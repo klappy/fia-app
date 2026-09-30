@@ -93,3 +93,28 @@ describe('C-10 settings', () => {
     expect(applyEasyMode({ ...DEFAULT_SETTINGS, textSize: 'max' }, true).textSize).toBe('max');
   });
 });
+
+describe('startup applies saved display settings (review fia-app#5 finding 3)', () => {
+  it('main.tsx applies loaded settings before the first render', async () => {
+    const fs = await import('node:fs');
+    const main = fs.readFileSync(new URL('../src/main.tsx', import.meta.url), 'utf8');
+    const apply = main.indexOf('applyToDocument(loadSettings(browserStore()).settings)');
+    expect(apply).toBeGreaterThan(-1);
+    expect(apply).toBeLessThan(main.indexOf('createRoot('));
+  });
+  it('a saved dark / max / Easy setting lands on the root element', async () => {
+    const { applyToDocument } = await import('../src/settings/apply');
+    const store = memoryStore();
+    saveSettings(store, { ...DEFAULT_SETTINGS, theme: 'dark', textSize: 'max', lowLiteracy: true });
+    const attrs = new Map<string, string>();
+    const root = {
+      setAttribute: (k: string, v: string) => void attrs.set(k, v),
+      removeAttribute: (k: string) => void attrs.delete(k),
+      toggleAttribute: (k: string, on: boolean) => void (on ? attrs.set(k, '') : attrs.delete(k)),
+    } as unknown as HTMLElement;
+    applyToDocument(loadSettings(store).settings, root);
+    expect(attrs.get('data-theme')).toBe('dark');
+    expect(attrs.get('data-text-step')).toBe('max');
+    expect(attrs.has('data-low-literacy')).toBe(true);
+  });
+});
