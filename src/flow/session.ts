@@ -28,7 +28,7 @@ export interface FlowSnapshot {
   state?: FlowState;
   view: View;
   saveStatus?: SaveStatus;
-  /** units whose marks were cleared on restore (C-11 digest mismatch). */
+  /** units whose marks are ignored on restore (C-11 digest mismatch; the record is kept). */
   changed: string[];
   error?: string;
 }
@@ -113,6 +113,7 @@ export function createFlowSession(catalog: Catalog, kv: KV | null) {
           changed: restored?.changed ?? [],
         });
       } catch (e) {
+        if (snap.packId !== packId) return;
         set({ guideStatus: 'error', error: String(e) });
       }
     },

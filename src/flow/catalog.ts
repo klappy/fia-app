@@ -116,6 +116,18 @@ export function entriesFor(m: CatalogManifest, language: string): CatalogEntry[]
   return m.entries.filter((e) => e.language === language && e.resourceTypes.includes('guide'));
 }
 
+/** USFM book ids in canonical (Protestant) order; unknown ids sort after, in manifest order. */
+const CANON = (
+  'GEN EXO LEV NUM DEU JOS JDG RUT 1SA 2SA 1KI 2KI 1CH 2CH EZR NEH EST JOB PSA PRO ECC SNG ISA ' +
+  'JER LAM EZK DAN HOS JOL AMO OBA JON MIC NAM HAB ZEP HAG ZEC MAL MAT MRK LUK JHN ACT ROM 1CO ' +
+  '2CO GAL EPH PHP COL 1TH 2TH 1TI 2TI TIT PHM HEB JAS 1PE 2PE 1JN 2JN 3JN JUD REV'
+).split(' ');
+const canonIndex = (book: string) => {
+  const i = CANON.indexOf(book.toUpperCase());
+  return i < 0 ? CANON.length : i;
+};
+
+/** Books of one language in canonical order (spec 02). */
 export function booksFor(m: CatalogManifest, language: string): BookRow[] {
   const rows = new Map<string, BookRow>();
   for (const e of entriesFor(m, language)) {
@@ -123,7 +135,7 @@ export function booksFor(m: CatalogManifest, language: string): BookRow[] {
     if (r) r.count += 1;
     else rows.set(e.book, { book: e.book, name: bookName(e.title), count: 1 });
   }
-  return [...rows.values()];
+  return [...rows.values()].sort((a, b) => canonIndex(a.book) - canonIndex(b.book));
 }
 
 /** Pericopes of one book in canonical order (chapter, then verse). */

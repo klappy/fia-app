@@ -58,6 +58,41 @@ describe('workspace (C-09) and completion (C-11)', () => {
     expect(r.changed).toEqual(['S01-U001']);
     expect(r.state.played).toEqual([]);
   });
+  it('a stale record is ignored, not deleted: the next save keeps it unchanged (C-11)', () => {
+    const kv = memoryKV();
+    saveSession(kv, g, run({ type: 'continue' }), 'guide');
+    const cr = JSON.parse(kv.get(completionKey(PACK))!);
+    cr.records[0].sourceDigest = 'f'.repeat(64);
+    const stale = { ...cr.records[0] };
+    const gone = { ...stale, unitId: 'S06-U999' };
+    cr.records.push(gone);
+    kv.set(completionKey(PACK), JSON.stringify(cr));
+    const r = restoreSession(kv, g)!;
+    expect(r.state.played).toEqual([]);
+    expect(saveSession(kv, g, r.state, 'guide').status).toBe('saved');
+    const after = JSON.parse(kv.get(completionKey(PACK))!);
+    expect(after.records).toEqual(expect.arrayContaining([stale, gone]));
+    expect(flowValidator().validate(C11, after).errors).toEqual([]);
+    // replaying the unit writes a fresh record in its place (one record per unit)
+    const again = [{ type: 'jump', unitId: 'S01-U001' }, { type: 'continue' }] as FlowAction[];
+    const replay = again.reduce((st, a) => reduce(g, st, a), r.state);
+    expect(saveSession(kv, g, replay, 'guide').status).toBe('saved');
+    const replayed = JSON.parse(kv.get(completionKey(PACK))!).records;
+    expect(replayed.filter((x: { unitId: string }) => x.unitId === 'S01-U001')).toEqual([
+      expect.objectContaining({ sourceDigest: g.steps[0].units[0].textSha256 }),
+    ]);
+    expect(replayed).toEqual(expect.arrayContaining([gone]));
+  });
+  it('with narration, restore on an unplayed stop unit is idle, not the stop prompt', () => {
+    const kv = memoryKV();
+    const audio = (...as: FlowAction[]) =>
+      as.reduce((s, a) => reduce(g, s, a), initialState(g, { hasAudio: true }));
+    const s = audio({ type: 'jump', unitId: stop1.afterUnitId });
+    expect(s.phase).toBe('idle');
+    saveSession(kv, g, s, 'guide');
+    expect(restoreSession(kv, g, { hasAudio: true })!.state.phase).toBe('idle');
+    expect(restoreSession(kv, g)!.state.phase).toBe('stop');
+  });
   it('invalid or foreign stored data is ignored, not thrown', () => {
     const kv = memoryKV({ [workspaceKey(PACK)]: '{"nope":1}' });
     expect(restoreSession(kv, g)).toBeNull();
@@ -94,6 +129,26 @@ describe('flow session (shared position across views, R-411)', () => {
     expect(b.get().state!.unitId).toBe('S01-U002');
     expect(b.get().view).toBe('overview');
     expect(b.get().saveStatus).toBeUndefined();
+  });
+  it("an old pack's guide failure does not mark the current pack as failed", async () => {
+    let failA!: (e: Error) => void;
+    const s = createFlowSession(
+      {
+        manifest: async () => fixtureCatalog().manifest(),
+        guide: (id) =>
+          id === 'A' ? new Promise((_, rej) => (failA = rej)) : fixtureCatalog().guide(id),
+      },
+      null,
+    );
+    s.selectPack('A');
+    const a = s.loadGuide();
+    s.selectPack(PACK);
+    await s.loadGuide();
+    failA(new Error('offline'));
+    await a;
+    expect(s.get().packId).toBe(PACK);
+    expect(s.get().guideStatus).toBe('ready');
+    expect(s.get().error).toBeUndefined();
   });
   it('catalog failure is an error state with retry', async () => {
     const s = createFlowSession(

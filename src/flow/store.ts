@@ -141,8 +141,9 @@ export function saveSession(
   theme: 'light' | 'dark' = 'light',
 ): { status: SaveStatus; detail?: string } {
   const ws = toWorkspace(g, s, view, theme);
-  const cr = toCompletion(g, s);
   const v = flowValidator();
+  const cr = toCompletion(g, s);
+  if (kv) cr.records.push(...staleRecords(kv, g, v, cr));
   const a = v.validate(C09, ws);
   if (!a.ok) return { status: 'invalid', detail: `C-09 ${errorText(a.errors)}` };
   const b = v.validate(C11, cr);
@@ -157,10 +158,29 @@ export function saveSession(
   }
 }
 
+/**
+ * Stored C-11 records that restore ignores (stale `sourceDigest`, or a unit the pack no longer
+ * has) and this save does not re-produce: kept unchanged, never deleted (C-11 test clause).
+ */
+function staleRecords(
+  kv: KV,
+  g: FlowGuide,
+  v: ReturnType<typeof flowValidator>,
+  fresh: CompletionRecord,
+): CompletionRecord['records'] {
+  const old = readJson(kv, completionKey(g.packId));
+  if (!old || !v.validate(C11, old).ok || (old as CompletionRecord).packId !== g.packId) return [];
+  const digest = new Map(g.steps.flatMap((st) => st.units.map((u) => [u.id, u.textSha256])));
+  const written = new Set(fresh.records.map((r) => r.unitId));
+  return (old as CompletionRecord).records.filter(
+    (r) => !written.has(r.unitId) && digest.get(r.unitId) !== r.sourceDigest,
+  );
+}
+
 export interface Restored {
   state: FlowState;
   view: View;
-  /** units whose C-11 digest no longer matches the pack text (marks cleared, J-A8). */
+  /** units whose C-11 digest no longer matches the pack text (marks ignored, record kept; J-A8). */
   changed: string[];
 }
 
@@ -206,7 +226,12 @@ export function restoreSession(
   }
   const unitId = known(w.position.unitId) ? w.position.unitId : base.unitId;
   const stop = stopAt(g, unitId);
-  const atStop = stop && !discussed.includes(stop.id);
+  // Mirror `enter` (machine.ts): with narration, a stop waits only if the session was saved
+  // on it (attachedStopId), so restore never skips a stop unit's unplayed narration.
+  const atStop =
+    stop &&
+    !discussed.includes(stop.id) &&
+    (!base.hasAudio || w.position.attachedStopId === stop.id);
   const view: View = w.view === 'overview' || w.view === 'single-script' ? w.view : 'guide';
   return {
     view,

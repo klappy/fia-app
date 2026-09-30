@@ -20,6 +20,12 @@ describe('catalog loader (C-03)', () => {
     expect(mrk[0]).toBe('MRK-1-1-13');
     expect(mrk).toEqual([...mrk].sort((a, b) => Number(a.split('-')[2]) - Number(b.split('-')[2])));
   });
+  it('books are listed in canonical order, not manifest order (spec 02)', async () => {
+    const m = await fixtureCatalog().manifest();
+    expect(booksFor(m, 'eng').map((b) => b.book)).toEqual(['MRK', 'JAS']);
+    const shuffled = { ...m, entries: [...m.entries].reverse() };
+    expect(booksFor(shuffled, 'eng').map((b) => b.book)).toEqual(['MRK', 'JAS']);
+  });
   it('rejects a manifest that breaks C-03', async () => {
     const bad = createCatalog('/data', async () => ({ schemaVersion: 1, languages: [] }));
     await expect(bad.manifest()).rejects.toBeInstanceOf(ContractError);
