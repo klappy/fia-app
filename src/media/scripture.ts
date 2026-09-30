@@ -17,6 +17,8 @@ export interface PackEdition extends Slot {
   language: string;
   verses: PackVerse[];
   longName?: string;
+  /** C-05 binding: narration clips must carry this as `sourceSha256` */
+  textSha256?: string;
 }
 
 export interface ScripturePack {

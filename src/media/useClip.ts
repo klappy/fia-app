@@ -16,8 +16,15 @@ export interface ClipState {
   playFrom: (t: number) => void;
 }
 
+/** Transport state after the clip changes or unmounts (never still "playing"). */
+export function clipReset(knownDuration = 0): { playing: false; elapsed: 0; duration: number } {
+  return { playing: false, elapsed: 0, duration: knownDuration };
+}
+
 export function useClip(url: string | null | undefined, key: string, knownDuration = 0): ClipState {
   const ref = useRef<HTMLAudioElement | null>(null);
+  // A seek asked for before metadata is known (e.g. edition switch by verse) is applied on load.
+  const pendingSeek = useRef<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [duration, setDuration] = useState(knownDuration);
   const [playing, setPlaying] = useState(false);
@@ -32,8 +39,11 @@ export function useClip(url: string | null | undefined, key: string, knownDurati
     setError(false);
     const onMeta = () => {
       setDuration(a.duration);
-      const r = resumePosition(resumeMap.current, key, a.duration);
-      if (r > 0) a.currentTime = r;
+      const want = pendingSeek.current;
+      pendingSeek.current = null;
+      const r = want ?? resumePosition(resumeMap.current, key, a.duration);
+      if (r > 0) a.currentTime = clampSeek(r, a.duration);
+      setElapsed(a.currentTime);
     };
     const onTime = () => {
       setElapsed(a.currentTime);
@@ -52,6 +62,13 @@ export function useClip(url: string | null | undefined, key: string, knownDurati
     a.addEventListener('ended', onPause);
     a.addEventListener('error', onErr);
     return () => {
+      // The pause event would arrive after its listener is gone: reset the transport here so a
+      // clip change (e.g. edition switch while playing) never keeps "playing" or the old clock.
+      const reset = clipReset(knownDuration);
+      setPlaying(reset.playing);
+      setElapsed(reset.elapsed);
+      setDuration(reset.duration);
+      pendingSeek.current = null;
       a.pause();
       a.removeAttribute('src');
       a.load();
@@ -63,11 +80,17 @@ export function useClip(url: string | null | undefined, key: string, knownDurati
       a.removeEventListener('ended', onPause);
       a.removeEventListener('error', onErr);
     };
+    // knownDuration is only the pre-metadata placeholder; it must not re-create the element
   }, [url, key]);
 
   const seek = useCallback((t: number) => {
     const a = ref.current;
     if (!a) return;
+    if (a.readyState < 1) {
+      pendingSeek.current = t; // HAVE_NOTHING: duration unknown, apply on loadedmetadata
+      setElapsed(t);
+      return;
+    }
     a.currentTime = clampSeek(t, a.duration || 0);
     setElapsed(a.currentTime);
   }, []);

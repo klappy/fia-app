@@ -155,3 +155,23 @@ export function splitVerse(v: AlignedVerse): { text: string; word: number | null
   if (at < v.text.length) out.push({ text: v.text.slice(at), word: null });
   return out;
 }
+
+/** Position carried across an edition switch until the new clip's sidecar is usable. */
+export interface EditionSwitchSeek {
+  from: AlignmentSidecar;
+  t: number;
+  toClipId: string;
+}
+
+/**
+ * Seek target in the new edition's clip once its (hash-bound) sidecar is usable, else null.
+ * Seeks only — never plays (R-407).
+ */
+export function editionSwitchTarget(
+  p: EditionSwitchSeek | null,
+  to: AlignmentSidecar | null,
+  clipId: string,
+): number | null {
+  if (!p || !to || p.toClipId !== clipId) return null;
+  return mapPositionByVerse(p.from, to, p.t).t;
+}

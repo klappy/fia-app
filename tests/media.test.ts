@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { createValidator, type ContractSchema } from '../src/contracts/validate';
 import {
   alignmentErrors,
+  editionSwitchTarget,
   mapPositionByVerse,
   positionAt,
   seekToVerse,
@@ -26,6 +27,7 @@ import {
   chipCounts,
   filterCards,
   htmlToParagraphs,
+  videoPrimaryAction,
   videoState,
   type ResourcesPack,
 } from '../src/media/resources';
@@ -50,6 +52,13 @@ import {
 } from '../src/media/seek';
 import { EN, format } from '../src/i18n';
 import { clipsFor, scriptureClipId } from '../src/media/narration';
+import {
+  sheetTypeKey,
+  sourceLineParts,
+  sourceLineValues,
+  type ProvenanceSheetState,
+} from '../src/media/sheet';
+import { clipReset } from '../src/media/useClip';
 import { markWords } from '../src/media/marks';
 
 // Small fixture trimmed from the L1 packs (eng/tpi MRK-1-1-13, hau LUK-6-17-19); the alignment
@@ -359,6 +368,9 @@ describe('narration manifest → clips (C-05)', () => {
   it('refuses a clip made from different text', () => {
     expect(clipsFor(m, 'scripture-bsb', 'c'.repeat(64)).generated).toBeNull();
   });
+  it('refuses every clip when the text sha is unknown (C-05, review LOW 8)', () => {
+    expect(clipsFor(m, 'scripture-bsb', undefined)).toEqual({ source: null, generated: null });
+  });
   it('an ai flag on a "source" entry still makes it generated', () => {
     const odd = { ...m, entries: [{ ...entry, recordingSource: 'source' as const }] };
     expect(clipsFor(odd, 'scripture-bsb', sha).source).toBeNull();
@@ -378,5 +390,71 @@ describe('mark words (R-313, R-503)', () => {
     expect(markWords('ai-translation')).toMatch(/^AI /);
     expect(markWords('source')).toBe('source recording');
     expect(markWords('absent', 'Tok Pisin')).toBe('not yet in Tok Pisin');
+  });
+});
+
+describe('review fixes (PR #4, rev-l4-1920)', () => {
+  it('M1: a clip change resets the transport (not playing, clock at 0)', () => {
+    expect(clipReset(52)).toEqual({ playing: false, elapsed: 0, duration: 52 });
+    expect(clipReset()).toEqual({ playing: false, elapsed: 0, duration: 0 });
+  });
+  it('M2: "Try again" after a video error retries without needing the <video> element', () => {
+    expect(videoPrimaryAction(true, 'error')).toBe('retry');
+    expect(videoPrimaryAction(true, 'playing')).toBe('toggle');
+    expect(videoPrimaryAction(true, 'ended')).toBe('close');
+    expect(videoPrimaryAction(false, 'error')).toBe('close');
+  });
+  it('M3: edition switch seeks the new clip to the same verse once its sidecar is usable', () => {
+    const other = clone(align);
+    other.verses.forEach((v, i) => ((v.start += 10 * i), (v.end += 10 * i)));
+    const p = { from: align, t: align.verses[1].words[2].start, toClipId: 'scripture-ult' };
+    expect(editionSwitchTarget(p, other, 'scripture-ult')).toBe(other.verses[1].start);
+    expect(editionSwitchTarget(p, null, 'scripture-ult')).toBeNull(); // sidecar not loaded yet
+    expect(editionSwitchTarget(p, other, 'scripture-bsb')).toBeNull(); // old clip still bound
+    expect(editionSwitchTarget(null, other, 'scripture-ult')).toBeNull();
+  });
+  it('M4: every absent sheet body names a type (no hole in the sentence)', () => {
+    const cases: ProvenanceSheetState[] = [
+      { domain: 'audio', slot: { status: 'absent' }, scripture: true },
+      { domain: 'text', slot: { status: 'absent' }, englishShown: true, typeKey: 'terms' },
+      { domain: 'text', slot: { status: 'absent' }, typeKey: 'maps' },
+      { domain: 'description', slot: { status: 'absent' } },
+      { domain: 'text', slot: { status: 'absent' } },
+    ];
+    for (const s of cases) {
+      const model = provenanceSheet(s);
+      const type = EN[sheetTypeKey(s)];
+      expect(type).toBeTruthy();
+      for (const k of model.bodyKeys) {
+        const out = format(EN[k], { type, language: 'Hausa' });
+        expect(out).not.toMatch(/ {2}|\{type\}/);
+      }
+    }
+    expect(sheetTypeKey({ domain: 'text', slot: undefined, typeKey: 'videos' })).toBe(
+      's.coverage.type.videos',
+    );
+  });
+  it('M5: the source line renders from the rights record, values ltr, never with holes', () => {
+    const rights = { source: 'BSB', holder: 'Berean Bible', licence: 'CC0 1.0' };
+    const src = provenanceSheet({ domain: 'audio', slot: { status: 'source' }, scripture: true });
+    expect(src.sourceLine).toBe(true);
+    expect(sourceLineValues(src, { domain: 'audio', slot: undefined, rights })).toBe(rights);
+    expect(sourceLineValues(src, { domain: 'audio', slot: undefined })).toBeNull();
+    expect(
+      sourceLineValues(src, {
+        domain: 'audio',
+        slot: undefined,
+        rights: { ...rights, licence: '' },
+      }),
+    ).toBeNull();
+    const none = provenanceSheet({ domain: 'text', slot: { status: 'absent' } });
+    expect(sourceLineValues(none, { domain: 'text', slot: undefined, rights })).toBeNull();
+    const parts = sourceLineParts(EN['s.prov.source'], rights);
+    expect(parts.map((p) => p.text).join('')).toBe('Source: BSB · Berean Bible · CC0 1.0');
+    expect(parts.filter((p) => p.ltr).map((p) => p.text)).toEqual([
+      'BSB',
+      'Berean Bible',
+      'CC0 1.0',
+    ]);
   });
 });

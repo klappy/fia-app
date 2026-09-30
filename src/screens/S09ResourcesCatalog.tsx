@@ -53,6 +53,7 @@ export default function S09ResourcesCatalog() {
             ? { status: 'absent' }
             : { status: 'generated' },
       englishShown: c.mark === 'absent',
+      typeKey: c.type,
       language: languageName(lang),
     };
     nav(PROVENANCE_SHEET_PATH, { state });

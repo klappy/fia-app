@@ -2,7 +2,12 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { SecondaryAction, Sheet } from '../components';
 import { t } from '../i18n';
 import { provenanceSheet, TITLE_GLYPHS } from '../media/provenance';
-import type { ProvenanceSheetState } from '../media/sheet';
+import {
+  sheetTypeKey,
+  sourceLineParts,
+  sourceLineValues,
+  type ProvenanceSheetState,
+} from '../media/sheet';
 
 // SH-1 — Provenance info sheet (spec 20; R-313, R-503, C-06). User words only; AI-made content
 // is always named as AI and never as source; Scripture text is never AI. The caller passes the
@@ -17,11 +22,12 @@ export default function SH1ProvenanceInfo() {
   const loc = useLocation();
   const s = (loc.state as ProvenanceSheetState | null) ?? DEFAULT_STATE;
   const model = provenanceSheet(s);
+  const rights = sourceLineValues(model, s);
   const values = {
     ...TITLE_GLYPHS,
     language: s.language ?? '',
     edition: s.edition ?? '',
-    type: s.typeWord ?? '',
+    type: t(sheetTypeKey(s)),
     collection: s.slot?.provenance?.collection ?? '',
   };
   return (
@@ -37,6 +43,20 @@ export default function SH1ProvenanceInfo() {
         .map((k) => (
           <p key={k}>{t(k, values)}</p>
         ))}
+      {rights && (
+        <p className="fia-caption">
+          {/* no values: placeholders stay in the template and are split into ltr spans */}
+          {sourceLineParts(t('s.prov.source'), rights).map((p, i) =>
+            p.ltr ? (
+              <span key={i} dir="ltr">
+                {p.text}
+              </span>
+            ) : (
+              <span key={i}>{p.text}</span>
+            ),
+          )}
+        </p>
+      )}
       {model.rows.includes('rights') && (
         <SecondaryAction label={`${t('s.prov.rights')} ⟶`} onPress={() => nav('/about')} />
       )}

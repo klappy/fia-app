@@ -33,6 +33,7 @@ export default function S11ImageMapViewer() {
       domain,
       slot: domain === 'text' ? item?.titleProvenance : item?.description,
       englishShown: domain === 'text' && titleMark === 'absent',
+      typeKey: item?.kind === 'map' ? 'maps' : 'images',
       language: languageName(lang),
     };
     nav(PROVENANCE_SHEET_PATH, { state });

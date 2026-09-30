@@ -4,6 +4,7 @@ import { AbsentBadge, AudioControls, SecondaryAction, ToastNotice } from '../com
 import { t } from '../i18n';
 import { languageName } from '../media/lang';
 import {
+  editionSwitchTarget,
   positionAt,
   seekToVerse,
   seekToWord,
@@ -11,6 +12,7 @@ import {
   timingMode,
   usableAlignment,
   type AlignmentSidecar,
+  type EditionSwitchSeek,
 } from '../media/alignment';
 import { clipsFor, scriptureClipId, type NarrationManifest } from '../media/narration';
 import { selectNarration } from '../media/provenance';
@@ -57,7 +59,7 @@ export default function S08ScriptureReader() {
     scripture.status === 'ready'
       ? scripture.data.editions.find((e) => e.short === ed?.short)
       : undefined;
-  const textSha = (packEd as { textSha256?: string } | undefined)?.textSha256;
+  const textSha = packEd?.textSha256;
 
   const clipId = ed ? scriptureClipId(ed.short) : '';
   const choice = selectNarration(
@@ -103,6 +105,7 @@ export default function S08ScriptureReader() {
         : { status: 'absent' },
       scripture: true,
       edition: ed?.short,
+      typeKey: 'scripture',
       language: languageName(lang),
       readsEnglish: !!ed?.fallback,
       sourceOnlySilent: choice.silent === 'source-only-silent',
@@ -123,11 +126,26 @@ export default function S08ScriptureReader() {
     }
   };
 
+  // Spec 08: switching edition keeps the audio position by verse (seek only, no autoplay).
+  const [pendingSwitch, setPendingSwitch] = useState<EditionSwitchSeek | null>(null);
+  const { seek } = clip;
+  useEffect(() => {
+    const target = editionSwitchTarget(pendingSwitch, aligned, clipId);
+    if (target === null) return;
+    setPendingSwitch(null);
+    seek(target);
+  }, [pendingSwitch, aligned, clipId, seek]);
+
   const switchEdition = (i: number) => {
     const ref = anchorRef ?? ed?.verses[Math.max(0, pos.verse)]?.ref ?? null;
+    const to = editions[i];
+    setPendingSwitch(
+      aligned && clip.elapsed > 0 && to && to.short !== ed?.short
+        ? { from: aligned, t: clip.elapsed, toClipId: scriptureClipId(to.short) }
+        : null,
+    );
     setEdIdx(i);
     setShowMore(false);
-    const to = editions[i];
     const vi = sameVerseIndex(to, ref);
     setAnchorRef(to.verses[vi]?.ref ?? null);
   };

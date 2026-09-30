@@ -36,7 +36,8 @@ export function clipsFor(
   };
   for (const e of manifest?.entries ?? []) {
     if (e.id !== id) continue;
-    if (textSha256 && e.sourceSha256 !== textSha256) continue; // stale clip: refuse
+    // stale clip, or text sha unknown (cannot prove it is fresh): refuse (C-05 § Test)
+    if (!textSha256 || e.sourceSha256 !== textSha256) continue;
     // `ai` and `recordingSource` must agree; any AI flag makes it generated (never shown as source)
     const generated = e.ai || e.recordingSource === 'generated';
     const ref: ClipRef = {

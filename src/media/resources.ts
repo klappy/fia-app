@@ -170,3 +170,18 @@ export function htmlToParagraphs(html: string): string[] {
 export function videoState(m: PackMedia, online: boolean): 'playable' | 'needs-connection' {
   return online && !!m.url ? 'playable' : 'needs-connection';
 }
+
+export type VideoUiState = 'idle' | 'playing' | 'paused' | 'ended' | 'error';
+
+/**
+ * S12 primary: close when not playable or ended; retry after an error (no element lookup — the
+ * frame message has replaced the video); otherwise play/pause the mounted element.
+ */
+export function videoPrimaryAction(
+  playable: boolean,
+  vs: VideoUiState,
+): 'close' | 'retry' | 'toggle' {
+  if (!playable || vs === 'ended') return 'close';
+  if (vs === 'error') return 'retry';
+  return 'toggle';
+}

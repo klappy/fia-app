@@ -40,6 +40,7 @@ export default function S10KeyTermDetail() {
       domain,
       slot: domain === 'text' ? term?.text : term?.audio,
       englishShown: domain === 'text' && markFor(term?.text, 'text') === 'absent',
+      typeKey: 'terms',
       language: languageName(lang),
     };
     nav(PROVENANCE_SHEET_PATH, { state });
@@ -77,6 +78,11 @@ export default function S10KeyTermDetail() {
         <div role="alert">
           <p>{t('s.resources.error')}</p>
           <SecondaryAction label={t('s.common.try-again')} onPress={res.retry} />
+        </div>
+      )}
+      {res.status === 'ready' && !term && (
+        <div role="alert">
+          <p>{t('s.resources.error')}</p>
         </div>
       )}
       {term && (

@@ -4,7 +4,13 @@ import { MediaViewer, ProvenanceMark, SecondaryAction } from '../components';
 import { t } from '../i18n';
 import { languageName } from '../media/lang';
 import { markFor } from '../media/provenance';
-import { findMedia, videoState, type ResourcesPack } from '../media/resources';
+import {
+  findMedia,
+  videoPrimaryAction,
+  videoState,
+  type ResourcesPack,
+  type VideoUiState,
+} from '../media/resources';
 import { PROVENANCE_SHEET_PATH, type ProvenanceSheetState } from '../media/sheet';
 import { DEFAULT_PACK, packLanguage, useOnline, usePackFile } from '../media/usePack';
 import { ScreenFrame } from './ScreenFrame';
@@ -22,7 +28,7 @@ export default function S12VideoPlayer() {
   const online = useOnline();
   const res = usePackFile<ResourcesPack>(packId, 'resources');
   const item = res.status === 'ready' ? findMedia(res.data, id) : undefined;
-  const [vs, setVs] = useState<'idle' | 'playing' | 'paused' | 'ended' | 'error'>('idle');
+  const [vs, setVs] = useState<VideoUiState>('idle');
   const playable = item ? videoState(item, online) === 'playable' : false;
   const close = () =>
     fromResources || !unit
@@ -43,13 +49,13 @@ export default function S12VideoPlayer() {
           ? t('s.video.primary-pause')
           : t('s.video.primary-play');
   const onPrimary = () => {
-    if (!playable || vs === 'ended') return close();
+    const act = videoPrimaryAction(playable, vs);
+    if (act === 'close') return close();
+    // On error the frame message replaces <video>: going idle mounts it again (fresh load).
+    if (act === 'retry') return setVs('idle');
     const v = video();
     if (!v) return;
-    if (vs === 'error') {
-      setVs('idle');
-      v.load();
-    } else if (v.paused) void v.play().catch(() => setVs('error'));
+    if (v.paused) void v.play().catch(() => setVs('error'));
     else v.pause();
   };
   const sheet = () => {
@@ -57,6 +63,7 @@ export default function S12VideoPlayer() {
       domain: 'text',
       slot: item?.titleProvenance,
       englishShown: titleMark === 'absent',
+      typeKey: 'videos',
       language: languageName(lang),
     };
     nav(PROVENANCE_SHEET_PATH, { state });
@@ -70,6 +77,9 @@ export default function S12VideoPlayer() {
       onPrimary={onPrimary}
     >
       {vs !== 'ended' && playable && <SecondaryAction label={closeLabel} onPress={close} />}
+      {res.status === 'ready' && !item && (
+        <MediaViewer kind="video" alt="" frameMessage={t('s.resources.error')} />
+      )}
       {res.status === 'error' && (
         <div role="alert">
           <p>{t('s.resources.error')}</p>
