@@ -17,7 +17,7 @@
     "catalog": "node bin/build-catalog.mjs",
     "rights": "node bin/build-rights.mjs",
     "pack": "node bin/build-pack.mjs",
-    "proofs": "node bin/build-pack.mjs eng MRK-1-1-13 && node bin/build-pack.mjs spa MRK-1-1-13 && node bin/build-pack.mjs hau MRK-1-1-13 && node bin/build-pack.mjs tpi MRK-1-1-13 && node bin/build-pack.mjs arb GEN-1-1-5",
+    "proofs": "node bin/build-pack.mjs eng MRK-1-1-13 && node bin/build-pack.mjs spa MRK-1-1-13 && node bin/build-pack.mjs hau LUK-6-17-19 && node bin/build-pack.mjs tpi MRK-1-1-13 && node bin/build-pack.mjs arb GEN-1-1-2-3",
     "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
