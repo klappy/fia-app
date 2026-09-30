@@ -74,3 +74,16 @@ test('headPinned: 404 is false without retry; 403 throws without retry', async (
   try { await assert.rejects(headPinned(sources, 'R', SHA, 'x/98.content.json'), /403/); } finally { g.restore(); }
   assert.equal(g.calls.length, 1);
 });
+
+test('fetchPinned retries when reading the body fails', async () => {
+  const calls = [];
+  const orig = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    calls.push(url);
+    if (calls.length === 1) return { ok: true, status: 200, arrayBuffer: async () => { throw new Error('ECONNRESET'); } };
+    return new Response('{"ok":1}', { status: 200 });
+  };
+  try { const r = await fetchPinned(sources, 'R', SHA, 'body-reset.json'); assert.equal(r.bytes.toString(), '{"ok":1}'); }
+  finally { globalThis.fetch = orig; }
+  assert.equal(calls.length, 2);
+});

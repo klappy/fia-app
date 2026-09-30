@@ -59,7 +59,14 @@ export async function fetchPinned(sources, repo, sha, filePath, { allow404 = fal
       await sleep(500 * (attempt + 1));
       continue;
     }
-    const bytes = Buffer.from(await res.arrayBuffer());
+    let bytes;
+    try {
+      bytes = Buffer.from(await res.arrayBuffer());
+    } catch (error) { // connection reset mid-body: retry like a fetch error
+      last = error;
+      await sleep(500 * (attempt + 1));
+      continue;
+    }
     await mkdir(path.dirname(cacheFile), { recursive: true });
     await writeFile(cacheFile, bytes);
     return { bytes, sha256: sha256(bytes), status: 200 };
