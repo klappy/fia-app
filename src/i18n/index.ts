@@ -25,7 +25,7 @@ export async function loadCatalog(code: string): Promise<Catalog> {
   return EN;
 }
 
-const PLURAL = /\{(\w+),\s*plural,\s*(.*)\}/s;
+const PLURAL = /\{(\w+),\s*plural,\s*((?:[^{}]|\{[^{}]*\})*)\}/g;
 const CLAUSE = /(\w+)\s*\{([^}]*)\}/g;
 
 /** Minimal ICU: `{name}` substitution and `{n, plural, one {...} other {...}}` (English rules). */
