@@ -46,6 +46,14 @@ export interface ContainerLike {
   addEventListener(type: string, fn: (e: MessageEvent) => void): void;
 }
 
+/** R-310: offer a content update only when its live revision was not declined ("Keep"). */
+export function offersUpdate(
+  p: Pick<PackStatus, 'packId' | 'updateAvailable' | 'liveRevision'>,
+  declined: Record<string, string>,
+): boolean {
+  return !!p.updateAvailable && !(p.packId && declined[p.packId] === p.liveRevision);
+}
+
 const DECLINED_KEY = 'fia.offline.declined.v1';
 function loadDeclined(): Record<string, string> {
   try {
@@ -132,6 +140,7 @@ export class OfflineClient {
       };
       if (reg.waiting && this.container.controller) this.emit({ updateReady: true });
       reg.addEventListener('updatefound', watch);
+      watch(); // a worker already installing when register() resolved
       this.container.addEventListener('message', (e: MessageEvent) => {
         const d = e.data as { type?: string; packId?: string; error?: string } | undefined;
         if (d?.type === 'CACHE_ERROR') {

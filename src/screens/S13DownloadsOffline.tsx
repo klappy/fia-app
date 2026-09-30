@@ -7,6 +7,7 @@ import {
   freeBytes,
   isQuotaError,
   mb,
+  offersUpdate,
   offline,
   packRef,
   useInstall,
@@ -34,7 +35,15 @@ function PackLine({ p }: { p: PackStatus }) {
   );
 }
 
-function SavedCard({ p, onUpdate }: { p: PackStatus; onUpdate: () => void }) {
+function SavedCard({
+  p,
+  offerUpdate,
+  onUpdate,
+}: {
+  p: PackStatus;
+  offerUpdate: boolean;
+  onUpdate: () => void;
+}) {
   const [confirm, setConfirm] = useState(false);
   const ref = packRef(p.packId ?? '');
   return (
@@ -55,7 +64,7 @@ function SavedCard({ p, onUpdate }: { p: PackStatus; onUpdate: () => void }) {
           />
         </div>
       )}
-      {p.updateAvailable && (
+      {offerUpdate && (
         <SecondaryAction
           label={`${t('s.downloads.update-available', { delta: mb(p.updateBytes) })} ⟶`}
           onPress={onUpdate}
@@ -236,6 +245,7 @@ export default function S13DownloadsOffline() {
             <SavedCard
               key={p.packId}
               p={p}
+              offerUpdate={offersUpdate(p, s.declined)}
               onUpdate={() =>
                 nav(`/sheet/update?variant=content&pack=${encodeURIComponent(p.packId!)}`)
               }

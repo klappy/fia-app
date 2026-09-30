@@ -369,7 +369,11 @@ describe('offline engine (C-07)', () => {
 });
 
 describe('offline shell (R-702)', () => {
-  async function shellSetup() {
+  // Cloudflare `auto-trailing-slash` answers /index.html with a 307 to /; fetch follows it and
+  // the final Response carries `redirected: true` (review fia-app#6 HIGH #1 / MEDIUM #2).
+  const redirected = (r: Response) => Object.defineProperty(r, 'redirected', { value: true });
+
+  async function shellSetup(opts: { redirect?: boolean } = {}) {
     const html = '<!doctype html><div id="root"></div>';
     const js = 'console.log(1)';
     const entries = [
@@ -400,8 +404,12 @@ describe('offline shell (R-702)', () => {
           return new Response(JSON.stringify({ schemaVersion: 1, entries }), {
             headers: { 'Content-Type': 'application/json' },
           });
-        if (p === '/index.html' || p === '/')
-          return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+        if (p === '/index.html' || p === '/') {
+          const r = new Response(html, {
+            headers: { 'Content-Type': 'text/html; charset=utf-8' },
+          });
+          return opts.redirect && p === '/index.html' ? redirected(r) : r;
+        }
         if (p === '/assets/app.js')
           return new Response(js, { headers: { 'Content-Type': 'application/javascript' } });
         return new Response('nf', { status: 404 });
@@ -425,6 +433,37 @@ describe('offline shell (R-702)', () => {
     expect(await nav!.text()).toBe(html);
     const js = await engine.handleFetch({ url: `${ORIGIN}/assets/app.js`, method: 'GET' });
     expect(await js!.text()).toBe('console.log(1)');
+  });
+
+  it('a redirected /index.html is cached without the redirected flag; offline cold start serves it', async () => {
+    const { engine, caches, setOnline, html } = await shellSetup({ redirect: true });
+    // The fake store clones on put (which drops the flag), so inspect what put() was handed.
+    const put: Record<string, boolean> = {};
+    const open = caches.open.bind(caches);
+    caches.open = async (name) => {
+      const c = await open(name);
+      return { ...c, put: async (k, v) => ((put[k] = v.redirected), c.put(k, v)) };
+    };
+    await engine.installShell();
+    expect(put['/index.html']).toBe(false);
+    await engine.activateShell();
+    setOnline(false);
+    const nav = await engine.handleFetch({ url: `${ORIGIN}/`, method: 'GET', mode: 'navigate' });
+    expect(nav!.redirected).toBe(false);
+    expect(nav!.headers.get('content-type')).toContain('text/html');
+    expect(await nav!.text()).toBe(html);
+  });
+
+  it('an online navigation that was redirected is left to the browser (null)', async () => {
+    const { engine } = await shellSetup({ redirect: true });
+    const nav = await engine.handleFetch({
+      url: `${ORIGIN}/index.html`,
+      method: 'GET',
+      mode: 'navigate',
+    });
+    expect(nav).toBeNull();
+    const ok = await engine.handleFetch({ url: `${ORIGIN}/`, method: 'GET', mode: 'navigate' });
+    expect(ok!.ok).toBe(true);
   });
 
   it('without a shell manifest (dev) install is a no-op', async () => {

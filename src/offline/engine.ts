@@ -133,6 +133,20 @@ export async function verified(response: Response | undefined, entry: OfflineEnt
   return response;
 }
 
+/**
+ * A response marked `redirected` cannot answer a navigation (the browser rejects it), so a
+ * followed redirect (e.g. Cloudflare's `/index.html` → `/`) is re-wrapped without the flag
+ * before it is cached. Same idea as Workbox's `cleanRedirect`.
+ */
+export async function cleanRedirect(response: Response): Promise<Response> {
+  if (!response.redirected) return response;
+  return new Response(await response.blob(), {
+    status: response.status,
+    statusText: response.statusText,
+    headers: response.headers,
+  });
+}
+
 export function createEngine(env: EngineEnv) {
   let job: {
     id: string;
@@ -319,7 +333,7 @@ export function createEngine(env: EngineEnv) {
           });
           await verified(res, entry);
           aborted();
-          await cache.put(entry.path, res);
+          await cache.put(entry.path, await cleanRedirect(res));
         }
         bytes += entry.bytes;
         files++;
@@ -445,7 +459,7 @@ export function createEngine(env: EngineEnv) {
         if (have) continue;
         const r = await env.fetch(new URL(e.path, env.origin).href, { cache: 'no-store' });
         await verified(r, e);
-        await cache.put(e.path, r);
+        await cache.put(e.path, await cleanRedirect(r));
       }
     } catch (e) {
       await env.caches.delete(name).catch(() => false);
@@ -480,6 +494,8 @@ export function createEngine(env: EngineEnv) {
     if (navigate) {
       try {
         const live = await env.fetch(request.url, { cache: 'no-store' });
+        // A redirected response cannot answer a navigation: let the browser follow it itself.
+        if (live.redirected) return null;
         if (live.ok) return live;
       } catch {
         /* offline: fall back to the cached shell */

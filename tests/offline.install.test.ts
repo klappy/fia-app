@@ -7,7 +7,7 @@ import {
   storageWarningFor,
   readStorage,
 } from '../src/offline/storage';
-import { OfflineClient, packRef } from '../src/offline/client';
+import { OfflineClient, offersUpdate, packRef } from '../src/offline/client';
 import type { PackStatus } from '../src/offline/engine';
 
 // Ported from the PoC tests/install.test.mjs (POC-REFERENCE § 7: install.js PORT).
@@ -186,5 +186,17 @@ describe('offline client (R-704, R-310)', () => {
     expect(packRef('spa.MRK-1-1-13')).toBe('MRK 1:1–13');
     expect(packRef('arb.GEN-1-1-2-3')).toBe('GEN 1:1–2:3');
     expect(packRef('eng.PSA-23-1')).toBe('PSA 23:1');
+  });
+});
+
+describe('declined content update (R-310 "remembered per revision")', () => {
+  const p = { packId: 'spa.MRK-1-1-13', updateAvailable: true, liveRevision: 'rev-b' };
+  it('is offered until the person taps Keep for that revision', () => {
+    expect(offersUpdate(p, {})).toBe(true);
+    expect(offersUpdate(p, { 'spa.MRK-1-1-13': 'rev-b' })).toBe(false);
+  });
+  it('a newer revision is offered again; no update means nothing to offer', () => {
+    expect(offersUpdate({ ...p, liveRevision: 'rev-c' }, { 'spa.MRK-1-1-13': 'rev-b' })).toBe(true);
+    expect(offersUpdate({ ...p, updateAvailable: false }, {})).toBe(false);
   });
 });
