@@ -2,7 +2,7 @@
 // C-08 derivative slots (no transcoding here), C-05 narration manifest shell (no AI generation in this lane; slots marked ai:true).
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { assert, bookFile2, DATA_ROOT, fetchJson, guideSteps, guideUnitsDocument, LANGUAGE_INFO, loadSources, parsePericope, parseRef, plainText, rangesOverlap, sha256, stableJson } from './lib.mjs';
+import { assert, bookFile2, DATA_ROOT, fetchJson, guideSteps, guideUnitsDocument, indexReferenceMatches, LANGUAGE_INFO, loadSources, parsePericope, parseRef, plainText, rangesOverlap, sha256, stableJson } from './lib.mjs';
 
 const FIA = { image: 'FIAImages', map: 'FIAMaps', term: 'FIAKeyTerms', video: 'VideoBibleDictionary' };
 
@@ -41,7 +41,7 @@ export async function buildPack(lang, pericope, { log = console.error } = {}) {
 
   // guide
   const meta = (await fetchJson(sources, guideRepo, guideSha, `${lang}/metadata.json`)).json;
-  const entry = Object.entries(meta.article_metadata).find(([, a]) => a.index_reference === `${start}-${end}`);
+  const entry = Object.entries(meta.article_metadata).find(([, a]) => indexReferenceMatches(a.index_reference, start, end));
   assert(entry, `${lang} has no guide pericope ${pericope} (${start}-${end}) on Aquifer at ${guideSha.slice(0, 7)} — nothing invented`);
   const [contentId, am] = entry;
   const gf = await fetchJson(sources, guideRepo, guideSha, `${lang}/json/${nn}.content.json`);

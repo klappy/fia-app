@@ -2,7 +2,7 @@
 // Reads <lang>/metadata.json + <lang>/json/NN.content.json directly (MCP browse fails on the large English files).
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { assert, bookFile2, bookNumber, bookUsfm, DATA_ROOT, fetchJson, fetchPinned, LANGUAGE_INFO, loadSources, parseRef, pericopeId, plainText, pmap, rangesOverlap, sha256, stableJson, guideSteps } from './lib.mjs';
+import { assert, bookFile2, bookNumber, bookUsfm, DATA_ROOT, fetchJson, fetchPinned, LANGUAGE_INFO, loadSources, parseRef, pericopeId, plainText, pmap, rangesOverlap, sha256, stableJson, guideSteps, headPinned } from './lib.mjs';
 
 const FIA = { guide: 'FIATranslationGuide', image: 'FIAImages', map: 'FIAMaps', term: 'FIAKeyTerms', video: 'VideoBibleDictionary' };
 // Size assumptions (CONSTRAINTS § 1.5, R-306); estimates, not measurements. Phone = webp<=640 + opus 32k, no video.
@@ -77,7 +77,7 @@ export async function buildCatalog({ appVersion = '0.2.0+0000000', log = console
   const fiaBookList = [...fiaBooks].sort();
   for (const list of Object.values(bibles)) for (const b of list) {
     if (b.wholeBible) { b.books = fiaBookList; continue; }
-    b.books = (await pmap(fiaBookList, 8, async (nn) => (await head(sources, b.repo, b.commitSha, `${b.language}/json/${nn}.content.json`)) ? nn : null)).filter(Boolean);
+    b.books = (await pmap(fiaBookList, 8, async (nn) => (await headPinned(sources, b.repo, b.commitSha, `${b.language}/json/${nn}.content.json`)) ? nn : null)).filter(Boolean);
     log(`${b.repo}: ${b.books.length}/${fiaBookList.length} FIA books`);
   }
 
@@ -151,14 +151,6 @@ export async function buildCatalog({ appVersion = '0.2.0+0000000', log = console
   return { manifest, coverage };
 }
 
-async function head(sources, repo, sha, filePath) {
-  const url = sources.rawBase.replace('{repo}', repo).replace('{sha}', sha).replace('{path}', filePath);
-  for (let attempt = 0; attempt < 3; attempt++) {
-    try { const res = await fetch(url, { method: 'HEAD', signal: AbortSignal.timeout(30000) }); if (res.status === 404) return false; if (res.ok) return true; } catch {}
-    await new Promise((r) => setTimeout(r, 400));
-  }
-  throw new Error(`HEAD failed ${url}`);
-}
 
 export function coverageMarkdown(coverage, sources, builtAt) {
   const rows = Object.entries(coverage).map(([l, c]) => `| ${l} | ${c.pericopes} | ${c.books} | ${c.scriptureEditions || '—'} | ${c.terms || '—'} | ${c.termAudio || '—'} | ${c.images || '—'} | ${c.maps || '—'} | ${c.videos || '—'} | ${c.guideUnitsEstimate} |`);

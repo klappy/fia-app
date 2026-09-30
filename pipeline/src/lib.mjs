@@ -15,6 +15,11 @@ const CACHE_ROOT = process.env.FIA_PIPELINE_CACHE || path.join(PIPELINE_ROOT, '.
 export const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
 export function assert(ok, message) { if (!ok) throw new Error(message); }
 
+export const USER_AGENT = 'fia-app-pipeline';
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+/** Retry only transient HTTP failures: 5xx and 429. A 404 (or other 4xx) at a pinned sha will not change. */
+export const isRetryableStatus = (status) => status === 429 || status >= 500;
+
 export async function loadSources() {
   return JSON.parse(await readFile(path.join(PIPELINE_ROOT, 'sources.json'), 'utf8'));
 }
@@ -35,24 +40,54 @@ export async function fetchPinned(sources, repo, sha, filePath, { allow404 = fal
   const url = rawUrl(sources, repo, sha, filePath);
   let last;
   for (let attempt = 0; attempt < 4; attempt++) {
+    let res;
     try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(90000), headers: { 'user-agent': 'fia-app-pipeline' } });
-      if (res.status === 404 && allow404) {
-        await mkdir(path.dirname(cacheFile), { recursive: true });
-        await writeFile(cacheFile + '.404', '');
-        return { bytes: null, sha256: null, status: 404 };
-      }
-      if (!res.ok) throw new Error(`HTTP ${res.status} ${url}`);
-      const bytes = Buffer.from(await res.arrayBuffer());
-      await mkdir(path.dirname(cacheFile), { recursive: true });
-      await writeFile(cacheFile, bytes);
-      return { bytes, sha256: sha256(bytes), status: 200 };
-    } catch (error) {
+      res = await fetch(url, { signal: AbortSignal.timeout(90000), headers: { 'user-agent': USER_AGENT } });
+    } catch (error) { // network error / timeout: retry
       last = error;
-      await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+      await sleep(500 * (attempt + 1));
+      continue;
     }
+    if (res.status === 404 && allow404) {
+      await mkdir(path.dirname(cacheFile), { recursive: true });
+      await writeFile(cacheFile + '.404', '');
+      return { bytes: null, sha256: null, status: 404 };
+    }
+    if (!res.ok) {
+      last = new Error(`HTTP ${res.status} ${url}`);
+      if (!isRetryableStatus(res.status)) throw last; // 404 and other 4xx are final at a pinned sha
+      await sleep(500 * (attempt + 1));
+      continue;
+    }
+    const bytes = Buffer.from(await res.arrayBuffer());
+    await mkdir(path.dirname(cacheFile), { recursive: true });
+    await writeFile(cacheFile, bytes);
+    return { bytes, sha256: sha256(bytes), status: 200 };
   }
   throw last;
+}
+
+/** HEAD one pinned file: true if present, false on 404. Memoized per URL for the process; retries only network errors and 5xx/429. */
+const headCache = new Map();
+export function headPinned(sources, repo, sha, filePath) {
+  const url = rawUrl(sources, repo, sha, filePath);
+  if (!headCache.has(url)) {
+    const p = (async () => {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        let res;
+        try { res = await fetch(url, { method: 'HEAD', signal: AbortSignal.timeout(30000), headers: { 'user-agent': USER_AGENT } }); }
+        catch { await sleep(400 * (attempt + 1)); continue; }
+        if (res.status === 404) return false;
+        if (res.ok) return true;
+        if (!isRetryableStatus(res.status)) throw new Error(`HEAD HTTP ${res.status} ${url}`);
+        await sleep(400 * (attempt + 1));
+      }
+      throw new Error(`HEAD failed ${url}`);
+    })();
+    headCache.set(url, p);
+    p.catch(() => headCache.delete(url)); // do not memoize failures
+  }
+  return headCache.get(url);
 }
 
 export async function fetchJson(sources, repo, sha, filePath, opts) {
@@ -90,6 +125,12 @@ export function pericopeId(indexReference) {
   assert(s.book && s.book === e.book, `cross-book pericope ${indexReference}`);
   if (s.chapter === e.chapter) return `${s.book}-${s.chapter}-${s.verse}-${e.verse}`;
   return `${s.book}-${s.chapter}-${s.verse}-${e.chapter}-${e.verse}`;
+}
+
+/** Does an Aquifer index_reference ('41001001-41001013', or single-ref '54006002') denote the range start..end? */
+export function indexReferenceMatches(indexReference, start, end) {
+  const [a, b] = String(indexReference).split('-');
+  return a === start && (b ?? a) === end;
 }
 
 /** 'MRK-1-1-13' -> {book, start:'41001001', end:'41001013', passage:'MRK 1:1-13'} */
