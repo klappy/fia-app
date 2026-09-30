@@ -23,6 +23,13 @@ export type Transport = (p: FeedbackPayload) => Promise<number>;
 /** No feedback endpoint yet (C-16 owner: Otto) — stub. `null` = nothing leaves the phone. */
 export const FEEDBACK_ENDPOINT: string | null = null;
 
+/** Keep at most OUTBOX_LIMIT items by dropping the oldest `received` ones; `waiting` stay. */
+function trimReceived(items: OutboxItem[]): OutboxItem[] {
+  let extra = items.length - OUTBOX_LIMIT;
+  if (extra <= 0) return items;
+  return items.filter((i) => !(i.status === 'received' && extra-- > 0));
+}
+
 export class Outbox {
   constructor(private store: KeyValueStore | null) {}
 
@@ -43,18 +50,27 @@ export class Outbox {
   private write(items: OutboxItem[]): boolean {
     if (!this.store) return false;
     try {
-      this.store.setItem(OUTBOX_KEY, JSON.stringify(items.slice(-OUTBOX_LIMIT)));
+      this.store.setItem(OUTBOX_KEY, JSON.stringify(trimReceived(items)));
       return true;
     } catch {
       return false;
     }
   }
 
-  /** Queue a validated payload. Same id twice → one item. `false` = cannot queue (storage denied). */
+  /** True when OUTBOX_LIMIT items are still waiting: nothing more can be queued until some send. */
+  full(): boolean {
+    return this.waiting().length >= OUTBOX_LIMIT;
+  }
+
+  /**
+   * Queue a validated payload. Same id twice → one item. `false` = not queued (storage denied,
+   * invalid, or the outbox is `full()`); an unsent item is never dropped to make room.
+   */
   enqueue(p: FeedbackPayload, now = new Date()): boolean {
     if (!validateFeedback(p).ok) return false;
     const items = this.list();
     if (items.some((i) => i.payload.id === p.id)) return true;
+    if (items.filter((i) => i.status === 'waiting').length >= OUTBOX_LIMIT) return false;
     items.push({ payload: p, status: 'waiting', queuedAt: now.toISOString(), attempts: 0 });
     return this.write(items);
   }

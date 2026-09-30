@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { Outbox, OUTBOX_KEY, defaultTransport } from '../src/feedback/outbox';
+import { Outbox, OUTBOX_KEY, OUTBOX_LIMIT, defaultTransport } from '../src/feedback/outbox';
 import {
   buildFeedback,
+  contactOk,
   refOf,
   userAgentClass,
   validateFeedback,
@@ -122,5 +123,42 @@ describe('feedback outbox (stub transport)', () => {
     const box = new Outbox(store);
     expect(box.enqueue({ ...payload(), text: '' })).toBe(false);
     expect(store.dump()[OUTBOX_KEY]).toBeUndefined();
+  });
+});
+
+describe('review fia-app#5 fixes', () => {
+  it('contact must be an email or phone (C-16); a name alone is refused on the field', () => {
+    expect(contactOk('')).toBe(true);
+    expect(contactOk('ana@example.org')).toBe(true);
+    expect(contactOk('+57 300 123 4567')).toBe(true);
+    expect(contactOk('Ana')).toBe(false);
+    const r = buildFeedback({ text: 'hi', contact: 'Ana' }, ctx, { id: ID });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toBe('bad-contact');
+    expect(buildFeedback({ text: 'hi', contact: 'ana@example.org' }, ctx, { id: ID }).ok).toBe(
+      true,
+    );
+  });
+  it('outbox never drops unsent items: full → refuse; only received items are trimmed', async () => {
+    const mk = (i: number) => {
+      const id = `6f1d2c3e-9a8b-4c7d-8e6f-${i.toString(16).padStart(12, '0')}`;
+      const r = buildFeedback({ text: `m${i}` }, ctx, { id });
+      if (!r.ok) throw new Error('fixture');
+      return r.payload;
+    };
+    const box = new Outbox(memoryStore());
+    for (let i = 0; i < OUTBOX_LIMIT; i++) expect(box.enqueue(mk(i))).toBe(true);
+    expect(box.full()).toBe(true);
+    expect(box.enqueue(mk(999))).toBe(false);
+    expect(box.waiting()).toHaveLength(OUTBOX_LIMIT);
+    expect(box.list()[0].payload.text).toBe('m0');
+    // once one is received, a new item fits by trimming the received one, not a waiting one
+    let first = true;
+    await box.flush(async () => (first ? ((first = false), 202) : 503));
+    expect(box.full()).toBe(false);
+    expect(box.enqueue(mk(1000))).toBe(true);
+    expect(box.list()).toHaveLength(OUTBOX_LIMIT);
+    expect(box.waiting()).toHaveLength(OUTBOX_LIMIT);
+    expect(box.list().every((i) => i.status === 'waiting')).toBe(true);
   });
 });

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FeedbackForm, ToastNotice } from '../components';
 import {
+  OUTBOX_LIMIT,
   Outbox,
   appVersion,
   buildFeedback,
@@ -36,7 +37,9 @@ export default function S16Feedback() {
   const [text, setText] = useState('');
   const [contact, setContact] = useState('');
   const [needText, setNeedText] = useState(false);
-  const [invalid, setInvalid] = useState(false);
+  const [badContact, setBadContact] = useState(false);
+  // Why the last Send did not queue. Never claims the message was kept when it was not.
+  const [notice, setNotice] = useState<null | 'error' | 'not-saved' | 'full'>(null);
   const [phase, setPhase] = useState<Phase>({ kind: 'compose' });
   const [online, setOnline] = useState(() => globalThis.navigator?.onLine ?? true);
 
@@ -96,12 +99,18 @@ export default function S16Feedback() {
     const r = buildFeedback({ text, contact }, ctx);
     if (!r.ok) {
       if (r.reason === 'need-text') setNeedText(true);
-      else setInvalid(true);
+      else if (r.reason === 'bad-contact') setBadContact(true);
+      else setNotice('error');
       return;
     }
-    setInvalid(false);
+    setBadContact(false);
+    setNotice(null);
+    if (outbox.full()) {
+      setNotice('full');
+      return;
+    }
     if (!outbox.enqueue(r.payload)) {
-      setInvalid(true);
+      setNotice('not-saved');
       return;
     }
     const delivered = online ? await outbox.flush(defaultTransport) : 0;
@@ -141,9 +150,11 @@ export default function S16Feedback() {
           {t('s.feedback.cannot-queue')}
         </ToastNotice>
       )}
-      {invalid && outbox.persistent && (
+      {notice && outbox.persistent && (
         <ToastNotice kind="banner" tone="error">
-          {t('s.feedback.error')}
+          {notice === 'full'
+            ? t('s.feedback.outbox-full', { n: OUTBOX_LIMIT })
+            : t(notice === 'not-saved' ? 's.feedback.not-saved' : 's.feedback.error')}
         </ToastNotice>
       )}
       <FeedbackForm
@@ -153,9 +164,13 @@ export default function S16Feedback() {
           setText(v);
           if (v.trim()) setNeedText(false);
         }}
-        onContact={setContact}
+        onContact={(v) => {
+          setContact(v);
+          setBadContact(false);
+        }}
         contextLines={contextLines}
         needText={needText}
+        contactInvalid={badContact}
       />
       <YourFeedback items={yours} />
     </ScreenFrame>

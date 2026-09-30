@@ -14,6 +14,8 @@ export interface FeedbackFormProps extends StateProps {
   /** Human context line(s) for the "We will attach" card (already formatted). */
   contextLines: string[];
   needText?: boolean;
+  /** Contact is not an email or phone C-16 accepts: error shown on the field itself. */
+  contactInvalid?: boolean;
   readOnly?: boolean;
 }
 
@@ -24,6 +26,7 @@ export function FeedbackForm({
   onContact,
   contextLines,
   needText,
+  contactInvalid,
   readOnly,
   state = 'default',
   className,
@@ -87,8 +90,15 @@ export function FeedbackForm({
         value={contact}
         maxLength={200}
         readOnly={readOnly}
+        aria-invalid={contactInvalid || undefined}
+        aria-describedby={contactInvalid ? 'fia-feedback-contact-error' : undefined}
         onChange={(e) => onContact(e.target.value)}
       />
+      {contactInvalid && (
+        <p id="fia-feedback-contact-error" role="alert" className="fia-caption">
+          {t('s.feedback.contact-invalid')}
+        </p>
+      )}
       <p className="fia-caption">{t('s.feedback.anon-note')}</p>
     </div>
   );

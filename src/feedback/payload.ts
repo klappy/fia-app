@@ -1,6 +1,7 @@
 // C-16 feedback payload (contracts/c16-feedback.schema.json 1.1.0). Built from what the person
 // typed plus app context; validated before it is queued. No personal data beyond what is typed
 // (R-905); contact is optional and anonymous by default (M19 pending → default 1).
+import c16 from '../../contracts/c16-feedback.schema.json';
 import { C16, contracts, errorsText } from '../settings/contracts';
 
 export type UserAgentClass = 'android-chrome' | 'ios-safari' | 'desktop' | 'other';
@@ -75,9 +76,18 @@ export function newId(): string {
 /** Short human reference shown on S16 (`Reference #{ref}`): first 4 hex of the id. */
 export const refOf = (id: string) => id.replace(/-/g, '').slice(0, 4);
 
+/** C-16 `contact` pattern (email or phone), borrowed from the schema — never restated. */
+const CONTACT_RE = new RegExp(c16.properties.contact.pattern);
+
+/** Empty (anonymous) or an email / phone that C-16 accepts. A name alone is not accepted. */
+export function contactOk(contact: string | undefined): boolean {
+  const c = contact?.trim() ?? '';
+  return !c || (c.length <= CONTACT_MAX && CONTACT_RE.test(c));
+}
+
 export type BuildResult =
   | { ok: true; payload: FeedbackPayload; dropped: string[] }
-  | { ok: false; reason: 'need-text' | 'invalid'; errors: string[] };
+  | { ok: false; reason: 'need-text' | 'bad-contact' | 'invalid'; errors: string[] };
 
 /**
  * Build + validate. Text is trimmed and required; an over-long text is invalid (never silently
@@ -91,6 +101,8 @@ export function buildFeedback(
 ): BuildResult {
   const text = input.text.trim();
   if (!text) return { ok: false, reason: 'need-text', errors: ['text is empty'] };
+  if (!contactOk(input.contact))
+    return { ok: false, reason: 'bad-contact', errors: ['contact is not an email or phone'] };
   const dropped: string[] = [];
   const contact = input.contact?.trim() ? input.contact.trim() : null;
   const payload: FeedbackPayload = {
