@@ -63,6 +63,17 @@ export interface RightsRow {
   revision: string;
 }
 
+/** Only http(s) links become <a href>; anything else is shown as plain text (never linked). */
+export function safeHref(u: string | undefined): string | undefined {
+  if (!u) return undefined;
+  try {
+    const p = new URL(u).protocol;
+    return p === 'http:' || p === 'https:' ? u : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export function toRightsRow(r: RightsRecord): RightsRow {
   const li = parseLicenseInfo(r.licenseInfo);
   const holder = li.holderName ?? r.holders[0];
@@ -127,7 +138,7 @@ const decode = (s: string) =>
     if (ENTITIES[e.toLowerCase()] !== undefined) return ENTITIES[e.toLowerCase()];
     if (e[0] === '#') {
       const n = e[1] === 'x' || e[1] === 'X' ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10);
-      return Number.isFinite(n) ? String.fromCodePoint(n) : m;
+      return Number.isInteger(n) && n >= 0 && n <= 0x10ffff ? String.fromCodePoint(n) : m;
     }
     return m;
   });

@@ -13,6 +13,7 @@ Train: Alpha phase 4, lane L5. Branch `alpha/l5-shell` (base `alpha/l0-scaffold`
 
 ## Stubbed / not in this lane
 
+- **S13 Downloads/Offline and sheets SH-3 (update notice) / SH-4 (storage warning) ship in lane L2 (PR #6)**, which owns storage; this lane leaves them as stubs.
 - **Feedback endpoint: stub.** `FEEDBACK_ENDPOINT = null`; every submission is queued locally and shows the amber "Queued" band. Outbox uses localStorage via a store seam; C-16 names IndexedDB (follow-on with L2 storage).
 - Screenshot attach (SB-8 opt-in) not built — no capture path yet.
 - `s.about.rights-note-slot` (M5) deliberately not rendered until Terry lands the note.

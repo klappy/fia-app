@@ -5,6 +5,7 @@ import {
   noticeTokens,
   parseLicenseInfo,
   parseRightsRecords,
+  safeHref,
 } from '../src/settings/rights';
 
 // Records copied verbatim from alpha/l1-pipeline data/rights/records.json (C-13).
@@ -50,5 +51,21 @@ describe('C-13 rights → S15 rows', () => {
     expect(noticePlainText(html)).not.toMatch(/[<>]/);
     expect(noticePlainText(html)).toContain('© 2025 Word Collective');
     expect(noticePlainText('<script>x</script><img src=x onerror=1>a &amp; b')).toBe('xa & b');
+  });
+});
+
+describe('review fia-app#5 LOWs', () => {
+  it('out-of-range numeric entities are left as text, never thrown', () => {
+    expect(() => noticePlainText('<p>a &#99999999; b &#x110000; c</p>')).not.toThrow();
+    expect(noticePlainText('<p>&#99999999;</p>')).toContain('&#99999999;');
+    expect(noticePlainText('<p>&#169;</p>')).toContain('©');
+  });
+  it('only http(s) rights links become hrefs', () => {
+    expect(safeHref('https://example.org/l')).toBe('https://example.org/l');
+    expect(safeHref('http://example.org')).toBe('http://example.org');
+    expect(safeHref('javascript:alert(1)')).toBeUndefined();
+    expect(safeHref('data:text/html,x')).toBeUndefined();
+    expect(safeHref('not a url')).toBeUndefined();
+    expect(safeHref(undefined)).toBeUndefined();
   });
 });

@@ -11,6 +11,7 @@ import {
   loadSettings,
   noticeTokens,
   parseRightsRecords,
+  safeHref,
   saveSettings,
   type RightsRow,
 } from '../settings';
@@ -60,13 +61,15 @@ function RecordDetails({ row }: { row: RightsRow }) {
           <code>{row.id}</code>
         </li>
         {row.url && (
-          <li>
-            <a href={row.url}>{row.url}</a>
-          </li>
+          <li>{safeHref(row.url) ? <a href={safeHref(row.url)}>{row.url}</a> : row.url}</li>
         )}
         {row.licenseUrl && (
           <li>
-            <a href={row.licenseUrl}>{row.licence}</a>
+            {safeHref(row.licenseUrl) ? (
+              <a href={safeHref(row.licenseUrl)}>{row.licence}</a>
+            ) : (
+              `${row.licence} (${row.licenseUrl})`
+            )}
           </li>
         )}
       </ul>
