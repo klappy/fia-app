@@ -25,13 +25,13 @@ export function SaveRow({ ctl, intent, onStart, onSeeDownloads }: SaveRowProps) 
   const { rowState, tier, sizeMb } = ctl;
   const free = freeBytes(s.storage);
   const tierName = (x: Tier) => t(`s.passage.tier.${x}`);
-  // No s.passage key for an unpublished tier yet: `s.lang.cov.absent` ("not yet") until spec 04 adds one.
+  // A tier the pack does not publish yet: `s.passage.tier-not-yet` (spec 04).
   const rows: TierRow[] = TIERS.map((x) => {
     const b = ctl.bytes[x];
     return {
       tier: x,
       label: tierName(x),
-      size: b !== undefined ? t('s.passage.tier-size', { mb: mb(b) }) : t('s.lang.cov.absent'),
+      size: b !== undefined ? t('s.passage.tier-size', { mb: mb(b) }) : t('s.passage.tier-not-yet'),
       help: t(`s.passage.tier.${x}-help`),
       recommended:
         x === 'phone' && ctl.available.includes(x) ? t('s.passage.tier-recommended') : undefined,
