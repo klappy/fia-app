@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fia.klappy.dev/contracts/c14-release-audit.schema.json",
+  "title": "Release stamp and audit",
+  "description": "Every build emits exactly one <meta name=\"fia-release\"> stamp, an allowlist of published paths by pattern, a forbidden-marker scan result and the deployable inventory. Counts are derived, never literal.",
+  "version": "1.0.0",
+  "contract": "c14",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "stamp",
+    "builtAt",
+    "gitSha",
+    "environment",
+    "allowlist",
+    "forbiddenMarkers",
+    "scan",
+    "inventory",
+    "distBytes"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "stamp": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+\\+[a-f0-9]{7}$",
+      "description": "semver + 7-char build sha, as in <meta name=\"fia-release\">"
+    },
+    "builtAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "gitSha": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$",
+      "description": "git commit sha (40 hex)"
+    },
+    "environment": {
+      "type": "string",
+      "enum": [
+        "dev",
+        "production"
+      ]
+    },
+    "allowlist": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "description": "glob pattern relative to dist/"
+      }
+    },
+    "forbiddenMarkers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9_.-]+$",
+        "description": "marker *name*, never the secret itself; the values live outside the repo"
+      }
+    },
+    "scan": {
+      "type": "object",
+      "required": [
+        "filesScanned",
+        "violations"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "filesScanned": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "violations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "inventory": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "bytes",
+          "sha256"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$",
+            "description": "SHA-256 hex, lower-case"
+          }
+        }
+      }
+    },
+    "distBytes": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "schemaVersion": 1,
+      "stamp": "0.2.0+abc1234",
+      "builtAt": "2026-10-01T00:00:00Z",
+      "gitSha": "abc1234abc1234abc1234abc1234abc1234abc12",
+      "environment": "dev",
+      "allowlist": [
+        "index.html",
+        "assets/*.{js,css}",
+        "packs/*/manifest.json",
+        "packs/*/**"
+      ],
+      "forbiddenMarkers": [
+        "PROVIDER_VOICE_ID",
+        "PROVIDER_HOST",
+        "PRIVATE_KEY"
+      ],
+      "scan": {
+        "filesScanned": 412,
+        "violations": []
+      },
+      "inventory": [
+        {
+          "path": "index.html",
+          "bytes": 567,
+          "sha256": "db905932a69a52a008bc29f4c6c8b2135256248b7a615ded5234e6fb5ce7fab0"
+        }
+      ],
+      "distBytes": 567
+    }
+  ]
+}

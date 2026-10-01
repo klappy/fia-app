@@ -1,0 +1,320 @@
+/* Layout per design/alpha-screens/README.md § Layout constants. Tokens come from tokens/alpha.css. */
+.fia-screen {
+  display: grid;
+  grid-template-rows: auto auto 1fr auto auto;
+  min-height: 100dvh;
+  max-width: var(--fia-content-max-width);
+  margin-inline: auto;
+  padding-top: var(--fia-safe-top);
+}
+.fia-header {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  padding-inline: var(--fia-gutter);
+}
+.fia-title {
+  font-size: var(--fia-fs-title);
+  font-weight: var(--fia-fw-semibold);
+  color: var(--fia-text-title);
+  margin: 0;
+}
+.fia-subtitle {
+  font-size: var(--fia-fs-subtitle);
+  font-weight: var(--fia-fw-medium);
+  margin: 0 0 var(--fia-space-4);
+}
+.fia-label {
+  font-size: var(--fia-fs-label);
+}
+.fia-caption {
+  font-size: var(--fia-fs-caption);
+  color: var(--fia-text-muted);
+}
+.fia-content {
+  overflow-y: auto;
+  padding: var(--fia-space-4) var(--fia-gutter);
+  display: flex;
+  flex-direction: column;
+  gap: var(--fia-gap-stack);
+}
+
+/* rule 1: the one primary, thumb slot; sticky above the dock; 72 px slot at +2 */
+.fia-primary-slot {
+  position: sticky;
+  bottom: calc(var(--fia-dock-h) + var(--fia-safe-bottom));
+  padding: var(--fia-space-4) var(--fia-gutter);
+  background: var(--fia-surface-app);
+}
+.fia-screen:not([data-dock]) .fia-primary-slot {
+  bottom: var(--fia-safe-bottom);
+}
+.fia-primary-slot--sheet {
+  position: static;
+}
+.fia-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--fia-gap-inline);
+  width: 100%;
+  min-height: var(--fia-tap-primary);
+  padding-inline: var(--fia-space-8);
+  background: var(--fia-primary);
+  color: var(--fia-on-primary);
+  border: 2px solid transparent;
+  border-radius: var(--fia-r-primary);
+  font: inherit;
+  font-size: var(--fia-fs-primary);
+  font-weight: var(--fia-fw-semibold);
+  transition:
+    transform var(--fia-dur-micro) var(--fia-ease-damp),
+    background var(--fia-dur-fast);
+}
+.fia-primary:active {
+  background: var(--fia-primary-pressed);
+  transform: scale(var(--fia-press-scale));
+}
+.fia-primary[data-state='disabled'] {
+  background: var(--fia-ground);
+  color: var(--fia-text-muted);
+  border-color: var(--fia-primary-disabled-border);
+}
+.fia-primary[data-state='playing'] {
+  background: var(--fia-primary-playing);
+}
+.fia-primary[data-state='discussion-stop'] {
+  background: var(--fia-stop-band);
+  color: var(--fia-stop);
+  border-color: var(--fia-stop);
+}
+:root[data-text-step='plus2'] .fia-primary,
+:root[data-text-step='max'] .fia-primary {
+  min-height: var(--fia-primary-slot-h);
+}
+
+/* rule 4: dock, four cells, labels always visible */
+.fia-dock {
+  position: sticky;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  min-height: var(--fia-dock-h);
+  padding-bottom: var(--fia-safe-bottom);
+  background: var(--fia-surface-solid);
+  border-top: 1px solid var(--fia-rail-track);
+}
+.fia-dock__cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: var(--fia-tap-min);
+  font: inherit;
+  font-size: var(--fia-fs-label);
+  color: var(--fia-text-body);
+  text-decoration: none;
+  background: none;
+  border: 0;
+}
+.fia-dock__cell[data-active],
+.fia-dock__cell.active {
+  color: var(--fia-primary);
+}
+
+/* rule 2: secondaries stay quiet */
+.fia-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--fia-gap-inline);
+  min-height: var(--fia-tap-min);
+  padding-inline: var(--fia-space-6);
+  background: none;
+  border: 0;
+  color: var(--fia-link);
+  font: inherit;
+  font-size: var(--fia-fs-label);
+  text-decoration: underline;
+}
+.fia-secondary--half {
+  width: 50%;
+}
+
+/* chips and marks are badges, never hidden */
+.fia-chip,
+.fia-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 28px;
+  padding-inline: var(--fia-space-5);
+  border-radius: var(--fia-r-chip);
+  font-size: var(--fia-fs-label);
+  background: var(--fia-offline-chip);
+  color: var(--fia-offline-chip-text);
+}
+.fia-mark--source {
+  background: var(--fia-prov-source-tint);
+  color: var(--fia-prov-source-tint-text);
+}
+.fia-mark--ai-voice,
+.fia-mark--ai-translation {
+  background: var(--fia-prov-ai-tint);
+  color: var(--fia-prov-ai-tint-text);
+}
+.fia-mark--absent {
+  background: var(--fia-absent-tint);
+  color: var(--fia-absent-tint-text);
+}
+
+.fia-card {
+  display: block;
+  text-align: start;
+  width: 100%;
+  padding: var(--fia-card-pad);
+  background: var(--fia-surface-solid);
+  border: 0;
+  border-radius: var(--fia-r-card);
+  color: inherit;
+  font: inherit;
+}
+.fia-notice {
+  padding: var(--fia-space-5) var(--fia-space-7);
+  border-radius: var(--fia-r-sm);
+  background: var(--fia-offline-chip);
+  color: var(--fia-offline-chip-text);
+}
+.fia-notice--error {
+  background: var(--fia-error-tint);
+  color: var(--fia-error-tint-text);
+}
+.fia-notice--stop,
+.fia-stop-band {
+  background: var(--fia-stop-band);
+  color: var(--fia-stop);
+  padding: var(--fia-space-7);
+  border-radius: var(--fia-r-md);
+}
+.fia-notice--offline-chip {
+  margin-inline: var(--fia-gutter);
+  align-self: start;
+}
+
+/* language picker: rows ≥ 64 px, autonym first in its own script */
+.fia-langs__search {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.fia-langs__search input {
+  min-height: var(--fia-tap-min);
+  font: inherit;
+  padding-inline: var(--fia-space-7);
+  border-radius: var(--fia-r-sm);
+  border: 1px solid var(--fia-rail-track);
+  background: var(--fia-surface-solid);
+  color: inherit;
+}
+.fia-langs__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--fia-space-3);
+}
+.fia-langs__row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  column-gap: var(--fia-gap-inline);
+  min-height: 64px;
+  padding: var(--fia-space-5) var(--fia-space-7);
+  background: var(--fia-surface-solid);
+  border-radius: var(--fia-r-md);
+}
+.fia-langs__row .fia-caption {
+  grid-column: 2;
+}
+.fia-langs__autonym {
+  font-size: var(--fia-fs-title);
+  color: var(--fia-text-title);
+}
+.fia-skeleton {
+  height: 64px;
+  border-radius: var(--fia-r-md);
+  background: var(--fia-rail-track);
+}
+
+/* sheets */
+.fia-sheet__scrim {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(0, 0, 0, 0.4);
+}
+.fia-sheet {
+  width: 100%;
+  max-width: var(--fia-content-max-width);
+  margin-inline: auto;
+  background: var(--fia-surface-solid);
+  border-radius: var(--fia-r-sheet) var(--fia-r-sheet) 0 0;
+  padding: var(--fia-space-7) var(--fia-gutter) calc(var(--fia-space-7) + var(--fia-safe-bottom));
+}
+.fia-sheet__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.fia-sheet__close {
+  min-width: var(--fia-tap-close);
+  min-height: var(--fia-tap-close);
+  background: none;
+  border: 0;
+  font-size: 28px;
+  color: inherit;
+}
+.fia-more__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.fia-more__row {
+  display: block;
+  min-height: var(--fia-tap-primary);
+  line-height: var(--fia-tap-primary);
+  color: var(--fia-text-body);
+  text-decoration: none;
+  font-size: var(--fia-fs-body);
+}
+
+.fia-text__seg[data-active] {
+  background: var(--fia-prov-source-tint);
+  border-radius: 4px;
+}
+.fia-settings-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 56px;
+  gap: var(--fia-gap-inline);
+}
+.fia-settings-row__text {
+  display: flex;
+  flex-direction: column;
+}
+.fia-transport__line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.fia-transport__seek {
+  width: 100%;
+  min-height: var(--fia-tap-min);
+}
+.fia-viewer img,
+.fia-viewer video {
+  max-width: 100%;
+}

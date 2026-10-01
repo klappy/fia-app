@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fia.klappy.dev/contracts/c15-journey.schema.json",
+  "title": "Journey and persona ids",
+  "description": "J-A1..J-A6 and P-01..P-06 plus constraint/script variants are stable ids; every e2e spec and scorecard row names one. Steps and pass criteria may grow (minor); ids never change meaning (major).",
+  "version": "1.0.0",
+  "contract": "c15",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "id",
+    "name",
+    "personas",
+    "steps",
+    "passCriteria"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "id": {
+      "$ref": "#/$defs/journeyId"
+    },
+    "name": {
+      "type": "string"
+    },
+    "personas": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/personaId"
+      }
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "passCriteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "requirements": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^R-\\d{3}$"
+      }
+    },
+    "mustPass": {
+      "type": "boolean",
+      "description": "true for J-A1, J-A2, J-A5 (R-902: 0 fails)"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "schemaVersion": 1,
+      "id": "J-A5",
+      "name": "Give feedback",
+      "personas": [
+        "P-05"
+      ],
+      "steps": [
+        "open feedback from any screen",
+        "write message",
+        "send"
+      ],
+      "passCriteria": [
+        "message arrives with stamp, language, packId, unitId",
+        "offline submission arrives after reconnect"
+      ],
+      "requirements": [
+        "R-705"
+      ],
+      "mustPass": true
+    }
+  ],
+  "$defs": {
+    "journeyId": {
+      "type": "string",
+      "pattern": "^J-A[1-9]$"
+    },
+    "personaId": {
+      "type": "string",
+      "pattern": "^(P-0[1-6]|CV-0[1-4]|SV-0[1-5])$",
+      "description": "P = role, CV = constraint variant (eyesight, screen, dexterity, unfamiliar), SV = script variant (arb/fas, hin/nep, zhs/zht, tpi/bis, ...)"
+    }
+  }
+}

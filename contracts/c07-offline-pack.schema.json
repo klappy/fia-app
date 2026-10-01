@@ -1,0 +1,258 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fia.klappy.dev/contracts/c07-offline-pack.schema.json",
+  "title": "Offline pack manifest and save protocol",
+  "description": "The saved-to-device manifest and the page<->service-worker messages. revision changes iff entries change; SAVE is staged, verified on write and again after all writes, committed atomically, rolled back on failure; STATUS re-verifies; DELETE is explicit; fetches cross-check ?fia-sha256=.",
+  "version": "1.0.0",
+  "contract": "c07",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "packId",
+    "tier",
+    "narration",
+    "revision",
+    "entries"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "packId": {
+      "type": "string",
+      "pattern": "^[a-z]{3}(-[A-Za-z]{2,8})?\\.[1-3A-Z]{3}(-\\d{1,3}){2,4}$",
+      "description": "<language>.<pericope>, e.g. spa.MRK-1-1-13"
+    },
+    "tier": {
+      "type": "string",
+      "enum": [
+        "text",
+        "phone",
+        "medium",
+        "original"
+      ]
+    },
+    "narration": {
+      "$ref": "https://fia.klappy.dev/contracts/c10-settings.schema.json#/$defs/narrationMode"
+    },
+    "appVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+\\+[a-f0-9]{7}$",
+      "description": "semver + 7-char build sha, as in <meta name=\"fia-release\">"
+    },
+    "revision": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "sha256 over the canonical JSON of entries; the update key"
+    },
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "bytes",
+          "sha256",
+          "mime",
+          "group"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string",
+            "pattern": "^/"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$",
+            "description": "SHA-256 hex, lower-case"
+          },
+          "mime": {
+            "type": "string",
+            "pattern": "^[a-z]+/[a-z0-9.+-]+$"
+          },
+          "group": {
+            "type": "string",
+            "enum": [
+              "shell",
+              "pack"
+            ]
+          },
+          "fetchUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "derivative": {
+            "$ref": "https://fia.klappy.dev/contracts/c08-media-derivative.schema.json"
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "schemaVersion": 1,
+      "packId": "eng.MRK-1-1-13",
+      "tier": "phone",
+      "narration": "source-fallback",
+      "appVersion": "0.2.0+abc1234",
+      "revision": "c1fe6f27e9738434c644c625acb6efaab9d2b89c01204babc0bd98643176fc0e",
+      "entries": [
+        {
+          "path": "/index.html",
+          "bytes": 567,
+          "sha256": "db905932a69a52a008bc29f4c6c8b2135256248b7a615ded5234e6fb5ce7fab0",
+          "mime": "text/html",
+          "group": "shell"
+        }
+      ]
+    }
+  ],
+  "$defs": {
+    "saveState": {
+      "type": "string",
+      "enum": [
+        "none",
+        "partial",
+        "saved",
+        "update-available",
+        "corrupt",
+        "removing"
+      ]
+    },
+    "request": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "SAVE",
+            "STATUS",
+            "DELETE",
+            "CANCEL",
+            "MEDIA_VARIANTS"
+          ]
+        },
+        "packId": {
+          "type": "string",
+          "pattern": "^[a-z]{3}(-[A-Za-z]{2,8})?\\.[1-3A-Z]{3}(-\\d{1,3}){2,4}$",
+          "description": "<language>.<pericope>, e.g. spa.MRK-1-1-13"
+        },
+        "tier": {
+          "type": "string",
+          "enum": [
+            "text",
+            "phone",
+            "medium",
+            "original"
+          ]
+        },
+        "narration": {
+          "$ref": "https://fia.klappy.dev/contracts/c10-settings.schema.json#/$defs/narrationMode"
+        },
+        "clientFetch": {
+          "type": "boolean"
+        }
+      }
+    },
+    "progress": {
+      "type": "object",
+      "required": [
+        "progress",
+        "bytes",
+        "total",
+        "files"
+      ],
+      "properties": {
+        "progress": {
+          "const": true
+        },
+        "bytes": {
+          "type": "integer"
+        },
+        "total": {
+          "type": "integer"
+        },
+        "files": {
+          "type": "integer"
+        }
+      }
+    },
+    "done": {
+      "type": "object",
+      "required": [
+        "done",
+        "state",
+        "saved",
+        "updateAvailable",
+        "corrupt"
+      ],
+      "properties": {
+        "done": {
+          "const": true
+        },
+        "state": {
+          "$ref": "#/$defs/saveState"
+        },
+        "saved": {
+          "type": "boolean"
+        },
+        "updateAvailable": {
+          "type": "boolean"
+        },
+        "corrupt": {
+          "type": "boolean"
+        },
+        "error": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "SHA-256 hex, lower-case"
+        },
+        "bytes": {
+          "type": "integer"
+        },
+        "files": {
+          "type": "integer"
+        },
+        "savedFiles": {
+          "type": "integer"
+        }
+      }
+    },
+    "broadcast": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "CACHE_ERROR",
+            "UPDATE_AVAILABLE"
+          ]
+        },
+        "packId": {
+          "type": "string",
+          "pattern": "^[a-z]{3}(-[A-Za-z]{2,8})?\\.[1-3A-Z]{3}(-\\d{1,3}){2,4}$",
+          "description": "<language>.<pericope>, e.g. spa.MRK-1-1-13"
+        },
+        "path": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
