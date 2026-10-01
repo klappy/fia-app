@@ -69,7 +69,7 @@ export default function S18Completion() {
       />
       <SecondaryAction
         label={`${t('s.completion.send-feedback')} ⟶`}
-        onPress={() => nav('/feedback')}
+        onPress={() => nav('/feedback?from=S18')}
       />
       {k > 0 && (
         <SecondaryAction
