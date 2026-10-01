@@ -1,0 +1,175 @@
+{
+  "schemaVersion": 1,
+  "packId": "eng.MRK-1-1-13",
+  "terms": [
+    {
+      "id": "term-eng-t4",
+      "termNumber": "4",
+      "engSourceId": "eng-t4-v1",
+      "title": "angel",
+      "text": {
+        "status": "source",
+        "sourceId": "eng-t4-v1",
+        "html": "<p>An <b>angel</b> is a supernatural, spiritual being created by God. Angels give messages from God to people; for instance, an angel told <data class=\"resource-ref\" data-content-id=\"eng-t89-v1\" data-</p>",
+        "textSha256": "173a7b50e1afdce32406ec51befa5faef425fcbc43481804cc94db95d4b3d1e8",
+        "provenance": {
+          "status": "source",
+          "collection": "FIAKeyTerms",
+          "revision": "a39260670bba9d87d902e0fa0ae447341343481f"
+        }
+      },
+      "audio": {
+        "status": "source",
+        "sourceId": "eng-t4-v1-audio",
+        "url": "https://s3.amazonaws.com/cbbt-er.public/terms/audio/eng/t4/v1/vbr4.mp3",
+        "provenance": {
+          "status": "source",
+          "collection": "FIAKeyTerms",
+          "revision": "a39260670bba9d87d902e0fa0ae447341343481f"
+        },
+        "derivatives": [
+          {
+            "sourcePath": "/packs/eng.MRK-1-1-13/audio/eng-t4-v1-audio.mp3",
+            "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceBytes": 1455212,
+            "kind": "audio",
+            "tier": "phone",
+            "recipe": "a=opus,br=32k",
+            "mime": "audio/ogg",
+            "eligible": true,
+            "status": "pending-transcode",
+            "fallbackMime": "audio/mpeg"
+          },
+          {
+            "sourcePath": "/packs/eng.MRK-1-1-13/audio/eng-t4-v1-audio.mp3",
+            "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceBytes": 1455212,
+            "kind": "audio",
+            "tier": "medium",
+            "recipe": "a=opus,br=64k",
+            "mime": "audio/ogg",
+            "eligible": true,
+            "status": "pending-transcode",
+            "fallbackMime": "audio/mpeg"
+          }
+        ]
+      },
+      "passages": ["GEN 19:1-GEN 19:29", "GEN 24:29-GEN 24:49"]
+    }
+  ],
+  "images": [
+    {
+      "id": "a112",
+      "kind": "image",
+      "title": "Jordan River",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "FIAImages",
+        "revision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+      },
+      "engTitle": "Jordan River",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/photos/a112/1000.jpg",
+      "sourceFile": "eng/json/010.content.json",
+      "sourceFileSha256": "331c6dac75af0395e426f5c527dba7ef0e47acd23c848d63ab18da5821d1bff7",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": true,
+      "derivatives": [
+        {
+          "sourcePath": "/packs/eng.MRK-1-1-13/images/a112.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "phone",
+          "recipe": "w=640,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        },
+        {
+          "sourcePath": "/packs/eng.MRK-1-1-13/images/a112.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "medium",
+          "recipe": "w=1280,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        }
+      ]
+    }
+  ],
+  "maps": [
+    {
+      "id": "c201",
+      "kind": "map",
+      "title": "Aerial View of Judea and Jerusalem",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "FIAMaps",
+        "revision": "4bc9bb9f1d9082e5d71a047a35bf8e608f473602"
+      },
+      "engTitle": "Aerial View of Judea and Jerusalem",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/maps/eng/c201/v1/original.png",
+      "sourceFile": "eng/json/001.content.json",
+      "sourceFileSha256": "b18ab809dbc64a880ec92f4490435d0155933a384e7bdf082d604b247e3f6b78",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": true,
+      "derivatives": [
+        {
+          "sourcePath": "/packs/eng.MRK-1-1-13/maps/c201.png",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 6646608,
+          "kind": "image",
+          "tier": "phone",
+          "recipe": "w=640,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        },
+        {
+          "sourcePath": "/packs/eng.MRK-1-1-13/maps/c201.png",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 6646608,
+          "kind": "image",
+          "tier": "medium",
+          "recipe": "w=1280,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        }
+      ]
+    }
+  ],
+  "videos": [
+    {
+      "id": "a13",
+      "kind": "video",
+      "title": "Jordan River",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "VideoBibleDictionary",
+        "revision": "1c02713d022bd96a29c78f5b75455315d6d35a6e"
+      },
+      "engTitle": "Jordan River",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/videos/a13/720p.mp4",
+      "sourceFile": "eng/json/008.content.json",
+      "sourceFileSha256": "b6c6a377ce2e249e4ea3b51f50e96ca2e01928d1caed56c844bcf193a4d296fb",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": false,
+      "streamOnly": true
+    }
+  ]
+}

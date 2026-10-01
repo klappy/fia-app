@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fia.klappy.dev/contracts/c17-scorecard-row.schema.json",
+  "title": "Persona-run scorecard row",
+  "description": "One row per persona x journey run (R-901, R-902): result, time, taps, friction notes, failures routed to R-ids. Rows compare across Alpha and Beta because ids (C-15) are stable.",
+  "version": "1.0.0",
+  "contract": "c17",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "runId",
+    "appVersion",
+    "ranAt",
+    "journeyId",
+    "personaId",
+    "driver",
+    "device",
+    "result",
+    "seconds",
+    "taps"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "runId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "appVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+\\+[a-f0-9]{7}$",
+      "description": "semver + 7-char build sha, as in <meta name=\"fia-release\">"
+    },
+    "ranAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "journeyId": {
+      "$ref": "https://fia.klappy.dev/contracts/c15-journey.schema.json#/$defs/journeyId"
+    },
+    "personaId": {
+      "$ref": "https://fia.klappy.dev/contracts/c15-journey.schema.json#/$defs/personaId"
+    },
+    "driver": {
+      "type": "string",
+      "enum": [
+        "agent",
+        "human"
+      ]
+    },
+    "device": {
+      "type": "object",
+      "required": [
+        "profile",
+        "textSize",
+        "uiLanguage",
+        "contentLanguage"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "profile": {
+          "type": "string"
+        },
+        "textSize": {
+          "type": "string",
+          "enum": [
+            "system",
+            "large",
+            "max"
+          ]
+        },
+        "uiLanguage": {
+          "type": "string",
+          "pattern": "^[a-z]{3}(-[A-Za-z]{2,8})?$",
+          "description": "Aquifer language code: ISO 639-3 three letters (eng, spa, arb, hin, ...) or Aquifer's script-suffixed forms (zhs, zht); never a BCP-47 two-letter tag"
+        },
+        "contentLanguage": {
+          "type": "string",
+          "pattern": "^[a-z]{3}(-[A-Za-z]{2,8})?$",
+          "description": "Aquifer language code: ISO 639-3 three letters (eng, spa, arb, hin, ...) or Aquifer's script-suffixed forms (zhs, zht); never a BCP-47 two-letter tag"
+        },
+        "offline": {
+          "type": "boolean"
+        },
+        "lowLiteracy": {
+          "type": "boolean"
+        }
+      }
+    },
+    "result": {
+      "type": "string",
+      "enum": [
+        "pass",
+        "pass-with-friction",
+        "fail"
+      ]
+    },
+    "seconds": {
+      "type": "number",
+      "minimum": 0
+    },
+    "taps": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "friction": {
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "type": "string"
+      }
+    },
+    "failures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "requirement",
+          "note"
+        ],
+        "properties": {
+          "requirement": {
+            "type": "string",
+            "pattern": "^R-\\d{3}$"
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "log": {
+      "type": "string",
+      "description": "path or url of the run log"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "schemaVersion": 1,
+      "runId": "2b7e1d8c-1c2d-4e3f-9a8b-7c6d5e4f3a2b",
+      "appVersion": "0.2.0+abc1234",
+      "ranAt": "2026-10-02T09:00:00Z",
+      "journeyId": "J-A1",
+      "personaId": "CV-01",
+      "driver": "agent",
+      "device": {
+        "profile": "android-360x640",
+        "textSize": "max",
+        "uiLanguage": "eng",
+        "contentLanguage": "eng",
+        "offline": false
+      },
+      "result": "pass-with-friction",
+      "seconds": 412,
+      "taps": 19,
+      "friction": [
+        "stop prompt read twice"
+      ],
+      "failures": []
+    }
+  ]
+}

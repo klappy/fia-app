@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "packId": "tpi.MRK-1-1-13",
+  "language": "tpi",
+  "direction": "ltr",
+  "pericope": "MRK-1-1-13",
+  "passage": "MRK 1:1-13",
+  "preparedAt": "2026-09-30T21:40:30.705Z",
+  "sourceRevisions": {
+    "FIATranslationGuide": "eb744452eb8d7c852caadde9d3181cddfe571119",
+    "FIAKeyTerms": "a39260670bba9d87d902e0fa0ae447341343481f",
+    "FIAImages": "136ff7c6b2381b84d241e27524005dcad71424ba",
+    "FIAMaps": "4bc9bb9f1d9082e5d71a047a35bf8e608f473602",
+    "VideoBibleDictionary": "1c02713d022bd96a29c78f5b75455315d6d35a6e",
+    "TokPisinBible2008": "2acc943325761b575494d7860a877552ab4cafc7"
+  },
+  "resourceTypes": [
+    "guide",
+    "scripture",
+    "term",
+    "image",
+    "map",
+    "video"
+  ],
+  "tiers": {
+    "text": {
+      "bytes": 284238,
+      "files": [
+        {
+          "path": "/packs/tpi.MRK-1-1-13/guide.json",
+          "bytes": 100035,
+          "sha256": "ee6c24f405c5e15f84db0af95e855f051d42c69baeffe2224c614f0bbe002c76",
+          "mime": "application/json"
+        },
+        {
+          "path": "/packs/tpi.MRK-1-1-13/guide-units.json",
+          "bytes": 27635,
+          "sha256": "cea2fad20a972e97199ceb148ba587e19262872d09daad380580e78f46560fe9",
+          "mime": "application/json"
+        },
+        {
+          "path": "/packs/tpi.MRK-1-1-13/scripture.json",
+          "bytes": 7516,
+          "sha256": "219139a68e08730dd8e3d49ea0c19dcc7fca21b2c12eabc9f1abbb578defac94",
+          "mime": "application/json"
+        },
+        {
+          "path": "/packs/tpi.MRK-1-1-13/resources.json",
+          "bytes": 97726,
+          "sha256": "e1ca477d7314ab451c504be1ed7d634507435c012809a314071493c3fdc6cc33",
+          "mime": "application/json"
+        },
+        {
+          "path": "/packs/tpi.MRK-1-1-13/narration.json",
+          "bytes": 93,
+          "sha256": "ce6743791cd5163be5eafe77955bc49b0d5e490d45dd50e9f00fb201d91eb569",
+          "mime": "application/json"
+        },
+        {
+          "path": "/packs/tpi.MRK-1-1-13/narration-plan.json",
+          "bytes": 51233,
+          "sha256": "437bc51015830715f71edc07d6de13f3d48399b9f517671dc6d813e2030f9d58",
+          "mime": "application/json"
+        }
+      ]
+    }
+  },
+  "counts": {
+    "steps": 6,
+    "units": 126,
+    "stops": 22,
+    "terms": 16,
+    "termAudio": 0,
+    "images": 4,
+    "maps": 4,
+    "videos": 3,
+    "scripture": 1,
+    "scriptureFallback": 0
+  },
+  "provenance": {
+    "text": {
+      "source": 143,
+      "generated": 0,
+      "missing": 0
+    },
+    "audio": {
+      "source": 0,
+      "generated": 0,
+      "missing": 143
+    },
+    "description": {
+      "source": 0,
+      "generated": 0,
+      "missing": 8
+    }
+  },
+  "rights": [
+    "FIATranslationGuide@eb74445",
+    "FIAKeyTerms@a392606",
+    "FIAImages@136ff7c",
+    "FIAMaps@4bc9bb9",
+    "VideoBibleDictionary@1c02713",
+    "TokPisinBible2008@2acc943"
+  ]
+}
