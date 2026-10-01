@@ -37,6 +37,7 @@ export const SHELL_NEXT_KEY = '/__fia_shell_next__';
 export const PACK_PREFIX = '/__fia_pack__/';
 export const PARTIAL_PREFIX = '/__fia_partial__/';
 export const SHELL_MANIFEST = '/offline-shell.json';
+export const VERSION_STAMP = '/version.json';
 
 export interface CacheLike {
   match(key: string): Promise<Response | undefined>;
@@ -489,7 +490,14 @@ export function createEngine(env: EngineEnv) {
     const url = new URL(request.url);
     const local = url.origin === env.origin;
     const navigate = request.mode === 'navigate';
-    if (local && (url.pathname === '/sw.js' || url.pathname === SHELL_MANIFEST)) return null;
+    // version.json (deploy stamp, RELEASING.md) bypasses the worker, navigation included.
+    if (
+      local &&
+      (url.pathname === '/sw.js' ||
+        url.pathname === SHELL_MANIFEST ||
+        url.pathname === VERSION_STAMP)
+    )
+      return null;
     if (/^\/packs\/[^/]+\/manifest\.json$/.test(url.pathname)) return null;
     if (navigate) {
       try {

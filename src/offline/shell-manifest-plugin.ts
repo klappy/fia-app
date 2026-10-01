@@ -20,7 +20,15 @@ const MIME: Record<string, string> = {
   webmanifest: 'application/manifest+json',
   woff2: 'font/woff2',
 };
-const SKIP = [/^sw\.js$/, /^workbox-/, /^registerSW\.js$/, /^offline-shell\.json$/, /\.map$/];
+// version.json is the deploy stamp (RELEASING.md): always from the network, never precached.
+const SKIP = [
+  /^sw\.js$/,
+  /^workbox-/,
+  /^registerSW\.js$/,
+  /^offline-shell\.json$/,
+  /^version\.json$/,
+  /\.map$/,
+];
 
 export function shellEntries(outDir: string) {
   const out: Array<{ path: string; bytes: number; sha256: string; mime: string; group: 'shell' }> =
