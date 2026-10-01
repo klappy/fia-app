@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fia.klappy.dev/contracts/c16-feedback.schema.json",
+  "title": "Feedback payload",
+  "description": "In-app feedback (R-705). Queued offline, sent when online, idempotent by id. No third-party analytics; no personal data beyond what the person types.",
+  "version": "1.1.0",
+  "contract": "c16",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "id",
+    "createdAt",
+    "appVersion",
+    "uiLanguage",
+    "contentLanguage",
+    "offline",
+    "text"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "appVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+\\+[a-f0-9]{7}$",
+      "description": "semver + 7-char build sha, as in <meta name=\"fia-release\">"
+    },
+    "uiLanguage": {
+      "type": "string",
+      "pattern": "^[a-z]{3}(-[A-Za-z]{2,8})?$",
+      "description": "Aquifer language code: ISO 639-3 three letters (eng, spa, arb, hin, ...) or Aquifer's script-suffixed forms (zhs, zht); never a BCP-47 two-letter tag"
+    },
+    "contentLanguage": {
+      "type": "string",
+      "pattern": "^[a-z]{3}(-[A-Za-z]{2,8})?$",
+      "description": "Aquifer language code: ISO 639-3 three letters (eng, spa, arb, hin, ...) or Aquifer's script-suffixed forms (zhs, zht); never a BCP-47 two-letter tag"
+    },
+    "packId": {
+      "type": "string",
+      "pattern": "^[a-z]{3}(-[A-Za-z]{2,8})?\\.[1-3A-Z]{3}(-\\d{1,3}){2,4}$",
+      "description": "<language>.<pericope>, e.g. spa.MRK-1-1-13"
+    },
+    "unitId": {
+      "type": "string",
+      "pattern": "^S0[1-6]-U\\d{3}$",
+      "description": "guide unit id: step S01..S06, unit number zero-padded"
+    },
+    "screen": {
+      "type": "string",
+      "pattern": "^S\\d{2}$"
+    },
+    "theme": {
+      "type": "string",
+      "enum": [
+        "light",
+        "dark"
+      ]
+    },
+    "textSize": {
+      "type": "string",
+      "enum": [
+        "system",
+        "large",
+        "max"
+      ]
+    },
+    "lowLiteracy": {
+      "type": "boolean"
+    },
+    "offline": {
+      "type": "boolean"
+    },
+    "installed": {
+      "type": "boolean"
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    },
+    "contact": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 200,
+      "pattern": "^(?:[^\\s@]+@[^\\s@]+\\.[^\\s@]+|\\+?[0-9][0-9 ().-]{5,}[0-9])$",
+      "description": "Optional contact the person typed on S16 (email or phone). Absent or null = anonymous (default). Pending M19: default anonymous, field optional."
+    },
+    "screenshot": {
+      "type": "object",
+      "required": [
+        "mime",
+        "bytes",
+        "sha256"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "mime": {
+          "type": "string",
+          "enum": [
+            "image/png",
+            "image/webp"
+          ]
+        },
+        "bytes": {
+          "type": "integer",
+          "maximum": 2000000
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "SHA-256 hex, lower-case"
+        }
+      }
+    },
+    "userAgentClass": {
+      "type": "string",
+      "enum": [
+        "android-chrome",
+        "ios-safari",
+        "desktop",
+        "other"
+      ]
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "schemaVersion": 1,
+      "id": "6f1d2c3e-9a8b-4c7d-8e6f-0a1b2c3d4e5f",
+      "createdAt": "2026-10-01T12:00:00Z",
+      "appVersion": "0.2.0+abc1234",
+      "uiLanguage": "spa",
+      "contentLanguage": "spa",
+      "packId": "spa.MRK-1-1-13",
+      "unitId": "S02-U004",
+      "screen": "S05",
+      "theme": "light",
+      "textSize": "large",
+      "offline": true,
+      "installed": true,
+      "text": "El audio se detuvo en el paso 2.",
+      "contact": null
+    }
+  ]
+}
