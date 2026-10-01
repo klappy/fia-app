@@ -254,6 +254,12 @@
   display: flex;
   align-items: flex-end;
   background: rgba(0, 0, 0, 0.4);
+  z-index: 2;
+}
+/* 21 § Layout: on a docked screen the scrim stops at the dock, so the sheet's primary sits
+   above it and the dock stays live (J-A1 rerun3: the SH-2 primary sat under the dock). */
+.fia-screen[data-dock] .fia-sheet__scrim {
+  bottom: calc(var(--fia-dock-h) + var(--fia-safe-bottom));
 }
 .fia-sheet {
   width: 100%;
