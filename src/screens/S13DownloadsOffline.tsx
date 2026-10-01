@@ -46,6 +46,12 @@ function SavedCard({
   onUpdate: () => void;
 }) {
   const [confirm, setConfirm] = useState(false);
+  const confirmRef = useRef<HTMLDivElement>(null);
+  // The confirm opens at the card's foot; bring it above the sticky primary + dock (offline.css
+  // scroll-margin) so "Remove" is never under "Save another passage".
+  useEffect(() => {
+    if (confirm) confirmRef.current?.scrollIntoView?.({ block: 'nearest' });
+  }, [confirm]);
   const ref = packRef(p.packId ?? '');
   return (
     <Card className="fia-dl__pack" state={p.corrupt ? 'error' : 'default'}>
@@ -72,7 +78,7 @@ function SavedCard({
         />
       )}
       {confirm ? (
-        <div className="fia-dl__band" role="alertdialog">
+        <div className="fia-dl__band fia-dl__confirm" role="alertdialog" ref={confirmRef}>
           <p>{t('s.downloads.remove-confirm', { ref, size: mb(p.bytes) })}</p>
           <div className="fia-dl__row">
             <SecondaryAction

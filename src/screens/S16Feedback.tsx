@@ -15,7 +15,7 @@ import { flowSession } from '../flow/session';
 import { t } from '../i18n';
 import { LANGUAGES } from '../i18n/languages';
 import { browserStore, loadSettings } from '../settings';
-import { SCREENS } from './registry';
+import { whereName } from './routing';
 import { ScreenFrame } from './ScreenFrame';
 import './l5-shell.css';
 
@@ -33,12 +33,6 @@ type Phase = { kind: 'compose' } | { kind: 'result'; ref: string; queued: boolea
 
 const LANG_OF_PACK = /^([a-z]{3}(?:-[A-Za-z]{2,8})?)\./;
 const langName = (code: string) => LANGUAGES.find((l) => l.code === code)?.autonym ?? code;
-
-/** "Back to {where}": the screen's own title when known, else Guide. */
-const whereName = (from?: string) => {
-  const def = SCREENS.find((x) => x.id === from);
-  return def?.titleKey ? t(def.titleKey) : (def?.name ?? t('s.common.dock.guide'));
-};
 
 const fmtTime = (iso: string) =>
   new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });

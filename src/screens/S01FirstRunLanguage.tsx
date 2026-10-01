@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { LanguagePicker } from '../components';
 import { flowSession } from '../flow/session';
 import { t } from '../i18n';
 import type { Language } from '../i18n/languages';
+import { firstRunRedirect } from './routing';
 import { ScreenFrame } from './ScreenFrame';
 
 // S01 First run / language (01-first-run-language.md). Whole row selects; primary carries the
@@ -11,6 +12,10 @@ import { ScreenFrame } from './ScreenFrame';
 export default function S01FirstRunLanguage() {
   const nav = useNavigate();
   const [pick, setPick] = useState<Language | undefined>();
+  // A language is already chosen: reopening at `/` starts on the Library, not the picker again.
+  const { search } = useLocation();
+  const skipTo = firstRunRedirect(flowSession().get().language, search);
+  if (skipTo) return <Navigate to={skipTo} replace />;
   return (
     <ScreenFrame
       id="S01"

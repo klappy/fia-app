@@ -37,6 +37,12 @@
   border-radius: var(--fia-r-sm);
   background: var(--fia-stop-band);
 }
+/* Remove confirm scrolls clear of the sticky primary slot + dock (375×667, gate rerun4). */
+.fia-dl__confirm {
+  scroll-margin-bottom: calc(
+    var(--fia-primary-slot-h) + 2 * var(--fia-space-4) + var(--fia-dock-h) + var(--fia-safe-bottom)
+  );
+}
 .fia-dl__band--error {
   background: var(--fia-error-tint);
   color: var(--fia-error-tint-text);

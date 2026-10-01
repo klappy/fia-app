@@ -212,8 +212,13 @@ export class OfflineClient {
       return null;
     } finally {
       this.jobId = null;
-      this.emit({ saving: null, progress: null });
-      await this.refresh();
+      // Stay in the saving (verifying) state until STATUS lands, so the row never flashes an
+      // enabled Save between the last file and "✓ Saved".
+      try {
+        await this.refresh();
+      } finally {
+        this.emit({ saving: null, progress: null });
+      }
     }
   }
 
