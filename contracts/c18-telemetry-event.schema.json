@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fia.klappy.dev/contracts/c18-telemetry-event.schema.json",
+  "title": "Telemetry event",
+  "description": "Opt-in anonymous usage counter only (R-905): screen, language, pericope, offline flag. No ids that identify a person or device; no third-party sink; disclosed on About.",
+  "version": "1.0.0",
+  "contract": "c18",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "event",
+    "at",
+    "appVersion",
+    "uiLanguage",
+    "offline"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "event": {
+      "type": "string",
+      "enum": [
+        "screen",
+        "pack-saved",
+        "pack-removed",
+        "journey-complete",
+        "narration-mode"
+      ]
+    },
+    "at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "appVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+\\+[a-f0-9]{7}$",
+      "description": "semver + 7-char build sha, as in <meta name=\"fia-release\">"
+    },
+    "screen": {
+      "type": "string",
+      "pattern": "^S\\d{2}$"
+    },
+    "uiLanguage": {
+      "type": "string",
+      "pattern": "^[a-z]{3}(-[A-Za-z]{2,8})?$",
+      "description": "Aquifer language code: ISO 639-3 three letters (eng, spa, arb, hin, ...) or Aquifer's script-suffixed forms (zhs, zht); never a BCP-47 two-letter tag"
+    },
+    "contentLanguage": {
+      "type": "string",
+      "pattern": "^[a-z]{3}(-[A-Za-z]{2,8})?$",
+      "description": "Aquifer language code: ISO 639-3 three letters (eng, spa, arb, hin, ...) or Aquifer's script-suffixed forms (zhs, zht); never a BCP-47 two-letter tag"
+    },
+    "pericope": {
+      "type": "string",
+      "pattern": "^[1-3A-Z]{3}(-\\d{1,3}){2,4}$",
+      "description": "USFM book id + chapter/verse range, e.g. MRK-1-1-13 (book, c, v[, c, v])"
+    },
+    "tier": {
+      "type": "string",
+      "enum": [
+        "text",
+        "phone",
+        "medium",
+        "original"
+      ]
+    },
+    "offline": {
+      "type": "boolean"
+    },
+    "installed": {
+      "type": "boolean"
+    },
+    "journeyId": {
+      "$ref": "https://fia.klappy.dev/contracts/c15-journey.schema.json#/$defs/journeyId"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "schemaVersion": 1,
+      "event": "screen",
+      "at": "2026-10-01T12:00:00Z",
+      "appVersion": "0.2.0+abc1234",
+      "screen": "S05",
+      "uiLanguage": "spa",
+      "contentLanguage": "spa",
+      "pericope": "MRK-1-1-13",
+      "offline": true,
+      "installed": true
+    }
+  ],
+  "not": {
+    "anyOf": [
+      {
+        "required": [
+          "userId"
+        ]
+      },
+      {
+        "required": [
+          "deviceId"
+        ]
+      },
+      {
+        "required": [
+          "ip"
+        ]
+      }
+    ]
+  }
+}

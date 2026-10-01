@@ -1,0 +1,53 @@
+{
+  "name": "fia-app",
+  "version": "0.2.0",
+  "description": "FIA App — Familiarization · Internalization · Articulation. Guided oral Bible engagement, offline-first PWA.",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "tokens": "node scripts/build-tokens.mjs",
+    "strings": "node scripts/extract-strings.mjs",
+    "lint": "eslint . && prettier --check .",
+    "format": "prettier --write .",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "test:contracts": "vitest run tests/contracts.test.ts",
+    "test:e2e": "playwright test",
+    "generate": "npm run tokens && npm run strings",
+    "deploy": "wrangler deploy --env dev"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7.9.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.36.0",
+    "@playwright/test": "1.56.1",
+    "@types/node": "^22.18.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "eslint": "^9.36.0",
+    "eslint-config-prettier": "^10.1.0",
+    "eslint-plugin-react-hooks": "^6.1.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "globals": "^16.4.0",
+    "prettier": "^3.6.0",
+    "typescript": "^5.9.0",
+    "typescript-eslint": "^8.44.0",
+    "vite": "^7.1.0",
+    "vite-plugin-pwa": "^1.0.3",
+    "vitest": "^3.2.0",
+    "wrangler": "^4.40.0"
+  }
+}

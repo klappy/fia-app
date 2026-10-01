@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fia.klappy.dev/contracts/c01-source-pin.schema.json",
+  "title": "Aquifer source pin",
+  "description": "One pinned Aquifer source file and the items inside it. A build fails on any mismatch; the pin is the only way content enters a pack.",
+  "version": "1.0.0",
+  "contract": "c01",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "repo",
+    "commitSha",
+    "path",
+    "language",
+    "fileSha256",
+    "items"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "repo": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]+$",
+      "description": "BibleAquifer repository name"
+    },
+    "commitSha": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$",
+      "description": "git commit sha (40 hex)"
+    },
+    "path": {
+      "type": "string",
+      "description": "path inside the repo at that commit"
+    },
+    "language": {
+      "type": "string",
+      "pattern": "^[a-z]{3}(-[A-Za-z]{2,8})?$",
+      "description": "Aquifer language code: ISO 639-3 three letters (eng, spa, arb, hin, ...) or Aquifer's script-suffixed forms (zhs, zht); never a BCP-47 two-letter tag"
+    },
+    "fileSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "SHA-256 hex, lower-case"
+    },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "contentId",
+          "version",
+          "contentSha256"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "contentId": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^\\d+\\.\\d+\\.\\d+$"
+          },
+          "contentSha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$",
+            "description": "SHA-256 hex, lower-case"
+          },
+          "apiCaptureSha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$",
+            "description": "SHA-256 hex, lower-case"
+          },
+          "contentMatchesAfterDocumentedTransform": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "schemaVersion": 1,
+      "repo": "VideoBibleDictionary",
+      "commitSha": "85b4bec7634f3f5989d0767b372084eb19098227",
+      "path": "eng/json/008.content.json",
+      "language": "eng",
+      "fileSha256": "b6c6a377ce2e249e4ea3b51f50e96ca2e01928d1caed56c844bcf193a4d296fb",
+      "items": [
+        {
+          "contentId": "a13",
+          "version": "1.0.4",
+          "contentSha256": "b76b7b5b8057d8182039e4e7355f5dd55b04cfa94f92b3b33e1f19e5b2562884"
+        }
+      ]
+    }
+  ]
+}
