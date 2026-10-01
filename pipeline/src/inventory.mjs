@@ -1,13 +1,28 @@
 // C-03 catalog manifest: languages x pericopes x resource types, from pinned Aquifer files.
 // Reads <lang>/metadata.json + <lang>/json/NN.content.json directly (MCP browse fails on the large English files).
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { assert, bookFile2, bookNumber, bookUsfm, DATA_ROOT, fetchJson, fetchPinned, LANGUAGE_INFO, loadSources, parseRef, pericopeId, plainText, pmap, rangesOverlap, sha256, stableJson, guideSteps, headPinned } from './lib.mjs';
 
 const FIA = { guide: 'FIATranslationGuide', image: 'FIAImages', map: 'FIAMaps', term: 'FIAKeyTerms', video: 'VideoBibleDictionary' };
-// Size assumptions (CONSTRAINTS § 1.5, R-306); estimates, not measurements. Phone = webp<=640 + opus 32k, no video.
-const EST = { imagePhone: 40_000, imageMedium: 114_000, imageOriginal: 114_000, mapPhone: 250_000, mapMedium: 1_500_000, mapOriginal: 6_646_608,
-  termAudioOriginal: 1_455_212, termAudioMedium: 500_000, termAudioPhone: 260_000, unitNarrationPhone: 24_000, unitNarrationMedium: 48_000, unitNarrationOriginal: 96_000, verseBytes: 160 };
+// Text-tier estimate for pericopes with no built pack (calibrated below against the packs that are built). Phone/Medium/Original are
+// not emitted until a pack publishes them (R-307): the pack format (C-02) ships only the Text tier today.
+const EST = { verseBytes: 160 };
+
+/** Bytes per tier exactly as a save downloads them: sum of the files the C-02 pack manifest lists per tier (R-307). */
+export function packTierBytes(packManifest) {
+  return Object.fromEntries(Object.entries(packManifest.tiers || {}).map(([tier, t]) => [tier, (t.files || []).reduce((n, f) => n + f.bytes, 0)]));
+}
+
+/** Built pack manifests under data/packs, keyed by packId. */
+export async function readBuiltPacks(dataRoot = DATA_ROOT) {
+  const dir = path.join(dataRoot, 'packs');
+  let ids = [];
+  try { ids = await readdir(dir); } catch { return {}; }
+  const out = {};
+  for (const id of ids) { try { out[id] = JSON.parse(await readFile(path.join(dir, id, 'manifest.json'), 'utf8')); } catch { /* not a pack dir */ } }
+  return out;
+}
 
 async function loadMediaCollection(sources, repo, kind, log) {
   const sha = sources.fia[repo].commitSha;
@@ -117,12 +132,7 @@ export async function buildCatalog({ appVersion = '0.2.0+0000000', log = console
       const termTextBytes = terms.reduce((s, t) => s + t.bytes, 0);
       const textBytes = (body?.bytes || 0) + editions.length * verses * EST.verseBytes + termTextBytes;
       const termAudioSource = termSlots.filter((t) => t.audio.status === 'source').length;
-      const tierBytes = {
-        text: textBytes,
-        phone: textBytes + images.length * EST.imagePhone + maps.length * EST.mapPhone + unitsEstimate * EST.unitNarrationPhone + termAudioSource * EST.termAudioPhone,
-        medium: textBytes + images.length * EST.imageMedium + maps.length * EST.mapMedium + unitsEstimate * EST.unitNarrationMedium + termAudioSource * EST.termAudioMedium,
-        original: textBytes + images.length * EST.imageOriginal + maps.length * EST.mapOriginal + unitsEstimate * EST.unitNarrationOriginal + termAudioSource * EST.termAudioOriginal,
-      };
+      const tierBytes = { text: textBytes }; // raw estimate; replaced below by the pack manifest (built) or the calibrated estimate
       const provenance = {
         text: { source: (body ? 1 : 0) + editions.length + termSlots.filter((t) => t.text.status === 'source').length, generated: 0, missing: termSlots.filter((t) => t.text.status !== 'source').length + (editions.length ? 0 : engEditions.length) },
         audio: { source: termAudioSource, generated: 0, missing: unitsEstimate + (termSlots.length - termAudioSource) },
@@ -131,14 +141,28 @@ export async function buildCatalog({ appVersion = '0.2.0+0000000', log = console
       const sourceRevisions = { [guideRepo]: guideSha, ...(terms.length ? { FIAKeyTerms: media.term.sha } : {}), ...(images.length ? { FIAImages: media.image.sha } : {}), ...(maps.length ? { FIAMaps: media.map.sha } : {}), ...(videos.length ? { VideoBibleDictionary: media.video.sha } : {}), ...Object.fromEntries((editions.length ? editions : engEditions).map((b) => [b.repo, b.commitSha])) };
       const detail = { packId: `${lang}.${pericope}`, language: lang, pericope, book, sourceId: a.contentId, engSourceId: a.engContentId, indexReference: a.indexReference, title: body?.title || a.contentId, version: body?.version, reviewLevel: body?.reviewLevel,
         guide: body ? { file: body.file, contentSha256: body.contentSha256, bytes: body.bytes, steps: body.steps, unitsEstimate, narration: { status: 'absent', ai: true, generator: 'narration' } } : { status: 'missing' },
-        scripture: scriptureSlots, terms: termSlots, images: imageSlots, maps: mapSlots, videos: videoSlots, resourceTypes, tierBytes, tierBytesAreEstimates: true, provenance, sourceRevisions };
-      const manifestSha256 = sha256(JSON.stringify(detail));
+        scripture: scriptureSlots, terms: termSlots, images: imageSlots, maps: mapSlots, videos: videoSlots, resourceTypes, tierBytes, tierBytesAreEstimates: true, tierBytesSource: 'estimate', provenance, sourceRevisions };
       entries.push(detail);
-      manifestEntries.push({ packId: detail.packId, language: lang, pericope, book, title: detail.title, resourceTypes, tierBytes, sourceRevision: sha256(JSON.stringify(sourceRevisions)), provenance, manifestSha256 });
+      manifestEntries.push({ packId: detail.packId, language: lang, pericope, book, title: detail.title, resourceTypes, tierBytes, sourceRevision: sha256(JSON.stringify(sourceRevisions)), provenance, manifestSha256: null });
       langCounts.pericopes++; langCounts.guideUnitsEstimate += unitsEstimate;
     }
     perLangOut[lang] = { schemaVersion: 1, language: lang, ...LANGUAGE_INFO[lang], builtAt: null, counts: langCounts, books: L.books.map(bookUsfm), files: L.files, skipped: L.skipped, entries };
     coverage[lang] = langCounts;
+  }
+
+  // 5. tier sizes (R-307): a built pack's manifest is the truth (sum of its listed file bytes per published tier); every other entry
+  // gets a Text-only estimate scaled by the measured/estimated ratio of the built packs. Tiers a pack does not publish are absent (C-03).
+  const built = await readBuiltPacks();
+  const details = Object.fromEntries(Object.values(perLangOut).flatMap((d) => d.entries).map((e) => [e.packId, e]));
+  const ratios = manifestEntries.filter((e) => built[e.packId] && e.tierBytes.text > 0).map((e) => packTierBytes(built[e.packId]).text / e.tierBytes.text);
+  const textCalibration = ratios.length ? ratios.reduce((a, b) => a + b, 0) / ratios.length : 1;
+  log(`tier sizes: ${ratios.length} built pack(s) measured; text estimate calibration x${textCalibration.toFixed(3)}`);
+  for (const e of manifestEntries) {
+    const d = details[e.packId];
+    const measured = built[e.packId] ? packTierBytes(built[e.packId]) : null;
+    e.tierBytes = measured || { text: Math.round(e.tierBytes.text * textCalibration) };
+    Object.assign(d, { tierBytes: e.tierBytes, tierBytesAreEstimates: !measured, tierBytesSource: measured ? 'pack-manifest' : 'estimate' });
+    e.manifestSha256 = sha256(JSON.stringify(d));
   }
 
   const builtAt = new Date().toISOString();
