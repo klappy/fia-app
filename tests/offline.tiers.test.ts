@@ -11,6 +11,8 @@ import {
   offlineManifestFromPack,
   publishedTiers,
   tierDownloadBytes,
+  measuredMap,
+  rowSize,
   type ContentPack,
   type PackStatus,
 } from '../src/offline';
@@ -96,5 +98,35 @@ describe('honest tiers (review rev17-1021)', () => {
     expect(effectiveTier(textOnly, 'phone')).toBe('text');
     const m = await offlineManifestFromPack(textOnly, 'phone', 'source-fallback');
     expect(m.tier).toBe('text');
+  });
+});
+
+describe('S03 row size (review rev18)', () => {
+  it('falls back to the best listed tier and marks estimates', () => {
+    expect(rowSize({ text: 277189 }, 'phone', true)).toEqual({
+      tier: 'text',
+      mb: '0.3',
+      exact: true,
+    });
+    expect(rowSize({ text: 48560 }, 'phone', false)?.exact).toBe(false);
+    expect(rowSize(MRK, 'phone', undefined)).toEqual({ tier: 'phone', mb: '8.0', exact: false });
+    expect(rowSize(MRK, 'phone', false, { tier: 'text', bytes: 277189 })).toEqual({
+      tier: 'text',
+      mb: '0.3',
+      exact: true,
+    });
+    expect(rowSize(undefined, 'phone', true)).toBeUndefined();
+  });
+  it('reads measured flags from a per-language catalog file', () => {
+    expect(
+      measuredMap({
+        entries: [
+          { packId: 'spa.MRK-1-1-13', tierBytesAreEstimates: false },
+          { packId: 'spa.LUK-1-1-4', tierBytesAreEstimates: true },
+          { packId: 'spa.X' },
+        ],
+      }),
+    ).toEqual({ 'spa.MRK-1-1-13': true, 'spa.LUK-1-1-4': false });
+    expect(measuredMap({ counts: {} })).toEqual({});
   });
 });

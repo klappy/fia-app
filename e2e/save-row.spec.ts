@@ -32,7 +32,9 @@ test('J-A2 1–6: size on S03, tier picker on S04, Save best published tier, sav
 
   // Step 1 — S03 row shows its size at the Settings tier (default Phone, M1) before any save.
   const row = page.locator(`[data-pack-id="${PACK}"]`);
-  await expect(row.getByTestId('row-size')).toHaveText(/^Phone \d+(\.\d)? MB$/);
+  // Catalog sizes: main lists Phone (unmeasured → "≈"); fia-app#18 lists Text only, measured for
+  // built packs (exact). Either way an estimate never reads as exact.
+  await expect(row.getByTestId('row-size')).toHaveText(/^(Phone ≈ |Text (≈ )?)\d+(\.\d)? MB$/);
   await expect(row.getByTestId('row-saved')).toHaveCount(0);
   await row.click();
 
@@ -70,6 +72,7 @@ test('J-A2 1–6: size on S03, tier picker on S04, Save best published tier, sav
   await page.goBack();
   await expect(page.locator('[data-screen="S03"]')).toBeVisible();
   await expect(row.getByTestId('row-saved')).toHaveText('✓ saved');
+  await expect(row.getByTestId('row-size')).toHaveText(`Text ${textSize}`);
   await page.goto('/downloads');
   await expect(page.locator('[data-screen="S13"]')).toBeVisible();
   await expect(page.getByText(`MRK 1:1–13 · Text · ${textSize}`)).toBeVisible();

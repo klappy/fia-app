@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { bookName, matches, pericopesFor } from '../flow/catalog';
 import { flowSession, useFlow } from '../flow/session';
 import { t } from '../i18n';
-import { browserStore } from '../settings';
-import { mb, preferredTier, saveRowState, tierMb, useOffline } from '../offline';
+import { browserStore, DATA_PATHS, fetchJson } from '../settings';
+import { measuredMap, preferredTier, rowSize, saveRowState, useOffline } from '../offline';
 import '../offline/offline.css';
 import { ScreenFrame } from './ScreenFrame';
 
@@ -26,7 +26,20 @@ export default function S03PericopeList() {
   const shown = rows.filter((r) => matches(q, r.title, r.pericope));
   const off = useOffline();
   const [tier] = useState(() => preferredTier(browserStore()));
-  const tierName = t(`s.passage.tier.${tier}`);
+  // Which entries carry measured (pack-manifest) sizes; anything unmarked reads as an estimate.
+  const [measured, setMeasured] = useState<{ lang?: string; map: Record<string, boolean> }>({
+    map: {},
+  });
+  useEffect(() => {
+    let live = true;
+    fetchJson(DATA_PATHS.languageCounts(language))
+      .then((doc) => live && setMeasured({ lang: language, map: measuredMap(doc) }))
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [language]);
+  const measuredFor = (id: string) => (measured.lang === language ? measured.map[id] : undefined);
   return (
     <ScreenFrame id="S03" title={book} dockActive="guide" primaryLabel={null}>
       <input
@@ -56,10 +69,14 @@ export default function S03PericopeList() {
       <ul className="fia-list">
         {shown.map((r) => {
           const st = saveRowState(r.packId, off.packs, off.saving);
-          // Saved rows show what was verified (tier + bytes); others the catalog projection.
-          const savedPack = st.state === 'saved' ? st.pack : undefined;
-          const size = savedPack ? mb(savedPack.bytes) : tierMb(r.tierBytes, tier);
-          const sizeTier = savedPack ? t(`s.passage.tier.${savedPack.tier ?? 'text'}`) : tierName;
+          // Saved rows show what was verified; others the catalog size at the best listed tier,
+          // prefixed ≈ unless the catalog marks it measured (never an estimate shown as exact).
+          const sz = rowSize(
+            r.tierBytes,
+            tier,
+            measuredFor(r.packId),
+            st.state === 'saved' ? st.pack : undefined,
+          );
           return (
             <li key={r.packId}>
               <button
@@ -88,9 +105,12 @@ export default function S03PericopeList() {
                     </span>
                   )}
                 </span>
-                {size && (
+                {sz && (
                   <span className="fia-caption" data-testid="row-size">
-                    {t('s.pericopes.size', { tier: sizeTier, mb: size })}
+                    {t('s.pericopes.size', {
+                      tier: t(`s.passage.tier.${sz.tier}`),
+                      mb: sz.exact ? sz.mb : `≈ ${sz.mb}`,
+                    })}
                   </span>
                 )}
               </button>

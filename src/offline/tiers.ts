@@ -65,3 +65,34 @@ export function saveRowState(
   if (pack.state === 'corrupt') return { state: 'corrupt', pack };
   return { state: 'none', pack };
 }
+
+/**
+ * S03 row size (R-307). The tier shown is the preferred one when the catalog lists it, else the
+ * best listed tier below it (Text). `exact` only when the per-language file marks the entry
+ * measured (`tierBytesAreEstimates: false`, pack-manifest bytes); no flag = estimate, so older
+ * catalogs never present a projection as exact. A verified save wins over both.
+ */
+export function rowSize(
+  tb: TierBytes | undefined,
+  pref: Tier,
+  measured: boolean | undefined,
+  saved?: Pick<PackStatus, 'tier' | 'bytes'>,
+): { tier: Tier; mb: string; exact: boolean } | undefined {
+  if (saved) return { tier: saved.tier ?? 'text', mb: mb(saved.bytes), exact: true };
+  const offered = offeredTiers(tb);
+  const below = TIERS.slice(0, TIERS.indexOf(pref) + 1).filter((x) => offered.includes(x));
+  const tier = below[below.length - 1] ?? offered[0];
+  if (!tier) return undefined;
+  return { tier, mb: mb(tb![tier]), exact: measured === true };
+}
+
+/** packId → measured? from a per-language catalog file (`entries[].tierBytesAreEstimates`). */
+export function measuredMap(doc: unknown): Record<string, boolean> {
+  const entries = (doc as { entries?: unknown } | null)?.entries;
+  if (!Array.isArray(entries)) return {};
+  const out: Record<string, boolean> = {};
+  for (const e of entries as { packId?: unknown; tierBytesAreEstimates?: unknown }[])
+    if (typeof e?.packId === 'string' && typeof e.tierBytesAreEstimates === 'boolean')
+      out[e.packId] = !e.tierBytesAreEstimates;
+  return out;
+}
