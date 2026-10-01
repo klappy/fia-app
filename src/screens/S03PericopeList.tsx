@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { bookName, matches, pericopesFor } from '../flow/catalog';
 import { flowSession, useFlow } from '../flow/session';
 import { t } from '../i18n';
+import { useOffline } from '../offline/useOffline';
+import { savedPackIds, useOnline } from '../offline/useOnline';
 import { ScreenFrame } from './ScreenFrame';
 
 // S03 Pericope list (03-pericope-list.md): the book's pericopes from the C-03 catalog in
@@ -12,6 +14,9 @@ export default function S03PericopeList() {
   const session = flowSession();
   const snap = useFlow(session);
   const [q, setQ] = useState('');
+  const online = useOnline();
+  const { packs } = useOffline();
+  const saved = useMemo(() => savedPackIds(packs), [packs]);
   useEffect(() => void session.loadCatalog(), [session]);
   const language = snap.language ?? 'eng';
   const rows = useMemo(
@@ -30,6 +35,7 @@ export default function S03PericopeList() {
         value={q}
         onChange={(e) => setQ(e.target.value)}
       />
+      {!online && <p className="fia-caption">{t('s.pericopes.offline-hint')}</p>}
       {snap.catalogStatus === 'error' && (
         <div role="alert">
           <p>{t('s.pericopes.error', { book })}</p>
@@ -59,6 +65,15 @@ export default function S03PericopeList() {
               }}
             >
               {r.title}
+              {!online && !saved.has(r.packId) && (
+                // pericope-card.md offline: unsaved rows stay tappable; the fact is a badge.
+                <>
+                  {' '}
+                  <span className="fia-badge--needs-connection" data-role="needs-connection">
+                    {t('s.common.not-saved-badge')}
+                  </span>
+                </>
+              )}
             </button>
           </li>
         ))}
