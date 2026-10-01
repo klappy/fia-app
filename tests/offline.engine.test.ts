@@ -466,6 +466,18 @@ describe('offline shell (R-702)', () => {
     expect(ok!.ok).toBe(true);
   });
 
+  it('/version.json (deploy stamp) bypasses the worker, navigation included', async () => {
+    const { engine, setOnline } = await shellSetup();
+    await engine.installShell();
+    await engine.activateShell();
+    setOnline(false);
+    for (const mode of ['navigate', 'cors']) {
+      expect(
+        await engine.handleFetch({ url: `${ORIGIN}/version.json?t=1`, method: 'GET', mode }),
+      ).toBeNull();
+    }
+  });
+
   it('without a shell manifest (dev) install is a no-op', async () => {
     const engine = createEngine({
       caches: fakeCaches(),

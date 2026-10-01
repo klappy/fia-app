@@ -10,7 +10,9 @@ How a change travels dev → staging → production, and how we prove each step 
 | `staging`    | staging    | https://staging.fiaguide.app | Workers Builds, `--env staging`                 |
 | `production` | production | https://fiaguide.app         | Workers Builds, `--env production`              |
 
-Branches only move forward by merge commits, so `main ⊇ staging ⊇ production` always holds (each is an ancestor of the one before it).
+Branches only move forward by merge commits, so `main ⊇ staging ⊇ production` always holds (each is an ancestor of the one before it). Until Otto adds branch protection (kitchen `rail/1-ordered/2026-09-30-fia-app-deploy-wiring`), merge-commit-only and no direct pushes on `staging`/`production` rest on discipline: pick **Create a merge commit** every time.
+
+**One-time bootstrap.** If `staging` or `production` does not exist yet, create each from `main` at a commit that is post-deploy green on dev (`git push origin <sha>:refs/heads/staging`, then the same for `production` once staging is green). After that, they only move by the PRs below.
 
 ## Proof a deploy landed
 
@@ -30,7 +32,7 @@ Promote only what has gone green on the env below it; never push directly to `st
 
 ## Rollback
 
-- **Preferred:** a revert PR on the env branch (`git revert -m 1 <merge>` for a promotion merge), merged, then post-deploy green. Then bring the same revert down to `main` (and `staging`) so the next promotion does not re-ship it.
+- **Preferred:** a revert PR on the env branch (`git revert -m 1 <merge>` for a promotion merge), merged, then post-deploy green. Then bring it down the same way a hotfix flows: merge `production → staging` and `staging → main` (merge commits), so no branch re-ships the bad change. To re-land the change later, revert the revert on `main` and promote as usual.
 - **Fast path (infra, Otto):** `npx wrangler rollback --env <env>` restores the previous Worker version without a build. Git still needs the revert afterwards, or the next push redeploys the bad commit. `version.json` will show the rolled-back commit, so post-deploy for that sha will not match until git is fixed.
 
 ## Hotfix

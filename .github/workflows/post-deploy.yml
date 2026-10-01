@@ -20,7 +20,7 @@ on:
         type: string
 
 concurrency:
-  group: post-deploy-${{ github.ref }}
+  group: post-deploy-${{ inputs.env || github.ref_name }}
   cancel-in-progress: true
 
 permissions:
@@ -99,6 +99,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: post-deploy-${{ steps.target.outputs.env }}-report
-          path: playwright-report
+          name: post-deploy-${{ steps.target.outputs.env }}-test-results
+          path: test-results
           retention-days: 7
