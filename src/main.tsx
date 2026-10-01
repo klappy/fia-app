@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { applyToDocument, browserStore, loadSettings } from './settings';
+import { registerOffline } from './offline/register';
 import './tokens/alpha.css';
 import './app.css';
 
@@ -14,3 +15,5 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </StrictMode>,
 );
+
+registerOffline();
