@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__github__merge_pull_request",
+      "mcp__github__push_files",
+      "mcp__github__create_pull_request",
+      "mcp__github__update_pull_request",
+      "mcp__github__add_issue_comment",
+      "Bash(git push *)",
+      "Agent"
+    ]
+  },
+  "autoMode": {
+    "allow": [
+      "$defaults",
+      "Merging a pull request into klappy/3d-review-app v3/integration, or into klappy/3d-review-cookbook, klappy/fia-app (DEV), klappy/fia-app-cookbook or klappy/kitchen main, when the PR carries a recorded fresh-review YES comment from a seat that did not write it (house rule H27). Production is never merged by an agent.",
+      "Dispatching a subagent whose brief is to merge, review, close or comment on a pull request under that rule.",
+      "Pushing journal rows, rail receipts and claim lines (journal/*.tsv, rail/**, work/**) straight to main in klappy/kitchen, klappy/3d-review-cookbook and klappy/fia-app-cookbook; the captain's law says rows go to main."
+    ]
+  }
+}

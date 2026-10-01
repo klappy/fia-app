@@ -3,20 +3,27 @@ import { useNavigate } from 'react-router-dom';
 import { bookName, matches, pericopesFor } from '../flow/catalog';
 import { flowSession, useFlow } from '../flow/session';
 import { t } from '../i18n';
-import { useOffline } from '../offline/useOffline';
-import { savedPackIds, useOnline } from '../offline/useOnline';
+import { browserStore, DATA_PATHS, fetchJson } from '../settings';
+import {
+  measuredMap,
+  preferredTier,
+  rowSize,
+  saveRowState,
+  useOffline,
+  useOnline,
+} from '../offline';
+import '../offline/offline.css';
 import { ScreenFrame } from './ScreenFrame';
 
 // S03 Pericope list (03-pericope-list.md): the book's pericopes from the C-03 catalog in
-// canonical order; row tap → 04. Select-and-save mode belongs to the offline lane.
+// canonical order; row tap → 04. Each row carries its size at the Settings tier (R-307, default
+// Phone) and its verified saved / partial mark (R-309). Select-and-save mode is a later slice (R-308).
 export default function S03PericopeList() {
   const nav = useNavigate();
   const session = flowSession();
   const snap = useFlow(session);
   const [q, setQ] = useState('');
   const online = useOnline();
-  const { packs } = useOffline();
-  const saved = useMemo(() => savedPackIds(packs), [packs]);
   useEffect(() => void session.loadCatalog(), [session]);
   const language = snap.language ?? 'eng';
   const rows = useMemo(
@@ -25,6 +32,22 @@ export default function S03PericopeList() {
   );
   const book = rows[0] ? bookName(rows[0].title) : (snap.book ?? '');
   const shown = rows.filter((r) => matches(q, r.title, r.pericope));
+  const off = useOffline();
+  const [tier] = useState(() => preferredTier(browserStore()));
+  // Which entries carry measured (pack-manifest) sizes; anything unmarked reads as an estimate.
+  const [measured, setMeasured] = useState<{ lang?: string; map: Record<string, boolean> }>({
+    map: {},
+  });
+  useEffect(() => {
+    let live = true;
+    fetchJson(DATA_PATHS.languageCounts(language))
+      .then((doc) => live && setMeasured({ lang: language, map: measuredMap(doc) }))
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [language]);
+  const measuredFor = (id: string) => (measured.lang === language ? measured.map[id] : undefined);
   return (
     <ScreenFrame id="S03" title={book} dockActive="guide" primaryLabel={null}>
       <input
@@ -53,30 +76,62 @@ export default function S03PericopeList() {
         <p>{t('s.pericopes.empty-search', { book })}</p>
       )}
       <ul className="fia-list">
-        {shown.map((r) => (
-          <li key={r.packId}>
-            <button
-              type="button"
-              className="fia-row"
-              data-pack-id={r.packId}
-              onClick={() => {
-                session.selectPack(r.packId);
-                nav('/passage');
-              }}
-            >
-              {r.title}
-              {!online && !saved.has(r.packId) && (
-                // pericope-card.md offline: unsaved rows stay tappable; the fact is a badge.
-                <>
-                  {' '}
-                  <span className="fia-badge--needs-connection" data-role="needs-connection">
-                    {t('s.common.not-saved-badge')}
+        {shown.map((r) => {
+          const st = saveRowState(r.packId, off.packs, off.saving);
+          // Saved rows show what was verified; others the catalog size at the best listed tier,
+          // prefixed ≈ unless the catalog marks it measured (never an estimate shown as exact).
+          const sz = rowSize(
+            r.tierBytes,
+            tier,
+            measuredFor(r.packId),
+            st.state === 'saved' ? st.pack : undefined,
+          );
+          return (
+            <li key={r.packId}>
+              <button
+                type="button"
+                className="fia-row"
+                data-pack-id={r.packId}
+                onClick={() => {
+                  session.selectPack(r.packId);
+                  nav('/passage');
+                }}
+              >
+                <span className="fia-row__line">
+                  <span>{r.title}</span>
+                  {st.state === 'saved' && (
+                    <span className="fia-mark fia-mark--source" data-testid="row-saved">
+                      ✓ {t('s.pericopes.saved')}
+                    </span>
+                  )}
+                  {st.state === 'partial' && st.pack && (
+                    <span className="fia-mark">
+                      ◐{' '}
+                      {t('s.common.mark.partial', {
+                        saved: st.pack.savedFiles ?? 0,
+                        total: st.pack.files ?? 0,
+                      })}
+                    </span>
+                  )}
+                  {!online && st.state !== 'saved' && (
+                    // pericope-card.md offline: unsaved rows stay tappable; the fact is a badge.
+                    <span className="fia-badge--needs-connection" data-role="needs-connection">
+                      {t('s.common.not-saved-badge')}
+                    </span>
+                  )}
+                </span>
+                {sz && (
+                  <span className="fia-caption" data-testid="row-size">
+                    {t('s.pericopes.size', {
+                      tier: t(`s.passage.tier.${sz.tier}`),
+                      mb: sz.exact ? sz.mb : `≈ ${sz.mb}`,
+                    })}
                   </span>
-                </>
-              )}
-            </button>
-          </li>
-        ))}
+                )}
+              </button>
+            </li>
+          );
+        })}
       </ul>
     </ScreenFrame>
   );

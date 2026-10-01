@@ -63,3 +63,86 @@
   border: 0;
   font: inherit;
 }
+
+/* S04 save row (04-passage-card.md § Save for offline) — tier radios 48 px, outlined quiet save */
+.fia-save {
+  display: grid;
+  gap: var(--fia-space-3);
+}
+.fia-save__heading {
+  font-size: var(--fia-fs-label);
+  margin: 0;
+}
+.fia-tiers {
+  display: grid;
+}
+.fia-tiers__row {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  gap: var(--fia-space-5);
+  align-items: center;
+  min-block-size: 48px;
+}
+.fia-tiers__row input {
+  inline-size: 24px;
+  block-size: 24px;
+  margin: 0;
+}
+.fia-tiers__text {
+  display: grid;
+}
+.fia-tiers__name {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--fia-space-3);
+  align-items: center;
+}
+.fia-tiers__size {
+  color: var(--fia-text-muted);
+  white-space: nowrap;
+}
+.fia-save__button {
+  inline-size: 100%;
+  min-block-size: 48px;
+  border-radius: 12px;
+  border: 1px solid var(--fia-primary);
+  background: none;
+  color: var(--fia-primary);
+  font: inherit;
+  font-weight: 600;
+}
+.fia-save__button:disabled {
+  opacity: 0.38;
+}
+.fia-save__saving,
+.fia-save__saved {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--fia-space-3);
+  align-items: center;
+  min-block-size: 48px;
+}
+.fia-save__ring {
+  inline-size: 24px;
+  block-size: 24px;
+  border-radius: 50%;
+  border: 3px solid var(--fia-text-muted);
+  border-block-start-color: var(--fia-primary);
+  animation: fia-spin 1s linear infinite;
+}
+@keyframes fia-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fia-save__ring {
+    animation: none;
+  }
+}
+.fia-row__line {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--fia-space-3);
+  inline-size: 100%;
+}
