@@ -81,6 +81,7 @@ export class OfflineClient {
   private container?: ContainerLike;
   private storageManager?: StorageManager;
   private reload: () => void;
+  private refreshTimeoutMs: number;
 
   constructor(
     opts: {
@@ -88,8 +89,11 @@ export class OfflineClient {
       storage?: StorageManager;
       online?: boolean;
       reload?: () => void;
+      /** Longest wait for the post-save STATUS before the row leaves "saving". */
+      refreshTimeoutMs?: number;
     } = {},
   ) {
+    this.refreshTimeoutMs = opts.refreshTimeoutMs ?? 5000;
     this.container = opts.container;
     this.storageManager = opts.storage;
     this.reload = opts.reload ?? (() => globalThis.location?.reload());
@@ -214,9 +218,15 @@ export class OfflineClient {
       this.jobId = null;
       // Stay in the saving (verifying) state until STATUS lands, so the row never flashes an
       // enabled Save between the last file and "✓ Saved".
+      // A STATUS that never answers must not leave the row stuck on "saving".
+      let timer: ReturnType<typeof setTimeout> | undefined;
       try {
-        await this.refresh();
+        await Promise.race([
+          this.refresh(),
+          new Promise((r) => (timer = setTimeout(r, this.refreshTimeoutMs))),
+        ]);
       } finally {
+        clearTimeout(timer);
         this.emit({ saving: null, progress: null });
       }
     }

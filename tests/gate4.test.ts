@@ -65,4 +65,26 @@ describe('save row never flashes Save between the last file and Saved', () => {
     const firstSaved = rows.indexOf('saved');
     expect(rows.slice(rows.indexOf('saving'), firstSaved)).not.toContain('none');
   });
+
+  it('leaves "saving" when the post-save STATUS never answers', async () => {
+    const packId = 'spa.MRK-1-1-13';
+    const controller = {
+      postMessage(msg: { type: string }, transfer?: Transferable[]) {
+        const port = transfer?.[0] as MessagePort | undefined;
+        if (port && msg.type === 'SAVE') setTimeout(() => port.postMessage({ packId }), 1);
+        // STATUS: never answers
+      },
+    };
+    const c = new OfflineClient({
+      container: {
+        controller,
+        register: async () => ({ addEventListener: () => undefined }),
+        addEventListener: () => undefined,
+      },
+      refreshTimeoutMs: 20,
+    });
+    await c.save(packId, 'text', 'source-fallback');
+    expect(c.snapshot().saving).toBeNull();
+    expect(c.snapshot().progress).toBeNull();
+  });
 });

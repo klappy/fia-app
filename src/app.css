@@ -39,6 +39,15 @@
   gap: var(--fia-gap-stack);
 }
 
+/* The page (html) is the scroller at 375×667 — .fia-content grows with its rows, never overflows
+   (measured; S13 Remove confirm, gate rerun4). scrollIntoView lands clear of the sticky primary +
+   dock. Not on .fia-content too: an inner padded box clips the target and the page stops short. */
+:root {
+  scroll-padding-bottom: calc(
+    var(--fia-primary-slot-h) + 2 * var(--fia-space-4) + var(--fia-dock-h) + var(--fia-safe-bottom)
+  );
+}
+
 /* rule 1: the one primary, thumb slot; sticky above the dock; 72 px slot at +2 */
 .fia-primary-slot {
   position: sticky;

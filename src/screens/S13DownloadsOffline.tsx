@@ -47,8 +47,8 @@ function SavedCard({
 }) {
   const [confirm, setConfirm] = useState(false);
   const confirmRef = useRef<HTMLDivElement>(null);
-  // The confirm opens at the card's foot; bring it above the sticky primary + dock (offline.css
-  // scroll-margin) so "Remove" is never under "Save another passage".
+  // The confirm opens at the card's foot; bring it above the sticky primary + dock (app.css
+  // scroll-padding-bottom) so "Remove" is never under "Save another passage".
   useEffect(() => {
     if (confirm) confirmRef.current?.scrollIntoView?.({ block: 'nearest' });
   }, [confirm]);
