@@ -29,6 +29,9 @@ const SKIP = [
   /^version\.json$/,
   /\.map$/,
 ];
+// Pipeline content (ship-data-plugin): packs are saved per pack on request (C-07 tiers) and the
+// catalog is ~32 MB — never part of the shell precache.
+const SKIP_DIRS = new Set(['data', 'packs']);
 
 export function shellEntries(outDir: string) {
   const out: Array<{ path: string; bytes: number; sha256: string; mime: string; group: 'shell' }> =
@@ -37,6 +40,7 @@ export function shellEntries(outDir: string) {
     for (const name of readdirSync(dir).sort()) {
       const full = join(dir, name);
       if (statSync(full).isDirectory()) {
+        if (dir === outDir && SKIP_DIRS.has(name)) continue;
         walk(full);
         continue;
       }
