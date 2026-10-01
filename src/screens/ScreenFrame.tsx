@@ -51,7 +51,7 @@ export function ScreenFrame({
         </div>
       )}
       {def.dock && <Dock active={dockActive} onMore={() => setMore(true)} />}
-      {def.dock && <MoreSheet open={more} onClose={() => setMore(false)} />}
+      {def.dock && <MoreSheet open={more} onClose={() => setMore(false)} from={def.id} />}
     </div>
   );
 }

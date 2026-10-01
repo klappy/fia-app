@@ -7,23 +7,38 @@ import {
   appVersion,
   buildFeedback,
   defaultTransport,
+  onOutboxChange,
   refOf,
   type FeedbackContextInput,
 } from '../feedback';
+import { flowSession } from '../flow/session';
 import { t } from '../i18n';
+import { LANGUAGES } from '../i18n/languages';
 import { browserStore, loadSettings } from '../settings';
+import { SCREENS } from './registry';
 import { ScreenFrame } from './ScreenFrame';
 import './l5-shell.css';
 
 // S16 Feedback (design/alpha-screens/16-feedback.md; R-705). Builds a C-16 payload, validates it
-// and queues it in the local outbox. STUB: no feedback endpoint exists yet, so every submission
-// lands on the honest amber "Queued" result and stays `waiting` in "Your feedback"; "Received" is
-// shown only after a 2xx, which cannot happen until the endpoint (Otto) is wired.
+// and queues it in the local outbox, then posts it at once when online. "Received" is shown only
+// after a 2xx from the feedback endpoint; offline or on any failure the honest amber "Queued"
+// result shows and the item stays `waiting` until the outbox flushes it (online / app open).
+// Context: passage, unit and screen come from the query (`?from=&pack=&unit=`) or else from the
+// live guide session; the content language is the pack's language when a pack is known.
 const PACK = /^[a-z]{3}(-[A-Za-z]{2,8})?\.[1-3A-Z]{3}(-\d{1,3}){2,4}$/;
 const UNIT = /^S0[1-6]-U\d{3}$/;
 const SCREEN = /^S\d{2}$/;
 
-type Phase = { kind: 'compose' } | { kind: 'result'; ref: string; queued: boolean };
+type Phase = { kind: 'compose' } | { kind: 'result'; ref: string; queued: boolean; at?: string };
+
+const LANG_OF_PACK = /^([a-z]{3}(?:-[A-Za-z]{2,8})?)\./;
+const langName = (code: string) => LANGUAGES.find((l) => l.code === code)?.autonym ?? code;
+
+/** "Back to {where}": the screen's own title when known, else Guide. */
+const whereName = (from?: string) => {
+  const def = SCREENS.find((x) => x.id === from);
+  return def?.titleKey ? t(def.titleKey) : (def?.name ?? t('s.common.dock.guide'));
+};
 
 const fmtTime = (iso: string) =>
   new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
@@ -42,6 +57,20 @@ export default function S16Feedback() {
   const [notice, setNotice] = useState<null | 'error' | 'not-saved' | 'full'>(null);
   const [phase, setPhase] = useState<Phase>({ kind: 'compose' });
   const [online, setOnline] = useState(() => globalThis.navigator?.onLine ?? true);
+  const [sending, setSending] = useState(false);
+  // re-render "Your feedback" when the outbox flushes in the background
+  const [, setRev] = useState(0);
+  useEffect(() => onOutboxChange(() => setRev((n) => n + 1)), []);
+  // where the person was: the live guide session (read once; S16 never loads a guide itself)
+  const [flow] = useState(() => {
+    const snap = flowSession().get();
+    const guide = snap.guide && snap.guide.packId === snap.packId ? snap.guide : undefined;
+    return {
+      packId: snap.packId,
+      title: guide?.title,
+      unitId: guide ? snap.state?.unitId : undefined,
+    };
+  });
 
   useEffect(() => {
     const on = () => setOnline(true);
@@ -66,14 +95,16 @@ export default function S16Feedback() {
         ? 'dark'
         : 'light';
   const from = params.get('from') ?? undefined;
-  const pack = params.get('pack') ?? undefined;
-  const unit = params.get('unit') ?? undefined;
+  const pack = params.get('pack') ?? flow.packId;
+  const packId = pack && PACK.test(pack) ? pack : undefined;
+  const unit = params.get('unit') ?? (packId && packId === flow.packId ? flow.unitId : undefined);
+  const unitId = unit && UNIT.test(unit) ? unit : undefined;
   const ctx: FeedbackContextInput = {
     appVersion: appVersion(),
     uiLanguage: settings.uiLanguage,
-    contentLanguage: settings.contentLanguage,
-    packId: pack && PACK.test(pack) ? pack : undefined,
-    unitId: unit && UNIT.test(unit) ? unit : undefined,
+    contentLanguage: (packId && LANG_OF_PACK.exec(packId)?.[1]) || settings.contentLanguage,
+    packId,
+    unitId,
     screen: from && SCREEN.test(from) ? from : undefined,
     theme,
     textSize: settings.textSize,
@@ -82,20 +113,20 @@ export default function S16Feedback() {
     installed: globalThis.matchMedia?.('(display-mode: standalone)').matches,
     userAgent: globalThis.navigator?.userAgent,
   };
+  // One fact per line (16-feedback.md § layout): passage · unit · screen · content language ·
+  // version / theme / size. Exactly what the payload carries, nothing hidden.
+  const passage = ctx.packId && ctx.packId === flow.packId && flow.title ? flow.title : ctx.packId;
   const contextLines = [
-    [
-      `v${ctx.appVersion.split('+')[0]}`,
-      ctx.contentLanguage,
-      ctx.packId,
-      ctx.unitId,
-      ctx.theme,
-      ctx.textSize,
-    ]
-      .filter(Boolean)
-      .join(' · ') + (ctx.offline ? ` ${t('s.feedback.context-offline')}` : ''),
-  ];
+    passage,
+    ctx.unitId && t('s.feedback.where.unit', { unit: ctx.unitId }),
+    ctx.screen && t('s.feedback.where.screen', { screen: ctx.screen }),
+    `${langName(ctx.contentLanguage)} (${ctx.contentLanguage})`,
+    [`v${ctx.appVersion.split('+')[0]}`, ctx.theme, ctx.textSize].filter(Boolean).join(' · ') +
+      (ctx.offline ? ` ${t('s.feedback.context-offline')}` : ''),
+  ].filter((l): l is string => !!l);
 
   const send = async () => {
+    if (sending) return;
     const r = buildFeedback({ text, contact }, ctx);
     if (!r.ok) {
       if (r.reason === 'need-text') setNeedText(true);
@@ -113,8 +144,22 @@ export default function S16Feedback() {
       setNotice('not-saved');
       return;
     }
-    const delivered = online ? await outbox.flush(defaultTransport) : 0;
-    setPhase({ kind: 'result', ref: refOf(r.payload.id), queued: delivered === 0 });
+    const id = r.payload.id;
+    if (online && defaultTransport) {
+      setSending(true);
+      try {
+        await outbox.flush(defaultTransport, { ids: [id] });
+      } finally {
+        setSending(false);
+      }
+    }
+    const item = outbox.get(id);
+    setPhase({
+      kind: 'result',
+      ref: refOf(id),
+      queued: item?.status !== 'received',
+      at: item?.receivedAt,
+    });
     setText('');
     setContact('');
   };
@@ -128,13 +173,13 @@ export default function S16Feedback() {
         id="S16"
         dockActive="more"
         offline={!online}
-        primaryLabel={t('s.feedback.primary.back', { where: from ?? t('s.common.dock.guide') })}
+        primaryLabel={t('s.feedback.primary.back', { where: whereName(from) })}
         onPrimary={back}
       >
         <ToastNotice kind="banner" tone={phase.queued ? 'stop' : 'info'}>
           {phase.queued
             ? t('s.feedback.queued')
-            : t('s.feedback.received', { time: fmtTime(new Date().toISOString()) })}
+            : t('s.feedback.received', { time: fmtTime(phase.at ?? new Date().toISOString()) })}
         </ToastNotice>
         <p>{t('s.feedback.thanks', { ref: phase.ref })}</p>
         {phase.queued && <p className="fia-caption">{t('s.feedback.waiting-hint')}</p>}
@@ -144,7 +189,14 @@ export default function S16Feedback() {
   }
 
   return (
-    <ScreenFrame id="S16" dockActive="more" offline={!online} onPrimary={send}>
+    <ScreenFrame
+      id="S16"
+      dockActive="more"
+      offline={!online}
+      onPrimary={send}
+      primaryLabel={sending ? t('s.feedback.primary.sending') : undefined}
+      primaryState={sending ? 'loading' : undefined}
+    >
       {!outbox.persistent && (
         <ToastNotice kind="banner" tone="stop">
           {t('s.feedback.cannot-queue')}

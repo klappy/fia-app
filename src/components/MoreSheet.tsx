@@ -7,6 +7,8 @@ import type { StateProps } from './types';
 export interface MoreSheetProps extends StateProps {
   open: boolean;
   onClose: () => void;
+  /** Screen the sheet was opened on (C-16 `screen`): Feedback opens with `?from=<id>`. */
+  from?: string;
 }
 
 const ROWS: { key: string; to: string }[] = [
@@ -18,7 +20,7 @@ const ROWS: { key: string; to: string }[] = [
   { key: 's.common.more.about', to: '/about' },
 ];
 
-export function MoreSheet({ open, onClose, state }: MoreSheetProps) {
+export function MoreSheet({ open, onClose, state, from }: MoreSheetProps) {
   return (
     <Sheet
       title={t('s.common.dock.more')}
@@ -30,7 +32,13 @@ export function MoreSheet({ open, onClose, state }: MoreSheetProps) {
       <ul className="fia-more__list">
         {ROWS.map((r) => (
           <li key={r.key}>
-            <Link to={r.to} onClick={onClose} className="fia-more__row">
+            <Link
+              to={
+                r.to === '/feedback' && from ? `/feedback?from=${encodeURIComponent(from)}` : r.to
+              }
+              onClick={onClose}
+              className="fia-more__row"
+            >
               {t(r.key)}
             </Link>
           </li>
