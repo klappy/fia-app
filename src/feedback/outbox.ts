@@ -175,9 +175,14 @@ export class Outbox {
     return { sent, waiting: l.filter((i) => i.status === 'waiting').length };
   }
 
-  /** When the next automatic retry is due (ms epoch), or `undefined` when nothing waits. */
+  /**
+   * When the next automatic retry is due (ms epoch), or `undefined` when nothing waits. Items
+   * being posted right now are left out, so the retry timer never spins while one is in flight.
+   */
   nextDue(): number | undefined {
-    const due = this.waiting().map((i) => (i.nextAttemptAt ? Date.parse(i.nextAttemptAt) : 0));
+    const due = this.waiting()
+      .filter((i) => !inFlight.has(i.payload.id))
+      .map((i) => (i.nextAttemptAt ? Date.parse(i.nextAttemptAt) : 0));
     return due.length ? Math.min(...due) : undefined;
   }
 
@@ -193,10 +198,13 @@ export class Outbox {
     if (!transport) return 0;
     const now = opts.now ?? (() => new Date());
     let delivered = 0;
-    for (const it of this.waiting()) {
-      const id = it.payload.id;
+    for (const { payload } of this.waiting()) {
+      const id = payload.id;
       if (opts.ids && !opts.ids.includes(id)) continue;
-      if (inFlight.has(id)) continue;
+      // re-read right before the POST: an overlapping flush (Send, `online`, timer) may have
+      // settled or claimed this id while an earlier item in this loop was being awaited
+      const it = this.get(id);
+      if (!it || it.status !== 'waiting' || inFlight.has(id)) continue;
       if (opts.due && it.nextAttemptAt && Date.parse(it.nextAttemptAt) > now().getTime()) continue;
       inFlight.add(id);
       let ok = false;
@@ -265,9 +273,12 @@ export function startFeedbackFlusher(
   };
   const onOnline = () => void run(false);
   env.addEventListener('online', onOnline);
+  // any outbox write (an online Send that failed, a new queued item) re-arms the retry timer
+  const offChange = onOutboxChange(schedule);
   void run(false);
   return () => {
     stopped = true;
+    offChange();
     env.removeEventListener('online', onOnline);
     if (timer !== undefined) env.clearTimeout(timer);
   };

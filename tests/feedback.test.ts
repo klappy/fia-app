@@ -327,7 +327,7 @@ describe('feedback transport + flush (R-705, mocked fetch)', () => {
     const transport = vi.fn(async () => status);
     const stop = startFeedbackFlusher(box, transport, env);
     await vi.waitFor(() => expect(transport).toHaveBeenCalledTimes(2)); // app open
-    await vi.waitFor(() => expect(timers.length).toBe(1)); // retry scheduled
+    await vi.waitFor(() => expect(timers.length).toBeGreaterThanOrEqual(1)); // retry scheduled
     expect(box.waiting()).toHaveLength(2);
     status = 202;
     listeners.online();
@@ -335,6 +335,62 @@ describe('feedback transport + flush (R-705, mocked fetch)', () => {
     expect(box.counts()).toEqual({ sent: 2, waiting: 0 });
     stop();
     expect(listeners.online).toBeUndefined();
+  });
+
+  it('overlapping Send + flush never POSTs one id twice (status re-checked before POST)', async () => {
+    const B = '6f1d2c3e-9a8b-4c7d-8e6f-0a1b2c3d4e61';
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    const posted: string[] = [];
+    const transport = vi.fn(async (p: { id: string }) => {
+      posted.push(p.id);
+      if (p.id === ID) await gate; // A is slow
+      return 201;
+    });
+    const store = memoryStore();
+    const box = new Outbox(store);
+    box.enqueue(payload());
+    box.enqueue(payload(B));
+    const background = box.flush(transport); // A in flight, B next in its snapshot
+    expect(box.nextDue()).toBe(0); // B waits; A (in flight) is not counted → no timer spin
+    expect(await new Outbox(store).flush(transport, { ids: [B] })).toBe(1); // Send posts B
+    release();
+    expect(await background).toBe(1); // only A; B was settled meanwhile
+    expect(posted.filter((x) => x === B)).toHaveLength(1);
+    expect(box.counts()).toEqual({ sent: 2, waiting: 0 });
+  });
+
+  it('nextDue leaves out in-flight items (no setTimeout(0) spin)', async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    const box = new Outbox(memoryStore());
+    box.enqueue(payload());
+    const p = box.flush(async () => (await gate, 201));
+    expect(box.nextDue()).toBeUndefined();
+    release();
+    await p;
+  });
+
+  it('flusher re-arms the backoff timer after an online Send fails', async () => {
+    const delays: number[] = [];
+    const env: FlusherEnv = {
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      navigator: { onLine: true },
+      setTimeout: (_f, ms) => delays.push(ms),
+      clearTimeout: () => {},
+    };
+    const box = new Outbox(memoryStore());
+    const stop = startFeedbackFlusher(box, async () => 201, env);
+    await Promise.resolve();
+    delays.length = 0; // nothing waiting at app open
+    box.enqueue(payload());
+    // S16 Send: online, the POST fails with 503
+    await box.flush(async () => 503, { ids: [ID] });
+    const last = delays[delays.length - 1];
+    expect(last).toBeGreaterThan(BACKOFF_BASE_MS - 1000);
+    expect(last).toBeLessThanOrEqual(BACKOFF_BASE_MS);
+    stop();
   });
 
   it('flusher does nothing while offline or without storage', async () => {

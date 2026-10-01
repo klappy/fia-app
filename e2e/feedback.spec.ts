@@ -30,7 +30,7 @@ async function send(page: Page, text: string) {
 }
 
 test('online Send posts C-16 with context and reads Received', async ({ page }) => {
-  const posts = await stub(page, () => 202);
+  const posts = await stub(page, () => 201);
   await page.goto(CTX);
   await expect(page.locator('[data-screen="S16"]')).toBeVisible();
   // context card: passage, unit, screen, content language
@@ -64,7 +64,7 @@ test('a failed post reads Queued; reload (app open) flushes it to Received, one 
   await expect(page.getByText('⊘ Queued — will send when online')).toBeVisible();
   await expect(page.getByText(/Waiting to send/)).toBeVisible();
   expect(posts).toHaveLength(1);
-  status = 202;
+  status = 200;
   await page.reload();
   await expect(page.getByText(/· Received/)).toBeVisible();
   await expect(page.getByText(/Waiting to send/)).toHaveCount(0);
@@ -78,7 +78,7 @@ test('a failed post reads Queued; reload (app open) flushes it to Received, one 
 });
 
 test('offline Send reads Queued; the online event flushes it', async ({ page, context }) => {
-  const posts = await stub(page, () => 202);
+  const posts = await stub(page, () => 201);
   await page.goto(CTX);
   await expect(page.locator('[data-screen="S16"]')).toBeVisible();
   await context.setOffline(true);
