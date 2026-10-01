@@ -1,0 +1,27 @@
+{
+  "name": "@fia-app/pipeline",
+  "version": "0.2.0",
+  "private": true,
+  "description": "FIA Alpha content pipeline: Aquifer FIA repos (pinned by commit SHA) -> catalog manifest (C-03), content packs (C-02/C-04), rights records (C-13). Server-side only, never on device.",
+  "type": "module",
+  "license": "MIT",
+  "engines": { "node": ">=20" },
+  "bin": {
+    "fia-build-catalog": "bin/build-catalog.mjs",
+    "fia-build-pack": "bin/build-pack.mjs",
+    "fia-build-rights": "bin/build-rights.mjs",
+    "fia-pin-sources": "bin/pin-sources.mjs"
+  },
+  "scripts": {
+    "pin": "node bin/pin-sources.mjs",
+    "catalog": "node bin/build-catalog.mjs",
+    "rights": "node bin/build-rights.mjs",
+    "pack": "node bin/build-pack.mjs",
+    "proofs": "node bin/build-pack.mjs eng MRK-1-1-13 && node bin/build-pack.mjs spa MRK-1-1-13 && node bin/build-pack.mjs hau LUK-6-17-19 && node bin/build-pack.mjs tpi MRK-1-1-13 && node bin/build-pack.mjs arb GEN-1-1-2-3",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1"
+  }
+}

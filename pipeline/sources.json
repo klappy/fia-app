@@ -1,0 +1,320 @@
+{
+  "schemaVersion": 1,
+  "pinnedAt": "2026-09-30",
+  "pinMethod": "git ls-remote https://github.com/BibleAquifer/<repo>.git HEAD (GitHub REST API was not reachable from this session); re-pin with `npm run pin`",
+  "rawBase": "https://raw.githubusercontent.com/BibleAquifer/{repo}/{sha}/{path}",
+  "languages": [
+    "eng",
+    "arb",
+    "hin",
+    "ind",
+    "por",
+    "fra",
+    "swh",
+    "spa",
+    "zhs",
+    "zht",
+    "nep",
+    "rus",
+    "hau",
+    "apd",
+    "bis",
+    "tpi",
+    "fas"
+  ],
+  "fia": {
+    "FIATranslationGuide": {
+      "commitSha": "eb744452eb8d7c852caadde9d3181cddfe571119",
+      "role": "guide",
+      "url": "https://github.com/BibleAquifer/FIATranslationGuide"
+    },
+    "FIAImages": {
+      "commitSha": "136ff7c6b2381b84d241e27524005dcad71424ba",
+      "role": "image",
+      "url": "https://github.com/BibleAquifer/FIAImages"
+    },
+    "FIAMaps": {
+      "commitSha": "4bc9bb9f1d9082e5d71a047a35bf8e608f473602",
+      "role": "map",
+      "url": "https://github.com/BibleAquifer/FIAMaps"
+    },
+    "FIAKeyTerms": {
+      "commitSha": "a39260670bba9d87d902e0fa0ae447341343481f",
+      "role": "term",
+      "url": "https://github.com/BibleAquifer/FIAKeyTerms"
+    },
+    "VideoBibleDictionary": {
+      "commitSha": "1c02713d022bd96a29c78f5b75455315d6d35a6e",
+      "role": "video",
+      "url": "https://github.com/BibleAquifer/VideoBibleDictionary"
+    }
+  },
+  "bibles": [
+    {
+      "language": "eng",
+      "repo": "BereanStandardBible",
+      "short": "BSB",
+      "commitSha": "87858d1e28ab728249d9fb50667170c194c6b013",
+      "articles": 66,
+      "wholeBible": true,
+      "url": "https://github.com/BibleAquifer/BereanStandardBible"
+    },
+    {
+      "language": "eng",
+      "repo": "unfoldingWordLiteral",
+      "short": "ULT",
+      "commitSha": "e49bdf4a0ddcdfe17428ca23e6dada29f54c0ea6",
+      "articles": 59,
+      "wholeBible": false,
+      "url": "https://github.com/BibleAquifer/unfoldingWordLiteral"
+    },
+    {
+      "language": "eng",
+      "repo": "unfoldingWordSimplified",
+      "short": "UST",
+      "commitSha": "41a5b938d4f170278f8e43e7dce4df9e87e7a4bd",
+      "articles": 59,
+      "wholeBible": false,
+      "url": "https://github.com/BibleAquifer/unfoldingWordSimplified"
+    },
+    {
+      "language": "eng",
+      "repo": "WorldEnglishBible",
+      "short": "WEB",
+      "commitSha": "bcb8b3edfb302863c241e3d1d2062cf51042d694",
+      "articles": 66,
+      "wholeBible": true,
+      "url": "https://github.com/BibleAquifer/WorldEnglishBible"
+    },
+    {
+      "language": "eng",
+      "repo": "WorldEnglishBibleUpdated",
+      "short": "WEBU",
+      "commitSha": "e8b8f852167379ff0a4e82032c444c12f56a2173",
+      "articles": 66,
+      "wholeBible": true,
+      "url": "https://github.com/BibleAquifer/WorldEnglishBibleUpdated"
+    },
+    {
+      "language": "spa",
+      "repo": "ReinaValera1909",
+      "short": "RV1909",
+      "commitSha": "84a071324be17c7c66db17dd204d7804e66d728b",
+      "articles": 66,
+      "wholeBible": true,
+      "url": "https://github.com/BibleAquifer/ReinaValera1909"
+    },
+    {
+      "language": "spa",
+      "repo": "AquiferSpanishBibleReferenceText",
+      "short": "ASBRT",
+      "commitSha": "edf50fc7913b15df1089534cb9bca084553acbef",
+      "articles": 66,
+      "wholeBible": true,
+      "url": "https://github.com/BibleAquifer/AquiferSpanishBibleReferenceText"
+    },
+    {
+      "language": "fra",
+      "repo": "LouisSegond1910",
+      "short": "LSG1910",
+      "commitSha": "c25cc382fb3584a0837289f1499a7f56a4798dde",
+      "articles": 66,
+      "wholeBible": true,
+      "url": "https://github.com/BibleAquifer/LouisSegond1910"
+    },
+    {
+      "language": "fra",
+      "repo": "AquiferFrenchBibleReferenceText",
+      "short": "AFBRT",
+      "commitSha": "087e6c54329b5ed13de377b283d713f9ff5eae7b",
+      "articles": 11,
+      "wholeBible": false,
+      "url": "https://github.com/BibleAquifer/AquiferFrenchBibleReferenceText"
+    },
+    {
+      "language": "hin",
+      "repo": "IndianRevisedVersion",
+      "short": "IRV",
+      "commitSha": "3726b2dc729252e1bc2884a7d87b511e2ad04790",
+      "articles": 66,
+      "wholeBible": true,
+      "url": "https://github.com/BibleAquifer/IndianRevisedVersion"
+    },
+    {
+      "language": "hin",
+      "repo": "OpenHindiContemporaryVersion",
+      "short": "OHCV",
+      "commitSha": "ff9255dff9ddd6016fb8e7997f44f22b4a90a205",
+      "articles": 66,
+      "wholeBible": true,
+      "url": "https://github.com/BibleAquifer/OpenHindiContemporaryVersion"
+    },
+    {
+      "language": "hin",
+      "repo": "GatewayLiteralTextHindi",
+      "short": "GLT",
+      "commitSha": "59b7d69a8641bd82fb466be20f699cbe83a60d66",
+      "articles": 29,
+      "wholeBible": false,
+      "url": "https://github.com/BibleAquifer/GatewayLiteralTextHindi"
+    },
+    {
+      "language": "hin",
+      "repo": "GatewaySimplifiedTextHindi",
+      "short": "GST",
+      "commitSha": "bc46f4ef59e6ee41e4ca49f0ac34a6b2cd004eec",
+      "articles": 29,
+      "wholeBible": false,
+      "url": "https://github.com/BibleAquifer/GatewaySimplifiedTextHindi"
+    },
+    {
+      "language": "por",
+      "repo": "AquiferPortugueseBibleReferenceText",
+      "short": "APBRT",
+      "commitSha": "94a7753eb0e60ffe89a169215c879694902bc6a5",
+      "articles": 66,
+      "wholeBible": true,
+      "url": "https://github.com/BibleAquifer/AquiferPortugueseBibleReferenceText"
+    },
+    {
+      "language": "zhs",
+      "repo": "BiblicaOpenChineseContemporary2023Simplified",
+      "short": "OCCB-S",
+      "commitSha": "a16778d13e6416300f3b36d193d7acc7784c8df8",
+      "articles": 66,
+      "wholeBible": true,
+      "url": "https://github.com/BibleAquifer/BiblicaOpenChineseContemporary2023Simplified"
+    },
+    {
+      "language": "zht",
+      "repo": "ChineseUnionVersionTraditional",
+      "short": "CUV-T",
+      "commitSha": "1d0ebfd9ec457ed0fe9ef07c4ca53ad78ab58b07",
+      "articles": 66,
+      "wholeBible": true,
+      "url": "https://github.com/BibleAquifer/ChineseUnionVersionTraditional"
+    },
+    {
+      "language": "zht",
+      "repo": "BiblicaOpenChineseContemporary2023Traditional",
+      "short": "OCCB-T",
+      "commitSha": "b6296b2bc848c8e60f8defb97fbe443ceadc38b5",
+      "articles": 66,
+      "wholeBible": true,
+      "url": "https://github.com/BibleAquifer/BiblicaOpenChineseContemporary2023Traditional"
+    },
+    {
+      "language": "arb",
+      "repo": "ArabicVanDyckBible",
+      "short": "VanDyck",
+      "commitSha": "a78f02395753d3baa64dab21fd08e254aafe8b00",
+      "articles": 66,
+      "wholeBible": true,
+      "url": "https://github.com/BibleAquifer/ArabicVanDyckBible"
+    },
+    {
+      "language": "arb",
+      "repo": "BiblicaOpenNewArabicVersion2012",
+      "short": "NAV2012",
+      "commitSha": "c7078f9acb609647add7d1422b57a19ad99c2666",
+      "articles": 66,
+      "wholeBible": true,
+      "url": "https://github.com/BibleAquifer/BiblicaOpenNewArabicVersion2012"
+    },
+    {
+      "language": "ind",
+      "repo": "TerjemahanBaruIndonesia",
+      "short": "TBI",
+      "commitSha": "3a628b64fe5a82e3e15fc5554dd8fd9b19d9d6f2",
+      "articles": 66,
+      "wholeBible": true,
+      "url": "https://github.com/BibleAquifer/TerjemahanBaruIndonesia"
+    },
+    {
+      "language": "ind",
+      "repo": "GatewayLiteralTextIndonesian",
+      "short": "GLT",
+      "commitSha": "f52dfe491ce548fa0947bcd4de2fca6dd8bc25f8",
+      "articles": 9,
+      "wholeBible": false,
+      "url": "https://github.com/BibleAquifer/GatewayLiteralTextIndonesian"
+    },
+    {
+      "language": "ind",
+      "repo": "GatewaySimplifiedTextIndonesian",
+      "short": "GST",
+      "commitSha": "1e3f58492983d756dc5ed34879235bf0b7f76248",
+      "articles": 9,
+      "wholeBible": false,
+      "url": "https://github.com/BibleAquifer/GatewaySimplifiedTextIndonesian"
+    },
+    {
+      "language": "ind",
+      "repo": "BiblicaOpenIndonesianContemporaryNewTestament2025",
+      "short": "OICNT",
+      "commitSha": "801802204c8915575946c36f05a326a01234ef5d",
+      "articles": 27,
+      "wholeBible": false,
+      "url": "https://github.com/BibleAquifer/BiblicaOpenIndonesianContemporaryNewTestament2025"
+    },
+    {
+      "language": "swh",
+      "repo": "OpenKiswahiliContemporaryVersion",
+      "short": "OKCV",
+      "commitSha": "9ac324e660f64c752a70b4df0f012f906ad173ac",
+      "articles": 66,
+      "wholeBible": true,
+      "url": "https://github.com/BibleAquifer/OpenKiswahiliContemporaryVersion"
+    },
+    {
+      "language": "nep",
+      "repo": "BiblicaOpenNepaliContemporaryVersion",
+      "short": "ONCV",
+      "commitSha": "bd1ce93379c7d32a35e57811d5838ee90f30ffaa",
+      "articles": 66,
+      "wholeBible": true,
+      "url": "https://github.com/BibleAquifer/BiblicaOpenNepaliContemporaryVersion"
+    },
+    {
+      "language": "nep",
+      "repo": "NepaliUnlockedLiteralBible",
+      "short": "NULB",
+      "commitSha": "f10cf09095cc95910972e93741397ffa928861a4",
+      "articles": 66,
+      "wholeBible": true,
+      "url": "https://github.com/BibleAquifer/NepaliUnlockedLiteralBible"
+    },
+    {
+      "language": "rus",
+      "repo": "RussianSynodalBible",
+      "short": "Synodal",
+      "commitSha": "1e33b9993b91bf6d84cdbf7b76f71930076a863e",
+      "articles": 66,
+      "wholeBible": true,
+      "url": "https://github.com/BibleAquifer/RussianSynodalBible"
+    },
+    {
+      "language": "tpi",
+      "repo": "TokPisinBible2008",
+      "short": "TPI2008",
+      "commitSha": "2acc943325761b575494d7860a877552ab4cafc7",
+      "articles": 66,
+      "wholeBible": true,
+      "url": "https://github.com/BibleAquifer/TokPisinBible2008"
+    },
+    {
+      "language": "bis",
+      "repo": "OpenBislamaBibleRevised",
+      "short": "OBBR",
+      "commitSha": "f8be807d6011d03e976667d6aab6160e988e2901",
+      "articles": 66,
+      "wholeBible": true,
+      "url": "https://github.com/BibleAquifer/OpenBislamaBibleRevised"
+    }
+  ],
+  "noScripture": [
+    "apd",
+    "hau",
+    "fas"
+  ]
+}
