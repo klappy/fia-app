@@ -21,7 +21,8 @@
     "test:contracts": "vitest run tests/contracts.test.ts",
     "test:e2e": "playwright test",
     "smoke:deployed": "playwright test e2e/smoke.spec.ts e2e/deployed.spec.ts",
-    "generate": "npm run tokens && npm run strings",
+    "generate": "npm run tokens && npm run strings && npm run generate:worker",
+    "generate:worker": "node scripts/build-worker-validators.mjs",
     "deploy": "wrangler deploy --env dev"
   },
   "dependencies": {

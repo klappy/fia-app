@@ -15,6 +15,7 @@ export default tseslint.config(
       'test-results',
       'pipeline',
       'data',
+      'worker/c16-validators.generated.js',
     ],
   },
   {

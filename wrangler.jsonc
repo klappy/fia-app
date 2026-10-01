@@ -6,19 +6,37 @@
   //   npx wrangler deploy --env production  (branch production) -> fiaguide.app
   // Custom domains are attached account-side (Otto); no routes live in this file.
   // Build command: `npm run build` = `vite build` only — tests gate the PR in CI, never the build.
+  // Worker entry (R-705): worker/index.ts answers `/api/*` only (run_worker_first); every other
+  // path is served by the ASSETS binding with the same SPA/trailing-slash handling as before.
+  // FEEDBACK is an R2 bucket per env (bindings are not inherited by envs, so each env names its
+  // own). The buckets are created account-side by Otto before this deploys — never from here.
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "fia-app",
+  "main": "worker/index.ts",
   "compatibility_date": "2026-09-01",
   "workers_dev": true,
   "assets": {
     "directory": "./dist",
     "not_found_handling": "single-page-application",
     "html_handling": "auto-trailing-slash",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"],
   },
+  // Top level = local `wrangler dev` only (miniflare simulates the bucket); deploys use --env.
+  "r2_buckets": [{ "binding": "FEEDBACK", "bucket_name": "fia-feedback-local" }],
   "observability": { "enabled": true },
   "env": {
-    "dev": { "name": "fia-app-dev" },
-    "staging": { "name": "fia-app-staging" },
-    "production": { "name": "fia-app" },
+    "dev": {
+      "name": "fia-app-dev",
+      "r2_buckets": [{ "binding": "FEEDBACK", "bucket_name": "fia-feedback-dev" }],
+    },
+    "staging": {
+      "name": "fia-app-staging",
+      "r2_buckets": [{ "binding": "FEEDBACK", "bucket_name": "fia-feedback-staging" }],
+    },
+    "production": {
+      "name": "fia-app",
+      "r2_buckets": [{ "binding": "FEEDBACK", "bucket_name": "fia-feedback-production" }],
+    },
   },
 }
