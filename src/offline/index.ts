@@ -8,4 +8,4 @@ export { useOffline, useInstall } from './useOffline';
 export { VersionBanner } from './VersionBanner';
 export * from './tiers';
 export { SaveRow } from './SaveRow';
-export { useSaveRow, type SaveController } from './useSaveRow';
+export { bestTier, useSaveRow, type SaveController } from './useSaveRow';

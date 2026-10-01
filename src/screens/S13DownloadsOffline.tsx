@@ -128,9 +128,14 @@ export default function S13DownloadsOffline() {
   let primaryLabel = saved.length
     ? t('s.downloads.primary.save-another')
     : t('s.downloads.primary.save-passage');
-  // `Save a passage` lands on 04 in save-intent (its primary saves) — never on a card without
-  // Save (J-A2--P-01 rerun 3). With no passage chosen yet, the library is where one is picked.
-  let onPrimary = () => nav(flowSession().get().packId ? '/passage?save=1' : '/library');
+  // `Save a passage` / `Save another passage` land on 04 in save-intent (its primary saves) only
+  // when the current passage is not saved yet — never on a card without Save (J-A2--P-01 rerun 3,
+  // review rev17-1021). Otherwise the picker: the book's list (03), or the library (02).
+  let onPrimary = () => {
+    const cur = flowSession().get();
+    const unsaved = !!cur.packId && !s.packs.some((p) => p.packId === cur.packId);
+    nav(unsaved ? '/passage?save=1' : cur.book ? '/pericopes' : '/library');
+  };
   if (justSaved) {
     primaryLabel = t('s.downloads.primary.start-saved', { ref: packRef(justSaved) });
     onPrimary = () => nav('/guide');

@@ -28,9 +28,7 @@ export default function S04PassageCard() {
   useEffect(() => void session.loadCatalog(), [session]);
   const entry = snap.manifest?.entries.find((e) => e.packId === snap.packId);
   const off = useOffline();
-  const ctl = useSaveRow(snap.packId, entry?.tierBytes, undefined, () =>
-    nav('/sheet/storage?variant=quota'),
-  );
+  const ctl = useSaveRow(snap.packId, undefined, () => nav('/sheet/storage?variant=quota'));
   const seeDownloads = () => nav(`/downloads?from=${encodeURIComponent(snap.packId ?? '')}`);
   const { guide, state } = snap;
   if (!guide || !state) {
@@ -97,15 +95,7 @@ export default function S04PassageCard() {
           </ul>
         </>
       )}
-      {entry && (
-        <SaveRow
-          ctl={ctl}
-          tierBytes={entry.tierBytes}
-          intent={intent}
-          onStart={start}
-          onSeeDownloads={seeDownloads}
-        />
-      )}
+      {entry && <SaveRow ctl={ctl} intent={intent} onStart={start} onSeeDownloads={seeDownloads} />}
       {!started && <p className="fia-caption">{t('s.passage.start-hint')}</p>}
     </ScreenFrame>
   );

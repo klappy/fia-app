@@ -4,7 +4,7 @@ import { bookName, matches, pericopesFor } from '../flow/catalog';
 import { flowSession, useFlow } from '../flow/session';
 import { t } from '../i18n';
 import { browserStore } from '../settings';
-import { preferredTier, saveRowState, tierMb, useOffline } from '../offline';
+import { mb, preferredTier, saveRowState, tierMb, useOffline } from '../offline';
 import '../offline/offline.css';
 import { ScreenFrame } from './ScreenFrame';
 
@@ -55,8 +55,11 @@ export default function S03PericopeList() {
       )}
       <ul className="fia-list">
         {shown.map((r) => {
-          const size = tierMb(r.tierBytes, tier);
           const st = saveRowState(r.packId, off.packs, off.saving);
+          // Saved rows show what was verified (tier + bytes); others the catalog projection.
+          const savedPack = st.state === 'saved' ? st.pack : undefined;
+          const size = savedPack ? mb(savedPack.bytes) : tierMb(r.tierBytes, tier);
+          const sizeTier = savedPack ? t(`s.passage.tier.${savedPack.tier ?? 'text'}`) : tierName;
           return (
             <li key={r.packId}>
               <button
@@ -87,7 +90,7 @@ export default function S03PericopeList() {
                 </span>
                 {size && (
                   <span className="fia-caption" data-testid="row-size">
-                    {t('s.pericopes.size', { tier: tierName, mb: size })}
+                    {t('s.pericopes.size', { tier: sizeTier, mb: size })}
                   </span>
                 )}
               </button>

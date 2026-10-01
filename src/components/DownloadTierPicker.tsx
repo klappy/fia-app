@@ -13,6 +13,8 @@ export interface TierRow {
   help?: string;
   /** Translated `recommended` chip text; rendered only when set. */
   recommended?: string;
+  /** A tier the pack does not publish yet: shown, not selectable. */
+  disabled?: boolean;
 }
 
 export interface DownloadTierPickerProps extends StateProps {
@@ -49,6 +51,7 @@ export function DownloadTierPicker({
           className="fia-tiers__row"
           data-tier={r.tier}
           data-recommended={r.recommended ? true : undefined}
+          data-disabled={r.disabled || undefined}
         >
           <input
             type="radio"
@@ -56,7 +59,7 @@ export function DownloadTierPicker({
             value={r.tier}
             checked={value === r.tier}
             onChange={() => onChange?.(r.tier)}
-            disabled={state === 'disabled'}
+            disabled={state === 'disabled' || r.disabled}
           />
           <span className="fia-tiers__text">
             <span className="fia-tiers__name">

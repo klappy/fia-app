@@ -6,6 +6,12 @@ import {
   saveMinutes,
   saveRowState,
   tierMb,
+  bestTier,
+  effectiveTier,
+  offlineManifestFromPack,
+  publishedTiers,
+  tierDownloadBytes,
+  type ContentPack,
   type PackStatus,
 } from '../src/offline';
 import { memoryStore } from '../src/settings';
@@ -65,5 +71,30 @@ describe('save row tiers', () => {
     expect(t('s.pericopes.size', { tier: t('s.passage.tier.phone'), mb: '8.0' })).toBe(
       'Phone 8.0 MB',
     );
+  });
+});
+
+describe('honest tiers (review rev17-1021)', () => {
+  const f = (path: string, bytes: number) => ({
+    path,
+    bytes,
+    sha256: 'a'.repeat(64),
+    mime: 'application/json',
+  });
+  const textOnly: ContentPack = {
+    packId: 'spa.MRK-1-1-13',
+    tiers: { text: { bytes: 300, files: [f('/packs/spa.MRK-1-1-13/a.json', 300)] } },
+  };
+  it('publishes and sizes only what the pack carries', () => {
+    expect(publishedTiers(textOnly)).toEqual(['text']);
+    expect(tierDownloadBytes(textOnly, 'text')).toBe(300);
+    expect(bestTier('phone', ['text'])).toBe('text');
+    expect(bestTier('medium', ['text', 'phone'])).toBe('phone');
+    expect(bestTier('phone', [])).toBeUndefined();
+  });
+  it('stamps the tier actually saved, not the one asked for', async () => {
+    expect(effectiveTier(textOnly, 'phone')).toBe('text');
+    const m = await offlineManifestFromPack(textOnly, 'phone', 'source-fallback');
+    expect(m.tier).toBe('text');
   });
 });

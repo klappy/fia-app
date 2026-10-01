@@ -2,37 +2,43 @@ import { DownloadTierPicker, SecondaryAction, type TierRow } from '../components
 import { t } from '../i18n';
 import type { Tier } from './manifest';
 import { freeBytes, isQuotaError, mb } from './storage';
-import { offeredTiers, saveMinutes, tierBytesOf, tierMb, type TierBytes } from './tiers';
+import { TIERS } from './manifest';
+import { saveMinutes } from './tiers';
 import { downlink, type SaveController } from './useSaveRow';
 import { useOffline } from './useOffline';
 
-// S04 "Save for offline" row (04-passage-card.md § Layout, States): tier picker with the C-03
-// sizes, free space + time estimate, and the one outlined `Save {tier} ({mb} MB)` button wired to
+// S04 "Save for offline" row (04-passage-card.md § Layout, States): tier picker with the bytes a
+// save downloads (pack C-02 manifest; unpublished tiers shown as not available yet), free space + time estimate, and the one outlined `Save {tier} ({mb} MB)` button wired to
 // the C-07 SAVE message (OfflineClient.save). The download starts here and its ring stays here
 // (Q04-b recut); "Saved" appears only from the worker's verified STATUS (R-309).
 
 export interface SaveRowProps {
   ctl: SaveController;
-  tierBytes: TierBytes | undefined;
   /** save-intent: the primary saves, so this row offers the quiet Start instead (spec 04). */
   intent?: boolean;
   onStart?: () => void;
   onSeeDownloads: () => void;
 }
 
-export function SaveRow({ ctl, tierBytes, intent, onStart, onSeeDownloads }: SaveRowProps) {
+export function SaveRow({ ctl, intent, onStart, onSeeDownloads }: SaveRowProps) {
   const s = useOffline();
   const { rowState, tier, sizeMb } = ctl;
   const free = freeBytes(s.storage);
   const tierName = (x: Tier) => t(`s.passage.tier.${x}`);
-  const rows: TierRow[] = offeredTiers(tierBytes).map((x) => ({
-    tier: x,
-    label: tierName(x),
-    size: t('s.passage.tier-size', { mb: tierMb(tierBytes, x)! }),
-    help: t(`s.passage.tier.${x}-help`),
-    recommended: x === 'phone' ? t('s.passage.tier-recommended') : undefined,
-  }));
-  const bytes = tierBytesOf(tierBytes, tier) ?? 0;
+  // No s.passage key for an unpublished tier yet: `s.lang.cov.absent` ("not yet") until spec 04 adds one.
+  const rows: TierRow[] = TIERS.map((x) => {
+    const b = ctl.bytes[x];
+    return {
+      tier: x,
+      label: tierName(x),
+      size: b !== undefined ? t('s.passage.tier-size', { mb: mb(b) }) : t('s.lang.cov.absent'),
+      help: t(`s.passage.tier.${x}-help`),
+      recommended:
+        x === 'phone' && ctl.available.includes(x) ? t('s.passage.tier-recommended') : undefined,
+      disabled: !ctl.available.includes(x),
+    };
+  });
+  const bytes = ctl.bytes[tier] ?? 0;
   const pr = s.progress;
 
   let action;
@@ -75,19 +81,20 @@ export function SaveRow({ ctl, tierBytes, intent, onStart, onSeeDownloads }: Sav
         </span>
         <SecondaryAction
           label={t('s.passage.resume-download')}
-          state={ctl.canSave ? 'default' : 'disabled'}
-          onPress={() => void ctl.save()}
+          state={s.online && !s.saving ? 'default' : 'disabled'}
+          onPress={() => void ctl.save(p.tier)}
         />
       </div>
     );
   } else if (rowState.state === 'corrupt') {
+    const p = rowState.pack;
     action = (
       <div className="fia-save__saved" role="status">
         <span>⚠ {t('s.downloads.evicted')}</span>
         <SecondaryAction
           label={t('s.downloads.resave')}
-          state={ctl.canSave ? 'default' : 'disabled'}
-          onPress={() => void ctl.save()}
+          state={s.online && !s.saving ? 'default' : 'disabled'}
+          onPress={() => void ctl.save(p?.tier)}
         />
       </div>
     );
@@ -107,7 +114,8 @@ export function SaveRow({ ctl, tierBytes, intent, onStart, onSeeDownloads }: Sav
     );
   }
 
-  const showPicker = rowState.state === 'none' || rowState.state === 'partial';
+  // A partial save resumes at the tier it started at: no picker until it completes or is removed.
+  const showPicker = rowState.state === 'none';
   return (
     <section className="fia-save" aria-labelledby="fia-save-heading" data-testid="save-row">
       <h2 id="fia-save-heading" className="fia-save__heading">
@@ -137,7 +145,10 @@ export function SaveRow({ ctl, tierBytes, intent, onStart, onSeeDownloads }: Sav
       {ctl.failed && !isQuotaError(ctl.failed) && (
         <div className="fia-dl__band fia-dl__band--error" role="alert">
           {t('s.passage.error')}{' '}
-          <SecondaryAction label={t('s.common.try-again')} onPress={() => void ctl.save()} />
+          <SecondaryAction
+            label={t('s.common.try-again')}
+            onPress={() => void ctl.save(rowState.pack?.tier)}
+          />
         </div>
       )}
     </section>

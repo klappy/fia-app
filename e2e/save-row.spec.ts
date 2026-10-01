@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 // J-A2 steps 1–6 (prepare a phone for offline use) on the built app (vite preview + /sw.js):
-// S03 row size → S04 tier picker with C-03 sizes + storage estimate → Save Phone → verified
+// S03 row size → S04 tier picker with pack-manifest sizes + storage estimate → Save (best published tier) → verified
 // saved state on S04 and the S03 row → S13 lists it; S13 `Save a passage` lands on a card whose
 // primary saves (no loop, J-A2--P-01 rerun 3). R-306, R-307, R-309; C-07 SAVE.
 const PACK = 'spa.MRK-1-1-13';
@@ -25,7 +25,9 @@ async function openMarcos(page: Page) {
   await expect(page.locator('[data-screen="S03"]')).toBeVisible();
 }
 
-test('J-A2 1–6: size on S03, tier picker on S04, Save Phone, saved marks', async ({ page }) => {
+test('J-A2 1–6: size on S03, tier picker on S04, Save best published tier, saved marks', async ({
+  page,
+}) => {
   await openMarcos(page);
 
   // Step 1 — S03 row shows its size at the Settings tier (default Phone, M1) before any save.
@@ -34,34 +36,32 @@ test('J-A2 1–6: size on S03, tier picker on S04, Save Phone, saved marks', asy
   await expect(row.getByTestId('row-saved')).toHaveCount(0);
   await row.click();
 
-  // Step 2 — S04 save row: four tiers with sizes, Phone preselected + recommended, estimate.
+  // Step 2 — S04 save row: all four tiers shown; sizes are the bytes a save downloads (pack C-02
+  // manifest). The pack publishes only Text today, so Phone/Medium/Original read "not yet", are
+  // not selectable, and the best available tier (Text) is chosen — no Phone claim (R-307/R-309).
   await expect(page.locator('[data-screen="S04"]')).toBeVisible();
   const saveRow = page.getByTestId('save-row');
   await expect(saveRow.getByRole('heading', { name: 'Save for offline' })).toBeVisible();
-  const radios = saveRow.getByRole('radio');
-  await expect(radios).toHaveCount(4);
-  for (const tier of ['text', 'phone', 'medium', 'original'])
-    await expect(saveRow.getByTestId(`tier-size-${tier}`)).toHaveText(/^\d+(\.\d)? MB$/);
-  await expect(saveRow.locator('input[value="phone"]')).toBeChecked();
-  await expect(saveRow.locator('[data-tier="phone"]')).toContainText('recommended');
+  await expect(saveRow.getByRole('radio')).toHaveCount(4);
+  await expect(saveRow.getByTestId('tier-size-text')).toHaveText(/^\d+(\.\d)? MB$/);
+  for (const tier of ['phone', 'medium', 'original']) {
+    await expect(saveRow.getByTestId(`tier-size-${tier}`)).toHaveText('not yet');
+    await expect(saveRow.locator(`input[value="${tier}"]`)).toBeDisabled();
+  }
+  await expect(saveRow.locator('input[value="text"]')).toBeChecked();
   await expect(saveRow.getByTestId('storage-estimate')).toContainText('on this connection');
-  const phoneSize = (await saveRow.getByTestId('tier-size-phone').textContent())!.trim();
+  const textSize = (await saveRow.getByTestId('tier-size-text').textContent())!.trim();
+  // Pack manifest text tier for spa.MRK-1-1-13 = 277,189 bytes → "0.3 MB" (data/packs/…/manifest.json).
+  expect(textSize).toBe('0.3 MB');
   const save = saveRow.getByTestId('save-button');
-  await expect(save).toHaveText(`⤓ Save Phone (${phoneSize})`);
+  await expect(save).toHaveText(`⤓ Save Text (${textSize})`);
   // The primary stays Start (one primary, rule 1); the save button is the outlined secondary.
   await expect(page.locator('[data-role="primary"]')).toContainText('Start');
 
-  // Tier change re-labels the button and its size (R-307: never a button without a size).
-  await saveRow.locator('[data-tier="text"]').click();
-  const textSize = (await saveRow.getByTestId('tier-size-text').textContent())!.trim();
-  await expect(save).toHaveText(`⤓ Save Text (${textSize})`);
-  await expect(saveRow).toContainText('Sizes on other passages follow this choice');
-  await saveRow.locator('[data-tier="phone"]').click();
-  await expect(save).toHaveText(`⤓ Save Phone (${phoneSize})`);
-
-  // Steps 4–5 — Save starts here (C-07 SAVE) and the row turns to the verified saved state.
+  // Steps 4–5 — Save starts here (C-07 SAVE); the row shows the verified state, stamped with the
+  // tier actually saved and its verified bytes.
   await save.click();
-  await expect(saveRow.getByTestId('saved-row')).toContainText(/✓ Saved \(Phone, [\d.]+ MB\)/, {
+  await expect(saveRow.getByTestId('saved-row')).toContainText(`✓ Saved (Text, ${textSize})`, {
     timeout: 20_000,
   });
   await expect(saveRow.getByRole('radio')).toHaveCount(0);
@@ -72,7 +72,12 @@ test('J-A2 1–6: size on S03, tier picker on S04, Save Phone, saved marks', asy
   await expect(row.getByTestId('row-saved')).toHaveText('✓ saved');
   await page.goto('/downloads');
   await expect(page.locator('[data-screen="S13"]')).toBeVisible();
-  await expect(page.getByText(/MRK 1:1–13 · Phone · [\d.]+ MB/)).toBeVisible();
+  await expect(page.getByText(`MRK 1:1–13 · Text · ${textSize}`)).toBeVisible();
+  // `Save another passage` never reopens the saved card: it goes to the book's list (03).
+  const primary = page.locator('[data-role="primary"]');
+  await expect(primary).toContainText('Save another passage');
+  await primary.click();
+  await expect(page.locator('[data-screen="S03"]')).toBeVisible();
 });
 
 test('S13 Save a passage opens S04 in save-intent: the primary saves', async ({ page }) => {
@@ -85,7 +90,7 @@ test('S13 Save a passage opens S04 in save-intent: the primary saves', async ({ 
   await primary.click();
   await expect(page.locator('[data-screen="S04"]')).toBeVisible();
   await expect(page).toHaveURL(/\/passage\?save=1$/);
-  await expect(primary).toContainText(/Save Phone \(\d+(\.\d)? MB\)/);
+  await expect(primary).toContainText('Save Text (0.3 MB)');
   await expect(page.getByTestId('save-row').getByText('▶ Start')).toBeVisible();
   await primary.click();
   await expect(page.getByTestId('saved-row')).toBeVisible({ timeout: 20_000 });
