@@ -16,6 +16,7 @@ import {
   type PackStatus,
 } from '../offline';
 import '../offline/offline.css';
+import { flowSession } from '../flow/session';
 import { ScreenFrame } from './ScreenFrame';
 
 // S13 Downloads / Offline (R-308..R-311, R-702, R-703): every line here comes from the worker's
@@ -127,7 +128,9 @@ export default function S13DownloadsOffline() {
   let primaryLabel = saved.length
     ? t('s.downloads.primary.save-another')
     : t('s.downloads.primary.save-passage');
-  let onPrimary = () => nav('/passage');
+  // `Save a passage` lands on 04 in save-intent (its primary saves) — never on a card without
+  // Save (J-A2--P-01 rerun 3). With no passage chosen yet, the library is where one is picked.
+  let onPrimary = () => nav(flowSession().get().packId ? '/passage?save=1' : '/library');
   if (justSaved) {
     primaryLabel = t('s.downloads.primary.start-saved', { ref: packRef(justSaved) });
     onPrimary = () => nav('/guide');

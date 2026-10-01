@@ -3,10 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { bookName, matches, pericopesFor } from '../flow/catalog';
 import { flowSession, useFlow } from '../flow/session';
 import { t } from '../i18n';
+import { browserStore } from '../settings';
+import { preferredTier, saveRowState, tierMb, useOffline } from '../offline';
+import '../offline/offline.css';
 import { ScreenFrame } from './ScreenFrame';
 
 // S03 Pericope list (03-pericope-list.md): the book's pericopes from the C-03 catalog in
-// canonical order; row tap → 04. Select-and-save mode belongs to the offline lane.
+// canonical order; row tap → 04. Each row carries its size at the Settings tier (R-307, default
+// Phone) and its verified saved / partial mark (R-309). Select-and-save mode is a later slice (R-308).
 export default function S03PericopeList() {
   const nav = useNavigate();
   const session = flowSession();
@@ -20,6 +24,9 @@ export default function S03PericopeList() {
   );
   const book = rows[0] ? bookName(rows[0].title) : (snap.book ?? '');
   const shown = rows.filter((r) => matches(q, r.title, r.pericope));
+  const off = useOffline();
+  const [tier] = useState(() => preferredTier(browserStore()));
+  const tierName = t(`s.passage.tier.${tier}`);
   return (
     <ScreenFrame id="S03" title={book} dockActive="guide" primaryLabel={null}>
       <input
@@ -47,21 +54,46 @@ export default function S03PericopeList() {
         <p>{t('s.pericopes.empty-search', { book })}</p>
       )}
       <ul className="fia-list">
-        {shown.map((r) => (
-          <li key={r.packId}>
-            <button
-              type="button"
-              className="fia-row"
-              data-pack-id={r.packId}
-              onClick={() => {
-                session.selectPack(r.packId);
-                nav('/passage');
-              }}
-            >
-              {r.title}
-            </button>
-          </li>
-        ))}
+        {shown.map((r) => {
+          const size = tierMb(r.tierBytes, tier);
+          const st = saveRowState(r.packId, off.packs, off.saving);
+          return (
+            <li key={r.packId}>
+              <button
+                type="button"
+                className="fia-row"
+                data-pack-id={r.packId}
+                onClick={() => {
+                  session.selectPack(r.packId);
+                  nav('/passage');
+                }}
+              >
+                <span className="fia-row__line">
+                  <span>{r.title}</span>
+                  {st.state === 'saved' && (
+                    <span className="fia-mark fia-mark--source" data-testid="row-saved">
+                      ✓ {t('s.pericopes.saved')}
+                    </span>
+                  )}
+                  {st.state === 'partial' && st.pack && (
+                    <span className="fia-mark">
+                      ◐{' '}
+                      {t('s.common.mark.partial', {
+                        saved: st.pack.savedFiles ?? 0,
+                        total: st.pack.files ?? 0,
+                      })}
+                    </span>
+                  )}
+                </span>
+                {size && (
+                  <span className="fia-caption" data-testid="row-size">
+                    {t('s.pericopes.size', { tier: tierName, mb: size })}
+                  </span>
+                )}
+              </button>
+            </li>
+          );
+        })}
       </ul>
     </ScreenFrame>
   );
