@@ -4,7 +4,14 @@ import { bookName, matches, pericopesFor } from '../flow/catalog';
 import { flowSession, useFlow } from '../flow/session';
 import { t } from '../i18n';
 import { browserStore, DATA_PATHS, fetchJson } from '../settings';
-import { measuredMap, preferredTier, rowSize, saveRowState, useOffline } from '../offline';
+import {
+  measuredMap,
+  preferredTier,
+  rowSize,
+  saveRowState,
+  useOffline,
+  useOnline,
+} from '../offline';
 import '../offline/offline.css';
 import { ScreenFrame } from './ScreenFrame';
 
@@ -16,6 +23,7 @@ export default function S03PericopeList() {
   const session = flowSession();
   const snap = useFlow(session);
   const [q, setQ] = useState('');
+  const online = useOnline();
   useEffect(() => void session.loadCatalog(), [session]);
   const language = snap.language ?? 'eng';
   const rows = useMemo(
@@ -50,6 +58,7 @@ export default function S03PericopeList() {
         value={q}
         onChange={(e) => setQ(e.target.value)}
       />
+      {!online && <p className="fia-caption">{t('s.pericopes.offline-hint')}</p>}
       {snap.catalogStatus === 'error' && (
         <div role="alert">
           <p>{t('s.pericopes.error', { book })}</p>
@@ -102,6 +111,12 @@ export default function S03PericopeList() {
                         saved: st.pack.savedFiles ?? 0,
                         total: st.pack.files ?? 0,
                       })}
+                    </span>
+                  )}
+                  {!online && st.state !== 'saved' && (
+                    // pericope-card.md offline: unsaved rows stay tappable; the fact is a badge.
+                    <span className="fia-badge--needs-connection" data-role="needs-connection">
+                      {t('s.common.not-saved-badge')}
                     </span>
                   )}
                 </span>

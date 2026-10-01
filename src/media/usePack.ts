@@ -32,20 +32,8 @@ export function usePackFile<T>(packId: string, file: string): Load<T> {
   return state;
 }
 
-export function useOnline(): boolean {
-  const [online, setOnline] = useState(typeof navigator === 'undefined' ? true : navigator.onLine);
-  useEffect(() => {
-    const on = () => setOnline(true);
-    const off = () => setOnline(false);
-    window.addEventListener('online', on);
-    window.addEventListener('offline', off);
-    return () => {
-      window.removeEventListener('online', on);
-      window.removeEventListener('offline', off);
-    };
-  }, []);
-  return online;
-}
+// Moved to src/offline/useOnline.ts (R-702); re-exported so screens keep their import.
+export { useOnline } from '../offline/useOnline';
 
 /** Language code from a pack id (`spa.MRK-1-1-13` → `spa`). */
 export const packLanguage = (packId: string) => packId.split('.')[0];
