@@ -5,14 +5,16 @@ import { validateV1, type StandaloneValidate } from './c16-validators.generated.
 /** The slice of an R2 bucket this Worker uses (R2Bucket in @cloudflare/workers-types). */
 export interface FeedbackBucket {
   head(key: string): Promise<unknown | null>;
+  /** With `onlyIf` and a failed precondition, R2 returns null instead of the object. */
   put(
     key: string,
     value: string,
     options?: {
+      onlyIf?: Headers;
       httpMetadata?: { contentType?: string };
       customMetadata?: Record<string, string>;
     },
-  ): Promise<unknown>;
+  ): Promise<unknown | null>;
 }
 
 export interface Env {
@@ -25,6 +27,9 @@ export const FEEDBACK_PATH = '/api/feedback';
 /** C-16 text ≤ 4000 code points (≤ 16 000 UTF-8 bytes) + contact ≤ 200 + context fields. */
 export const MAX_BODY_BYTES = 32 * 1024;
 const MAX_ERRORS = 10;
+/** R2 caps customMetadata at 2 KiB in total; each value is cut well below that. */
+const META_MAX = 64;
+const STORAGE_DOWN = { error: 'storage-unavailable' };
 
 /** Every C-16 major ever shipped, keyed by `schemaVersion` (queued items may be weeks old). */
 const VALIDATORS: Record<number, StandaloneValidate> = { 1: validateV1 };
@@ -75,9 +80,16 @@ async function readCapped(request: Request, limit: number): Promise<string | nul
   return new TextDecoder('utf-8', { fatal: true }).decode(buf);
 }
 
+/**
+ * One id → one key. The C-16 `uuid` format (ajv-formats) is case-insensitive and also accepts an
+ * optional `urn:uuid:` prefix, so both are normalized away: bare, lower-case uuid.
+ */
+export function canonicalId(id: string): string {
+  return id.replace(/^urn:uuid:/i, '').toLowerCase();
+}
+
 export function feedbackKey(id: string): string {
-  // Lower-case: the C-16 uuid format is case-insensitive, so one id → one object.
-  return `feedback/v1/${id.toLowerCase()}.json`;
+  return `feedback/v1/${canonicalId(id)}.json`;
 }
 
 export async function handleFeedback(request: Request, env: Env, now = new Date()) {
@@ -120,23 +132,33 @@ export async function handleFeedback(request: Request, env: Env, now = new Date(
     return json(400, { error: 'invalid', errors });
   }
 
-  if (!env.FEEDBACK) return json(503, { error: 'storage-unavailable' }, { 'retry-after': '3600' });
+  const bucket = env.FEEDBACK;
+  if (!bucket) return json(503, STORAGE_DOWN, { 'retry-after': '3600' });
 
   const p = payload as { id: string; schemaVersion: number; appVersion: string };
-  const key = feedbackKey(p.id);
-  // Idempotent by id: a resend after reconnect finds the stored object and stores nothing.
-  // R2 is strongly consistent (read-after-write), and an existing object is never overwritten.
-  if (await env.FEEDBACK.head(key)) return json(200, { id: p.id, status: 'duplicate' });
-
+  const id = canonicalId(p.id);
+  const key = feedbackKey(id);
+  const duplicate = () => json(200, { id, status: 'duplicate' });
   const receivedAt = now.toISOString();
-  // Stored: the payload as validated + receive time. No IP, no user agent, no headers (R-905).
-  await env.FEEDBACK.put(key, JSON.stringify({ receivedAt, payload }), {
-    httpMetadata: { contentType: 'application/json' },
-    customMetadata: {
-      receivedAt,
-      schemaVersion: String(p.schemaVersion),
-      appVersion: p.appVersion,
-    },
-  });
-  return json(201, { id: p.id, status: 'stored' });
+  try {
+    // Fast path: a resend after reconnect finds the stored object and writes nothing.
+    if (await bucket.head(key)) return duplicate();
+    // Race-safe path: create-only put (If-None-Match: *). Two first sends of one id can both
+    // miss head(); R2 lets exactly one put win and returns null to the other → duplicate.
+    // Stored: the payload as validated + receive time. No IP, no user agent, no headers (R-905).
+    const stored = await bucket.put(key, JSON.stringify({ receivedAt, payload }), {
+      onlyIf: new Headers({ 'if-none-match': '*' }),
+      httpMetadata: { contentType: 'application/json' },
+      customMetadata: {
+        receivedAt,
+        schemaVersion: String(p.schemaVersion),
+        appVersion: p.appVersion.slice(0, META_MAX),
+      },
+    });
+    if (stored === null) return duplicate();
+  } catch {
+    // R2 failure: a JSON 503 the client retries later, never an unhandled 500.
+    return json(503, STORAGE_DOWN, { 'retry-after': '60' });
+  }
+  return json(201, { id, status: 'stored' });
 }

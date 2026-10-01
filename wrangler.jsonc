@@ -1,15 +1,17 @@
 {
   // Cloudflare Workers static assets for the Alpha PWA (R-708). Captain ruling: domain
   // fiaguide.app, three environments. Workers Builds deploys with
-  //   npx wrangler deploy --env dev         (branch main)       -> dev.fiaguide.app
-  //   npx wrangler deploy --env staging     (branch staging)    -> staging.fiaguide.app
-  //   npx wrangler deploy --env production  (branch production) -> fiaguide.app
+  //   npm run deploy:dev         (branch main)       -> dev.fiaguide.app
+  //   npm run deploy:staging     (branch staging)    -> staging.fiaguide.app
+  //   npm run deploy:production  (branch production) -> fiaguide.app
+  // Each runs `wrangler deploy --env <env> --no-x-provision`: wrangler 4.45+ otherwise CREATES a
+  // missing R2 bucket on deploy; with the flag a missing bucket fails the deploy loudly.
   // Custom domains are attached account-side (Otto); no routes live in this file.
   // Build command: `npm run build` = `vite build` only — tests gate the PR in CI, never the build.
   // Worker entry (R-705): worker/index.ts answers `/api/*` only (run_worker_first); every other
   // path is served by the ASSETS binding with the same SPA/trailing-slash handling as before.
   // FEEDBACK is an R2 bucket per env (bindings are not inherited by envs, so each env names its
-  // own). The buckets are created account-side by Otto before this deploys — never from here.
+  // own). The buckets are created account-side by Otto before this deploys — never by CI.
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "fia-app",
   "main": "worker/index.ts",

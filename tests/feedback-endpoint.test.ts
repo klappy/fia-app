@@ -5,6 +5,7 @@ import worker from '../worker/index';
 import {
   FEEDBACK_PATH,
   MAX_BODY_BYTES,
+  canonicalId,
   feedbackKey,
   handleFeedback,
   type Env,
@@ -18,12 +19,18 @@ const URL_ = `${ORIGIN}${FEEDBACK_PATH}`;
 const ID = '6f1d2c3e-9a8b-4c7d-8e6f-0a1b2c3d4e5f';
 const valid = () => structuredClone(c16.examples[0]) as Record<string, unknown>;
 
-function memoryBucket() {
+/** In-memory R2 slice: honours `onlyIf: If-None-Match: *` (create-only) like R2 does. */
+function memoryBucket(opts: { headGate?: Promise<void> } = {}) {
   const objects = new Map<string, { value: string; meta?: Record<string, string> }>();
   let puts = 0;
   const bucket: FeedbackBucket = {
-    head: async (k) => (objects.has(k) ? { key: k } : null),
+    head: async (k) => {
+      const seen = objects.has(k);
+      await opts.headGate;
+      return seen ? { key: k } : null;
+    },
     put: async (k, value, o) => {
+      if (o?.onlyIf?.get('if-none-match') === '*' && objects.has(k)) return null;
       puts++;
       objects.set(k, { value, meta: o?.customMetadata });
       return { key: k };
@@ -92,6 +99,60 @@ describe('POST /api/feedback (C-16)', () => {
     expect(m.objects.size).toBe(1);
     expect(m.puts()).toBe(1);
     expect(JSON.parse(m.objects.get(feedbackKey(ID))!.value).payload.text).toBe(valid().text);
+  });
+
+  it('concurrent first sends of one id race past head(): one 201, one 200, one object', async () => {
+    let open!: () => void;
+    const m = memoryBucket({ headGate: new Promise<void>((r) => (open = r)) });
+    const env = envWith(m.bucket);
+    const a = worker.fetch(post(valid()), env);
+    const b = worker.fetch(post({ ...valid(), text: 'second' }), env);
+    await new Promise((r) => setTimeout(r, 10));
+    open();
+    const statuses = (await Promise.all([a, b])).map((r) => r.status).sort();
+    expect(statuses).toEqual([200, 201]);
+    expect(m.puts()).toBe(1);
+    expect(m.objects.size).toBe(1);
+  });
+
+  it('id normalized: urn:uuid: prefix and upper case map to the same key', async () => {
+    expect(canonicalId(`urn:uuid:${ID.toUpperCase()}`)).toBe(ID);
+    const m = memoryBucket();
+    const env = envWith(m.bucket);
+    const first = await worker.fetch(post({ ...valid(), id: `urn:uuid:${ID}` }), env);
+    expect(first.status).toBe(201);
+    expect(await first.json()).toEqual({ id: ID, status: 'stored' });
+    expect([...m.objects.keys()]).toEqual([`feedback/v1/${ID}.json`]);
+    expect(
+      (await worker.fetch(post({ ...valid(), id: `URN:UUID:${ID.toUpperCase()}` }), env)).status,
+    ).toBe(200);
+    expect(m.objects.size).toBe(1);
+  });
+
+  it('R2 failures → 503 JSON, never an unhandled 500', async () => {
+    const boom = async () => {
+      throw new Error('r2 down');
+    };
+    for (const bucket of [
+      { head: boom, put: async () => ({}) },
+      { head: async () => null, put: boom },
+    ] as FeedbackBucket[]) {
+      const res = await worker.fetch(post(valid()), envWith(bucket));
+      expect(res.status).toBe(503);
+      expect(res.headers.get('content-type')).toContain('application/json');
+      expect(await res.json()).toEqual({ error: 'storage-unavailable' });
+    }
+  });
+
+  it('customMetadata stays far under R2 2 KiB (long appVersion is cut)', async () => {
+    const m = memoryBucket();
+    const appVersion = `${'9'.repeat(5000)}.0.0+abc1234`;
+    expect((await worker.fetch(post({ ...valid(), appVersion }), envWith(m.bucket))).status).toBe(
+      201,
+    );
+    const meta = m.objects.get(feedbackKey(ID))!.meta!;
+    const bytes = Object.entries(meta).reduce((n, [k, v]) => n + k.length + v.length, 0);
+    expect(bytes).toBeLessThan(256);
   });
 
   it.each([

@@ -23,7 +23,10 @@
     "smoke:deployed": "playwright test e2e/smoke.spec.ts e2e/deployed.spec.ts",
     "generate": "npm run tokens && npm run strings && npm run generate:worker",
     "generate:worker": "node scripts/build-worker-validators.mjs",
-    "deploy": "wrangler deploy --env dev"
+    "deploy": "npm run deploy:dev",
+    "deploy:dev": "wrangler deploy --env dev --no-x-provision",
+    "deploy:staging": "wrangler deploy --env staging --no-x-provision",
+    "deploy:production": "wrangler deploy --env production --no-x-provision"
   },
   "dependencies": {
     "ajv": "^8.17.1",
