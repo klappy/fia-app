@@ -1,67 +1,105 @@
-import { useState } from 'react';
 import { t } from '../i18n';
 import { stateAttrs, type StateProps } from './types';
 
-// feedback-form.md — compose, attach context, received / queued (R-705; contract C-16).
-export interface FeedbackContext {
-  version: string;
-  language: string;
-  pericope?: string;
-  unit?: string;
-  theme: 'light' | 'dark';
-  textStep: string;
-}
+// feedback-form.md — compose + attach context (R-705; contract C-16). Controlled: S16 owns the
+// draft and builds/validates the C-16 payload (src/feedback/payload.ts).
+export const FEEDBACK_REASONS = ['confusing', 'wrong', 'broken', 'other'] as const;
+export type FeedbackReason = (typeof FEEDBACK_REASONS)[number];
 
 export interface FeedbackFormProps extends StateProps {
-  context: FeedbackContext;
-  reasons?: string[];
-  onSubmit?: (text: string, reason?: string) => void;
+  text: string;
+  contact: string;
+  onText: (v: string) => void;
+  onContact: (v: string) => void;
+  /** Human context line(s) for the "We will attach" card (already formatted). */
+  contextLines: string[];
+  needText?: boolean;
+  /** Contact is not an email or phone C-16 accepts: error shown on the field itself. */
+  contactInvalid?: boolean;
+  readOnly?: boolean;
 }
 
 export function FeedbackForm({
-  context,
-  reasons = [],
-  onSubmit,
+  text,
+  contact,
+  onText,
+  onContact,
+  contextLines,
+  needText,
+  contactInvalid,
+  readOnly,
   state = 'default',
   className,
 }: FeedbackFormProps) {
-  const [text, setText] = useState('');
-  const [reason, setReason] = useState<string | undefined>();
   return (
-    <form
-      className={['fia-feedback', className].filter(Boolean).join(' ')}
-      {...stateAttrs(state)}
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (text.trim()) onSubmit?.(text, reason);
-      }}
-    >
-      {reasons.length > 0 && (
-        <div className="fia-feedback__reasons" role="group">
-          {reasons.map((r) => (
+    <div className={['fia-feedback', className].filter(Boolean).join(' ')} {...stateAttrs(state)}>
+      <label htmlFor="fia-feedback-text" className="fia-label">
+        {t('s.feedback.prompt')}
+      </label>
+      {/* M18 reason chips: C-16 1.1.0 has no `reason` field, so a chip writes its word into the
+          text the person can see and edit — nothing hidden is sent. */}
+      <div className="fia-feedback__reasons" role="group" aria-label={t('s.feedback.prompt')}>
+        {FEEDBACK_REASONS.map((r) => {
+          const word = t(`s.feedback.reason.${r}`);
+          return (
             <button
               key={r}
               type="button"
               className="fia-chip"
-              aria-pressed={reason === r}
-              onClick={() => setReason(r)}
+              disabled={readOnly}
+              aria-pressed={text.trim().toLowerCase().startsWith(word.toLowerCase())}
+              onClick={() => onText(text.trim() ? `${word}: ${text}` : `${word}: `)}
             >
-              {r}
+              {word}
             </button>
-          ))}
-        </div>
-      )}
+          );
+        })}
+      </div>
       <textarea
-        aria-label={t('s.feedback.title')}
+        id="fia-feedback-text"
+        dir="auto"
         value={text}
-        onChange={(e) => setText(e.target.value)}
-        rows={5}
-        disabled={state === 'disabled'}
+        placeholder={t('s.feedback.placeholder')}
+        onChange={(e) => onText(e.target.value)}
+        rows={6}
+        maxLength={4000}
+        readOnly={readOnly}
+        aria-invalid={needText || undefined}
+        aria-describedby={needText ? 'fia-feedback-need' : undefined}
       />
-      <p className="fia-caption">
-        {context.version} · {context.language} · {context.pericope ?? '—'} · {context.theme} ·{' '}
-        {context.textStep}
-      </p>
-    </form>
+      {needText && (
+        <p id="fia-feedback-need" role="alert" className="fia-caption">
+          {t('s.feedback.need-text')}
+        </p>
+      )}
+      <section className="fia-card fia-feedback__context">
+        <h3 className="fia-caption">{t('s.feedback.attach-header')}</h3>
+        {contextLines.map((l) => (
+          <p key={l}>{l}</p>
+        ))}
+      </section>
+      <label htmlFor="fia-feedback-contact" className="fia-label">
+        {t('s.feedback.contact')}
+      </label>
+      <input
+        id="fia-feedback-contact"
+        dir="auto"
+        type="text"
+        inputMode="email"
+        autoComplete="email"
+        value={contact}
+        maxLength={200}
+        readOnly={readOnly}
+        aria-invalid={contactInvalid || undefined}
+        aria-describedby={contactInvalid ? 'fia-feedback-contact-error' : undefined}
+        onChange={(e) => onContact(e.target.value)}
+      />
+      {contactInvalid && (
+        <p id="fia-feedback-contact-error" role="alert" className="fia-caption">
+          {t('s.feedback.contact-invalid')}
+        </p>
+      )}
+      <p className="fia-caption">{t('s.feedback.anon-note')}</p>
+    </div>
   );
 }
