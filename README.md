@@ -46,7 +46,7 @@ Cloudflare Workers static assets (`wrangler.jsonc`), domain **fiaguide.app**, th
 | `staging`    | `npx wrangler deploy --env staging`    | `fia-app-staging` | staging.fiaguide.app           |
 | `production` | `npx wrangler deploy --env production` | `fia-app`         | fiaguide.app                   |
 
-No routes or custom domains live in the repo; `workers_dev` stays on for preview URLs. Production merges are the captain's.
+No routes or custom domains live in the repo; `workers_dev` stays on for preview URLs. Every build stamps `/version.json` (version, commit, branch, builtAt); `.github/workflows/post-deploy.yml` waits for each env to serve the pushed commit, then runs the smoke against it. Promotion dev → staging → production, rollback and hotfix: **[RELEASING.md](RELEASING.md)**.
 
 ## Sources of truth
 
