@@ -1,0 +1,65 @@
+/* L2 offline screens (S13, S17, SH-3, SH-4) — tokens only, logical properties (RTL). */
+.fia-dl__storage {
+  display: grid;
+  gap: var(--fia-space-3);
+  padding-inline: var(--fia-gutter);
+}
+.fia-dl__section {
+  padding-inline: var(--fia-gutter);
+  display: grid;
+  gap: var(--fia-space-5);
+}
+.fia-dl__section-head {
+  font-size: 14px;
+  text-transform: uppercase;
+  min-block-size: 40px;
+  display: flex;
+  align-items: end;
+  margin: 0;
+}
+.fia-dl__pack {
+  display: grid;
+  gap: var(--fia-space-3);
+}
+.fia-dl__bar {
+  block-size: 8px;
+  border-radius: 4px;
+  background: var(--fia-hairline, #d4d9e2);
+  overflow: hidden;
+}
+.fia-dl__bar > span {
+  display: block;
+  block-size: 100%;
+  background: var(--fia-primary, #4c6a8a);
+}
+.fia-dl__band {
+  padding: var(--fia-space-5);
+  border-radius: var(--fia-r-sm);
+  background: var(--fia-stop-band);
+}
+.fia-dl__band--error {
+  background: var(--fia-error-tint);
+  color: var(--fia-error-tint-text);
+}
+.fia-dl__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--fia-space-5);
+  align-items: center;
+}
+.fia-dl__empty {
+  text-align: center;
+  margin-block-start: 30vh;
+  padding-inline: var(--fia-gutter);
+}
+.fia-install__steps {
+  padding-inline: var(--fia-gutter);
+  display: grid;
+  gap: var(--fia-space-5);
+}
+.fia-notice--version {
+  margin-inline: var(--fia-gutter);
+  min-block-size: 48px;
+  border: 0;
+  font: inherit;
+}

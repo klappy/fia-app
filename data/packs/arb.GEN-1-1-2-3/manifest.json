@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "packId": "arb.GEN-1-1-2-3",
+  "language": "arb",
+  "direction": "rtl",
+  "pericope": "GEN-1-1-2-3",
+  "passage": "GEN 1:1-2:3",
+  "preparedAt": "2026-09-30T21:52:45.247Z",
+  "sourceRevisions": {
+    "FIATranslationGuide": "eb744452eb8d7c852caadde9d3181cddfe571119",
+    "FIAKeyTerms": "a39260670bba9d87d902e0fa0ae447341343481f",
+    "ArabicVanDyckBible": "a78f02395753d3baa64dab21fd08e254aafe8b00",
+    "BiblicaOpenNewArabicVersion2012": "c7078f9acb609647add7d1422b57a19ad99c2666"
+  },
+  "resourceTypes": [
+    "guide",
+    "scripture",
+    "term"
+  ],
+  "tiers": {
+    "text": {
+      "bytes": 277805,
+      "files": [
+        {
+          "path": "/packs/arb.GEN-1-1-2-3/guide.json",
+          "bytes": 110973,
+          "sha256": "86fda682f845a1f4bf33f5f2ae1f9d722e83e2396e73f4223f2aeb7abf554648",
+          "mime": "application/json"
+        },
+        {
+          "path": "/packs/arb.GEN-1-1-2-3/guide-units.json",
+          "bytes": 26571,
+          "sha256": "68288690eb5bdcb4b2eef4f8671445b2e450fa3596e29272ee1522cb5200e0c1",
+          "mime": "application/json"
+        },
+        {
+          "path": "/packs/arb.GEN-1-1-2-3/scripture.json",
+          "bytes": 51354,
+          "sha256": "00955131638bf52b294aaa546c9182b8f5f629ccd63c9bf7b8b549ca730bda0d",
+          "mime": "application/json"
+        },
+        {
+          "path": "/packs/arb.GEN-1-1-2-3/resources.json",
+          "bytes": 42252,
+          "sha256": "b7115fa6cfb7e54d1e3e5f83b5c5cb0e31922a85c62510123f85c54abd631632",
+          "mime": "application/json"
+        },
+        {
+          "path": "/packs/arb.GEN-1-1-2-3/narration.json",
+          "bytes": 94,
+          "sha256": "8e085db5cc6b34b335ee929fd459b7ee729f4edc25a180d44b930fd2ea6b0fac",
+          "mime": "application/json"
+        },
+        {
+          "path": "/packs/arb.GEN-1-1-2-3/narration-plan.json",
+          "bytes": 46561,
+          "sha256": "4d08f1eddc2928e86cd26a23ef5f5f5bb926f677aec5235e4ff66c1cf0c9a64e",
+          "mime": "application/json"
+        }
+      ]
+    }
+  },
+  "counts": {
+    "steps": 6,
+    "units": 118,
+    "stops": 1,
+    "terms": 7,
+    "termAudio": 0,
+    "images": 0,
+    "maps": 0,
+    "videos": 0,
+    "scripture": 2,
+    "scriptureFallback": 0
+  },
+  "provenance": {
+    "text": {
+      "source": 127,
+      "generated": 0,
+      "missing": 0
+    },
+    "audio": {
+      "source": 0,
+      "generated": 0,
+      "missing": 127
+    },
+    "description": {
+      "source": 0,
+      "generated": 0,
+      "missing": 0
+    }
+  },
+  "rights": [
+    "FIATranslationGuide@eb74445",
+    "FIAKeyTerms@a392606",
+    "ArabicVanDyckBible@a78f023",
+    "BiblicaOpenNewArabicVersion2012@c7078f9"
+  ]
+}
