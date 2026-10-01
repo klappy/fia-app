@@ -1,0 +1,104 @@
+name: post-deploy
+
+# The gate that a deploy (or promotion) actually landed. Workers Builds deploys each env
+# branch (main → dev, staging → staging, production → production); this workflow waits
+# until <env>/version.json reports the pushed commit, then runs the smoke against the
+# live URL. Read-only: it never deploys, it only observes. See RELEASING.md.
+on:
+  push:
+    branches: [main, staging, production]
+  workflow_dispatch:
+    inputs:
+      env:
+        description: Environment to check
+        required: true
+        type: choice
+        options: [dev, staging, production]
+      commit:
+        description: Expected commit (blank = skip the commit match, smoke only)
+        required: false
+        type: string
+
+concurrency:
+  group: post-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Resolve env URL and expected commit
+        id: target
+        env:
+          EVENT: ${{ github.event_name }}
+          INPUT_ENV: ${{ inputs.env }}
+          INPUT_COMMIT: ${{ inputs.commit }}
+          REF_NAME: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
+        run: |
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            env="$INPUT_ENV"; commit="$INPUT_COMMIT"
+          else
+            case "$REF_NAME" in
+              main) env=dev ;;
+              staging) env=staging ;;
+              production) env=production ;;
+              *) echo "no env for $REF_NAME"; exit 1 ;;
+            esac
+            commit="$SHA"
+          fi
+          case "$env" in
+            dev) url=https://dev.fiaguide.app ;;
+            staging) url=https://staging.fiaguide.app ;;
+            production) url=https://fiaguide.app ;;
+          esac
+          echo "env=$env" >> "$GITHUB_OUTPUT"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
+          echo "### post-deploy: $env ($url) expecting \`${commit:-any}\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Wait for version.json to report the commit (10 min)
+        if: steps.target.outputs.commit != ''
+        env:
+          URL: ${{ steps.target.outputs.url }}
+          EXPECT: ${{ steps.target.outputs.commit }}
+        run: |
+          deadline=$(( $(date +%s) + 600 ))
+          while :; do
+            body=$(curl -fsS -H 'Cache-Control: no-cache' "$URL/version.json?t=$(date +%s%N)" 2>/dev/null || true)
+            got=$(printf '%s' "$body" | jq -r '.commit // empty' 2>/dev/null || true)
+            if [ "$got" = "$EXPECT" ]; then
+              echo "landed: $(printf '%s' "$body" | jq -c .)"
+              echo "landed: \`$(printf '%s' "$body" | jq -c .)\`" >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            if [ "$(date +%s)" -ge "$deadline" ]; then
+              echo "::error::$URL never served $EXPECT within 10 min (last commit: ${got:-none})"
+              exit 1
+            fi
+            echo "waiting: serving ${got:-none}"
+            sleep 15
+          done
+
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Deployed smoke
+        env:
+          BASE_URL: ${{ steps.target.outputs.url }}
+          EXPECT_COMMIT: ${{ steps.target.outputs.commit }}
+        run: npm run smoke:deployed
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: post-deploy-${{ steps.target.outputs.env }}-report
+          path: playwright-report
+          retention-days: 7
