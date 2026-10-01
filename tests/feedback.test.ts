@@ -241,6 +241,31 @@ describe('feedback transport + flush (R-705, mocked fetch)', () => {
     expect(backoffMs(99)).toBe(5 * 60_000);
   });
 
+  it('200 duplicate → received; 400/413/415 → failed, never retried; 403/404 stay waiting', async () => {
+    mockFetch(async () => respond(200));
+    const dup = new Outbox(memoryStore());
+    dup.enqueue(payload());
+    expect(await dup.flush(fetchTransport('/api/feedback'))).toBe(1);
+    expect(dup.get(ID)?.status).toBe('received');
+    for (const code of [400, 413, 415]) {
+      const f = mockFetch(async () => respond(code));
+      const box = new Outbox(memoryStore());
+      box.enqueue(payload());
+      expect(await box.flush(fetchTransport('/api/feedback'))).toBe(0);
+      expect(box.get(ID)).toMatchObject({ status: 'failed', failedStatus: code, attempts: 1 });
+      expect(box.counts()).toEqual({ sent: 0, waiting: 0 });
+      expect(await box.flush(fetchTransport('/api/feedback'))).toBe(0);
+      expect(f).toHaveBeenCalledTimes(1);
+    }
+    for (const code of [403, 404, 500]) {
+      mockFetch(async () => respond(code));
+      const box = new Outbox(memoryStore());
+      box.enqueue(payload());
+      await box.flush(fetchTransport('/api/feedback'));
+      expect(box.get(ID)?.status).toBe('waiting');
+    }
+  });
+
   it('a 2xx HTML page (SPA fallback, not the endpoint) is never counted as received', async () => {
     mockFetch(async () => respond(200, 'text/html; charset=utf-8'));
     const box = new Outbox(memoryStore());

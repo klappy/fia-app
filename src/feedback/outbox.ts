@@ -1,5 +1,7 @@
 // Feedback outbox (R-705, C-16). Items are queued locally, idempotent by C-16 `id`, and marked
-// `received` only on a 2xx from the feedback endpoint. Send posts at once when online; anything
+// `received` only on a 2xx from the feedback endpoint (201 stored, 200 duplicate). A final refusal
+// (400 invalid, 413 too large, 415 not JSON) marks the item `failed`: resending the same bytes can
+// never succeed, so it is not retried. 5xx, other statuses and network errors stay `waiting`. Send posts at once when online; anything
 // still `waiting` is flushed on the `online` event, on app open, and on a backoff timer.
 // C-16 names IndexedDB for the outbox; this train keeps it in the KeyValueStore seam
 // (localStorage) until L2's storage layer lands.
@@ -11,9 +13,11 @@ export const OUTBOX_LIMIT = 50;
 
 export interface OutboxItem {
   payload: FeedbackPayload;
-  status: 'waiting' | 'received';
+  status: 'waiting' | 'received' | 'failed';
   queuedAt: string;
   receivedAt?: string;
+  /** Set with `failed`: the final HTTP status the endpoint refused the item with. */
+  failedStatus?: number;
   attempts: number;
   /** Earliest time an automatic (timer) retry may try again; Send / online / app open ignore it. */
   nextAttemptAt?: string;
@@ -21,6 +25,9 @@ export interface OutboxItem {
 
 /** A transport returns the HTTP status (or throws when offline). */
 export type Transport = (p: FeedbackPayload) => Promise<number>;
+
+/** Endpoint refusals that no resend can fix (fia-app#16 worker/feedback.ts responses). */
+export const FINAL_STATUSES: readonly number[] = [400, 413, 415];
 
 /** Same-origin Worker route (C-16 endpoint, owner Otto). */
 export const DEFAULT_FEEDBACK_ENDPOINT = '/api/feedback';
@@ -87,11 +94,11 @@ export function onOutboxChange(f: () => void): () => void {
   return () => void listeners.delete(f);
 }
 
-/** Keep at most OUTBOX_LIMIT items by dropping the oldest `received` ones; `waiting` stay. */
+/** Keep at most OUTBOX_LIMIT items by dropping the oldest settled (received / failed) ones. */
 function trimReceived(items: OutboxItem[]): OutboxItem[] {
   let extra = items.length - OUTBOX_LIMIT;
   if (extra <= 0) return items;
-  return items.filter((i) => !(i.status === 'received' && extra-- > 0));
+  return items.filter((i) => !(i.status !== 'waiting' && extra-- > 0));
 }
 
 export class Outbox {
@@ -165,7 +172,7 @@ export class Outbox {
   counts() {
     const l = this.list();
     const sent = l.filter((i) => i.status === 'received').length;
-    return { sent, waiting: l.length - sent };
+    return { sent, waiting: l.filter((i) => i.status === 'waiting').length };
   }
 
   /** When the next automatic retry is due (ms epoch), or `undefined` when nothing waits. */
@@ -175,8 +182,8 @@ export class Outbox {
   }
 
   /**
-   * Try waiting items, one POST per id; mark `received` only on 2xx, anything else stays
-   * `waiting` with a backoff. `due: true` (the retry timer) skips items still backing off;
+   * Try waiting items, one POST per id; mark `received` only on 2xx, `failed` on a final
+   * refusal (FINAL_STATUSES), anything else stays `waiting` with a backoff. `due: true` (the retry timer) skips items still backing off;
    * Send, `online` and app open try every waiting item. Without a transport nothing is sent.
    */
   async flush(
@@ -193,9 +200,11 @@ export class Outbox {
       if (opts.due && it.nextAttemptAt && Date.parse(it.nextAttemptAt) > now().getTime()) continue;
       inFlight.add(id);
       let ok = false;
+      let final: number | undefined;
       try {
         const status = await transport(it.payload);
         ok = status >= 200 && status < 300;
+        if (FINAL_STATUSES.includes(status)) final = status;
       } catch {
         /* offline or network error: stays waiting */
       } finally {
@@ -206,6 +215,10 @@ export class Outbox {
         if (ok) {
           i.status = 'received';
           i.receivedAt = now().toISOString();
+          delete i.nextAttemptAt;
+        } else if (final !== undefined && i.status === 'waiting') {
+          i.status = 'failed';
+          i.failedStatus = final;
           delete i.nextAttemptAt;
         } else if (i.status === 'waiting') {
           i.nextAttemptAt = new Date(now().getTime() + backoffMs(i.attempts)).toISOString();

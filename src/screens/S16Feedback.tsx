@@ -60,7 +60,11 @@ export default function S16Feedback() {
   const [sending, setSending] = useState(false);
   // re-render "Your feedback" when the outbox flushes in the background
   const [, setRev] = useState(0);
-  useEffect(() => onOutboxChange(() => setRev((n) => n + 1)), []);
+  useEffect(() => {
+    const off = onOutboxChange(() => setRev((n) => n + 1));
+    setRev((n) => n + 1); // catch a flush that landed between first render and subscribe
+    return off;
+  }, []);
   // where the person was: the live guide session (read once; S16 never loads a guide itself)
   const [flow] = useState(() => {
     const snap = flowSession().get();
@@ -154,6 +158,11 @@ export default function S16Feedback() {
       }
     }
     const item = outbox.get(id);
+    if (item?.status === 'failed') {
+      // refused for good (e.g. 400): never claim it was kept or sent; the draft stays
+      setNotice('error');
+      return;
+    }
     setPhase({
       kind: 'result',
       ref: refOf(id),
@@ -250,7 +259,9 @@ function YourFeedback({ items }: { items: ReturnType<Outbox['recent']> }) {
               >
                 {i.status === 'received'
                   ? t('s.feedback.row-received', { ref, time })
-                  : t('s.feedback.row-waiting', { ref, time })}
+                  : i.status === 'failed'
+                    ? t('s.feedback.row-failed', { ref, time })
+                    : t('s.feedback.row-waiting', { ref, time })}
               </button>
             </li>
           );

@@ -91,3 +91,16 @@ test('offline Send reads Queued; the online event flushes it', async ({ page, co
   expect(posts).toHaveLength(1);
   expect(posts[0]).toMatchObject({ offline: true, text: 'Sent while offline.' });
 });
+
+test('a 400 refusal never reads Queued or Received; the draft stays', async ({ page }) => {
+  const posts = await stub(page, () => 400);
+  await page.goto(CTX);
+  await send(page, 'Refused by the endpoint.');
+  await expect(page.getByText('Could not send. Your text is still here.')).toBeVisible();
+  await expect(page.locator('#fia-feedback-text')).toHaveValue('Refused by the endpoint.');
+  await expect(page.getByText(/Not accepted/)).toBeVisible();
+  await expect(page.getByText(/Queued|Received/)).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByText(/Not accepted/)).toBeVisible();
+  expect(posts).toHaveLength(1);
+});
