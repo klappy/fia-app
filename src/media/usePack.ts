@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 
 // Pack loader for the media screens. Packs are pipeline output (L1) served from the content
-// origin (POC-REFERENCE A14), not the source tree. Base defaults to `/content`; override with
-// VITE_CONTENT_BASE. L2 (offline) serves the same URLs from the verified pack cache.
-export const CONTENT_BASE: string =
-  (import.meta.env.VITE_CONTENT_BASE as string | undefined) ?? '/content';
+// origin (POC-REFERENCE A14), not the source tree. Base defaults to the app origin, so packs are
+// read at their C-02 paths (`/packs/<id>/…`, shipped by the build from `data/packs/`); override
+// with VITE_CONTENT_BASE. L2 (offline) serves the same URLs from the verified pack cache.
+export const CONTENT_BASE: string = (import.meta.env.VITE_CONTENT_BASE as string | undefined) ?? '';
 
 export const DEFAULT_PACK = 'eng.MRK-1-1-13';
 
