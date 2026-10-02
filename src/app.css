@@ -281,6 +281,28 @@
   overflow-y: auto;
   margin-top: 10px;
 }
+/* Tall sheets (Explore): the dialog is a column, the body takes the free height and scrolls, so the
+   actions row sits at the sheet bottom in the thumb slot (25-explore mock), not after the last row. */
+.fia-sheet--tall {
+  display: flex;
+  flex-direction: column;
+}
+.fia-sheet--tall > .fia-sheet__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+}
+/* Title row lockup: FIA logo then the title (RULING 2026-10-01 (f); mock _frame.css:191-192). */
+.fia-sheet-brand {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+.fia-sheet-brand > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .fia-sheet__actions {
   flex: 1;
   display: flex;
@@ -316,7 +338,25 @@
   align-items: center;
   gap: 10px;
 }
+/* Kit resources/CatalogRow sets its title as an inline `500 15px/1.35` (CatalogRow.jsx:8), so the
+   --fia-text-scale steps never reach it; !important is the only way past an inline style. Copied from
+   the mock's _frame.css:141 (25-explore.giant200/giant310 rows grow and wrap). Icons scale like the
+   mock's iconSz(): base x min(scale, 2) (_frame.js:41). (fix2-f4-1124) */
+.fia-more__row > div:first-child > div[dir] {
+  font-size: calc(15px * var(--fia-text-scale)) !important;
+  line-height: 1.3 !important;
+}
+.fia-more__row .fia-row-label > svg {
+  width: calc(18px * min(var(--fia-text-scale), 2));
+  height: calc(18px * min(var(--fia-text-scale), 2));
+}
+.fia-more__row > div:last-child svg {
+  width: calc(16px * min(var(--fia-text-scale), 2));
+  height: calc(16px * min(var(--fia-text-scale), 2));
+}
 .fia-explore__footer {
+  /* --text-muted, not the caption's dim tone: dark measured 3.87:1 on the sheet with it (fix-f4-1124). */
+  color: var(--text-muted);
   text-align: center;
   margin: 10px 0 2px;
 }

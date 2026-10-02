@@ -46,7 +46,6 @@ export default function S02Library() {
     <ScreenFrame
       id="S02"
       title={snap.manifest?.languages.find((l) => l.code === language)?.autonym}
-      dockActive="guide"
       primaryLabel={
         resumeEntry ? t('s.library.primary-continue', { ref: resumeEntry.title }) : null
       }

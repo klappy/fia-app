@@ -70,6 +70,7 @@ export function MoreSheet({ open, onClose, state, from }: MoreSheetProps) {
       onClose={onClose}
       state={state}
       tall
+      brand
       closeButton={false}
       className="fia-more"
       actions={

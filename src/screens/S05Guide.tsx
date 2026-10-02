@@ -39,7 +39,7 @@ export default function S05Guide() {
 
   if (!guide || !state) {
     return (
-      <ScreenFrame id="S05" dockActive="guide" primaryLabel={null}>
+      <ScreenFrame id="S05" primaryLabel={null}>
         <FlowGate
           status={snap.guideStatus}
           hasPack={!!snap.packId}
@@ -77,7 +77,6 @@ export default function S05Guide() {
     <ScreenFrame
       id="S05"
       title={guide.title}
-      dockActive="guide"
       primaryLabel={sheetOpen ? null : label}
       primaryState={uiState}
       onPrimary={press}

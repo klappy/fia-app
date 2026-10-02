@@ -190,7 +190,6 @@ export default function S16Feedback() {
     return (
       <ScreenFrame
         id="S16"
-        dockActive="more"
         offline={!online}
         primaryLabel={t('s.feedback.primary.back', { where: whereName(from) })}
         onPrimary={back}
@@ -212,7 +211,6 @@ export default function S16Feedback() {
   return (
     <ScreenFrame
       id="S16"
-      dockActive="more"
       offline={!online}
       onPrimary={send}
       primaryLabel={sending ? t('s.feedback.primary.sending') : undefined}

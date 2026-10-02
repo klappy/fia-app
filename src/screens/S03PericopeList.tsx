@@ -49,7 +49,7 @@ export default function S03PericopeList() {
   }, [language]);
   const measuredFor = (id: string) => (measured.lang === language ? measured.map[id] : undefined);
   return (
-    <ScreenFrame id="S03" title={book} dockActive="guide" primaryLabel={null}>
+    <ScreenFrame id="S03" title={book} primaryLabel={null}>
       <input
         type="search"
         className="fia-search"
