@@ -1,8 +1,8 @@
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import { shipData } from '../src/offline/ship-data-plugin';
+import { REQUIRED_DATA, shipData } from '../src/offline/ship-data-plugin';
 import { shellEntries } from '../src/offline/shell-manifest-plugin';
 
 const DATA = join(__dirname, '..', 'data');
@@ -39,6 +39,19 @@ describe('ship-data build step', () => {
 
   it('ships JSON only', () => {
     expect(existsSync(join(out, 'data/catalog/COVERAGE.md'))).toBe(false);
+  });
+
+  it('never ships the pipeline cache (data/cache/, BL4d subtitle cache)', () => {
+    const data = mkdtempSync(join(tmpdir(), 'fia-data-'));
+    const dest = mkdtempSync(join(tmpdir(), 'fia-out-'));
+    tmp.push(data, dest);
+    for (const f of [...REQUIRED_DATA, 'cache/subtitles/abc.json']) {
+      mkdirSync(dirname(join(data, f)), { recursive: true });
+      writeFileSync(join(data, f), '{}');
+    }
+    shipData(data, dest);
+    expect(existsSync(join(dest, 'data/catalog/manifest.json'))).toBe(true);
+    expect(existsSync(join(dest, 'data/cache'))).toBe(false);
   });
 
   it('keeps pipeline data out of the shell precache (C-07)', () => {

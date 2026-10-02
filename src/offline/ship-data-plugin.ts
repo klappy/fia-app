@@ -7,6 +7,7 @@
 //   data/rights/*.json    -> dist/data/rights/    (C-13 rights records; S15)
 //   data/packs/<id>/*.json -> dist/data/packs/<id>/ (flow guide + guide-units)
 //                         -> dist/packs/<id>/      (C-02 paths: offline engine, media screens)
+//   data/cache/**         -> not shipped (BL4d interim subtitle cache; lines reach the app via the catalog)
 //
 // Only `.json` is shipped. None of it is precached: the shell manifest skips `data/` and `packs/`
 // (C-07 tiers — packs are saved per pack on request, never with the shell).
@@ -31,6 +32,7 @@ export function shipData(dataDir: string, outDir: string): string[] {
     for (const name of readdirSync(full).sort()) {
       const r = rel ? `${rel}/${name}` : name;
       if (statSync(join(dataDir, r)).isDirectory()) {
+        if (r === 'cache') continue; // pipeline-only cache (raw model text, usage, heading inputs): never served
         walk(r);
         continue;
       }
