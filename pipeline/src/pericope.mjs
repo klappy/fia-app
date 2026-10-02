@@ -4,6 +4,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { assert, bookFile2, DATA_ROOT, fetchJson, guideSteps, guideUnitsDocument, indexReferenceMatches, LANGUAGE_INFO, loadSources, parsePericope, parseRef, plainText, rangesOverlap, sha256, stableJson } from './lib.mjs';
 import { loadRightsRecords, packRightsLines } from './rights.mjs';
+import { stripPlanFiller } from './spoken-text.mjs';
 
 const FIA = { image: 'FIAImages', map: 'FIAMaps', term: 'FIAKeyTerms', video: 'VideoBibleDictionary' };
 
@@ -207,6 +208,10 @@ export async function buildPack(lang, pericope, { log = console.error } = {}) {
   const audioTier = { tier: 'phone', recipe: 'a=opus,br=32k', mime: 'audio/ogg', fallbackMime: 'audio/mpeg', status: 'planned', clips: narrationPlan.length,
     contractGap: 'C-02 tiers.<tier>.files needs bytes + sha256 per file; the audio tier enters manifest.tiers only when clips exist (B2b)' };
   const narration = { schemaVersion: 1, packId, language: lang, entries: [] };
+  // V1-6 text step: generated Spanish scripts/descriptions lose sentence-start AI filler before B6c voices them
+  // (spoken-text.mjs). Source text is never touched; other languages pass through.
+  const fillerStripped = stripPlanFiller(narrationPlan, lang, sha256);
+  if (fillerStripped) log(`${packId}: stripped sentence-start filler from ${fillerStripped} generated text(s)`);
 
   // write files, then the C-02 manifest with bytes + sha256 per file
   const dir = path.join(DATA_ROOT, 'packs', packId);
