@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ProvenanceMark, SecondaryAction } from '../components';
 import { FiaLogo } from '../components/FiaLogo';
@@ -209,7 +209,7 @@ export default function S15AboutRights() {
   const go = useNavigate();
   const [store] = useState(browserStore);
   const [settings, setSettings] = useState(() => loadSettings(store).settings);
-  const feedback = new Outbox(store).counts();
+  const feedback = useMemo(() => new Outbox(store).counts(), [store]);
   const [rows, setRows] = useState<RightsRow[] | null>(null);
   const [lines, setLines] = useState<PackRightsLine[]>([]);
   const [failed, setFailed] = useState(false);
@@ -234,7 +234,7 @@ export default function S15AboutRights() {
   // A collection with no short name in the pack keeps its C-13 name; nothing is invented here.
   const scripturePack = usePackFile<ScripturePack>(
     readCurrent(browserKV()).packId || DEFAULT_PACK,
-    'scripture.json',
+    'scripture',
   );
   const shortOf = (collection: string): string =>
     (scripturePack.status === 'ready' &&

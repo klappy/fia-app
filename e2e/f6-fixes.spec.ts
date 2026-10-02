@@ -48,3 +48,13 @@ test.describe('install guide opened cold', () => {
     await expect(page).toHaveURL(/\/$/);
   });
 });
+
+test('S15 names the current pack scripture editions by their short names', async ({ page }) => {
+  await page.addInitScript(() =>
+    localStorage.setItem('fia.flow.current.v1', JSON.stringify({ packId: 'eng.MRK-1-1-13' })),
+  );
+  await page.goto('/about');
+  await expect(
+    page.getByText('Scripture · BSB, ULT, UST, WEB, WEBU', { exact: true }),
+  ).toBeVisible();
+});
