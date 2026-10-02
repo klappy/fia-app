@@ -49,6 +49,12 @@ export function FeedbackForm({
     const r = (next.find((v) => !pressed.includes(v as FeedbackReason)) ??
       pressed.find((v) => !next.includes(v))) as FeedbackReason | undefined;
     if (!r) return;
+    // Pressing a selected chip deselects it: strip its leading `word:` rather than adding it again.
+    if (pressed.includes(r)) {
+      const lead = text.trimStart();
+      onText(lead.slice(word(r).length).replace(/^\s*:\s*/, ''));
+      return;
+    }
     onText(text.trim() ? `${word(r)}: ${text}` : `${word(r)}: `);
   };
   return (

@@ -5,7 +5,6 @@
   text-transform: uppercase;
   color: var(--fia-text-muted);
 }
-.fia-toggle,
 .fia-stepper__a,
 .fia-segmented > button,
 .fia-link-row,
@@ -16,10 +15,6 @@
   border-radius: var(--fia-r-md);
   font: inherit;
   color: inherit;
-}
-.fia-toggle[data-on] {
-  background: var(--fia-primary);
-  color: var(--fia-on-primary, #fff);
 }
 .fia-stepper {
   display: flex;
