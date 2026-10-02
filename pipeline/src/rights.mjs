@@ -1,6 +1,7 @@
 // C-13 rights records: one per source repo, licence fields verbatim from <lang>/metadata.json resource_metadata.
 // Discrepancies are recorded, never resolved by code (R-312).
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { DATA_ROOT, fetchJson, loadSources, plainText, stableJson } from './lib.mjs';
 
@@ -60,4 +61,26 @@ function noticeMarkdown(records, extras) {
     lines.push('');
   }
   return lines.join('\n');
+}
+
+// BL8 (F3a S15): the holder and licence lines a pack carries for each of its sources, read from the C-13 records.
+// Nothing is invented: a missing record, a placeholder holder or an absent licence stays null.
+const HOLDER_PLACEHOLDERS = new Set(['(no holder named in metadata)', '(metadata unreadable)']);
+export function packRightsLines(ids, records, language) {
+  const byId = new Map(records.map((r) => [r.id, r]));
+  return ids.map((id) => {
+    const rec = byId.get(id);
+    if (!rec) return { id, collection: id.split('@')[0], revision: null, holders: null, licence: null, url: null };
+    let info = null; try { info = rec.licenseInfo ? JSON.parse(rec.licenseInfo) : null; } catch { info = null; }
+    const entries = (info?.licenses || []).filter((l) => l && typeof l === 'object');
+    const pick = entries.find((l) => l[language]) ?.[language] || entries.find((l) => l.eng)?.eng || (entries[0] && Object.values(entries[0])[0]) || null;
+    const licence = pick && (pick.name || pick.url) ? { name: pick.name ?? null, url: pick.url ?? null } : null;
+    const holders = rec.holders.filter((h) => !HOLDER_PLACEHOLDERS.has(h));
+    return { id, collection: rec.collection, revision: rec.revision, holders: holders.length ? holders : null, licence, url: rec.url };
+  });
+}
+
+export async function loadRightsRecords() {
+  const p = path.join(DATA_ROOT, 'rights', 'records.json');
+  return existsSync(p) ? JSON.parse(await readFile(p, 'utf8')) : [];
 }

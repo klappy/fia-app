@@ -3,6 +3,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { assert, bookFile2, DATA_ROOT, fetchJson, guideSteps, guideUnitsDocument, indexReferenceMatches, LANGUAGE_INFO, loadSources, parsePericope, parseRef, plainText, rangesOverlap, sha256, stableJson } from './lib.mjs';
+import { loadRightsRecords, packRightsLines } from './rights.mjs';
 
 const FIA = { image: 'FIAImages', map: 'FIAMaps', term: 'FIAKeyTerms', video: 'VideoBibleDictionary' };
 
@@ -177,6 +178,11 @@ export async function buildPack(lang, pericope, { log = console.error } = {}) {
   const units = steps.reduce((n, s) => n + s.units.length, 0);
   // same rule as inventory.mjs: a media pin is recorded only when the pack has >=1 item of it, so catalog sourceRevision === sha256(this map) (C-03)
   const sourceRevisions = { [guideRepo]: guideSha, ...(termRecords.length ? { FIAKeyTerms: sources.fia.FIAKeyTerms.commitSha } : {}), ...(resources.images.length ? { FIAImages: sources.fia.FIAImages.commitSha } : {}), ...(resources.maps.length ? { FIAMaps: sources.fia.FIAMaps.commitSha } : {}), ...(resources.videos.length ? { VideoBibleDictionary: sources.fia.VideoBibleDictionary.commitSha } : {}), ...Object.fromEntries(editions.filter((e) => e.verses).map((e) => [e.repo, sources.bibles.find((b) => b.repo === e.repo).commitSha])) };
+  // BL8: holder and licence per source, from the C-13 records (data/rights/records.json; npm run rights first)
+  const rightsIds = [...new Set(Object.keys(sourceRevisions).map((repo) => `${repo}@${sourceRevisions[repo].slice(0, 7)}`))];
+  const rightsLines = packRightsLines(rightsIds, await loadRightsRecords(), lang);
+  for (const l of rightsLines) if (!l.holders || !l.licence) log(`${packId}: ${l.id} has no ${[!l.holders && 'holder', !l.licence && 'licence'].filter(Boolean).join(' or ')} in the C-13 record (left null)`);
+  await put('rights.json', { schemaVersion: 1, packId, source: 'C-13 data/rights/records.json', sources: rightsLines });
   const textBytes = files.reduce((n, f) => n + f.bytes, 0);
   const mediaRefs = [...resources.images, ...resources.maps];
   const termAudioSrc = termRecords.filter((t) => t.audio.status === 'source').length;
@@ -188,7 +194,7 @@ export async function buildPack(lang, pericope, { log = console.error } = {}) {
       hiddenUnits, termsSupplement: termRecords.filter((t) => t.selectedBy === 'supplement').length, narrationSlots: narrationPlan.length, narrationFloorSlots: narrationPlan.filter((p) => p.floor).length, alignmentSlots,
       ...Object.fromEntries(Object.entries(slotCounts).map(([k, v]) => [`slots-${k}`, v])) },
     provenance: { text: { source: units + ownPresent.length + termRecords.filter((t) => t.text.status === 'source').length, generated: 0, missing: termRecords.filter((t) => t.text.status !== 'source').length + (ownPresent.length ? 0 : editions.filter((e) => e.verses).length) }, audio: { source: termAudioSrc, generated: 0, missing: narrationPlan.filter((p) => p.status !== 'source-available').length }, description: { source: 0, generated: 0, missing: mediaRefs.length } },
-    rights: [...new Set(Object.keys(sourceRevisions).map((repo) => `${repo}@${sourceRevisions[repo].slice(0, 7)}`))],
+    rights: rightsIds,
   };
   await writeFile(path.join(dir, 'manifest.json'), stableJson(manifest));
   log(`${packId}: ${steps.length} steps, ${units} units, ${guideUnits.stops.length} stops, ${termRecords.length} terms (${termAudioSrc} audio), ${resources.images.length} images, ${resources.maps.length} maps, ${resources.videos.length} videos, scripture ${editions.map((e) => `${e.short}:${e.status}`).join(',')}; text tier ${textBytes} B`);
