@@ -30,11 +30,10 @@ test('J-A2 1–6: size on S03, tier picker on S04, Save best published tier, sav
 }) => {
   await openMarcos(page);
 
-  // Step 1 — S03 row shows its size at the Settings tier (default Phone, M1) before any save.
+  // Step 1 — S03 row shows its parts and the Text size a save downloads (F6-S03: the list saves
+  // Text only; the tier picker is S04's). Measured for built packs (exact); an estimate reads "≈".
   const row = page.locator(`[data-pack-id="${PACK}"]`);
-  // Catalog sizes: main lists Phone (unmeasured → "≈"); fia-app#18 lists Text only, measured for
-  // built packs (exact). Either way an estimate never reads as exact.
-  await expect(row.getByTestId('row-size')).toHaveText(/^(Phone ≈ |Text (≈ )?)\d+(\.\d)? MB$/);
+  await expect(row.getByTestId('row-size')).toHaveText(/^≈?\d+\sparts\s·\s≈?\d+(\.\d)?\s(KB|MB)$/);
   await expect(row.getByTestId('row-saved')).toHaveCount(0);
   await row.click();
 
@@ -71,8 +70,9 @@ test('J-A2 1–6: size on S03, tier picker on S04, Save best published tier, sav
   // Step 6 — the S03 row carries the saved mark; S13 lists the pack under Saved.
   await page.goBack();
   await expect(page.locator('[data-screen="S03"]')).toBeVisible();
-  await expect(row.getByTestId('row-saved')).toHaveText('✓ saved');
-  await expect(row.getByTestId('row-size')).toHaveText(`Text ${textSize}`);
+  await expect(row.getByTestId('row-saved')).toHaveText('Saved');
+  // the verified save's own bytes, exact (no ≈); S03 writes sizes under 1 MB in KB
+  await expect(row.getByTestId('row-size')).toHaveText(/·\s\d+\sKB$/);
   await page.goto('/downloads');
   await expect(page.locator('[data-screen="S13"]')).toBeVisible();
   await expect(page.getByText(`MRK 1:1–13 · Text · ${textSize}`)).toBeVisible();
