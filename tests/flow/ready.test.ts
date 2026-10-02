@@ -3,9 +3,11 @@ import {
   booksWithReady,
   createReadyStore,
   isNotYet,
+  PACK_INDEX_URL,
   readPackIndex,
   readyFirst,
 } from '../../src/flow/ready';
+import { READY_INDEX } from '../../src/offline/ship-data-plugin';
 import type { CatalogEntry } from '../../src/flow/types';
 
 // GAP-NOPACK: the catalog lists every guide; only packs in the build's index open.
@@ -13,6 +15,11 @@ const entry = (packId: string): CatalogEntry =>
   ({ packId, book: packId.split('.')[1].split('-')[0] }) as CatalogEntry;
 
 describe('pack index (GAP-NOPACK)', () => {
+  it('is read beside the catalog, where the build writes it — never under /data/packs', () => {
+    expect(PACK_INDEX_URL).toBe('/data/catalog/ready.json');
+    expect(PACK_INDEX_URL).toBe(`/${READY_INDEX}`);
+  });
+
   it('reads { packs: [...] } and refuses anything else', () => {
     expect([...readPackIndex({ packs: ['eng.MRK-1-1-13'] })!]).toEqual(['eng.MRK-1-1-13']);
     expect(readPackIndex({ packs: [1] })).toBeNull();
@@ -49,8 +56,8 @@ describe('pack index (GAP-NOPACK)', () => {
       new Response(JSON.stringify({ packs: ['arb.GEN-1-1-2-3'] })),
     ];
     let calls = 0;
-    const store = createReadyStore('/data/packs/index.json', async (url) => {
-      expect(url).toBe('/data/packs/index.json');
+    const store = createReadyStore('/data/catalog/ready.json', async (url) => {
+      expect(url).toBe('/data/catalog/ready.json');
       calls++;
       return answers.shift()!;
     });

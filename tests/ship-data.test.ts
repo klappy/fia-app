@@ -2,7 +2,12 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import { REQUIRED_DATA, shipData, shippedPacks } from '../src/offline/ship-data-plugin';
+import {
+  READY_INDEX,
+  REQUIRED_DATA,
+  shipData,
+  shippedPacks,
+} from '../src/offline/ship-data-plugin';
 import { shellEntries } from '../src/offline/shell-manifest-plugin';
 
 const DATA = join(__dirname, '..', 'data');
@@ -23,12 +28,16 @@ describe('ship-data build step', () => {
   it('ships rights and packs at every path the app requests', () => {
     for (const p of [
       'data/rights/records.json',
-      `data/packs/${PACK}/guide.json`,
-      `data/packs/${PACK}/guide-units.json`,
+      `packs/${PACK}/guide.json`,
+      `packs/${PACK}/guide-units.json`,
       `packs/${PACK}/manifest.json`,
       `packs/${PACK}/scripture.json`,
     ])
       expect(existsSync(join(out, p)), p).toBe(true);
+  });
+
+  it('ships each pack at one path only, its C-02 path (GAP-OFFLINE)', () => {
+    expect(existsSync(join(out, 'data/packs'))).toBe(false);
   });
 
   it('every file a pack manifest lists exists at its C-02 path', () => {
@@ -37,13 +46,16 @@ describe('ship-data build step', () => {
       for (const f of tier.files) expect(existsSync(join(out, f.path)), f.path).toBe(true);
   });
 
-  it('writes the pack index: the packs this build ships with a guide (GAP-NOPACK)', () => {
-    const doc = JSON.parse(readFileSync(join(out, 'data/packs/index.json'), 'utf8'));
+  it('writes the ready index beside the catalog: the packs this build ships with a guide (GAP-NOPACK)', () => {
+    expect(READY_INDEX).toBe('data/catalog/ready.json');
+    const doc = JSON.parse(readFileSync(join(out, READY_INDEX), 'utf8'));
     expect(doc.packs).toEqual(shippedPacks(DATA));
     expect(doc.packs).toEqual(expect.arrayContaining([PACK, 'arb.GEN-1-1-2-3']));
     expect(doc.packs).not.toContain('eng.MRK-1-14-20');
+    // every listed pack opens at its one (C-02) path (the index adds nothing under data/packs)
     for (const id of doc.packs)
-      expect(existsSync(join(out, `data/packs/${id}/guide.json`))).toBe(true);
+      for (const f of ['guide.json', 'guide-units.json'])
+        expect(existsSync(join(out, `packs/${id}/${f}`)), `${id}/${f}`).toBe(true);
     // a pack without its guide files is not listed; no packs dir → an empty list
     const data = mkdtempSync(join(tmpdir(), 'fia-data-'));
     tmp.push(data);

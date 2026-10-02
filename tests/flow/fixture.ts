@@ -7,7 +7,7 @@ import { createCatalog, type FetchJson } from '../../src/flow/catalog';
 const root = join(process.cwd(), 'tests/fixtures/flow');
 
 export const fixtureFetch: FetchJson = async (url) => {
-  const path = url.replace(/^\/data\//, '');
+  const path = url.replace(/^\/(data\/)?/, '');
   const file =
     path === 'catalog/manifest.json' ? 'catalog-manifest.json' : path.replace(/^packs\//, '');
   return JSON.parse(readFileSync(join(root, file), 'utf8'));

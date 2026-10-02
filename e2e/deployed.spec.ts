@@ -33,6 +33,6 @@ test('catalog manifest, rights and a pack manifest are served as JSON', async ({
   const packId = 'eng.MRK-1-1-13';
   const pack = await getJson(request, `/packs/${packId}/manifest.json`);
   expect(pack.packId).toBe(packId);
-  const guide = await getJson(request, `/data/packs/${packId}/guide-units.json`);
+  const guide = await getJson(request, `/packs/${packId}/guide-units.json`);
   expect(guide.packId).toBe(packId);
 });

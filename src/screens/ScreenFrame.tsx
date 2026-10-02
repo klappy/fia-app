@@ -21,6 +21,10 @@ export interface ScreenFrameProps {
   onPrimary?: () => void;
   /** Overrides the browser's connectivity (R-702); default: `!navigator.onLine`, live. */
   offline?: boolean;
+  /** Replaces the primary in the thumb slot (S05: the guide transport with GuidePrimary; F5). */
+  thumb?: ReactNode;
+  /** The screen title is for screen readers only (S05: the reference is the band's overline). */
+  titleHidden?: boolean;
   children?: ReactNode;
 }
 
@@ -42,6 +46,8 @@ export function ScreenFrame({
   primaryState,
   onPrimary,
   offline,
+  thumb,
+  titleHidden,
   children,
 }: ScreenFrameProps) {
   const def = screenById(id);
@@ -105,17 +111,23 @@ export function ScreenFrame({
             </div>
           </GlassSurface>
         </header>
-        <h1 className="fia-title fia-screen__title">{heading}</h1>
+        <h1 className={`fia-title fia-screen__title${titleHidden ? ' fia-sr-only' : ''}`}>
+          {heading}
+        </h1>
         <main className="fia-content">{children}</main>
-        {label && (
-          <div className="fia-primary-slot">
-            <PrimaryButton
-              label={label}
-              state={primaryState}
-              onPress={onPrimary}
-              hint={t('s.common.a11y.primary-hint')}
-            />
-          </div>
+        {thumb ? (
+          <div className="fia-primary-slot fia-thumb">{thumb}</div>
+        ) : (
+          label && (
+            <div className="fia-primary-slot">
+              <PrimaryButton
+                label={label}
+                state={primaryState}
+                onPress={onPrimary}
+                hint={t('s.common.a11y.primary-hint')}
+              />
+            </div>
+          )
         )}
         {hub && <MoreSheet open={explore} onClose={() => setExplore(false)} from={def.id} />}
       </div>

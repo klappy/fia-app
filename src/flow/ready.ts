@@ -1,9 +1,10 @@
 // Which passages this build can open (GAP-NOPACK). The C-03 catalog lists every guide the sources
 // hold (~1,500 in English), but only the passages with a built pack open. The build writes
-// `data/packs/index.json` — the pack ids it ships (ship-data-plugin) — and a passage outside it is
-// shown as the set's absent mark, "not yet in {language}" (R-305; absent-badge.md), never as an
-// error. While the index loads, or when it cannot be read (dev server, older deploy), nothing is
-// marked and the screens behave as before.
+// `data/catalog/ready.json` beside the catalog — the pack ids it ships (ship-data-plugin
+// READY_INDEX; the packs themselves live only at their C-02 path, `/packs/<id>/`) — and a passage
+// outside it is shown as the set's absent mark, "not yet in {language}" (R-305; absent-badge.md),
+// never as an error. While the index loads, or when it cannot be read (dev server, older deploy),
+// nothing is marked and the screens behave as before.
 import { useEffect, useSyncExternalStore } from 'react';
 import { languageName } from '../media/lang';
 import { useFlow } from './session';
@@ -16,7 +17,7 @@ const DATA_BASE =
   (import.meta.env?.VITE_FIA_DATA_BASE as string | undefined) ??
   `${import.meta.env?.BASE_URL ?? '/'}data`;
 
-export const PACK_INDEX_URL = `${DATA_BASE.replace(/\/$/, '')}/packs/index.json`;
+export const PACK_INDEX_URL = `${DATA_BASE.replace(/\/$/, '')}/catalog/ready.json`;
 
 /** `{ packs: string[] }` → the set; anything else (an HTML fallback page, a bad shape) → null. */
 export function readPackIndex(doc: unknown): ReadonlySet<string> | null {

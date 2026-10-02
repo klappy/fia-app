@@ -26,7 +26,7 @@ export interface FlowState {
   /** sheet 21 shown once this session; later stops show the band only (Q21-a). */
   stopSheetSeen: boolean;
   finished: boolean;
-  /** the unit has a narration clip (false until L4 wires narration). */
+  /** the current unit has a narration clip (per unit from `FlowGuide.audio` when it is known; F5). */
   hasAudio: boolean;
   autoContinue: boolean;
 }
@@ -51,8 +51,9 @@ export function initialState(
   g: FlowGuide,
   opts: { hasAudio?: boolean; autoContinue?: boolean } = {},
 ): FlowState {
+  const first = firstUnitId(g);
   const s: FlowState = {
-    unitId: firstUnitId(g),
+    unitId: first,
     phase: 'idle',
     visited: [],
     played: [],
@@ -60,7 +61,7 @@ export function initialState(
     asked: [],
     stopSheetSeen: false,
     finished: false,
-    hasAudio: opts.hasAudio ?? false,
+    hasAudio: opts.hasAudio ?? g.audio?.has(first) ?? false,
     autoContinue: opts.autoContinue ?? true,
   };
   return enter(g, s, s.unitId);
@@ -68,16 +69,38 @@ export function initialState(
 
 const add = (xs: string[], x: string) => (xs.includes(x) ? xs : [...xs, x]);
 
+/** Does this unit play? Per unit once the guide knows its clips (F5), else the session flag. */
+export const audible = (g: FlowGuide, s: Pick<FlowState, 'hasAudio'>, unitId: string): boolean =>
+  g.audio ? g.audio.has(unitId) : s.hasAudio;
+
 /** Land on a unit: never plays (R-407); an un-discussed stop without narration waits at once. */
 function enter(g: FlowGuide, s: FlowState, unitId: string): FlowState {
   const stop = stopAt(g, unitId);
-  const waiting = stop && !s.discussed.includes(stop.id) && !s.hasAudio;
+  const hasAudio = audible(g, s, unitId);
+  const waiting = stop && !s.discussed.includes(stop.id) && !hasAudio;
   return {
     ...s,
     unitId,
+    hasAudio,
     visited: add(s.visited, unitId),
-    phase: waiting ? 'stop' : s.hasAudio ? 'idle' : 'next-ready',
+    phase: waiting ? 'stop' : hasAudio ? 'idle' : 'next-ready',
   };
+}
+
+/**
+ * Re-read the current unit's clip after the guide's audible set changed (narration loaded late, or
+ * the narration mode changed). Never plays (R-407) and never leaves a stop the person is at.
+ */
+export function syncAudio(g: FlowGuide, s: FlowState): FlowState {
+  const hasAudio = audible(g, s, s.unitId);
+  if (hasAudio === s.hasAudio) return s;
+  const stop = stopAt(g, s.unitId);
+  const waiting = !!stop && !s.discussed.includes(stop.id);
+  let phase = s.phase;
+  if (hasAudio && phase === 'next-ready') phase = 'idle';
+  if (!hasAudio && (phase === 'idle' || phase === 'playing' || phase === 'paused'))
+    phase = waiting ? 'stop' : 'next-ready';
+  return { ...s, hasAudio, phase };
 }
 
 function advance(g: FlowGuide, s: FlowState): FlowState {
@@ -123,7 +146,15 @@ export function reduce(g: FlowGuide, s: FlowState, a: FlowAction): FlowState {
     case 'undo': {
       if (!s.undo) return s;
       const discussed = s.discussed.filter((x) => x !== s.undo!.stopId);
-      return { ...s, discussed, unitId: s.undo.unitId, phase: 'stop', undo: undefined };
+      const unitId = s.undo.unitId;
+      return {
+        ...s,
+        discussed,
+        unitId,
+        hasAudio: audible(g, s, unitId),
+        phase: 'stop',
+        undo: undefined,
+      };
     }
     case 'undo-expired':
       return { ...s, undo: undefined };
