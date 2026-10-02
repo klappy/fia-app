@@ -21,13 +21,17 @@ async function scriptTexts(packId) {
   const doc = JSON.parse(await readFile(new URL('../script-texts.json', import.meta.url), 'utf8'));
   return composeDescriptions(doc.packs[packId] || {}, doc.descriptionBases?.[packId.split('.')[0]] || {});
 }
+// A description slot is keyed by its resource: desc-<resourceId, lowercased, non [a-z0-9-] as '-'>.
+export const descriptionSlotId = (resourceId) => `desc-${resourceId.toLowerCase().replace(/[^a-z0-9-]/g, '-')}`;
 // V1-4 / M9 default 1: a description is one shared base per visual (what it shows; written and reviewed once, reused by
 // every pericope that attaches it) plus one passage line per occurrence (why it matters here). The voiced clip is the
 // whole text, per occurrence; descriptionBase records which base (and which version of it) the clip was built from.
+// The slot's base must be the slot's own resource: a base borrowed from another visual would describe the wrong picture.
 export function composeDescriptions(texts, bases) {
   const out = {};
   for (const [id, t] of Object.entries(texts)) {
     if (!t.base) { out[id] = t; continue; }
+    assert(id === descriptionSlotId(t.base), `${id}: description base ${t.base} is not this slot's resource (expected slot ${descriptionSlotId(t.base)})`);
     const b = bases[t.base];
     assert(b && t.passageLine, `${id}: description base ${t.base} or its passage line is missing`);
     out[id] = { ...t, text: `${b.text} ${t.passageLine}`, descriptionBase: { resourceId: t.base, textSha256: sha256(Buffer.from(b.text)) } };
@@ -39,6 +43,7 @@ export function applyScriptTexts(entries, texts) {
   for (const e of entries) {
     const t = texts[e.id];
     if (!t || !['pending-script', 'pending-text'].includes(e.status)) continue;
+    assert(!t.descriptionBase || t.descriptionBase.resourceId === e.resourceId, `${e.id}: description base ${t.descriptionBase?.resourceId} is not the slot's resource ${e.resourceId}`);
     const textSha256 = sha256(Buffer.from(t.text));
     const field = e.kind === 'description' ? 'text' : 'script';
     Object.assign(e, { [field]: t.text, sourceSha256: textSha256, textProvenance: { status: 'generated', ...(t.from ? { generatedFrom: t.from } : {}), generator: e.kind === 'description' ? 'description' : 'narration', audited: false }, borrow: t.borrow, ...(t.replacesUnitId ? { replacesUnitId: t.replacesUnitId } : {}), ...(t.descriptionBase ? { descriptionBase: t.descriptionBase } : {}), status: 'pending' });
@@ -204,7 +209,7 @@ export async function buildPack(lang, pericope, { log = console.error } = {}) {
     narrationPlan.push(slot({ id: t.id, kind: 'term-recording', termId: t.engSourceId, sourceSha256: t.text.textSha256 || null, ai: !rec, recordingSource: rec ? 'source' : 'generated', ...(rec ? { sourceId: t.audio.sourceId, url: t.audio.url, provenance: t.audio.provenance } : { generator: 'narration' }), selectedBy: t.selectedBy, floor: true, status: rec ? 'source-available' : 'pending' }));
     if (t.text.textSha256) narrationPlan.push(slot({ id: `${t.id}-read`, kind: 'term-read-aloud', termId: t.engSourceId, sourceSha256: t.text.textSha256, ai: true, recordingSource: 'generated', generator: 'narration', generatedFrom: `FIAKeyTerms@${termSha}:${t.sourceFile}#${t.text.sourceId}`, selectedBy: t.selectedBy, floor: true, status: 'pending' }));
   }
-  for (const m of [...resources.images, ...resources.maps]) narrationPlan.push(slot({ id: `desc-${m.id.toLowerCase().replace(/[^a-z0-9-]/g, '-')}`, kind: 'description', resourceId: m.id, resourceKind: m.kind, sourceSha256: null, ai: true, recordingSource: 'generated', generator: 'description', generatedFrom: `${FIA[m.kind]}@${m.sha || sources.fia[FIA[m.kind]].commitSha}:${m.sourceFile}#${m.id}`, floor: true, status: 'pending-text' }));
+  for (const m of [...resources.images, ...resources.maps]) narrationPlan.push(slot({ id: descriptionSlotId(m.id), kind: 'description', resourceId: m.id, resourceKind: m.kind, sourceSha256: null, ai: true, recordingSource: 'generated', generator: 'description', generatedFrom: `${FIA[m.kind]}@${m.sha || sources.fia[FIA[m.kind]].commitSha}:${m.sourceFile}#${m.id}`, floor: true, status: 'pending-text' }));
   for (const s of steps) for (const u of s.units) if (!u.hidden && VISUAL_CUE.test(u.text)) narrationPlan.push(slot({ id: `next-${u.id}`, kind: 'next-action', afterUnitId: u.id, cue: 'visual', sourceSha256: null, ai: true, recordingSource: 'generated', generator: 'narration', floor: true, status: 'pending-script', contractGap: 'C-05 id pattern has no next-action prefix' }));
   for (const s of steps.filter((x) => x.id === 'S05')) {
     const seen = new Set();
