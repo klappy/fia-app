@@ -13,6 +13,26 @@ async function termSupplement(packId) {
   return new Set(doc.packs[packId]?.terms || []);
 }
 
+// BL9: written next-action / transition scripts and description texts (script-texts.json), borrowed from the PoC where
+// it had them. A slot with a text gets the text, its sha256 as sourceSha256 and a C-06 text provenance; its status moves
+// from pending-script / pending-text to pending (voice still to be generated, B2b). Slots without a text stay as they were.
+async function scriptTexts(packId) {
+  const doc = JSON.parse(await readFile(new URL('../script-texts.json', import.meta.url), 'utf8'));
+  return doc.packs[packId] || {};
+}
+export function applyScriptTexts(entries, texts) {
+  let applied = 0;
+  for (const e of entries) {
+    const t = texts[e.id];
+    if (!t || !['pending-script', 'pending-text'].includes(e.status)) continue;
+    const textSha256 = sha256(Buffer.from(t.text));
+    const field = e.kind === 'description' ? 'text' : 'script';
+    Object.assign(e, { [field]: t.text, sourceSha256: textSha256, textProvenance: { status: 'generated', ...(t.from ? { generatedFrom: t.from } : {}), generator: e.kind === 'description' ? 'description' : 'narration', audited: false }, borrow: t.borrow, ...(t.replacesUnitId ? { replacesUnitId: t.replacesUnitId } : {}), status: 'pending' });
+    applied++;
+  }
+  return applied;
+}
+
 // PoC matrix row 14: an English worked example ("The following is an example ...") runs to the end of its step and is
 // hidden until the user reveals it; it is never auto-narrated (PoC cues.hidden_example_region.auto_narrate === false).
 // The opener is found in the English guide (the anchor) and mapped by position onto the localized guide, so the
@@ -181,6 +201,7 @@ export async function buildPack(lang, pericope, { log = console.error } = {}) {
     }
   }
   for (const st of guideUnits.stops) narrationPlan.push(slot({ id: st.id, kind: 'transition', stopKind: st.kind, afterUnitId: st.afterUnitId, sourceSha256: st.promptSha256 || null, ai: true, recordingSource: 'generated', generator: 'narration', floor: true, status: st.promptSha256 ? 'pending' : 'pending-script' }));
+  applyScriptTexts(narrationPlan, await scriptTexts(packId));
   const slotCounts = narrationPlan.reduce((c, p) => ({ ...c, [p.kind]: (c[p.kind] || 0) + 1 }), {});
   const alignmentSlots = narrationPlan.filter((p) => p.alignment).length;
   const audioTier = { tier: 'phone', recipe: 'a=opus,br=32k', mime: 'audio/ogg', fallbackMime: 'audio/mpeg', status: 'planned', clips: narrationPlan.length,
