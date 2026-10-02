@@ -32,6 +32,7 @@ export default function SH1ProvenanceInfo() {
   };
   return (
     <Sheet
+      brand
       title={t(model.titleKey, values).trim()}
       primaryLabel={t('s.prov.primary.close')}
       onClose={() => nav(-1)}

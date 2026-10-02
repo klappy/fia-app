@@ -35,6 +35,7 @@ export function DiscussionStopSheet({
       : t('s.stop.primary.continue');
   return (
     <Sheet
+      brand
       open={open}
       title={t('s.stop.title')}
       primaryLabel={primary}
@@ -68,6 +69,7 @@ export default function SH2DiscussionStop() {
   if (!snap.guide || !snap.state || !stopAt(snap.guide, snap.state.unitId)) {
     return (
       <Sheet
+        brand
         title={t('s.stop.title')}
         primaryLabel={t('s.stop.primary.resume')}
         onClose={() => nav(-1)}
