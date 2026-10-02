@@ -295,7 +295,10 @@ body {
 }
 
 /* ---- F6-S17 Install guide (mock design/alpha-v2-screens/17-install-guide.html @ cookbook; kit @6aa9bc3) ---- */
-/* A named container in caption ems: past ~28em of text it is the 200%+ layout (mock html.fia-big). */
+/* A named container in caption ems: under 28em of text it is the stacked layout (one-column steps, Why after the
+   step). It matches at 150% at every width and at 100% below ~336 px (28 × 12 px), not only at 200%+: the mock has
+   no 150% frame (_frame.js:5 ?text=100|200|310), so the stack is kept there by content width. The app row alone
+   is mock html.fia-big (200%+) and keys on the text step below. */
 .fia-install.fia-install__steps {
   container: fia-install / inline-size;
   font-size: var(--fs-caption);
@@ -725,6 +728,7 @@ body {
   right: 16px;
   z-index: 50;
   overflow-wrap: anywhere;
+  font-size: calc(1rem * var(--fia-text-scale)); /* follows the text step: 16 px at 100%, as before */
 }
 /* app.css loads after this file and its same-specificity `.fia-well { padding: 2px 0 }` won; the
    compound selector keeps the mock's 10/12 inset (14-settings.html:114; F6-S14 review 4/6/8). */
@@ -765,6 +769,19 @@ body {
   justify-content: center;
   gap: 6px;
 }
+/* Below the 360 px reference phone the 10/12 card inset leaves the 100% row too narrow for three
+   options: each choice takes an even share and may put its icons over its words rather than run past
+   its track (F6-S14 follow-up; 360 px and up keep their widths). */
+@media (max-width: 359.98px) {
+  .s14-seg [role='radio'],
+  .s14-opt {
+    min-width: 0;
+  }
+  .s14-opt {
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
+}
 .s14-two {
   display: inline-flex;
   gap: 2px;
@@ -786,7 +803,7 @@ body {
   justify-content: flex-start;
   text-align: start;
 }
-/* A full-width list row may wrap a long word rather than run past its track (PRD § 8.5, 320 px). */
+/* A full-width list row may wrap a long word rather than run past its track (PRD § 8.5 text steps; measured at 320 px). */
 .s14-seg.is-vertical [role='radio'],
 .s14-seg.is-vertical .s14-opt,
 .s14-seg.is-vertical .s14-size {

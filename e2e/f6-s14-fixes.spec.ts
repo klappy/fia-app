@@ -31,6 +31,27 @@ for (const width of [320, 360, 390]) {
   });
 }
 
+test('S14 at 100% keeps the Voice choices inside their track at 320px (no sideways scroll)', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  await page.goto('/settings');
+  const voice = page.getByRole('radiogroup', { name: 'Voice' });
+  await expect(voice).toBeVisible();
+  const r = await voice.evaluate((g) => {
+    const t = g.getBoundingClientRect();
+    const body = document.querySelector<HTMLElement>('.s14-body')!;
+    const right = Math.max(
+      ...[...g.querySelectorAll('[role="radio"], .s14-opt')].map(
+        (e) => e.getBoundingClientRect().right,
+      ),
+    );
+    return { over: right - t.right, sideways: body.scrollWidth - body.clientWidth };
+  });
+  expect(r.over).toBeLessThanOrEqual(0.5);
+  expect(r.sideways).toBe(0);
+});
+
 test('S14 save-failed toast renders inside the viewport (R-706)', async ({ page }) => {
   await page.addInitScript(() => {
     const set = Storage.prototype.setItem;
