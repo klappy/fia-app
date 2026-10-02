@@ -90,7 +90,12 @@ export function packRightsLines(ids, records, language) {
     if (!rec) return { id, collection: id.split('@')[0], revision: null, holders: null, licence: null, url: null, discrepancies: null };
     const holders = Array.isArray(rec.holders) ? rec.holders.filter((h) => typeof h === 'string' && !HOLDER_PLACEHOLDERS.has(h)) : [];
     const discrepancies = Array.isArray(rec.discrepancies) ? rec.discrepancies.filter((d) => typeof d === 'string') : [];
-    return { id, collection: rec.collection, revision: rec.revision ?? null, holders: holders.length ? holders : null, licence: licenceFrom(rec.licenseInfo, language), url: rec.url ?? null, discrepancies };
+    // C-13 1.1.0: revisionKind (absent = git) and licenceUrl are copied only when the record carries them, so git lines stay byte-identical.
+    return {
+      id, collection: rec.collection, ...(rec.revisionKind ? { revisionKind: rec.revisionKind } : {}), revision: rec.revision ?? null,
+      holders: holders.length ? holders : null, licence: licenceFrom(rec.licenseInfo, language), ...(rec.licenceUrl ? { licenceUrl: rec.licenceUrl } : {}),
+      url: rec.url ?? null, discrepancies,
+    };
   });
 }
 

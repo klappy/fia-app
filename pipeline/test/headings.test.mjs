@@ -2,9 +2,9 @@
 // Fixtures are whole-chapter excerpts of Mark (test/fixtures/usfm/SOURCES.json); no network.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { deflateRawSync } from 'node:zlib';
-import { NEVER_READ, PERICOPES, fetchSource, normalizeHeading, parseHeadings, placeHeadings, rungCoverage, unzipEntries } from '../src/headings.mjs';
+import { MAX_ENTRY_BYTES, NEVER_READ, PERICOPES, fetchSource, normalizeHeading, parseHeadings, placeHeadings, rungCoverage, unzipEntries } from '../src/headings.mjs';
 
 const fx = (name) => readFileSync(new URL(`./fixtures/usfm/MRK-${name}.usfm`, import.meta.url), 'utf8');
 const ENG = { BSB: [], OEB: [], TCENT: [], T4T: [], F35: ['f35-date-tail'], PEV: [] };
@@ -95,12 +95,37 @@ test('registry: every USE source carries the BL4a fields; one grounding per lang
   assert.ok(reg.sources.slice(aquiferFirst).every((s) => s.kind !== 'aquifer'), 'Aquifer pins first');
 });
 
-test('zip reader: deflated entry round-trips', () => {
-  const data = Buffer.from('\\id MRK\n\\c 1\n'); const comp = deflateRawSync(data); const name = Buffer.from('47-MRKx.usfm');
+// One deflated entry in a minimal zip (local header, central directory, end record).
+function zipOf(file, data) {
+  const comp = deflateRawSync(data); const name = Buffer.from(file);
   const local = Buffer.alloc(30); local.writeUInt32LE(0x04034b50, 0); local.writeUInt16LE(8, 8); local.writeUInt32LE(comp.length, 18); local.writeUInt32LE(data.length, 22); local.writeUInt16LE(name.length, 26);
   const cd = Buffer.alloc(46); cd.writeUInt32LE(0x02014b50, 0); cd.writeUInt16LE(8, 10); cd.writeUInt32LE(comp.length, 20); cd.writeUInt32LE(data.length, 24); cd.writeUInt16LE(name.length, 28); cd.writeUInt32LE(0, 42);
   const cdOff = 30 + name.length + comp.length;
   const eocd = Buffer.alloc(22); eocd.writeUInt32LE(0x06054b50, 0); eocd.writeUInt16LE(1, 8); eocd.writeUInt16LE(1, 10); eocd.writeUInt32LE(46 + name.length, 12); eocd.writeUInt32LE(cdOff, 16);
-  const zip = Buffer.concat([local, name, comp, cd, name, eocd]);
-  assert.equal(unzipEntries(zip).get('47-MRKx.usfm')().toString(), data.toString());
+  return Buffer.concat([local, name, comp, cd, name, eocd]);
+}
+
+test('zip reader: deflated entry round-trips', () => {
+  const data = Buffer.from('\\id MRK\n\\c 1\n');
+  assert.equal(unzipEntries(zipOf('47-MRKx.usfm', data)).get('47-MRKx.usfm')().toString(), data.toString());
+});
+
+// rev43-1520 nit: inflateRawSync output is capped (zip-bomb guard), 16 MiB by default.
+test('zip reader: an entry that inflates past the cap throws', () => {
+  assert.equal(MAX_ENTRY_BYTES, 16 * 1024 * 1024);
+  assert.throws(() => unzipEntries(zipOf('bomb.usfm', Buffer.alloc(MAX_ENTRY_BYTES + 1))).get('bomb.usfm')(), RangeError);
+  assert.throws(() => unzipEntries(zipOf('x.usfm', Buffer.alloc(1025)), { maxEntryBytes: 1024 }).get('x.usfm')(), RangeError);
+  assert.equal(unzipEntries(zipOf('x.usfm', Buffer.alloc(1024)), { maxEntryBytes: 1024 }).get('x.usfm')().length, 1024, 'at the cap is fine');
+});
+
+// rev43-1520 nit: every fixture names its licence URI beside the SPDX id (CC § 3(a)(1)(C)) and a source URI (§ 3(a)(1)(A)(v)).
+test('fixture SOURCES.json: every file has a matching licence URI and a source URI', () => {
+  const URI = { 'CC0-1.0': 'https://creativecommons.org/publicdomain/zero/1.0/', 'CC-BY-4.0': 'https://creativecommons.org/licenses/by/4.0/', 'CC-BY-SA-4.0': 'https://creativecommons.org/licenses/by-sa/4.0/' };
+  const { files } = JSON.parse(readFileSync(new URL('./fixtures/usfm/SOURCES.json', import.meta.url), 'utf8'));
+  const usfm = readdirSync(new URL('./fixtures/usfm/', import.meta.url)).filter((f) => f.endsWith('.usfm')).sort();
+  assert.deepEqual(Object.keys(files).sort(), usfm, 'every fixture is listed');
+  for (const [f, e] of Object.entries(files)) {
+    assert.equal(e.licenceUrl, URI[e.licence], f);
+    assert.match(e.url, /^https:\/\//, f);
+  }
 });

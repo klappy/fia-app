@@ -1,13 +1,13 @@
 {
-  "about": "Excerpts (whole chapters only, unmodified) of Mark from the BL4a heading sources, for pipeline/test/headings.test.mjs. Revisions and licences as pinned in pipeline/heading-sources.json.",
+  "about": "Excerpts (whole chapters only, unmodified) of Mark from the BL4a heading sources, for pipeline/test/headings.test.mjs. Revisions and licences as pinned in pipeline/heading-sources.json. Each file names its licence URI (CC BY / BY-SA 4.0 § 3(a)(1)(C)) and a URI to the source material (§ 3(a)(1)(A)(v)).",
   "files": {
-    "MRK-BSB.usfm": { "source": "Berean Standard Bible (Aquifer BereanStandardBible @87858d1)", "chapters": [1, 5, 6, 7, 9], "licence": "CC0-1.0" },
-    "MRK-OEB.usfm": { "source": "Open English Bible (openenglishbible/Open-English-Bible @1965127)", "chapters": [1, 7], "licence": "CC0-1.0" },
-    "MRK-TCENT.usfm": { "source": "eBible engtcent, Robert Adam Boyd", "chapters": [1, 7], "licence": "CC-BY-4.0" },
-    "MRK-T4T.usfm": { "source": "eBible eng-t4t, Ellis W. Deibler, Jr.", "chapters": [1, 7], "licence": "CC-BY-SA-4.0" },
-    "MRK-F35.usfm": { "source": "eBible engf35, Wilbur N. Pickering", "chapters": [1, 7], "licence": "CC-BY-SA-4.0" },
-    "MRK-PEV.usfm": { "source": "eBible engPEV, Wycliffe Bible Translators Australia", "chapters": [1, 7], "licence": "CC-BY-SA-4.0" },
-    "MRK-francl.usfm": { "source": "eBible francl, Fraternité de Tibériade", "chapters": [1], "licence": "CC-BY-SA-4.0" },
-    "MRK-spapddpt.usfm": { "source": "eBible spapddpt, Asociacion Biblica Latinoamericana", "chapters": [11], "licence": "CC-BY-4.0" }
+    "MRK-BSB.usfm": { "source": "Berean Standard Bible (Aquifer BereanStandardBible @87858d1)", "chapters": [1, 5, 6, 7, 9], "licence": "CC0-1.0", "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/", "url": "https://github.com/BibleAquifer/BereanStandardBible" },
+    "MRK-OEB.usfm": { "source": "Open English Bible (openenglishbible/Open-English-Bible @1965127)", "chapters": [1, 7], "licence": "CC0-1.0", "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/", "url": "https://github.com/openenglishbible/Open-English-Bible" },
+    "MRK-TCENT.usfm": { "source": "eBible engtcent, Robert Adam Boyd", "chapters": [1, 7], "licence": "CC-BY-4.0", "licenceUrl": "https://creativecommons.org/licenses/by/4.0/", "url": "https://ebible.org/details.php?id=engtcent" },
+    "MRK-T4T.usfm": { "source": "eBible eng-t4t, Ellis W. Deibler, Jr.", "chapters": [1, 7], "licence": "CC-BY-SA-4.0", "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/", "url": "https://ebible.org/details.php?id=eng-t4t" },
+    "MRK-F35.usfm": { "source": "eBible engf35, Wilbur N. Pickering", "chapters": [1, 7], "licence": "CC-BY-SA-4.0", "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/", "url": "https://ebible.org/details.php?id=engf35" },
+    "MRK-PEV.usfm": { "source": "eBible engPEV, Wycliffe Bible Translators Australia", "chapters": [1, 7], "licence": "CC-BY-SA-4.0", "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/", "url": "https://ebible.org/details.php?id=engPEV" },
+    "MRK-francl.usfm": { "source": "eBible francl, Fraternité de Tibériade", "chapters": [1], "licence": "CC-BY-SA-4.0", "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/", "url": "https://ebible.org/details.php?id=francl" },
+    "MRK-spapddpt.usfm": { "source": "eBible spapddpt, Asociacion Biblica Latinoamericana", "chapters": [11], "licence": "CC-BY-4.0", "licenceUrl": "https://creativecommons.org/licenses/by/4.0/", "url": "https://ebible.org/details.php?id=spapddpt" }
   }
 }
