@@ -135,9 +135,12 @@ export default function S14Settings() {
     if (!r.ok) setFailed(true);
   };
 
-  // PRD § 8.5: at 200% and above the controls become vertical lists and the title scrolls with the body.
+  // PRD § 8.5: above 1× the controls stack (vertical lists from Larger, 150%, so no choice runs past its
+  // track at 360-390 px); at 200% and above the title also scrolls with the body.
   const big = SIZE_K[settings.textSize] >= 2;
-  const seg = (extra = '') => ['s14-seg', extra, big && 'is-vertical'].filter(Boolean).join(' ');
+  const stacked = SIZE_K[settings.textSize] >= 1.5;
+  const seg = (extra = '') =>
+    ['s14-seg', extra, stacked && 'is-vertical'].filter(Boolean).join(' ');
   const lang = autonym(settings.contentLanguage);
   const title = (
     <div className="s14-title">
@@ -285,7 +288,7 @@ export default function S14Settings() {
           </div>
         </GlassSheet>
         {failed && (
-          <ToastNotice kind="toast" tone="error">
+          <ToastNotice kind="toast" tone="error" className="s14-toast">
             {t('s.settings.save-failed')}
           </ToastNotice>
         )}

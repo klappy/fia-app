@@ -700,7 +700,19 @@ body {
 .s14-group > .fia-overline {
   padding: 0 4px 5px;
 }
-.s14-card {
+.s14-page > .fia-notice.s14-toast {
+  /* R-706: the save-failed toast sits in the viewport over the sheet, not after the 100% sheet in a
+     clipped field (F6-S14 review 2). */
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
+  left: 16px;
+  right: 16px;
+  z-index: 50;
+  overflow-wrap: anywhere;
+}
+/* app.css loads after this file and its same-specificity `.fia-well { padding: 2px 0 }` won; the
+   compound selector keeps the mock's 10/12 inset (14-settings.html:114; F6-S14 review 4/6/8). */
+.fia-well.s14-card {
   padding: 10px 12px;
 }
 .s14-sep {
@@ -757,6 +769,13 @@ body {
 .s14-seg.is-vertical .s14-opt {
   justify-content: flex-start;
   text-align: start;
+}
+/* A full-width list row may wrap a long word rather than run past its track (PRD § 8.5, 320 px). */
+.s14-seg.is-vertical [role='radio'],
+.s14-seg.is-vertical .s14-opt,
+.s14-seg.is-vertical .s14-size {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 /* Text size: each option shows an "A" at the size it gives (a preview, not scaled) over its word. */
 .s14-size {
@@ -881,6 +900,14 @@ body {
    is a frame well, the track drops to --glass-fill-1, secondary words take --text-body (mock 14-settings). */
 .s14-body .fia-overline {
   color: var(--text-muted);
+}
+/* Dark: each group card is a frame well, smoked with no sheen (mock _frame.css:203-204), so the
+   secondary words read 10:1 rather than 4.1-4.4:1 on the lifted level-3 glass (F6-S14 review 5/8). */
+[data-theme='dark'] .s14-card.fia-well {
+  background: color-mix(in srgb, var(--surface-app) 50%, transparent) !important;
+}
+[data-theme='dark'] .s14-card.fia-well > span[aria-hidden='true']:first-child {
+  display: none;
 }
 [data-theme='dark'] .s14-seg {
   background: var(--glass-fill-1) !important;
