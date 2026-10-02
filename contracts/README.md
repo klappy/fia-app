@@ -30,7 +30,7 @@ One JSON Schema (draft 2020-12) per contract. Each schema's `description` and it
 | C-17                   | `c17-scorecard-row.schema.json`      | Persona-run scorecard row                                              | Auggie                     | `contracts.scorecard.test`        | VERDICT scorecard                               |
 | C-18                   | `c18-telemetry-event.schema.json`    | Telemetry event                                                        | Otto / Terry               | `contracts.telemetry.test`        | opt-in counter endpoint                         |
 
-**Planned at B2a step 1b** (not in this directory yet; each lands with examples and scenario fixtures):
+**Planned at B2a step 1b** (not in this directory yet; each lands with examples and scenario fixtures; the fields of C-19, C-23 and C-33 are in `server/SPEC.md` § 11a):
 
 | id   | file (`.schema.json`)     | fixes the shape of                                                                       | owner  | behaviour test                       |
 | ---- | ------------------------- | ---------------------------------------------------------------------------------------- | ------ | ------------------------------------ |
@@ -88,7 +88,7 @@ Files here are authored by hand (a generator was used for the first cut; the JSO
 - Opening paragraph: the cookbook README:3, with § 2d-2 (the page:150) replacing its pointer to the narrative file.
 - One home: the page:145; klappy/kitchen `health-code/HYGIENE.md:135` (H35) and `:108` (H19).
 - Index, C-01 to C-18: id, file, title, owner and instances from the cookbook README:9-26; behaviour test names from the narrative file's **Test** line for each contract (lines 46, 56, 66, 76, 86, 96, 107, 117, 127, 137, 147, 157, 167, 177, 187, 197, 207, 217). The pack projection `c13-pack-rights` is fia-app's own file (the page:146); its title is that file's `title` field; its owner is Terry as C-32 (the page:151), and its test name follows § 2d-3's `contracts.<slug>.test`.
-- Planned table: file names and shapes from the page:158-174; owners from § 2d-3 (the page:151); test names from § 2d-3's pattern with each file's slug; `capabilities.json` as the C-19 instance from the page:89; "all land in B2a step 1b" from the page:156.
+- Planned table: file names and shapes from the page:158-174, whose C-19, C-23 and C-33 fields `server/SPEC.md` § 11a carries; owners from § 2d-3 (the page:151); test names from § 2d-3's pattern with each file's slug; `capabilities.json` as the C-19 instance from the page:89; "all land in B2a step 1b" from the page:156.
 - Shared patterns, Versioning (first four bullets), Testing (first and last bullets, and the PoC seeds), Changing a contract and the closing paragraph: carried from the cookbook README:28-55. The Testing first bullet's "today" line is replaced by this repo's runner (`tests/contracts.test.ts:6-13`, `package.json` script `test:contracts`); that is a fact for this repo, not an amendment.
 - § 2d-1 to § 2d-6: the page:149-154. The side-by-side rule in § 2d-5 is the page:51.
 - The `capabilities.json` exception: the page:89, :132, against the cookbook README:55; open as `server/SPEC.md` O-18.
