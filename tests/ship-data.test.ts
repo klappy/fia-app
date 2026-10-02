@@ -23,12 +23,16 @@ describe('ship-data build step', () => {
   it('ships rights and packs at every path the app requests', () => {
     for (const p of [
       'data/rights/records.json',
-      `data/packs/${PACK}/guide.json`,
-      `data/packs/${PACK}/guide-units.json`,
+      `packs/${PACK}/guide.json`,
+      `packs/${PACK}/guide-units.json`,
       `packs/${PACK}/manifest.json`,
       `packs/${PACK}/scripture.json`,
     ])
       expect(existsSync(join(out, p)), p).toBe(true);
+  });
+
+  it('ships each pack at one path only, its C-02 path (GAP-OFFLINE)', () => {
+    expect(existsSync(join(out, 'data/packs'))).toBe(false);
   });
 
   it('every file a pack manifest lists exists at its C-02 path', () => {
