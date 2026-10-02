@@ -37,7 +37,7 @@ describe('F6-S16 feedback in glass', () => {
     expect(html).not.toContain(EN['s.feedback.paused-note']);
     expect(form('', { paused: true })).toContain(EN['s.feedback.paused-note']);
   });
-  it('S16 shows where, not the build: no version/theme/size line on screen', () => {
+  it('S16 shows where in words, not the build or ids: no version/theme/size/id on screen', () => {
     const html = renderToString(
       createElement(
         MemoryRouter,
@@ -45,8 +45,10 @@ describe('F6-S16 feedback in glass', () => {
         createElement(S16Feedback),
       ),
     );
-    expect(html).toContain('spa.MRK-1-1-13');
-    expect(html).toContain('Español (spa)');
+    // design-lens rule 5: ids ride in the C-16 payload only (e2e/feedback.spec.ts checks it)
+    expect(html).toContain('<p class="fia-feedback__where">Español</p>');
+    for (const id of ['spa.MRK-1-1-13', 'S02-U004', '>S05<', '(spa)'])
+      expect(html).not.toContain(id);
     expect(html).not.toMatch(/>v\d+\.\d+/);
     expect(html).toContain(EN['s.feedback.paused-note']);
   });

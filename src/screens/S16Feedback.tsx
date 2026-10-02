@@ -12,6 +12,7 @@ import {
   refOf,
   type FeedbackContextInput,
 } from '../feedback';
+import { position } from '../flow/model';
 import { flowSession } from '../flow/session';
 import { t } from '../i18n';
 import { LANGUAGES } from '../i18n/languages';
@@ -82,8 +83,10 @@ export default function S16Feedback() {
     const guide = snap.guide && snap.guide.packId === snap.packId ? snap.guide : undefined;
     return {
       packId: snap.packId,
-      title: guide?.title,
+      guide,
       unitId: guide ? snap.state?.unitId : undefined,
+      /** C-03 catalog title of each pack (words), when the catalog is loaded. */
+      titles: new Map(snap.manifest?.entries.map((e) => [e.packId, e.title]) ?? []),
     };
   });
 
@@ -129,16 +132,26 @@ export default function S16Feedback() {
     installed: globalThis.matchMedia?.('(display-mode: standalone)').matches,
     userAgent: globalThis.navigator?.userAgent,
   };
-  // One fact per line (16-feedback.md § layout): passage · unit · screen · content language.
-  // Version, theme and size still ride in the payload but are not shown (mock rev2 fix-support:
-  // design-lens dl-v21-support-04, product-lens pl-v21-support-03); offline shows in the header chip.
-  const passage = ctx.packId && ctx.packId === flow.packId && flow.title ? flow.title : ctx.packId;
+  // One line in words (mock 16-feedback.html:147): passage · step title, part n · language
+  // (s.feedback.context-human). Ids (pack, unit, screen) and version, theme and size ride in the
+  // C-16 payload only, never on screen (design-lens rule 5; dl-v21-support-04, dl-f6s16-01/02,
+  // pl-f6s16-02); offline shows in the header chip.
+  const guide = ctx.packId && ctx.packId === flow.packId ? flow.guide : undefined;
+  const passage = guide?.title ?? (ctx.packId && flow.titles.get(ctx.packId));
+  const language = langName(ctx.contentLanguage);
+  const inGuide =
+    guide && ctx.unitId && guide.steps.some((s) => s.units.some((u) => u.id === ctx.unitId));
+  const at = inGuide && ctx.unitId ? position(guide, ctx.unitId) : undefined;
   const contextLines = [
-    passage,
-    ctx.unitId && t('s.feedback.where.unit', { unit: ctx.unitId }),
-    ctx.screen && t('s.feedback.where.screen', { screen: ctx.screen }),
-    `${langName(ctx.contentLanguage)} (${ctx.contentLanguage})`,
-  ].filter((l): l is string => !!l);
+    passage && at
+      ? t('s.feedback.context-human', {
+          ref: passage,
+          stage: at.stageTitle,
+          unit: String(at.unitIndex + 1),
+          language,
+        })
+      : [passage, language].filter(Boolean).join(' · '),
+  ];
 
   const send = async () => {
     if (sending) return;

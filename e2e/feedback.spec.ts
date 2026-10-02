@@ -33,12 +33,11 @@ test('online Send posts C-16 with context and reads Received', async ({ page }) 
   const posts = await stub(page, () => 201);
   await page.goto(CTX);
   await expect(page.locator('[data-screen="S16"]')).toBeVisible();
-  // context card: passage, unit, screen, content language
+  // context card: words only (design-lens rule 5); the ids ride in the payload checked below
   const card = page.locator('.fia-feedback__context');
-  await expect(card).toContainText('spa.MRK-1-1-13');
-  await expect(card).toContainText('unit S02-U004');
-  await expect(card).toContainText('S05');
-  await expect(card).toContainText('Español (spa)');
+  await expect(card).toContainText('Español');
+  for (const id of ['spa.MRK', 'S02-U004', 'S05', '(spa)'])
+    await expect(card).not.toContainText(id);
   await send(page, 'Audio stopped in step 2.');
   await expect(page.getByRole('status').getByText(/^Received ·/)).toBeVisible();
   await expect(page.getByText(/Queued/)).toHaveCount(0);
