@@ -5,7 +5,7 @@
   "direction": "ltr",
   "pericope": "MRK-1-1-13",
   "passage": "MRK 1:1-13",
-  "preparedAt": "2026-09-30T21:40:30.705Z",
+  "preparedAt": "2026-10-02T16:28:27.601Z",
   "sourceRevisions": {
     "FIATranslationGuide": "eb744452eb8d7c852caadde9d3181cddfe571119",
     "FIAKeyTerms": "a39260670bba9d87d902e0fa0ae447341343481f",
@@ -24,7 +24,7 @@
   ],
   "tiers": {
     "text": {
-      "bytes": 284238,
+      "bytes": 333186,
       "files": [
         {
           "path": "/packs/tpi.MRK-1-1-13/guide.json",
@@ -46,8 +46,8 @@
         },
         {
           "path": "/packs/tpi.MRK-1-1-13/resources.json",
-          "bytes": 97726,
-          "sha256": "e1ca477d7314ab451c504be1ed7d634507435c012809a314071493c3fdc6cc33",
+          "bytes": 99006,
+          "sha256": "1e405eaae320e7df21c9e41ca2ac29f6f6bcfafdbfcf190100621cb89923b14e",
           "mime": "application/json"
         },
         {
@@ -58,8 +58,14 @@
         },
         {
           "path": "/packs/tpi.MRK-1-1-13/narration-plan.json",
-          "bytes": 51233,
-          "sha256": "437bc51015830715f71edc07d6de13f3d48399b9f517671dc6d813e2030f9d58",
+          "bytes": 96148,
+          "sha256": "9cb31ee5eae325f59295a7f73c92686a7af99a20a94b152e47c2fea7acfb00da",
+          "mime": "application/json"
+        },
+        {
+          "path": "/packs/tpi.MRK-1-1-13/rights.json",
+          "bytes": 2753,
+          "sha256": "1a5ffb450defe188b0bc7733b201366aec1afc5859226a92d4ed7102749b2f7c",
           "mime": "application/json"
         }
       ]
@@ -75,7 +81,19 @@
     "maps": 4,
     "videos": 3,
     "scripture": 1,
-    "scriptureFallback": 0
+    "scriptureFallback": 0,
+    "hiddenUnits": 0,
+    "termsSupplement": 0,
+    "narrationSlots": 192,
+    "narrationFloorSlots": 191,
+    "alignmentSlots": 1,
+    "slots-guide-unit": 126,
+    "slots-scripture": 1,
+    "slots-term-recording": 16,
+    "slots-term-read-aloud": 16,
+    "slots-description": 8,
+    "slots-next-action": 3,
+    "slots-transition": 22
   },
   "provenance": {
     "text": {
@@ -86,7 +104,7 @@
     "audio": {
       "source": 0,
       "generated": 0,
-      "missing": 143
+      "missing": 192
     },
     "description": {
       "source": 0,
