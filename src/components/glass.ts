@@ -1,4 +1,4 @@
-// BT Glass, vendored whole at klappy/bt-design-system-generative-glass @6aa9bc3 (src/vendor/glass/,
+// BT Glass, vendored whole at klappy/bt-design-system-generative-glass @ad528f4 (src/vendor/glass/,
 // FE-1; pin in src/vendor/glass/.vendored-sha). The kit is never edited: app overrides live in
 // src/tokens/alpha.css. This file is the one import point the app uses, so a re-pin touches one place.
 // React 19 import proof (F4): the kit's .jsx render through the app's React 19 build (vite, @vitejs/plugin-react).
@@ -23,6 +23,7 @@ import { GlassSegmented as KitGlassSegmented } from '../vendor/glass/components/
 import { GlassToggle as KitGlassToggle } from '../vendor/glass/components/forms/GlassToggle';
 import { CatalogRow as KitCatalogRow } from '../vendor/glass/components/resources/CatalogRow';
 import { Icon as KitIcon } from '../vendor/glass/components/icons/Icon';
+import type { IconName } from '../vendor/glass/components/icons/Icon';
 import { FilterChips as KitFilterChips } from '../vendor/glass/components/forms/FilterChips';
 import { GlassField as KitGlassField } from '../vendor/glass/components/forms/GlassField';
 
@@ -86,22 +87,5 @@ export const GlassField = KitGlassField as unknown as ComponentType<
   }
 >;
 
-/** Kit icon names present in `components/icons/Icon.jsx` @6aa9bc3 (the .d.ts union omits the BT additions). */
-export type KitIconName =
-  | 'chevronLeft'
-  | 'arrowUpRight'
-  | 'chevronRight'
-  | 'bookmark'
-  | 'maximize'
-  | 'moon'
-  | 'compass'
-  | 'sparkle'
-  | 'book'
-  | 'headphones'
-  | 'check'
-  | 'cloudOff'
-  | 'globe'
-  | 'languages'
-  | 'x'
-  | 'plus'
-  | 'search';
+/** Kit icon names: the kit's own `Icon.d.ts` union, which @ad528f4 lists all 41 glyphs in `Icon.jsx` (K1, kit #9). */
+export type KitIconName = IconName;

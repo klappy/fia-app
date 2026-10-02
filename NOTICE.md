@@ -8,4 +8,6 @@ AI-generated narration and AI translations of the English are derived works of t
 
 Nothing in this repository grants rights to the FIA name, logo or brand assets beyond their use in this app as supplied.
 
+Fonts: the scripture faces Noto Serif, Noto Serif Hebrew, Noto Naskh Arabic, Noto Serif Devanagari, Noto Serif Gujarati and Noto Serif TC (© The Noto Project Authors and Google Inc.) are self-hosted in the vendored BT Glass kit (`src/vendor/glass/assets/fonts/`, from npm `@fontsource/*` 5.3.0) under the **SIL Open Font License 1.1**; the licence text sits beside each family as `OFL.txt`.
+
 This file is a stub; the generated per-language attribution list lands with the content pipeline.
