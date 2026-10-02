@@ -2,6 +2,38 @@
 
 All notable changes to the FIA App. One entry per train; the train note lives in `release/changes/<version>-<slug>.md`.
 
+## 0.3.0 — First v2 cut (2026-10-02)
+
+First v2 cut, shipped in phases (captain order 2026-10-01). Gathered from `release/changes/` since 0.2.1 and from every PR merged on `main` since production `dc8ff06` (`git log origin/production..origin/main --merges`): 36 PRs between #11 and #50. Train note: [`release/changes/0.3.0-first-v2-cut.md`](release/changes/0.3.0-first-v2-cut.md).
+
+- **Library loads: pipeline data ships with the build** (#11): `data/` (catalog, rights, packs) is copied into `dist/`, so the content journey gets past S02 (on 0.2.1 it stops at "Could not load the library."). Media screens read `/packs/<id>/…`; `fia-release` meta reads `<version>+<sha7>`. Note: [`release/changes/fix-ship-data.md`](release/changes/fix-ship-data.md).
+- **Save for offline** (#14, #17, #18): ⊘ Offline chip and needs-connection rows (R-702); S04 save row with tier picker, sizes and Save (R-306/307/309); catalog tier sizes match the pack manifests (R-307).
+- **Feedback client** (#15, #34): outbox sends and flushes, with context chips (R-705 client); S16 attach line reads "part n of m". The server route is not live (known gap 5).
+- **BT Glass shell and skins** (#13, #22, #24–#26, #28–#30, #32, #36, #38, #40, #41, #44): F4 glass shell (kit vendored, glass header and Explore, no bottom bar); F6 skins for S14 Settings, S15 About and rights (pack holder and licence lines), S16 Feedback and S17 Install guide, with their review follow-ups; sheet scrim, focus trap and brand row; SH-2 sheet action above the dock.
+- **Kit re-vendor** (#50): BT Glass at `ad528f4` (17 v2 icons, self-hosted Noto scripture faces, `GlassCheckbox`, `CountdownRing` / `StageRail` / `BeadStrip`, not yet wired into screens); Noto Serif TC stays out of the offline shell. Note: [`release/changes/kit-revendor-fonts.md`](release/changes/kit-revendor-fonts.md).
+- **Content pipeline** (#20, #21, #23, #27, #31, #33, #35, #37, #39): Mark 1:1–13 narration plan carries every PoC-floor slot (B2-prep); 21 key terms from `term-supplements.json` (BL5); each pack carries holder and licence per source from the C-13 rights record (BL8, hardened in #31, pipeline tests gate CI); autonyms, `next-` clip ids and the hidden-example anchor in any language (BL2/6/7); next-action scripts and description texts (BL9); Spanish text step strips AI sentence-start filler (V1-6); short visual descriptions on the M9 shared-base model (V1-4, follow-ups #39).
+- **Passage titles** (#42, #43, #45–#48): contracts C-03/C-06/C-10/C-13 1.1.0 for pericope subtitles (BL4b); Bible section headings gathered per Mark pericope (BL4a); text route with a pinned `claude-opus-5-5` client, mock test and CI secret slot (BL4c); subtitle generator (rung, key, cache, ledger, caps), no live calls (BL4d); hardening (#46); `subtitleMode` setting, S14 "Passage titles" switch and S01 summaries line (FS-2).
+
+Also on `main`: five direct commits that sync agent allow rules in `.claude/settings.json` (no app change). Notes in `release/changes/` since 0.2.1: `fix-ship-data.md` and `kit-revendor-fonts.md` only; the other PRs carry no note, so their lines above come from the merge log.
+
+### Known gaps (shipping in phases)
+
+1. Offline save does not cover the Guide (P1; elevate to a blocker if the first cut must meet the 20:41 'verified offline save' floor). S04 says 'Saved (Text, 0.5 MB)' and S13 lists 'MRK 1:1–13 · Text ✓'. With the network gone, S04, S05, S06 and S07 show 'Could not read this passage's details. Try again'; only S08 Scripture opens. Cause: src/flow/catalog.ts reads /data/packs/<id>/guide.json and guide-units.json (and S04 also reads /data/catalog/manifest.json). The Text tier saves /packs/<id>/… paths instead. Not a regression: production has no packs at all.
+2. Content is one English pack. Only eng.MRK-1-1-13 exists in English (5 packs in all: eng/spa/tpi Mark 1:1–13, arb GEN-1-1-2-3, hau LUK-6-17-19). The library lists about 1,900 English guides; every other passage (checked Mark 1:14–20, Mark 8:1–10, Genesis 1:1–2:3, John 1:43–51) dead-ends at S04 with 'Could not read this passage's details. Try again'. No crash. Suggest a quick 'not yet' label or hiding passages that have no pack.
+3. No audio on S05 ('AI voice not yet available'); F5's stand-in is not on main yet.
+4. Most screens are still unskinned (the captain called this mix 'fugly'). Glass header, but raw lists elsewhere: S05 progress shows as plain numbered lists with blank items 1–8; S02 books, S08 edition tabs and S05 view tabs are default buttons. S08 heading reads 'MRK 1:1-13' and the edition line 'BereanStandardBible'. F5/F6 skins pending.
+5. Feedback endpoint is not live. DEV and prod are assets-only Workers, so POST /api/feedback returns 405; the C-16 Worker route (owner Otto) is missing. The app queues honestly ('Waiting to send') and retries with backoff, which leaves 405 noise in the console.
+6. Analytics vs. the About screen. Cloudflare Web Analytics adds its beacon (static.cloudflareinsights.com) at the edge on both dev and production; the same beacon is already live on production, so not a regression. S15 says 'Count anonymous usage … Off'. Needs Otto or the captain to decide on the zone setting or the disclosure.
+7. Update banner only on S13. The 'New version ready · Reload' banner is mounted only on S13 Downloads, although the VersionBanner comment says S05/S06/S08 host it. Users elsewhere get the update when the app is next closed and reopened (verified).
+8. Release prep not done (RELEASING step 3). package.json is still 0.2.1, the same as production v1, so the two builds differ only by the +sha in fia-release. No CHANGELOG entry yet. _(Closed by this entry and the 0.3.0 bump once merged.)_
+9. Cosmetic leftovers. Without a current pack, S15 shows the licence-file holder only ('Word Collective'); with the pack it shows both holders. The licence notice shows raw JSON. Requests for SF-Pro-\*.otf get the SPA fallback (200 text/html, no font binaries shipped, falls back to system font). Interface text and the header chip stay English when the content is Spanish or Tok Pisin.
+10. Sandbox limit, not an app fault. Here Chromium rejects the session proxy CA (ERR_CERT_AUTHORITY_INVALID), so smoke:deployed's browser test cannot hit https://dev.fiaguide.app directly from this sandbox. Covered by the relay run and by GitHub post-deploy (green).
+
+### Next
+
+- Guide audio arrives in 0.3.1 (F5, PoC voices as a stand-in).
+- AI voice to become a clone of the FIA voice per language (queued).
+
 ## 0.2.1 — Alpha first train (2026-10-01)
 
 First promotion of the Alpha app (dev → staging → production). Folds in the unreleased 0.2.0 scaffold below and every Alpha lane merged on `main` since.
