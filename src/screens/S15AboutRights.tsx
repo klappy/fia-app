@@ -160,7 +160,7 @@ export default function S15AboutRights() {
   const scripture = (rows ?? []).filter((r) => !FIA_SOURCES[r.collection]);
 
   return (
-    <ScreenFrame id="S15" dockActive="more">
+    <ScreenFrame id="S15">
       <section className="fia-about__brand">
         <p className="fia-mono">{t('s.about.version', { version, build })}</p>
       </section>

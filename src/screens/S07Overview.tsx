@@ -20,7 +20,7 @@ export default function S07Overview() {
 
   if (!guide || !state) {
     return (
-      <ScreenFrame id="S07" dockActive="guide" primaryLabel={null}>
+      <ScreenFrame id="S07" primaryLabel={null}>
         <FlowGate
           status={snap.guideStatus}
           hasPack={!!snap.packId}
@@ -74,7 +74,6 @@ export default function S07Overview() {
     <ScreenFrame
       id="S07"
       title={guide.title}
-      dockActive="guide"
       primaryLabel={guard.length ? null : label}
       onPrimary={press}
     >
