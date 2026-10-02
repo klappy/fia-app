@@ -281,6 +281,28 @@
   overflow-y: auto;
   margin-top: 10px;
 }
+/* Tall sheets (Explore): the dialog is a column, the body takes the free height and scrolls, so the
+   actions row sits at the sheet bottom in the thumb slot (25-explore mock), not after the last row. */
+.fia-sheet--tall {
+  display: flex;
+  flex-direction: column;
+}
+.fia-sheet--tall > .fia-sheet__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+}
+/* Title row lockup: FIA logo then the title (RULING 2026-10-01 (f); mock _frame.css:191-192). */
+.fia-sheet-brand {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+.fia-sheet-brand > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .fia-sheet__actions {
   flex: 1;
   display: flex;
@@ -317,6 +339,8 @@
   gap: 10px;
 }
 .fia-explore__footer {
+  /* --text-muted, not the caption's dim tone: dark measured 3.87:1 on the sheet with it (fix-f4-1124). */
+  color: var(--text-muted);
   text-align: center;
   margin: 10px 0 2px;
 }

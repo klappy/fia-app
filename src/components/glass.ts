@@ -23,7 +23,7 @@ export const AuroraField = KitAuroraField as unknown as ComponentType<AuroraFiel
 export const GlassSurface = KitGlassSurface as unknown as ComponentType<GlassSurfaceProps & Html>;
 export const GlassButton = KitGlassButton as unknown as ComponentType<GlassButtonProps>;
 export const GlassSheet = KitGlassSheet as unknown as ComponentType<
-  Omit<GlassSheetProps, 'title'> & Html & { title?: string }
+  Omit<GlassSheetProps, 'title'> & Omit<Html, 'title'> & { title?: ReactNode }
 >;
 export const CatalogRow = KitCatalogRow as unknown as ComponentType<
   Omit<Html, 'title'> & {
