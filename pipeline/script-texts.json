@@ -1,6 +1,58 @@
 {
   "schemaVersion": 1,
-  "note": "BL9: spoken next-action / transition scripts and visual description texts per pack slot. Borrowed from the PoC (klappy/fia-functional-poc) where it had them; each entry cites its origin. replacesUnitId = the guide stop unit the PoC voiced as this prompt, so B2b can avoid speaking both.",
+  "note": "BL9: spoken next-action / transition scripts and visual description texts per pack slot. Borrowed from the PoC (klappy/fia-functional-poc) where it had them; each entry cites its origin. replacesUnitId = the guide stop unit the PoC voiced as this prompt, so B2b can avoid speaking both. V1-4 (M9 default 1): a description slot names a shared base in descriptionBases.<lang> (what the visual shows, reviewed once, reused by every pericope that attaches it) plus a passageLine (why it matters to this passage); the pipeline voices base + line per occurrence.",
+  "descriptionBases": {
+    "eng": {
+      "a112": {
+        "text": "Jordan River. A photo of a calm green river with trees and reeds on its banks, and a man in a long robe standing at the edge.",
+        "checkedAgainst": "FIAImages a112 1000.jpg @ FIA pin (pipeline/sources.json); viewed 2026-10-02 by cook-v14-1420",
+        "from": "fia-functional-poc@62a979fc34272a481ef6a113cec23e8e22afdcb2:public/content/visual-narration.json#a112",
+        "borrow": "bent: PoC description cut to what the visual shows; checked against the asset"
+      },
+      "a111": {
+        "text": "Wilderness or Desert. A photo of dry, bare hills cut by gullies, with a few small bushes and two tiny people at the bottom.",
+        "checkedAgainst": "FIAImages a111 1000.jpg @ FIA pin (pipeline/sources.json); viewed 2026-10-02 by cook-v14-1420",
+        "from": "fia-functional-poc@62a979fc34272a481ef6a113cec23e8e22afdcb2:public/content/visual-narration.json#a111",
+        "borrow": "bent: PoC description cut to what the visual shows; checked against the asset"
+      },
+      "a203": {
+        "text": "Sandals. A photo of a man in a belted tunic, holding a wooden staff, with sandals on his feet.",
+        "checkedAgainst": "FIAImages a203 1000.jpg @ FIA pin (pipeline/sources.json); viewed 2026-10-02 by cook-v14-1420",
+        "from": "fia-functional-poc@62a979fc34272a481ef6a113cec23e8e22afdcb2:public/content/visual-narration.json#a203",
+        "borrow": "bent: PoC description cut to what the visual shows; checked against the asset"
+      },
+      "a204": {
+        "text": "Sandals. A close photo of feet in leather sandals, with a strap over the toes and a buckled strap around the ankle.",
+        "checkedAgainst": "FIAImages a204 1000.jpg @ FIA pin (pipeline/sources.json); viewed 2026-10-02 by cook-v14-1420",
+        "from": "fia-functional-poc@62a979fc34272a481ef6a113cec23e8e22afdcb2:public/content/visual-narration.json#a204",
+        "borrow": "bent: PoC description cut to what the visual shows; checked against the asset"
+      },
+      "c197": {
+        "text": "Locations in the Book of Mark. A map, north at the top. The Jordan River runs south from the Sea of Galilee to the Dead Sea. Nazareth is in Galilee, in the north; Jerusalem is in Judea, in the south.",
+        "checkedAgainst": "FIAMaps c197 original.png @ FIA pin (pipeline/sources.json); viewed 2026-10-02 by cook-v14-1420",
+        "from": "fia-functional-poc@62a979fc34272a481ef6a113cec23e8e22afdcb2:public/content/visual-narration.json#c197",
+        "borrow": "bent: PoC description cut to what the visual shows; checked against the asset"
+      },
+      "c168": {
+        "text": "Nazareth and Judea. A map, north at the top. A black arrow for the travels of Jesus runs from Nazareth in Galilee down the Jordan valley to the river near the Dead Sea; a short arrow points west into Judea.",
+        "checkedAgainst": "FIAMaps c168 original.png @ FIA pin (pipeline/sources.json); viewed 2026-10-02 by cook-v14-1420",
+        "from": "fia-functional-poc@62a979fc34272a481ef6a113cec23e8e22afdcb2:public/content/visual-narration.json#c168",
+        "borrow": "bent: PoC description cut to what the visual shows; checked against the asset"
+      },
+      "c201": {
+        "text": "Aerial View of Judea and Jerusalem. A drawing of the land seen from above, looking north: the Dead Sea in front, the Jordan River flowing into it, and Jerusalem high in the hills of Judea, to the left.",
+        "checkedAgainst": "FIAMaps c201 original.png @ FIA pin (pipeline/sources.json); viewed 2026-10-02 by cook-v14-1420",
+        "from": "fia-functional-poc@62a979fc34272a481ef6a113cec23e8e22afdcb2:public/content/visual-narration.json#c201",
+        "borrow": "bent: PoC description cut to what the visual shows; checked against the asset"
+      },
+      "c202": {
+        "text": "Important Locations in Jerusalem. A map of the city inside its walls, north at the top. The Temple is on the east side; across the Kidron River are the Mount of Olives and the road to Bethany.",
+        "checkedAgainst": "FIAMaps c202 original.png @ FIA pin (pipeline/sources.json); viewed 2026-10-02 by cook-v14-1420",
+        "from": "fia-functional-poc@62a979fc34272a481ef6a113cec23e8e22afdcb2:public/content/visual-narration.json#c202",
+        "borrow": "bent: PoC description cut to what the visual shows; checked against the asset"
+      }
+    }
+  },
   "packs": {
     "eng.MRK-1-1-13": {
       "next-S02-U005": {
@@ -121,44 +173,52 @@
         "borrow": "built: the PoC transition clips (public/audio/activity-transitions/manifest.json) end at S06-U008; none covers the terminal stop"
       },
       "desc-a112": {
-        "text": "Jordan River. A person stands beside the river, with trees and reeds along its banks. Look at the water and the land beside it as you picture the Jordan River setting.",
+        "base": "a112",
+        "passageLine": "John baptizes people in the Jordan, and baptizes Jesus there too (verses 5 and 9).",
         "from": "fia-functional-poc@62a979fc34272a481ef6a113cec23e8e22afdcb2:public/content/visual-narration.json#a112",
-        "borrow": "verbatim (PoC accepted description; V1-4 reviews length and passage fit)"
+        "borrow": "bent (V1-4): shared base + Mark 1:1-13 line; PoC text replaced"
       },
       "desc-a111": {
-        "text": "Wilderness or Desert. Dry, rounded hills stretch across the landscape, cut by gullies with little vegetation. Look at this landscape as you picture the wilderness and discuss the word you will use for it.",
+        "base": "a111",
+        "passageLine": "John preaches in the wilderness, and the Spirit drives Jesus there for forty days (verses 4, 12 and 13).",
         "from": "fia-functional-poc@62a979fc34272a481ef6a113cec23e8e22afdcb2:public/content/visual-narration.json#a111",
-        "borrow": "verbatim (PoC accepted description; V1-4 reviews length and passage fit)"
+        "borrow": "bent (V1-4): shared base + Mark 1:1-13 line; PoC text replaced"
       },
       "desc-a203": {
-        "text": "Sandals. Here is a full view of a person wearing sandals and holding a wooden staff under a shaded shelter. Look down at the feet to see how the sandals are worn.",
+        "base": "a203",
+        "passageLine": "In verse 7, John says he is not worthy to untie the sandals of the one coming after him.",
         "from": "fia-functional-poc@62a979fc34272a481ef6a113cec23e8e22afdcb2:public/content/visual-narration.json#a203",
-        "borrow": "verbatim (PoC accepted description; V1-4 reviews length and passage fit)"
+        "borrow": "bent (V1-4): shared base + Mark 1:1-13 line; PoC text replaced"
       },
       "desc-a204": {
-        "text": "Sandals. Here is a close view of sandals on a person’s feet. Look at the open toes, the straps around the feet and ankles, and the buckle.",
+        "base": "a204",
+        "passageLine": "Straps like these are what John, in verse 7, is not worthy to stoop down and untie.",
         "from": "fia-functional-poc@62a979fc34272a481ef6a113cec23e8e22afdcb2:public/content/visual-narration.json#a204",
-        "borrow": "verbatim (PoC accepted description; V1-4 reviews length and passage fit)"
+        "borrow": "bent (V1-4): shared base + Mark 1:1-13 line; PoC text replaced"
       },
       "desc-c202": {
-        "text": "Important Locations in Jerusalem. This map outlines Jerusalem and labels the Temple, the Mount of Olives, and nearby places. Find Jerusalem inside the heavy black outline, then look across the blue river line toward the Mount of Olives.",
+        "base": "c202",
+        "passageLine": "Mark 1 names Jerusalem only in verse 5, as a place people came from; these places belong to later chapters.",
         "from": "fia-functional-poc@62a979fc34272a481ef6a113cec23e8e22afdcb2:public/content/visual-narration.json#c202",
-        "borrow": "verbatim (PoC accepted description; V1-4 reviews length and passage fit)"
+        "borrow": "bent (V1-4): shared base + Mark 1:1-13 line; PoC text replaced"
       },
       "desc-c197": {
-        "text": "Locations in the Book of Mark. The large blue area on the left is the Mediterranean Sea. Look inland to the pear-shaped blue lake just above the middle of the map. That is the Sea of Galilee. From its bottom, trace the thin, winding blue line down to the long blue Dead Sea near the bottom of the map. That line is the Jordan River. Blue lines mark rivers; dashed lines mark roads. Around the river are Galilee, Nazareth, Judea, and Jerusalem.",
+        "base": "c197",
+        "passageLine": "Here, people come from Jerusalem and Judea to the Jordan, and Jesus comes from Nazareth (verses 5 and 9).",
         "from": "fia-functional-poc@62a979fc34272a481ef6a113cec23e8e22afdcb2:public/content/visual-narration.json#c197",
-        "borrow": "verbatim (PoC accepted description; V1-4 reviews length and passage fit)"
+        "borrow": "bent (V1-4): shared base + Mark 1:1-13 line; PoC text replaced"
       },
       "desc-c201": {
-        "text": "Aerial View of Judea and Jerusalem. This illustrated terrain view shows hills and valleys around Judea and Jerusalem, with the Jordan River and the Dead Sea. Find Jerusalem and notice the raised land and the lower river valley as you picture the setting.",
+        "base": "c201",
+        "passageLine": "In verse 5, people come down from Jerusalem and the Judean countryside to the Jordan to be baptized.",
         "from": "fia-functional-poc@62a979fc34272a481ef6a113cec23e8e22afdcb2:public/content/visual-narration.json#c201",
-        "borrow": "verbatim (PoC accepted description; V1-4 reviews length and passage fit)"
+        "borrow": "bent (V1-4): shared base + Mark 1:1-13 line; PoC text replaced"
       },
       "desc-c168": {
-        "text": "Nazareth and Judea. Find Nazareth in the region labeled Galilee. Then follow the blue Jordan River toward the Dead Sea, and find Judea and Jerusalem. The black arrows are labeled travels of Jesus. Use these labels to orient yourself to Galilee, Nazareth, and the Jordan River area.",
+        "base": "c168",
+        "passageLine": "Follow the long arrow: in verse 9, Jesus comes from Nazareth to be baptized in the Jordan.",
         "from": "fia-functional-poc@62a979fc34272a481ef6a113cec23e8e22afdcb2:public/content/visual-narration.json#c168",
-        "borrow": "verbatim (PoC accepted description; V1-4 reviews length and passage fit)"
+        "borrow": "bent (V1-4): shared base + Mark 1:1-13 line; PoC text replaced"
       }
     }
   }

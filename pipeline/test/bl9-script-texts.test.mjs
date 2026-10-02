@@ -23,12 +23,6 @@ test('BL9: the eng Mark 1:1-13 plan has no pending-script or pending-text slot',
   }
 });
 
-test('BL9: borrowed descriptions keep the PoC text hash', async () => {
-  const plan = await json('../../data/packs/eng.MRK-1-1-13/narration-plan.json');
-  // PoC public/content/visual-narration.json @62a979f, a112 textSha256
-  assert.equal(plan.entries.find((e) => e.id === 'desc-a112').sourceSha256, 'b83157a53dc4f256db3acf483f65a0d399222cfeb5729fec6ab584da7175cabc');
-});
-
 test('BL9: applyScriptTexts fills only pending text slots and leaves the rest', () => {
   const entries = [
     { id: 'next-S01-U001', kind: 'next-action', status: 'pending-script', sourceSha256: null },

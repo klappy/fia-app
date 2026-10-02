@@ -19,7 +19,20 @@ async function termSupplement(packId) {
 // from pending-script / pending-text to pending (voice still to be generated, B2b). Slots without a text stay as they were.
 async function scriptTexts(packId) {
   const doc = JSON.parse(await readFile(new URL('../script-texts.json', import.meta.url), 'utf8'));
-  return doc.packs[packId] || {};
+  return composeDescriptions(doc.packs[packId] || {}, doc.descriptionBases?.[packId.split('.')[0]] || {});
+}
+// V1-4 / M9 default 1: a description is one shared base per visual (what it shows; written and reviewed once, reused by
+// every pericope that attaches it) plus one passage line per occurrence (why it matters here). The voiced clip is the
+// whole text, per occurrence; descriptionBase records which base (and which version of it) the clip was built from.
+export function composeDescriptions(texts, bases) {
+  const out = {};
+  for (const [id, t] of Object.entries(texts)) {
+    if (!t.base) { out[id] = t; continue; }
+    const b = bases[t.base];
+    assert(b && t.passageLine, `${id}: description base ${t.base} or its passage line is missing`);
+    out[id] = { ...t, text: `${b.text} ${t.passageLine}`, descriptionBase: { resourceId: t.base, textSha256: sha256(Buffer.from(b.text)) } };
+  }
+  return out;
 }
 export function applyScriptTexts(entries, texts) {
   let applied = 0;
@@ -28,7 +41,7 @@ export function applyScriptTexts(entries, texts) {
     if (!t || !['pending-script', 'pending-text'].includes(e.status)) continue;
     const textSha256 = sha256(Buffer.from(t.text));
     const field = e.kind === 'description' ? 'text' : 'script';
-    Object.assign(e, { [field]: t.text, sourceSha256: textSha256, textProvenance: { status: 'generated', ...(t.from ? { generatedFrom: t.from } : {}), generator: e.kind === 'description' ? 'description' : 'narration', audited: false }, borrow: t.borrow, ...(t.replacesUnitId ? { replacesUnitId: t.replacesUnitId } : {}), status: 'pending' });
+    Object.assign(e, { [field]: t.text, sourceSha256: textSha256, textProvenance: { status: 'generated', ...(t.from ? { generatedFrom: t.from } : {}), generator: e.kind === 'description' ? 'description' : 'narration', audited: false }, borrow: t.borrow, ...(t.replacesUnitId ? { replacesUnitId: t.replacesUnitId } : {}), ...(t.descriptionBase ? { descriptionBase: t.descriptionBase } : {}), status: 'pending' });
     applied++;
   }
   return applied;
