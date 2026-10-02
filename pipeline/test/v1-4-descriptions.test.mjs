@@ -20,9 +20,9 @@ test('V1-4: every eng Mark 1:1-13 description is a shared base plus a passage li
     const slot = doc.packs['eng.MRK-1-1-13'][e.id];
     const base = bases[e.resourceId];
     assert.equal(slot.base, e.resourceId, e.id);
-    assert.ok(words(base.text) <= 50, `${e.id} base ${words(base.text)} words`);
-    assert.ok(words(slot.passageLine) <= 25, `${e.id} line ${words(slot.passageLine)} words`);
-    assert.ok(words(e.text) <= 75, `${e.id} ${words(e.text)} words (~30 s; R-509 target <= 45 s)`);
+    assert.ok(words(base.text) <= 40, `${e.id} base ${words(base.text)} words`);
+    assert.ok(words(slot.passageLine) <= 20, `${e.id} line ${words(slot.passageLine)} words`);
+    assert.ok(words(e.text) <= 60, `${e.id} ${words(e.text)} words (~25 s; R-509 target <= 45 s)`);
     assert.equal(e.text, `${base.text} ${slot.passageLine}`);
     assert.ok(e.text.startsWith(`${(await json('../../data/packs/eng.MRK-1-1-13/resources.json'))[e.resourceKind === 'map' ? 'maps' : 'images'].find((m) => m.id === e.resourceId).title}.`), `${e.id} opens with the visual's title`);
     assert.match(slot.passageLine, /verse|Mark 1|this passage/i, `${e.id} line ties to the passage`);
