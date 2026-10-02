@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../components';
 import { booksFor, entriesFor, matches } from '../flow/catalog';
+import { booksWithReady, readyFirst, useReadyPacks } from '../flow/ready';
 import { flowSession, useFlow } from '../flow/session';
 import { t } from '../i18n';
+import { languageName } from '../media/lang';
 import { useOffline } from '../offline/useOffline';
 import { savedPackIds, useOnline } from '../offline/useOnline';
 import { ScreenFrame } from './ScreenFrame';
@@ -27,7 +29,18 @@ export default function S02Library() {
     () => (snap.manifest ? booksFor(snap.manifest, language) : []),
     [snap.manifest, language],
   );
-  const shown = books.filter((b) => matches(q, b.name, b.book));
+  // GAP-NOPACK: books with a passage that opens come first; a book with none reads
+  // "not yet in {language}" in place of its count (ready.ts).
+  const ready = useReadyPacks();
+  const withReady = useMemo(
+    () => (snap.manifest ? booksWithReady(entriesFor(snap.manifest, language), ready) : null),
+    [snap.manifest, language, ready],
+  );
+  const notYet = (book: string) => !!withReady && !withReady.has(book);
+  const shown = readyFirst(
+    books.filter((b) => matches(q, b.name, b.book)),
+    (b) => !notYet(b.book),
+  );
   // R-702 / 02 § States "offline, saved books": a book with no saved passage reads
   // `not saved — needs connection` as a badge in place of its count; saved books are unchanged.
   const savedBooks = useMemo(() => {
@@ -87,14 +100,22 @@ export default function S02Library() {
               type="button"
               className="fia-row"
               data-book={b.book}
-              aria-label={t('s.library.a11y.row', { book: b.name, n: b.count, saved: 0 })}
+              aria-label={
+                notYet(b.book)
+                  ? `${b.name}, ${t('s.common.mark.absent', { language: languageName(language) })}`
+                  : t('s.library.a11y.row', { book: b.name, n: b.count, saved: 0 })
+              }
               onClick={() => {
                 session.selectBook(b.book);
                 nav('/pericopes');
               }}
             >
               <span>{b.name}</span>{' '}
-              {!online && !savedBooks.has(b.book) ? (
+              {notYet(b.book) ? (
+                <span className="fia-mark fia-mark--absent" data-role="not-yet">
+                  ◌ {t('s.common.mark.absent', { language: languageName(language) })}
+                </span>
+              ) : !online && !savedBooks.has(b.book) ? (
                 <span className="fia-badge--needs-connection" data-role="needs-connection">
                   {t('s.library.row-not-saved')}
                 </span>

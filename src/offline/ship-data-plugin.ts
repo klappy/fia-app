@@ -9,15 +9,22 @@
 //                                                   rights line and the offline engine all read
 //                                                   these, so a Save covers what S04–S08 read)
 //   data/cache/**         -> not shipped (BL4d interim subtitle cache; lines reach the app via the catalog)
+//   (written)             -> dist/data/catalog/ready.json: `{ packs: [ids] }`, the packs this build
+//                            ships with a guide (guide.json + guide-units.json). It sits beside the
+//                            C-03 catalog, which lists every guide the sources hold; S02–S04 mark the
+//                            rest "not yet" (GAP-NOPACK). Never under /data/packs: packs have one path.
 //
 // Only `.json` is shipped. None of it is precached: the shell manifest skips `data/` and `packs/`
 // (C-07 tiers — packs are saved per pack on request, never with the shell).
-import { cpSync, existsSync, mkdirSync, readdirSync, statSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import type { Plugin, ResolvedConfig } from 'vite';
 
 /** Files the app cannot start without; a build without them fails loudly. */
 export const REQUIRED_DATA = ['catalog/manifest.json', 'rights/records.json'];
+
+/** Where the build writes the ready index (GAP-NOPACK), beside the catalog; read by `flow/ready`. */
+export const READY_INDEX = 'data/catalog/ready.json';
 
 export function shipData(dataDir: string, outDir: string): string[] {
   for (const f of REQUIRED_DATA)
@@ -43,7 +50,20 @@ export function shipData(dataDir: string, outDir: string): string[] {
     }
   };
   walk('');
+  const index = join(outDir, READY_INDEX);
+  mkdirSync(dirname(index), { recursive: true });
+  writeFileSync(index, `${JSON.stringify({ packs: shippedPacks(dataDir) })}\n`);
+  written.push(index);
   return written;
+}
+
+/** Pack ids under `data/packs/` that carry the two files the guide flow reads, sorted. */
+export function shippedPacks(dataDir: string): string[] {
+  const dir = join(dataDir, 'packs');
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir)
+    .filter((id) => ['guide.json', 'guide-units.json'].every((f) => existsSync(join(dir, id, f))))
+    .sort();
 }
 
 export function shipDataPlugin(opts: { dataDir?: string } = {}): Plugin {
