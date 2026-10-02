@@ -56,7 +56,9 @@ export function ScreenFrame({
   const label =
     primaryLabel === undefined ? (def.primaryKey ? t(def.primaryKey) : null) : primaryLabel;
   const hub = def.dock;
-  const lang = autonym(loadSettings(browserStore()).settings.contentLanguage);
+  // Read once per mount (each route mounts its own frame); useClip re-renders this on every
+  // `timeupdate`, which used to re-parse localStorage each time (PR #22 deferred line).
+  const [lang] = useState(() => autonym(loadSettings(browserStore()).settings.contentLanguage));
   return (
     <AuroraField
       className="fia-aurora"

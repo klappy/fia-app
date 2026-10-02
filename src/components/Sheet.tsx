@@ -83,7 +83,13 @@ export function Sheet({
       const f = focusables();
       if (!f.length) return;
       const [first, last] = [f[0], f[f.length - 1]];
-      if (e.shiftKey && document.activeElement === first) {
+      // Focus off the list (a click on a non-focusable part of the sheet leaves it on <body>, and the
+      // browser's sequential-navigation start point is the clicked node): Tab would walk out behind
+      // the aria-modal scrim, so wrap it back into the sheet (ticket 2026-10-02 sheet-scrim item 2).
+      if (!f.includes(document.activeElement as HTMLElement)) {
+        e.preventDefault();
+        (e.shiftKey ? last : first).focus();
+      } else if (e.shiftKey && document.activeElement === first) {
         e.preventDefault();
         last.focus();
       } else if (!e.shiftKey && document.activeElement === last) {
@@ -108,7 +114,10 @@ export function Sheet({
       role="presentation"
       ref={host}
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose?.();
+        // Hit-test the dialog, not the scrim node: below 640 px the kit GlassSheet's full-height
+        // wrapper (GlassSheet.jsx:3, height 100%) covers the scrim and takes the tap, so
+        // `target === currentTarget` never matched there (ticket 2026-10-02 sheet-scrim item 1).
+        if (!(e.target as Element).closest('[role="dialog"]')) onClose?.();
       }}
     >
       <GlassSheet

@@ -19,6 +19,7 @@ export default function SH3UpdateNotice() {
   if (variant === 'app') {
     return (
       <Sheet
+        brand
         title={t('s.update.title.app')}
         primaryLabel={t('s.update.primary.reload')}
         onClose={close}
@@ -43,6 +44,7 @@ export default function SH3UpdateNotice() {
   };
   return (
     <Sheet
+      brand
       title={t('s.update.title.content')}
       primaryLabel={
         s.online
