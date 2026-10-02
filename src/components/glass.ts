@@ -77,4 +77,6 @@ export type KitIconName =
   | 'cloudOff'
   | 'globe'
   | 'languages'
-  | 'x';
+  | 'x'
+  | 'plus'
+  | 'search';

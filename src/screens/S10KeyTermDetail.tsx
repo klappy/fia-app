@@ -59,7 +59,6 @@ export default function S10KeyTermDetail() {
     <ScreenFrame
       id="S10"
       title={term?.title ?? t('s.common.loading')}
-      dockActive="resources"
       offline={!online}
       primaryLabel={primary}
       primaryState={clip.phase === 'playing' ? 'playing' : 'default'}

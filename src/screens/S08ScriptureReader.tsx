@@ -170,7 +170,6 @@ export default function S08ScriptureReader() {
     <ScreenFrame
       id="S08"
       title={title}
-      dockActive="scripture"
       offline={!online}
       primaryLabel={primary}
       primaryState={clip.phase === 'playing' ? 'playing' : 'default'}

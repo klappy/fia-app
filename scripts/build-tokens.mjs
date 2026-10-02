@@ -59,8 +59,6 @@ spaceVars.push(
   `  --fia-gap-inline: ${s.gap_inline}px;`,
   `  --fia-card-pad: ${s.card_pad}px;`,
   `  --fia-card-pad-wide: ${s.card_pad_wide}px;`,
-  `  --fia-dock-h: ${s.dock_h}px;`,
-  `  --fia-dock-h-stacked: ${s.dock_h_stacked}px;`,
   `  --fia-safe-top: ${s.safe_top};`,
   `  --fia-safe-bottom: ${s.safe_bottom};`,
   `  --fia-content-max-width: ${s.content_max_width}px;`,

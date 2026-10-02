@@ -153,7 +153,6 @@ export default function S13DownloadsOffline() {
   return (
     <ScreenFrame
       id="S13"
-      dockActive="more"
       offline={!s.online}
       primaryLabel={primaryLabel}
       primaryState={!s.online && !justSaved ? 'disabled' : 'default'}
