@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react';
 import { t } from '../i18n';
+import { FiaLogo } from './FiaLogo';
 import { GlassButton, GlassSheet, Icon } from './glass';
 import { PrimaryButton } from './PrimaryButton';
 import { stateAttrs, type StateProps } from './types';
@@ -20,8 +21,11 @@ export interface SheetProps extends StateProps {
   description?: string;
   /** Show the corner close (×); off when the actions row is the one way out (Explore). */
   closeButton?: boolean;
-  /** Full-height sheet (Explore, settings pages). */
+  /** Full-height sheet (Explore, settings pages): the body scrolls and the actions row sits at the
+   *  sheet bottom, in the thumb slot (25-explore mock). */
   tall?: boolean;
+  /** Lead the title row with the FIA logo (RULING 2026-10-01 (f); mock _frame.js:397 `fia-sheet-brand`). */
+  brand?: boolean;
   children?: ReactNode;
 }
 
@@ -34,6 +38,7 @@ export function Sheet({
   actions,
   description,
   tall,
+  brand,
   closeButton = true,
   children,
   state = 'default',
@@ -46,9 +51,19 @@ export function Sheet({
     if (!dialog) return;
     dialog.setAttribute('aria-modal', 'true');
     dialog.setAttribute('aria-label', title);
-    dialog.className = ['fia-sheet', className].filter(Boolean).join(' ');
+    dialog.className = ['fia-sheet', tall && 'fia-sheet--tall', className]
+      .filter(Boolean)
+      .join(' ');
     const attrs = stateAttrs(state, 'sheet') as Record<string, string | undefined>;
     for (const [k, v] of Object.entries(attrs)) if (v !== undefined) dialog.setAttribute(k, v);
+  });
+
+  // The latest onClose, read at key time. The trap effect must not depend on onClose: callers pass
+  // inline closures (ScreenFrame), and a parent re-render (useClip `timeupdate`) would otherwise
+  // re-run it, snapping focus to the opener and back to the first row (PR #22 review finding 1).
+  const closeRef = useRef(onClose);
+  useLayoutEffect(() => {
+    closeRef.current = onClose;
   });
 
   useEffect(() => {
@@ -63,7 +78,7 @@ export function Sheet({
       ).filter((el) => !el.hasAttribute('disabled') && el.tabIndex !== -1);
     focusables()[0]?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose?.();
+      if (e.key === 'Escape') closeRef.current?.();
       if (e.key !== 'Tab') return;
       const f = focusables();
       if (!f.length) return;
@@ -81,7 +96,7 @@ export function Sheet({
       document.removeEventListener('keydown', onKey);
       before?.focus?.();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
   const row =
@@ -98,7 +113,16 @@ export function Sheet({
     >
       <GlassSheet
         open
-        title={title}
+        title={
+          brand ? (
+            <div className="fia-sheet-brand">
+              <FiaLogo />
+              <span>{title}</span>
+            </div>
+          ) : (
+            title
+          )
+        }
         description={description}
         height={tall ? 'calc(100% - 14px)' : 'auto'}
         actions={row ? <div className="fia-sheet__actions">{row}</div> : undefined}
