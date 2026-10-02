@@ -295,7 +295,11 @@ export async function runJobs(jobs, { client, env, cache = fileCache(), ledger =
   for (const job of jobs) {
     if (job.absent) { absent.push({ id: job.id, reason: job.absent }); continue; }
     const hit = cache.get(job.key);
-    if (hit) { out.hits++; records.set(job.key, hit.record); results.push({ job, record: hit.record, raw: hit.raw, cached: true }); continue; }
+    if (hit) {
+      // Same key = same content; an edit elsewhere in the book only refreshes the source revision stamps (TICKET § 5), no call.
+      const record = { ...hit.record, inputs: job.inputs, licence: licenceOf(job.licenceClasses) };
+      out.hits++; records.set(job.key, record); results.push({ job, record, raw: hit.raw, cached: true }); continue;
+    }
     if (ledger.attempted(job.key)) { absent.push({ id: job.id, reason: 'prior-attempt' }); continue; }
     if (!inBatch.has(job.key)) { absent.push({ id: job.id, reason: 'cap-next-batch' }); continue; }
     const engRecord = job.kind === 'translation' ? cached(job.engKey) : null;

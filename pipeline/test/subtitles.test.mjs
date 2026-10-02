@@ -147,6 +147,20 @@ test('ledger row is written uncertain BEFORE each call; cache hit on re-run = 0 
   assert.equal(again.calls.length, 0); assert.equal(second.calls, 0); assert.equal(second.hits, 6); assert.equal(second.plan.need, 0);
 });
 
+test('a revision bump re-run makes 0 calls and the emitted record carries the new source stamp (TICKET § 5)', async () => {
+  const s = store();
+  await runJobs(plan(), { client: mockClient(), cache: s.cache, ledger: s.ledger, approve: true });
+  const bumped = plan({ revisions: { BSB: 'abcdef1'.padEnd(40, '0') } });
+  const client = mockClient();
+  const out = await runJobs(bumped, { client, cache: s.cache, ledger: s.ledger, approve: true });
+  assert.equal(client.calls.length, 0); assert.equal(out.calls, 0); assert.equal(out.hits, 6);
+  const eng = out.records.get(bumped[0].key);
+  assert.deepEqual(eng.inputs.map((i) => i.source), ['BereanStandardBible@abcdef1', 'engtcent@13ef9e4', 'BereanStandardBible@abcdef1', 'engPEV@79f49ed', 'BereanStandardBible@87858d1']);
+  assert.deepEqual(eng.inputs, bumped[0].inputs);
+  assert.deepEqual(eng.licence, { name: 'CC BY-SA 4.0', url: 'https://creativecommons.org/licenses/by-sa/4.0/' });
+  assert.equal(s.cache.get(bumped[0].key).record.inputs[0].source, 'BereanStandardBible@87858d1', 'the cache entry is not rewritten');
+});
+
 test('cap stop: no call past the call cap or the input-token cap; the rest is named, not dropped', async () => {
   const s = store(); const client = mockClient();
   const out = await runJobs(plan(), { client, cache: s.cache, ledger: s.ledger, caps: { calls: 2, inputTokens: 600_000 }, approve: true });
