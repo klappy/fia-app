@@ -10,6 +10,7 @@ import type {
   GuideStop,
   UnitKind,
 } from './types';
+import { CONTENT_BASE } from '../media/usePack';
 
 export type FetchJson = (url: string) => Promise<unknown>;
 
@@ -45,11 +46,21 @@ interface RawUnits {
   stops: GuideStop[];
 }
 
-export function createCatalog(base: string, fetchJson: FetchJson = defaultFetchJson) {
-  const root = base.replace(/\/$/, '');
+/**
+ * `base` holds the catalog (`<base>/catalog/manifest.json`). Pack files are read at their C-02
+ * paths, `<contentBase>/packs/<id>/<file>` — the URLs a Save stores and the worker serves offline
+ * (C-07), and the ones the media screens read (`packUrl`). One path per pack file.
+ */
+export function createCatalog(
+  base: string,
+  fetchJson: FetchJson = defaultFetchJson,
+  contentBase: string = CONTENT_BASE,
+) {
+  const data = base.replace(/\/$/, '');
+  const root = contentBase.replace(/\/$/, '');
   return {
     async manifest(): Promise<CatalogManifest> {
-      const doc = await fetchJson(`${root}/catalog/manifest.json`);
+      const doc = await fetchJson(`${data}/catalog/manifest.json`);
       const r = flowValidator().validate(C03, doc);
       if (!r.ok) throw new ContractError(`catalog manifest (C-03): ${errorText(r.errors)}`);
       return doc as CatalogManifest;
