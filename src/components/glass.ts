@@ -4,7 +4,13 @@
 // React 19 import proof (F4): the kit's .jsx render through the app's React 19 build (vite, @vitejs/plugin-react).
 import '../vendor/glass/styles.css';
 
-import type { ComponentType, CSSProperties, HTMLAttributes, ReactNode } from 'react';
+import type {
+  ComponentType,
+  CSSProperties,
+  HTMLAttributes,
+  InputHTMLAttributes,
+  ReactNode,
+} from 'react';
 import { AuroraField as KitAuroraField } from '../vendor/glass/components/glass/AuroraField';
 import type { AuroraFieldProps } from '../vendor/glass/components/glass/AuroraField';
 import { GlassSurface as KitGlassSurface } from '../vendor/glass/components/glass/GlassSurface';
@@ -17,6 +23,8 @@ import { GlassSegmented as KitGlassSegmented } from '../vendor/glass/components/
 import { GlassToggle as KitGlassToggle } from '../vendor/glass/components/forms/GlassToggle';
 import { CatalogRow as KitCatalogRow } from '../vendor/glass/components/resources/CatalogRow';
 import { Icon as KitIcon } from '../vendor/glass/components/icons/Icon';
+import { FilterChips as KitFilterChips } from '../vendor/glass/components/forms/FilterChips';
+import { GlassField as KitGlassField } from '../vendor/glass/components/forms/GlassField';
 
 // Typing only: the kit's .d.ts (written for React 18's global JSX) omit the `...rest` the .jsx
 // forward (className, aria-*, handlers). Same components, wider prop types; no behaviour added.
@@ -61,6 +69,22 @@ export const Icon = KitIcon as unknown as ComponentType<{
   stroke?: number;
   color?: string;
 }>;
+
+// F6-S16: forms. The .jsx forward `...rest` (FilterChips → the row; GlassField → the <input>).
+export const FilterChips = KitFilterChips as unknown as ComponentType<
+  Omit<Html, 'onChange'> & {
+    options: { value: string; label?: ReactNode }[];
+    value: string[];
+    onChange?: (next: string[]) => void;
+    bleed?: boolean;
+  }
+>;
+export const GlassField = KitGlassField as unknown as ComponentType<
+  Omit<InputHTMLAttributes<HTMLInputElement>, 'style'> & {
+    label?: ReactNode;
+    style?: CSSProperties;
+  }
+>;
 
 /** Kit icon names present in `components/icons/Icon.jsx` @6aa9bc3 (the .d.ts union omits the BT additions). */
 export type KitIconName =
