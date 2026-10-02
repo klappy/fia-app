@@ -92,7 +92,13 @@ export default defineConfig({
     shipDataPlugin(),
     offlineShellManifest(),
   ],
-  build: { target: 'es2022', sourcemap: true },
+  build: {
+    target: 'es2022',
+    sourcemap: true,
+    // Fonts stay files, never base64 in the CSS: a Noto Serif TC subset under Vite's 4 KB inline
+    // default would ride into the precached CSS that the shell manifest keeps TC out of.
+    assetsInlineLimit: (file: string) => (file.endsWith('.woff2') ? false : undefined),
+  },
   test: {
     include: ['tests/**/*.test.ts'],
     environment: 'node',

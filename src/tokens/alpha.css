@@ -256,7 +256,7 @@ body { margin: 0; min-height: 100dvh; background: var(--fia-surface-app); }
 :root { --fia-theme-color-light: #EEF0F5; --fia-theme-color-dark: #0B0D10; }
 
 /* ==== app overrides over BT Glass (hand-written; scripts/build-tokens.mjs keeps this block) ====
-   Kit: klappy/bt-design-system-generative-glass @6aa9bc3, vendored whole in src/vendor/glass/ and never
+   Kit: klappy/bt-design-system-generative-glass @ad528f4, vendored whole in src/vendor/glass/ and never
    edited (FE-1). BEND only: app tokens and re-points of kit aliases, after the kit's styles.css. Values
    follow the nodded v2.1 mocks' app layer (cookbook design/alpha-v2-screens/_frame.css @2792f33). */
 :root {

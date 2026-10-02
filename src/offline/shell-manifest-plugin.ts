@@ -21,6 +21,10 @@ const MIME: Record<string, string> = {
   woff2: 'font/woff2',
 };
 // version.json is the deploy stamp (RELEASING.md): always from the network, never precached.
+// Noto Serif TC (Han, ~6 MB in 216 unicode-range subsets) stays out of the shell: the kit asks
+// apps to keep it out of any offline precache, and it loads lazily when Han text renders (vendored
+// kit assets/fonts/README.md; tokens/fonts-noto-tc.css:3). Vite emits its subsets flat as
+// assets/noto-serif-tc-<n>-<weight>-normal-<hash>.woff2; the other five Noto faces are precached.
 const SKIP = [
   /^sw\.js$/,
   /^workbox-/,
@@ -28,6 +32,7 @@ const SKIP = [
   /^offline-shell\.json$/,
   /^version\.json$/,
   /\.map$/,
+  /^noto-serif-tc-.*\.woff2$/,
 ];
 // Pipeline content (ship-data-plugin): packs are saved per pack on request (C-07 tiers) and the
 // catalog is ~32 MB — never part of the shell precache.
