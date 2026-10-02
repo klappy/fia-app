@@ -39,6 +39,6 @@ test('opened from the guide, "We will attach" is one line in words', async ({ pa
   await expect(page.locator('[data-screen="S16"]')).toBeVisible();
   const where = page.locator('.fia-feedback__where');
   await expect(where).toHaveCount(1);
-  await expect(where).toHaveText(/^Mark 1:1–13 · .+, part \d+ · English$/);
+  await expect(where).toHaveText(/^Mark 1:1–13 · .+, part \d+ of \d+ · English$/);
   for (const id of ['eng.MRK', 'S0', '-U0', '(eng)']) await expect(where).not.toContainText(id);
 });

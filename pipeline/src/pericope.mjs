@@ -4,6 +4,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { assert, bookFile2, DATA_ROOT, fetchJson, guideSteps, guideUnitsDocument, indexReferenceMatches, LANGUAGE_INFO, loadSources, parsePericope, parseRef, plainText, rangesOverlap, sha256, stableJson } from './lib.mjs';
 import { loadRightsRecords, packRightsLines } from './rights.mjs';
+import { stripPlanFiller } from './spoken-text.mjs';
 
 const FIA = { image: 'FIAImages', map: 'FIAMaps', term: 'FIAKeyTerms', video: 'VideoBibleDictionary' };
 
@@ -11,6 +12,26 @@ const FIA = { image: 'FIAImages', map: 'FIAMaps', term: 'FIAKeyTerms', video: 'V
 async function termSupplement(packId) {
   const doc = JSON.parse(await readFile(new URL('../term-supplements.json', import.meta.url), 'utf8'));
   return new Set(doc.packs[packId]?.terms || []);
+}
+
+// BL9: written next-action / transition scripts and description texts (script-texts.json), borrowed from the PoC where
+// it had them. A slot with a text gets the text, its sha256 as sourceSha256 and a C-06 text provenance; its status moves
+// from pending-script / pending-text to pending (voice still to be generated, B2b). Slots without a text stay as they were.
+async function scriptTexts(packId) {
+  const doc = JSON.parse(await readFile(new URL('../script-texts.json', import.meta.url), 'utf8'));
+  return doc.packs[packId] || {};
+}
+export function applyScriptTexts(entries, texts) {
+  let applied = 0;
+  for (const e of entries) {
+    const t = texts[e.id];
+    if (!t || !['pending-script', 'pending-text'].includes(e.status)) continue;
+    const textSha256 = sha256(Buffer.from(t.text));
+    const field = e.kind === 'description' ? 'text' : 'script';
+    Object.assign(e, { [field]: t.text, sourceSha256: textSha256, textProvenance: { status: 'generated', ...(t.from ? { generatedFrom: t.from } : {}), generator: e.kind === 'description' ? 'description' : 'narration', audited: false }, borrow: t.borrow, ...(t.replacesUnitId ? { replacesUnitId: t.replacesUnitId } : {}), status: 'pending' });
+    applied++;
+  }
+  return applied;
 }
 
 // PoC matrix row 14: an English worked example ("The following is an example ...") runs to the end of its step and is
@@ -181,11 +202,16 @@ export async function buildPack(lang, pericope, { log = console.error } = {}) {
     }
   }
   for (const st of guideUnits.stops) narrationPlan.push(slot({ id: st.id, kind: 'transition', stopKind: st.kind, afterUnitId: st.afterUnitId, sourceSha256: st.promptSha256 || null, ai: true, recordingSource: 'generated', generator: 'narration', floor: true, status: st.promptSha256 ? 'pending' : 'pending-script' }));
+  applyScriptTexts(narrationPlan, await scriptTexts(packId));
   const slotCounts = narrationPlan.reduce((c, p) => ({ ...c, [p.kind]: (c[p.kind] || 0) + 1 }), {});
   const alignmentSlots = narrationPlan.filter((p) => p.alignment).length;
   const audioTier = { tier: 'phone', recipe: 'a=opus,br=32k', mime: 'audio/ogg', fallbackMime: 'audio/mpeg', status: 'planned', clips: narrationPlan.length,
     contractGap: 'C-02 tiers.<tier>.files needs bytes + sha256 per file; the audio tier enters manifest.tiers only when clips exist (B2b)' };
   const narration = { schemaVersion: 1, packId, language: lang, entries: [] };
+  // V1-6 text step: generated Spanish scripts/descriptions lose sentence-start AI filler before B6c voices them
+  // (spoken-text.mjs). Source text is never touched; other languages pass through.
+  const fillerStripped = stripPlanFiller(narrationPlan, lang, sha256);
+  if (fillerStripped) log(`${packId}: stripped sentence-start filler from ${fillerStripped} generated text(s)`);
 
   // write files, then the C-02 manifest with bytes + sha256 per file
   const dir = path.join(DATA_ROOT, 'packs', packId);

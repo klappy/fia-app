@@ -132,7 +132,7 @@ export default function S16Feedback() {
     installed: globalThis.matchMedia?.('(display-mode: standalone)').matches,
     userAgent: globalThis.navigator?.userAgent,
   };
-  // One line in words (mock 16-feedback.html:147): passage · step title, part n · language
+  // One line in words (mock 16-feedback.html:147): passage · step title, part n of m · language
   // (s.feedback.context-human). Ids (pack, unit, screen) and version, theme and size ride in the
   // C-16 payload only, never on screen (design-lens rule 5; dl-v21-support-04, dl-f6s16-01/02,
   // pl-f6s16-02); offline shows in the header chip.
@@ -148,6 +148,7 @@ export default function S16Feedback() {
           ref: passage,
           stage: at.stageTitle,
           unit: String(at.unitIndex + 1),
+          units: String(at.unitCount),
           language,
         })
       : [passage, language].filter(Boolean).join(' · '),
