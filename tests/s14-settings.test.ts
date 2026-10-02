@@ -47,6 +47,41 @@ describe('S14 Settings in glass', () => {
   });
 });
 
+describe('S14 Passage titles (FS-2, C-10 subtitleMode)', () => {
+  it('renders one Short summaries switch with its note and the kit sparkle, off by default', () => {
+    const h = html();
+    expect(h).toContain('aria-label="Passage titles"');
+    expect(h).toContain(EN['s.settings.summaries-note']);
+    expect(EN['s.settings.summaries']).toBe('Short summaries');
+    expect(EN['s.settings.summaries-note']).toBe(
+      'One line under each passage, written by AI from Bible section headings. Always marked.',
+    );
+    const sw = h.match(
+      /<[^>]*role="switch"[^>]*aria-label="Short summaries"[^>]*>|<[^>]*aria-label="Short summaries"[^>]*role="switch"[^>]*>/,
+    );
+    expect(sw?.[0]).toContain('aria-checked="false"');
+    const group = h.slice(h.indexOf('aria-label="Passage titles"'));
+    expect(group.slice(0, group.indexOf('</section>'))).toContain('M12 3l1.9 5.1L19 10');
+  });
+  it('sits between Voice and Language', () => {
+    const h = html();
+    const at = (k: string) => h.indexOf(`aria-label="${EN[k]}"`);
+    expect(at('s.settings.narration')).toBeLessThan(at('s.settings.passage-titles'));
+    expect(at('s.settings.passage-titles')).toBeLessThan(at('s.settings.language'));
+  });
+});
+
+describe('S01 disclosure names passage summaries when the switch is on (TERRY-READING (4))', () => {
+  it("keeps today's line by default and has the summaries line ready", async () => {
+    const { default: S01 } = await import('../src/screens/S01FirstRunLanguage');
+    const h = renderToString(createElement(MemoryRouter, null, createElement(S01)));
+    expect(h).toContain(EN['s.lang.disclosure']);
+    expect(EN['s.lang.disclosure-summaries']).toBe(
+      'Some voices, translations and passage summaries are made by AI and are marked.',
+    );
+  });
+});
+
 describe('Text-size steps 100 / 150 / 200 / 310% (PRD § 8.5)', () => {
   it('C-10 accepts huge and maps each step to its own html attribute', () => {
     expect(normalizeSettings({ ...DEFAULT_SETTINGS, textSize: 'huge' }).settings.textSize).toBe(
