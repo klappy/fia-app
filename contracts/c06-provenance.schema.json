@@ -3,7 +3,7 @@
   "$id": "https://fia.klappy.dev/contracts/c06-provenance.schema.json",
   "title": "Provenance record",
   "description": "One vocabulary for text, audio and descriptions: source | generated | missing, with what it was generated from and the source collection + revision. UI renders user words, never backend names.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "contract": "c06",
   "type": "object",
   "required": [
@@ -29,14 +29,15 @@
     },
     "generatedFrom": {
       "type": "string",
-      "description": "<collection>@<sha>:<path>#<unit> when status=generated"
+      "description": "<collection>@<sha>:<path>#<unit> when status=generated; for a subtitle (1.1.0) subtitle@<sha256 key>:<packId>, with the N-Bible inputs in C-03 subtitle.inputs"
     },
     "generator": {
       "type": "string",
       "enum": [
         "translation",
         "narration",
-        "description"
+        "description",
+        "subtitle"
       ]
     },
     "audited": {

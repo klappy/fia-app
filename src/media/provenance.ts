@@ -9,9 +9,53 @@ export interface ProvenanceRecord {
   collection?: string;
   revision?: string;
   generatedFrom?: string;
-  generator?: 'translation' | 'narration' | 'description';
+  generator?: 'translation' | 'narration' | 'description' | 'subtitle';
   audited?: boolean;
 }
+
+/** C-03 1.1.0 entry `ref`: the pericope as book + first/last chapter:verse. */
+export interface PericopeRef {
+  book: string;
+  start: string;
+  end: string;
+}
+
+/** C-03 1.1.0 `subtitle.inputs[]`: a heading span (`text`) or the grounding passage (`textSha256`). */
+export interface SubtitleInput {
+  /** C-13 record id, so rights resolve directly */
+  source: string;
+  verse: string;
+  last?: string;
+  kind?: 'heading' | 'passage';
+  text?: string;
+  textSha256?: string;
+}
+
+/** C-03 1.1.0 entry `subtitle` (AI, always marked; C-10 `subtitleMode` shows or hides it). */
+export interface SubtitleRecord {
+  text: string;
+  lang: string;
+  ai: true;
+  generator: 'subtitle' | 'translation';
+  basis?: 'headings' | 'passage';
+  model: string;
+  promptSha256: string;
+  key: string;
+  /** null when every input is CC0/PD */
+  licence: { name: 'CC BY-SA 4.0' | 'CC BY 4.0'; url: string } | null;
+  inputs: SubtitleInput[];
+  /** rung 2 only */
+  translatedFrom?: { lang: string; key: string; text: string };
+  provenance: ProvenanceRecord;
+  review?: { status: 'pass' | 'fail'; receiptSha256: string };
+}
+
+/** C-10 1.1.0 `subtitleMode`; a missing key normalizes to `off` (PoC a5). */
+export type SubtitleMode = 'generated' | 'off';
+export const DEFAULT_SUBTITLE_MODE: SubtitleMode = 'off';
+
+/** C-13 1.1.0 `revisionKind`; absent = `git` (40-hex commit), `sha256` = 64-hex file digest. */
+export type RevisionKind = 'git' | 'sha256';
 
 /** A pack slot as the L1 pipeline emits it (text / audio / description / title). */
 export interface Slot {

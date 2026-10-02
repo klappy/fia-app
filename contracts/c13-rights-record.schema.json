@@ -2,8 +2,8 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://fia.klappy.dev/contracts/c13-rights-record.schema.json",
   "title": "Rights record",
-  "description": "Per source: licence and adaptation notice verbatim, holder, url, metadata sha. Rendered per resource and on About/Rights; discrepancies preserved, never resolved by code (R-312).",
-  "version": "1.0.0",
+  "description": "Per source: licence and adaptation notice verbatim, holder, url, metadata sha. Rendered per resource and on About/Rights; discrepancies preserved, never resolved by code (R-312). 1.1.0: optional revisionKind (git | sha256; absent = git) and licenceUrl. A sha256-kind record (eBible zip) carries the 64-hex sha256 of the downloaded file; licenseInfo and adaptationNotice verbatim from copr.htm, metadataSha256 = sha256(copr.htm). ETag/Last-Modified are freshness hints, never identity.",
+  "version": "1.1.0",
   "contract": "c13",
   "type": "object",
   "required": [
@@ -26,14 +26,27 @@
     "collection": {
       "type": "string"
     },
+    "revisionKind": {
+      "type": "string",
+      "enum": [
+        "git",
+        "sha256"
+      ],
+      "default": "git",
+      "description": "absent = git"
+    },
     "revision": {
       "type": "string",
-      "pattern": "^[a-f0-9]{40}$",
-      "description": "git commit sha (40 hex)"
+      "pattern": "^([a-f0-9]{40}|[a-f0-9]{64})$",
+      "description": "git commit sha (40 hex) or, for revisionKind sha256, the sha256 of the downloaded file (64 hex); id keeps name@7hex from it"
     },
     "licenseInfo": {
       "type": "string",
       "description": "verbatim license_info"
+    },
+    "licenceUrl": {
+      "type": "string",
+      "format": "uri"
     },
     "adaptationNotice": {
       "type": "string",
@@ -81,6 +94,49 @@
       "discrepancies": [
         "holder differs between metadata.json and license_info"
       ]
+    },
+    {
+      "schemaVersion": 1,
+      "id": "engtcent@13ef9e4",
+      "collection": "engtcent",
+      "revisionKind": "sha256",
+      "revision": "13ef9e4700000000000000000000000000000000000000000000000000000000",
+      "licenseInfo": "Creative Commons Attribution 4.0 International (example)",
+      "licenceUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "adaptationNotice": "",
+      "holders": [
+        "Robert Adam Boyd"
+      ],
+      "url": "https://ebible.org/details.php?id=engtcent",
+      "metadataSha256": "3333333333333333333333333333333333333333333333333333333333333333"
+    }
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "revisionKind": {
+            "const": "sha256"
+          }
+        },
+        "required": [
+          "revisionKind"
+        ]
+      },
+      "then": {
+        "properties": {
+          "revision": {
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "revision": {
+            "pattern": "^[a-f0-9]{40}$"
+          }
+        }
+      }
     }
   ]
 }
