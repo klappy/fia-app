@@ -294,14 +294,17 @@
   max-height: none;
 }
 /* Title row lockup: FIA logo then the title (RULING 2026-10-01 (f); mock _frame.css:191-192). */
-/* One row, never under the Close X: the end padding reserves the absolute Close button's box
-   (tap-min wide, 10px from the dialog edge), the logo keeps its size and the title wraps in its own
-   column beside it (design-lens dl-sh32-02; mock 24-sheet-forward-jump-guard.html:10). */
+/* One row, never under the Close X: the logo keeps its size and the title wraps in its own column
+   beside it (design-lens dl-sh32-02; mock 24-sheet-forward-jump-guard.html:10). */
 .fia-sheet-brand {
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
   gap: 12px;
+}
+/* Only a sheet that renders Close reserves the absolute Close button's box (tap-min wide, 10px from
+   the dialog edge); a sheet without Close (Explore) keeps the full row (rev32b-1420 note 1). */
+.fia-sheet-brand--close {
   padding-inline-end: calc(var(--fia-tap-min) + 10px);
 }
 .fia-sheet-brand > .fia-logo {
