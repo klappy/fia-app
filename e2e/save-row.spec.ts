@@ -1,8 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 
 // J-A2 steps 1–6 (prepare a phone for offline use) on the built app (vite preview + /sw.js):
-// S03 row size → S04 tier picker with pack-manifest sizes + storage estimate → Save (best published tier) → verified
-// saved state on S04 and the S03 row → S13 lists it; S13 `Save a passage` lands on a card whose
+// S03 row size → S04 tier picker (kit GlassSegmented) with pack-manifest sizes + storage estimate → Save (best
+// published tier) → verified saved state on S04 and the S03 row → S13 lists it; S13 `Save a passage` lands on a card whose
 // primary saves (no loop, J-A2--P-01 rerun 3). R-306, R-307, R-309; C-07 SAVE.
 const PACK = 'spa.MRK-1-1-13';
 
@@ -38,35 +38,42 @@ test('J-A2 1–6: size on S03, tier picker on S04, Save best published tier, sav
   await expect(row.getByTestId('row-saved')).toHaveCount(0);
   await row.click();
 
-  // Step 2 — S04 save row: all four tiers shown; sizes are the bytes a save downloads (pack C-02
-  // manifest). The pack publishes only Text today, so Phone/Medium/Original read "not yet", are
-  // not selectable, and the best available tier (Text) is chosen — no Phone claim (R-307/R-309).
+  // Step 2 — S04 save card (F6-S04 glass): the mock's three tiers on kit GlassSegmented; sizes are the
+  // bytes a save downloads (pack C-02 manifest). The pack publishes only Text today, so Phone and Full
+  // read "not yet", cannot be chosen (aria-disabled), and the best available tier (Text) is chosen —
+  // no Phone claim (R-307/R-309).
   await expect(page.locator('[data-screen="S04"]')).toBeVisible();
   const saveRow = page.getByTestId('save-row');
   await expect(saveRow.getByRole('heading', { name: 'Save for offline' })).toBeVisible();
-  await expect(saveRow.getByRole('radio')).toHaveCount(4);
-  await expect(saveRow.getByTestId('tier-size-text')).toHaveText(/^\d+(\.\d)? MB$/);
-  for (const tier of ['phone', 'medium', 'original']) {
+  const tiers = saveRow.getByRole('radiogroup', { name: 'How much to save' });
+  await expect(tiers.getByRole('radio')).toHaveCount(3);
+  await expect(saveRow.getByTestId('tier-size-text')).toHaveText(/^\d+(\.\d)?\u00a0MB$/);
+  for (const tier of ['phone', 'original']) {
     await expect(saveRow.getByTestId(`tier-size-${tier}`)).toHaveText('not yet');
-    await expect(saveRow.locator(`input[value="${tier}"]`)).toBeDisabled();
+    await expect(tiers.locator(`[data-tier="${tier}"]`)).toBeDisabled();
   }
-  await expect(saveRow.locator('input[value="text"]')).toBeChecked();
+  await expect(tiers.locator('[data-tier="text"]')).toBeChecked();
   await expect(saveRow.getByTestId('storage-estimate')).toContainText('on this connection');
-  const textSize = (await saveRow.getByTestId('tier-size-text').textContent())!.trim();
+  const textSize = (await saveRow.getByTestId('tier-size-text').textContent())!
+    .trim()
+    .replace('\u00a0', ' ');
   // Pack manifest text tier for spa.MRK-1-1-13 = 277,189 bytes → "0.3 MB" (data/packs/…/manifest.json).
   expect(textSize).toBe('0.3 MB');
+  // A tap on a tier that is not published changes nothing.
+  await tiers.locator('[data-tier="phone"]').click({ force: true });
+  await expect(tiers.locator('[data-tier="text"]')).toBeChecked();
   const save = saveRow.getByTestId('save-button');
-  await expect(save).toHaveText(`⤓ Save Text (${textSize})`);
-  // The primary stays Start (one primary, rule 1); the save button is the outlined secondary.
+  await expect(save).toHaveText(`Save Text (${textSize})`);
+  // The primary stays Start (one primary, rule 1); the save is the quiet kit button in the card.
   await expect(page.locator('[data-role="primary"]')).toContainText('Start');
 
-  // Steps 4–5 — Save starts here (C-07 SAVE); the row shows the verified state, stamped with the
-  // tier actually saved and its verified bytes.
+  // Steps 4–5 — Save starts here (C-07 SAVE); the card shows the verified state, stamped with the
+  // tier actually saved and its verified bytes. The cells stay, read-only, on the saved tier.
   await save.click();
-  await expect(saveRow.getByTestId('saved-row')).toContainText(`✓ Saved (Text, ${textSize})`, {
-    timeout: 20_000,
-  });
-  await expect(saveRow.getByRole('radio')).toHaveCount(0);
+  await expect(saveRow.getByTestId('save-badge')).toHaveText('Saved · text', { timeout: 20_000 });
+  await expect(saveRow.getByTestId('saved-row')).toContainText('Remove from this phone');
+  await expect(tiers.locator('[data-tier="text"]')).toBeChecked();
+  await expect(saveRow.getByTestId('tier-size-text')).toHaveText(textSize.replace(' ', '\u00a0'));
 
   // Step 6 — the S03 row carries the saved mark; S13 lists the pack under Saved.
   await page.goBack();
@@ -94,7 +101,7 @@ test('S13 Save a passage opens S04 in save-intent: the primary saves', async ({ 
   await expect(page.locator('[data-screen="S04"]')).toBeVisible();
   await expect(page).toHaveURL(/\/passage\?save=1$/);
   await expect(primary).toContainText('Save Text (0.3 MB)');
-  await expect(page.getByTestId('save-row').getByText('▶ Start')).toBeVisible();
+  await expect(page.getByTestId('save-row').getByRole('button', { name: 'Start' })).toBeVisible();
   await primary.click();
   await expect(page.getByTestId('saved-row')).toBeVisible({ timeout: 20_000 });
   await expect(primary).toContainText('Start');

@@ -1,0 +1,184 @@
+/* ---- F6-S04 Passage card on the kit (nodded mock design/alpha-v2-screens/04-passage-card.html <style>,
+   s04- page classes). Kit GlassSurface cards, GlassChip, the progress Bead, GlassButton quiet; the shell
+   (ScreenFrame) is not re-skinned. Spacing is the kit's --sp-* tokens, as the mock's. ---- */
+
+/* The page scrolls as one column: the frame's <main> is not a second scroller (as S02). */
+[data-screen='S04'] .fia-content {
+  overflow: visible;
+  gap: 0;
+  padding-top: 0;
+  flex: 1 0 auto; /* the start line can sit right above the thumb slot (mock .s04-start at 1×) */
+}
+/* The frame's <h1> keeps the reference for assistive tech; the hero below the back row is its face,
+   so the regions run in the mock's order: header · ‹ Mark · Mark 1:1–13. */
+[data-screen='S04']:has(.s04-hero) .fia-screen__title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Bead colours: the mock's --fia-kind-* values (_frame.css:25-29, :52-56), page-scoped. */
+[data-screen='S04'] {
+  --s04-kind-plain: #6e7787;
+  --s04-kind-scripture: var(--text-title);
+  --s04-kind-term: var(--accent-blue);
+  --s04-kind-media: #17786e;
+  --s04-kind-video: #17786e;
+  --s04-kind-stop: var(--accent-red);
+}
+[data-theme='dark'] [data-screen='S04'] {
+  --s04-kind-plain: var(--on-night-500);
+  --s04-kind-term: var(--accent-blue-soft);
+  --s04-kind-media: var(--accent-teal);
+  --s04-kind-video: var(--accent-teal);
+  --s04-kind-stop: #ff6b73;
+}
+
+/* Back row (mock BackRow): quiet kit GlassButton, chevron + the book. */
+.s04-back {
+  margin-top: 6px;
+}
+.s04-back__button {
+  min-height: 48px;
+  padding: 10px 12px !important;
+  font-size: var(--fs-label) !important;
+  white-space: normal !important;
+}
+.s04-back__button svg {
+  width: calc(18px * min(var(--fia-text-scale), 2));
+  height: calc(18px * min(var(--fia-text-scale), 2));
+}
+
+.s04-head {
+  margin-top: var(--sp-2);
+}
+.s04-hero {
+  margin: 0;
+  font: var(--fw-bold) var(--fs-hero) / 1.12 var(--font-core);
+  letter-spacing: var(--ls-hero);
+  color: var(--text-title);
+  overflow-wrap: anywhere;
+}
+.s04-sub {
+  margin: var(--sp-2) 0 0;
+  font: var(--fw-medium) var(--fs-label) / 1.3 var(--font-core);
+  color: var(--text-body);
+}
+.s04-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+.s04-chip {
+  font-size: var(--fs-caption) !important;
+  white-space: normal !important;
+  max-width: 100%;
+}
+.s04-chip svg {
+  width: calc(13px * min(var(--fia-text-scale), 2));
+  height: calc(13px * min(var(--fia-text-scale), 2));
+}
+/* Dark: a chip is never lighter than what it sits on (mock _frame.css:131 .fia-chip). */
+[data-theme='dark'] .s04-chip {
+  background: var(--glass-fill-1) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Cards (kit GlassSurface level 2): the Includes card and the save card. */
+.s04-card {
+  margin-top: var(--sp-6);
+}
+[data-screen='S04'] .fia-savecard {
+  margin-top: var(--sp-5);
+}
+.s04-card__inner {
+  position: relative; /* above the kit GlassSurface refraction layer */
+  padding: var(--sp-6) var(--sp-7);
+}
+.s04-overline {
+  margin: 0 0 var(--sp-4);
+  font: var(--type-overline);
+  letter-spacing: var(--ls-overline);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Includes: 2 columns up to 200% (mark over word at 200%), 1 column at 310% (mark beside word). */
+.s04-kinds {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4) var(--sp-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.s04-kind {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+.s04-mark {
+  width: calc(24px * min(var(--fia-text-scale), 2.4));
+  display: flex;
+  justify-content: center;
+  flex: none;
+}
+.s04-kind__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.s04-word {
+  font: var(--fw-semibold) var(--fs-label) / 1.2 var(--font-core);
+  color: var(--text-title);
+}
+.s04-count {
+  font: var(--fw-regular) calc(11px * var(--fia-text-scale)) / 1.25 var(--font-core);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+.s04-note {
+  margin: var(--sp-4) 0 0;
+  font: var(--fw-medium) var(--fs-caption) / 1.3 var(--font-core);
+  color: var(--text-muted);
+}
+:root:is([data-text-step='x200'], [data-text-step='x310']) .s04-kind {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+:root:is([data-text-step='x200'], [data-text-step='x310']) .s04-mark {
+  justify-content: flex-start;
+}
+:root[data-text-step='x310'] .s04-kinds {
+  grid-template-columns: 1fr;
+}
+:root[data-text-step='x310'] .s04-kind {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--sp-5);
+}
+
+.s04-rights {
+  margin: var(--sp-4) 0 0;
+  font: var(--fw-medium) var(--fs-caption) / 1.3 var(--font-core);
+  color: var(--text-muted);
+}
+/* The start line ends the column, right above the thumb slot (mock .s04-start, s04-hint-big). */
+.s04-start {
+  margin: auto 0 0;
+  padding-top: var(--sp-7);
+  text-align: center;
+  font: var(--fw-medium) var(--fs-caption) / 1.3 var(--font-core);
+  color: var(--text-muted);
+}
