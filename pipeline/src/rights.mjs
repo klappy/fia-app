@@ -64,24 +64,45 @@ function noticeMarkdown(records, extras) {
 }
 
 // BL8 (F3a S15): the holder and licence lines a pack carries for each of its sources, read from the C-13 records.
-// Nothing is invented: a missing record, a placeholder holder or an absent licence stays null.
+// Nothing is invented: a missing record, a placeholder holder or an absent licence stays null. Discrepancies are
+// carried verbatim (R-312): [] when the record lists none, null when there is no record.
 const HOLDER_PLACEHOLDERS = new Set(['(no holder named in metadata)', '(metadata unreadable)']);
+const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+const hasLicence = (v) => isObj(v) && (v.name != null || v.url != null);
+
+// Reads licenseInfo the way the app's parseLicenseInfo does (src/settings/rights.ts:26-46): JSON text of
+// license_info, or — when it is not a JSON object — a plain licence name (the C-13 schema example form).
+// The pipeline additionally prefers the pack language entry, then eng, then the first stated licence.
+export function licenceFrom(licenseInfo, language) {
+  if (typeof licenseInfo !== 'string' || licenseInfo === '') return null;
+  let info;
+  try { info = JSON.parse(licenseInfo); } catch { return { name: licenseInfo, url: null }; }
+  if (!info || typeof info !== 'object') return { name: licenseInfo, url: null };
+  const entries = Array.isArray(info.licenses) ? info.licenses.filter(isObj) : [];
+  const pick = entries.map((l) => l[language]).find(hasLicence) || entries.map((l) => l.eng).find(hasLicence) || entries.flatMap((l) => Object.values(l)).find(hasLicence) || null;
+  return pick ? { name: pick.name ?? null, url: pick.url ?? null } : null;
+}
+
 export function packRightsLines(ids, records, language) {
   const byId = new Map(records.map((r) => [r.id, r]));
   return ids.map((id) => {
     const rec = byId.get(id);
-    if (!rec) return { id, collection: id.split('@')[0], revision: null, holders: null, licence: null, url: null };
-    let info = null; try { info = rec.licenseInfo ? JSON.parse(rec.licenseInfo) : null; } catch { info = null; }
-    const entries = (info?.licenses || []).filter((l) => l && typeof l === 'object');
-    const pick = entries.find((l) => l[language])?.[language] || entries.find((l) => l.eng)?.eng || (entries[0] && Object.values(entries[0])[0]) || null;
-    const licence = pick && (pick.name || pick.url) ? { name: pick.name ?? null, url: pick.url ?? null } : null;
-    const holders = rec.holders.filter((h) => !HOLDER_PLACEHOLDERS.has(h));
-    return { id, collection: rec.collection, revision: rec.revision, holders: holders.length ? holders : null, licence, url: rec.url };
+    if (!rec) return { id, collection: id.split('@')[0], revision: null, holders: null, licence: null, url: null, discrepancies: null };
+    const holders = Array.isArray(rec.holders) ? rec.holders.filter((h) => typeof h === 'string' && !HOLDER_PLACEHOLDERS.has(h)) : [];
+    const discrepancies = Array.isArray(rec.discrepancies) ? rec.discrepancies.filter((d) => typeof d === 'string') : [];
+    return { id, collection: rec.collection, revision: rec.revision ?? null, holders: holders.length ? holders : null, licence: licenceFrom(rec.licenseInfo, language), url: rec.url ?? null, discrepancies };
   });
 }
 
-export async function loadRightsRecords() {
-  const p = path.join(DATA_ROOT, 'rights', 'records.json');
-  if (!existsSync(p)) throw new Error(`rights: ${p} is missing; run \`npm run rights\` first (C-13 records are required for pack rights lines)`);
-  return JSON.parse(await readFile(p, 'utf8'));
+// Absent → throw; stale (a pinned source in sources.json has no record at its pin, e.g. `npm run pin` without
+// `npm run rights`) → throw, instead of writing a rights.json of nulls with exit 0.
+export async function loadRightsRecords({ file = path.join(DATA_ROOT, 'rights', 'records.json'), sources } = {}) {
+  if (!existsSync(file)) throw new Error(`rights: ${file} is missing; run \`npm run rights\` first (C-13 records are required for pack rights lines)`);
+  const records = JSON.parse(await readFile(file, 'utf8'));
+  const pins = sources ?? await loadSources();
+  const have = new Set(records.map((r) => r.id));
+  const want = [...Object.entries(pins.fia || {}).map(([repo, p]) => `${repo}@${p.commitSha.slice(0, 7)}`), ...(pins.bibles || []).map((b) => `${b.repo}@${b.commitSha.slice(0, 7)}`)];
+  const missing = want.filter((id) => !have.has(id));
+  if (missing.length) throw new Error(`rights: ${file} is stale — no C-13 record for ${missing.join(', ')}; run \`npm run rights\` after \`npm run pin\``);
+  return records;
 }
