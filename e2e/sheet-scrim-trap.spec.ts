@@ -12,6 +12,11 @@ async function openGuide(page: Page) {
       'fia.flow.current.v1',
       JSON.stringify({ language: 'eng', book: 'MRK', packId: 'eng.MRK-1-1-13' }),
     );
+    // F5: "Recorded only" (C-10) keeps every part silent, so the big button steps to the stop.
+    localStorage.setItem(
+      'fia.settings.v1',
+      JSON.stringify({ schemaVersion: 1, narrationMode: 'source-only' }),
+    );
   });
   await page.goto('/guide');
 }
