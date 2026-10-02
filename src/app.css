@@ -1,17 +1,48 @@
-/* Layout per design/alpha-screens/README.md § Layout constants. Tokens come from tokens/alpha.css. */
+/* v2 shell (F4) over BT Glass (src/vendor/glass @6aa9bc3, never edited). Kit surfaces carry the material;
+   this file lays them out. App tokens and kit overrides: tokens/alpha.css. No bottom bar (RULING 21:23 ET (a)). */
+.fia-aurora {
+  min-height: 100dvh;
+}
 .fia-screen {
-  display: grid;
-  grid-template-rows: auto auto 1fr auto auto;
+  display: flex;
+  flex-direction: column;
   min-height: 100dvh;
   max-width: var(--fia-content-max-width);
   margin-inline: auto;
   padding-top: var(--fia-safe-top);
+  color: var(--text-body);
+  font-family: var(--font-core);
+}
+.fia-header-wrap {
+  padding: 6px var(--fia-gutter) 0;
 }
 .fia-header {
-  min-height: 48px;
+  padding: 8px 8px 8px 16px;
+}
+.fia-header-grid {
+  position: relative;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  padding-inline: var(--fia-gutter);
+  gap: 8px;
+}
+.fia-logo {
+  display: block;
+  flex: none;
+  color: var(--fia-brand);
+}
+.fia-header-grid .fia-notice--offline-chip,
+.fia-header-grid .fia-lang {
+  margin-inline-start: auto;
+}
+.fia-header-grid .fia-notice--offline-chip + .fia-lang {
+  margin-inline-start: 0;
+}
+.fia-pill {
+  min-height: var(--fia-tap-min);
+}
+.fia-screen__title {
+  padding: var(--fia-space-6) var(--fia-gutter) 0;
 }
 .fia-title {
   font-size: var(--fia-fs-title);
@@ -39,15 +70,12 @@
   gap: var(--fia-gap-stack);
 }
 
-/* rule 1: the one primary, thumb slot; sticky above the dock; 72 px slot at +2 */
+/* the one primary, thumb slot (PRD § 8.2), sticky at the bottom; no dock under it */
 .fia-primary-slot {
   position: sticky;
-  bottom: calc(var(--fia-dock-h) + var(--fia-safe-bottom));
-  padding: var(--fia-space-4) var(--fia-gutter);
-  background: var(--fia-surface-app);
-}
-.fia-screen:not([data-dock]) .fia-primary-slot {
-  bottom: var(--fia-safe-bottom);
+  bottom: 0;
+  margin-top: auto;
+  padding: var(--fia-space-4) var(--fia-gutter) calc(var(--fia-space-4) + var(--fia-safe-bottom));
 }
 .fia-primary-slot--sheet {
   position: static;
@@ -91,36 +119,6 @@
 :root[data-text-step='plus2'] .fia-primary,
 :root[data-text-step='max'] .fia-primary {
   min-height: var(--fia-primary-slot-h);
-}
-
-/* rule 4: dock, four cells, labels always visible */
-.fia-dock {
-  position: sticky;
-  bottom: 0;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  min-height: var(--fia-dock-h);
-  padding-bottom: var(--fia-safe-bottom);
-  background: var(--fia-surface-solid);
-  border-top: 1px solid var(--fia-rail-track);
-}
-.fia-dock__cell {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  min-height: var(--fia-tap-min);
-  font: inherit;
-  font-size: var(--fia-fs-label);
-  color: var(--fia-text-body);
-  text-decoration: none;
-  background: none;
-  border: 0;
-}
-.fia-dock__cell[data-active],
-.fia-dock__cell.active {
-  color: var(--fia-primary);
 }
 
 /* rule 2: secondaries stay quiet */
@@ -170,14 +168,14 @@
 
 .fia-card {
   display: block;
-  text-align: start;
   width: 100%;
-  padding: var(--fia-card-pad);
-  background: var(--fia-surface-solid);
-  border: 0;
-  border-radius: var(--fia-r-card);
+  text-align: start;
   color: inherit;
   font: inherit;
+}
+.fia-card__inner {
+  position: relative;
+  padding: var(--fia-card-pad);
 }
 .fia-notice {
   padding: var(--fia-space-5) var(--fia-space-7);
@@ -260,53 +258,70 @@
   background: var(--fia-rail-track);
 }
 
-/* sheets */
+/* sheets: kit GlassSheet inside an app scrim (Sheet.tsx, kit gap: no scrim/escape/focus/scroll) */
 .fia-sheet__scrim {
   position: fixed;
   inset: 0;
-  display: flex;
-  align-items: flex-end;
-  background: rgba(0, 0, 0, 0.4);
   z-index: 2;
+  background: rgba(14, 20, 32, 0.28);
 }
-/* 21 § Layout: on a docked screen the scrim stops at the dock, so the sheet's primary sits
-   above it and the dock stays live (J-A1 rerun3: the SH-2 primary sat under the dock). */
-.fia-screen[data-dock] .fia-sheet__scrim {
-  bottom: calc(var(--fia-dock-h) + var(--fia-safe-bottom));
-}
-.fia-sheet {
-  width: 100%;
+.fia-sheet__scrim > div {
   max-width: var(--fia-content-max-width);
   margin-inline: auto;
-  background: var(--fia-surface-solid);
-  border-radius: var(--fia-r-sheet) var(--fia-r-sheet) 0 0;
-  padding: var(--fia-space-7) var(--fia-gutter) calc(var(--fia-space-7) + var(--fia-safe-bottom));
-}
-.fia-sheet__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
 }
 .fia-sheet__close {
-  min-width: var(--fia-tap-close);
-  min-height: var(--fia-tap-close);
-  background: none;
-  border: 0;
-  font-size: 28px;
-  color: inherit;
+  position: absolute;
+  inset-block-start: 10px;
+  inset-inline-end: 10px;
+  min-width: var(--fia-tap-min);
+  min-height: var(--fia-tap-min);
+}
+.fia-sheet__body {
+  max-height: calc(100dvh - 200px);
+  overflow-y: auto;
+  margin-top: 10px;
+}
+.fia-sheet__actions {
+  flex: 1;
+  display: flex;
+}
+.fia-sheet__actions > * {
+  flex: 1;
+}
+.fia-sheet__actions .fia-primary-slot {
+  position: static;
+  padding: 0;
+}
+.fia-overline {
+  font: var(--type-overline);
+  letter-spacing: var(--ls-overline);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 14px 4px 6px;
+}
+.fia-well {
+  padding: 2px 0;
 }
 .fia-more__list {
+  position: relative;
   list-style: none;
   margin: 0;
   padding: 0;
 }
 .fia-more__row {
-  display: block;
-  min-height: var(--fia-tap-primary);
-  line-height: var(--fia-tap-primary);
-  color: var(--fia-text-body);
-  text-decoration: none;
-  font-size: var(--fia-fs-body);
+  min-height: var(--fia-tap-min);
+}
+.fia-row-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.fia-explore__footer {
+  text-align: center;
+  margin: 10px 0 2px;
+}
+.fia-explore-close {
+  min-height: 56px;
 }
 
 .fia-text__seg[data-active] {

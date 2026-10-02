@@ -1,10 +1,10 @@
 import { expect, test } from '@playwright/test';
 
 // J-A1 friction (persona rerun3): at the first discussion stop the SH-2 primary sat under the
-// dock, so a tap hit Resources. 21-sheet-discussion-stop.md: the scrim does not cover the dock
-// and the sheet's primary sits above it, fully tappable.
+// v1 dock, so a tap hit Resources. v2 has no bottom bar (RULING 2026-10-01 21:23 ET (a)); the
+// sheet's primary must sit inside the viewport and be the element hit at its centre.
 for (const width of [360, 375, 412]) {
-  test(`SH-2 primary is above the dock and tappable at ${width} px`, async ({ page }) => {
+  test(`SH-2 primary is on screen and tappable at ${width} px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 640 });
     await page.addInitScript(() => {
       localStorage.setItem(
@@ -23,8 +23,7 @@ for (const width of [360, 375, 412]) {
     const button = sheet.locator('[data-role="primary"]');
     await expect(button).toBeVisible();
     const box = (await button.boundingBox())!;
-    const dock = (await page.locator('.fia-dock').boundingBox())!;
-    expect(box.y + box.height).toBeLessThanOrEqual(dock.y);
+    expect(box.y + box.height).toBeLessThanOrEqual(640);
     const hit = await button.evaluate((el) => {
       const r = el.getBoundingClientRect();
       const at = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);

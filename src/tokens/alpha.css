@@ -256,3 +256,42 @@ html { background: var(--fia-ground); color: var(--fia-text-body); font-family: 
 body { margin: 0; min-height: 100dvh; background: var(--fia-surface-app); }
 :focus-visible { outline: 3px solid var(--fia-focus-ring); outline-offset: 3px; }
 :root { --fia-theme-color-light: #EEF0F5; --fia-theme-color-dark: #0B0D10; }
+
+/* ==== app overrides over BT Glass (hand-written; scripts/build-tokens.mjs keeps this block) ====
+   Kit: klappy/bt-design-system-generative-glass @6aa9bc3, vendored whole in src/vendor/glass/ and never
+   edited (FE-1). BEND only: app tokens and re-points of kit aliases, after the kit's styles.css. Values
+   follow the nodded v2.1 mocks' app layer (cookbook design/alpha-v2-screens/_frame.css @2792f33). */
+:root {
+  --fia-brand: #3b6086; /* logo only; PoC app.css:3 (PRD § 8.4) */
+  /* Kit secondary text re-pointed to ≥ 4.5:1 on light glass (_frame.css:22-24) */
+  --text-muted: #475060;
+  --text-dim: var(--text-muted);
+  /* Kit type tokens scale with the app's text size (PRD § 8.5): px × --fia-text-scale */
+  --fs-hero: calc(28px * var(--fia-text-scale));
+  --fs-title: calc(19px * var(--fia-text-scale));
+  --fs-subtitle: calc(17px * var(--fia-text-scale));
+  --fs-body: calc(15px * var(--fia-text-scale));
+  --fs-label: calc(13px * var(--fia-text-scale));
+  --fs-caption: calc(12px * var(--fia-text-scale));
+  --fs-micro: calc(10px * var(--fia-text-scale));
+  --fs-overline: calc(9px * var(--fia-text-scale));
+  --fs-scripture: calc(17px * var(--fia-text-scale));
+}
+[data-theme='dark'] {
+  --fia-brand: #ffffff; /* PoC app.css:50 swap */
+  --text-muted: #c9ced6; /* mock dark re-point, _frame.css:44-50 */
+  --text-dim: var(--text-muted);
+}
+/* The phone's text size reaches rem (PRD § 8.5): replaces the generated 16px root. */
+html {
+  font-size: 100%;
+  background: var(--surface-app);
+}
+body {
+  background: var(--surface-app);
+  color: var(--text-body);
+}
+/* Dark aurora at .6 under the kit's glass ladder (mock Frame, _frame.js:414-416); the kit sets opacity inline. */
+[data-theme='dark'] .fia-aurora > [aria-hidden='true'] {
+  opacity: 0.6 !important;
+}
