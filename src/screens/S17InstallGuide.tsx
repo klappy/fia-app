@@ -153,7 +153,7 @@ function Drawing({ kind }: { kind: 'ios1' | 'ios2' | 'ios3' | 'android' }) {
         blur="medium"
         radius="lg"
         shadow="rest"
-        className="fia-install__dialog"
+        className="fia-install__dialog fia-install__dialog--android"
       >
         <span className="fia-install__dialog-title">{t('s.install.draw.install-app')}</span>
         <span className="fia-install__app-row">

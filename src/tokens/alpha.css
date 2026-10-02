@@ -428,11 +428,14 @@ body {
   margin-top: 12px;
 }
 .fia-install__well-inner {
+  /* 0 at 100% text, 1 at any larger step (mock html.fia-scaled): at 1× the well hugs its drawing so
+     steps 1–3 and the quiet row clear the sticky primary slot at 390×844; the 180 px floor is large text only. */
+  --fia-scaled: clamp(0, (var(--fia-text-scale) - 1) * 1000, 1);
   position: relative;
   display: grid;
   place-items: center;
-  min-height: 180px;
-  padding: 18px 8px;
+  min-height: calc(180px * var(--fia-scaled));
+  padding: calc(14px + 4px * var(--fia-scaled)) 8px;
 }
 .fia-install__draw {
   --k: min(var(--fia-text-scale), 2);
@@ -478,12 +481,19 @@ body {
   padding: 3px 8px;
   font-weight: var(--fw-semibold);
 }
+/* Border-box: the 12px 14px padding sits inside the width, so the drawing never passes the well (mock widths 220/240/250). */
 .fia-install__sheet,
 .fia-install__dialog {
-  width: min(100%, calc(230px * var(--k)));
+  --w: 240px;
+  box-sizing: border-box;
+  width: min(100%, calc(var(--w) * var(--k)));
 }
 .fia-install__sheet {
+  --w: 220px;
   padding: 2px 0;
+}
+.fia-install__dialog--android {
+  --w: 250px;
 }
 .fia-install__sheet-row {
   position: relative;
@@ -643,6 +653,12 @@ body {
   .fia-install__bar {
     padding: 10px 14px;
   }
+}
+/* 200%+ only (mock :96 html.fia-big, _frame.js:21 scale >= 2): the icon over the words, which take the drawing's
+   width. Keyed on the text step, not the 28em container above, which at 390 px already matches at 130% and 150%. */
+:root:is([data-text-step='x200'], [data-text-step='x310']) .fia-install__app-row {
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 /* ---- Text-size steps (F6-S14; PRD § 8.5; mock 14-settings): Follows phone · Larger · Largest · Huge =
