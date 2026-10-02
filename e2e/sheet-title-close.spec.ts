@@ -53,11 +53,11 @@ for (const width of [390, 320]) {
     await page.setViewportSize({ width, height: 844 });
     await seedPack(page);
     await page.goto('/overview');
-    const stages = page.locator('.fia-overview__stage');
-    await expect(stages.first()).toBeVisible();
-    await stages.last().click();
-    await page.locator('.fia-overview__unit').last().click();
-    await page.locator('[data-screen="S07"] > .fia-primary-slot [data-role="primary"]').click();
+    // F6-S07 Whole guide map: open the last step and tap its last part; the jump passes many talks.
+    const steps = page.locator('[data-screen="S07"] .s07-step');
+    await expect(steps.first()).toBeVisible();
+    await steps.last().click();
+    await page.locator('[data-screen="S07"] .s07-part').last().click();
     const dialog = page.locator('[role="dialog"].fia-sheet--stop');
     await expect(dialog).toBeVisible();
     await expect(dialog.locator('.fia-sheet-brand > span')).toHaveText(
