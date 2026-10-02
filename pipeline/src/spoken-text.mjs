@@ -77,11 +77,9 @@ function stripSentence(sentence, removed) {
   return s === sentence ? s : upperFirst(s);
 }
 
-/**
- * Remove sentence-start filler from AI-generated Spanish text. Returns { text, removed } — removed lists each
- * stripped opener in order, so the narration plan can record what the text step changed.
- */
-export function stripSpanishFiller(text) {
+// One pass over the sentences. A whole-sentence "¡X!" that only opens a sentence after a preamble or comma filler is
+// removed can survive one pass, so stripSpanishFiller loops this until nothing changes.
+function stripOnce(text) {
   const removed = [];
   // split keeps sentence boundaries (after . ! ? … or a newline), so only sentence starts are examined
   const parts = String(text).split(/((?:[.!?…]["”»)]*\s+)|\n+)/u);
@@ -95,6 +93,22 @@ export function stripSpanishFiller(text) {
   }
   const out = parts.map((p, i) => (i % 2 === 0 && p ? stripSentence(p, removed) : p)).join('');
   return { text: out, removed };
+}
+
+/**
+ * Remove sentence-start filler from AI-generated Spanish text. Returns { text, removed } — removed lists each
+ * stripped opener in order, so the narration plan can record what the text step changed. Idempotent:
+ * stripSpanishFiller(stripSpanishFiller(x).text).text === stripSpanishFiller(x).text.
+ */
+export function stripSpanishFiller(text) {
+  const removed = [];
+  let t = String(text);
+  for (;;) {
+    const r = stripOnce(t);
+    if (!r.removed.length) return { text: t, removed };
+    removed.push(...r.removed);
+    t = r.text;
+  }
 }
 
 /**

@@ -58,3 +58,40 @@ test('narration plan: generated scripts/texts are stripped and re-hashed; source
   assert.equal(entries[2].text, 'Bueno, esto es fuente.');
   assert.equal(stripPlanFiller([{ script: 'Bueno, stop.', textProvenance: { status: 'generated' } }], 'eng', hash), 0);
 });
+
+test('the strip is idempotent: an exclamation exposed by an earlier strip is removed in the same call', () => {
+  assert.equal(stripSpanishFiller('Aquí tienes la traducción: ¡Claro! El río Jordán.').text, 'El río Jordán.');
+  assert.equal(stripSpanishFiller('Aquí tienes la traducción: ¡Claro! El río.').text, 'El río.');
+  assert.equal(stripSpanishFiller('Claro, bueno, ¡Mira! El río.').text, 'El río.');
+  assert.equal(stripSpanishFiller('Claro, ¡Bien!').text, '¡Bien!', 'a filler-only sentence is still never emptied');
+});
+
+const s = (x) => stripSpanishFiller(x).text;
+const IDEMPOTENCE_INPUTS = [
+  'Bueno, lean Marcos 1. Claro, luego hablen. Pues, terminen.', '¡Claro! Aquí se ve el río Jordán.', '¡Claro, es el río Jordán!',
+  'Aquí tienes la traducción: Sandalias. Observa los dedos.', 'Claro, bueno, el grupo se detiene.', 'Primera línea.\nBueno, segunda línea.',
+  'Jesús dijo: bueno, vengan.', 'El río es claro, y el agua es fría.', 'Esto está bien, pero no es todo.', 'Claridad es la meta.',
+  'Bienaventurados los que lloran.', 'Pueblo de Dios, escuchen.', '¡Claro!', 'Bueno, lean.', 'Claro, deténganse aquí y miren el mapa.',
+  'Aquí tienes la traducción: ¡Claro! El río Jordán.', 'Claro, bueno, ¡Mira! El río.', 'Claro, ¡Bien!',
+  ...SPANISH_FILLER_INTERJECTIONS.map(({ phrase }) => `${phrase}, el grupo lee el pasaje.`),
+  ...SPANISH_MEANING_BEARING_OPENERS.map(({ example }) => example),
+];
+
+test('property: strip(strip(x)) === strip(x) over the test inputs', () => {
+  for (const x of IDEMPOTENCE_INPUTS) assert.equal(s(s(x)), s(x), x);
+});
+
+test('fuzz: strip(strip(x)) === strip(x) over seeded random filler strings', () => {
+  let seed = 0x5eed;
+  const rnd = (n) => { seed = (seed * 1103515245 + 12345) >>> 0; return (seed >>> 8) % n; };
+  const fillers = [...SPANISH_FILLER_INTERJECTIONS.map((f) => f.phrase), 'Aquí tienes la traducción', 'A continuación te presento el texto'];
+  const words = ['el río', 'Jordán', 'lean', 'miren el mapa', 'Dios', 'bueno', 'claro', 'sandalias'];
+  const seps = [', ', ': ', '! ', '. ', '!', '. ¡', ', ¡', ' ', '\n', '… '];
+  for (let n = 0; n < 20000; n++) {
+    let x = rnd(2) ? '¡' : '';
+    const len = 1 + rnd(6);
+    for (let k = 0; k < len; k++) x += (rnd(3) ? fillers[rnd(fillers.length)] : words[rnd(words.length)]) + seps[rnd(seps.length)];
+    x += words[rnd(words.length)] + (rnd(2) ? '.' : '!');
+    assert.equal(s(s(x)), s(x), JSON.stringify(x));
+  }
+});
