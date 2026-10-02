@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://fia.klappy.dev/contracts/c13-pack-rights.schema.json",
   "title": "Pack rights lines",
-  "description": "C-13 projection carried in each content pack as rights.json (BL8, F3a S15): one line per manifest.rights id with the holders, licence, url and discrepancies read from data/rights/records.json by pipeline/src/rights.mjs packRightsLines. Nothing is invented: a missing record, placeholder holder or absent licence is null; discrepancies are verbatim (R-312), [] when the record lists none, null when there is no record. 1.1.0: a line mirrors revisionKind and the widened revision (40-hex git or 64-hex sha256).",
+  "description": "C-13 projection carried in each content pack as rights.json (BL8, F3a S15): one line per manifest.rights id with the holders, licence, url and discrepancies read from data/rights/records.json by pipeline/src/rights.mjs packRightsLines. Nothing is invented: a missing record, placeholder holder or absent licence is null; discrepancies are verbatim (R-312), [] when the record lists none, null when there is no record. 1.1.0: a line mirrors revisionKind and the widened revision exactly as c13-rights-record does (revisionKind absent = git → 40-hex; sha256 → 64-hex), and the record licenceUrl when it has one.",
   "version": "1.1.0",
   "contract": "c13",
   "type": "object",
@@ -36,10 +36,18 @@
           },
           "additionalProperties": false
         },
+        "licenceUrl": { "type": "string", "format": "uri", "description": "C-13 licenceUrl verbatim; absent when the record has none" },
         "url": { "type": ["string", "null"], "format": "uri" },
         "discrepancies": { "type": ["array", "null"], "items": { "type": "string" } }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": { "properties": { "revisionKind": { "const": "sha256" } }, "required": ["revisionKind"] },
+          "then": { "properties": { "revision": { "pattern": "^[a-f0-9]{64}$" } } },
+          "else": { "properties": { "revision": { "pattern": "^[a-f0-9]{40}$" } } }
+        }
+      ]
     }
   },
   "examples": [

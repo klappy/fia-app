@@ -110,3 +110,37 @@ test('C-13 1.1.0: git records unchanged; sha256-kind records take 64 hex; pack l
   pack.sources[pack.sources.length - 1].revisionKind = 'etag';
   assert.equal(ok('c13-pack-rights', pack), false);
 });
+
+// BL4 hardening (rev42-1520 non-blocking items): the tightened rules reject; old shapes still validate.
+test('C-13 pack rights: revisionKind ties revision length as the record does; licenceUrl is a uri', async () => {
+  const pack = clone((await schema('c13-pack-rights')).examples[0]);
+  const line = clone(pack.sources[0]);
+  const withLine = (l) => ({ ...pack, sources: [l] });
+  assert.ok(ok('c13-pack-rights', withLine(line)), 'git line, no kind, 40 hex');
+  assert.ok(ok('c13-pack-rights', withLine({ ...line, revisionKind: 'git' })));
+  assert.ok(ok('c13-pack-rights', withLine({ ...line, revisionKind: 'sha256', revision: H('a') })));
+  assert.ok(ok('c13-pack-rights', withLine({ ...line, revisionKind: 'sha256', revision: null })), 'missing record stays null');
+  assert.ok(ok('c13-pack-rights', withLine({ ...line, licenceUrl: 'https://creativecommons.org/licenses/by/4.0/' })));
+  assert.equal(ok('c13-pack-rights', withLine({ ...line, revision: H('a') })), false, 'absent kind = git → 40 hex only');
+  assert.equal(ok('c13-pack-rights', withLine({ ...line, revisionKind: 'git', revision: H('a') })), false, 'git → 40 hex only');
+  assert.equal(ok('c13-pack-rights', withLine({ ...line, revisionKind: 'sha256' })), false, 'sha256 → 64 hex only');
+  assert.equal(ok('c13-pack-rights', withLine({ ...line, licenceUrl: 'not a uri' })), false);
+});
+
+test('C-06 1.1.0: a sha256-kind source takes a 64-hex revision; git stays 40 hex', () => {
+  const src = { status: 'source', collection: 'FIAMaps', revision: '4bc9bb9f1d9082e5d71a047a35bf8e608f473602' };
+  assert.ok(ok('c06-provenance', src), 'old git source record');
+  assert.ok(ok('c06-provenance', { ...src, revisionKind: 'git' }));
+  assert.ok(ok('c06-provenance', { status: 'source', collection: 'engtcent', revisionKind: 'sha256', revision: H('1') }));
+  assert.equal(ok('c06-provenance', { ...src, revision: H('1') }), false, 'absent kind = git → 40 hex only');
+  assert.equal(ok('c06-provenance', { ...src, revisionKind: 'sha256' }), false, 'sha256 → 64 hex only');
+  assert.equal(ok('c06-provenance', { ...src, revisionKind: 'etag' }), false, 'ETag is never identity');
+});
+
+test('C-03 1.1.0: a passage input never stores the text; subtitle.inputs is never empty', async () => {
+  const passage = { ...eng.inputs[1], text: 'In the beginning of the good news' };
+  assert.equal(ok('c03-catalog-manifest', await entryWith(clone({ ...eng, inputs: [eng.inputs[0], passage] }))), false, 'passage + text');
+  assert.equal(ok('c03-catalog-manifest', await entryWith(clone({ ...eng, inputs: [] }))), false, 'empty inputs');
+  assert.equal(ok('c03-catalog-manifest', await entryWith(clone({ ...rus, inputs: [] }))), false, 'empty inputs (rung 2)');
+  assert.ok(ok('c03-catalog-manifest', await entryWith(clone({ ...eng, inputs: [eng.inputs[0]] }))), 'one heading input');
+});
