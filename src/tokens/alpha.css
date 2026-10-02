@@ -1044,3 +1044,207 @@ body {
   width: 1.15em;
   height: 1.15em;
 }
+
+/* ---- F6-S15 About and rights (mock design/alpha-v2-screens/15-about.html @ cookbook; kit @6aa9bc3) ---- */
+/* Own block (conflict guard with #24/#25): every rule here is scoped to .fia-about. */
+.fia-about {
+  container: fia-about / inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.fia-about__hero > div,
+.fia-about__card > div {
+  position: relative; /* above the kit GlassSurface refraction layer */
+}
+.fia-about__hero {
+  padding: 14px 16px 12px;
+}
+.fia-about__id {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+.fia-about__logo {
+  color: var(--fia-brand, var(--text-title));
+  display: inline-flex;
+}
+.fia-about__qualifier {
+  margin: 0;
+  font: var(--fw-semibold) var(--fs-label) / 1.25 var(--font-core);
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+.fia-about__group {
+  margin-top: 10px;
+}
+.fia-about__overline {
+  margin: 0;
+  padding: 0 4px 5px;
+  color: var(--text-muted); /* mock: --text-dim is under 3:1 behind overline type on the aurora glass */
+}
+.fia-about__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.fia-about__source + .fia-about__source {
+  border-top: var(--border-hairline);
+}
+.fia-about__row {
+  padding-top: 7px !important;
+  padding-bottom: 7px !important;
+  gap: 8px !important;
+  min-height: 48px;
+}
+/* Kit CatalogRow sets its title inline (CatalogRow.jsx:8); grow with the phone's text size (F4 fix2). */
+.fia-about__row > div:first-child > div[dir] {
+  font-size: calc(15px * var(--fia-text-scale)) !important;
+  line-height: 1.3 !important;
+}
+.fia-about__row svg {
+  width: calc(16px * min(var(--fia-text-scale), 2));
+  height: calc(16px * min(var(--fia-text-scale), 2));
+}
+.fia-about__install > svg {
+  width: calc(18px * min(var(--fia-text-scale), 2));
+  height: calc(18px * min(var(--fia-text-scale), 2));
+}
+.fia-about__src {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  max-width: 100%;
+}
+.fia-about__src-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  overflow-wrap: anywhere; /* long C-13 names wrap, never pass the card (G-F, 390px) */
+}
+.fia-about__line {
+  color: var(--text-muted);
+}
+.fia-about__chev {
+  display: inline-flex;
+  transition: transform var(--dur-fast, 120ms);
+}
+.fia-about__chev[data-open] {
+  transform: rotate(90deg);
+}
+.fia-about__detail {
+  padding: 4px 16px 12px;
+  overflow-wrap: anywhere;
+}
+/* Kit gap fallback (S15AboutRights.tsx LegendMark): the guide legend's marks, app-drawn. */
+.fia-about__mark {
+  flex: none;
+  display: inline-block;
+  width: calc(10px * min(var(--fia-text-scale), 2.4));
+  height: calc(10px * min(var(--fia-text-scale), 2.4));
+  margin: 0 calc(3px * min(var(--fia-text-scale), 2.4));
+}
+.fia-about__mark--plain {
+  border-radius: 50%;
+  background: var(--fia-kind-plain, #6e7787);
+}
+.fia-about__mark--scripture {
+  border-radius: 2px;
+  background: var(--fia-kind-scripture, var(--text-title));
+}
+.fia-about__mark--term {
+  transform: rotate(45deg) scale(0.85);
+  background: var(--fia-kind-term, var(--accent-blue));
+}
+.fia-about__mark--media {
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  background: var(--fia-kind-media, #17786e);
+}
+.fia-about__mark--video {
+  width: calc(14px * min(var(--fia-text-scale), 2.4));
+  height: calc(8px * min(var(--fia-text-scale), 2.4));
+  margin: 0 calc(1px * min(var(--fia-text-scale), 2.4));
+  border-radius: 2px;
+  background: var(--fia-kind-media, #17786e);
+}
+.fia-about__note {
+  margin: 6px 4px 0;
+  color: var(--text-muted);
+}
+.fia-about__card .fia-about__toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 6px 12px;
+}
+.fia-about__toggle-text {
+  flex: 1;
+  min-width: 0;
+}
+.fia-about__toggle-label {
+  font: var(--fw-semibold) var(--fs-label) / 1.25 var(--font-core);
+  color: var(--text-title);
+}
+.fia-about__toggle-ctl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+.fia-about__state {
+  font: var(--fw-semibold) var(--fs-caption) / 1 var(--font-core);
+  color: var(--text-muted);
+  min-width: 2.2em;
+  text-align: end;
+}
+.fia-about__toggle-ctl [role='switch'] {
+  position: relative;
+}
+.fia-about__toggle-ctl [role='switch']::before {
+  content: '';
+  position: absolute;
+  inset: -11px -4px; /* 48 px target around the 26 px track */
+}
+.fia-about__toggle-ctl [role='switch'][aria-checked='false'] {
+  background: color-mix(in srgb, var(--text-title) 12%, transparent) !important;
+}
+.fia-about__toggle-ctl [role='switch'][aria-checked='true'] {
+  background: var(--accent-blue) !important;
+}
+.fia-about__links {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 6px 0 0 -6px;
+}
+.fia-about__quiet {
+  min-height: 48px;
+  padding: 0 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font: var(--fw-semibold) var(--fs-label) / 1.25 var(--font-core);
+  color: var(--text-muted);
+}
+.fia-about__quiet svg {
+  width: calc(18px * min(var(--fia-text-scale), 2));
+  height: calc(18px * min(var(--fia-text-scale), 2));
+}
+@container fia-about (max-width: 28em) {
+  .fia-about__toggle {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 6px !important;
+  }
+  .fia-about__toggle-ctl {
+    justify-content: flex-end;
+  }
+  .fia-about__quiet .fia-row-label {
+    flex-direction: column; /* icon over label at 200%+ (dl-v21-support-13) */
+    gap: 4px;
+  }
+}

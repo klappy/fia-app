@@ -89,6 +89,7 @@ export const GlassField = KitGlassField as unknown as ComponentType<
 /** Kit icon names present in `components/icons/Icon.jsx` @6aa9bc3 (the .d.ts union omits the BT additions). */
 export type KitIconName =
   | 'chevronLeft'
+  | 'arrowUpRight'
   | 'chevronRight'
   | 'bookmark'
   | 'maximize'

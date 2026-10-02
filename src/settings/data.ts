@@ -6,6 +6,8 @@ export const DATA_PATHS = {
   catalog: `${BASE}/catalog/manifest.json`,
   languageCounts: (code: string) => `${BASE}/catalog/${code}.json`,
   rights: `${BASE}/rights/records.json`,
+  /** BL8: holder and licence per source, carried in each pack (`rights.json`). */
+  packRights: (packId: string) => `${BASE}/packs/${encodeURIComponent(packId)}/rights.json`,
 };
 
 export async function fetchJson(url: string, f: typeof fetch = fetch): Promise<unknown> {
