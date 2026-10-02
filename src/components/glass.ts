@@ -22,10 +22,29 @@ import type { GlassSheetProps } from '../vendor/glass/components/navigation/Glas
 import { GlassSegmented as KitGlassSegmented } from '../vendor/glass/components/forms/GlassSegmented';
 import { GlassToggle as KitGlassToggle } from '../vendor/glass/components/forms/GlassToggle';
 import { CatalogRow as KitCatalogRow } from '../vendor/glass/components/resources/CatalogRow';
+import { GlassSearch as KitGlassSearch } from '../vendor/glass/components/forms/GlassSearch';
+import { SyncBadge as KitSyncBadge } from '../vendor/glass/components/scripture/SyncBadge';
+import type { SyncBadgeProps } from '../vendor/glass/components/scripture/SyncBadge';
 import { Icon as KitIcon } from '../vendor/glass/components/icons/Icon';
 import type { IconName } from '../vendor/glass/components/icons/Icon';
 import { FilterChips as KitFilterChips } from '../vendor/glass/components/forms/FilterChips';
 import { GlassField as KitGlassField } from '../vendor/glass/components/forms/GlassField';
+import { GlassChip as KitGlassChip } from '../vendor/glass/components/glass/GlassChip';
+import type { GlassChipProps } from '../vendor/glass/components/glass/GlassChip';
+import { DotRing as KitDotRing } from '../vendor/glass/components/glass/DotRing';
+import type { DotRingProps } from '../vendor/glass/components/glass/DotRing';
+import { CountdownRing as KitCountdownRing } from '../vendor/glass/components/progress/CountdownRing';
+import type { CountdownRingProps } from '../vendor/glass/components/progress/CountdownRing';
+import {
+  Bead as KitBead,
+  BeadStrip as KitBeadStrip,
+  StageRail as KitStageRail,
+} from '../vendor/glass/components/progress/StageRail';
+import type {
+  BeadProps,
+  BeadStripProps,
+  StageRailProps,
+} from '../vendor/glass/components/progress/StageRail';
 
 // Typing only: the kit's .d.ts (written for React 18's global JSX) omit the `...rest` the .jsx
 // forward (className, aria-*, handlers). Same components, wider prop types; no behaviour added.
@@ -64,6 +83,15 @@ export const CatalogRow = KitCatalogRow as unknown as ComponentType<
     onOpen?: () => void;
   }
 >;
+// F6-S02: the library's search field and the resume card's saved badge. GlassSearch forwards
+// `...rest` to its <input> (GlassSearch.jsx:7); SyncBadge to its root <span> (SyncBadge.jsx:7).
+export const GlassSearch = KitGlassSearch as unknown as ComponentType<
+  Omit<InputHTMLAttributes<HTMLInputElement>, 'style' | 'height'> & {
+    height?: number | 'auto';
+    style?: CSSProperties;
+  }
+>;
+export const SyncBadge = KitSyncBadge as unknown as ComponentType<SyncBadgeProps & Html>;
 export const Icon = KitIcon as unknown as ComponentType<{
   name: KitIconName;
   size?: number;
@@ -89,3 +117,16 @@ export const GlassField = KitGlassField as unknown as ComponentType<
 
 /** Kit icon names: the kit's own `Icon.d.ts` union, which @ad528f4 lists all 41 glyphs in `Icon.jsx` (K1, kit #9). */
 export type KitIconName = IconName;
+
+// F5 (S05 Guide): the guide primary's ring and arc, the progress band, and chips. The kit's
+// progress/CountdownRing and progress/StageRail (StageRail · BeadStrip · Bead) landed in the kit
+// (BUILD-ORDER K2, K3; vendored @ad528f4); their `...rest` reaches the root node.
+export const GlassChip = KitGlassChip as unknown as ComponentType<GlassChipProps & Html>;
+export const DotRing = KitDotRing as unknown as ComponentType<DotRingProps & Html>;
+export const CountdownRing = KitCountdownRing as unknown as ComponentType<
+  CountdownRingProps & Omit<Html, 'children'>
+>;
+export const StageRail = KitStageRail as unknown as ComponentType<StageRailProps & Html>;
+export const BeadStrip = KitBeadStrip as unknown as ComponentType<BeadStripProps & Html>;
+export const Bead = KitBead as unknown as ComponentType<BeadProps & Html>;
+export type { BeadProps } from '../vendor/glass/components/progress/StageRail';
