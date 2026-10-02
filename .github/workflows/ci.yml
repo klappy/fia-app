@@ -38,3 +38,19 @@ jobs:
           name: test-results
           path: test-results
           retention-days: 7
+  # Pipeline unit + data tests (rights lines, tier bytes, contracts). Offline: reads committed data/ only.
+  pipeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: pipeline
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: pipeline/package-lock.json
+      - run: npm ci
+      - run: npm test

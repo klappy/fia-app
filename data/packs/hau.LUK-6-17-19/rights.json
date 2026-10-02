@@ -15,7 +15,8 @@
         "name": "CC BY-SA 4.0 license",
         "url": "https://creativecommons.org/licenses/by-sa/4.0/legalcode.en"
       },
-      "url": "https://github.com/BibleAquifer/FIATranslationGuide"
+      "url": "https://github.com/BibleAquifer/FIATranslationGuide",
+      "discrepancies": []
     },
     {
       "id": "FIAKeyTerms@a392606",
@@ -29,7 +30,10 @@
         "name": "CC BY-SA 4.0 license",
         "url": "https://creativecommons.org/licenses/by-sa/4.0/legalcode.en"
       },
-      "url": "https://github.com/BibleAquifer/FIAKeyTerms"
+      "url": "https://github.com/BibleAquifer/FIAKeyTerms",
+      "discrepancies": [
+        "license_info.title (\"Familiarization, Internalization, Articulation (Fia) Terms\") differs from resource title (\"Familiarization, Internalization, Articulation (FIA) Key Terms\")"
+      ]
     },
     {
       "id": "FIAImages@136ff7c",
@@ -43,7 +47,8 @@
         "name": "CC BY-SA 4.0 license",
         "url": "https://creativecommons.org/licenses/by-sa/4.0/legalcode.en"
       },
-      "url": "https://github.com/BibleAquifer/FIAImages"
+      "url": "https://github.com/BibleAquifer/FIAImages",
+      "discrepancies": []
     },
     {
       "id": "FIAMaps@4bc9bb9",
@@ -58,7 +63,10 @@
         "name": "CC BY-SA 4.0 license",
         "url": "https://creativecommons.org/licenses/by-sa/4.0/legalcode.en"
       },
-      "url": "https://github.com/BibleAquifer/FIAMaps"
+      "url": "https://github.com/BibleAquifer/FIAMaps",
+      "discrepancies": [
+        "holder differs between license_info (\"Biblica\") and adaptation_notice (\"Word Collective\")"
+      ]
     },
     {
       "id": "BereanStandardBible@87858d1",
@@ -71,7 +79,8 @@
         "name": "Public Domain CC0",
         "url": "https://creativecommons.org/public-domain/cc0/"
       },
-      "url": "https://github.com/BibleAquifer/BereanStandardBible"
+      "url": "https://github.com/BibleAquifer/BereanStandardBible",
+      "discrepancies": []
     },
     {
       "id": "unfoldingWordLiteral@e49bdf4",
@@ -84,7 +93,8 @@
         "name": "CC BY-SA 4.0",
         "url": "https://creativecommons.org/licenses/by-sa/4.0/legalcode.en"
       },
-      "url": "https://github.com/BibleAquifer/unfoldingWordLiteral"
+      "url": "https://github.com/BibleAquifer/unfoldingWordLiteral",
+      "discrepancies": []
     },
     {
       "id": "unfoldingWordSimplified@41a5b93",
@@ -97,7 +107,8 @@
         "name": "CC BY-SA 4.0",
         "url": "https://creativecommons.org/licenses/by-sa/4.0/legalcode.en"
       },
-      "url": "https://github.com/BibleAquifer/unfoldingWordSimplified"
+      "url": "https://github.com/BibleAquifer/unfoldingWordSimplified",
+      "discrepancies": []
     },
     {
       "id": "WorldEnglishBible@bcb8b3e",
@@ -110,7 +121,8 @@
         "name": "Public Domain CC0",
         "url": "https://creativecommons.org/public-domain/cc0/"
       },
-      "url": "https://github.com/BibleAquifer/WorldEnglishBible"
+      "url": "https://github.com/BibleAquifer/WorldEnglishBible",
+      "discrepancies": []
     },
     {
       "id": "WorldEnglishBibleUpdated@e8b8f85",
@@ -123,7 +135,8 @@
         "name": "Public Domain CC0",
         "url": "https://creativecommons.org/public-domain/cc0/"
       },
-      "url": "https://github.com/BibleAquifer/WorldEnglishBibleUpdated"
+      "url": "https://github.com/BibleAquifer/WorldEnglishBibleUpdated",
+      "discrepancies": []
     }
   ]
 }
