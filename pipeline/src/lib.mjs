@@ -198,7 +198,7 @@ export function guideUnitsDocument(packId, guideHtml, steps) {
   if (last) stops.push({ id: `stop-${String(++n).padStart(3, '0')}`, afterUnitId: last.id, kind: 'terminal' });
   return {
     schemaVersion: 1, packId, guideSha256: sha256(guideHtml),
-    steps: steps.slice(0, 6).map((s) => ({ id: s.id, title: s.title, units: s.units.map((u) => ({ id: u.id, textSha256: u.textSha256, kind: u.kind, ...(u.resources?.length ? { resources: u.resources } : {}) })) })),
+    steps: steps.slice(0, 6).map((s) => ({ id: s.id, title: s.title, units: s.units.map((u) => ({ id: u.id, textSha256: u.textSha256, kind: u.kind, ...(u.hidden ? { hidden: true } : {}), ...(u.resources?.length ? { resources: u.resources } : {}) })) })),
     stops,
   };
 }
