@@ -122,7 +122,8 @@ export default function S16Feedback() {
     unitId,
     screen: from && SCREEN.test(from) ? from : undefined,
     theme,
-    textSize: settings.textSize,
+    // C-16 textSize is system|large|max; C-10 gained `huge` (310%, F6-S14), reported as its nearest C-16 value.
+    textSize: settings.textSize === 'huge' ? 'max' : settings.textSize,
     lowLiteracy: settings.lowLiteracy,
     offline: !online,
     installed: globalThis.matchMedia?.('(display-mode: standalone)').matches,

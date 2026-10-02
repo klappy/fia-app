@@ -19,6 +19,8 @@ import { GlassButton as KitGlassButton } from '../vendor/glass/components/glass/
 import type { GlassButtonProps } from '../vendor/glass/components/glass/GlassButton';
 import { GlassSheet as KitGlassSheet } from '../vendor/glass/components/navigation/GlassSheet';
 import type { GlassSheetProps } from '../vendor/glass/components/navigation/GlassSheet';
+import { GlassSegmented as KitGlassSegmented } from '../vendor/glass/components/forms/GlassSegmented';
+import { GlassToggle as KitGlassToggle } from '../vendor/glass/components/forms/GlassToggle';
 import { CatalogRow as KitCatalogRow } from '../vendor/glass/components/resources/CatalogRow';
 import { Icon as KitIcon } from '../vendor/glass/components/icons/Icon';
 import { FilterChips as KitFilterChips } from '../vendor/glass/components/forms/FilterChips';
@@ -32,6 +34,25 @@ export const GlassSurface = KitGlassSurface as unknown as ComponentType<GlassSur
 export const GlassButton = KitGlassButton as unknown as ComponentType<GlassButtonProps>;
 export const GlassSheet = KitGlassSheet as unknown as ComponentType<
   Omit<GlassSheetProps, 'title'> & Omit<Html, 'title'> & { title?: ReactNode }
+>;
+/** forms/GlassSegmented: radiogroup of buttons; `label` may be a node (GlassSegmented.jsx:5). */
+export const GlassSegmented = KitGlassSegmented as unknown as ComponentType<
+  Omit<Html, 'onChange'> & {
+    options: { value: string; label: ReactNode }[];
+    value?: string;
+    onChange?: (value: string) => void;
+    size?: 'sm' | 'md';
+    style?: CSSProperties;
+  }
+>;
+/** forms/GlassToggle: role=switch button; `...rest` lands on the switch (GlassToggle.jsx:4). */
+export const GlassToggle = KitGlassToggle as unknown as ComponentType<
+  Omit<Html, 'onChange'> & {
+    checked?: boolean;
+    label?: string;
+    onChange?: (checked: boolean) => void;
+    style?: CSSProperties;
+  }
 >;
 export const CatalogRow = KitCatalogRow as unknown as ComponentType<
   Omit<Html, 'title'> & {
@@ -70,6 +91,8 @@ export type KitIconName =
   | 'chevronLeft'
   | 'chevronRight'
   | 'bookmark'
+  | 'maximize'
+  | 'moon'
   | 'compass'
   | 'sparkle'
   | 'book'

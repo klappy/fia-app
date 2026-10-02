@@ -1,7 +1,16 @@
-import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { SettingsRow, ToastNotice } from '../components';
+import { useEffect, useState, type ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { PrimaryButton, SettingsRow, ToastNotice } from '../components';
+import { FiaLogo } from '../components/FiaLogo';
 import { SettingsToggle } from '../components/SettingsRow';
+import {
+  AuroraField,
+  GlassSegmented,
+  GlassSheet,
+  GlassSurface,
+  Icon,
+  type KitIconName,
+} from '../components/glass';
 import { t } from '../i18n';
 import {
   TEXT_STEPS,
@@ -12,26 +21,100 @@ import {
   saveSettings,
   type NarrationMode,
   type Settings,
+  type TextSize,
   type Theme,
 } from '../settings';
-import { ScreenFrame } from './ScreenFrame';
-import './l5-shell.css';
 
-// S14 Settings (design/alpha-screens/14-settings.md). Every change persists to C-10
-// `fia.settings.v1` after validation (R-706); a failed save shows `save-failed` for 4 s and the
-// app continues. Rows whose value has no C-10 field (auto-continue, play-next, content-language
-// split) are not rendered here: they would not persist (see release/changes/l5-shell.md).
-const NARRATION: { mode: NarrationMode; key: string }[] = [
-  { mode: 'source-fallback', key: 's.settings.narration.fallback' },
-  { mode: 'source-only', key: 's.settings.narration.source-only' },
-  { mode: 'generated-only', key: 's.settings.narration.ai-only' },
+// S14 Settings in glass (F6-S14; nodded mock cookbook design/alpha-v2-screens/14-settings.html, PRD § 4
+// row S14, § 8.5): a full-height kit GlassSheet with the FIA logo leading the title, one primary
+// ('Done') in the thumb slot, groups as kit GlassSurface wells: Text size · Theme · Voice · Language.
+// Kept bones: every change persists to C-10 `fia.settings.v1` after validation (R-706); a failed save
+// shows `save-failed` for 4 s and the app continues. Rows whose value has no C-10 field (auto-continue,
+// read without voice, this phone's voice) are not rendered: they would not persist (BIDE, PR body).
+// RULING 2026-10-01 21:23 ET: no bottom bar; language lives in the header pill only, so the Language
+// group is a read-only pointer; Downloads / Feedback / About live in Explore, not here.
+
+/** 100 / 150 / 200 / 310% (PRD § 8.5): the "A" is drawn at the label size that step gives (13 px × k). */
+const SIZE_K: Record<TextSize, number> = { system: 1, large: 1.5, max: 2, huge: 3.1 };
+const NARRATION: { mode: NarrationMode; key: string; icon: KitIconName[] }[] = [
+  { mode: 'source-fallback', key: 's.settings.narration.fallback', icon: ['check', 'sparkle'] },
+  { mode: 'source-only', key: 's.settings.narration.source-only', icon: ['check'] },
+  { mode: 'generated-only', key: 's.settings.narration.ai-only', icon: ['sparkle'] },
 ];
-const THEMES: { theme: Theme; key: string }[] = [
-  { theme: 'light', key: 's.settings.theme.light' },
-  { theme: 'dark', key: 's.settings.theme.dark' },
-  { theme: 'system', key: 's.settings.theme.auto' },
-];
-const A_SIZE = ['1em', '1.25em', '1.5em'];
+
+// BEGET (kit gap, BUILD-ORDER K1): the kit Icon @6aa9bc3 has no phone glyph. Lucide 'smartphone'
+// drawn in the kit Icon's style (24 grid, round stroke, no fill), as the mock does.
+function PhoneGlyph({ size = 18, stroke = 1.7 }: { size?: number; stroke?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={stroke}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      data-kit-gap="smartphone"
+      style={{ display: 'block', flex: 'none' }}
+    >
+      <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+      <path d="M12 18h.01" />
+    </svg>
+  );
+}
+// BEGET (kit gap): the kit's 'sun' (Icon.jsx) is the rays without the disc and reads as a loading
+// spinner (mock README § Kit gaps 2; dl-v21-support-08). Lucide 'sun' with its r=4 disc.
+function SunGlyph({ size = 18, stroke = 1.7 }: { size?: number; stroke?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={stroke}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      data-kit-gap="sun"
+      style={{ display: 'block', flex: 'none' }}
+    >
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2m-7.07-17.07 1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+    </svg>
+  );
+}
+
+function autonym(code: string): string {
+  try {
+    return new Intl.DisplayNames([code], { type: 'language' }).of(code) ?? code;
+  } catch {
+    return code;
+  }
+}
+
+function Group({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="s14-group" aria-label={title}>
+      <div className="fia-overline" aria-hidden="true">
+        {title}
+      </div>
+      <GlassSurface level={3} blur="soft" radius="xl" shadow="none" className="fia-well s14-card">
+        {children}
+      </GlassSurface>
+    </section>
+  );
+}
+
+/** Icon + word option label; the selected one turns semibold with a heavier stroke (mock `opt`). */
+const opt = (icon: (stroke: number) => ReactNode, word: string, on: boolean) => (
+  <span className="s14-opt">
+    {icon(on ? 2.2 : 1.7)}
+    {word}
+  </span>
+);
 
 export default function S14Settings() {
   const navigate = useNavigate();
@@ -52,116 +135,161 @@ export default function S14Settings() {
     if (!r.ok) setFailed(true);
   };
 
-  return (
-    <ScreenFrame id="S14" onPrimary={() => navigate(-1)}>
-      <section aria-labelledby="s14-narration">
-        <h2 id="s14-narration" className="fia-group-header">
-          {t('s.settings.narration')}
-        </h2>
-        <div role="radiogroup" aria-labelledby="s14-narration">
-          {NARRATION.map((n) => (
-            <SettingsRow
-              key={n.mode}
-              label={t(n.key)}
-              control={
-                <input
-                  type="radio"
-                  name="narration"
-                  aria-label={t(n.key)}
-                  checked={settings.narrationMode === n.mode}
-                  onChange={() => update({ ...settings, narrationMode: n.mode })}
-                />
-              }
-            />
-          ))}
-        </div>
-      </section>
+  // PRD § 8.5: at 200% and above the controls become vertical lists and the title scrolls with the body.
+  const big = SIZE_K[settings.textSize] >= 2;
+  const seg = (extra = '') => ['s14-seg', extra, big && 'is-vertical'].filter(Boolean).join(' ');
+  const lang = autonym(settings.contentLanguage);
+  const title = (
+    <div className="s14-title">
+      <FiaLogo />
+      <h1 className="s14-title-word">{t('s.settings.title')}</h1>
+    </div>
+  );
 
-      <section aria-labelledby="s14-text">
-        <h2 id="s14-text" className="fia-group-header">
-          {t('s.settings.text-size')}
-        </h2>
-        <SettingsRow
-          label={t('s.settings.text-size')}
-          consequence={
-            settings.textSize === 'system' ? t('s.settings.text-size-follows') : undefined
-          }
-          control={
-            <div role="group" aria-label={t('s.settings.text-size')} className="fia-stepper">
-              {TEXT_STEPS.map((size, i) => (
-                <button
-                  key={size}
-                  type="button"
-                  className="fia-stepper__a"
-                  aria-pressed={settings.textSize === size}
-                  aria-label={`${t('s.settings.text-size')} ${i + 1}`}
-                  style={{ fontSize: A_SIZE[i] }}
-                  onClick={() => update({ ...settings, textSize: size })}
-                >
-                  A
-                </button>
-              ))}
+  return (
+    <AuroraField
+      className="fia-aurora"
+      drift={false}
+      style={{ height: '100dvh', overflow: 'clip' }}
+    >
+      <div className="s14-page" data-screen="S14">
+        <GlassSheet
+          open
+          className="fia-sheet s14-sheet"
+          height={big ? '100%' : 'calc(100% - 14px)'}
+          title={big ? undefined : title}
+          actions={
+            <div className="fia-sheet__actions">
+              <div className="fia-primary-slot">
+                <PrimaryButton
+                  label={t('s.settings.primary.done')}
+                  onPress={() => navigate(-1)}
+                  hint={t('s.common.a11y.primary-hint')}
+                />
+              </div>
             </div>
           }
-        />
-        <SettingsRow
-          label={t('s.settings.easy-mode')}
-          consequence={t('s.settings.easy-mode-note')}
-          control={
-            <SettingsToggle
-              on={settings.lowLiteracy}
-              label={t('s.settings.easy-mode')}
-              onChange={(v) => update(applyEasyMode(settings, v))}
-            />
-          }
-        />
-      </section>
+        >
+          <div className="s14-body">
+            {big && <div className="s14-title-scroll">{title}</div>}
 
-      <section aria-labelledby="s14-theme">
-        <h2 id="s14-theme" className="fia-group-header">
-          {t('s.settings.theme')}
-        </h2>
-        <div role="radiogroup" aria-labelledby="s14-theme" className="fia-segmented">
-          {THEMES.map((th) => (
-            <button
-              key={th.theme}
-              type="button"
-              role="radio"
-              aria-checked={settings.theme === th.theme}
-              onClick={() => update({ ...settings, theme: th.theme })}
-            >
-              {t(th.key)}
-            </button>
-          ))}
-        </div>
-      </section>
+            <Group title={t('s.settings.text-size')}>
+              <GlassSegmented
+                className={seg('s14-sizes')}
+                aria-label={t('s.settings.text-size')}
+                value={settings.textSize}
+                onChange={(v) => update({ ...settings, textSize: v as TextSize })}
+                options={TEXT_STEPS.map((s) => ({
+                  value: s,
+                  label: (
+                    <span className="s14-size">
+                      <span
+                        className="s14-A"
+                        aria-hidden="true"
+                        style={{ fontSize: `${Math.round(13 * SIZE_K[s])}px` }}
+                      >
+                        A
+                      </span>
+                      <span>{t(`s.settings.text-size.${s}`)}</span>
+                    </span>
+                  ),
+                }))}
+              />
+              <div className="s14-sep" />
+              <SettingsRow
+                icon={<Icon name="maximize" size={18} />}
+                label={t('s.settings.easy-mode')}
+                consequence={t('s.settings.easy-mode-note')}
+                control={
+                  <SettingsToggle
+                    on={settings.lowLiteracy}
+                    label={t('s.settings.easy-mode')}
+                    onChange={(v) => update(applyEasyMode(settings, v))}
+                  />
+                }
+              />
+            </Group>
 
-      <section aria-label={t('s.settings.language')}>
-        <SettingsRow
-          label={t('s.settings.language')}
-          control={
-            <Link to="/?mode=use" dir="auto">
-              {settings.uiLanguage} ▾
-            </Link>
-          }
-        />
-        <SettingsRow
-          label={t('s.settings.reduce-motion')}
-          control={<span className="fia-caption">{t('s.settings.follows-phone')}</span>}
-        />
-      </section>
+            <Group title={t('s.settings.theme')}>
+              <GlassSegmented
+                className={seg()}
+                aria-label={t('s.settings.theme')}
+                value={settings.theme}
+                onChange={(v) => update({ ...settings, theme: v as Theme })}
+                options={[
+                  {
+                    value: 'system',
+                    label: opt(
+                      (sw) => <PhoneGlyph stroke={sw} />,
+                      t('s.settings.theme.auto'),
+                      settings.theme === 'system',
+                    ),
+                  },
+                  {
+                    value: 'light',
+                    label: opt(
+                      (sw) => <SunGlyph stroke={sw} />,
+                      t('s.settings.theme.light'),
+                      settings.theme === 'light',
+                    ),
+                  },
+                  {
+                    value: 'dark',
+                    label: opt(
+                      (sw) => <Icon name="moon" size={18} stroke={sw} />,
+                      t('s.settings.theme.dark'),
+                      settings.theme === 'dark',
+                    ),
+                  },
+                ]}
+              />
+            </Group>
 
-      <nav className="fia-links" aria-label={t('s.settings.title')}>
-        <Link to="/downloads">{t('s.settings.links.downloads')}</Link>
-        <Link to="/feedback">{t('s.settings.links.feedback')}</Link>
-        <Link to="/about">{t('s.settings.links.about')}</Link>
-      </nav>
+            <Group title={t('s.settings.narration')}>
+              <GlassSegmented
+                className={seg('s14-even')}
+                aria-label={t('s.settings.narration')}
+                value={settings.narrationMode}
+                onChange={(v) => update({ ...settings, narrationMode: v as NarrationMode })}
+                options={NARRATION.map((n) => ({
+                  value: n.mode,
+                  label: opt(
+                    (sw) => (
+                      <span className="s14-two">
+                        {n.icon.map((i) => (
+                          <Icon key={i} name={i} size={16} stroke={sw} />
+                        ))}
+                      </span>
+                    ),
+                    t(n.key),
+                    settings.narrationMode === n.mode,
+                  ),
+                }))}
+              />
+              <div className="fia-caption s14-note">{t('s.settings.narration.note')}</div>
+            </Group>
 
-      {failed && (
-        <ToastNotice kind="toast" tone="error">
-          {t('s.settings.save-failed')}
-        </ToastNotice>
-      )}
-    </ScreenFrame>
+            <Group title={t('s.settings.language')}>
+              <div className="s14-lang">
+                <Icon name="languages" size={18} />
+                <div className="s14-lang-text">
+                  <div className="s14-lang-word" dir="auto">
+                    {lang}
+                  </div>
+                  <div className="fia-caption s14-note">
+                    {t('s.settings.language-note', { language: lang })}
+                  </div>
+                </div>
+              </div>
+            </Group>
+          </div>
+        </GlassSheet>
+        {failed && (
+          <ToastNotice kind="toast" tone="error">
+            {t('s.settings.save-failed')}
+          </ToastNotice>
+        )}
+      </div>
+    </AuroraField>
   );
 }
