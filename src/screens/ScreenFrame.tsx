@@ -19,9 +19,6 @@ export interface ScreenFrameProps {
   primaryLabel?: string | null;
   primaryState?: UiState;
   onPrimary?: () => void;
-  /** @deprecated v1 dock highlight, ignored. No screen on this branch passes it; the optional field stays
-   *  only so branches stacked on F4 (F6-S14/S16/S17) still compile. Drop it once they land. */
-  dockActive?: string;
   /** Overrides the browser's connectivity (R-702); default: `!navigator.onLine`, live. */
   offline?: boolean;
   children?: ReactNode;
