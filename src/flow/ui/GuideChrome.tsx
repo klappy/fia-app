@@ -145,6 +145,8 @@ export function StickyStrip({ guide, unitId }: { guide: FlowGuide; unitId: strin
 }
 
 // ── card: Guide · Text · Resources (kit forms/GlassSegmented, icon + label nodes) ───────────────────
+// One row fits only at 1×. Above 1× the views are a vertical list (mock README § Large text; S14's
+// segmented rows also stack from 150%), so no option runs past the card at 320 or 390 px.
 
 export function CardViews({
   active,
@@ -168,7 +170,7 @@ export function CardViews({
   });
   return (
     <GlassSegmented
-      className={['fia-views', scale >= 2 && 'is-vertical'].filter(Boolean).join(' ')}
+      className={['fia-views', scale > 1 && 'is-vertical'].filter(Boolean).join(' ')}
       size="md"
       aria-label={t('s.guide.view.label')}
       value={active}

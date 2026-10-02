@@ -233,6 +233,10 @@ html[data-text-step] .fia-guide-card .fia-views.is-vertical {
 .fia-views.is-vertical .fia-seg {
   justify-content: flex-start;
   text-align: start;
+  /* a word wider than the row (Resources at 310% on 320 px) drops under its icon, never past it */
+  flex-wrap: wrap;
+  min-width: 0;
+  row-gap: 2px;
 }
 
 /* chips: kit GlassChip (a <span>) inside a <button> (GlassChip.jsx:2-11: 10 px, nowrap) */

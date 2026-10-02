@@ -257,7 +257,8 @@ export default function S05Guide() {
     : undefined;
   const question = parentId ? unitAt(guide, indexOf(guide, parentId)) : unit;
   const qChoice = question ? snap.narration?.get(question.id) : undefined;
-  const viewsFirst = scale < 2;
+  // Above 1× the views are a vertical list below the text (mock README § Large text).
+  const viewsFirst = scale <= 1;
   const views = <CardViews active="guide" count={items.length} scale={scale} onView={view} />;
 
   return (
