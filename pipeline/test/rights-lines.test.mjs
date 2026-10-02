@@ -116,3 +116,13 @@ test('every pack: rights.json exists, one line per manifest.rights id, fields eq
     assert.ok(m.tiers.text.files.some((f) => f.path === `/packs/${p}/rights.json`), `${p}: rights.json listed in tiers.text`);
   }
 });
+
+// BL4 hardening (rev42-1520): a sha256-kind record's line carries its revisionKind and licenceUrl; git lines are unchanged.
+test('packRightsLines: copies revisionKind and licenceUrl when the record has them', () => {
+  const sha = { id: 'engtcent@13ef9e4', collection: 'engtcent', revisionKind: 'sha256', revision: '13ef9e47'.padEnd(64, '0'), licenseInfo: 'Creative Commons Attribution 4.0 International', licenceUrl: 'https://creativecommons.org/licenses/by/4.0/', holders: ['Robert Adam Boyd'], url: 'https://ebible.org/details.php?id=engtcent' };
+  const git = { id: 'A@1234567', collection: 'A', revision: '1234567aaa', licenseInfo: lic('CC0', 'https://cc/zero'), holders: ['H'], url: 'u' };
+  const [s, g] = packRightsLines([sha.id, git.id], [sha, git], 'eng');
+  assert.deepEqual(s, { id: sha.id, collection: 'engtcent', revisionKind: 'sha256', revision: sha.revision, holders: ['Robert Adam Boyd'], licence: { name: 'Creative Commons Attribution 4.0 International', url: null }, licenceUrl: 'https://creativecommons.org/licenses/by/4.0/', url: sha.url, discrepancies: [] });
+  assert.equal('revisionKind' in g, false, 'absent kind stays absent (= git)');
+  assert.equal('licenceUrl' in g, false);
+});

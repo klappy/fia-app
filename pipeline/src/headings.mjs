@@ -114,8 +114,14 @@ export function placeHeadings(source, usfm, { strip = [], forwardAll = false } =
 // ---- fetching -------------------------------------------------------------------------------------------------------
 const CACHE_ROOT = path.join(PIPELINE_ROOT, '.cache', 'headings');
 
+/**
+ * Cap on one inflated zip entry (zip-bomb guard). Measured 2026-10-02: the largest entry in the eng-t4t zip is
+ * 20-PSAeng-t4t.usfm at 1,139,177 bytes and Mark is about 462 KB (eng-t4t, engf35), so 16 MiB is ~14x headroom.
+ */
+export const MAX_ENTRY_BYTES = 16 * 1024 * 1024;
+
 /** Minimal zip reader (central directory, stored or deflate) — eBible ships each Bible as one zip. */
-export function unzipEntries(buf) {
+export function unzipEntries(buf, { maxEntryBytes = MAX_ENTRY_BYTES } = {}) {
   let eocd = -1;
   for (let i = buf.length - 22; i >= Math.max(0, buf.length - 65557); i--) if (buf.readUInt32LE(i) === 0x06054b50) { eocd = i; break; }
   assert(eocd >= 0, 'zip: no end of central directory');
@@ -128,7 +134,7 @@ export function unzipEntries(buf) {
     out.set(name, () => {
       const start = local + 30 + buf.readUInt16LE(local + 26) + buf.readUInt16LE(local + 28);
       const data = buf.subarray(start, start + size);
-      return method === 0 ? data : inflateRawSync(data);
+      return method === 0 ? data : inflateRawSync(data, { maxOutputLength: maxEntryBytes });
     });
     p += 46 + nameLen + extra + comment;
   }
