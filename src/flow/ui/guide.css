@@ -1,0 +1,620 @@
+/* F5 — S05 Guide and sheets 20/21 on BT Glass. The app layer only: tokens, layout and class-scoped
+   overrides of kit literals; every surface, button, chip, ring, rail and bead is the kit's
+   (src/vendor/glass @ad528f4, never edited). Values follow the nodded v2.1 mocks' app layer:
+   cookbook design/alpha-v2-screens/_frame.css and the 05, 20, 21 pages (PRD § 8.1–8.5). */
+
+/* ---------- tokens: the coded marks (PRD § 8.3; mock _frame.css:25-30, :52-56) ---------- */
+:root {
+  --fia-kind-plain: #6e7787; /* ● plain part, done step segments: 3:1 or more on light glass */
+  --fia-kind-scripture: var(--text-title); /* ■ Scripture */
+  --fia-kind-term: var(--accent-blue); /* ◆ key term */
+  --fia-kind-media: #17786e; /* ▲ image or map: app contrast variant of kit teal */
+  --fia-kind-stop: var(--accent-red); /* | talk together, ‖ end of guide */
+  --fia-dotring: rgba(70, 86, 112, 0.34); /* the big button's DotRing (mock _frame.js:339) */
+}
+[data-theme='dark'] {
+  --fia-kind-plain: var(--on-night-500);
+  --fia-kind-term: var(--accent-blue-soft);
+  --fia-kind-media: var(--accent-teal);
+  --fia-kind-stop: #ff6b73;
+  --fia-dotring: rgba(255, 255, 255, 0.34);
+}
+
+.fia-sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  padding: 0 !important;
+}
+
+/* ---------- screen layout: one phone screen at 1×, one scrolling column above (PRD § 8.5) ---------- */
+html:not([data-text-step]) .fia-screen[data-screen='S05'] {
+  height: 100dvh;
+  min-height: 0;
+}
+.fia-screen[data-screen='S05'] > .fia-content {
+  padding-top: 10px;
+  padding-bottom: 0;
+  overflow: visible;
+}
+html:not([data-text-step]) .fia-screen[data-screen='S05'] > .fia-content {
+  flex: 1;
+  min-height: 0;
+  padding-bottom: 2px;
+}
+.fia-guide {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+}
+.fia-guide > * {
+  position: relative; /* paint in DOM order over the kit's backdrop-filter stacking contexts */
+}
+.fia-guide-note {
+  margin: 0;
+}
+
+/* ---------- progress band (kit progress/StageRail + BeadStrip; mock ProgressBand) ---------- */
+.fia-band {
+  padding: 12px 16px;
+  flex: none;
+}
+.fia-band[data-lifted] {
+  z-index: 3; /* above the stop sheet's scrim (z 2): the beads stay readable (mock 21) */
+}
+.fia-band__inner {
+  position: relative;
+  display: grid;
+  gap: 8px;
+}
+.fia-band .fia-band__overline {
+  margin: 0;
+  text-wrap: balance;
+}
+.fia-band__title {
+  font: var(--fw-semibold) var(--fs-subtitle) / 1.25 var(--font-core);
+  letter-spacing: var(--ls-title);
+  color: var(--text-title);
+  text-wrap: balance;
+}
+.fia-band .fia-band__caption,
+.fia-stop-inside .fia-caption {
+  margin: 0;
+  font: var(--fw-medium) var(--fs-caption) / 1.3 var(--font-core);
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+.fia-num {
+  font-variant-numeric: tabular-nums;
+}
+.fia-rail {
+  display: grid;
+  gap: 12px;
+}
+/* The kit rail and capsules draw done/ahead in --text-dim; the band uses the marks' own grey. */
+.fia-rail__steps > [data-state='done'] {
+  background: var(--fia-kind-plain) !important;
+}
+.fia-rail__steps > [data-state='upcoming'],
+.fia-rail__steps > [data-state='current'] {
+  box-shadow: inset 0 0 0 1px var(--fia-kind-plain) !important;
+}
+.fia-sticky-strip {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  margin: 0 0 -10px;
+  padding: 8px 14px;
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
+  background: var(--material-floating);
+  backdrop-filter: blur(var(--blur-heavy)) var(--sat-glass);
+  -webkit-backdrop-filter: blur(var(--blur-heavy)) var(--sat-glass);
+  border: var(--border-glass);
+  border-top: none;
+  box-shadow: var(--shadow-rest);
+}
+.fia-sticky-strip[data-shown='false'] {
+  visibility: hidden;
+  position: absolute;
+  height: 0;
+  padding: 0;
+  border: none;
+}
+.fia-sticky-strip__words {
+  color: var(--text-title);
+  font: var(--fw-semibold) min(var(--fs-caption), 20px) / 1.2 var(--font-core);
+}
+.fia-sticky-strip__track {
+  margin-top: 6px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--glass-fill-4);
+  overflow: hidden;
+}
+.fia-sticky-strip__track > div {
+  height: 100%;
+  background: var(--text-title);
+}
+
+/* ---------- the guide card ---------- */
+.fia-guide-card {
+  flex: none;
+}
+html:not([data-text-step]) .fia-guide-card {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.fia-guide-card__inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding: 10px 12px 8px;
+}
+.fia-guide-card__voice {
+  margin-top: 6px;
+}
+.fia-guide-card .fia-card-body {
+  margin-top: 2px;
+}
+html:not([data-text-step]) .fia-guide-card .fia-card-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 10px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 12px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 12px), transparent);
+}
+html[data-text-step] .fia-guide-card .fia-views.is-vertical {
+  margin-top: 14px;
+}
+.fia-text--guide {
+  margin: 4px 0 0;
+  font: var(--fw-regular) calc(17px * var(--fia-text-scale)) / calc(26px * var(--fia-text-scale))
+    var(--font-core);
+  color: var(--text-body);
+  overflow-wrap: anywhere;
+}
+.fia-text--guide strong {
+  color: var(--text-title);
+  font-weight: var(--fw-semibold);
+}
+.fia-guide-cue {
+  margin: 6px 0 0 -10px;
+}
+
+/* card views: kit forms/GlassSegmented (GlassSegmented.jsx:5-6 literals: 36 px, 12 px, nowrap) */
+.fia-views [role='radio'] {
+  font-size: var(--fs-label) !important;
+  line-height: 1.15 !important;
+  min-height: 48px !important;
+  height: auto !important;
+  white-space: normal !important;
+  padding: 6px 8px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 auto !important;
+}
+.fia-views [role='radio'][aria-checked='false'] {
+  font-weight: var(--fw-medium) !important;
+}
+[data-theme='dark'] .fia-views [role='radio'][aria-checked='false'] {
+  color: var(--text-body) !important;
+}
+.fia-seg {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.fia-views.is-vertical {
+  flex-direction: column !important;
+  border-radius: var(--r-xl) !important;
+  gap: 4px;
+}
+.fia-views.is-vertical [role='radio'] {
+  flex: none !important;
+  width: 100%;
+  min-height: 56px !important;
+  border-radius: var(--r-lg) !important;
+  justify-content: flex-start;
+  padding: 8px 16px !important;
+}
+.fia-views.is-vertical .fia-seg {
+  justify-content: flex-start;
+  text-align: start;
+}
+
+/* chips: kit GlassChip (a <span>) inside a <button> (GlassChip.jsx:2-11: 10 px, nowrap) */
+.fia-chip-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  max-width: 100%;
+}
+.fia-chip-mark {
+  display: inline-flex;
+  max-width: 100%;
+}
+html:not([data-text-step]) .fia-guide-card .fia-chip-btn {
+  margin-block: -7px;
+}
+.fia-prov-chip,
+.fia-chip--part,
+.fia-prov-flag {
+  white-space: normal !important;
+  max-width: 100%;
+  min-height: 0;
+}
+.fia-prov-chip {
+  font-size: var(--fs-caption) !important;
+  padding: 6px 12px !important;
+}
+.fia-chip--part {
+  padding: 8px 14px !important;
+}
+.fia-chip-label {
+  font: var(--fw-semibold) var(--fs-label) / 1.2 var(--font-core);
+  color: var(--text-title);
+}
+.fia-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 8px;
+  margin-top: 8px;
+}
+.fia-chips .fia-chips__label {
+  margin: 0 2px 0 0;
+  font: var(--fw-medium) var(--fs-caption) / 1.3 var(--font-core);
+  color: var(--text-muted);
+}
+html[data-text-step='x200'] .fia-chips,
+html[data-text-step='x310'] .fia-chips {
+  flex-direction: column;
+  align-items: flex-start;
+}
+/* Dark: a chip is never lighter than the card it sits on (mock _frame.css:165-172). */
+[data-theme='dark'] :is(.fia-guide, .fia-sheet--stop, .fia-sheet--prov) .fia-chip {
+  background: var(--glass-fill-1) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+[data-theme='dark'] .fia-chip-btn[aria-haspopup='dialog'] > .fia-chip,
+[data-theme='dark'] .fia-chip-mark > .fia-chip {
+  color: var(--text-title) !important;
+}
+
+/* stop band (kit GlassSurface level 3) */
+.fia-guide .fia-stop-band {
+  padding: 10px 14px;
+  flex: none;
+  box-shadow:
+    inset 4px 0 0 var(--fia-kind-stop),
+    var(--inner-top) !important;
+}
+.fia-stop-band__inner {
+  position: relative;
+  display: grid;
+  gap: 2px;
+}
+.fia-stop-band__lead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font: var(--fw-semibold) var(--fs-label) / 1.3 var(--font-core);
+  color: var(--text-title);
+}
+.fia-stop-band__body {
+  margin: 0;
+  font: var(--fw-regular) var(--fs-label) / 1.4 var(--font-core);
+}
+.fia-stop-band__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-inline-start: -10px;
+}
+
+/* ---------- thumb zone: Back · the big button · Skip (mock Transport, _frame.css:176-201) ---------- */
+.fia-screen[data-screen='S05'] > .fia-thumb {
+  position: relative;
+  z-index: 1;
+  padding: 0 var(--fia-gutter) calc(var(--fia-safe-bottom) + 12px);
+}
+html[data-text-step] .fia-screen[data-screen='S05'] > .fia-thumb {
+  position: sticky;
+  bottom: 0;
+  margin-top: 12px;
+  padding-top: 10px;
+  background: var(--material-floating);
+  backdrop-filter: blur(var(--blur-heavy)) var(--sat-glass);
+  -webkit-backdrop-filter: blur(var(--blur-heavy)) var(--sat-glass);
+  border-top: var(--border-glass);
+  border-radius: var(--r-2xl) var(--r-2xl) 0 0;
+  box-shadow: var(--shadow-float);
+}
+.fia-status {
+  position: relative;
+  z-index: 1;
+  margin-bottom: -10px;
+  text-align: center;
+  font: var(--fw-medium) var(--fs-caption) / 1.3 var(--font-core);
+  color: var(--text-body);
+}
+.fia-transport-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.fia-transport-all .fia-transport-row > .fia-btn {
+  margin-top: 36px;
+}
+.fia-transport-col .fia-status {
+  margin-bottom: 0;
+}
+.fia-transport-col .fia-transport-row {
+  align-items: center;
+  margin-top: 4px;
+}
+.fia-btn {
+  white-space: normal !important;
+  text-align: center;
+  line-height: 1.15 !important;
+}
+.fia-quiet {
+  min-height: 48px;
+  padding: 10px 12px !important;
+}
+.fia-quiet:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* GuidePrimary: one <button> = kit DotRing + 72 px disc + kit CountdownRing + verb label (PRD § 8.2) */
+.fia-gp {
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 120px;
+  max-width: 170px;
+  border-radius: var(--r-xl);
+}
+.fia-gp:focus-visible {
+  outline: 3px solid var(--fia-focus-ring);
+  outline-offset: 3px;
+}
+.fia-gp-ring {
+  flex: none;
+}
+.fia-gp-disc {
+  width: 72px;
+  height: 72px;
+  border-radius: var(--r-pill);
+  display: grid;
+  place-items: center;
+  background: var(--surface-inverse);
+  color: var(--text-on-inverse);
+  border: 0.5px solid rgba(255, 255, 255, 0.14);
+  box-shadow: var(--shadow-night);
+}
+/* play and pause read as solid shapes, as the PoC's (kit Icon draws outlines; a fill on the path only) */
+.fia-gp-disc[data-glyph='play'] svg *,
+.fia-gp-disc[data-glyph='pause'] svg * {
+  fill: currentColor;
+}
+.fia-gp-disc[data-glyph='play'] svg {
+  margin-left: 4px;
+}
+.fia-gp-label {
+  margin-top: -10px;
+  position: relative;
+  font: var(--fw-semibold) var(--fs-subtitle) / 1.15 var(--font-core);
+  color: var(--text-title);
+  text-align: center;
+  max-width: 170px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.fia-gp-sub {
+  margin-top: 3px;
+  font: var(--fw-medium) var(--fs-caption) / 1.2 var(--font-core);
+  color: var(--text-muted);
+  text-align: center;
+}
+.fia-gp.is-row {
+  flex-direction: row;
+  max-width: none;
+  width: 100%;
+  gap: 10px;
+  padding: 4px 14px 4px 4px;
+  text-align: start;
+  background: var(--glass-fill-3);
+  border: var(--border-glass);
+  box-shadow: var(--shadow-rest), var(--inner-top);
+}
+.fia-gp.is-row .fia-gp-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  flex: 1;
+}
+.fia-gp.is-row .fia-gp-label {
+  margin-top: 0;
+  text-align: start;
+  max-width: none;
+  -webkit-line-clamp: 3;
+}
+.fia-gp.is-row .fia-gp-sub {
+  text-align: start;
+}
+[data-theme='dark'] .fia-gp.is-row {
+  background: var(--glass-fill-1);
+}
+
+/* ---------- sheets 20 and 21 (kit navigation/GlassSheet via components/Sheet) ---------- */
+.fia-kit-primary {
+  min-height: 56px;
+}
+.fia-sheet-brand .fia-prov-mark,
+.fia-sheet-brand .fia-stop-title-icon {
+  display: inline-grid;
+  place-items: center;
+  vertical-align: middle;
+  margin-inline-end: 10px;
+}
+.fia-prov-mark {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--text-title) 7%, transparent);
+  color: var(--text-title);
+}
+.fia-stop-title-icon {
+  color: var(--fia-kind-stop);
+}
+.fia-prov-body {
+  margin: 2px 0 0;
+}
+.fia-prov-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.fia-prov-flag {
+  font-size: var(--fs-caption) !important;
+  padding: 6px 12px !important;
+  background: color-mix(in srgb, var(--text-title) 5%, transparent) !important;
+}
+.fia-prov-flag b {
+  color: var(--text-title);
+  font-weight: var(--fw-semibold);
+}
+.fia-sheet--prov .fia-prov-source {
+  margin: 10px 0 0;
+  font: var(--fw-medium) var(--fs-caption) / 1.35 var(--font-core);
+  color: var(--text-muted);
+}
+.fia-prov-rows {
+  margin-top: 12px;
+}
+.fia-sheet.fia-sheet--stop {
+  box-shadow:
+    inset 0 6px 0 var(--fia-kind-stop),
+    var(--shadow-float),
+    var(--inner-top) !important;
+}
+.fia-stop-lead {
+  margin: 2px 0 0;
+}
+.fia-stop-lead strong {
+  color: var(--text-title);
+  font-weight: var(--fw-semibold);
+}
+.fia-stop-q {
+  margin-top: 10px;
+}
+[data-theme='light'] .fia-stop-q {
+  background: color-mix(in srgb, var(--text-title) 5%, transparent) !important;
+}
+.fia-stop-q__inner {
+  position: relative;
+  padding: 10px 14px 8px;
+}
+.fia-stop-q .fia-stop-q__label {
+  margin: 0;
+}
+.fia-stop-quote {
+  margin: 4px 0 0;
+  font: var(--fw-medium) italic var(--fs-subtitle) / 1.4 var(--font-core);
+  color: var(--text-title);
+  overflow-wrap: anywhere;
+}
+.fia-stop-again-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 6px;
+  margin: 4px 0 -4px;
+}
+.fia-stop-again-row > .fia-btn {
+  margin-left: -10px;
+}
+.fia-stop-inside {
+  margin: 0 0 10px;
+  padding: 10px 14px 8px;
+  border-radius: var(--r-xl);
+  border: var(--border-glass);
+  background: color-mix(in srgb, var(--text-title) 5%, transparent);
+  display: grid;
+  gap: 8px;
+}
+/* At a stop: the talk named in words beside its red bar. The words take --text-title in both themes:
+   the stop red measured 3.4:1 over the lifted band in light (audit, F5), as the mock's dark 4.4:1 did
+   (mock 21 rev2 gaps-contrast); the bar keeps the red, so the stop never relies on colour. */
+.fia-band__caption--stop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 8px;
+}
+.fia-band__stopcap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-title);
+  font-weight: var(--fw-semibold);
+}
+/* Over the guide, sheets 20 and 21 blur what they cover, as the kit sheet's base (GlassSheet.jsx:4). */
+.fia-sheet__scrim:has(> * > .fia-sheet--prov),
+.fia-sheet__scrim:has(> * > .fia-sheet--stop) {
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+/* Light: kit glass chips vanish on the white sheet; a 6% ink wash keeps them reading as shapes. */
+[data-theme='light'] :is(.fia-sheet--stop, .fia-sheet--prov) .fia-chip {
+  background: color-mix(in srgb, var(--text-title) 6%, transparent) !important;
+}
+/* Dark sheets: the floating material is mid-grey; wells are smoked so words and marks keep their
+   contrast (mock 20/21 dark rules; kit tokens untouched, light unchanged). */
+[data-theme='dark'] :is(.fia-sheet--prov, .fia-sheet--stop) {
+  --fia-kind-plain: var(--on-night-500);
+}
+[data-theme='dark'] :is(.fia-prov-rows, .fia-stop-q, .fia-stop-inside) {
+  background: color-mix(in srgb, var(--surface-app) 50%, transparent) !important;
+}
+[data-theme='dark'] :is(.fia-prov-rows, .fia-stop-q) > span[aria-hidden='true']:first-child {
+  display: none;
+}

@@ -1,7 +1,8 @@
 // Thin loader over the L1 catalog shape (C-03 manifest) and pack guides (guide.json + C-04
 // guide-units.json). Every document is validated before use; nothing is invented when data is
 // missing — callers get an error status and render the spec's error state.
-import { C03, C04, errorText, flowValidator } from './contracts';
+import type { NarrationManifest } from '../media/narration';
+import { C03, C04, C05, errorText, flowValidator } from './contracts';
 import type {
   CatalogEntry,
   CatalogManifest,
@@ -33,6 +34,7 @@ interface RawGuide {
       id: string;
       kind: UnitKind;
       text: string;
+      html?: string;
       textSha256: string;
       resources?: string[];
     }[];
@@ -63,6 +65,15 @@ export function createCatalog(base: string, fetchJson: FetchJson = defaultFetchJ
       if (!r.ok) throw new ContractError(`guide units (C-04): ${errorText(r.errors)}`);
       return joinGuide(g as RawGuide, u as RawUnits);
     },
+    /** The pack's C-05 narration manifest, or null when it cannot be read or is not C-05 (F5). */
+    async narration(packId: string): Promise<NarrationManifest | null> {
+      try {
+        const doc = await fetchJson(`${root}/packs/${packId}/narration.json`);
+        return flowValidator().validate(C05, doc).ok ? (doc as NarrationManifest) : null;
+      } catch {
+        return null;
+      }
+    },
   };
 }
 
@@ -83,6 +94,7 @@ export function joinGuide(g: RawGuide, u: RawUnits): FlowGuide {
         stepId: s.id,
         kind: t.kind,
         text: t.text,
+        ...(t.html && t.html !== t.text ? { html: t.html } : {}),
         textSha256: t.textSha256,
         hidden: x.hidden === true,
         resources: t.resources ?? [],

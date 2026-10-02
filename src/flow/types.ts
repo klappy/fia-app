@@ -37,6 +37,8 @@ export interface GuideUnit {
   stepId: string;
   kind: UnitKind;
   text: string;
+  /** the source html of `text` (only <strong>/<em>; same characters), when the pack carries it */
+  html?: string;
   textSha256: string;
   /** C-04 hidden region: reachable behind the unit's info control (R-413), never deleted. */
   hidden: boolean;
@@ -64,4 +66,9 @@ export interface FlowGuide {
   provenance: string;
   steps: GuideStep[];
   stops: GuideStop[];
+  /**
+   * Unit ids with a clip the narration mode lets play (C-05 via R-501; F5). Absent: no narration is
+   * known yet and the session-wide `FlowState.hasAudio` applies (the pre-F5 behaviour).
+   */
+  audio?: ReadonlySet<string>;
 }
