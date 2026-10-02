@@ -958,7 +958,6 @@ body {
   min-height: 76px;
   field-sizing: content;
   resize: none;
-  outline: none;
   padding: 12px 18px;
   border-radius: var(--r-xl);
   background: var(--glass-fill-2);
@@ -981,6 +980,18 @@ body {
 }
 .fia-feedback__field label > span {
   font-size: var(--fs-caption) !important;
+}
+/* WCAG 2.4.7: both fields keep the app's 3 px focus ring (:focus-visible above). The text area
+   no longer turns it off; the kit GlassField sets outline:none inline (GlassField.jsx:7), so
+   only !important beats it. The kit's --glow-focus stays as well. */
+.fia-feedback__field input:focus-visible {
+  outline: 3px solid var(--fia-focus-ring) !important;
+  outline-offset: 3px;
+}
+/* Captions in the form: app.css .fia-caption (loaded after this file) sets the older
+   --fia-text-muted (#5A6472, 4.1-4.5:1 on light glass); the kit's --text-muted (#475060) clears 4.5:1. */
+.fia-feedback .fia-caption {
+  color: var(--text-muted);
 }
 /* Result (after Send): the words carry the state; the kit icon repeats it. */
 .fia-feedback-band__title {
