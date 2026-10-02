@@ -2,10 +2,11 @@
   "schemaVersion": 1,
   "packId": "tpi.MRK-1-1-13",
   "language": "tpi",
+  "autonym": "Tok Pisin",
   "direction": "ltr",
   "pericope": "MRK-1-1-13",
   "passage": "MRK 1:1-13",
-  "preparedAt": "2026-10-02T16:28:27.601Z",
+  "preparedAt": "2026-10-02T16:37:17.205Z",
   "sourceRevisions": {
     "FIATranslationGuide": "eb744452eb8d7c852caadde9d3181cddfe571119",
     "FIAKeyTerms": "a39260670bba9d87d902e0fa0ae447341343481f",
@@ -24,18 +25,18 @@
   ],
   "tiers": {
     "text": {
-      "bytes": 333186,
+      "bytes": 333876,
       "files": [
         {
           "path": "/packs/tpi.MRK-1-1-13/guide.json",
-          "bytes": 100035,
-          "sha256": "ee6c24f405c5e15f84db0af95e855f051d42c69baeffe2224c614f0bbe002c76",
+          "bytes": 100373,
+          "sha256": "f1e72d8e1dc396bb80b53ca8b754f0690703a80b59cd756bee00bd6096b11523",
           "mime": "application/json"
         },
         {
           "path": "/packs/tpi.MRK-1-1-13/guide-units.json",
-          "bytes": 27635,
-          "sha256": "cea2fad20a972e97199ceb148ba587e19262872d09daad380580e78f46560fe9",
+          "bytes": 27973,
+          "sha256": "e88e57d55d1e31ef1e0b5a5b30c1fd2cd659de21bc833549e4662a6bc30c5d80",
           "mime": "application/json"
         },
         {
@@ -58,8 +59,8 @@
         },
         {
           "path": "/packs/tpi.MRK-1-1-13/narration-plan.json",
-          "bytes": 96148,
-          "sha256": "9cb31ee5eae325f59295a7f73c92686a7af99a20a94b152e47c2fea7acfb00da",
+          "bytes": 96162,
+          "sha256": "b3d616da5d255a8b4292469498b826fc377992c2b6df9f4ba4cefc7e25b19340",
           "mime": "application/json"
         },
         {
@@ -82,10 +83,10 @@
     "videos": 3,
     "scripture": 1,
     "scriptureFallback": 0,
-    "hiddenUnits": 0,
+    "hiddenUnits": 13,
     "termsSupplement": 0,
     "narrationSlots": 192,
-    "narrationFloorSlots": 191,
+    "narrationFloorSlots": 178,
     "alignmentSlots": 1,
     "slots-guide-unit": 126,
     "slots-scripture": 1,

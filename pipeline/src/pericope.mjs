@@ -15,13 +15,30 @@ async function termSupplement(packId) {
 
 // PoC matrix row 14: an English worked example ("The following is an example ...") runs to the end of its step and is
 // hidden until the user reveals it; it is never auto-narrated (PoC cues.hidden_example_region.auto_narrate === false).
+// The opener is found in the English guide (the anchor) and mapped by position onto the localized guide, so the
+// region is hidden in any language. A step whose unit count differs from the anchor's is left unmarked (never guessed).
 const HIDDEN_EXAMPLE_OPENER = /^the following is an example\b/i;
-export function markHiddenExamples(steps) {
-  for (const step of steps) {
-    const at = step.units.findIndex((u) => HIDDEN_EXAMPLE_OPENER.test(u.text.trim()));
-    if (at >= 0) for (const u of step.units.slice(at)) u.hidden = true;
-  }
+export function markHiddenExamples(steps, anchorSteps = steps) {
+  const skipped = [];
+  steps.forEach((step, i) => {
+    const anchor = anchorSteps[i];
+    const at = anchor ? anchor.units.findIndex((u) => HIDDEN_EXAMPLE_OPENER.test(u.text.trim())) : -1;
+    if (at < 0) return;
+    if (anchor.units.length !== step.units.length) { skipped.push(step.id); return; }
+    for (const u of step.units.slice(at)) u.hidden = true;
+  });
+  if (skipped.length) console.error(`hidden-example anchor: unit count differs from English in ${skipped.join(', ')}; left unmarked`);
   return steps.reduce((n, s) => n + s.units.filter((u) => u.hidden).length, 0);
+}
+
+// The English guide body for the same pericope: the anchor markHiddenExamples reads the opener from.
+async function englishAnchorSteps(sources, guideSha, nn, engContentId, start, end) {
+  const meta = (await fetchJson(sources, 'FIATranslationGuide', guideSha, 'eng/metadata.json')).json;
+  const id = engContentId || Object.entries(meta.article_metadata).find(([, a]) => indexReferenceMatches(a.index_reference, start, end))?.[0];
+  if (!id) return null;
+  const f = await fetchJson(sources, 'FIATranslationGuide', guideSha, `eng/json/${nn}.content.json`, { allow404: true });
+  const body = f.json?.find((a) => a.content_id === id);
+  return body ? guideSteps(body.content) : null;
 }
 
 // Units where the guide asks the group to look at something: a spoken next-action prompt pauses there (PoC next-actions).
@@ -71,7 +88,8 @@ export async function buildPack(lang, pericope, { log = console.error } = {}) {
   assert(article, `content body ${contentId} missing in ${lang}/json/${nn}.content.json`);
   const steps = guideSteps(article.content);
   assert(steps.length === 6, `${contentId}: expected 6 <h2> steps, found ${steps.length}`);
-  const hiddenUnits = markHiddenExamples(steps);
+  const anchorSteps = lang === 'eng' ? steps : (await englishAnchorSteps(sources, guideSha, nn, am.localizations?.eng?.content_id, start, end)) || [];
+  const hiddenUnits = markHiddenExamples(steps, anchorSteps);
   const supplementIds = await termSupplement(packId);
 
   // key terms (text + audio), images, maps, videos by passage overlap
@@ -187,7 +205,7 @@ export async function buildPack(lang, pericope, { log = console.error } = {}) {
   const mediaRefs = [...resources.images, ...resources.maps];
   const termAudioSrc = termRecords.filter((t) => t.audio.status === 'source').length;
   const manifest = {
-    schemaVersion: 1, packId, language: lang, direction: LANGUAGE_INFO[lang].direction, pericope, passage, preparedAt: new Date().toISOString(), sourceRevisions,
+    schemaVersion: 1, packId, language: lang, autonym: LANGUAGE_INFO[lang].autonym, direction: LANGUAGE_INFO[lang].direction, pericope, passage, preparedAt: new Date().toISOString(), sourceRevisions,
     resourceTypes: [...new Set(['guide', ...(ownPresent.length ? ['scripture'] : []), ...(termRecords.length ? ['term'] : []), ...(resources.images.length ? ['image'] : []), ...(resources.maps.length ? ['map'] : []), ...(resources.videos.length ? ['video'] : []), ...(termAudioSrc ? ['audio'] : [])])],
     tiers: { text: { bytes: textBytes, files } },
     counts: { steps: steps.length, units, stops: guideUnits.stops.length, terms: termRecords.length, termAudio: termAudioSrc, images: resources.images.length, maps: resources.maps.length, videos: resources.videos.length, scripture: ownPresent.length, scriptureFallback: editions.filter((e) => e.status === 'absent-fallback').length,

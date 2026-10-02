@@ -73,7 +73,7 @@ export function packRightsLines(ids, records, language) {
     if (!rec) return { id, collection: id.split('@')[0], revision: null, holders: null, licence: null, url: null };
     let info = null; try { info = rec.licenseInfo ? JSON.parse(rec.licenseInfo) : null; } catch { info = null; }
     const entries = (info?.licenses || []).filter((l) => l && typeof l === 'object');
-    const pick = entries.find((l) => l[language]) ?.[language] || entries.find((l) => l.eng)?.eng || (entries[0] && Object.values(entries[0])[0]) || null;
+    const pick = entries.find((l) => l[language])?.[language] || entries.find((l) => l.eng)?.eng || (entries[0] && Object.values(entries[0])[0]) || null;
     const licence = pick && (pick.name || pick.url) ? { name: pick.name ?? null, url: pick.url ?? null } : null;
     const holders = rec.holders.filter((h) => !HOLDER_PLACEHOLDERS.has(h));
     return { id, collection: rec.collection, revision: rec.revision, holders: holders.length ? holders : null, licence, url: rec.url };
@@ -82,5 +82,6 @@ export function packRightsLines(ids, records, language) {
 
 export async function loadRightsRecords() {
   const p = path.join(DATA_ROOT, 'rights', 'records.json');
-  return existsSync(p) ? JSON.parse(await readFile(p, 'utf8')) : [];
+  if (!existsSync(p)) throw new Error(`rights: ${p} is missing; run \`npm run rights\` first (C-13 records are required for pack rights lines)`);
+  return JSON.parse(await readFile(p, 'utf8'));
 }
