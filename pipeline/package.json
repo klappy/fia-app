@@ -19,7 +19,8 @@
     "pack": "node bin/build-pack.mjs",
     "proofs": "node bin/build-pack.mjs eng MRK-1-1-13 && node bin/build-pack.mjs spa MRK-1-1-13 && node bin/build-pack.mjs hau LUK-6-17-19 && node bin/build-pack.mjs tpi MRK-1-1-13 && node bin/build-pack.mjs arb GEN-1-1-2-3",
     "test": "node --test test/*.test.mjs",
-    "text-route:smoke": "node bin/text-route-smoke.mjs"
+    "text-route:smoke": "node bin/text-route-smoke.mjs",
+    "subtitles": "node bin/build-subtitles.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",

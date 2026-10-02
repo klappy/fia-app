@@ -21,6 +21,9 @@ export const KEY_ENV = 'ANTHROPIC_API_KEY';
  */
 export const RATE_USD_PER_1K = Object.freeze({ input: 0.004, output: 0.02 });
 
+/** The only stop reasons whose text is a complete answer. Anything else throws. */
+export const ACCEPTED_STOP = Object.freeze(new Set(['end_turn', 'stop_sequence']));
+
 export class TextRouteError extends Error {
   constructor(code, message, extra = {}) {
     super(message);
@@ -82,6 +85,10 @@ export async function textRoute({ prompt, system, maxTokens = 8000, effort = 'me
   }
   if (res.stop_reason === 'max_tokens') {
     throw new TextRouteError('max-tokens', `output hit max_tokens=${maxTokens}`, { model: res.model, usage: res.usage });
+  }
+  // Only a finished answer leaves this route, so a truncated, paused or tool-shaped reply is never cached (rev45 nit 3).
+  if (!ACCEPTED_STOP.has(res.stop_reason)) {
+    throw new TextRouteError('bad-stop', `stop_reason ${res.stop_reason ?? 'missing'} is not end_turn/stop_sequence`, { model: res.model, usage: res.usage });
   }
   const text = res.content
     .filter((b) => b.type === 'text')
