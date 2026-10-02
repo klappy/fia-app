@@ -3,6 +3,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { assert, bookFile2, DATA_ROOT, fetchJson, guideSteps, guideUnitsDocument, indexReferenceMatches, LANGUAGE_INFO, loadSources, parsePericope, parseRef, plainText, rangesOverlap, sha256, stableJson } from './lib.mjs';
+import { loadRightsRecords, packRightsLines } from './rights.mjs';
 
 const FIA = { image: 'FIAImages', map: 'FIAMaps', term: 'FIAKeyTerms', video: 'VideoBibleDictionary' };
 
@@ -14,13 +15,30 @@ async function termSupplement(packId) {
 
 // PoC matrix row 14: an English worked example ("The following is an example ...") runs to the end of its step and is
 // hidden until the user reveals it; it is never auto-narrated (PoC cues.hidden_example_region.auto_narrate === false).
+// The opener is found in the English guide (the anchor) and mapped by position onto the localized guide, so the
+// region is hidden in any language. A step whose unit count differs from the anchor's is left unmarked (never guessed).
 const HIDDEN_EXAMPLE_OPENER = /^the following is an example\b/i;
-export function markHiddenExamples(steps) {
-  for (const step of steps) {
-    const at = step.units.findIndex((u) => HIDDEN_EXAMPLE_OPENER.test(u.text.trim()));
-    if (at >= 0) for (const u of step.units.slice(at)) u.hidden = true;
-  }
+export function markHiddenExamples(steps, anchorSteps = steps) {
+  const skipped = [];
+  steps.forEach((step, i) => {
+    const anchor = anchorSteps[i];
+    const at = anchor ? anchor.units.findIndex((u) => HIDDEN_EXAMPLE_OPENER.test(u.text.trim())) : -1;
+    if (at < 0) return;
+    if (anchor.units.length !== step.units.length) { skipped.push(step.id); return; }
+    for (const u of step.units.slice(at)) u.hidden = true;
+  });
+  if (skipped.length) console.error(`hidden-example anchor: unit count differs from English in ${skipped.join(', ')}; left unmarked`);
   return steps.reduce((n, s) => n + s.units.filter((u) => u.hidden).length, 0);
+}
+
+// The English guide body for the same pericope: the anchor markHiddenExamples reads the opener from.
+async function englishAnchorSteps(sources, guideSha, nn, engContentId, start, end) {
+  const meta = (await fetchJson(sources, 'FIATranslationGuide', guideSha, 'eng/metadata.json')).json;
+  const id = engContentId || Object.entries(meta.article_metadata).find(([, a]) => indexReferenceMatches(a.index_reference, start, end))?.[0];
+  if (!id) return null;
+  const f = await fetchJson(sources, 'FIATranslationGuide', guideSha, `eng/json/${nn}.content.json`, { allow404: true });
+  const body = f.json?.find((a) => a.content_id === id);
+  return body ? guideSteps(body.content) : null;
 }
 
 // Units where the guide asks the group to look at something: a spoken next-action prompt pauses there (PoC next-actions).
@@ -70,7 +88,8 @@ export async function buildPack(lang, pericope, { log = console.error } = {}) {
   assert(article, `content body ${contentId} missing in ${lang}/json/${nn}.content.json`);
   const steps = guideSteps(article.content);
   assert(steps.length === 6, `${contentId}: expected 6 <h2> steps, found ${steps.length}`);
-  const hiddenUnits = markHiddenExamples(steps);
+  const anchorSteps = lang === 'eng' ? steps : (await englishAnchorSteps(sources, guideSha, nn, am.localizations?.eng?.content_id, start, end)) || [];
+  const hiddenUnits = markHiddenExamples(steps, anchorSteps);
   const supplementIds = await termSupplement(packId);
 
   // key terms (text + audio), images, maps, videos by passage overlap
@@ -177,18 +196,23 @@ export async function buildPack(lang, pericope, { log = console.error } = {}) {
   const units = steps.reduce((n, s) => n + s.units.length, 0);
   // same rule as inventory.mjs: a media pin is recorded only when the pack has >=1 item of it, so catalog sourceRevision === sha256(this map) (C-03)
   const sourceRevisions = { [guideRepo]: guideSha, ...(termRecords.length ? { FIAKeyTerms: sources.fia.FIAKeyTerms.commitSha } : {}), ...(resources.images.length ? { FIAImages: sources.fia.FIAImages.commitSha } : {}), ...(resources.maps.length ? { FIAMaps: sources.fia.FIAMaps.commitSha } : {}), ...(resources.videos.length ? { VideoBibleDictionary: sources.fia.VideoBibleDictionary.commitSha } : {}), ...Object.fromEntries(editions.filter((e) => e.verses).map((e) => [e.repo, sources.bibles.find((b) => b.repo === e.repo).commitSha])) };
+  // BL8: holder and licence per source, from the C-13 records (data/rights/records.json; npm run rights first)
+  const rightsIds = [...new Set(Object.keys(sourceRevisions).map((repo) => `${repo}@${sourceRevisions[repo].slice(0, 7)}`))];
+  const rightsLines = packRightsLines(rightsIds, await loadRightsRecords(), lang);
+  for (const l of rightsLines) if (!l.holders || !l.licence) log(`${packId}: ${l.id} has no ${[!l.holders && 'holder', !l.licence && 'licence'].filter(Boolean).join(' or ')} in the C-13 record (left null)`);
+  await put('rights.json', { schemaVersion: 1, packId, source: 'C-13 data/rights/records.json', sources: rightsLines });
   const textBytes = files.reduce((n, f) => n + f.bytes, 0);
   const mediaRefs = [...resources.images, ...resources.maps];
   const termAudioSrc = termRecords.filter((t) => t.audio.status === 'source').length;
   const manifest = {
-    schemaVersion: 1, packId, language: lang, direction: LANGUAGE_INFO[lang].direction, pericope, passage, preparedAt: new Date().toISOString(), sourceRevisions,
+    schemaVersion: 1, packId, language: lang, autonym: LANGUAGE_INFO[lang].autonym, direction: LANGUAGE_INFO[lang].direction, pericope, passage, preparedAt: new Date().toISOString(), sourceRevisions,
     resourceTypes: [...new Set(['guide', ...(ownPresent.length ? ['scripture'] : []), ...(termRecords.length ? ['term'] : []), ...(resources.images.length ? ['image'] : []), ...(resources.maps.length ? ['map'] : []), ...(resources.videos.length ? ['video'] : []), ...(termAudioSrc ? ['audio'] : [])])],
     tiers: { text: { bytes: textBytes, files } },
     counts: { steps: steps.length, units, stops: guideUnits.stops.length, terms: termRecords.length, termAudio: termAudioSrc, images: resources.images.length, maps: resources.maps.length, videos: resources.videos.length, scripture: ownPresent.length, scriptureFallback: editions.filter((e) => e.status === 'absent-fallback').length,
       hiddenUnits, termsSupplement: termRecords.filter((t) => t.selectedBy === 'supplement').length, narrationSlots: narrationPlan.length, narrationFloorSlots: narrationPlan.filter((p) => p.floor).length, alignmentSlots,
       ...Object.fromEntries(Object.entries(slotCounts).map(([k, v]) => [`slots-${k}`, v])) },
     provenance: { text: { source: units + ownPresent.length + termRecords.filter((t) => t.text.status === 'source').length, generated: 0, missing: termRecords.filter((t) => t.text.status !== 'source').length + (ownPresent.length ? 0 : editions.filter((e) => e.verses).length) }, audio: { source: termAudioSrc, generated: 0, missing: narrationPlan.filter((p) => p.status !== 'source-available').length }, description: { source: 0, generated: 0, missing: mediaRefs.length } },
-    rights: [...new Set(Object.keys(sourceRevisions).map((repo) => `${repo}@${sourceRevisions[repo].slice(0, 7)}`))],
+    rights: rightsIds,
   };
   await writeFile(path.join(dir, 'manifest.json'), stableJson(manifest));
   log(`${packId}: ${steps.length} steps, ${units} units, ${guideUnits.stops.length} stops, ${termRecords.length} terms (${termAudioSrc} audio), ${resources.images.length} images, ${resources.maps.length} maps, ${resources.videos.length} videos, scripture ${editions.map((e) => `${e.short}:${e.status}`).join(',')}; text tier ${textBytes} B`);

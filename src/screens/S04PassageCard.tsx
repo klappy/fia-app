@@ -33,7 +33,7 @@ export default function S04PassageCard() {
   const { guide, state } = snap;
   if (!guide || !state) {
     return (
-      <ScreenFrame id="S04" title={entry?.title} dockActive="guide" primaryLabel={null}>
+      <ScreenFrame id="S04" title={entry?.title} primaryLabel={null}>
         <FlowGate
           status={snap.guideStatus}
           hasPack={!!snap.packId}
@@ -63,7 +63,6 @@ export default function S04PassageCard() {
     <ScreenFrame
       id="S04"
       title={guide.title}
-      dockActive="guide"
       offline={!off.online}
       primaryLabel={
         intent

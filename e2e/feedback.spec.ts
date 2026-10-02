@@ -33,14 +33,13 @@ test('online Send posts C-16 with context and reads Received', async ({ page }) 
   const posts = await stub(page, () => 201);
   await page.goto(CTX);
   await expect(page.locator('[data-screen="S16"]')).toBeVisible();
-  // context card: passage, unit, screen, content language
+  // context card: words only (design-lens rule 5); the ids ride in the payload checked below
   const card = page.locator('.fia-feedback__context');
-  await expect(card).toContainText('spa.MRK-1-1-13');
-  await expect(card).toContainText('unit S02-U004');
-  await expect(card).toContainText('S05');
-  await expect(card).toContainText('Español (spa)');
+  await expect(card).toContainText('Español');
+  for (const id of ['spa.MRK', 'S02-U004', 'S05', '(spa)'])
+    await expect(card).not.toContainText(id);
   await send(page, 'Audio stopped in step 2.');
-  await expect(page.getByText(/✓ Received/).first()).toBeVisible();
+  await expect(page.getByRole('status').getByText(/^Received ·/)).toBeVisible();
   await expect(page.getByText(/Queued/)).toHaveCount(0);
   expect(posts).toHaveLength(1);
   expect(posts[0]).toMatchObject({
@@ -61,7 +60,7 @@ test('a failed post reads Queued; reload (app open) flushes it to Received, one 
   const posts = await stub(page, () => status);
   await page.goto(CTX);
   await send(page, 'Queued then sent.');
-  await expect(page.getByText('⊘ Queued — will send when online')).toBeVisible();
+  await expect(page.getByText('Queued — will send when online')).toBeVisible();
   await expect(page.getByText(/Waiting to send/)).toBeVisible();
   expect(posts).toHaveLength(1);
   status = 200;
@@ -83,7 +82,7 @@ test('offline Send reads Queued; the online event flushes it', async ({ page, co
   await expect(page.locator('[data-screen="S16"]')).toBeVisible();
   await context.setOffline(true);
   await send(page, 'Sent while offline.');
-  await expect(page.getByText('⊘ Queued — will send when online')).toBeVisible();
+  await expect(page.getByText('Queued — will send when online')).toBeVisible();
   await expect(page.getByText(/Waiting to send/)).toBeVisible();
   expect(posts).toHaveLength(0);
   await context.setOffline(false);

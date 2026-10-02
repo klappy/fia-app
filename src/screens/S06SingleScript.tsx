@@ -29,7 +29,7 @@ export default function S06SingleScript() {
 
   if (!guide || !state) {
     return (
-      <ScreenFrame id="S06" dockActive="guide" primaryLabel={null}>
+      <ScreenFrame id="S06" primaryLabel={null}>
         <FlowGate
           status={snap.guideStatus}
           hasPack={!!snap.packId}
@@ -51,7 +51,6 @@ export default function S06SingleScript() {
     <ScreenFrame
       id="S06"
       title={guide.title}
-      dockActive="guide"
       primaryLabel={label}
       primaryState={atStop ? 'discussion-stop' : 'default'}
       onPrimary={() => session.dispatch(primaryAction(kind))}

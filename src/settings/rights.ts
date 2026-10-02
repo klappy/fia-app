@@ -171,3 +171,50 @@ export const noticePlainText = (html: string) =>
   noticeTokens(html)
     .map((t) => (t.br ? '\n' : t.text))
     .join('');
+
+/**
+ * BL8 pack rights lines (`data/packs/<id>/rights.json`, built by pipeline/src/rights.mjs from C-13):
+ * one line per source with its holders and licence, verbatim. A missing holder or licence stays
+ * `null` and the screen says it is not listed — nothing is filled in here.
+ */
+export interface PackRightsLine {
+  id: string;
+  collection: string;
+  holders: string[] | null;
+  licence: { name: string; url?: string } | null;
+  url?: string | null;
+}
+
+export function parsePackRights(data: unknown): PackRightsLine[] {
+  const sources = (data as { sources?: unknown } | null)?.sources;
+  if (!Array.isArray(sources)) return [];
+  const out: PackRightsLine[] = [];
+  for (const s of sources as Record<string, unknown>[]) {
+    if (!s || typeof s.id !== 'string' || typeof s.collection !== 'string') continue;
+    const holders =
+      Array.isArray(s.holders) && s.holders.every((h) => typeof h === 'string') && s.holders.length
+        ? (s.holders as string[])
+        : null;
+    const lic = s.licence as { name?: unknown; url?: unknown } | null | undefined;
+    const licence =
+      lic && typeof lic.name === 'string' && lic.name
+        ? { name: lic.name, url: typeof lic.url === 'string' ? lic.url : undefined }
+        : null;
+    out.push({
+      id: s.id,
+      collection: s.collection,
+      holders,
+      licence,
+      url: typeof s.url === 'string' ? s.url : null,
+    });
+  }
+  return out;
+}
+
+/** The holder and licence of one pack line, or null when either is not listed. */
+export function packLineParts(
+  line: PackRightsLine | undefined,
+): { holder: string; licence: string } | null {
+  if (!line?.holders || !line.licence) return null;
+  return { holder: line.holders.join(', '), licence: line.licence.name };
+}

@@ -1,6 +1,7 @@
 // C-13 rights records: one per source repo, licence fields verbatim from <lang>/metadata.json resource_metadata.
 // Discrepancies are recorded, never resolved by code (R-312).
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { DATA_ROOT, fetchJson, loadSources, plainText, stableJson } from './lib.mjs';
 
@@ -60,4 +61,48 @@ function noticeMarkdown(records, extras) {
     lines.push('');
   }
   return lines.join('\n');
+}
+
+// BL8 (F3a S15): the holder and licence lines a pack carries for each of its sources, read from the C-13 records.
+// Nothing is invented: a missing record, a placeholder holder or an absent licence stays null. Discrepancies are
+// carried verbatim (R-312): [] when the record lists none, null when there is no record.
+const HOLDER_PLACEHOLDERS = new Set(['(no holder named in metadata)', '(metadata unreadable)']);
+const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+const hasLicence = (v) => isObj(v) && (v.name != null || v.url != null);
+
+// Reads licenseInfo the way the app's parseLicenseInfo does (src/settings/rights.ts:26-46): JSON text of
+// license_info, or — when it is not a JSON object — a plain licence name (the C-13 schema example form).
+// The pipeline additionally prefers the pack language entry, then eng, then the first stated licence.
+export function licenceFrom(licenseInfo, language) {
+  if (typeof licenseInfo !== 'string' || licenseInfo === '') return null;
+  let info;
+  try { info = JSON.parse(licenseInfo); } catch { return { name: licenseInfo, url: null }; }
+  if (!info || typeof info !== 'object') return { name: licenseInfo, url: null };
+  const entries = Array.isArray(info.licenses) ? info.licenses.filter(isObj) : [];
+  const pick = entries.map((l) => l[language]).find(hasLicence) || entries.map((l) => l.eng).find(hasLicence) || entries.flatMap((l) => Object.values(l)).find(hasLicence) || null;
+  return pick ? { name: pick.name ?? null, url: pick.url ?? null } : null;
+}
+
+export function packRightsLines(ids, records, language) {
+  const byId = new Map(records.map((r) => [r.id, r]));
+  return ids.map((id) => {
+    const rec = byId.get(id);
+    if (!rec) return { id, collection: id.split('@')[0], revision: null, holders: null, licence: null, url: null, discrepancies: null };
+    const holders = Array.isArray(rec.holders) ? rec.holders.filter((h) => typeof h === 'string' && !HOLDER_PLACEHOLDERS.has(h)) : [];
+    const discrepancies = Array.isArray(rec.discrepancies) ? rec.discrepancies.filter((d) => typeof d === 'string') : [];
+    return { id, collection: rec.collection, revision: rec.revision ?? null, holders: holders.length ? holders : null, licence: licenceFrom(rec.licenseInfo, language), url: rec.url ?? null, discrepancies };
+  });
+}
+
+// Absent → throw; stale (a pinned source in sources.json has no record at its pin, e.g. `npm run pin` without
+// `npm run rights`) → throw, instead of writing a rights.json of nulls with exit 0.
+export async function loadRightsRecords({ file = path.join(DATA_ROOT, 'rights', 'records.json'), sources } = {}) {
+  if (!existsSync(file)) throw new Error(`rights: ${file} is missing; run \`npm run rights\` first (C-13 records are required for pack rights lines)`);
+  const records = JSON.parse(await readFile(file, 'utf8'));
+  const pins = sources ?? await loadSources();
+  const have = new Set(records.map((r) => r.id));
+  const want = [...Object.entries(pins.fia || {}).map(([repo, p]) => `${repo}@${p.commitSha.slice(0, 7)}`), ...(pins.bibles || []).map((b) => `${b.repo}@${b.commitSha.slice(0, 7)}`)];
+  const missing = want.filter((id) => !have.has(id));
+  if (missing.length) throw new Error(`rights: ${file} is stale — no C-13 record for ${missing.join(', ')}; run \`npm run rights\` after \`npm run pin\``);
+  return records;
 }

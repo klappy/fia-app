@@ -2,10 +2,11 @@
   "schemaVersion": 1,
   "packId": "eng.MRK-1-1-13",
   "language": "eng",
+  "autonym": "English",
   "direction": "ltr",
   "pericope": "MRK-1-1-13",
   "passage": "MRK 1:1-13",
-  "preparedAt": "2026-10-02T01:13:22.811Z",
+  "preparedAt": "2026-10-02T16:37:09.997Z",
   "sourceRevisions": {
     "FIATranslationGuide": "eb744452eb8d7c852caadde9d3181cddfe571119",
     "FIAKeyTerms": "a39260670bba9d87d902e0fa0ae447341343481f",
@@ -29,7 +30,7 @@
   ],
   "tiers": {
     "text": {
-      "bytes": 441387,
+      "bytes": 446534,
       "files": [
         {
           "path": "/packs/eng.MRK-1-1-13/guide.json",
@@ -65,6 +66,12 @@
           "path": "/packs/eng.MRK-1-1-13/narration-plan.json",
           "bytes": 119298,
           "sha256": "1fa693396df2d6b5da6d3426572951fef1dbb6cfb09807173c907bc610357296",
+          "mime": "application/json"
+        },
+        {
+          "path": "/packs/eng.MRK-1-1-13/rights.json",
+          "bytes": 5147,
+          "sha256": "ca41384b1883ea8f8b163e50e566bbb18c5fa38735bac013906990858e30830d",
           "mime": "application/json"
         }
       ]

@@ -79,7 +79,7 @@ export default function S19Coverage() {
   const dir = cov?.language?.direction ?? 'auto';
 
   return (
-    <ScreenFrame id="S19" title={t('s.coverage.title', { language })} dockActive="more">
+    <ScreenFrame id="S19" title={t('s.coverage.title', { language })}>
       <p className="fia-subtitle">{t('s.coverage.subtitle')}</p>
       {cov && (
         <p className="fia-caption">

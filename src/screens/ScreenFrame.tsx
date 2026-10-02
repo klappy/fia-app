@@ -19,7 +19,8 @@ export interface ScreenFrameProps {
   primaryLabel?: string | null;
   primaryState?: UiState;
   onPrimary?: () => void;
-  /** v1 dock highlight; kept so F5/F6 screens compile until they are re-skinned. Unused. */
+  /** @deprecated v1 dock highlight, ignored. No screen on this branch passes it; the optional field stays
+   *  only so branches stacked on F4 (F6-S14/S16/S17) still compile. Drop it once they land. */
   dockActive?: string;
   /** Overrides the browser's connectivity (R-702); default: `!navigator.onLine`, live. */
   offline?: boolean;

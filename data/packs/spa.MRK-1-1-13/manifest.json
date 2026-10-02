@@ -2,10 +2,11 @@
   "schemaVersion": 1,
   "packId": "spa.MRK-1-1-13",
   "language": "spa",
+  "autonym": "Español",
   "direction": "ltr",
   "pericope": "MRK-1-1-13",
   "passage": "MRK 1:1-13",
-  "preparedAt": "2026-09-30T21:40:24.277Z",
+  "preparedAt": "2026-10-02T16:37:13.018Z",
   "sourceRevisions": {
     "FIATranslationGuide": "eb744452eb8d7c852caadde9d3181cddfe571119",
     "FIAKeyTerms": "a39260670bba9d87d902e0fa0ae447341343481f",
@@ -26,18 +27,18 @@
   ],
   "tiers": {
     "text": {
-      "bytes": 277189,
+      "bytes": 320643,
       "files": [
         {
           "path": "/packs/spa.MRK-1-1-13/guide.json",
-          "bytes": 90127,
-          "sha256": "329fe4356728c09fbd948da9b64ddc71024679e00310f451983aa8c11ab14467",
+          "bytes": 90465,
+          "sha256": "6c4a8998e96f08e6604b810a03bdb087332394c97d0bf91ec067a2ef5d0233f1",
           "mime": "application/json"
         },
         {
           "path": "/packs/spa.MRK-1-1-13/guide-units.json",
-          "bytes": 23453,
-          "sha256": "3f30a211fdb5c3c14dbc0decd1f4884f021e62003ce510651d0748f3dbb51720",
+          "bytes": 23791,
+          "sha256": "b7202e690ffac08fd0aa59f82778dc8e35dbda148a6089a662b2cb899784b2c9",
           "mime": "application/json"
         },
         {
@@ -48,8 +49,8 @@
         },
         {
           "path": "/packs/spa.MRK-1-1-13/resources.json",
-          "bytes": 96716,
-          "sha256": "db0cad2857c962bff437ec4eea32d96d1c7690f948a953771b82cc17a18bdd1b",
+          "bytes": 97996,
+          "sha256": "0e4440dbc7e030616d5a513834f8551b148393f36e0803de0d68153703293828",
           "mime": "application/json"
         },
         {
@@ -60,8 +61,14 @@
         },
         {
           "path": "/packs/spa.MRK-1-1-13/narration-plan.json",
-          "bytes": 53251,
-          "sha256": "dddf9e5713e94a9fa67651ed834fec7cd31d2b106d4ef0bb24432232d400c81f",
+          "bytes": 90914,
+          "sha256": "4ee4747ffa815c6f6789d39b235c981867dace6ed9d488554b55eb0549a57456",
+          "mime": "application/json"
+        },
+        {
+          "path": "/packs/spa.MRK-1-1-13/rights.json",
+          "bytes": 3835,
+          "sha256": "e4c7c7da77ba6cee5dc1abd732f884de6d5bb612aaaa88722f6fc2754ffd72cb",
           "mime": "application/json"
         }
       ]
@@ -77,7 +84,19 @@
     "maps": 4,
     "videos": 3,
     "scripture": 2,
-    "scriptureFallback": 0
+    "scriptureFallback": 0,
+    "hiddenUnits": 13,
+    "termsSupplement": 0,
+    "narrationSlots": 175,
+    "narrationFloorSlots": 160,
+    "alignmentSlots": 2,
+    "slots-guide-unit": 130,
+    "slots-scripture": 2,
+    "slots-term-recording": 16,
+    "slots-term-read-aloud": 16,
+    "slots-description": 8,
+    "slots-next-action": 1,
+    "slots-transition": 2
   },
   "provenance": {
     "text": {
@@ -88,7 +107,7 @@
     "audio": {
       "source": 1,
       "generated": 0,
-      "missing": 147
+      "missing": 174
     },
     "description": {
       "source": 0,

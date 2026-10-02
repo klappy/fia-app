@@ -14,6 +14,21 @@ export function packTierBytes(packManifest) {
   return Object.fromEntries(Object.entries(packManifest.tiers || {}).map(([tier, t]) => [tier, (t.files || []).reduce((n, f) => n + f.bytes, 0)]));
 }
 
+/** Term supplements per packId (term-supplements.json): terms the passage-overlap rule misses because FIAKeyTerms caps
+ * associations.passage at 100. The same file pericope.mjs reads for the pack, so catalog and pack count the same terms. */
+export async function readTermSupplements(file = new URL('../term-supplements.json', import.meta.url)) {
+  const doc = JSON.parse(await readFile(file, 'utf8'));
+  return Object.fromEntries(Object.entries(doc.packs || {}).map(([packId, p]) => [packId, new Set(p.terms || [])]));
+}
+
+/** Key-term Text articles for one catalog entry: passage overlap plus the pack's supplement ids, overlap first, no duplicates. */
+export function entryTerms(termItems, overlaps, supplementIds = new Set()) {
+  const text = termItems.filter((i) => i.mediaType === 'Text');
+  const byOverlap = text.filter(overlaps);
+  const seen = new Set(byOverlap.map((i) => i.contentId));
+  return [...byOverlap, ...text.filter((i) => supplementIds.has(i.contentId) && !seen.has(i.contentId))];
+}
+
 /** Built pack manifests under data/packs, keyed by packId. */
 export async function readBuiltPacks(dataRoot = DATA_ROOT) {
   const dir = path.join(dataRoot, 'packs');
@@ -56,6 +71,7 @@ export async function buildCatalog({ appVersion = '0.2.0+0000000', log = console
     const r = await fetchJson(sources, FIA.term, media.term.sha, `${lang}/metadata.json`, { allow404: true });
     termsByLang[lang] = r.json ? Object.keys(r.json.article_metadata) : [];
   });
+  const termSupplements = await readTermSupplements();
   const termNumber = (id) => id.match(/-t(\d+)-/)?.[1];
   const langTermSets = Object.fromEntries(languages.map((l) => [l, { text: new Set(), audio: new Set() }]));
   for (const [l, ids] of Object.entries(termsByLang)) for (const id of ids) (id.endsWith('-audio') ? langTermSets[l].audio : langTermSets[l].text).add(termNumber(id));
@@ -114,7 +130,7 @@ export async function buildCatalog({ appVersion = '0.2.0+0000000', log = console
       const book = pericope.split('-')[0];
       const nn = bookFile2(book);
       const overlap = (item) => item.passages.some((p) => rangesOverlap(start, end, p.start, p.end));
-      const terms = media.term.items.filter((i) => i.mediaType === 'Text' && overlap(i));
+      const terms = entryTerms(media.term.items, overlap, termSupplements[`${lang}.${pericope}`]);
       const images = media.image.items.filter(overlap);
       const maps = media.map.items.filter(overlap);
       const videos = media.video.items.filter(overlap);
@@ -143,10 +159,10 @@ export async function buildCatalog({ appVersion = '0.2.0+0000000', log = console
         guide: body ? { file: body.file, contentSha256: body.contentSha256, bytes: body.bytes, steps: body.steps, unitsEstimate, narration: { status: 'absent', ai: true, generator: 'narration' } } : { status: 'missing' },
         scripture: scriptureSlots, terms: termSlots, images: imageSlots, maps: mapSlots, videos: videoSlots, resourceTypes, tierBytes, tierBytesAreEstimates: true, tierBytesSource: 'estimate', provenance, sourceRevisions };
       entries.push(detail);
-      manifestEntries.push({ packId: detail.packId, language: lang, pericope, book, title: detail.title, resourceTypes, tierBytes, sourceRevision: sha256(JSON.stringify(sourceRevisions)), provenance, manifestSha256: null });
+      manifestEntries.push({ packId: detail.packId, language: lang, autonym: LANGUAGE_INFO[lang].autonym, pericope, book, title: detail.title, resourceTypes, tierBytes, sourceRevision: sha256(JSON.stringify(sourceRevisions)), provenance, manifestSha256: null });
       langCounts.pericopes++; langCounts.guideUnitsEstimate += unitsEstimate;
     }
-    perLangOut[lang] = { schemaVersion: 1, language: lang, ...LANGUAGE_INFO[lang], builtAt: null, counts: langCounts, books: L.books.map(bookUsfm), files: L.files, skipped: L.skipped, entries };
+    perLangOut[lang] = { schemaVersion: 1, language: lang, ...LANGUAGE_INFO[lang], builtAt: null, counts: langCounts, books: L.books.map(bookUsfm), files: Object.fromEntries(Object.entries(L.files).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))), skipped: L.skipped, entries };
     coverage[lang] = langCounts;
   }
 

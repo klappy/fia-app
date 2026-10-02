@@ -219,7 +219,11 @@ const unglyph = (s: string) => s.replace(/^✓\s*/, '');
 
 export default function S17InstallGuide() {
   const nav = useNavigate();
-  const q = new URLSearchParams(useLocation().search);
+  const loc = useLocation();
+  const q = new URLSearchParams(loc.search);
+  // Opened cold (deep link, no in-app history): router's first entry has key 'default', so
+  // nav(-1) would leave the app or do nothing. Fall back to home.
+  const back = () => (loc.key !== 'default' ? nav(-1) : nav('/', { replace: true }));
   const ref = q.get('ref');
   const fromGate = q.get('from') === 'passage';
   const install = useInstall();
@@ -369,7 +373,7 @@ export default function S17InstallGuide() {
                 <SecondaryAction
                   className="fia-install__end"
                   label={t('s.install.skip-yes')}
-                  onPress={() => nav(-1)}
+                  onPress={back}
                 />
               </div>
             </div>
@@ -398,7 +402,7 @@ export default function S17InstallGuide() {
                     className="fia-install__end"
                     icon={<Icon name="x" size={18} />}
                     label={t('s.install.not-now')}
-                    onPress={() => nav(-1)}
+                    onPress={back}
                   />
                 ))}
             </div>
