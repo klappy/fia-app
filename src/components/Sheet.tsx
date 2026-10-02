@@ -124,7 +124,13 @@ export function Sheet({
         open
         title={
           brand ? (
-            <div className="fia-sheet-brand">
+            <div
+              className={
+                onClose && closeButton
+                  ? 'fia-sheet-brand fia-sheet-brand--close'
+                  : 'fia-sheet-brand'
+              }
+            >
               <FiaLogo />
               <span>{title}</span>
             </div>
