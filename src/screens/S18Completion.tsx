@@ -14,7 +14,7 @@ export default function S18Completion() {
   const { guide, state } = snap;
   if (!guide || !state) {
     return (
-      <ScreenFrame id="S18" dockActive="guide" primaryLabel={null}>
+      <ScreenFrame id="S18" primaryLabel={null}>
         <FlowGate
           status={snap.guideStatus}
           hasPack={!!snap.packId}
@@ -34,7 +34,6 @@ export default function S18Completion() {
     <ScreenFrame
       id="S18"
       title={guide.title}
-      dockActive="guide"
       primaryLabel={t('s.completion.primary.start-again')}
       onPrimary={() => {
         session.dispatch({ type: 'restart' });

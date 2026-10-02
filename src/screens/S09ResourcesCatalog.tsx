@@ -59,12 +59,7 @@ export default function S09ResourcesCatalog() {
     nav(PROVENANCE_SHEET_PATH, { state });
   };
   return (
-    <ScreenFrame
-      id="S09"
-      title={t('s.resources.title', { ref })}
-      dockActive="resources"
-      offline={!online}
-    >
+    <ScreenFrame id="S09" title={t('s.resources.title', { ref })} offline={!online}>
       {unit && (
         <SecondaryAction
           label={`⟵ ${t('s.resources.back-to-unit', { n: unit })}`}

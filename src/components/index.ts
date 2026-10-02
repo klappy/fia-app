@@ -4,7 +4,6 @@ export { AudioControls } from './AudioControls';
 export { Card } from './Card';
 export { CoverageChips } from './CoverageChips';
 export { DiscussionStopBand } from './DiscussionStopBand';
-export { Dock, type DockCell } from './Dock';
 export { DownloadTierPicker, type TierRow } from './DownloadTierPicker';
 export { FeedbackForm } from './FeedbackForm';
 export { LanguagePicker } from './LanguagePicker';

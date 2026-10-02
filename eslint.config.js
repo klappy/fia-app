@@ -15,6 +15,7 @@ export default tseslint.config(
       'test-results',
       'pipeline',
       'data',
+      'src/vendor',
     ],
   },
   {

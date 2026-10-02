@@ -59,8 +59,6 @@ spaceVars.push(
   `  --fia-gap-inline: ${s.gap_inline}px;`,
   `  --fia-card-pad: ${s.card_pad}px;`,
   `  --fia-card-pad-wide: ${s.card_pad_wide}px;`,
-  `  --fia-dock-h: ${s.dock_h}px;`,
-  `  --fia-dock-h-stacked: ${s.dock_h_stacked}px;`,
   `  --fia-safe-top: ${s.safe_top};`,
   `  --fia-safe-bottom: ${s.safe_bottom};`,
   `  --fia-content-max-width: ${s.content_max_width}px;`,
@@ -146,6 +144,18 @@ push(
   `:root { --fia-theme-color-light: ${tokens.color['pwa-theme-color'].light}; --fia-theme-color-dark: ${tokens.color['pwa-theme-color'].dark}; }`,
 );
 
+// Hand-written app overrides over BT Glass (F4, PRD § 3 "How the kit arrives") live after MARK in
+// alpha.css; regeneration keeps them byte for byte.
+const MARK = '/* ==== app overrides over BT Glass';
+let kept = '';
+try {
+  const prev = readFileSync(out, 'utf8');
+  const at = prev.indexOf(MARK);
+  if (at >= 0) kept = '\n' + prev.slice(at);
+} catch {
+  /* first run */
+}
+
 mkdirSync(dirname(out), { recursive: true });
-writeFileSync(out, lines.join('\n') + '\n');
+writeFileSync(out, lines.join('\n') + '\n' + kept);
 console.log(`tokens: wrote ${out} (${lines.length} lines)`);

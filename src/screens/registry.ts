@@ -37,7 +37,8 @@ export interface ScreenDef {
   titleKey: string | null;
   /** Primary-button label key; `null` = the screen has no next action (rule 1). */
   primaryKey: string | null;
-  /** Dock visible (dock.md: hidden on 01, 11, 12, 17 and on sheets). */
+  /** Hub frame (F4): the glass header carries the language pill and Explore. There is no bottom bar on
+   *  any screen (RULING 2026-10-01 (a)); `false` frames show the logo only. */
   dock: boolean;
   kind: 'screen' | 'sheet';
 }

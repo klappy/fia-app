@@ -53,7 +53,7 @@ export default function S14Settings() {
   };
 
   return (
-    <ScreenFrame id="S14" dockActive="more" onPrimary={() => navigate(-1)}>
+    <ScreenFrame id="S14" onPrimary={() => navigate(-1)}>
       <section aria-labelledby="s14-narration">
         <h2 id="s14-narration" className="fia-group-header">
           {t('s.settings.narration')}
