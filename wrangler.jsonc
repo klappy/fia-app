@@ -6,6 +6,9 @@
   //   npx wrangler deploy --env production  (branch production) -> fiaguide.app
   // Custom domains are attached account-side (Otto); no routes live in this file.
   // Build command: `npm run build` = `vite build` only — tests gate the PR in CI, never the build.
+  // No LLM secret here: this Worker serves static assets only. The BL4c text route key (ANTHROPIC_API_KEY)
+  // lives in CI secrets now and, once the API+MCP server Worker exists, on that Worker via
+  // `wrangler secret put ANTHROPIC_API_KEY` (host only; never in this file or vars).
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "fia-app",
   "compatibility_date": "2026-09-01",
