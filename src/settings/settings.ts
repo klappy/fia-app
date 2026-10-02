@@ -8,7 +8,7 @@ export const SETTINGS_KEY = 'fia.settings.v1';
 
 export const NARRATION_MODES = ['source-fallback', 'source-only', 'generated-only'] as const;
 export const MEDIA_TIERS = ['text', 'phone', 'medium', 'original'] as const;
-export const TEXT_SIZES = ['system', 'large', 'max'] as const;
+export const TEXT_SIZES = ['system', 'large', 'max', 'huge'] as const;
 export const THEMES = ['system', 'light', 'dark'] as const;
 export const DISCLOSURES = [
   'ai-narration',
@@ -231,9 +231,9 @@ export function saveSettings(
 }
 
 /**
- * S14 spec draws four `A` targets ("Text size {step} of 4") but C-10 `textSize` has three values
- * (system|large|max). Contract wins: the stepper renders three targets, one per enum value, so a
- * stored value always reads back as the target that set it. Gap reported on the PR.
+ * S14 Text size (PRD § 8.5; mock 14-settings): Follows phone · Larger · Largest · Huge, the
+ * 100 / 150 / 200 / 310% steps. C-10 `textSize` system|large|max|huge, one target per value, so a
+ * stored value always reads back as the target that set it (F6-S14 added `huge`; scales in apply.ts).
  */
 export const TEXT_STEPS: readonly TextSize[] = TEXT_SIZES;
 

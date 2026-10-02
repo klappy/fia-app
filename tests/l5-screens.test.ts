@@ -18,7 +18,7 @@ describe('L5 screens render', () => {
     const html = render(S14Settings, '/settings');
     expect(html).toContain(EN['s.settings.narration.fallback']);
     expect(html).toContain(EN['s.settings.narration.ai-only']);
-    expect(html).toMatch(/checked=""[^>]*>|<input[^>]*checked/);
+    expect(html).toMatch(/aria-checked="true"[^>]*>(?:(?!<\/button>).)*Recorded \+ AI/);
     expect(html).toContain(EN['s.settings.primary.done']);
   });
   it('S15 renders LICENSE verbatim holder line and never the M5 slot', () => {

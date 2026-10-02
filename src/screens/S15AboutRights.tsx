@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ProvenanceMark, SecondaryAction } from '../components';
 import { FiaLogo } from '../components/FiaLogo';
 import { CatalogRow, GlassSurface, GlassToggle, Icon } from '../components/glass';
+import { Outbox } from '../feedback';
 import { browserKV, readCurrent } from '../flow/store';
 import { t } from '../i18n';
 import {
@@ -21,6 +22,8 @@ import {
 } from '../settings';
 import LICENSE from '../../LICENSE?raw';
 import NOTICE from '../../NOTICE.md?raw';
+import { DEFAULT_PACK, usePackFile } from '../media/usePack';
+import type { ScripturePack } from '../media/scripture';
 import { ScreenFrame } from './ScreenFrame';
 import './l5-shell.css';
 
@@ -206,6 +209,7 @@ export default function S15AboutRights() {
   const go = useNavigate();
   const [store] = useState(browserStore);
   const [settings, setSettings] = useState(() => loadSettings(store).settings);
+  const feedback = new Outbox(store).counts();
   const [rows, setRows] = useState<RightsRow[] | null>(null);
   const [lines, setLines] = useState<PackRightsLine[]>([]);
   const [failed, setFailed] = useState(false);
@@ -225,6 +229,17 @@ export default function S15AboutRights() {
   }, []);
   useEffect(load, [load]);
 
+  // Short edition names (BSB, ULT…) come from the pack's own scripture.json (C-02 `short` per
+  // `repo`, the same labels the S08 edition tabs show): the current pack, else the default pack.
+  // A collection with no short name in the pack keeps its C-13 name; nothing is invented here.
+  const scripturePack = usePackFile<ScripturePack>(
+    readCurrent(browserKV()).packId || DEFAULT_PACK,
+    'scripture.json',
+  );
+  const shortOf = (collection: string): string =>
+    (scripturePack.status === 'ready' &&
+      scripturePack.data.editions?.find((e) => e.repo === collection)?.short) ||
+    collection;
   const toggle = (id: string) => setOpen((o) => (o === id ? null : id));
   const records = rows ?? [];
   // With a current pack, its own sources name the editions on screen; else every C-13 edition (v1).
@@ -315,7 +330,9 @@ export default function S15AboutRights() {
             {editions.length > 0 && (
               <SourceRow
                 id="scripture"
-                title={t('s.about.source.scripture', { editions: editions.join(', ') })}
+                title={t('s.about.source.scripture', {
+                  editions: editions.map(shortOf).join(', '),
+                })}
                 lines={uniq(scriptureLines).length === 1 ? uniq(scriptureLines) : undefined}
                 mark={<LegendMark kind="scripture" />}
                 open={open === 'scripture'}
@@ -402,6 +419,12 @@ export default function S15AboutRights() {
               />
             </div>
           </div>
+          {/* R-705 (spec 15-about-rights.md:85): the S16 outbox row stays — the PoC is the floor. */}
+          <button type="button" className="fia-about__quiet" onClick={() => go('/feedback')}>
+            <span className="fia-caption">
+              {t('s.about.feedback-row', { n: feedback.sent, k: feedback.waiting })} ⟶
+            </span>
+          </button>
         </Group>
 
         <div className="fia-about__links">

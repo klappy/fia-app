@@ -159,10 +159,10 @@ export async function buildCatalog({ appVersion = '0.2.0+0000000', log = console
         guide: body ? { file: body.file, contentSha256: body.contentSha256, bytes: body.bytes, steps: body.steps, unitsEstimate, narration: { status: 'absent', ai: true, generator: 'narration' } } : { status: 'missing' },
         scripture: scriptureSlots, terms: termSlots, images: imageSlots, maps: mapSlots, videos: videoSlots, resourceTypes, tierBytes, tierBytesAreEstimates: true, tierBytesSource: 'estimate', provenance, sourceRevisions };
       entries.push(detail);
-      manifestEntries.push({ packId: detail.packId, language: lang, pericope, book, title: detail.title, resourceTypes, tierBytes, sourceRevision: sha256(JSON.stringify(sourceRevisions)), provenance, manifestSha256: null });
+      manifestEntries.push({ packId: detail.packId, language: lang, autonym: LANGUAGE_INFO[lang].autonym, pericope, book, title: detail.title, resourceTypes, tierBytes, sourceRevision: sha256(JSON.stringify(sourceRevisions)), provenance, manifestSha256: null });
       langCounts.pericopes++; langCounts.guideUnitsEstimate += unitsEstimate;
     }
-    perLangOut[lang] = { schemaVersion: 1, language: lang, ...LANGUAGE_INFO[lang], builtAt: null, counts: langCounts, books: L.books.map(bookUsfm), files: L.files, skipped: L.skipped, entries };
+    perLangOut[lang] = { schemaVersion: 1, language: lang, ...LANGUAGE_INFO[lang], builtAt: null, counts: langCounts, books: L.books.map(bookUsfm), files: Object.fromEntries(Object.entries(L.files).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))), skipped: L.skipped, entries };
     coverage[lang] = langCounts;
   }
 

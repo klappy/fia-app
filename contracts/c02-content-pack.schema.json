@@ -31,6 +31,11 @@
       "pattern": "^[a-z]{3}(-[A-Za-z]{2,8})?$",
       "description": "Aquifer language code: ISO 639-3 three letters (eng, spa, arb, hin, ...) or Aquifer's script-suffixed forms (zhs, zht); never a BCP-47 two-letter tag"
     },
+    "autonym": {
+      "type": "string",
+      "minLength": 1,
+      "description": "the language's own name for itself (e.g. English, Español), from LANGUAGE_INFO; shown in the language picker"
+    },
     "direction": {
       "type": "string",
       "enum": [
@@ -191,6 +196,7 @@
       "schemaVersion": 1,
       "packId": "eng.MRK-1-1-13",
       "language": "eng",
+      "autonym": "English",
       "direction": "ltr",
       "pericope": "MRK-1-1-13",
       "passage": "MRK 1:1-13",

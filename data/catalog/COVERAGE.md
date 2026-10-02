@@ -1,6 +1,6 @@
 # FIA Alpha catalog coverage
 
-Generated 2026-10-02T16:29:10.636Z by `@fia-app/pipeline` (`npm run catalog`). Counts are what Aquifer has per language at the pinned commits in `pipeline/sources.json` (FIATranslationGuide @ eb74445). "—" = nothing on Aquifer for that language: the app shows the English item badged (maps, Scripture where the language has none) or an AI-backfill slot marked `ai: true` (term text, image/video titles, narration, descriptions). Nothing is invented; Scripture is never AI-backfilled.
+Generated 2026-10-02T16:38:02.617Z by `@fia-app/pipeline` (`npm run catalog`). Counts are what Aquifer has per language at the pinned commits in `pipeline/sources.json` (FIATranslationGuide @ eb74445). "—" = nothing on Aquifer for that language: the app shows the English item badged (maps, Scripture where the language has none) or an AI-backfill slot marked `ai: true` (term text, image/video titles, narration, descriptions). Nothing is invented; Scripture is never AI-backfilled.
 
 | Lang | Guide pericopes | Books | Scripture editions | Key terms (text) | Key-term audio | Images (localized title) | Maps | Videos (localized title) | Guide units (est.) |
 |---|---|---|---|---|---|---|---|---|---|

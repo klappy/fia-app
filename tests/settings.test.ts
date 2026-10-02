@@ -20,7 +20,11 @@ describe('C-10 settings', () => {
     expect(DEFAULT_SETTINGS.telemetryOptIn).toBe(false);
   });
   it('unknown enum value → default with a status line', () => {
-    const r = normalizeSettings({ narrationMode: 'aquifer-only', theme: 'neon', textSize: 'huge' });
+    const r = normalizeSettings({
+      narrationMode: 'aquifer-only',
+      theme: 'neon',
+      textSize: 'giant',
+    });
     expect(r.settings.narrationMode).toBe('source-fallback');
     expect(r.settings.theme).toBe('system');
     expect(r.settings.textSize).toBe('system');
@@ -85,7 +89,7 @@ describe('C-10 settings', () => {
     expect(loadSettings(store).settings.narrationMode).toBe('generated-only');
   });
   it('text-size stepper has one target per C-10 enum value', () => {
-    expect(TEXT_STEPS).toEqual(['system', 'large', 'max']);
+    expect(TEXT_STEPS).toEqual(['system', 'large', 'max', 'huge']);
   });
   it('Easy mode steps text up at once and sets lowLiteracy', () => {
     const on = applyEasyMode(DEFAULT_SETTINGS, true);
@@ -114,7 +118,7 @@ describe('startup applies saved display settings (review fia-app#5 finding 3)', 
     } as unknown as HTMLElement;
     applyToDocument(loadSettings(store).settings, root);
     expect(attrs.get('data-theme')).toBe('dark');
-    expect(attrs.get('data-text-step')).toBe('max');
+    expect(attrs.get('data-text-step')).toBe('x200');
     expect(attrs.has('data-low-literacy')).toBe(true);
   });
 });
