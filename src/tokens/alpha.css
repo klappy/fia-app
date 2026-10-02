@@ -653,10 +653,12 @@ body {
   .fia-install__bar {
     padding: 10px 14px;
   }
-  .fia-install__app-row {
-    flex-direction: column; /* 200%+: the icon over the words, which take the drawing's width (mock :96) */
-    align-items: flex-start;
-  }
+}
+/* 200%+ only (mock :96 html.fia-big, _frame.js:21 scale >= 2): the icon over the words, which take the drawing's
+   width. Keyed on the text step, not the 28em container above, which at 390 px already matches at 130% and 150%. */
+:root:is([data-text-step='x200'], [data-text-step='x310']) .fia-install__app-row {
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 /* ---- Text-size steps (F6-S14; PRD § 8.5; mock 14-settings): Follows phone · Larger · Largest · Huge =
