@@ -9,6 +9,8 @@ import { AuroraField as KitAuroraField } from '../vendor/glass/components/glass/
 import type { AuroraFieldProps } from '../vendor/glass/components/glass/AuroraField';
 import { GlassSurface as KitGlassSurface } from '../vendor/glass/components/glass/GlassSurface';
 import type { GlassSurfaceProps } from '../vendor/glass/components/glass/GlassSurface';
+import { GlassToggle as KitGlassToggle } from '../vendor/glass/components/forms/GlassToggle';
+import type { GlassToggleProps } from '../vendor/glass/components/forms/GlassToggle';
 import { GlassButton as KitGlassButton } from '../vendor/glass/components/glass/GlassButton';
 import type { GlassButtonProps } from '../vendor/glass/components/glass/GlassButton';
 import { GlassSheet as KitGlassSheet } from '../vendor/glass/components/navigation/GlassSheet';
@@ -21,6 +23,9 @@ import { Icon as KitIcon } from '../vendor/glass/components/icons/Icon';
 type Html = HTMLAttributes<HTMLElement> & { type?: 'button' | 'submit' | 'reset' };
 export const AuroraField = KitAuroraField as unknown as ComponentType<AuroraFieldProps & Html>;
 export const GlassSurface = KitGlassSurface as unknown as ComponentType<GlassSurfaceProps & Html>;
+export const GlassToggle = KitGlassToggle as unknown as ComponentType<
+  GlassToggleProps & Omit<Html, 'onChange'>
+>;
 export const GlassButton = KitGlassButton as unknown as ComponentType<GlassButtonProps>;
 export const GlassSheet = KitGlassSheet as unknown as ComponentType<
   Omit<GlassSheetProps, 'title'> & Omit<Html, 'title'> & { title?: ReactNode }
@@ -44,6 +49,7 @@ export const Icon = KitIcon as unknown as ComponentType<{
 /** Kit icon names present in `components/icons/Icon.jsx` @6aa9bc3 (the .d.ts union omits the BT additions). */
 export type KitIconName =
   | 'chevronLeft'
+  | 'arrowUpRight'
   | 'chevronRight'
   | 'bookmark'
   | 'compass'
