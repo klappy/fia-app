@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import { REQUIRED_DATA, shipData } from '../src/offline/ship-data-plugin';
+import { REQUIRED_DATA, shipData, shippedPacks } from '../src/offline/ship-data-plugin';
 import { shellEntries } from '../src/offline/shell-manifest-plugin';
 
 const DATA = join(__dirname, '..', 'data');
@@ -35,6 +35,22 @@ describe('ship-data build step', () => {
     const m = JSON.parse(readFileSync(join(out, `packs/${PACK}/manifest.json`), 'utf8'));
     for (const tier of Object.values(m.tiers) as Array<{ files: { path: string }[] }>)
       for (const f of tier.files) expect(existsSync(join(out, f.path)), f.path).toBe(true);
+  });
+
+  it('writes the pack index: the packs this build ships with a guide (GAP-NOPACK)', () => {
+    const doc = JSON.parse(readFileSync(join(out, 'data/packs/index.json'), 'utf8'));
+    expect(doc.packs).toEqual(shippedPacks(DATA));
+    expect(doc.packs).toEqual(expect.arrayContaining([PACK, 'arb.GEN-1-1-2-3']));
+    expect(doc.packs).not.toContain('eng.MRK-1-14-20');
+    for (const id of doc.packs)
+      expect(existsSync(join(out, `data/packs/${id}/guide.json`))).toBe(true);
+    // a pack without its guide files is not listed; no packs dir → an empty list
+    const data = mkdtempSync(join(tmpdir(), 'fia-data-'));
+    tmp.push(data);
+    mkdirSync(join(data, 'packs/eng.X-1-1-2'), { recursive: true });
+    writeFileSync(join(data, 'packs/eng.X-1-1-2/manifest.json'), '{}');
+    expect(shippedPacks(data)).toEqual([]);
+    expect(shippedPacks(join(data, 'none'))).toEqual([]);
   });
 
   it('ships JSON only', () => {

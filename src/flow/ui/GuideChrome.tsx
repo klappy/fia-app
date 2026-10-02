@@ -3,6 +3,8 @@
 import { useNavigate } from 'react-router-dom';
 import { ProgressRail } from '../../components';
 import { t } from '../../i18n';
+import { AbsentBadge } from '../../components';
+import { useNotYet } from '../ready';
 import type { FlowState } from '../machine';
 import { position, skippedStops } from '../model';
 import type { View } from '../store';
@@ -101,13 +103,24 @@ export function FlowGate({
   onRetry: () => void;
 }) {
   const nav = useNavigate();
+  const notYet = useNotYet();
   if (!hasPack)
     return (
       <button type="button" className="fia-secondary" onClick={() => nav('/library')}>
         {t('s.completion.another-passage')}
       </button>
     );
-  if (status === 'error')
+  // GAP-NOPACK: a listed passage this build has no pack for reads "not yet in {language}" with the
+  // way to another passage (absent-badge.md: never a dead end), not "Could not read…".
+  if (notYet)
+    return (
+      <AbsentBadge
+        language={notYet}
+        fallbackLabel={t('s.completion.another-passage')}
+        onFallback={() => nav('/library')}
+      />
+    );
+  if (status === 'error' && notYet !== undefined)
     return (
       <div role="alert">
         <p>{t('s.passage.error')}</p>

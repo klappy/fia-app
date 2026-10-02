@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { bookName, matches, pericopesFor } from '../flow/catalog';
+import { isNotYet, readyFirst, useReadyPacks } from '../flow/ready';
 import { flowSession, useFlow } from '../flow/session';
 import { t } from '../i18n';
+import { languageName } from '../media/lang';
 import { browserStore, DATA_PATHS, fetchJson } from '../settings';
 import {
   measuredMap,
@@ -31,7 +33,12 @@ export default function S03PericopeList() {
     [snap.manifest, language, snap.book],
   );
   const book = rows[0] ? bookName(rows[0].title) : (snap.book ?? '');
-  const shown = rows.filter((r) => matches(q, r.title, r.pericope));
+  // GAP-NOPACK: passages that open come first; the rest read "not yet in {language}" (ready.ts).
+  const ready = useReadyPacks();
+  const shown = readyFirst(
+    rows.filter((r) => matches(q, r.title, r.pericope)),
+    (r) => !isNotYet(ready, r.packId),
+  );
   const off = useOffline();
   const [tier] = useState(() => preferredTier(browserStore()));
   // Which entries carry measured (pack-manifest) sizes; anything unmarked reads as an estimate.
@@ -78,6 +85,7 @@ export default function S03PericopeList() {
       <ul className="fia-list">
         {shown.map((r) => {
           const st = saveRowState(r.packId, off.packs, off.saving);
+          const notYet = isNotYet(ready, r.packId);
           // Saved rows show what was verified; others the catalog size at the best listed tier,
           // prefixed ≈ unless the catalog marks it measured (never an estimate shown as exact).
           const sz = rowSize(
@@ -113,14 +121,19 @@ export default function S03PericopeList() {
                       })}
                     </span>
                   )}
-                  {!online && st.state !== 'saved' && (
+                  {notYet && (
+                    <span className="fia-mark fia-mark--absent" data-role="not-yet">
+                      ◌ {t('s.common.mark.absent', { language: languageName(language) })}
+                    </span>
+                  )}
+                  {!online && st.state !== 'saved' && !notYet && (
                     // pericope-card.md offline: unsaved rows stay tappable; the fact is a badge.
                     <span className="fia-badge--needs-connection" data-role="needs-connection">
                       {t('s.common.not-saved-badge')}
                     </span>
                   )}
                 </span>
-                {sz && (
+                {sz && !notYet && (
                   <span className="fia-caption" data-testid="row-size">
                     {t('s.pericopes.size', {
                       tier: t(`s.passage.tier.${sz.tier}`),
