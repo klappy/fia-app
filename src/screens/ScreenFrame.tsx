@@ -25,6 +25,12 @@ export interface ScreenFrameProps {
   thumb?: ReactNode;
   /** The screen title is for screen readers only (S05: the reference is the band's overline). */
   titleHidden?: boolean;
+  /**
+   * Layer frame (PRD § 8.1 Layer; mock CloseHeader, design/alpha-v2-screens/_frame.js:241-249): the one
+   * labelled way back sits in the glass header as a quiet kit GlassButton with a chevron. Ignored on
+   * hub frames, which carry the language pill and Explore instead.
+   */
+  close?: { label: string; onPress: () => void };
   children?: ReactNode;
 }
 
@@ -48,6 +54,7 @@ export function ScreenFrame({
   offline,
   thumb,
   titleHidden,
+  close,
   children,
 }: ScreenFrameProps) {
   const def = screenById(id);
@@ -83,6 +90,17 @@ export function ScreenFrame({
                   <span aria-hidden="true">⊘ </span>
                   {t('s.common.offline-chip')}
                 </span>
+              )}
+              {close && !hub && (
+                <GlassButton
+                  variant="quiet"
+                  className="fia-pill fia-close-back"
+                  style={PILL}
+                  leading={<Icon name="chevronLeft" size={18} />}
+                  onClick={close.onPress}
+                >
+                  {close.label}
+                </GlassButton>
               )}
               {hub && (
                 <GlassButton

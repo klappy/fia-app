@@ -443,9 +443,11 @@ export default function S07Overview() {
             )}
           </div>
         </GlassSheet>
-        {guide && guard && (
+        {guide && state && guard && (
           <ForwardJumpSheet
             guide={guide}
+            state={state}
+            target={guard.target}
             stops={guard.stops}
             open
             onToStop={(s) => {

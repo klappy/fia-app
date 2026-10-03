@@ -28,19 +28,19 @@ describe('F6-S02 library model (C-03 catalog)', () => {
     expect(mark).toMatchObject({ name: 'Mark', count: 68, saved: 1 });
     expect(books.filter((b) => b.saved > 0).map((b) => b.book)).toEqual(['MRK']);
   });
-  it('voice line follows the catalog: no generated narration today, so no book claims a voice', () => {
+  it('voice line follows passageCard voiceOf: Mark plays the stand-in AI clips, no other book has a voice', () => {
     const books = libraryBooks(manifest, 'eng', new Set());
-    expect(books.every((b) => b.voice === 'none')).toBe(true);
+    expect(books.filter((b) => b.voice === 'ai').map((b) => b.book)).toEqual(['MRK']);
     const voiced: CatalogManifest = {
       ...manifest,
       entries: manifest.entries.map((e) =>
-        e.packId === 'eng.MRK-1-1-13'
-          ? { ...e, provenance: { audio: { source: 21, generated: 108, missing: 0 } } }
+        e.packId === 'eng.LUK-1-1-4'
+          ? { ...e, provenance: { audio: { source: 0, generated: 20, missing: 0 } } }
           : e,
       ),
     };
     const after = libraryBooks(voiced, 'eng', new Set());
-    expect(after.filter((b) => b.voice === 'ai').map((b) => b.book)).toEqual(['MRK']);
+    expect(after.filter((b) => b.voice === 'ai').map((b) => b.book)).toEqual(['MRK', 'LUK']);
   });
   it('search finds passages by reference: whole numbers, any dash, none for an empty query', () => {
     const titles = passageMatches(manifest, 'eng', 'Mark 1').map((e) => e.title);

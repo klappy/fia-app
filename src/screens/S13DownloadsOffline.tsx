@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Card, SecondaryAction } from '../components';
+import { QuietAction } from '../components';
+import { GlassSurface, Icon, SyncBadge } from '../components/glass';
 import { t } from '../i18n';
 import {
   detectPlatform,
@@ -22,7 +23,37 @@ import { ScreenFrame } from './ScreenFrame';
 // S13 Downloads / Offline (R-308..R-311, R-702, R-703): every line here comes from the worker's
 // STATUS (C-07): "Saved ✓" only after verification, partial as n of m with Resume, update with
 // its size delta, Remove only after a confirm naming the consequence. Nothing is swept.
+// F6-S13 glass (nodded mock cookbook design/alpha-v2-screens/13-downloads.html; PRD § 4 row S13, § 8.1
+// Layer): ScreenFrame layer header with the one labelled way back (`close`), group overlines
+// (.fia-overline), pack cards on kit GlassSurface with the kit SyncBadge for "Saved ✓", quiet kit
+// GlassButtons with kit Icons for the card actions, and the catalog row on a level-1 GlassSurface.
+// v1 strings and behaviour are kept (design/alpha-screens/13-downloads-offline.md is the wireframe).
 const tierName = (tier?: string) => t(`s.downloads.tier.${tier ?? 'text'}`);
+
+/** A pack card: kit GlassSurface, as the mock's saved card (13-downloads.html:166). */
+function PackCard({
+  children,
+  tone,
+  testId,
+}: {
+  children: ReactNode;
+  tone?: 'partial' | 'error';
+  testId?: string;
+}) {
+  return (
+    <GlassSurface
+      level={2}
+      blur="strong"
+      radius="xl"
+      shadow="card"
+      className="fia-dl__pack"
+      data-tone={tone}
+      data-testid={testId}
+    >
+      {children}
+    </GlassSurface>
+  );
+}
 
 function PackLine({ p }: { p: PackStatus }) {
   return (
@@ -48,25 +79,35 @@ function SavedCard({
   const [confirm, setConfirm] = useState(false);
   const ref = packRef(p.packId ?? '');
   return (
-    <Card className="fia-dl__pack" state={p.corrupt ? 'error' : 'default'}>
+    <PackCard tone={p.corrupt ? 'error' : undefined}>
       <div className="fia-dl__row">
-        <PackLine p={p} />
-        {!p.corrupt && <span aria-label={t('s.downloads.section-saved')}>✓</span>}
+        <span className="fia-dl__title">
+          <PackLine p={p} />
+        </span>
+        {!p.corrupt && (
+          <SyncBadge
+            className="fia-badge fia-dl__badge"
+            state="ok"
+            label={t('s.downloads.section-saved')}
+          />
+        )}
       </div>
       <span className="fia-caption">
         {t('s.downloads.revision', { rev: (p.revision ?? '').slice(0, 7) })}
       </span>
       {p.corrupt && (
         <div className="fia-dl__band" role="status">
-          {t('s.downloads.evicted')}{' '}
-          <SecondaryAction
+          <p>{t('s.downloads.evicted')}</p>
+          <QuietAction
+            icon="download"
             label={t('s.downloads.resave')}
             onPress={() => void offline.save(p.packId!, p.tier!, p.narration!)}
           />
         </div>
       )}
       {offerUpdate && (
-        <SecondaryAction
+        <QuietAction
+          icon="update"
           label={`${t('s.downloads.update-available', { delta: mb(p.updateBytes) })} ⟶`}
           onPress={onUpdate}
         />
@@ -75,20 +116,22 @@ function SavedCard({
         <div className="fia-dl__band" role="alertdialog">
           <p>{t('s.downloads.remove-confirm', { ref, size: mb(p.bytes) })}</p>
           <div className="fia-dl__row">
-            <SecondaryAction
+            <QuietAction
+              icon="x"
               label={t('s.downloads.remove-yes')}
               onPress={() => void offline.remove(p.packId!).finally(() => setConfirm(false))}
             />
-            <SecondaryAction
+            <QuietAction
+              icon="check"
               label={t('s.downloads.remove-keep')}
               onPress={() => setConfirm(false)}
             />
           </div>
         </div>
       ) : (
-        <SecondaryAction label={t('s.downloads.remove')} onPress={() => setConfirm(true)} />
+        <QuietAction icon="x" label={t('s.downloads.remove')} onPress={() => setConfirm(true)} />
       )}
-    </Card>
+    </PackCard>
   );
 }
 
@@ -149,6 +192,15 @@ export default function S13DownloadsOffline() {
   const rate =
     pr && started.current ? pr.bytes / Math.max(1, (Date.now() - started.current) / 1000) : 0;
   const minLeft = pr && rate ? Math.max(1, Math.ceil((pr.total - pr.bytes) / rate / 60)) : 1;
+  // One labelled way back (PRD § 8.1 Layer; mock CloseHeader): to the passage it came from
+  // (J-A2--P-01, v1 `back-to-passage`), else where the reader came from, else the library.
+  const close = {
+    label: from ? t('s.downloads.back-to-passage', { ref: packRef(from) }) : t('s.common.back'),
+    onPress: () =>
+      from || (globalThis.history?.state as { idx?: number } | null)?.idx
+        ? nav(-1)
+        : nav('/library'),
+  };
 
   return (
     <ScreenFrame
@@ -157,19 +209,22 @@ export default function S13DownloadsOffline() {
       primaryLabel={primaryLabel}
       primaryState={!s.online && !justSaved ? 'disabled' : 'default'}
       onPrimary={onPrimary}
+      close={close}
     >
       <VersionBanner />
       {s.storage.supported && (
         <div className="fia-dl__storage" data-testid="storage-line">
-          <span>
+          <span className="fia-caption fia-dl__line">
+            <Icon name="check" size={14} />
             {t('s.downloads.storage', {
               used: `${mb(s.storage.usage)} MB`,
               free: `${mb(free)} MB`,
             })}
           </span>
-          <details>
+          <details className="fia-dl__about">
             <summary>
               {s.storage.persisted ? t('s.downloads.persisted') : t('s.downloads.not-persisted')}
+              <Icon name="chevronRight" size={16} />
             </summary>
             {!s.storage.persisted && (
               <span className="fia-caption">{t('s.downloads.persist-info')}</span>
@@ -187,19 +242,14 @@ export default function S13DownloadsOffline() {
         </div>
       )}
       {ios && !install.standalone && (
-        <Card className="fia-dl__band">
+        <GlassSurface level={1} radius="lg" shadow="none" className="fia-dl__band">
           <p>{t('s.downloads.ios-install-note')}</p>
-          <SecondaryAction
+          <QuietAction
+            icon="download"
             label={`${t('s.downloads.install-link')} ⟶`}
             onPress={() => nav('/install')}
           />
-        </Card>
-      )}
-      {from && (
-        <SecondaryAction
-          label={`⟵ ${t('s.downloads.back-to-passage', { ref: packRef(from) })}`}
-          onPress={() => nav(-1)}
-        />
+        </GlassSurface>
       )}
       {!s.online && !justSaved && (
         <p className="fia-caption">{t('s.downloads.needs-connection')}</p>
@@ -207,9 +257,9 @@ export default function S13DownloadsOffline() {
 
       {pr && (
         <section className="fia-dl__section" aria-live="polite">
-          <h2 className="fia-dl__section-head">{t('s.downloads.section-downloading')}</h2>
-          <Card className="fia-dl__pack">
-            <span>{packRef(pr.packId)}</span>
+          <h2 className="fia-overline">{t('s.downloads.section-downloading')}</h2>
+          <PackCard>
+            <span className="fia-dl__title">{packRef(pr.packId)}</span>
             <span className="fia-caption" data-testid="status-words">
               {!s.online
                 ? t('s.downloads.paused-waiting')
@@ -229,15 +279,20 @@ export default function S13DownloadsOffline() {
             >
               <span style={{ inlineSize: `${pr.total ? (pr.bytes / pr.total) * 100 : 0}%` }} />
             </div>
-            <SecondaryAction label={t('s.downloads.pause')} onPress={() => offline.cancel()} />
-          </Card>
+            <QuietAction
+              icon="pause"
+              label={t('s.downloads.pause')}
+              onPress={() => offline.cancel()}
+            />
+          </PackCard>
         </section>
       )}
 
       {lastFailed && !isQuotaError(lastFailed.error) && lastFailed.error !== 'Save canceled.' && (
         <div className="fia-dl__band fia-dl__band--error" role="alert">
-          {t('s.downloads.error-verify')}{' '}
-          <SecondaryAction
+          <p>{t('s.downloads.error-verify')}</p>
+          <QuietAction
+            icon="update"
             label={t('s.downloads.try-again')}
             onPress={() => void run(lastFailed)}
           />
@@ -246,7 +301,7 @@ export default function S13DownloadsOffline() {
 
       {saved.length > 0 && (
         <section className="fia-dl__section">
-          <h2 className="fia-dl__section-head">{t('s.downloads.section-saved')}</h2>
+          <h2 className="fia-overline">{t('s.downloads.section-saved')}</h2>
           {justSaved && <p>{t('s.downloads.status-saved')}</p>}
           {saved.map((p) => (
             <SavedCard
@@ -263,11 +318,13 @@ export default function S13DownloadsOffline() {
 
       {partial.length > 0 && (
         <section className="fia-dl__section">
-          <h2 className="fia-dl__section-head">{t('s.downloads.section-partial')}</h2>
+          <h2 className="fia-overline">{t('s.downloads.section-partial')}</h2>
           {partial.map((p) => (
-            <Card key={p.packId} className="fia-dl__pack fia-dl__band">
-              <PackLine p={p} />
-              <span>
+            <PackCard key={p.packId} tone="partial">
+              <span className="fia-dl__title">
+                <PackLine p={p} />
+              </span>
+              <span className="fia-dl__partial">
                 ◐{' '}
                 {t('s.downloads.files-verified', {
                   n: p.savedFiles ?? 0,
@@ -275,12 +332,13 @@ export default function S13DownloadsOffline() {
                   mb: mb(p.bytes),
                 })}
               </span>
-              <SecondaryAction
+              <QuietAction
+                icon="play"
                 label={t('s.downloads.resume')}
-                state={s.online && !s.saving ? 'default' : 'disabled'}
+                disabled={!s.online || !!s.saving}
                 onPress={() => void run(p)}
               />
-            </Card>
+            </PackCard>
           ))}
         </section>
       )}
@@ -288,6 +346,18 @@ export default function S13DownloadsOffline() {
       {!pr && !saved.length && !partial.length && (
         <p className="fia-dl__empty">{t('s.downloads.empty')}</p>
       )}
+
+      {/* M1 default: the catalog and the text of every language are always on the phone (v1 spec
+          § Layout "Catalog row"; mock 13-downloads.html:177, a level-1 glass row). */}
+      <GlassSurface
+        level={1}
+        radius="lg"
+        shadow="none"
+        className="fia-dl__catalog"
+        data-testid="catalog-row"
+      >
+        <span>{t('s.downloads.catalog-cached')}</span>
+      </GlassSurface>
     </ScreenFrame>
   );
 }

@@ -140,3 +140,26 @@ export function stepBeads(step: MapStep) {
     ...(p.end ? [{ kind: 'end' as const, state: 'upcoming' as const }] : []),
   ]);
 }
+
+/**
+ * Sheet 24's jump drawn as coded beads (mock 24 `BeadRow from to stopScale={1.5}`): every part from
+ * "you are here" to the part tapped, in guide order across steps, with a bar after each talk on the
+ * way. "You are here" is the current bead, the rest are ahead; a talk's bar is solid at 1.5× so the one
+ * thing the jump would pass reads first (PRD § 8.3: the talk bar is the only bar).
+ */
+export function jumpBeads(map: GuideMap, fromId: string, toId: string, size = 10) {
+  const parts = map.steps.flatMap((st) => st.parts);
+  const a = parts.findIndex((p) => p.unit.id === fromId);
+  const b = parts.findIndex((p) => p.unit.id === toId);
+  if (a < 0 || b < a) return [];
+  return parts.slice(a, b + 1).flatMap((p, i) => [
+    {
+      kind: p.kind,
+      state: i === 0 ? ('current' as const) : ('upcoming' as const),
+      more: p.more || undefined,
+    },
+    ...(p.talk && i < b - a
+      ? [{ kind: 'stop' as const, state: 'done' as const, size: Math.round(size * 1.5) }]
+      : []),
+  ]);
+}

@@ -151,7 +151,7 @@ export const SCREENS: readonly ScreenDef[] = [
     path: '/term',
     titleKey: null,
     primaryKey: 's.term.primary-play',
-    dock: true,
+    dock: false,
     kind: 'screen',
   },
   {
@@ -184,7 +184,7 @@ export const SCREENS: readonly ScreenDef[] = [
     path: '/downloads',
     titleKey: 's.downloads.title',
     primaryKey: 's.downloads.primary.save-passage',
-    dock: true,
+    dock: false,
     kind: 'screen',
   },
   {

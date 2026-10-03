@@ -31,16 +31,19 @@
 }
 
 /* ---------- screen layout: one phone screen at 1×, one scrolling column above (PRD § 8.5) ---------- */
-html:not([data-text-step]) .fia-screen[data-screen='S05'] {
+html:not([data-text-step])
+  .fia-screen:is([data-screen='S05'], [data-screen='S08'], [data-screen='S09']) {
   height: 100dvh;
   min-height: 0;
 }
-.fia-screen[data-screen='S05'] > .fia-content {
+.fia-screen:is([data-screen='S05'], [data-screen='S08'], [data-screen='S09']) > .fia-content {
   padding-top: 10px;
   padding-bottom: 0;
   overflow: visible;
 }
-html:not([data-text-step]) .fia-screen[data-screen='S05'] > .fia-content {
+html:not([data-text-step])
+  .fia-screen:is([data-screen='S05'], [data-screen='S08'], [data-screen='S09'])
+  > .fia-content {
   flex: 1;
   min-height: 0;
   padding-bottom: 2px;
@@ -341,12 +344,14 @@ html[data-text-step='x310'] .fia-chips {
 }
 
 /* ---------- thumb zone: Back · the big button · Skip (mock Transport, _frame.css:176-201) ---------- */
-.fia-screen[data-screen='S05'] > .fia-thumb {
+.fia-screen:is([data-screen='S05'], [data-screen='S08'], [data-screen='S09']) > .fia-thumb {
   position: relative;
   z-index: 1;
   padding: 0 var(--fia-gutter) calc(var(--fia-safe-bottom) + 12px);
 }
-html[data-text-step] .fia-screen[data-screen='S05'] > .fia-thumb {
+html[data-text-step]
+  .fia-screen:is([data-screen='S05'], [data-screen='S08'], [data-screen='S09'])
+  > .fia-thumb {
   position: sticky;
   bottom: 0;
   margin-top: 12px;
@@ -576,6 +581,31 @@ html[data-text-step] .fia-screen[data-screen='S05'] > .fia-thumb {
 .fia-stop-again-row > .fia-btn {
   margin-left: -10px;
 }
+/* Sheet 24 (jump guard): sheet 21's well holds the jump as beads; layout only (mock 24 s24-*). */
+.fia-jump {
+  display: grid;
+  gap: 8px;
+}
+.fia-jump__ends,
+.fia-jump__choices {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2px 12px;
+}
+html:not([data-text-step]) .fia-jump__beads {
+  justify-content: space-between;
+}
+.fia-sheet--jump .fia-stop-lead {
+  margin-top: 12px;
+}
+.fia-jump .fia-jump__quote {
+  margin: 2px 0 0;
+  font-size: var(--fs-label);
+}
+.fia-jump__choices {
+  margin: 6px -10px 0;
+}
 .fia-stop-inside {
   margin: 0 0 10px;
   padding: 10px 14px 8px;
@@ -621,4 +651,101 @@ html[data-text-step] .fia-screen[data-screen='S05'] > .fia-thumb {
 }
 [data-theme='dark'] :is(.fia-prov-rows, .fia-stop-q) > span[aria-hidden='true']:first-child {
   display: none;
+}
+
+/* ---------- the card's Text view (S08; mock 08 TextCard): edition + replay row, the passage ---------- */
+.fia-reader-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 8px;
+  margin-top: 6px;
+}
+.fia-reader-tools > label {
+  width: 120px;
+}
+/* kit GlassSelect fixes its height at 48 px (GlassSelect.jsx:6-7): let it grow with the text scale (mock 08). */
+.fia-reader-tools > label > span {
+  height: auto !important;
+}
+select.fia-reader-edition {
+  height: auto !important;
+  min-height: 48px;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+  line-height: 1.2 !important;
+}
+html[data-text-step] .fia-reader-tools {
+  flex-direction: column;
+  align-items: stretch;
+}
+html[data-text-step] .fia-reader-tools > label {
+  width: 100%;
+}
+.fia-reader-text {
+  font: var(--fw-regular) var(--fs-subtitle) / 1.55 var(--font-scripture-latin);
+  color: var(--text-title);
+  margin-top: 6px;
+  overflow-wrap: anywhere;
+}
+.fia-reader-text .fia-text__verse {
+  margin: 0;
+  display: inline;
+}
+.fia-reader-text .fia-text__verse[data-active],
+.fia-reader-text .fia-text__verse[data-active] .fia-text__seg {
+  background: color-mix(in srgb, var(--fia-kind-term) 13%, transparent);
+}
+.fia-reader-text .fia-text__vnum {
+  all: unset;
+  cursor: pointer;
+  vertical-align: super;
+  font: var(--fw-semibold) var(--fs-caption) / 1 var(--font-core);
+  color: var(--text-muted);
+  padding: 0 2px;
+}
+.fia-reader-text .fia-text__seg[data-active] {
+  background: color-mix(in srgb, var(--fia-kind-term) 30%, transparent);
+  box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--fia-kind-term) 55%, transparent);
+  border-radius: 4px;
+  font-weight: var(--fw-semibold);
+}
+[data-theme='dark'] .fia-reader-text .fia-text__verse[data-active] {
+  background: color-mix(in srgb, var(--fia-kind-term) 24%, transparent);
+}
+.fia-transport-row:has(> :only-child) {
+  justify-content: center;
+}
+
+/* ---------- the card's Resources view (S09; mock 09): search, type chips, rows with (i); layout only ---------- */
+.fia-res {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 8px;
+}
+.fia-res > * {
+  flex: none;
+}
+.fia-res__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.fia-res__row {
+  display: flex;
+  align-items: center;
+}
+.fia-res__row > .fia-catalog {
+  flex: 1;
+  min-width: 0;
+}
+.fia-res__row > .fia-catalog[aria-disabled='true'] {
+  cursor: default;
+  opacity: 0.6;
+}
+/* The type chips wrap (mock 09b; spec 09 large print): every type stays in view, nothing scrolls sideways. */
+.fia-res__chips {
+  flex-wrap: wrap;
 }
