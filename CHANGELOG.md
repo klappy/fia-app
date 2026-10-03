@@ -2,6 +2,30 @@
 
 All notable changes to the FIA App. One entry per train; the train note lives in `release/changes/<version>-<slug>.md`.
 
+## 0.3.1 — Train 1: v2 glass journey (2026-10-03)
+
+Train 1 runs `v2/integration` → `main` as one PR (cookbook `work/active/2026-10-01-fia-alpha-v2/RULING.md` § ~19:55 ET (c)). It brings the lane-F screens that put the journey in BT Glass. Each one merged into `v2/integration` on a recorded fresh YES at its head. 0.3.0 (`main` `8346fe4`) was never promoted, so production stays 0.2.1 until this version is promoted.
+
+The PRs come from `git log --merges --first-parent origin/main..origin/v2/integration`. None of them added a note in `release/changes/`, so the lines below come from the merge log and the PR descriptions. Train note: [`release/changes/0.3.1-train-1-glass-journey.md`](release/changes/0.3.1-train-1-glass-journey.md).
+
+- **Not-yet passages** (#55, GAP-NOPACK): the build writes `dist/data/packs/index.json`, which lists the packs it ships. A passage with no pack now shows the absent badge and reads "not yet in English", where 0.3.0 showed "Could not read this passage's details". Ready passages sort first. If the index can't be read, nothing is marked. This takes the error out of 0.3.0 known gap 2; content is still five packs.
+- **S01 First run · language** (#54): kit `LanguagePicker` over the catalog, autonym first. Linear frame with the 44 px lockup hero and one primary, "Continue in {autonym}".
+- **S02 Library** (#52): one kit `CatalogRow` per book, with a saved count and a voice line. Passages are listed by reference. The "Where you left off" recap uses kit `StageRail` and `BeadStrip`, and one primary is either "Continue {ref}" or "Open Mark". Ready passages come first.
+- **S03 Passage list** (#58): one kit `CatalogRow` per passage on a `GlassSurface` well, each opening S04. A Select mode (J-A2, R-308) shows its state on the kit `GlassChip` (Saved, Selected or Add, FE-2) and saves the chosen passages one at a time at the Text tier.
+- **S04 Passage card** (#57): the reference as hero, the voice chip, an Includes legend drawn with kit progress `Bead`s (a kind the pack lacks gets no row), Save for offline on kit `GlassSegmented` with the tiers the data allows, and one primary, "▶ Start {ref}".
+- **S06 Read without voice** (#60): the S05 Guide view with voice off, built from F4's frame and F5's shared parts, not a fourth view.
+- **S07 Whole guide map** (#62): kit `GlassSheet` opened from Explore. It shows a legend of the guide's coded beads, the step rows, and one primary, "Back to part n".
+- **S18 Completion** (#61): a recap plate on kit `StageRail` and beads, with the next passage as the one primary.
+- **S19 Coverage** (#59): six kit type cards read from the catalog (Guide, Scripture, Key terms, Images, Maps, Videos), each with a Text cell and an Audio cell. There is no primary, as in the mock.
+
+### Known gaps
+
+1. Not every screen is in glass yet. S08–S13 and sheets SH-3 to SH-5 are not cooked yet (cookbook `work/active/2026-10-01-fia-alpha-v2/SPRINTS.md`, handoff fia-app-sched-1657).
+2. Each screen brings its own stylesheet instead of composing shared app components styled once (captain, RULING § ~20:05 ET). A consolidation pass follows this train as its own PR.
+3. Content is still five packs (0.3.0 gap 2); other passages now read "not yet" instead of an error.
+4. The Guide can't finish if the last part's clip fails to load. On part 10 of step 6, Skip is disabled. After "This narration could not load", the primary reads Continue, but it retries the clip, so S18 never opens (`src/screens/S05Guide.tsx:356-360`, `src/flow/machine.ts:202-203`, `:235-236`). Seen on a local preview at 390×844, where the PoC clip host failed TLS in the sandbox (0.3.0 gap 10). S18 itself renders in glass when opened from a finished record.
+5. 0.3.0 gaps 5, 6, 7 and 9 (feedback endpoint, analytics disclosure, update banner only on S13, cosmetic leftovers) are carried forward. This train did not re-check them.
+
 ## 0.3.0 — First v2 cut (2026-10-02)
 
 First v2 cut, shipped in phases (captain order 2026-10-01). Gathered from `release/changes/` since 0.2.1 and from every PR merged on `main` since production `dc8ff06` (`git log origin/production..origin/main --merges`): 36 PRs between #11 and #50. Train note: [`release/changes/0.3.0-first-v2-cut.md`](release/changes/0.3.0-first-v2-cut.md).
@@ -18,9 +42,9 @@ Also on `main`: five direct commits that sync agent allow rules in `.claude/sett
 
 ### Known gaps (shipping in phases)
 
-1. Offline save does not cover the Guide (P1; elevate to a blocker if the first cut must meet the 20:41 'verified offline save' floor). S04 says 'Saved (Text, 0.5 MB)' and S13 lists 'MRK 1:1–13 · Text ✓'. With the network gone, S04, S05, S06 and S07 show 'Could not read this passage's details. Try again'; only S08 Scripture opens. Cause: src/flow/catalog.ts reads /data/packs/<id>/guide.json and guide-units.json (and S04 also reads /data/catalog/manifest.json). The Text tier saves /packs/<id>/… paths instead. Not a regression: production has no packs at all.
+1. Offline save does not cover the Guide (P1; elevate to a blocker if the first cut must meet the 20:41 'verified offline save' floor). S04 says 'Saved (Text, 0.5 MB)' and S13 lists 'MRK 1:1–13 · Text ✓'. With the network gone, S04, S05, S06 and S07 show 'Could not read this passage's details. Try again'; only S08 Scripture opens. Cause: src/flow/catalog.ts reads /data/packs/<id>/guide.json and guide-units.json (and S04 also reads /data/catalog/manifest.json). The Text tier saves /packs/<id>/… paths instead. Not a regression: production has no packs at all. _(Closed before this cut: GAP-OFFLINE #56 merged on `main` ahead of the prep PR #53. Note: [`release/changes/fix-offline-pack-paths.md`](release/changes/fix-offline-pack-paths.md).)_
 2. Content is one English pack. Only eng.MRK-1-1-13 exists in English (5 packs in all: eng/spa/tpi Mark 1:1–13, arb GEN-1-1-2-3, hau LUK-6-17-19). The library lists about 1,900 English guides; every other passage (checked Mark 1:14–20, Mark 8:1–10, Genesis 1:1–2:3, John 1:43–51) dead-ends at S04 with 'Could not read this passage's details. Try again'. No crash. Suggest a quick 'not yet' label or hiding passages that have no pack.
-3. No audio on S05 ('AI voice not yet available'); F5's stand-in is not on main yet.
+3. No audio on S05 ('AI voice not yet available'); F5's stand-in is not on main yet. _(Closed before this cut: F5 #51 merged on `main` ahead of the prep PR #53; see Next.)_
 4. Most screens are still unskinned (the captain called this mix 'fugly'). Glass header, but raw lists elsewhere: S05 progress shows as plain numbered lists with blank items 1–8; S02 books, S08 edition tabs and S05 view tabs are default buttons. S08 heading reads 'MRK 1:1-13' and the edition line 'BereanStandardBible'. F5/F6 skins pending.
 5. Feedback endpoint is not live. DEV and prod are assets-only Workers, so POST /api/feedback returns 405; the C-16 Worker route (owner Otto) is missing. The app queues honestly ('Waiting to send') and retries with backoff, which leaves 405 noise in the console.
 6. Analytics vs. the About screen. Cloudflare Web Analytics adds its beacon (static.cloudflareinsights.com) at the edge on both dev and production; the same beacon is already live on production, so not a regression. S15 says 'Count anonymous usage … Off'. Needs Otto or the captain to decide on the zone setting or the disclosure.
@@ -31,7 +55,7 @@ Also on `main`: five direct commits that sync agent allow rules in `.claude/sett
 
 ### Next
 
-- Guide audio arrives in 0.3.1 (F5, PoC voices as a stand-in).
+- Guide audio is already in this cut: F5 (#51) plays the PoC's live Mark 1:1–13 clips (English) as a stand-in C-05 manifest. #51 merged on `main` before this entry's prep PR (#53), so 0.3.0 has it. This line used to say the audio "arrives in 0.3.1"; that was written before #51 landed and is corrected here.
 - AI voice to become a clone of the FIA voice per language (queued).
 
 ## 0.2.1 — Alpha first train (2026-10-01)
