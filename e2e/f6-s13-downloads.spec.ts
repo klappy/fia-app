@@ -6,6 +6,7 @@ import { expect, test, type Page } from '@playwright/test';
 // kit GlassButton actions, Remove only after the confirm naming the consequence (R-311), the catalog row.
 const PACK = 'spa.MRK-1-1-13';
 
+// Picking Español on S01 sets the guide and the menus (SB-3), so the labels below are Spanish.
 async function savePack(page: Page) {
   await page.goto('/');
   await expect(page.locator('[data-screen="S01"]')).toBeVisible();
@@ -48,10 +49,10 @@ test.describe('F6-S13 downloads in glass', () => {
     await savePack(page);
     await page.goto(`/downloads?from=${PACK}`);
     const screen = page.locator('[data-screen="S13"]');
-    await expect(screen.locator('.fia-close-back')).toHaveText('Back to MRK 1:1–13');
+    await expect(screen.locator('.fia-close-back')).toHaveText('Volver a MRK 1:1–13');
     const card = screen.locator('.fia-dl__pack').first();
-    await expect(card).toContainText('MRK 1:1–13 · Text · 0.3 MB');
-    await expect(card.getByText('Saved ✓')).toBeVisible();
+    await expect(card).toContainText('MRK 1:1–13 · Texto · 0.3 MB');
+    await expect(card.getByText('Guardado ✓')).toBeVisible();
     // kit GlassSurface: backdrop blur on the card itself
     expect(await card.evaluate((el) => getComputedStyle(el).backdropFilter)).toContain('blur');
     const sw = await page.evaluate(() => document.documentElement.scrollWidth);
@@ -63,11 +64,11 @@ test.describe('F6-S13 downloads in glass', () => {
     await page.emulateMedia({ colorScheme: 'light' });
 
     // Remove → the confirm names the consequence; Keep leaves the pack saved (R-311).
-    await card.getByRole('button', { name: 'Remove' }).click();
+    await card.getByRole('button', { name: 'Quitar' }).click();
     const confirm = card.getByRole('alertdialog');
-    await expect(confirm).toContainText('MRK 1:1–13 will not work offline. Remove 0.3 MB?');
-    await confirm.getByRole('button', { name: 'Keep' }).click();
+    await expect(confirm).toContainText('MRK 1:1–13 no funcionará sin conexión. ¿Quitar 0.3 MB?');
+    await confirm.getByRole('button', { name: 'Conservar' }).click();
     await expect(card.getByRole('alertdialog')).toHaveCount(0);
-    await expect(card.getByText('Saved ✓')).toBeVisible();
+    await expect(card.getByText('Guardado ✓')).toBeVisible();
   });
 });

@@ -6,6 +6,7 @@ import { expect, test, type Page } from '@playwright/test';
 // deletes by itself), one dark KitPrimary with a glyph.
 const PACK = 'spa.MRK-1-1-13';
 
+// Picking Español on S01 sets the guide and the menus (SB-3), so the labels below are Spanish.
 async function savePack(page: Page) {
   await page.goto('/');
   await expect(page.locator('[data-screen="S01"]')).toBeVisible();
@@ -45,21 +46,21 @@ test('largest packs on a glass well; Remove asks first and Keep keeps it', async
   await page.goto('/sheet/storage?variant=space&needed=23068672');
   const dialog = page.locator('[role="dialog"][aria-modal="true"]');
   const well = dialog.getByTestId('largest-packs');
-  await expect(well).toContainText('MRK 1:1–13 · Text 0.3 MB');
+  await expect(well).toContainText('MRK 1:1–13 · Texto 0.3 MB');
   expect(await well.evaluate((el) => getComputedStyle(el).backdropFilter)).toContain('blur');
-  await expect(dialog.locator('[data-role="primary"]')).toHaveText('Manage downloads');
+  await expect(dialog.locator('[data-role="primary"]')).toHaveText('Administrar descargas');
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   for (const scheme of ['light', 'dark'] as const) {
     await page.emulateMedia({ colorScheme: scheme });
     await page.screenshot({ path: `screenshots/f6-sh23/sh23-storage.${scheme}.png` });
   }
   await page.emulateMedia({ colorScheme: 'light' });
-  await well.getByRole('button', { name: 'Remove' }).click();
+  await well.getByRole('button', { name: 'Quitar' }).click();
   const confirm = well.getByRole('alertdialog');
-  await expect(confirm).toContainText('MRK 1:1–13 will not work offline. Remove 0.3 MB?');
-  await confirm.getByRole('button', { name: 'Keep' }).click();
+  await expect(confirm).toContainText('MRK 1:1–13 no funcionará sin conexión. ¿Quitar 0.3 MB?');
+  await confirm.getByRole('button', { name: 'Conservar' }).click();
   await expect(well.getByRole('alertdialog')).toHaveCount(0);
-  await expect(well).toContainText('MRK 1:1–13 · Text 0.3 MB');
+  await expect(well).toContainText('MRK 1:1–13 · Texto 0.3 MB');
 });
 
 test('persist denied: Install on this phone, quiet Continue anyway', async ({ page }) => {

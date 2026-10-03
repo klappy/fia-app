@@ -10,7 +10,7 @@ import {
   suggestedLanguages,
 } from '../components/languageRows';
 import { flowSession, useFlow } from '../flow/session';
-import { t } from '../i18n';
+import { hasCatalog, setUiLanguage, t } from '../i18n';
 import {
   browserStore,
   DATA_PATHS,
@@ -97,9 +97,14 @@ export default function S01FirstRunLanguage() {
   const choose = (code: string) => {
     session.setLanguage(code);
     const store = browserStore();
+    // SB-3 (1): one pick sets the guide and the app (`s.lang.lede`). The menus follow the pick when
+    // it has a UI catalog (eng, spa); any other pick keeps English menus, the honest fallback.
+    const ui = hasCatalog(code) ? code : 'eng';
     // A failed save leaves the pill on the old language; the guide's language (above) is already set.
-    saveSettings(store, { ...loadSettings(store).settings, contentLanguage: code });
-    nav('/library');
+    saveSettings(store, { ...loadSettings(store).settings, contentLanguage: code, uiLanguage: ui });
+    void setUiLanguage(ui)
+      .catch(() => undefined)
+      .finally(() => nav('/library'));
   };
 
   return (

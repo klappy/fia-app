@@ -10,7 +10,8 @@ import {
   Icon,
   type KitIconName,
 } from '../components/glass';
-import { t } from '../i18n';
+import { t, uiLanguage } from '../i18n';
+import { languageByCode } from '../i18n/languages';
 import {
   TEXT_STEPS,
   applyEasyMode,
@@ -297,6 +298,14 @@ export default function S14Settings() {
                   <div className="fia-caption s14-note">
                     {t('s.settings.language-note', { language: lang })}
                   </div>
+                  {uiLanguage() !== 'eng' && (
+                    // README § strings: the UI language row says the menus are an AI translation.
+                    <div className="fia-caption s14-note" data-mark="ui-lang-ai">
+                      {t('s.common.ui-lang-ai', {
+                        language: languageByCode(uiLanguage())?.autonym ?? uiLanguage(),
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
             </Group>
