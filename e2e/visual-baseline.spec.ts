@@ -8,12 +8,13 @@ import { expect, test, type Page } from '@playwright/test';
 // fia.completion.v1.<pack> · fia.settings.v1). Pixels are pinned: no network past the preview
 // server, a fixed storage estimate, CSS animations off, fonts loaded before the shot.
 //
-// Baselines are the CI runner's (ubuntu-latest, Playwright's bundled Chromium): *-chromium-linux.png.
-// The UI face is system-ui (tokens/alpha.css:59), i.e. DejaVu Sans on that runner; its italic (SH-2's
-// question, guide.css:570) needs DejaVu Sans Oblique (fonts-dejavu-extra), which the runner has.
-// A box without it synthesizes the slant and fails SH-2 only. Update after an intended change:
-// `npm run build && npm run test:visual -- --update-snapshots` on such a Linux box, or take the
-// *-actual.png files from CI's test-results artifact; then review every changed PNG in the diff.
+// Baselines (*-chromium-linux.png) are rendered inside mcr.microsoft.com/playwright:v1.56.1-noble,
+// the image ci.yml's `visual` job runs in, so fonts and libraries are fixed. The UI face is system-ui
+// (tokens/alpha.css:59); which file draws it, and its italic (SH-2's question, guide.css:570), is the
+// machine's choice, so a bare runner or another Linux box can render text a few pixels apart.
+// After an intended change, take the PNGs from the failed job's `visual-baselines` artifact (or run
+// `npm run build && npm run test:visual -- --update-snapshots` inside that image), review every
+// changed PNG against `visual-results` (expected / actual / diff), and commit them.
 test.use({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block' });
 // Every shot seeds its own page: the 52 run side by side across workers.
 test.describe.configure({ mode: 'parallel' });
