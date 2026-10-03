@@ -679,7 +679,10 @@ body {
 
 /* ---- S14 Settings on the kit (F6-S14). BEND: kit GlassSheet / GlassSegmented / GlassToggle literals
    re-pointed by class, as the nodded mock does (cookbook design/alpha-v2-screens/14-settings.html <style>,
-   _frame.css:111-121, 189-190). The kit is not edited. ---- */
+   _frame.css:111-121, 189-190). The kit is not edited. Layout only since lift 2: the segmented's ink,
+   faces and corners (.fia-segs-kit), the toggle track and knob (.fia-switch), the dark secondary words
+   (.fia-quiet-words), the title, A, language, row faces and the hairline are frame/frame.css parts S14
+   and components/SettingsRow.tsx compose. ---- */
 .s14-page {
   position: relative;
   height: 100dvh;
@@ -693,9 +696,6 @@ body {
 }
 .s14-title-word {
   margin: 0;
-  font: var(--type-card-title);
-  letter-spacing: var(--ls-title);
-  color: var(--text-title);
 }
 .s14-title-scroll {
   margin: 4px 0 10px;
@@ -717,8 +717,7 @@ body {
   left: 16px;
   right: 16px;
   z-index: 50;
-  overflow-wrap: anywhere;
-  font-size: calc(1rem * var(--fia-text-scale)); /* follows the text step: 16 px at 100%, as before */
+  overflow-wrap: anywhere; /* size: frame/frame.css .fia-type-toast (follows the text step) */
 }
 /* app.css loads after this file and its same-specificity `.fia-well { padding: 2px 0 }` won; the
    compound selector keeps the mock's 10/12 inset (14-settings.html:114; F6-S14 review 4/6/8). */
@@ -727,7 +726,6 @@ body {
 }
 .s14-sep {
   height: 0;
-  border-top: var(--border-hairline);
   margin: 8px 0 4px;
 }
 .s14-note {
@@ -735,12 +733,7 @@ body {
 }
 /* Kit GlassSegmented (GlassSegmented.jsx:3-6): 12 px literal label, 36 px height, nowrap, glass-fill-2
    track (vanishes on the light sheet) → text scale, 48 px floor, wrap, a 6% ink wash. */
-.s14-seg {
-  background: color-mix(in srgb, var(--text-title) 6%, transparent) !important;
-}
 .s14-seg [role='radio'] {
-  font-size: var(--fs-label) !important;
-  line-height: 1.15 !important;
   min-height: 48px !important;
   height: auto !important;
   white-space: normal !important;
@@ -749,9 +742,6 @@ body {
   align-items: center;
   justify-content: center;
   flex: 1 1 0 !important;
-}
-.s14-seg [role='radio'][aria-checked='false'] {
-  font-weight: var(--fw-medium) !important;
 }
 .s14-opt {
   display: inline-flex;
@@ -778,14 +768,12 @@ body {
 }
 .s14-seg.is-vertical {
   flex-direction: column !important;
-  border-radius: var(--r-xl) !important;
   gap: 4px;
 }
 .s14-seg.is-vertical [role='radio'] {
   flex: none !important;
   width: 100%;
   min-height: 56px !important;
-  border-radius: var(--r-lg) !important;
   justify-content: flex-start;
   padding: 8px 16px !important;
 }
@@ -812,10 +800,6 @@ body {
   height: 42px;
   display: flex;
   align-items: flex-end;
-  font-family: var(--font-core);
-  font-weight: var(--fw-semibold);
-  line-height: 1;
-  color: var(--text-title);
 }
 .s14-sizes [role='radio'] {
   min-height: 80px !important;
@@ -845,10 +829,6 @@ body {
 .s14-lang-text {
   min-width: 0;
 }
-.s14-lang-word {
-  font: var(--fw-semibold) var(--fs-label) / 1.25 var(--font-core);
-  color: var(--text-title);
-}
 .s14-lang .s14-note {
   margin-top: 2px;
 }
@@ -868,8 +848,6 @@ body {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  font: var(--fw-semibold) var(--fs-label) / 1.25 var(--font-core);
-  color: var(--text-title);
   overflow-wrap: anywhere;
 }
 .fia-srow__note {
@@ -883,8 +861,6 @@ body {
   flex: none;
 }
 .fia-srow__state {
-  font: var(--fw-semibold) var(--fs-caption) / 1 var(--font-core);
-  color: var(--text-muted);
   min-width: 2.2em;
   text-align: end;
 }
@@ -896,8 +872,8 @@ body {
 :root.fia-big .fia-srow__control {
   justify-content: flex-end;
 }
-/* Kit GlassToggle (GlassToggle.jsx:4-5): checked track --surface-inverse would be a second dark element
-   beside the primary; here the kit's interactive blue with a near-white knob. 44×26 target → 48 px tall. */
+/* Kit GlassToggle: track and knob are frame/frame.css .fia-switch / .fia-switch--knob. 44×26 target →
+   48 px tall. */
 .fia-srow__toggle [role='switch'] {
   position: relative;
   flex: none;
@@ -907,33 +883,8 @@ body {
   position: absolute;
   inset: -11px -4px;
 }
-.fia-srow__toggle [role='switch'][aria-checked='false'] {
-  background: color-mix(in srgb, var(--text-title) 12%, transparent) !important;
-}
-.fia-srow__toggle [role='switch'][aria-checked='true'] {
-  background: var(--accent-blue) !important;
-}
-.fia-srow__toggle [role='switch'][aria-checked='true'] > span {
-  background: var(--paper-050) !important;
-}
 :root.fia-big .fia-srow__toggle [role='switch'] {
   zoom: 1.5;
-}
-/* Light: overlines on the near-white sheet take --text-muted (mock 14-settings: 5.9:1). Dark: each group
-   is a frame well, the track drops to --glass-fill-1, secondary words take --text-body (mock 14-settings). */
-.s14-body .fia-overline {
-  color: var(--text-muted);
-}
-/* Dark: each group card is a frame well, smoked with no sheen (.fia-well, frame/frame.css), so the
-   secondary words read 10:1 rather than 4.1-4.4:1 on the lifted level-3 glass (F6-S14 review 5/8). */
-[data-theme='dark'] .s14-seg {
-  background: var(--glass-fill-1) !important;
-}
-[data-theme='dark'] .s14-body [role='radio'][aria-checked='false'],
-[data-theme='dark'] .s14-body .fia-caption,
-[data-theme='dark'] .s14-body .fia-srow__state,
-[data-theme='dark'] .s14-body .fia-overline {
-  color: var(--text-body) !important;
 }
 
 /* ---- F6-S16 Feedback (mock design/alpha-v2-screens/16-feedback.html @ cookbook; kit @6aa9bc3) ---- */
@@ -1101,7 +1052,9 @@ body {
 }
 
 /* ---- F6-S15 About and rights (mock design/alpha-v2-screens/15-about.html @ cookbook; kit @6aa9bc3) ---- */
-/* Own block (conflict guard with #24/#25): every rule here is scoped to .fia-about. */
+/* Own block (conflict guard with #24/#25): every rule here is scoped to .fia-about. Layout only since
+   lift 2: the faces, tones, marks, toggle track and quiet links are frame/frame.css parts S15 composes
+   (.fia-swatch, .fia-switch, .fia-quiet-link, .fia-hairline-run, type faces and tones). */
 .fia-about {
   container: fia-about / inline-size;
   display: flex;
@@ -1125,18 +1078,15 @@ body {
 .fia-about__group {
   margin-top: 10px;
 }
+/* colour: app.css .fia-overline's --text-muted (mock: --text-dim is under 3:1 behind overline type) */
 .fia-about__overline {
   margin: 0;
   padding: 0 4px 5px;
-  color: var(--text-muted); /* mock: --text-dim is under 3:1 behind overline type on the aurora glass */
 }
 .fia-about__list {
   list-style: none;
   margin: 0;
   padding: 0;
-}
-.fia-about__source + .fia-about__source {
-  border-top: var(--border-hairline);
 }
 .fia-about__row {
   padding-top: 7px !important;
@@ -1166,9 +1116,6 @@ body {
   min-width: 0;
   overflow-wrap: anywhere; /* long C-13 names wrap, never pass the card (G-F, 390px) */
 }
-.fia-about__line {
-  color: var(--text-muted);
-}
 .fia-about__chev {
   display: inline-flex;
   transition: transform var(--dur-fast, 120ms);
@@ -1188,32 +1135,21 @@ body {
   height: calc(10px * min(var(--fia-text-scale), 2.4));
   margin: 0 calc(3px * min(var(--fia-text-scale), 2.4));
 }
-.fia-about__mark--plain {
-  border-radius: 50%;
-  background: var(--fia-kind-plain);
-}
-.fia-about__mark--scripture {
-  border-radius: 2px;
-  background: var(--fia-kind-scripture);
-}
+/* shape here; ink and corners: frame/frame.css .fia-swatch--<kind> */
 .fia-about__mark--term {
   transform: rotate(45deg) scale(0.85);
-  background: var(--fia-kind-term);
 }
 .fia-about__mark--media {
   clip-path: polygon(50% 0, 100% 100%, 0 100%);
-  background: var(--fia-kind-media);
 }
 .fia-about__mark--video {
   width: calc(14px * min(var(--fia-text-scale), 2.4));
   height: calc(8px * min(var(--fia-text-scale), 2.4));
   margin: 0 calc(1px * min(var(--fia-text-scale), 2.4));
-  border-radius: 2px;
-  background: var(--fia-kind-media);
 }
+/* colour: app.css .fia-caption */
 .fia-about__note {
   margin: 6px 4px 0;
-  color: var(--text-muted);
 }
 .fia-about__card .fia-about__toggle {
   display: flex;
@@ -1226,10 +1162,6 @@ body {
   flex: 1;
   min-width: 0;
 }
-.fia-about__toggle-label {
-  font: var(--fw-semibold) var(--fs-label) / 1.25 var(--font-core);
-  color: var(--text-title);
-}
 .fia-about__toggle-ctl {
   display: flex;
   align-items: center;
@@ -1237,8 +1169,6 @@ body {
   flex: none;
 }
 .fia-about__state {
-  font: var(--fw-semibold) var(--fs-caption) / 1 var(--font-core);
-  color: var(--text-muted);
   min-width: 2.2em;
   text-align: end;
 }
@@ -1250,12 +1180,6 @@ body {
   position: absolute;
   inset: -11px -4px; /* 48 px target around the 26 px track */
 }
-.fia-about__toggle-ctl [role='switch'][aria-checked='false'] {
-  background: color-mix(in srgb, var(--text-title) 12%, transparent) !important;
-}
-.fia-about__toggle-ctl [role='switch'][aria-checked='true'] {
-  background: var(--accent-blue) !important;
-}
 .fia-about__links {
   display: flex;
   flex-wrap: wrap;
@@ -1264,11 +1188,6 @@ body {
 .fia-about__quiet {
   min-height: 48px;
   padding: 0 6px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font: var(--fw-semibold) var(--fs-label) / 1.25 var(--font-core);
-  color: var(--text-muted);
 }
 .fia-about__quiet svg {
   width: calc(18px * min(var(--fia-text-scale), 2));

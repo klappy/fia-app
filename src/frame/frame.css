@@ -332,6 +332,90 @@ html.fia-scaled .fia-screen > .fia-thumb {
   color: var(--text-title);
 }
 
+/* A run of rows with a hairline between neighbours (S15's source rows). */
+.fia-hairline-run + .fia-hairline-run {
+  border-top: var(--border-hairline);
+}
+/* A quiet text button: no chrome, the muted semibold label face (S15's feedback and install links). */
+.fia-quiet-link {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font: var(--fw-semibold) var(--fs-label) / 1.25 var(--font-core);
+  color: var(--text-muted);
+}
+
+/* ---------- kit GlassToggle track (GlassToggle.jsx:4-5): the checked --surface-inverse track would be
+   a second dark element beside the primary; the kit's interactive blue instead (S14, S15) ---------- */
+.fia-switch [role='switch'][aria-checked='false'] {
+  background: color-mix(in srgb, var(--text-title) 12%, transparent) !important;
+}
+.fia-switch [role='switch'][aria-checked='true'] {
+  background: var(--accent-blue) !important;
+}
+/* S14's settings rows: a near-white knob on the blue track. */
+.fia-switch--knob [role='switch'][aria-checked='true'] > span {
+  background: var(--paper-050) !important;
+}
+
+/* ---------- kit GlassSegmented (GlassSegmented.jsx:3-6; _frame.css:111-121 .fia-views): the 12 px
+   literal label scales, the glass-fill-2 track (it vanishes on a light sheet) takes a 6% ink wash, an
+   unselected option is medium; stacked, the track and options round to the list's corners (S14) ---------- */
+.fia-segs-kit {
+  background: color-mix(in srgb, var(--text-title) 6%, transparent) !important;
+}
+.fia-segs-kit [role='radio'] {
+  font-size: var(--fs-label) !important;
+  line-height: 1.15 !important;
+}
+.fia-segs-kit [role='radio'][aria-checked='false'] {
+  font-weight: var(--fw-medium) !important;
+}
+.fia-segs-kit.is-vertical {
+  border-radius: var(--r-xl) !important;
+}
+.fia-segs-kit.is-vertical [role='radio'] {
+  border-radius: var(--r-lg) !important;
+}
+
+/* ---------- secondary words on a sheet of frame wells (S14's body) ---------- */
+/* Light: overlines on the near-white sheet take --text-muted (mock 14-settings: 5.9:1). Dark: each group
+   card is a frame well, smoked with no sheen (.fia-well), so the segmented track drops to
+   --glass-fill-1 and the secondary words take --text-body: 10:1 rather than 4.1-4.4:1 on the lifted
+   level-3 glass (F6-S14 review 5/8). */
+.fia-quiet-words .fia-overline {
+  color: var(--text-muted);
+}
+[data-theme='dark'] .fia-quiet-words .fia-segs-kit {
+  background: var(--glass-fill-1) !important;
+}
+[data-theme='dark'] .fia-quiet-words [role='radio'][aria-checked='false'],
+[data-theme='dark'] .fia-quiet-words .fia-caption,
+[data-theme='dark'] .fia-quiet-words .fia-srow__state,
+[data-theme='dark'] .fia-quiet-words .fia-overline {
+  color: var(--text-body) !important;
+}
+
+/* ---------- the coded marks drawn by the app where the kit has no legend bead (S15 LegendMark) ---------- */
+.fia-swatch--plain {
+  border-radius: 50%;
+  background: var(--fia-kind-plain);
+}
+.fia-swatch--scripture {
+  border-radius: 2px;
+  background: var(--fia-kind-scripture);
+}
+.fia-swatch--term {
+  background: var(--fia-kind-term);
+}
+.fia-swatch--media {
+  background: var(--fia-kind-media);
+}
+.fia-swatch--video {
+  border-radius: 2px;
+  background: var(--fia-kind-media);
+}
+
 /* ---------- the step badge: number in a ringed glass disc (mock 07-overview.html:33-44) ---------- */
 .fia-step-badge {
   border-radius: var(--r-pill);
@@ -435,6 +519,9 @@ html.fia-scaled .fia-screen > .fia-thumb {
 .fia-lh-130 {
   line-height: 1.3;
 }
+.fia-ff-core {
+  font-family: var(--font-core);
+}
 .fia-ff-numeric {
   font-family: var(--font-numeric);
 }
@@ -446,6 +533,10 @@ html.fia-scaled .fia-screen > .fia-thumb {
 }
 .fia-ls-tight {
   letter-spacing: -0.01em;
+}
+/* A toast's words follow the text step: 16 px at 100% (S14's save-failed notice). */
+.fia-notice.fia-type-toast {
+  font-size: calc(1rem * var(--fia-text-scale));
 }
 /* Tones: the text colours a screen may name. */
 .fia-tone-title {

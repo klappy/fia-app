@@ -106,7 +106,7 @@ function RecordDetails({ row }: { row: RightsRow }) {
 function LegendMark({ kind }: { kind: Mark }) {
   return (
     <span
-      className={`fia-about__mark fia-about__mark--${kind}`}
+      className={`fia-about__mark fia-about__mark--${kind} fia-swatch--${kind}`}
       data-kit-gap="legend-mark"
       aria-hidden
     />
@@ -167,7 +167,7 @@ function SourceRow({
   children: ReactNode;
 }) {
   return (
-    <li className="fia-about__source" data-open={open || undefined}>
+    <li className="fia-about__source fia-hairline-run" data-open={open || undefined}>
       <CatalogRow
         className="fia-catalog fia-about__row"
         first={first}
@@ -398,11 +398,16 @@ export default function S15AboutRights() {
         <Group id="s15-data" title={t('s.about.data')}>
           <div className="fia-about__toggle">
             <div className="fia-about__toggle-text">
-              <div className="fia-about__toggle-label">{t('s.about.data.count')}</div>
+              <div className="fia-about__toggle-label fia-type-label fia-fw-semibold fia-lh-125 fia-tone-title">
+                {t('s.about.data.count')}
+              </div>
               <div className="fia-caption">{t('s.about.data.count-note')}</div>
             </div>
-            <div className="fia-about__toggle-ctl">
-              <span className="fia-about__state" aria-hidden>
+            <div className="fia-about__toggle-ctl fia-switch">
+              <span
+                className="fia-about__state fia-type-caption fia-fw-semibold fia-lh-100 fia-tone-muted"
+                aria-hidden
+              >
                 {t(settings.telemetryOptIn ? 's.settings.on' : 's.settings.off')}
               </span>
               <GlassToggle
@@ -417,7 +422,11 @@ export default function S15AboutRights() {
             </div>
           </div>
           {/* R-705 (spec 15-about-rights.md:85): the S16 outbox row stays — the PoC is the floor. */}
-          <button type="button" className="fia-about__quiet" onClick={() => go('/feedback')}>
+          <button
+            type="button"
+            className="fia-about__quiet fia-quiet-link"
+            onClick={() => go('/feedback')}
+          >
             <span className="fia-caption">
               {t('s.about.feedback-row', { n: feedback.sent, k: feedback.waiting })} ⟶
             </span>
@@ -425,7 +434,11 @@ export default function S15AboutRights() {
         </Group>
 
         <div className="fia-about__links">
-          <button type="button" className="fia-about__quiet" onClick={() => go('/feedback')}>
+          <button
+            type="button"
+            className="fia-about__quiet fia-quiet-link"
+            onClick={() => go('/feedback')}
+          >
             <span className="fia-row-label">
               <MessageGlyph />
               {t('s.about.send-feedback')}
