@@ -11,6 +11,8 @@ The PRs come from `git log --merges --first-parent origin/main..origin/v2/integr
 - **Not-yet passages** (#55, GAP-NOPACK): the build writes `dist/data/packs/index.json`, which lists the packs it ships. A passage with no pack now shows the absent badge and reads "not yet in English", where 0.3.0 showed "Could not read this passage's details". Ready passages sort first. If the index can't be read, nothing is marked. This takes the error out of 0.3.0 known gap 2; content is still five packs.
 - **S01 First run · language** (#54): kit `LanguagePicker` over the catalog, autonym first. Linear frame with the 44 px lockup hero and one primary, "Continue in {autonym}".
 - **S02 Library** (#52): one kit `CatalogRow` per book, with a saved count and a voice line. Passages are listed by reference. The "Where you left off" recap uses kit `StageRail` and `BeadStrip`, and one primary is either "Continue {ref}" or "Open Mark". Ready passages come first.
+- **S03 Passage list** (#58): one kit `CatalogRow` per passage on a `GlassSurface` well, each opening S04. A Select mode (J-A2, R-308) shows its state on the kit `GlassChip` (Saved, Selected or Add, FE-2) and saves the chosen passages one at a time at the Text tier.
+- **S04 Passage card** (#57): the reference as hero, the voice chip, an Includes legend drawn with kit progress `Bead`s (a kind the pack lacks gets no row), Save for offline on kit `GlassSegmented` with the tiers the data allows, and one primary, "▶ Start {ref}".
 - **S06 Read without voice** (#60): the S05 Guide view with voice off, built from F4's frame and F5's shared parts, not a fourth view.
 - **S07 Whole guide map** (#62): kit `GlassSheet` opened from Explore. It shows a legend of the guide's coded beads, the step rows, and one primary, "Back to part n".
 - **S18 Completion** (#61): a recap plate on kit `StageRail` and beads, with the next passage as the one primary.
@@ -18,10 +20,11 @@ The PRs come from `git log --merges --first-parent origin/main..origin/v2/integr
 
 ### Known gaps
 
-1. Not every screen is in glass yet. S03 and S04 are still open PRs (#58, #57). S08–S13 and sheets SH-3 to SH-5 are not cooked yet (cookbook `work/active/2026-10-01-fia-alpha-v2/SPRINTS.md`, handoff fia-app-sched-1657).
+1. Not every screen is in glass yet. S08–S13 and sheets SH-3 to SH-5 are not cooked yet (cookbook `work/active/2026-10-01-fia-alpha-v2/SPRINTS.md`, handoff fia-app-sched-1657).
 2. Each screen brings its own stylesheet instead of composing shared app components styled once (captain, RULING § ~20:05 ET). A consolidation pass follows this train as its own PR.
 3. Content is still five packs (0.3.0 gap 2); other passages now read "not yet" instead of an error.
-4. 0.3.0 gaps 5, 6, 7 and 9 (feedback endpoint, analytics disclosure, update banner only on S13, cosmetic leftovers) are carried forward. This train did not re-check them.
+4. The Guide can't finish if the last part's clip fails to load. On part 10 of step 6, Skip is disabled. After "This narration could not load", the primary reads Continue, but it retries the clip, so S18 never opens (`src/screens/S05Guide.tsx:356-360`, `src/flow/machine.ts:202-203`, `:235-236`). Seen on a local preview at 390×844, where the PoC clip host failed TLS in the sandbox (0.3.0 gap 10). S18 itself renders in glass when opened from a finished record.
+5. 0.3.0 gaps 5, 6, 7 and 9 (feedback endpoint, analytics disclosure, update banner only on S13, cosmetic leftovers) are carried forward. This train did not re-check them.
 
 ## 0.3.0 — First v2 cut (2026-10-02)
 
