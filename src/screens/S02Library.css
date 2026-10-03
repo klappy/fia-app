@@ -42,6 +42,13 @@
   line-height: 1.3 !important;
 }
 
+/* The book name keeps its own width; the meta takes the rest of the row and wraps at the end edge, so
+   a wide "◌ not yet in {language}" mark (#55) never squeezes the title (kit CatalogRow's
+   `minmax(0,1fr) auto` gave the meta column first claim). Large text stacks instead (below). */
+.s02-well .fia-catalog.s02-book {
+  grid-template-columns: minmax(0, max-content) minmax(0, 1fr) !important;
+}
+
 /* At 1× with a resume card, the book list scrolls inside its well so "Where you left off" stays on the
    first screen (02-library.md § Layout: the list region ends above the card; the card is not sticky).
    Above 1× the page is one scrolling column (PRD § 8.5): no inner scroll. */

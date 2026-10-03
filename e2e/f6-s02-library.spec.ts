@@ -51,7 +51,11 @@ test('first visit: hero, counts, book rows on the kit, one primary "Open Mark"',
   await expect(screen.getByText('English · 32 books · 1,497 passages')).toBeVisible();
   const rows = screen.locator('button[data-book]');
   await expect(rows).toHaveCount(32);
-  await expect(rows.first()).toContainText('Genesis');
+  // GAP-NOPACK (#55): books with a passage that opens come first; the rest read "not yet in English".
+  await expect(rows.first()).toHaveAttribute('data-book', 'MRK');
+  await expect(screen.locator('button[data-book="GEN"] [data-role="not-yet"]')).toHaveText(
+    '◌ not yet in English',
+  );
   const mark = screen.locator('button[data-book="MRK"]');
   await expect(mark).toContainText('68 passages');
   await expect(mark).toContainText('Text · voice not yet');
