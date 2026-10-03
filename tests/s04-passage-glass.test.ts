@@ -8,6 +8,7 @@ import type { CatalogEntry, FlowGuide } from '../src/flow/types';
 import { EN } from '../src/i18n';
 import {
   EMPTY_FACTS,
+  guideVoice,
   keepRef,
   legendRows,
   rightsLine,
@@ -81,6 +82,25 @@ describe('F6-S04 card words from the pack', () => {
     expect(voiceOf({ ...entry, provenance: null })).toBe('none');
     expect(voiceOf(undefined)).toBe('none');
     expect(EN['s.passage.voice-not-yet']).toBe('Text · voice not yet');
+  });
+
+  it('S05 voice chip follows the same rule: "voice not yet" when the catalog has no generated narration', () => {
+    const clip = { id: 'S01-U001', url: '/a.mp3' };
+    const ai = { clip, mark: 'ai-voice' as const };
+    // J-A1 walk: the stand-in clip plays, but the catalog says no guide voice yet → same words as S04.
+    expect(guideVoice(entry, ai)).toEqual({ mark: 'absent', words: 'Text · voice not yet' });
+    const generated = { ...entry, provenance: { audio: { generated: 117 } } };
+    expect(guideVoice(generated, ai)).toEqual({ mark: 'ai-voice', words: 'AI voice' });
+    // A recording, or a part the setting keeps silent, still says so.
+    expect(guideVoice(entry, { clip, mark: 'source' }).mark).toBe('source');
+    expect(
+      guideVoice(entry, { clip: null, mark: 'absent', silent: 'source-only-silent' }).words,
+    ).toBe('Silent: recorded voices only');
+    // Catalog not read yet (offline): the part's own clip names its voice (C-06).
+    expect(guideVoice(undefined, ai).words).toBe('AI voice');
+    expect(guideVoice(generated, { clip: null, mark: 'absent', silent: 'no-audio' }).words).toBe(
+      'No voice for this part',
+    );
   });
 
   it('sub line, sources line and the reference that never breaks at its dash', () => {

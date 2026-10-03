@@ -2,10 +2,12 @@
 // 04-passage-card.html). Nothing here invents data: a row, a count or the voice chip appears only when
 // the pack (C-02 manifest.json counts, scripture.json editions), the C-03 catalog entry or the guide
 // (C-04 stops) carries it.
+import type { Provenance } from '../components/types';
 import { position } from '../flow/model';
 import type { CatalogEntry, FlowGuide } from '../flow/types';
 import { t } from '../i18n';
 import type { FlowState } from '../flow/machine';
+import type { NarrationChoice } from '../media/provenance';
 
 /** What the pack's own files add to the catalog entry (fetched beside the card). */
 export interface PackFacts {
@@ -112,6 +114,27 @@ export function voiceOf(entry: CatalogEntry | undefined): 'ai' | 'none' {
   const p = entry?.provenance as { audio?: { generated?: unknown } } | null | undefined;
   const n = p?.audio?.generated;
   return typeof n === 'number' && n > 0 ? 'ai' : 'none';
+}
+
+/**
+ * S05's voice chip under the same rule (J-A1 walk: S05 read "AI voice" where S02 and S04 read "Text ·
+ * voice not yet" for the same passage). A clip is named "AI voice" only when the C-03 entry says guide
+ * narration was generated (`voiceOf`); otherwise the part reads "voice not yet", as the card does. A
+ * recording, or a part the narration setting keeps silent, still says so. Before the catalog is read
+ * (`entry` undefined, e.g. offline) the part's own clip names its voice (C-06: AI is always named).
+ */
+export function guideVoice(
+  entry: CatalogEntry | undefined,
+  choice: NarrationChoice | undefined,
+): { mark: Provenance; words: string } {
+  if (choice?.clip && choice.mark === 'source')
+    return { mark: 'source', words: t('s.common.mark.source') };
+  if (choice?.silent === 'source-only-silent')
+    return { mark: 'absent', words: t('s.guide.voice-silent') };
+  if (entry && voiceOf(entry) === 'none')
+    return { mark: 'absent', words: t('s.guide.voice-not-yet') };
+  if (choice?.clip) return { mark: choice.mark, words: t('s.common.mark.ai-voice') };
+  return { mark: 'absent', words: t('s.guide.voice-none') };
 }
 
 /** "English · 6 steps · 130 parts" (mock s04-sub); the language leads once the catalog names it. */

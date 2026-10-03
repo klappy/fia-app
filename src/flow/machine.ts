@@ -35,6 +35,7 @@ export type FlowAction =
   | { type: 'play' }
   | { type: 'pause' }
   | { type: 'narration-end' }
+  | { type: 'clip-error' }
   | { type: 'countdown-done' }
   | { type: 'wait' }
   | { type: 'continue' }
@@ -126,6 +127,16 @@ export function reduce(g: FlowGuide, s: FlowState, a: FlowAction): FlowState {
       if (stop && !s.discussed.includes(stop.id)) return { ...s, played, phase: 'stop' };
       if (isLast(g, s.unitId)) return { ...s, played, phase: 'next-ready' };
       return { ...s, played, phase: s.autoContinue ? 'countdown' : 'next-ready' };
+    }
+    case 'clip-error': {
+      // A clip that fails to load never traps the person (J-A1 walk, train1-2021): the part stays
+      // readable, so the guide stands where its narration would have ended, without marking it
+      // played. An un-discussed stop still waits; otherwise the big button goes on (Next part, or
+      // Finish on the last part, which reaches S18). The clip stays the part's (`hasAudio`), so
+      // `play` can try it again as a second choice. Never a countdown: the person moves on.
+      if (s.phase !== 'playing') return s;
+      const stop = stopAt(g, s.unitId);
+      return { ...s, phase: stop && !s.discussed.includes(stop.id) ? 'stop' : 'next-ready' };
     }
     case 'countdown-done': {
       if (s.phase !== 'countdown') return s;

@@ -86,8 +86,9 @@ test('the guide streams a live PoC clip, then the 2 s countdown plays the next p
   const guide = page.locator('.fia-guide');
   await expect(guide).toHaveAttribute('data-unit-id', 'S01-U001');
   await expect(primary(page)).toHaveAccessibleName('Play part 1');
-  // The voice is named as AI on the card (C-06), and nothing played before the tap (R-407).
-  await expect(page.locator('.fia-guide-card__voice')).toContainText('AI voice');
+  // The card's voice chip reads as S02 and S04 do for this passage: the C-03 catalog has no generated
+  // guide narration yet (passageCard `guideVoice`; J-A1 walk). Nothing played before the tap (R-407).
+  await expect(page.locator('.fia-guide-card__voice')).toContainText('Text · voice not yet');
   expect(seen).toHaveLength(0);
 
   await primary(page).click();
@@ -175,4 +176,42 @@ test('Recorded only: no AI clip plays, the part says so and the big button goes 
   await expect(primary(page)).toHaveAccessibleName('Next part');
   await primary(page).click();
   await expect(guide).toHaveAttribute('data-unit-id', 'S01-U002');
+});
+
+test('a last part whose clip fails to load still finishes: the guide reaches S18 (J-A1 walk)', async ({
+  context,
+  page,
+}) => {
+  test.setTimeout(60_000);
+  // The last part's clip never loads (a dropped connection). Page routes win over setup's relay.
+  const last = entry('S06-U010');
+  let tries = 0;
+  await page.route(`${HOST}${last.path}`, (r) => {
+    tries++;
+    return r.abort();
+  });
+  await setup(context, page, 'S06-U010');
+  const guide = page.locator('.fia-guide');
+  await expect(guide).toHaveAttribute('data-unit-id', 'S06-U010');
+  // Skip has nowhere to go on the last part; before this fix the big button was the only way on.
+  await expect(page.getByRole('button', { name: 'Skip to the next part' })).toBeDisabled();
+  await primary(page).click();
+
+  // Honest copy, and the big button goes on (it no longer only retries the clip).
+  const alert = page.locator('[data-role="clip-error"]');
+  await expect(alert).toContainText('The voice for this part did not load.');
+  await expect(guide).toHaveAttribute('data-phase', 'next-ready');
+  await expect(primary(page)).toHaveAccessibleName('Finish');
+  expect(tries).toBeGreaterThan(0);
+
+  // Trying again stays a second choice: it fetches the clip afresh and lands back here.
+  const seen = tries;
+  await alert.getByRole('button', { name: 'Try again' }).click();
+  await expect.poll(() => tries, { timeout: 10_000 }).toBeGreaterThan(seen);
+  await expect(alert).toBeVisible();
+  await expect(guide).toHaveAttribute('data-phase', 'next-ready');
+
+  await primary(page).click();
+  await expect(page).toHaveURL(/\/done$/);
+  await expect(page.locator('[data-screen="S18"]')).toBeVisible();
 });
