@@ -16,19 +16,19 @@ SH2, SH5, DiscussionStopBand and AudioControls. The mock's `Quiet` keeps the kit
 
 - `src/components/actions.css` keeps only `.fia-kit-primary:disabled`. The `.fia-quiet` block is gone.
 - `src/components/QuietAction.tsx` renders `className="fia-btn fia-quiet"`. These are the mock
-  `Quiet`'s classes (`_frame.js:211-212`) and the ones the 10 existing call sites use. It no
+  `Quiet`'s classes (`_frame.js:211-212`) and the ones every other quiet call site uses. It no
   longer imports `actions.css`.
-- `src/offline/offline.css` drops `.fia-dl__confirm`. S13's Remove confirm uses `.fia-dl__band`.
-  One layout-only rule keeps a lone quiet action at the start of the pack card or band
-  (`justify-self: start`), as #73 rendered it.
-- Measured at 390 × 844 on S13: the quiet colour is back to the kit's, light rgb(71, 80, 96) and
-  dark rgb(201, 206, 214). Padding is 10px 12px, the same as before. The confirm band's
-  background, padding, radius and gap have not changed.
+- `src/offline/offline.css` drops `.fia-dl__confirm`. The Remove confirms on S13 and sheet 23
+  (`SH4StorageWarning.tsx`, merged in #77) use `.fia-dl__band`. One layout-only rule keeps a lone
+  quiet action at the start of the pack card or band (`justify-self: start`), as #73 rendered it.
+- Measured at 390 × 844 against `v2/integration` `803a96b` on S13, sheet 22 (both variants) and
+  sheet 23 (space with its confirm, and persist). Every quiet action keeps the same size and
+  position. The colour goes back to the kit's muted rgb(71, 80, 96) in light (rgb(201, 206, 214)
+  in dark), from rgb(36, 44, 58). Padding stays 10px 12px. The confirm bands' background,
+  padding, radius and gap have not changed. The labels are centred like the mock `Quiet`. This
+  shows only when a label wraps at 200% / 310%.
 
 ## Not in this change
 
-- #76 (sheet 22) and #77 (sheet 23) each add their own copy of `.fia-dl__confirm` to
-  `offline.css`, and SH4 uses that class. Both need to switch to `.fia-dl__band` when they
-  merge this in.
 - Two follow-ups on #73 stay open: the v1 primary on S13, and the title sitting outside the
   header.
