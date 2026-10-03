@@ -1,26 +1,12 @@
-/* Lane L5 shell (S14, S15, S16, S19). Tokens only; targets ≥ 48 px (R-603); logical props (R-606). */
-.fia-group-header {
-  margin: var(--fia-space-5) 0 var(--fia-space-4);
-  font-size: var(--fia-fs-label);
-  text-transform: uppercase;
-  color: var(--fia-text-muted);
-}
-.fia-stepper__a,
-.fia-segmented > button,
-.fia-link-row,
-.fia-links > a,
-.fia-rights__head {
+/* Lane L5 shell (S15, S16). Tokens only; targets ≥ 48 px (R-603); logical props (R-606). Selectors no
+   TSX references (stepper, link rows, rights head, group header, visually-hidden) are deleted. */
+.fia-segmented > button {
   min-height: var(--fia-tap-min);
   min-inline-size: var(--fia-tap-min);
   border-radius: var(--fia-r-md);
   font: inherit;
   color: inherit;
 }
-.fia-stepper {
-  display: flex;
-  gap: var(--fia-gap-inline);
-}
-.fia-stepper__a[aria-pressed='true'],
 .fia-segmented > [aria-checked='true'] {
   outline: 2px solid var(--fia-primary);
 }
@@ -32,35 +18,16 @@
 .fia-segmented > button {
   flex: 1 1 6rem;
 }
-.fia-links,
 .fia-feedback__reasons {
   display: flex;
   flex-wrap: wrap;
   gap: var(--fia-gap-inline);
 }
-.fia-link-row,
-.fia-links > a {
-  display: flex;
-  align-items: center;
-  padding-inline: var(--fia-space-4);
-  background: none;
-  border: 0;
-  text-align: start;
-}
-.fia-rights,
-.fia-coverage-cards {
+.fia-rights {
   display: grid;
   gap: var(--fia-gap-inline);
   padding: 0;
   list-style: none;
-}
-.fia-rights__head {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  width: 100%;
-  background: none;
-  border: 0;
-  text-align: start;
 }
 .fia-rights__json,
 .fia-rights__verbatim {
@@ -79,12 +46,4 @@
 }
 .fia-feedback textarea {
   min-height: 10rem;
-}
-.fia-visually-hidden {
-  position: absolute;
-  inline-size: 1px;
-  block-size: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
 }

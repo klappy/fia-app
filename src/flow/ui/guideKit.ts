@@ -1,37 +1,16 @@
 // Pure helpers and the text-scale hook shared by the guide family (F5). Split from GuideChrome.tsx so
 // that file exports components only (react-refresh).
-import { useEffect, useState } from 'react';
 import { t } from '../../i18n';
 import type { PackMedia, PackTerm, ResourcesPack } from '../../media/resources';
 import type { GuideUnit } from '../types';
 import { CUE_MEDIA, type BandModel, type Tail } from './band';
+import { keepNumber, keepRef, NB } from '../../frame/text';
+import { iconSz, useTextScale } from '../../frame/scale';
 
-// ── text scale (C-10 text size → html[data-text-step], settings/apply.ts) ────────────────────────────
-
-const STEP_SCALE: Record<string, number> = { x150: 1.5, x200: 2, x310: 3.1 };
-const readScale = () =>
-  STEP_SCALE[globalThis.document?.documentElement.getAttribute('data-text-step') ?? ''] ?? 1;
-
-/** 1 · 1.5 · 2 · 3.1, live: the mock's --fia-text-scale (_frame.js:16-21). */
-export function useTextScale(): number {
-  const [scale, setScale] = useState(readScale);
-  useEffect(() => {
-    const root = document.documentElement;
-    const mo = new MutationObserver(() => setScale(readScale()));
-    mo.observe(root, { attributes: true, attributeFilter: ['data-text-step'] });
-    return () => mo.disconnect();
-  }, []);
-  return scale;
-}
-
-/** Icon box: base × min(scale, 2) (mock iconSz, _frame.js:41). */
-export const iconSize = (base: number, scale: number) => Math.round(base * Math.min(scale, 2));
-
-export const NB = '\u00a0';
-/** "Mark 1:1–13" never breaks at the dash (mock _frame.js:83). */
-export const keepRef = (title: string) => title.replace(/–/g, '\u2060–\u2060');
-/** "part 7" never breaks before the number. */
-const keepNumber = (s: string) => s.replace(/ (\d+)$/, `${NB}$1`);
+// The text-scale reader (frame/scale.ts) and the text helpers (frame/text.ts) are the shared layer's;
+// re-exported here for the guide's parts, which have always imported them from guideKit.
+export { useTextScale, iconSz as iconSize };
+export { NB, keepRef };
 
 export function tailWords(tail: Tail): string {
   switch (tail.kind) {

@@ -15,6 +15,7 @@
     "tokens": "node scripts/build-tokens.mjs",
     "strings": "node scripts/extract-strings.mjs",
     "lint": "eslint . && prettier --check .",
+    "check:css": "node scripts/check-css-budget.mjs",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",

@@ -2,7 +2,6 @@ import {
   useEffect,
   useMemo,
   useState,
-  useSyncExternalStore,
   type ComponentType,
   type CSSProperties,
   type HTMLAttributes,
@@ -37,6 +36,7 @@ import {
   type RowFacts,
 } from './pericopeList';
 import { ScreenFrame } from './ScreenFrame';
+import { useBig } from '../frame/scale';
 import './S03PericopeList.css';
 
 // S03 Pericope list in glass, F6-S03 (03-pericope-list.md; R-306–R-309, R-702). Nodded mock
@@ -58,16 +58,6 @@ const GlassSearch = KitGlassSearch as unknown as ComponentType<
     style?: CSSProperties;
   }
 >;
-
-/** 200% and 310% text (mock html.fia-big): live from <html data-text-step> (settings/apply.ts). */
-const BIG_STEPS = new Set(['x200', 'x310']);
-const readBig = () =>
-  BIG_STEPS.has(globalThis.document?.documentElement.getAttribute('data-text-step') ?? '');
-const watchBig = (f: () => void) => {
-  const mo = new MutationObserver(f);
-  mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-text-step'] });
-  return () => mo.disconnect();
-};
 
 /** Glyphs grow with large text, capped (mock iconSz). */
 const iconSz = (n: number, big: boolean) => (big ? Math.round(n * 1.5) : n);
@@ -108,7 +98,7 @@ export default function S03PericopeList() {
   const [q, setQ] = useState('');
   const online = useOnline();
   const off = useOffline();
-  const big = useSyncExternalStore(watchBig, readBig, () => false);
+  const big = useBig();
   useEffect(() => {
     void session.loadCatalog();
     // the guide in progress (R-410): its walked parts count and the Continue primary
@@ -214,6 +204,7 @@ export default function S03PericopeList() {
   return (
     <ScreenFrame
       id="S03"
+      titleHidden
       title={book}
       primaryLabel={primaryLabel}
       primaryState={primaryState}
@@ -231,7 +222,7 @@ export default function S03PericopeList() {
       </div>
       <div className="s03-head">
         {/* The frame's <h1> names the book for assistive tech; this is its visible hero (mock .s03-hero). */}
-        <p className="s03-hero" aria-hidden="true">
+        <p className="fia-hero s03-hero" aria-hidden="true">
           {book}
         </p>
         <GlassButton

@@ -26,6 +26,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run lint
+      # CSS budget (RULING ~20:05 ET): no new per-screen stylesheet, no file past its ceiling; prints totals.
+      - run: npm run check:css
       - run: npm run typecheck
       - run: npx vitest run
       - run: npm run test:contracts

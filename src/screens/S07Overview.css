@@ -9,18 +9,7 @@
   position: relative;
   height: 100dvh;
 }
-/* The kit sheet is one column: the pinned title rows, the scrolling body, the action (mock _frame.css:189). */
-.s07-sheet > [role='dialog'] {
-  display: flex;
-  flex-direction: column;
-}
-.s07-body {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  margin: 10px -18px 0;
-  padding: 0 18px;
-}
+/* The kit sheet is one column with a scrolling body: .fia-sheet / .fia-sheet-body (frame/frame.css). */
 
 /* ---------- pinned top: FIA lockup (not interactive) · the one way back to Explore ---------- */
 .s07-brand {
@@ -66,55 +55,6 @@
 }
 
 /* ---------- legend card: a smoked kit GlassSurface well (mock :144-150, _frame.css:196-204) ---------- */
-.fia-well.s07-legend {
-  margin-top: 2px;
-  padding: 10px 14px;
-}
-.s07-legend__inner {
-  position: relative;
-}
-.s07-legend__title {
-  margin-bottom: 6px;
-  font: var(--fw-semibold) var(--fs-label) / 1.25 var(--font-core);
-  color: var(--text-title);
-}
-.s07-legend__grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 3px 12px;
-}
-.s07-page.is-big .s07-legend__grid {
-  grid-template-columns: 1fr;
-}
-.s07-legend__item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font: var(--fw-medium) var(--fs-label) / 1.25 var(--font-core);
-  color: var(--text-title);
-}
-.s07-legend__mark {
-  width: calc(24px * min(var(--fia-text-scale), 2.4));
-  display: flex;
-  justify-content: center;
-  flex: none;
-}
-.s07-legend__seg {
-  width: calc(24px * min(var(--fia-text-scale), 2.4));
-}
-.s07-legend__states {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 2px 10px;
-  margin: 8px 0 0;
-}
-.s07-legend__state {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-
 /* ---------- step rows: badge · title + words + beads · chevron (mock :33-44) ---------- */
 .s07-steps {
   margin-top: 6px;
@@ -153,21 +93,13 @@
 .s07-step.is-current .s07-step__badge {
   box-shadow: inset 0 0 0 2px var(--surface-inverse);
 }
+/* .s07-step__title: face frame/frame.css .fia-title-v2 */
 .s07-step__title {
   display: block;
-  font: var(--fw-semibold) var(--fs-subtitle) / 1.25 var(--font-core);
-  color: var(--text-title);
-  letter-spacing: var(--ls-title);
   overflow-wrap: anywhere;
 }
-/* Captions in the mock's face and --text-muted (mock _frame.css:74), not the v1 .fia-caption tokens
-   (app.css: --fia-text-muted read 3.9:1 on the dark sheet). */
-.s07-step__words,
-.s07-legend__states,
-.s07-ai {
-  font: var(--fw-medium) var(--fs-caption) / 1.3 var(--font-core);
-  color: var(--text-muted);
-}
+/* .s07-step__words and .s07-ai: the mock's caption face, frame/frame.css .fia-caption-v2 (not the v1
+   .fia-caption tokens: --fia-text-muted read 3.9:1 on the dark sheet). */
 .s07-step__words {
   display: block;
   margin-top: 2px;
@@ -287,22 +219,16 @@
 }
 
 /* ---------- dark (mock :65-72, _frame.css:203-204) ---------- */
-/* The kit sheet's --material-floating is a mid grey; inside it the plain bead and the dim chevrons take
-   --on-night-500, the talk words take --text-title (the bar and icon keep the red), and the legend
-   card is a smoked well (half --surface-app, no sheen). Light is unchanged. The kit is not edited.
+/* The kit sheet's --material-floating is a mid grey; inside it the dim chevrons take --on-night-500
+   (the plain bead's dark --fia-kind-plain is frame/frame.css's), the talk words take --text-title (the
+   bar and icon keep the red), and the legend card is a smoked well (half --surface-app, no sheen).
+   Light is unchanged. The kit is not edited.
    App.tsx mirrors "follow the phone" into data-theme, so [data-theme='dark'] covers both. */
 [data-theme='dark'] .s07-sheet > [role='dialog'] {
   --text-dim: var(--on-night-500);
-  --fia-kind-plain: var(--on-night-500);
 }
 [data-theme='dark'] .s07-talk {
   color: var(--text-title);
-}
-[data-theme='dark'] .fia-well.s07-legend {
-  background: color-mix(in srgb, var(--surface-app) 50%, transparent) !important;
-}
-[data-theme='dark'] .fia-well.s07-legend > span[aria-hidden='true']:first-child {
-  display: none;
 }
 
 /* The shared KitPrimary draws its glyph at a fixed 18 px; on this sheet it follows the text step like

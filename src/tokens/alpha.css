@@ -659,7 +659,7 @@ body {
 }
 /* 200%+ only (mock :96 html.fia-big, _frame.js:21 scale >= 2): the icon over the words, which take the drawing's
    width. Keyed on the text step, not the 28em container above, which at 390 px already matches at 130% and 150%. */
-:root:is([data-text-step='x200'], [data-text-step='x310']) .fia-install__app-row {
+:root.fia-big .fia-install__app-row {
   flex-direction: column;
   align-items: flex-start;
 }
@@ -684,17 +684,7 @@ body {
   position: relative;
   height: 100dvh;
 }
-.s14-sheet > [role='dialog'] {
-  display: flex;
-  flex-direction: column;
-}
-.s14-body {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  margin: 10px -18px 0;
-  padding: 0 18px;
-}
+/* The sheet column and its scrolling body: .fia-sheet / .fia-sheet-body (frame/frame.css). */
 .s14-title {
   display: flex;
   align-items: center;
@@ -898,12 +888,12 @@ body {
   min-width: 2.2em;
   text-align: end;
 }
-:root:is([data-text-step='x200'], [data-text-step='x310']) .fia-srow {
+:root.fia-big .fia-srow {
   flex-direction: column;
   align-items: stretch;
   gap: 6px;
 }
-:root:is([data-text-step='x200'], [data-text-step='x310']) .fia-srow__control {
+:root.fia-big .fia-srow__control {
   justify-content: flex-end;
 }
 /* Kit GlassToggle (GlassToggle.jsx:4-5): checked track --surface-inverse would be a second dark element
@@ -926,7 +916,7 @@ body {
 .fia-srow__toggle [role='switch'][aria-checked='true'] > span {
   background: var(--paper-050) !important;
 }
-:root:is([data-text-step='x200'], [data-text-step='x310']) .fia-srow__toggle [role='switch'] {
+:root.fia-big .fia-srow__toggle [role='switch'] {
   zoom: 1.5;
 }
 /* Light: overlines on the near-white sheet take --text-muted (mock 14-settings: 5.9:1). Dark: each group
@@ -934,14 +924,8 @@ body {
 .s14-body .fia-overline {
   color: var(--text-muted);
 }
-/* Dark: each group card is a frame well, smoked with no sheen (mock _frame.css:203-204), so the
+/* Dark: each group card is a frame well, smoked with no sheen (.fia-well, frame/frame.css), so the
    secondary words read 10:1 rather than 4.1-4.4:1 on the lifted level-3 glass (F6-S14 review 5/8). */
-[data-theme='dark'] .s14-card.fia-well {
-  background: color-mix(in srgb, var(--surface-app) 50%, transparent) !important;
-}
-[data-theme='dark'] .s14-card.fia-well > span[aria-hidden='true']:first-child {
-  display: none;
-}
 [data-theme='dark'] .s14-seg {
   background: var(--glass-fill-1) !important;
 }
@@ -1138,16 +1122,6 @@ body {
   gap: 6px;
   text-align: center;
 }
-.fia-about__logo {
-  color: var(--fia-brand, var(--text-title));
-  display: inline-flex;
-}
-.fia-about__qualifier {
-  margin: 0;
-  font: var(--fw-semibold) var(--fs-label) / 1.25 var(--font-core);
-  letter-spacing: 0.04em;
-  color: var(--text-muted);
-}
 .fia-about__group {
   margin-top: 10px;
 }
@@ -1169,11 +1143,6 @@ body {
   padding-bottom: 7px !important;
   gap: 8px !important;
   min-height: 48px;
-}
-/* Kit CatalogRow sets its title inline (CatalogRow.jsx:8); grow with the phone's text size (F4 fix2). */
-.fia-about__row > div:first-child > div[dir] {
-  font-size: calc(15px * var(--fia-text-scale)) !important;
-  line-height: 1.3 !important;
 }
 .fia-about__row svg {
   width: calc(16px * min(var(--fia-text-scale), 2));
@@ -1221,26 +1190,26 @@ body {
 }
 .fia-about__mark--plain {
   border-radius: 50%;
-  background: var(--fia-kind-plain, #6e7787);
+  background: var(--fia-kind-plain);
 }
 .fia-about__mark--scripture {
   border-radius: 2px;
-  background: var(--fia-kind-scripture, var(--text-title));
+  background: var(--fia-kind-scripture);
 }
 .fia-about__mark--term {
   transform: rotate(45deg) scale(0.85);
-  background: var(--fia-kind-term, var(--accent-blue));
+  background: var(--fia-kind-term);
 }
 .fia-about__mark--media {
   clip-path: polygon(50% 0, 100% 100%, 0 100%);
-  background: var(--fia-kind-media, #17786e);
+  background: var(--fia-kind-media);
 }
 .fia-about__mark--video {
   width: calc(14px * min(var(--fia-text-scale), 2.4));
   height: calc(8px * min(var(--fia-text-scale), 2.4));
   margin: 0 calc(1px * min(var(--fia-text-scale), 2.4));
   border-radius: 2px;
-  background: var(--fia-kind-media, #17786e);
+  background: var(--fia-kind-media);
 }
 .fia-about__note {
   margin: 6px 4px 0;

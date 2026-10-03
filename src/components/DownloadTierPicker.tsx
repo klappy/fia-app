@@ -92,7 +92,7 @@ export function DownloadTierPicker({
         }}
       />
       {selected?.note && (
-        <p className="fia-tierpick__note" data-testid="tier-note">
+        <p className="fia-caption-v2 fia-tierpick__note" data-testid="tier-note">
           {selected.note}
         </p>
       )}

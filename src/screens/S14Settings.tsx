@@ -7,7 +7,6 @@ import {
   AuroraField,
   GlassSegmented,
   GlassSheet,
-  GlassSurface,
   Icon,
   type KitIconName,
 } from '../components/glass';
@@ -24,6 +23,7 @@ import {
   type TextSize,
   type Theme,
 } from '../settings';
+import { Group as SharedGroup } from '../frame/Group';
 
 // S14 Settings in glass (F6-S14; nodded mock cookbook design/alpha-v2-screens/14-settings.html, PRD § 4
 // row S14, § 8.5): a full-height kit GlassSheet with the FIA logo leading the title, one primary
@@ -96,18 +96,12 @@ function autonym(code: string): string {
   }
 }
 
-function Group({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className="s14-group" aria-label={title}>
-      <div className="fia-overline" aria-hidden="true">
-        {title}
-      </div>
-      <GlassSurface level={3} blur="soft" radius="xl" shadow="none" className="fia-well s14-card">
-        {children}
-      </GlassSurface>
-    </section>
-  );
-}
+/** A settings group: the shared Group as a named region (frame/Group.tsx). */
+const Group = ({ title, children }: { title: string; children: ReactNode }) => (
+  <SharedGroup title={title} region className="s14-group" wellClassName="s14-card">
+    {children}
+  </SharedGroup>
+);
 
 /** Icon + word option label; the selected one turns semibold with a heavier stroke (mock `opt`). */
 const opt = (icon: (stroke: number) => ReactNode, word: string, on: boolean) => (
@@ -174,7 +168,7 @@ export default function S14Settings() {
             </div>
           }
         >
-          <div className="s14-body">
+          <div className="fia-sheet-body s14-body">
             {big && <div className="s14-title-scroll">{title}</div>}
 
             <Group title={t('s.settings.text-size')}>

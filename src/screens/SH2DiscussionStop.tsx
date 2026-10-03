@@ -123,7 +123,7 @@ export function DiscussionStopSheet({
       actions={<KitPrimary label={primary} icon="check" onPress={onContinue} />}
     >
       {big && (
-        <div className="fia-stop-inside">
+        <div className="fia-well fia-stop-inside">
           <ProgressRail
             steps={b.steps}
             currentStep={b.stepIndex}
@@ -138,7 +138,7 @@ export function DiscussionStopSheet({
               stage: b.stepTitle,
             })}
           />
-          <p className="fia-caption fia-num">{bandCaption(b)}</p>
+          <p className="fia-caption-v2 fia-num">{bandCaption(b)}</p>
         </div>
       )}
       {discussed && (
@@ -150,7 +150,13 @@ export function DiscussionStopSheet({
         <strong>{t('s.stop.v2.lead-strong')}</strong> {t('s.stop.v2.lead')}
       </p>
       {unit?.text ? (
-        <GlassSurface level={3} blur="soft" radius="xl" shadow="none" className="fia-stop-q">
+        <GlassSurface
+          level={3}
+          blur="soft"
+          radius="xl"
+          shadow="none"
+          className="fia-well fia-stop-q"
+        >
           <div className="fia-stop-q__inner">
             <span className="fia-overline fia-stop-q__label">{t('s.stop.v2.question')}</span>
             <blockquote className="fia-stop-quote" dir="auto" lang={guide.language}>

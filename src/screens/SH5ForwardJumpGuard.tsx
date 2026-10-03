@@ -79,7 +79,7 @@ export function ForwardJumpSheet({
         />
       }
     >
-      <GlassSurface level={3} blur="soft" radius="xl" shadow="none" className="fia-stop-q">
+      <GlassSurface level={3} blur="soft" radius="xl" shadow="none" className="fia-well fia-stop-q">
         <div className="fia-stop-q__inner fia-jump">
           <div className="fia-jump__ends fia-caption fia-num">
             <span>{t('s.jump.v2.here', { n: a.n })}</span>

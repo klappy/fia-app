@@ -10,36 +10,7 @@
   flex: 1 0 auto; /* the start line can sit right above the thumb slot (mock .s04-start at 1×) */
 }
 /* The frame's <h1> keeps the reference for assistive tech; the hero below the back row is its face,
-   so the regions run in the mock's order: header · ‹ Mark · Mark 1:1–13. */
-[data-screen='S04']:has(.s04-hero) .fia-screen__title {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-  border: 0;
-}
-
-/* Bead colours: the mock's --fia-kind-* values (_frame.css:25-29, :52-56), page-scoped. */
-[data-screen='S04'] {
-  --s04-kind-plain: #6e7787;
-  --s04-kind-scripture: var(--text-title);
-  --s04-kind-term: var(--accent-blue);
-  --s04-kind-media: #17786e;
-  --s04-kind-video: #17786e;
-  --s04-kind-stop: var(--accent-red);
-}
-[data-theme='dark'] [data-screen='S04'] {
-  --s04-kind-plain: var(--on-night-500);
-  --s04-kind-term: var(--accent-blue-soft);
-  --s04-kind-media: var(--accent-teal);
-  --s04-kind-video: var(--accent-teal);
-  --s04-kind-stop: #ff6b73;
-}
-
+   so the regions run in the mock's order: header · ‹ Mark · Mark 1:1–13 (ScreenFrame titleHidden). */
 /* Back row (mock BackRow): quiet kit GlassButton, chevron + the book. */
 .s04-back {
   margin-top: 6px;
@@ -59,11 +30,7 @@
   margin-top: var(--sp-2);
 }
 .s04-hero {
-  margin: 0;
-  font: var(--fw-bold) var(--fs-hero) / 1.12 var(--font-core);
-  letter-spacing: var(--ls-hero);
-  color: var(--text-title);
-  overflow-wrap: anywhere;
+  overflow-wrap: anywhere; /* face: frame/frame.css .fia-hero */
 }
 .s04-sub {
   margin: var(--sp-2) 0 0;
@@ -85,12 +52,6 @@
   width: calc(13px * min(var(--fia-text-scale), 2));
   height: calc(13px * min(var(--fia-text-scale), 2));
 }
-/* Dark: a chip is never lighter than what it sits on (mock _frame.css:131 .fia-chip). */
-[data-theme='dark'] .s04-chip {
-  background: var(--glass-fill-1) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
 
 /* Cards (kit GlassSurface level 2): the Includes card and the save card. */
 .s04-card {
@@ -103,12 +64,9 @@
   position: relative; /* above the kit GlassSurface refraction layer */
   padding: var(--sp-6) var(--sp-7);
 }
-.s04-overline {
+/* face: app.css .fia-overline; this margin outweighs its 14px 4px 6px */
+.fia-overline.s04-overline {
   margin: 0 0 var(--sp-4);
-  font: var(--type-overline);
-  letter-spacing: var(--ls-overline);
-  text-transform: uppercase;
-  color: var(--text-muted);
 }
 
 /* Includes: 2 columns up to 200% (mark over word at 200%), 1 column at 310% (mark beside word). */
@@ -126,12 +84,7 @@
   gap: var(--sp-4);
   min-width: 0;
 }
-.s04-mark {
-  width: calc(24px * min(var(--fia-text-scale), 2.4));
-  display: flex;
-  justify-content: center;
-  flex: none;
-}
+/* the mark: frame/frame.css .fia-legend-mark (mock 04-passage-card.html:82) */
 .s04-kind__text {
   display: flex;
   flex-direction: column;
@@ -147,17 +100,16 @@
   font-variant-numeric: tabular-nums;
   color: var(--text-muted);
 }
+/* .s04-note, .s04-rights, .s04-start: face frame/frame.css .fia-caption-v2 */
 .s04-note {
   margin: var(--sp-4) 0 0;
-  font: var(--fw-medium) var(--fs-caption) / 1.3 var(--font-core);
-  color: var(--text-muted);
 }
-:root:is([data-text-step='x200'], [data-text-step='x310']) .s04-kind {
+:root.fia-big .s04-kind {
   flex-direction: column;
   align-items: flex-start;
   gap: var(--sp-2);
 }
-:root:is([data-text-step='x200'], [data-text-step='x310']) .s04-mark {
+:root.fia-big .s04-kind .fia-legend-mark {
   justify-content: flex-start;
 }
 :root[data-text-step='x310'] .s04-kinds {
@@ -171,14 +123,10 @@
 
 .s04-rights {
   margin: var(--sp-4) 0 0;
-  font: var(--fw-medium) var(--fs-caption) / 1.3 var(--font-core);
-  color: var(--text-muted);
 }
 /* The start line ends the column, right above the thumb slot (mock .s04-start, s04-hint-big). */
 .s04-start {
   margin: auto 0 0;
   padding-top: var(--sp-7);
   text-align: center;
-  font: var(--fw-medium) var(--fs-caption) / 1.3 var(--font-core);
-  color: var(--text-muted);
 }

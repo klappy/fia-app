@@ -1,0 +1,26 @@
+{
+  "$comment": "Ceilings for scripts/check-css-budget.mjs. Lower with --write after a lift; raise or add only by hand, with a reason in the PR body.",
+  "total": 4521,
+  "important": 203,
+  "files": {
+    "src/app.css": 433,
+    "src/components/DownloadTierPicker.css": 80,
+    "src/components/LanguagePicker.css": 100,
+    "src/components/PericopeCard.css": 66,
+    "src/components/actions.css": 6,
+    "src/flow/ui/guide.css": 672,
+    "src/frame/frame.css": 218,
+    "src/offline/SaveRow.css": 86,
+    "src/offline/offline.css": 232,
+    "src/screens/S01FirstRunLanguage.css": 106,
+    "src/screens/S02Library.css": 185,
+    "src/screens/S03PericopeList.css": 238,
+    "src/screens/S04PassageCard.css": 132,
+    "src/screens/S07Overview.css": 239,
+    "src/screens/S18Completion.css": 175,
+    "src/screens/S19Coverage.css": 179,
+    "src/screens/l5-shell.css": 49,
+    "src/screens/s06.css": 35,
+    "src/tokens/alpha.css": 1290
+  }
+}

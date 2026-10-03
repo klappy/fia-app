@@ -3,51 +3,8 @@
    (src/vendor/glass @ad528f4, never edited). Values follow the nodded v2.1 mocks' app layer:
    cookbook design/alpha-v2-screens/_frame.css and the 05, 20, 21 pages (PRD § 8.1–8.5). */
 
-/* ---------- tokens: the coded marks (PRD § 8.3; mock _frame.css:25-30, :52-56) ---------- */
-:root {
-  --fia-kind-plain: #6e7787; /* ● plain part, done step segments: 3:1 or more on light glass */
-  --fia-kind-scripture: var(--text-title); /* ■ Scripture */
-  --fia-kind-term: var(--accent-blue); /* ◆ key term */
-  --fia-kind-media: #17786e; /* ▲ image or map: app contrast variant of kit teal */
-  --fia-kind-stop: var(--accent-red); /* | talk together, ‖ end of guide */
-  --fia-dotring: rgba(70, 86, 112, 0.34); /* the big button's DotRing (mock _frame.js:339) */
-}
-[data-theme='dark'] {
-  --fia-kind-plain: var(--on-night-500);
-  --fia-kind-term: var(--accent-blue-soft);
-  --fia-kind-media: var(--accent-teal);
-  --fia-kind-stop: #ff6b73;
-  --fia-dotring: rgba(255, 255, 255, 0.34);
-}
-
-.fia-sr-only {
-  position: absolute !important;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-  padding: 0 !important;
-}
-
-/* ---------- screen layout: one phone screen at 1×, one scrolling column above (PRD § 8.5) ---------- */
-html:not([data-text-step])
-  .fia-screen:is([data-screen='S05'], [data-screen='S08'], [data-screen='S09']) {
-  height: 100dvh;
-  min-height: 0;
-}
-.fia-screen:is([data-screen='S05'], [data-screen='S08'], [data-screen='S09']) > .fia-content {
-  padding-top: 10px;
-  padding-bottom: 0;
-  overflow: visible;
-}
-html:not([data-text-step])
-  .fia-screen:is([data-screen='S05'], [data-screen='S08'], [data-screen='S09'])
-  > .fia-content {
-  flex: 1;
-  min-height: 0;
-  padding-bottom: 2px;
-}
+/* The coded-mark tokens (--fia-kind-*, --fia-dotring), .fia-sr-only and the guide frame's screen
+   layout (ScreenFrame frame="guide") live in the shared stylesheet, frame/frame.css. */
 .fia-guide {
   display: flex;
   flex-direction: column;
@@ -79,17 +36,14 @@ html:not([data-text-step])
   margin: 0;
   text-wrap: balance;
 }
+/* .fia-band__title: face frame/frame.css .fia-title-v2 */
 .fia-band__title {
-  font: var(--fw-semibold) var(--fs-subtitle) / 1.25 var(--font-core);
-  letter-spacing: var(--ls-title);
-  color: var(--text-title);
   text-wrap: balance;
 }
+/* face: frame/frame.css .fia-caption-v2 */
 .fia-band .fia-band__caption,
-.fia-stop-inside .fia-caption {
+.fia-stop-inside .fia-caption-v2 {
   margin: 0;
-  font: var(--fw-medium) var(--fs-caption) / 1.3 var(--font-core);
-  color: var(--text-muted);
   text-wrap: pretty;
 }
 .fia-num {
@@ -148,7 +102,7 @@ html:not([data-text-step])
 .fia-guide-card {
   flex: none;
 }
-html:not([data-text-step]) .fia-guide-card {
+html:not(.fia-scaled) .fia-guide-card {
   flex: 1;
   min-height: 0;
   display: flex;
@@ -169,7 +123,7 @@ html:not([data-text-step]) .fia-guide-card {
 .fia-guide-card .fia-card-body {
   margin-top: 2px;
 }
-html:not([data-text-step]) .fia-guide-card .fia-card-body {
+html:not(.fia-scaled) .fia-guide-card .fia-card-body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -177,7 +131,7 @@ html:not([data-text-step]) .fia-guide-card .fia-card-body {
   -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 12px), transparent);
   mask-image: linear-gradient(to bottom, #000 calc(100% - 12px), transparent);
 }
-html[data-text-step] .fia-guide-card .fia-views.is-vertical {
+html.fia-scaled .fia-guide-card .fia-views.is-vertical {
   margin-top: 14px;
 }
 .fia-text--guide {
@@ -262,7 +216,7 @@ html[data-text-step] .fia-guide-card .fia-views.is-vertical {
   display: inline-flex;
   max-width: 100%;
 }
-html:not([data-text-step]) .fia-guide-card .fia-chip-btn {
+html:not(.fia-scaled) .fia-guide-card .fia-chip-btn {
   margin-block: -7px;
 }
 .fia-prov-chip,
@@ -290,22 +244,15 @@ html:not([data-text-step]) .fia-guide-card .fia-chip-btn {
   column-gap: 8px;
   margin-top: 8px;
 }
+/* face: frame/frame.css .fia-caption-v2 */
 .fia-chips .fia-chips__label {
   margin: 0 2px 0 0;
-  font: var(--fw-medium) var(--fs-caption) / 1.3 var(--font-core);
-  color: var(--text-muted);
 }
-html[data-text-step='x200'] .fia-chips,
-html[data-text-step='x310'] .fia-chips {
+html.fia-big .fia-chips {
   flex-direction: column;
   align-items: flex-start;
 }
-/* Dark: a chip is never lighter than the card it sits on (mock _frame.css:165-172). */
-[data-theme='dark'] :is(.fia-guide, .fia-sheet--stop, .fia-sheet--prov) .fia-chip {
-  background: var(--glass-fill-1) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
+/* Dark chip fill: frame/frame.css (dark chips and badges). Provenance chips' words read in --text-title. */
 [data-theme='dark'] .fia-chip-btn[aria-haspopup='dialog'] > .fia-chip,
 [data-theme='dark'] .fia-chip-mark > .fia-chip {
   color: var(--text-title) !important;
@@ -343,26 +290,7 @@ html[data-text-step='x310'] .fia-chips {
   margin-inline-start: -10px;
 }
 
-/* ---------- thumb zone: Back · the big button · Skip (mock Transport, _frame.css:176-201) ---------- */
-.fia-screen:is([data-screen='S05'], [data-screen='S08'], [data-screen='S09']) > .fia-thumb {
-  position: relative;
-  z-index: 1;
-  padding: 0 var(--fia-gutter) calc(var(--fia-safe-bottom) + 12px);
-}
-html[data-text-step]
-  .fia-screen:is([data-screen='S05'], [data-screen='S08'], [data-screen='S09'])
-  > .fia-thumb {
-  position: sticky;
-  bottom: 0;
-  margin-top: 12px;
-  padding-top: 10px;
-  background: var(--material-floating);
-  backdrop-filter: blur(var(--blur-heavy)) var(--sat-glass);
-  -webkit-backdrop-filter: blur(var(--blur-heavy)) var(--sat-glass);
-  border-top: var(--border-glass);
-  border-radius: var(--r-2xl) var(--r-2xl) 0 0;
-  box-shadow: var(--shadow-float);
-}
+/* ---------- thumb zone: Back · the big button · Skip (mock Transport, _frame.css:176-201); the slot is frame/frame.css ---------- */
 .fia-status {
   position: relative;
   z-index: 1;
@@ -552,8 +480,10 @@ html[data-text-step]
   color: var(--text-title);
   font-weight: var(--fw-semibold);
 }
-.fia-stop-q {
+/* .fia-well.… outweighs the frame well's 2px 0 padding (frame/frame.css). */
+.fia-well.fia-stop-q {
   margin-top: 10px;
+  padding: 0;
 }
 [data-theme='light'] .fia-stop-q {
   background: color-mix(in srgb, var(--text-title) 5%, transparent) !important;
@@ -593,7 +523,7 @@ html[data-text-step]
   justify-content: space-between;
   gap: 2px 12px;
 }
-html:not([data-text-step]) .fia-jump__beads {
+html:not(.fia-scaled) .fia-jump__beads {
   justify-content: space-between;
 }
 .fia-sheet--jump .fia-stop-lead {
@@ -606,7 +536,7 @@ html:not([data-text-step]) .fia-jump__beads {
 .fia-jump__choices {
   margin: 6px -10px 0;
 }
-.fia-stop-inside {
+.fia-well.fia-stop-inside {
   margin: 0 0 10px;
   padding: 10px 14px 8px;
   border-radius: var(--r-xl);
@@ -641,17 +571,8 @@ html:not([data-text-step]) .fia-jump__beads {
 [data-theme='light'] :is(.fia-sheet--stop, .fia-sheet--prov) .fia-chip {
   background: color-mix(in srgb, var(--text-title) 6%, transparent) !important;
 }
-/* Dark sheets: the floating material is mid-grey; wells are smoked so words and marks keep their
-   contrast (mock 20/21 dark rules; kit tokens untouched, light unchanged). */
-[data-theme='dark'] :is(.fia-sheet--prov, .fia-sheet--stop) {
-  --fia-kind-plain: var(--on-night-500);
-}
-[data-theme='dark'] :is(.fia-prov-rows, .fia-stop-q, .fia-stop-inside) {
-  background: color-mix(in srgb, var(--surface-app) 50%, transparent) !important;
-}
-[data-theme='dark'] :is(.fia-prov-rows, .fia-stop-q) > span[aria-hidden='true']:first-child {
-  display: none;
-}
+/* Dark sheets: the plain bead takes frame/frame.css's dark --fia-kind-plain, and SH-1's rows and the
+   talk sheet's two wells (.fia-stop-q, .fia-stop-inside) are .fia-well, smoked there (mock 20/21). */
 
 /* ---------- the card's Text view (S08; mock 08 TextCard): edition + replay row, the passage ---------- */
 .fia-reader-tools {
@@ -676,11 +597,11 @@ select.fia-reader-edition {
   padding-bottom: 8px !important;
   line-height: 1.2 !important;
 }
-html[data-text-step] .fia-reader-tools {
+html.fia-scaled .fia-reader-tools {
   flex-direction: column;
   align-items: stretch;
 }
-html[data-text-step] .fia-reader-tools > label {
+html.fia-scaled .fia-reader-tools > label {
   width: 100%;
 }
 .fia-reader-text {
