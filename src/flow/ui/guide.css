@@ -31,16 +31,16 @@
 }
 
 /* ---------- screen layout: one phone screen at 1×, one scrolling column above (PRD § 8.5) ---------- */
-html:not([data-text-step]) .fia-screen[data-screen='S05'] {
+html:not([data-text-step]) .fia-screen:is([data-screen='S05'], [data-screen='S09']) {
   height: 100dvh;
   min-height: 0;
 }
-.fia-screen[data-screen='S05'] > .fia-content {
+.fia-screen:is([data-screen='S05'], [data-screen='S09']) > .fia-content {
   padding-top: 10px;
   padding-bottom: 0;
   overflow: visible;
 }
-html:not([data-text-step]) .fia-screen[data-screen='S05'] > .fia-content {
+html:not([data-text-step]) .fia-screen:is([data-screen='S05'], [data-screen='S09']) > .fia-content {
   flex: 1;
   min-height: 0;
   padding-bottom: 2px;
@@ -341,12 +341,12 @@ html[data-text-step='x310'] .fia-chips {
 }
 
 /* ---------- thumb zone: Back · the big button · Skip (mock Transport, _frame.css:176-201) ---------- */
-.fia-screen[data-screen='S05'] > .fia-thumb {
+.fia-screen:is([data-screen='S05'], [data-screen='S09']) > .fia-thumb {
   position: relative;
   z-index: 1;
   padding: 0 var(--fia-gutter) calc(var(--fia-safe-bottom) + 12px);
 }
-html[data-text-step] .fia-screen[data-screen='S05'] > .fia-thumb {
+html[data-text-step] .fia-screen:is([data-screen='S05'], [data-screen='S09']) > .fia-thumb {
   position: sticky;
   bottom: 0;
   margin-top: 12px;
@@ -621,4 +621,36 @@ html[data-text-step] .fia-screen[data-screen='S05'] > .fia-thumb {
 }
 [data-theme='dark'] :is(.fia-prov-rows, .fia-stop-q) > span[aria-hidden='true']:first-child {
   display: none;
+}
+
+/* ---------- the card's Resources view (S09; mock 09): search, type chips, rows with (i); layout only ---------- */
+.fia-res {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 8px;
+}
+.fia-res > * {
+  flex: none;
+}
+.fia-res__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.fia-res__row {
+  display: flex;
+  align-items: center;
+}
+.fia-res__row > .fia-catalog {
+  flex: 1;
+  min-width: 0;
+}
+.fia-res__row > .fia-catalog[aria-disabled='true'] {
+  cursor: default;
+  opacity: 0.6;
+}
+/* The type chips wrap (mock 09b; spec 09 large print): every type stays in view, nothing scrolls sideways. */
+.fia-res__chips {
+  flex-wrap: wrap;
 }
