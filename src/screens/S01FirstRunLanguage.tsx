@@ -10,7 +10,8 @@ import {
   suggestedLanguages,
 } from '../components/languageRows';
 import { flowSession, useFlow } from '../flow/session';
-import { hasCatalog, setUiLanguage, t } from '../i18n';
+import { hasCatalog, setUiLanguage, t, uiLanguage } from '../i18n';
+import { languageByCode } from '../i18n/languages';
 import {
   browserStore,
   DATA_PATHS,
@@ -96,6 +97,12 @@ export default function S01FirstRunLanguage() {
   const chosen = pick ?? recent ?? device ?? (codes.includes('eng') ? 'eng' : codes[0]);
   const row = languages.find((l) => l.code === chosen);
   const failed = snap.catalogStatus === 'error';
+  // Use mode (01-first-run-language.md:64): the pick changes the content only, so the first-run lede
+  // ("one pick sets the guide and the app") is not shown; a pick other than the menus' language reads
+  // `primary-use-content` with `content-only-note` on the line above it, else `primary-use` (later visit).
+  const ui = uiLanguage();
+  const contentOnly = useMode && row !== undefined && row.code !== ui;
+  const uiName = languageByCode(ui)?.autonym ?? ui;
 
   const choose = (code: string) => {
     session.setLanguage(code);
@@ -123,7 +130,14 @@ export default function S01FirstRunLanguage() {
       titleHidden
       primaryLabel={
         row
-          ? t('s.lang.primary-pick', { language: row.autonym })
+          ? t(
+              contentOnly
+                ? 's.lang.primary-use-content'
+                : useMode
+                  ? 's.lang.primary-use'
+                  : 's.lang.primary-pick',
+              { language: row.autonym },
+            )
           : failed
             ? t('s.lang.primary-retry')
             : t('s.lang.primary-idle')
@@ -141,10 +155,18 @@ export default function S01FirstRunLanguage() {
       <p className="s01-h1 fia-display" aria-hidden="true">
         {t('s.lang.title')}
       </p>
-      <p className="fia-caption-v2 s01-lede">
-        {t('s.lang.lede')}
-        {languages.length > 0 && ` ${t('s.lang.lede-count', { n: languages.length })}`}
-      </p>
+      {useMode ? (
+        languages.length > 0 && (
+          <p className="fia-caption-v2 s01-lede">
+            {t('s.lang.lede-count', { n: languages.length })}
+          </p>
+        )
+      ) : (
+        <p className="fia-caption-v2 s01-lede">
+          {t('s.lang.lede')}
+          {languages.length > 0 && ` ${t('s.lang.lede-count', { n: languages.length })}`}
+        </p>
+      )}
       {languages.length > 0 ? (
         <div className="s01-wrap">
           <LanguagePicker
@@ -190,6 +212,14 @@ export default function S01FirstRunLanguage() {
           {t('s.common.explore.feedback')}
         </GlassButton>
       </div>
+      {contentOnly && (
+        <p
+          className="s01-note fia-type-caption fia-fw-medium fia-tone-body"
+          data-testid="s01-content-only-note"
+        >
+          {t('s.lang.content-only-note', { uiLanguage: uiName })}
+        </p>
+      )}
     </ScreenFrame>
   );
 }

@@ -123,4 +123,53 @@ describe('S01 and the UI language', () => {
     expect(saved()).toMatchObject({ contentLanguage: 'eng', uiLanguage: 'spa' });
     expect(uiLanguage()).toBe('spa');
   });
+
+  // FU-a / FU-b (cookbook 2026-10-03-fia-spanish-ui-strings TICKET.md:24-25).
+  it('Spanish UI: the kit picker chrome reads from the app catalog, not English', async () => {
+    await open('/', 'spa');
+    const text = host.textContent ?? '';
+    for (const en of [
+      'Suggested',
+      'All languages',
+      'AI-translatable',
+      'Available',
+      'Full coverage',
+      'No resources yet',
+    ])
+      expect(text).not.toContain(en);
+    expect(text).toMatch(/Sugeridos/);
+    expect(text).toMatch(/Todos los idiomas/);
+    expect(text).toMatch(/\d+ de \d+/);
+    expect(text).not.toMatch(/\d+ of \d+/);
+    expect(text).toContain('Traducible con IA');
+    expect(host.querySelector('span[title$="· AI-translatable"]')).toBeNull();
+    expect(host.querySelector('span[title$="· traducible con IA"]')).not.toBeNull();
+  });
+
+  it('English UI: the kit chrome keeps its English words', async () => {
+    await open('/', 'eng');
+    const text = host.textContent ?? '';
+    expect(text).toContain('Suggested');
+    expect(text).toContain('All languages');
+    expect(text).toMatch(/\d+ of \d+/);
+  });
+
+  it('first run shows the one-pick lede', async () => {
+    await open('/', 'spa');
+    expect(host.textContent).toContain('Una sola elección define la guía y la app.');
+    expect($('[data-testid="s01-content-only-note"]')).toBeNull();
+  });
+
+  it('use mode: no first-run lede; another content language reads primary-use-content + content-only-note', async () => {
+    await open('/?mode=use', 'spa');
+    expect(host.textContent).not.toContain('Una sola elección');
+    await act(async () => $('[role="radio"][data-code="hau"]')!.click());
+    expect($('[data-testid="s01-content-only-note"]')!.textContent).toBe(
+      'Los menús siguen en Español. Cámbialo en Ajustes.',
+    );
+    expect($('[data-role="primary"]')!.textContent).toContain('para el contenido');
+    await act(async () => $('[role="radio"][data-code="spa"]')!.click());
+    expect($('[data-testid="s01-content-only-note"]')).toBeNull();
+    expect($('[data-role="primary"]')!.textContent).toContain('Usar Español');
+  });
 });
