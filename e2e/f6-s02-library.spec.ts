@@ -58,7 +58,8 @@ test('first visit: hero, counts, book rows on the kit, one primary "Open Mark"',
   );
   const mark = screen.locator('button[data-book="MRK"]');
   await expect(mark).toContainText('68 passages');
-  await expect(mark).toContainText('Text · voice not yet');
+  // Mark 1:1–13 plays the stand-in's AI-voiced clips: AI narration is always marked (C-06).
+  await expect(mark).toContainText('AI voice');
   await expect(screen.locator('[data-role="resume"]')).toHaveCount(0);
   const primary = page.locator('[data-role="primary"]');
   await expect(primary).toHaveCount(1);

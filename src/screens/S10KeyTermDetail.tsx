@@ -1,7 +1,11 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { AbsentBadge, AudioControls, ProvenanceMark, SecondaryAction } from '../components';
+import { AudioControls, LayerHead } from '../components';
+import { GlassButton, GlassSurface, Icon } from '../components/glass';
+import { ProvenanceChip } from '../components/ProvenanceMark';
+import { iconSize, useTextScale } from '../flow/ui/guideKit';
 import { t } from '../i18n';
 import { languageName } from '../media/lang';
+import { markWords } from '../media/marks';
 import { markFor, selectNarration } from '../media/provenance';
 import { findTerm, htmlToParagraphs, type ResourcesPack } from '../media/resources';
 import { PROVENANCE_SHEET_PATH, type ProvenanceSheetState } from '../media/sheet';
@@ -11,14 +15,21 @@ import { ScreenFrame } from './ScreenFrame';
 
 // S10 — Key term detail (spec 10): text + audio + provenance (R-505, R-313). Opening never
 // starts audio (R-407). Only source clips exist today; AI term narration is a marked slot (Bide).
+// F6-S10 glass (nodded mock design/alpha-v2-screens/10-key-term.html, Layer frame): the way back
+// in the glass header (ScreenFrame `close`), the term set large led by its ◆ bead with the kind
+// line under it (LayerHead), the marks as ProvenanceChips (kit GlassChip → sheet 20), the
+// definition on one kit GlassSurface card, then the time line above the one primary. Composed
+// only from the kit and the shared app layer; this screen adds no CSS (RULING ~20:05 ET).
 export default function S10KeyTermDetail() {
   const [params] = useSearchParams();
   const nav = useNavigate();
+  const scale = useTextScale();
   const packId = params.get('pack') ?? DEFAULT_PACK;
   const id = params.get('id') ?? '';
   const unit = params.get('unit');
   const fromResources = params.get('from') === 'resources';
   const lang = packLanguage(packId);
+  const language = languageName(lang);
   const online = useOnline();
   const res = usePackFile<ResourcesPack>(packId, 'resources');
   const term = res.status === 'ready' ? findTerm(res.data, id) : undefined;
@@ -41,7 +52,7 @@ export default function S10KeyTermDetail() {
       slot: domain === 'text' ? term?.text : term?.audio,
       englishShown: domain === 'text' && markFor(term?.text, 'text') === 'absent',
       typeKey: 'terms',
-      language: languageName(lang),
+      language,
     };
     nav(PROVENANCE_SHEET_PATH, { state });
   };
@@ -55,62 +66,95 @@ export default function S10KeyTermDetail() {
           ? t('s.term.primary-again')
           : t('s.term.primary-play');
   const textMark = markFor(term?.text, 'text');
+  const audioShown = choice.clip ? choice.mark : 'absent';
   return (
     <ScreenFrame
       id="S10"
       title={term?.title ?? t('s.common.loading')}
+      titleHidden={!!term}
+      close={{
+        label:
+          fromResources || !unit
+            ? t('s.term.close-back-resources')
+            : t('s.term.close-back', { n: unit }),
+        onPress: back,
+      }}
       offline={!online}
       primaryLabel={primary}
       primaryState={clip.phase === 'playing' ? 'playing' : 'default'}
       onPrimary={clip.toggle}
     >
-      <SecondaryAction
-        label={
-          fromResources || !unit
-            ? t('s.term.close-back-resources')
-            : t('s.term.close-back', { n: unit })
-        }
-        onPress={back}
-      />
-      <p className="fia-caption">{t('s.term.kind')}</p>
       {res.status === 'error' && (
-        <div role="alert">
-          <p>{t('s.resources.error')}</p>
-          <SecondaryAction label={t('s.common.try-again')} onPress={res.retry} />
-        </div>
+        <GlassSurface level={2} blur="medium" radius="lg" shadow="rest" className="fia-layer-card">
+          <div role="alert">
+            <p>{t('s.resources.error')}</p>
+            <GlassButton
+              variant="glass"
+              leading={<Icon name="update" size={iconSize(18, scale)} />}
+              onClick={res.retry}
+            >
+              {t('s.common.try-again')}
+            </GlassButton>
+          </div>
+        </GlassSurface>
       )}
       {res.status === 'ready' && !term && (
-        <div role="alert">
-          <p>{t('s.resources.error')}</p>
-        </div>
+        <GlassSurface level={2} blur="medium" radius="lg" shadow="rest" className="fia-layer-card">
+          <p role="alert">{t('s.resources.error')}</p>
+        </GlassSurface>
       )}
       {term && (
         <>
-          <ProvenanceMark
-            provenance={textMark}
-            language={languageName(lang)}
-            onInfo={() => openSheet('text')}
+          <LayerHead
+            kind="term"
+            beadOn="title"
+            kindLine={t('s.term.kind')}
+            title={term.title}
+            scale={scale}
           />
-          {textMark === 'absent' && <AbsentBadge language={languageName(lang)} />}
-          <div className="fia-text fia-text--guide" dir="auto" lang={lang}>
+          <div className="fia-chips">
+            <ProvenanceChip
+              provenance={textMark}
+              words={
+                textMark === 'absent'
+                  ? t('s.term.english-fallback', { language })
+                  : markWords(textMark, language)
+              }
+              iconSize={iconSize(14, scale)}
+              onInfo={() => openSheet('text')}
+            />
+            {/* one chip when text and recording carry the same mark (mock: one chip); else both */}
+            {audioShown !== textMark && (
+              <ProvenanceChip
+                provenance={audioShown}
+                words={markWords(audioShown, language)}
+                iconSize={iconSize(14, scale)}
+                onInfo={() => openSheet('audio')}
+              />
+            )}
+          </div>
+          <GlassSurface
+            level={2}
+            blur="medium"
+            radius="lg"
+            shadow="rest"
+            className="fia-layer-card fia-text fia-text--guide"
+            dir="auto"
+            lang={lang}
+          >
             {htmlToParagraphs(term.text.html ?? '').map((p, i) => (
               <p key={i}>{p}</p>
             ))}
-          </div>
-          {choice.clip ? (
+          </GlassSurface>
+          {choice.clip && (
             <AudioControls
+              className="fia-layer-audio"
+              hideMark
               provenance={choice.mark}
               elapsedSec={clip.elapsed}
               totalSec={clip.duration}
               onSeek={clip.seek}
-              onMarkInfo={() => openSheet('audio')}
               state={clip.playing ? 'playing' : clip.error ? 'error' : 'default'}
-            />
-          ) : (
-            <ProvenanceMark
-              provenance="absent"
-              language={languageName(lang)}
-              onInfo={() => openSheet('audio')}
             />
           )}
           {clip.error && <p role="alert">{t('s.term.error')}</p>}

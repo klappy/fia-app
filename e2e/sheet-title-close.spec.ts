@@ -45,9 +45,9 @@ for (const width of [390, 320]) {
     });
   }
 
-  // rev32b-1420 note 2: the longer multi-stop title ("You would pass {k} discussion stops") only
-  // shows over S07 when the forward jump passes more than one un-discussed stop.
-  test(`SH-5 multi-stop forward-jump title clears the Close button at ${width} wide`, async ({
+  // rev32b-1420 note 2, v2 (F6-S24, mock 24): the multi-stop jump has no Close (its quiet "Stay here"
+  // is the way out); its title stays on the logo's row and the brand row reserves no Close padding.
+  test(`SH-5 multi-stop forward-jump title stays beside the logo at ${width} wide`, async ({
     page,
   }) => {
     await page.setViewportSize({ width, height: 844 });
@@ -61,9 +61,14 @@ for (const width of [390, 320]) {
     const dialog = page.locator('[role="dialog"].fia-sheet--stop');
     await expect(dialog).toBeVisible();
     await expect(dialog.locator('.fia-sheet-brand > span')).toHaveText(
-      /^You would pass \d+ discussion stops$/,
+      /^Jump to step \d+, part \d+\?$/,
     );
-    await expectTitleClearsClose(dialog);
+    await expect(dialog).toContainText(/You would skip \d+ talks\./);
+    await expect(dialog.locator('.fia-sheet__close')).toHaveCount(0);
+    const title = (await dialog.locator('.fia-sheet-brand > span').boundingBox())!;
+    const logo = (await dialog.locator('.fia-sheet-brand > .fia-logo').boundingBox())!;
+    expect(title.x).toBeGreaterThanOrEqual(logo.x + logo.width);
+    expect(title.x + title.width).toBeLessThanOrEqual(width);
   });
 }
 

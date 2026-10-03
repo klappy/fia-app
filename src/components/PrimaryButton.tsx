@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { CountdownRing, DotRing, GlassButton, Icon, type KitIconName } from './glass';
 import { stateAttrs, type StateProps } from './types';
+import './actions.css';
 
 // primary-button.md — the one action at the thumb slot. Position and width never change;
 // only fill, icon and label change between states. One per screen (`data-role="primary"`).
@@ -142,10 +143,12 @@ export interface KitPrimaryProps {
   /** leading kit glyph (icon + label, PRD § 5 rule 7) */
   icon?: KitIconName;
   onPress?: () => void;
+  /** Shown but not actionable (offline: "Update (3 MB) — needs connection", 22 spec States). */
+  disabled?: boolean;
 }
 
 /** The primary everywhere else (PRD § 8.2): kit GlassButton dark, full, lg, at least 56 px. */
-export function KitPrimary({ label, icon, onPress }: KitPrimaryProps) {
+export function KitPrimary({ label, icon, onPress, disabled }: KitPrimaryProps) {
   return (
     <GlassButton
       variant="dark"
@@ -155,7 +158,9 @@ export function KitPrimary({ label, icon, onPress }: KitPrimaryProps) {
       data-role="primary"
       data-fia-primary=""
       leading={icon ? <Icon name={icon} size={18} /> : undefined}
-      onClick={onPress}
+      disabled={disabled}
+      data-state={disabled ? 'disabled' : undefined}
+      onClick={disabled ? undefined : onPress}
     >
       {label}
     </GlassButton>
