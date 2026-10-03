@@ -113,7 +113,7 @@ function SavedCard({
         />
       )}
       {confirm ? (
-        <div className="fia-dl__confirm" role="alertdialog">
+        <div className="fia-dl__band" role="alertdialog">
           <p>{t('s.downloads.remove-confirm', { ref, size: mb(p.bytes) })}</p>
           <div className="fia-dl__row">
             <QuietAction

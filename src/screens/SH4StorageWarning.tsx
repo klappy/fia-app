@@ -84,7 +84,7 @@ export default function SH4StorageWarning() {
                     })}
                   </span>
                   {confirm === p.packId ? (
-                    <div className="fia-dl__confirm" role="alertdialog">
+                    <div className="fia-dl__band" role="alertdialog">
                       <p>{t('s.storage.remove-confirm', { ref, size })}</p>
                       <div className="fia-dl__row">
                         <QuietAction
