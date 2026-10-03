@@ -125,7 +125,7 @@ export default function S06SingleScript() {
 
   if (!guide || !state || !unitId) {
     return (
-      <ScreenFrame id="S06" primaryLabel={null} titleHidden>
+      <ScreenFrame frame="guide" id="S06" primaryLabel={null} titleHidden>
         <FlowGate
           status={snap.guideStatus}
           hasPack={!!snap.packId}
@@ -227,6 +227,7 @@ export default function S06SingleScript() {
 
   return (
     <ScreenFrame
+      frame="guide"
       id="S06"
       title={guide.title}
       titleHidden

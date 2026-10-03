@@ -214,6 +214,7 @@ export default function S03PericopeList() {
   return (
     <ScreenFrame
       id="S03"
+      titleHidden
       title={book}
       primaryLabel={primaryLabel}
       primaryState={primaryState}

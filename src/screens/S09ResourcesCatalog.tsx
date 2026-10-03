@@ -154,6 +154,7 @@ export default function S09ResourcesCatalog() {
   if (all)
     return (
       <ScreenFrame
+        frame="guide"
         id="S09"
         title={title}
         offline={!online}
@@ -217,7 +218,14 @@ export default function S09ResourcesCatalog() {
   );
 
   return (
-    <ScreenFrame id="S09" title={title} titleHidden offline={!online} primaryLabel={null}>
+    <ScreenFrame
+      frame="guide"
+      id="S09"
+      title={title}
+      titleHidden
+      offline={!online}
+      primaryLabel={null}
+    >
       <div className="fia-guide fia-guide--resources">
         {guide && guideUnit && <ProgressBand guide={guide} unitId={guideUnit} scale={scale} />}
         <GlassSurface level={2} blur="strong" radius="2xl" shadow="card" className="fia-guide-card">

@@ -24,6 +24,7 @@ import {
   type PartItem,
 } from './guideKit';
 import './guide.css';
+import { kindColor } from '../../frame/kinds';
 
 // ── progress band ────────────────────────────────────────────────────────────────────────────────
 
@@ -234,7 +235,7 @@ export function PartChips({
                 kind={it.kind === 'term' ? 'term' : 'media'}
                 state="done"
                 size={9 * Math.min(scale, 2)}
-                color={it.kind === 'term' ? 'var(--fia-kind-term)' : 'var(--fia-kind-media)'}
+                color={kindColor(it.kind === 'term' ? 'term' : 'media')}
               />
             }
           >

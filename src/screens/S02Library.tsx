@@ -28,6 +28,8 @@ import {
 } from './libraryModel';
 import { ScreenFrame } from './ScreenFrame';
 import './S02Library.css';
+import { KINDS } from '../frame/kinds';
+import { keepRef } from '../frame/text';
 
 // S02 Library (02-library.md; R-303, R-410, R-702, R-706) in glass, F6-S02. Nodded mock
 // design/alpha-v2-screens/02-library.html (Home frame): hero "Library" and a count line, kit
@@ -38,9 +40,6 @@ import './S02Library.css';
 
 /** Counts read "1,497" (the strings are English today; the plural word is chosen by `n`). */
 const num = (n: number) => n.toLocaleString('en');
-
-/** "Mark 1:1–13" never breaks at the dash (mock _frame.js:83). */
-const keepRef = (s: string) => s.replace(/–/g, '\u2060–\u2060');
 
 /** 200% and 310% text (mock html.fia-big): live from <html data-text-step> (settings/apply.ts). */
 const BIG_STEPS = new Set(['x200', 'x310']);
@@ -64,16 +63,6 @@ function tailWords(tail: RecapTail): string {
       return t('s.library.tail.step-ends', { n: tail.n });
   }
 }
-
-// Bead colours: the app's --fia-kind-* tokens (PRD § 8.3) with the F5 values as fallbacks, so the
-// recap reads the same before and after the guide's tokens load. Shapes stay the kit's.
-const KINDS = {
-  plain: { shape: 'circle', color: 'var(--s02-kind-plain)' },
-  scripture: { shape: 'square', color: 'var(--s02-kind-scripture)' },
-  term: { shape: 'diamond', color: 'var(--s02-kind-term)' },
-  stop: { shape: 'bar', color: 'var(--s02-kind-stop)' },
-  end: { shape: 'bars', color: 'var(--s02-kind-stop)' },
-} as const;
 
 /** Per-book meta (mock BookMeta): saved count, voice line (PoC floor a1), passage count. */
 function BookMeta({
@@ -306,7 +295,11 @@ export default function S02Library() {
             <div className="s02-resume__top">
               <span className="fia-overline s02-overline">{t('s.library.resume-overline')}</span>
               {savedIds.has(resumeEntry.packId) && (
-                <SyncBadge state="ok" label={t('s.common.explore.saved')} className="s02-badge" />
+                <SyncBadge
+                  state="ok"
+                  label={t('s.common.explore.saved')}
+                  className="fia-badge s02-badge"
+                />
               )}
             </div>
             <p className="s02-resume__title">

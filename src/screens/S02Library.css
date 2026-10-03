@@ -36,11 +36,6 @@
   padding-top: var(--sp-4) !important;
   padding-bottom: var(--sp-4) !important;
 }
-/* kit CatalogRow title literal 15px (CatalogRow.jsx:8) scales with the text size (PRD § 8.5) */
-.s02-well .fia-catalog > div:first-child > div[dir] {
-  font-size: calc(15px * var(--fia-text-scale)) !important;
-  line-height: 1.3 !important;
-}
 
 /* The book name keeps its own width; the meta takes the rest of the row and wraps at the end edge, so
    a wide "◌ not yet in {language}" mark (#55) never squeezes the title (kit CatalogRow's
@@ -52,7 +47,7 @@
 /* At 1× with a resume card, the book list scrolls inside its well so "Where you left off" stays on the
    first screen (02-library.md § Layout: the list region ends above the card; the card is not sticky).
    Above 1× the page is one scrolling column (PRD § 8.5): no inner scroll. */
-:root:not([data-text-step]) .s02-books--bounded .s02-list {
+:root:not(.fia-scaled) .s02-books--bounded .s02-list {
   max-height: calc(var(--sp-1) + 5.5 * 48px); /* half a row shows that the list scrolls */
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -97,24 +92,24 @@
 }
 
 /* Large text (mock html.fia-big, 200%+): each book row stacks its title over its meta. */
-:root:is([data-text-step='x200'], [data-text-step='x310']) .s02-well .fia-catalog {
+:root.fia-big .s02-well .fia-catalog {
   grid-template-columns: minmax(0, 1fr) !important;
   gap: var(--sp-4) !important;
   padding-left: 10px !important;
   padding-right: 6px !important;
 }
-:root:is([data-text-step='x200'], [data-text-step='x310']) .s02-well .fia-catalog > div:last-child {
+:root.fia-big .s02-well .fia-catalog > div:last-child {
   align-items: flex-start !important;
 }
-:root:is([data-text-step='x200'], [data-text-step='x310']) .s02-meta {
+:root.fia-big .s02-meta {
   justify-content: flex-start;
   text-align: start;
 }
-:root:is([data-text-step='x200'], [data-text-step='x310']) .s02-search > div {
+:root.fia-big .s02-search > div {
   min-height: 56px;
   padding-block: var(--sp-3) !important;
 }
-:root:is([data-text-step='x200'], [data-text-step='x310']) .s02-search svg {
+:root.fia-big .s02-search svg {
   width: 36px;
   height: 36px;
 }
@@ -126,17 +121,8 @@
 
 /* Where you left off (display only; the primary is the one way on). */
 .s02-resume {
-  --s02-kind-plain: var(--fia-kind-plain, #6e7787);
-  --s02-kind-scripture: var(--fia-kind-scripture, var(--text-title));
-  --s02-kind-term: var(--fia-kind-term, var(--accent-blue));
-  --s02-kind-stop: var(--fia-kind-stop, var(--accent-red));
   padding: var(--sp-6) var(--sp-8) var(--sp-7);
   margin-top: var(--sp-2);
-}
-[data-theme='dark'] .s02-resume {
-  --s02-kind-plain: var(--fia-kind-plain, var(--on-night-500));
-  --s02-kind-term: var(--fia-kind-term, var(--accent-blue-soft));
-  --s02-kind-stop: var(--fia-kind-stop, #ff6b73);
 }
 .s02-resume__body {
   position: relative;
@@ -164,7 +150,7 @@
 /* Kit StageRail segments and BeadStrip capsules paint --text-dim; re-point it to the plain-part token
    (3:1 or more on the card) inside the recap only. */
 .s02-recap {
-  --text-dim: var(--s02-kind-plain);
+  --text-dim: var(--fia-kind-plain);
   display: grid;
   gap: var(--sp-4);
 }
@@ -175,12 +161,6 @@
 .s02-badge {
   max-width: 100%;
   white-space: normal !important;
-}
-/* Dark badge: never lighter than its card (mock _frame.css:131). */
-[data-theme='dark'] .s02-badge {
-  background: var(--glass-fill-1) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
 }
 
 /* States */

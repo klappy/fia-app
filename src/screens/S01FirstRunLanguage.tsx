@@ -105,6 +105,7 @@ export default function S01FirstRunLanguage() {
   return (
     <ScreenFrame
       id="S01"
+      titleHidden
       primaryLabel={
         row
           ? t('s.lang.primary-pick', { language: row.autonym })
@@ -119,10 +120,7 @@ export default function S01FirstRunLanguage() {
       }}
     >
       <div className="s01-hero">
-        <span className="s01-logo">
-          <FiaLogo size={44} />
-        </span>
-        <p className="s01-qualifier">{t('s.about.qualifier')}</p>
+        <FiaLogo size={44} qualifier />
       </div>
       {/* The frame's h1 carries the same words for screen readers; this is the mock's display title. */}
       <p className="s01-h1" aria-hidden="true">

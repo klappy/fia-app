@@ -169,7 +169,7 @@ function SourceRow({
   return (
     <li className="fia-about__source" data-open={open || undefined}>
       <CatalogRow
-        className="fia-about__row"
+        className="fia-catalog fia-about__row"
         first={first}
         onOpen={() => onToggle(id)}
         aria-expanded={open}
@@ -302,16 +302,13 @@ export default function S15AboutRights() {
           className="fia-about__hero"
         >
           <div className="fia-about__id">
-            <span className="fia-about__logo">
-              <FiaLogo size={44} />
-            </span>
-            <p className="fia-about__qualifier">{t('s.about.qualifier')}</p>
+            <FiaLogo size={44} qualifier />
           </div>
         </GlassSurface>
 
         <Group id="s15-app" title={t('s.about.this-app')}>
           <CatalogRow
-            className="fia-about__row"
+            className="fia-catalog fia-about__row"
             first
             onOpen={() => go('/install?from=about')}
             title={

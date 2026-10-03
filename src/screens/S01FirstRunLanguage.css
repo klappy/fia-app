@@ -11,16 +11,6 @@
 .fia-screen[data-screen='S01']:not([data-offline]) > .fia-header-wrap {
   display: none;
 }
-.fia-screen[data-screen='S01'] > .fia-screen__title {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
 .fia-screen[data-screen='S01'] > .fia-content {
   gap: 0;
 }
@@ -30,17 +20,6 @@
   align-items: center;
   gap: var(--sp-4);
   padding-top: var(--sp-7);
-}
-.s01-logo {
-  display: inline-flex;
-  color: var(--fia-brand, var(--text-title));
-}
-.s01-qualifier {
-  margin: 0;
-  font: var(--fw-semibold) var(--fs-label) / 1.25 var(--font-core);
-  letter-spacing: 0.04em;
-  color: var(--text-muted);
-  text-align: center;
 }
 /* Capped so 'language' fits 358 px at 310% (mock .s01-h1). */
 .s01-h1 {
@@ -102,28 +81,28 @@
 
 /* 1× (Follows phone): one screen, as the mock — the picker takes the rest and its list scrolls inside
    (kit behaviour, 17 languages); on a short phone the list keeps three rows and the content scrolls. */
-:root:not([data-text-step]) .fia-screen[data-screen='S01'] {
+:root:not(.fia-scaled) .fia-screen[data-screen='S01'] {
   height: 100dvh;
 }
-:root:not([data-text-step]) .fia-screen[data-screen='S01'] > .fia-content {
+:root:not(.fia-scaled) .fia-screen[data-screen='S01'] > .fia-content {
   flex: 1;
   min-height: 0;
 }
-:root:not([data-text-step]) .s01-wrap,
-:root:not([data-text-step]) .s01-wrap .fia-lp-wrap,
-:root:not([data-text-step]) .s01-wrap .fia-lp {
+:root:not(.fia-scaled) .s01-wrap,
+:root:not(.fia-scaled) .s01-wrap .fia-lp-wrap,
+:root:not(.fia-scaled) .s01-wrap .fia-lp {
   flex: 1 1 0;
   display: flex;
   flex-direction: column;
 }
-:root:not([data-text-step]) .s01-wrap .fia-lp > div:nth-of-type(3) {
+:root:not(.fia-scaled) .s01-wrap .fia-lp > div:nth-of-type(3) {
   flex: 1 1 0;
   min-height: 176px;
   max-height: none !important;
 }
 
 /* Above 1×: the page scrolls, so the list flows in the page (no nested scroller). */
-:root[data-text-step] .s01-wrap .fia-lp > div:nth-of-type(3) {
+:root.fia-scaled .s01-wrap .fia-lp > div:nth-of-type(3) {
   max-height: none !important;
   overflow: visible !important;
 }

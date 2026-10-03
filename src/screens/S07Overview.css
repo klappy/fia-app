@@ -66,55 +66,6 @@
 }
 
 /* ---------- legend card: a smoked kit GlassSurface well (mock :144-150, _frame.css:196-204) ---------- */
-.fia-well.s07-legend {
-  margin-top: 2px;
-  padding: 10px 14px;
-}
-.s07-legend__inner {
-  position: relative;
-}
-.s07-legend__title {
-  margin-bottom: 6px;
-  font: var(--fw-semibold) var(--fs-label) / 1.25 var(--font-core);
-  color: var(--text-title);
-}
-.s07-legend__grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 3px 12px;
-}
-.s07-page.is-big .s07-legend__grid {
-  grid-template-columns: 1fr;
-}
-.s07-legend__item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font: var(--fw-medium) var(--fs-label) / 1.25 var(--font-core);
-  color: var(--text-title);
-}
-.s07-legend__mark {
-  width: calc(24px * min(var(--fia-text-scale), 2.4));
-  display: flex;
-  justify-content: center;
-  flex: none;
-}
-.s07-legend__seg {
-  width: calc(24px * min(var(--fia-text-scale), 2.4));
-}
-.s07-legend__states {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 2px 10px;
-  margin: 8px 0 0;
-}
-.s07-legend__state {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-
 /* ---------- step rows: badge · title + words + beads · chevron (mock :33-44) ---------- */
 .s07-steps {
   margin-top: 6px;
@@ -163,7 +114,6 @@
 /* Captions in the mock's face and --text-muted (mock _frame.css:74), not the v1 .fia-caption tokens
    (app.css: --fia-text-muted read 3.9:1 on the dark sheet). */
 .s07-step__words,
-.s07-legend__states,
 .s07-ai {
   font: var(--fw-medium) var(--fs-caption) / 1.3 var(--font-core);
   color: var(--text-muted);
@@ -297,12 +247,6 @@
 }
 [data-theme='dark'] .s07-talk {
   color: var(--text-title);
-}
-[data-theme='dark'] .fia-well.s07-legend {
-  background: color-mix(in srgb, var(--surface-app) 50%, transparent) !important;
-}
-[data-theme='dark'] .fia-well.s07-legend > span[aria-hidden='true']:first-child {
-  display: none;
 }
 
 /* The shared KitPrimary draws its glyph at a fixed 18 px; on this sheet it follows the text step like

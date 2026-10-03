@@ -5,6 +5,7 @@ import { t } from '../../i18n';
 import type { PackMedia, PackTerm, ResourcesPack } from '../../media/resources';
 import type { GuideUnit } from '../types';
 import { CUE_MEDIA, type BandModel, type Tail } from './band';
+import { keepNumber, keepRef, NB } from '../../frame/text';
 
 // ── text scale (C-10 text size → html[data-text-step], settings/apply.ts) ────────────────────────────
 
@@ -27,11 +28,8 @@ export function useTextScale(): number {
 /** Icon box: base × min(scale, 2) (mock iconSz, _frame.js:41). */
 export const iconSize = (base: number, scale: number) => Math.round(base * Math.min(scale, 2));
 
-export const NB = '\u00a0';
-/** "Mark 1:1–13" never breaks at the dash (mock _frame.js:83). */
-export const keepRef = (title: string) => title.replace(/–/g, '\u2060–\u2060');
-/** "part 7" never breaks before the number. */
-const keepNumber = (s: string) => s.replace(/ (\d+)$/, `${NB}$1`);
+// NB, keepRef and keepNumber are the shared layer's (frame/text.ts); re-exported for the guide's parts.
+export { NB, keepRef };
 
 export function tailWords(tail: Tail): string {
   switch (tail.kind) {

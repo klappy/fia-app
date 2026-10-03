@@ -1,34 +1,19 @@
-import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MoreSheet } from '../components';
 import { FiaLogo } from '../components/FiaLogo';
-import {
-  AuroraField,
-  Bead,
-  BeadStrip,
-  GlassButton,
-  GlassSheet,
-  GlassSurface,
-  Icon,
-  StageRail,
-} from '../components/glass';
+import { AuroraField, Bead, BeadStrip, GlassButton, GlassSheet, Icon } from '../components/glass';
 import { KitPrimary } from '../components/PrimaryButton';
 import { stopsPassed } from '../flow/model';
-import type { BeadKind } from '../flow/ui/band';
 import { FlowGate } from '../flow/ui/GuideChrome';
-import { iconSize, keepRef, NB, useTextScale } from '../flow/ui/guideKit';
+import { iconSize, keepRef, useTextScale } from '../flow/ui/guideKit';
+import { LegendWell } from '../frame/BeadLegend';
+import { keepNumber } from '../frame/text';
 import { useGuide } from '../flow/ui/useGuide';
 import type { GuideStop } from '../flow/types';
 import { t } from '../i18n';
 import { ForwardJumpSheet } from './SH5ForwardJumpGuard';
-import {
-  guideMap,
-  MAP_KINDS,
-  stepBeads,
-  type GuideMap,
-  type MapPart,
-  type MapStep,
-} from './S07Overview.map';
+import { guideMap, MAP_KINDS, stepBeads, type MapPart, type MapStep } from './S07Overview.map';
 import './S07Overview.css';
 
 // S07 Whole guide map, v2 (BUILD-ORDER F6-S07; nodded mock cookbook design/alpha-v2-screens/07-overview.html;
@@ -40,97 +25,11 @@ import './S07Overview.css';
 // 21:23 ET (a)). Kept bones (R-412, 07-overview.md): a jump back is free; a jump forward past an
 // un-discussed talk asks once per talk (sheet 24, SH5ForwardJumpGuard, imported as is).
 
-const LEGEND: { kind: BeadKind; key: string }[] = [
-  { kind: 'plain', key: 's.legend.plain' },
-  { kind: 'scripture', key: 's.legend.scripture' },
-  { kind: 'term', key: 's.legend.term' },
-  { kind: 'media', key: 's.legend.media' },
-  { kind: 'stop', key: 's.legend.stop' },
-  { kind: 'end', key: 's.legend.end' },
-];
 const STATE_KEY = {
   done: 's.legend.state.heard',
   current: 's.legend.state.here',
   upcoming: 's.legend.state.ahead',
 } as const;
-
-/** "part 7" never breaks before its number. */
-const keepNumber = (s: string) => s.replace(/ (\d+)$/, `${NB}$1`);
-
-/** "What the marks mean": the kinds this guide draws, the band's two marks, then the four states. */
-function Legend({ map, scale }: { map: GuideMap; scale: number }) {
-  const b = 10 * Math.min(scale, 2.4);
-  const item = (key: string, mark: ReactNode, words: string) => (
-    <div key={key} className="s07-legend__item" role="listitem">
-      <span className="s07-legend__mark" aria-hidden="true">
-        {mark}
-      </span>
-      <span>{words}</span>
-    </div>
-  );
-  const state = (key: string, mark: ReactNode, words: string) => (
-    <span key={key} className="s07-legend__state">
-      <span aria-hidden="true">{mark}</span>
-      {words}
-    </span>
-  );
-  return (
-    <GlassSurface
-      level={3}
-      blur="soft"
-      radius="xl"
-      shadow="none"
-      className="fia-well s07-legend"
-      role="group"
-      aria-labelledby="s07-legend-title"
-    >
-      <div className="s07-legend__inner">
-        <div className="s07-legend__title" id="s07-legend-title">
-          {t('s.legend.title')}
-        </div>
-        <div className="s07-legend__grid" role="list">
-          {LEGEND.filter((l) => map.kinds.has(l.kind)).map((l) =>
-            item(l.kind, <Bead kind={l.kind} kinds={MAP_KINDS} state="done" size={b} />, t(l.key)),
-          )}
-          {item(
-            'step',
-            <StageRail
-              className="fia-rail__steps s07-legend__seg"
-              stages={[{ title: '' }]}
-              current={0}
-              progress={0.5}
-              height={6 * Math.min(scale, 1.67)}
-            />,
-            t('s.legend.step', { n: map.steps.length }),
-          )}
-          {item('stretch', <BeadStrip items={[]} after={1} size={b} />, t('s.legend.stretch'))}
-        </div>
-        <div className="s07-legend__states">
-          {state(
-            'heard',
-            <Bead kind="term" kinds={MAP_KINDS} state="done" size={b} />,
-            t('s.legend.state.heard'),
-          )}
-          {state(
-            'ahead',
-            <Bead kind="term" kinds={MAP_KINDS} state="upcoming" size={b} />,
-            t('s.legend.state.ahead'),
-          )}
-          {state(
-            'here',
-            <Bead kind="term" kinds={MAP_KINDS} state="current" size={7 * Math.min(scale, 2.4)} />,
-            t('s.legend.state.here'),
-          )}
-          {state(
-            'more',
-            <Bead kind="term" kinds={MAP_KINDS} state="done" size={b} more />,
-            t('s.legend.state.more'),
-          )}
-        </div>
-      </div>
-    </GlassSurface>
-  );
-}
 
 function PartRow({
   part,
@@ -423,7 +322,12 @@ export default function S07Overview() {
                     {t('s.overview.whole-guide-ai')}
                   </p>
                 )}
-                <Legend map={map} scale={scale} />
+                <LegendWell
+                  kinds={map.kinds}
+                  steps={map.steps.length}
+                  scale={scale}
+                  id="s07-legend-title"
+                />
                 <div className="s07-steps">
                   {map.steps.map((st) => (
                     <StepRow

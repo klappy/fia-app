@@ -1,3 +1,5 @@
+import { t } from '../i18n';
+
 // The FIA lockup (PRD § 8.4): official mark + wordmark. Paths are copied byte for byte by script from
 // klappy/fia-functional-poc @62a979f src/components/FiaBrand.jsx:2-3 (fia.bible/about; hashes in the
 // cookbook's evidence/b2/BRAND-SOURCES.json); never retype them. Geometry from the PoC header
@@ -16,8 +18,12 @@ const S2 = 20 / 151.29;
 const SYM_W = 300 * S1;
 const LOCK_W = SYM_W + 6 + 300 * S2;
 
-export function FiaLogo({ size = 22 }: { size?: number }) {
-  return (
+/**
+ * The lockup; `qualifier` sets the line under it (mock FiaLogo qualifier, design/alpha-v2-screens/_frame.js:77-78;
+ * .fia-qualifier in frame/frame.css), as S01 and S15 show it. The parent lays the two out.
+ */
+export function FiaLogo({ size = 22, qualifier }: { size?: number; qualifier?: boolean }) {
+  const svg = (
     <svg
       className="fia-logo"
       viewBox={`0 0 ${LOCK_W.toFixed(2)} 22`}
@@ -40,5 +46,12 @@ export function FiaLogo({ size = 22 }: { size?: number }) {
         </g>
       </g>
     </svg>
+  );
+  if (!qualifier) return svg;
+  return (
+    <>
+      {svg}
+      <p className="fia-qualifier">{t('s.about.qualifier')}</p>
+    </>
   );
 }

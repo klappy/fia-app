@@ -62,15 +62,12 @@
 
 /* Above 1× (PRD § 8.5; mock html.fia-big → is-vertical): the cells become a vertical list, icon beside
    the word. From Larger (150%) too: three cells with a word and a size no longer fit 390 px there. */
-:root:is([data-text-step='x150'], [data-text-step='x200'], [data-text-step='x310'])
-  .fia-tierpick__cells {
+:root.fia-scaled .fia-tierpick__cells {
   flex-direction: column !important;
   border-radius: var(--r-xl) !important;
   gap: 4px;
 }
-:root:is([data-text-step='x150'], [data-text-step='x200'], [data-text-step='x310'])
-  .fia-tierpick__cells
-  [role='radio'] {
+:root.fia-scaled .fia-tierpick__cells [role='radio'] {
   flex: none !important;
   width: 100%;
   min-height: 56px !important;
@@ -78,8 +75,7 @@
   justify-content: flex-start;
   padding: 8px 16px !important;
 }
-:root:is([data-text-step='x150'], [data-text-step='x200'], [data-text-step='x310'])
-  .fia-tierpick__cell {
+:root.fia-scaled .fia-tierpick__cell {
   justify-content: flex-start;
   gap: 14px;
 }

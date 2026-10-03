@@ -111,7 +111,7 @@ export function SaveRow({ ctl, intent, onStart, onSeeDownloads }: SaveRowProps) 
   if (rowState.state === 'saving') {
     badge = (
       <SyncBadge
-        className="fia-savecard__badge"
+        className="fia-badge fia-savecard__badge"
         state="syncing"
         data-testid="saving-line"
         role="status"
@@ -132,7 +132,7 @@ export function SaveRow({ ctl, intent, onStart, onSeeDownloads }: SaveRowProps) 
     const withVoice = !!pack.tier && pack.tier !== 'text';
     badge = (
       <SyncBadge
-        className="fia-savecard__badge"
+        className="fia-badge fia-savecard__badge"
         state="ok"
         data-testid="save-badge"
         label={t(withVoice ? 's.passage.saved-badge.voice' : 's.passage.saved-badge.text')}
@@ -148,7 +148,7 @@ export function SaveRow({ ctl, intent, onStart, onSeeDownloads }: SaveRowProps) 
   } else if (rowState.state === 'partial' && pack) {
     badge = (
       <SyncBadge
-        className="fia-savecard__badge"
+        className="fia-badge fia-savecard__badge"
         state="offline"
         data-testid="save-badge"
         label={t('s.common.mark.partial', { saved: pack.savedFiles ?? 0, total: pack.files ?? 0 })}

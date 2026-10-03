@@ -8,6 +8,7 @@ import { t } from '../i18n';
 import type { PackStatus } from '../offline/engine';
 import { mb } from '../offline/storage';
 import { rowSize } from '../offline/tiers';
+import { keepRef } from '../frame/text';
 
 /** packId → what the per-language catalog file (`data/catalog/<lang>.json`) says about it. */
 export interface ListFacts {
@@ -115,4 +116,4 @@ export function freeWords(bytes: number): string {
 }
 
 /** "Mark 1:1–13" never breaks at the dash (mock `nb`). */
-export const keepRef = (s: string) => s.replace(/–/g, '⁠–⁠');
+export { keepRef };

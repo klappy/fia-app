@@ -2,20 +2,6 @@
    classes). BEND: kit GlassChip / GlassButton literals re-pointed by class, as the mock does (_frame.css).
    The kit is not edited; the shell (ScreenFrame) is not re-skinned. ---- */
 
-/* The coded kind marks (PRD § 8.3; mock _frame.css): the app's --fia-kind-* contrast variants when the
-   guide's tokens are loaded, else the same values here. */
-[data-screen='S19'] {
-  --s19-kind-plain: var(--fia-kind-plain, #6e7787);
-  --s19-kind-scripture: var(--fia-kind-scripture, var(--text-title));
-  --s19-kind-term: var(--fia-kind-term, var(--accent-blue));
-  --s19-kind-media: var(--fia-kind-media, #17786e);
-}
-[data-theme='dark'] [data-screen='S19'] {
-  --s19-kind-plain: var(--fia-kind-plain, var(--on-night-500));
-  --s19-kind-term: var(--fia-kind-term, var(--accent-blue-soft));
-  --s19-kind-media: var(--fia-kind-media, var(--accent-teal));
-}
-
 /* The page scrolls as one column (PRD § 8.5): the frame's <main> is not a second scroller, which would
    clip the kit glass under it. Spacing is the mock's, not the frame's stack gap. */
 [data-screen='S19'] .fia-content {
@@ -26,15 +12,6 @@
 
 /* Layer frame order (mock CloseHeader: logo · title · ‹ Back): the frame's <h1> stays the heading for
    assistive tech, out of sight; the head row below draws the same words (aria-hidden) beside Back. */
-[data-screen='S19'] .fia-screen__title {
-  position: absolute;
-  inline-size: 1px;
-  block-size: 1px;
-  padding: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
 .s19-head {
   display: flex;
   align-items: center;
@@ -151,12 +128,6 @@
 .s19-chip > svg {
   margin-top: calc((var(--fs-caption) * 1.2 - 14px * min(var(--fia-text-scale), 2)) / 2);
 }
-/* Dark chips (mock _frame.css): --glass-fill-1 with no blur of their own, never lighter than the card. */
-[data-theme='dark'] .s19-chip {
-  background: var(--glass-fill-1) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
 
 /* The voice card (kit GlassSurface level 1). */
 .s19-voice {
@@ -191,18 +162,18 @@
 }
 
 /* 200% and 310% (mock html.fia-big): cells and keys stack, chips wrap inside the card. */
-:root:is([data-text-step='x200'], [data-text-step='x310']) .s19-cells,
-:root:is([data-text-step='x200'], [data-text-step='x310']) .s19-keys {
+:root.fia-big .s19-cells,
+:root.fia-big .s19-keys {
   flex-direction: column;
   align-items: flex-start;
 }
-:root:is([data-text-step='x200'], [data-text-step='x310']) .s19-cell {
+:root.fia-big .s19-cell {
   flex-wrap: wrap;
 }
 /* Mock big CloseHeader: the way back stays on the first line, the title below it. */
-:root:is([data-text-step='x200'], [data-text-step='x310']) .s19-back {
+:root.fia-big .s19-back {
   order: -1;
 }
-:root:is([data-text-step='x200'], [data-text-step='x310']) .s19-hero {
+:root.fia-big .s19-hero {
   flex-basis: 100%;
 }

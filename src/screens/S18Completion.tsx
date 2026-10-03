@@ -20,6 +20,7 @@ import type { BeadProps, StageRailProps } from '../vendor/glass/components/progr
 import { completionSummary, keepRef, nextPassage, type RecapKind } from './completionModel';
 import { ScreenFrame } from './ScreenFrame';
 import './S18Completion.css';
+import { KINDS } from '../frame/kinds';
 
 // S18 Completion in glass (F6-S18; nodded mock cookbook design/alpha-v2-screens/18-completion.html; PRD § 4
 // row S18, § 8.1–8.5). Home frame: header (shell) · the recap plate (kit glass/GlassSurface): a glass
@@ -44,17 +45,6 @@ const watchScale = (f: () => void) => {
   mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-text-step'] });
   return () => mo.disconnect();
 };
-
-// Bead colours: the mock's --fia-kind-* values (_frame.css:25-29, :52-56), page-scoped in the CSS. Shapes
-// stay the kit's (StageRail.jsx BEAD_KINDS).
-const KINDS = {
-  term: { shape: 'diamond', color: 'var(--s18-kind-term)' },
-  media: { shape: 'triangle', color: 'var(--s18-kind-media)' },
-  video: { shape: 'screen', color: 'var(--s18-kind-media)' },
-  scripture: { shape: 'square', color: 'var(--s18-kind-scripture)' },
-  stop: { shape: 'bar', color: 'var(--s18-kind-stop)' },
-  end: { shape: 'bars', color: 'var(--s18-kind-stop)' },
-} as const;
 
 const KIND_KEY: Record<RecapKind, string> = {
   term: 's.completion.kind.term',
@@ -152,6 +142,7 @@ export default function S18Completion() {
     <ScreenFrame
       id="S18"
       title={headline}
+      titleHidden
       primaryLabel={
         next
           ? t('s.completion.primary.next', { ref: keepRef(next.title) })

@@ -6,6 +6,7 @@
 import { pericopesFor } from '../flow/catalog';
 import { isScriptureCue, units, waitingStops } from '../flow/model';
 import type { CatalogEntry, CatalogManifest, FlowGuide, GuideUnit } from '../flow/types';
+import { keepRef } from '../frame/text';
 
 /** Kit bead kinds the recap can name (StageRail.jsx BEAD_KINDS). */
 export type RecapKind = 'term' | 'media' | 'video' | 'scripture' | 'stop';
@@ -97,4 +98,4 @@ export function nextPassage(
 }
 
 /** "Mark 1:14–20" never breaks at the dash (mock 18-completion.html NEXT, _frame.js:83). */
-export const keepRef = (s: string) => s.replace(/–/g, '⁠–⁠');
+export { keepRef };

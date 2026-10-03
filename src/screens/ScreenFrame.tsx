@@ -31,6 +31,12 @@ export interface ScreenFrameProps {
    * hub frames, which carry the language pill and Explore instead.
    */
   close?: { label: string; onPress: () => void };
+  /**
+   * Frame variant (mock Frame, design/alpha-v2-screens/_frame.js:412-419), a prop rather than per-screen
+   * CSS: `guide` is one phone screen at 1× with the card taking the free height and the thumb zone
+   * at the bottom, one scrolling column above 1× (S05, S06, S08, S09; frame/frame.css).
+   */
+  frame?: 'guide';
   children?: ReactNode;
 }
 
@@ -55,6 +61,7 @@ export function ScreenFrame({
   thumb,
   titleHidden,
   close,
+  frame,
   children,
 }: ScreenFrameProps) {
   const def = screenById(id);
@@ -75,7 +82,12 @@ export function ScreenFrame({
       drift={false}
       style={{ height: 'auto', minHeight: '100dvh', overflow: 'clip' }}
     >
-      <div className="fia-screen" data-screen={def.id} data-offline={isOffline || undefined}>
+      <div
+        className="fia-screen"
+        data-screen={def.id}
+        data-frame={frame}
+        data-offline={isOffline || undefined}
+      >
         <header className="fia-header-wrap">
           <GlassSurface level={3} blur="strong" radius="pill" shadow="card" className="fia-header">
             <div className="fia-header-grid">

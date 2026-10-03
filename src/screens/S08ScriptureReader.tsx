@@ -228,6 +228,7 @@ export default function S08ScriptureReader() {
 
   return (
     <ScreenFrame
+      frame="guide"
       id="S08"
       title={title}
       titleHidden

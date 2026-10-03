@@ -1,5 +1,6 @@
 import { BeadStrip, StageRail } from './glass';
 import { stateAttrs, type StateProps } from './types';
+import { KINDS } from '../frame/kinds';
 
 // progress-rail (PRD § 3 app-owned, § 8.3), v2: the kit's progress/StageRail (overall: one segment per
 // step) and progress/BeadStrip (scoped: coded beads for this section, capsules for the step's other
@@ -29,16 +30,6 @@ export interface ProgressRailProps extends StateProps {
   /** text scale (1, 1.5, 2, 3.1): beads are 10 px × min(scale, 2.4) (mock _frame.js:42) */
   scale?: number;
 }
-
-const KINDS = {
-  plain: { shape: 'circle', color: 'var(--fia-kind-plain)' },
-  scripture: { shape: 'square', color: 'var(--fia-kind-scripture)' },
-  term: { shape: 'diamond', color: 'var(--fia-kind-term)' },
-  media: { shape: 'triangle', color: 'var(--fia-kind-media)' },
-  video: { shape: 'screen', color: 'var(--fia-kind-media)' },
-  stop: { shape: 'bar', color: 'var(--fia-kind-stop)' },
-  end: { shape: 'bars', color: 'var(--fia-kind-stop)' },
-} as const;
 
 export function ProgressRail({
   steps,

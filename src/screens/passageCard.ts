@@ -9,6 +9,7 @@ import { t } from '../i18n';
 import type { FlowState } from '../flow/machine';
 import type { NarrationChoice } from '../media/provenance';
 import { STANDINS } from '../media/standin';
+import { keepRef } from '../frame/text';
 
 /** What the pack's own files add to the catalog entry (fetched beside the card). */
 export interface PackFacts {
@@ -31,7 +32,7 @@ export interface LegendRow {
 
 const NB = ' ';
 /** "Mark 1:1–13" never breaks at the dash (mock TITLE). */
-export const keepRef = (title: string) => title.replace(/–/g, '⁠–⁠');
+export { keepRef };
 const num = (n: number) => n.toLocaleString('en-US');
 
 /** C-04 discussion stops: the guide's "Talk together" (the terminal stop is the guide's end, not a talk). */

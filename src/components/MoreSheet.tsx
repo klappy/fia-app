@@ -39,7 +39,7 @@ export function MoreSheet({ open, onClose, state, from }: MoreSheetProps) {
           {rows.map((r, i) => (
             <li key={r.key}>
               <CatalogRow
-                className="fia-more__row"
+                className="fia-catalog fia-more__row"
                 first={i === 0}
                 onOpen={() => {
                   onClose();

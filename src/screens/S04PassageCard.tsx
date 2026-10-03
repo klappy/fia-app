@@ -23,6 +23,7 @@ import {
 } from './passageCard';
 import { ScreenFrame } from './ScreenFrame';
 import './S04PassageCard.css';
+import { kindColor } from '../frame/kinds';
 
 // S04 Passage card in glass (F6-S04; nodded mock cookbook design/alpha-v2-screens/04-passage-card.html,
 // rev4; PRD § 4 row S04, § 8.1–8.5). Browse frame: header (shell) · quiet ‹ {book} · the reference as
@@ -94,7 +95,7 @@ function Includes({ rows }: { rows: LegendRow[] }) {
           {rows.map((r) => (
             <li key={r.kind} className="s04-kind" data-kind={r.kind}>
               <span className="s04-mark">
-                <Bead kind={r.kind} state="done" size={size} color={`var(--s04-kind-${r.kind})`} />
+                <Bead kind={r.kind} state="done" size={size} color={kindColor(r.kind)} />
               </span>
               <span className="s04-kind__text">
                 <span className="s04-word">{r.word}</span>
@@ -150,6 +151,7 @@ export default function S04PassageCard() {
     <ScreenFrame
       id="S04"
       title={guide.title}
+      titleHidden
       offline={!off.online}
       primaryLabel={
         intent
@@ -185,7 +187,7 @@ export default function S04PassageCard() {
         <p className="s04-sub">{subLine(language, guide)}</p>
         <div className="s04-chips">
           <GlassChip
-            className="s04-chip"
+            className="fia-badge s04-chip"
             data-voice={voice}
             leading={<Icon name={voice === 'ai' ? 'sparkle' : 'book'} size={13} />}
           >

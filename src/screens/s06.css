@@ -1,43 +1,10 @@
 /* F6-S06 — Guide · read without voice (nodded mock cookbook design/alpha-v2-screens/06-single-script.html).
    The app layer only. Every surface, button, chip, ring and bead is F5's shared part on the kit
-   (flow/ui/guide.css, components/glass.ts → src/vendor/glass/components/); this file gives S06 the same
-   screen frame S05 has (guide.css scopes it to data-screen='S05') and draws the two things voice off
+   (flow/ui/guide.css, components/glass.ts → src/vendor/glass/components/); S06 takes the same guide
+   frame S05 has (frame/frame.css) and this file draws only the layout of the two things voice off
    adds: the quiet "Voice off · Turn voice on" row and the flow line under the card. */
 
-/* ---------- screen layout: one phone screen at 1×, one scrolling column above (PRD § 8.5) ---------- */
-html:not([data-text-step]) .fia-screen[data-screen='S06'] {
-  height: 100dvh;
-  min-height: 0;
-}
-.fia-screen[data-screen='S06'] > .fia-content {
-  padding-top: 10px;
-  padding-bottom: 0;
-  overflow: visible;
-}
-html:not([data-text-step]) .fia-screen[data-screen='S06'] > .fia-content {
-  flex: 1;
-  min-height: 0;
-  padding-bottom: 2px;
-}
-
-/* ---------- thumb zone: Back · the big button · Skip; sticky above 1× (as S05) ---------- */
-.fia-screen[data-screen='S06'] > .fia-thumb {
-  position: relative;
-  z-index: 1;
-  padding: 0 var(--fia-gutter) calc(var(--fia-safe-bottom) + 12px);
-}
-html[data-text-step] .fia-screen[data-screen='S06'] > .fia-thumb {
-  position: sticky;
-  bottom: 0;
-  margin-top: 12px;
-  padding-top: 10px;
-  background: var(--material-floating);
-  backdrop-filter: blur(var(--blur-heavy)) var(--sat-glass);
-  -webkit-backdrop-filter: blur(var(--blur-heavy)) var(--sat-glass);
-  border-top: var(--border-glass);
-  border-radius: var(--r-2xl) var(--r-2xl) 0 0;
-  box-shadow: var(--shadow-float);
-}
+/* Screen layout and the thumb zone are the guide frame's (ScreenFrame frame="guide", frame/frame.css). */
 
 /* ---------- voice off: the voice chip's slot (mock VoiceOffButton, _frame.js:271-275) ---------- */
 .fia-voice-row {
