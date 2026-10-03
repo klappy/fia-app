@@ -22,6 +22,9 @@ import type { GlassSheetProps } from '../vendor/glass/components/navigation/Glas
 import { GlassSegmented as KitGlassSegmented } from '../vendor/glass/components/forms/GlassSegmented';
 import { GlassToggle as KitGlassToggle } from '../vendor/glass/components/forms/GlassToggle';
 import { CatalogRow as KitCatalogRow } from '../vendor/glass/components/resources/CatalogRow';
+import { GlassSearch as KitGlassSearch } from '../vendor/glass/components/forms/GlassSearch';
+import { SyncBadge as KitSyncBadge } from '../vendor/glass/components/scripture/SyncBadge';
+import type { SyncBadgeProps } from '../vendor/glass/components/scripture/SyncBadge';
 import { Icon as KitIcon } from '../vendor/glass/components/icons/Icon';
 import type { IconName } from '../vendor/glass/components/icons/Icon';
 import { FilterChips as KitFilterChips } from '../vendor/glass/components/forms/FilterChips';
@@ -80,6 +83,15 @@ export const CatalogRow = KitCatalogRow as unknown as ComponentType<
     onOpen?: () => void;
   }
 >;
+// F6-S02: the library's search field and the resume card's saved badge. GlassSearch forwards
+// `...rest` to its <input> (GlassSearch.jsx:7); SyncBadge to its root <span> (SyncBadge.jsx:7).
+export const GlassSearch = KitGlassSearch as unknown as ComponentType<
+  Omit<InputHTMLAttributes<HTMLInputElement>, 'style' | 'height'> & {
+    height?: number | 'auto';
+    style?: CSSProperties;
+  }
+>;
+export const SyncBadge = KitSyncBadge as unknown as ComponentType<SyncBadgeProps & Html>;
 export const Icon = KitIcon as unknown as ComponentType<{
   name: KitIconName;
   size?: number;

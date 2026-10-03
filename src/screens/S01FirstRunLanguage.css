@@ -1,0 +1,129 @@
+/* F6-S01 First run · language (mock cookbook design/alpha-v2-screens/01-first-run-language.html; kit @ad528f4).
+   Own file (conflict guard with the parallel F6 rows on alpha.css); every rule is scoped to S01. Spacing uses
+   the kit's --sp-* tokens, as the mock does. */
+
+/* Linear frame (mock README:163; PRD § 8.1 "Linear: S01, S17", § 8.4 "44 px as a hero on S01"): no header
+   bar — the hero carries the lockup. Offline, the frame's header stays for its offline chip, without a
+   second logo. The frame's h1 stays for screen readers; the hero's display title is the visible one. */
+.fia-screen[data-screen='S01'] > .fia-header-wrap .fia-logo {
+  display: none;
+}
+.fia-screen[data-screen='S01']:not([data-offline]) > .fia-header-wrap {
+  display: none;
+}
+.fia-screen[data-screen='S01'] > .fia-screen__title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.fia-screen[data-screen='S01'] > .fia-content {
+  gap: 0;
+}
+.s01-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-4);
+  padding-top: var(--sp-7);
+}
+.s01-logo {
+  display: inline-flex;
+  color: var(--fia-brand, var(--text-title));
+}
+.s01-qualifier {
+  margin: 0;
+  font: var(--fw-semibold) var(--fs-label) / 1.25 var(--font-core);
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  text-align: center;
+}
+/* Capped so 'language' fits 358 px at 310% (mock .s01-h1). */
+.s01-h1 {
+  margin: var(--sp-7) 0 0;
+  font: var(--fw-bold) min(calc(26px * var(--fia-text-scale)), 62px) / 1.15 var(--font-core);
+  letter-spacing: -0.01em;
+  color: var(--text-title);
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+.s01-lede {
+  margin: var(--sp-3) 0 0;
+  font: var(--fw-medium) var(--fs-caption) / 1.3 var(--font-core);
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+.s01-wrap {
+  margin-top: var(--sp-6);
+}
+.s01-wrap .fia-lp {
+  max-width: none !important;
+}
+/* The closing caption sits on the bare aurora: --text-body there (mock: --text-muted read 4.47:1 in light). */
+.s01-note {
+  margin: var(--sp-4) 0 0;
+  font: var(--fw-medium) var(--fs-caption) / 1.3 var(--font-core);
+  color: var(--text-body);
+  text-align: center;
+  text-wrap: pretty;
+}
+.s01-feedback {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--sp-2);
+}
+.s01-feedback__btn {
+  min-height: 48px;
+  padding: var(--sp-5) var(--sp-6) !important;
+}
+
+/* Loading and error (unmocked): the kit card with the picker's title and one line. */
+.s01-state {
+  margin-top: var(--sp-6);
+}
+.s01-state__inner {
+  position: relative; /* above the kit GlassSurface refraction layer */
+  padding: var(--sp-8) var(--sp-9) var(--sp-9);
+}
+.s01-state__title {
+  margin: 0;
+  font: var(--type-card-title);
+  color: var(--text-title);
+}
+.s01-state__body {
+  margin: var(--sp-4) 0 0;
+  font: var(--type-body);
+  color: var(--text-body);
+}
+
+/* 1× (Follows phone): one screen, as the mock — the picker takes the rest and its list scrolls inside
+   (kit behaviour, 17 languages); on a short phone the list keeps three rows and the content scrolls. */
+:root:not([data-text-step]) .fia-screen[data-screen='S01'] {
+  height: 100dvh;
+}
+:root:not([data-text-step]) .fia-screen[data-screen='S01'] > .fia-content {
+  flex: 1;
+  min-height: 0;
+}
+:root:not([data-text-step]) .s01-wrap,
+:root:not([data-text-step]) .s01-wrap .fia-lp-wrap,
+:root:not([data-text-step]) .s01-wrap .fia-lp {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+}
+:root:not([data-text-step]) .s01-wrap .fia-lp > div:nth-of-type(3) {
+  flex: 1 1 0;
+  min-height: 176px;
+  max-height: none !important;
+}
+
+/* Above 1×: the page scrolls, so the list flows in the page (no nested scroller). */
+:root[data-text-step] .s01-wrap .fia-lp > div:nth-of-type(3) {
+  max-height: none !important;
+  overflow: visible !important;
+}
