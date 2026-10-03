@@ -54,7 +54,7 @@ export interface HeaderProps {
 
 /**
  * Keep the hub header on one row (mock 02-library): when the pills would wrap at the mock's 16 px
- * inline padding (longer UI strings, e.g. Spanish at 390 px), tighten them to 12 px. English at 390 px
+ * inline padding (longer UI strings, e.g. Spanish at 390 px), tighten them to the kit's --sp-6 (12 px). English at 390 px
  * fits as before and is untouched; at big text sizes the header still wraps as designed.
  */
 function useOneRowHub(grid: React.RefObject<HTMLDivElement | null>, on: boolean) {
@@ -67,7 +67,7 @@ function useOneRowHub(grid: React.RefObject<HTMLDivElement | null>, on: boolean)
         Math.max(...[...g.children].map((c) => c.getBoundingClientRect().height));
       for (const p of pills) p.style.paddingInline = '';
       if (g.getBoundingClientRect().height <= tallest() + 1) return;
-      for (const p of pills) p.style.paddingInline = '12px';
+      for (const p of pills) p.style.paddingInline = 'var(--sp-6)'; // kit spacing token, 12 px
     };
     fit();
     window.addEventListener('resize', fit);
