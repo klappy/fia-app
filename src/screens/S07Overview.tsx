@@ -58,7 +58,7 @@ function PartRow({
     <>
       <button
         type="button"
-        className={`s07-part is-${part.state}`}
+        className={`s07-part fia-row-btn fia-r-md is-${part.state}${cur ? ' fia-row-current' : ''}`}
         data-unit-id={part.unit.id}
         aria-label={label}
         aria-current={cur ? 'step' : undefined}
@@ -73,21 +73,30 @@ function PartRow({
             size={cur ? b : 1.6 * b}
           />
         </span>
-        <span className="s07-part__n fia-num">
+        <span
+          className={`s07-part__n fia-num fia-type-label fia-fw-semibold fia-lh-120 fia-ff-numeric fia-tabular ${cur ? 'fia-tone-title' : 'fia-tone-muted'}`}
+        >
           {big ? t('s.overview.v2.part', { n: part.n }) : part.n}
         </span>
-        <span className="s07-part__words" dir="auto">
+        <span
+          className={`s07-part__words fia-type-label ${cur ? 'fia-tone-title fia-fw-semibold' : part.state === 'done' ? 'fia-tone-muted' : 'fia-tone-body'}`}
+          dir="auto"
+        >
           {part.words}
-          {cur && <span className="s07-part__here">{t('s.overview.v2.here')}</span>}
+          {cur && (
+            <span className="s07-part__here fia-type-caption fia-fw-semibold fia-lh-120 fia-tone-muted">
+              {t('s.overview.v2.here')}
+            </span>
+          )}
         </span>
-        <span className="s07-chev">
+        <span className="s07-chev fia-tone-dim">
           <Icon name="chevronRight" size={iconSize(16, scale)} />
         </span>
       </button>
       {part.talk && (
         // A talk: a full-width row in the stop colour, led by the bar and the users icon. Not a control.
         <div
-          className="s07-talk"
+          className="s07-talk fia-talk"
           data-stop-id={part.talk.stop.id}
           data-skipped={part.talk.skipped || undefined}
         >
@@ -99,7 +108,7 @@ function PartRow({
         </div>
       )}
       {part.end && (
-        <div className="s07-talk s07-talk--end">
+        <div className="s07-talk s07-talk--end fia-talk">
           <span>{keepNumber(t('s.overview.v2.end', { n: part.n }))}</span>
         </div>
       )}
@@ -141,7 +150,7 @@ function StepRow({
     <div className="s07-step-wrap" data-step-id={step.id}>
       <button
         type="button"
-        className={`s07-step is-${step.status}${open ? ' is-open' : ''}`}
+        className={`s07-step fia-row-btn${step.index > 0 ? ' fia-divider' : ''} is-${step.status}${open ? ' is-open' : ''}`}
         aria-expanded={open}
         aria-label={t('s.overview.v2.a11y.step', {
           n: step.index + 1,
@@ -151,7 +160,11 @@ function StepRow({
         })}
         onClick={onToggle}
       >
-        <span className="s07-step__badge fia-num">{step.index + 1}</span>
+        <span
+          className={`s07-step__badge fia-num fia-step-badge${step.status === 'current' ? ' is-current' : ''}`}
+        >
+          {step.index + 1}
+        </span>
         <span className="s07-step__text">
           <span className="fia-title-v2 s07-step__title" dir="auto">
             {step.title}
@@ -167,7 +180,7 @@ function StepRow({
             />
           )}
         </span>
-        <span className="s07-chev">
+        <span className="s07-chev fia-tone-dim">
           <Icon name="chevronRight" size={iconSize(18, scale)} />
         </span>
       </button>
@@ -253,7 +266,7 @@ export default function S07Overview() {
       <GlassButton
         variant="quiet"
         size="md"
-        className="fia-btn fia-quiet s07-explore"
+        className="fia-btn fia-quiet fia-kit-muted fia-kit-label s07-explore"
         leading={<Icon name="chevronLeft" size={iconSize(18, scale)} />}
         aria-haspopup="dialog"
         onClick={() => setExplore(true)}
@@ -262,7 +275,13 @@ export default function S07Overview() {
       </GlassButton>
     </div>
   );
-  const heading = <h1 className="s07-h">{t('s.common.explore.map')}</h1>;
+  const heading = (
+    <h1
+      className={`s07-h ${big ? 'fia-face-card-title fia-ls-title fia-tone-title' : 'fia-inherit'}`}
+    >
+      {t('s.common.explore.map')}
+    </h1>
+  );
 
   return (
     <AuroraField
@@ -273,7 +292,7 @@ export default function S07Overview() {
       <div className={`s07-page${big ? ' is-big' : ''}`} data-screen="S07">
         <GlassSheet
           open
-          className="fia-sheet s07-sheet"
+          className="fia-sheet fia-sheet--night-dim s07-sheet"
           height={big ? '100%' : 'calc(100% - 14px)'}
           title={
             big ? (
@@ -305,7 +324,9 @@ export default function S07Overview() {
               // At 200%+ the title and counts scroll with the map; the logo row and the action stay.
               <div className="s07-head">
                 {heading}
-                {summary && <div className="s07-head__desc">{summary}</div>}
+                {summary && (
+                  <div className="s07-head__desc fia-face-caption fia-tone-muted">{summary}</div>
+                )}
               </div>
             )}
             {!guide || !map ? (

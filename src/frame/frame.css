@@ -216,3 +216,179 @@ html.fia-scaled .fia-screen > .fia-thumb {
   margin: 10px -18px 0;
   padding: 0 18px;
 }
+
+/* ======================================================================================================
+   Lift 2 (RULING 2026-10-02 ~20:05 ET (b); cookbook CLAIM.md @c995638): the visual declarations the
+   per-screen sheets (src/screens/*.css) carried, folded into the shared layer. A screen's sheet keeps
+   layout only (grid, flex, gap, margin, padding, size, position); check:css fails on anything else there.
+   Screens compose the classes below by name. Everything here sits after the rules above, so a modifier
+   wins over a face by order, never by !important.
+   ====================================================================================================== */
+
+/* ---------- parts on kit components with literal px (_frame.css:141-150 shape) ---------- */
+/* A kit GlassButton, GlassChip or segmented label whose inline px size grows with the text step. */
+.fia-kit-label {
+  font-size: var(--fs-label) !important;
+}
+.fia-kit-caption {
+  font-size: var(--fs-caption) !important;
+}
+/* A quiet kit button whose words read as a muted label (S07's "‹ Explore"). */
+.fia-kit-muted {
+  color: var(--text-muted) !important;
+}
+
+/* ---------- row buttons and dividers (_frame.css:124 .fia-chip-btn, :172 .fia-gp) ---------- */
+/* A whole row that is one <button>: no native chrome, the row's own words and face. */
+.fia-row-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+/* A hairline above every row but the first (the screen sets it on rows after the first). */
+.fia-divider {
+  border-top: var(--border-hairline);
+}
+/* The row the walk is on (S07 part rows). */
+.fia-row-current {
+  background: color-mix(in srgb, var(--text-title) 7%, transparent);
+}
+.fia-r-md {
+  border-radius: var(--r-md);
+}
+.fia-r-pill {
+  border-radius: var(--r-pill);
+}
+/* A heading that wears its container's face (S07's title inside the kit sheet's title slot). */
+.fia-inherit {
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+}
+
+/* ---------- the step badge: number in a ringed glass disc (mock 07-overview.html:33-44) ---------- */
+.fia-step-badge {
+  border-radius: var(--r-pill);
+  background: var(--glass-fill-3);
+  box-shadow: inset 0 0 0 1px var(--text-dim);
+  font: var(--fw-semibold) var(--fs-label) / 1 var(--font-numeric);
+  color: var(--text-title);
+}
+.fia-step-badge.is-current {
+  box-shadow: inset 0 0 0 2px var(--surface-inverse);
+}
+
+/* ---------- a talk row: led by the stop bar, in the stop colour; not a control (mock 07-overview.html:61-64) ---------- */
+.fia-talk {
+  border-start-end-radius: var(--r-md);
+  border-end-end-radius: var(--r-md);
+  border-inline-start: 3px solid var(--fia-kind-stop);
+  background: color-mix(in srgb, var(--fia-kind-stop) 8%, transparent);
+  font: var(--fw-semibold) var(--fs-label) / 1.25 var(--font-core);
+  color: var(--fia-kind-stop);
+}
+.fia-talk > svg {
+  color: var(--fia-kind-stop);
+}
+/* Dark: the words take --text-title on the mid-grey sheet; the bar and the icon keep the red (mock :65-72). */
+[data-theme='dark'] .fia-talk {
+  color: var(--text-title);
+}
+
+/* ---------- sheet re-points ---------- */
+/* Dark: the kit sheet's --material-floating is a mid grey; inside it the dim chevrons take
+   --on-night-500 (S07's map sheet; mock 07-overview.html:65-72). Light unchanged. */
+[data-theme='dark'] .fia-sheet--night-dim > [role='dialog'] {
+  --text-dim: var(--on-night-500);
+}
+
+/* ---------- type: faces, then weight / line / family / spacing modifiers, then tones ---------- */
+/* One face per step of the kit type scale (tokens/typography.css, scaled by --fia-text-scale), regular
+   weight on a 1.3 line in the core family. The kit's own shorthands (--type-*) are faces too. A modifier
+   below a face replaces one part of it, so a screen composes e.g. "fia-type-label fia-fw-semibold
+   fia-lh-120" for the mock's semibold 13/1.2. */
+.fia-type-caption {
+  font: var(--fw-regular) var(--fs-caption) / 1.3 var(--font-core);
+}
+.fia-type-small {
+  font: var(--fw-regular) calc(11px * var(--fia-text-scale)) / 1.3 var(--font-core);
+}
+.fia-type-label {
+  font: var(--fw-regular) var(--fs-label) / 1.3 var(--font-core);
+}
+.fia-type-body {
+  font: var(--fw-regular) var(--fs-body) / 1.3 var(--font-core);
+}
+.fia-type-subtitle {
+  font: var(--fw-regular) var(--fs-subtitle) / 1.3 var(--font-core);
+}
+.fia-type-title {
+  font: var(--fw-regular) var(--fs-title) / 1.3 var(--font-core);
+}
+.fia-face-card-title {
+  font: var(--type-card-title);
+}
+.fia-face-body {
+  font: var(--type-body);
+}
+.fia-face-caption {
+  font: var(--type-caption);
+}
+.fia-fw-regular {
+  font-weight: var(--fw-regular);
+}
+.fia-fw-medium {
+  font-weight: var(--fw-medium);
+}
+.fia-fw-semibold {
+  font-weight: var(--fw-semibold);
+}
+.fia-fw-bold {
+  font-weight: var(--fw-bold);
+}
+.fia-lh-100 {
+  line-height: 1;
+}
+.fia-lh-115 {
+  line-height: 1.15;
+}
+.fia-lh-118 {
+  line-height: 1.18;
+}
+.fia-lh-120 {
+  line-height: 1.2;
+}
+.fia-lh-125 {
+  line-height: 1.25;
+}
+.fia-lh-130 {
+  line-height: 1.3;
+}
+.fia-ff-numeric {
+  font-family: var(--font-numeric);
+}
+.fia-tabular {
+  font-variant-numeric: tabular-nums;
+}
+.fia-ls-title {
+  letter-spacing: var(--ls-title);
+}
+.fia-ls-tight {
+  letter-spacing: -0.01em;
+}
+/* Tones: the text colours a screen may name. */
+.fia-tone-title {
+  color: var(--text-title);
+}
+.fia-tone-body {
+  color: var(--text-body);
+}
+.fia-tone-muted {
+  color: var(--text-muted);
+}
+.fia-tone-dim {
+  color: var(--text-dim);
+}
