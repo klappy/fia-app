@@ -51,7 +51,9 @@ describe('ship-data build step', () => {
     const doc = JSON.parse(readFileSync(join(out, READY_INDEX), 'utf8'));
     expect(doc.packs).toEqual(shippedPacks(DATA));
     expect(doc.packs).toEqual(expect.arrayContaining([PACK, 'arb.GEN-1-1-2-3']));
-    expect(doc.packs).not.toContain('eng.MRK-1-14-20');
+    // every Mark passage ships in English and Spanish; Genesis ships in Arabic only
+    expect(doc.packs).toEqual(expect.arrayContaining(['eng.MRK-1-14-20', 'spa.MRK-16-9-20']));
+    expect(doc.packs).not.toContain('eng.GEN-1-1-2-3');
     // every listed pack opens at its one (C-02) path (the index adds nothing under data/packs)
     for (const id of doc.packs)
       for (const f of ['guide.json', 'guide-units.json'])

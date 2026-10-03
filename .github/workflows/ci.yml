@@ -33,8 +33,9 @@ jobs:
       - run: npm run test:contracts
       - run: npm run build
       - run: npx playwright install --with-deps chromium
-      # The visual baselines run in the `visual` job below, inside Playwright's pinned image.
-      - run: npx playwright test --grep-invert visual-baseline
+      # The visual baselines run in the `visual` job below, inside Playwright's pinned image; the
+      # per-pack Mark walk runs in the `mark-walk` job (136 packs, ~25 min on 4 workers).
+      - run: npx playwright test --grep-invert "visual-baseline|mark-walk"
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
@@ -76,6 +77,29 @@ jobs:
           name: visual-baselines
           path: e2e/visual-baseline.spec.ts-snapshots
           retention-days: 7
+  # Mark eng+spa ticket item 3: walk every Mark pack (eng + spa, 136) on the built app — every visible
+  # part to S18, every resource once, no console error, no missing string; S03 and the catalog list all
+  # 68 per language; Save for offline. The first/last-step shots (390×844, 1280×800) upload as
+  # `mark-walk-shots` for the design lens.
+  mark-walk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test e2e/mark-walk.spec.ts --workers=4
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mark-walk-shots
+          path: test-results
+          retention-days: 7
   # Pipeline unit + data tests (rights lines, tier bytes, contracts). Offline: reads committed data/ only.
   pipeline:
     runs-on: ubuntu-latest
@@ -92,3 +116,6 @@ jobs:
           cache-dependency-path: pipeline/package-lock.json
       - run: npm ci
       - run: npm test
+      # Content checks per pack (units, every verse per edition, rights lines, ai:true slots) + narration characters.
+      # The URL-200 half (`npm run check:urls`) needs S3 and GitHub, so it runs outside CI.
+      - run: npm run check:content -- --chars
