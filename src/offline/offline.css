@@ -93,6 +93,11 @@
 .fia-dl__band > p {
   margin: 0;
 }
+/* layout only: a lone quiet action sits at the start of the card / band (look: .fia-btn .fia-quiet, guide.css) */
+.fia-dl__pack > .fia-quiet,
+.fia-dl__band > .fia-quiet {
+  justify-self: start;
+}
 .fia-dl__band--error {
   background: var(--fia-error-tint);
   color: var(--fia-error-tint-text);
@@ -212,16 +217,6 @@
   font-size: var(--fia-fs-label);
   color: var(--text-title);
   overflow-wrap: anywhere;
-}
-.fia-dl__confirm {
-  display: grid;
-  gap: 4px;
-  padding: 10px 14px;
-  border-radius: var(--r-lg, 16px);
-  background: var(--fia-stop-band);
-}
-.fia-dl__confirm > p {
-  margin: 0;
 }
 .fia-dl__facts {
   display: grid;
