@@ -31,7 +31,7 @@ export function SettingsRow({
       {...stateAttrs(state)}
     >
       <div className="fia-srow__text">
-        <div className="fia-srow__label">
+        <div className="fia-srow__label fia-type-label fia-fw-semibold fia-lh-125 fia-tone-title">
           {icon}
           <span>{label}</span>
         </div>
@@ -57,8 +57,11 @@ export function SettingsToggle({
   onChange: (v: boolean) => void;
 }) {
   return (
-    <span className="fia-srow__toggle">
-      <span className="fia-srow__state" aria-hidden="true">
+    <span className="fia-srow__toggle fia-switch fia-switch--knob">
+      <span
+        className="fia-srow__state fia-type-caption fia-fw-semibold fia-lh-100 fia-tone-muted"
+        aria-hidden="true"
+      >
         {on ? t('s.settings.on') : t('s.settings.off')}
       </span>
       <GlassToggle checked={on} aria-label={label} onChange={onChange} style={{ padding: 0 }} />

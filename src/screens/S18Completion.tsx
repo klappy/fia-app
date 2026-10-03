@@ -1,10 +1,4 @@
-import {
-  useEffect,
-  useSyncExternalStore,
-  type ComponentType,
-  type HTMLAttributes,
-  type ReactNode,
-} from 'react';
+import { useEffect, type ComponentType, type HTMLAttributes, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CatalogRow, GlassSurface, Icon, type KitIconName } from '../components/glass';
 import { FlowGate } from '../flow/ui/GuideChrome';
@@ -19,6 +13,8 @@ import {
 import type { BeadProps, StageRailProps } from '../vendor/glass/components/progress/StageRail';
 import { completionSummary, keepRef, nextPassage, type RecapKind } from './completionModel';
 import { ScreenFrame } from './ScreenFrame';
+import { KINDS } from '../frame/kinds';
+import { iconSz, useTextScale } from '../frame/scale';
 import './S18Completion.css';
 
 // S18 Completion in glass (F6-S18; nodded mock cookbook design/alpha-v2-screens/18-completion.html; PRD § 4
@@ -34,27 +30,6 @@ const Bead = KitBead as unknown as ComponentType<BeadProps & HTMLAttributes<SVGE
 const StageRail = KitStageRail as unknown as ComponentType<
   StageRailProps & HTMLAttributes<HTMLElement>
 >;
-
-/** --fia-text-scale per C-10 text step (settings/apply.ts; tokens/alpha.css; mock _frame.js:16-21). */
-const STEP_SCALE: Record<string, number> = { x150: 1.5, x200: 2, x310: 3.1 };
-const readScale = () =>
-  STEP_SCALE[globalThis.document?.documentElement.getAttribute('data-text-step') ?? ''] ?? 1;
-const watchScale = (f: () => void) => {
-  const mo = new MutationObserver(f);
-  mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-text-step'] });
-  return () => mo.disconnect();
-};
-
-// Bead colours: the mock's --fia-kind-* values (_frame.css:25-29, :52-56), page-scoped in the CSS. Shapes
-// stay the kit's (StageRail.jsx BEAD_KINDS).
-const KINDS = {
-  term: { shape: 'diamond', color: 'var(--s18-kind-term)' },
-  media: { shape: 'triangle', color: 'var(--s18-kind-media)' },
-  video: { shape: 'screen', color: 'var(--s18-kind-media)' },
-  scripture: { shape: 'square', color: 'var(--s18-kind-scripture)' },
-  stop: { shape: 'bar', color: 'var(--s18-kind-stop)' },
-  end: { shape: 'bars', color: 'var(--s18-kind-stop)' },
-} as const;
 
 const KIND_KEY: Record<RecapKind, string> = {
   term: 's.completion.kind.term',
@@ -101,7 +76,7 @@ export default function S18Completion() {
   const nav = useNavigate();
   const { session, snap } = useGuide();
   const { guide, state } = snap;
-  const scale = useSyncExternalStore(watchScale, readScale, () => 1);
+  const scale = useTextScale();
   const online = useOnline();
   const off = useOffline();
   useEffect(() => {
@@ -137,7 +112,6 @@ export default function S18Completion() {
   // C-07 STATUS: verified saves only (offline/useOnline savedPackIds); no worker → nothing is saved.
   const saved = savedPackIds(off.packs).has(guide.packId);
   const beadSize = 10 * Math.min(scale, 2.4);
-  const iconSize = (base: number) => Math.round(base * Math.min(scale, 2));
   const kindLines: { kind: RecapKind; text: string }[] = sum.kinds.map((k) => ({
     kind: k.kind,
     text: t(KIND_KEY[k.kind], { n: k.parts }),
@@ -152,6 +126,7 @@ export default function S18Completion() {
     <ScreenFrame
       id="S18"
       title={headline}
+      titleHidden
       primaryLabel={
         next
           ? t('s.completion.primary.next', { ref: keepRef(next.title) })
@@ -178,14 +153,17 @@ export default function S18Completion() {
         <div className="s18-recap__body">
           <div className="s18-top">
             {/* A mark, not a button: glass with a check, so the primary stays the one dark fill. */}
-            <span className="s18-mark" aria-hidden="true">
+            <span className="s18-mark fia-done-mark" aria-hidden="true">
               <Icon name="check" size={Math.round(28 * Math.min(scale, 1.5))} stroke={2.4} />
             </span>
             {/* The frame's <h1> carries the headline for assistive tech; this is its visible face. */}
-            <p className="s18-h1" aria-hidden="true">
+            <p className="s18-h1 fia-display-sm" aria-hidden="true">
               {headline}
             </p>
-            <p className="s18-sum" data-role="summary">
+            <p
+              className="s18-sum fia-type-label fia-fw-medium fia-tabular fia-tone-muted"
+              data-role="summary"
+            >
               {stepsWords}
               {' · '}
               {t('s.completion.parts-of', { v: sum.visited, total: sum.total })}
@@ -194,7 +172,7 @@ export default function S18Completion() {
           <div className="s18-overall" role="group" aria-label={stepsWords}>
             <div className="s18-segs">
               <StageRail
-                className="s18-rail"
+                className="s18-rail fia-dim-plain"
                 stages={sum.steps}
                 current={firstGap < 0 ? n : firstGap}
                 progress={0}
@@ -205,30 +183,45 @@ export default function S18Completion() {
             </div>
             <ol className="s18-steps">
               {sum.steps.map((st, i) => (
-                <li key={st.id} className="s18-step" data-reached={st.reached || undefined}>
+                <li
+                  key={st.id}
+                  className="s18-step fia-type-caption fia-fw-medium fia-lh-125 fia-tone-title"
+                  data-reached={st.reached || undefined}
+                >
                   <span className="s18-tick" aria-hidden="true">
-                    {st.reached && <Icon name="check" size={iconSize(14)} stroke={2.2} />}
+                    {st.reached && <Icon name="check" size={iconSz(14, scale)} stroke={2.2} />}
                   </span>
                   <span>
-                    <span className="s18-step-n">{i + 1}</span> {st.title}
+                    <span className="s18-step-n fia-ff-numeric fia-tabular fia-fw-semibold fia-tone-muted">
+                      {i + 1}
+                    </span>{' '}
+                    {st.title}
                   </span>
                 </li>
               ))}
             </ol>
           </div>
-          <hr className="s18-rule" />
-          <h2 className="fia-overline s18-overline">{t('s.completion.went-through')}</h2>
+          <hr className="s18-rule fia-hr" />
+          <h2 className="fia-overline fia-tone-aside s18-overline">
+            {t('s.completion.went-through')}
+          </h2>
           <ul className="s18-kinds">
             {kindLines.map((k) => (
-              <li key={k.kind} className="s18-kind" data-kind={k.kind}>
-                <span className="s18-legend-mark">
+              <li
+                key={k.kind}
+                className="s18-kind fia-type-label fia-fw-medium fia-lh-125 fia-tone-title"
+                data-kind={k.kind}
+              >
+                <span className="fia-legend-mark">
                   <Bead kind={k.kind} state="done" size={beadSize} kinds={KINDS} />
                 </span>
                 <span>{k.text}</span>
               </li>
             ))}
           </ul>
-          <p className="fia-caption s18-kept">{t('s.completion.marks-kept')}</p>
+          <p className="fia-caption fia-fw-medium fia-lh-130 s18-kept">
+            {t('s.completion.marks-kept')}
+          </p>
         </div>
       </GlassSurface>
       <GlassSurface level={2} blur="medium" radius="xl" shadow="rest" className="s18-more">

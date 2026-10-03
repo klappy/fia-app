@@ -22,6 +22,8 @@ import {
   type PackFacts,
 } from './passageCard';
 import { ScreenFrame } from './ScreenFrame';
+import { kindColor } from '../frame/kinds';
+import { readScale } from '../frame/scale';
 import './S04PassageCard.css';
 
 // S04 Passage card in glass (F6-S04; nodded mock cookbook design/alpha-v2-screens/04-passage-card.html,
@@ -37,11 +39,6 @@ const GlassChip = KitGlassChip as unknown as ComponentType<
   GlassChipProps & HTMLAttributes<HTMLElement>
 >;
 const Bead = KitBead as unknown as ComponentType<BeadProps & HTMLAttributes<SVGElement>>;
-
-/** --fia-text-scale per C-10 text step (settings/apply.ts; mock _frame.js:16-21). */
-const STEP_SCALE: Record<string, number> = { x150: 1.5, x200: 2, x310: 3.1 };
-const textScale = () =>
-  STEP_SCALE[globalThis.document?.documentElement.getAttribute('data-text-step') ?? ''] ?? 1;
 
 /** The pack's own counts and edition names (C-02 manifest.json, scripture.json); empty until read. */
 function usePackFacts(packId: string | undefined): PackFacts {
@@ -75,7 +72,7 @@ function usePackFacts(packId: string | undefined): PackFacts {
 
 /** "Includes": the legend, one shape + colour + word per kind (mock Includes; PRD § 8.3). */
 function Includes({ rows }: { rows: LegendRow[] }) {
-  const size = 10 * Math.min(textScale(), 2.4);
+  const size = 10 * Math.min(readScale(), 2.4);
   return (
     <GlassSurface
       as="section"
@@ -87,23 +84,27 @@ function Includes({ rows }: { rows: LegendRow[] }) {
       aria-labelledby="s04-includes-heading"
     >
       <div className="s04-card__inner">
-        <h2 id="s04-includes-heading" className="s04-overline">
+        <h2 id="s04-includes-heading" className="fia-overline s04-overline">
           {t('s.passage.inc.heading')}
         </h2>
         <ul className="s04-kinds">
           {rows.map((r) => (
             <li key={r.kind} className="s04-kind" data-kind={r.kind}>
-              <span className="s04-mark">
-                <Bead kind={r.kind} state="done" size={size} color={`var(--s04-kind-${r.kind})`} />
+              <span className="fia-legend-mark">
+                <Bead kind={r.kind} state="done" size={size} color={kindColor(r.kind)} />
               </span>
               <span className="s04-kind__text">
-                <span className="s04-word">{r.word}</span>
-                <span className="s04-count">{r.count}</span>
+                <span className="s04-word fia-type-label fia-fw-semibold fia-lh-120 fia-tone-title">
+                  {r.word}
+                </span>
+                <span className="s04-count fia-type-small fia-lh-125 fia-tabular fia-tone-muted">
+                  {r.count}
+                </span>
               </span>
             </li>
           ))}
         </ul>
-        <p className="s04-note">{t('s.passage.kinds-note')}</p>
+        <p className="fia-caption-v2 s04-note">{t('s.passage.kinds-note')}</p>
       </div>
     </GlassSurface>
   );
@@ -150,6 +151,7 @@ export default function S04PassageCard() {
     <ScreenFrame
       id="S04"
       title={guide.title}
+      titleHidden
       offline={!off.online}
       primaryLabel={
         intent
@@ -169,7 +171,7 @@ export default function S04PassageCard() {
           type="button"
           variant="quiet"
           size="md"
-          className="s04-back__button"
+          className="s04-back__button fia-kit-label"
           leading={<Icon name="chevronLeft" size={18} />}
           aria-label={t('s.passage.a11y.back', { book })}
           onClick={() => nav('/pericopes')}
@@ -179,13 +181,15 @@ export default function S04PassageCard() {
       </div>
       <div className="s04-head">
         {/* The frame's <h1> carries the reference for assistive tech; this is its visible face. */}
-        <p className="s04-hero" aria-hidden="true">
+        <p className="fia-hero s04-hero" aria-hidden="true">
           {keepRef(guide.title)}
         </p>
-        <p className="s04-sub">{subLine(language, guide)}</p>
+        <p className="s04-sub fia-type-label fia-fw-medium fia-tone-body">
+          {subLine(language, guide)}
+        </p>
         <div className="s04-chips">
           <GlassChip
-            className="s04-chip"
+            className="fia-badge fia-kit-caption s04-chip"
             data-voice={voice}
             leading={<Icon name={voice === 'ai' ? 'sparkle' : 'book'} size={13} />}
           >
@@ -198,9 +202,9 @@ export default function S04PassageCard() {
       {(entry || ctl.rowState.state !== 'none') && (
         <SaveRow ctl={ctl} intent={intent} onStart={start} onSeeDownloads={seeDownloads} />
       )}
-      <p className="s04-rights">{rightsLine(facts)}</p>
+      <p className="fia-caption-v2 s04-rights">{rightsLine(facts)}</p>
       {!intent && (
-        <p className="s04-start" data-testid="start-line">
+        <p className="fia-caption-v2 s04-start" data-testid="start-line">
           {copy.hint}
         </p>
       )}

@@ -8,15 +8,11 @@
   overflow: visible;
 }
 
-/* Hero: the frame's own <h1>, set as the mock's .s02-hero on this screen only. */
-[data-screen='S02'] .fia-screen__title {
-  font: var(--fw-bold) var(--fs-hero) / 1.15 var(--font-core);
-  letter-spacing: var(--ls-hero);
-  color: var(--text-title);
-}
+/* Hero: the frame's own <h1> in the shared hero face (ScreenFrame titleHero, frame/frame.css .fia-hero);
+   the mock's .s02-hero sets its line at 1.15 (02-library.html:31; titleClassName fia-lh-115), S03/S04's
+   at 1.12. */
 .s02-sub {
   margin: calc(-1 * var(--fia-space-4) + var(--sp-1)) 0 0;
-  color: var(--text-muted);
 }
 
 /* Search: kit GlassSearch draws a fixed 18 px glyph and a fixed height; the wrapper keeps a 48 px floor. */
@@ -36,11 +32,6 @@
   padding-top: var(--sp-4) !important;
   padding-bottom: var(--sp-4) !important;
 }
-/* kit CatalogRow title literal 15px (CatalogRow.jsx:8) scales with the text size (PRD § 8.5) */
-.s02-well .fia-catalog > div:first-child > div[dir] {
-  font-size: calc(15px * var(--fia-text-scale)) !important;
-  line-height: 1.3 !important;
-}
 
 /* The book name keeps its own width; the meta takes the rest of the row and wraps at the end edge, so
    a wide "◌ not yet in {language}" mark (#55) never squeezes the title (kit CatalogRow's
@@ -52,7 +43,7 @@
 /* At 1× with a resume card, the book list scrolls inside its well so "Where you left off" stays on the
    first screen (02-library.md § Layout: the list region ends above the card; the card is not sticky).
    Above 1× the page is one scrolling column (PRD § 8.5): no inner scroll. */
-:root:not([data-text-step]) .s02-books--bounded .s02-list {
+:root:not(.fia-scaled) .s02-books--bounded .s02-list {
   max-height: calc(var(--sp-1) + 5.5 * 48px); /* half a row shows that the list scrolls */
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -66,55 +57,42 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   text-align: end;
-  color: var(--text-muted);
 }
 .s02-meta svg {
   flex: none;
   width: calc(14px * min(var(--fia-text-scale), 2));
   height: calc(14px * min(var(--fia-text-scale), 2));
 }
-.s02-saved {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-2);
-  color: var(--text-title);
-  font-weight: var(--fw-semibold);
-}
+/* Tones: frame/frame.css .fia-tone-title / .fia-tone-aside, .fia-fw-semibold. */
+.s02-saved,
 .s02-voice {
   display: inline-flex;
   align-items: center;
   gap: var(--sp-2);
-  color: var(--text-title);
-}
-.s02-voice.is-off {
-  color: var(--text-muted);
-}
-[data-theme='dark'] .s02-voice.is-off {
-  color: var(--text-body);
 }
 .s02-needs {
   white-space: normal;
 }
 
 /* Large text (mock html.fia-big, 200%+): each book row stacks its title over its meta. */
-:root:is([data-text-step='x200'], [data-text-step='x310']) .s02-well .fia-catalog {
+:root.fia-big .s02-well .fia-catalog {
   grid-template-columns: minmax(0, 1fr) !important;
   gap: var(--sp-4) !important;
   padding-left: 10px !important;
   padding-right: 6px !important;
 }
-:root:is([data-text-step='x200'], [data-text-step='x310']) .s02-well .fia-catalog > div:last-child {
+:root.fia-big .s02-well .fia-catalog > div:last-child {
   align-items: flex-start !important;
 }
-:root:is([data-text-step='x200'], [data-text-step='x310']) .s02-meta {
+:root.fia-big .s02-meta {
   justify-content: flex-start;
   text-align: start;
 }
-:root:is([data-text-step='x200'], [data-text-step='x310']) .s02-search > div {
+:root.fia-big .s02-search > div {
   min-height: 56px;
   padding-block: var(--sp-3) !important;
 }
-:root:is([data-text-step='x200'], [data-text-step='x310']) .s02-search svg {
+:root.fia-big .s02-search svg {
   width: 36px;
   height: 36px;
 }
@@ -126,17 +104,8 @@
 
 /* Where you left off (display only; the primary is the one way on). */
 .s02-resume {
-  --s02-kind-plain: var(--fia-kind-plain, #6e7787);
-  --s02-kind-scripture: var(--fia-kind-scripture, var(--text-title));
-  --s02-kind-term: var(--fia-kind-term, var(--accent-blue));
-  --s02-kind-stop: var(--fia-kind-stop, var(--accent-red));
   padding: var(--sp-6) var(--sp-8) var(--sp-7);
   margin-top: var(--sp-2);
-}
-[data-theme='dark'] .s02-resume {
-  --s02-kind-plain: var(--fia-kind-plain, var(--on-night-500));
-  --s02-kind-term: var(--fia-kind-term, var(--accent-blue-soft));
-  --s02-kind-stop: var(--fia-kind-stop, #ff6b73);
 }
 .s02-resume__body {
   position: relative;
@@ -154,17 +123,14 @@
 .s02-resume .s02-overline {
   margin: 0;
 }
+/* face: frame/frame.css .fia-title-v2 */
 .s02-resume__title {
   margin: 0;
-  font: var(--fw-semibold) var(--fs-subtitle) / 1.25 var(--font-core);
-  letter-spacing: var(--ls-title);
-  color: var(--text-title);
   text-wrap: balance;
 }
-/* Kit StageRail segments and BeadStrip capsules paint --text-dim; re-point it to the plain-part token
-   (3:1 or more on the card) inside the recap only. */
+/* Kit StageRail segments and BeadStrip capsules paint --text-dim: the recap re-points it to the
+   plain-part token (frame/frame.css .fia-dim-plain). */
 .s02-recap {
-  --text-dim: var(--s02-kind-plain);
   display: grid;
   gap: var(--sp-4);
 }
@@ -176,18 +142,11 @@
   max-width: 100%;
   white-space: normal !important;
 }
-/* Dark badge: never lighter than its card (mock _frame.css:131). */
-[data-theme='dark'] .s02-badge {
-  background: var(--glass-fill-1) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
 
-/* States */
+/* States (words: frame/frame.css .fia-tone-body) */
 .s02-empty,
 .s02-error p {
   margin: 0;
-  color: var(--text-body);
 }
 .s02-error {
   display: grid;
@@ -201,8 +160,4 @@
   position: relative;
   display: block;
   height: 48px;
-  border-top: var(--border-hairline);
-}
-.s02-skel:first-child {
-  border-top: none;
 }

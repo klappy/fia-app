@@ -11,23 +11,13 @@
 }
 
 /* Browse frame order (mock: header · ‹ Library · hero + Select): the frame's <h1> stays the heading
-   for assistive tech, out of sight; the hero row below draws the same words (aria-hidden). */
-[data-screen='S03'] .fia-screen__title {
-  position: absolute;
-  inline-size: 1px;
-  block-size: 1px;
-  padding: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
+   for assistive tech, out of sight (ScreenFrame titleHidden); the hero row draws the same words. */
 
 /* Quiet buttons (mock Quiet): transparent kit GlassButton, icon + label, ≥ 48 px. */
 .s03-quiet {
   min-height: 48px;
   padding: 10px 12px !important;
-  font-size: var(--fs-label) !important;
-  white-space: normal !important;
+  white-space: normal !important; /* size: frame/frame.css .fia-kit-label */
   text-align: start;
 }
 .s03-back {
@@ -42,11 +32,7 @@
   margin-top: var(--sp-1);
 }
 .s03-hero {
-  margin: 0;
-  font: var(--fw-bold) var(--fs-hero) / 1.12 var(--font-core);
-  letter-spacing: var(--ls-hero);
-  color: var(--text-title);
-  overflow-wrap: anywhere;
+  overflow-wrap: anywhere; /* face: frame/frame.css .fia-hero */
 }
 .s03-toggle {
   margin-inline-end: calc(-1 * var(--sp-6));
@@ -62,8 +48,7 @@
 .s03-error,
 .s03-empty,
 .s03-failed {
-  margin: var(--sp-4) 0 0;
-  color: var(--text-body);
+  margin: var(--sp-4) 0 0; /* words: frame/frame.css .fia-tone-body */
 }
 
 /* The well: kit GlassSurface level 2; the list sits above the kit's refraction layer. */
@@ -80,11 +65,6 @@
   min-height: 52px;
   padding: var(--sp-3) var(--sp-8) var(--sp-3) var(--sp-6) !important;
   column-gap: var(--sp-5) !important;
-}
-/* kit CatalogRow title literal 15px (CatalogRow.jsx:8) scales with the text size (PRD § 8.5) */
-.s03-well .fia-catalog > div:first-child > div[dir] {
-  font-size: calc(15px * var(--fia-text-scale)) !important;
-  line-height: 1.3 !important;
 }
 /* Select rows (mock: state chip + reference on one line, the size at the end): the title keeps its
    one line and the size wraps at its " · " instead (pericopeList.ts metaWords). Kit CatalogRow is a
@@ -107,20 +87,13 @@
 /* At 1× in select mode the 68 rows scroll inside their well, so the summary (count, size, free space)
    stays on the first screen above "Save 3 for offline", as the mock draws it. Above 1× the page is one
    scrolling column (PRD § 8.5): no inner scroll. */
-:root:not([data-text-step]) .s03-list[data-mode='select'] {
+:root:not(.fia-scaled) .s03-list[data-mode='select'] {
   max-height: calc(var(--sp-1) + 6.5 * 52px); /* half a row shows that the list scrolls */
   overflow-y: auto;
   overscroll-behavior: contain;
 }
 
-/* a chosen row is lit (mock .s03-row.is-on) */
-.s03-row.is-on {
-  background: var(--glass-fill-3) !important;
-}
-/* Dark: on a chosen row the size line in --text-dim reads under 4.5:1 at 310% (mock rev3 contrast). */
-[data-theme='dark'] .s03-row.is-on {
-  --text-dim: var(--text-body);
-}
+/* a chosen row is lit (mock .s03-row.is-on): frame/frame.css .fia-row-on */
 .s03-row[aria-disabled='true'] {
   cursor: default !important;
 }
@@ -140,9 +113,6 @@
   align-items: center;
   gap: var(--sp-3);
 }
-.s03-size {
-  font-variant-numeric: tabular-nums;
-}
 .s03-meta svg,
 .s03-tail svg {
   flex: none;
@@ -156,23 +126,14 @@
 
 /* State chips (kit GlassChip). One width for Saved / Selected / Add in select mode, so the references
    line up (mock .s03-state); in browse the Saved chip stands alone in the meta. */
+/* Size: frame/frame.css .fia-kit-caption; the selected state (FE-2) is .fia-chip-on. */
 .s03-chip {
   justify-content: center;
-  font-size: var(--fs-caption) !important;
   padding: var(--sp-3) var(--sp-4) !important;
   white-space: normal !important;
 }
 .s03-title .s03-chip {
   min-width: calc(96px * min(var(--fia-text-scale), 2));
-}
-/* The GlassChip selected state (FE-2): title ink, semibold, brighter fill and a 1.5 px ring. */
-.s03-chip.is-on {
-  color: var(--text-title) !important;
-  font-weight: var(--fw-semibold) !important;
-  background: var(--glass-fill-4) !important;
-  box-shadow:
-    var(--inner-top),
-    0 0 0 1.5px var(--text-title);
 }
 .s03-title--stack {
   flex-direction: column;
@@ -199,11 +160,6 @@
   flex-wrap: wrap;
   gap: var(--sp-4);
 }
-.s03-summary__title {
-  font: var(--fw-semibold) var(--fs-label) / 1.3 var(--font-core);
-  color: var(--text-title);
-  font-variant-numeric: tabular-nums;
-}
 .s03-badge {
   white-space: normal !important;
 }
@@ -217,49 +173,39 @@
   gap: var(--sp-4);
   padding: var(--sp-6) var(--sp-8);
 }
+/* the bar: frame/frame.css .fia-skel-bar */
 .s03-skel {
   position: relative;
   display: block;
   height: 28px;
-  border-radius: var(--r-pill);
-  background: var(--glass-fill-2);
 }
 
 /* Large text (200% and 310%, mock html.fia-big): each row stacks title over its meta (kit CatalogRow is a
    2-column grid set inline); the meta starts at the start edge; nothing is nowrap. */
-:root:is([data-text-step='x200'], [data-text-step='x310']) .s03-well .fia-catalog {
+:root.fia-big .s03-well .fia-catalog {
   grid-template-columns: minmax(0, 1fr) !important;
 }
-:root:is([data-text-step='x200'], [data-text-step='x310']) .s03-well .fia-catalog > div:last-child {
+:root.fia-big .s03-well .fia-catalog > div:last-child {
   align-items: flex-start !important;
 }
-:root:is([data-text-step='x200'], [data-text-step='x310'])
-  .s03-list[data-mode='select']
-  .fia-catalog {
+:root.fia-big .s03-list[data-mode='select'] .fia-catalog {
   flex-direction: column;
   align-items: stretch !important;
 }
-:root:is([data-text-step='x200'], [data-text-step='x310'])
-  .s03-list[data-mode='select']
-  .fia-catalog
-  > div:last-child {
+:root.fia-big .s03-list[data-mode='select'] .fia-catalog > div:last-child {
   width: auto;
 }
-:root:is([data-text-step='x200'], [data-text-step='x310'])
-  .s03-list[data-mode='select']
-  .fia-catalog
-  > div:last-child
-  > span {
+:root.fia-big .s03-list[data-mode='select'] .fia-catalog > div:last-child > span {
   text-align: start;
 }
-:root:is([data-text-step='x200'], [data-text-step='x310']) .s03-meta {
+:root.fia-big .s03-meta {
   justify-content: flex-start;
   text-align: start;
 }
-:root:is([data-text-step='x200'], [data-text-step='x310']) .s03-search svg {
+:root.fia-big .s03-search svg {
   width: 36px;
   height: 36px;
 }
-:root:is([data-text-step='x200'], [data-text-step='x310']) .s03-search > div {
+:root.fia-big .s03-search > div {
   padding: var(--sp-3) var(--sp-9) !important;
 }

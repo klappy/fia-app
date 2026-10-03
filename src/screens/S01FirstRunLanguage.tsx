@@ -105,6 +105,7 @@ export default function S01FirstRunLanguage() {
   return (
     <ScreenFrame
       id="S01"
+      titleHidden
       primaryLabel={
         row
           ? t('s.lang.primary-pick', { language: row.autonym })
@@ -119,16 +120,13 @@ export default function S01FirstRunLanguage() {
       }}
     >
       <div className="s01-hero">
-        <span className="s01-logo">
-          <FiaLogo size={44} />
-        </span>
-        <p className="s01-qualifier">{t('s.about.qualifier')}</p>
+        <FiaLogo size={44} qualifier />
       </div>
       {/* The frame's h1 carries the same words for screen readers; this is the mock's display title. */}
-      <p className="s01-h1" aria-hidden="true">
+      <p className="s01-h1 fia-display" aria-hidden="true">
         {t('s.lang.title')}
       </p>
-      <p className="s01-lede">
+      <p className="fia-caption-v2 s01-lede">
         {t('s.lang.lede')}
         {languages.length > 0 && ` ${t('s.lang.lede-count', { n: languages.length })}`}
       </p>
@@ -154,14 +152,16 @@ export default function S01FirstRunLanguage() {
             aria-busy={!failed || undefined}
             data-state={failed ? 'error' : 'loading'}
           >
-            <p className="s01-state__title">{t('s.lang.picker-title')}</p>
-            <p className="s01-state__body">
+            <p className="s01-state__title fia-face-card-title fia-tone-title">
+              {t('s.lang.picker-title')}
+            </p>
+            <p className="s01-state__body fia-face-body fia-tone-body">
               {failed ? t('s.lang.error') : `${t('s.common.loading')}…`}
             </p>
           </div>
         </GlassSurface>
       )}
-      <p className="s01-note">
+      <p className="s01-note fia-type-caption fia-fw-medium fia-tone-body">
         {t(summaries ? 's.lang.disclosure-summaries' : 's.lang.disclosure')}
       </p>
       <div className="s01-feedback">

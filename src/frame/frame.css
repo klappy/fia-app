@@ -1,0 +1,743 @@
+/* The FIA app layer: the one shared stylesheet every glass screen composes with (RULING 2026-10-02
+   ~20:05 ET: screens are compositions of kit + a shared app layer styled by one stylesheet; per-screen
+   CSS is layout only). Port of the nodded mocks' cookbook design/alpha-v2-screens/_frame.css @19763f3,
+   mapped to the app's existing tokens (tokens/alpha.css). The kit (src/vendor/glass @ad528f4) is never
+   edited: app tokens, the text-scale flags and the overrides for kit components with literal px live
+   here, class-scoped. Imported once, last (main.tsx), so one fix here reaches every screen.
+   Parts that use these classes: src/frame/ (index.ts names them after _frame.js). */
+
+/* ---------- app tokens: the coded marks (PRD § 8.3; _frame.css:15-57) ---------- */
+:root {
+  --fia-kind-plain: #6e7787; /* ● plain part, done step segments: 3:1 or more on light glass */
+  --fia-kind-scripture: var(--text-title); /* ■ Scripture */
+  --fia-kind-term: var(--accent-blue); /* ◆ key term */
+  --fia-kind-media: #17786e; /* ▲ image or map: app contrast variant of kit teal */
+  --fia-kind-stop: var(--accent-red); /* | talk together, ‖ end of guide */
+  --fia-dotring: rgba(70, 86, 112, 0.34); /* the big button's DotRing (_frame.js:339) */
+}
+[data-theme='dark'] {
+  --fia-kind-plain: var(--on-night-500);
+  --fia-kind-term: var(--accent-blue-soft);
+  --fia-kind-media: var(--accent-teal);
+  --fia-kind-stop: #ff6b73;
+  --fia-dotring: rgba(255, 255, 255, 0.34);
+}
+
+/* ---------- utilities ---------- */
+/* ScreenFrame `titleHidden` and any visually hidden label. */
+.fia-sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  padding: 0 !important;
+}
+
+/* ---------- frames (Frame, _frame.js:412-419; ScreenFrame `frame`) ---------- */
+/* Text scale flags (_frame.js:20-21): html.fia-scaled (any step above 1×) and html.fia-big (200%,
+   310%) are set by settings/apply.ts beside data-text-step. Selectors use :root so they weigh what
+   :root:is([data-text-step=…]) weighed. */
+/* Guide frame (S05, S06, S08, S09): one phone screen at 1×, one scrolling column above (PRD § 8.5). */
+html:not(.fia-scaled) .fia-screen[data-frame='guide'] {
+  height: 100dvh;
+  min-height: 0;
+}
+.fia-screen[data-frame='guide'] > .fia-content {
+  padding-top: 10px;
+  padding-bottom: 0;
+  overflow: visible;
+}
+html:not(.fia-scaled) .fia-screen[data-frame='guide'] > .fia-content {
+  flex: 1;
+  min-height: 0;
+  padding-bottom: 2px;
+}
+
+/* ---------- thumb zone (Thumb, _frame.js:221; _frame.css:158-162): sticky only when scaled ---------- */
+.fia-screen > .fia-thumb {
+  position: relative;
+  z-index: 1;
+  padding: 0 var(--fia-gutter) calc(var(--fia-safe-bottom) + 12px);
+}
+html.fia-scaled .fia-screen > .fia-thumb {
+  position: sticky;
+  bottom: 0;
+  margin-top: 12px;
+  padding-top: 10px;
+  background: var(--material-floating);
+  backdrop-filter: blur(var(--blur-heavy)) var(--sat-glass);
+  -webkit-backdrop-filter: blur(var(--blur-heavy)) var(--sat-glass);
+  border-top: var(--border-glass);
+  border-radius: var(--r-2xl) var(--r-2xl) 0 0;
+  box-shadow: var(--shadow-float);
+}
+
+/* ---------- logo qualifier (FiaLogo qualifier, _frame.js:77-78; _frame.css:80) ---------- */
+/* The app's label size (S01 and S15 drew it so); the mock's caption size is the text-primitives PR. */
+.fia-qualifier {
+  margin: 0;
+  font: var(--fw-semibold) var(--fs-label) / 1.25 var(--font-core);
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* ---------- text primitives (_frame.css:73-75; the mock pages' .s02/.s03/.s04-hero) ---------- */
+/* Screens compose these by class; their own sheets keep only margins and wrapping. The overline face
+   is app.css .fia-overline (already the mock's, _frame.css:73). */
+/* The browse hero (mock 03-pericope-list.html:44, 04-passage-card.html:29; S02 keeps its own 1.15 line). */
+.fia-hero {
+  margin: 0;
+  font: var(--fw-bold) var(--fs-hero) / 1.12 var(--font-core);
+  letter-spacing: var(--ls-hero);
+  color: var(--text-title);
+}
+/* The mock's caption face (_frame.css:74). Its own name until the text-primitives PR moves the v1
+   .fia-caption (app.css: 13px, --fia-text-muted) onto this face, a visible change on ~20 screens. */
+.fia-caption-v2 {
+  font: var(--fw-medium) var(--fs-caption) / 1.3 var(--font-core);
+  color: var(--text-muted);
+}
+/* The mock's title face (_frame.css:75), minus its text-wrap (wrapping stays with each sheet). Its own
+   name until the text-primitives PR moves the v1 .fia-title (app.css: 22px) onto this face. */
+.fia-title-v2 {
+  font: var(--fw-semibold) var(--fs-subtitle) / 1.25 var(--font-core);
+  letter-spacing: var(--ls-title);
+  color: var(--text-title);
+}
+
+/* ---------- kit resources/CatalogRow (CatalogRow.jsx:8 title literal 15px; _frame.css:141-143) ---------- */
+/* Every CatalogRow carries .fia-catalog; the title grows with the text size (one rule for the six
+   hand copies that were in app.css, S02, S03, S18, PericopeCard and alpha.css). */
+.fia-catalog > div:first-child > div[dir] {
+  font-size: calc(15px * var(--fia-text-scale)) !important;
+  line-height: 1.3 !important;
+}
+.fia-catalog {
+  min-height: 48px;
+}
+.fia-row-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ---------- dark chips and badges (_frame.css:131-133) ---------- */
+/* A kit GlassChip or SyncBadge marked .fia-badge, and every .fia-chip in the guide, the stop sheet and
+   the provenance sheet, drops to --glass-fill-1 with no blur of its own in dark, so it is never lighter
+   than the card it sits on. Light unchanged. (The mock makes every .fia-chip so; the app keeps the
+   guide's scope here, so chips elsewhere do not move.) */
+[data-theme='dark'] .fia-badge,
+[data-theme='dark'] :is(.fia-guide, .fia-sheet--stop, .fia-sheet--prov) .fia-chip {
+  background: var(--glass-fill-1) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* ---------- sheets: groups and the legend (Group, BeadLegend; _frame.css:193-199) ---------- */
+.fia-well {
+  padding: 2px 0;
+}
+.fia-legend {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px 12px;
+}
+:root.fia-big .fia-legend {
+  grid-template-columns: 1fr;
+}
+.fia-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: var(--fw-medium) var(--fs-label) / 1.25 var(--font-core);
+  color: var(--text-title);
+}
+.fia-legend-mark {
+  width: calc(24px * min(var(--fia-text-scale), 2.4));
+  display: flex;
+  justify-content: center;
+  flex: none;
+}
+/* A well: a kit GlassSurface nested on a sheet (Explore's groups, S07's legend, S14's groups). Dark:
+   kit glass-fill-3 plus the refraction sheen on the sheet's --material-floating lifted the card to
+   #5F6267–#6C6F74 (words 2.4–2.6:1); the well is smoked (half --surface-app, no sheen). Light unchanged. */
+[data-theme='dark'] .fia-well {
+  background: color-mix(in srgb, var(--surface-app) 50%, transparent) !important;
+}
+[data-theme='dark'] .fia-well > span[aria-hidden='true']:first-child {
+  display: none;
+}
+/* The key in its well (LegendWell): S07 today; S15 and Explore are the visible follow-up. */
+.fia-well.fia-legend-well {
+  margin-top: 2px;
+  padding: 10px 14px;
+}
+.fia-legend-inner {
+  position: relative;
+}
+.fia-legend-title {
+  margin-bottom: 6px;
+  font: var(--fw-semibold) var(--fs-label) / 1.25 var(--font-core);
+  color: var(--text-title);
+}
+.fia-legend-seg {
+  width: calc(24px * min(var(--fia-text-scale), 2.4));
+}
+.fia-legend-states {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 10px;
+  margin: 8px 0 0;
+  font: var(--fw-medium) var(--fs-caption) / 1.3 var(--font-core);
+  color: var(--text-muted);
+}
+.fia-legend-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* ---------- sheets on the kit GlassSheet (_frame.css:189-190) ---------- */
+/* A raw kit GlassSheet (S07's map, S14's settings) with class .fia-sheet is one column: the pinned
+   title rows, the scrolling .fia-sheet-body, the action. (Sheet.tsx puts .fia-sheet on the dialog itself
+   and lays its own body out in app.css.) */
+.fia-sheet > [role='dialog'] {
+  display: flex;
+  flex-direction: column;
+}
+.fia-sheet-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 10px -18px 0;
+  padding: 0 18px;
+}
+
+/* ======================================================================================================
+   Lift 2 (RULING 2026-10-02 ~20:05 ET (b); cookbook CLAIM.md @c995638): the visual declarations the
+   per-screen sheets (src/screens/*.css) carried, folded into the shared layer. A screen's sheet keeps
+   layout only (grid, flex, gap, margin, padding, size, position); check:css fails on anything else there.
+   Screens compose the classes below by name. Everything here sits after the rules above, so a modifier
+   wins over a face by order, never by !important.
+   ====================================================================================================== */
+
+/* ---------- parts on kit components with literal px (_frame.css:141-150 shape) ---------- */
+/* A kit GlassButton, GlassChip or segmented label whose inline px size grows with the text step. */
+.fia-kit-label {
+  font-size: var(--fs-label) !important;
+}
+.fia-kit-caption {
+  font-size: var(--fs-caption) !important;
+}
+/* A kit GlassChip in the mock's chip face and title ink (S19's coverage chips; kit sets 12 px inline). */
+.fia-kit-chip {
+  font: var(--fw-medium) var(--fs-caption) / 1.2 var(--font-core) !important;
+  color: var(--text-title) !important;
+}
+/* A chosen kit GlassChip (FE-2; S03's select chips): title ink, semibold, brighter fill, a 1.5 px ring. */
+.fia-chip-on {
+  color: var(--text-title) !important;
+  font-weight: var(--fw-semibold) !important;
+  background: var(--glass-fill-4) !important;
+  box-shadow:
+    var(--inner-top),
+    0 0 0 1.5px var(--text-title);
+}
+/* A chosen kit CatalogRow is lit (mock 03-pericope-list.html .s03-row.is-on). Dark: its size line in
+   --text-dim read under 4.5:1 at 310% (mock rev3 contrast), so dim takes --text-body there. */
+.fia-row-on {
+  background: var(--glass-fill-3) !important;
+}
+[data-theme='dark'] .fia-row-on {
+  --text-dim: var(--text-body);
+}
+/* A quiet kit button whose words read as a muted label (S07's "‹ Explore"). */
+.fia-kit-muted {
+  color: var(--text-muted) !important;
+}
+
+/* ---------- row buttons and dividers (_frame.css:124 .fia-chip-btn, :172 .fia-gp) ---------- */
+/* A whole row that is one <button>: no native chrome, the row's own words and face. */
+.fia-row-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+/* A button with no chrome of its own (S16's feedback rows). */
+.fia-bare {
+  background: none;
+  border: 0;
+}
+/* A hairline above every row but the first (the screen sets it on rows after the first). */
+.fia-divider {
+  border-top: var(--border-hairline);
+}
+/* The row the walk is on (S07 part rows). */
+.fia-row-current {
+  background: color-mix(in srgb, var(--text-title) 7%, transparent);
+}
+.fia-r-md {
+  border-radius: var(--r-md);
+}
+/* A loading placeholder bar (S03's skeleton rows). */
+.fia-skel-bar {
+  border-radius: var(--r-pill);
+  background: var(--glass-fill-2);
+}
+/* Verbatim licence and JSON text (S15). */
+.fia-mono {
+  font-family: var(--fia-font-mono, monospace);
+}
+/* A heading that wears its container's face (S07's title inside the kit sheet's title slot). */
+.fia-inherit {
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+}
+
+/* A hairline rule (an <hr>): no native bevel. */
+.fia-hr {
+  border: none;
+  border-top: var(--border-hairline);
+}
+
+/* ---------- display faces: a capped headline that grows with the text step ---------- */
+/* S01's "choose your language" hero (mock 01-first-run-language.html). */
+.fia-display {
+  font: var(--fw-bold) min(calc(26px * var(--fia-text-scale)), 62px) / 1.15 var(--font-core);
+  letter-spacing: -0.01em;
+  color: var(--text-title);
+}
+/* S18's "You finished …" headline (mock 18-completion.html). */
+.fia-display-sm {
+  font: var(--fw-bold) min(calc(22px * var(--fia-text-scale)), 58px) / 1.18 var(--font-core);
+  letter-spacing: -0.01em;
+  color: var(--text-title);
+}
+
+/* ---------- the done mark: glass, not ink; a mark, not a button (mock 18-completion.html) ---------- */
+.fia-done-mark {
+  border-radius: var(--r-pill);
+  background: var(--glass-fill-4);
+  border: var(--border-glass);
+  box-shadow:
+    var(--shadow-rest),
+    var(--inner-top),
+    inset 0 0 0 2px var(--text-title);
+  color: var(--text-title);
+}
+
+/* A run of rows with a hairline between neighbours (S15's source rows). */
+.fia-hairline-run + .fia-hairline-run {
+  border-top: var(--border-hairline);
+}
+/* A quiet text button: no chrome, the muted semibold label face (S15's feedback and install links). */
+.fia-quiet-link {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font: var(--fw-semibold) var(--fs-label) / 1.25 var(--font-core);
+  color: var(--text-muted);
+}
+
+/* ---------- kit GlassToggle track (GlassToggle.jsx:4-5): the checked --surface-inverse track would be
+   a second dark element beside the primary; the kit's interactive blue instead (S14, S15) ---------- */
+.fia-switch [role='switch'][aria-checked='false'] {
+  background: color-mix(in srgb, var(--text-title) 12%, transparent) !important;
+}
+.fia-switch [role='switch'][aria-checked='true'] {
+  background: var(--accent-blue) !important;
+}
+/* S14's settings rows: a near-white knob on the blue track. */
+.fia-switch--knob [role='switch'][aria-checked='true'] > span {
+  background: var(--paper-050) !important;
+}
+
+/* ---------- kit GlassSegmented (GlassSegmented.jsx:3-6; _frame.css:111-121 .fia-views): the 12 px
+   literal label scales, the glass-fill-2 track (it vanishes on a light sheet) takes a 6% ink wash, an
+   unselected option is medium; stacked, the track and options round to the list's corners (S14) ---------- */
+.fia-segs-kit {
+  background: color-mix(in srgb, var(--text-title) 6%, transparent) !important;
+}
+.fia-segs-kit [role='radio'] {
+  font-size: var(--fs-label) !important;
+  line-height: 1.15 !important;
+}
+.fia-segs-kit [role='radio'][aria-checked='false'] {
+  font-weight: var(--fw-medium) !important;
+}
+.fia-segs-kit.is-vertical {
+  border-radius: var(--r-xl) !important;
+}
+.fia-segs-kit.is-vertical [role='radio'] {
+  border-radius: var(--r-lg) !important;
+}
+
+/* ---------- kit FilterChips (FilterChips.jsx:5; _frame.css:146-148 .fia-filter): the 12 px literal
+   label scales; a chosen chip is glass + check + semibold, not --surface-inverse, so the primary stays
+   the only dark element (S16's reasons) ---------- */
+.fia-filter-kit > button {
+  font-size: var(--fs-label) !important;
+}
+.fia-filter-kit > button[aria-pressed='true'] {
+  background: var(--glass-fill-4) !important;
+  color: var(--text-title) !important;
+  font-weight: var(--fw-semibold) !important;
+  box-shadow:
+    inset 0 0 0 1.5px var(--text-title),
+    var(--shadow-rest) !important;
+  border: 0.5px solid transparent !important;
+}
+
+/* ---------- kit GlassField (GlassField.jsx:5-7): label and input sizes follow the text step; the input
+   keeps the app's 3 px focus ring (WCAG 2.4.7; the kit sets outline:none inline, so only !important
+   beats it; the kit's --glow-focus stays as well) (S16's contact field) ---------- */
+.fia-field-kit input {
+  font-size: var(--fs-body) !important;
+}
+.fia-field-kit label > span {
+  font-size: var(--fs-caption) !important;
+}
+.fia-field-kit input:focus-visible {
+  outline: 3px solid var(--fia-focus-ring) !important;
+  outline-offset: 3px;
+}
+
+/* ---------- a growing text area drawn with kit GlassField's own tokens (kit gap fallback, S16) ---------- */
+.fia-glass-area {
+  border-radius: var(--r-xl);
+  background: var(--glass-fill-2);
+  border: var(--border-glass);
+  box-shadow: var(--shadow-rest), var(--inner-top);
+  font: var(--type-body);
+  font-size: var(--fs-body);
+  line-height: 1.4;
+  color: var(--text-title);
+}
+.fia-glass-area:focus-visible {
+  box-shadow: var(--shadow-rest), var(--inner-top), var(--glow-focus);
+}
+
+/* ---------- captions in a kit form: app.css .fia-caption sets the older --fia-text-muted (#5A6472,
+   4.1-4.5:1 on light glass); the kit's --text-muted (#475060) clears 4.5:1 (S16's form) ---------- */
+.fia-kit-captions .fia-caption {
+  color: var(--text-muted);
+}
+/* The form's overline: semibold 9 px on a 1.2 line, wider tracking (mock 16-feedback.html). */
+.fia-overline.fia-overline--form {
+  font: var(--fw-semibold) var(--fs-overline) / 1.2 var(--font-core);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ---------- secondary words on a sheet of frame wells (S14's body) ---------- */
+/* Light: overlines on the near-white sheet take --text-muted (mock 14-settings: 5.9:1). Dark: each group
+   card is a frame well, smoked with no sheen (.fia-well), so the segmented track drops to
+   --glass-fill-1 and the secondary words take --text-body: 10:1 rather than 4.1-4.4:1 on the lifted
+   level-3 glass (F6-S14 review 5/8). */
+.fia-quiet-words .fia-overline {
+  color: var(--text-muted);
+}
+[data-theme='dark'] .fia-quiet-words .fia-segs-kit {
+  background: var(--glass-fill-1) !important;
+}
+[data-theme='dark'] .fia-quiet-words [role='radio'][aria-checked='false'],
+[data-theme='dark'] .fia-quiet-words .fia-caption,
+[data-theme='dark'] .fia-quiet-words .fia-srow__state,
+[data-theme='dark'] .fia-quiet-words .fia-overline {
+  color: var(--text-body) !important;
+}
+
+/* ---------- the coded marks drawn by the app where the kit has no legend bead (S15 LegendMark) ---------- */
+.fia-swatch--plain {
+  border-radius: 50%;
+  background: var(--fia-kind-plain);
+}
+.fia-swatch--scripture {
+  border-radius: 2px;
+  background: var(--fia-kind-scripture);
+}
+.fia-swatch--term {
+  background: var(--fia-kind-term);
+}
+.fia-swatch--media {
+  background: var(--fia-kind-media);
+}
+.fia-swatch--video {
+  border-radius: 2px;
+  background: var(--fia-kind-media);
+}
+
+/* ---------- the step badge: number in a ringed glass disc (mock 07-overview.html:33-44) ---------- */
+.fia-step-badge {
+  border-radius: var(--r-pill);
+  background: var(--glass-fill-3);
+  box-shadow: inset 0 0 0 1px var(--text-dim);
+  font: var(--fw-semibold) var(--fs-label) / 1 var(--font-numeric);
+  color: var(--text-title);
+}
+.fia-step-badge.is-current {
+  box-shadow: inset 0 0 0 2px var(--surface-inverse);
+}
+
+/* ---------- a talk row: led by the stop bar, in the stop colour; not a control (mock 07-overview.html:61-64) ---------- */
+.fia-talk {
+  border-start-end-radius: var(--r-md);
+  border-end-end-radius: var(--r-md);
+  border-inline-start: 3px solid var(--fia-kind-stop);
+  background: color-mix(in srgb, var(--fia-kind-stop) 8%, transparent);
+  font: var(--fw-semibold) var(--fs-label) / 1.25 var(--font-core);
+  color: var(--fia-kind-stop);
+}
+.fia-talk > svg {
+  color: var(--fia-kind-stop);
+}
+/* Dark: the words take --text-title on the mid-grey sheet; the bar and the icon keep the red (mock :65-72). */
+[data-theme='dark'] .fia-talk {
+  color: var(--text-title);
+}
+
+/* ---------- --text-dim re-points ---------- */
+/* Kit StageRail segments and BeadStrip capsules paint --text-dim; inside a recap they take the plain-part
+   token (3:1 or more on the card): S02's resume card, S18's recap. */
+.fia-dim-plain {
+  --text-dim: var(--fia-kind-plain);
+}
+/* Dark: the kit sheet's --material-floating is a mid grey; inside it the dim chevrons take
+   --on-night-500 (S07's map sheet; mock 07-overview.html:65-72). Light unchanged. */
+[data-theme='dark'] .fia-sheet--night-dim > [role='dialog'] {
+  --text-dim: var(--on-night-500);
+}
+
+/* ---------- type: faces, then weight / line / family / spacing modifiers, then tones ---------- */
+/* One face per step of the kit type scale (tokens/typography.css, scaled by --fia-text-scale), regular
+   weight on a 1.3 line in the core family. The kit's own shorthands (--type-*) are faces too. A modifier
+   below a face replaces one part of it, so a screen composes e.g. "fia-type-label fia-fw-semibold
+   fia-lh-120" for the mock's semibold 13/1.2. */
+.fia-type-caption {
+  font: var(--fw-regular) var(--fs-caption) / 1.3 var(--font-core);
+}
+.fia-type-small {
+  font: var(--fw-regular) calc(11px * var(--fia-text-scale)) / 1.3 var(--font-core);
+}
+.fia-type-label {
+  font: var(--fw-regular) var(--fs-label) / 1.3 var(--font-core);
+}
+.fia-type-body {
+  font: var(--fw-regular) var(--fs-body) / 1.3 var(--font-core);
+}
+.fia-type-subtitle {
+  font: var(--fw-regular) var(--fs-subtitle) / 1.3 var(--font-core);
+}
+.fia-type-title {
+  font: var(--fw-regular) var(--fs-title) / 1.3 var(--font-core);
+}
+.fia-face-card-title {
+  font: var(--type-card-title);
+}
+.fia-face-body {
+  font: var(--type-body);
+}
+.fia-face-caption {
+  font: var(--type-caption);
+}
+.fia-fw-medium {
+  font-weight: var(--fw-medium);
+}
+.fia-fw-semibold {
+  font-weight: var(--fw-semibold);
+}
+.fia-lh-100 {
+  line-height: 1;
+}
+.fia-lh-115 {
+  line-height: 1.15;
+}
+.fia-lh-120 {
+  line-height: 1.2;
+}
+.fia-lh-125 {
+  line-height: 1.25;
+}
+.fia-lh-130 {
+  line-height: 1.3;
+}
+.fia-lh-140 {
+  line-height: 1.4;
+}
+.fia-ff-core {
+  font-family: var(--font-core);
+}
+.fia-ff-numeric {
+  font-family: var(--font-numeric);
+}
+.fia-tabular {
+  font-variant-numeric: tabular-nums;
+}
+.fia-ls-title {
+  letter-spacing: var(--ls-title);
+}
+/* A toast's words follow the text step: 16 px at 100% (S14's save-failed notice). */
+.fia-notice.fia-type-toast {
+  font-size: calc(1rem * var(--fia-text-scale));
+}
+/* Tones: the text colours a screen may name. */
+.fia-tone-title {
+  color: var(--text-title);
+}
+.fia-tone-body {
+  color: var(--text-body);
+}
+.fia-tone-muted {
+  color: var(--text-muted);
+}
+.fia-tone-dim {
+  color: var(--text-dim);
+}
+/* An aside that steps back: muted in light, --text-body in dark where muted under-reads on a glass
+   card (S02's "voice not yet"). */
+.fia-tone-aside {
+  color: var(--text-muted);
+}
+[data-theme='dark'] .fia-tone-aside {
+  color: var(--text-body);
+}
+
+/* ---------- S17 install guide: the step list, cards and kit-gap drawings (mock 17-install-guide.html)
+   Their visual declarations, moved from tokens/alpha.css under the same selectors (the layout stays
+   there). The drawings scale on their own capped --k, so no shared face fits them yet; composing them
+   from shared parts is a follow-up. Every element here carries only .fia-install__* classes, so moving
+   the rules after app.css changes no outcome. ---------- */
+.fia-install.fia-install__steps {
+  font-size: var(--fs-caption);
+}
+.fia-install__overline {
+  font: var(--fw-semibold) var(--fs-overline) / 1.2 var(--font-core);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.fia-install__why-text {
+  font: var(--fw-regular) var(--fs-label) / 1.4 var(--font-core);
+  color: var(--text-body);
+}
+.fia-install__step + .fia-install__step::before {
+  border-top: 1.5px solid var(--text-dim);
+  opacity: 0.6;
+}
+.fia-install__badge {
+  border-radius: var(--r-pill);
+  background: var(--glass-fill-3);
+  box-shadow: inset 0 0 0 1px var(--text-dim);
+  font: var(--fw-semibold) calc(13px * var(--k)) / 1 var(--font-numeric, var(--font-core));
+  color: var(--text-muted);
+}
+.fia-install__step-label {
+  font: var(--fw-medium) var(--fs-caption) / 1.2 var(--font-core);
+  color: var(--text-muted);
+}
+.fia-install__step[aria-current='step'] .fia-install__badge {
+  box-shadow: inset 0 0 0 2px var(--text-title);
+  color: var(--text-title);
+}
+.fia-install__step[aria-current='step'] .fia-install__step-label {
+  color: var(--text-title);
+  font-weight: var(--fw-semibold);
+}
+.fia-install__step.is-done .fia-install__badge {
+  color: var(--text-title);
+}
+.fia-install__where {
+  font: var(--fw-semibold) var(--fs-caption) / 1.2 var(--font-core);
+  color: var(--text-muted);
+}
+.fia-install__title {
+  font: var(--fw-semibold) calc(18px * var(--fia-text-scale)) / 1.25 var(--font-core);
+  color: var(--text-title);
+}
+.fia-install__body {
+  font: var(--fw-regular) var(--fs-subtitle) / 1.4 var(--font-core);
+  color: var(--text-body);
+}
+.fia-install__note {
+  font: var(--fw-regular) var(--fs-label) / 1.4 var(--font-core);
+  color: var(--text-muted);
+}
+.fia-install__safari {
+  color: var(--text-title);
+}
+.fia-install__ring {
+  border-radius: var(--r-md);
+  box-shadow: 0 0 0 2px var(--accent-blue);
+}
+.fia-install__ring--round {
+  border-radius: var(--r-pill);
+}
+.fia-install__ring--word {
+  font-weight: var(--fw-semibold);
+}
+.fia-install__sheet-row {
+  font: var(--fw-medium) calc(13px * var(--k)) / 1.2 var(--font-core);
+  color: var(--text-title);
+}
+.fia-install__sheet-row + .fia-install__sheet-row {
+  border-top: var(--border-hairline);
+}
+.fia-install__dialog-title {
+  font: var(--fw-semibold) calc(15px * var(--k)) / 1.2 var(--font-core);
+  color: var(--text-title);
+}
+.fia-install__dialog-row {
+  font: var(--fw-medium) calc(13px * var(--k)) / 1.2 var(--font-core);
+  color: var(--text-title);
+}
+.fia-install__app {
+  border-radius: var(--r-md);
+  background: var(--glass-fill-4);
+  border: var(--border-glass);
+}
+.fia-install__app-name {
+  font: var(--fw-semibold) calc(13px * var(--k)) / 1.25 var(--font-core);
+  color: var(--text-title);
+}
+.fia-install__app-name > span {
+  font-weight: var(--fw-regular);
+  color: var(--text-muted);
+}
+.fia-install__draw-caption {
+  font: var(--fw-medium) calc(12px * var(--k)) / 1.3 var(--font-core);
+  color: var(--text-muted);
+}
+/* Drawings of a dark Safari/Chrome sheet are smoked in dark, so their words read past 4.5:1 (mock rev2). */
+[data-theme='dark'] .fia-install__bar,
+[data-theme='dark'] .fia-install__sheet,
+[data-theme='dark'] .fia-install__dialog {
+  background: rgba(20, 22, 28, 0.72) !important;
+}
+[data-theme='dark'] .fia-install__overline,
+[data-theme='dark'] .fia-install__step-label,
+[data-theme='dark'] .fia-install__badge,
+[data-theme='dark'] .fia-install__draw-caption,
+[data-theme='dark'] .fia-install__app-name > span,
+[data-theme='dark'] .fia-install__note {
+  color: var(--text-body);
+}
+[data-theme='dark'] .fia-install__step[aria-current='step'] .fia-install__step-label,
+[data-theme='dark'] .fia-install__step[aria-current='step'] .fia-install__badge,
+[data-theme='dark'] .fia-install__step.is-done .fia-install__badge {
+  color: var(--text-title);
+}
+.fia-install__quiet > .fia-secondary {
+  font: var(--fw-semibold) var(--fs-label) / 1.25 var(--font-core);
+  color: var(--text-muted);
+  text-decoration: none;
+}

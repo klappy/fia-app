@@ -46,7 +46,8 @@ describe('F6-S16 feedback in glass', () => {
       ),
     );
     // design-lens rule 5: ids ride in the C-16 payload only (e2e/feedback.spec.ts checks it)
-    expect(html).toContain('<p class="fia-feedback__where">Español</p>');
+    // The row's face is shared classes after .fia-feedback__where (lift 2); the words are the check.
+    expect(html).toMatch(/<p class="fia-feedback__where[^"]*">Español<\/p>/);
     for (const id of ['spa.MRK-1-1-13', 'S02-U004', '>S05<', '(spa)'])
       expect(html).not.toContain(id);
     expect(html).not.toMatch(/>v\d+\.\d+/);

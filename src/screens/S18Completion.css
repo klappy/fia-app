@@ -9,34 +9,7 @@
   padding-top: var(--sp-5);
 }
 /* The frame's <h1> keeps the headline for assistive tech; the plate's headline is its face, so the
-   regions run in the mock's order: header · mark · "You finished Mark 1:1–13". */
-[data-screen='S18']:has(.s18-recap) .fia-screen__title {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-  border: 0;
-}
-
-/* Bead and segment colours: the mock's --fia-kind-* values (_frame.css:25-29, :52-56), page-scoped. */
-[data-screen='S18'] {
-  --s18-kind-plain: var(--fia-kind-plain, #6e7787);
-  --s18-kind-scripture: var(--fia-kind-scripture, var(--text-title));
-  --s18-kind-term: var(--fia-kind-term, var(--accent-blue));
-  --s18-kind-media: var(--fia-kind-media, #17786e);
-  --s18-kind-stop: var(--fia-kind-stop, var(--accent-red));
-}
-[data-theme='dark'] [data-screen='S18'] {
-  --s18-kind-plain: var(--fia-kind-plain, var(--on-night-500));
-  --s18-kind-term: var(--fia-kind-term, var(--accent-blue-soft));
-  --s18-kind-media: var(--fia-kind-media, var(--accent-teal));
-  --s18-kind-stop: var(--fia-kind-stop, #ff6b73);
-}
-
+   regions run in the mock's order: header · mark · "You finished Mark 1:1–13" (ScreenFrame titleHidden). */
 /* ---- the recap plate (kit GlassSurface level 2, strong blur, 2xl) ---- */
 .s18-recap__body {
   position: relative; /* above the kit's refraction layer */
@@ -48,35 +21,21 @@
   align-items: center;
   text-align: center;
 }
-/* The done mark: glass, not ink — a mark, not a button (one dark element per screen). */
+/* The done mark: frame/frame.css .fia-done-mark (glass, not ink). The headline: .fia-display-sm. */
 .s18-mark {
   width: calc(60px * min(var(--fia-text-scale), 1.5));
   height: calc(60px * min(var(--fia-text-scale), 1.5));
-  border-radius: var(--r-pill);
   display: grid;
   place-items: center;
   flex: none;
-  background: var(--glass-fill-4);
-  border: var(--border-glass);
-  box-shadow:
-    var(--shadow-rest),
-    var(--inner-top),
-    inset 0 0 0 2px var(--text-title);
-  color: var(--text-title);
 }
 .s18-h1 {
   margin: 12px 0 0;
-  font: var(--fw-bold) min(calc(22px * var(--fia-text-scale)), 58px) / 1.18 var(--font-core);
-  letter-spacing: -0.01em;
-  color: var(--text-title);
   text-wrap: balance;
   overflow-wrap: anywhere;
 }
 .s18-sum {
   margin: 4px 0 0;
-  font: var(--fw-medium) var(--fs-label) / 1.3 var(--font-core);
-  font-variant-numeric: tabular-nums;
-  color: var(--text-muted);
   text-wrap: balance;
 }
 
@@ -90,8 +49,7 @@
   gap: 8px;
 }
 .s18-rail {
-  flex: 1;
-  --text-dim: var(--s18-kind-plain); /* the kit rail draws done segments in --text-dim */
+  flex: 1; /* done segments: frame/frame.css .fia-dim-plain */
 }
 .s18-steps {
   list-style: none;
@@ -101,7 +59,7 @@
   grid-template-columns: 1fr 1fr;
   gap: 5px 12px;
 }
-:root:is([data-text-step='x200'], [data-text-step='x310']) .s18-steps {
+:root.fia-big .s18-steps {
   grid-template-columns: 1fr;
   gap: 8px;
 }
@@ -109,8 +67,6 @@
   display: flex;
   align-items: flex-start;
   gap: 6px;
-  font: var(--fw-medium) var(--fs-caption) / 1.25 var(--font-core);
-  color: var(--text-title);
   min-width: 0;
   overflow-wrap: anywhere;
 }
@@ -120,27 +76,15 @@
   width: calc(14px * min(var(--fia-text-scale), 2));
   margin-top: 1px;
 }
-.s18-step-n {
-  font-family: var(--font-numeric, var(--font-core));
-  font-variant-numeric: tabular-nums;
-  font-weight: var(--fw-semibold);
-  color: var(--text-muted);
-}
-
+/* The rule: frame/frame.css .fia-hr. */
 .s18-rule {
   height: 0;
-  border: none;
-  border-top: var(--border-hairline);
   margin: 12px 0 10px;
 }
-/* Group overline (as on S13–S16): --text-dim measured 3.3:1 behind 9 px type in both themes; muted light,
-   body dark (mock 18-completion.html <style>). */
+/* Group overline (as on S13–S16): muted light, body dark (frame/frame.css .fia-tone-aside; mock
+   18-completion.html <style>). */
 .s18-overline.fia-overline {
   margin: 0;
-  color: var(--text-muted);
-}
-[data-theme='dark'] .s18-overline.fia-overline {
-  color: var(--text-body);
 }
 
 /* Scoped: what the group went through, one line per kind, led by the guide's own marks. */
@@ -155,28 +99,19 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font: var(--fw-medium) var(--fs-label) / 1.25 var(--font-core);
-  color: var(--text-title);
   overflow-wrap: anywhere;
 }
-.s18-legend-mark {
-  width: calc(24px * min(var(--fia-text-scale), 2.4));
-  display: flex;
-  justify-content: center;
-  flex: none;
-}
-:root:is([data-text-step='x200'], [data-text-step='x310']) .s18-kind {
+/* the mark: frame/frame.css .fia-legend-mark (mock 18-completion.html:95) */
+:root.fia-big .s18-kind {
   align-items: flex-start;
 }
 /* the mark sits on the first line */
-:root:is([data-text-step='x200'], [data-text-step='x310']) .s18-legend-mark {
+:root.fia-big .s18-kind > .fia-legend-mark {
   height: calc(var(--fs-label) * 1.25);
   align-items: center;
 }
 .s18-kept {
-  margin: 10px 0 0;
-  font: var(--fw-medium) var(--fs-caption) / 1.3 var(--font-core);
-  color: var(--text-muted);
+  margin: 10px 0 0; /* size, colour: v1 .fia-caption (app.css); weight, line: .fia-fw-medium .fia-lh-130 */
 }
 
 /* ---- quiet rows (kit GlassSurface level 2 well + CatalogRow), above the thumb band ---- */
@@ -191,11 +126,6 @@
   padding-top: 8px !important;
   padding-bottom: 8px !important;
 }
-/* kit CatalogRow title literal 15px (CatalogRow.jsx:8) scales with the text size (PRD § 8.5) */
-.s18-more .fia-catalog > div:first-child > div[dir] {
-  font-size: calc(15px * var(--fia-text-scale)) !important;
-  line-height: 1.3 !important;
-}
 .s18-more .fia-row-label > svg {
   flex: none;
   width: calc(18px * min(var(--fia-text-scale), 2));
@@ -205,7 +135,7 @@
   width: calc(16px * min(var(--fia-text-scale), 2));
   height: calc(16px * min(var(--fia-text-scale), 2));
 }
-:root:is([data-text-step='x200'], [data-text-step='x310']) .s18-more .fia-catalog {
+:root.fia-big .s18-more .fia-catalog {
   gap: 8px !important;
   padding-left: 10px !important;
   padding-right: 6px !important;

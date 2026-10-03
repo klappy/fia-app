@@ -2,7 +2,6 @@ import {
   useEffect,
   useMemo,
   useState,
-  useSyncExternalStore,
   type ComponentType,
   type CSSProperties,
   type HTMLAttributes,
@@ -37,6 +36,7 @@ import {
   type RowFacts,
 } from './pericopeList';
 import { ScreenFrame } from './ScreenFrame';
+import { useBig } from '../frame/scale';
 import './S03PericopeList.css';
 
 // S03 Pericope list in glass, F6-S03 (03-pericope-list.md; R-306–R-309, R-702). Nodded mock
@@ -58,16 +58,6 @@ const GlassSearch = KitGlassSearch as unknown as ComponentType<
     style?: CSSProperties;
   }
 >;
-
-/** 200% and 310% text (mock html.fia-big): live from <html data-text-step> (settings/apply.ts). */
-const BIG_STEPS = new Set(['x200', 'x310']);
-const readBig = () =>
-  BIG_STEPS.has(globalThis.document?.documentElement.getAttribute('data-text-step') ?? '');
-const watchBig = (f: () => void) => {
-  const mo = new MutationObserver(f);
-  mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-text-step'] });
-  return () => mo.disconnect();
-};
 
 /** Glyphs grow with large text, capped (mock iconSz). */
 const iconSz = (n: number, big: boolean) => (big ? Math.round(n * 1.5) : n);
@@ -91,7 +81,7 @@ function Chip({
 }) {
   return (
     <GlassChip
-      className={`s03-chip${on ? ' is-on' : ''}`}
+      className={`s03-chip fia-kit-caption${on ? ' is-on fia-chip-on' : ''}`}
       leading={<Icon name={icon} size={iconSz(14, big)} stroke={on ? 2.4 : undefined} />}
       aria-hidden={quiet || undefined}
       data-testid={testId}
@@ -108,7 +98,7 @@ export default function S03PericopeList() {
   const [q, setQ] = useState('');
   const online = useOnline();
   const off = useOffline();
-  const big = useSyncExternalStore(watchBig, readBig, () => false);
+  const big = useBig();
   useEffect(() => {
     void session.loadCatalog();
     // the guide in progress (R-410): its walked parts count and the Continue primary
@@ -214,6 +204,7 @@ export default function S03PericopeList() {
   return (
     <ScreenFrame
       id="S03"
+      titleHidden
       title={book}
       primaryLabel={primaryLabel}
       primaryState={primaryState}
@@ -222,7 +213,7 @@ export default function S03PericopeList() {
       <div className="s03-back">
         <GlassButton
           variant="quiet"
-          className="s03-quiet"
+          className="s03-quiet fia-kit-label"
           leading={<Icon name="chevronLeft" size={iconSz(18, big)} />}
           onClick={() => nav('/library')}
         >
@@ -231,12 +222,12 @@ export default function S03PericopeList() {
       </div>
       <div className="s03-head">
         {/* The frame's <h1> names the book for assistive tech; this is its visible hero (mock .s03-hero). */}
-        <p className="s03-hero" aria-hidden="true">
+        <p className="fia-hero s03-hero" aria-hidden="true">
           {book}
         </p>
         <GlassButton
           variant="quiet"
-          className="s03-quiet s03-toggle"
+          className="s03-quiet fia-kit-label s03-toggle"
           leading={<Icon name={selecting ? 'x' : 'check'} size={iconSz(18, big)} />}
           aria-pressed={selecting}
           data-testid="select-toggle"
@@ -269,11 +260,11 @@ export default function S03PericopeList() {
       )}
       {!online && <p className="fia-caption s03-hint">{t('s.pericopes.offline-hint')}</p>}
       {snap.catalogStatus === 'error' && (
-        <div role="alert" className="s03-error">
+        <div role="alert" className="s03-error fia-tone-body">
           <p>{t('s.pericopes.error', { book })}</p>
           <GlassButton
             variant="quiet"
-            className="s03-quiet"
+            className="s03-quiet fia-kit-label"
             leading={<Icon name="update" size={iconSz(16, big)} />}
             onClick={() => void session.loadCatalog(true)}
           >
@@ -292,12 +283,12 @@ export default function S03PericopeList() {
           data-state="loading"
         >
           {[0, 1, 2, 3, 4, 5].map((i) => (
-            <span key={i} className="s03-skel" aria-hidden="true" />
+            <span key={i} className="s03-skel fia-skel-bar" aria-hidden="true" />
           ))}
         </GlassSurface>
       )}
       {snap.catalogStatus === 'ready' && rows.length > 0 && shown.length === 0 && (
-        <p className="s03-empty">{t('s.pericopes.empty-search', { book })}</p>
+        <p className="s03-empty fia-tone-body">{t('s.pericopes.empty-search', { book })}</p>
       )}
       {shown.length > 0 && (
         <GlassSurface level={2} blur="medium" radius="xl" shadow="rest" className="s03-well">
@@ -315,7 +306,7 @@ export default function S03PericopeList() {
                   ◌ {t('s.common.mark.absent', { language: languageName(language) })}
                 </span>
               ) : meta ? (
-                <span className="s03-size" data-testid="row-size">
+                <span className="s03-size fia-tabular" data-testid="row-size">
                   {meta}
                 </span>
               ) : null;
@@ -383,7 +374,7 @@ export default function S03PericopeList() {
               return (
                 <li key={r.packId}>
                   <CatalogRow
-                    className={`fia-catalog s03-row${on ? ' is-on' : ''}`}
+                    className={`fia-catalog s03-row${on ? ' is-on fia-row-on' : ''}`}
                     first={i === 0}
                     data-pack-id={r.packId}
                     role={choice ? 'checkbox' : undefined}
@@ -415,7 +406,7 @@ export default function S03PericopeList() {
         </GlassSurface>
       )}
       {selecting && failed > 0 && (
-        <p role="alert" className="s03-failed">
+        <p role="alert" className="s03-failed fia-tone-body">
           {t('s.pericopes.save-failed', { n: failed })}
         </p>
       )}
@@ -430,7 +421,7 @@ export default function S03PericopeList() {
         >
           <div className="s03-summary__body">
             <div className="s03-summary__top">
-              <span className="s03-summary__title">
+              <span className="s03-summary__title fia-type-label fia-fw-semibold fia-tone-title fia-tabular">
                 {sum
                   ? t('s.pericopes.summary', { n: picked.length, size: sizeWords(sum) })
                   : t('s.pericopes.summary-count', { n: picked.length })}

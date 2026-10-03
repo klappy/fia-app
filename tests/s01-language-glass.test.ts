@@ -81,7 +81,7 @@ describe('F6-S01 first run · language in glass', () => {
     const logo = $('.s01-hero svg[role="img"]')!;
     expect(logo.getAttribute('aria-label')).toBe('FIA');
     expect(logo.getAttribute('height')).toBe('44');
-    expect($('.s01-qualifier')!.textContent).toBe(EN['s.about.qualifier']);
+    expect($('.fia-qualifier')!.textContent).toBe(EN['s.about.qualifier']);
     expect($$('h1').map((h) => h.textContent)).toEqual([EN['s.lang.title']]);
     expect($('.fia-lang')).toBeNull();
     expect($('.fia-explore')).toBeNull();
