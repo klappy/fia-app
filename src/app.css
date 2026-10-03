@@ -213,52 +213,6 @@
   color: var(--fia-offline-chip-text);
 }
 
-/* language picker: rows ≥ 64 px, autonym first in its own script */
-.fia-langs__search {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.fia-langs__search input {
-  min-height: var(--fia-tap-min);
-  font: inherit;
-  padding-inline: var(--fia-space-7);
-  border-radius: var(--fia-r-sm);
-  border: 1px solid var(--fia-rail-track);
-  background: var(--fia-surface-solid);
-  color: inherit;
-}
-.fia-langs__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--fia-space-3);
-}
-.fia-langs__row {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  column-gap: var(--fia-gap-inline);
-  min-height: 64px;
-  padding: var(--fia-space-5) var(--fia-space-7);
-  background: var(--fia-surface-solid);
-  border-radius: var(--fia-r-md);
-}
-.fia-langs__row .fia-caption {
-  grid-column: 2;
-}
-.fia-langs__autonym {
-  font-size: var(--fia-fs-title);
-  color: var(--fia-text-title);
-}
-.fia-skeleton {
-  height: 64px;
-  border-radius: var(--fia-r-md);
-  background: var(--fia-rail-track);
-}
-
 /* sheets: kit GlassSheet inside an app scrim (Sheet.tsx, kit gap: no scrim/escape/focus/scroll) */
 .fia-sheet__scrim {
   position: fixed;
