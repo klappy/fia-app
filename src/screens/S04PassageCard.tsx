@@ -22,9 +22,9 @@ import {
   type PackFacts,
 } from './passageCard';
 import { ScreenFrame } from './ScreenFrame';
-import './S04PassageCard.css';
 import { kindColor } from '../frame/kinds';
 import { readScale } from '../frame/scale';
+import './S04PassageCard.css';
 
 // S04 Passage card in glass (F6-S04; nodded mock cookbook design/alpha-v2-screens/04-passage-card.html,
 // rev4; PRD § 4 row S04, § 8.1–8.5). Browse frame: header (shell) · quiet ‹ {book} · the reference as

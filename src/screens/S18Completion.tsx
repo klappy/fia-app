@@ -13,9 +13,9 @@ import {
 import type { BeadProps, StageRailProps } from '../vendor/glass/components/progress/StageRail';
 import { completionSummary, keepRef, nextPassage, type RecapKind } from './completionModel';
 import { ScreenFrame } from './ScreenFrame';
-import './S18Completion.css';
 import { KINDS } from '../frame/kinds';
 import { useTextScale } from '../frame/scale';
+import './S18Completion.css';
 
 // S18 Completion in glass (F6-S18; nodded mock cookbook design/alpha-v2-screens/18-completion.html; PRD § 4
 // row S18, § 8.1–8.5). Home frame: header (shell) · the recap plate (kit glass/GlassSurface): a glass

@@ -32,9 +32,9 @@ import {
   type TypeCard,
 } from './coverageCards';
 import { ScreenFrame } from './ScreenFrame';
-import './S19Coverage.css';
 import { kindColor } from '../frame/kinds';
 import { iconSz, useTextScale } from '../frame/scale';
+import './S19Coverage.css';
 
 // S19 Coverage in glass, F6-S19 (19-coverage.md; R-304, R-314). Nodded mock
 // design/alpha-v2-screens/19-coverage.html (Layer frame, no primary): the title says what the page

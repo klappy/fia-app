@@ -28,8 +28,8 @@ import { DEFAULT_PACK, usePackFile } from '../media/usePack';
 import { DiscussionStopSheet } from './SH2DiscussionStop';
 import { ProvenanceSheet } from './SH1ProvenanceInfo';
 import { ScreenFrame } from './ScreenFrame';
-import './s06.css';
 import { GuideCard } from '../frame/GuideCard';
+import './s06.css';
 
 /**
  * A talk the person has not had yet, on a part whose clip would close it (S05: the clip ends, then the

@@ -27,10 +27,10 @@ import {
   type RecapTail,
 } from './libraryModel';
 import { ScreenFrame } from './ScreenFrame';
-import './S02Library.css';
 import { KINDS } from '../frame/kinds';
 import { keepRef } from '../frame/text';
 import { useBig } from '../frame/scale';
+import './S02Library.css';
 
 // S02 Library (02-library.md; R-303, R-410, R-702, R-706) in glass, F6-S02. Nodded mock
 // design/alpha-v2-screens/02-library.html (Home frame): hero "Library" and a count line, kit

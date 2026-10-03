@@ -36,8 +36,8 @@ import {
   type RowFacts,
 } from './pericopeList';
 import { ScreenFrame } from './ScreenFrame';
-import './S03PericopeList.css';
 import { useBig } from '../frame/scale';
+import './S03PericopeList.css';
 
 // S03 Pericope list in glass, F6-S03 (03-pericope-list.md; R-306–R-309, R-702). Nodded mock
 // design/alpha-v2-screens/03-pericope-list.html (Browse frame): quiet "‹ Library", the book as the

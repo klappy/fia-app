@@ -7,12 +7,9 @@ import { CUE_MEDIA, type BandModel, type Tail } from './band';
 import { keepNumber, keepRef, NB } from '../../frame/text';
 import { iconSz, useTextScale } from '../../frame/scale';
 
-// ── text scale (C-10 text size → html[data-text-step], settings/apply.ts) ────────────────────────────
-
-// The reader lives in the shared layer (frame/scale.ts); the guide's parts import it from here.
+// The text-scale reader (frame/scale.ts) and the text helpers (frame/text.ts) are the shared layer's;
+// re-exported here for the guide's parts, which have always imported them from guideKit.
 export { useTextScale, iconSz as iconSize };
-
-// NB, keepRef and keepNumber are the shared layer's (frame/text.ts); re-exported for the guide's parts.
 export { NB, keepRef };
 
 export function tailWords(tail: Tail): string {
