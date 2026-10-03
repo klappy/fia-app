@@ -67,7 +67,7 @@ export function ProgressBand({
             m: total,
           }).replace(' · ', `${NB}· `)}
         </span>
-        <div className="fia-band__title">{b.stepTitle}</div>
+        <div className="fia-title-v2 fia-band__title">{b.stepTitle}</div>
         <ProgressRail
           steps={b.steps}
           currentStep={complete ? total : b.stepIndex}
@@ -87,7 +87,7 @@ export function ProgressBand({
         />
         {lifted && b.tail.kind === 'talk-here' ? (
           // At a stop the caption names it in words beside its own bar (mock 21 StopCaption).
-          <span className="fia-caption fia-num fia-band__caption fia-band__caption--stop">
+          <span className="fia-caption-v2 fia-num fia-band__caption fia-band__caption--stop">
             <span>{t('s.guide.band.part', { n: b.n, m: b.m })}</span>
             <span className="fia-band__stopcap">
               <Bead kind="stop" state="done" color="var(--fia-kind-stop)" />
@@ -95,7 +95,7 @@ export function ProgressBand({
             </span>
           </span>
         ) : (
-          <span className="fia-caption fia-num fia-band__caption">
+          <span className="fia-caption-v2 fia-num fia-band__caption">
             {complete ? stepsLabel : bandCaption(b)}
           </span>
         )}
@@ -216,7 +216,7 @@ export function PartChips({
     `?pack=${encodeURIComponent(packId)}&id=${encodeURIComponent(id)}&unit=${encodeURIComponent(unitId)}`;
   return (
     <div className="fia-chips">
-      <span className="fia-caption fia-chips__label">{t('s.guide.in-this-part')}</span>
+      <span className="fia-caption-v2 fia-chips__label">{t('s.guide.in-this-part')}</span>
       {items.map((it) => (
         <button
           key={it.id}

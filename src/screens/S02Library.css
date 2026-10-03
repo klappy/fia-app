@@ -139,11 +139,9 @@
 .s02-resume .s02-overline {
   margin: 0;
 }
+/* face: frame/frame.css .fia-title-v2 */
 .s02-resume__title {
   margin: 0;
-  font: var(--fw-semibold) var(--fs-subtitle) / 1.25 var(--font-core);
-  letter-spacing: var(--ls-title);
-  color: var(--text-title);
   text-wrap: balance;
 }
 /* Kit StageRail segments and BeadStrip capsules paint --text-dim; re-point it to the plain-part token

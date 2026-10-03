@@ -294,7 +294,7 @@ export default function S02Library() {
                 />
               )}
             </div>
-            <p className="s02-resume__title">
+            <p className="fia-title-v2 s02-resume__title">
               {t('s.library.resume-heading', {
                 ref: keepRef(resumeEntry.title),
                 stage: recap.stepTitle,

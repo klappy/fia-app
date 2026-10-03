@@ -153,7 +153,7 @@ function StepRow({
       >
         <span className="s07-step__badge fia-num">{step.index + 1}</span>
         <span className="s07-step__text">
-          <span className="s07-step__title" dir="auto">
+          <span className="fia-title-v2 s07-step__title" dir="auto">
             {step.title}
           </span>
           <span className="fia-caption-v2 s07-step__words fia-num">{words}</span>

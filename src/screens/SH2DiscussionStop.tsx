@@ -138,7 +138,7 @@ export function DiscussionStopSheet({
               stage: b.stepTitle,
             })}
           />
-          <p className="fia-caption fia-num">{bandCaption(b)}</p>
+          <p className="fia-caption-v2 fia-num">{bandCaption(b)}</p>
         </div>
       )}
       {discussed && (

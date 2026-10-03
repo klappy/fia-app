@@ -219,7 +219,7 @@ export function SaveRow({ ctl, intent, onStart, onSeeDownloads }: SaveRowProps) 
     >
       <div className="fia-savecard__inner">
         <div className="fia-savecard__top">
-          <h2 id="fia-save-heading" className="fia-savecard__heading">
+          <h2 id="fia-save-heading" className="fia-overline fia-savecard__heading">
             {t('s.passage.save-heading')}
           </h2>
           {badge}
@@ -232,12 +232,12 @@ export function SaveRow({ ctl, intent, onStart, onSeeDownloads }: SaveRowProps) 
           state={held || s.saving ? 'disabled' : 'default'}
         />
         {!held && ctl.tierFollows && (
-          <p className="fia-savecard__caption" role="status">
+          <p className="fia-caption-v2 fia-savecard__caption" role="status">
             {t('s.passage.tier-follows')}
           </p>
         )}
         {!held && s.online && (free !== undefined || bytes > 0) && (
-          <p className="fia-savecard__caption" data-testid="storage-estimate">
+          <p className="fia-caption-v2 fia-savecard__caption" data-testid="storage-estimate">
             {free !== undefined &&
               t('s.passage.free-space', { free: t('s.passage.tier-size', { mb: mb(free) }) })}
             {free !== undefined && ' · '}
