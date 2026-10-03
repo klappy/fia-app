@@ -7,6 +7,7 @@ export { DiscussionStopBand } from './DiscussionStopBand';
 export { DownloadTierPicker, type TierRow } from './DownloadTierPicker';
 export { FeedbackForm } from './FeedbackForm';
 export { LanguagePicker } from './LanguagePicker';
+export { LayerHead, type LayerKind } from './LayerHead';
 export { MediaViewer } from './MediaViewer';
 export { MoreSheet } from './MoreSheet';
 export { PericopeCard } from './PericopeCard';
