@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { MediaViewer, ProvenanceMark, SecondaryAction } from '../components';
+import { LayerHead, MediaViewer } from '../components';
+import { GlassButton, GlassSurface, Icon } from '../components/glass';
+import { ProvenanceChip } from '../components/ProvenanceMark';
+import { iconSize, useTextScale } from '../flow/ui/guideKit';
 import { t } from '../i18n';
 import { languageName } from '../media/lang';
 import { markFor } from '../media/provenance';
@@ -17,14 +20,21 @@ import { ScreenFrame } from './ScreenFrame';
 
 // S12 — Video player (spec 12, R-506): in-app, streamed (never packaged), never autoplays;
 // offline shows "Needs connection" honestly; close returns to the same unit.
+// F6-S12 glass (nodded mock design/alpha-v2-screens/12-video.html, Layer frame): the way back in
+// the glass header (ScreenFrame `close`) while the primary plays; the video in the shared dark
+// media well (always #0F131A); the kind line "Video Bible Dictionary · streams" led by the video
+// bead and the title (LayerHead); the source mark as a ProvenanceChip (kit GlassChip → sheet 20).
+// Composed from the kit and the shared layer; no screen CSS (RULING ~20:05 ET).
 export default function S12VideoPlayer() {
   const [params] = useSearchParams();
   const nav = useNavigate();
+  const scale = useTextScale();
   const packId = params.get('pack') ?? DEFAULT_PACK;
   const id = params.get('id') ?? '';
   const unit = params.get('unit');
   const fromResources = params.get('from') === 'resources';
   const lang = packLanguage(packId);
+  const language = languageName(lang);
   const online = useOnline();
   const res = usePackFile<ResourcesPack>(packId, 'resources');
   const item = res.status === 'ready' ? findMedia(res.data, id) : undefined;
@@ -64,41 +74,47 @@ export default function S12VideoPlayer() {
       slot: item?.titleProvenance,
       englishShown: titleMark === 'absent',
       typeKey: 'videos',
-      language: languageName(lang),
+      language,
     };
     nav(PROVENANCE_SHEET_PATH, { state });
   };
+  // One labelled way back: in the header while the primary plays; when the primary is the way
+  // back (offline, ended), the header carries none (v1: the close row shows only while playable).
+  const headerClose =
+    vs !== 'ended' && playable ? { label: closeLabel, onPress: close } : undefined;
   return (
     <ScreenFrame
       id="S12"
       title={item?.title ?? t('s.common.loading')}
+      titleHidden={!!item}
+      close={headerClose}
       primaryLabel={primary}
       primaryState={vs === 'playing' ? 'playing' : 'default'}
       onPrimary={onPrimary}
     >
-      {vs !== 'ended' && playable && <SecondaryAction label={closeLabel} onPress={close} />}
       {res.status === 'ready' && !item && (
         <MediaViewer kind="video" alt="" frameMessage={t('s.resources.error')} />
       )}
       {res.status === 'error' && (
-        <div role="alert">
-          <p>{t('s.resources.error')}</p>
-          <SecondaryAction label={t('s.common.try-again')} onPress={res.retry} />
-        </div>
+        <GlassSurface level={2} blur="medium" radius="lg" shadow="rest" className="fia-layer-card">
+          <div role="alert">
+            <p>{t('s.resources.error')}</p>
+            <GlassButton
+              variant="glass"
+              leading={<Icon name="update" size={iconSize(18, scale)} />}
+              onClick={res.retry}
+            >
+              {t('s.common.try-again')}
+            </GlassButton>
+          </div>
+        </GlassSurface>
       )}
       {item && (
         <>
-          <p className="fia-caption">{t('s.video.source-line')}</p>
-          <ProvenanceMark provenance={titleMark} language={languageName(lang)} onInfo={sheet} />
-          {titleMark === 'absent' && (
-            <p className="fia-mark fia-mark--absent">
-              ◌ {t('s.video.mark-english', { language: languageName(lang) })}
-            </p>
-          )}
           <MediaViewer
             kind="video"
             src={playable ? item.url : undefined}
-            alt={t('s.video.a11y.video', { title: item.title, language: languageName(lang) })}
+            alt={t('s.video.a11y.video', { title: item.title, language })}
             frameMessage={
               !playable
                 ? `⊘ ${t('s.video.needs-connection')}`
@@ -108,6 +124,24 @@ export default function S12VideoPlayer() {
             }
             onVideoState={(s) => setVs(s)}
           />
+          <LayerHead
+            kind="video"
+            kindLine={t('s.video.source-line')}
+            title={item.title}
+            scale={scale}
+          />
+          <div className="fia-chips">
+            <ProvenanceChip
+              provenance={titleMark}
+              words={
+                titleMark === 'absent'
+                  ? t('s.video.mark-english', { language })
+                  : t('s.video.mark-source', { language })
+              }
+              iconSize={iconSize(14, scale)}
+              onInfo={sheet}
+            />
+          </div>
         </>
       )}
     </ScreenFrame>
