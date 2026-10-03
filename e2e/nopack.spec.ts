@@ -4,8 +4,24 @@ import { expect, test, type Page } from '@playwright/test';
 // passages with a built pack open. A passage with no pack must not dead-end at S04 with
 // "Could not read this passage's details": it reads "not yet in {language}" with a way to another
 // passage, and the passages that open come first on S02 and S03. Proof on Mark 1:14–20 and
-// Genesis 1:1–2:3 (no English pack), against Arabic Genesis 1:1–2:3 (built).
+// Genesis 1:1–2:3 (no English pack), against Arabic Genesis 1:1–2:3 (built). Every Mark pack now
+// ships (Mark eng+spa ticket item 1), so the Mark proof runs as a build that withholds 1:14–20:
+// the ready index is served without it and its pack files answer 404.
 test.use({ serviceWorkers: 'block' });
+
+async function withholds(page: Page, ids: string[]) {
+  await page.route('**/data/catalog/ready.json', async (route) => {
+    const res = await route.fetch();
+    const doc = (await res.json()) as { packs: string[] };
+    await route.fulfill({
+      response: res,
+      json: { ...doc, packs: doc.packs.filter((p) => !ids.includes(p)) },
+    });
+  });
+  // …and its pack files are not in the build either
+  for (const id of ids)
+    await page.route(`**/packs/${id}/**`, (route) => route.fulfill({ status: 404 }));
+}
 
 const NOT_YET_EN = '◌ not yet in English';
 
@@ -30,6 +46,7 @@ async function notYetCard(page: Page, title: string) {
 test('Mark 1:14–20 (no pack) reads "not yet in English", never the error; ready passage first', async ({
   page,
 }) => {
+  await withholds(page, ['eng.MRK-1-14-20']);
   await library(page, /English/);
 
   // S02: the book with a passage that opens comes first; a book with none says so in its row.

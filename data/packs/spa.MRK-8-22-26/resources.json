@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "packId": "spa.MRK-8-22-26",
+  "terms": [
+    {
+      "id": "term-spa-t14",
+      "termNumber": "14",
+      "engSourceId": "eng-t14-v1",
+      "title": "bethsaida",
+      "sourceFile": "eng/json/002.content.json",
+      "selectedBy": "passage",
+      "text": {
+        "status": "source",
+        "sourceId": "spa-t14-v1",
+        "html": "<p><b>Betsaida</b> es un pueblo en la provincia de <data class=\"resource-ref\" data-content-id=\"spa-t55-v1\" data-resource-code=\"FIAKeyTerms\">Galilea</data>. Probablemente era cerca de la ciudad de <data class=\"resource-ref\" data-content-id=\"spa-t22-v1\" data-resource-code=\"FIAKeyTerms\">Cafarnaúm</data>, porque <data class=\"resource-ref\" data-content-id=\"spa-t78-v1\" data-resource-code=\"FIAKeyTerms\">Juan</data> nos dice que los <data class=\"resource-ref\" data-content-id=\"spa-t39-v1\" data-resource-code=\"FIAKeyTerms\">discípulos</data> de Jesús, Andrés y Pedro, venían de Betsaida, pero Marcos nos dice que vivían en Cafarnaúm. El pueblo estaba cerca del <data class=\"resource-ref\" data-content-id=\"spa-t121-v1\" data-resource-code=\"FIAKeyTerms\">Mar de Galilea</data>, y muchas personas en el pueblo se ganaban la vida de la pesca. El nombre Betsaida incluso significa “casa de pesca”.</p>",
+        "textSha256": "3287505bc3ef7538b1052e7d5edb6b293a1522415e98a2f77e808ef8ddc3f13e",
+        "provenance": {
+          "status": "source",
+          "collection": "FIAKeyTerms",
+          "revision": "a39260670bba9d87d902e0fa0ae447341343481f"
+        }
+      },
+      "audio": {
+        "status": "absent",
+        "ai": true,
+        "generator": "narration",
+        "provenance": {
+          "status": "missing"
+        }
+      },
+      "passages": [
+        "MRK 8:22-MRK 8:26"
+      ]
+    },
+    {
+      "id": "term-spa-t62",
+      "termNumber": "62",
+      "engSourceId": "eng-t62-v1",
+      "title": "heal",
+      "sourceFile": "eng/json/008.content.json",
+      "selectedBy": "passage",
+      "text": {
+        "status": "source",
+        "sourceId": "spa-t62-v1",
+        "html": "<p>En este tipo de sanación, Jesús <b>sana</b> a la persona tanto física como espiritualmente, restaurándola a la comunidad. La persona ha sido restaurada por completo o completamente. </p>",
+        "textSha256": "9bf7ca78260a1f3963f99d119d5129317bd521ce1a03321ae2e4eb133f5b5cb9",
+        "provenance": {
+          "status": "source",
+          "collection": "FIAKeyTerms",
+          "revision": "a39260670bba9d87d902e0fa0ae447341343481f"
+        }
+      },
+      "audio": {
+        "status": "absent",
+        "ai": true,
+        "generator": "narration",
+        "provenance": {
+          "status": "missing"
+        }
+      },
+      "passages": [
+        "2CH 30:13-2CH 30:20",
+        "MAT 21:12-MAT 21:22",
+        "MRK 1:40-MRK 1:45",
+        "MRK 5:21-MRK 5:34",
+        "MRK 6:45-MRK 6:56",
+        "MRK 8:22-MRK 8:26",
+        "MRK 10:46-MRK 10:52",
+        "LUK 10:1-LUK 10:16",
+        "LUK 17:11-LUK 17:19",
+        "LUK 18:35-LUK 19:10",
+        "ACT 28:1-ACT 28:10"
+      ]
+    }
+  ],
+  "images": [],
+  "maps": [
+    {
+      "id": "c16",
+      "kind": "map",
+      "title": "Sea of Galilee with Bethsaida",
+      "titleProvenance": {
+        "status": "missing",
+        "badge": "not-yet-in-language",
+        "fallback": "eng",
+        "ai": false
+      },
+      "engTitle": "Sea of Galilee with Bethsaida",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/maps/eng/c16/v1.1/original.png",
+      "sourceFile": "eng/json/017.content.json",
+      "sourceFileSha256": "93b9688e8df3b8b73ef7cfa5bbbdeb24aa04d03ba6245b0a2fa7f5f25f0d4670",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": true,
+      "derivatives": [
+        {
+          "sourcePath": "/packs/spa.MRK-8-22-26/maps/c16.png",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 6646608,
+          "kind": "image",
+          "tier": "phone",
+          "recipe": "w=640,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        },
+        {
+          "sourcePath": "/packs/spa.MRK-8-22-26/maps/c16.png",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 6646608,
+          "kind": "image",
+          "tier": "medium",
+          "recipe": "w=1280,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        }
+      ]
+    }
+  ],
+  "videos": []
+}

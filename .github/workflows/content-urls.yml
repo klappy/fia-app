@@ -1,0 +1,34 @@
+name: content-urls
+
+# Mark eng+spa ticket DoD 2, the network half of the content checks: every image/map/video/term-audio
+# URL a built pack points at answers 200, and the Aquifer file it was read from answers 200 at its
+# pinned sha (pipeline/bin/check-urls.mjs). It needs S3 and raw.githubusercontent.com, so it is not a
+# PR gate (ci.yml stays offline); it runs weekly and on demand.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 9 * * 1' # Mondays 09:17 UTC
+
+concurrency:
+  group: content-urls
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  urls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: pipeline
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: pipeline/package-lock.json
+      - run: npm ci
+      - run: npm run check:urls

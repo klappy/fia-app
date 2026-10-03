@@ -1,0 +1,485 @@
+{
+  "schemaVersion": 1,
+  "packId": "eng.MRK-14-66-72",
+  "terms": [
+    {
+      "id": "term-eng-t31",
+      "termNumber": "31",
+      "engSourceId": "eng-t31-v1",
+      "title": "curse",
+      "sourceFile": "eng/json/003.content.json",
+      "selectedBy": "passage",
+      "text": {
+        "status": "source",
+        "sourceId": "eng-t31-v1",
+        "html": "<p>To <b>curse</b> someone is the opposite of to <data class=\"resource-ref\" data-content-id=\"eng-t16-v1\" data-resource-code=\"FIAKeyTerms\">bless</data> someone. When you bless someone, you wish that something good will happen to the person you bless. When you curse them, you wish that something bad will happen to them. People <data class=\"resource-ref\" data-content-id=\"eng-t11-v1\" data-resource-code=\"FIAKeyTerms\">believed</data> that a curse would come true. If someone cursed them, they became very afraid.</p><p>When God curses someone, the bad thing that God says will happen will certainly happen. God curses people to punish them. God told the <data class=\"resource-ref\" data-content-id=\"eng-t259-v2\" data-resource-code=\"FIAKeyTerms\">Israelites</data> that if they obeyed God, God would bless them. If they disobeyed God, God would curse them.</p>",
+        "textSha256": "876f65b027188ae1a6e7e480b5a20211361365aa6d57ba4fa5b0c6a7588db07c",
+        "provenance": {
+          "status": "source",
+          "collection": "FIAKeyTerms",
+          "revision": "a39260670bba9d87d902e0fa0ae447341343481f"
+        }
+      },
+      "audio": {
+        "status": "source",
+        "sourceId": "eng-t31-v1-audio",
+        "url": "https://s3.amazonaws.com/cbbt-er.public/terms/audio/eng/t31/v1/vbr4.mp3",
+        "provenance": {
+          "status": "source",
+          "collection": "FIAKeyTerms",
+          "revision": "a39260670bba9d87d902e0fa0ae447341343481f"
+        },
+        "derivatives": [
+          {
+            "sourcePath": "/packs/eng.MRK-14-66-72/audio/eng-t31-v1-audio.mp3",
+            "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceBytes": 1455212,
+            "kind": "audio",
+            "tier": "phone",
+            "recipe": "a=opus,br=32k",
+            "mime": "audio/ogg",
+            "eligible": true,
+            "status": "pending-transcode",
+            "fallbackMime": "audio/mpeg"
+          },
+          {
+            "sourcePath": "/packs/eng.MRK-14-66-72/audio/eng-t31-v1-audio.mp3",
+            "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceBytes": 1455212,
+            "kind": "audio",
+            "tier": "medium",
+            "recipe": "a=opus,br=64k",
+            "mime": "audio/ogg",
+            "eligible": true,
+            "status": "pending-transcode",
+            "fallbackMime": "audio/mpeg"
+          }
+        ]
+      },
+      "passages": [
+        "GEN 3:1-GEN 3:24",
+        "GEN 4:1-GEN 4:16",
+        "GEN 8:20-GEN 9:17",
+        "GEN 9:18-GEN 9:29",
+        "GEN 12:1-GEN 12:9",
+        "GEN 26:34-GEN 27:17",
+        "GEN 27:18-GEN 27:29",
+        "GEN 49:1-GEN 49:28",
+        "EXO 21:12-EXO 21:17",
+        "EXO 22:25-EXO 22:31",
+        "LEV 19:9-LEV 19:14",
+        "LEV 20:1-LEV 20:9",
+        "LEV 24:10-LEV 24:23",
+        "NUM 5:11-NUM 5:31",
+        "NUM 22:1-NUM 22:21",
+        "NUM 23:7-NUM 23:12",
+        "NUM 23:13-NUM 23:26",
+        "NUM 23:27-NUM 24:13",
+        "DEU 28:15-DEU 28:24",
+        "DEU 28:38-DEU 28:46",
+        "DEU 30:1-DEU 30:10",
+        "DEU 30:11-DEU 30:20",
+        "JOS 6:15-JOS 6:27",
+        "JOS 8:30-JOS 8:35",
+        "JOS 9:16-JOS 9:27",
+        "JOS 24:1-JOS 24:13",
+        "JDG 5:19-JDG 5:23",
+        "JDG 9:22-JDG 9:29",
+        "JDG 9:50-JDG 9:57",
+        "JDG 17:1-JDG 17:13",
+        "JDG 21:13-JDG 21:25",
+        "1SA 3:1-1SA 3:14",
+        "1SA 14:24-1SA 14:35",
+        "1SA 17:41-1SA 17:54",
+        "1SA 26:13-1SA 26:25",
+        "2SA 3:22-2SA 3:30",
+        "2SA 16:5-2SA 16:14",
+        "2SA 19:18-2SA 19:23",
+        "1KI 2:1-1KI 2:12",
+        "1KI 21:1-1KI 21:16",
+        "2KI 2:13-2KI 2:25",
+        "2CH 34:22-2CH 34:33",
+        "JOB 1:1-JOB 1:5",
+        "JOB 1:6-JOB 1:12",
+        "JOB 2:1-JOB 2:6",
+        "JOB 2:7-JOB 2:13",
+        "MAT 25:31-MAT 25:46",
+        "MRK 11:12-MRK 11:26",
+        "MRK 14:66-MRK 14:72",
+        "LUK 6:27-LUK 6:36",
+        "1CO 4:6-1CO 4:13",
+        "1CO 12:1-1CO 12:11",
+        "1CO 16:19-1CO 16:24",
+        "GAL 1:6-GAL 1:10",
+        "GAL 3:10-GAL 3:14",
+        "JAS 3:1-JAS 3:12"
+      ]
+    },
+    {
+      "id": "term-eng-t55",
+      "termNumber": "55",
+      "engSourceId": "eng-t55-v1",
+      "title": "Galilee",
+      "sourceFile": "eng/json/007.content.json",
+      "selectedBy": "passage",
+      "text": {
+        "status": "source",
+        "sourceId": "eng-t55-v1",
+        "html": "<p><b>Galilee</b> is the name of a region in northern <data class=\"resource-ref\" data-content-id=\"eng-t74-v2\" data-resource-code=\"FIAKeyTerms\">Israel</data>. Jesus grew up in Galilee and did much of his work of preaching in Galilee. Most of Jesus's <data class=\"resource-ref\" data-content-id=\"eng-t39-v1\" data-resource-code=\"FIAKeyTerms\">disciples</data> came from Galilee. Most parts of Galilee are hilly, with low mountains. To the east, or right, of Galilee is a large lake that is called the <data class=\"resource-ref\" data-content-id=\"eng-t121-v1\" data-resource-code=\"FIAKeyTerms\">Sea of Galilee</data>. Many people in Galilee made their living from fishing or selling fish. Some of Jesus's disciples were fishermen who lived in villages surrounding the Sea of Galilee. Other names for the Sea of Galilee are the <b>Sea of Gennesareth</b>, or the <b>Lake of Tiberius</b>.</p><p>In the time of Jesus, Israel was not an independent <data class=\"resource-ref\" data-content-id=\"eng-t94-v2\" data-resource-code=\"FIAKeyTerms\">nation</data>. The <data class=\"resource-ref\" data-content-id=\"eng-t259-v2\" data-resource-code=\"FIAKeyTerms\">Israelites</data> were ruled by the Roman people. The Romans had divided Israel into several regions, or provinces. During Jesus's life, Galilee was governed by a ruler named Antipas, who was appointed by the Roman government. Antipas was the son of king Herod, who tried to kill Jesus when he was a baby. Antipas was the brother of the Herod who ordered Jesus to be crucified.</p><p>Other provinces in Israel were <data class=\"resource-ref\" data-content-id=\"eng-t81-v2\" data-resource-code=\"FIAKeyTerms\">Judea</data> and <data class=\"resource-ref\" data-content-id=\"eng-t221-v1\" data-resource-code=\"FIAKeyTerms\">Samaria</data>. Galilee was in the north, Judea was in the south, and Samaria was in the middle. Judea was the place where the most important city, <data class=\"resource-ref\" data-content-id=\"eng-t76-v1\" data-resource-code=\"FIAKeyTerms\">Jerusalem</data>, was, and therefore the <data class=\"resource-ref\" data-content-id=\"eng-t138-v1\" data-resource-code=\"FIAKeyTerms\">temple</data> of God. The people in Judea often thought that they were better <data class=\"resource-ref\" data-content-id=\"eng-t77-v2\" data-resource-code=\"FIAKeyTerms\">Jews</data> than the people in Galilee. They looked down on the people in Galilee, and thought that people in Galilee were uneducated and rough. The people in Judea and as well, the people in Galilee, looked down on people in Samaria, whom they considered not to be Jews at all.</p>",
+        "textSha256": "a88ac2401f167e9c8e900de22bbe00e2e9881b38d2113e4f9bccadb77c7422d5",
+        "provenance": {
+          "status": "source",
+          "collection": "FIAKeyTerms",
+          "revision": "a39260670bba9d87d902e0fa0ae447341343481f"
+        }
+      },
+      "audio": {
+        "status": "source",
+        "sourceId": "eng-t55-v1-audio",
+        "url": "https://s3.amazonaws.com/cbbt-er.public/terms/audio/eng/t55/v1/vbr4.mp3",
+        "provenance": {
+          "status": "source",
+          "collection": "FIAKeyTerms",
+          "revision": "a39260670bba9d87d902e0fa0ae447341343481f"
+        },
+        "derivatives": [
+          {
+            "sourcePath": "/packs/eng.MRK-14-66-72/audio/eng-t55-v1-audio.mp3",
+            "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceBytes": 1455212,
+            "kind": "audio",
+            "tier": "phone",
+            "recipe": "a=opus,br=32k",
+            "mime": "audio/ogg",
+            "eligible": true,
+            "status": "pending-transcode",
+            "fallbackMime": "audio/mpeg"
+          },
+          {
+            "sourcePath": "/packs/eng.MRK-14-66-72/audio/eng-t55-v1-audio.mp3",
+            "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceBytes": 1455212,
+            "kind": "audio",
+            "tier": "medium",
+            "recipe": "a=opus,br=64k",
+            "mime": "audio/ogg",
+            "eligible": true,
+            "status": "pending-transcode",
+            "fallbackMime": "audio/mpeg"
+          }
+        ]
+      },
+      "passages": [
+        "JOS 21:27-JOS 21:33",
+        "1KI 9:10-1KI 9:25",
+        "MAT 10:1-MAT 10:15",
+        "MAT 17:22-MAT 17:27",
+        "MAT 19:1-MAT 19:12",
+        "MAT 21:1-MAT 21:11",
+        "MAT 26:69-MAT 26:75",
+        "MAT 28:1-MAT 28:15",
+        "MAT 28:16-MAT 28:20",
+        "MRK 1:14-MRK 1:20",
+        "MRK 1:21-MRK 1:28",
+        "MRK 1:35-MRK 1:39",
+        "MRK 6:14-MRK 6:29",
+        "MRK 8:27-MRK 8:30",
+        "MRK 9:30-MRK 9:50",
+        "MRK 14:27-MRK 14:31",
+        "MRK 14:66-MRK 14:72",
+        "MRK 16:1-MRK 16:8",
+        "LUK 1:1-LUK 1:4",
+        "LUK 1:26-LUK 1:38",
+        "LUK 3:1-LUK 3:14",
+        "LUK 4:14-LUK 4:30",
+        "LUK 8:26-LUK 8:39",
+        "LUK 8:40-LUK 8:56",
+        "LUK 10:1-LUK 10:16",
+        "LUK 13:1-LUK 13:9",
+        "LUK 24:1-LUK 24:12",
+        "JHN 4:1-JHN 4:15",
+        "JHN 4:43-JHN 4:54",
+        "JHN 7:1-JHN 7:10",
+        "ACT 1:6-ACT 1:11",
+        "ACT 3:1-ACT 3:10"
+      ]
+    },
+    {
+      "id": "term-eng-t95",
+      "termNumber": "95",
+      "engSourceId": "eng-t95-v1",
+      "title": "Nazareth",
+      "sourceFile": "eng/json/014.content.json",
+      "selectedBy": "passage",
+      "text": {
+        "status": "source",
+        "sourceId": "eng-t95-v1",
+        "html": "<p><b>Nazareth</b> is a small town in the region of <data class=\"resource-ref\" data-content-id=\"eng-t55-v1\" data-resource-code=\"FIAKeyTerms\">Galilee</data>, in the north of <data class=\"resource-ref\" data-content-id=\"eng-t74-v2\" data-resource-code=\"FIAKeyTerms\">Israel</data>. Nazareth does not appear in the Old Testament, and the first time we hear about this town is when we hear that <data class=\"resource-ref\" data-content-id=\"eng-t89-v1\" data-resource-code=\"FIAKeyTerms\">Mary</data> and Joseph, Jesus's parents, came from Nazareth. Jesus was born in a village called <data class=\"resource-ref\" data-content-id=\"eng-t13-v1\" data-resource-code=\"FIAKeyTerms\">Bethlehem</data>, in <data class=\"resource-ref\" data-content-id=\"eng-t81-v2\" data-resource-code=\"FIAKeyTerms\">Judea</data>, but when he was still small Mary and Joseph went to live in Nazareth. Therefore Jesus was later called a Nazarene, which means someone from Nazareth. That was not a compliment. The <data class=\"resource-ref\" data-content-id=\"eng-t77-v2\" data-resource-code=\"FIAKeyTerms\">Jews</data> from Judea looked down on the people in Galilee, and even the people within Galilee looked down on people from Nazareth, because it was a small and unimportant town.</p>",
+        "textSha256": "fa05de10b055e530e135dfad35ca0732d5fdf14cf97ba3c900d47783c2a0bb74",
+        "provenance": {
+          "status": "source",
+          "collection": "FIAKeyTerms",
+          "revision": "a39260670bba9d87d902e0fa0ae447341343481f"
+        }
+      },
+      "audio": {
+        "status": "source",
+        "sourceId": "eng-t95-v1-audio",
+        "url": "https://s3.amazonaws.com/cbbt-er.public/terms/audio/eng/t95/v1/vbr4.mp3",
+        "provenance": {
+          "status": "source",
+          "collection": "FIAKeyTerms",
+          "revision": "a39260670bba9d87d902e0fa0ae447341343481f"
+        },
+        "derivatives": [
+          {
+            "sourcePath": "/packs/eng.MRK-14-66-72/audio/eng-t95-v1-audio.mp3",
+            "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceBytes": 1455212,
+            "kind": "audio",
+            "tier": "phone",
+            "recipe": "a=opus,br=32k",
+            "mime": "audio/ogg",
+            "eligible": true,
+            "status": "pending-transcode",
+            "fallbackMime": "audio/mpeg"
+          },
+          {
+            "sourcePath": "/packs/eng.MRK-14-66-72/audio/eng-t95-v1-audio.mp3",
+            "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceBytes": 1455212,
+            "kind": "audio",
+            "tier": "medium",
+            "recipe": "a=opus,br=64k",
+            "mime": "audio/ogg",
+            "eligible": true,
+            "status": "pending-transcode",
+            "fallbackMime": "audio/mpeg"
+          }
+        ]
+      },
+      "passages": [
+        "MAT 21:1-MAT 21:11",
+        "MAT 26:69-MAT 26:75",
+        "MRK 1:21-MRK 1:28",
+        "MRK 6:1-MRK 6:6",
+        "MRK 10:46-MRK 10:52",
+        "MRK 14:66-MRK 14:72",
+        "MRK 16:1-MRK 16:8",
+        "LUK 1:26-LUK 1:38",
+        "LUK 1:39-LUK 1:56",
+        "LUK 2:22-LUK 2:40",
+        "LUK 2:41-LUK 2:52",
+        "LUK 4:14-LUK 4:30",
+        "LUK 4:31-LUK 4:44",
+        "JHN 19:17-JHN 19:30",
+        "ACT 3:1-ACT 3:10",
+        "ACT 24:1-ACT 24:9",
+        "ACT 26:1-ACT 26:23"
+      ]
+    }
+  ],
+  "images": [
+    {
+      "id": "a264",
+      "kind": "image",
+      "title": "Rooster",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "FIAImages",
+        "revision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+      },
+      "engTitle": "Rooster",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/photos/a264/1000.jpg",
+      "sourceFile": "eng/json/018.content.json",
+      "sourceFileSha256": "d7a06a1419720daf2f16591cf0620317ae6f7fc246689185f4b0405baecdef7c",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": true,
+      "derivatives": [
+        {
+          "sourcePath": "/packs/eng.MRK-14-66-72/images/a264.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "phone",
+          "recipe": "w=640,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        },
+        {
+          "sourcePath": "/packs/eng.MRK-14-66-72/images/a264.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "medium",
+          "recipe": "w=1280,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        }
+      ]
+    },
+    {
+      "id": "a265",
+      "kind": "image",
+      "title": "Rooster",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "FIAImages",
+        "revision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+      },
+      "engTitle": "Rooster",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/photos/a265/1000.jpg",
+      "sourceFile": "eng/json/018.content.json",
+      "sourceFileSha256": "d7a06a1419720daf2f16591cf0620317ae6f7fc246689185f4b0405baecdef7c",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": true,
+      "derivatives": [
+        {
+          "sourcePath": "/packs/eng.MRK-14-66-72/images/a265.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "phone",
+          "recipe": "w=640,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        },
+        {
+          "sourcePath": "/packs/eng.MRK-14-66-72/images/a265.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "medium",
+          "recipe": "w=1280,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        }
+      ]
+    },
+    {
+      "id": "a266",
+      "kind": "image",
+      "title": "Rooster",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "FIAImages",
+        "revision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+      },
+      "engTitle": "Rooster",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/photos/a266/1000.jpg",
+      "sourceFile": "eng/json/018.content.json",
+      "sourceFileSha256": "d7a06a1419720daf2f16591cf0620317ae6f7fc246689185f4b0405baecdef7c",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": true,
+      "derivatives": [
+        {
+          "sourcePath": "/packs/eng.MRK-14-66-72/images/a266.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "phone",
+          "recipe": "w=640,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        },
+        {
+          "sourcePath": "/packs/eng.MRK-14-66-72/images/a266.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "medium",
+          "recipe": "w=1280,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        }
+      ]
+    }
+  ],
+  "maps": [
+    {
+      "id": "c20",
+      "kind": "map",
+      "title": "Israel with region of Galilee, Nazareth, Jerusalem",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "FIAMaps",
+        "revision": "4bc9bb9f1d9082e5d71a047a35bf8e608f473602"
+      },
+      "engTitle": "Israel with region of Galilee, Nazareth, Jerusalem",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/maps/eng/c20/v1/original.png",
+      "sourceFile": "eng/json/009.content.json",
+      "sourceFileSha256": "3eed9e1acac0dd90cdffe1f3a4e885e5a567db8a73b5c38db0c31584ba6a6ed2",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": true,
+      "derivatives": [
+        {
+          "sourcePath": "/packs/eng.MRK-14-66-72/maps/c20.png",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 6646608,
+          "kind": "image",
+          "tier": "phone",
+          "recipe": "w=640,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        },
+        {
+          "sourcePath": "/packs/eng.MRK-14-66-72/maps/c20.png",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 6646608,
+          "kind": "image",
+          "tier": "medium",
+          "recipe": "w=1280,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        }
+      ]
+    }
+  ],
+  "videos": [
+    {
+      "id": "a1388",
+      "kind": "video",
+      "title": "Rooster Crowing",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "VideoBibleDictionary",
+        "revision": "1c02713d022bd96a29c78f5b75455315d6d35a6e"
+      },
+      "engTitle": "Rooster Crowing",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/videos/a1388/720p.mp4",
+      "sourceFile": "eng/json/014.content.json",
+      "sourceFileSha256": "18fef6709a2f1ad4e2bb3946ee69caf78fb9a60af3d44bd32c1bf83dd32e78b4",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": false,
+      "streamOnly": true
+    }
+  ]
+}

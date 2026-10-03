@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "packId": "eng.MRK-1-35-39",
+  "language": "eng",
+  "autonym": "English",
+  "direction": "ltr",
+  "pericope": "MRK-1-35-39",
+  "passage": "MRK 1:35-39",
+  "preparedAt": "2026-10-03T13:24:52.483Z",
+  "sourceRevisions": {
+    "FIATranslationGuide": "eb744452eb8d7c852caadde9d3181cddfe571119",
+    "FIAKeyTerms": "a39260670bba9d87d902e0fa0ae447341343481f",
+    "FIAMaps": "4bc9bb9f1d9082e5d71a047a35bf8e608f473602",
+    "BereanStandardBible": "87858d1e28ab728249d9fb50667170c194c6b013",
+    "unfoldingWordLiteral": "e49bdf4a0ddcdfe17428ca23e6dada29f54c0ea6",
+    "unfoldingWordSimplified": "41a5b938d4f170278f8e43e7dce4df9e87e7a4bd",
+    "WorldEnglishBible": "bcb8b3edfb302863c241e3d1d2062cf51042d694",
+    "WorldEnglishBibleUpdated": "e8b8f852167379ff0a4e82032c444c12f56a2173"
+  },
+  "resourceTypes": [
+    "guide",
+    "scripture",
+    "term",
+    "map",
+    "audio"
+  ],
+  "tiers": {
+    "text": {
+      "bytes": 175339,
+      "files": [
+        {
+          "path": "/packs/eng.MRK-1-35-39/guide.json",
+          "bytes": 47648,
+          "sha256": "1e7975887f88baa38f06877660513451911229a95523f49959bb5626ba643e9e",
+          "mime": "application/json"
+        },
+        {
+          "path": "/packs/eng.MRK-1-35-39/guide-units.json",
+          "bytes": 16224,
+          "sha256": "d6fb3d7f3e746525f22823b8bb7ae12b00517e5dc9e74bb267b3ec7b4ae3017a",
+          "mime": "application/json"
+        },
+        {
+          "path": "/packs/eng.MRK-1-35-39/scripture.json",
+          "bytes": 14530,
+          "sha256": "750e3ca0918c9c67d98b5940bef9ea8030f65d6511686f0e8d31007909ab76dd",
+          "mime": "application/json"
+        },
+        {
+          "path": "/packs/eng.MRK-1-35-39/resources.json",
+          "bytes": 35836,
+          "sha256": "26f7a15798fd7814c37f9f3a60b17e081136d246e62a902edb33dfeaba7c15c1",
+          "mime": "application/json"
+        },
+        {
+          "path": "/packs/eng.MRK-1-35-39/narration.json",
+          "bytes": 94,
+          "sha256": "737c6587f5e97e0c4f785ae791a0cebd78f2cac0b33569613e10bc942e639210",
+          "mime": "application/json"
+        },
+        {
+          "path": "/packs/eng.MRK-1-35-39/narration-plan.json",
+          "bytes": 56951,
+          "sha256": "d1d7094da3a63246049301e7840b6ebf339edbf7a5da16c7d3c0325dd89b65b6",
+          "mime": "application/json"
+        },
+        {
+          "path": "/packs/eng.MRK-1-35-39/rights.json",
+          "bytes": 4056,
+          "sha256": "d8bc001a87a0e25742ce1ad406252ce4891142513957e8f5546c75635eb49b73",
+          "mime": "application/json"
+        }
+      ]
+    }
+  },
+  "counts": {
+    "steps": 6,
+    "units": 72,
+    "stops": 10,
+    "terms": 6,
+    "termAudio": 6,
+    "images": 0,
+    "maps": 1,
+    "videos": 0,
+    "scripture": 5,
+    "scriptureFallback": 0,
+    "hiddenUnits": 8,
+    "termsSupplement": 0,
+    "narrationSlots": 106,
+    "narrationFloorSlots": 96,
+    "alignmentSlots": 5,
+    "slots-guide-unit": 72,
+    "slots-scripture": 5,
+    "slots-term-recording": 6,
+    "slots-term-read-aloud": 6,
+    "slots-description": 1,
+    "slots-next-action": 6,
+    "slots-transition": 10
+  },
+  "provenance": {
+    "text": {
+      "source": 83,
+      "generated": 0,
+      "missing": 0
+    },
+    "audio": {
+      "source": 6,
+      "generated": 0,
+      "missing": 100
+    },
+    "description": {
+      "source": 0,
+      "generated": 0,
+      "missing": 1
+    }
+  },
+  "rights": [
+    "FIATranslationGuide@eb74445",
+    "FIAKeyTerms@a392606",
+    "FIAMaps@4bc9bb9",
+    "BereanStandardBible@87858d1",
+    "unfoldingWordLiteral@e49bdf4",
+    "unfoldingWordSimplified@41a5b93",
+    "WorldEnglishBible@bcb8b3e",
+    "WorldEnglishBibleUpdated@e8b8f85"
+  ]
+}

@@ -51,7 +51,9 @@ describe('F6-S03 list facts', () => {
   const facts = listFacts(doc);
 
   it('reads the per-language catalog: parts estimate and measured flag per pack', () => {
-    expect(facts['eng.MRK-1-14-20']).toEqual({ units: 78, measured: false });
+    // every Mark passage is built (Mark eng+spa ticket item 1); Genesis 1:1–2:3 is not, in English
+    expect(facts['eng.GEN-1-1-2-3']).toEqual({ units: 102, measured: false });
+    expect(facts['eng.MRK-1-14-20']).toEqual({ units: 78, measured: true });
     expect(facts['eng.MRK-1-1-13'].measured).toBe(true);
     expect(listFacts(null)).toEqual({});
     expect(listFacts({ entries: [{ packId: 'x', guide: { unitsEstimate: 0 } }] })).toEqual({
@@ -60,11 +62,18 @@ describe('F6-S03 list facts', () => {
   });
 
   it('an unbuilt passage: ≈ parts and ≈ Text size (estimates, as the catalog marks them)', () => {
+    const e = entry('eng.GEN-1-1-2-3');
+    const f = rowFacts(e, facts[e.packId], undefined, undefined);
+    expect(f.parts).toEqual({ n: 102, exact: false });
+    expect(f.bytes).toEqual({ n: e.tierBytes.text, exact: false });
+    expect(metaWords(f)).toMatch(new RegExp(`^≈102${NB}parts${NB}· ≈`));
+  });
+
+  it('a built passage not in progress: ≈ parts (catalog estimate) and its measured Text size, exact', () => {
     const e = entry('eng.MRK-1-14-20');
     const f = rowFacts(e, facts[e.packId], undefined, undefined);
     expect(f.parts).toEqual({ n: 78, exact: false });
-    expect(f.bytes).toEqual({ n: e.tierBytes.text, exact: false });
-    expect(metaWords(f)).toBe(`≈78${NB}parts${NB}· ≈${Math.round(e.tierBytes.text / 1000)}${NB}KB`);
+    expect(f.bytes).toEqual({ n: e.tierBytes.text, exact: true });
   });
 
   it('the guide in progress counts its walked parts (hidden example parts are not walked)', () => {
