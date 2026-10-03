@@ -84,12 +84,7 @@
   gap: var(--sp-4);
   min-width: 0;
 }
-.s04-mark {
-  width: calc(24px * min(var(--fia-text-scale), 2.4));
-  display: flex;
-  justify-content: center;
-  flex: none;
-}
+/* the mark: frame/frame.css .fia-legend-mark (mock 04-passage-card.html:82) */
 .s04-kind__text {
   display: flex;
   flex-direction: column;
@@ -114,7 +109,7 @@
   align-items: flex-start;
   gap: var(--sp-2);
 }
-:root.fia-big .s04-mark {
+:root.fia-big .s04-kind .fia-legend-mark {
   justify-content: flex-start;
 }
 :root[data-text-step='x310'] .s04-kinds {

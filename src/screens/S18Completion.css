@@ -132,17 +132,12 @@
   color: var(--text-title);
   overflow-wrap: anywhere;
 }
-.s18-legend-mark {
-  width: calc(24px * min(var(--fia-text-scale), 2.4));
-  display: flex;
-  justify-content: center;
-  flex: none;
-}
+/* the mark: frame/frame.css .fia-legend-mark (mock 18-completion.html:95) */
 :root.fia-big .s18-kind {
   align-items: flex-start;
 }
 /* the mark sits on the first line */
-:root.fia-big .s18-legend-mark {
+:root.fia-big .s18-kind > .fia-legend-mark {
   height: calc(var(--fs-label) * 1.25);
   align-items: center;
 }

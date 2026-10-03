@@ -90,7 +90,7 @@ function Includes({ rows }: { rows: LegendRow[] }) {
         <ul className="s04-kinds">
           {rows.map((r) => (
             <li key={r.kind} className="s04-kind" data-kind={r.kind}>
-              <span className="s04-mark">
+              <span className="fia-legend-mark">
                 <Bead kind={r.kind} state="done" size={size} color={kindColor(r.kind)} />
               </span>
               <span className="s04-kind__text">
