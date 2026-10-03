@@ -122,3 +122,46 @@ describe('startup applies saved display settings (review fia-app#5 finding 3)', 
     expect(attrs.has('data-low-literacy')).toBe(true);
   });
 });
+
+// FS-2 (pericope-subtitles TICKET § 8): C-10 1.1.0 `subtitleMode` generated|off, default off (PoC a5).
+describe('C-10 subtitleMode (FS-2)', () => {
+  it('defaults to off, matching the contract default and DEFAULT_SUBTITLE_MODE', async () => {
+    const fs = await import('node:fs');
+    const c10 = JSON.parse(
+      fs.readFileSync(new URL('../contracts/c10-settings.schema.json', import.meta.url), 'utf8'),
+    );
+    const { DEFAULT_SUBTITLE_MODE } = await import('../src/media/provenance');
+    expect(DEFAULT_SETTINGS.subtitleMode).toBe('off');
+    expect(DEFAULT_SUBTITLE_MODE).toBe('off');
+    expect(c10.properties.subtitleMode.default).toBe('off');
+    expect(c10.properties.subtitleMode.enum).toEqual(['generated', 'off']);
+    expect(normalizeSettings({}).settings.subtitleMode).toBe('off');
+    expect(validateSettings(DEFAULT_SETTINGS).ok).toBe(true);
+  });
+  it('normalize keeps a stored valid value and drops junk with a status line', () => {
+    const kept = normalizeSettings({ ...DEFAULT_SETTINGS, subtitleMode: 'generated' });
+    expect(kept.settings.subtitleMode).toBe('generated');
+    expect(kept.notes).toEqual([]);
+    const junk = normalizeSettings({ ...DEFAULT_SETTINGS, subtitleMode: 'on' });
+    expect(junk.settings.subtitleMode).toBe('off');
+    expect(junk.notes).toEqual(['subtitleMode: unknown value "on" → off']);
+    expect(validateSettings({ ...DEFAULT_SETTINGS, subtitleMode: 'on' }).ok).toBe(false);
+  });
+  it('generated survives save → load through fia.settings.v1', () => {
+    const store = memoryStore();
+    const saved = saveSettings(store, { ...DEFAULT_SETTINGS, subtitleMode: 'generated' });
+    expect(saved.ok).toBe(true);
+    expect(JSON.parse(store.getItem(SETTINGS_KEY)!).subtitleMode).toBe('generated');
+    expect(loadSettings(store).settings.subtitleMode).toBe('generated');
+  });
+  it('a 1.0.0 record with no subtitleMode loads as off', () => {
+    const store = memoryStore();
+    const { subtitleMode: _drop, ...old } = DEFAULT_SETTINGS;
+    void _drop;
+    store.setItem(SETTINGS_KEY, JSON.stringify({ ...old, narrationMode: 'source-only' }));
+    const r = loadSettings(store);
+    expect(r.settings.subtitleMode).toBe('off');
+    expect(r.settings.narrationMode).toBe('source-only');
+    expect(r.notes).toEqual([]);
+  });
+});

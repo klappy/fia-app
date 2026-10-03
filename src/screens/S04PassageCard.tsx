@@ -94,7 +94,10 @@ export default function S04PassageCard() {
           </ul>
         </>
       )}
-      {entry && <SaveRow ctl={ctl} intent={intent} onStart={start} onSeeDownloads={seeDownloads} />}
+      {/* Offline the catalog is not saved; a saved passage still shows its verified row. */}
+      {(entry || ctl.rowState.state !== 'none') && (
+        <SaveRow ctl={ctl} intent={intent} onStart={start} onSeeDownloads={seeDownloads} />
+      )}
       {!started && <p className="fia-caption">{t('s.passage.start-hint')}</p>}
     </ScreenFrame>
   );

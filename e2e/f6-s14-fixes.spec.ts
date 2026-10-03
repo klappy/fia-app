@@ -76,6 +76,7 @@ test('S14 group wells keep the 10/12 inset over app.css .fia-well', async ({ pag
   const pads = await page
     .locator('.s14-card')
     .evaluateAll((els) => els.map((e) => getComputedStyle(e).padding));
-  expect(pads.length).toBe(4);
+  // Text size · Theme · Voice · Passage titles (FS-2) · Language.
+  expect(pads.length).toBe(5);
   for (const p of pads) expect(p).toBe('10px 12px');
 });

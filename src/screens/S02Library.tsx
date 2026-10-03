@@ -12,8 +12,10 @@ import {
   SyncBadge,
 } from '../components/glass';
 import { entriesFor, matches } from '../flow/catalog';
+import { booksWithReady, readyFirst, useReadyPacks } from '../flow/ready';
 import { flowSession, useFlow } from '../flow/session';
 import { t } from '../i18n';
+import { languageName } from '../media/lang';
 import { useOffline } from '../offline/useOffline';
 import { savedPackIds, useOnline } from '../offline/useOnline';
 import {
@@ -74,7 +76,16 @@ const KINDS = {
 } as const;
 
 /** Per-book meta (mock BookMeta): saved count, voice line (PoC floor a1), passage count. */
-function BookMeta({ b, offline }: { b: LibraryBook; offline: boolean }) {
+function BookMeta({
+  b,
+  offline,
+  notYet,
+}: {
+  b: LibraryBook;
+  offline: boolean;
+  /** GAP-NOPACK: the content language's name when no passage of this book opens in this build. */
+  notYet?: string;
+}) {
   return (
     <span className="s02-meta">
       {b.saved > 0 && (
@@ -91,7 +102,13 @@ function BookMeta({ b, offline }: { b: LibraryBook; offline: boolean }) {
       ) : (
         <span className="s02-voice is-off">{t('s.library.voice-not-yet')}</span>
       )}
-      {offline && b.saved === 0 ? (
+      {notYet ? (
+        // GAP-NOPACK: a book with no passage that opens reads "not yet in {language}" in place of
+        // its count (ready.ts).
+        <span className="fia-mark fia-mark--absent" data-role="not-yet">
+          ◌ {t('s.common.mark.absent', { language: notYet })}
+        </span>
+      ) : offline && b.saved === 0 ? (
         // R-702 / 02 § States "offline, saved books": the count gives way to a badge, never hidden.
         <span className="fia-badge--needs-connection s02-needs" data-role="needs-connection">
           {t('s.library.row-not-saved')}
@@ -129,10 +146,20 @@ export default function S02Library() {
     () => (snap.manifest ? passageMatches(snap.manifest, language, q) : []),
     [snap.manifest, language, q],
   );
-  const shown = books.filter((b) => matches(q, b.name, b.book));
+  // GAP-NOPACK: books with a passage that opens come first; a book with none reads
+  // "not yet in {language}" in place of its count (ready.ts).
+  const ready = useReadyPacks();
+  const withReady = useMemo(
+    () => (snap.manifest ? booksWithReady(entriesFor(snap.manifest, language), ready) : null),
+    [snap.manifest, language, ready],
+  );
+  const notYet = (book: string) => !!withReady && !withReady.has(book);
+  const shown = readyFirst(
+    books.filter((b) => matches(q, b.name, b.book)),
+    (b) => !notYet(b.book),
+  );
   const total = books.reduce((n, b) => n + b.count, 0);
-  const languageName =
-    snap.manifest?.languages.find((l) => l.code === language)?.autonym ?? language;
+  const autonym = snap.manifest?.languages.find((l) => l.code === language)?.autonym ?? language;
   const resumeEntry =
     snap.manifest && snap.packId && snap.state && snap.state.visited.length > 1
       ? entriesFor(snap.manifest, language).find((e) => e.packId === snap.packId)
@@ -163,7 +190,7 @@ export default function S02Library() {
       {snap.catalogStatus === 'ready' && (
         <p className="fia-caption s02-sub">
           {t('s.library.summary', {
-            language: languageName,
+            language: autonym,
             b: books.length,
             books: num(books.length),
             n: total,
@@ -227,7 +254,13 @@ export default function S02Library() {
                   className="fia-catalog s02-book"
                   first={i === 0}
                   title={b.name}
-                  meta={<BookMeta b={b} offline={!online} />}
+                  meta={
+                    <BookMeta
+                      b={b}
+                      offline={!online}
+                      notYet={notYet(b.book) ? languageName(language) : undefined}
+                    />
+                  }
                   data-book={b.book}
                   onOpen={() => openRow(b.book)}
                 />
