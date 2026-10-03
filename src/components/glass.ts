@@ -21,6 +21,7 @@ import { GlassSheet as KitGlassSheet } from '../vendor/glass/components/navigati
 import type { GlassSheetProps } from '../vendor/glass/components/navigation/GlassSheet';
 import { GlassSegmented as KitGlassSegmented } from '../vendor/glass/components/forms/GlassSegmented';
 import { GlassToggle as KitGlassToggle } from '../vendor/glass/components/forms/GlassToggle';
+import { GlassSelect as KitGlassSelect } from '../vendor/glass/components/forms/GlassSelect';
 import { CatalogRow as KitCatalogRow } from '../vendor/glass/components/resources/CatalogRow';
 import { GlassSearch as KitGlassSearch } from '../vendor/glass/components/forms/GlassSearch';
 import { SyncBadge as KitSyncBadge } from '../vendor/glass/components/scripture/SyncBadge';
@@ -71,6 +72,16 @@ export const GlassToggle = KitGlassToggle as unknown as ComponentType<
     checked?: boolean;
     label?: string;
     onChange?: (checked: boolean) => void;
+    style?: CSSProperties;
+  }
+>;
+/** forms/GlassSelect: pill <select>; `...rest` lands on the <select> (GlassSelect.jsx:3,7). F6-S08. */
+export const GlassSelect = KitGlassSelect as unknown as ComponentType<
+  Omit<Html, 'onChange'> & {
+    label?: string;
+    value?: string;
+    options: (string | { value: string; label: string })[];
+    onChange?: (value: string) => void;
     style?: CSSProperties;
   }
 >;

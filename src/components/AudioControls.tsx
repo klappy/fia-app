@@ -83,13 +83,21 @@ export function AudioControls({
 
 // ── v2 guide transport (PRD § 3 audio-controls, § 8.2; mock Transport, _frame.js:350-360) ───────────
 
+interface TransportSide {
+  label: string;
+  ariaLabel?: string;
+  disabled?: boolean;
+  onPress: () => void;
+}
+
 export interface GuideTransportProps {
   /** the guide primary (GuidePrimary) — the one thing in the thumb slot */
   primary: ReactNode;
   /** "0:17 / 0:42"; null when the part has no voice (the status line is time only) */
   time?: string | null;
-  back: { label: string; ariaLabel?: string; disabled?: boolean; onPress: () => void };
-  skip: { label: string; ariaLabel?: string; disabled?: boolean; onPress: () => void };
+  /** quiet Back / Skip beside the primary; S08's reading has neither (its primary stands alone) */
+  back?: TransportSide;
+  skip?: TransportSide;
   /** icon box for the quiet buttons (18 × min(scale, 2)) */
   iconSize?: number;
   /**
@@ -107,7 +115,7 @@ function Quiet({
   icon,
   trailing,
   size,
-}: GuideTransportProps['back'] & { icon?: boolean; trailing?: boolean; size: number }) {
+}: TransportSide & { icon?: boolean; trailing?: boolean; size: number }) {
   return (
     <GlassButton
       variant="quiet"
@@ -138,8 +146,8 @@ export function GuideTransport({
       {time}
     </div>
   ) : null;
-  const b = <Quiet {...back} icon size={iconSize} />;
-  const s = <Quiet {...skip} trailing size={iconSize} />;
+  const b = back && <Quiet {...back} icon size={iconSize} />;
+  const s = skip && <Quiet {...skip} trailing size={iconSize} />;
   if (part === 'primary') return <>{primary}</>;
   if (part === 'column')
     return (
