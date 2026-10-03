@@ -63,6 +63,10 @@ export default function S01FirstRunLanguage() {
   const [pick, setPick] = useState<string | undefined>();
   const [counts, setCounts] = useState<Counts | null>(null);
   const [huge] = useState(() => loadSettings(browserStore()).settings.textSize === 'huge');
+  // FS-2: with C-10 `subtitleMode` on, the disclosure also names passage summaries (TERRY-READING (4)).
+  const [summaries] = useState(
+    () => loadSettings(browserStore()).settings.subtitleMode === 'generated',
+  );
 
   useEffect(() => {
     void session.loadCatalog();
@@ -157,7 +161,9 @@ export default function S01FirstRunLanguage() {
           </div>
         </GlassSurface>
       )}
-      <p className="s01-note">{t('s.lang.disclosure')}</p>
+      <p className="s01-note">
+        {t(summaries ? 's.lang.disclosure-summaries' : 's.lang.disclosure')}
+      </p>
       <div className="s01-feedback">
         <GlassButton
           variant="quiet"

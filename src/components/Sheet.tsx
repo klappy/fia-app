@@ -26,6 +26,11 @@ export interface SheetProps extends StateProps {
   tall?: boolean;
   /** Lead the title row with the FIA logo (RULING 2026-10-01 (f); mock _frame.js:397 `fia-sheet-brand`). */
   brand?: boolean;
+  /** A mark before the title words (S20's voice mark, S21's people glyph); decorative. */
+  titleIcon?: ReactNode;
+  /** A set height (S21 rises to just under the progress band, mock 21-sheet-discussion-stop.html);
+   *  the body scrolls and the actions row stays at the sheet bottom, as `tall`. */
+  height?: string;
   children?: ReactNode;
 }
 
@@ -39,6 +44,8 @@ export function Sheet({
   description,
   tall,
   brand,
+  titleIcon,
+  height,
   closeButton = true,
   children,
   state = 'default',
@@ -51,7 +58,7 @@ export function Sheet({
     if (!dialog) return;
     dialog.setAttribute('aria-modal', 'true');
     dialog.setAttribute('aria-label', title);
-    dialog.className = ['fia-sheet', tall && 'fia-sheet--tall', className]
+    dialog.className = ['fia-sheet', (tall || height) && 'fia-sheet--tall', className]
       .filter(Boolean)
       .join(' ');
     const attrs = stateAttrs(state, 'sheet') as Record<string, string | undefined>;
@@ -132,14 +139,17 @@ export function Sheet({
               }
             >
               <FiaLogo />
-              <span>{title}</span>
+              <span>
+                {titleIcon}
+                {title}
+              </span>
             </div>
           ) : (
             title
           )
         }
         description={description}
-        height={tall ? 'calc(100% - 14px)' : 'auto'}
+        height={height ?? (tall ? 'calc(100% - 14px)' : 'auto')}
         actions={row ? <div className="fia-sheet__actions">{row}</div> : undefined}
       >
         {onClose && closeButton && (
