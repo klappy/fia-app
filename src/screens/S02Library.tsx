@@ -158,6 +158,7 @@ export default function S02Library() {
     <ScreenFrame
       id="S02"
       title={t('s.library.title')}
+      titleHero
       primaryLabel={
         resumeEntry
           ? t('s.library.primary-continue', { ref: keepRef(resumeEntry.title) })

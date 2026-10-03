@@ -315,7 +315,7 @@ export default function S06SingleScript() {
           }
         />
         {line && (
-          <p className="fia-caption fia-num fia-flow-line" role="note">
+          <p className="fia-caption fia-caption-v2 fia-num fia-flow-line" role="note">
             {line}
           </p>
         )}

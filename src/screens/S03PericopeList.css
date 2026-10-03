@@ -33,11 +33,7 @@
   margin-top: var(--sp-1);
 }
 .s03-hero {
-  margin: 0;
-  font: var(--fw-bold) var(--fs-hero) / 1.12 var(--font-core);
-  letter-spacing: var(--ls-hero);
-  color: var(--text-title);
-  overflow-wrap: anywhere;
+  overflow-wrap: anywhere; /* face: frame/frame.css .fia-hero */
 }
 .s03-toggle {
   margin-inline-end: calc(-1 * var(--sp-6));

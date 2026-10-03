@@ -126,7 +126,7 @@ export default function S01FirstRunLanguage() {
       <p className="s01-h1" aria-hidden="true">
         {t('s.lang.title')}
       </p>
-      <p className="s01-lede">
+      <p className="fia-caption-v2 s01-lede">
         {t('s.lang.lede')}
         {languages.length > 0 && ` ${t('s.lang.lede-count', { n: languages.length })}`}
       </p>

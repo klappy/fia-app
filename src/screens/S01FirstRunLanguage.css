@@ -32,9 +32,7 @@
 }
 .s01-lede {
   margin: var(--sp-3) 0 0;
-  font: var(--fw-medium) var(--fs-caption) / 1.3 var(--font-core);
-  color: var(--text-muted);
-  text-wrap: pretty;
+  text-wrap: pretty; /* face: frame/frame.css .fia-caption-v2 */
 }
 .s01-wrap {
   margin-top: var(--sp-6);

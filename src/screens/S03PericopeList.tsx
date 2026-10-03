@@ -222,7 +222,7 @@ export default function S03PericopeList() {
       </div>
       <div className="s03-head">
         {/* The frame's <h1> names the book for assistive tech; this is its visible hero (mock .s03-hero). */}
-        <p className="s03-hero" aria-hidden="true">
+        <p className="fia-hero s03-hero" aria-hidden="true">
           {book}
         </p>
         <GlassButton

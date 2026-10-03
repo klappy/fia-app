@@ -100,13 +100,8 @@
   letter-spacing: var(--ls-title);
   overflow-wrap: anywhere;
 }
-/* Captions in the mock's face and --text-muted (mock _frame.css:74), not the v1 .fia-caption tokens
-   (app.css: --fia-text-muted read 3.9:1 on the dark sheet). */
-.s07-step__words,
-.s07-ai {
-  font: var(--fw-medium) var(--fs-caption) / 1.3 var(--font-core);
-  color: var(--text-muted);
-}
+/* .s07-step__words and .s07-ai: the mock's caption face, frame/frame.css .fia-caption-v2 (not the v1
+   .fia-caption tokens: --fia-text-muted read 3.9:1 on the dark sheet). */
 .s07-step__words {
   display: block;
   margin-top: 2px;

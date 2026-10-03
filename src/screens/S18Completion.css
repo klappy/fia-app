@@ -148,8 +148,8 @@
 }
 .s18-kept {
   margin: 10px 0 0;
-  font: var(--fw-medium) var(--fs-caption) / 1.3 var(--font-core);
-  color: var(--text-muted);
+  font-weight: var(--fw-medium); /* size, colour: v1 .fia-caption (app.css) */
+  line-height: 1.3;
 }
 
 /* ---- quiet rows (kit GlassSurface level 2 well + CatalogRow), above the thumb band ---- */

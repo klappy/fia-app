@@ -156,7 +156,7 @@ function StepRow({
           <span className="s07-step__title" dir="auto">
             {step.title}
           </span>
-          <span className="s07-step__words fia-num">{words}</span>
+          <span className="fia-caption-v2 s07-step__words fia-num">{words}</span>
           {!open && (
             <BeadStrip
               className="s07-step__beads"
@@ -317,7 +317,7 @@ export default function S07Overview() {
             ) : (
               <>
                 {guide.provenance !== 'source' && (
-                  <p className="s07-ai">
+                  <p className="fia-caption-v2 s07-ai">
                     <Icon name="sparkle" size={iconSize(14, scale)} />
                     {t('s.overview.whole-guide-ai')}
                   </p>

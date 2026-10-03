@@ -84,6 +84,23 @@ html.fia-scaled .fia-screen > .fia-thumb {
   text-align: center;
 }
 
+/* ---------- text primitives (_frame.css:73-74; the mock pages' .s02/.s03/.s04-hero) ---------- */
+/* Screens compose these by class; their own sheets keep only margins and wrapping. The overline face
+   is app.css .fia-overline (already the mock's, _frame.css:73). */
+/* The browse hero (mock 03-pericope-list.html:44, 04-passage-card.html:29; S02 keeps its own 1.15 line). */
+.fia-hero {
+  margin: 0;
+  font: var(--fw-bold) var(--fs-hero) / 1.12 var(--font-core);
+  letter-spacing: var(--ls-hero);
+  color: var(--text-title);
+}
+/* The mock's caption face (_frame.css:74). Its own name until the text-primitives PR moves the v1
+   .fia-caption (app.css: 13px, --fia-text-muted) onto this face, a visible change on ~20 screens. */
+.fia-caption-v2 {
+  font: var(--fw-medium) var(--fs-caption) / 1.3 var(--font-core);
+  color: var(--text-muted);
+}
+
 /* ---------- kit resources/CatalogRow (CatalogRow.jsx:8 title literal 15px; _frame.css:141-143) ---------- */
 /* Every CatalogRow carries .fia-catalog; the title grows with the text size (one rule for the six
    hand copies that were in app.css, S02, S03, S18, PericopeCard and alpha.css). */

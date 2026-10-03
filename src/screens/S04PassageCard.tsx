@@ -84,7 +84,7 @@ function Includes({ rows }: { rows: LegendRow[] }) {
       aria-labelledby="s04-includes-heading"
     >
       <div className="s04-card__inner">
-        <h2 id="s04-includes-heading" className="s04-overline">
+        <h2 id="s04-includes-heading" className="fia-overline s04-overline">
           {t('s.passage.inc.heading')}
         </h2>
         <ul className="s04-kinds">
@@ -100,7 +100,7 @@ function Includes({ rows }: { rows: LegendRow[] }) {
             </li>
           ))}
         </ul>
-        <p className="s04-note">{t('s.passage.kinds-note')}</p>
+        <p className="fia-caption-v2 s04-note">{t('s.passage.kinds-note')}</p>
       </div>
     </GlassSurface>
   );
@@ -177,7 +177,7 @@ export default function S04PassageCard() {
       </div>
       <div className="s04-head">
         {/* The frame's <h1> carries the reference for assistive tech; this is its visible face. */}
-        <p className="s04-hero" aria-hidden="true">
+        <p className="fia-hero s04-hero" aria-hidden="true">
           {keepRef(guide.title)}
         </p>
         <p className="s04-sub">{subLine(language, guide)}</p>
@@ -196,9 +196,9 @@ export default function S04PassageCard() {
       {(entry || ctl.rowState.state !== 'none') && (
         <SaveRow ctl={ctl} intent={intent} onStart={start} onSeeDownloads={seeDownloads} />
       )}
-      <p className="s04-rights">{rightsLine(facts)}</p>
+      <p className="fia-caption-v2 s04-rights">{rightsLine(facts)}</p>
       {!intent && (
-        <p className="s04-start" data-testid="start-line">
+        <p className="fia-caption-v2 s04-start" data-testid="start-line">
           {copy.hint}
         </p>
       )}

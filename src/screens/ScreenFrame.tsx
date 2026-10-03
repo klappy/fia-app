@@ -25,6 +25,8 @@ export interface ScreenFrameProps {
   thumb?: ReactNode;
   /** The screen title is for screen readers only (S05: the reference is the band's overline). */
   titleHidden?: boolean;
+  /** The screen title is the page's hero face (S02; frame/frame.css .fia-hero). */
+  titleHero?: boolean;
   /**
    * Layer frame (PRD § 8.1 Layer; mock CloseHeader, design/alpha-v2-screens/_frame.js:241-249): the one
    * labelled way back sits in the glass header as a quiet kit GlassButton with a chevron. Ignored on
@@ -57,6 +59,7 @@ export function ScreenFrame({
   offline,
   thumb,
   titleHidden,
+  titleHero,
   close,
   frame,
   children,
@@ -94,7 +97,9 @@ export function ScreenFrame({
               : undefined
           }
         />
-        <h1 className={`fia-title fia-screen__title${titleHidden ? ' fia-sr-only' : ''}`}>
+        <h1
+          className={`fia-title fia-screen__title${titleHero ? ' fia-hero' : ''}${titleHidden ? ' fia-sr-only' : ''}`}
+        >
           {heading}
         </h1>
         <main className="fia-content">{children}</main>

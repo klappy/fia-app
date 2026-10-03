@@ -8,11 +8,10 @@
   overflow: visible;
 }
 
-/* Hero: the frame's own <h1>, set as the mock's .s02-hero on this screen only. */
+/* Hero: the frame's own <h1> in the shared hero face (ScreenFrame titleHero, frame/frame.css .fia-hero);
+   the mock's .s02-hero sets its line at 1.15 (02-library.html:31), S03/S04's at 1.12. */
 [data-screen='S02'] .fia-screen__title {
-  font: var(--fw-bold) var(--fs-hero) / 1.15 var(--font-core);
-  letter-spacing: var(--ls-hero);
-  color: var(--text-title);
+  line-height: 1.15;
 }
 .s02-sub {
   margin: calc(-1 * var(--fia-space-4) + var(--sp-1)) 0 0;
