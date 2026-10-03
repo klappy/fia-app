@@ -117,3 +117,67 @@ test('use mode (header pill) changes the content only: the Spanish menus stay', 
   const settings = await page.evaluate(() => JSON.parse(localStorage.getItem('fia.settings.v1')!));
   expect(settings).toMatchObject({ contentLanguage: 'eng', uiLanguage: 'spa' });
 });
+
+// FU-a / FU-b (cookbook 2026-10-03-fia-spanish-ui-strings TICKET.md:24-25): the kit picker's chrome
+// reads from the app catalog, and use mode drops the first-run lede for the content-only line
+// (design/alpha-screens/01-first-run-language.md:64). Shots at 390×844 and 1280×800 for design-lens.
+test('S01 in Spanish: picker chrome from the catalog; use mode reads content-only', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    if (sessionStorage.getItem('seeded')) return;
+    sessionStorage.setItem('seeded', '1');
+    localStorage.setItem(
+      'fia.settings.v1',
+      JSON.stringify({
+        schemaVersion: 1,
+        narrationMode: 'source-fallback',
+        mediaTier: 'phone',
+        contentLanguage: 'spa',
+        uiLanguage: 'spa',
+        textSize: 'system',
+        lowLiteracy: false,
+        theme: 'light',
+        disclosuresPresented: [],
+        telemetryOptIn: false,
+      }),
+    );
+  });
+  const shot = (name: string) =>
+    page.screenshot({ path: `screenshots/f6-s01/01-first-run-language.spa.${name}.png` });
+  const s01 = page.locator('[data-screen="S01"]');
+
+  await page.goto('/');
+  await expect(s01).toBeVisible();
+  await expect(s01).toContainText('Sugeridos');
+  await expect(s01).toContainText('Todos los idiomas');
+  await expect(s01).toContainText(/\d+ de \d+/);
+  await expect(s01).toContainText('Traducible con IA');
+  for (const en of ['Suggested', 'All languages', 'AI-translatable', 'Full coverage'])
+    await expect(s01).not.toContainText(en);
+  await expect(s01).toContainText('Una sola elección define la guía y la app.');
+  await noRawKeys(page);
+  await shot('first-run.390');
+
+  await page.goto('/?mode=use');
+  await expect(s01).toBeVisible();
+  await expect(s01).toContainText('Sugeridos');
+  await expect(s01).not.toContainText('Una sola elección');
+  await page.getByText('Español', { exact: true }).first().click();
+  await expect(page.locator('[data-testid="s01-content-only-note"]')).toHaveCount(0);
+  await expect(page.locator('[data-role="primary"]')).toHaveText(/Usar Español/);
+  await page.getByText('English', { exact: true }).first().click();
+  await expect(page.locator('[data-testid="s01-content-only-note"]')).toHaveText(
+    'Los menús siguen en Español. Cámbialo en Ajustes.',
+  );
+  await expect(page.locator('[data-role="primary"]')).toHaveText(/Usar English para el contenido/);
+  await noRawKeys(page);
+  await shot('use-mode.390');
+
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await expect(page.locator('[data-testid="s01-content-only-note"]')).toBeVisible();
+  await shot('use-mode.1280');
+  await page.goto('/');
+  await expect(s01).toContainText('Una sola elección');
+  await shot('first-run.1280');
+});

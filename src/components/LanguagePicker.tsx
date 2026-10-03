@@ -16,6 +16,64 @@ import './LanguagePicker.css';
 // each chip's state, which the kit draws only by edge and fill), and it labels the search field (the kit
 // gives it a placeholder only). The kit's literal px and contrast are bent in LanguagePicker.css.
 // Imported straight from the vendored kit path (G-F), so this row leaves the shared glass.ts alone.
+// The kit draws its own chrome words in English with no prop for them (group heads, the "n of m" count,
+// Clear, the empty line, the legend, the chip tooltips). The wrapper relabels those text nodes from the
+// app catalog (`s.lang.kit.*`, `s.lang.empty-search`) in place — node data only, so React keeps its
+// handles — and never patches the vendored kit (cookbook TICKET 2026-10-03-fia-spanish-ui-strings FU-a).
+
+const KIT_STATES: Record<string, string> = {
+  available: 's.lang.kit.state.available',
+  'AI-translatable': 's.lang.kit.state.ai',
+  none: 's.lang.kit.state.none',
+};
+
+/** The catalog's words for one English string the kit draws, or undefined when it is not kit chrome. */
+function kitLabel(text: string): string | undefined {
+  switch (text) {
+    case 'Suggested':
+      return t('s.lang.kit.suggested');
+    case 'All languages':
+      return t('s.lang.kit.all');
+    case 'Clear':
+      return t('s.lang.kit.clear');
+    case 'Available':
+      return t('s.lang.kit.legend.available');
+    case 'AI-translatable':
+      return t('s.lang.kit.legend.ai');
+    case 'None':
+      return t('s.lang.kit.legend.none');
+    case 'Full coverage':
+      return t('s.lang.kit.note.full');
+    case 'No resources yet · you can still choose it':
+      return t('s.lang.kit.note.none');
+  }
+  let m = /^(\d+) available · (\d+) AI-translatable$/.exec(text);
+  if (m) return t('s.lang.kit.note.partial', { available: Number(m[1]), ai: Number(m[2]) });
+  m = /^(\d+) of (\d+)$/.exec(text);
+  if (m) return t('s.lang.kit.count', { shown: m[1], total: m[2] });
+  m = /^Matches for “([\s\S]*)”$/.exec(text);
+  if (m) return t('s.lang.kit.matches', { query: m[1] });
+  if (/^Nothing matches “[\s\S]*”\. Try the English name, the code, or a country\.$/.test(text))
+    return t('s.lang.empty-search');
+  return undefined;
+}
+
+/** Relabels the kit's chrome text nodes and chip tooltips; rows' own words (autonyms) are left alone. */
+function relabelKit(el: HTMLElement) {
+  const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  for (let n = walk.nextNode() as Text | null; n; n = walk.nextNode() as Text | null) {
+    const own = n.parentElement?.closest('[lang]');
+    if (own && el.contains(own)) continue;
+    const next = kitLabel(n.data);
+    if (next !== undefined && next !== n.data) n.data = next;
+  }
+  for (const chip of el.querySelectorAll<HTMLElement>('span[title]')) {
+    const m = /^(.*) · (available|AI-translatable|none)$/.exec(chip.title);
+    if (!m) continue;
+    const next = t('s.lang.kit.chip-title', { type: m[1], state: t(KIT_STATES[m[2]]) });
+    if (next !== chip.title) chip.title = next;
+  }
+}
 
 // Typing only (as glass.ts): the kit's .d.ts omit the `...rest` the .jsx spreads on its root.
 const KitPicker = KitLanguagePicker as unknown as ComponentType<
@@ -79,10 +137,11 @@ export function LanguagePicker({
         const name = names.get(code);
         if (name) b.setAttribute('aria-label', name);
       }
+      relabelKit(el);
     };
     apply();
     const watch = new MutationObserver(apply);
-    watch.observe(el, { childList: true, subtree: true });
+    watch.observe(el, { childList: true, subtree: true, characterData: true });
     return () => watch.disconnect();
   }, [languages, value, title, placeholder]);
 
