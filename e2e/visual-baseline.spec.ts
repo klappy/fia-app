@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 
 // Visual baselines for the v2 glass lift: every screen S01–S19 and every sheet on v2/integration
@@ -9,13 +10,19 @@ import { expect, test, type Page } from '@playwright/test';
 // server, a fixed storage estimate, CSS animations off, fonts loaded before the shot.
 //
 // Baselines (*-chromium-linux.png) are rendered inside mcr.microsoft.com/playwright:v1.56.1-noble,
-// the image ci.yml's `visual` job runs in, so fonts and libraries are fixed. The UI face is system-ui
-// (tokens/alpha.css:59); which file draws it, and its italic (SH-2's question, guide.css:570), is the
-// machine's choice, so a bare runner or another Linux box can render text a few pixels apart.
+// the image ci.yml's `visual` job runs in, so Chromium, fonts and libraries are fixed. The UI face is
+// system-ui (tokens/alpha.css:59), which each machine resolves differently (DejaVu Sans on a bare
+// runner, WenQuanYi Zen Hei with no bold or italic in that image), so the browser gets
+// visual-fonts.conf: Liberation Sans first for the generic families, all four styles present.
 // After an intended change, take the PNGs from the failed job's `visual-baselines` artifact (or run
 // `npm run build && npm run test:visual -- --update-snapshots` inside that image), review every
 // changed PNG against `visual-results` (expected / actual / diff), and commit them.
-test.use({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block' });
+const FONTS = fileURLToPath(new URL('./visual-fonts.conf', import.meta.url));
+test.use({
+  viewport: { width: 390, height: 844 },
+  serviceWorkers: 'block',
+  launchOptions: { env: { ...process.env, FONTCONFIG_FILE: FONTS } },
+});
 // Every shot seeds its own page: the 52 run side by side across workers.
 test.describe.configure({ mode: 'parallel' });
 

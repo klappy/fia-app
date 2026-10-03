@@ -42,8 +42,8 @@ jobs:
           path: test-results
           retention-days: 7
   # Visual baselines (e2e/visual-baseline.spec.ts). Pixels depend on the machine's fonts and
-  # libraries, so the spec runs inside Playwright's pinned image, and the committed
-  # *-chromium-linux.png are that image's output. The tag must match @playwright/test in
+  # libraries, so the spec runs inside Playwright's pinned image (fonts pinned further by
+  # e2e/visual-fonts.conf), and the committed *-chromium-linux.png are that image's output. The tag must match @playwright/test in
   # package.json. On failure the job uploads `visual-results` (expected / actual / diff) and
   # `visual-baselines` (the snapshot folder re-rendered in this image): review the diffs,
   # then commit the PNGs from `visual-baselines` for an intended change. CI never commits them.
@@ -69,7 +69,7 @@ jobs:
           retention-days: 7
       - name: Re-render the baselines in this image (artifact only)
         if: failure()
-        run: npm run test:visual -- --update-snapshots=all --retries=0
+        run: npm run test:visual -- --update-snapshots=changed --retries=0
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
