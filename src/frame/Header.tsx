@@ -58,7 +58,7 @@ export function ExploreButton({ onPress, fit = 0 }: { onPress: () => void; fit?:
     <GlassButton
       variant="glass"
       className="fia-pill fia-explore"
-      style={fit >= 4 ? { ...pill(fit), minWidth: 48 } : pill(fit)}
+      style={fit >= 4 ? { ...pill(fit), minWidth: 'var(--sp-14)' } : pill(fit)}
       leading={fit === 3 ? undefined : <Icon name="compass" size={18} />}
       aria-haspopup="dialog"
       aria-label={fit >= 4 ? word : undefined}
