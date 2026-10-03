@@ -576,6 +576,31 @@ html[data-text-step] .fia-screen[data-screen='S05'] > .fia-thumb {
 .fia-stop-again-row > .fia-btn {
   margin-left: -10px;
 }
+/* Sheet 24 (jump guard): sheet 21's well holds the jump as beads; layout only (mock 24 s24-*). */
+.fia-jump {
+  display: grid;
+  gap: 8px;
+}
+.fia-jump__ends,
+.fia-jump__choices {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2px 12px;
+}
+html:not([data-text-step]) .fia-jump__beads {
+  justify-content: space-between;
+}
+.fia-sheet--jump .fia-stop-lead {
+  margin-top: 12px;
+}
+.fia-jump .fia-jump__quote {
+  margin: 2px 0 0;
+  font-size: var(--fs-label);
+}
+.fia-jump__choices {
+  margin: 6px -10px 0;
+}
 .fia-stop-inside {
   margin: 0 0 10px;
   padding: 10px 14px 8px;
