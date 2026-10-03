@@ -347,3 +347,108 @@
 .fia-viewer video {
   max-width: 100%;
 }
+
+/* ---------- layer frame (PRD § 8.1 Layer: S09b, S10–S13, S15, S16, S19) ----------
+   Shared by every layer screen; per-screen CSS stays layout only (RULING 2026-10-02 ~20:05 ET).
+   Mocks: design/alpha-v2-screens/_frame.js:241-249 (CloseHeader), 10-key-term, 11-image-viewer, 12-video. */
+/* the one labelled way back, in the glass header (ScreenFrame `close`) */
+.fia-header-grid .fia-close-back {
+  margin-inline-start: auto;
+  white-space: normal !important; /* kit GlassButton sets nowrap inline (GlassButton.jsx:16); 200%/310% wrap */
+  text-align: start;
+  color: var(--text-body) !important;
+  font-weight: var(--fw-semibold);
+}
+.fia-header-grid .fia-notice--offline-chip + .fia-close-back {
+  margin-inline-start: 0;
+}
+/* the item's kind line and its title set large (LayerHead) */
+.fia-layer-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.fia-layer-head__kind {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font: var(--fw-medium) var(--fs-caption) / 1.3 var(--font-core);
+  font-size: var(--fia-fs-caption);
+  color: var(--text-muted);
+}
+.fia-layer-head__title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  font: var(--fw-semibold) var(--fs-hero) / var(--lh-hero) var(--font-core);
+  font-size: var(--fia-fs-hero);
+  color: var(--text-title);
+  overflow-wrap: anywhere;
+}
+.fia-layer-head__bead {
+  display: inline-flex;
+  flex: none;
+}
+/* the one glass card a layer reads from (S10 definition): kit GlassSurface, app padding only */
+.fia-layer-card {
+  padding: 16px;
+}
+.fia-layer-card > p:first-child {
+  margin-top: 0;
+}
+.fia-layer-card > p:last-child {
+  margin-bottom: 0;
+}
+/* media well: always on #0F131A so photographs and video read the same in both themes (11 spec
+   § Layout; mocks 11/12 frame), rounded like the mock's frame, never a new tab (R-506, R-507) */
+.fia-viewer {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.fia-viewer__well,
+.fia-viewer > video,
+.fia-viewer__frame-message {
+  background: #0f131a;
+  border-radius: var(--r-2xl, 28px);
+  overflow: hidden;
+  border: 0.5px solid rgba(255, 255, 255, 0.14);
+  box-shadow: var(--shadow-card);
+}
+.fia-viewer__well {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+}
+.fia-viewer__well img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.fia-viewer > video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
+.fia-viewer__frame-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 16 / 9;
+  padding: 16px;
+  color: #e9edf3;
+  font: var(--fw-semibold) var(--fs-label) / 1.3 var(--font-core);
+  text-align: center;
+}
+.fia-viewer figcaption:empty {
+  display: none;
+}
+/* time + seek line of a layer's audio (AudioControls hideMark) */
+.fia-layer-audio .fia-transport__line {
+  justify-content: flex-start;
+  color: var(--text-muted);
+}

@@ -23,6 +23,8 @@ export interface AudioControlsProps extends StateProps {
   leading?: { label: string; onPress: () => void };
   /** trailing hint while not playing, e.g. `s.scripture.hint-timed` */
   hint?: string;
+  /** v2 layers (S10): the mark is a ProvenanceChip elsewhere on the screen, so the line is time + seek only */
+  hideMark?: boolean;
 }
 
 export function AudioControls({
@@ -36,6 +38,7 @@ export function AudioControls({
   onMarkInfo,
   leading,
   hint,
+  hideMark,
   state = 'default',
   className,
 }: AudioControlsProps) {
@@ -54,8 +57,10 @@ export function AudioControls({
             ↺ {leading.label}
           </button>
         )}
-        <ProvenanceMark provenance={provenance} language={language} onInfo={onMarkInfo} />
-        <span className="fia-transport__time">
+        {!hideMark && (
+          <ProvenanceMark provenance={provenance} language={language} onInfo={onMarkInfo} />
+        )}
+        <span className="fia-transport__time fia-num">
           {elapsed} / {total}
         </span>
         {hint && state !== 'playing' && <span className="fia-caption">{hint}</span>}
