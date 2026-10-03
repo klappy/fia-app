@@ -3,14 +3,17 @@ import { expect, test, type Page } from '@playwright/test';
 
 // Visual baselines for the v2 glass lift: every screen S01–S19 and every sheet on v2/integration
 // (SH-1..SH-5 and the Explore sheet, mock 25), at 390 × 844 in light and dark, so a reskin or a lift
-// of the shared app layer can prove nothing moved. One state per screen (S09 adds its S09b layer), seeded as the F6 specs seed
-// it (fia.flow.current.v1 · fia.workspace.v1.<pack> · fia.completion.v1.<pack> · fia.settings.v1).
-// Pixels are pinned: no network past the preview server, a fixed storage estimate, CSS animations
-// off, fonts loaded before the shot.
+// of the shared app layer can prove nothing moved. One state per screen (S09 adds its S09b layer),
+// seeded as the F6 specs seed it (fia.flow.current.v1 · fia.workspace.v1.<pack> ·
+// fia.completion.v1.<pack> · fia.settings.v1). Pixels are pinned: no network past the preview
+// server, a fixed storage estimate, CSS animations off, fonts loaded before the shot.
 //
 // Baselines are the CI runner's (ubuntu-latest, Playwright's bundled Chromium): *-chromium-linux.png.
-// Update after an intended change: `npm run test:visual -- --update-snapshots` on Linux (or inside
-// mcr.microsoft.com/playwright:v1.56.1-noble), then review every changed PNG in the diff.
+// The UI face is system-ui (tokens/alpha.css:59), i.e. DejaVu Sans on that runner; its italic (SH-2's
+// question, guide.css:570) needs DejaVu Sans Oblique (fonts-dejavu-extra), which the runner has.
+// A box without it synthesizes the slant and fails SH-2 only. Update after an intended change:
+// `npm run build && npm run test:visual -- --update-snapshots` on such a Linux box, or take the
+// *-actual.png files from CI's test-results artifact; then review every changed PNG in the diff.
 test.use({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block' });
 // Every shot seeds its own page: the 52 run side by side across workers.
 test.describe.configure({ mode: 'parallel' });
