@@ -5,6 +5,7 @@ import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { offlineShellManifest } from './src/offline/shell-manifest-plugin';
+import { shipDataPlugin } from './src/offline/ship-data-plugin';
 
 // Build stamp: emit dist/version.json so a deployed env can prove which commit it serves
 // (post-deploy gate, RELEASING.md). Workers Builds injects WORKERS_CI_COMMIT_SHA and
@@ -23,15 +24,25 @@ function git(args: string): string | undefined {
 }
 
 function versionStamp(): Plugin {
+  const env = process.env;
+  const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
+  const commit = env.WORKERS_CI_COMMIT_SHA || env.GITHUB_SHA || git('rev-parse HEAD') || 'unknown';
+  const sha7 = /^[0-9a-f]{7,}$/.test(commit) ? commit.slice(0, 7) : '0000000';
   return {
     name: 'fia-version-stamp',
     apply: 'build',
+    // C-14 release stamp read by src/feedback/version.ts (About, C-16 appVersion).
+    transformIndexHtml: () => [
+      {
+        tag: 'meta',
+        attrs: { name: 'fia-release', content: `${pkg.version}+${sha7}` },
+        injectTo: 'head',
+      },
+    ],
     generateBundle() {
-      const env = process.env;
-      const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
       const stamp = {
         version: pkg.version as string,
-        commit: env.WORKERS_CI_COMMIT_SHA || env.GITHUB_SHA || git('rev-parse HEAD') || 'unknown',
+        commit,
         branch:
           env.WORKERS_CI_BRANCH ||
           env.GITHUB_REF_NAME ||
@@ -78,9 +89,16 @@ export default defineConfig({
       // No Workbox precache list: the worker reads dist/offline-shell.json (sha256 per file).
       injectManifest: { injectionPoint: undefined },
     }),
+    shipDataPlugin(),
     offlineShellManifest(),
   ],
-  build: { target: 'es2022', sourcemap: true },
+  build: {
+    target: 'es2022',
+    sourcemap: true,
+    // Fonts stay files, never base64 in the CSS: a Noto Serif TC subset under Vite's 4 KB inline
+    // default would ride into the precached CSS that the shell manifest keeps TC out of.
+    assetsInlineLimit: (file: string) => (file.endsWith('.woff2') ? false : undefined),
+  },
   test: {
     include: ['tests/**/*.test.ts'],
     environment: 'node',

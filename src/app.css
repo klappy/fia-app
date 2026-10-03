@@ -1,17 +1,48 @@
-/* Layout per design/alpha-screens/README.md § Layout constants. Tokens come from tokens/alpha.css. */
+/* v2 shell (F4) over BT Glass (src/vendor/glass @ad528f4, never edited). Kit surfaces carry the material;
+   this file lays them out. App tokens and kit overrides: tokens/alpha.css. No bottom bar (RULING 21:23 ET (a)). */
+.fia-aurora {
+  min-height: 100dvh;
+}
 .fia-screen {
-  display: grid;
-  grid-template-rows: auto auto 1fr auto auto;
+  display: flex;
+  flex-direction: column;
   min-height: 100dvh;
   max-width: var(--fia-content-max-width);
   margin-inline: auto;
   padding-top: var(--fia-safe-top);
+  color: var(--text-body);
+  font-family: var(--font-core);
+}
+.fia-header-wrap {
+  padding: 6px var(--fia-gutter) 0;
 }
 .fia-header {
-  min-height: 48px;
+  padding: 8px 8px 8px 16px;
+}
+.fia-header-grid {
+  position: relative;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  padding-inline: var(--fia-gutter);
+  gap: 8px;
+}
+.fia-logo {
+  display: block;
+  flex: none;
+  color: var(--fia-brand);
+}
+.fia-header-grid .fia-notice--offline-chip,
+.fia-header-grid .fia-lang {
+  margin-inline-start: auto;
+}
+.fia-header-grid .fia-notice--offline-chip + .fia-lang {
+  margin-inline-start: 0;
+}
+.fia-pill {
+  min-height: var(--fia-tap-min);
+}
+.fia-screen__title {
+  padding: var(--fia-space-6) var(--fia-gutter) 0;
 }
 .fia-title {
   font-size: var(--fia-fs-title);
@@ -39,15 +70,12 @@
   gap: var(--fia-gap-stack);
 }
 
-/* rule 1: the one primary, thumb slot; sticky above the dock; 72 px slot at +2 */
+/* the one primary, thumb slot (PRD § 8.2), sticky at the bottom; no dock under it */
 .fia-primary-slot {
   position: sticky;
-  bottom: calc(var(--fia-dock-h) + var(--fia-safe-bottom));
-  padding: var(--fia-space-4) var(--fia-gutter);
-  background: var(--fia-surface-app);
-}
-.fia-screen:not([data-dock]) .fia-primary-slot {
-  bottom: var(--fia-safe-bottom);
+  bottom: 0;
+  margin-top: auto;
+  padding: var(--fia-space-4) var(--fia-gutter) calc(var(--fia-space-4) + var(--fia-safe-bottom));
 }
 .fia-primary-slot--sheet {
   position: static;
@@ -88,39 +116,10 @@
   color: var(--fia-stop);
   border-color: var(--fia-stop);
 }
-:root[data-text-step='plus2'] .fia-primary,
-:root[data-text-step='max'] .fia-primary {
+:root[data-text-step='x150'] .fia-primary,
+:root[data-text-step='x200'] .fia-primary,
+:root[data-text-step='x310'] .fia-primary {
   min-height: var(--fia-primary-slot-h);
-}
-
-/* rule 4: dock, four cells, labels always visible */
-.fia-dock {
-  position: sticky;
-  bottom: 0;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  min-height: var(--fia-dock-h);
-  padding-bottom: var(--fia-safe-bottom);
-  background: var(--fia-surface-solid);
-  border-top: 1px solid var(--fia-rail-track);
-}
-.fia-dock__cell {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  min-height: var(--fia-tap-min);
-  font: inherit;
-  font-size: var(--fia-fs-label);
-  color: var(--fia-text-body);
-  text-decoration: none;
-  background: none;
-  border: 0;
-}
-.fia-dock__cell[data-active],
-.fia-dock__cell.active {
-  color: var(--fia-primary);
 }
 
 /* rule 2: secondaries stay quiet */
@@ -170,14 +169,14 @@
 
 .fia-card {
   display: block;
-  text-align: start;
   width: 100%;
-  padding: var(--fia-card-pad);
-  background: var(--fia-surface-solid);
-  border: 0;
-  border-radius: var(--fia-r-card);
+  text-align: start;
   color: inherit;
   font: inherit;
+}
+.fia-card__inner {
+  position: relative;
+  padding: var(--fia-card-pad);
 }
 .fia-notice {
   padding: var(--fia-space-5) var(--fia-space-7);
@@ -196,114 +195,144 @@
   padding: var(--fia-space-7);
   border-radius: var(--fia-r-md);
 }
+.fia-header {
+  gap: var(--fia-space-5);
+}
 .fia-notice--offline-chip {
-  margin-inline: var(--fia-gutter);
-  align-self: start;
+  /* trailing in the header row (02-library.md: header offline chip, x ≤ 344); RTL mirrors */
+  margin-inline-start: auto;
+  flex: none;
+  padding-block: var(--fia-space-3);
+  white-space: nowrap;
 }
-
-/* language picker: rows ≥ 64 px, autonym first in its own script */
-.fia-langs__search {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.fia-langs__search input {
-  min-height: var(--fia-tap-min);
-  font: inherit;
-  padding-inline: var(--fia-space-7);
+.fia-badge--needs-connection {
+  display: inline-block;
+  padding: 0 var(--fia-space-3);
   border-radius: var(--fia-r-sm);
-  border: 1px solid var(--fia-rail-track);
-  background: var(--fia-surface-solid);
-  color: inherit;
-}
-.fia-langs__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--fia-space-3);
-}
-.fia-langs__row {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  column-gap: var(--fia-gap-inline);
-  min-height: 64px;
-  padding: var(--fia-space-5) var(--fia-space-7);
-  background: var(--fia-surface-solid);
-  border-radius: var(--fia-r-md);
-}
-.fia-langs__row .fia-caption {
-  grid-column: 2;
-}
-.fia-langs__autonym {
-  font-size: var(--fia-fs-title);
-  color: var(--fia-text-title);
-}
-.fia-skeleton {
-  height: 64px;
-  border-radius: var(--fia-r-md);
-  background: var(--fia-rail-track);
+  background: var(--fia-offline-chip);
+  color: var(--fia-offline-chip-text);
 }
 
-/* sheets */
+/* sheets: kit GlassSheet inside an app scrim (Sheet.tsx, kit gap: no scrim/escape/focus/scroll) */
 .fia-sheet__scrim {
   position: fixed;
   inset: 0;
-  display: flex;
-  align-items: flex-end;
-  background: rgba(0, 0, 0, 0.4);
+  z-index: 2;
+  background: rgba(14, 20, 32, 0.28);
 }
-.fia-sheet {
-  width: 100%;
+.fia-sheet__scrim > div {
   max-width: var(--fia-content-max-width);
   margin-inline: auto;
-  background: var(--fia-surface-solid);
-  border-radius: var(--fia-r-sheet) var(--fia-r-sheet) 0 0;
-  padding: var(--fia-space-7) var(--fia-gutter) calc(var(--fia-space-7) + var(--fia-safe-bottom));
-}
-.fia-sheet__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
 }
 .fia-sheet__close {
-  min-width: var(--fia-tap-close);
-  min-height: var(--fia-tap-close);
-  background: none;
-  border: 0;
-  font-size: 28px;
-  color: inherit;
+  position: absolute;
+  inset-block-start: 10px;
+  inset-inline-end: 10px;
+  min-width: var(--fia-tap-min);
+  min-height: var(--fia-tap-min);
+}
+.fia-sheet__body {
+  max-height: calc(100dvh - 200px);
+  overflow-y: auto;
+  margin-top: 10px;
+}
+/* Tall sheets (Explore): the dialog is a column, the body takes the free height and scrolls, so the
+   actions row sits at the sheet bottom in the thumb slot (25-explore mock), not after the last row. */
+.fia-sheet--tall {
+  display: flex;
+  flex-direction: column;
+}
+.fia-sheet--tall > .fia-sheet__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+}
+/* Title row lockup: FIA logo then the title (RULING 2026-10-01 (f); mock _frame.css:191-192). */
+/* One row, never under the Close X: the logo keeps its size and the title wraps in its own column
+   beside it (design-lens dl-sh32-02; mock 24-sheet-forward-jump-guard.html:10). */
+.fia-sheet-brand {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 12px;
+}
+/* Only a sheet that renders Close reserves the absolute Close button's box (tap-min wide, 10px from
+   the dialog edge); a sheet without Close (Explore) keeps the full row (rev32b-1420 note 1). */
+.fia-sheet-brand--close {
+  padding-inline-end: calc(var(--fia-tap-min) + 10px);
+}
+.fia-sheet-brand > .fia-logo {
+  flex: none;
+}
+.fia-sheet-brand > span {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.fia-sheet__actions {
+  flex: 1;
+  display: flex;
+}
+.fia-sheet__actions > * {
+  flex: 1;
+}
+.fia-sheet__actions .fia-primary-slot {
+  position: static;
+  padding: 0;
+}
+.fia-overline {
+  font: var(--type-overline);
+  letter-spacing: var(--ls-overline);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 14px 4px 6px;
+}
+.fia-well {
+  padding: 2px 0;
 }
 .fia-more__list {
+  position: relative;
   list-style: none;
   margin: 0;
   padding: 0;
 }
 .fia-more__row {
-  display: block;
-  min-height: var(--fia-tap-primary);
-  line-height: var(--fia-tap-primary);
-  color: var(--fia-text-body);
-  text-decoration: none;
-  font-size: var(--fia-fs-body);
+  min-height: var(--fia-tap-min);
+}
+.fia-row-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+/* Kit resources/CatalogRow sets its title as an inline `500 15px/1.35` (CatalogRow.jsx:8), so the
+   --fia-text-scale steps never reach it; !important is the only way past an inline style. Copied from
+   the mock's _frame.css:141 (25-explore.giant200/giant310 rows grow and wrap). Icons scale like the
+   mock's iconSz(): base x min(scale, 2) (_frame.js:41). (fix2-f4-1124) */
+.fia-more__row > div:first-child > div[dir] {
+  font-size: calc(15px * var(--fia-text-scale)) !important;
+  line-height: 1.3 !important;
+}
+.fia-more__row .fia-row-label > svg {
+  width: calc(18px * min(var(--fia-text-scale), 2));
+  height: calc(18px * min(var(--fia-text-scale), 2));
+}
+.fia-more__row > div:last-child svg {
+  width: calc(16px * min(var(--fia-text-scale), 2));
+  height: calc(16px * min(var(--fia-text-scale), 2));
+}
+.fia-explore__footer {
+  /* --text-muted, not the caption's dim tone: dark measured 3.87:1 on the sheet with it (fix-f4-1124). */
+  color: var(--text-muted);
+  text-align: center;
+  margin: 10px 0 2px;
+}
+.fia-explore-close {
+  min-height: 56px;
 }
 
 .fia-text__seg[data-active] {
   background: var(--fia-prov-source-tint);
   border-radius: 4px;
-}
-.fia-settings-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  min-height: 56px;
-  gap: var(--fia-gap-inline);
-}
-.fia-settings-row__text {
-  display: flex;
-  flex-direction: column;
 }
 .fia-transport__line {
   display: flex;

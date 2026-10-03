@@ -1,0 +1,30 @@
+name: text-route-smoke
+
+# BL4c: the secret slot for the pipeline text route (cookbook work/active/2026-10-02-fia-pericope-subtitles § 8).
+# Manual only; one short call on the pinned model (well under $0.01). The secret is referenced by name and set
+# in repo Settings -> Secrets -> Actions by the captain/Otto. With the slot empty the job skips the call.
+# BL4f's scheduled subtitles-refresh workflow reuses the same secret name.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: pipeline
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: pipeline/package-lock.json
+      - run: npm ci
+      - run: node bin/text-route-smoke.mjs
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

@@ -1,31 +1,180 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LanguagePicker } from '../components';
-import { flowSession } from '../flow/session';
+import { FiaLogo } from '../components/FiaLogo';
+import { GlassButton, GlassSurface, Icon } from '../components/glass';
+import {
+  deviceLanguage,
+  pickerLanguages,
+  readCounts,
+  suggestedLanguages,
+} from '../components/languageRows';
+import { flowSession, useFlow } from '../flow/session';
 import { t } from '../i18n';
-import type { Language } from '../i18n/languages';
+import {
+  browserStore,
+  DATA_PATHS,
+  loadSettings,
+  saveSettings,
+  type CatalogManifest as CoverageManifest,
+  type LanguageCounts,
+} from '../settings';
 import { ScreenFrame } from './ScreenFrame';
+import './S01FirstRunLanguage.css';
 
-// S01 First run / language (01-first-run-language.md). Whole row selects; primary carries the
-// pick into the flow session (content language for the library, C-09 `contentLanguage`).
+// S01 First run · language (J-A1 step 1). F6-S01 glass skin on the nodded mock
+// (cookbook design/alpha-v2-screens/01-first-run-language.html): Linear frame — the 44 px FIA lockup with
+// "Alpha · prototype" as the hero (PRD § 8.4), no header bar and no Explore (nothing to explore yet), the
+// kit LanguagePicker as the content, a quiet "Send feedback" above the thumb band (J-A5), and one primary,
+// "Continue in {autonym}". Rows, autonyms and coverage come from the C-03 catalog (BL2), never from code.
+// The pick sets the guide's language (flow session, C-09) and the app's (C-10 contentLanguage, which the
+// header pill reads), then opens the library.
+
+type Counts = Record<string, LanguageCounts | null>;
+const countsCache = new Map<string, Promise<Counts>>();
+
+/** The chips' per-language counts, read once per app load; a file slower than 5 s is left unread and its
+ *  row shows only what the catalog itself tells (Scripture, Guide). A partial read is not cached. */
+function languageCounts(codes: readonly string[]): Promise<Counts> {
+  const key = codes.join(',');
+  let p = countsCache.get(key);
+  if (!p) {
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 5000);
+    p = Promise.all(
+      codes.map(
+        async (c) =>
+          [c, await readCounts(DATA_PATHS.languageCounts(c), { signal: ctl.signal })] as const,
+      ),
+    ).then((pairs) => {
+      clearTimeout(timer);
+      if (pairs.some(([, v]) => !v)) countsCache.delete(key);
+      return Object.fromEntries(pairs);
+    });
+    countsCache.set(key, p);
+  }
+  return p;
+}
+
 export default function S01FirstRunLanguage() {
   const nav = useNavigate();
-  const [pick, setPick] = useState<Language | undefined>();
+  const session = flowSession();
+  const snap = useFlow(session);
+  const [pick, setPick] = useState<string | undefined>();
+  const [counts, setCounts] = useState<Counts | null>(null);
+  const [huge] = useState(() => loadSettings(browserStore()).settings.textSize === 'huge');
+  // FS-2: with C-10 `subtitleMode` on, the disclosure also names passage summaries (TERRY-READING (4)).
+  const [summaries] = useState(
+    () => loadSettings(browserStore()).settings.subtitleMode === 'generated',
+  );
+
+  useEffect(() => {
+    void session.loadCatalog();
+  }, [session]);
+  const manifest = snap.manifest;
+  const codes = useMemo(() => manifest?.languages.map((l) => l.code) ?? [], [manifest]);
+  useEffect(() => {
+    if (codes.length === 0) return;
+    let live = true;
+    void languageCounts(codes).then((c) => live && setCounts(c));
+    return () => {
+      live = false;
+    };
+  }, [codes]);
+
+  // The session's manifest is the same C-03 document S19 reads (validated against C-03 on load);
+  // settings/coverage.ts types its resourceTypes as the C-03 enum.
+  const languages = useMemo(
+    () => (manifest && counts ? pickerLanguages(manifest as CoverageManifest, counts) : []),
+    [manifest, counts],
+  );
+  const device = useMemo(() => deviceLanguage(codes), [codes]);
+  const recent = snap.language && codes.includes(snap.language) ? snap.language : undefined;
+  const chosen = pick ?? recent ?? device ?? (codes.includes('eng') ? 'eng' : codes[0]);
+  const row = languages.find((l) => l.code === chosen);
+  const failed = snap.catalogStatus === 'error';
+
+  const choose = (code: string) => {
+    session.setLanguage(code);
+    const store = browserStore();
+    // A failed save leaves the pill on the old language; the guide's language (above) is already set.
+    saveSettings(store, { ...loadSettings(store).settings, contentLanguage: code });
+    nav('/library');
+  };
+
   return (
     <ScreenFrame
       id="S01"
       primaryLabel={
-        pick ? t('s.lang.primary-pick', { language: pick.autonym }) : t('s.lang.primary-idle')
+        row
+          ? t('s.lang.primary-pick', { language: row.autonym })
+          : failed
+            ? t('s.lang.primary-retry')
+            : t('s.lang.primary-idle')
       }
-      primaryState={pick ? 'default' : 'disabled'}
+      primaryState={row || failed ? 'default' : 'loading'}
       onPrimary={() => {
-        if (!pick) return;
-        flowSession().setLanguage(pick.code);
-        nav('/library');
+        if (row) choose(row.code);
+        else if (failed) void session.loadCatalog(true);
       }}
     >
-      <LanguagePicker variant="first-run" value={pick?.code} onChange={(_c, row) => setPick(row)} />
-      <p className="fia-caption">{t('s.lang.disclosure')}</p>
+      <div className="s01-hero">
+        <span className="s01-logo">
+          <FiaLogo size={44} />
+        </span>
+        <p className="s01-qualifier">{t('s.about.qualifier')}</p>
+      </div>
+      {/* The frame's h1 carries the same words for screen readers; this is the mock's display title. */}
+      <p className="s01-h1" aria-hidden="true">
+        {t('s.lang.title')}
+      </p>
+      <p className="s01-lede">
+        {t('s.lang.lede')}
+        {languages.length > 0 && ` ${t('s.lang.lede-count', { n: languages.length })}`}
+      </p>
+      {languages.length > 0 ? (
+        <div className="s01-wrap">
+          <LanguagePicker
+            className="s01-picker"
+            languages={languages}
+            value={chosen}
+            onChange={setPick}
+            suggested={suggestedLanguages(codes, recent, device)}
+            title={t('s.lang.picker-title')}
+            placeholder={huge ? t('s.common.search') : t('s.lang.search-languages')}
+          />
+        </div>
+      ) : (
+        // Unmocked states, drawn on the kit card: the catalog is loading, or it could not be read
+        // (first run with no connection); the primary turns into "Try again".
+        <GlassSurface level={2} blur="strong" radius="2xl" shadow="card" className="s01-state">
+          <div
+            className="s01-state__inner"
+            role={failed ? 'alert' : 'status'}
+            aria-busy={!failed || undefined}
+            data-state={failed ? 'error' : 'loading'}
+          >
+            <p className="s01-state__title">{t('s.lang.picker-title')}</p>
+            <p className="s01-state__body">
+              {failed ? t('s.lang.error') : `${t('s.common.loading')}…`}
+            </p>
+          </div>
+        </GlassSurface>
+      )}
+      <p className="s01-note">
+        {t(summaries ? 's.lang.disclosure-summaries' : 's.lang.disclosure')}
+      </p>
+      <div className="s01-feedback">
+        <GlassButton
+          variant="quiet"
+          size="md"
+          className="s01-feedback__btn"
+          leading={<Icon name="message" size={18} />}
+          onClick={() => nav('/feedback?from=S01')}
+        >
+          {t('s.common.explore.feedback')}
+        </GlassButton>
+      </div>
     </ScreenFrame>
   );
 }

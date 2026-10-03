@@ -1,7 +1,8 @@
 // Thin loader over the L1 catalog shape (C-03 manifest) and pack guides (guide.json + C-04
 // guide-units.json). Every document is validated before use; nothing is invented when data is
 // missing — callers get an error status and render the spec's error state.
-import { C03, C04, errorText, flowValidator } from './contracts';
+import type { NarrationManifest } from '../media/narration';
+import { C03, C04, C05, errorText, flowValidator } from './contracts';
 import type {
   CatalogEntry,
   CatalogManifest,
@@ -10,6 +11,7 @@ import type {
   GuideStop,
   UnitKind,
 } from './types';
+import { CONTENT_BASE } from '../media/usePack';
 
 export type FetchJson = (url: string) => Promise<unknown>;
 
@@ -33,6 +35,7 @@ interface RawGuide {
       id: string;
       kind: UnitKind;
       text: string;
+      html?: string;
       textSha256: string;
       resources?: string[];
     }[];
@@ -45,11 +48,21 @@ interface RawUnits {
   stops: GuideStop[];
 }
 
-export function createCatalog(base: string, fetchJson: FetchJson = defaultFetchJson) {
-  const root = base.replace(/\/$/, '');
+/**
+ * `base` holds the catalog (`<base>/catalog/manifest.json`). Pack files are read at their C-02
+ * paths, `<contentBase>/packs/<id>/<file>` — the URLs a Save stores and the worker serves offline
+ * (C-07), and the ones the media screens read (`packUrl`). One path per pack file.
+ */
+export function createCatalog(
+  base: string,
+  fetchJson: FetchJson = defaultFetchJson,
+  contentBase: string = CONTENT_BASE,
+) {
+  const data = base.replace(/\/$/, '');
+  const root = contentBase.replace(/\/$/, '');
   return {
     async manifest(): Promise<CatalogManifest> {
-      const doc = await fetchJson(`${root}/catalog/manifest.json`);
+      const doc = await fetchJson(`${data}/catalog/manifest.json`);
       const r = flowValidator().validate(C03, doc);
       if (!r.ok) throw new ContractError(`catalog manifest (C-03): ${errorText(r.errors)}`);
       return doc as CatalogManifest;
@@ -62,6 +75,15 @@ export function createCatalog(base: string, fetchJson: FetchJson = defaultFetchJ
       const r = flowValidator().validate(C04, u);
       if (!r.ok) throw new ContractError(`guide units (C-04): ${errorText(r.errors)}`);
       return joinGuide(g as RawGuide, u as RawUnits);
+    },
+    /** The pack's C-05 narration manifest, or null when it cannot be read or is not C-05 (F5). */
+    async narration(packId: string): Promise<NarrationManifest | null> {
+      try {
+        const doc = await fetchJson(`${root}/packs/${packId}/narration.json`);
+        return flowValidator().validate(C05, doc).ok ? (doc as NarrationManifest) : null;
+      } catch {
+        return null;
+      }
     },
   };
 }
@@ -83,6 +105,7 @@ export function joinGuide(g: RawGuide, u: RawUnits): FlowGuide {
         stepId: s.id,
         kind: t.kind,
         text: t.text,
+        ...(t.html && t.html !== t.text ? { html: t.html } : {}),
         textSha256: t.textSha256,
         hidden: x.hidden === true,
         resources: t.resources ?? [],

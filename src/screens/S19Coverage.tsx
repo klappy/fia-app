@@ -1,6 +1,14 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { AbsentBadge, SecondaryAction } from '../components';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+  type ComponentType,
+  type HTMLAttributes,
+} from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { GlassButton, GlassSurface, Icon } from '../components/glass';
 import { t } from '../i18n';
 import {
   DATA_PATHS,
@@ -10,139 +18,268 @@ import {
   loadSettings,
   validateCatalog,
   type CatalogManifest,
-  type CoverageRow,
-  type LanguageCounts,
-  type LanguageCoverage,
-  type ProvenanceCount,
 } from '../settings';
+import { GlassChip as KitGlassChip } from '../vendor/glass/components/glass/GlassChip';
+import type { GlassChipProps } from '../vendor/glass/components/glass/GlassChip';
+import { Bead as KitBead } from '../vendor/glass/components/progress/StageRail';
+import type { BeadProps } from '../vendor/glass/components/progress/StageRail';
+import {
+  coverageCards,
+  marksUsed,
+  voiceState,
+  type Cell,
+  type CellMark,
+  type LanguageFile,
+  type TypeCard,
+} from './coverageCards';
 import { ScreenFrame } from './ScreenFrame';
-import './l5-shell.css';
+import './S19Coverage.css';
 
-// S19 Coverage per language (design/alpha-screens/19-coverage.md; R-304, R-314). Reads the C-03
-// catalog (validated) plus the pipeline's per-language counts; every number shown is from data,
-// absent types are badged "not yet in {language}", nothing is invented. Per-type audio/description
-// splits and the voice audition row (R-510) need fields C-03 does not carry yet — not rendered.
-const ICON = { ai: '✦', src: '🎙', absent: '◌' };
+// S19 Coverage in glass, F6-S19 (19-coverage.md; R-304, R-314). Nodded mock
+// design/alpha-v2-screens/19-coverage.html (Layer frame, no primary): the title says what the page
+// answers, "What Español has", with one labelled way back; the key for the marks before the cards
+// that use them; six kit GlassSurface type cards, each led by the guide's kind bead (kit Bead) with a
+// Text and an Audio cell as kit GlassChip marks (check = on FIA in this language, sparkle = AI voice,
+// dash = not yet; "none" where the kind has no audio); then the voice card. Every chip comes from the
+// pipeline catalog (coverageCards.ts); a slot the data has not filled reads "not yet".
+// Kit parts that components/glass.ts does not export on this base come straight from the kit paths;
+// the casts are typing only (the kit's .d.ts omit the `...rest` the .jsx forward), as glass.ts does.
+type Html = HTMLAttributes<HTMLElement> & Record<`data-${string}`, string | undefined>;
+const GlassChip = KitGlassChip as unknown as ComponentType<GlassChipProps & Html>;
+const Bead = KitBead as unknown as ComponentType<BeadProps & Html>;
 
-function cellText(row: CoverageRow, language: string): React.ReactNode {
-  switch (row.status) {
-    case 'available':
-      return row.key === 'scripture'
-        ? t('s.coverage.cell.editions', { n: row.count ?? 0 })
-        : t('s.coverage.cell.source', { n: row.count ?? 0 });
-    case 'english-only':
-      return t('s.coverage.cell.english-only', ICON);
-    case 'listed':
-      return t('s.common.mark.checking');
-    case 'absent':
-      return <AbsentBadge language={language} />;
-  }
-}
+/** Text scale from <html data-text-step> (settings/apply.ts), live; the mock's --fia-text-scale. */
+const SCALE: Record<string, number> = { x150: 1.5, x200: 2, x310: 3.1 };
+const readScale = () =>
+  SCALE[globalThis.document?.documentElement.getAttribute('data-text-step') ?? ''] ?? 1;
+const watchScale = (f: () => void) => {
+  const mo = new MutationObserver(f);
+  mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-text-step'] });
+  return () => mo.disconnect();
+};
+/** Glyphs grow with the text, capped at 2× (mock iconSz); beads at 2.4× (mock k()). */
+const iconSz = (n: number, scale: number) => Math.round(n * Math.min(scale, 2));
 
-function Counts({ label, c, language }: { label: string; c: ProvenanceCount; language: string }) {
-  const parts: string[] = [];
-  if (c.source) parts.push(t('s.coverage.cell.source', { n: c.source }));
-  if (c.generated) parts.push(t('s.coverage.cell.ai', { ...ICON, n: c.generated }));
-  if (c.missing) parts.push(`${c.missing} · ${t('s.coverage.cell.absent', { ...ICON, language })}`);
+/** Bead colours: the app's --fia-kind-* contrast variants (PRD § 8.3), set in S19Coverage.css. */
+const KIND_COLOR: Record<TypeCard['kind'], string> = {
+  plain: 'var(--s19-kind-plain)',
+  scripture: 'var(--s19-kind-scripture)',
+  term: 'var(--s19-kind-term)',
+  media: 'var(--s19-kind-media)',
+  video: 'var(--s19-kind-media)',
+};
+
+/** KIT GAP (K1): Icon has no minus. Lucide 'minus' in the kit Icon's style: the [—] not-yet mark. */
+function MinusGlyph({ size }: { size: number }) {
   return (
-    <p>
-      {label}: {parts.length ? parts.join(' · ') : t('s.coverage.cell.none')}
-    </p>
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2.2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      data-kit-gap="minus"
+      style={{ display: 'block', flex: 'none' }}
+    >
+      <path d="M5 12h14" />
+    </svg>
   );
 }
 
+function MarkGlyph({ mark, size }: { mark: Exclude<CellMark, 'none'>; size: number }) {
+  if (mark === 'absent') return <MinusGlyph size={size} />;
+  return <Icon name={mark === 'ai' ? 'sparkle' : 'check'} size={size} />;
+}
+
+function Mark({ cell, glyph }: { cell: Cell; glyph: number }) {
+  if (cell.mark === 'none')
+    return (
+      <span className="s19-none" data-mark="none">
+        {cell.words}
+      </span>
+    );
+  return (
+    <GlassChip
+      className="s19-chip"
+      data-mark={cell.mark}
+      leading={<MarkGlyph mark={cell.mark} size={glyph} />}
+    >
+      {cell.words}
+    </GlassChip>
+  );
+}
+
+function Card({ card, scale }: { card: TypeCard; scale: number }) {
+  const glyph = iconSz(14, scale);
+  return (
+    <li data-type={card.key}>
+      <GlassSurface level={2} blur="medium" radius="lg" shadow="rest" className="s19-card">
+        <h2 className="s19-type">
+          <span className="s19-bead">
+            <Bead
+              kind={card.kind}
+              state="done"
+              size={10 * Math.min(scale, 2.4)}
+              color={KIND_COLOR[card.kind]}
+            />
+          </span>
+          {t(`s.coverage.type.${card.key}`)}
+        </h2>
+        <div className="s19-cells">
+          <span className="s19-cell" data-col="text">
+            <span className="s19-label">{t('s.coverage.col.text')}</span>
+            <Mark cell={card.text} glyph={glyph} />
+          </span>
+          <span className="s19-cell" data-col="audio">
+            <span className="s19-label">{t('s.coverage.col.audio')}</span>
+            <Mark cell={card.audio} glyph={glyph} />
+          </span>
+        </div>
+      </GlassSurface>
+    </li>
+  );
+}
+
+/** Before the catalog answers: the language's own name from the platform, else its code. */
+function fallbackName(code: string): string {
+  try {
+    const n = new Intl.DisplayNames([code], { type: 'language' }).of(code) ?? code;
+    return n.charAt(0).toLocaleUpperCase(code) + n.slice(1);
+  } catch {
+    return code;
+  }
+}
+
+interface Loaded {
+  manifest: CatalogManifest;
+  file: LanguageFile;
+}
+
 export default function S19Coverage() {
+  const nav = useNavigate();
   const [params] = useSearchParams();
   const [code] = useState(
     () => params.get('lang') ?? loadSettings(browserStore()).settings.contentLanguage,
   );
-  const [cov, setCov] = useState<LanguageCoverage | null>(null);
+  const [data, setData] = useState<Loaded | null>(null);
   const [failed, setFailed] = useState(false);
+  const scale = useSyncExternalStore(watchScale, readScale, () => 1);
 
   const load = useCallback(() => {
     setFailed(false);
-    setCov(null);
-    Promise.all([
-      fetchJson(DATA_PATHS.catalog),
-      fetchJson(DATA_PATHS.languageCounts(code)).catch(() => null),
-    ])
-      .then(([manifest, lang]) => {
+    setData(null);
+    Promise.all([fetchJson(DATA_PATHS.catalog), fetchJson(DATA_PATHS.languageCounts(code))])
+      .then(([manifest, file]) => {
         if (!validateCatalog(manifest).ok) throw new Error('catalog fails C-03');
-        const counts = (lang as { counts?: LanguageCounts } | null)?.counts;
-        setCov(coverageFor(manifest as CatalogManifest, code, counts));
+        // Every chip is a count from the per-language file: without it, the load failed.
+        if (!(file as LanguageFile | null)?.counts) throw new Error('no per-language counts');
+        setData({ manifest: manifest as CatalogManifest, file: file as LanguageFile });
       })
       .catch(() => setFailed(true));
   }, [code]);
   useEffect(load, [load]);
 
-  const language = cov?.language?.autonym ?? code;
-  const dir = cov?.language?.direction ?? 'auto';
+  const view = useMemo(() => {
+    if (!data) return null;
+    const cov = coverageFor(data.manifest, code, data.file.counts);
+    const cards = coverageCards(cov, data.file);
+    return { cov, cards, marks: marksUsed(cards), voice: voiceState(cards) };
+  }, [data, code]);
+
+  const language = view?.cov.language?.autonym ?? data?.file.autonym ?? fallbackName(code);
+  const title = t('s.coverage.has', { language });
+  // One labelled way back (PRD § 8.1 Layer): where the reader came from, else the library.
+  const back = () =>
+    (globalThis.history?.state as { idx?: number } | null)?.idx ? nav(-1) : nav('/library');
 
   return (
-    <ScreenFrame id="S19" title={t('s.coverage.title', { language })} dockActive="more">
-      <p className="fia-subtitle">{t('s.coverage.subtitle')}</p>
-      {cov && (
-        <p className="fia-caption">
-          {t('s.coverage.as-of', { date: new Date(cov.builtAt).toLocaleDateString() })}
+    <ScreenFrame id="S19" title={title} primaryLabel={null}>
+      <div className="s19-head">
+        {/* The frame's <h1> names the page for assistive tech; this is its visible line (mock header). */}
+        <p className="s19-hero" aria-hidden="true">
+          {title}
         </p>
-      )}
+        <GlassButton
+          variant="quiet"
+          className="s19-back"
+          leading={<Icon name="chevronLeft" size={iconSz(18, scale)} />}
+          onClick={back}
+        >
+          {t('s.common.back')}
+        </GlassButton>
+      </div>
+      <p className="s19-sub">{t('s.coverage.subtitle')}</p>
+
       {failed && (
-        <div role="alert">
-          <p>{t('s.coverage.error')}</p>
-          <SecondaryAction label={t('s.coverage.try-again')} onPress={load} />
-        </div>
+        <GlassSurface
+          level={2}
+          blur="medium"
+          radius="lg"
+          shadow="rest"
+          className="s19-card s19-failed"
+        >
+          <div role="alert" className="s19-error">
+            <p className="s19-row">{t('s.coverage.error')}</p>
+            <GlassButton
+              variant="glass"
+              className="s19-retry"
+              leading={<Icon name="update" size={iconSz(18, scale)} />}
+              onClick={load}
+            >
+              {t('s.coverage.try-again')}
+            </GlassButton>
+          </div>
+        </GlassSurface>
       )}
-      {!cov && !failed && (
-        <p aria-busy="true" className="fia-caption">
+      {!view && !failed && (
+        <p aria-busy="true" className="fia-caption s19-loading">
           {t('s.common.loading')}
         </p>
       )}
-      {cov && (
-        <ul className="fia-coverage-cards" role="list" dir={dir}>
-          {cov.rows.map((row) => (
-            <li key={row.key} className="fia-card" data-status={row.status}>
-              <h3 className="fia-label">{t(`s.coverage.type.${row.key}`)}</h3>
-              <p>
-                {t('s.coverage.col.text')}: {cellText(row, language)}
-              </p>
-              {row.sourceAudio ? (
-                <p>
-                  {t('s.coverage.col.audio')}:{' '}
-                  {t('s.coverage.cell.source-rec', { ...ICON, n: row.sourceAudio })}
-                </p>
-              ) : null}
-              {row.key === 'scripture' && (
-                <p className="fia-caption">{t('s.coverage.scripture-note')}</p>
-              )}
-            </li>
-          ))}
-        </ul>
+      {view && (
+        <>
+          {/* The key first, so the marks are read before the cards that use them (pl-v21-support-13). */}
+          <div className="s19-keys" role="list" aria-label={t('s.coverage.key.label')}>
+            {view.marks.map((m) => (
+              <span key={m} className="s19-key" role="listitem" data-mark={m}>
+                <MarkGlyph mark={m} size={iconSz(14, scale)} />
+                {m === 'on'
+                  ? t('s.coverage.key.on', { language })
+                  : m === 'ai'
+                    ? t('s.common.mark.ai-voice')
+                    : t('s.coverage.not-yet')}
+              </span>
+            ))}
+          </div>
+          <ul className="s19-cards" role="list">
+            {view.cards.map((c) => (
+              <Card key={c.key} card={c} scale={scale} />
+            ))}
+          </ul>
+          <GlassSurface
+            level={1}
+            blur="soft"
+            radius="lg"
+            shadow="none"
+            className="s19-voice"
+            data-voice={view.voice}
+          >
+            <p className="s19-row">
+              <Icon name="headphones" size={iconSz(16, scale)} />
+              {view.voice === 'ai'
+                ? t('s.coverage.voice', { language })
+                : view.voice === 'recorded'
+                  ? t('s.coverage.voice-recorded', { language })
+                  : t('s.coverage.voice-not-yet', { language })}
+            </p>
+            <p className="fia-caption s19-note">{t('s.coverage.scripture-note')}</p>
+          </GlassSurface>
+        </>
       )}
-      {cov && (
-        <section className="fia-card" aria-label={t('s.coverage.legend')}>
-          <Counts label={t('s.coverage.col.text')} c={cov.provenance.text} language={language} />
-          <Counts label={t('s.coverage.col.audio')} c={cov.provenance.audio} language={language} />
-          <Counts
-            label={t('s.coverage.col.description')}
-            c={cov.provenance.description}
-            language={language}
-          />
-        </section>
-      )}
-      <section aria-labelledby="s19-legend">
-        <h2 id="s19-legend" className="fia-group-header">
-          {t('s.coverage.legend')}
-        </h2>
-        <ul role="list">
-          <li>{t('s.coverage.legend.source')}</li>
-          <li>{t('s.coverage.legend.rec', ICON)}</li>
-          <li>{t('s.coverage.legend.ai', ICON)}</li>
-          <li>{t('s.coverage.legend.absent', { ...ICON, language })}</li>
-        </ul>
-      </section>
-      <Link to="/feedback?from=S19" className="fia-link-row">
-        {t('s.coverage.report-gap')} ⟶
-      </Link>
     </ScreenFrame>
   );
 }

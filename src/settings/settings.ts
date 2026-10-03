@@ -1,6 +1,7 @@
 // C-10 Settings (contracts/c10-settings.schema.json, key `fia.settings.v1`).
 // Load → migrate PoC keys once → coerce unknown enums to defaults with a status line →
 // validate → persist. Enum values are the contract; UI labels are not (R-313).
+import { DEFAULT_SUBTITLE_MODE, type SubtitleMode } from '../media/provenance';
 import { C10, contracts, errorsText } from './contracts';
 import type { KeyValueStore } from './storage';
 
@@ -8,8 +9,10 @@ export const SETTINGS_KEY = 'fia.settings.v1';
 
 export const NARRATION_MODES = ['source-fallback', 'source-only', 'generated-only'] as const;
 export const MEDIA_TIERS = ['text', 'phone', 'medium', 'original'] as const;
-export const TEXT_SIZES = ['system', 'large', 'max'] as const;
+export const TEXT_SIZES = ['system', 'large', 'max', 'huge'] as const;
 export const THEMES = ['system', 'light', 'dark'] as const;
+/** C-10 1.1.0 `subtitleMode` (FS-2): AI pericope subtitles shown (`generated`) or hidden (`off`). */
+export const SUBTITLE_MODES = ['generated', 'off'] as const satisfies readonly SubtitleMode[];
 export const DISCLOSURES = [
   'ai-narration',
   'ai-translation',
@@ -22,10 +25,13 @@ export type MediaTier = (typeof MEDIA_TIERS)[number];
 export type TextSize = (typeof TEXT_SIZES)[number];
 export type Theme = (typeof THEMES)[number];
 export type Disclosure = (typeof DISCLOSURES)[number];
+export type { SubtitleMode };
 
 export interface Settings {
   schemaVersion: 1;
   narrationMode: NarrationMode;
+  /** C-10 1.1.0; optional in the contract, always filled by normalizeSettings (default `off`). */
+  subtitleMode: SubtitleMode;
   mediaTier: MediaTier;
   contentLanguage: string;
   uiLanguage: string;
@@ -39,10 +45,11 @@ export interface Settings {
 
 const LANG = /^[a-z]{3}(-[A-Za-z]{2,8})?$/;
 
-/** Defaults: narration source-fallback (M3, R-501); telemetry off (C-10 test). */
+/** Defaults: narration source-fallback (M3, R-501); subtitles off (PoC a5); telemetry off (C-10 test). */
 export const DEFAULT_SETTINGS: Settings = Object.freeze({
   schemaVersion: 1,
   narrationMode: 'source-fallback',
+  subtitleMode: DEFAULT_SUBTITLE_MODE,
   mediaTier: 'phone',
   contentLanguage: 'eng',
   uiLanguage: 'eng',
@@ -128,6 +135,7 @@ export function normalizeSettings(raw: unknown, base: Settings = DEFAULT_SETTING
       'narrationMode',
       notes,
     ),
+    subtitleMode: pick(SUBTITLE_MODES, r.subtitleMode, base.subtitleMode, 'subtitleMode', notes),
     mediaTier: pick(MEDIA_TIERS, r.mediaTier, base.mediaTier, 'mediaTier', notes),
     contentLanguage: lang(r.contentLanguage, base.contentLanguage, 'contentLanguage', notes),
     uiLanguage: lang(r.uiLanguage, base.uiLanguage, 'uiLanguage', notes),
@@ -231,9 +239,9 @@ export function saveSettings(
 }
 
 /**
- * S14 spec draws four `A` targets ("Text size {step} of 4") but C-10 `textSize` has three values
- * (system|large|max). Contract wins: the stepper renders three targets, one per enum value, so a
- * stored value always reads back as the target that set it. Gap reported on the PR.
+ * S14 Text size (PRD § 8.5; mock 14-settings): Follows phone · Larger · Largest · Huge, the
+ * 100 / 150 / 200 / 310% steps. C-10 `textSize` system|large|max|huge, one target per value, so a
+ * stored value always reads back as the target that set it (F6-S14 added `huge`; scales in apply.ts).
  */
 export const TEXT_STEPS: readonly TextSize[] = TEXT_SIZES;
 

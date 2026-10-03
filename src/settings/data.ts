@@ -1,11 +1,16 @@
+import { packUrl } from '../media/usePack';
+
 // Where the shell reads pipeline output (L1 `data/`): catalog (C-03), per-language counts, rights
-// (C-13). Base is configurable because the serving path is not settled yet (L1/L2 decide).
+// (C-13). Base is configurable because the serving path is not settled yet (L1/L2 decide). Pack
+// files are not under it: they live at their C-02 paths (`packUrl`), the ones a Save stores.
 const BASE = (import.meta.env?.VITE_FIA_DATA_BASE as string | undefined) ?? '/data';
 
 export const DATA_PATHS = {
   catalog: `${BASE}/catalog/manifest.json`,
   languageCounts: (code: string) => `${BASE}/catalog/${code}.json`,
   rights: `${BASE}/rights/records.json`,
+  /** BL8: holder and licence per source, carried in each pack (`rights.json`). */
+  packRights: (packId: string) => packUrl(packId, 'rights'),
 };
 
 export async function fetchJson(url: string, f: typeof fetch = fetch): Promise<unknown> {

@@ -93,6 +93,23 @@ export function tierFiles(pack: ContentPack, tier: Tier): ContentPackFile[] {
   return out;
 }
 
+/** Tiers this pack publishes (`tiers.<tier>` present), in order. */
+export const publishedTiers = (pack: Pick<ContentPack, 'tiers'>): Tier[] =>
+  TIERS.filter((t) => !!pack.tiers[t]);
+
+/**
+ * The tier a save of `tier` actually holds: the highest published tier at or below it (tiers are
+ * cumulative). A Phone request on a text-only pack saves — and is stamped — Text (R-309 honesty).
+ */
+export function effectiveTier(pack: Pick<ContentPack, 'tiers'>, tier: Tier): Tier {
+  const upTo = TIERS.slice(0, TIERS.indexOf(tier) + 1).filter((t) => !!pack.tiers[t]);
+  return upTo[upTo.length - 1] ?? tier;
+}
+
+/** Bytes a save of `tier` downloads: the cumulative, de-duplicated tier files (R-307). */
+export const tierDownloadBytes = (pack: ContentPack, tier: Tier): number =>
+  tierFiles(pack, tier).reduce((n, f) => n + f.bytes, 0);
+
 export async function offlineManifestFromPack(
   pack: ContentPack,
   tier: Tier,
@@ -113,7 +130,7 @@ export async function offlineManifestFromPack(
   return {
     schemaVersion: 1,
     packId: pack.packId,
-    tier,
+    tier: effectiveTier(pack, tier),
     narration,
     ...(opts.appVersion ? { appVersion: opts.appVersion } : {}),
     revision: await revisionOf(entries),

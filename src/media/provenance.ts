@@ -9,9 +9,53 @@ export interface ProvenanceRecord {
   collection?: string;
   revision?: string;
   generatedFrom?: string;
-  generator?: 'translation' | 'narration' | 'description';
+  generator?: 'translation' | 'narration' | 'description' | 'subtitle';
   audited?: boolean;
 }
+
+/** C-03 1.1.0 entry `ref`: the pericope as book + first/last chapter:verse. */
+export interface PericopeRef {
+  book: string;
+  start: string;
+  end: string;
+}
+
+/** C-03 1.1.0 `subtitle.inputs[]`: a heading span (`text`) or the grounding passage (`textSha256`). */
+export interface SubtitleInput {
+  /** C-13 record id, so rights resolve directly */
+  source: string;
+  verse: string;
+  last?: string;
+  kind?: 'heading' | 'passage';
+  text?: string;
+  textSha256?: string;
+}
+
+/** C-03 1.1.0 entry `subtitle` (AI, always marked; C-10 `subtitleMode` shows or hides it). */
+export interface SubtitleRecord {
+  text: string;
+  lang: string;
+  ai: true;
+  generator: 'subtitle' | 'translation';
+  basis?: 'headings' | 'passage';
+  model: string;
+  promptSha256: string;
+  key: string;
+  /** null when every input is CC0/PD */
+  licence: { name: 'CC BY-SA 4.0' | 'CC BY 4.0'; url: string } | null;
+  inputs: SubtitleInput[];
+  /** rung 2 only */
+  translatedFrom?: { lang: string; key: string; text: string };
+  provenance: ProvenanceRecord;
+  review?: { status: 'pass' | 'fail'; receiptSha256: string };
+}
+
+/** C-10 1.1.0 `subtitleMode`; a missing key normalizes to `off` (PoC a5). */
+export type SubtitleMode = 'generated' | 'off';
+export const DEFAULT_SUBTITLE_MODE: SubtitleMode = 'off';
+
+/** C-13 1.1.0 `revisionKind`; absent = `git` (40-hex commit), `sha256` = 64-hex file digest. */
+export type RevisionKind = 'git' | 'sha256';
 
 /** A pack slot as the L1 pipeline emits it (text / audio / description / title). */
 export interface Slot {
@@ -116,6 +160,8 @@ export interface SheetInput {
   sourceOnlySilent?: boolean;
   /** Scripture audio reads the English edition (absent-Scripture ladder) */
   readsEnglish?: boolean;
+  /** the item is a guide part's narration (S05): a part with no clip says so in voice words (F5) */
+  guidePart?: boolean;
 }
 
 export type SheetRow = 'rights' | 'report' | 'change-settings';
@@ -130,8 +176,16 @@ export interface SheetModel {
 }
 
 export function provenanceSheet(input: SheetInput): SheetModel {
-  const { domain, slot, scripture, englishShown, unmatched, sourceOnlySilent, readsEnglish } =
-    input;
+  const {
+    domain,
+    slot,
+    scripture,
+    englishShown,
+    unmatched,
+    sourceOnlySilent,
+    readsEnglish,
+    guidePart,
+  } = input;
   if (scripture && domain === 'text') scriptureTextMark(slot ?? { status: 'absent' });
   if (sourceOnlySilent) {
     return {
@@ -172,6 +226,14 @@ export function provenanceSheet(input: SheetInput): SheetModel {
       rows: scripture ? ['rights'] : ['rights', 'report'],
     };
   }
+  if (guidePart && domain === 'audio')
+    return {
+      mark: 'absent',
+      titleKey: 's.prov.title.no-voice',
+      bodyKeys: ['s.prov.body.absent-voice'],
+      sourceLine: false,
+      rows: ['report'],
+    };
   return {
     mark: 'absent',
     titleKey: 's.prov.title.absent',

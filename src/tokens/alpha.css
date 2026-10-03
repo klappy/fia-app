@@ -80,8 +80,6 @@
   --fia-gap-inline: 8px;
   --fia-card-pad: 16px;
   --fia-card-pad-wide: 20px;
-  --fia-dock-h: 64px;
-  --fia-dock-h-stacked: 72px;
   --fia-safe-top: env(safe-area-inset-top,0px);
   --fia-safe-bottom: env(safe-area-inset-bottom,0px);
   --fia-content-max-width: 640px;
@@ -256,3 +254,1068 @@ html { background: var(--fia-ground); color: var(--fia-text-body); font-family: 
 body { margin: 0; min-height: 100dvh; background: var(--fia-surface-app); }
 :focus-visible { outline: 3px solid var(--fia-focus-ring); outline-offset: 3px; }
 :root { --fia-theme-color-light: #EEF0F5; --fia-theme-color-dark: #0B0D10; }
+
+/* ==== app overrides over BT Glass (hand-written; scripts/build-tokens.mjs keeps this block) ====
+   Kit: klappy/bt-design-system-generative-glass @ad528f4, vendored whole in src/vendor/glass/ and never
+   edited (FE-1). BEND only: app tokens and re-points of kit aliases, after the kit's styles.css. Values
+   follow the nodded v2.1 mocks' app layer (cookbook design/alpha-v2-screens/_frame.css @2792f33). */
+:root {
+  --fia-brand: #3b6086; /* logo only; PoC app.css:3 (PRD § 8.4) */
+  /* Kit secondary text re-pointed to ≥ 4.5:1 on light glass (_frame.css:22-24) */
+  --text-muted: #475060;
+  --text-dim: var(--text-muted);
+  /* Kit type tokens scale with the app's text size (PRD § 8.5): px × --fia-text-scale */
+  --fs-hero: calc(28px * var(--fia-text-scale));
+  --fs-title: calc(19px * var(--fia-text-scale));
+  --fs-subtitle: calc(17px * var(--fia-text-scale));
+  --fs-body: calc(15px * var(--fia-text-scale));
+  --fs-label: calc(13px * var(--fia-text-scale));
+  --fs-caption: calc(12px * var(--fia-text-scale));
+  --fs-micro: calc(10px * var(--fia-text-scale));
+  --fs-overline: calc(9px * var(--fia-text-scale));
+  --fs-scripture: calc(17px * var(--fia-text-scale));
+}
+[data-theme='dark'] {
+  --fia-brand: #ffffff; /* PoC app.css:50 swap */
+  --text-muted: #c9ced6; /* mock dark re-point, _frame.css:44-50 */
+  --text-dim: var(--text-muted);
+}
+/* The phone's text size reaches rem (PRD § 8.5): replaces the generated 16px root. */
+html {
+  font-size: 100%;
+  background: var(--surface-app);
+}
+body {
+  background: var(--surface-app);
+  color: var(--text-body);
+}
+/* Dark aurora at .6 under the kit's glass ladder (mock Frame, _frame.js:414-416); the kit sets opacity inline. */
+[data-theme='dark'] .fia-aurora > [aria-hidden='true'] {
+  opacity: 0.6 !important;
+}
+
+/* ---- F6-S17 Install guide (mock design/alpha-v2-screens/17-install-guide.html @ cookbook; kit @6aa9bc3) ---- */
+/* A named container in caption ems: under 28em of text it is the stacked layout (one-column steps, Why after the
+   step). It matches at 150% at every width and at 100% below ~336 px (28 × 12 px), not only at 200%+: the mock has
+   no 150% frame (_frame.js:5 ?text=100|200|310), so the stack is kept there by content width. The app row alone
+   is mock html.fia-big (200%+) and keys on the text step below. */
+.fia-install.fia-install__steps {
+  container: fia-install / inline-size;
+  font-size: var(--fs-caption);
+  gap: 10px;
+  padding-inline: 0; /* .fia-content carries the 16 px gutter (mock .fia-px) */
+}
+.fia-install > * {
+  min-width: 0; /* grid items: never grow past the column for a wide drawing */
+}
+.fia-install__inner {
+  position: relative; /* above the kit GlassSurface refraction layer */
+  padding: 14px 16px;
+}
+.fia-install__why .fia-install__inner {
+  padding: 12px 16px;
+}
+.fia-install__overline {
+  margin: 0 0 4px;
+  font: var(--fw-semibold) var(--fs-overline) / 1.2 var(--font-core);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.fia-install__why-text {
+  margin: 0;
+  font: var(--fw-regular) var(--fs-label) / 1.4 var(--font-core);
+  color: var(--text-body);
+}
+/* Kit gap fallback (S17InstallGuide.tsx StepList): numbered, labelled steps, not beads. */
+.fia-install__step-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.fia-install__step {
+  --k: min(var(--fia-text-scale), 2);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  text-align: center;
+}
+.fia-install__step + .fia-install__step::before {
+  content: '';
+  position: absolute;
+  top: calc(13px * var(--k));
+  right: calc(50% + 20px * var(--k));
+  width: calc(100% - 34px * var(--k));
+  border-top: 1.5px solid var(--text-dim);
+  opacity: 0.6;
+}
+.fia-install__badge {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: calc(26px * var(--k));
+  height: calc(26px * var(--k));
+  border-radius: var(--r-pill);
+  background: var(--glass-fill-3);
+  box-shadow: inset 0 0 0 1px var(--text-dim);
+  font: var(--fw-semibold) calc(13px * var(--k)) / 1 var(--font-numeric, var(--font-core));
+  color: var(--text-muted);
+}
+.fia-install__step-label {
+  font: var(--fw-medium) var(--fs-caption) / 1.2 var(--font-core);
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+.fia-install__step[aria-current='step'] .fia-install__badge {
+  box-shadow: inset 0 0 0 2px var(--text-title);
+  color: var(--text-title);
+}
+.fia-install__step[aria-current='step'] .fia-install__step-label {
+  color: var(--text-title);
+  font-weight: var(--fw-semibold);
+}
+.fia-install__step.is-done .fia-install__badge {
+  color: var(--text-title);
+}
+.fia-install__where {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 14px 0 0;
+  font: var(--fw-semibold) var(--fs-caption) / 1.2 var(--font-core);
+  color: var(--text-muted);
+}
+.fia-install__where.is-first {
+  margin-top: 0;
+}
+.fia-install__glyph {
+  display: block;
+  flex: none;
+}
+.fia-install__where .fia-install__glyph {
+  width: calc(15px * min(var(--fia-text-scale), 2));
+  height: calc(15px * min(var(--fia-text-scale), 2));
+}
+.fia-install__title {
+  margin: 4px 0 0;
+  font: var(--fw-semibold) calc(18px * var(--fia-text-scale)) / 1.25 var(--font-core);
+  color: var(--text-title);
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+.fia-install__title--icon {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+.fia-install__body {
+  margin: 10px 0 0;
+  font: var(--fw-regular) var(--fs-subtitle) / 1.4 var(--font-core);
+  color: var(--text-body);
+}
+.fia-install__note {
+  margin: 6px 0 0;
+  font: var(--fw-regular) var(--fs-label) / 1.4 var(--font-core);
+  color: var(--text-muted);
+}
+/* Kit gap fallback (S17InstallGuide.tsx Drawing): the app-owned illustration well and its drawings. */
+.fia-install__well {
+  margin-top: 12px;
+}
+.fia-install__well-inner {
+  /* 0 at 100% text, 1 at any larger step (mock html.fia-scaled): at 1× the well hugs its drawing so
+     steps 1–3 and the quiet row clear the sticky primary slot at 390×844; the 180 px floor is large text only. */
+  --fia-scaled: clamp(0, (var(--fia-text-scale) - 1) * 1000, 1);
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: calc(180px * var(--fia-scaled));
+  padding: calc(14px + 4px * var(--fia-scaled)) 8px;
+}
+.fia-install__draw {
+  --k: min(var(--fia-text-scale), 2);
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  max-width: 100%;
+}
+.fia-install__bar {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 10px 18px;
+}
+.fia-install__safari {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 22px;
+  color: var(--text-title);
+}
+.fia-install__draw svg {
+  width: calc(18px * var(--k));
+  height: calc(18px * var(--k));
+}
+.fia-install__ring {
+  display: grid;
+  place-items: center;
+  flex: none;
+  border-radius: var(--r-md);
+  box-shadow: 0 0 0 2px var(--accent-blue);
+}
+.fia-install__ring--round {
+  width: calc(40px * var(--k));
+  height: calc(40px * var(--k));
+  border-radius: var(--r-pill);
+}
+.fia-install__ring--row {
+  width: calc(26px * var(--k));
+  height: calc(26px * var(--k));
+}
+.fia-install__ring--word {
+  padding: 3px 8px;
+  font-weight: var(--fw-semibold);
+}
+/* Border-box: the 12px 14px padding sits inside the width, so the drawing never passes the well (mock widths 220/240/250). */
+.fia-install__sheet,
+.fia-install__dialog {
+  --w: 240px;
+  box-sizing: border-box;
+  width: min(100%, calc(var(--w) * var(--k)));
+}
+.fia-install__sheet {
+  --w: 220px;
+  padding: 2px 0;
+}
+.fia-install__dialog--android {
+  --w: 250px;
+}
+.fia-install__sheet-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  font: var(--fw-medium) calc(13px * var(--k)) / 1.2 var(--font-core);
+  color: var(--text-title);
+  overflow-wrap: anywhere;
+}
+.fia-install__sheet-row + .fia-install__sheet-row {
+  border-top: var(--border-hairline);
+}
+.fia-install__dialog {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+  text-align: start;
+}
+.fia-install__dialog > * {
+  position: relative;
+}
+.fia-install__dialog-title {
+  font: var(--fw-semibold) calc(15px * var(--k)) / 1.2 var(--font-core);
+  color: var(--text-title);
+}
+.fia-install__dialog-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  font: var(--fw-medium) calc(13px * var(--k)) / 1.2 var(--font-core);
+  color: var(--text-title);
+}
+.fia-install__dialog-row--end {
+  justify-content: flex-end;
+}
+.fia-install__app-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.fia-install__app {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-md);
+  background: var(--glass-fill-4);
+  border: var(--border-glass);
+}
+.fia-install__appmark {
+  display: block;
+  width: 33px; /* the symbol only: 300 × 18 / 167.52 (FiaLogo.tsx S1) */
+  overflow: hidden;
+}
+.fia-install__appmark .fia-logo {
+  display: block;
+  width: 69.6px; /* the whole lockup at 18 px (FiaLogo.tsx LOCK_W × 18 / 22) */
+  max-width: none;
+  height: 18px;
+}
+.fia-install__app-name {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font: var(--fw-semibold) calc(13px * var(--k)) / 1.25 var(--font-core);
+  color: var(--text-title);
+  overflow-wrap: anywhere;
+}
+.fia-install__app-name > span {
+  font-weight: var(--fw-regular);
+  color: var(--text-muted);
+}
+.fia-install__draw-caption {
+  margin: 0;
+  min-width: 0;
+  text-align: center;
+  font: var(--fw-medium) calc(12px * var(--k)) / 1.3 var(--font-core);
+  color: var(--text-muted);
+}
+.fia-install__app-row .fia-install__draw-caption {
+  text-align: start;
+}
+/* Drawings of a dark Safari/Chrome sheet are smoked in dark, so their words read past 4.5:1 (mock rev2). */
+[data-theme='dark'] .fia-install__bar,
+[data-theme='dark'] .fia-install__sheet,
+[data-theme='dark'] .fia-install__dialog {
+  background: rgba(20, 22, 28, 0.72) !important;
+}
+[data-theme='dark'] .fia-install__overline,
+[data-theme='dark'] .fia-install__step-label,
+[data-theme='dark'] .fia-install__badge,
+[data-theme='dark'] .fia-install__draw-caption,
+[data-theme='dark'] .fia-install__app-name > span,
+[data-theme='dark'] .fia-install__note {
+  color: var(--text-body);
+}
+[data-theme='dark'] .fia-install__step[aria-current='step'] .fia-install__step-label,
+[data-theme='dark'] .fia-install__step[aria-current='step'] .fia-install__badge,
+[data-theme='dark'] .fia-install__step.is-done .fia-install__badge {
+  color: var(--text-title);
+}
+/* Quiet row: Previous keeps the start and the way out the end; one per row when they no longer fit. */
+.fia-install__quiet {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px 8px;
+}
+.fia-install__quiet > .fia-install__end {
+  margin-inline-start: auto;
+}
+.fia-install__end--trailing {
+  flex-direction: row-reverse;
+}
+.fia-install__quiet > .fia-secondary {
+  min-height: 48px;
+  font: var(--fw-semibold) var(--fs-label) / 1.25 var(--font-core);
+  color: var(--text-muted);
+  text-decoration: none;
+  max-width: 100%;
+  text-align: start;
+}
+.fia-install__quiet .fia-secondary svg {
+  width: calc(18px * min(var(--fia-text-scale), 2));
+  height: calc(18px * min(var(--fia-text-scale), 2));
+}
+@container fia-install (max-width: 28em) {
+  .fia-install__why {
+    order: 2; /* the step to do comes first on the first screen */
+  }
+  .fia-install__quiet,
+  .fia-install__warn {
+    order: 3;
+  }
+  .fia-install__step-list {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+  .fia-install__step {
+    flex-direction: row;
+    gap: 10px;
+    text-align: start;
+  }
+  .fia-install__step + .fia-install__step::before {
+    display: none;
+  }
+  .fia-install__safari {
+    gap: 12px;
+  }
+  .fia-install__bar {
+    padding: 10px 14px;
+  }
+}
+/* 200%+ only (mock :96 html.fia-big, _frame.js:21 scale >= 2): the icon over the words, which take the drawing's
+   width. Keyed on the text step, not the 28em container above, which at 390 px already matches at 130% and 150%. */
+:root:is([data-text-step='x200'], [data-text-step='x310']) .fia-install__app-row {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* ---- Text-size steps (F6-S14; PRD § 8.5; mock 14-settings): Follows phone · Larger · Largest · Huge =
+   100 / 150 / 200 / 310%. New step names, so the generated plus2/max rules (which hide .fia-caption) are
+   never set: at large text nothing disappears. apply.ts maps C-10 large/max/huge here. */
+:root[data-text-step='x150'] {
+  --fia-text-scale: 1.5;
+}
+:root[data-text-step='x200'] {
+  --fia-text-scale: 2;
+}
+:root[data-text-step='x310'] {
+  --fia-text-scale: 3.1;
+}
+
+/* ---- S14 Settings on the kit (F6-S14). BEND: kit GlassSheet / GlassSegmented / GlassToggle literals
+   re-pointed by class, as the nodded mock does (cookbook design/alpha-v2-screens/14-settings.html <style>,
+   _frame.css:111-121, 189-190). The kit is not edited. ---- */
+.s14-page {
+  position: relative;
+  height: 100dvh;
+}
+.s14-sheet > [role='dialog'] {
+  display: flex;
+  flex-direction: column;
+}
+.s14-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 10px -18px 0;
+  padding: 0 18px;
+}
+.s14-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.s14-title-word {
+  margin: 0;
+  font: var(--type-card-title);
+  letter-spacing: var(--ls-title);
+  color: var(--text-title);
+}
+.s14-title-scroll {
+  margin: 4px 0 10px;
+}
+.s14-group {
+  margin-top: 8px;
+}
+.s14-group:first-child {
+  margin-top: 0;
+}
+.s14-group > .fia-overline {
+  padding: 0 4px 5px;
+}
+.s14-page > .fia-notice.s14-toast {
+  /* R-706: the save-failed toast sits in the viewport over the sheet, not after the 100% sheet in a
+     clipped field (F6-S14 review 2). */
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
+  left: 16px;
+  right: 16px;
+  z-index: 50;
+  overflow-wrap: anywhere;
+  font-size: calc(1rem * var(--fia-text-scale)); /* follows the text step: 16 px at 100%, as before */
+}
+/* app.css loads after this file and its same-specificity `.fia-well { padding: 2px 0 }` won; the
+   compound selector keeps the mock's 10/12 inset (14-settings.html:114; F6-S14 review 4/6/8). */
+.fia-well.s14-card {
+  padding: 10px 12px;
+}
+.s14-sep {
+  height: 0;
+  border-top: var(--border-hairline);
+  margin: 8px 0 4px;
+}
+.s14-note {
+  margin-top: 6px;
+}
+/* Kit GlassSegmented (GlassSegmented.jsx:3-6): 12 px literal label, 36 px height, nowrap, glass-fill-2
+   track (vanishes on the light sheet) → text scale, 48 px floor, wrap, a 6% ink wash. */
+.s14-seg {
+  background: color-mix(in srgb, var(--text-title) 6%, transparent) !important;
+}
+.s14-seg [role='radio'] {
+  font-size: var(--fs-label) !important;
+  line-height: 1.15 !important;
+  min-height: 48px !important;
+  height: auto !important;
+  white-space: normal !important;
+  padding: 6px 6px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 0 !important;
+}
+.s14-seg [role='radio'][aria-checked='false'] {
+  font-weight: var(--fw-medium) !important;
+}
+.s14-opt {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+/* Below the 360 px reference phone the 10/12 card inset leaves the 100% row too narrow for three
+   options: each choice takes an even share and may put its icons over its words rather than run past
+   its track (F6-S14 follow-up; 360 px and up keep their widths). */
+@media (max-width: 359.98px) {
+  .s14-seg [role='radio'],
+  .s14-opt {
+    min-width: 0;
+  }
+  .s14-opt {
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
+}
+.s14-two {
+  display: inline-flex;
+  gap: 2px;
+}
+.s14-seg.is-vertical {
+  flex-direction: column !important;
+  border-radius: var(--r-xl) !important;
+  gap: 4px;
+}
+.s14-seg.is-vertical [role='radio'] {
+  flex: none !important;
+  width: 100%;
+  min-height: 56px !important;
+  border-radius: var(--r-lg) !important;
+  justify-content: flex-start;
+  padding: 8px 16px !important;
+}
+.s14-seg.is-vertical .s14-opt {
+  justify-content: flex-start;
+  text-align: start;
+}
+/* A full-width list row may wrap a long word rather than run past its track (PRD § 8.5 text steps; measured at 320 px). */
+.s14-seg.is-vertical [role='radio'],
+.s14-seg.is-vertical .s14-opt,
+.s14-seg.is-vertical .s14-size {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+/* Text size: each option shows an "A" at the size it gives (a preview, not scaled) over its word. */
+.s14-size {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  text-align: center;
+}
+.s14-A {
+  height: 42px;
+  display: flex;
+  align-items: flex-end;
+  font-family: var(--font-core);
+  font-weight: var(--fw-semibold);
+  line-height: 1;
+  color: var(--text-title);
+}
+.s14-sizes [role='radio'] {
+  min-height: 80px !important;
+  padding: 6px 4px !important;
+}
+.s14-seg.is-vertical .s14-size {
+  flex-direction: row;
+  gap: 14px;
+  text-align: start;
+}
+.s14-seg.is-vertical .s14-A {
+  height: auto;
+  width: 48px;
+  justify-content: center;
+  flex: none;
+}
+.s14-seg.is-vertical.s14-sizes [role='radio'] {
+  min-height: 64px !important;
+  padding: 8px 14px !important;
+}
+.s14-lang {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 2px;
+}
+.s14-lang-text {
+  min-width: 0;
+}
+.s14-lang-word {
+  font: var(--fw-semibold) var(--fs-label) / 1.25 var(--font-core);
+  color: var(--text-title);
+}
+.s14-lang .s14-note {
+  margin-top: 2px;
+}
+/* Settings row (components/SettingsRow.tsx): icon · label + note · On/Off word · kit GlassToggle. */
+.fia-srow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 2px;
+}
+.fia-srow__text {
+  flex: 1;
+  min-width: 0;
+}
+.fia-srow__label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font: var(--fw-semibold) var(--fs-label) / 1.25 var(--font-core);
+  color: var(--text-title);
+  overflow-wrap: anywhere;
+}
+.fia-srow__note {
+  margin-top: 2px;
+}
+.fia-srow__control,
+.fia-srow__toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+.fia-srow__state {
+  font: var(--fw-semibold) var(--fs-caption) / 1 var(--font-core);
+  color: var(--text-muted);
+  min-width: 2.2em;
+  text-align: end;
+}
+:root:is([data-text-step='x200'], [data-text-step='x310']) .fia-srow {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+:root:is([data-text-step='x200'], [data-text-step='x310']) .fia-srow__control {
+  justify-content: flex-end;
+}
+/* Kit GlassToggle (GlassToggle.jsx:4-5): checked track --surface-inverse would be a second dark element
+   beside the primary; here the kit's interactive blue with a near-white knob. 44×26 target → 48 px tall. */
+.fia-srow__toggle [role='switch'] {
+  position: relative;
+  flex: none;
+}
+.fia-srow__toggle [role='switch']::before {
+  content: '';
+  position: absolute;
+  inset: -11px -4px;
+}
+.fia-srow__toggle [role='switch'][aria-checked='false'] {
+  background: color-mix(in srgb, var(--text-title) 12%, transparent) !important;
+}
+.fia-srow__toggle [role='switch'][aria-checked='true'] {
+  background: var(--accent-blue) !important;
+}
+.fia-srow__toggle [role='switch'][aria-checked='true'] > span {
+  background: var(--paper-050) !important;
+}
+:root:is([data-text-step='x200'], [data-text-step='x310']) .fia-srow__toggle [role='switch'] {
+  zoom: 1.5;
+}
+/* Light: overlines on the near-white sheet take --text-muted (mock 14-settings: 5.9:1). Dark: each group
+   is a frame well, the track drops to --glass-fill-1, secondary words take --text-body (mock 14-settings). */
+.s14-body .fia-overline {
+  color: var(--text-muted);
+}
+/* Dark: each group card is a frame well, smoked with no sheen (mock _frame.css:203-204), so the
+   secondary words read 10:1 rather than 4.1-4.4:1 on the lifted level-3 glass (F6-S14 review 5/8). */
+[data-theme='dark'] .s14-card.fia-well {
+  background: color-mix(in srgb, var(--surface-app) 50%, transparent) !important;
+}
+[data-theme='dark'] .s14-card.fia-well > span[aria-hidden='true']:first-child {
+  display: none;
+}
+[data-theme='dark'] .s14-seg {
+  background: var(--glass-fill-1) !important;
+}
+[data-theme='dark'] .s14-body [role='radio'][aria-checked='false'],
+[data-theme='dark'] .s14-body .fia-caption,
+[data-theme='dark'] .s14-body .fia-srow__state,
+[data-theme='dark'] .s14-body .fia-overline {
+  color: var(--text-body) !important;
+}
+
+/* ---- F6-S16 Feedback (mock design/alpha-v2-screens/16-feedback.html @ cookbook; kit @6aa9bc3) ---- */
+.fia-feedback--glass {
+  display: grid;
+  gap: 10px;
+}
+.fia-feedback__paused {
+  color: var(--text-muted);
+}
+.fia-feedback__prompt {
+  font: var(--fw-semibold) var(--fs-subtitle) / 1.25 var(--font-core);
+  color: var(--text-title);
+  text-wrap: balance;
+}
+.fia-feedback__inner {
+  position: relative; /* above the kit GlassSurface refraction layer */
+  padding: 12px 14px;
+  margin: 0;
+}
+.fia-feedback .fia-overline,
+.fia-feedback-yours > .fia-overline {
+  margin: 0 0 4px;
+  font: var(--fw-semibold) var(--fs-overline) / 1.2 var(--font-core);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.fia-feedback__where {
+  margin: 2px 0 0;
+  font: var(--fw-semibold) var(--fs-label) / 1.3 var(--font-core);
+  color: var(--text-title);
+  overflow-wrap: anywhere;
+}
+/* Kit FilterChips: its 12 px / 36 px literals (FilterChips.jsx:5) scale with the text; the row wraps. */
+.fia-feedback .fia-feedback__reasons {
+  flex-wrap: wrap;
+  overflow: visible !important;
+}
+.fia-feedback__reasons > button {
+  height: auto !important;
+  min-height: 44px;
+  padding: 6px 16px !important;
+  font-size: var(--fs-label) !important;
+  white-space: normal !important;
+}
+/* Selected: glass + check + semibold, not --surface-inverse, so the primary stays the only dark element. */
+.fia-feedback__reasons > button[aria-pressed='true'] {
+  background: var(--glass-fill-4) !important;
+  color: var(--text-title) !important;
+  font-weight: var(--fw-semibold) !important;
+  box-shadow:
+    inset 0 0 0 1.5px var(--text-title),
+    var(--shadow-rest) !important;
+  border: 0.5px solid transparent !important;
+}
+.fia-feedback__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+/* Kit gap fallback (FeedbackForm.tsx): a growing text area drawn with kit GlassField's own tokens. */
+.fia-feedback--glass .fia-glass-area {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 76px;
+  field-sizing: content;
+  resize: none;
+  padding: 12px 18px;
+  border-radius: var(--r-xl);
+  background: var(--glass-fill-2);
+  border: var(--border-glass);
+  box-shadow: var(--shadow-rest), var(--inner-top);
+  font: var(--type-body);
+  font-size: var(--fs-body);
+  line-height: 1.4;
+  color: var(--text-title);
+}
+.fia-feedback--glass .fia-glass-area:focus-visible {
+  box-shadow: var(--shadow-rest), var(--inner-top), var(--glow-focus);
+}
+/* Kit GlassField: a 48 px literal height (GlassField.jsx:6); the input grows with its text. */
+.fia-feedback__field input {
+  height: auto !important;
+  min-height: 48px;
+  padding-block: 10px !important;
+  font-size: var(--fs-body) !important;
+}
+.fia-feedback__field label > span {
+  font-size: var(--fs-caption) !important;
+}
+/* WCAG 2.4.7: both fields keep the app's 3 px focus ring (:focus-visible above). The text area
+   no longer turns it off; the kit GlassField sets outline:none inline (GlassField.jsx:7), so
+   only !important beats it. The kit's --glow-focus stays as well. */
+.fia-feedback__field input:focus-visible {
+  outline: 3px solid var(--fia-focus-ring) !important;
+  outline-offset: 3px;
+}
+/* Captions in the form: app.css .fia-caption (loaded after this file) sets the older
+   --fia-text-muted (#5A6472, 4.1-4.5:1 on light glass); the kit's --text-muted (#475060) clears 4.5:1. */
+.fia-feedback .fia-caption {
+  color: var(--text-muted);
+}
+/* Result (after Send): the words carry the state; the kit icon repeats it. */
+.fia-feedback-band__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin: 0;
+  font: var(--fw-semibold) var(--fs-subtitle) / 1.25 var(--font-core);
+  color: var(--text-title);
+  text-wrap: balance;
+}
+.fia-feedback-band__title > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.fia-feedback-band__text {
+  margin: 6px 0 0;
+  font: var(--fw-regular) var(--fs-body) / 1.4 var(--font-core);
+  color: var(--text-body);
+}
+.fia-feedback-band__ref {
+  margin: 8px 0 0;
+  font: var(--fw-medium) var(--fs-label) / 1.3 var(--font-core);
+  color: var(--text-body);
+  font-variant-numeric: tabular-nums;
+}
+.fia-feedback-yours {
+  margin-top: 14px;
+}
+.fia-feedback-yours ul {
+  list-style: none;
+  padding: 2px 0;
+}
+.fia-feedback-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 48px;
+  padding: 8px 14px;
+  background: none;
+  border: 0;
+  text-align: start;
+  font: var(--fw-medium) var(--fs-label) / 1.3 var(--font-core);
+  color: var(--text-title);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.fia-feedback-yours li + li .fia-feedback-row {
+  border-top: var(--border-hairline);
+}
+.fia-feedback-band__title svg {
+  flex: none;
+  width: 1.3em;
+  height: 1.3em;
+}
+.fia-feedback-row svg,
+.fia-feedback__chip svg {
+  flex: none;
+  width: 1.15em;
+  height: 1.15em;
+}
+
+/* ---- F6-S15 About and rights (mock design/alpha-v2-screens/15-about.html @ cookbook; kit @6aa9bc3) ---- */
+/* Own block (conflict guard with #24/#25): every rule here is scoped to .fia-about. */
+.fia-about {
+  container: fia-about / inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.fia-about__hero > div,
+.fia-about__card > div {
+  position: relative; /* above the kit GlassSurface refraction layer */
+}
+.fia-about__hero {
+  padding: 14px 16px 12px;
+}
+.fia-about__id {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+.fia-about__logo {
+  color: var(--fia-brand, var(--text-title));
+  display: inline-flex;
+}
+.fia-about__qualifier {
+  margin: 0;
+  font: var(--fw-semibold) var(--fs-label) / 1.25 var(--font-core);
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+.fia-about__group {
+  margin-top: 10px;
+}
+.fia-about__overline {
+  margin: 0;
+  padding: 0 4px 5px;
+  color: var(--text-muted); /* mock: --text-dim is under 3:1 behind overline type on the aurora glass */
+}
+.fia-about__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.fia-about__source + .fia-about__source {
+  border-top: var(--border-hairline);
+}
+.fia-about__row {
+  padding-top: 7px !important;
+  padding-bottom: 7px !important;
+  gap: 8px !important;
+  min-height: 48px;
+}
+/* Kit CatalogRow sets its title inline (CatalogRow.jsx:8); grow with the phone's text size (F4 fix2). */
+.fia-about__row > div:first-child > div[dir] {
+  font-size: calc(15px * var(--fia-text-scale)) !important;
+  line-height: 1.3 !important;
+}
+.fia-about__row svg {
+  width: calc(16px * min(var(--fia-text-scale), 2));
+  height: calc(16px * min(var(--fia-text-scale), 2));
+}
+.fia-about__install > svg {
+  width: calc(18px * min(var(--fia-text-scale), 2));
+  height: calc(18px * min(var(--fia-text-scale), 2));
+}
+.fia-about__src {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  max-width: 100%;
+}
+.fia-about__src-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  overflow-wrap: anywhere; /* long C-13 names wrap, never pass the card (G-F, 390px) */
+}
+.fia-about__line {
+  color: var(--text-muted);
+}
+.fia-about__chev {
+  display: inline-flex;
+  transition: transform var(--dur-fast, 120ms);
+}
+.fia-about__chev[data-open] {
+  transform: rotate(90deg);
+}
+.fia-about__detail {
+  padding: 4px 16px 12px;
+  overflow-wrap: anywhere;
+}
+/* Kit gap fallback (S15AboutRights.tsx LegendMark): the guide legend's marks, app-drawn. */
+.fia-about__mark {
+  flex: none;
+  display: inline-block;
+  width: calc(10px * min(var(--fia-text-scale), 2.4));
+  height: calc(10px * min(var(--fia-text-scale), 2.4));
+  margin: 0 calc(3px * min(var(--fia-text-scale), 2.4));
+}
+.fia-about__mark--plain {
+  border-radius: 50%;
+  background: var(--fia-kind-plain, #6e7787);
+}
+.fia-about__mark--scripture {
+  border-radius: 2px;
+  background: var(--fia-kind-scripture, var(--text-title));
+}
+.fia-about__mark--term {
+  transform: rotate(45deg) scale(0.85);
+  background: var(--fia-kind-term, var(--accent-blue));
+}
+.fia-about__mark--media {
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  background: var(--fia-kind-media, #17786e);
+}
+.fia-about__mark--video {
+  width: calc(14px * min(var(--fia-text-scale), 2.4));
+  height: calc(8px * min(var(--fia-text-scale), 2.4));
+  margin: 0 calc(1px * min(var(--fia-text-scale), 2.4));
+  border-radius: 2px;
+  background: var(--fia-kind-media, #17786e);
+}
+.fia-about__note {
+  margin: 6px 4px 0;
+  color: var(--text-muted);
+}
+.fia-about__card .fia-about__toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 6px 12px;
+}
+.fia-about__toggle-text {
+  flex: 1;
+  min-width: 0;
+}
+.fia-about__toggle-label {
+  font: var(--fw-semibold) var(--fs-label) / 1.25 var(--font-core);
+  color: var(--text-title);
+}
+.fia-about__toggle-ctl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+.fia-about__state {
+  font: var(--fw-semibold) var(--fs-caption) / 1 var(--font-core);
+  color: var(--text-muted);
+  min-width: 2.2em;
+  text-align: end;
+}
+.fia-about__toggle-ctl [role='switch'] {
+  position: relative;
+}
+.fia-about__toggle-ctl [role='switch']::before {
+  content: '';
+  position: absolute;
+  inset: -11px -4px; /* 48 px target around the 26 px track */
+}
+.fia-about__toggle-ctl [role='switch'][aria-checked='false'] {
+  background: color-mix(in srgb, var(--text-title) 12%, transparent) !important;
+}
+.fia-about__toggle-ctl [role='switch'][aria-checked='true'] {
+  background: var(--accent-blue) !important;
+}
+.fia-about__links {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 6px 0 0 -6px;
+}
+.fia-about__quiet {
+  min-height: 48px;
+  padding: 0 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font: var(--fw-semibold) var(--fs-label) / 1.25 var(--font-core);
+  color: var(--text-muted);
+}
+.fia-about__quiet svg {
+  width: calc(18px * min(var(--fia-text-scale), 2));
+  height: calc(18px * min(var(--fia-text-scale), 2));
+}
+@container fia-about (max-width: 28em) {
+  .fia-about__toggle {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 6px !important;
+  }
+  .fia-about__toggle-ctl {
+    justify-content: flex-end;
+  }
+  .fia-about__quiet .fia-row-label {
+    flex-direction: column; /* icon over label at 200%+ (dl-v21-support-13) */
+    gap: 4px;
+  }
+}

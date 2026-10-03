@@ -1,19 +1,42 @@
 import { useState, type ReactNode } from 'react';
-import { Dock, MoreSheet, PrimaryButton, type DockCell, type UiState } from '../components';
+import { useNavigate } from 'react-router-dom';
+import { MoreSheet, PrimaryButton, type UiState } from '../components';
+import { FiaLogo } from '../components/FiaLogo';
+import { AuroraField, GlassButton, GlassSurface, Icon } from '../components/glass';
 import { t } from '../i18n';
+import { useOnline } from '../offline/useOnline';
+import { browserStore, loadSettings } from '../settings';
 import { screenById, type ScreenId } from './registry';
 
-// Layout constants (design/alpha-screens/README.md): header · content (scrolls) · primary slot
-// (rule 1, thumb zone, h 56 / 72 at +2, sticky above the dock with safe-area inset) · dock (rule 4).
+// v2 shell (F4; PRD § 2, § 8.1): kit AuroraField ground · glass header on GlassSurface (FiaLogo ·
+// language pill · Explore pill) · content · one primary in the thumb slot. NO bottom bar on any
+// screen (RULING 2026-10-01 21:23 ET (a); nodded mocks design/alpha-v2-screens @2792f33): the v1
+// dock is gone and Explore (on GlassSheet) is the one fallback. The registry's `dock` flag now
+// means "guide/home/browse frame": it carries the language pill and Explore; other frames show the logo only.
 export interface ScreenFrameProps {
   id: ScreenId;
   title?: string;
   primaryLabel?: string | null;
   primaryState?: UiState;
   onPrimary?: () => void;
-  dockActive?: DockCell;
+  /** Overrides the browser's connectivity (R-702); default: `!navigator.onLine`, live. */
   offline?: boolean;
+  /** Replaces the primary in the thumb slot (S05: the guide transport with GuidePrimary; F5). */
+  thumb?: ReactNode;
+  /** The screen title is for screen readers only (S05: the reference is the band's overline). */
+  titleHidden?: boolean;
   children?: ReactNode;
+}
+
+// Header pill geometry from the nodded mock (_frame.js:224-229): 48 px tall, 10 × 16 padding.
+const PILL = { minHeight: 48, padding: '10px 16px' };
+
+function autonym(code: string): string {
+  try {
+    return new Intl.DisplayNames([code], { type: 'language' }).of(code) ?? code;
+  } catch {
+    return code;
+  }
 }
 
 export function ScreenFrame({
@@ -22,36 +45,92 @@ export function ScreenFrame({
   primaryLabel,
   primaryState,
   onPrimary,
-  dockActive,
   offline,
+  thumb,
+  titleHidden,
   children,
 }: ScreenFrameProps) {
   const def = screenById(id);
-  const [more, setMore] = useState(false);
+  const go = useNavigate();
+  const [explore, setExplore] = useState(false);
+  const online = useOnline();
+  const isOffline = offline ?? !online;
   const heading = title ?? (def.titleKey ? t(def.titleKey) : def.name);
   const label =
     primaryLabel === undefined ? (def.primaryKey ? t(def.primaryKey) : null) : primaryLabel;
+  const hub = def.dock;
+  // Read once per mount (each route mounts its own frame); useClip re-renders this on every
+  // `timeupdate`, which used to re-parse localStorage each time (PR #22 deferred line).
+  const [lang] = useState(() => autonym(loadSettings(browserStore()).settings.contentLanguage));
   return (
-    <div className="fia-screen" data-screen={def.id} data-dock={def.dock || undefined}>
-      <header className="fia-header">
-        <h1 className="fia-title">{heading}</h1>
-      </header>
-      {offline && (
-        <span className="fia-notice fia-notice--offline-chip">{t('s.common.offline-chip')}</span>
-      )}
-      <main className="fia-content">{children}</main>
-      {label && (
-        <div className="fia-primary-slot">
-          <PrimaryButton
-            label={label}
-            state={primaryState}
-            onPress={onPrimary}
-            hint={t('s.common.a11y.primary-hint')}
-          />
-        </div>
-      )}
-      {def.dock && <Dock active={dockActive} onMore={() => setMore(true)} />}
-      {def.dock && <MoreSheet open={more} onClose={() => setMore(false)} />}
-    </div>
+    <AuroraField
+      className="fia-aurora"
+      drift={false}
+      style={{ height: 'auto', minHeight: '100dvh', overflow: 'clip' }}
+    >
+      <div className="fia-screen" data-screen={def.id} data-offline={isOffline || undefined}>
+        <header className="fia-header-wrap">
+          <GlassSurface level={3} blur="strong" radius="pill" shadow="card" className="fia-header">
+            <div className="fia-header-grid">
+              <FiaLogo />
+              {isOffline && (
+                // toast-notice.md `chip`: persistent while offline; text, never icon-only.
+                <span
+                  className="fia-notice fia-notice--offline-chip"
+                  role="status"
+                  data-role="offline-chip"
+                >
+                  <span aria-hidden="true">⊘ </span>
+                  {t('s.common.offline-chip')}
+                </span>
+              )}
+              {hub && (
+                <GlassButton
+                  variant="glass"
+                  className="fia-pill fia-lang"
+                  style={PILL}
+                  leading={<Icon name="languages" size={18} />}
+                  aria-label={t('s.common.language-pill', { language: lang })}
+                  onClick={() => go('/?mode=use')}
+                >
+                  {lang}
+                </GlassButton>
+              )}
+              {hub && (
+                <GlassButton
+                  variant="glass"
+                  className="fia-pill fia-explore"
+                  style={PILL}
+                  leading={<Icon name="compass" size={18} />}
+                  aria-haspopup="dialog"
+                  onClick={() => setExplore(true)}
+                >
+                  {t('s.common.explore')}
+                </GlassButton>
+              )}
+            </div>
+          </GlassSurface>
+        </header>
+        <h1 className={`fia-title fia-screen__title${titleHidden ? ' fia-sr-only' : ''}`}>
+          {heading}
+        </h1>
+        <main className="fia-content">{children}</main>
+        {thumb ? (
+          <div className="fia-primary-slot fia-thumb">{thumb}</div>
+        ) : (
+          label && (
+            <div className="fia-primary-slot">
+              <PrimaryButton
+                label={label}
+                state={primaryState}
+                onPress={onPrimary}
+                hint={t('s.common.a11y.primary-hint')}
+              />
+            </div>
+          )
+        )}
+        {hub && <MoreSheet open={explore} onClose={() => setExplore(false)} from={def.id} />}
+      </div>
+    </AuroraField>
   );
 }

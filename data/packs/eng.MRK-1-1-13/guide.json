@@ -151,6 +151,7 @@
           "pause": false,
           "resources": [
             "term-eng-t92",
+            "term-eng-t104",
             "term-eng-t145"
           ]
         },
@@ -195,7 +196,8 @@
             "term-eng-t9",
             "term-eng-t53",
             "term-eng-t63",
-            "term-eng-t68"
+            "term-eng-t68",
+            "term-eng-t104"
           ]
         },
         {
@@ -269,6 +271,7 @@
           "textSha256": "7b523bfca29e22f7b0339e59c4b4281b9761a965ed6f20db5811063b88605791",
           "pause": false,
           "resources": [
+            "term-eng-t87",
             "term-eng-t88",
             "term-eng-t145"
           ]
@@ -477,6 +480,7 @@
           "resources": [
             "term-eng-t38",
             "term-eng-t118",
+            "term-eng-t125",
             "term-eng-t145"
           ]
         },
@@ -634,7 +638,8 @@
           "html": "The following is an example of the drama and possible responses.",
           "text": "The following is an example of the drama and possible responses.",
           "textSha256": "b2aa5dc8b943d66f3b2d2ce650b56d21f5750386d802ae26a94db8354845c367",
-          "pause": false
+          "pause": false,
+          "hidden": true
         },
         {
           "id": "S04-U018",
@@ -643,6 +648,7 @@
           "text": "The beginning scene of this story sets the background. This story happens in the wilderness. It is the fulfillment of scripture. Act out John telling the crowd to be baptized, to turn away from their old ways of living, and to follow God and be forgiven for their sins.",
           "textSha256": "9f4b59230f744897e5be4a0b9e52de06c5126dbf676dcdf231aed0ec1e312e43",
           "pause": false,
+          "hidden": true,
           "resources": [
             "term-eng-t145"
           ]
@@ -654,8 +660,10 @@
           "text": "Pause the drama. Ask the people playing the crowds, \"What are you feeling or thinking?\" The people might answer things like \"Can we trust this man?\" or \"I'm excited to be baptized and be forgiven,\" or \"Is this man a prophet?\" or \"Expectant: Is the Messiah going to come soon?\" Continue the drama.",
           "textSha256": "5bb998739d7177a69575e79b68cf9fe699087b066622be4c54f8b5b0db768ebc",
           "pause": false,
+          "hidden": true,
           "resources": [
-            "term-eng-t92"
+            "term-eng-t92",
+            "term-eng-t104"
           ]
         },
         {
@@ -664,7 +672,8 @@
           "html": "Act out John baptizing people in the river and the people confessing their sins.",
           "text": "Act out John baptizing people in the river and the people confessing their sins.",
           "textSha256": "f61712e3362b34d5519205ae337fcc08f7a298c71a953cab1a15d833426a407e",
-          "pause": false
+          "pause": false,
+          "hidden": true
         },
         {
           "id": "S04-U021",
@@ -672,7 +681,8 @@
           "html": "Pause the drama. Ask the person playing John, \"What are you feeling or thinking?\" The person might answer things like \"Happy to see so many people hearing God's message,\" or \"surprised at the crowd.\" Continue the drama.",
           "text": "Pause the drama. Ask the person playing John, \"What are you feeling or thinking?\" The person might answer things like \"Happy to see so many people hearing God's message,\" or \"surprised at the crowd.\" Continue the drama.",
           "textSha256": "63b5aea5139c6c2f44de57f64420310b4c386c92f71609319168ad67cd53409f",
-          "pause": false
+          "pause": false,
+          "hidden": true
         },
         {
           "id": "S04-U022",
@@ -681,6 +691,7 @@
           "text": "Act out John telling the crowd that someone is coming who is more powerful than him. He will not baptize with water but with the Holy Spirit.",
           "textSha256": "53a93b9226261b0264b6f8d3810ebdbac87a18e46b228267bccaddaf58911e5e",
           "pause": false,
+          "hidden": true,
           "resources": [
             "term-eng-t68"
           ]
@@ -692,6 +703,7 @@
           "text": "Pause the drama. Ask the people in the crowd what they are feeling or thinking. They might answer with things like \"When will they come?\" or \"What does it mean to be baptized with the Holy Spirit?\" or \"Can we believe what John is telling us?\" or \"Who is the person who is coming?\" Continue the drama.",
           "textSha256": "9e7c6849ed1b58143f8c2a712d2295078423236930cb5312e988a015350182ff",
           "pause": false,
+          "hidden": true,
           "resources": [
             "term-eng-t68"
           ]
@@ -703,6 +715,7 @@
           "text": "Act out Jesus being baptized by John. Think about how you can act out the sky being torn open and the Holy Spirit coming upon Jesus. Could you use random objects to help you visualize this? You could tear a piece of cloth in two to show the sky opening up.",
           "textSha256": "5a1d4c9b97fbc33e74d0a2369b0dd49e4f3d7df04020b160683a715410fc0f46",
           "pause": false,
+          "hidden": true,
           "resources": [
             "term-eng-t68"
           ]
@@ -713,7 +726,8 @@
           "html": "Act out God's voice speaking to Jesus, telling him that Jesus is his loved son and he is pleased with him.",
           "text": "Act out God's voice speaking to Jesus, telling him that Jesus is his loved son and he is pleased with him.",
           "textSha256": "befb96794069791385693de57c97656c7633acc7052484796b7764982f676fcb",
-          "pause": false
+          "pause": false,
+          "hidden": true
         },
         {
           "id": "S04-U026",
@@ -721,7 +735,8 @@
           "html": "Pause the drama. Ask the person playing John, \"How are you feeling in this moment?\" The person might answer, \"Unworthy\" or \"Excited that he is here\" or \"Amazed\" or \"Confused-why does Jesus need to be baptized?\" Ask the person playing God, \"How are you feeling in this moment?\" The person might answer things like, \"I'm feeling so much love for my son\" or \"Proud.\" Ask the person playing Jesus, \"How are you feeling in this moment?\" The person might answer things like, \"So happy to hear God's voice,\" or \"Overwhelmed by the task ahead,\" or \"Loved.\" Continue the drama.",
           "text": "Pause the drama. Ask the person playing John, \"How are you feeling in this moment?\" The person might answer, \"Unworthy\" or \"Excited that he is here\" or \"Amazed\" or \"Confused-why does Jesus need to be baptized?\" Ask the person playing God, \"How are you feeling in this moment?\" The person might answer things like, \"I'm feeling so much love for my son\" or \"Proud.\" Ask the person playing Jesus, \"How are you feeling in this moment?\" The person might answer things like, \"So happy to hear God's voice,\" or \"Overwhelmed by the task ahead,\" or \"Loved.\" Continue the drama.",
           "textSha256": "1c23eb1ad8e34ef12d1372885ca2de61740f81da1d63925c70805233a8c0188b",
-          "pause": false
+          "pause": false,
+          "hidden": true
         },
         {
           "id": "S04-U027",
@@ -730,6 +745,7 @@
           "text": "Finally, act out Jesus going to the wilderness for 40 days where he is tested by Satan. Angels are with him, helping him. Think about in what ways the angels may be helping Jesus. Mark doesn't tell us. Mark also doesn't tell us in what ways Satan tests Jesus.",
           "textSha256": "b382a7a62feaa2f7888a02c68d36237ef08dad6f504b8665d7977a872a811270",
           "pause": false,
+          "hidden": true,
           "resources": [
             "term-eng-t118",
             "term-eng-t145"
@@ -742,6 +758,7 @@
           "text": "Pause the drama. Ask the person playing Satan, \"What are you feeling or thinking?\" The person might answer things like, \"I can make Jesus listen to me,\" or \"I want Jesus to fail,\" or \"I am more powerful than this man.\"",
           "textSha256": "e9c40d71ac573d9bfbbaaf1f791e246c56ba424dea6ab5fe7639d2413ce1d1fa",
           "pause": false,
+          "hidden": true,
           "resources": [
             "term-eng-t118"
           ]
@@ -753,6 +770,7 @@
           "text": "At the end, ask the group, \"What do you think about the Holy Spirit sending Jesus to the wilderness to be tested or tempted by Satan? How do you feel about the ending to the story?\"",
           "textSha256": "2c2498a14781ec28b8594e6ac4ed373884a44493ccd9d0967bf958cfe4b1c1c1",
           "pause": false,
+          "hidden": true,
           "resources": [
             "term-eng-t68",
             "term-eng-t118",
@@ -813,6 +831,7 @@
           "resources": [
             "term-eng-t23",
             "term-eng-t60",
+            "term-eng-t226",
             "term-eng-t92",
             "term-eng-t129"
           ]
@@ -858,7 +877,10 @@
           "html": "Mark tells us what Isaiah the <strong>prophet</strong> talked about many years before. Choose a term for <strong>prophet</strong> that adequately describes the prophet's function. A prophet:",
           "text": "Mark tells us what Isaiah the prophet talked about many years before. Choose a term for prophet that adequately describes the prophet's function. A prophet:",
           "textSha256": "e7f36b59157f751a102614386adfbf645c9ee5192b7fe9a22a0377f025054f28",
-          "pause": false
+          "pause": false,
+          "resources": [
+            "term-eng-t104"
+          ]
         },
         {
           "id": "S05-U010",
@@ -890,7 +912,10 @@
           "html": "Stop here and discuss as a group what word you will use for <strong>prophet.</strong> For more information about <strong>prophet,</strong> refer to the Master Glossary. Pause this audio here.",
           "text": "Stop here and discuss as a group what word you will use for prophet. For more information about prophet, refer to the Master Glossary. Pause this audio here.",
           "textSha256": "76e052294d16f36c0e5976a63ae06263c41fd521564f2f5d67863e0d919f0cc5",
-          "pause": true
+          "pause": true,
+          "resources": [
+            "term-eng-t104"
+          ]
         },
         {
           "id": "S05-U014",
@@ -923,6 +948,7 @@
           "textSha256": "32454b88612b0c55c8ca5d32c94cc66279f9de3aeb6a552c0882471bd65369eb",
           "pause": false,
           "resources": [
+            "term-eng-t87",
             "term-eng-t88"
           ]
         },
@@ -934,6 +960,7 @@
           "textSha256": "d912af0d0f4541a47925c44e5549cbf9a9429d9cb89249c93b35207f81302839",
           "pause": true,
           "resources": [
+            "term-eng-t87",
             "term-eng-t88"
           ]
         },
@@ -1054,7 +1081,10 @@
           "html": "<strong>Sin</strong> refers to an act of disobedience to God. Be sure that the word you use here does not mean that someone has failed to perform a religious act like ritual prayer or following certain religious rules.",
           "text": "Sin refers to an act of disobedience to God. Be sure that the word you use here does not mean that someone has failed to perform a religious act like ritual prayer or following certain religious rules.",
           "textSha256": "31421e07b0bf6f07e12f0bf88ebf75e7f4f8ec713f2ad84671689f0c2d84ba32",
-          "pause": false
+          "pause": false,
+          "resources": [
+            "term-eng-t125"
+          ]
         },
         {
           "id": "S05-U031",
@@ -1062,7 +1092,10 @@
           "html": "Stop here and discuss as a group what word or phrase you will use for <strong>sin</strong>. Look up sin in the Master Glossary for more information. Pause this audio here.",
           "text": "Stop here and discuss as a group what word or phrase you will use for sin. Look up sin in the Master Glossary for more information. Pause this audio here.",
           "textSha256": "1b05943c2ebd0e4e872a0583e1dd4bc854179e19f97d53f6c0194d4d7a3c428d",
-          "pause": true
+          "pause": true,
+          "resources": [
+            "term-eng-t125"
+          ]
         },
         {
           "id": "S05-U032",
@@ -1072,7 +1105,8 @@
           "textSha256": "039a980368ab3a5f94b8eb747ee898160f6292eac8820b830d5a75e90a46ab10",
           "pause": false,
           "resources": [
-            "term-eng-t68"
+            "term-eng-t68",
+            "term-eng-t226"
           ]
         },
         {
@@ -1176,7 +1210,8 @@
           "textSha256": "71ec6b8881bb4156e393d94fcb6103cc48bdd2d861913ac904f6cc64dbae5521",
           "pause": false,
           "resources": [
-            "term-eng-t4"
+            "term-eng-t4",
+            "term-eng-t104"
           ]
         },
         {
