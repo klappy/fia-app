@@ -151,7 +151,7 @@ export const SCREENS: readonly ScreenDef[] = [
     path: '/term',
     titleKey: null,
     primaryKey: 's.term.primary-play',
-    dock: true,
+    dock: false,
     kind: 'screen',
   },
   {
