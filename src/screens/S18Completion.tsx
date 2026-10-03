@@ -153,14 +153,17 @@ export default function S18Completion() {
         <div className="s18-recap__body">
           <div className="s18-top">
             {/* A mark, not a button: glass with a check, so the primary stays the one dark fill. */}
-            <span className="s18-mark" aria-hidden="true">
+            <span className="s18-mark fia-done-mark" aria-hidden="true">
               <Icon name="check" size={Math.round(28 * Math.min(scale, 1.5))} stroke={2.4} />
             </span>
             {/* The frame's <h1> carries the headline for assistive tech; this is its visible face. */}
-            <p className="s18-h1" aria-hidden="true">
+            <p className="s18-h1 fia-display-sm" aria-hidden="true">
               {headline}
             </p>
-            <p className="s18-sum" data-role="summary">
+            <p
+              className="s18-sum fia-type-label fia-fw-medium fia-tabular fia-tone-muted"
+              data-role="summary"
+            >
               {stepsWords}
               {' · '}
               {t('s.completion.parts-of', { v: sum.visited, total: sum.total })}
@@ -169,7 +172,7 @@ export default function S18Completion() {
           <div className="s18-overall" role="group" aria-label={stepsWords}>
             <div className="s18-segs">
               <StageRail
-                className="s18-rail"
+                className="s18-rail fia-dim-plain"
                 stages={sum.steps}
                 current={firstGap < 0 ? n : firstGap}
                 progress={0}
@@ -180,22 +183,35 @@ export default function S18Completion() {
             </div>
             <ol className="s18-steps">
               {sum.steps.map((st, i) => (
-                <li key={st.id} className="s18-step" data-reached={st.reached || undefined}>
+                <li
+                  key={st.id}
+                  className="s18-step fia-type-caption fia-fw-medium fia-lh-125 fia-tone-title"
+                  data-reached={st.reached || undefined}
+                >
                   <span className="s18-tick" aria-hidden="true">
                     {st.reached && <Icon name="check" size={iconSz(14, scale)} stroke={2.2} />}
                   </span>
                   <span>
-                    <span className="s18-step-n">{i + 1}</span> {st.title}
+                    <span className="s18-step-n fia-ff-numeric fia-tabular fia-fw-semibold fia-tone-muted">
+                      {i + 1}
+                    </span>{' '}
+                    {st.title}
                   </span>
                 </li>
               ))}
             </ol>
           </div>
-          <hr className="s18-rule" />
-          <h2 className="fia-overline s18-overline">{t('s.completion.went-through')}</h2>
+          <hr className="s18-rule fia-hr" />
+          <h2 className="fia-overline fia-tone-aside s18-overline">
+            {t('s.completion.went-through')}
+          </h2>
           <ul className="s18-kinds">
             {kindLines.map((k) => (
-              <li key={k.kind} className="s18-kind" data-kind={k.kind}>
+              <li
+                key={k.kind}
+                className="s18-kind fia-type-label fia-fw-medium fia-lh-125 fia-tone-title"
+                data-kind={k.kind}
+              >
                 <span className="fia-legend-mark">
                   <Bead kind={k.kind} state="done" size={beadSize} kinds={KINDS} />
                 </span>
@@ -203,7 +219,9 @@ export default function S18Completion() {
               </li>
             ))}
           </ul>
-          <p className="fia-caption s18-kept">{t('s.completion.marks-kept')}</p>
+          <p className="fia-caption fia-fw-medium fia-lh-130 s18-kept">
+            {t('s.completion.marks-kept')}
+          </p>
         </div>
       </GlassSurface>
       <GlassSurface level={2} blur="medium" radius="xl" shadow="rest" className="s18-more">

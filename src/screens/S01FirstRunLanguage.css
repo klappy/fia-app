@@ -21,12 +21,9 @@
   gap: var(--sp-4);
   padding-top: var(--sp-7);
 }
-/* Capped so 'language' fits 358 px at 310% (mock .s01-h1). */
+/* Face: frame/frame.css .fia-display, capped so 'language' fits 358 px at 310% (mock .s01-h1). */
 .s01-h1 {
   margin: var(--sp-7) 0 0;
-  font: var(--fw-bold) min(calc(26px * var(--fia-text-scale)), 62px) / 1.15 var(--font-core);
-  letter-spacing: -0.01em;
-  color: var(--text-title);
   overflow-wrap: anywhere;
   text-wrap: balance;
 }
@@ -40,11 +37,10 @@
 .s01-wrap .fia-lp {
   max-width: none !important;
 }
-/* The closing caption sits on the bare aurora: --text-body there (mock: --text-muted read 4.47:1 in light). */
+/* The closing caption sits on the bare aurora: --text-body there (mock: --text-muted read 4.47:1 in
+   light), composed as fia-type-caption fia-fw-medium fia-tone-body. */
 .s01-note {
   margin: var(--sp-4) 0 0;
-  font: var(--fw-medium) var(--fs-caption) / 1.3 var(--font-core);
-  color: var(--text-body);
   text-align: center;
   text-wrap: pretty;
 }
@@ -66,15 +62,12 @@
   position: relative; /* above the kit GlassSurface refraction layer */
   padding: var(--sp-8) var(--sp-9) var(--sp-9);
 }
+/* Faces: frame/frame.css .fia-face-card-title / .fia-face-body with their tones. */
 .s01-state__title {
   margin: 0;
-  font: var(--type-card-title);
-  color: var(--text-title);
 }
 .s01-state__body {
   margin: var(--sp-4) 0 0;
-  font: var(--type-body);
-  color: var(--text-body);
 }
 
 /* 1× (Follows phone): one screen, as the mock — the picker takes the rest and its list scrolls inside

@@ -285,12 +285,18 @@ function ResultBand({
       data-state={queued ? 'queued' : 'received'}
     >
       <div className="fia-feedback__inner" role="status">
-        <p className="fia-feedback-band__title">
+        <p className="fia-feedback-band__title fia-type-subtitle fia-fw-semibold fia-lh-125 fia-tone-title">
           <Icon name={head.icon ?? (queued ? 'cloudOff' : 'check')} size={22} stroke={2} />
           <span>{head.words}</span>
         </p>
-        {queued && <p className="fia-feedback-band__text">{t('s.feedback.waiting-hint')}</p>}
-        <p className="fia-feedback-band__ref">{refLine}</p>
+        {queued && (
+          <p className="fia-feedback-band__text fia-type-body fia-lh-140 fia-tone-body">
+            {t('s.feedback.waiting-hint')}
+          </p>
+        )}
+        <p className="fia-feedback-band__ref fia-type-label fia-fw-medium fia-tone-body fia-tabular">
+          {refLine}
+        </p>
       </div>
     </GlassSurface>
   );
@@ -300,12 +306,12 @@ function YourFeedback({ items }: { items: ReturnType<Outbox['recent']> }) {
   if (!items.length) return null;
   return (
     <section aria-labelledby="s16-yours" className="fia-feedback-yours">
-      <h2 id="s16-yours" className="fia-overline">
+      <h2 id="s16-yours" className="fia-overline fia-overline--form">
         {t('s.feedback.yours')}
       </h2>
       <GlassSurface level={2} blur="medium" radius="xl" shadow="rest">
         <ul role="list" className="fia-feedback__inner">
-          {items.map((i) => {
+          {items.map((i, k) => {
             const ref = refOf(i.payload.id);
             const time = fmtTime(i.receivedAt ?? i.queuedAt);
             const row = glyphed(
@@ -319,7 +325,7 @@ function YourFeedback({ items }: { items: ReturnType<Outbox['recent']> }) {
               <li key={i.payload.id}>
                 <button
                   type="button"
-                  className="fia-feedback-row"
+                  className={`fia-feedback-row fia-bare fia-type-label fia-fw-medium fia-tone-title fia-tabular${k > 0 ? ' fia-divider' : ''}`}
                   data-status={i.status}
                   aria-label={`${row.words}. ${t('s.feedback.copy-ref', { ref })}`}
                   onClick={() => void globalThis.navigator?.clipboard?.writeText(i.payload.id)}

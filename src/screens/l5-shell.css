@@ -1,14 +1,13 @@
-/* Lane L5 shell (S15, S16). Tokens only; targets ≥ 48 px (R-603); logical props (R-606). Selectors no
-   TSX references (stepper, link rows, rights head, group header, visually-hidden) are deleted. */
+/* Lane L5 shell (S15, S16): layout only. Tokens only; targets ≥ 48 px (R-603); logical props (R-606).
+   Selectors no TSX references (stepper, link rows, rights head, group header, visually-hidden) are
+   deleted. Lift 2 dropped the visual declarations no element wore: .fia-segmented's radius, font,
+   colour and [aria-checked] outline (ViewToggle renders nowhere, and its tabs carry aria-selected),
+   and the feedback field's font and radius (kit GlassField sets both inline; the text area's
+   .fia-feedback--glass .fia-glass-area in tokens/alpha.css outweighs them). The rights text's mono
+   family is frame/frame.css .fia-mono. */
 .fia-segmented > button {
   min-height: var(--fia-tap-min);
   min-inline-size: var(--fia-tap-min);
-  border-radius: var(--fia-r-md);
-  font: inherit;
-  color: inherit;
-}
-.fia-segmented > [aria-checked='true'] {
-  outline: 2px solid var(--fia-primary);
 }
 .fia-segmented {
   display: flex;
@@ -34,14 +33,11 @@
   display: block;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  font-family: var(--fia-font-mono, monospace);
 }
 .fia-feedback textarea,
 .fia-feedback input {
   width: 100%;
   min-height: var(--fia-tap-min);
-  font: inherit;
-  border-radius: var(--fia-r-md);
   padding: var(--fia-space-4);
 }
 .fia-feedback textarea {

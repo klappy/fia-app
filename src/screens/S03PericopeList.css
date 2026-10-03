@@ -17,8 +17,7 @@
 .s03-quiet {
   min-height: 48px;
   padding: 10px 12px !important;
-  font-size: var(--fs-label) !important;
-  white-space: normal !important;
+  white-space: normal !important; /* size: frame/frame.css .fia-kit-label */
   text-align: start;
 }
 .s03-back {
@@ -49,8 +48,7 @@
 .s03-error,
 .s03-empty,
 .s03-failed {
-  margin: var(--sp-4) 0 0;
-  color: var(--text-body);
+  margin: var(--sp-4) 0 0; /* words: frame/frame.css .fia-tone-body */
 }
 
 /* The well: kit GlassSurface level 2; the list sits above the kit's refraction layer. */
@@ -95,14 +93,7 @@
   overscroll-behavior: contain;
 }
 
-/* a chosen row is lit (mock .s03-row.is-on) */
-.s03-row.is-on {
-  background: var(--glass-fill-3) !important;
-}
-/* Dark: on a chosen row the size line in --text-dim reads under 4.5:1 at 310% (mock rev3 contrast). */
-[data-theme='dark'] .s03-row.is-on {
-  --text-dim: var(--text-body);
-}
+/* a chosen row is lit (mock .s03-row.is-on): frame/frame.css .fia-row-on */
 .s03-row[aria-disabled='true'] {
   cursor: default !important;
 }
@@ -122,9 +113,6 @@
   align-items: center;
   gap: var(--sp-3);
 }
-.s03-size {
-  font-variant-numeric: tabular-nums;
-}
 .s03-meta svg,
 .s03-tail svg {
   flex: none;
@@ -138,23 +126,14 @@
 
 /* State chips (kit GlassChip). One width for Saved / Selected / Add in select mode, so the references
    line up (mock .s03-state); in browse the Saved chip stands alone in the meta. */
+/* Size: frame/frame.css .fia-kit-caption; the selected state (FE-2) is .fia-chip-on. */
 .s03-chip {
   justify-content: center;
-  font-size: var(--fs-caption) !important;
   padding: var(--sp-3) var(--sp-4) !important;
   white-space: normal !important;
 }
 .s03-title .s03-chip {
   min-width: calc(96px * min(var(--fia-text-scale), 2));
-}
-/* The GlassChip selected state (FE-2): title ink, semibold, brighter fill and a 1.5 px ring. */
-.s03-chip.is-on {
-  color: var(--text-title) !important;
-  font-weight: var(--fw-semibold) !important;
-  background: var(--glass-fill-4) !important;
-  box-shadow:
-    var(--inner-top),
-    0 0 0 1.5px var(--text-title);
 }
 .s03-title--stack {
   flex-direction: column;
@@ -181,11 +160,6 @@
   flex-wrap: wrap;
   gap: var(--sp-4);
 }
-.s03-summary__title {
-  font: var(--fw-semibold) var(--fs-label) / 1.3 var(--font-core);
-  color: var(--text-title);
-  font-variant-numeric: tabular-nums;
-}
 .s03-badge {
   white-space: normal !important;
 }
@@ -199,12 +173,11 @@
   gap: var(--sp-4);
   padding: var(--sp-6) var(--sp-8);
 }
+/* the bar: frame/frame.css .fia-skel-bar */
 .s03-skel {
   position: relative;
   display: block;
   height: 28px;
-  border-radius: var(--r-pill);
-  background: var(--glass-fill-2);
 }
 
 /* Large text (200% and 310%, mock html.fia-big): each row stacks title over its meta (kit CatalogRow is a

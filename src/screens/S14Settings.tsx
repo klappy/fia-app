@@ -135,12 +135,14 @@ export default function S14Settings() {
   const big = SIZE_K[settings.textSize] >= 2;
   const stacked = SIZE_K[settings.textSize] >= 1.5;
   const seg = (extra = '') =>
-    ['s14-seg', extra, stacked && 'is-vertical'].filter(Boolean).join(' ');
+    ['s14-seg fia-segs-kit', extra, stacked && 'is-vertical'].filter(Boolean).join(' ');
   const lang = autonym(settings.contentLanguage);
   const title = (
     <div className="s14-title">
       <FiaLogo />
-      <h1 className="s14-title-word">{t('s.settings.title')}</h1>
+      <h1 className="s14-title-word fia-face-card-title fia-ls-title fia-tone-title">
+        {t('s.settings.title')}
+      </h1>
     </div>
   );
 
@@ -168,7 +170,7 @@ export default function S14Settings() {
             </div>
           }
         >
-          <div className="fia-sheet-body s14-body">
+          <div className="fia-sheet-body fia-quiet-words s14-body">
             {big && <div className="s14-title-scroll">{title}</div>}
 
             <Group title={t('s.settings.text-size')}>
@@ -182,7 +184,7 @@ export default function S14Settings() {
                   label: (
                     <span className="s14-size">
                       <span
-                        className="s14-A"
+                        className="s14-A fia-ff-core fia-fw-semibold fia-lh-100 fia-tone-title"
                         aria-hidden="true"
                         style={{ fontSize: `${Math.round(13 * SIZE_K[s])}px` }}
                       >
@@ -193,7 +195,7 @@ export default function S14Settings() {
                   ),
                 }))}
               />
-              <div className="s14-sep" />
+              <div className="s14-sep fia-divider" />
               <SettingsRow
                 icon={<Icon name="maximize" size={18} />}
                 label={t('s.settings.easy-mode')}
@@ -286,7 +288,10 @@ export default function S14Settings() {
               <div className="s14-lang">
                 <Icon name="languages" size={18} />
                 <div className="s14-lang-text">
-                  <div className="s14-lang-word" dir="auto">
+                  <div
+                    className="s14-lang-word fia-type-label fia-fw-semibold fia-lh-125 fia-tone-title"
+                    dir="auto"
+                  >
                     {lang}
                   </div>
                   <div className="fia-caption s14-note">
@@ -298,7 +303,7 @@ export default function S14Settings() {
           </div>
         </GlassSheet>
         {failed && (
-          <ToastNotice kind="toast" tone="error" className="s14-toast">
+          <ToastNotice kind="toast" tone="error" className="s14-toast fia-type-toast">
             {t('s.settings.save-failed')}
           </ToastNotice>
         )}

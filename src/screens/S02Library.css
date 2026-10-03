@@ -9,13 +9,10 @@
 }
 
 /* Hero: the frame's own <h1> in the shared hero face (ScreenFrame titleHero, frame/frame.css .fia-hero);
-   the mock's .s02-hero sets its line at 1.15 (02-library.html:31), S03/S04's at 1.12. */
-[data-screen='S02'] .fia-screen__title {
-  line-height: 1.15;
-}
+   the mock's .s02-hero sets its line at 1.15 (02-library.html:31; titleClassName fia-lh-115), S03/S04's
+   at 1.12. */
 .s02-sub {
   margin: calc(-1 * var(--fia-space-4) + var(--sp-1)) 0 0;
-  color: var(--text-muted);
 }
 
 /* Search: kit GlassSearch draws a fixed 18 px glyph and a fixed height; the wrapper keeps a 48 px floor. */
@@ -60,31 +57,18 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   text-align: end;
-  color: var(--text-muted);
 }
 .s02-meta svg {
   flex: none;
   width: calc(14px * min(var(--fia-text-scale), 2));
   height: calc(14px * min(var(--fia-text-scale), 2));
 }
-.s02-saved {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-2);
-  color: var(--text-title);
-  font-weight: var(--fw-semibold);
-}
+/* Tones: frame/frame.css .fia-tone-title / .fia-tone-aside, .fia-fw-semibold. */
+.s02-saved,
 .s02-voice {
   display: inline-flex;
   align-items: center;
   gap: var(--sp-2);
-  color: var(--text-title);
-}
-.s02-voice.is-off {
-  color: var(--text-muted);
-}
-[data-theme='dark'] .s02-voice.is-off {
-  color: var(--text-body);
 }
 .s02-needs {
   white-space: normal;
@@ -144,10 +128,9 @@
   margin: 0;
   text-wrap: balance;
 }
-/* Kit StageRail segments and BeadStrip capsules paint --text-dim; re-point it to the plain-part token
-   (3:1 or more on the card) inside the recap only. */
+/* Kit StageRail segments and BeadStrip capsules paint --text-dim: the recap re-points it to the
+   plain-part token (frame/frame.css .fia-dim-plain). */
 .s02-recap {
-  --text-dim: var(--fia-kind-plain);
   display: grid;
   gap: var(--sp-4);
 }
@@ -160,11 +143,10 @@
   white-space: normal !important;
 }
 
-/* States */
+/* States (words: frame/frame.css .fia-tone-body) */
 .s02-empty,
 .s02-error p {
   margin: 0;
-  color: var(--text-body);
 }
 .s02-error {
   display: grid;
@@ -178,8 +160,4 @@
   position: relative;
   display: block;
   height: 48px;
-  border-top: var(--border-hairline);
-}
-.s02-skel:first-child {
-  border-top: none;
 }
