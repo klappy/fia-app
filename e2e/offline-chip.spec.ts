@@ -23,7 +23,7 @@ test('offline chip and needs-connection rows follow the connection', async ({ pa
   await rows.first().click();
   await expect(page.locator('[data-screen="S03"]')).toBeVisible();
   await expect(page.locator('header [data-role="offline-chip"]')).toBeVisible();
-  const pericope = page.locator('.fia-row[data-pack-id]').first();
+  const pericope = page.locator('[data-screen="S03"] button[data-pack-id]').first();
   await expect(pericope.locator('[data-role="needs-connection"]')).toBeVisible();
   await expect(pericope).toBeEnabled();
 
