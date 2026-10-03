@@ -31,7 +31,8 @@
 }
 
 /* ---------- screen layout: one phone screen at 1×, one scrolling column above (PRD § 8.5) ---------- */
-html:not([data-text-step]) .fia-screen:is([data-screen='S05'], [data-screen='S08'], [data-screen='S09']) {
+html:not([data-text-step])
+  .fia-screen:is([data-screen='S05'], [data-screen='S08'], [data-screen='S09']) {
   height: 100dvh;
   min-height: 0;
 }
@@ -40,7 +41,9 @@ html:not([data-text-step]) .fia-screen:is([data-screen='S05'], [data-screen='S08
   padding-bottom: 0;
   overflow: visible;
 }
-html:not([data-text-step]) .fia-screen:is([data-screen='S05'], [data-screen='S08'], [data-screen='S09']) > .fia-content {
+html:not([data-text-step])
+  .fia-screen:is([data-screen='S05'], [data-screen='S08'], [data-screen='S09'])
+  > .fia-content {
   flex: 1;
   min-height: 0;
   padding-bottom: 2px;
@@ -346,7 +349,9 @@ html[data-text-step='x310'] .fia-chips {
   z-index: 1;
   padding: 0 var(--fia-gutter) calc(var(--fia-safe-bottom) + 12px);
 }
-html[data-text-step] .fia-screen:is([data-screen='S05'], [data-screen='S08'], [data-screen='S09']) > .fia-thumb {
+html[data-text-step]
+  .fia-screen:is([data-screen='S05'], [data-screen='S08'], [data-screen='S09'])
+  > .fia-thumb {
   position: sticky;
   bottom: 0;
   margin-top: 12px;
