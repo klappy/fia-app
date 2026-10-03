@@ -31,12 +31,48 @@ jobs:
       - run: npm run test:contracts
       - run: npm run build
       - run: npx playwright install --with-deps chromium
-      - run: npx playwright test
+      # The visual baselines run in the `visual` job below, inside Playwright's pinned image.
+      - run: npx playwright test --grep-invert visual-baseline
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: test-results
           path: test-results
+          retention-days: 7
+  # Visual baselines (e2e/visual-baseline.spec.ts). Pixels depend on the machine's fonts and
+  # libraries, so the spec runs inside Playwright's pinned image (fonts pinned further by
+  # e2e/visual-fonts.conf), and the committed *-chromium-linux.png are that image's output. The tag must match @playwright/test in
+  # package.json. On failure the job uploads `visual-results` (expected / actual / diff) and
+  # `visual-baselines` (the snapshot folder re-rendered in this image): review the diffs,
+  # then commit the PNGs from `visual-baselines` for an intended change. CI never commits them.
+  visual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container:
+      image: mcr.microsoft.com/playwright:v1.56.1-noble
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run test:visual
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: visual-results
+          path: test-results
+          retention-days: 7
+      - name: Re-render the baselines in this image (artifact only)
+        if: failure()
+        run: npm run test:visual -- --update-snapshots=changed --retries=0
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: visual-baselines
+          path: e2e/visual-baseline.spec.ts-snapshots
           retention-days: 7
   # Pipeline unit + data tests (rights lines, tier bytes, contracts). Offline: reads committed data/ only.
   pipeline:
