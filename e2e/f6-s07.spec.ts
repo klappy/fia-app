@@ -208,3 +208,65 @@ for (const [textSize, label] of [
     });
   }
 }
+
+// F6-S24 (nodded mock cookbook design/alpha-v2-screens/24-sheet-forward-jump-guard.html): part 4 → part
+// 12 of step 3 passes the talk after part 7. The mock's regions and words, the two quiet ways out
+// ("Stay here" keeps the map and the position; "Go ahead anyway" jumps and leaves the talk undone).
+const guard = (page: Page) => page.locator('[role="dialog"].fia-sheet--jump');
+
+test('sheet 24 in glass: the jump as beads, the talk it passes in words, one primary', async ({
+  page,
+}) => {
+  await seed(page);
+  await page.goto('/overview');
+  await part(page, 'S03-U012').click();
+  const g = guard(page);
+  await expect(g).toBeVisible();
+  await expect(g.locator('.fia-sheet-brand .fia-logo')).toBeVisible();
+  await expect(g.locator('.fia-sheet-brand > span')).toHaveText('Jump to part 12?');
+  await expect(g).toContainText('From part 4 · Step 3, Defining the Scenes');
+  await expect(g.locator('.fia-jump__ends')).toContainText('Part 4, you are here');
+  await expect(g.locator('.fia-jump__ends')).toContainText('to part 12');
+  await expect(g.locator('.fia-jump__stop')).toHaveCount(1);
+  await expect(g.locator('.fia-jump__stopcap')).toHaveText(
+    'Talk together · after part 7 · not done yet',
+  );
+  await expect(g.locator('.fia-jump__quote')).toHaveText(/^“.+”$/);
+  await expect(g).toContainText(
+    'You would skip the talk after part 7. Going ahead will not mark it as done; you can come back to it from the Whole guide map.',
+  );
+  await expect(g.locator('.fia-sheet__close')).toHaveCount(0);
+  await expect(g.locator('[data-role="primary"]')).toHaveCount(1);
+  await expect(g.locator('[data-role="primary"]')).toHaveText('Go to the talk first');
+  // "Stay here": the map stays, the position stays.
+  await g.locator('[data-role="cancel"]').click();
+  await expect(guard(page)).toHaveCount(0);
+  await expect(part(page, 'S03-U004')).toHaveAttribute('aria-current', 'step');
+  // Asked again (not yet answered), then "Go ahead anyway": the guide opens at part 12.
+  await part(page, 'S03-U012').click();
+  await guard(page).locator('[data-role="go-ahead"]').click();
+  await expect(page).toHaveURL(/\/guide$/);
+  await expect(page.locator('.fia-guide')).toHaveAttribute('data-unit-id', 'S03-U012');
+});
+
+for (const [textSize, label] of [
+  ['max', '200%'],
+  ['huge', '310%'],
+] as const) {
+  test(`sheet 24 at ${label} text and 320 px: nothing runs past the phone`, async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 844 });
+    await seed(page, { textSize });
+    await page.goto('/overview');
+    await part(page, 'S03-U012').click();
+    await expect(guard(page)).toBeVisible();
+    const over = await page.evaluate(() =>
+      [...document.querySelectorAll('.fia-sheet--jump *')]
+        .filter((e) => {
+          const r = e.getBoundingClientRect();
+          return r.width > 0 && (r.right > innerWidth + 0.5 || r.left < -0.5);
+        })
+        .map((e) => e.className),
+    );
+    expect(over).toEqual([]);
+  });
+}
