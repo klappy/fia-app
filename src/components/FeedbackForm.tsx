@@ -59,17 +59,22 @@ export function FeedbackForm({
   };
   return (
     <div
-      className={['fia-feedback', 'fia-feedback--glass', className].filter(Boolean).join(' ')}
+      className={['fia-feedback', 'fia-feedback--glass', 'fia-kit-captions', className]
+        .filter(Boolean)
+        .join(' ')}
       {...stateAttrs(state)}
     >
       {paused && <p className="fia-caption fia-feedback__paused">{t('s.feedback.paused-note')}</p>}
-      <label htmlFor="fia-feedback-text" className="fia-feedback__prompt">
+      <label
+        htmlFor="fia-feedback-text"
+        className="fia-feedback__prompt fia-type-subtitle fia-fw-semibold fia-lh-125 fia-tone-title"
+      >
         {t('s.feedback.prompt')}
       </label>
       {/* Selected chip: glass + check + semibold (alpha.css), not the kit's --surface-inverse, so
           the primary stays the only dark element (mock 16-feedback.html, FilterChips.jsx:5). */}
       <FilterChips
-        className="fia-feedback__reasons"
+        className="fia-feedback__reasons fia-filter-kit"
         role="group"
         aria-label={t('s.feedback.prompt')}
         bleed={false}
@@ -117,15 +122,20 @@ export function FeedbackForm({
         className="fia-feedback__context"
       >
         <div className="fia-feedback__inner">
-          <h3 className="fia-overline">{t('s.feedback.attach-header').replace(/:\s*$/, '')}</h3>
+          <h3 className="fia-overline fia-overline--form">
+            {t('s.feedback.attach-header').replace(/:\s*$/, '')}
+          </h3>
           {contextLines.map((l) => (
-            <p key={l} className="fia-feedback__where">
+            <p
+              key={l}
+              className="fia-feedback__where fia-type-label fia-fw-semibold fia-tone-title"
+            >
               {l}
             </p>
           ))}
         </div>
       </GlassSurface>
-      <div className="fia-feedback__field">
+      <div className="fia-feedback__field fia-field-kit">
         <GlassField
           id="fia-feedback-contact"
           label={t('s.feedback.contact')}
