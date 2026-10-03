@@ -18,8 +18,7 @@
 .s04-back__button {
   min-height: 48px;
   padding: 10px 12px !important;
-  font-size: var(--fs-label) !important;
-  white-space: normal !important;
+  white-space: normal !important; /* size: frame/frame.css .fia-kit-label */
 }
 .s04-back__button svg {
   width: calc(18px * min(var(--fia-text-scale), 2));
@@ -34,8 +33,6 @@
 }
 .s04-sub {
   margin: var(--sp-2) 0 0;
-  font: var(--fw-medium) var(--fs-label) / 1.3 var(--font-core);
-  color: var(--text-body);
 }
 .s04-chips {
   display: flex;
@@ -43,8 +40,8 @@
   gap: var(--sp-3);
   margin-top: var(--sp-4);
 }
+/* size: frame/frame.css .fia-kit-caption */
 .s04-chip {
-  font-size: var(--fs-caption) !important;
   white-space: normal !important;
   max-width: 100%;
 }
@@ -91,15 +88,7 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
-.s04-word {
-  font: var(--fw-semibold) var(--fs-label) / 1.2 var(--font-core);
-  color: var(--text-title);
-}
-.s04-count {
-  font: var(--fw-regular) calc(11px * var(--fia-text-scale)) / 1.25 var(--font-core);
-  font-variant-numeric: tabular-nums;
-  color: var(--text-muted);
-}
+/* .s04-word, .s04-count: faces and tones from frame/frame.css, composed in S04PassageCard.tsx */
 /* .s04-note, .s04-rights, .s04-start: face frame/frame.css .fia-caption-v2 */
 .s04-note {
   margin: var(--sp-4) 0 0;

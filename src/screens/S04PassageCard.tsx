@@ -94,8 +94,12 @@ function Includes({ rows }: { rows: LegendRow[] }) {
                 <Bead kind={r.kind} state="done" size={size} color={kindColor(r.kind)} />
               </span>
               <span className="s04-kind__text">
-                <span className="s04-word">{r.word}</span>
-                <span className="s04-count">{r.count}</span>
+                <span className="s04-word fia-type-label fia-fw-semibold fia-lh-120 fia-tone-title">
+                  {r.word}
+                </span>
+                <span className="s04-count fia-type-small fia-lh-125 fia-tabular fia-tone-muted">
+                  {r.count}
+                </span>
               </span>
             </li>
           ))}
@@ -167,7 +171,7 @@ export default function S04PassageCard() {
           type="button"
           variant="quiet"
           size="md"
-          className="s04-back__button"
+          className="s04-back__button fia-kit-label"
           leading={<Icon name="chevronLeft" size={18} />}
           aria-label={t('s.passage.a11y.back', { book })}
           onClick={() => nav('/pericopes')}
@@ -180,10 +184,12 @@ export default function S04PassageCard() {
         <p className="fia-hero s04-hero" aria-hidden="true">
           {keepRef(guide.title)}
         </p>
-        <p className="s04-sub">{subLine(language, guide)}</p>
+        <p className="s04-sub fia-type-label fia-fw-medium fia-tone-body">
+          {subLine(language, guide)}
+        </p>
         <div className="s04-chips">
           <GlassChip
-            className="fia-badge s04-chip"
+            className="fia-badge fia-kit-caption s04-chip"
             data-voice={voice}
             leading={<Icon name={voice === 'ai' ? 'sparkle' : 'book'} size={13} />}
           >

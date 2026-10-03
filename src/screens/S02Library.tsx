@@ -67,20 +67,20 @@ function BookMeta({
   notYet?: string;
 }) {
   return (
-    <span className="s02-meta">
+    <span className="s02-meta fia-tone-muted">
       {b.saved > 0 && (
-        <span className="s02-saved">
+        <span className="s02-saved fia-tone-title fia-fw-semibold">
           <Icon name="check" size={14} />
           {t('s.library.saved-count', { n: b.saved })}
         </span>
       )}
       {b.voice === 'ai' ? (
-        <span className="s02-voice">
+        <span className="s02-voice fia-tone-title">
           <Icon name="sparkle" size={13} />
           {t('s.common.mark.ai-voice')}
         </span>
       ) : (
-        <span className="s02-voice is-off">{t('s.library.voice-not-yet')}</span>
+        <span className="s02-voice is-off fia-tone-aside">{t('s.library.voice-not-yet')}</span>
       )}
       {notYet ? (
         // GAP-NOPACK: a book with no passage that opens reads "not yet in {language}" in place of
@@ -159,6 +159,7 @@ export default function S02Library() {
       id="S02"
       title={t('s.library.title')}
       titleHero
+      titleClassName="fia-lh-115"
       primaryLabel={
         resumeEntry
           ? t('s.library.primary-continue', { ref: keepRef(resumeEntry.title) })
@@ -192,7 +193,7 @@ export default function S02Library() {
       </div>
       {snap.catalogStatus === 'error' && (
         <div role="alert" className="s02-error">
-          <p>{t('s.library.error')}</p>
+          <p className="fia-tone-body">{t('s.library.error')}</p>
           <GlassButton
             variant="quiet"
             leading={<Icon name="update" size={16} />}
@@ -213,12 +214,14 @@ export default function S02Library() {
           data-state="loading"
         >
           {[0, 1, 2, 3, 4].map((i) => (
-            <span key={i} className="s02-skel" aria-hidden="true" />
+            <span key={i} className="s02-skel fia-divider" aria-hidden="true" />
           ))}
         </GlassSurface>
       )}
       {snap.catalogStatus === 'ready' && shown.length === 0 && passages.length === 0 && (
-        <p className="s02-empty">{t('s.library.empty-search', { example: 'Mark 1' })}</p>
+        <p className="s02-empty fia-tone-body">
+          {t('s.library.empty-search', { example: 'Mark 1' })}
+        </p>
       )}
       {shown.length > 0 && (
         <GlassSurface
@@ -300,7 +303,7 @@ export default function S02Library() {
                 stage: recap.stepTitle,
               })}
             </p>
-            <div className="s02-recap">
+            <div className="s02-recap fia-dim-plain">
               <span className="fia-overline s02-overline">
                 {t('s.library.resume-where', {
                   n: recap.stepIndex + 1,

@@ -269,6 +269,38 @@ html.fia-scaled .fia-screen > .fia-thumb {
   color: inherit;
 }
 
+/* A hairline rule (an <hr>): no native bevel. */
+.fia-hr {
+  border: none;
+  border-top: var(--border-hairline);
+}
+
+/* ---------- display faces: a capped headline that grows with the text step ---------- */
+/* S01's "choose your language" hero (mock 01-first-run-language.html). */
+.fia-display {
+  font: var(--fw-bold) min(calc(26px * var(--fia-text-scale)), 62px) / 1.15 var(--font-core);
+  letter-spacing: -0.01em;
+  color: var(--text-title);
+}
+/* S18's "You finished …" headline (mock 18-completion.html). */
+.fia-display-sm {
+  font: var(--fw-bold) min(calc(22px * var(--fia-text-scale)), 58px) / 1.18 var(--font-core);
+  letter-spacing: -0.01em;
+  color: var(--text-title);
+}
+
+/* ---------- the done mark: glass, not ink; a mark, not a button (mock 18-completion.html) ---------- */
+.fia-done-mark {
+  border-radius: var(--r-pill);
+  background: var(--glass-fill-4);
+  border: var(--border-glass);
+  box-shadow:
+    var(--shadow-rest),
+    var(--inner-top),
+    inset 0 0 0 2px var(--text-title);
+  color: var(--text-title);
+}
+
 /* ---------- the step badge: number in a ringed glass disc (mock 07-overview.html:33-44) ---------- */
 .fia-step-badge {
   border-radius: var(--r-pill);
@@ -298,7 +330,12 @@ html.fia-scaled .fia-screen > .fia-thumb {
   color: var(--text-title);
 }
 
-/* ---------- sheet re-points ---------- */
+/* ---------- --text-dim re-points ---------- */
+/* Kit StageRail segments and BeadStrip capsules paint --text-dim; inside a recap they take the plain-part
+   token (3:1 or more on the card): S02's resume card, S18's recap. */
+.fia-dim-plain {
+  --text-dim: var(--fia-kind-plain);
+}
 /* Dark: the kit sheet's --material-floating is a mid grey; inside it the dim chevrons take
    --on-night-500 (S07's map sheet; mock 07-overview.html:65-72). Light unchanged. */
 [data-theme='dark'] .fia-sheet--night-dim > [role='dialog'] {
@@ -391,4 +428,12 @@ html.fia-scaled .fia-screen > .fia-thumb {
 }
 .fia-tone-dim {
   color: var(--text-dim);
+}
+/* An aside that steps back: muted in light, --text-body in dark where muted under-reads on a glass
+   card (S02's "voice not yet"). */
+.fia-tone-aside {
+  color: var(--text-muted);
+}
+[data-theme='dark'] .fia-tone-aside {
+  color: var(--text-body);
 }
