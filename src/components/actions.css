@@ -1,0 +1,18 @@
+/* Shared actions on the kit (QuietAction.tsx, KitPrimary in PrimaryButton.tsx): S13, sheets 22 / 23,
+   any glass screen. The kit GlassButton sets nowrap and its own padding inline (GlassButton.jsx:16),
+   so the quiet row needs !important to wrap at 200% / 310%. */
+.fia-quiet {
+  justify-self: start;
+  min-height: var(--fia-tap-min);
+  padding-inline: 4px !important;
+  white-space: normal !important;
+  text-align: start;
+  color: var(--text-body) !important;
+}
+.fia-quiet:disabled {
+  opacity: 0.45;
+}
+.fia-kit-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
