@@ -1,6 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { AbsentBadge, AudioControls, SecondaryAction, ToastNotice } from '../components';
+import { AbsentBadge, SecondaryAction, ToastNotice } from '../components';
+import { GuideTransport } from '../components/AudioControls';
+import { GlassButton, GlassSelect, GlassSurface, Icon } from '../components/glass';
+import { GuidePrimary, type GuideGlyph } from '../components/PrimaryButton';
+import { ProvenanceChip } from '../components/ProvenanceMark';
+import { CardViews, ProgressBand } from '../flow/ui/GuideChrome';
+import { iconSize, partItems, useTextScale, type CardView } from '../flow/ui/guideKit';
+import { useGuide } from '../flow/ui/useGuide';
+import { indexOf, unitAt } from '../flow/model';
+import type { ResourcesPack } from '../media/resources';
+import { formatClock } from '../media/seek';
 import { t } from '../i18n';
 import { languageName } from '../media/lang';
 import {
@@ -16,12 +26,7 @@ import {
 } from '../media/alignment';
 import { clipsFor, scriptureClipId, type NarrationManifest } from '../media/narration';
 import { selectNarration } from '../media/provenance';
-import {
-  readerEditions,
-  sameVerseIndex,
-  splitEditions,
-  type ScripturePack,
-} from '../media/scripture';
+import { readerEditions, sameVerseIndex, type ScripturePack } from '../media/scripture';
 import { PROVENANCE_SHEET_PATH, type ProvenanceSheetState } from '../media/sheet';
 import { useClip } from '../media/useClip';
 import {
@@ -34,8 +39,13 @@ import {
 } from '../media/usePack';
 import { ScreenFrame } from './ScreenFrame';
 
-// S08 — Scripture reader (spec 08): edition segments, verse text with word/verse band from a
-// C-12 sidecar bound to the playing clip, tap-to-seek, transport with provenance (R-503..R-505).
+// S08 — Scripture reader, v2 (spec 08 as wireframe; nodded mock cookbook design/alpha-v2-screens/
+// 08-scripture-reader.html; PRD § 4 S08 "the card's Text view"). Composed of S05's shared parts: the
+// glass frame (ScreenFrame), the progress band, the guide card with Guide · Text · Resources (CardViews,
+// Text active), the voice chip (ProvenanceChip → sheet 20), the thumb zone (GuideTransport + GuidePrimary,
+// the arc is the reading's elapsed time). Kept v1 bones: editions from the catalog (kit GlassSelect),
+// verse text with the word/verse band from a C-12 sidecar bound to the playing clip, tap a word or a
+// verse to seek, "Play this verse again", the untimed notice once per session (R-503..R-505, SB-6).
 let untimedNoticeShown = false; // SB-6: once per session
 
 export default function S08ScriptureReader() {
@@ -45,6 +55,14 @@ export default function S08ScriptureReader() {
   const unit = params.get('unit');
   const lang = packLanguage(packId);
   const online = useOnline();
+  const scale = useTextScale();
+  const { snap } = useGuide();
+  const guide = snap.guide && snap.guide.packId === packId ? snap.guide : undefined;
+  // The band follows the guide's own position (the reader never moves it, PRD § 8.1).
+  const guideUnit = guide ? snap.state?.unitId : undefined;
+  const resources = usePackFile<ResourcesPack>(packId, 'resources');
+  const gu = guide && guideUnit ? unitAt(guide, indexOf(guide, guideUnit)) : undefined;
+  const unitItems = gu ? partItems(gu, resources.status === 'ready' ? resources.data : null) : [];
   const scripture = usePackFile<ScripturePack>(packId, 'scripture');
   const narration = usePackFile<NarrationManifest>(packId, 'narration');
   const editions = useMemo(
@@ -52,7 +70,6 @@ export default function S08ScriptureReader() {
     [scripture],
   );
   const [edIdx, setEdIdx] = useState(0);
-  const [showMore, setShowMore] = useState(false);
   const [anchorRef, setAnchorRef] = useState<string | null>(null);
   const ed = editions[edIdx];
   const packEd =
@@ -145,7 +162,6 @@ export default function S08ScriptureReader() {
         : null,
     );
     setEdIdx(i);
-    setShowMore(false);
     const vi = sameVerseIndex(to, ref);
     setAnchorRef(to.verses[vi]?.ref ?? null);
   };
@@ -164,159 +180,174 @@ export default function S08ScriptureReader() {
           : t('s.scripture.primary-play');
 
   const title = scripture.status === 'ready' ? scripture.data.passage : t('s.common.loading');
-  const { inline, more } = splitEditions(editions);
+  const toGuide = () =>
+    nav(`/guide?pack=${encodeURIComponent(packId)}${unit ? `&unit=${unit}` : ''}`);
+  const toView = (v: CardView) => {
+    if (v === 'text') return;
+    if (v === 'guide') return toGuide();
+    nav(`/resources?pack=${encodeURIComponent(packId)}${unit ? `&unit=${unit}` : ''}`);
+  };
+  const glyph: GuideGlyph = clip.phase === 'playing' ? 'pause' : 'play';
+  const thumb =
+    primary && choice.clip ? (
+      <GuideTransport
+        part={scale > 1 ? 'primary' : 'all'}
+        time={
+          clip.duration
+            ? t('s.guide.clip-length', {
+                elapsed: formatClock(clip.elapsed),
+                total: formatClock(clip.duration),
+              })
+            : null
+        }
+        primary={
+          <GuidePrimary
+            glyph={glyph}
+            label={primary}
+            row={scale > 1}
+            arc={clip.duration ? { value: clip.elapsed / clip.duration } : undefined}
+            state={clip.phase === 'playing' ? 'playing' : 'default'}
+            onPress={clip.toggle}
+          />
+        }
+      />
+    ) : undefined;
+  const voiceWords = !choice.clip
+    ? !online
+      ? t('s.scripture.no-audio-offline', { name: ed?.short ?? '' })
+      : choice.silent === 'source-only-silent'
+        ? t('s.scripture.primary-source-only')
+        : t('s.common.mark.absent', { language: languageName(lang) })
+    : choice.mark === 'source'
+      ? t('s.common.mark.source')
+      : t('s.common.mark.ai-voice');
+  // Above 1× the views are a vertical list, first in this view (mock README § Large text).
+  const views = (
+    <CardViews active="text" count={unitItems.length || undefined} scale={scale} onView={toView} />
+  );
 
   return (
     <ScreenFrame
       id="S08"
       title={title}
+      titleHidden
       offline={!online}
-      primaryLabel={primary}
-      primaryState={clip.phase === 'playing' ? 'playing' : 'default'}
-      onPrimary={clip.toggle}
+      primaryLabel={null}
+      thumb={thumb}
     >
-      {unit && (
-        <SecondaryAction
-          label={`⟵ ${t('s.scripture.crumb', { n: unit })}`}
-          onPress={() => nav(`/guide?pack=${encodeURIComponent(packId)}&unit=${unit}`)}
-        />
-      )}
-      {scripture.status === 'loading' && <p className="fia-caption">{t('s.common.loading')}</p>}
-      {scripture.status === 'error' && (
-        <div role="alert">
-          <p>{t('s.scripture.error')}</p>
-          <SecondaryAction label={t('s.common.try-again')} onPress={scripture.retry} />
-        </div>
-      )}
-      {ed && (
-        <>
-          <div className="fia-segments" role="tablist" aria-label={t('s.scripture.edition-hint')}>
-            {inline.map((e, i) => (
-              <button
-                key={e.short}
-                type="button"
-                role="tab"
-                aria-selected={i === edIdx}
-                aria-label={t('s.scripture.a11y.edition', {
-                  name: e.short,
-                  language: languageName(e.language),
-                })}
-                onClick={() => switchEdition(i)}
-              >
-                {e.short}
-              </button>
-            ))}
-            {more.length > 0 && (
-              <button type="button" onClick={() => setShowMore((s) => !s)} aria-expanded={showMore}>
-                ▾ {t('s.scripture.more-editions')}
-              </button>
+      <div className="fia-guide fia-guide--text" data-edition={ed?.short}>
+        {guide && guideUnit && <ProgressBand guide={guide} unitId={guideUnit} scale={scale} />}
+        <GlassSurface level={2} blur="strong" radius="2xl" shadow="card" className="fia-guide-card">
+          <div className="fia-guide-card__inner">
+            {views}
+            {scripture.status === 'loading' && (
+              <p className="fia-caption">{t('s.common.loading')}</p>
+            )}
+            {scripture.status === 'error' && (
+              <div role="alert">
+                <p>{t('s.scripture.error')}</p>
+                <SecondaryAction label={t('s.common.try-again')} onPress={scripture.retry} />
+              </div>
+            )}
+            {ed && (
+              <>
+                <div className="fia-guide-card__voice">
+                  <ProvenanceChip
+                    provenance={choice.clip ? choice.mark : 'absent'}
+                    words={voiceWords}
+                    ariaLabel={t('s.guide.a11y.voice-chip', { mark: voiceWords })}
+                    iconSize={iconSize(14, scale)}
+                    onInfo={openSheet}
+                  />
+                </div>
+                <div className="fia-reader-tools">
+                  <GlassSelect
+                    className="fia-reader-edition"
+                    aria-label={t('s.scripture.edition-hint')}
+                    value={ed.short}
+                    options={editions.map((e) => e.short)}
+                    onChange={(v) => switchEdition(editions.findIndex((e) => e.short === v))}
+                  />
+                  {aligned && pos.verse >= 0 && (
+                    <GlassButton
+                      variant="quiet"
+                      size="md"
+                      className="fia-btn fia-quiet"
+                      data-role="replay-verse"
+                      leading={<Icon name="update" size={iconSize(18, scale)} />}
+                      onClick={() => clip.playFrom(seekToVerse(aligned, pos.verse) ?? 0)}
+                    >
+                      {t('s.scripture.replay-verse')}
+                    </GlassButton>
+                  )}
+                </div>
+                <p className="fia-caption fia-reader-long">
+                  {t('s.scripture.edition-long', {
+                    longName: ed.repo,
+                    language: languageName(ed.language),
+                  })}
+                </p>
+                {ed.fallback && <AbsentBadge language={languageName(lang)} />}
+                {ed.fallback && <p className="fia-caption">{t('s.scripture.english-fallback')}</p>}
+                <div className="fia-card-body">
+                  <div className="fia-text fia-reader-text" dir="auto" lang={ed.language}>
+                    {ed.verses.map((v, vi) => {
+                      const ai = aligned?.verses.findIndex((x) => x.sourceId === v.sourceId) ?? -1;
+                      const av = ai >= 0 ? aligned!.verses[ai] : null;
+                      const verseActive = ai >= 0 && ai === pos.verse;
+                      return (
+                        <p
+                          key={v.ref}
+                          id={`v-${v.ref}`}
+                          className="fia-text__verse"
+                          data-active={verseActive && mode === 'verse' ? true : undefined}
+                        >
+                          <button
+                            type="button"
+                            className="fia-text__vnum"
+                            aria-label={t('s.scripture.a11y.verse', { n: v.n })}
+                            onClick={() => tapVerse(vi, v.ref)}
+                          >
+                            {v.n}
+                          </button>
+                          {av && mode === 'word' && av.text === v.text ? (
+                            splitVerse(av).map((p, k) =>
+                              p.word === null ? (
+                                <span key={k}>{p.text}</span>
+                              ) : (
+                                <span
+                                  key={k}
+                                  className="fia-text__seg"
+                                  data-active={
+                                    verseActive && pos.word === p.word ? true : undefined
+                                  }
+                                  onClick={() => {
+                                    const s = seekToWord(aligned!, ai, p.word!);
+                                    if (s !== null) clip.playFrom(s);
+                                  }}
+                                >
+                                  {p.text}
+                                </span>
+                              ),
+                            )
+                          ) : (
+                            <span onClick={() => tapVerse(vi, v.ref)}>{v.text}</span>
+                          )}{' '}
+                        </p>
+                      );
+                    })}
+                  </div>
+                  {clip.phase === 'finished' && unit && (
+                    <SecondaryAction label={t('s.scripture.back-to-guide')} onPress={toGuide} />
+                  )}
+                  {clip.error && <p role="alert">{t('s.scripture.error')}</p>}
+                  {notice && <ToastNotice kind="inline">{notice}</ToastNotice>}
+                </div>
+              </>
             )}
           </div>
-          {showMore && (
-            <ul className="fia-list">
-              {more.map((e, j) => (
-                <li key={e.short}>
-                  <button type="button" onClick={() => switchEdition(inline.length + j)}>
-                    {e.short} {inline.length + j === edIdx ? '✓' : ''}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-          <p className="fia-caption">
-            {t('s.scripture.edition-long', {
-              longName: ed.repo,
-              language: languageName(ed.language),
-            })}
-          </p>
-          {ed.fallback && <AbsentBadge language={languageName(lang)} />}
-          {ed.fallback && <p className="fia-caption">{t('s.scripture.english-fallback')}</p>}
-          <div className="fia-text fia-text--scripture" dir="auto" lang={ed.language}>
-            {ed.verses.map((v, vi) => {
-              const ai = aligned?.verses.findIndex((x) => x.sourceId === v.sourceId) ?? -1;
-              const av = ai >= 0 ? aligned!.verses[ai] : null;
-              const verseActive = ai >= 0 && ai === pos.verse;
-              return (
-                <p
-                  key={v.ref}
-                  id={`v-${v.ref}`}
-                  className="fia-text__verse"
-                  data-active={verseActive && mode === 'verse' ? true : undefined}
-                >
-                  <button
-                    type="button"
-                    className="fia-text__vnum"
-                    aria-label={t('s.scripture.a11y.verse', { n: v.n })}
-                    onClick={() => tapVerse(vi, v.ref)}
-                  >
-                    {v.n}
-                  </button>{' '}
-                  {av && mode === 'word' && av.text === v.text ? (
-                    splitVerse(av).map((p, k) =>
-                      p.word === null ? (
-                        <span key={k}>{p.text}</span>
-                      ) : (
-                        <span
-                          key={k}
-                          className="fia-text__seg"
-                          data-active={verseActive && pos.word === p.word ? true : undefined}
-                          onClick={() => {
-                            const s = seekToWord(aligned!, ai, p.word!);
-                            if (s !== null) clip.playFrom(s);
-                          }}
-                        >
-                          {p.text}
-                        </span>
-                      ),
-                    )
-                  ) : (
-                    <span onClick={() => tapVerse(vi, v.ref)}>{v.text}</span>
-                  )}
-                </p>
-              );
-            })}
-          </div>
-          {clip.phase === 'finished' && unit && (
-            <SecondaryAction
-              label={t('s.scripture.back-to-guide')}
-              onPress={() => nav(`/guide?pack=${encodeURIComponent(packId)}&unit=${unit}`)}
-            />
-          )}
-          {choice.clip ? (
-            <AudioControls
-              provenance={choice.mark}
-              language={languageName(ed.fallback ? 'eng' : lang)}
-              elapsedSec={clip.elapsed}
-              totalSec={clip.duration}
-              onSeek={clip.seek}
-              onMarkInfo={openSheet}
-              state={clip.playing ? 'playing' : clip.error ? 'error' : 'default'}
-              hint={mode === 'word' ? t('s.scripture.hint-timed') : undefined}
-              leading={
-                aligned && pos.verse >= 0
-                  ? {
-                      label: t('s.scripture.replay-verse'),
-                      onPress: () => clip.playFrom(seekToVerse(aligned, pos.verse) ?? 0),
-                    }
-                  : undefined
-              }
-            />
-          ) : (
-            // Bide: L1 ships narration.json empty (AI Scripture narration is generated later,
-            // marked); until a clip exists the audio is honestly absent — no disabled primary.
-            <button type="button" className="fia-mark fia-mark--absent" onClick={openSheet}>
-              ◌{' '}
-              {!online
-                ? t('s.scripture.no-audio-offline', { name: ed.short })
-                : choice.silent === 'source-only-silent'
-                  ? t('s.scripture.primary-source-only')
-                  : t('s.common.mark.absent', { language: languageName(lang) })}
-            </button>
-          )}
-          {clip.error && <p role="alert">{t('s.scripture.error')}</p>}
-          {notice && <ToastNotice kind="inline">{notice}</ToastNotice>}
-        </>
-      )}
+        </GlassSurface>
+      </div>
     </ScreenFrame>
   );
 }
