@@ -69,9 +69,10 @@ test('a Text save opens S04 → S08 with no network', async ({ page, context }) 
   await cold(page, '/passage', 'S04');
   const saveRow = page.getByTestId('save-row');
   await saveRow.getByTestId('save-button').click();
-  await expect(saveRow.getByTestId('saved-row')).toContainText('Saved (Text, 0.5 MB)', {
-    timeout: 20_000,
-  });
+  // The verified state is the kit badge; the saved tier's cell carries its verified bytes.
+  await expect(saveRow.getByTestId('save-badge')).toHaveText('Saved · text', { timeout: 20_000 });
+  await expect(saveRow.locator('[data-tier="text"]')).toBeChecked();
+  await expect(saveRow.getByTestId('tier-size-text')).toHaveText('0.5 MB');
 
   // Drop the network: the page reports offline, and every request that reaches the network —
   // the page's or the service worker's — is aborted and recorded.
@@ -85,7 +86,11 @@ test('a Text save opens S04 → S08 with no network', async ({ page, context }) 
   // S04 passage card: title, the verified saved row, one primary.
   await cold(page, '/passage', 'S04');
   await expect(page.getByText(guide.title).first()).toBeVisible();
-  await expect(page.getByTestId('saved-row')).toContainText('Saved (Text, 0.5 MB)');
+  const savedCard = page.getByTestId('save-row');
+  await expect(savedCard.getByTestId('save-badge')).toHaveText('Saved · text');
+  await expect(savedCard.locator('[data-tier="text"]')).toBeChecked();
+  await expect(savedCard.getByTestId('tier-size-text')).toHaveText('0.5 MB');
+  await expect(savedCard.getByTestId('saved-row')).toContainText('Remove from this phone');
   await expect(page.locator('[data-role="primary"]')).toContainText('Start');
 
   // S05 guide: the primary opens the first unit.
