@@ -1,6 +1,6 @@
 {
   "name": "fia-app",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "FIA App — Familiarization · Internalization · Articulation. Guided oral Bible engagement, offline-first PWA.",
   "license": "MIT",
   "private": true,
@@ -15,11 +15,13 @@
     "tokens": "node scripts/build-tokens.mjs",
     "strings": "node scripts/extract-strings.mjs",
     "lint": "eslint . && prettier --check .",
+    "check:css": "node scripts/check-css-budget.mjs",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
     "test:contracts": "vitest run tests/contracts.test.ts",
     "test:e2e": "playwright test",
+    "test:visual": "playwright test e2e/visual-baseline.spec.ts",
     "smoke:deployed": "playwright test e2e/smoke.spec.ts e2e/deployed.spec.ts",
     "generate": "npm run tokens && npm run strings",
     "deploy": "wrangler deploy --env dev"

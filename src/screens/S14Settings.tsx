@@ -7,7 +7,6 @@ import {
   AuroraField,
   GlassSegmented,
   GlassSheet,
-  GlassSurface,
   Icon,
   type KitIconName,
 } from '../components/glass';
@@ -24,6 +23,7 @@ import {
   type TextSize,
   type Theme,
 } from '../settings';
+import { Group as SharedGroup } from '../frame/Group';
 
 // S14 Settings in glass (F6-S14; nodded mock cookbook design/alpha-v2-screens/14-settings.html, PRD § 4
 // row S14, § 8.5): a full-height kit GlassSheet with the FIA logo leading the title, one primary
@@ -96,18 +96,12 @@ function autonym(code: string): string {
   }
 }
 
-function Group({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className="s14-group" aria-label={title}>
-      <div className="fia-overline" aria-hidden="true">
-        {title}
-      </div>
-      <GlassSurface level={3} blur="soft" radius="xl" shadow="none" className="fia-well s14-card">
-        {children}
-      </GlassSurface>
-    </section>
-  );
-}
+/** A settings group: the shared Group as a named region (frame/Group.tsx). */
+const Group = ({ title, children }: { title: string; children: ReactNode }) => (
+  <SharedGroup title={title} region className="s14-group" wellClassName="s14-card">
+    {children}
+  </SharedGroup>
+);
 
 /** Icon + word option label; the selected one turns semibold with a heavier stroke (mock `opt`). */
 const opt = (icon: (stroke: number) => ReactNode, word: string, on: boolean) => (
@@ -141,12 +135,14 @@ export default function S14Settings() {
   const big = SIZE_K[settings.textSize] >= 2;
   const stacked = SIZE_K[settings.textSize] >= 1.5;
   const seg = (extra = '') =>
-    ['s14-seg', extra, stacked && 'is-vertical'].filter(Boolean).join(' ');
+    ['s14-seg fia-segs-kit', extra, stacked && 'is-vertical'].filter(Boolean).join(' ');
   const lang = autonym(settings.contentLanguage);
   const title = (
     <div className="s14-title">
       <FiaLogo />
-      <h1 className="s14-title-word">{t('s.settings.title')}</h1>
+      <h1 className="s14-title-word fia-face-card-title fia-ls-title fia-tone-title">
+        {t('s.settings.title')}
+      </h1>
     </div>
   );
 
@@ -174,7 +170,7 @@ export default function S14Settings() {
             </div>
           }
         >
-          <div className="s14-body">
+          <div className="fia-sheet-body fia-quiet-words s14-body">
             {big && <div className="s14-title-scroll">{title}</div>}
 
             <Group title={t('s.settings.text-size')}>
@@ -188,7 +184,7 @@ export default function S14Settings() {
                   label: (
                     <span className="s14-size">
                       <span
-                        className="s14-A"
+                        className="s14-A fia-ff-core fia-fw-semibold fia-lh-100 fia-tone-title"
                         aria-hidden="true"
                         style={{ fontSize: `${Math.round(13 * SIZE_K[s])}px` }}
                       >
@@ -199,7 +195,7 @@ export default function S14Settings() {
                   ),
                 }))}
               />
-              <div className="s14-sep" />
+              <div className="s14-sep fia-divider" />
               <SettingsRow
                 icon={<Icon name="maximize" size={18} />}
                 label={t('s.settings.easy-mode')}
@@ -292,7 +288,10 @@ export default function S14Settings() {
               <div className="s14-lang">
                 <Icon name="languages" size={18} />
                 <div className="s14-lang-text">
-                  <div className="s14-lang-word" dir="auto">
+                  <div
+                    className="s14-lang-word fia-type-label fia-fw-semibold fia-lh-125 fia-tone-title"
+                    dir="auto"
+                  >
                     {lang}
                   </div>
                   <div className="fia-caption s14-note">
@@ -304,7 +303,7 @@ export default function S14Settings() {
           </div>
         </GlassSheet>
         {failed && (
-          <ToastNotice kind="toast" tone="error" className="s14-toast">
+          <ToastNotice kind="toast" tone="error" className="s14-toast fia-type-toast">
             {t('s.settings.save-failed')}
           </ToastNotice>
         )}

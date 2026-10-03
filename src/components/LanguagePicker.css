@@ -62,52 +62,39 @@
 }
 
 /* Above 1× the kit's literal px scale with the text (PRD § 8.5; README § Kit gaps 3). */
-:root:is([data-text-step='x150'], [data-text-step='x200'], [data-text-step='x310'])
-  .fia-lp
-  > div:nth-of-type(2) {
+:root.fia-scaled .fia-lp > div:nth-of-type(2) {
   height: auto !important;
   min-height: 56px;
   padding: var(--sp-3) var(--sp-8) !important;
 }
-:root:is([data-text-step='x150'], [data-text-step='x200'], [data-text-step='x310'])
-  .fia-lp
-  > div:nth-of-type(2)
-  svg {
+:root.fia-scaled .fia-lp > div:nth-of-type(2) svg {
   width: 32px;
   height: 32px;
 }
-:root:is([data-text-step='x150'], [data-text-step='x200'], [data-text-step='x310'])
-  .fia-lp
-  span[lang] {
+:root.fia-scaled .fia-lp span[lang] {
   font-size: calc(15px * var(--fia-text-scale)) !important;
 }
-:root:is([data-text-step='x150'], [data-text-step='x200'], [data-text-step='x310'])
-  .fia-lp
-  [style*='9px/1.1'] {
+:root.fia-scaled .fia-lp [style*='9px/1.1'] {
   font-size: calc(9px * var(--fia-text-scale)) !important;
   padding: var(--sp-2) var(--sp-4) !important;
 }
-:root:is([data-text-step='x150'], [data-text-step='x200'], [data-text-step='x310'])
-  .fia-lp
-  [style*='8px/1.1'] {
+:root.fia-scaled .fia-lp [style*='8px/1.1'] {
   font-size: calc(8px * var(--fia-text-scale)) !important;
 }
-:root:is([data-text-step='x150'], [data-text-step='x200'], [data-text-step='x310'])
-  .fia-lp
-  span[style*='width: 14px'] {
+:root.fia-scaled .fia-lp span[style*='width: 14px'] {
   width: calc(14px * min(var(--fia-text-scale), 2)) !important;
   height: calc(10px * min(var(--fia-text-scale), 2)) !important;
 }
 
 /* 200% and up: the title row wraps (the count under the title); each row stacks autonym / English name / chips. */
-:root:is([data-text-step='x200'], [data-text-step='x310']) .fia-lp > div:nth-of-type(1) {
+:root.fia-big .fia-lp > div:nth-of-type(1) {
   flex-wrap: wrap;
 }
-:root:is([data-text-step='x200'], [data-text-step='x310']) .fia-lp button[data-code] {
+:root.fia-big .fia-lp button[data-code] {
   flex-direction: column !important;
   align-items: flex-start !important;
   gap: var(--sp-4) !important;
 }
-:root:is([data-text-step='x200'], [data-text-step='x310']) .fia-lp button > span:nth-child(2) {
+:root.fia-big .fia-lp button > span:nth-child(2) {
   flex-wrap: wrap !important;
 }

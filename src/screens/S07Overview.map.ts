@@ -7,17 +7,10 @@ import { position, skippedStops, stopAt, waitingStops } from '../flow/model';
 import type { FlowState } from '../flow/machine';
 import { unitKinds, type BeadKind, type BeadState } from '../flow/ui/band';
 import type { FlowGuide, GuideStop, GuideUnit } from '../flow/types';
+import { KINDS } from '../frame/kinds';
 
-/** Kind → shape and colour for the kit Bead / BeadStrip: the band's own map (components/ProgressRail.tsx KINDS). */
-export const MAP_KINDS = {
-  plain: { shape: 'circle', color: 'var(--fia-kind-plain)' },
-  scripture: { shape: 'square', color: 'var(--fia-kind-scripture)' },
-  term: { shape: 'diamond', color: 'var(--fia-kind-term)' },
-  media: { shape: 'triangle', color: 'var(--fia-kind-media)' },
-  video: { shape: 'screen', color: 'var(--fia-kind-media)' },
-  stop: { shape: 'bar', color: 'var(--fia-kind-stop)' },
-  end: { shape: 'bars', color: 'var(--fia-kind-stop)' },
-} as const;
+/** Kind → shape and colour for the kit Bead / BeadStrip: the one table (frame/kinds.ts KINDS). */
+export const MAP_KINDS = KINDS;
 
 /** A part's top kind: video > image/map > Scripture > key term > plain (PRD § 8.3; band.ts PRIORITY). */
 const PRIORITY: BeadKind[] = ['video', 'media', 'scripture', 'term'];

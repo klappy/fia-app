@@ -2,14 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SecondaryAction } from '../components';
 import { KitPrimary } from '../components/PrimaryButton';
-import {
-  CatalogRow,
-  FilterChips,
-  GlassButton,
-  GlassSearch,
-  GlassSurface,
-  Icon,
-} from '../components/glass';
+import { CatalogRow, FilterChips, GlassButton, GlassSearch, Icon } from '../components/glass';
 import { bandModel } from '../flow/ui/band';
 import { CardViews, ProgressBand } from '../flow/ui/GuideChrome';
 import {
@@ -35,6 +28,7 @@ import {
 import { PROVENANCE_SHEET_PATH, type ProvenanceSheetState } from '../media/sheet';
 import { DEFAULT_PACK, packLanguage, useOnline, usePackFile } from '../media/usePack';
 import { ScreenFrame } from './ScreenFrame';
+import { GuideCard } from '../frame/GuideCard';
 
 // S09 Resources, v2 (spec 09 as wireframe; nodded mock cookbook design/alpha-v2-screens/09-resources.html;
 // PRD § 4 S09 "the card's Resources view; S09b all resources is a layer"). Composed of S05's shared parts:
@@ -154,6 +148,7 @@ export default function S09ResourcesCatalog() {
   if (all)
     return (
       <ScreenFrame
+        frame="guide"
         id="S09"
         title={title}
         offline={!online}
@@ -169,15 +164,10 @@ export default function S09ResourcesCatalog() {
         }
       >
         <div className="fia-guide fia-guide--resources" data-layer="all">
-          <GlassSurface
-            level={2}
-            blur="strong"
-            radius="2xl"
-            shadow="card"
-            className="fia-guide-card"
-          >
-            <div className="fia-guide-card__inner">
-              <div className="fia-card-body fia-res">
+          <GuideCard
+            bodyClassName="fia-res"
+            body={
+              <>
                 <GlassSearch
                   placeholder={t('s.resources.search-placeholder')}
                   aria-label={t('s.common.search')}
@@ -204,9 +194,9 @@ export default function S09ResourcesCatalog() {
                   <p className="fia-caption">{t('s.resources.empty-search')}</p>
                 )}
                 <ul className="fia-res__list">{shown.map((c, i) => row(c, i))}</ul>
-              </div>
-            </div>
-          </GlassSurface>
+              </>
+            }
+          />
         </div>
       </ScreenFrame>
     );
@@ -217,13 +207,21 @@ export default function S09ResourcesCatalog() {
   );
 
   return (
-    <ScreenFrame id="S09" title={title} titleHidden offline={!online} primaryLabel={null}>
+    <ScreenFrame
+      frame="guide"
+      id="S09"
+      title={title}
+      titleHidden
+      offline={!online}
+      primaryLabel={null}
+    >
       <div className="fia-guide fia-guide--resources">
         {guide && guideUnit && <ProgressBand guide={guide} unitId={guideUnit} scale={scale} />}
-        <GlassSurface level={2} blur="strong" radius="2xl" shadow="card" className="fia-guide-card">
-          <div className="fia-guide-card__inner">
-            {views}
-            <div className="fia-card-body fia-res">
+        <GuideCard
+          views={views}
+          bodyClassName="fia-res"
+          body={
+            <>
               <p className="fia-overline">{t('s.guide.in-this-part')}</p>
               {status}
               {res.status === 'ready' && mine.length === 0 && (
@@ -244,9 +242,9 @@ export default function S09ResourcesCatalog() {
                 meta={<Icon name="chevronRight" size={iconSize(16, scale)} />}
                 onOpen={() => nav(`/resources${here}&all=1`)}
               />
-            </div>
-          </div>
-        </GlassSurface>
+            </>
+          }
+        />
       </div>
     </ScreenFrame>
   );

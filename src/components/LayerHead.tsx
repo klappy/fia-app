@@ -1,4 +1,6 @@
 import { Bead } from './glass';
+import { KINDS } from '../frame/kinds';
+import type { BeadKind } from '../flow/ui/band';
 
 // Layer-frame head (PRD § 8.1 Layer; nodded mocks design/alpha-v2-screens/10-key-term.html,
 // 11-image-viewer.html, 12-video.html): the item's kind bead (the guide's coded marks, PRD § 8.3)
@@ -7,11 +9,11 @@ import { Bead } from './glass';
 // Shared by S10, S11 and S12; any layer that opens one resource can use it.
 export type LayerKind = 'term' | 'image' | 'map' | 'video';
 
-const BEAD: Record<LayerKind, { kind: string; color: string }> = {
-  term: { kind: 'term', color: 'var(--fia-kind-term)' },
-  image: { kind: 'media', color: 'var(--fia-kind-media)' },
-  map: { kind: 'media', color: 'var(--fia-kind-media)' },
-  video: { kind: 'video', color: 'var(--fia-kind-media)' },
+const BEAD: Record<LayerKind, { kind: BeadKind; color: string }> = {
+  term: { kind: 'term', color: KINDS.term.color },
+  image: { kind: 'media', color: KINDS.media.color },
+  map: { kind: 'media', color: KINDS.media.color },
+  video: { kind: 'video', color: KINDS.video.color },
 };
 
 export interface LayerHeadProps {

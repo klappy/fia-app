@@ -168,7 +168,7 @@ export function ProvenanceSheet({
           {rows.map((r, i) => (
             <li key={r.label}>
               <CatalogRow
-                className="fia-more__row"
+                className="fia-catalog fia-more__row"
                 first={i === 0}
                 onOpen={() => go(r.to)}
                 title={

@@ -1,8 +1,8 @@
 import { useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MoreSheet, PrimaryButton, type UiState } from '../components';
-import { FiaLogo } from '../components/FiaLogo';
-import { AuroraField, GlassButton, GlassSurface, Icon } from '../components/glass';
+import { AuroraField } from '../components/glass';
+import { Header } from '../frame/Header';
 import { t } from '../i18n';
 import { useOnline } from '../offline/useOnline';
 import { browserStore, loadSettings } from '../settings';
@@ -25,17 +25,24 @@ export interface ScreenFrameProps {
   thumb?: ReactNode;
   /** The screen title is for screen readers only (S05: the reference is the band's overline). */
   titleHidden?: boolean;
+  /** The screen title is the page's hero face (S02; frame/frame.css .fia-hero). */
+  titleHero?: boolean;
+  /** Shared classes the title composes over its face (S02: frame/frame.css .fia-lh-115 on the hero). */
+  titleClassName?: string;
   /**
    * Layer frame (PRD § 8.1 Layer; mock CloseHeader, design/alpha-v2-screens/_frame.js:241-249): the one
    * labelled way back sits in the glass header as a quiet kit GlassButton with a chevron. Ignored on
    * hub frames, which carry the language pill and Explore instead.
    */
   close?: { label: string; onPress: () => void };
+  /**
+   * Frame variant (mock Frame, design/alpha-v2-screens/_frame.js:412-419), a prop rather than per-screen
+   * CSS: `guide` is one phone screen at 1× with the card taking the free height and the thumb zone
+   * at the bottom, one scrolling column above 1× (S05, S06, S08, S09; frame/frame.css).
+   */
+  frame?: 'guide';
   children?: ReactNode;
 }
-
-// Header pill geometry from the nodded mock (_frame.js:224-229): 48 px tall, 10 × 16 padding.
-const PILL = { minHeight: 48, padding: '10px 16px' };
 
 function autonym(code: string): string {
   try {
@@ -54,7 +61,10 @@ export function ScreenFrame({
   offline,
   thumb,
   titleHidden,
+  titleHero,
+  titleClassName,
   close,
+  frame,
   children,
 }: ScreenFrameProps) {
   const def = screenById(id);
@@ -75,61 +85,24 @@ export function ScreenFrame({
       drift={false}
       style={{ height: 'auto', minHeight: '100dvh', overflow: 'clip' }}
     >
-      <div className="fia-screen" data-screen={def.id} data-offline={isOffline || undefined}>
-        <header className="fia-header-wrap">
-          <GlassSurface level={3} blur="strong" radius="pill" shadow="card" className="fia-header">
-            <div className="fia-header-grid">
-              <FiaLogo />
-              {isOffline && (
-                // toast-notice.md `chip`: persistent while offline; text, never icon-only.
-                <span
-                  className="fia-notice fia-notice--offline-chip"
-                  role="status"
-                  data-role="offline-chip"
-                >
-                  <span aria-hidden="true">⊘ </span>
-                  {t('s.common.offline-chip')}
-                </span>
-              )}
-              {close && !hub && (
-                <GlassButton
-                  variant="quiet"
-                  className="fia-pill fia-close-back"
-                  style={PILL}
-                  leading={<Icon name="chevronLeft" size={18} />}
-                  onClick={close.onPress}
-                >
-                  {close.label}
-                </GlassButton>
-              )}
-              {hub && (
-                <GlassButton
-                  variant="glass"
-                  className="fia-pill fia-lang"
-                  style={PILL}
-                  leading={<Icon name="languages" size={18} />}
-                  aria-label={t('s.common.language-pill', { language: lang })}
-                  onClick={() => go('/?mode=use')}
-                >
-                  {lang}
-                </GlassButton>
-              )}
-              {hub && (
-                <GlassButton
-                  variant="glass"
-                  className="fia-pill fia-explore"
-                  style={PILL}
-                  leading={<Icon name="compass" size={18} />}
-                  aria-haspopup="dialog"
-                  onClick={() => setExplore(true)}
-                >
-                  {t('s.common.explore')}
-                </GlassButton>
-              )}
-            </div>
-          </GlassSurface>
-        </header>
-        <h1 className={`fia-title fia-screen__title${titleHidden ? ' fia-sr-only' : ''}`}>
+      <div
+        className="fia-screen"
+        data-screen={def.id}
+        data-frame={frame}
+        data-offline={isOffline || undefined}
+      >
+        <Header
+          offline={isOffline}
+          close={close}
+          hub={
+            hub
+              ? { lang, onLang: () => go('/?mode=use'), onExplore: () => setExplore(true) }
+              : undefined
+          }
+        />
+        <h1
+          className={`fia-title fia-screen__title${titleHero ? ' fia-hero' : ''}${titleHidden ? ' fia-sr-only' : ''}${titleClassName ? ` ${titleClassName}` : ''}`}
+        >
           {heading}
         </h1>
         <main className="fia-content">{children}</main>

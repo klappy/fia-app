@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PericopeCard } from '../components';
 import {
@@ -27,6 +27,9 @@ import {
   type RecapTail,
 } from './libraryModel';
 import { ScreenFrame } from './ScreenFrame';
+import { KINDS } from '../frame/kinds';
+import { keepRef } from '../frame/text';
+import { useBig } from '../frame/scale';
 import './S02Library.css';
 
 // S02 Library (02-library.md; R-303, R-410, R-702, R-706) in glass, F6-S02. Nodded mock
@@ -38,19 +41,6 @@ import './S02Library.css';
 
 /** Counts read "1,497" (the strings are English today; the plural word is chosen by `n`). */
 const num = (n: number) => n.toLocaleString('en');
-
-/** "Mark 1:1–13" never breaks at the dash (mock _frame.js:83). */
-const keepRef = (s: string) => s.replace(/–/g, '\u2060–\u2060');
-
-/** 200% and 310% text (mock html.fia-big): live from <html data-text-step> (settings/apply.ts). */
-const BIG_STEPS = new Set(['x200', 'x310']);
-const readBig = () =>
-  BIG_STEPS.has(globalThis.document?.documentElement.getAttribute('data-text-step') ?? '');
-const watchBig = (f: () => void) => {
-  const mo = new MutationObserver(f);
-  mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-text-step'] });
-  return () => mo.disconnect();
-};
 
 function tailWords(tail: RecapTail): string {
   switch (tail.kind) {
@@ -65,16 +55,6 @@ function tailWords(tail: RecapTail): string {
   }
 }
 
-// Bead colours: the app's --fia-kind-* tokens (PRD § 8.3) with the F5 values as fallbacks, so the
-// recap reads the same before and after the guide's tokens load. Shapes stay the kit's.
-const KINDS = {
-  plain: { shape: 'circle', color: 'var(--s02-kind-plain)' },
-  scripture: { shape: 'square', color: 'var(--s02-kind-scripture)' },
-  term: { shape: 'diamond', color: 'var(--s02-kind-term)' },
-  stop: { shape: 'bar', color: 'var(--s02-kind-stop)' },
-  end: { shape: 'bars', color: 'var(--s02-kind-stop)' },
-} as const;
-
 /** Per-book meta (mock BookMeta): saved count, voice line (PoC floor a1), passage count. */
 function BookMeta({
   b,
@@ -87,20 +67,20 @@ function BookMeta({
   notYet?: string;
 }) {
   return (
-    <span className="s02-meta">
+    <span className="s02-meta fia-tone-muted">
       {b.saved > 0 && (
-        <span className="s02-saved">
+        <span className="s02-saved fia-tone-title fia-fw-semibold">
           <Icon name="check" size={14} />
           {t('s.library.saved-count', { n: b.saved })}
         </span>
       )}
       {b.voice === 'ai' ? (
-        <span className="s02-voice">
+        <span className="s02-voice fia-tone-title">
           <Icon name="sparkle" size={13} />
           {t('s.common.mark.ai-voice')}
         </span>
       ) : (
-        <span className="s02-voice is-off">{t('s.library.voice-not-yet')}</span>
+        <span className="s02-voice is-off fia-tone-aside">{t('s.library.voice-not-yet')}</span>
       )}
       {notYet ? (
         // GAP-NOPACK: a book with no passage that opens reads "not yet in {language}" in place of
@@ -128,7 +108,7 @@ export default function S02Library() {
   const session = flowSession();
   const snap = useFlow(session);
   const [q, setQ] = useState('');
-  const big = useSyncExternalStore(watchBig, readBig, () => false);
+  const big = useBig();
   const online = useOnline();
   const { packs } = useOffline();
   useEffect(() => {
@@ -178,6 +158,8 @@ export default function S02Library() {
     <ScreenFrame
       id="S02"
       title={t('s.library.title')}
+      titleHero
+      titleClassName="fia-lh-115"
       primaryLabel={
         resumeEntry
           ? t('s.library.primary-continue', { ref: keepRef(resumeEntry.title) })
@@ -211,7 +193,7 @@ export default function S02Library() {
       </div>
       {snap.catalogStatus === 'error' && (
         <div role="alert" className="s02-error">
-          <p>{t('s.library.error')}</p>
+          <p className="fia-tone-body">{t('s.library.error')}</p>
           <GlassButton
             variant="quiet"
             leading={<Icon name="update" size={16} />}
@@ -232,12 +214,14 @@ export default function S02Library() {
           data-state="loading"
         >
           {[0, 1, 2, 3, 4].map((i) => (
-            <span key={i} className="s02-skel" aria-hidden="true" />
+            <span key={i} className="s02-skel fia-divider" aria-hidden="true" />
           ))}
         </GlassSurface>
       )}
       {snap.catalogStatus === 'ready' && shown.length === 0 && passages.length === 0 && (
-        <p className="s02-empty">{t('s.library.empty-search', { example: 'Mark 1' })}</p>
+        <p className="s02-empty fia-tone-body">
+          {t('s.library.empty-search', { example: 'Mark 1' })}
+        </p>
       )}
       {shown.length > 0 && (
         <GlassSurface
@@ -306,16 +290,20 @@ export default function S02Library() {
             <div className="s02-resume__top">
               <span className="fia-overline s02-overline">{t('s.library.resume-overline')}</span>
               {savedIds.has(resumeEntry.packId) && (
-                <SyncBadge state="ok" label={t('s.common.explore.saved')} className="s02-badge" />
+                <SyncBadge
+                  state="ok"
+                  label={t('s.common.explore.saved')}
+                  className="fia-badge s02-badge"
+                />
               )}
             </div>
-            <p className="s02-resume__title">
+            <p className="fia-title-v2 s02-resume__title">
               {t('s.library.resume-heading', {
                 ref: keepRef(resumeEntry.title),
                 stage: recap.stepTitle,
               })}
             </p>
-            <div className="s02-recap">
+            <div className="s02-recap fia-dim-plain">
               <span className="fia-overline s02-overline">
                 {t('s.library.resume-where', {
                   n: recap.stepIndex + 1,

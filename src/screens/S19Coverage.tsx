@@ -3,7 +3,6 @@ import {
   useEffect,
   useMemo,
   useState,
-  useSyncExternalStore,
   type ComponentType,
   type HTMLAttributes,
 } from 'react';
@@ -33,6 +32,8 @@ import {
   type TypeCard,
 } from './coverageCards';
 import { ScreenFrame } from './ScreenFrame';
+import { kindColor } from '../frame/kinds';
+import { iconSz, useTextScale } from '../frame/scale';
 import './S19Coverage.css';
 
 // S19 Coverage in glass, F6-S19 (19-coverage.md; R-304, R-314). Nodded mock
@@ -47,27 +48,6 @@ import './S19Coverage.css';
 type Html = HTMLAttributes<HTMLElement> & Record<`data-${string}`, string | undefined>;
 const GlassChip = KitGlassChip as unknown as ComponentType<GlassChipProps & Html>;
 const Bead = KitBead as unknown as ComponentType<BeadProps & Html>;
-
-/** Text scale from <html data-text-step> (settings/apply.ts), live; the mock's --fia-text-scale. */
-const SCALE: Record<string, number> = { x150: 1.5, x200: 2, x310: 3.1 };
-const readScale = () =>
-  SCALE[globalThis.document?.documentElement.getAttribute('data-text-step') ?? ''] ?? 1;
-const watchScale = (f: () => void) => {
-  const mo = new MutationObserver(f);
-  mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-text-step'] });
-  return () => mo.disconnect();
-};
-/** Glyphs grow with the text, capped at 2× (mock iconSz); beads at 2.4× (mock k()). */
-const iconSz = (n: number, scale: number) => Math.round(n * Math.min(scale, 2));
-
-/** Bead colours: the app's --fia-kind-* contrast variants (PRD § 8.3), set in S19Coverage.css. */
-const KIND_COLOR: Record<TypeCard['kind'], string> = {
-  plain: 'var(--s19-kind-plain)',
-  scripture: 'var(--s19-kind-scripture)',
-  term: 'var(--s19-kind-term)',
-  media: 'var(--s19-kind-media)',
-  video: 'var(--s19-kind-media)',
-};
 
 /** KIT GAP (K1): Icon has no minus. Lucide 'minus' in the kit Icon's style: the [—] not-yet mark. */
 function MinusGlyph({ size }: { size: number }) {
@@ -95,16 +75,23 @@ function MarkGlyph({ mark, size }: { mark: Exclude<CellMark, 'none'>; size: numb
   return <Icon name={mark === 'ai' ? 'sparkle' : 'check'} size={size} />;
 }
 
+/** Shared faces (frame/frame.css): a cell's column label, and a sentence row. */
+const LABEL = 's19-label fia-type-label fia-fw-medium fia-lh-120 fia-tone-aside';
+const ROW = 's19-row fia-type-label fia-fw-medium fia-tone-title';
+
 function Mark({ cell, glyph }: { cell: Cell; glyph: number }) {
   if (cell.mark === 'none')
     return (
-      <span className="s19-none" data-mark="none">
+      <span
+        className="s19-none fia-type-label fia-fw-medium fia-lh-120 fia-tone-muted"
+        data-mark="none"
+      >
         {cell.words}
       </span>
     );
   return (
     <GlassChip
-      className="s19-chip"
+      className="fia-badge fia-kit-chip s19-chip"
       data-mark={cell.mark}
       leading={<MarkGlyph mark={cell.mark} size={glyph} />}
     >
@@ -118,24 +105,24 @@ function Card({ card, scale }: { card: TypeCard; scale: number }) {
   return (
     <li data-type={card.key}>
       <GlassSurface level={2} blur="medium" radius="lg" shadow="rest" className="s19-card">
-        <h2 className="s19-type">
+        <h2 className="s19-type fia-type-subtitle fia-fw-semibold fia-lh-120 fia-tone-title">
           <span className="s19-bead">
             <Bead
               kind={card.kind}
               state="done"
               size={10 * Math.min(scale, 2.4)}
-              color={KIND_COLOR[card.kind]}
+              color={kindColor(card.kind)}
             />
           </span>
           {t(`s.coverage.type.${card.key}`)}
         </h2>
         <div className="s19-cells">
           <span className="s19-cell" data-col="text">
-            <span className="s19-label">{t('s.coverage.col.text')}</span>
+            <span className={LABEL}>{t('s.coverage.col.text')}</span>
             <Mark cell={card.text} glyph={glyph} />
           </span>
           <span className="s19-cell" data-col="audio">
-            <span className="s19-label">{t('s.coverage.col.audio')}</span>
+            <span className={LABEL}>{t('s.coverage.col.audio')}</span>
             <Mark cell={card.audio} glyph={glyph} />
           </span>
         </div>
@@ -167,7 +154,7 @@ export default function S19Coverage() {
   );
   const [data, setData] = useState<Loaded | null>(null);
   const [failed, setFailed] = useState(false);
-  const scale = useSyncExternalStore(watchScale, readScale, () => 1);
+  const scale = useTextScale();
 
   const load = useCallback(() => {
     setFailed(false);
@@ -197,22 +184,27 @@ export default function S19Coverage() {
     (globalThis.history?.state as { idx?: number } | null)?.idx ? nav(-1) : nav('/library');
 
   return (
-    <ScreenFrame id="S19" title={title} primaryLabel={null}>
+    <ScreenFrame id="S19" title={title} titleHidden primaryLabel={null}>
       <div className="s19-head">
         {/* The frame's <h1> names the page for assistive tech; this is its visible line (mock header). */}
-        <p className="s19-hero" aria-hidden="true">
+        <p
+          className="s19-hero fia-type-title fia-fw-semibold fia-lh-120 fia-tone-title"
+          aria-hidden="true"
+        >
           {title}
         </p>
         <GlassButton
           variant="quiet"
-          className="s19-back"
+          className="s19-back fia-kit-label"
           leading={<Icon name="chevronLeft" size={iconSz(18, scale)} />}
           onClick={back}
         >
           {t('s.common.back')}
         </GlassButton>
       </div>
-      <p className="s19-sub">{t('s.coverage.subtitle')}</p>
+      <p className="s19-sub fia-type-body fia-fw-medium fia-tone-muted">
+        {t('s.coverage.subtitle')}
+      </p>
 
       {failed && (
         <GlassSurface
@@ -223,7 +215,7 @@ export default function S19Coverage() {
           className="s19-card s19-failed"
         >
           <div role="alert" className="s19-error">
-            <p className="s19-row">{t('s.coverage.error')}</p>
+            <p className={ROW}>{t('s.coverage.error')}</p>
             <GlassButton
               variant="glass"
               className="s19-retry"
@@ -245,7 +237,12 @@ export default function S19Coverage() {
           {/* The key first, so the marks are read before the cards that use them (pl-v21-support-13). */}
           <div className="s19-keys" role="list" aria-label={t('s.coverage.key.label')}>
             {view.marks.map((m) => (
-              <span key={m} className="s19-key" role="listitem" data-mark={m}>
+              <span
+                key={m}
+                className="s19-key fia-type-caption fia-fw-medium fia-lh-125 fia-tone-body"
+                role="listitem"
+                data-mark={m}
+              >
                 <MarkGlyph mark={m} size={iconSz(14, scale)} />
                 {m === 'on'
                   ? t('s.coverage.key.on', { language })
@@ -268,7 +265,7 @@ export default function S19Coverage() {
             className="s19-voice"
             data-voice={view.voice}
           >
-            <p className="s19-row">
+            <p className={ROW}>
               <Icon name="headphones" size={iconSz(16, scale)} />
               {view.voice === 'ai'
                 ? t('s.coverage.voice', { language })
