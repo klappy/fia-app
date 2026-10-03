@@ -184,7 +184,7 @@ export const SCREENS: readonly ScreenDef[] = [
     path: '/downloads',
     titleKey: 's.downloads.title',
     primaryKey: 's.downloads.primary.save-passage',
-    dock: true,
+    dock: false,
     kind: 'screen',
   },
   {
