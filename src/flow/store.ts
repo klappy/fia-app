@@ -2,7 +2,7 @@
 // Storage failure is a status, not an error; restore validates against the schema and the
 // loaded pack, drops what no longer matches, and never autoplays (C-09 description, R-410).
 import { C09, C11, errorText, flowValidator } from './contracts';
-import { initialState, type FlowState } from './machine';
+import { audible, initialState, type FlowState } from './machine';
 import { indexOf, stopAt } from './model';
 import type { FlowGuide } from './types';
 
@@ -226,12 +226,11 @@ export function restoreSession(
   }
   const unitId = known(w.position.unitId) ? w.position.unitId : base.unitId;
   const stop = stopAt(g, unitId);
+  const hasAudio = audible(g, base, unitId);
   // Mirror `enter` (machine.ts): with narration, a stop waits only if the session was saved
   // on it (attachedStopId), so restore never skips a stop unit's unplayed narration.
   const atStop =
-    stop &&
-    !discussed.includes(stop.id) &&
-    (!base.hasAudio || w.position.attachedStopId === stop.id);
+    stop && !discussed.includes(stop.id) && (!hasAudio || w.position.attachedStopId === stop.id);
   const view: View = w.view === 'overview' || w.view === 'single-script' ? w.view : 'guide';
   return {
     view,
@@ -239,18 +238,13 @@ export function restoreSession(
     state: {
       ...base,
       unitId,
+      hasAudio,
       visited: w.position.visited.filter(known),
       played,
       discussed,
       finished: w.position.finished,
       // restore never autoplays (C-09): a stop waits, anything else is ready, never playing.
-      phase: w.position.finished
-        ? 'finished'
-        : atStop
-          ? 'stop'
-          : base.hasAudio
-            ? 'idle'
-            : 'next-ready',
+      phase: w.position.finished ? 'finished' : atStop ? 'stop' : hasAudio ? 'idle' : 'next-ready',
     },
   };
 }

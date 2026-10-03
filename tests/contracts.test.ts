@@ -13,8 +13,8 @@ const schemas = files.map((f) => JSON.parse(readFileSync(join(dir, f), 'utf8')) 
 const validator = createValidator(schemas);
 
 describe('contracts', () => {
-  it('has all 18 schemas', () => {
-    expect(files).toHaveLength(18);
+  it('has all 19 schemas (18 contracts + the C-13 pack-rights projection)', () => {
+    expect(files).toHaveLength(19);
   });
   for (const [i, s] of schemas.entries()) {
     it(`${files[i]}: shape, then examples[0] validates`, () => {
@@ -32,6 +32,30 @@ describe('contracts', () => {
       }
     });
   }
+  // BL8: each pack's rights.json is the C-13 projection the device reads (src/settings/rights.ts parsePackRights).
+  const packsDir = join(process.cwd(), 'data/packs');
+  for (const p of readdirSync(packsDir).filter((d) => /^[a-z]{3}\./.test(d))) {
+    it(`data/packs/${p}/rights.json validates against c13-pack-rights`, () => {
+      const doc: unknown = JSON.parse(readFileSync(join(packsDir, p, 'rights.json'), 'utf8'));
+      const r = validator.validate(
+        'https://fia.klappy.dev/contracts/c13-pack-rights.schema.json',
+        doc,
+      );
+      expect(r.errors, JSON.stringify(r.errors, null, 2)).toEqual([]);
+    });
+  }
+  // F5 stand-in (RULING § 2026-10-02 ~17:22 ET): the PoC-clip manifest is C-05 in the frozen shape, so
+  // B2b's pack replaces it with no screen change.
+  it('src/media/standin/eng.MRK-1-1-13.narration.json validates against c05', () => {
+    const doc: unknown = JSON.parse(
+      readFileSync(join(process.cwd(), 'src/media/standin/eng.MRK-1-1-13.narration.json'), 'utf8'),
+    );
+    const r = validator.validate(
+      'https://fia.klappy.dev/contracts/c05-narration-manifest.schema.json',
+      doc,
+    );
+    expect(r.errors, JSON.stringify(r.errors, null, 2)).toEqual([]);
+  });
   it('rejects an instance that breaks a pattern', () => {
     const r = validator.validate('https://fia.klappy.dev/contracts/c10-settings.schema.json', {
       schemaVersion: 'nope',

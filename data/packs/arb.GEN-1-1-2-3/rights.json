@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "packId": "arb.GEN-1-1-2-3",
+  "source": "C-13 data/rights/records.json",
+  "sources": [
+    {
+      "id": "FIATranslationGuide@eb74445",
+      "collection": "FIATranslationGuide",
+      "revision": "eb744452eb8d7c852caadde9d3181cddfe571119",
+      "holders": [
+        "Word Collective",
+        "Mission Mutual"
+      ],
+      "licence": {
+        "name": "CC BY-SA 4.0 license",
+        "url": "https://creativecommons.org/licenses/by-sa/4.0/legalcode.en"
+      },
+      "url": "https://github.com/BibleAquifer/FIATranslationGuide",
+      "discrepancies": []
+    },
+    {
+      "id": "FIAKeyTerms@a392606",
+      "collection": "FIAKeyTerms",
+      "revision": "a39260670bba9d87d902e0fa0ae447341343481f",
+      "holders": [
+        "Word Collective",
+        "Mission Mutual"
+      ],
+      "licence": {
+        "name": "CC BY-SA 4.0 license",
+        "url": "https://creativecommons.org/licenses/by-sa/4.0/legalcode.en"
+      },
+      "url": "https://github.com/BibleAquifer/FIAKeyTerms",
+      "discrepancies": [
+        "license_info.title (\"Familiarization, Internalization, Articulation (Fia) Terms\") differs from resource title (\"Familiarization, Internalization, Articulation (FIA) Key Terms\")"
+      ]
+    },
+    {
+      "id": "ArabicVanDyckBible@a78f023",
+      "collection": "ArabicVanDyckBible",
+      "revision": "a78f02395753d3baa64dab21fd08e254aafe8b00",
+      "holders": [
+        "Public Domain"
+      ],
+      "licence": {
+        "name": "Public Domain CC0",
+        "url": "https://creativecommons.org/public-domain/cc0/"
+      },
+      "url": "https://github.com/BibleAquifer/ArabicVanDyckBible",
+      "discrepancies": [
+        "license_info.title (\"Van Dyck Bible\") differs from resource title (\"Arabic Van Dyck Bible\")"
+      ]
+    },
+    {
+      "id": "BiblicaOpenNewArabicVersion2012@c7078f9",
+      "collection": "BiblicaOpenNewArabicVersion2012",
+      "revision": "c7078f9acb609647add7d1422b57a19ad99c2666",
+      "holders": [
+        "Biblica"
+      ],
+      "licence": {
+        "name": "CC BY-SA 4.0 license",
+        "url": "https://creativecommons.org/licenses/by-sa/4.0/legalcode.en"
+      },
+      "url": "https://github.com/BibleAquifer/BiblicaOpenNewArabicVersion2012",
+      "discrepancies": []
+    }
+  ]
+}

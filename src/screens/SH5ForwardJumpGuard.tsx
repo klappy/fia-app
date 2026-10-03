@@ -33,6 +33,7 @@ export function ForwardJumpSheet({
   const rest = stops.length - listed.length;
   return (
     <Sheet
+      brand
       open={open}
       title={many ? t('s.jump.title.many', { k: stops.length }) : t('s.jump.title.one')}
       primaryLabel={many ? t('s.jump.primary.many') : t('s.jump.primary.one')}
@@ -65,6 +66,7 @@ export default function SH5ForwardJumpGuard() {
   const nav = useNavigate();
   return (
     <Sheet
+      brand
       title={t('s.jump.title.one')}
       primaryLabel={t('s.jump.cancel')}
       onClose={() => nav('/overview')}

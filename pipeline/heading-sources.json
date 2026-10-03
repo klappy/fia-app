@@ -1,0 +1,544 @@
+{
+  "schemaVersion": 1,
+  "book": "MRK",
+  "pinnedAt": "2026-10-02",
+  "about": "BL4a heading gather registry (cookbook work/active/2026-10-02-fia-pericope-subtitles TICKET.md § 3 USE set): Aquifer pins first at the sources.json commits, then eBible and OEB. eBible zips are pinned by sha256; ETag/Last-Modified are freshness hints only. Sources are living (RULING @d10f1fd): a changed sha256 is reported as drift, never guessed.",
+  "neverRead": [
+    "TBI",
+    "CUV-T",
+    "TPI2008",
+    "VanDyck",
+    "LSG1910"
+  ],
+  "notReadPinCovers": {
+    "hin2017": "IRV",
+    "swhonen": "OKCV",
+    "cmncbs": "OCCB-S",
+    "cmncbt": "OCCB-T",
+    "arbnav": "NAV2012",
+    "engbsb": "BSB"
+  },
+  "held": [
+    "fraLSG",
+    "cmn-cu89s",
+    "cmn-cu89t",
+    "arb-vd",
+    "pesOPV"
+  ],
+  "excluded": [
+    "NET",
+    "EMTV",
+    "Barkly",
+    "NNA",
+    "tpiOTNT",
+    "BLP",
+    "TB",
+    "indayt"
+  ],
+  "sources": [
+    {
+      "id": "BSB",
+      "lang": "eng",
+      "kind": "aquifer",
+      "repo": "BereanStandardBible",
+      "url": "https://github.com/BibleAquifer/BereanStandardBible",
+      "path": "eng/usfm/41MRKBSB.SFM",
+      "revisionKind": "git",
+      "freshness": {
+        "commit": "87858d1e28ab728249d9fb50667170c194c6b013"
+      },
+      "licence": "CC0-1.0",
+      "holder": "Berean Standard Bible",
+      "rewordOk": true
+    },
+    {
+      "id": "IRV",
+      "lang": "hin",
+      "kind": "aquifer",
+      "repo": "IndianRevisedVersion",
+      "url": "https://github.com/BibleAquifer/IndianRevisedVersion",
+      "path": "hin/usfm/41MRKIRVHin.SFM",
+      "revisionKind": "git",
+      "freshness": {
+        "commit": "3726b2dc729252e1bc2884a7d87b511e2ad04790"
+      },
+      "licence": "CC-BY-SA-4.0",
+      "holder": "Bridge Connectivity Solutions",
+      "rewordOk": true
+    },
+    {
+      "id": "OCCB-S",
+      "lang": "zhs",
+      "kind": "aquifer",
+      "repo": "BiblicaOpenChineseContemporary2023Simplified",
+      "url": "https://github.com/BibleAquifer/BiblicaOpenChineseContemporary2023Simplified",
+      "path": "zhs/usfm/41MRKBOCCB2023S.SFM",
+      "revisionKind": "git",
+      "freshness": {
+        "commit": "a16778d13e6416300f3b36d193d7acc7784c8df8"
+      },
+      "licence": "CC-BY-SA-4.0",
+      "holder": "Biblica",
+      "rewordOk": true
+    },
+    {
+      "id": "OCCB-T",
+      "lang": "zht",
+      "kind": "aquifer",
+      "repo": "BiblicaOpenChineseContemporary2023Traditional",
+      "url": "https://github.com/BibleAquifer/BiblicaOpenChineseContemporary2023Traditional",
+      "path": "zht/usfm/41MRKBOCCB2023T.SFM",
+      "revisionKind": "git",
+      "freshness": {
+        "commit": "b6296b2bc848c8e60f8defb97fbe443ceadc38b5"
+      },
+      "licence": "CC-BY-SA-4.0",
+      "holder": "Biblica",
+      "rewordOk": true
+    },
+    {
+      "id": "NAV2012",
+      "lang": "arb",
+      "kind": "aquifer",
+      "repo": "BiblicaOpenNewArabicVersion2012",
+      "url": "https://github.com/BibleAquifer/BiblicaOpenNewArabicVersion2012",
+      "path": "arb/usfm/41MRKONAV.SFM",
+      "revisionKind": "git",
+      "freshness": {
+        "commit": "c7078f9acb609647add7d1422b57a19ad99c2666"
+      },
+      "licence": "CC-BY-SA-4.0",
+      "holder": "Biblica",
+      "rewordOk": true
+    },
+    {
+      "id": "OICNT",
+      "lang": "ind",
+      "kind": "aquifer",
+      "repo": "BiblicaOpenIndonesianContemporaryNewTestament2025",
+      "url": "https://github.com/BibleAquifer/BiblicaOpenIndonesianContemporaryNewTestament2025",
+      "path": "ind/usfm/41MRKBOKKPB.SFM",
+      "revisionKind": "git",
+      "freshness": {
+        "commit": "801802204c8915575946c36f05a326a01234ef5d"
+      },
+      "licence": "CC-BY-SA-4.0",
+      "holder": "Biblica",
+      "rewordOk": true
+    },
+    {
+      "id": "OKCV",
+      "lang": "swh",
+      "kind": "aquifer",
+      "repo": "OpenKiswahiliContemporaryVersion",
+      "url": "https://github.com/BibleAquifer/OpenKiswahiliContemporaryVersion",
+      "path": "swh/usfm/41MRKONEN.SFM",
+      "revisionKind": "git",
+      "freshness": {
+        "commit": "9ac324e660f64c752a70b4df0f012f906ad173ac"
+      },
+      "licence": "CC-BY-SA-4.0",
+      "holder": "Biblica",
+      "rewordOk": true
+    },
+    {
+      "id": "OBBR",
+      "lang": "bis",
+      "kind": "aquifer",
+      "repo": "OpenBislamaBibleRevised",
+      "url": "https://github.com/BibleAquifer/OpenBislamaBibleRevised",
+      "path": "bis/usfm/41MRKOBBR.SFM",
+      "revisionKind": "git",
+      "freshness": {
+        "commit": "f8be807d6011d03e976667d6aab6160e988e2901"
+      },
+      "licence": "CC-BY-SA-4.0",
+      "holder": "Mission Mutual",
+      "rewordOk": true,
+      "strip": [
+        "line-break-slashes"
+      ]
+    },
+    {
+      "id": "OEB",
+      "lang": "eng",
+      "kind": "git",
+      "repo": "openenglishbible/Open-English-Bible",
+      "url": "https://github.com/openenglishbible/Open-English-Bible",
+      "rawUrl": "https://raw.githubusercontent.com/openenglishbible/Open-English-Bible/{commit}/{path}",
+      "path": "artifacts/us-release/usfm/41-Mark.usfm",
+      "revisionKind": "git",
+      "freshness": {
+        "commit": "1965127de5c3c103af3fdbc9288c1abec5f39994"
+      },
+      "licence": "CC0-1.0",
+      "holder": "Open English Bible",
+      "rewordOk": true
+    },
+    {
+      "id": "TCENT",
+      "lang": "eng",
+      "kind": "ebible",
+      "ebibleId": "engtcent",
+      "url": "https://ebible.org/Scriptures/engtcent_usfm.zip",
+      "path": "*MRK*.usfm",
+      "revisionKind": "sha256",
+      "freshness": {
+        "sha256": "13ef9e472e906d2328da50a3153200be62fc2b0ee7e20f5593413771c1e11baa",
+        "etag": "6abc94ed-cd993",
+        "lastModified": "Wed, 30 Sep 2026 04:49:49 GMT"
+      },
+      "licence": "CC-BY-4.0",
+      "holder": "Robert Adam Boyd",
+      "rewordOk": true,
+      "note": "Licensor name may not be used for an adaptation (TICKET § 3)."
+    },
+    {
+      "id": "T4T",
+      "lang": "eng",
+      "kind": "ebible",
+      "ebibleId": "eng-t4t",
+      "url": "https://ebible.org/Scriptures/eng-t4t_usfm.zip",
+      "path": "*MRK*.usfm",
+      "revisionKind": "sha256",
+      "freshness": {
+        "sha256": "40c959989897d793a84f8cc42dbc3e21b0c6f8cf95e03f1f9fca7de053bbef80",
+        "etag": "6a76cdb9-39466f",
+        "lastModified": "Sat, 08 Aug 2026 06:33:29 GMT"
+      },
+      "licence": "CC-BY-SA-4.0",
+      "holder": "Ellis W. Deibler, Jr.",
+      "rewordOk": true
+    },
+    {
+      "id": "F35",
+      "lang": "eng",
+      "kind": "ebible",
+      "ebibleId": "engf35",
+      "url": "https://ebible.org/Scriptures/engf35_usfm.zip",
+      "path": "*MRK*.usfm",
+      "revisionKind": "sha256",
+      "freshness": {
+        "sha256": "b77629b530e4f74d12ace5d933413f16a0ad42547b3cc556a4cd30719f90d53e",
+        "etag": "6a76cb97-1419b0",
+        "lastModified": "Sat, 08 Aug 2026 06:24:23 GMT"
+      },
+      "licence": "CC-BY-SA-4.0",
+      "holder": "Wilbur N. Pickering",
+      "rewordOk": true,
+      "strip": [
+        "f35-date-tail"
+      ]
+    },
+    {
+      "id": "PEV",
+      "lang": "eng",
+      "kind": "ebible",
+      "ebibleId": "engPEV",
+      "url": "https://ebible.org/Scriptures/engPEV_usfm.zip",
+      "path": "*MRK*.usfm",
+      "revisionKind": "sha256",
+      "freshness": {
+        "sha256": "79f49ed1602e5cbe2287cb25636f07e474c05fa3f47f1017b886bcf75dca4195",
+        "etag": "6ab4b22b-10f649",
+        "lastModified": "Thu, 24 Sep 2026 05:16:27 GMT"
+      },
+      "licence": "CC-BY-SA-4.0",
+      "holder": "Wycliffe Bible Translators Australia",
+      "rewordOk": true
+    },
+    {
+      "id": "spaonbv",
+      "lang": "spa",
+      "kind": "ebible",
+      "ebibleId": "spaonbv",
+      "url": "https://ebible.org/Scriptures/spaonbv_usfm.zip",
+      "path": "*MRK*.usfm",
+      "revisionKind": "sha256",
+      "freshness": {
+        "sha256": "8f8e1027cd84bb8784c17a7cc0c5c27f68b5de0dafd027f958a64dd69df9cc18",
+        "etag": "6a76c39d-17f4bb",
+        "lastModified": "Sat, 08 Aug 2026 05:50:21 GMT"
+      },
+      "licence": "CC-BY-SA-4.0",
+      "holder": "Biblica",
+      "rewordOk": true
+    },
+    {
+      "id": "spapddpt",
+      "lang": "spa",
+      "kind": "ebible",
+      "ebibleId": "spapddpt",
+      "url": "https://ebible.org/Scriptures/spapddpt_usfm.zip",
+      "path": "*MRK*.usfm",
+      "revisionKind": "sha256",
+      "freshness": {
+        "sha256": "5f1ec376ba89f31dabea0715daa22daf33be405c58548993940cd109a41cadc8",
+        "etag": "6a76cfd7-25a198",
+        "lastModified": "Sat, 08 Aug 2026 06:42:31 GMT"
+      },
+      "licence": "CC-BY-4.0",
+      "holder": "Asociacion Biblica Latinoamericana",
+      "rewordOk": true
+    },
+    {
+      "id": "francl",
+      "lang": "fra",
+      "kind": "ebible",
+      "ebibleId": "francl",
+      "url": "https://ebible.org/Scriptures/francl_usfm.zip",
+      "path": "*MRK*.usfm",
+      "revisionKind": "sha256",
+      "freshness": {
+        "sha256": "db9866bb24f0a47ac12fb1499dc161d8b6e73007109925ca46ab84f0e34ce8b0",
+        "etag": "6ab9d288-38e26f",
+        "lastModified": "Mon, 28 Sep 2026 02:35:52 GMT"
+      },
+      "licence": "CC-BY-SA-4.0",
+      "holder": "Fraternité de Tibériade",
+      "rewordOk": true
+    },
+    {
+      "id": "hincv",
+      "lang": "hin",
+      "kind": "ebible",
+      "ebibleId": "hincv",
+      "url": "https://ebible.org/Scriptures/hincv_usfm.zip",
+      "path": "*MRK*.usfm",
+      "revisionKind": "sha256",
+      "freshness": {
+        "sha256": "761e8d0d37dea02b84f9ef464985f26da5b7e5e81ad8a5102b16c73358814ab5",
+        "etag": "6a76b04d-20c416",
+        "lastModified": "Sat, 08 Aug 2026 04:27:57 GMT"
+      },
+      "licence": "CC-BY-SA-4.0",
+      "holder": "Biblica",
+      "rewordOk": true
+    },
+    {
+      "id": "portft",
+      "lang": "por",
+      "kind": "ebible",
+      "ebibleId": "portft",
+      "url": "https://ebible.org/Scriptures/portft_usfm.zip",
+      "path": "*MRK*.usfm",
+      "revisionKind": "sha256",
+      "freshness": {
+        "sha256": "21e846c62f53ce501f7adaa4571023a8d2bb8828915081dcc7451e323be2bf2a",
+        "etag": "6a76bfb6-b16c8",
+        "lastModified": "Sat, 08 Aug 2026 05:33:42 GMT"
+      },
+      "licence": "CC-BY-SA-4.0",
+      "holder": "Ellis W. Deibler, Jr.",
+      "rewordOk": true,
+      "strip": [
+        "tema-label"
+      ]
+    },
+    {
+      "id": "ind",
+      "lang": "ind",
+      "kind": "ebible",
+      "ebibleId": "ind",
+      "url": "https://ebible.org/Scriptures/ind_usfm.zip",
+      "path": "*MRK*.usfm",
+      "revisionKind": "sha256",
+      "freshness": {
+        "sha256": "77e21b41503c51d839eacad4960362b3eab8f24768c5803ac90c4be7bbf9a6ba",
+        "etag": "6a76b31d-14f572",
+        "lastModified": "Sat, 08 Aug 2026 04:39:57 GMT"
+      },
+      "licence": "CC-BY-SA-4.0",
+      "holder": "Albata",
+      "rewordOk": true,
+      "note": "TSI."
+    },
+    {
+      "id": "indags",
+      "lang": "ind",
+      "kind": "ebible",
+      "ebibleId": "indags",
+      "url": "https://ebible.org/Scriptures/indags_usfm.zip",
+      "path": "*MRK*.usfm",
+      "revisionKind": "sha256",
+      "freshness": {
+        "sha256": "094937a17db2fe4f7c9645c83c4295c8289aa10b86f9fdc4b79eec9e04dc9ff6",
+        "etag": "6a76b2d0-6e039",
+        "lastModified": "Sat, 08 Aug 2026 04:38:40 GMT"
+      },
+      "licence": "CC-BY-SA-4.0",
+      "holder": "Jonathan Gallagher",
+      "rewordOk": true
+    },
+    {
+      "id": "npioncb",
+      "lang": "nep",
+      "kind": "ebible",
+      "ebibleId": "npioncb",
+      "url": "https://ebible.org/Scriptures/npioncb_usfm.zip",
+      "path": "*MRK*.usfm",
+      "revisionKind": "sha256",
+      "freshness": {
+        "sha256": "de7b40c8ad60f3f46e5cefb3efbe0a6f1ae94c0a4611e55ac51d23c2b2cad9cd",
+        "etag": "6a76bde2-1f6a73",
+        "lastModified": "Sat, 08 Aug 2026 05:25:54 GMT"
+      },
+      "licence": "CC-BY-SA-4.0",
+      "holder": "Biblica",
+      "rewordOk": true,
+      "note": "Pinned ONCV has 0 headings."
+    },
+    {
+      "id": "swhonmm",
+      "lang": "swh",
+      "kind": "ebible",
+      "ebibleId": "swhonmm",
+      "url": "https://ebible.org/Scriptures/swhonmm_usfm.zip",
+      "path": "*MRK*.usfm",
+      "revisionKind": "sha256",
+      "freshness": {
+        "sha256": "0d855899cee752cdc1e41ee9f5529ea250ff2dd68700d6a0747dfeaa5c0190de",
+        "etag": "6a76c473-16e0af",
+        "lastModified": "Sat, 08 Aug 2026 05:53:55 GMT"
+      },
+      "licence": "CC-BY-SA-4.0",
+      "holder": "Biblica",
+      "rewordOk": true
+    },
+    {
+      "id": "pesopcb",
+      "lang": "fas",
+      "kind": "ebible",
+      "ebibleId": "pesopcb",
+      "url": "https://ebible.org/Scriptures/pesopcb_usfm.zip",
+      "path": "*MRK*.usfm",
+      "revisionKind": "sha256",
+      "freshness": {
+        "sha256": "7512f11346d71e43e7e1658c39a82120854ba6ed2924c41a038e7b474f162ad8",
+        "etag": "6a76bfec-1ada1b",
+        "lastModified": "Sat, 08 Aug 2026 05:34:36 GMT"
+      },
+      "licence": "CC-BY-SA-4.0",
+      "holder": "Biblica",
+      "rewordOk": true
+    }
+  ],
+  "grounding": {
+    "eng": {
+      "source": "BSB",
+      "kind": "aquifer",
+      "repo": "BereanStandardBible",
+      "commit": "87858d1e28ab728249d9fb50667170c194c6b013",
+      "path": "eng/usfm/41MRKBSB.SFM"
+    },
+    "spa": {
+      "source": "RV1909",
+      "kind": "aquifer",
+      "repo": "ReinaValera1909",
+      "commit": "84a071324be17c7c66db17dd204d7804e66d728b",
+      "path": "spa/usfm/41MRKRV09.SFM"
+    },
+    "fra": {
+      "source": "AFBRT",
+      "kind": "aquifer",
+      "repo": "AquiferFrenchBibleReferenceText",
+      "commit": "087e6c54329b5ed13de377b283d713f9ff5eae7b",
+      "path": "fra/usfm/41MRKAFBRT.SFM",
+      "note": "Not LSG1910 (fraLSG HOLD)."
+    },
+    "hin": {
+      "source": "IRV",
+      "kind": "aquifer",
+      "repo": "IndianRevisedVersion",
+      "commit": "3726b2dc729252e1bc2884a7d87b511e2ad04790",
+      "path": "hin/usfm/41MRKIRVHin.SFM"
+    },
+    "por": {
+      "source": "APBRT",
+      "kind": "aquifer",
+      "repo": "AquiferPortugueseBibleReferenceText",
+      "commit": "94a7753eb0e60ffe89a169215c879694902bc6a5",
+      "path": "por/usfm/41MRKAPBRT.SFM"
+    },
+    "zhs": {
+      "source": "OCCB-S",
+      "kind": "aquifer",
+      "repo": "BiblicaOpenChineseContemporary2023Simplified",
+      "commit": "a16778d13e6416300f3b36d193d7acc7784c8df8",
+      "path": "zhs/usfm/41MRKBOCCB2023S.SFM"
+    },
+    "zht": {
+      "source": "OCCB-T",
+      "kind": "aquifer",
+      "repo": "BiblicaOpenChineseContemporary2023Traditional",
+      "commit": "b6296b2bc848c8e60f8defb97fbe443ceadc38b5",
+      "path": "zht/usfm/41MRKBOCCB2023T.SFM",
+      "note": "Not CUV-T."
+    },
+    "arb": {
+      "source": "NAV2012",
+      "kind": "aquifer",
+      "repo": "BiblicaOpenNewArabicVersion2012",
+      "commit": "c7078f9acb609647add7d1422b57a19ad99c2666",
+      "path": "arb/usfm/41MRKONAV.SFM",
+      "note": "Not Van Dyck (arb-vd HOLD)."
+    },
+    "ind": {
+      "source": "OICNT",
+      "kind": "aquifer",
+      "repo": "BiblicaOpenIndonesianContemporaryNewTestament2025",
+      "commit": "801802204c8915575946c36f05a326a01234ef5d",
+      "path": "ind/usfm/41MRKBOKKPB.SFM",
+      "note": "Not TBI."
+    },
+    "nep": {
+      "source": "ONCV",
+      "kind": "aquifer",
+      "repo": "BiblicaOpenNepaliContemporaryVersion",
+      "commit": "bd1ce93379c7d32a35e57811d5838ee90f30ffaa",
+      "path": "nep/usfm/41MRKONCV.SFM"
+    },
+    "swh": {
+      "source": "OKCV",
+      "kind": "aquifer",
+      "repo": "OpenKiswahiliContemporaryVersion",
+      "commit": "9ac324e660f64c752a70b4df0f012f906ad173ac",
+      "path": "swh/usfm/41MRKONEN.SFM"
+    },
+    "fas": {
+      "source": "pesopcb",
+      "kind": "ebible",
+      "ebibleId": "pesopcb"
+    },
+    "bis": {
+      "source": "OBBR",
+      "kind": "aquifer",
+      "repo": "OpenBislamaBibleRevised",
+      "commit": "f8be807d6011d03e976667d6aab6160e988e2901",
+      "path": "bis/usfm/41MRKOBBR.SFM"
+    },
+    "rus": {
+      "source": "Synodal",
+      "kind": "aquifer",
+      "repo": "RussianSynodalBible",
+      "commit": "1e33b9993b91bf6d84cdbf7b76f71930076a863e",
+      "path": "rus/usfm/41MRKRSB.SFM"
+    },
+    "tpi": {
+      "source": "BSB",
+      "kind": "aquifer",
+      "repo": "BereanStandardBible",
+      "commit": "87858d1e28ab728249d9fb50667170c194c6b013",
+      "path": "eng/usfm/41MRKBSB.SFM",
+      "note": "TPI2008 is ND."
+    },
+    "apd": {
+      "source": "BSB",
+      "kind": "aquifer",
+      "repo": "BereanStandardBible",
+      "commit": "87858d1e28ab728249d9fb50667170c194c6b013",
+      "path": "eng/usfm/41MRKBSB.SFM",
+      "note": "No apd edition."
+    }
+  }
+}

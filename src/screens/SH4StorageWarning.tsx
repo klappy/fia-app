@@ -31,6 +31,7 @@ export default function SH4StorageWarning() {
 
   return (
     <Sheet
+      brand
       title={t(`s.storage.title.${variant}`)}
       primaryLabel={primary.label}
       onClose={close}

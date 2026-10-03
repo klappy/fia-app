@@ -51,7 +51,7 @@ test('C-13: data/rights/records.json validates and keeps the FIAMaps holder disc
   assert.ok(maps.discrepancies?.some((d) => /holder differs/.test(d)));
 });
 
-test('C-02 / C-04 / C-05 / C-06 / C-08: every proof pack validates', async () => {
+test('C-02 / C-04 / C-05 / C-06 / C-08 / C-13 pack rights: every proof pack validates', async () => {
   const packsDir = path.join(DATA_ROOT, 'packs');
   if (!existsSync(packsDir)) return;
   const packs = (await readdir(packsDir)).filter((d) => /^[a-z]{3}\./.test(d));
@@ -80,6 +80,8 @@ test('C-02 / C-04 / C-05 / C-06 / C-08: every proof pack validates', async () =>
       const bytes = await readFile(path.join(dir, path.basename(f.path)));
       assert.equal(bytes.length, f.bytes, `${p} ${f.path} bytes`);
     }
+    const rights = await readJson(path.join(dir, 'rights.json'));
+    r = validate('c13-pack-rights', rights); assert.ok(r.ok, `${p} rights.json: ${r.errors.join('; ')}`);
     const scripture = await readJson(path.join(dir, 'scripture.json'));
     assert.equal(scripture.scriptureNeverAI, true);
     for (const e of scripture.editions) assert.ok(['source', 'absent-fallback', 'absent'].includes(e.status));

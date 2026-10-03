@@ -2,10 +2,11 @@
   "schemaVersion": 1,
   "packId": "tpi.MRK-1-1-13",
   "language": "tpi",
+  "autonym": "Tok Pisin",
   "direction": "ltr",
   "pericope": "MRK-1-1-13",
   "passage": "MRK 1:1-13",
-  "preparedAt": "2026-09-30T21:40:30.705Z",
+  "preparedAt": "2026-10-02T16:37:17.205Z",
   "sourceRevisions": {
     "FIATranslationGuide": "eb744452eb8d7c852caadde9d3181cddfe571119",
     "FIAKeyTerms": "a39260670bba9d87d902e0fa0ae447341343481f",
@@ -24,18 +25,18 @@
   ],
   "tiers": {
     "text": {
-      "bytes": 284238,
+      "bytes": 334506,
       "files": [
         {
           "path": "/packs/tpi.MRK-1-1-13/guide.json",
-          "bytes": 100035,
-          "sha256": "ee6c24f405c5e15f84db0af95e855f051d42c69baeffe2224c614f0bbe002c76",
+          "bytes": 100373,
+          "sha256": "f1e72d8e1dc396bb80b53ca8b754f0690703a80b59cd756bee00bd6096b11523",
           "mime": "application/json"
         },
         {
           "path": "/packs/tpi.MRK-1-1-13/guide-units.json",
-          "bytes": 27635,
-          "sha256": "cea2fad20a972e97199ceb148ba587e19262872d09daad380580e78f46560fe9",
+          "bytes": 27973,
+          "sha256": "e88e57d55d1e31ef1e0b5a5b30c1fd2cd659de21bc833549e4662a6bc30c5d80",
           "mime": "application/json"
         },
         {
@@ -46,8 +47,8 @@
         },
         {
           "path": "/packs/tpi.MRK-1-1-13/resources.json",
-          "bytes": 97726,
-          "sha256": "e1ca477d7314ab451c504be1ed7d634507435c012809a314071493c3fdc6cc33",
+          "bytes": 99006,
+          "sha256": "1e405eaae320e7df21c9e41ca2ac29f6f6bcfafdbfcf190100621cb89923b14e",
           "mime": "application/json"
         },
         {
@@ -58,8 +59,14 @@
         },
         {
           "path": "/packs/tpi.MRK-1-1-13/narration-plan.json",
-          "bytes": 51233,
-          "sha256": "437bc51015830715f71edc07d6de13f3d48399b9f517671dc6d813e2030f9d58",
+          "bytes": 96162,
+          "sha256": "b3d616da5d255a8b4292469498b826fc377992c2b6df9f4ba4cefc7e25b19340",
+          "mime": "application/json"
+        },
+        {
+          "path": "/packs/tpi.MRK-1-1-13/rights.json",
+          "bytes": 3383,
+          "sha256": "add91ab6770b2a36c1ca1928d7caf735e874bf0b555d3f7e207053580748a480",
           "mime": "application/json"
         }
       ]
@@ -75,7 +82,19 @@
     "maps": 4,
     "videos": 3,
     "scripture": 1,
-    "scriptureFallback": 0
+    "scriptureFallback": 0,
+    "hiddenUnits": 13,
+    "termsSupplement": 0,
+    "narrationSlots": 192,
+    "narrationFloorSlots": 178,
+    "alignmentSlots": 1,
+    "slots-guide-unit": 126,
+    "slots-scripture": 1,
+    "slots-term-recording": 16,
+    "slots-term-read-aloud": 16,
+    "slots-description": 8,
+    "slots-next-action": 3,
+    "slots-transition": 22
   },
   "provenance": {
     "text": {
@@ -86,7 +105,7 @@
     "audio": {
       "source": 0,
       "generated": 0,
-      "missing": 143
+      "missing": 192
     },
     "description": {
       "source": 0,

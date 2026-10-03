@@ -308,7 +308,7 @@ export function createEngine(env: EngineEnv) {
         packId,
         cache: stage,
         revision: manifest.revision,
-        tier,
+        tier: manifest.tier,
         narration,
         appVersion: manifest.appVersion,
         entries: manifest.entries,

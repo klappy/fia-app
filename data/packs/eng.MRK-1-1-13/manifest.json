@@ -2,10 +2,11 @@
   "schemaVersion": 1,
   "packId": "eng.MRK-1-1-13",
   "language": "eng",
+  "autonym": "English",
   "direction": "ltr",
   "pericope": "MRK-1-1-13",
   "passage": "MRK 1:1-13",
-  "preparedAt": "2026-09-30T21:40:09.006Z",
+  "preparedAt": "2026-10-02T18:37:54.873Z",
   "sourceRevisions": {
     "FIATranslationGuide": "eb744452eb8d7c852caadde9d3181cddfe571119",
     "FIAKeyTerms": "a39260670bba9d87d902e0fa0ae447341343481f",
@@ -29,18 +30,18 @@
   ],
   "tiers": {
     "text": {
-      "bytes": 324619,
+      "bytes": 464142,
       "files": [
         {
           "path": "/packs/eng.MRK-1-1-13/guide.json",
-          "bytes": 89144,
-          "sha256": "302d8eeefc028fd20b70d0fedf97d2d172b64e6bb633bf13969e13f72e80ee57",
+          "bytes": 90033,
+          "sha256": "7df2eae9c6256c14ac9c93601e25914fb6ee0e77c76b063ae77c640496ceffcc",
           "mime": "application/json"
         },
         {
           "path": "/packs/eng.MRK-1-1-13/guide-units.json",
-          "bytes": 31968,
-          "sha256": "1d6ffb83af5126b1e945dc84da558308fc2c8f39010e2e7be44729e5cc7d05a1",
+          "bytes": 32857,
+          "sha256": "491a971c09281792121e90c868d640b15611c591b0b5b7f017a3d004c2643fcd",
           "mime": "application/json"
         },
         {
@@ -51,8 +52,8 @@
         },
         {
           "path": "/packs/eng.MRK-1-1-13/resources.json",
-          "bytes": 114719,
-          "sha256": "7318cdbc1c78e688040be570443a4d780127fd78f3f0ed730109a5c228158d35",
+          "bytes": 164501,
+          "sha256": "6dd445eafa6c3940e815cb28e0055190d5628e1b44c28ee1be0f7783f1846c38",
           "mime": "application/json"
         },
         {
@@ -63,8 +64,14 @@
         },
         {
           "path": "/packs/eng.MRK-1-1-13/narration-plan.json",
-          "bytes": 54090,
-          "sha256": "1a2944deb278fd8f00b7081aa7d79260db7d35ffcad21c0dee38266efbd2087d",
+          "bytes": 136906,
+          "sha256": "308e8c55529aa9bd5a86fb4e10aa086c495c8404f7bb0c6ea395151f603dfe58",
+          "mime": "application/json"
+        },
+        {
+          "path": "/packs/eng.MRK-1-1-13/rights.json",
+          "bytes": 5147,
+          "sha256": "ca41384b1883ea8f8b163e50e566bbb18c5fa38735bac013906990858e30830d",
           "mime": "application/json"
         }
       ]
@@ -74,24 +81,36 @@
     "steps": 6,
     "units": 130,
     "stops": 24,
-    "terms": 16,
-    "termAudio": 16,
+    "terms": 21,
+    "termAudio": 21,
     "images": 4,
     "maps": 4,
     "videos": 3,
     "scripture": 5,
-    "scriptureFallback": 0
+    "scriptureFallback": 0,
+    "hiddenUnits": 13,
+    "termsSupplement": 5,
+    "narrationSlots": 228,
+    "narrationFloorSlots": 213,
+    "alignmentSlots": 5,
+    "slots-guide-unit": 130,
+    "slots-scripture": 5,
+    "slots-term-recording": 21,
+    "slots-term-read-aloud": 21,
+    "slots-description": 8,
+    "slots-next-action": 19,
+    "slots-transition": 24
   },
   "provenance": {
     "text": {
-      "source": 151,
+      "source": 156,
       "generated": 0,
       "missing": 0
     },
     "audio": {
-      "source": 16,
+      "source": 21,
       "generated": 0,
-      "missing": 135
+      "missing": 207
     },
     "description": {
       "source": 0,
