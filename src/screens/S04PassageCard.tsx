@@ -194,7 +194,10 @@ export default function S04PassageCard() {
         </div>
       </div>
       <Includes rows={legendRows(guide, entry, facts)} />
-      {entry && <SaveRow ctl={ctl} intent={intent} onStart={start} onSeeDownloads={seeDownloads} />}
+      {/* Offline the catalog is not saved; a saved passage still shows its verified row. */}
+      {(entry || ctl.rowState.state !== 'none') && (
+        <SaveRow ctl={ctl} intent={intent} onStart={start} onSeeDownloads={seeDownloads} />
+      )}
       <p className="s04-rights">{rightsLine(facts)}</p>
       {!intent && (
         <p className="s04-start" data-testid="start-line">

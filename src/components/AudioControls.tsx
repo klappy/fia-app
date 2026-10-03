@@ -1,6 +1,8 @@
+import type { ReactNode } from 'react';
 import { t } from '../i18n';
 import { formatClock, sliderVisible } from '../media/seek';
 import { markWords } from '../media/marks';
+import { GlassButton, Icon } from './glass';
 import { ProvenanceMark } from './ProvenanceMark';
 import { stateAttrs, type Provenance, type StateProps } from './types';
 
@@ -75,6 +77,88 @@ export function AudioControls({
           disabled={state === 'disabled' || state === 'loading'}
         />
       )}
+    </div>
+  );
+}
+
+// ── v2 guide transport (PRD § 3 audio-controls, § 8.2; mock Transport, _frame.js:350-360) ───────────
+
+export interface GuideTransportProps {
+  /** the guide primary (GuidePrimary) — the one thing in the thumb slot */
+  primary: ReactNode;
+  /** "0:17 / 0:42"; null when the part has no voice (the status line is time only) */
+  time?: string | null;
+  back: { label: string; ariaLabel?: string; disabled?: boolean; onPress: () => void };
+  skip: { label: string; ariaLabel?: string; disabled?: boolean; onPress: () => void };
+  /** icon box for the quiet buttons (18 × min(scale, 2)) */
+  iconSize?: number;
+  /**
+   * 'all' (1×): time · Back · primary · Skip in the thumb zone. Above 1× the big button alone is the
+   * sticky thumb zone ('primary') and the time line with Back · Skip sit in the column ('column').
+   */
+  part?: 'all' | 'primary' | 'column';
+}
+
+function Quiet({
+  label,
+  ariaLabel,
+  disabled,
+  onPress,
+  icon,
+  trailing,
+  size,
+}: GuideTransportProps['back'] & { icon?: boolean; trailing?: boolean; size: number }) {
+  return (
+    <GlassButton
+      variant="quiet"
+      size="md"
+      className="fia-btn fia-quiet"
+      aria-label={ariaLabel}
+      disabled={disabled}
+      aria-disabled={disabled || undefined}
+      leading={icon ? <Icon name="chevronLeft" size={size} /> : undefined}
+      trailing={trailing ? <Icon name="chevronRight" size={size} /> : undefined}
+      onClick={disabled ? undefined : onPress}
+    >
+      {label}
+    </GlassButton>
+  );
+}
+
+export function GuideTransport({
+  primary,
+  time,
+  back,
+  skip,
+  iconSize = 18,
+  part = 'all',
+}: GuideTransportProps) {
+  const status = time ? (
+    <div className="fia-status fia-num" role="status">
+      {time}
+    </div>
+  ) : null;
+  const b = <Quiet {...back} icon size={iconSize} />;
+  const s = <Quiet {...skip} trailing size={iconSize} />;
+  if (part === 'primary') return <>{primary}</>;
+  if (part === 'column')
+    return (
+      <div className="fia-transport-col">
+        {status}
+        <div className="fia-transport-row">
+          {b}
+          {s}
+        </div>
+      </div>
+    );
+  return (
+    <div className="fia-transport-all">
+      {status}
+      <div className="fia-transport-row">
+        {b}
+        {primary}
+        {s}
+      </div>
     </div>
   );
 }
