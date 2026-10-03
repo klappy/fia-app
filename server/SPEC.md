@@ -38,7 +38,7 @@
 - Their `/packs/<id>/…` reads (the offline engine and the media screens) do move to the server once `run_worker_first` covers rows 7–10. They send no `major`, so they get major 1 (§ 8). Whether the build keeps writing `dist/packs/` is O-25; what they get for a cold pack is O-24.
 - **Under O-24's default, those builds break on a cold pack.** A build without the B2a-app bend takes the `202` as content: its offline save fails (`engine.ts:188` throws) and its media screens are handed the job in place of the pack (`usePack.ts:25`). Right after deploy every pack is cold, so this hits every pack those builds open (the five shipped today) until the server has built that pack; a read after that gets the complete revision (§ 8). This departs from the page's "Phones on old app builds keep working", so the nod on this file covers it (§ 13 item 1). The other option is in O-24.
 - The app never speaks MCP **(guess)**.
-- Deploy is push, through Workers Builds; no seat runs `wrangler deploy`, and only the captain promotes to production.
+- Deploy is push, through Workers Builds; no seat runs `wrangler deploy`, and promotion to staging and production follows fia-app `RELEASING.md`.
 - The server becomes two only when one of four reasons appears: another app wants the core (the captain's own reason), a per-invocation Workers limit binds one part only **(guess)**, the spend secrets must sit where FIA code cannot reach them **(guess)**, or the app and the server need separate release timing **(guess)**.
 
 **Sources**
@@ -54,7 +54,8 @@
 - Per-file `fetchUrl` and updates that reuse unchanged files: page:16, :36, :103, :156, :192-193, :229; BUILD-ORDER:25. Today's engine and notice: fia-app `src/offline/manifest.ts:126`, `:175-177` and `src/offline/engine.ts:305`, `:321-336` @213bed7 (unchanged at @5fad86b). Raised by product-bind-1657 (items 1 and 3).
 - Old builds on a cold pack: page:12 against O-24; fia-app `src/offline/engine.ts:186-188` (a `202` passes `res.ok`; a C-23 job has no matching `packId`), `src/media/usePack.ts:24-27` and the five packs under `data/packs/`, all @213bed7. A complete revision is served once it exists: page:47.
 - What old builds read, fia-app @213bed7: `/data/…` through `src/settings/data.ts:3-10` and `src/flow/catalog.ts:59-60` with `src/flow/session.ts:36-38`; `/packs/…` through `src/offline/engine.ts:184` and `src/media/usePack.ts:15`, shipped to `dist/packs/` by `src/offline/ship-data-plugin.ts:9`, `:41`. Absent `major` means 1: page:51.
-- Deploy is push, no `wrangler deploy`, captain promotes production: law:100-113, :140-147; page:67.
+- Deploy is push, no `wrangler deploy`: law:100-113, :140-147; page:67.
+- Promotion to staging and production follows `RELEASING.md`: fia-app `RELEASING.md:3` @213bed7 ("agents merge everything") and RULING @3141e35:136 (a) ("by fia-app RELEASING.md … agents merge with a fresh review"). **Flagged departure from page:67:** the page says only the captain promotes to production and cites "HYGIENE 32", but HYGIENE:8 marks lines 31–32 unassigned.
 - When to split: page:275; RULING:111.
 
 ## 2. What This Server Knows
