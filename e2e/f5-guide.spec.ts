@@ -86,9 +86,9 @@ test('the guide streams a live PoC clip, then the 2 s countdown plays the next p
   const guide = page.locator('.fia-guide');
   await expect(guide).toHaveAttribute('data-unit-id', 'S01-U001');
   await expect(primary(page)).toHaveAccessibleName('Play part 1');
-  // The card's voice chip reads as S02 and S04 do for this passage: the C-03 catalog has no generated
-  // guide narration yet (passageCard `guideVoice`; J-A1 walk). Nothing played before the tap (R-407).
-  await expect(page.locator('.fia-guide-card__voice')).toContainText('Text · voice not yet');
+  // The voice is named as AI on the card (C-06), as S02 and S04 name it for this passage
+  // (passageCard `voiceOf`, stand-in clips; J-A1 walk), and nothing played before the tap (R-407).
+  await expect(page.locator('.fia-guide-card__voice')).toContainText('AI voice');
   expect(seen).toHaveLength(0);
 
   await primary(page).click();

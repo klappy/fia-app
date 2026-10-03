@@ -10,9 +10,10 @@ In the Guide (S05), when a part's clip failed to load, the screen paused the flo
 only plays the clip again (`machine.ts` `primaryAction`). On the last part Skip is disabled, so
 the person could only retry a clip that would not load: S18 completion never opened.
 
-S05's voice chip also said "AI voice" for Mark 1:1–13 while S02 and S04 said "Text · voice not
-yet" for the same passage. The catalog (C-03) says no guide narration was generated yet; the
-chip named the stand-in clip instead.
+S05's voice chip said "AI voice" for Mark 1:1–13 while S02 and S04 said "Text · voice not yet"
+for the same passage. S05 was right: the guide plays the stand-in's AI-voiced PoC clips, and AI
+narration is always marked (C-06). S02 and S04 read only the C-03 catalog, which counts no
+generated guide narration yet.
 
 ## What changes
 
@@ -25,20 +26,21 @@ chip named the stand-in clip instead.
   load. You can read it and go on." Below it, a quiet "Try again" (the shared `SecondaryAction`)
   reloads the clip inside the tap. A browser that wants a tap first (`NotAllowedError`) still
   pauses, and the big button is that tap. No new CSS.
-- `src/screens/passageCard.ts` — `guideVoice(entry, choice)`: S05's chip follows `voiceOf`. When
-  the catalog entry says no generated narration, the part reads "Text · voice not yet". A
-  recording, or a part the setting keeps silent, still says so. S05 now loads the catalog (as S04
-  does). Before the catalog is read, the clip names its own voice.
+- `src/screens/passageCard.ts` — one rule, `voiceOf`, for S02, S04 and S05: "AI voice" when the
+  catalog counts generated narration or the guide plays stand-in clips for the passage; only a
+  passage with no clips at all reads "Text · voice not yet". `guideVoice(entry, choice)` names a
+  clip that plays (a recording or "AI voice"), as sheet 20 does. A part with no clip reads "Text ·
+  voice not yet" in a passage with no clips, else "No voice for this part". S05 now loads the
+  catalog, as S04 does.
+- `src/screens/libraryModel.ts` — S02's book voice line uses `voiceOf`, so Mark reads "AI voice".
 - `src/i18n/en.json` — `s.guide.error-clip` reworded; `s.guide.voice-not-yet` added.
 - Tests: `tests/flow/machine.test.ts` (clip-error goes on, never counts down, finishes on the
   last part, waits at a stop, retry plays, ignored unless playing);
-  `tests/s04-passage-glass.test.ts` (S05 chip rule); `e2e/f5-guide.spec.ts`: the last part's
+  `tests/s04-passage-glass.test.ts` (`voiceOf` and the S05 chip, incl. a no-clip passage);
+  `tests/s02-library-glass.test.ts` (Mark's book line); `e2e/f5-guide.spec.ts`: the last part's
   clip is aborted (`page.route`). The page shows the note, retries, and Finish reaches S18. The
-  first test's chip assertion now expects "Text · voice not yet".
+  S02, S04 and S05 e2e expect "AI voice" for Mark 1:1–13.
 
 ## Not in this change
 
-- Sheet 20 ("About this voice") still names the clip that plays: the stand-in's PoC clips are
-  AI-voiced. The chip and the sheet differ until B2b ships the pack's own narration, or until the
-  rule in `voiceOf` changes for S02, S04 and S05 together.
-- S06 (single script) has no clip-error handling of its own; it is not touched here.
+- S06 (single script) has no clip-error handling of its own. That is a follow-up.

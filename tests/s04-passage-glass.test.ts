@@ -30,6 +30,10 @@ const manifest = JSON.parse(read('data/packs/eng.MRK-1-1-13/manifest.json')) as 
 const entry = (
   JSON.parse(read('data/catalog/manifest.json')) as { entries: CatalogEntry[] }
 ).entries.find((e) => e.packId === PACK)!;
+/** A passage with no clips: no generated narration and no stand-in. */
+const bare = (
+  JSON.parse(read('data/catalog/manifest.json')) as { entries: CatalogEntry[] }
+).entries.find((e) => e.packId === 'eng.MRK-1-14-20')!;
 const FACTS: PackFacts = {
   counts: manifest.counts,
   editions: ['BSB', 'ULT', 'UST', 'WEB', 'WEBU'],
@@ -76,31 +80,32 @@ describe('F6-S04 card words from the pack', () => {
     expect(legendRows(guide, entry, EMPTY_FACTS).map((r) => r.kind)).toEqual(['plain', 'stop']);
   });
 
-  it('voice chip: "AI voice" only when the catalog says guide narration was generated', () => {
-    expect(voiceOf(entry)).toBe('none'); // provenance.audio: source 21 (term recordings), generated 0
-    expect(voiceOf({ ...entry, provenance: { audio: { generated: 117 } } })).toBe('ai');
-    expect(voiceOf({ ...entry, provenance: null })).toBe('none');
+  it('voice chip: "AI voice" wherever AI narration plays (catalog or stand-in), else "voice not yet"', () => {
+    // Mark 1:1–13: the catalog has generated 0 (source 21 = term recordings), but the guide plays the
+    // stand-in's AI-voiced PoC clips, so the passage is marked AI (C-06), the same on S02, S04 and S05.
+    expect(voiceOf(entry)).toBe('ai');
+    expect(voiceOf({ ...entry, provenance: null })).toBe('ai');
+    // A passage with no clips at all is the only one that reads "Text · voice not yet".
+    expect(voiceOf(bare)).toBe('none');
+    expect(voiceOf({ ...bare, provenance: { audio: { generated: 117 } } })).toBe('ai');
     expect(voiceOf(undefined)).toBe('none');
     expect(EN['s.passage.voice-not-yet']).toBe('Text · voice not yet');
   });
 
-  it('S05 voice chip follows the same rule: "voice not yet" when the catalog has no generated narration', () => {
+  it('S05 voice chip agrees with S02/S04 and sheet 20: a clip that plays is named', () => {
     const clip = { id: 'S01-U001', url: '/a.mp3' };
     const ai = { clip, mark: 'ai-voice' as const };
-    // J-A1 walk: the stand-in clip plays, but the catalog says no guide voice yet → same words as S04.
-    expect(guideVoice(entry, ai)).toEqual({ mark: 'absent', words: 'Text · voice not yet' });
-    const generated = { ...entry, provenance: { audio: { generated: 117 } } };
-    expect(guideVoice(generated, ai)).toEqual({ mark: 'ai-voice', words: 'AI voice' });
-    // A recording, or a part the setting keeps silent, still says so.
+    const noClip = { clip: null, mark: 'absent' as const, silent: 'no-audio' as const };
+    // J-A1 walk: the stand-in clip plays on Mark 1:1–13 → "AI voice", as S02 and S04 now say.
+    expect(guideVoice(entry, ai)).toEqual({ mark: 'ai-voice', words: 'AI voice' });
+    expect(guideVoice(undefined, ai).words).toBe('AI voice'); // before the catalog is read
     expect(guideVoice(entry, { clip, mark: 'source' }).mark).toBe('source');
     expect(
       guideVoice(entry, { clip: null, mark: 'absent', silent: 'source-only-silent' }).words,
     ).toBe('Silent: recorded voices only');
-    // Catalog not read yet (offline): the part's own clip names its voice (C-06).
-    expect(guideVoice(undefined, ai).words).toBe('AI voice');
-    expect(guideVoice(generated, { clip: null, mark: 'absent', silent: 'no-audio' }).words).toBe(
-      'No voice for this part',
-    );
+    // A part without a clip in a voiced passage, and a passage with no clips at all.
+    expect(guideVoice(entry, noClip).words).toBe('No voice for this part');
+    expect(guideVoice(bare, noClip)).toEqual({ mark: 'absent', words: 'Text · voice not yet' });
   });
 
   it('sub line, sources line and the reference that never breaks at its dash', () => {
