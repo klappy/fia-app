@@ -3,6 +3,7 @@
 // lazily and are AI translations of the English until a human translation lands
 // (`s.common.ui-lang-ai`); a missing key falls back to English, then to the key itself.
 import en from './en.json';
+import { languageByCode } from './languages';
 
 export type Catalog = Record<string, string>;
 export type Values = Record<string, string | number>;
@@ -16,14 +17,26 @@ export const EN: Catalog = strip(en as Record<string, unknown>);
 
 const catalogs = new Map<string, Catalog>([['eng', EN]]);
 
-/** Load a UI language catalog. Only `eng` is bundled in this train; others resolve to English. */
+/** Translated UI catalogs, each its own lazy chunk (AI translations of en.json, `s.common.ui-lang-ai`). */
+const LOADERS: Record<string, () => Promise<{ default: Record<string, unknown> }>> = {
+  spa: () => import('./spa.json'),
+};
+
+/** True when `code` has its own UI catalog (English, or a lazy translated one). */
+export const hasCatalog = (code: string): boolean => code === 'eng' || code in LOADERS;
+
+/** Load a UI language catalog: `eng` is bundled, `spa` loads lazily; others resolve to English. */
 export async function loadCatalog(code: string): Promise<Catalog> {
   const cached = catalogs.get(code);
   if (cached) return cached;
-  // Follow-on lane: `import(`./${code}.json`)` once translated catalogs exist.
-  catalogs.set(code, EN);
-  return EN;
+  const load = LOADERS[code];
+  const catalog = load ? strip((await load()).default) : EN;
+  catalogs.set(code, catalog);
+  return catalog;
 }
+
+/** Intl locale for a UI language (plural rules): the BCP-47 tag from languages.ts, else English. */
+export const localeFor = (code: string): string => languageByCode(code)?.bcp47 ?? 'en';
 
 const PLURAL = /\{(\w+),\s*plural,\s*((?:[^{}]|\{[^{}]*\})*)\}/g;
 const CLAUSE = /(\w+)\s*\{([^}]*)\}/g;
@@ -59,4 +72,42 @@ export function makeT(catalog: Catalog, lang = 'eng', locale = 'en'): Translator
   return t;
 }
 
-export const t = makeT(EN);
+// The active UI language. Screens import `t` once; it reads whichever catalog is active now, and
+// the app re-renders on a switch (App.tsx subscribes to `subscribeUiLanguage`).
+let active: Translator = makeT(EN);
+const listeners = new Set<() => void>();
+
+/** The active UI language code (`eng` until a catalog is switched in). */
+export const uiLanguage = (): string => active.lang;
+
+export function subscribeUiLanguage(f: () => void): () => void {
+  listeners.add(f);
+  return () => void listeners.delete(f);
+}
+
+/**
+ * Switch the UI language. A language with no catalog of its own shows English (the fallback),
+ * so it switches to `eng` rather than claiming an AI translation that does not exist.
+ */
+let request = 0;
+
+export async function setUiLanguage(code: string): Promise<string> {
+  const lang = hasCatalog(code) ? code : 'eng';
+  // The latest call wins: a slow lazy load must not override a later pick that resolved first.
+  const mine = ++request;
+  const catalog = await loadCatalog(lang);
+  if (mine !== request) return active.lang;
+  if (active.lang !== lang) {
+    active = makeT(catalog, lang, localeFor(lang));
+    for (const f of listeners) f();
+  }
+  return lang;
+}
+
+export const t: Translator = Object.defineProperty(
+  ((key: string, values?: Values, fallback?: string) =>
+    active(key, values, fallback)) as Translator,
+  'lang',
+  { get: () => active.lang },
+);
+t.has = (key) => active.has(key);

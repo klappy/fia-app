@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from 'react';
 import { FiaLogo } from '../components/FiaLogo';
 import { GlassButton, GlassSurface, Icon } from '../components/glass';
 import { t } from '../i18n';
@@ -51,11 +52,36 @@ export interface HeaderProps {
   close?: { label: string; onPress: () => void };
 }
 
+/**
+ * Keep the hub header on one row (mock 02-library): when the pills would wrap at the mock's 16 px
+ * inline padding (longer UI strings, e.g. Spanish at 390 px), tighten them to the kit's --sp-6 (12 px). English at 390 px
+ * fits as before and is untouched; at big text sizes the header still wraps as designed.
+ */
+function useOneRowHub(grid: React.RefObject<HTMLDivElement | null>, on: boolean) {
+  useLayoutEffect(() => {
+    const g = grid.current;
+    if (!on || !g) return;
+    const fit = () => {
+      const pills = [...g.querySelectorAll<HTMLElement>(':scope > .fia-pill')];
+      const tallest = () =>
+        Math.max(...[...g.children].map((c) => c.getBoundingClientRect().height));
+      for (const p of pills) p.style.paddingInline = '';
+      if (g.getBoundingClientRect().height <= tallest() + 1) return;
+      for (const p of pills) p.style.paddingInline = 'var(--sp-6)'; // kit spacing token, 12 px
+    };
+    fit();
+    window.addEventListener('resize', fit);
+    return () => window.removeEventListener('resize', fit);
+  }, [grid, on]);
+}
+
 export function Header({ offline, hub, close }: HeaderProps) {
+  const grid = useRef<HTMLDivElement>(null);
+  useOneRowHub(grid, !!hub);
   return (
     <header className="fia-header-wrap">
       <GlassSurface level={3} blur="strong" radius="pill" shadow="card" className="fia-header">
-        <div className="fia-header-grid">
+        <div className="fia-header-grid" ref={grid}>
           <FiaLogo />
           {offline && (
             // toast-notice.md `chip`: persistent while offline; text, never icon-only.

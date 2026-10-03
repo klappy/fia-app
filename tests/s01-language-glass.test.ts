@@ -9,7 +9,7 @@ import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { EN } from '../src/i18n';
+import { EN, setUiLanguage, uiLanguage } from '../src/i18n';
 import { flowSession } from '../src/flow/session';
 import S01FirstRunLanguage from '../src/screens/S01FirstRunLanguage';
 
@@ -129,9 +129,14 @@ describe('F6-S01 first run · language in glass', () => {
     expect($('[role="radio"][data-code="eng"]')!.getAttribute('aria-checked')).toBe('false');
     expect(primary().textContent).toContain('Continue in Español');
     await act(async () => primary().click());
-    expect($('#where')!.textContent).toBe('/library');
+    // The Spanish UI catalog loads lazily before the library opens (one pick sets both, SB-3).
+    await vi.waitFor(() => expect($('#where')!.textContent).toBe('/library'));
     expect(flowSession().get().language).toBe('spa');
-    expect(JSON.parse(localStorage.getItem('fia.settings.v1')!).contentLanguage).toBe('spa');
+    const saved = JSON.parse(localStorage.getItem('fia.settings.v1')!);
+    expect(saved.contentLanguage).toBe('spa');
+    expect(saved.uiLanguage).toBe('spa');
+    expect(uiLanguage()).toBe('spa');
+    await act(async () => void (await setUiLanguage('eng')));
   });
 
   it('the kit picker is imported from the vendored kit path (G-F)', () => {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { LanguagePicker } from '../components';
 import { FiaLogo } from '../components/FiaLogo';
 import { GlassButton, GlassSurface, Icon } from '../components/glass';
@@ -10,7 +10,7 @@ import {
   suggestedLanguages,
 } from '../components/languageRows';
 import { flowSession, useFlow } from '../flow/session';
-import { t } from '../i18n';
+import { hasCatalog, setUiLanguage, t } from '../i18n';
 import {
   browserStore,
   DATA_PATHS,
@@ -58,6 +58,9 @@ function languageCounts(codes: readonly string[]): Promise<Counts> {
 
 export default function S01FirstRunLanguage() {
   const nav = useNavigate();
+  // The header pill opens S01 in use mode (`/?mode=use`, ScreenFrame): it changes the content only.
+  const [params] = useSearchParams();
+  const useMode = params.get('mode') === 'use';
   const session = flowSession();
   const snap = useFlow(session);
   const [pick, setPick] = useState<string | undefined>();
@@ -97,9 +100,21 @@ export default function S01FirstRunLanguage() {
   const choose = (code: string) => {
     session.setLanguage(code);
     const store = browserStore();
+    const saved = loadSettings(store).settings;
     // A failed save leaves the pill on the old language; the guide's language (above) is already set.
-    saveSettings(store, { ...loadSettings(store).settings, contentLanguage: code });
-    nav('/library');
+    if (useMode) {
+      // Use mode: the UI language never flips silently (01-first-run-language.md:64, J-A7--P-01).
+      saveSettings(store, { ...saved, contentLanguage: code });
+      nav('/library');
+      return;
+    }
+    // First run, SB-3 (1): one pick sets the guide and the app (`s.lang.lede`). The menus follow the
+    // pick when it has a UI catalog (eng, spa); any other pick keeps English menus, the honest fallback.
+    const ui = hasCatalog(code) ? code : 'eng';
+    saveSettings(store, { ...saved, contentLanguage: code, uiLanguage: ui });
+    void setUiLanguage(ui)
+      .catch(() => undefined)
+      .finally(() => nav('/library'));
   };
 
   return (

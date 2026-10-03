@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
+import { setUiLanguage } from './i18n';
 import { applyToDocument, browserStore, loadSettings, watchScaleFlags } from './settings';
 import { registerOffline } from './offline/register';
 import { Outbox, startFeedbackFlusher } from './feedback';
@@ -14,11 +15,20 @@ import './frame/frame.css';
 applyToDocument(loadSettings(browserStore()).settings);
 watchScaleFlags();
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+const render = () =>
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
+// R-604: the saved UI language's catalog (a lazy chunk, precached for offline) loads before the
+// first paint, so a Spanish user never sees English chrome flash; a failed load stays in English.
+const ui = loadSettings(browserStore()).settings.uiLanguage;
+if (ui === 'eng') render();
+else
+  void setUiLanguage(ui)
+    .catch(() => undefined)
+    .finally(render);
 
 registerOffline();
 

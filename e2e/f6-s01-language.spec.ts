@@ -55,7 +55,7 @@ test('S01 pick → library, and the header pill reads the chosen autonym', async
   await primary.click();
   await expect(page.locator('[data-screen="S02"]')).toBeVisible();
   // before F6-S01 the pill read English after any pick (S01 never wrote C-10 contentLanguage). The
-  // pill's own words come from the shell (Intl.DisplayNames, lower-case "español"), not the catalog.
+  // pill's own words are the picker autonym ("Español", languages.ts), not the catalog.
   await expect(page.locator('.fia-lang')).toHaveText(/^español$/i);
 });
 
