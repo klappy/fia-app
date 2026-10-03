@@ -13,7 +13,7 @@
   "autoMode": {
     "allow": [
       "$defaults",
-      "Merging a pull request into klappy/3d-review-app v3/integration or main (DEV trains only), or into klappy/3d-review-cookbook, klappy/fia-app (DEV), klappy/fia-app-cookbook or klappy/kitchen main, when the PR carries a recorded fresh-review YES comment from a seat that did not write it (house rule H27). Production is never merged by an agent.",
+      "Merging a pull request into klappy/3d-review-app v3/integration or main (DEV trains only), or into klappy/3d-review-cookbook, klappy/fia-app v2/integration or main (main deploys DEV, never production), klappy/fia-app-cookbook, klappy/kitchen or klappy/kitchens main, when the PR carries a recorded fresh-review YES comment from a seat that did not write it (house rule H27). Production is never merged by an agent.",
       "Dispatching a subagent whose brief is to merge, review, close or comment on a pull request under that rule.",
       "Pushing journal rows, rail receipts and claim lines (journal/*.tsv, rail/**, work/**) straight to main in klappy/kitchen, klappy/3d-review-cookbook and klappy/fia-app-cookbook; the captain's law says rows go to main.",
       "Closing a pull request, retitling it, tagging a commit, or moving rail units to done in klappy/fia-app, klappy/fia-app-cookbook, klappy/3d-review-app, klappy/3d-review-cookbook or klappy/kitchen, when a recorded captain ruling on the rail (RULING.md beside the unit) orders that freeze, close or retirement; the comment on each PR cites the ruling. Never a merge, never a deletion of a branch, never production.",
