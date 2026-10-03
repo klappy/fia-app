@@ -18,7 +18,7 @@ type Row = { icon: KitIconName; key: string; to: string };
 
 const PASSAGE: Row[] = [
   { icon: 'compass', key: 's.common.explore.map', to: '/overview' },
-  { icon: 'globe', key: 's.common.explore.resources', to: '/resources' },
+  { icon: 'globe', key: 's.common.explore.resources', to: '/resources?all=1' },
   { icon: 'sparkle', key: 's.common.explore.voice', to: '/sheet/provenance' },
   { icon: 'check', key: 's.common.explore.saved', to: '/downloads' },
 ];
