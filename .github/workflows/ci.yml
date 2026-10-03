@@ -117,5 +117,5 @@ jobs:
       - run: npm ci
       - run: npm test
       # Content checks per pack (units, every verse per edition, rights lines, ai:true slots) + narration characters.
-      # The URL-200 half (`npm run check:urls`) needs S3 and GitHub, so it runs outside CI.
+      # The URL-200 half (`npm run check:urls`) needs S3 and GitHub, so it is not a PR gate: `content-urls.yml` runs it weekly and on dispatch.
       - run: npm run check:content -- --chars
