@@ -16,6 +16,6 @@ Train: Alpha v2 lane F (F6). Branch `claude/blissful-bohr-t7m7it-l1-s08` (base `
 - `src/components/AudioControls.tsx` — `GuideTransport` Back / Skip optional (the reading's primary
   stands alone).
 - `src/flow/ui/guide.css` — S05's frame rules shared with S08 (`:is([data-screen='S05'],
-  [data-screen='S08'])`, no copy); a small shared Text-view block (`.fia-reader-*`: tools row,
+[data-screen='S08'])`, no copy); a small shared Text-view block (`.fia-reader-*`: tools row,
   reading face, verse/word bands per mock 08).
 - e2e: `e2e/f6-s08.spec.ts`.
