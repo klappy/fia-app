@@ -1,23 +1,17 @@
 // F6-S02 Library: pure queries the glass screen draws (nodded mock design/alpha-v2-screens/02-library.html).
-// Nothing here invents data: a book reads "AI voice" only when the C-03 catalog says narration was
-// generated for one of its passages, and the resume recap codes only the kinds the pack carries.
+// Nothing here invents data: a book reads "AI voice" when one of its passages has AI narration (the
+// shared rule, passageCard `voiceOf`), and the resume recap codes only the kinds the pack carries.
 import { booksFor, entriesFor, type BookRow } from '../flow/catalog';
 import { isScriptureCue, position, stopAt } from '../flow/model';
 import type { CatalogEntry, CatalogManifest, FlowGuide, GuideUnit } from '../flow/types';
+import { voiceOf } from './passageCard';
 
 export interface LibraryBook extends BookRow {
   /** passages of this book saved on this phone (verified saves only, offline/useOnline savedPackIds) */
   saved: number;
-  /** 'ai' when any passage has generated narration (C-03 provenance.audio.generated > 0) */
+  /** 'ai' when any passage has AI narration (passageCard `voiceOf`, shared with S04 and S05) */
   voice: 'ai' | 'none';
 }
-
-/** C-03 `provenance.audio.generated`: guide narration made by the AI voice (term recordings are `source`). */
-const generatedNarration = (e: CatalogEntry): number => {
-  const p = e.provenance as { audio?: { generated?: unknown } } | null | undefined;
-  const n = p?.audio?.generated;
-  return typeof n === 'number' ? n : 0;
-};
 
 /** Book rows in canonical order, each with its saved count and voice line (PoC floor a1). */
 export function libraryBooks(
@@ -31,7 +25,7 @@ export function libraryBooks(
     return {
       ...b,
       saved: mine.filter((e) => savedIds.has(e.packId)).length,
-      voice: mine.some((e) => generatedNarration(e) > 0) ? 'ai' : 'none',
+      voice: mine.some((e) => voiceOf(e) === 'ai') ? 'ai' : 'none',
     };
   });
 }

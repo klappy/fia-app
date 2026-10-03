@@ -2,10 +2,13 @@
 // 04-passage-card.html). Nothing here invents data: a row, a count or the voice chip appears only when
 // the pack (C-02 manifest.json counts, scripture.json editions), the C-03 catalog entry or the guide
 // (C-04 stops) carries it.
+import type { Provenance } from '../components/types';
 import { position } from '../flow/model';
 import type { CatalogEntry, FlowGuide } from '../flow/types';
 import { t } from '../i18n';
 import type { FlowState } from '../flow/machine';
+import type { NarrationChoice } from '../media/provenance';
+import { STANDINS } from '../media/standin';
 
 /** What the pack's own files add to the catalog entry (fetched beside the card). */
 export interface PackFacts {
@@ -104,14 +107,38 @@ export function legendRows(
 }
 
 /**
- * The voice chip (PoC floor a1: a passage shows whether it has a voice before you choose it). "AI voice"
- * only when the C-03 catalog says guide narration was generated (`provenance.audio.generated`; key-term
- * recordings are `source`, not the guide's voice); otherwise the card says the voice is not there yet.
+ * The voice line on S02, S04 and S05 (PoC floor a1: a passage shows whether it has a voice before you
+ * choose it; C-06: AI narration is always marked). "AI voice" when the C-03 catalog says guide narration
+ * was generated (`provenance.audio.generated`; key-term recordings are `source`, not the guide's voice),
+ * or when the guide plays the stand-in's AI-voiced PoC clips for the passage (media/standin; RULING
+ * 2026-10-02 ~17:22 ET). Only a passage with no clips at all reads "Text · voice not yet".
  */
 export function voiceOf(entry: CatalogEntry | undefined): 'ai' | 'none' {
   const p = entry?.provenance as { audio?: { generated?: unknown } } | null | undefined;
   const n = p?.audio?.generated;
-  return typeof n === 'number' && n > 0 ? 'ai' : 'none';
+  if (typeof n === 'number' && n > 0) return 'ai';
+  return entry && (STANDINS[entry.packId]?.manifest.entries.length ?? 0) > 0 ? 'ai' : 'none';
+}
+
+/**
+ * S05's voice chip, in step with S02 and S04 (`voiceOf`) and with sheet 20 (the clip that plays). A
+ * part whose clip plays names it: a recording, or "AI voice" (C-06: AI narration is always marked). A
+ * part the narration setting keeps silent says so. A part with no clip reads "Text · voice not yet" when
+ * the passage has no clips at all (`voiceOf` none, as the card says), else "No voice for this part".
+ */
+export function guideVoice(
+  entry: CatalogEntry | undefined,
+  choice: NarrationChoice | undefined,
+): { mark: Provenance; words: string } {
+  if (choice?.clip)
+    return choice.mark === 'source'
+      ? { mark: 'source', words: t('s.common.mark.source') }
+      : { mark: choice.mark, words: t('s.common.mark.ai-voice') };
+  if (choice?.silent === 'source-only-silent')
+    return { mark: 'absent', words: t('s.guide.voice-silent') };
+  if (entry && voiceOf(entry) === 'none')
+    return { mark: 'absent', words: t('s.guide.voice-not-yet') };
+  return { mark: 'absent', words: t('s.guide.voice-none') };
 }
 
 /** "English · 6 steps · 130 parts" (mock s04-sub); the language leads once the catalog names it. */

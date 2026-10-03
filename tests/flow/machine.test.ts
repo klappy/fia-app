@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   initialState,
+  primaryAction,
   primaryKind,
   reduce,
   type FlowAction,
@@ -104,5 +105,50 @@ describe('guide machine — with narration (L4 events)', () => {
       { type: 'narration-end' },
     );
     expect(s.phase).toBe('next-ready');
+  });
+});
+
+describe('guide machine — a clip that fails to load never traps the person (J-A1 walk)', () => {
+  const audio = () => initialState(g, { hasAudio: true, autoContinue: true });
+  const lastId = units(g)[units(g).length - 1].id;
+  it('playing → clip-error: the big button goes on, the part is not marked played', () => {
+    const s = run(audio(), { type: 'play' }, { type: 'clip-error' });
+    expect(s.phase).toBe('next-ready');
+    expect(s.played).toEqual([]);
+    expect(primaryKind(g, s)).toBe('continue'); // not `resume`, which only retried the clip
+    const n = run(s, primaryAction(primaryKind(g, s)));
+    expect(n.unitId).toBe('S01-U002');
+    expect(run(s, { type: 'skip' }).unitId).toBe('S01-U002'); // Skip still works
+  });
+  it('never counts down into the next part, even with auto-continue on', () => {
+    const s = run(audio(), { type: 'play' }, { type: 'clip-error' });
+    expect(run(s, { type: 'countdown-done' })).toBe(s);
+  });
+  it('on the last part the forward action finishes the guide (S18), not a dead end', () => {
+    const s = run(at(lastId, audio()), { type: 'play' }, { type: 'clip-error' });
+    expect(isLast(g, s.unitId)).toBe(true);
+    expect(primaryKind(g, s)).toBe('finish');
+    const done = run(s, primaryAction(primaryKind(g, s)));
+    expect(done.finished).toBe(true);
+    expect(done.phase).toBe('finished');
+  });
+  it('an un-discussed stop still waits; its continue marks it discussed', () => {
+    const s = run(at(stop1.afterUnitId, audio()), { type: 'play' }, { type: 'clip-error' });
+    expect(s.phase).toBe('stop');
+    expect(primaryKind(g, s)).toBe('discuss');
+    expect(run(s, { type: 'continue' }).discussed).toEqual([stop1.id]);
+  });
+  it('the clip can be tried again as a second choice: play from where the error left it', () => {
+    const s = run(audio(), { type: 'play' }, { type: 'clip-error' });
+    expect(s.hasAudio).toBe(true);
+    expect(run(s, { type: 'play' }).phase).toBe('playing');
+  });
+  it('is ignored unless a clip is playing (idle, paused, text-only)', () => {
+    const idle = audio();
+    expect(run(idle, { type: 'clip-error' })).toBe(idle);
+    const paused = run(idle, { type: 'play' }, { type: 'pause' });
+    expect(run(paused, { type: 'clip-error' })).toBe(paused);
+    const text = initialState(g);
+    expect(run(text, { type: 'clip-error' })).toBe(text);
   });
 });

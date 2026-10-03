@@ -66,8 +66,8 @@ test('fresh card: the mock regions in order, pack counts, voice chip, one primar
   const back = screen.getByRole('button', { name: 'Back to Mark' });
   await expect(back).toHaveText('Mark');
   await expect(screen.locator('.s04-sub')).toHaveText('English · 6 steps · 130 parts');
-  // The pack has no generated guide narration yet (C-03 provenance.audio.generated = 0).
-  await expect(screen.locator('.s04-chip')).toHaveText('Text · voice not yet');
+  // The guide plays the stand-in's AI-voiced PoC clips (catalog generated = 0): marked AI (C-06).
+  await expect(screen.locator('.s04-chip')).toHaveText('AI voice');
 
   const inc = screen.getByRole('region', { name: 'Includes' });
   const kinds = inc.getByRole('listitem');
