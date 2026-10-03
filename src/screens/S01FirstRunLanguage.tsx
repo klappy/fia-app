@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { LanguagePicker } from '../components';
 import { FiaLogo } from '../components/FiaLogo';
 import { GlassButton, GlassSurface, Icon } from '../components/glass';
@@ -10,7 +10,8 @@ import {
   suggestedLanguages,
 } from '../components/languageRows';
 import { flowSession, useFlow } from '../flow/session';
-import { t } from '../i18n';
+import { hasCatalog, setUiLanguage, t, uiLanguage } from '../i18n';
+import { languageByCode } from '../i18n/languages';
 import {
   browserStore,
   DATA_PATHS,
@@ -58,6 +59,9 @@ function languageCounts(codes: readonly string[]): Promise<Counts> {
 
 export default function S01FirstRunLanguage() {
   const nav = useNavigate();
+  // The header pill opens S01 in use mode (`/?mode=use`, ScreenFrame): it changes the content only.
+  const [params] = useSearchParams();
+  const useMode = params.get('mode') === 'use';
   const session = flowSession();
   const snap = useFlow(session);
   const [pick, setPick] = useState<string | undefined>();
@@ -93,13 +97,31 @@ export default function S01FirstRunLanguage() {
   const chosen = pick ?? recent ?? device ?? (codes.includes('eng') ? 'eng' : codes[0]);
   const row = languages.find((l) => l.code === chosen);
   const failed = snap.catalogStatus === 'error';
+  // Use mode (01-first-run-language.md:64): the pick changes the content only, so the first-run lede
+  // ("one pick sets the guide and the app") is not shown; a pick other than the menus' language reads
+  // `primary-use-content` with `content-only-note` on the line above it, else `primary-use` (later visit).
+  const ui = uiLanguage();
+  const contentOnly = useMode && row !== undefined && row.code !== ui;
+  const uiName = languageByCode(ui)?.autonym ?? ui;
 
   const choose = (code: string) => {
     session.setLanguage(code);
     const store = browserStore();
+    const saved = loadSettings(store).settings;
     // A failed save leaves the pill on the old language; the guide's language (above) is already set.
-    saveSettings(store, { ...loadSettings(store).settings, contentLanguage: code });
-    nav('/library');
+    if (useMode) {
+      // Use mode: the UI language never flips silently (01-first-run-language.md:64, J-A7--P-01).
+      saveSettings(store, { ...saved, contentLanguage: code });
+      nav('/library');
+      return;
+    }
+    // First run, SB-3 (1): one pick sets the guide and the app (`s.lang.lede`). The menus follow the
+    // pick when it has a UI catalog (eng, spa); any other pick keeps English menus, the honest fallback.
+    const ui = hasCatalog(code) ? code : 'eng';
+    saveSettings(store, { ...saved, contentLanguage: code, uiLanguage: ui });
+    void setUiLanguage(ui)
+      .catch(() => undefined)
+      .finally(() => nav('/library'));
   };
 
   return (
@@ -108,7 +130,14 @@ export default function S01FirstRunLanguage() {
       titleHidden
       primaryLabel={
         row
-          ? t('s.lang.primary-pick', { language: row.autonym })
+          ? t(
+              contentOnly
+                ? 's.lang.primary-use-content'
+                : useMode
+                  ? 's.lang.primary-use'
+                  : 's.lang.primary-pick',
+              { language: row.autonym },
+            )
           : failed
             ? t('s.lang.primary-retry')
             : t('s.lang.primary-idle')
@@ -126,10 +155,18 @@ export default function S01FirstRunLanguage() {
       <p className="s01-h1 fia-display" aria-hidden="true">
         {t('s.lang.title')}
       </p>
-      <p className="fia-caption-v2 s01-lede">
-        {t('s.lang.lede')}
-        {languages.length > 0 && ` ${t('s.lang.lede-count', { n: languages.length })}`}
-      </p>
+      {useMode ? (
+        languages.length > 0 && (
+          <p className="fia-caption-v2 s01-lede">
+            {t('s.lang.lede-count', { n: languages.length })}
+          </p>
+        )
+      ) : (
+        <p className="fia-caption-v2 s01-lede">
+          {t('s.lang.lede')}
+          {languages.length > 0 && ` ${t('s.lang.lede-count', { n: languages.length })}`}
+        </p>
+      )}
       {languages.length > 0 ? (
         <div className="s01-wrap">
           <LanguagePicker
@@ -175,6 +212,14 @@ export default function S01FirstRunLanguage() {
           {t('s.common.explore.feedback')}
         </GlassButton>
       </div>
+      {contentOnly && (
+        <p
+          className="s01-note fia-type-caption fia-fw-medium fia-tone-body"
+          data-testid="s01-content-only-note"
+        >
+          {t('s.lang.content-only-note', { uiLanguage: uiName })}
+        </p>
+      )}
     </ScreenFrame>
   );
 }

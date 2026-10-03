@@ -10,7 +10,8 @@ import {
   Icon,
   type KitIconName,
 } from '../components/glass';
-import { t } from '../i18n';
+import { t, uiLanguage } from '../i18n';
+import { languageByCode } from '../i18n/languages';
 import {
   TEXT_STEPS,
   applyEasyMode,
@@ -89,6 +90,9 @@ function SunGlyph({ size = 18, stroke = 1.7 }: { size?: number; stroke?: number 
 }
 
 function autonym(code: string): string {
+  // The picker's autonym first (languages.ts, "Español"), so the pill matches S01/S02; Intl otherwise.
+  const known = languageByCode(code)?.autonym;
+  if (known) return known;
   try {
     return new Intl.DisplayNames([code], { type: 'language' }).of(code) ?? code;
   } catch {
@@ -297,6 +301,14 @@ export default function S14Settings() {
                   <div className="fia-caption s14-note">
                     {t('s.settings.language-note', { language: lang })}
                   </div>
+                  {uiLanguage() !== 'eng' && (
+                    // README § strings: the UI language row says the menus are an AI translation.
+                    <div className="fia-caption s14-note" data-mark="ui-lang-ai">
+                      {t('s.common.ui-lang-ai', {
+                        language: languageByCode(uiLanguage())?.autonym ?? uiLanguage(),
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
             </Group>

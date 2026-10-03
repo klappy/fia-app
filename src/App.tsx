@@ -1,6 +1,7 @@
-import { useLayoutEffect } from 'react';
+import { useLayoutEffect, useSyncExternalStore } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { SCREENS, SCREEN_COMPONENTS } from './screens';
+import { subscribeUiLanguage, uiLanguage } from './i18n';
 
 // BEGET (kit gap): BT Glass goes dark only under [data-theme="dark"] (kit tokens/theme-dark.css:6),
 // while the app's "follow the phone" setting removes data-theme (settings/apply.ts:15). Mirror the
@@ -42,9 +43,11 @@ function useKitTheme() {
 
 export function App() {
   useKitTheme();
+  // A UI language switch remounts the screens so every `t()` label reads the new catalog.
+  const lang = useSyncExternalStore(subscribeUiLanguage, uiLanguage);
   return (
     <BrowserRouter>
-      <Routes>
+      <Routes key={lang}>
         {SCREENS.map((s) => {
           const C = SCREEN_COMPONENTS[s.id];
           return <Route key={s.id} path={s.path} element={<C />} />;

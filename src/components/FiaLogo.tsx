@@ -22,12 +22,22 @@ const LOCK_W = SYM_W + 6 + 300 * S2;
  * The lockup; `qualifier` sets the line under it (mock FiaLogo qualifier, design/alpha-v2-screens/_frame.js:77-78;
  * .fia-qualifier in frame/frame.css), as S01 and S15 show it. The parent lays the two out.
  */
-export function FiaLogo({ size = 22, qualifier }: { size?: number; qualifier?: boolean }) {
+export function FiaLogo({
+  size = 22,
+  qualifier,
+  mark,
+}: {
+  size?: number;
+  qualifier?: boolean;
+  /** The symbol alone, no wordmark: the hub header's last-resort fit (Header.tsx `useOneRowHub`). */
+  mark?: boolean;
+}) {
+  const w = mark ? SYM_W : LOCK_W;
   const svg = (
     <svg
       className="fia-logo"
-      viewBox={`0 0 ${LOCK_W.toFixed(2)} 22`}
-      width={+((LOCK_W * size) / 22).toFixed(2)}
+      viewBox={`0 0 ${w.toFixed(2)} 22`}
+      width={+((w * size) / 22).toFixed(2)}
       height={size}
       role="img"
       aria-label="FIA"
@@ -39,11 +49,13 @@ export function FiaLogo({ size = 22, qualifier }: { size?: number; qualifier?: b
             <path key={d} d={d} />
           ))}
         </g>
-        <g transform={`translate(${(SYM_W + 6).toFixed(3)} 1) scale(${S2.toFixed(6)})`}>
-          {WORDMARK.map((d) => (
-            <path key={d} d={d} />
-          ))}
-        </g>
+        {!mark && (
+          <g transform={`translate(${(SYM_W + 6).toFixed(3)} 1) scale(${S2.toFixed(6)})`}>
+            {WORDMARK.map((d) => (
+              <path key={d} d={d} />
+            ))}
+          </g>
+        )}
       </g>
     </svg>
   );
