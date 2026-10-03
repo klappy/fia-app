@@ -95,7 +95,7 @@ function RecordDetails({ row }: { row: RightsRow }) {
         </>
       )}
       <h4 className="fia-caption">{t('s.about.licence-text')}</h4>
-      <code dir="ltr" className="fia-rights__json">
+      <code dir="ltr" className="fia-rights__json fia-mono">
         {row.licenseInfo}
       </code>
     </div>
@@ -381,10 +381,10 @@ export default function S15AboutRights() {
               open={open === 'app-code'}
               onToggle={toggle}
             >
-              <pre dir="ltr" className="fia-rights__verbatim">
+              <pre dir="ltr" className="fia-rights__verbatim fia-mono">
                 {LICENSE}
               </pre>
-              <pre dir="ltr" className="fia-rights__verbatim">
+              <pre dir="ltr" className="fia-rights__verbatim fia-mono">
                 {NOTICE}
               </pre>
             </SourceRow>

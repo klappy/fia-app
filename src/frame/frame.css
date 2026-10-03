@@ -233,6 +233,28 @@ html.fia-scaled .fia-screen > .fia-thumb {
 .fia-kit-caption {
   font-size: var(--fs-caption) !important;
 }
+/* A kit GlassChip in the mock's chip face and title ink (S19's coverage chips; kit sets 12 px inline). */
+.fia-kit-chip {
+  font: var(--fw-medium) var(--fs-caption) / 1.2 var(--font-core) !important;
+  color: var(--text-title) !important;
+}
+/* A chosen kit GlassChip (FE-2; S03's select chips): title ink, semibold, brighter fill, a 1.5 px ring. */
+.fia-chip-on {
+  color: var(--text-title) !important;
+  font-weight: var(--fw-semibold) !important;
+  background: var(--glass-fill-4) !important;
+  box-shadow:
+    var(--inner-top),
+    0 0 0 1.5px var(--text-title);
+}
+/* A chosen kit CatalogRow is lit (mock 03-pericope-list.html .s03-row.is-on). Dark: its size line in
+   --text-dim read under 4.5:1 at 310% (mock rev3 contrast), so dim takes --text-body there. */
+.fia-row-on {
+  background: var(--glass-fill-3) !important;
+}
+[data-theme='dark'] .fia-row-on {
+  --text-dim: var(--text-body);
+}
 /* A quiet kit button whose words read as a muted label (S07's "‹ Explore"). */
 .fia-kit-muted {
   color: var(--text-muted) !important;
@@ -261,6 +283,15 @@ html.fia-scaled .fia-screen > .fia-thumb {
 }
 .fia-r-pill {
   border-radius: var(--r-pill);
+}
+/* A loading placeholder bar (S03's skeleton rows). */
+.fia-skel-bar {
+  border-radius: var(--r-pill);
+  background: var(--glass-fill-2);
+}
+/* Verbatim licence and JSON text (S15). */
+.fia-mono {
+  font-family: var(--fia-font-mono, monospace);
 }
 /* A heading that wears its container's face (S07's title inside the kit sheet's title slot). */
 .fia-inherit {

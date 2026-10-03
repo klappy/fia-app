@@ -276,7 +276,7 @@ export default function S06SingleScript() {
                 onClick={turnVoiceOn}
               >
                 <span>
-                  <b>{t('s.script.voice-off')}</b>
+                  <b className="fia-fw-semibold">{t('s.script.voice-off')}</b>
                   {` · ${t('s.script.turn-voice-on')}`}
                 </span>
               </GlassButton>
