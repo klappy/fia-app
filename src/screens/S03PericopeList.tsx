@@ -12,9 +12,11 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { CatalogRow, GlassButton, GlassSurface, Icon, type KitIconName } from '../components/glass';
 import { bookName, entriesFor, matches, pericopesFor } from '../flow/catalog';
+import { isNotYet, readyFirst, useReadyPacks } from '../flow/ready';
 import { flowSession, useFlow } from '../flow/session';
 import type { CatalogEntry } from '../flow/types';
 import { t } from '../i18n';
+import { languageName } from '../media/lang';
 import { offline, saveRowState, useOffline, useOnline } from '../offline';
 import { freeBytes } from '../offline/storage';
 import { browserStore, DATA_PATHS, fetchJson, loadSettings } from '../settings';
@@ -118,7 +120,12 @@ export default function S03PericopeList() {
     [snap.manifest, language, snap.book],
   );
   const book = rows[0] ? bookName(rows[0].title) : (snap.book ?? '');
-  const shown = rows.filter((r) => matches(q, r.title, r.pericope));
+  // GAP-NOPACK: passages that open come first; the rest read "not yet in {language}" (ready.ts).
+  const ready = useReadyPacks();
+  const shown = readyFirst(
+    rows.filter((r) => matches(q, r.title, r.pericope)),
+    (r) => !isNotYet(ready, r.packId),
+  );
 
   // Per-language catalog file: the parts estimate and whether the Text size is measured.
   const [facts, setFacts] = useState<{ lang?: string; map: Record<string, ListFacts> }>({
@@ -295,9 +302,16 @@ export default function S03PericopeList() {
             {shown.map((r, i) => {
               const st = saveRowState(r.packId, off.packs, off.saving);
               const saved = st.state === 'saved';
+              // GAP-NOPACK: a passage this build cannot open reads "not yet in {language}" in place
+              // of its size (ready.ts).
+              const notYet = isNotYet(ready, r.packId);
               const meta = metaWords(factsOf(r));
               const ref = keepRef(r.title);
-              const size = meta ? (
+              const size = notYet ? (
+                <span className="fia-mark fia-mark--absent" data-role="not-yet">
+                  ◌ {t('s.common.mark.absent', { language: languageName(language) })}
+                </span>
+              ) : meta ? (
                 <span className="s03-size" data-testid="row-size">
                   {meta}
                 </span>
@@ -315,7 +329,7 @@ export default function S03PericopeList() {
                       first={i === 0}
                       data-pack-id={r.packId}
                       title={
-                        !online && !saved ? (
+                        !online && !saved && !notYet ? (
                           // pericope-card.md offline: unsaved rows stay tappable; the fact is a
                           // chip in words under the reference (not drawn in the mock).
                           <span className="s03-title s03-title--stack">

@@ -160,6 +160,8 @@ export interface SheetInput {
   sourceOnlySilent?: boolean;
   /** Scripture audio reads the English edition (absent-Scripture ladder) */
   readsEnglish?: boolean;
+  /** the item is a guide part's narration (S05): a part with no clip says so in voice words (F5) */
+  guidePart?: boolean;
 }
 
 export type SheetRow = 'rights' | 'report' | 'change-settings';
@@ -174,8 +176,16 @@ export interface SheetModel {
 }
 
 export function provenanceSheet(input: SheetInput): SheetModel {
-  const { domain, slot, scripture, englishShown, unmatched, sourceOnlySilent, readsEnglish } =
-    input;
+  const {
+    domain,
+    slot,
+    scripture,
+    englishShown,
+    unmatched,
+    sourceOnlySilent,
+    readsEnglish,
+    guidePart,
+  } = input;
   if (scripture && domain === 'text') scriptureTextMark(slot ?? { status: 'absent' });
   if (sourceOnlySilent) {
     return {
@@ -216,6 +226,14 @@ export function provenanceSheet(input: SheetInput): SheetModel {
       rows: scripture ? ['rights'] : ['rights', 'report'],
     };
   }
+  if (guidePart && domain === 'audio')
+    return {
+      mark: 'absent',
+      titleKey: 's.prov.title.no-voice',
+      bodyKeys: ['s.prov.body.absent-voice'],
+      sourceLine: false,
+      rows: ['report'],
+    };
   return {
     mark: 'absent',
     titleKey: 's.prov.title.absent',

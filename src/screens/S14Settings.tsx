@@ -27,7 +27,8 @@ import {
 
 // S14 Settings in glass (F6-S14; nodded mock cookbook design/alpha-v2-screens/14-settings.html, PRD § 4
 // row S14, § 8.5): a full-height kit GlassSheet with the FIA logo leading the title, one primary
-// ('Done') in the thumb slot, groups as kit GlassSurface wells: Text size · Theme · Voice · Language.
+// ('Done') in the thumb slot, groups as kit GlassSurface wells: Text size · Theme · Voice · Passage titles
+// · Language. FS-2: "Passage titles" holds one ToggleRow (kit sparkle) for C-10 `subtitleMode`, default off.
 // Kept bones: every change persists to C-10 `fia.settings.v1` after validation (R-706); a failed save
 // shows `save-failed` for 4 s and the app continues. Rows whose value has no C-10 field (auto-continue,
 // read without voice, this phone's voice) are not rendered: they would not persist (BIDE, PR body).
@@ -270,6 +271,21 @@ export default function S14Settings() {
                 }))}
               />
               <div className="fia-caption s14-note">{t('s.settings.narration.note')}</div>
+            </Group>
+
+            <Group title={t('s.settings.passage-titles')}>
+              <SettingsRow
+                icon={<Icon name="sparkle" size={18} />}
+                label={t('s.settings.summaries')}
+                consequence={t('s.settings.summaries-note')}
+                control={
+                  <SettingsToggle
+                    on={settings.subtitleMode === 'generated'}
+                    label={t('s.settings.summaries')}
+                    onChange={(v) => update({ ...settings, subtitleMode: v ? 'generated' : 'off' })}
+                  />
+                }
+              />
             </Group>
 
             <Group title={t('s.settings.language')}>
