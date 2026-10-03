@@ -150,13 +150,16 @@ export default function S03PericopeList() {
     );
   };
 
-  // Select mode (J-A2, R-308): the chosen pack ids. A saved passage is not a choice.
+  // Select mode (J-A2, R-308): the chosen pack ids. A saved passage is not a choice, nor is one
+  // this build has no pack for (GAP-NOPACK: it says "not yet", there is nothing to save).
   const [selecting, setSelecting] = useState(false);
   const [chosen, setChosen] = useState<Set<string>>(() => new Set());
   const [saving, setSaving] = useState<{ i: number; n: number } | null>(null);
   const [failed, setFailed] = useState(0);
   const isSaved = (id: string) => saveRowState(id, off.packs, off.saving).state === 'saved';
-  const picked = rows.filter((r) => chosen.has(r.packId) && !isSaved(r.packId));
+  const picked = rows.filter(
+    (r) => chosen.has(r.packId) && !isSaved(r.packId) && !isNotYet(ready, r.packId),
+  );
   const toggle = (id: string) =>
     setChosen((cur) => {
       const next = new Set(cur);
@@ -373,23 +376,24 @@ export default function S03PericopeList() {
                     />
                   </li>
                 );
-              const on = chosen.has(r.packId) && !saved;
-              const locked = saved || !!saving;
+              // A saved passage and a not-yet one are not choices; the others are checkboxes (R-308).
+              const choice = !saved && !notYet;
+              const on = choice && chosen.has(r.packId);
+              const locked = !choice || !!saving;
               return (
                 <li key={r.packId}>
                   <CatalogRow
                     className={`fia-catalog s03-row${on ? ' is-on' : ''}`}
                     first={i === 0}
                     data-pack-id={r.packId}
-                    // The saved passage is not a choice; the others are checkboxes (R-308).
-                    role={saved ? undefined : 'checkbox'}
-                    aria-checked={saved ? undefined : on}
+                    role={choice ? 'checkbox' : undefined}
+                    aria-checked={choice ? on : undefined}
                     aria-disabled={locked || undefined}
                     title={
                       <span className="s03-title">
                         {saved ? (
                           savedChip
-                        ) : on ? (
+                        ) : notYet ? null : on ? (
                           <Chip icon="check" on quiet big={big} testId="row-selected">
                             {t('s.pericopes.chip.selected')}
                           </Chip>
