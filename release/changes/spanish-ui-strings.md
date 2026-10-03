@@ -12,8 +12,13 @@ Branch `claude/blissful-bohr-e2bu5m-spaui` (base `v2/integration`). Cookbook uni
   in `offline-shell.json` so it is precached, R-702). `setUiLanguage(code)` switches the active
   catalog; `t` reads whichever is active, with Spanish plural rules (`es` from `languages.ts`). A
   language with no catalog of its own switches to English instead of claiming an AI translation.
-- **S01**: one pick sets the guide and the app (SB-3 (1), `s.lang.lede`): the pick saves
-  `uiLanguage` too when it has a catalog (eng, spa), else English. `main.tsx` loads a saved non-English
+- **S01**: on first run one pick sets the guide and the app (SB-3 (1), `s.lang.lede`): the pick saves
+  `uiLanguage` too when it has a catalog (eng, spa), else English. In use mode (`/?mode=use`, the
+  header pill) only the content changes; the UI language never flips silently (01-first-run-language.md:64).
+  `setUiLanguage` drops stale loads, so the latest pick wins.
+- **Header**: the hub pills tighten to 12 px inline padding only when they would wrap (Spanish at
+  390 px), so the header keeps one row; English is unchanged. The pill shows the picker autonym
+  (`Español`), matching S01/S02. `main.tsx` loads a saved non-English
   catalog before the first paint; `App.tsx` remounts the routes on a switch.
 - **S14**: the Language row shows `s.common.ui-lang-ai` when the menus are not English
   (design/alpha-screens/README.md:43).

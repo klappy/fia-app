@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { MoreSheet, PrimaryButton, type UiState } from '../components';
 import { AuroraField } from '../components/glass';
 import { Header } from '../frame/Header';
+import { languageByCode } from '../i18n/languages';
 import { t } from '../i18n';
 import { useOnline } from '../offline/useOnline';
 import { browserStore, loadSettings } from '../settings';
@@ -45,6 +46,9 @@ export interface ScreenFrameProps {
 }
 
 function autonym(code: string): string {
+  // The picker's autonym first (languages.ts, "Español"), so the pill matches S01/S02; Intl otherwise.
+  const known = languageByCode(code)?.autonym;
+  if (known) return known;
   try {
     return new Intl.DisplayNames([code], { type: 'language' }).of(code) ?? code;
   } catch {

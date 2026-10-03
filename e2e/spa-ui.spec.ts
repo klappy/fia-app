@@ -19,6 +19,23 @@ async function noRawKeys(page: Page) {
   for (const a of attrs) expect(a, 'a raw s.* key in an attribute').not.toMatch(RAW_KEY);
 }
 
+/** The hub header keeps one row at 390 px (mock 02-library): the grid is no taller than its pills. */
+async function headerOneRow(page: Page) {
+  const m = await page.evaluate(() => {
+    const g = document.querySelector<HTMLElement>('.fia-header-grid')!;
+    const kids = [...g.children].map((c) => c.getBoundingClientRect().height);
+    return {
+      grid: g.getBoundingClientRect().height,
+      tallest: Math.max(...kids),
+      header: g.parentElement!.offsetHeight,
+    };
+  });
+  expect(m.grid, `header grid ${JSON.stringify(m)}`).toBeLessThanOrEqual(m.tallest + 1);
+  expect(m.header).toBeLessThan(80);
+  await expect(page.locator('.fia-lang')).toHaveText('Español');
+  await expect(page.locator('.fia-explore')).toHaveText('Explorar');
+}
+
 test('S01 → S03 in Spanish: Spanish labels, no raw keys, survives a reload', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('[data-screen="S01"]')).toBeVisible();
@@ -33,6 +50,7 @@ test('S01 → S03 in Spanish: Spanish labels, no raw keys, survives a reload', a
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Biblioteca');
   await expect(s02).not.toContainText('Library');
   await noRawKeys(page);
+  await headerOneRow(page);
   const settings = await page.evaluate(() => JSON.parse(localStorage.getItem('fia.settings.v1')!));
   expect(settings.uiLanguage).toBe('spa');
   expect(settings.contentLanguage).toBe('spa');
@@ -45,12 +63,14 @@ test('S01 → S03 in Spanish: Spanish labels, no raw keys, survives a reload', a
   await expect(s03).toContainText(/pasajes? · toca uno para verlo/);
   await expect(s03).not.toContainText('tap one to see it');
   await noRawKeys(page);
+  await headerOneRow(page);
 
   // A reload keeps the Spanish chrome (the saved UI language loads before the first paint).
   await page.reload();
   await expect(page.locator('[data-screen="S03"]')).toBeVisible();
   await expect(page.locator('[data-screen="S03"]')).toContainText(/toca uno para verlo/);
   await noRawKeys(page);
+  await headerOneRow(page);
 });
 
 test('S14 says the Spanish menus are an AI translation (s.common.ui-lang-ai)', async ({ page }) => {
@@ -79,4 +99,21 @@ test('S14 says the Spanish menus are an AI translation (s.common.ui-lang-ai)', a
     'Los menús y las etiquetas en Español son una traducción del inglés hecha por IA.',
   );
   await noRawKeys(page);
+});
+
+test('use mode (header pill) changes the content only: the Spanish menus stay', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByText('Español').click();
+  await page.locator('[data-role="primary"]').click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Biblioteca');
+  await page.locator('.fia-lang').click();
+  await expect(page.locator('[data-screen="S01"]')).toBeVisible();
+  await page.getByText('English', { exact: true }).first().click();
+  await page.locator('[data-role="primary"]').click();
+  await expect(page.locator('[data-screen="S02"]')).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Biblioteca');
+  const settings = await page.evaluate(() => JSON.parse(localStorage.getItem('fia.settings.v1')!));
+  expect(settings).toMatchObject({ contentLanguage: 'eng', uiLanguage: 'spa' });
 });

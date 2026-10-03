@@ -78,6 +78,15 @@ describe('Spanish UI catalog (spa.json)', () => {
     expect(t('s.pericopes.primary-save', { n: 3, mb: 12 })).toBe('Guardar 3 pasajes (12 MB)');
   });
 
+  it('the latest switch wins: a slow Spanish load does not override a later English pick', async () => {
+    await setUiLanguage('eng');
+    const spa = setUiLanguage('spa');
+    const eng = setUiLanguage('eng');
+    await Promise.all([spa, eng]);
+    expect(uiLanguage()).toBe('eng');
+    expect(t('s.common.dock.guide')).toBe('Guide');
+  });
+
   it('a language with no catalog shows English menus (no false AI-translation claim)', async () => {
     expect(await setUiLanguage('fra')).toBe('eng');
     expect(t('s.common.dock.guide')).toBe('Guide');

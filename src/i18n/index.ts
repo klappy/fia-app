@@ -89,9 +89,14 @@ export function subscribeUiLanguage(f: () => void): () => void {
  * Switch the UI language. A language with no catalog of its own shows English (the fallback),
  * so it switches to `eng` rather than claiming an AI translation that does not exist.
  */
+let request = 0;
+
 export async function setUiLanguage(code: string): Promise<string> {
   const lang = hasCatalog(code) ? code : 'eng';
+  // The latest call wins: a slow lazy load must not override a later pick that resolved first.
+  const mine = ++request;
   const catalog = await loadCatalog(lang);
+  if (mine !== request) return active.lang;
   if (active.lang !== lang) {
     active = makeT(catalog, lang, localeFor(lang));
     for (const f of listeners) f();
