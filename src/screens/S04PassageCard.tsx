@@ -24,6 +24,7 @@ import {
 import { ScreenFrame } from './ScreenFrame';
 import './S04PassageCard.css';
 import { kindColor } from '../frame/kinds';
+import { readScale } from '../frame/scale';
 
 // S04 Passage card in glass (F6-S04; nodded mock cookbook design/alpha-v2-screens/04-passage-card.html,
 // rev4; PRD § 4 row S04, § 8.1–8.5). Browse frame: header (shell) · quiet ‹ {book} · the reference as
@@ -38,11 +39,6 @@ const GlassChip = KitGlassChip as unknown as ComponentType<
   GlassChipProps & HTMLAttributes<HTMLElement>
 >;
 const Bead = KitBead as unknown as ComponentType<BeadProps & HTMLAttributes<SVGElement>>;
-
-/** --fia-text-scale per C-10 text step (settings/apply.ts; mock _frame.js:16-21). */
-const STEP_SCALE: Record<string, number> = { x150: 1.5, x200: 2, x310: 3.1 };
-const textScale = () =>
-  STEP_SCALE[globalThis.document?.documentElement.getAttribute('data-text-step') ?? ''] ?? 1;
 
 /** The pack's own counts and edition names (C-02 manifest.json, scripture.json); empty until read. */
 function usePackFacts(packId: string | undefined): PackFacts {
@@ -76,7 +72,7 @@ function usePackFacts(packId: string | undefined): PackFacts {
 
 /** "Includes": the legend, one shape + colour + word per kind (mock Includes; PRD § 8.3). */
 function Includes({ rows }: { rows: LegendRow[] }) {
-  const size = 10 * Math.min(textScale(), 2.4);
+  const size = 10 * Math.min(readScale(), 2.4);
   return (
     <GlassSurface
       as="section"

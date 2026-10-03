@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AbsentBadge, SecondaryAction, ToastNotice } from '../components';
 import { GuideTransport } from '../components/AudioControls';
-import { GlassButton, GlassSelect, GlassSurface, Icon } from '../components/glass';
+import { GlassButton, GlassSelect, Icon } from '../components/glass';
 import { GuidePrimary, type GuideGlyph } from '../components/PrimaryButton';
 import { ProvenanceChip } from '../components/ProvenanceMark';
 import { CardViews, ProgressBand } from '../flow/ui/GuideChrome';
@@ -38,6 +38,7 @@ import {
   usePackFile,
 } from '../media/usePack';
 import { ScreenFrame } from './ScreenFrame';
+import { GuideCard } from '../frame/GuideCard';
 
 // S08 — Scripture reader, v2 (spec 08 as wireframe; nodded mock cookbook design/alpha-v2-screens/
 // 08-scripture-reader.html; PRD § 4 S08 "the card's Text view"). Composed of S05's shared parts: the
@@ -238,116 +239,109 @@ export default function S08ScriptureReader() {
     >
       <div className="fia-guide fia-guide--text" data-edition={ed?.short}>
         {guide && guideUnit && <ProgressBand guide={guide} unitId={guideUnit} scale={scale} />}
-        <GlassSurface level={2} blur="strong" radius="2xl" shadow="card" className="fia-guide-card">
-          <div className="fia-guide-card__inner">
-            {views}
-            {scripture.status === 'loading' && (
-              <p className="fia-caption">{t('s.common.loading')}</p>
-            )}
-            {scripture.status === 'error' && (
-              <div role="alert">
-                <p>{t('s.scripture.error')}</p>
-                <SecondaryAction label={t('s.common.try-again')} onPress={scripture.retry} />
+        <GuideCard views={views}>
+          {scripture.status === 'loading' && <p className="fia-caption">{t('s.common.loading')}</p>}
+          {scripture.status === 'error' && (
+            <div role="alert">
+              <p>{t('s.scripture.error')}</p>
+              <SecondaryAction label={t('s.common.try-again')} onPress={scripture.retry} />
+            </div>
+          )}
+          {ed && (
+            <>
+              <div className="fia-guide-card__voice">
+                <ProvenanceChip
+                  provenance={choice.clip ? choice.mark : 'absent'}
+                  words={voiceWords}
+                  ariaLabel={t('s.guide.a11y.voice-chip', { mark: voiceWords })}
+                  iconSize={iconSize(14, scale)}
+                  onInfo={openSheet}
+                />
               </div>
-            )}
-            {ed && (
-              <>
-                <div className="fia-guide-card__voice">
-                  <ProvenanceChip
-                    provenance={choice.clip ? choice.mark : 'absent'}
-                    words={voiceWords}
-                    ariaLabel={t('s.guide.a11y.voice-chip', { mark: voiceWords })}
-                    iconSize={iconSize(14, scale)}
-                    onInfo={openSheet}
-                  />
-                </div>
-                <div className="fia-reader-tools">
-                  <GlassSelect
-                    className="fia-reader-edition"
-                    aria-label={t('s.scripture.edition-hint')}
-                    value={ed.short}
-                    options={editions.map((e) => e.short)}
-                    onChange={(v) => switchEdition(editions.findIndex((e) => e.short === v))}
-                  />
-                  {aligned && pos.verse >= 0 && (
-                    <GlassButton
-                      variant="quiet"
-                      size="md"
-                      className="fia-btn fia-quiet"
-                      data-role="replay-verse"
-                      leading={<Icon name="update" size={iconSize(18, scale)} />}
-                      onClick={() => clip.playFrom(seekToVerse(aligned, pos.verse) ?? 0)}
-                    >
-                      {t('s.scripture.replay-verse')}
-                    </GlassButton>
-                  )}
-                </div>
-                <p className="fia-caption fia-reader-long">
-                  {t('s.scripture.edition-long', {
-                    longName: ed.repo,
-                    language: languageName(ed.language),
-                  })}
-                </p>
-                {ed.fallback && <AbsentBadge language={languageName(lang)} />}
-                {ed.fallback && <p className="fia-caption">{t('s.scripture.english-fallback')}</p>}
-                <div className="fia-card-body">
-                  <div className="fia-text fia-reader-text" dir="auto" lang={ed.language}>
-                    {ed.verses.map((v, vi) => {
-                      const ai = aligned?.verses.findIndex((x) => x.sourceId === v.sourceId) ?? -1;
-                      const av = ai >= 0 ? aligned!.verses[ai] : null;
-                      const verseActive = ai >= 0 && ai === pos.verse;
-                      return (
-                        <p
-                          key={v.ref}
-                          id={`v-${v.ref}`}
-                          className="fia-text__verse"
-                          data-active={verseActive && mode === 'verse' ? true : undefined}
+              <div className="fia-reader-tools">
+                <GlassSelect
+                  className="fia-reader-edition"
+                  aria-label={t('s.scripture.edition-hint')}
+                  value={ed.short}
+                  options={editions.map((e) => e.short)}
+                  onChange={(v) => switchEdition(editions.findIndex((e) => e.short === v))}
+                />
+                {aligned && pos.verse >= 0 && (
+                  <GlassButton
+                    variant="quiet"
+                    size="md"
+                    className="fia-btn fia-quiet"
+                    data-role="replay-verse"
+                    leading={<Icon name="update" size={iconSize(18, scale)} />}
+                    onClick={() => clip.playFrom(seekToVerse(aligned, pos.verse) ?? 0)}
+                  >
+                    {t('s.scripture.replay-verse')}
+                  </GlassButton>
+                )}
+              </div>
+              <p className="fia-caption fia-reader-long">
+                {t('s.scripture.edition-long', {
+                  longName: ed.repo,
+                  language: languageName(ed.language),
+                })}
+              </p>
+              {ed.fallback && <AbsentBadge language={languageName(lang)} />}
+              {ed.fallback && <p className="fia-caption">{t('s.scripture.english-fallback')}</p>}
+              <div className="fia-card-body">
+                <div className="fia-text fia-reader-text" dir="auto" lang={ed.language}>
+                  {ed.verses.map((v, vi) => {
+                    const ai = aligned?.verses.findIndex((x) => x.sourceId === v.sourceId) ?? -1;
+                    const av = ai >= 0 ? aligned!.verses[ai] : null;
+                    const verseActive = ai >= 0 && ai === pos.verse;
+                    return (
+                      <p
+                        key={v.ref}
+                        id={`v-${v.ref}`}
+                        className="fia-text__verse"
+                        data-active={verseActive && mode === 'verse' ? true : undefined}
+                      >
+                        <button
+                          type="button"
+                          className="fia-text__vnum"
+                          aria-label={t('s.scripture.a11y.verse', { n: v.n })}
+                          onClick={() => tapVerse(vi, v.ref)}
                         >
-                          <button
-                            type="button"
-                            className="fia-text__vnum"
-                            aria-label={t('s.scripture.a11y.verse', { n: v.n })}
-                            onClick={() => tapVerse(vi, v.ref)}
-                          >
-                            {v.n}
-                          </button>
-                          {av && mode === 'word' && av.text === v.text ? (
-                            splitVerse(av).map((p, k) =>
-                              p.word === null ? (
-                                <span key={k}>{p.text}</span>
-                              ) : (
-                                <span
-                                  key={k}
-                                  className="fia-text__seg"
-                                  data-active={
-                                    verseActive && pos.word === p.word ? true : undefined
-                                  }
-                                  onClick={() => {
-                                    const s = seekToWord(aligned!, ai, p.word!);
-                                    if (s !== null) clip.playFrom(s);
-                                  }}
-                                >
-                                  {p.text}
-                                </span>
-                              ),
-                            )
-                          ) : (
-                            <span onClick={() => tapVerse(vi, v.ref)}>{v.text}</span>
-                          )}{' '}
-                        </p>
-                      );
-                    })}
-                  </div>
-                  {clip.phase === 'finished' && unit && (
-                    <SecondaryAction label={t('s.scripture.back-to-guide')} onPress={toGuide} />
-                  )}
-                  {clip.error && <p role="alert">{t('s.scripture.error')}</p>}
-                  {notice && <ToastNotice kind="inline">{notice}</ToastNotice>}
+                          {v.n}
+                        </button>
+                        {av && mode === 'word' && av.text === v.text ? (
+                          splitVerse(av).map((p, k) =>
+                            p.word === null ? (
+                              <span key={k}>{p.text}</span>
+                            ) : (
+                              <span
+                                key={k}
+                                className="fia-text__seg"
+                                data-active={verseActive && pos.word === p.word ? true : undefined}
+                                onClick={() => {
+                                  const s = seekToWord(aligned!, ai, p.word!);
+                                  if (s !== null) clip.playFrom(s);
+                                }}
+                              >
+                                {p.text}
+                              </span>
+                            ),
+                          )
+                        ) : (
+                          <span onClick={() => tapVerse(vi, v.ref)}>{v.text}</span>
+                        )}{' '}
+                      </p>
+                    );
+                  })}
                 </div>
-              </>
-            )}
-          </div>
-        </GlassSurface>
+                {clip.phase === 'finished' && unit && (
+                  <SecondaryAction label={t('s.scripture.back-to-guide')} onPress={toGuide} />
+                )}
+                {clip.error && <p role="alert">{t('s.scripture.error')}</p>}
+                {notice && <ToastNotice kind="inline">{notice}</ToastNotice>}
+              </div>
+            </>
+          )}
+        </GuideCard>
       </div>
     </ScreenFrame>
   );

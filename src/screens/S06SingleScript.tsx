@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DiscussionStopBand, TextBlock } from '../components';
 import { GuideTransport } from '../components/AudioControls';
-import { GlassButton, GlassSurface, Icon } from '../components/glass';
+import { GlassButton, Icon } from '../components/glass';
 import { GuidePrimary, type GuideGlyph } from '../components/PrimaryButton';
 import { ProvenanceChip } from '../components/ProvenanceMark';
 import { UNDO_MS, type FlowState } from '../flow/machine';
@@ -29,6 +29,7 @@ import { DiscussionStopSheet } from './SH2DiscussionStop';
 import { ProvenanceSheet } from './SH1ProvenanceInfo';
 import { ScreenFrame } from './ScreenFrame';
 import './s06.css';
+import { GuideCard } from '../frame/GuideCard';
 
 /**
  * A talk the person has not had yet, on a part whose clip would close it (S05: the clip ends, then the
@@ -260,10 +261,12 @@ export default function S06SingleScript() {
             onUndo={() => session.dispatch({ type: 'undo' })}
           />
         )}
-        <GlassSurface level={2} blur="strong" radius="2xl" shadow="card" className="fia-guide-card">
-          <div className="fia-guide-card__inner">
-            {viewsFirst && views}
-            <div className="fia-guide-card__voice fia-voice-row">
+        <GuideCard
+          views={views}
+          viewsLast={!viewsFirst}
+          voiceClassName="fia-voice-row"
+          voice={
+            <>
               <GlassButton
                 variant="quiet"
                 size="md"
@@ -286,8 +289,10 @@ export default function S06SingleScript() {
                   onInfo={() => setAbout(true)}
                 />
               )}
-            </div>
-            <div className="fia-card-body">
+            </>
+          }
+          body={
+            <>
               <TextBlock
                 kind="guide"
                 lang={guide.language}
@@ -306,10 +311,9 @@ export default function S06SingleScript() {
                   {t('s.guide.read-scripture', { ref: guide.title })}
                 </GlassButton>
               )}
-            </div>
-            {!viewsFirst && views}
-          </div>
-        </GlassSurface>
+            </>
+          }
+        />
         {line && (
           <p className="fia-caption fia-num fia-flow-line" role="note">
             {line}

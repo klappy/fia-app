@@ -83,7 +83,7 @@ test('the map opens at "you are here" with the mock\'s regions, words and one pr
   await expect(dialog).toContainText(
     /Mark 1:1\u2060?–\u2060?13 · 6 steps · 130 parts · 23 talks together/,
   );
-  await expect(dialog.locator('.s07-legend')).toContainText('What the marks mean');
+  await expect(dialog.locator('.fia-legend-well')).toContainText('What the marks mean');
   // Six steps; step 3 open on its 25 parts with its 3 talks; the others show their bead rows.
   await expect(map(page).locator('.s07-step')).toHaveCount(6);
   await expect(step(page, 'S03')).toHaveAttribute('aria-expanded', 'true');

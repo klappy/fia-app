@@ -9,18 +9,7 @@
   position: relative;
   height: 100dvh;
 }
-/* The kit sheet is one column: the pinned title rows, the scrolling body, the action (mock _frame.css:189). */
-.s07-sheet > [role='dialog'] {
-  display: flex;
-  flex-direction: column;
-}
-.s07-body {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  margin: 10px -18px 0;
-  padding: 0 18px;
-}
+/* The kit sheet is one column with a scrolling body: .fia-sheet / .fia-sheet-body (frame/frame.css). */
 
 /* ---------- pinned top: FIA lockup (not interactive) · the one way back to Explore ---------- */
 .s07-brand {

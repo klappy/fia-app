@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PericopeCard } from '../components';
 import {
@@ -30,6 +30,7 @@ import { ScreenFrame } from './ScreenFrame';
 import './S02Library.css';
 import { KINDS } from '../frame/kinds';
 import { keepRef } from '../frame/text';
+import { useBig } from '../frame/scale';
 
 // S02 Library (02-library.md; R-303, R-410, R-702, R-706) in glass, F6-S02. Nodded mock
 // design/alpha-v2-screens/02-library.html (Home frame): hero "Library" and a count line, kit
@@ -40,16 +41,6 @@ import { keepRef } from '../frame/text';
 
 /** Counts read "1,497" (the strings are English today; the plural word is chosen by `n`). */
 const num = (n: number) => n.toLocaleString('en');
-
-/** 200% and 310% text (mock html.fia-big): live from <html data-text-step> (settings/apply.ts). */
-const BIG_STEPS = new Set(['x200', 'x310']);
-const readBig = () =>
-  BIG_STEPS.has(globalThis.document?.documentElement.getAttribute('data-text-step') ?? '');
-const watchBig = (f: () => void) => {
-  const mo = new MutationObserver(f);
-  mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-text-step'] });
-  return () => mo.disconnect();
-};
 
 function tailWords(tail: RecapTail): string {
   switch (tail.kind) {
@@ -117,7 +108,7 @@ export default function S02Library() {
   const session = flowSession();
   const snap = useFlow(session);
   const [q, setQ] = useState('');
-  const big = useSyncExternalStore(watchBig, readBig, () => false);
+  const big = useBig();
   const online = useOnline();
   const { packs } = useOffline();
   useEffect(() => {

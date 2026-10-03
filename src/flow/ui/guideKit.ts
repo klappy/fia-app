@@ -1,32 +1,16 @@
 // Pure helpers and the text-scale hook shared by the guide family (F5). Split from GuideChrome.tsx so
 // that file exports components only (react-refresh).
-import { useEffect, useState } from 'react';
 import { t } from '../../i18n';
 import type { PackMedia, PackTerm, ResourcesPack } from '../../media/resources';
 import type { GuideUnit } from '../types';
 import { CUE_MEDIA, type BandModel, type Tail } from './band';
 import { keepNumber, keepRef, NB } from '../../frame/text';
+import { iconSz, useTextScale } from '../../frame/scale';
 
 // ── text scale (C-10 text size → html[data-text-step], settings/apply.ts) ────────────────────────────
 
-const STEP_SCALE: Record<string, number> = { x150: 1.5, x200: 2, x310: 3.1 };
-const readScale = () =>
-  STEP_SCALE[globalThis.document?.documentElement.getAttribute('data-text-step') ?? ''] ?? 1;
-
-/** 1 · 1.5 · 2 · 3.1, live: the mock's --fia-text-scale (_frame.js:16-21). */
-export function useTextScale(): number {
-  const [scale, setScale] = useState(readScale);
-  useEffect(() => {
-    const root = document.documentElement;
-    const mo = new MutationObserver(() => setScale(readScale()));
-    mo.observe(root, { attributes: true, attributeFilter: ['data-text-step'] });
-    return () => mo.disconnect();
-  }, []);
-  return scale;
-}
-
-/** Icon box: base × min(scale, 2) (mock iconSz, _frame.js:41). */
-export const iconSize = (base: number, scale: number) => Math.round(base * Math.min(scale, 2));
+// The reader lives in the shared layer (frame/scale.ts); the guide's parts import it from here.
+export { useTextScale, iconSz as iconSize };
 
 // NB, keepRef and keepNumber are the shared layer's (frame/text.ts); re-exported for the guide's parts.
 export { NB, keepRef };

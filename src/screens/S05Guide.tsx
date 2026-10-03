@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DiscussionStopBand, SecondaryAction, TextBlock } from '../components';
 import { GuideTransport } from '../components/AudioControls';
-import { GlassButton, GlassSurface, Icon } from '../components/glass';
+import { GlassButton, Icon } from '../components/glass';
 import { GuidePrimary, type GuideGlyph } from '../components/PrimaryButton';
 import { ProvenanceChip } from '../components/ProvenanceMark';
 import type { Provenance } from '../components/types';
@@ -22,6 +22,7 @@ import { useGuideRights } from '../media/guideRights';
 import { ProvenanceSheet } from './SH1ProvenanceInfo';
 import { ScreenFrame } from './ScreenFrame';
 import { guideVoice } from './passageCard';
+import { GuideCard } from '../frame/GuideCard';
 
 // S05 Guide, v2 (BUILD-ORDER F5; nodded mock design/alpha-v2-screens/05-guide.html; PRD § 4 S05, § 8):
 // glass header (ScreenFrame) · progress band (overall steps + coded beads) · the guide card (Guide ·
@@ -316,19 +317,20 @@ export default function S05Guide() {
             onUndo={() => session.dispatch({ type: 'undo' })}
           />
         )}
-        <GlassSurface level={2} blur="strong" radius="2xl" shadow="card" className="fia-guide-card">
-          <div className="fia-guide-card__inner">
-            {viewsFirst && views}
-            <div className="fia-guide-card__voice">
-              <ProvenanceChip
-                provenance={voice.mark}
-                words={voice.words}
-                ariaLabel={t('s.guide.a11y.voice-chip', { mark: voice.words })}
-                iconSize={iconSize(14, scale)}
-                onInfo={() => setAbout(true)}
-              />
-            </div>
-            <div className="fia-card-body">
+        <GuideCard
+          views={views}
+          viewsLast={!viewsFirst}
+          voice={
+            <ProvenanceChip
+              provenance={voice.mark}
+              words={voice.words}
+              ariaLabel={t('s.guide.a11y.voice-chip', { mark: voice.words })}
+              iconSize={iconSize(14, scale)}
+              onInfo={() => setAbout(true)}
+            />
+          }
+          body={
+            <>
               <TextBlock
                 kind="guide"
                 lang={guide.language}
@@ -347,10 +349,9 @@ export default function S05Guide() {
                   {t('s.guide.read-scripture', { ref: guide.title })}
                 </GlassButton>
               )}
-            </div>
-            {!viewsFirst && views}
-          </div>
-        </GlassSurface>
+            </>
+          }
+        />
         {clipError && (
           <div className="fia-guide-note" role="alert" data-role="clip-error">
             <p className="fia-caption fia-guide-note">{t('s.guide.error-clip')}</p>

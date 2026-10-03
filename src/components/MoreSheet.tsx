@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { t } from '../i18n';
-import { CatalogRow, GlassButton, GlassSurface, Icon, type KitIconName } from './glass';
+import { Group } from '../frame/Group';
+import { CatalogRow, GlassButton, Icon, type KitIconName } from './glass';
 import { Sheet } from './Sheet';
 import type { StateProps } from './types';
 
@@ -32,36 +33,33 @@ const FIA: Row[] = [
 export function MoreSheet({ open, onClose, state, from }: MoreSheetProps) {
   const go = useNavigate();
   const group = (title: string, rows: Row[]) => (
-    <div className="fia-group">
-      <div className="fia-overline">{title}</div>
-      <GlassSurface level={3} blur="soft" radius="xl" shadow="none" className="fia-well">
-        <ul className="fia-more__list">
-          {rows.map((r, i) => (
-            <li key={r.key}>
-              <CatalogRow
-                className="fia-catalog fia-more__row"
-                first={i === 0}
-                onOpen={() => {
-                  onClose();
-                  go(
-                    r.to === '/feedback' && from
-                      ? `/feedback?from=${encodeURIComponent(from)}`
-                      : r.to,
-                  );
-                }}
-                title={
-                  <span className="fia-row-label">
-                    <Icon name={r.icon} size={18} />
-                    {t(r.key)}
-                  </span>
-                }
-                meta={<Icon name="chevronRight" size={16} />}
-              />
-            </li>
-          ))}
-        </ul>
-      </GlassSurface>
-    </div>
+    <Group title={title}>
+      <ul className="fia-more__list">
+        {rows.map((r, i) => (
+          <li key={r.key}>
+            <CatalogRow
+              className="fia-catalog fia-more__row"
+              first={i === 0}
+              onOpen={() => {
+                onClose();
+                go(
+                  r.to === '/feedback' && from
+                    ? `/feedback?from=${encodeURIComponent(from)}`
+                    : r.to,
+                );
+              }}
+              title={
+                <span className="fia-row-label">
+                  <Icon name={r.icon} size={18} />
+                  {t(r.key)}
+                </span>
+              }
+              meta={<Icon name="chevronRight" size={16} />}
+            />
+          </li>
+        ))}
+      </ul>
+    </Group>
   );
   return (
     <Sheet

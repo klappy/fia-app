@@ -174,3 +174,19 @@ html.fia-scaled .fia-screen > .fia-thumb {
   align-items: center;
   gap: 5px;
 }
+
+/* ---------- sheets on the kit GlassSheet (_frame.css:189-190) ---------- */
+/* A raw kit GlassSheet (S07's map, S14's settings) with class .fia-sheet is one column: the pinned
+   title rows, the scrolling .fia-sheet-body, the action. (Sheet.tsx puts .fia-sheet on the dialog itself
+   and lays its own body out in app.css.) */
+.fia-sheet > [role='dialog'] {
+  display: flex;
+  flex-direction: column;
+}
+.fia-sheet-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 10px -18px 0;
+  padding: 0 18px;
+}

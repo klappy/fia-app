@@ -3,7 +3,6 @@ import {
   useEffect,
   useMemo,
   useState,
-  useSyncExternalStore,
   type ComponentType,
   type HTMLAttributes,
 } from 'react';
@@ -35,6 +34,7 @@ import {
 import { ScreenFrame } from './ScreenFrame';
 import './S19Coverage.css';
 import { kindColor } from '../frame/kinds';
+import { iconSz, useTextScale } from '../frame/scale';
 
 // S19 Coverage in glass, F6-S19 (19-coverage.md; R-304, R-314). Nodded mock
 // design/alpha-v2-screens/19-coverage.html (Layer frame, no primary): the title says what the page
@@ -48,18 +48,6 @@ import { kindColor } from '../frame/kinds';
 type Html = HTMLAttributes<HTMLElement> & Record<`data-${string}`, string | undefined>;
 const GlassChip = KitGlassChip as unknown as ComponentType<GlassChipProps & Html>;
 const Bead = KitBead as unknown as ComponentType<BeadProps & Html>;
-
-/** Text scale from <html data-text-step> (settings/apply.ts), live; the mock's --fia-text-scale. */
-const SCALE: Record<string, number> = { x150: 1.5, x200: 2, x310: 3.1 };
-const readScale = () =>
-  SCALE[globalThis.document?.documentElement.getAttribute('data-text-step') ?? ''] ?? 1;
-const watchScale = (f: () => void) => {
-  const mo = new MutationObserver(f);
-  mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-text-step'] });
-  return () => mo.disconnect();
-};
-/** Glyphs grow with the text, capped at 2× (mock iconSz); beads at 2.4× (mock k()). */
-const iconSz = (n: number, scale: number) => Math.round(n * Math.min(scale, 2));
 
 /** KIT GAP (K1): Icon has no minus. Lucide 'minus' in the kit Icon's style: the [—] not-yet mark. */
 function MinusGlyph({ size }: { size: number }) {
@@ -159,7 +147,7 @@ export default function S19Coverage() {
   );
   const [data, setData] = useState<Loaded | null>(null);
   const [failed, setFailed] = useState(false);
-  const scale = useSyncExternalStore(watchScale, readScale, () => 1);
+  const scale = useTextScale();
 
   const load = useCallback(() => {
     setFailed(false);

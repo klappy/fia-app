@@ -300,7 +300,7 @@ export default function S07Overview() {
             ) : undefined
           }
         >
-          <div className="s07-body" ref={body}>
+          <div className="fia-sheet-body s07-body" ref={body}>
             {big && (
               // At 200%+ the title and counts scroll with the map; the logo row and the action stay.
               <div className="s07-head">

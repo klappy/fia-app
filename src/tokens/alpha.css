@@ -684,17 +684,7 @@ body {
   position: relative;
   height: 100dvh;
 }
-.s14-sheet > [role='dialog'] {
-  display: flex;
-  flex-direction: column;
-}
-.s14-body {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  margin: 10px -18px 0;
-  padding: 0 18px;
-}
+/* The sheet column and its scrolling body: .fia-sheet / .fia-sheet-body (frame/frame.css). */
 .s14-title {
   display: flex;
   align-items: center;

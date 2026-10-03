@@ -1,8 +1,8 @@
 import { useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MoreSheet, PrimaryButton, type UiState } from '../components';
-import { FiaLogo } from '../components/FiaLogo';
-import { AuroraField, GlassButton, GlassSurface, Icon } from '../components/glass';
+import { AuroraField } from '../components/glass';
+import { Header } from '../frame/Header';
 import { t } from '../i18n';
 import { useOnline } from '../offline/useOnline';
 import { browserStore, loadSettings } from '../settings';
@@ -39,9 +39,6 @@ export interface ScreenFrameProps {
   frame?: 'guide';
   children?: ReactNode;
 }
-
-// Header pill geometry from the nodded mock (_frame.js:224-229): 48 px tall, 10 × 16 padding.
-const PILL = { minHeight: 48, padding: '10px 16px' };
 
 function autonym(code: string): string {
   try {
@@ -88,59 +85,15 @@ export function ScreenFrame({
         data-frame={frame}
         data-offline={isOffline || undefined}
       >
-        <header className="fia-header-wrap">
-          <GlassSurface level={3} blur="strong" radius="pill" shadow="card" className="fia-header">
-            <div className="fia-header-grid">
-              <FiaLogo />
-              {isOffline && (
-                // toast-notice.md `chip`: persistent while offline; text, never icon-only.
-                <span
-                  className="fia-notice fia-notice--offline-chip"
-                  role="status"
-                  data-role="offline-chip"
-                >
-                  <span aria-hidden="true">⊘ </span>
-                  {t('s.common.offline-chip')}
-                </span>
-              )}
-              {close && !hub && (
-                <GlassButton
-                  variant="quiet"
-                  className="fia-pill fia-close-back"
-                  style={PILL}
-                  leading={<Icon name="chevronLeft" size={18} />}
-                  onClick={close.onPress}
-                >
-                  {close.label}
-                </GlassButton>
-              )}
-              {hub && (
-                <GlassButton
-                  variant="glass"
-                  className="fia-pill fia-lang"
-                  style={PILL}
-                  leading={<Icon name="languages" size={18} />}
-                  aria-label={t('s.common.language-pill', { language: lang })}
-                  onClick={() => go('/?mode=use')}
-                >
-                  {lang}
-                </GlassButton>
-              )}
-              {hub && (
-                <GlassButton
-                  variant="glass"
-                  className="fia-pill fia-explore"
-                  style={PILL}
-                  leading={<Icon name="compass" size={18} />}
-                  aria-haspopup="dialog"
-                  onClick={() => setExplore(true)}
-                >
-                  {t('s.common.explore')}
-                </GlassButton>
-              )}
-            </div>
-          </GlassSurface>
-        </header>
+        <Header
+          offline={isOffline}
+          close={close}
+          hub={
+            hub
+              ? { lang, onLang: () => go('/?mode=use'), onExplore: () => setExplore(true) }
+              : undefined
+          }
+        />
         <h1 className={`fia-title fia-screen__title${titleHidden ? ' fia-sr-only' : ''}`}>
           {heading}
         </h1>

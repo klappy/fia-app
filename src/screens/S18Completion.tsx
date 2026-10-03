@@ -1,10 +1,4 @@
-import {
-  useEffect,
-  useSyncExternalStore,
-  type ComponentType,
-  type HTMLAttributes,
-  type ReactNode,
-} from 'react';
+import { useEffect, type ComponentType, type HTMLAttributes, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CatalogRow, GlassSurface, Icon, type KitIconName } from '../components/glass';
 import { FlowGate } from '../flow/ui/GuideChrome';
@@ -21,6 +15,7 @@ import { completionSummary, keepRef, nextPassage, type RecapKind } from './compl
 import { ScreenFrame } from './ScreenFrame';
 import './S18Completion.css';
 import { KINDS } from '../frame/kinds';
+import { useTextScale } from '../frame/scale';
 
 // S18 Completion in glass (F6-S18; nodded mock cookbook design/alpha-v2-screens/18-completion.html; PRD § 4
 // row S18, § 8.1–8.5). Home frame: header (shell) · the recap plate (kit glass/GlassSurface): a glass
@@ -35,16 +30,6 @@ const Bead = KitBead as unknown as ComponentType<BeadProps & HTMLAttributes<SVGE
 const StageRail = KitStageRail as unknown as ComponentType<
   StageRailProps & HTMLAttributes<HTMLElement>
 >;
-
-/** --fia-text-scale per C-10 text step (settings/apply.ts; tokens/alpha.css; mock _frame.js:16-21). */
-const STEP_SCALE: Record<string, number> = { x150: 1.5, x200: 2, x310: 3.1 };
-const readScale = () =>
-  STEP_SCALE[globalThis.document?.documentElement.getAttribute('data-text-step') ?? ''] ?? 1;
-const watchScale = (f: () => void) => {
-  const mo = new MutationObserver(f);
-  mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-text-step'] });
-  return () => mo.disconnect();
-};
 
 const KIND_KEY: Record<RecapKind, string> = {
   term: 's.completion.kind.term',
@@ -91,7 +76,7 @@ export default function S18Completion() {
   const nav = useNavigate();
   const { session, snap } = useGuide();
   const { guide, state } = snap;
-  const scale = useSyncExternalStore(watchScale, readScale, () => 1);
+  const scale = useTextScale();
   const online = useOnline();
   const off = useOffline();
   useEffect(() => {
