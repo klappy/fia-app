@@ -1,12 +1,12 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DiscussionStopBand, TextBlock } from '../components';
+import { DiscussionStopBand, SecondaryAction, TextBlock } from '../components';
 import { GuideTransport } from '../components/AudioControls';
 import { GlassButton, GlassSurface, Icon } from '../components/glass';
 import { GuidePrimary, type GuideGlyph } from '../components/PrimaryButton';
 import { ProvenanceChip } from '../components/ProvenanceMark';
 import type { Provenance } from '../components/types';
-import { COUNTDOWN_MS, UNDO_MS, primaryAction, primaryKind } from '../flow/machine';
+import { COUNTDOWN_MS, UNDO_MS, primaryAction, primaryKind, reduce } from '../flow/machine';
 import { indexOf, isLast, isScriptureCue, position, stopAt, unitAt } from '../flow/model';
 import { CardViews, FlowGate, PartChips, ProgressBand, StickyStrip } from '../flow/ui/GuideChrome';
 import { iconSize, partItems, useTextScale, type CardView } from '../flow/ui/guideKit';
@@ -21,6 +21,7 @@ import { DiscussionStopSheet } from './SH2DiscussionStop';
 import { useGuideRights } from '../media/guideRights';
 import { ProvenanceSheet } from './SH1ProvenanceInfo';
 import { ScreenFrame } from './ScreenFrame';
+import { guideVoice } from './passageCard';
 
 // S05 Guide, v2 (BUILD-ORDER F5; nodded mock design/alpha-v2-screens/05-guide.html; PRD § 4 S05, § 8):
 // glass header (ScreenFrame) · progress band (overall steps + coded beads) · the guide card (Guide ·
@@ -53,6 +54,8 @@ export default function S05Guide() {
 
   // The narration mode may have changed in S14 since the guide loaded (R-501).
   useEffect(() => session.refreshNarration(), [session, guide?.packId]);
+  // The catalog entry names the passage's voice as S02 and S04 do (passageCard `voiceOf`).
+  useEffect(() => void session.loadCatalog(), [session]);
 
   useEffect(() => {
     if (phase !== 'countdown') return;
@@ -90,9 +93,16 @@ export default function S05Guide() {
     if (!a) return;
     if (phase === 'playing' && clip) {
       void a.play().catch((e: unknown) => {
-        if ((e as { name?: string })?.name === 'AbortError') return; // a newer load took over
+        const name = (e as { name?: string })?.name;
+        if (name === 'AbortError') return; // a newer load took over
+        // The browser wants a tap first: pause, and the big button (Continue) is that tap.
+        if (name === 'NotAllowedError') {
+          session.dispatch({ type: 'pause' });
+          return;
+        }
+        // The clip did not load: never a dead end, the guide goes on (machine `clip-error`).
         setClipError(true);
-        session.dispatch({ type: 'pause' });
+        session.dispatch({ type: 'clip-error' });
       });
     } else if (!a.paused) a.pause();
   }, [phase, clip, session]);
@@ -139,15 +149,13 @@ export default function S05Guide() {
   const cue = isScriptureCue(unit, guide.title);
   const language = languageName(guide.language);
 
-  // The voice this part has (C-06; AI is always named): the chip in the card, and sheet 20.
+  // The voice this part has (C-06; AI is always named): the chip in the card, under the same rule
+  // as S02 and S04 (passageCard `guideVoice`), and sheet 20, which names the clip that plays.
   const mark: Provenance = clip ? choice!.mark : 'absent';
-  const voiceWords = clip
-    ? mark === 'source'
-      ? t('s.common.mark.source')
-      : t('s.common.mark.ai-voice')
-    : choice?.silent === 'source-only-silent'
-      ? t('s.guide.voice-silent')
-      : t('s.guide.voice-none');
+  const entry = snap.manifest?.entries.find((e) => e.packId === guide.packId);
+  const voice = guideVoice(entry, choice);
+  // A clip that did not load can be tried again where the machine would play it (a second choice).
+  const retryable = clipError && reduce(guide, state, { type: 'play' }) !== state;
 
   // The big button: same slot, same shape, one verb per state (PRD § 8.2).
   const arcValue = clock.d > 0 ? Math.min(1, clock.t / clock.d) : 0;
@@ -197,6 +205,17 @@ export default function S05Guide() {
       session.dispatch({ type: 'stop-sheet-seen' });
     }
     session.dispatch(primaryAction(kind));
+  };
+
+  const retry = () => {
+    // Load the clip afresh inside the tap (a failed element does not reload on play alone).
+    setClipError(false);
+    const a = audio.current;
+    if (a) {
+      a.load();
+      void a.play().catch(() => undefined);
+    }
+    session.dispatch({ type: 'play' });
   };
 
   const view = (v: CardView) => {
@@ -301,9 +320,9 @@ export default function S05Guide() {
             {viewsFirst && views}
             <div className="fia-guide-card__voice">
               <ProvenanceChip
-                provenance={mark}
-                words={voiceWords}
-                ariaLabel={t('s.guide.a11y.voice-chip', { mark: voiceWords })}
+                provenance={voice.mark}
+                words={voice.words}
+                ariaLabel={t('s.guide.a11y.voice-chip', { mark: voice.words })}
                 iconSize={iconSize(14, scale)}
                 onInfo={() => setAbout(true)}
               />
@@ -332,9 +351,10 @@ export default function S05Guide() {
           </div>
         </GlassSurface>
         {clipError && (
-          <p className="fia-caption fia-guide-note" role="alert">
-            {t('s.guide.error-clip')}
-          </p>
+          <div className="fia-guide-note" role="alert" data-role="clip-error">
+            <p className="fia-caption fia-guide-note">{t('s.guide.error-clip')}</p>
+            {retryable && <SecondaryAction label={t('s.common.try-again')} onPress={retry} />}
+          </div>
         )}
         {scale > 1 && transport('column')}
         <audio
@@ -356,7 +376,7 @@ export default function S05Guide() {
           onError={() => {
             if (phaseRef.current !== 'playing') return;
             setClipError(true);
-            session.dispatch({ type: 'pause' });
+            session.dispatch({ type: 'clip-error' });
           }}
         />
       </div>
