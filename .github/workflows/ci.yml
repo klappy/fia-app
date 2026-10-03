@@ -40,8 +40,8 @@ jobs:
           path: test-results
           retention-days: 7
   # Visual baselines (e2e/visual-baseline.spec.ts). Pixels depend on the machine's fonts and
-  # libraries, so the spec runs inside Playwright's pinned image, and the committed
-  # *-chromium-linux.png are that image's output. The tag must match @playwright/test in
+  # libraries, so the spec runs inside Playwright's pinned image (fonts pinned further by
+  # e2e/visual-fonts.conf), and the committed *-chromium-linux.png are that image's output. The tag must match @playwright/test in
   # package.json. On failure the job uploads `visual-results` (expected / actual / diff) and
   # `visual-baselines` (the snapshot folder re-rendered in this image): review the diffs,
   # then commit the PNGs from `visual-baselines` for an intended change. CI never commits them.
