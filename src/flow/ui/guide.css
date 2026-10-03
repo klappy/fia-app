@@ -489,8 +489,10 @@ html.fia-big .fia-chips {
   color: var(--text-title);
   font-weight: var(--fw-semibold);
 }
-.fia-stop-q {
+/* .fia-well.… outweighs the frame well's 2px 0 padding (frame/frame.css). */
+.fia-well.fia-stop-q {
   margin-top: 10px;
+  padding: 0;
 }
 [data-theme='light'] .fia-stop-q {
   background: color-mix(in srgb, var(--text-title) 5%, transparent) !important;
@@ -543,7 +545,7 @@ html:not(.fia-scaled) .fia-jump__beads {
 .fia-jump__choices {
   margin: 6px -10px 0;
 }
-.fia-stop-inside {
+.fia-well.fia-stop-inside {
   margin: 0 0 10px;
   padding: 10px 14px 8px;
   border-radius: var(--r-xl);
@@ -578,18 +580,8 @@ html:not(.fia-scaled) .fia-jump__beads {
 [data-theme='light'] :is(.fia-sheet--stop, .fia-sheet--prov) .fia-chip {
   background: color-mix(in srgb, var(--text-title) 6%, transparent) !important;
 }
-/* Dark sheets: the floating material is mid-grey; wells are smoked so words and marks keep their
-   contrast (mock 20/21 dark rules; kit tokens untouched, light unchanged). */
-[data-theme='dark'] :is(.fia-sheet--prov, .fia-sheet--stop) {
-  --fia-kind-plain: var(--on-night-500);
-}
-/* SH-1's rows are a .fia-well (frame/frame.css); the talk sheet's two wells are smoked here. */
-[data-theme='dark'] :is(.fia-stop-q, .fia-stop-inside) {
-  background: color-mix(in srgb, var(--surface-app) 50%, transparent) !important;
-}
-[data-theme='dark'] .fia-stop-q > span[aria-hidden='true']:first-child {
-  display: none;
-}
+/* Dark sheets: the plain bead takes frame/frame.css's dark --fia-kind-plain, and SH-1's rows and the
+   talk sheet's two wells (.fia-stop-q, .fia-stop-inside) are .fia-well, smoked there (mock 20/21). */
 
 /* ---------- the card's Text view (S08; mock 08 TextCard): edition + replay row, the passage ---------- */
 .fia-reader-tools {

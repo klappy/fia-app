@@ -221,13 +221,13 @@
 }
 
 /* ---------- dark (mock :65-72, _frame.css:203-204) ---------- */
-/* The kit sheet's --material-floating is a mid grey; inside it the plain bead and the dim chevrons take
-   --on-night-500, the talk words take --text-title (the bar and icon keep the red), and the legend
-   card is a smoked well (half --surface-app, no sheen). Light is unchanged. The kit is not edited.
+/* The kit sheet's --material-floating is a mid grey; inside it the dim chevrons take --on-night-500
+   (the plain bead's dark --fia-kind-plain is frame/frame.css's), the talk words take --text-title (the
+   bar and icon keep the red), and the legend card is a smoked well (half --surface-app, no sheen).
+   Light is unchanged. The kit is not edited.
    App.tsx mirrors "follow the phone" into data-theme, so [data-theme='dark'] covers both. */
 [data-theme='dark'] .s07-sheet > [role='dialog'] {
   --text-dim: var(--on-night-500);
-  --fia-kind-plain: var(--on-night-500);
 }
 [data-theme='dark'] .s07-talk {
   color: var(--text-title);
