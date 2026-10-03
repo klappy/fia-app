@@ -1,0 +1,714 @@
+{
+  "schemaVersion": 1,
+  "packId": "eng.MRK-12-38-44",
+  "terms": [
+    {
+      "id": "term-eng-t102",
+      "termNumber": "102",
+      "engSourceId": "eng-t102-v1",
+      "title": "pray",
+      "sourceFile": "eng/json/016.content.json",
+      "selectedBy": "passage",
+      "text": {
+        "status": "source",
+        "sourceId": "eng-t102-v1",
+        "html": "<p>When you <b>pray</b>, or offer a <b>prayer</b>, you are communicating with God. You might be <data class=\"resource-ref\" data-content-id=\"eng-t219-v1\" data-resource-code=\"FIAKeyTerms\">praising</data> him, thanking him, asking him for help, telling him about the wrong things you have done, asking him to help other people, or you might just be crying to him because you feel so sad. In the Bible, all these things are part of praying.</p><p>Sometimes people speak out loud when they pray, and sometimes they only pray with their thoughts. We might call this \"praying in your heart.\" Sometimes people kneel down to pray, and sometimes they stand up, with their arms stretched up to God. There are no rules in the Bible about how you should pray, only that you have to pray sincerely and humbly.</p><p>Sometimes people can pray all together at the same time. Many of the Psalms in the Bible are prayers, and the <data class=\"resource-ref\" data-content-id=\"eng-t259-v2\" data-resource-code=\"FIAKeyTerms\">Israelites</data> would recite or sing these prayers when they came together to <data class=\"resource-ref\" data-content-id=\"eng-t149-v1\" data-resource-code=\"FIAKeyTerms\">worship</data> God in the <data class=\"resource-ref\" data-content-id=\"eng-t138-v1\" data-resource-code=\"FIAKeyTerms\">temple</data>.</p><p>When God listens to someone's prayer and responds in some way, we say that God has answered this person's prayer.</p><p><strong>When you are translating prayer, be careful about the following things:</strong></p><p>Some languages use a word for prayer that means the speaking of certain, fixed words. This would not be a good word to use for prayer in the Bible.</p><p>Some languages have more than one word for praying, depending on what kind of conversation people are having with God. For example, some languages have one word for thanksgiving prayers and another word for prayer that is asking God for help. Be sure you are using the right word in each context. Maybe you need to use more than one word for prayer in a passage.</p>",
+        "textSha256": "f33416953291cfaf05bc6ff4303221a6657d953187f749681d07cc48a9521820",
+        "provenance": {
+          "status": "source",
+          "collection": "FIAKeyTerms",
+          "revision": "a39260670bba9d87d902e0fa0ae447341343481f"
+        }
+      },
+      "audio": {
+        "status": "source",
+        "sourceId": "eng-t102-v1-audio",
+        "url": "https://s3.amazonaws.com/cbbt-er.public/terms/audio/eng/t102/v1/vbr4.mp3",
+        "provenance": {
+          "status": "source",
+          "collection": "FIAKeyTerms",
+          "revision": "a39260670bba9d87d902e0fa0ae447341343481f"
+        },
+        "derivatives": [
+          {
+            "sourcePath": "/packs/eng.MRK-12-38-44/audio/eng-t102-v1-audio.mp3",
+            "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceBytes": 1455212,
+            "kind": "audio",
+            "tier": "phone",
+            "recipe": "a=opus,br=32k",
+            "mime": "audio/ogg",
+            "eligible": true,
+            "status": "pending-transcode",
+            "fallbackMime": "audio/mpeg"
+          },
+          {
+            "sourcePath": "/packs/eng.MRK-12-38-44/audio/eng-t102-v1-audio.mp3",
+            "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceBytes": 1455212,
+            "kind": "audio",
+            "tier": "medium",
+            "recipe": "a=opus,br=64k",
+            "mime": "audio/ogg",
+            "eligible": true,
+            "status": "pending-transcode",
+            "fallbackMime": "audio/mpeg"
+          }
+        ]
+      },
+      "passages": [
+        "GEN 20:1-GEN 20:18",
+        "GEN 24:1-GEN 24:14",
+        "GEN 24:15-GEN 24:28",
+        "GEN 25:19-GEN 25:34",
+        "DEU 9:18-DEU 9:29",
+        "JOS 10:1-JOS 10:15",
+        "1SA 1:9-1SA 1:18",
+        "1SA 1:19-1SA 1:28",
+        "1SA 8:1-1SA 8:9",
+        "1SA 12:18-1SA 12:25",
+        "1SA 14:36-1SA 14:46",
+        "2SA 15:24-2SA 15:37",
+        "2SA 24:18-2SA 24:25",
+        "1KI 8:22-1KI 8:30",
+        "1KI 8:31-1KI 8:53",
+        "1KI 8:54-1KI 8:61",
+        "1KI 9:1-1KI 9:9",
+        "1KI 13:1-1KI 13:10",
+        "1KI 17:17-1KI 17:24",
+        "1KI 18:30-1KI 18:40",
+        "1KI 19:1-1KI 19:8",
+        "2KI 5:1-2KI 5:14",
+        "1CH 5:18-1CH 5:26",
+        "2CH 6:12-2CH 6:21",
+        "2CH 6:22-2CH 6:39",
+        "2CH 6:40-2CH 7:3",
+        "2CH 7:11-2CH 7:22",
+        "2CH 30:13-2CH 30:20",
+        "2CH 30:21-2CH 30:27",
+        "2CH 32:9-2CH 32:23",
+        "2CH 32:24-2CH 32:33",
+        "2CH 33:10-2CH 33:20",
+        "EZR 6:1-EZR 6:12",
+        "EZR 10:1-EZR 10:8",
+        "NEH 1:1-NEH 1:11",
+        "NEH 2:1-NEH 2:10",
+        "NEH 4:1-NEH 4:14",
+        "NEH 11:10-NEH 11:24",
+        "JON 1:17-JON 2:10",
+        "JON 4:1-JON 4:11",
+        "MAT 6:1-MAT 6:8",
+        "MAT 9:27-MAT 9:38",
+        "MAT 14:22-MAT 14:36",
+        "MAT 21:12-MAT 21:22",
+        "MAT 26:36-MAT 26:46",
+        "MRK 1:35-MRK 1:39",
+        "MRK 6:45-MRK 6:56",
+        "MRK 9:14-MRK 9:29",
+        "MRK 11:12-MRK 11:26",
+        "MRK 12:38-MRK 12:44",
+        "MRK 13:9-MRK 13:23",
+        "MRK 14:32-MRK 14:42",
+        "LUK 6:12-LUK 6:16",
+        "LUK 9:18-LUK 9:27",
+        "LUK 9:28-LUK 9:36",
+        "LUK 11:1-LUK 11:13",
+        "LUK 19:45-LUK 20:8",
+        "LUK 20:45-LUK 21:4",
+        "LUK 21:29-LUK 21:38",
+        "LUK 22:39-LUK 22:46",
+        "JHN 11:28-JHN 11:44",
+        "JHN 17:1-JHN 17:19",
+        "JHN 17:20-JHN 17:26",
+        "JHN 18:1-JHN 18:14",
+        "ACT 1:12-ACT 1:14",
+        "ACT 3:1-ACT 3:10",
+        "ACT 4:23-ACT 4:31",
+        "ACT 6:1-ACT 6:7",
+        "ACT 10:9-ACT 10:23",
+        "ACT 11:1-ACT 11:18",
+        "ACT 14:21-ACT 14:28",
+        "ACT 21:1-ACT 21:9",
+        "ACT 27:27-ACT 27:38",
+        "1CO 11:2-1CO 11:16",
+        "2CO 1:8-2CO 1:11",
+        "2CO 9:6-2CO 9:15",
+        "2CO 13:5-2CO 13:10",
+        "EPH 6:10-EPH 6:20",
+        "EPH 6:21-EPH 6:24",
+        "PHP 1:1-PHP 1:11",
+        "PHP 1:18-PHP 1:26",
+        "PHP 4:2-PHP 4:9",
+        "1TH 1:1-1TH 1:10",
+        "1TH 3:6-1TH 3:13",
+        "1TH 5:12-1TH 5:22",
+        "1TH 5:23-1TH 5:28",
+        "2TH 1:5-2TH 1:12",
+        "2TH 3:1-2TH 3:5",
+        "1TI 2:1-1TI 2:7",
+        "1TI 2:8-1TI 2:15",
+        "1TI 4:1-1TI 4:5",
+        "1TI 5:1-1TI 5:8",
+        "2TI 1:1-2TI 1:7",
+        "JAS 5:13-JAS 5:20",
+        "JUD 1:17-JUD 1:23"
+      ]
+    },
+    {
+      "id": "term-eng-t112",
+      "termNumber": "112",
+      "engSourceId": "eng-t112-v1",
+      "title": "robe",
+      "sourceFile": "eng/json/017.content.json",
+      "selectedBy": "passage",
+      "text": {
+        "status": "source",
+        "sourceId": "eng-t112-v1",
+        "html": "<p>A <data class=\"resource-ref\" data-content-id=\"eng-t27-v1\" data-resource-code=\"FIAKeyTerms\">cloak</data>, also called a <b>robe</b>, is a piece of clothing. People wear a cloak on top of other clothes. A cloak helps to keep people warm and dry and can be used as a blanket at night. People made cloaks from animal skin or wool, which is the hair of an animal named a sheep. A cloak was often a simple square piece of material with holes for the arms.</p><div data-type=\"callout\" data-callout-style=\"action\"><p>You can look in the visual Bible dictionary for a picture of a cloak.</p></div>",
+        "textSha256": "226a7f5144dc631e67de2eef3d4323addb0ad81a04475b042e41cf63fc5a0411",
+        "provenance": {
+          "status": "source",
+          "collection": "FIAKeyTerms",
+          "revision": "a39260670bba9d87d902e0fa0ae447341343481f"
+        }
+      },
+      "audio": {
+        "status": "source",
+        "sourceId": "eng-t112-v1-audio",
+        "url": "https://s3.amazonaws.com/cbbt-er.public/terms/audio/eng/t112/v1/vbr4.mp3",
+        "provenance": {
+          "status": "source",
+          "collection": "FIAKeyTerms",
+          "revision": "a39260670bba9d87d902e0fa0ae447341343481f"
+        },
+        "derivatives": [
+          {
+            "sourcePath": "/packs/eng.MRK-12-38-44/audio/eng-t112-v1-audio.mp3",
+            "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceBytes": 1455212,
+            "kind": "audio",
+            "tier": "phone",
+            "recipe": "a=opus,br=32k",
+            "mime": "audio/ogg",
+            "eligible": true,
+            "status": "pending-transcode",
+            "fallbackMime": "audio/mpeg"
+          },
+          {
+            "sourcePath": "/packs/eng.MRK-12-38-44/audio/eng-t112-v1-audio.mp3",
+            "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceBytes": 1455212,
+            "kind": "audio",
+            "tier": "medium",
+            "recipe": "a=opus,br=64k",
+            "mime": "audio/ogg",
+            "eligible": true,
+            "status": "pending-transcode",
+            "fallbackMime": "audio/mpeg"
+          }
+        ]
+      },
+      "passages": [
+        "EXO 28:1-EXO 28:14",
+        "EXO 28:31-EXO 28:43",
+        "EXO 39:22-EXO 39:31",
+        "LEV 8:1-LEV 8:13",
+        "NUM 15:37-NUM 15:41",
+        "1SA 15:24-1SA 15:35",
+        "1SA 17:55-1SA 18:5",
+        "1SA 24:1-1SA 24:7",
+        "1SA 24:8-1SA 24:22",
+        "1SA 28:3-1SA 28:14",
+        "2SA 13:10-2SA 13:22",
+        "2SA 15:24-2SA 15:37",
+        "1KI 18:41-1KI 18:46",
+        "1KI 19:9-1KI 19:21",
+        "1KI 22:1-1KI 22:12",
+        "1KI 22:29-1KI 22:40",
+        "2KI 6:24-2KI 7:2",
+        "1CH 15:25-1CH 16:7",
+        "2CH 18:9-2CH 18:27",
+        "2CH 18:28-2CH 18:34",
+        "2CH 34:8-2CH 34:21",
+        "NEH 5:1-NEH 5:13",
+        "PSA 93:1-PSA 93:5",
+        "MAT 14:22-MAT 14:36",
+        "MAT 27:27-MAT 27:31",
+        "MRK 5:21-MRK 5:34",
+        "MRK 10:46-MRK 10:52",
+        "MRK 11:1-MRK 11:11",
+        "MRK 12:38-MRK 12:44",
+        "MRK 15:16-MRK 15:32",
+        "MRK 16:1-MRK 16:8",
+        "LUK 20:45-LUK 21:4",
+        "LUK 23:1-LUK 23:12",
+        "JHN 21:1-JHN 21:14",
+        "ACT 7:54-ACT 8:3"
+      ]
+    },
+    {
+      "id": "term-eng-t133",
+      "termNumber": "133",
+      "engSourceId": "eng-t133-v1",
+      "title": "synagogue",
+      "sourceFile": "eng/json/018.content.json",
+      "selectedBy": "passage",
+      "text": {
+        "status": "source",
+        "sourceId": "eng-t133-v1",
+        "html": "<p>A <b>synagogue</b> is a place where <data class=\"resource-ref\" data-content-id=\"eng-t77-v2\" data-resource-code=\"FIAKeyTerms\">Jewish</data> people are meeting for <data class=\"resource-ref\" data-content-id=\"eng-t102-v1\" data-resource-code=\"FIAKeyTerms\">prayer</data> and for study of the <data class=\"resource-ref\" data-content-id=\"eng-t120-v1\" data-resource-code=\"FIAKeyTerms\">Scriptures</data>, as well as for other types of discussion and teaching.</p><p>A synagogue is different from the <data class=\"resource-ref\" data-content-id=\"eng-t138-v1\" data-resource-code=\"FIAKeyTerms\">temple</data>. The temple was the place where people brought <data class=\"resource-ref\" data-content-id=\"eng-t114-v1\" data-resource-code=\"FIAKeyTerms\">sacrifices</data> to God. People did not bring sacrifices in the synagogue. There was only one temple for the Jews, in <data class=\"resource-ref\" data-content-id=\"eng-t76-v1\" data-resource-code=\"FIAKeyTerms\">Jerusalem</data>, but there were many synagogues. We do not hear about synagogues in the Old Testament, but in the time of the New Testament there were many synagogues throughout <data class=\"resource-ref\" data-content-id=\"eng-t74-v2\" data-resource-code=\"FIAKeyTerms\">Israel</data>, as well as in many other countries where Jewish people lived.</p><p>The Jews gathered in the synagogues on the <data class=\"resource-ref\" data-content-id=\"eng-t113-v2\" data-resource-code=\"FIAKeyTerms\">Sabbath</data>-the weekly day of rest-and on special feast days. During their gatherings they prayed together, read from the Scriptures, the books of the Bible that we now call the Old Testament, and listened to teaching about the Scriptures.</p><p>Each synagogue had a ruler who was responsible for the building and for making sure that everything was done properly. The ruler of the synagogue was in charge of inviting people to come forward to pray, to read from the Scriptures, or to teach.</p><p>The Scriptures were written on scrolls-long strips of material made from the fiber of certain plants or from the skin of animals-that were rolled up. These scrolls were kept in boxes inside the synagogue. Scrolls were precious. A special person was in charge of taking out a scroll from the box and giving it to the person who was going to read.</p><p>The synagogue was also used as a school for children, and as a meeting place for people to discuss issues within their community.</p><p><strong>When you are translating \"synagogue,\" be careful about the following things:</strong></p><p>You should not use the same word as you are using for the <data class=\"resource-ref\" data-content-id=\"eng-t138-v1\" data-resource-code=\"FIAKeyTerms\">temple</data>. You should also not use the same word as you are using for a <data class=\"resource-ref\" data-content-id=\"eng-t24-v1\" data-resource-code=\"FIAKeyTerms\">church</data> building. You could maybe use a phrase like \"Jewish meeting house,\" or \"prayer house.\"</p>",
+        "textSha256": "a07baf410d67a0bff65ab0111ce475815da7aa0cc5dcd433ac85897322e4a9fc",
+        "provenance": {
+          "status": "source",
+          "collection": "FIAKeyTerms",
+          "revision": "a39260670bba9d87d902e0fa0ae447341343481f"
+        }
+      },
+      "audio": {
+        "status": "source",
+        "sourceId": "eng-t133-v1-audio",
+        "url": "https://s3.amazonaws.com/cbbt-er.public/terms/audio/eng/t133/v1/vbr4.mp3",
+        "provenance": {
+          "status": "source",
+          "collection": "FIAKeyTerms",
+          "revision": "a39260670bba9d87d902e0fa0ae447341343481f"
+        },
+        "derivatives": [
+          {
+            "sourcePath": "/packs/eng.MRK-12-38-44/audio/eng-t133-v1-audio.mp3",
+            "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceBytes": 1455212,
+            "kind": "audio",
+            "tier": "phone",
+            "recipe": "a=opus,br=32k",
+            "mime": "audio/ogg",
+            "eligible": true,
+            "status": "pending-transcode",
+            "fallbackMime": "audio/mpeg"
+          },
+          {
+            "sourcePath": "/packs/eng.MRK-12-38-44/audio/eng-t133-v1-audio.mp3",
+            "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceBytes": 1455212,
+            "kind": "audio",
+            "tier": "medium",
+            "recipe": "a=opus,br=64k",
+            "mime": "audio/ogg",
+            "eligible": true,
+            "status": "pending-transcode",
+            "fallbackMime": "audio/mpeg"
+          }
+        ]
+      },
+      "passages": [
+        "MAT 4:12-MAT 4:25",
+        "MAT 6:1-MAT 6:8",
+        "MAT 9:27-MAT 9:38",
+        "MAT 10:16-MAT 10:25",
+        "MAT 12:1-MAT 12:14",
+        "MAT 13:54-MAT 13:58",
+        "MAT 23:1-MAT 23:12",
+        "MAT 23:29-MAT 23:36",
+        "MRK 1:21-MRK 1:28",
+        "MRK 1:29-MRK 1:34",
+        "MRK 1:35-MRK 1:39",
+        "MRK 1:40-MRK 1:45",
+        "MRK 2:23-MRK 3:6",
+        "MRK 5:21-MRK 5:34",
+        "MRK 5:35-MRK 5:43",
+        "MRK 6:1-MRK 6:6",
+        "MRK 12:38-MRK 12:44",
+        "MRK 13:9-MRK 13:23",
+        "LUK 4:14-LUK 4:30",
+        "LUK 4:31-LUK 4:44",
+        "LUK 6:1-LUK 6:11",
+        "LUK 7:1-LUK 7:10",
+        "LUK 8:40-LUK 8:56",
+        "LUK 11:33-LUK 11:54",
+        "LUK 12:1-LUK 12:12",
+        "LUK 13:10-LUK 13:17",
+        "LUK 20:45-LUK 21:4",
+        "LUK 21:12-LUK 21:19",
+        "LUK 21:20-LUK 21:28",
+        "JHN 6:52-JHN 6:59",
+        "JHN 9:13-JHN 9:23",
+        "JHN 9:24-JHN 9:34",
+        "JHN 9:35-JHN 9:41",
+        "JHN 12:37-JHN 12:50",
+        "JHN 16:1-JHN 16:15",
+        "JHN 18:15-JHN 18:27",
+        "ACT 1:12-ACT 1:14",
+        "ACT 6:8-ACT 6:15",
+        "ACT 9:1-ACT 9:19",
+        "ACT 9:19-ACT 9:31",
+        "ACT 13:4-ACT 13:12",
+        "ACT 13:13-ACT 13:22",
+        "ACT 13:42-ACT 13:52",
+        "ACT 14:1-ACT 14:7",
+        "ACT 17:1-ACT 17:9",
+        "ACT 17:10-ACT 17:15",
+        "ACT 17:16-ACT 17:21",
+        "ACT 18:1-ACT 18:17",
+        "ACT 18:18-ACT 18:23",
+        "ACT 18:24-ACT 18:28",
+        "ACT 19:8-ACT 19:10",
+        "ACT 21:37-ACT 22:21",
+        "ACT 24:10-ACT 24:23",
+        "ACT 26:1-ACT 26:23"
+      ]
+    },
+    {
+      "id": "term-eng-t137",
+      "termNumber": "137",
+      "engSourceId": "eng-t137-v1",
+      "title": "teachers of the Law",
+      "sourceFile": "eng/json/019.content.json",
+      "selectedBy": "passage",
+      "text": {
+        "status": "source",
+        "sourceId": "eng-t137-v1",
+        "html": "<p><b>Teachers of the law</b> were a group of religious leaders who were experts on the law of God.</p><p>The <data class=\"resource-ref\" data-content-id=\"eng-t83-v1\" data-resource-code=\"FIAKeyTerms\">law</data> means the set of instructions that God gave the people of <data class=\"resource-ref\" data-content-id=\"eng-t74-v2\" data-resource-code=\"FIAKeyTerms\">Israel</data> in the first five books of the Old Testament, but teachers of the law also taught all the <data class=\"resource-ref\" data-content-id=\"eng-t120-v1\" data-resource-code=\"FIAKeyTerms\">Scriptures</data>, not only the part of Scriptures that talked about the law. Scriptures refers to the part of the Bible that we now call the Old Testament.</p><p>Teachers of the law explained the Scriptures to the people. They did not write down their explanations but told them to their students. Their students memorized their explanations, and taught these explanations to the next generation. People kept adding more and more explanations and discussions about explanations. In the time of the New Testament, these memorized explanations had become very important to the people, maybe even more important than the Scriptures themselves.</p><p>In the time of the New Testament, teachers of the law were very important people in the community. People showed them great respect and often called them \"<data class=\"resource-ref\" data-content-id=\"eng-t106-v1\" data-resource-code=\"FIAKeyTerms\">Rabbi</data>,\" a title used for important religious teachers. There were also teachers of the law in the <data class=\"resource-ref\" data-content-id=\"eng-t168-v1\" data-resource-code=\"FIAKeyTerms\">Sanhedrin</data>, the <data class=\"resource-ref\" data-content-id=\"eng-t77-v2\" data-resource-code=\"FIAKeyTerms\">Jewish</data> religious court.</p><p>Teachers of the law are sometimes called <b>scribes</b>. A scribe means someone who can write. Many people in the times of the Bible were not able to read or write themselves. If people needed to write something, like a letter, they would hire a scribe to write for them. Scribes also copied Scripture so that the text of the Scripture would not get lost. The Scriptures were not written down on paper, the way people do now. Books and paper did not yet exist. Instead, people wrote Scriptures on long strips of papyrus or parchment. Papyrus is a thin sheet that is made from the fibers of a certain plant, and parchment is made from the skin of an animal. Because those sheets were very long, people rolled them up. The name for such a sheet is a scroll. Scrolls could become damaged quickly, especially those scrolls made of papyrus. Therefore scribes were always busy copying the text from one scroll to a new scroll, so that the text would not get lost.</p><p>However, when the Bible talks about teachers of the law, the focus is on their knowledge of the religious law, and not on their writing skills.</p><p><strong>When you are translating \"teachers of the law,\" be careful about the following things:</strong></p><p>You should not use a phrase that makes your listeners think that these people are teaching the law of a country. Maybe you can use a phrase like \"teachers of the religious law,\" or \"experts of the religious law,\" or \"experts of the Scriptures.\"</p>",
+        "textSha256": "d1869ddf5245ebedc2a035fb4f636a5ff1d6239c5512ba3d09dc532536cfe893",
+        "provenance": {
+          "status": "source",
+          "collection": "FIAKeyTerms",
+          "revision": "a39260670bba9d87d902e0fa0ae447341343481f"
+        }
+      },
+      "audio": {
+        "status": "source",
+        "sourceId": "eng-t137-v1-audio",
+        "url": "https://s3.amazonaws.com/cbbt-er.public/terms/audio/eng/t137/v1/vbr4.mp3",
+        "provenance": {
+          "status": "source",
+          "collection": "FIAKeyTerms",
+          "revision": "a39260670bba9d87d902e0fa0ae447341343481f"
+        },
+        "derivatives": [
+          {
+            "sourcePath": "/packs/eng.MRK-12-38-44/audio/eng-t137-v1-audio.mp3",
+            "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceBytes": 1455212,
+            "kind": "audio",
+            "tier": "phone",
+            "recipe": "a=opus,br=32k",
+            "mime": "audio/ogg",
+            "eligible": true,
+            "status": "pending-transcode",
+            "fallbackMime": "audio/mpeg"
+          },
+          {
+            "sourcePath": "/packs/eng.MRK-12-38-44/audio/eng-t137-v1-audio.mp3",
+            "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceBytes": 1455212,
+            "kind": "audio",
+            "tier": "medium",
+            "recipe": "a=opus,br=64k",
+            "mime": "audio/ogg",
+            "eligible": true,
+            "status": "pending-transcode",
+            "fallbackMime": "audio/mpeg"
+          }
+        ]
+      },
+      "passages": [
+        "MAT 2:1-MAT 2:12",
+        "MAT 7:13-MAT 7:29",
+        "MAT 8:18-MAT 8:22",
+        "MAT 12:38-MAT 12:45",
+        "MAT 20:17-MAT 20:28",
+        "MAT 23:23-MAT 23:28",
+        "MAT 23:29-MAT 23:36",
+        "MAT 26:47-MAT 26:56",
+        "MAT 27:32-MAT 27:44",
+        "MRK 1:21-MRK 1:28",
+        "MRK 2:1-MRK 2:12",
+        "MRK 2:13-MRK 2:17",
+        "MRK 3:20-MRK 3:35",
+        "MRK 7:1-MRK 7:8",
+        "MRK 8:31-MRK 9:1",
+        "MRK 9:2-MRK 9:13",
+        "MRK 9:14-MRK 9:29",
+        "MRK 10:32-MRK 10:45",
+        "MRK 11:12-MRK 11:26",
+        "MRK 11:27-MRK 11:33",
+        "MRK 12:28-MRK 12:34",
+        "MRK 12:35-MRK 12:37",
+        "MRK 12:38-MRK 12:44",
+        "MRK 14:1-MRK 14:11",
+        "MRK 14:43-MRK 14:52",
+        "MRK 14:53-MRK 14:65",
+        "MRK 15:1-MRK 15:15",
+        "MRK 15:16-MRK 15:32",
+        "LUK 2:41-LUK 2:52",
+        "LUK 5:17-LUK 5:26",
+        "LUK 5:27-LUK 5:39",
+        "LUK 7:18-LUK 7:35",
+        "LUK 9:18-LUK 9:27",
+        "LUK 10:25-LUK 10:37",
+        "LUK 11:33-LUK 11:54",
+        "LUK 14:1-LUK 14:14",
+        "LUK 15:1-LUK 15:10",
+        "LUK 19:45-LUK 20:8",
+        "LUK 20:9-LUK 20:19",
+        "LUK 20:20-LUK 20:40",
+        "LUK 20:45-LUK 21:4",
+        "LUK 22:1-LUK 22:6",
+        "LUK 22:47-LUK 22:62",
+        "JHN 7:1-JHN 7:10",
+        "JHN 7:11-JHN 7:24",
+        "JHN 7:25-JHN 7:36",
+        "JHN 8:1-JHN 8:11",
+        "ACT 4:1-ACT 4:22",
+        "ACT 5:27-ACT 5:42",
+        "1TI 1:3-1TI 1:7"
+      ]
+    }
+  ],
+  "images": [
+    {
+      "id": "a58",
+      "kind": "image",
+      "title": "Copper Coins",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "FIAImages",
+        "revision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+      },
+      "engTitle": "Copper Coins",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/photos/a58/1000.jpg",
+      "sourceFile": "eng/json/003.content.json",
+      "sourceFileSha256": "e08d3159a8a9e7cd6c6479e2afdd52d488e9205cb4e4b6511e28bc1ea898fd25",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": true,
+      "derivatives": [
+        {
+          "sourcePath": "/packs/eng.MRK-12-38-44/images/a58.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "phone",
+          "recipe": "w=640,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        },
+        {
+          "sourcePath": "/packs/eng.MRK-12-38-44/images/a58.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "medium",
+          "recipe": "w=1280,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        }
+      ]
+    },
+    {
+      "id": "a59",
+      "kind": "image",
+      "title": "Copper Coins",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "FIAImages",
+        "revision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+      },
+      "engTitle": "Copper Coins",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/photos/a59/1000.jpg",
+      "sourceFile": "eng/json/003.content.json",
+      "sourceFileSha256": "e08d3159a8a9e7cd6c6479e2afdd52d488e9205cb4e4b6511e28bc1ea898fd25",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": true,
+      "derivatives": [
+        {
+          "sourcePath": "/packs/eng.MRK-12-38-44/images/a59.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "phone",
+          "recipe": "w=640,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        },
+        {
+          "sourcePath": "/packs/eng.MRK-12-38-44/images/a59.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "medium",
+          "recipe": "w=1280,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        }
+      ]
+    },
+    {
+      "id": "a190",
+      "kind": "image",
+      "title": "Edge of Cloak with Tassels",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "FIAImages",
+        "revision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+      },
+      "engTitle": "Edge of Cloak with Tassels",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/photos/a190/1000.jpg",
+      "sourceFile": "eng/json/005.content.json",
+      "sourceFileSha256": "7f0d9afada69531e465333e100239769a1222a6e0a63efb2e79c2f6d7c5b5d66",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": true,
+      "derivatives": [
+        {
+          "sourcePath": "/packs/eng.MRK-12-38-44/images/a190.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "phone",
+          "recipe": "w=640,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        },
+        {
+          "sourcePath": "/packs/eng.MRK-12-38-44/images/a190.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "medium",
+          "recipe": "w=1280,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        }
+      ]
+    },
+    {
+      "id": "a298",
+      "kind": "image",
+      "title": "Herod's Temple",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "FIAImages",
+        "revision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+      },
+      "engTitle": "Herod's Temple",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/photos/a298/1000.jpg",
+      "sourceFile": "eng/json/008.content.json",
+      "sourceFileSha256": "000f5e2c442da11b88d79607389cf505c3cbaf7e4fe8bb82c2283c15b5c29e20",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": true,
+      "derivatives": [
+        {
+          "sourcePath": "/packs/eng.MRK-12-38-44/images/a298.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "phone",
+          "recipe": "w=640,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        },
+        {
+          "sourcePath": "/packs/eng.MRK-12-38-44/images/a298.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "medium",
+          "recipe": "w=1280,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        }
+      ]
+    },
+    {
+      "id": "a276",
+      "kind": "image",
+      "title": "Temple Collection Box",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "FIAImages",
+        "revision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+      },
+      "engTitle": "Temple Collection Box",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/illustrations/a276/1000.jpg",
+      "sourceFile": "eng/json/020.content.json",
+      "sourceFileSha256": "d3174e8af89971869d846327957e473e5cf71c8959f7b548b3c4db98ca1bf8e1",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": true,
+      "derivatives": [
+        {
+          "sourcePath": "/packs/eng.MRK-12-38-44/images/a276.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "phone",
+          "recipe": "w=640,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        },
+        {
+          "sourcePath": "/packs/eng.MRK-12-38-44/images/a276.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "medium",
+          "recipe": "w=1280,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        }
+      ]
+    }
+  ],
+  "maps": [],
+  "videos": [
+    {
+      "id": "a29",
+      "kind": "video",
+      "title": "Copper Coins",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "VideoBibleDictionary",
+        "revision": "1c02713d022bd96a29c78f5b75455315d6d35a6e"
+      },
+      "engTitle": "Copper Coins",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/videos/a29/720p.mp4",
+      "sourceFile": "eng/json/003.content.json",
+      "sourceFileSha256": "8d2136558385f9d291a3ef2b63cbfd56068f19bc826ec517caaf5fd0388aa38c",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": false,
+      "streamOnly": true
+    }
+  ]
+}

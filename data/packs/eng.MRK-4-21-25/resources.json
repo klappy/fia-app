@@ -1,0 +1,696 @@
+{
+  "schemaVersion": 1,
+  "packId": "eng.MRK-4-21-25",
+  "terms": [
+    {
+      "id": "term-eng-t97",
+      "termNumber": "97",
+      "engSourceId": "eng-t97-v1",
+      "title": "oil lamp",
+      "sourceFile": "eng/json/015.content.json",
+      "selectedBy": "passage",
+      "text": {
+        "status": "source",
+        "sourceId": "eng-t97-v1",
+        "html": "<p>The people of <data class=\"resource-ref\" data-content-id=\"eng-t74-v2\" data-resource-code=\"FIAKeyTerms\">Israel</data> used <b>oil lamps</b> to help them see in the dark. People made lamps out of clay that was burned in an oven to make it hard. People could also cut lamps out of stone. Many oil lamps simply looked a bit as if someone pinched the edge of a bowl together, but other oil lamps were more elaborate. People put oil in the bowl. Usually this was olive oil, which came from the fruit from an olive tree. Then people put a strip of cloth in the bowl: One end rested inside the oil, and the other end rested on the rim of the lamp. The strip of cloth is called a wick. The wick would soak up the oil. People would then light the wick. The lamp would keep burning as long as there was oil, or until the wick would be burned up completely.</p><p>Inside a house, people would put oil lamps on stands so that they would be higher up and give more light.</p><div data-type=\"callout\" data-callout-style=\"action\"><p>You may want to look at some pictures of oil lamps.</p></div>",
+        "textSha256": "66c46e64017f4630933c22f37757c684466a47bc36830e4094649b0e40f8d64e",
+        "provenance": {
+          "status": "source",
+          "collection": "FIAKeyTerms",
+          "revision": "a39260670bba9d87d902e0fa0ae447341343481f"
+        }
+      },
+      "audio": {
+        "status": "source",
+        "sourceId": "eng-t97-v1-audio",
+        "url": "https://s3.amazonaws.com/cbbt-er.public/terms/audio/eng/t97/v1/vbr4.mp3",
+        "provenance": {
+          "status": "source",
+          "collection": "FIAKeyTerms",
+          "revision": "a39260670bba9d87d902e0fa0ae447341343481f"
+        },
+        "derivatives": [
+          {
+            "sourcePath": "/packs/eng.MRK-4-21-25/audio/eng-t97-v1-audio.mp3",
+            "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceBytes": 1455212,
+            "kind": "audio",
+            "tier": "phone",
+            "recipe": "a=opus,br=32k",
+            "mime": "audio/ogg",
+            "eligible": true,
+            "status": "pending-transcode",
+            "fallbackMime": "audio/mpeg"
+          },
+          {
+            "sourcePath": "/packs/eng.MRK-4-21-25/audio/eng-t97-v1-audio.mp3",
+            "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceBytes": 1455212,
+            "kind": "audio",
+            "tier": "medium",
+            "recipe": "a=opus,br=64k",
+            "mime": "audio/ogg",
+            "eligible": true,
+            "status": "pending-transcode",
+            "fallbackMime": "audio/mpeg"
+          }
+        ]
+      },
+      "passages": [
+        "EXO 25:31-EXO 25:40",
+        "EXO 30:1-EXO 30:10",
+        "EXO 35:1-EXO 35:19",
+        "EXO 35:20-EXO 35:29",
+        "EXO 37:17-EXO 37:24",
+        "EXO 40:16-EXO 40:33",
+        "2SA 21:15-2SA 21:22",
+        "2SA 22:21-2SA 22:29",
+        "2KI 8:16-2KI 8:24",
+        "2CH 21:1-2CH 21:10",
+        "2CH 29:1-2CH 29:17",
+        "MAT 6:19-MAT 6:34",
+        "MRK 4:21-MRK 4:25",
+        "LUK 8:16-LUK 8:18",
+        "LUK 11:33-LUK 11:54"
+      ]
+    }
+  ],
+  "images": [
+    {
+      "id": "a89",
+      "kind": "image",
+      "title": "Basket as a Bushel",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "FIAImages",
+        "revision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+      },
+      "engTitle": "Basket as a Bushel",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/photos/a89/1000.jpg",
+      "sourceFile": "eng/json/002.content.json",
+      "sourceFileSha256": "335c55d7da5aabe5618d0d58b0370ffcd6580bad138e1ce55ef5c9d85096bc7a",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": true,
+      "derivatives": [
+        {
+          "sourcePath": "/packs/eng.MRK-4-21-25/images/a89.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "phone",
+          "recipe": "w=640,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        },
+        {
+          "sourcePath": "/packs/eng.MRK-4-21-25/images/a89.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "medium",
+          "recipe": "w=1280,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        }
+      ]
+    },
+    {
+      "id": "a90",
+      "kind": "image",
+      "title": "Basket as a Bushel",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "FIAImages",
+        "revision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+      },
+      "engTitle": "Basket as a Bushel",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/photos/a90/1000.jpg",
+      "sourceFile": "eng/json/002.content.json",
+      "sourceFileSha256": "335c55d7da5aabe5618d0d58b0370ffcd6580bad138e1ce55ef5c9d85096bc7a",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": true,
+      "derivatives": [
+        {
+          "sourcePath": "/packs/eng.MRK-4-21-25/images/a90.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "phone",
+          "recipe": "w=640,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        },
+        {
+          "sourcePath": "/packs/eng.MRK-4-21-25/images/a90.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "medium",
+          "recipe": "w=1280,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        }
+      ]
+    },
+    {
+      "id": "a293",
+      "kind": "image",
+      "title": "Boat",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "FIAImages",
+        "revision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+      },
+      "engTitle": "Boat",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/photos/a293/1000.jpg",
+      "sourceFile": "eng/json/002.content.json",
+      "sourceFileSha256": "335c55d7da5aabe5618d0d58b0370ffcd6580bad138e1ce55ef5c9d85096bc7a",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": true,
+      "derivatives": [
+        {
+          "sourcePath": "/packs/eng.MRK-4-21-25/images/a293.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "phone",
+          "recipe": "w=640,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        },
+        {
+          "sourcePath": "/packs/eng.MRK-4-21-25/images/a293.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "medium",
+          "recipe": "w=1280,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        }
+      ]
+    },
+    {
+      "id": "a324",
+      "kind": "image",
+      "title": "Dining Bench",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "FIAImages",
+        "revision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+      },
+      "engTitle": "Dining Bench",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/illustrations/a324/1000.jpg",
+      "sourceFile": "eng/json/004.content.json",
+      "sourceFileSha256": "d3590ce49c10c5ce931c3e23f9ffa20f32e4a790d0b5eb4237e71f3b16046b17",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": true,
+      "derivatives": [
+        {
+          "sourcePath": "/packs/eng.MRK-4-21-25/images/a324.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "phone",
+          "recipe": "w=640,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        },
+        {
+          "sourcePath": "/packs/eng.MRK-4-21-25/images/a324.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "medium",
+          "recipe": "w=1280,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        }
+      ]
+    },
+    {
+      "id": "a341",
+      "kind": "image",
+      "title": "Dining Bench",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "FIAImages",
+        "revision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+      },
+      "engTitle": "Dining Bench",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/illustrations/a341/1000.jpg",
+      "sourceFile": "eng/json/004.content.json",
+      "sourceFileSha256": "d3590ce49c10c5ce931c3e23f9ffa20f32e4a790d0b5eb4237e71f3b16046b17",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": true,
+      "derivatives": [
+        {
+          "sourcePath": "/packs/eng.MRK-4-21-25/images/a341.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "phone",
+          "recipe": "w=640,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        },
+        {
+          "sourcePath": "/packs/eng.MRK-4-21-25/images/a341.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "medium",
+          "recipe": "w=1280,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        }
+      ]
+    },
+    {
+      "id": "a80",
+      "kind": "image",
+      "title": "Lampstand",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "FIAImages",
+        "revision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+      },
+      "engTitle": "Lampstand",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/photos/a80/1000.jpg",
+      "sourceFile": "eng/json/012.content.json",
+      "sourceFileSha256": "fa3f065a8c2bf14bd7b7623b4262f593805861c04a23938bccc46fb07f35406f",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": true,
+      "derivatives": [
+        {
+          "sourcePath": "/packs/eng.MRK-4-21-25/images/a80.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "phone",
+          "recipe": "w=640,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        },
+        {
+          "sourcePath": "/packs/eng.MRK-4-21-25/images/a80.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "medium",
+          "recipe": "w=1280,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        }
+      ]
+    },
+    {
+      "id": "a81",
+      "kind": "image",
+      "title": "Lampstand",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "FIAImages",
+        "revision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+      },
+      "engTitle": "Lampstand",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/photos/a81/1000.jpg",
+      "sourceFile": "eng/json/012.content.json",
+      "sourceFileSha256": "fa3f065a8c2bf14bd7b7623b4262f593805861c04a23938bccc46fb07f35406f",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": true,
+      "derivatives": [
+        {
+          "sourcePath": "/packs/eng.MRK-4-21-25/images/a81.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "phone",
+          "recipe": "w=640,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        },
+        {
+          "sourcePath": "/packs/eng.MRK-4-21-25/images/a81.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "medium",
+          "recipe": "w=1280,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        }
+      ]
+    },
+    {
+      "id": "a78",
+      "kind": "image",
+      "title": "Oil Lamp",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "FIAImages",
+        "revision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+      },
+      "engTitle": "Oil Lamp",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/photos/a78/1000.jpg",
+      "sourceFile": "eng/json/015.content.json",
+      "sourceFileSha256": "96e5eae867b4b21d5765d36f977118fda5c258ed13a14abe05e7fd635f845122",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": true,
+      "derivatives": [
+        {
+          "sourcePath": "/packs/eng.MRK-4-21-25/images/a78.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "phone",
+          "recipe": "w=640,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        },
+        {
+          "sourcePath": "/packs/eng.MRK-4-21-25/images/a78.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "medium",
+          "recipe": "w=1280,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        }
+      ]
+    },
+    {
+      "id": "a79",
+      "kind": "image",
+      "title": "Oil Lamp",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "FIAImages",
+        "revision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+      },
+      "engTitle": "Oil Lamp",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/photos/a79/1000.jpg",
+      "sourceFile": "eng/json/015.content.json",
+      "sourceFileSha256": "96e5eae867b4b21d5765d36f977118fda5c258ed13a14abe05e7fd635f845122",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": true,
+      "derivatives": [
+        {
+          "sourcePath": "/packs/eng.MRK-4-21-25/images/a79.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "phone",
+          "recipe": "w=640,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        },
+        {
+          "sourcePath": "/packs/eng.MRK-4-21-25/images/a79.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "medium",
+          "recipe": "w=1280,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        }
+      ]
+    },
+    {
+      "id": "a1400",
+      "kind": "image",
+      "title": "Sea of Galilee",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "FIAImages",
+        "revision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+      },
+      "engTitle": "Sea of Galilee",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/photos/a1400/1000.jpg",
+      "sourceFile": "eng/json/019.content.json",
+      "sourceFileSha256": "8447fcabbe01dc1c9453465a401b5c5fb93fdb5cfb63ac1b2d29fc5a08fa988e",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": true,
+      "derivatives": [
+        {
+          "sourcePath": "/packs/eng.MRK-4-21-25/images/a1400.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "phone",
+          "recipe": "w=640,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        },
+        {
+          "sourcePath": "/packs/eng.MRK-4-21-25/images/a1400.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "medium",
+          "recipe": "w=1280,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        }
+      ]
+    },
+    {
+      "id": "a1273",
+      "kind": "image",
+      "title": "Wooden bedframe",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "FIAImages",
+        "revision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+      },
+      "engTitle": "Wooden bedframe",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/photos/a1273/1000.jpg",
+      "sourceFile": "eng/json/023.content.json",
+      "sourceFileSha256": "494f479035529d1bda30d2f3d6e88e47d0d722880c3b708d71e7130c9cdf7714",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": true,
+      "derivatives": [
+        {
+          "sourcePath": "/packs/eng.MRK-4-21-25/images/a1273.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "phone",
+          "recipe": "w=640,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        },
+        {
+          "sourcePath": "/packs/eng.MRK-4-21-25/images/a1273.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "medium",
+          "recipe": "w=1280,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        }
+      ]
+    }
+  ],
+  "maps": [
+    {
+      "id": "c2",
+      "kind": "map",
+      "title": "Galilee Area with Capernaum",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "FIAMaps",
+        "revision": "4bc9bb9f1d9082e5d71a047a35bf8e608f473602"
+      },
+      "engTitle": "Galilee Area with Capernaum",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/maps/eng/c2/v1.1/original.png",
+      "sourceFile": "eng/json/007.content.json",
+      "sourceFileSha256": "c2e796ad27262766e822dedbf1d212bfb9966af8b6c68353635595cf3d5fc3b1",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": true,
+      "derivatives": [
+        {
+          "sourcePath": "/packs/eng.MRK-4-21-25/maps/c2.png",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 6646608,
+          "kind": "image",
+          "tier": "phone",
+          "recipe": "w=640,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        },
+        {
+          "sourcePath": "/packs/eng.MRK-4-21-25/maps/c2.png",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 6646608,
+          "kind": "image",
+          "tier": "medium",
+          "recipe": "w=1280,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        }
+      ]
+    }
+  ],
+  "videos": [
+    {
+      "id": "a30",
+      "kind": "video",
+      "title": "Basket as a Bushel",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "VideoBibleDictionary",
+        "revision": "1c02713d022bd96a29c78f5b75455315d6d35a6e"
+      },
+      "engTitle": "Basket as a Bushel",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/videos/a30/720p.mp4",
+      "sourceFile": "eng/json/002.content.json",
+      "sourceFileSha256": "214fe5f0c208f0c88eb4c5224b76f3c8bdb857a43b7db7de712d7fd2b3630cb9",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": false,
+      "streamOnly": true
+    },
+    {
+      "id": "a21",
+      "kind": "video",
+      "title": "Lampstand",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "VideoBibleDictionary",
+        "revision": "1c02713d022bd96a29c78f5b75455315d6d35a6e"
+      },
+      "engTitle": "Lampstand",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/videos/a21/720p.mp4",
+      "sourceFile": "eng/json/009.content.json",
+      "sourceFileSha256": "a6b8106a03154a5f4566d7021b2a14ede6af4c9a2668312bbbe1ab80a4dc0369",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": false,
+      "streamOnly": true
+    },
+    {
+      "id": "a22",
+      "kind": "video",
+      "title": "Oil Lamp",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "VideoBibleDictionary",
+        "revision": "1c02713d022bd96a29c78f5b75455315d6d35a6e"
+      },
+      "engTitle": "Oil Lamp",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/videos/a22/720p.mp4",
+      "sourceFile": "eng/json/012.content.json",
+      "sourceFileSha256": "39e930e1b7770a70667e3abcb1cbfece0f15841dce3a74fc4d13dbac0863364d",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": false,
+      "streamOnly": true
+    },
+    {
+      "id": "a11",
+      "kind": "video",
+      "title": "Sea of Galilee",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "VideoBibleDictionary",
+        "revision": "1c02713d022bd96a29c78f5b75455315d6d35a6e"
+      },
+      "engTitle": "Sea of Galilee",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/videos/a11/720p.mp4",
+      "sourceFile": "eng/json/015.content.json",
+      "sourceFileSha256": "f5084d0a8d3487b9a0bc6335c92ca71635e5bfbadd2ea495b0a7bad37536b550",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": false,
+      "streamOnly": true
+    }
+  ]
+}

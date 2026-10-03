@@ -1,0 +1,362 @@
+{
+  "schemaVersion": 1,
+  "packId": "spa.MRK-7-31-37",
+  "terms": [
+    {
+      "id": "term-spa-t35",
+      "termNumber": "35",
+      "engSourceId": "eng-t35-v1",
+      "title": "decapolis",
+      "sourceFile": "eng/json/004.content.json",
+      "selectedBy": "passage",
+      "text": {
+        "status": "source",
+        "sourceId": "spa-t35-v1",
+        "html": "<p><b>Decápolis</b> significa literalmente “10 ciudades”. La palabra se refiere a un área al este del <data class=\"resource-ref\" data-content-id=\"spa-t121-v1\" data-resource-code=\"FIAKeyTerms\">Mar de Galilea</data> y del <data class=\"resource-ref\" data-content-id=\"spa-t80-v1\" data-resource-code=\"FIAKeyTerms\">río Jordán</data>. La mayoría de las personas que vivían allí no eran <data class=\"resource-ref\" data-content-id=\"spa-t77-v2\" data-resource-code=\"FIAKeyTerms\">judíos</data>.</p>",
+        "textSha256": "81f0f99c4a575058bb3e1210f294df3eb081c29a7740a93928720e9cfdb00fe2",
+        "provenance": {
+          "status": "source",
+          "collection": "FIAKeyTerms",
+          "revision": "a39260670bba9d87d902e0fa0ae447341343481f"
+        }
+      },
+      "audio": {
+        "status": "absent",
+        "ai": true,
+        "generator": "narration",
+        "provenance": {
+          "status": "missing"
+        }
+      },
+      "passages": [
+        "MRK 5:1-MRK 5:20",
+        "MRK 7:31-MRK 7:37"
+      ]
+    },
+    {
+      "id": "term-spa-t39",
+      "termNumber": "39",
+      "engSourceId": "eng-t39-v1",
+      "title": "discípulo",
+      "sourceFile": "eng/json/004.content.json",
+      "selectedBy": "passage",
+      "text": {
+        "status": "source",
+        "sourceId": "spa-t39-v1",
+        "html": "<p>Un <b>discípulo</b> es una persona que sigue a un maestro religioso como estudiante.</p><p>En el Nuevo Testamento, todas las personas que siguen a Jesús y quieren aprender de él son discípulos. A veces, Jesús enviaba grupos de discípulos a predicar las <data class=\"resource-ref\" data-content-id=\"spa-t160-v1\" data-resource-code=\"FIAKeyTerms\">buenas nuevas</data> de que el <data class=\"resource-ref\" data-content-id=\"spa-t82-v1\" data-resource-code=\"FIAKeyTerms\">reino de Dios</data> había llegado y a <data class=\"resource-ref\" data-content-id=\"spa-t62-v1\" data-resource-code=\"FIAKeyTerms\">sanar</data> a los enfermos.</p><p>Jesús también eligió a doce personas para que fueran sus discípulos especiales. Este pequeño grupo a menudo se llama &quot;los doce discípulos&quot;, o incluso solo &quot;los doce&quot;. Estas personas seguían a Jesús a todas partes, aprendiendo de él y observándolo. Estos doce discípulos también eran llamados de <data class=\"resource-ref\" data-content-id=\"spa-t6-v1\" data-resource-code=\"FIAKeyTerms\">apóstoles</data>. Un apóstol es alguien que ha recibido una <data class=\"resource-ref\" data-content-id=\"spa-t8-v1\" data-resource-code=\"FIAKeyTerms\">autoridad</data> especial de Jesús.</p><p>Antes de que Jesús regresara al <data class=\"resource-ref\" data-content-id=\"spa-t63-v1\" data-resource-code=\"FIAKeyTerms\">cielo</data>, Jesús dijo a sus discípulos &quot;vayan y hagan a todas las personas de todas las <data class=\"resource-ref\" data-content-id=\"spa-t94-v1\" data-resource-code=\"FIAKeyTerms\">naciones</data> mis discípulos&quot;. Cada persona que confía en Jesús y quiere obedecerle es un discípulo de Jesús.</p><p>A veces la palabra &quot;discípulos&quot; es utilizada para un grupo grande de personas, y a veces significa solamente los doce discípulos escogidos.</p><p><b>Cuando estén traduciendo discípulo, tengan cuidado con las siguientes cosas:</b></p><p>Si en su idioma tiene una palabra que significa seguidor de un maestro respetado, pueden usar ese término aquí.</p><p>Recuerden que ustedes necesitan tener una palabra diferente para <data class=\"resource-ref\" data-content-id=\"spa-t6-v1\" data-resource-code=\"FIAKeyTerms\">apóstol</data> también.</p>",
+        "textSha256": "00f9a5e896b85e64b60054e99cd70876685b077d2747acedcf0d40ea166ec2c6",
+        "provenance": {
+          "status": "source",
+          "collection": "FIAKeyTerms",
+          "revision": "a39260670bba9d87d902e0fa0ae447341343481f"
+        }
+      },
+      "audio": {
+        "status": "source",
+        "sourceId": "spa-t39-v1-audio",
+        "url": "https://s3.amazonaws.com/cbbt-er.public/terms/audio/spa/t39/v1/vbr4.mp3",
+        "provenance": {
+          "status": "source",
+          "collection": "FIAKeyTerms",
+          "revision": "a39260670bba9d87d902e0fa0ae447341343481f"
+        },
+        "derivatives": [
+          {
+            "sourcePath": "/packs/spa.MRK-7-31-37/audio/spa-t39-v1-audio.mp3",
+            "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceBytes": 1455212,
+            "kind": "audio",
+            "tier": "phone",
+            "recipe": "a=opus,br=32k",
+            "mime": "audio/ogg",
+            "eligible": true,
+            "status": "pending-transcode",
+            "fallbackMime": "audio/mpeg"
+          },
+          {
+            "sourcePath": "/packs/spa.MRK-7-31-37/audio/spa-t39-v1-audio.mp3",
+            "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceBytes": 1455212,
+            "kind": "audio",
+            "tier": "medium",
+            "recipe": "a=opus,br=64k",
+            "mime": "audio/ogg",
+            "eligible": true,
+            "status": "pending-transcode",
+            "fallbackMime": "audio/mpeg"
+          }
+        ]
+      },
+      "passages": [
+        "MAT 5:1-MAT 5:12",
+        "MAT 5:13-MAT 5:16",
+        "MAT 8:18-MAT 8:22",
+        "MAT 8:23-MAT 8:27",
+        "MAT 9:9-MAT 9:13",
+        "MAT 9:14-MAT 9:17",
+        "MAT 9:18-MAT 9:26",
+        "MAT 9:27-MAT 9:38",
+        "MAT 10:1-MAT 10:15",
+        "MAT 10:16-MAT 10:25",
+        "MAT 11:1-MAT 11:6",
+        "MAT 12:1-MAT 12:14",
+        "MAT 12:46-MAT 12:50",
+        "MAT 13:10-MAT 13:17",
+        "MAT 13:36-MAT 13:43",
+        "MAT 13:44-MAT 13:53",
+        "MAT 14:1-MAT 14:12",
+        "MAT 14:13-MAT 14:21",
+        "MAT 14:22-MAT 14:36",
+        "MAT 15:1-MAT 15:20",
+        "MAT 16:21-MAT 16:28",
+        "MAT 17:1-MAT 17:13",
+        "MAT 17:14-MAT 17:21",
+        "MAT 17:22-MAT 17:27",
+        "MAT 18:1-MAT 18:9",
+        "MAT 19:1-MAT 19:12",
+        "MAT 19:13-MAT 19:30",
+        "MAT 20:17-MAT 20:28",
+        "MAT 21:1-MAT 21:11",
+        "MAT 22:15-MAT 22:22",
+        "MAT 23:1-MAT 23:12",
+        "MAT 24:3-MAT 24:14",
+        "MAT 26:1-MAT 26:16",
+        "MAT 26:17-MAT 26:25",
+        "MAT 26:26-MAT 26:35",
+        "MAT 26:36-MAT 26:46",
+        "MAT 26:47-MAT 26:56",
+        "MAT 27:57-MAT 27:66",
+        "MAT 28:1-MAT 28:15",
+        "MAT 28:16-MAT 28:20",
+        "MRK 2:13-MRK 2:17",
+        "MRK 2:18-MRK 2:22",
+        "MRK 2:23-MRK 3:6",
+        "MRK 3:7-MRK 3:12",
+        "MRK 3:13-MRK 3:19",
+        "MRK 3:20-MRK 3:35",
+        "MRK 4:1-MRK 4:20",
+        "MRK 4:26-MRK 4:34",
+        "MRK 4:35-MRK 4:41",
+        "MRK 5:21-MRK 5:34",
+        "MRK 6:1-MRK 6:6",
+        "MRK 6:30-MRK 6:44",
+        "MRK 6:45-MRK 6:56",
+        "MRK 7:1-MRK 7:8",
+        "MRK 7:14-MRK 7:23",
+        "MRK 7:31-MRK 7:37",
+        "MRK 8:1-MRK 8:10",
+        "MRK 8:11-MRK 8:21",
+        "MRK 8:27-MRK 8:30",
+        "MRK 9:14-MRK 9:29",
+        "MRK 9:30-MRK 9:50",
+        "MRK 10:1-MRK 10:12",
+        "MRK 10:13-MRK 10:31",
+        "MRK 10:32-MRK 10:45",
+        "MRK 10:46-MRK 10:52",
+        "MRK 11:1-MRK 11:11",
+        "MRK 11:12-MRK 11:26",
+        "MRK 11:27-MRK 11:33",
+        "MRK 13:1-MRK 13:8",
+        "MRK 14:1-MRK 14:11",
+        "MRK 14:12-MRK 14:26",
+        "MRK 14:32-MRK 14:42",
+        "MRK 16:1-MRK 16:8",
+        "MRK 16:9-MRK 16:20",
+        "LUK 5:27-LUK 5:39",
+        "LUK 6:1-LUK 6:11",
+        "LUK 6:12-LUK 6:16",
+        "LUK 6:17-LUK 6:19",
+        "LUK 6:20-LUK 6:26",
+        "LUK 6:27-LUK 6:36",
+        "LUK 6:37-LUK 6:42",
+        "LUK 6:43-LUK 6:49",
+        "LUK 7:11-LUK 7:17",
+        "LUK 7:18-LUK 7:35",
+        "LUK 8:4-LUK 8:15",
+        "LUK 8:22-LUK 8:25",
+        "LUK 8:26-LUK 8:39",
+        "LUK 9:1-LUK 9:17",
+        "LUK 9:18-LUK 9:27",
+        "LUK 9:28-LUK 9:36",
+        "LUK 9:37-LUK 9:45",
+        "LUK 9:46-LUK 9:62",
+        "LUK 10:1-LUK 10:16",
+        "LUK 10:17-LUK 10:24",
+        "LUK 10:38-LUK 10:42",
+        "LUK 11:1-LUK 11:13",
+        "LUK 12:1-LUK 12:12",
+        "LUK 12:13-LUK 12:21",
+        "LUK 12:22-LUK 12:34",
+        "LUK 14:25-LUK 14:35"
+      ]
+    },
+    {
+      "id": "term-spa-t121",
+      "termNumber": "121",
+      "engSourceId": "eng-t121-v1",
+      "title": "Mar de Galilea",
+      "sourceFile": "eng/json/018.content.json",
+      "selectedBy": "passage",
+      "text": {
+        "status": "source",
+        "sourceId": "spa-t121-v1",
+        "html": "<p>El <b>Mar de Galilea</b> es un mar, o un lago, en el norte de <data class=\"resource-ref\" data-content-id=\"spa-t74-v2\" data-resource-code=\"FIAKeyTerms\">Israel</data>. En el Nuevo Testamento, la parte del país cercana al Mar de Galilea se llama <data class=\"resource-ref\" data-content-id=\"spa-t55-v1\" data-resource-code=\"FIAKeyTerms\">Galilea</data>.</p><p>Un mar, o un lago, es un lugar donde solo hay agua. Un mar suele ser más grande que un lago, pero en la Biblia al Mar de Galilea a veces se le llama mar, y a veces se le llama lago.</p><p>El Mar de Galilea tenía unos 20 kilómetros de largo y 10 kilómetros de ancho. Si alguien quiere dar la vuelta al lago a pie, tendrá que caminar durante uno o dos días. Las personas a menudo usaban <data class=\"resource-ref\" data-content-id=\"spa-t17-v1\" data-resource-code=\"FIAKeyTerms\">barcos</data> para ir de un lado del lago a otro. El medio del lago era muy profundo. Había muchos peces en el lago, y la mayoría de las personas que vivían en las aldeas cercanas al lago se ganaban la vida pescando y vendiendo pescado. El agua en el mar era fresca, lo que significa que no era salada, a diferencia del agua en muchos otros mares.</p>",
+        "textSha256": "076851caec0f23e5dcab448eb011d5e258cb11d8e56e32c266f7e4f391231d4b",
+        "provenance": {
+          "status": "source",
+          "collection": "FIAKeyTerms",
+          "revision": "a39260670bba9d87d902e0fa0ae447341343481f"
+        }
+      },
+      "audio": {
+        "status": "source",
+        "sourceId": "spa-t121-v1-audio",
+        "url": "https://s3.amazonaws.com/cbbt-er.public/terms/audio/spa/t121/v1/vbr4.mp3",
+        "provenance": {
+          "status": "source",
+          "collection": "FIAKeyTerms",
+          "revision": "a39260670bba9d87d902e0fa0ae447341343481f"
+        },
+        "derivatives": [
+          {
+            "sourcePath": "/packs/spa.MRK-7-31-37/audio/spa-t121-v1-audio.mp3",
+            "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceBytes": 1455212,
+            "kind": "audio",
+            "tier": "phone",
+            "recipe": "a=opus,br=32k",
+            "mime": "audio/ogg",
+            "eligible": true,
+            "status": "pending-transcode",
+            "fallbackMime": "audio/mpeg"
+          },
+          {
+            "sourcePath": "/packs/spa.MRK-7-31-37/audio/spa-t121-v1-audio.mp3",
+            "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceBytes": 1455212,
+            "kind": "audio",
+            "tier": "medium",
+            "recipe": "a=opus,br=64k",
+            "mime": "audio/ogg",
+            "eligible": true,
+            "status": "pending-transcode",
+            "fallbackMime": "audio/mpeg"
+          }
+        ]
+      },
+      "passages": [
+        "MAT 4:12-MAT 4:25",
+        "MAT 8:23-MAT 8:27",
+        "MAT 13:1-MAT 13:9",
+        "MAT 14:13-MAT 14:21",
+        "MAT 14:22-MAT 14:36",
+        "MRK 1:14-MRK 1:20",
+        "MRK 1:21-MRK 1:28",
+        "MRK 1:35-MRK 1:39",
+        "MRK 4:1-MRK 4:20",
+        "MRK 4:35-MRK 4:41",
+        "MRK 5:1-MRK 5:20",
+        "MRK 6:30-MRK 6:44",
+        "MRK 6:45-MRK 6:56",
+        "MRK 7:24-MRK 7:30",
+        "MRK 7:31-MRK 7:37",
+        "MRK 9:30-MRK 9:50",
+        "MRK 14:27-MRK 14:31",
+        "LUK 5:1-LUK 5:11",
+        "LUK 6:12-LUK 6:16",
+        "LUK 6:17-LUK 6:19",
+        "LUK 6:27-LUK 6:36",
+        "LUK 6:37-LUK 6:42",
+        "LUK 6:43-LUK 6:49",
+        "LUK 8:22-LUK 8:25",
+        "LUK 8:26-LUK 8:39",
+        "JHN 6:1-JHN 6:15",
+        "JHN 6:16-JHN 6:21",
+        "JHN 6:22-JHN 6:27",
+        "JHN 21:1-JHN 21:14"
+      ]
+    },
+    {
+      "id": "term-spa-t141",
+      "termNumber": "141",
+      "engSourceId": "eng-t141-v1",
+      "title": "tyre",
+      "sourceFile": "eng/json/019.content.json",
+      "selectedBy": "passage",
+      "text": {
+        "status": "source",
+        "sourceId": "spa-t141-v1",
+        "html": "<p>Tiro es una ciudad en <data class=\"resource-ref\" data-content-id=\"spa-t135-v1\" data-resource-code=\"FIAKeyTerms\">Fenicia Siria</data>, o Fenicia, una región que está al norte de <data class=\"resource-ref\" data-content-id=\"spa-t74-v2\" data-resource-code=\"FIAKeyTerms\">Israel</data>. Tiro está ubicada en la costa del mar Mediterráneo. Hoy, esta ciudad es parte del país que ahora conocemos como Líbano. Durante la época de Jesús, Tiro era una ciudad importante en la región porque las personas en Fenicia eran buenas construyendo barcos y navegando a otros países en sus barcos para comprar y vender bienes. Tiro no era parte de Israel, y el pueblo <data class=\"resource-ref\" data-content-id=\"spa-t77-v2\" data-resource-code=\"FIAKeyTerms\">judío</data> sabía que el pueblo de Tiro era inmoral y no seguía las leyes de Dios. Los <data class=\"resource-ref\" data-content-id=\"spa-t259-v2\" data-resource-code=\"FIAKeyTerms\">profetas</data> <data class=\"resource-ref\" data-content-id=\"spa-t104-v1\" data-resource-code=\"FIAKeyTerms\">israelitas</data> profetizaron contra Tiro. Sin embargo, Jesús dijo que las ciudades judías que lo rechazaban ¡recibirían un castigo aún mayor que Tiro cuando Dios las juzgara!</p>",
+        "textSha256": "32a713547f67c29d37db1fd4663b44083f222ce784b274cb2c47dd264f4b09f9",
+        "provenance": {
+          "status": "source",
+          "collection": "FIAKeyTerms",
+          "revision": "a39260670bba9d87d902e0fa0ae447341343481f"
+        }
+      },
+      "audio": {
+        "status": "absent",
+        "ai": true,
+        "generator": "narration",
+        "provenance": {
+          "status": "missing"
+        }
+      },
+      "passages": [
+        "1KI 5:1-1KI 5:12",
+        "1KI 7:13-1KI 7:22",
+        "MRK 7:24-MRK 7:30",
+        "MRK 7:31-MRK 7:37"
+      ]
+    }
+  ],
+  "images": [],
+  "maps": [
+    {
+      "id": "c18",
+      "kind": "map",
+      "title": "Tyre, Sidon and The Sea of Galilee",
+      "titleProvenance": {
+        "status": "missing",
+        "badge": "not-yet-in-language",
+        "fallback": "eng",
+        "ai": false
+      },
+      "engTitle": "Tyre, Sidon and The Sea of Galilee",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/maps/eng/c18/v1.1/original.png",
+      "sourceFile": "eng/json/018.content.json",
+      "sourceFileSha256": "a5492a6b0e19c62a1986e117463e043c261a3334bb70cfaf4075cca742fc4e31",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": true,
+      "derivatives": [
+        {
+          "sourcePath": "/packs/spa.MRK-7-31-37/maps/c18.png",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 6646608,
+          "kind": "image",
+          "tier": "phone",
+          "recipe": "w=640,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        },
+        {
+          "sourcePath": "/packs/spa.MRK-7-31-37/maps/c18.png",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 6646608,
+          "kind": "image",
+          "tier": "medium",
+          "recipe": "w=1280,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        }
+      ]
+    }
+  ],
+  "videos": []
+}

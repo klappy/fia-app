@@ -1,0 +1,703 @@
+{
+  "schemaVersion": 1,
+  "packId": "eng.MRK-14-27-31",
+  "terms": [
+    {
+      "id": "term-eng-t55",
+      "termNumber": "55",
+      "engSourceId": "eng-t55-v1",
+      "title": "Galilee",
+      "sourceFile": "eng/json/007.content.json",
+      "selectedBy": "passage",
+      "text": {
+        "status": "source",
+        "sourceId": "eng-t55-v1",
+        "html": "<p><b>Galilee</b> is the name of a region in northern <data class=\"resource-ref\" data-content-id=\"eng-t74-v2\" data-resource-code=\"FIAKeyTerms\">Israel</data>. Jesus grew up in Galilee and did much of his work of preaching in Galilee. Most of Jesus's <data class=\"resource-ref\" data-content-id=\"eng-t39-v1\" data-resource-code=\"FIAKeyTerms\">disciples</data> came from Galilee. Most parts of Galilee are hilly, with low mountains. To the east, or right, of Galilee is a large lake that is called the <data class=\"resource-ref\" data-content-id=\"eng-t121-v1\" data-resource-code=\"FIAKeyTerms\">Sea of Galilee</data>. Many people in Galilee made their living from fishing or selling fish. Some of Jesus's disciples were fishermen who lived in villages surrounding the Sea of Galilee. Other names for the Sea of Galilee are the <b>Sea of Gennesareth</b>, or the <b>Lake of Tiberius</b>.</p><p>In the time of Jesus, Israel was not an independent <data class=\"resource-ref\" data-content-id=\"eng-t94-v2\" data-resource-code=\"FIAKeyTerms\">nation</data>. The <data class=\"resource-ref\" data-content-id=\"eng-t259-v2\" data-resource-code=\"FIAKeyTerms\">Israelites</data> were ruled by the Roman people. The Romans had divided Israel into several regions, or provinces. During Jesus's life, Galilee was governed by a ruler named Antipas, who was appointed by the Roman government. Antipas was the son of king Herod, who tried to kill Jesus when he was a baby. Antipas was the brother of the Herod who ordered Jesus to be crucified.</p><p>Other provinces in Israel were <data class=\"resource-ref\" data-content-id=\"eng-t81-v2\" data-resource-code=\"FIAKeyTerms\">Judea</data> and <data class=\"resource-ref\" data-content-id=\"eng-t221-v1\" data-resource-code=\"FIAKeyTerms\">Samaria</data>. Galilee was in the north, Judea was in the south, and Samaria was in the middle. Judea was the place where the most important city, <data class=\"resource-ref\" data-content-id=\"eng-t76-v1\" data-resource-code=\"FIAKeyTerms\">Jerusalem</data>, was, and therefore the <data class=\"resource-ref\" data-content-id=\"eng-t138-v1\" data-resource-code=\"FIAKeyTerms\">temple</data> of God. The people in Judea often thought that they were better <data class=\"resource-ref\" data-content-id=\"eng-t77-v2\" data-resource-code=\"FIAKeyTerms\">Jews</data> than the people in Galilee. They looked down on the people in Galilee, and thought that people in Galilee were uneducated and rough. The people in Judea and as well, the people in Galilee, looked down on people in Samaria, whom they considered not to be Jews at all.</p>",
+        "textSha256": "a88ac2401f167e9c8e900de22bbe00e2e9881b38d2113e4f9bccadb77c7422d5",
+        "provenance": {
+          "status": "source",
+          "collection": "FIAKeyTerms",
+          "revision": "a39260670bba9d87d902e0fa0ae447341343481f"
+        }
+      },
+      "audio": {
+        "status": "source",
+        "sourceId": "eng-t55-v1-audio",
+        "url": "https://s3.amazonaws.com/cbbt-er.public/terms/audio/eng/t55/v1/vbr4.mp3",
+        "provenance": {
+          "status": "source",
+          "collection": "FIAKeyTerms",
+          "revision": "a39260670bba9d87d902e0fa0ae447341343481f"
+        },
+        "derivatives": [
+          {
+            "sourcePath": "/packs/eng.MRK-14-27-31/audio/eng-t55-v1-audio.mp3",
+            "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceBytes": 1455212,
+            "kind": "audio",
+            "tier": "phone",
+            "recipe": "a=opus,br=32k",
+            "mime": "audio/ogg",
+            "eligible": true,
+            "status": "pending-transcode",
+            "fallbackMime": "audio/mpeg"
+          },
+          {
+            "sourcePath": "/packs/eng.MRK-14-27-31/audio/eng-t55-v1-audio.mp3",
+            "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceBytes": 1455212,
+            "kind": "audio",
+            "tier": "medium",
+            "recipe": "a=opus,br=64k",
+            "mime": "audio/ogg",
+            "eligible": true,
+            "status": "pending-transcode",
+            "fallbackMime": "audio/mpeg"
+          }
+        ]
+      },
+      "passages": [
+        "JOS 21:27-JOS 21:33",
+        "1KI 9:10-1KI 9:25",
+        "MAT 10:1-MAT 10:15",
+        "MAT 17:22-MAT 17:27",
+        "MAT 19:1-MAT 19:12",
+        "MAT 21:1-MAT 21:11",
+        "MAT 26:69-MAT 26:75",
+        "MAT 28:1-MAT 28:15",
+        "MAT 28:16-MAT 28:20",
+        "MRK 1:14-MRK 1:20",
+        "MRK 1:21-MRK 1:28",
+        "MRK 1:35-MRK 1:39",
+        "MRK 6:14-MRK 6:29",
+        "MRK 8:27-MRK 8:30",
+        "MRK 9:30-MRK 9:50",
+        "MRK 14:27-MRK 14:31",
+        "MRK 14:66-MRK 14:72",
+        "MRK 16:1-MRK 16:8",
+        "LUK 1:1-LUK 1:4",
+        "LUK 1:26-LUK 1:38",
+        "LUK 3:1-LUK 3:14",
+        "LUK 4:14-LUK 4:30",
+        "LUK 8:26-LUK 8:39",
+        "LUK 8:40-LUK 8:56",
+        "LUK 10:1-LUK 10:16",
+        "LUK 13:1-LUK 13:9",
+        "LUK 24:1-LUK 24:12",
+        "JHN 4:1-JHN 4:15",
+        "JHN 4:43-JHN 4:54",
+        "JHN 7:1-JHN 7:10",
+        "ACT 1:6-ACT 1:11",
+        "ACT 3:1-ACT 3:10"
+      ]
+    },
+    {
+      "id": "term-eng-t120",
+      "termNumber": "120",
+      "engSourceId": "eng-t120-v1",
+      "title": "scriptures",
+      "sourceFile": "eng/json/018.content.json",
+      "selectedBy": "passage",
+      "text": {
+        "status": "source",
+        "sourceId": "eng-t120-v1",
+        "html": "<p>A <b>scripture</b> can mean anything that is written down, but it <em>especially</em> means something that is written down and very important to people. When people in the New Testament talk about the Scripture, or the <b>Scriptures</b>, they are talking about the part of the Bible that <data class=\"resource-ref\" data-content-id=\"eng-t175-v1\" data-resource-code=\"FIAKeyTerms\">Christians</data> now call the Old Testament. The Old Testament consisted of what the people sometimes called \"the Law and the Prophets\" because it was made up of the written laws and instructions that God gave his people through Moses, and the writings of the <data class=\"resource-ref\" data-content-id=\"eng-t77-v2\" data-resource-code=\"FIAKeyTerms\">Jewish</data> <data class=\"resource-ref\" data-content-id=\"eng-t200-v1\" data-resource-code=\"FIAKeyTerms\">prophets</data>. Sometimes this is called the <em>holy</em> Scriptures. The Scriptures are called <data class=\"resource-ref\" data-content-id=\"eng-t67-v1\" data-resource-code=\"FIAKeyTerms\">holy</data> because they tell us about God, who is holy.</p><p>Sometimes people talked about something from the Scriptures without saying the word \"Scriptures.\" Everybody knew that if you said \"it is written,\" you meant something that was written in the Scriptures.</p><p>The Scriptures were not written down on paper, the way people do now. Books and paper did not yet exist. Instead, the Scriptures were written on long strips of papyrus or parchment. Papyrus is a thin sheet that is made from the fibers of a certain plant, and parchment is made from the skin of an animal. Because those sheets were very long, people rolled them up. The name for such a sheet is a scroll. On both ends of the scroll people attached a narrow wooden handle, like a round stick. When people were reading from a scroll, they would unroll one side of the scroll, and roll up the other end around the stick.</p><p>Scrolls could become damaged quickly, especially those made of papyrus. Therefore people who are called scribes were always busy copying the text from one scroll to a new scroll, so that the text would not get lost. Scrolls were expensive. Most people did not own a scroll. Instead, scrolls were kept in the <data class=\"resource-ref\" data-content-id=\"eng-t133-v1\" data-resource-code=\"FIAKeyTerms\">synagogues</data>-the Jewish meeting places. Many Jewish people knew large parts of these scrolls by heart; sometimes even people who could not read could recite large parts of the scrolls.</p><div data-type=\"callout\" data-callout-style=\"action\"><p>Look up \"scroll\" in the video Bible dictionary.</p></div>",
+        "textSha256": "d782a43ae0d1ca947ea3637ca633d081b6aa610ade957eeebe4bde181fc9ec5b",
+        "provenance": {
+          "status": "source",
+          "collection": "FIAKeyTerms",
+          "revision": "a39260670bba9d87d902e0fa0ae447341343481f"
+        }
+      },
+      "audio": {
+        "status": "source",
+        "sourceId": "eng-t120-v1-audio",
+        "url": "https://s3.amazonaws.com/cbbt-er.public/terms/audio/eng/t120/v1/vbr4.mp3",
+        "provenance": {
+          "status": "source",
+          "collection": "FIAKeyTerms",
+          "revision": "a39260670bba9d87d902e0fa0ae447341343481f"
+        },
+        "derivatives": [
+          {
+            "sourcePath": "/packs/eng.MRK-14-27-31/audio/eng-t120-v1-audio.mp3",
+            "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceBytes": 1455212,
+            "kind": "audio",
+            "tier": "phone",
+            "recipe": "a=opus,br=32k",
+            "mime": "audio/ogg",
+            "eligible": true,
+            "status": "pending-transcode",
+            "fallbackMime": "audio/mpeg"
+          },
+          {
+            "sourcePath": "/packs/eng.MRK-14-27-31/audio/eng-t120-v1-audio.mp3",
+            "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceBytes": 1455212,
+            "kind": "audio",
+            "tier": "medium",
+            "recipe": "a=opus,br=64k",
+            "mime": "audio/ogg",
+            "eligible": true,
+            "status": "pending-transcode",
+            "fallbackMime": "audio/mpeg"
+          }
+        ]
+      },
+      "passages": [
+        "MAT 11:7-MAT 11:19",
+        "MAT 21:33-MAT 21:46",
+        "MAT 22:23-MAT 22:33",
+        "MAT 22:34-MAT 22:46",
+        "MAT 26:47-MAT 26:56",
+        "MRK 2:23-MRK 3:6",
+        "MRK 9:2-MRK 9:13",
+        "MRK 12:1-MRK 12:12",
+        "MRK 12:18-MRK 12:27",
+        "MRK 14:12-MRK 14:26",
+        "MRK 14:27-MRK 14:31",
+        "MRK 14:43-MRK 14:52",
+        "LUK 4:14-LUK 4:30",
+        "LUK 6:1-LUK 6:11",
+        "LUK 20:9-LUK 20:19",
+        "LUK 24:13-LUK 24:35",
+        "LUK 24:36-LUK 24:53",
+        "JHN 5:31-JHN 5:47",
+        "JHN 7:37-JHN 7:44",
+        "JHN 10:22-JHN 10:42",
+        "JHN 12:20-JHN 12:36",
+        "JHN 13:12-JHN 13:30",
+        "JHN 17:1-JHN 17:19",
+        "JHN 19:31-JHN 19:42",
+        "JHN 20:1-JHN 20:18",
+        "ACT 1:15-ACT 1:26",
+        "ACT 8:26-ACT 8:40",
+        "ACT 17:1-ACT 17:9",
+        "ACT 17:10-ACT 17:15",
+        "ACT 18:24-ACT 18:28",
+        "1CO 10:1-1CO 10:13",
+        "1CO 15:1-1CO 15:11",
+        "2CO 4:13-2CO 4:18",
+        "GAL 3:1-GAL 3:9",
+        "GAL 3:10-GAL 3:14",
+        "GAL 3:15-GAL 3:18",
+        "GAL 3:19-GAL 3:25",
+        "GAL 4:21-GAL 4:27",
+        "GAL 4:28-GAL 5:1",
+        "1TI 4:11-1TI 4:16",
+        "1TI 5:17-1TI 5:25",
+        "2TI 3:10-2TI 3:17",
+        "JAS 2:8-JAS 2:13",
+        "JAS 2:14-JAS 2:26",
+        "JAS 4:1-JAS 4:10"
+      ]
+    },
+    {
+      "id": "term-eng-t121",
+      "termNumber": "121",
+      "engSourceId": "eng-t121-v1",
+      "title": "Sea of Galilee",
+      "sourceFile": "eng/json/018.content.json",
+      "selectedBy": "passage",
+      "text": {
+        "status": "source",
+        "sourceId": "eng-t121-v1",
+        "html": "<p>The <b>Sea of Galilee</b> is a sea, or a lake, in the north of <data class=\"resource-ref\" data-content-id=\"eng-t74-v2\" data-resource-code=\"FIAKeyTerms\">Israel</data>. In the New Testament, the part of the country near the Sea of Galilee is called <data class=\"resource-ref\" data-content-id=\"eng-t55-v1\" data-resource-code=\"FIAKeyTerms\">Galilee</data>.</p><p>A sea, or a lake, is a place where there is only water. A sea is usually bigger than a lake, but in the Bible the Sea of Galilee is sometimes called a sea, and sometimes called a lake.</p><p>The Sea of Galilee was about 20 kilometers long and 10 kilometers wide. If you wanted to walk all around the lake, you would have to walk for one or two days. People often used <data class=\"resource-ref\" data-content-id=\"eng-t17-v1\" data-resource-code=\"FIAKeyTerms\">boats</data> to go from one side of the lake to another side. The middle of the lake was very deep. There were many fish in the lake, and most people who lived in the villages nearby the lake made a living by catching and selling fish. The water in the sea was fresh, which means that it was not salty, unlike the water in many other seas.</p><div data-type=\"callout\" data-callout-style=\"action\"><p>Look at a picture of the Sea of Galilee in the video Bible dictionary.</p></div>",
+        "textSha256": "26754cd6825c667c746fe7e0c344cbded1f389f2c1ab75f3b0cec04cd791b77c",
+        "provenance": {
+          "status": "source",
+          "collection": "FIAKeyTerms",
+          "revision": "a39260670bba9d87d902e0fa0ae447341343481f"
+        }
+      },
+      "audio": {
+        "status": "source",
+        "sourceId": "eng-t121-v1-audio",
+        "url": "https://s3.amazonaws.com/cbbt-er.public/terms/audio/eng/t121/v1/vbr4.mp3",
+        "provenance": {
+          "status": "source",
+          "collection": "FIAKeyTerms",
+          "revision": "a39260670bba9d87d902e0fa0ae447341343481f"
+        },
+        "derivatives": [
+          {
+            "sourcePath": "/packs/eng.MRK-14-27-31/audio/eng-t121-v1-audio.mp3",
+            "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceBytes": 1455212,
+            "kind": "audio",
+            "tier": "phone",
+            "recipe": "a=opus,br=32k",
+            "mime": "audio/ogg",
+            "eligible": true,
+            "status": "pending-transcode",
+            "fallbackMime": "audio/mpeg"
+          },
+          {
+            "sourcePath": "/packs/eng.MRK-14-27-31/audio/eng-t121-v1-audio.mp3",
+            "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceBytes": 1455212,
+            "kind": "audio",
+            "tier": "medium",
+            "recipe": "a=opus,br=64k",
+            "mime": "audio/ogg",
+            "eligible": true,
+            "status": "pending-transcode",
+            "fallbackMime": "audio/mpeg"
+          }
+        ]
+      },
+      "passages": [
+        "MAT 4:12-MAT 4:25",
+        "MAT 8:23-MAT 8:27",
+        "MAT 13:1-MAT 13:9",
+        "MAT 14:13-MAT 14:21",
+        "MAT 14:22-MAT 14:36",
+        "MRK 1:14-MRK 1:20",
+        "MRK 1:21-MRK 1:28",
+        "MRK 1:35-MRK 1:39",
+        "MRK 4:1-MRK 4:20",
+        "MRK 4:35-MRK 4:41",
+        "MRK 5:1-MRK 5:20",
+        "MRK 6:30-MRK 6:44",
+        "MRK 6:45-MRK 6:56",
+        "MRK 7:24-MRK 7:30",
+        "MRK 7:31-MRK 7:37",
+        "MRK 9:30-MRK 9:50",
+        "MRK 14:27-MRK 14:31",
+        "LUK 5:1-LUK 5:11",
+        "LUK 6:12-LUK 6:16",
+        "LUK 6:17-LUK 6:19",
+        "LUK 6:27-LUK 6:36",
+        "LUK 6:37-LUK 6:42",
+        "LUK 6:43-LUK 6:49",
+        "LUK 8:22-LUK 8:25",
+        "LUK 8:26-LUK 8:39",
+        "JHN 6:1-JHN 6:15",
+        "JHN 6:16-JHN 6:21",
+        "JHN 6:22-JHN 6:27",
+        "JHN 21:1-JHN 21:14"
+      ]
+    },
+    {
+      "id": "term-eng-t166",
+      "termNumber": "166",
+      "engSourceId": "eng-t166-v1",
+      "title": "shepherd",
+      "sourceFile": "eng/json/018.content.json",
+      "selectedBy": "passage",
+      "text": {
+        "status": "source",
+        "sourceId": "eng-t166-v1",
+        "html": "<p>A <b>shepherd</b> is a person who takes care of sheep and goats. Sheep and goats are animals that people keep in order to use their milk, to eat their meat, and to use their hair for making clothes. Sheep are gentle animals. Goats are similar to sheep, but more temperamental, and harder to lead.</p><p>A group of sheep or goats is called a flock. A shepherd is responsible for taking his flock to places where they can find the grass or the plants that they need to eat and where they can drink water. A shepherd had to make sure that not any of the sheep or goats got lost. Being a shepherd was hard work, because they sometimes had to walk far with their animals to find enough food and drink for them, and they often had to stay away from home and sleep outside with their animals. A shepherd also had to protect his flock against wild animals. King <data class=\"resource-ref\" data-content-id=\"eng-t33-v1\" data-resource-code=\"FIAKeyTerms\">David</data>, who was the most beloved <data class=\"resource-ref\" data-content-id=\"eng-t226-v2\" data-resource-code=\"FIAKeyTerms\">king</data> of <data class=\"resource-ref\" data-content-id=\"eng-t74-v2\" data-resource-code=\"FIAKeyTerms\">Israel</data>, was a shepherd before he became king.</p><p>Because shepherds were so common in Israel, the word shepherd is often used as picture language for a protector or a ruler. God calls himself the Shepherd of Israel. People are called the sheep of God. Jesus calls himself the Good Shepherd, because he gave his life in order that \"his sheep\"-the people-could be saved from danger.</p><p>In the time of the New Testament, some people looked down on shepherds, thinking that they were rough and uneducated people.</p>",
+        "textSha256": "7c6ed2a5cbd8769f16e4103b24a8d5867518cceaa776786efb758c869d0a847b",
+        "provenance": {
+          "status": "source",
+          "collection": "FIAKeyTerms",
+          "revision": "a39260670bba9d87d902e0fa0ae447341343481f"
+        }
+      },
+      "audio": {
+        "status": "source",
+        "sourceId": "eng-t166-v1-audio",
+        "url": "https://s3.amazonaws.com/cbbt-er.public/terms/audio/eng/t166/v1/vbr4.mp3",
+        "provenance": {
+          "status": "source",
+          "collection": "FIAKeyTerms",
+          "revision": "a39260670bba9d87d902e0fa0ae447341343481f"
+        },
+        "derivatives": [
+          {
+            "sourcePath": "/packs/eng.MRK-14-27-31/audio/eng-t166-v1-audio.mp3",
+            "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceBytes": 1455212,
+            "kind": "audio",
+            "tier": "phone",
+            "recipe": "a=opus,br=32k",
+            "mime": "audio/ogg",
+            "eligible": true,
+            "status": "pending-transcode",
+            "fallbackMime": "audio/mpeg"
+          },
+          {
+            "sourcePath": "/packs/eng.MRK-14-27-31/audio/eng-t166-v1-audio.mp3",
+            "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceBytes": 1455212,
+            "kind": "audio",
+            "tier": "medium",
+            "recipe": "a=opus,br=64k",
+            "mime": "audio/ogg",
+            "eligible": true,
+            "status": "pending-transcode",
+            "fallbackMime": "audio/mpeg"
+          }
+        ]
+      },
+      "passages": [
+        "GEN 46:28-GEN 47:12",
+        "GEN 48:1-GEN 48:22",
+        "EXO 2:16-EXO 2:25",
+        "EXO 4:1-EXO 4:17",
+        "EXO 4:18-EXO 4:31",
+        "EXO 9:22-EXO 9:35",
+        "EXO 10:1-EXO 10:20",
+        "NUM 14:26-NUM 14:38",
+        "NUM 27:12-NUM 27:23",
+        "JDG 5:11-JDG 5:18",
+        "1SA 16:14-1SA 16:23",
+        "1SA 17:20-1SA 17:30",
+        "1SA 17:31-1SA 17:40",
+        "1SA 21:1-1SA 21:9",
+        "1SA 25:1-1SA 25:13",
+        "2SA 5:1-2SA 5:16",
+        "2SA 7:1-2SA 7:17",
+        "2SA 24:10-2SA 24:17",
+        "1KI 22:13-1KI 22:28",
+        "1CH 11:1-1CH 11:9",
+        "1CH 17:1-1CH 17:15",
+        "2CH 18:9-2CH 18:27",
+        "MAT 18:10-MAT 18:14",
+        "MAT 25:31-MAT 25:46",
+        "MRK 14:27-MRK 14:31",
+        "JHN 10:11-JHN 10:21",
+        "ACT 20:18-ACT 20:38",
+        "JUD 1:12-JUD 1:16"
+      ]
+    }
+  ],
+  "images": [
+    {
+      "id": "a264",
+      "kind": "image",
+      "title": "Rooster",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "FIAImages",
+        "revision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+      },
+      "engTitle": "Rooster",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/photos/a264/1000.jpg",
+      "sourceFile": "eng/json/018.content.json",
+      "sourceFileSha256": "d7a06a1419720daf2f16591cf0620317ae6f7fc246689185f4b0405baecdef7c",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": true,
+      "derivatives": [
+        {
+          "sourcePath": "/packs/eng.MRK-14-27-31/images/a264.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "phone",
+          "recipe": "w=640,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        },
+        {
+          "sourcePath": "/packs/eng.MRK-14-27-31/images/a264.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "medium",
+          "recipe": "w=1280,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        }
+      ]
+    },
+    {
+      "id": "a265",
+      "kind": "image",
+      "title": "Rooster",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "FIAImages",
+        "revision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+      },
+      "engTitle": "Rooster",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/photos/a265/1000.jpg",
+      "sourceFile": "eng/json/018.content.json",
+      "sourceFileSha256": "d7a06a1419720daf2f16591cf0620317ae6f7fc246689185f4b0405baecdef7c",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": true,
+      "derivatives": [
+        {
+          "sourcePath": "/packs/eng.MRK-14-27-31/images/a265.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "phone",
+          "recipe": "w=640,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        },
+        {
+          "sourcePath": "/packs/eng.MRK-14-27-31/images/a265.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "medium",
+          "recipe": "w=1280,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        }
+      ]
+    },
+    {
+      "id": "a266",
+      "kind": "image",
+      "title": "Rooster",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "FIAImages",
+        "revision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+      },
+      "engTitle": "Rooster",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/photos/a266/1000.jpg",
+      "sourceFile": "eng/json/018.content.json",
+      "sourceFileSha256": "d7a06a1419720daf2f16591cf0620317ae6f7fc246689185f4b0405baecdef7c",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": true,
+      "derivatives": [
+        {
+          "sourcePath": "/packs/eng.MRK-14-27-31/images/a266.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "phone",
+          "recipe": "w=640,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        },
+        {
+          "sourcePath": "/packs/eng.MRK-14-27-31/images/a266.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "medium",
+          "recipe": "w=1280,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        }
+      ]
+    },
+    {
+      "id": "a230",
+      "kind": "image",
+      "title": "Shepherds",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "FIAImages",
+        "revision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+      },
+      "engTitle": "Shepherds",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/photos/a230/1000.jpg",
+      "sourceFile": "eng/json/019.content.json",
+      "sourceFileSha256": "8447fcabbe01dc1c9453465a401b5c5fb93fdb5cfb63ac1b2d29fc5a08fa988e",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": true,
+      "derivatives": [
+        {
+          "sourcePath": "/packs/eng.MRK-14-27-31/images/a230.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "phone",
+          "recipe": "w=640,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        },
+        {
+          "sourcePath": "/packs/eng.MRK-14-27-31/images/a230.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "medium",
+          "recipe": "w=1280,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        }
+      ]
+    },
+    {
+      "id": "a231",
+      "kind": "image",
+      "title": "Shepherds",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "FIAImages",
+        "revision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+      },
+      "engTitle": "Shepherds",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/photos/a231/1000.jpg",
+      "sourceFile": "eng/json/019.content.json",
+      "sourceFileSha256": "8447fcabbe01dc1c9453465a401b5c5fb93fdb5cfb63ac1b2d29fc5a08fa988e",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": true,
+      "derivatives": [
+        {
+          "sourcePath": "/packs/eng.MRK-14-27-31/images/a231.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "phone",
+          "recipe": "w=640,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        },
+        {
+          "sourcePath": "/packs/eng.MRK-14-27-31/images/a231.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "medium",
+          "recipe": "w=1280,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        }
+      ]
+    },
+    {
+      "id": "a232",
+      "kind": "image",
+      "title": "Shepherds",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "FIAImages",
+        "revision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+      },
+      "engTitle": "Shepherds",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/photos/a232/1000.jpg",
+      "sourceFile": "eng/json/019.content.json",
+      "sourceFileSha256": "8447fcabbe01dc1c9453465a401b5c5fb93fdb5cfb63ac1b2d29fc5a08fa988e",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": true,
+      "derivatives": [
+        {
+          "sourcePath": "/packs/eng.MRK-14-27-31/images/a232.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "phone",
+          "recipe": "w=640,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        },
+        {
+          "sourcePath": "/packs/eng.MRK-14-27-31/images/a232.jpg",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 114000,
+          "kind": "image",
+          "tier": "medium",
+          "recipe": "w=1280,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        }
+      ]
+    }
+  ],
+  "maps": [
+    {
+      "id": "c19",
+      "kind": "map",
+      "title": "Jerusalem and Galilee region",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "FIAMaps",
+        "revision": "4bc9bb9f1d9082e5d71a047a35bf8e608f473602"
+      },
+      "engTitle": "Jerusalem and Galilee region",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/maps/eng/c19/v1/original.png",
+      "sourceFile": "eng/json/010.content.json",
+      "sourceFileSha256": "3e686d08839c72175c9f0bc2a494ea7b64e7757bce803f9b32ffaa308603b04f",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": true,
+      "derivatives": [
+        {
+          "sourcePath": "/packs/eng.MRK-14-27-31/maps/c19.png",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 6646608,
+          "kind": "image",
+          "tier": "phone",
+          "recipe": "w=640,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        },
+        {
+          "sourcePath": "/packs/eng.MRK-14-27-31/maps/c19.png",
+          "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "sourceBytes": 6646608,
+          "kind": "image",
+          "tier": "medium",
+          "recipe": "w=1280,q=medium,f=webp",
+          "mime": "image/webp",
+          "eligible": true,
+          "status": "pending-transcode"
+        }
+      ]
+    }
+  ],
+  "videos": [
+    {
+      "id": "a1388",
+      "kind": "video",
+      "title": "Rooster Crowing",
+      "titleProvenance": {
+        "status": "source",
+        "collection": "VideoBibleDictionary",
+        "revision": "1c02713d022bd96a29c78f5b75455315d6d35a6e"
+      },
+      "engTitle": "Rooster Crowing",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/media/videos/a1388/720p.mp4",
+      "sourceFile": "eng/json/014.content.json",
+      "sourceFileSha256": "18fef6709a2f1ad4e2bb3946ee69caf78fb9a60af3d44bd32c1bf83dd32e78b4",
+      "description": {
+        "status": "absent",
+        "ai": true,
+        "generator": "description"
+      },
+      "packaged": false,
+      "streamOnly": true
+    }
+  ]
+}
