@@ -70,15 +70,18 @@ async function seed(page: Page, { session = true, textSize = 'system' } = {}) {
 const screen = (page: Page) => page.locator('[data-screen="S03"]');
 const row = (page: Page, id: string) => screen(page).locator(`[data-pack-id="${id}"]`);
 const NOT_YET_EN = '◌ not yet in English';
-// This build ships one Mark pack (eng.MRK-1-1-13, data/catalog/ready.json); every other Mark
-// passage is "not yet" and is not a choice (GAP-NOPACK, #55). The multi-select mechanics below run
-// as a build that ships these Mark packs: the ready index is served with them added.
-const CHOICES = ['eng.MRK-1-14-20', 'eng.MRK-1-21-28', 'eng.MRK-1-29-34', 'eng.MRK-1-35-39'];
-async function ships(page: Page, extra: string[]) {
+// This build ships every Mark pack in English and Spanish (data/catalog/ready.json; Mark eng+spa
+// ticket item 1), so every row has a size and is a choice. The "not yet" mechanics (GAP-NOPACK, #55)
+// run as a build that withholds one pack: the ready index is served without it.
+const WITHHELD = 'eng.MRK-1-14-20';
+async function withholds(page: Page, ids: string[]) {
   await page.route('**/data/catalog/ready.json', async (route) => {
     const res = await route.fetch();
     const doc = (await res.json()) as { packs: string[] };
-    await route.fulfill({ response: res, json: { ...doc, packs: [...doc.packs, ...extra] } });
+    await route.fulfill({
+      response: res,
+      json: { ...doc, packs: doc.packs.filter((p) => !ids.includes(p)) },
+    });
   });
 }
 
@@ -113,11 +116,12 @@ test.describe('browse and select (no saves)', () => {
     await expect(row(page, PACK).getByTestId('row-size')).toHaveText(
       new RegExp(`^${walked}\\sparts\\s·\\s\\d+\\sKB$`),
     );
-    // a passage with no pack in this build says not yet in place of a size, never a size (#55)
-    await expect(row(page, 'eng.MRK-1-14-20').locator('[data-role="not-yet"]')).toHaveText(
-      NOT_YET_EN,
+    // every Mark passage ships a pack in this build: each row has its measured size, none says not yet
+    await expect(row(page, 'eng.MRK-1-14-20').getByTestId('row-size')).toHaveText(
+      /^≈\d+\sparts\s·\s\d+\sKB$/,
     );
-    await expect(row(page, 'eng.MRK-1-14-20').getByTestId('row-size')).toHaveCount(0);
+    await expect(s.locator('[data-role="not-yet"]')).toHaveCount(0);
+    await expect(s.getByTestId('row-size')).toHaveCount(68);
     await expect(s.getByTestId('row-saved')).toHaveCount(0); // nothing saved in this context
     const primary = page.locator('[data-role="primary"]');
     await expect(primary).toHaveCount(1);
@@ -156,7 +160,6 @@ test.describe('browse and select (no saves)', () => {
     page,
   }) => {
     await seed(page);
-    await ships(page, CHOICES);
     await page.goto('/pericopes');
     const toggle = page.getByTestId('select-toggle');
     await toggle.click();
@@ -165,9 +168,9 @@ test.describe('browse and select (no saves)', () => {
     await expect(page.getByTestId('list-hint')).toHaveText(
       '68 passages · tap a passage to choose it for saving',
     );
-    // the five passages with a pack are checkboxes; the 63 not-yet passages are not
+    // every passage ships a pack, so all 68 are checkboxes
     const boxes = screen(page).getByRole('checkbox');
-    await expect(boxes).toHaveCount(1 + CHOICES.length);
+    await expect(boxes).toHaveCount(68);
     const primary = page.locator('[data-role="primary"]');
     await expect(primary).toHaveText(/Save for offline/);
     await expect(primary).toHaveAttribute('aria-disabled', 'true');
@@ -188,7 +191,8 @@ test.describe('browse and select (no saves)', () => {
       'true',
     );
     const summary = page.getByTestId('select-summary');
-    await expect(summary).toContainText(/^Selected 3 · ≈\d+\sKB of guide text/);
+    // every chosen passage ships its pack, so the size is measured from the packs, exact (R-307)
+    await expect(summary).toContainText(/^Selected 3 · \d+\sKB of guide text/);
     await expect(summary).toContainText('Text only');
     await expect(primary).toHaveText(/Save 3 for offline/);
     // at 1× the list scrolls in its well, so the summary sits on the first screen above the primary
@@ -212,12 +216,13 @@ test.describe('browse and select (no saves)', () => {
     page,
   }) => {
     await seed(page);
+    await withholds(page, [WITHHELD]);
     await page.goto('/pericopes');
-    const notYet = row(page, 'eng.MRK-1-14-20');
+    const notYet = row(page, WITHHELD);
     await expect(notYet.locator('[data-role="not-yet"]')).toHaveText(NOT_YET_EN);
     await page.getByTestId('select-toggle').click();
-    // only the passage with a pack is a checkbox (this build ships one Mark pack)
-    await expect(screen(page).getByRole('checkbox')).toHaveCount(1);
+    // every passage but the withheld one is a checkbox
+    await expect(screen(page).getByRole('checkbox')).toHaveCount(67);
     await expect(row(page, PACK)).toHaveAttribute('role', 'checkbox');
     await expect(notYet).not.toHaveAttribute('role', 'checkbox');
     await expect(notYet).not.toHaveAttribute('aria-checked');
@@ -248,7 +253,6 @@ test.describe('browse and select (no saves)', () => {
       page,
     }) => {
       await seed(page, { textSize: size });
-      await ships(page, CHOICES);
       await page.goto('/pericopes');
       await expect(page.locator('html')).toHaveAttribute('data-text-step', step);
       await expect(screen(page).locator('button[data-pack-id]').first()).toBeVisible();
@@ -313,7 +317,7 @@ test('Save 1 for offline saves through C-07 at the Text tier; the row shows the 
   await page.getByTestId('select-toggle').click();
   await expect(row(page, PACK)).not.toHaveAttribute('role', 'checkbox');
   await expect(row(page, PACK).getByTestId('row-saved')).toBeVisible();
-  // nor are the 67 others: this build ships no pack for them, so they say not yet (#55)
-  await expect(screen(page).getByRole('checkbox')).toHaveCount(0);
-  await expect(screen(page).locator('[data-role="not-yet"]')).toHaveCount(67);
+  // the 67 others ship a pack too, so they stay choices and none says not yet (#55)
+  await expect(screen(page).getByRole('checkbox')).toHaveCount(67);
+  await expect(screen(page).locator('[data-role="not-yet"]')).toHaveCount(0);
 });

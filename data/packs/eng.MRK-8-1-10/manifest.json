@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 1,
+  "packId": "eng.MRK-8-1-10",
+  "language": "eng",
+  "autonym": "English",
+  "direction": "ltr",
+  "pericope": "MRK-8-1-10",
+  "passage": "MRK 8:1-10",
+  "preparedAt": "2026-10-03T13:24:57.384Z",
+  "sourceRevisions": {
+    "FIATranslationGuide": "eb744452eb8d7c852caadde9d3181cddfe571119",
+    "FIAKeyTerms": "a39260670bba9d87d902e0fa0ae447341343481f",
+    "FIAImages": "136ff7c6b2381b84d241e27524005dcad71424ba",
+    "FIAMaps": "4bc9bb9f1d9082e5d71a047a35bf8e608f473602",
+    "VideoBibleDictionary": "1c02713d022bd96a29c78f5b75455315d6d35a6e",
+    "BereanStandardBible": "87858d1e28ab728249d9fb50667170c194c6b013",
+    "unfoldingWordLiteral": "e49bdf4a0ddcdfe17428ca23e6dada29f54c0ea6",
+    "unfoldingWordSimplified": "41a5b938d4f170278f8e43e7dce4df9e87e7a4bd",
+    "WorldEnglishBible": "bcb8b3edfb302863c241e3d1d2062cf51042d694",
+    "WorldEnglishBibleUpdated": "e8b8f852167379ff0a4e82032c444c12f56a2173"
+  },
+  "resourceTypes": [
+    "guide",
+    "scripture",
+    "term",
+    "image",
+    "map",
+    "video",
+    "audio"
+  ],
+  "tiers": {
+    "text": {
+      "bytes": 216851,
+      "files": [
+        {
+          "path": "/packs/eng.MRK-8-1-10/guide.json",
+          "bytes": 55885,
+          "sha256": "decdcc14b09946e7d65bb0c6752d1035b4b016d7fe04760d38d19d2fa1f7c16d",
+          "mime": "application/json"
+        },
+        {
+          "path": "/packs/eng.MRK-8-1-10/guide-units.json",
+          "bytes": 18918,
+          "sha256": "8bfeeca5abba231618d3265042d09dd69cfeaa361b46fa7928c1ca7ec6cef81a",
+          "mime": "application/json"
+        },
+        {
+          "path": "/packs/eng.MRK-8-1-10/scripture.json",
+          "bytes": 27731,
+          "sha256": "5bfa47549f8f8cf481c672aedb7c0e9f8568fc420422c7d6130895322ef3d954",
+          "mime": "application/json"
+        },
+        {
+          "path": "/packs/eng.MRK-8-1-10/resources.json",
+          "bytes": 39361,
+          "sha256": "f545a75796e9c7aa31aa0a84a9d2f67f0ae2422ce6f013f43eb4a823730ac5df",
+          "mime": "application/json"
+        },
+        {
+          "path": "/packs/eng.MRK-8-1-10/narration.json",
+          "bytes": 93,
+          "sha256": "0ded89d037fb38e68e59a79254cc2cf8489b561ef0d75be9e90e426a2e5802d7",
+          "mime": "application/json"
+        },
+        {
+          "path": "/packs/eng.MRK-8-1-10/narration-plan.json",
+          "bytes": 69716,
+          "sha256": "79c8eda50a8dd36d87213da42e7a231cb3b47cf763513523a0b1b37748fe6d44",
+          "mime": "application/json"
+        },
+        {
+          "path": "/packs/eng.MRK-8-1-10/rights.json",
+          "bytes": 5147,
+          "sha256": "dfccfbf8c62099d10ab0ae80baa245c1f1b4f4f960a8584d217b035bb6aa49fa",
+          "mime": "application/json"
+        }
+      ]
+    }
+  },
+  "counts": {
+    "steps": 6,
+    "units": 82,
+    "stops": 15,
+    "terms": 6,
+    "termAudio": 6,
+    "images": 7,
+    "maps": 1,
+    "videos": 3,
+    "scripture": 5,
+    "scriptureFallback": 0,
+    "hiddenUnits": 9,
+    "termsSupplement": 0,
+    "narrationSlots": 134,
+    "narrationFloorSlots": 123,
+    "alignmentSlots": 5,
+    "slots-guide-unit": 82,
+    "slots-scripture": 5,
+    "slots-term-recording": 6,
+    "slots-term-read-aloud": 6,
+    "slots-description": 8,
+    "slots-next-action": 12,
+    "slots-transition": 15
+  },
+  "provenance": {
+    "text": {
+      "source": 93,
+      "generated": 0,
+      "missing": 0
+    },
+    "audio": {
+      "source": 6,
+      "generated": 0,
+      "missing": 128
+    },
+    "description": {
+      "source": 0,
+      "generated": 0,
+      "missing": 8
+    }
+  },
+  "rights": [
+    "FIATranslationGuide@eb74445",
+    "FIAKeyTerms@a392606",
+    "FIAImages@136ff7c",
+    "FIAMaps@4bc9bb9",
+    "VideoBibleDictionary@1c02713",
+    "BereanStandardBible@87858d1",
+    "unfoldingWordLiteral@e49bdf4",
+    "unfoldingWordSimplified@41a5b93",
+    "WorldEnglishBible@bcb8b3e",
+    "WorldEnglishBibleUpdated@e8b8f85"
+  ]
+}

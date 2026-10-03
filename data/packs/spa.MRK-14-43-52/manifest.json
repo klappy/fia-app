@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "packId": "spa.MRK-14-43-52",
+  "language": "spa",
+  "autonym": "Español",
+  "direction": "ltr",
+  "pericope": "MRK-14-43-52",
+  "passage": "MRK 14:43-52",
+  "preparedAt": "2026-10-03T13:25:21.659Z",
+  "sourceRevisions": {
+    "FIATranslationGuide": "eb744452eb8d7c852caadde9d3181cddfe571119",
+    "FIAKeyTerms": "a39260670bba9d87d902e0fa0ae447341343481f",
+    "FIAImages": "136ff7c6b2381b84d241e27524005dcad71424ba",
+    "VideoBibleDictionary": "1c02713d022bd96a29c78f5b75455315d6d35a6e",
+    "ReinaValera1909": "84a071324be17c7c66db17dd204d7804e66d728b",
+    "AquiferSpanishBibleReferenceText": "edf50fc7913b15df1089534cb9bca084553acbef"
+  },
+  "resourceTypes": [
+    "guide",
+    "scripture",
+    "term",
+    "image",
+    "video"
+  ],
+  "tiers": {
+    "text": {
+      "bytes": 178780,
+      "files": [
+        {
+          "path": "/packs/spa.MRK-14-43-52/guide.json",
+          "bytes": 65520,
+          "sha256": "349c74f6f73327b66bd66bb5a2ac47560f7187064efc22c16f30c4c633ced910",
+          "mime": "application/json"
+        },
+        {
+          "path": "/packs/spa.MRK-14-43-52/guide-units.json",
+          "bytes": 16722,
+          "sha256": "9095b6820a51c3fc9a7d195f7ce99c529c886189ff8f0c8340c1e8e5fbbe7b5f",
+          "mime": "application/json"
+        },
+        {
+          "path": "/packs/spa.MRK-14-43-52/scripture.json",
+          "bytes": 10549,
+          "sha256": "e46bfbaf1f41453197376c290fce5339158a08d516ab57f2e7da1c1e84e942ac",
+          "mime": "application/json"
+        },
+        {
+          "path": "/packs/spa.MRK-14-43-52/resources.json",
+          "bytes": 26729,
+          "sha256": "a634bb6eb0789c508f158e4ac02eba909713355ed9aee4fca4dee47fbfae2d38",
+          "mime": "application/json"
+        },
+        {
+          "path": "/packs/spa.MRK-14-43-52/narration.json",
+          "bytes": 95,
+          "sha256": "8dfe81553701a0ac4d038309db9d208a9e09f0ac9b9458ba579e4dc98fb61f56",
+          "mime": "application/json"
+        },
+        {
+          "path": "/packs/spa.MRK-14-43-52/narration-plan.json",
+          "bytes": 55902,
+          "sha256": "3d6b14013bc7911513605ea1f74351d546d6bf7399cf74ac20b8c980a8d3633d",
+          "mime": "application/json"
+        },
+        {
+          "path": "/packs/spa.MRK-14-43-52/rights.json",
+          "bytes": 3263,
+          "sha256": "3ab2729764c76e546f52da77a02d8e0282b7071b00f1489f6b6cc4314b8f94b2",
+          "mime": "application/json"
+        }
+      ]
+    }
+  },
+  "counts": {
+    "steps": 6,
+    "units": 88,
+    "stops": 2,
+    "terms": 5,
+    "termAudio": 0,
+    "images": 3,
+    "maps": 0,
+    "videos": 1,
+    "scripture": 2,
+    "scriptureFallback": 0,
+    "hiddenUnits": 8,
+    "termsSupplement": 0,
+    "narrationSlots": 105,
+    "narrationFloorSlots": 95,
+    "alignmentSlots": 2,
+    "slots-guide-unit": 88,
+    "slots-scripture": 2,
+    "slots-term-recording": 5,
+    "slots-term-read-aloud": 5,
+    "slots-description": 3,
+    "slots-transition": 2
+  },
+  "provenance": {
+    "text": {
+      "source": 95,
+      "generated": 0,
+      "missing": 0
+    },
+    "audio": {
+      "source": 0,
+      "generated": 0,
+      "missing": 105
+    },
+    "description": {
+      "source": 0,
+      "generated": 0,
+      "missing": 3
+    }
+  },
+  "rights": [
+    "FIATranslationGuide@eb74445",
+    "FIAKeyTerms@a392606",
+    "FIAImages@136ff7c",
+    "VideoBibleDictionary@1c02713",
+    "ReinaValera1909@84a0713",
+    "AquiferSpanishBibleReferenceText@edf50fc"
+  ]
+}
