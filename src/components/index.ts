@@ -14,6 +14,7 @@ export { PericopeCard } from './PericopeCard';
 export { PrimaryButton } from './PrimaryButton';
 export { ProgressRail } from './ProgressRail';
 export { ProvenanceMark } from './ProvenanceMark';
+export { QuietAction } from './QuietAction';
 export { SecondaryAction } from './SecondaryAction';
 export { SettingsRow } from './SettingsRow';
 export { Sheet } from './Sheet';
