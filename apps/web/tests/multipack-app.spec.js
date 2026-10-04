@@ -30,3 +30,11 @@ it('late previous-pack download activation cannot expose media in the newly sele
  release({selected:true});await new Promise(resolve=>setTimeout(resolve,10));
  expect(document.querySelector('img[src="/assets/stale-shared.png"]')).toBeNull();expect(screen.getByRole('button',{name:'Open Downloads'})).toBeTruthy();
 });
+
+it('remote-only resource says not prepared without offering a download action',async()=>{
+ const descriptor=registry.packs.find(p=>p.id==='spa.MRK-1-1-13'),presentation=JSON.parse(readFileSync('public'+descriptor.presentation.url,'utf8'));
+ presentation.activities[0].assetId='a112';delete presentation.assets.a112.src;
+ localStorage.setItem('fia-v3-selected-pack',descriptor.id);vi.spyOn(libraryAdapter,'select').mockResolvedValue({descriptor,presentation});vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});vi.spyOn(libraryAdapter,'activate').mockResolvedValue({selected:true});
+ vi.stubGlobal('Audio',vi.fn());HTMLMediaElement.prototype.pause=vi.fn();Element.prototype.scrollTo=vi.fn();render(App);
+ await waitFor(()=>expect(screen.getByText(/not prepared for download yet/)).toBeTruthy());expect(screen.queryByRole('button',{name:'Open Downloads'})).toBeNull();expect(document.querySelector('img[src]')).toBeNull();
+});

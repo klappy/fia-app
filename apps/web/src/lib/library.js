@@ -54,3 +54,5 @@ async function workerRequest(type,data={},onprogress){
   arm();registration.active.postMessage({type,...data},[channel.port2]);
  });
 }
+
+export const hasUnresolvedInstructions=pack=>(pack.diagnostics||[]).some(d=>['conservative-continuation','unresolved-resource-link'].includes(d.code));

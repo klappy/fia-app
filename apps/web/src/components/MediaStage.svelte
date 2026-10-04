@@ -31,7 +31,7 @@
 
 <div class:reading-stage={asset.kind==='scripture'||asset.kind==='term'} class:resource-visual={['image','map','video'].includes(asset.kind)} class="media-stage" data-kind={asset.kind}>
   {#if ['image','map','video'].includes(asset.kind)}<div class="visual-identification" use:balanceCredit><ResourceIdentification asset={inlineVideo&&frameReady?inlineVideo:asset}/></div>{/if}
-  {#if asset.downloadRequired}<div class="media-error"><p>This resource has not been downloaded. You can continue with the passage text.</p><button class="quiet" onclick={ondownload}>Open Downloads</button></div>
+  {#if asset.downloadRequired}<div class="media-error">{#if asset.downloadPrepared}<p>This resource has not been downloaded. You can continue with the passage text.</p><button class="quiet" onclick={ondownload}>Open Downloads</button>{:else}<p>This source resource is not prepared for download yet. You can continue with the passage text.</p>{/if}</div>
   {:else if asset.kind==='scripture'}
     <AlignedReading {asset} {playback} {suspended}/>
   {:else if asset.kind==='term'}
