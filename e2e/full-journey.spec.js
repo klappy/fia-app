@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {readFileSync} from 'node:fs';
 import {activities} from '../apps/web/src/lib/content.js';
 import {seedPassage,saved,downloadSelected} from './helpers.js';
 test('approved manual journey preserves grouped readings and explicit holds through completion',async({page})=>{
@@ -18,7 +19,9 @@ test('explicit Play uses cached verified recording while automatic narration sta
  await context.setOffline(true);await page.getByRole('button',{name:'Play',exact:true}).click();
  await expect.poll(()=>page.evaluate(()=>window.__verifiedPlayers.at(-1)?.currentTime||0)).toBeGreaterThan(.1);
  const first=await page.evaluate(()=>window.__verifiedPlayers.at(-1).currentTime);await expect.poll(()=>page.evaluate(()=>window.__verifiedPlayers.at(-1).currentTime)).toBeGreaterThan(first);
- expect(await page.evaluate(()=>window.__verifiedPlayers.at(-1).src.startsWith('blob:'))).toBe(true);expect(activities[(await saved(page)).index].id).toBe('S01-U002');expect(media).toEqual([]);
+ const expected=JSON.parse(readFileSync('dist/offline/eng.MRK-1-1-13.json')).files.find(f=>f.path==='/audio/source/S01-U002.mp3');
+ const actual=await page.evaluate(async()=>{const src=window.__verifiedPlayers.at(-1).src;if(!src.startsWith('blob:'))throw Error('Expected verified playback blob');const b=await(await fetch(src)).arrayBuffer();return {bytes:b.byteLength,sha256:Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',b)),x=>x.toString(16).padStart(2,'0')).join('')};});
+ expect(actual).toEqual({bytes:expected.bytes,sha256:expected.sha256});expect(activities[(await saved(page)).index].id).toBe('S01-U002');expect(media).toEqual([]);
  await expect(page.getByRole('button',{name:'Pause',exact:true})).toBeVisible();
  await page.getByRole('button',{name:'Pause',exact:true}).click();await expect(page.getByRole('button',{name:'Resume',exact:true})).toBeVisible();expect((await saved(page)).index).toBe(index);
 });
