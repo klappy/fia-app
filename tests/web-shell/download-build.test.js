@@ -28,5 +28,15 @@ test('finalizer keeps deployment controls in output but excludes them from all13
    for(const f of manifest.files){assert.ok(!['/_headers','/_redirects'].includes(f.path));const bytes=readFileSync(join(dir,'dist'+f.path));assert.equal(bytes.length,f.bytes);assert.equal(createHash('sha256').update(bytes).digest('hex'),f.sha256);}
   }
   assert.equal(readFileSync(join(dir,'dist/_headers'),'utf8'),'/*\n  X-Test: retained');assert.equal(readFileSync(join(dir,'dist/_redirects'),'utf8'),'/* /index.html 200');
+  const hash=x=>createHash('sha256').update(x).digest('hex');
+  const sidecar={schema:1,packId:packs[0].id,presentationRevision:'a'.repeat(64),recipeRevision:'accepted',entries:[{path:'/audio/test.mp3',source:{url:'https://fia.test/audio/test.mp3',sha256:hash('audio'),bytes:5,provenance:{}},delivery:{url:'https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://fia.test/audio/test.mp3',sha256:hash('ogg'),bytes:3,mime:'audio/ogg',kind:'audio',format:'opus',preset:'voice',q:'medium',status:'transformed'},timing:{status:'not-applicable'}}]};
+  const body=JSON.stringify(sidecar),sidecarPath=`dist/content/delivery/${packs[0].id}/${hash(body)}.json`;put(sidecarPath,body);
+  execFileSync(process.execPath,[resolve('scripts/finalize-build.mjs')],{cwd:dir});
+  const updated=JSON.parse(readFileSync(join(dir,`dist/offline/${packs[0].id}.json`)));
+  const audio=updated.files.find(f=>f.path==='/audio/test.mp3');assert.equal(audio.bytes,3);assert.equal(audio.sha256,hash('ogg'));assert.equal(audio.sourceSha256,hash('audio'));assert.equal(updated.deliveryRevision,hash(body));
+  const index=JSON.parse(readFileSync(join(dir,'dist/content/delivery/index.json')));assert.equal(index.packs[0].delivery.sha256,hash(body));assert.equal(index.packs[0].delivery.bytes,Buffer.byteLength(body));
+  assert.ok(updated.files.some(f=>f.path==='/content/delivery/index.json'));assert.ok(updated.files.some(f=>f.path===sidecarPath.slice(4)));
+  rmSync(join(dir,sidecarPath));sidecar.entries[0].source.sha256='f'.repeat(64);const bad=JSON.stringify(sidecar);put(`dist/content/delivery/${packs[0].id}/${hash(bad)}.json`,bad);
+  assert.throws(()=>execFileSync(process.execPath,[resolve('scripts/finalize-build.mjs')],{cwd:dir,stdio:'pipe'}),/Delivery source mismatch/);
  }finally{rmSync(dir,{recursive:true,force:true});}
 });

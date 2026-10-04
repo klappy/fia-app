@@ -10,6 +10,29 @@ class FakeAudio {
  constructor(src){this.src=src;this.paused=true;this.currentTime=0;this.duration=12;players.push(this);}
  play(){this.paused=false;return Promise.resolve();} pause(){this.paused=true;} load(){} removeAttribute(){} end(){this.paused=true;this.onended?.();}
 }
+it('Pause between recording completion and queued next start revokes the pending session',async()=>{
+ vi.useFakeTimers();await startAt('S01-U001');await fireEvent.click(screen.getByRole('button',{name:'Begin',exact:true}));await settle();
+ expect(players).toHaveLength(1);players[0].end();await settle();
+ await fireEvent.click(screen.getByRole('button',{name:'Pause',exact:true}));await settle();await vi.advanceTimersByTimeAsync(1000);
+ expect(players).toHaveLength(1);expect(state().status).toBe('ready');expect(screen.getByRole('button',{name:'Play',exact:true})).toBeTruthy();
+});
+it('prepared online recording is silent until Play and does not require an offline download',async()=>{
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});
+ vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[{path:'/audio/source/S01-U001.mp3'}]});
+ const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array([1,2,3]).buffer,mime:'audio/ogg',timing:{status:'not-applicable'}});
+ vi.stubGlobal('URL',class extends URL{static createObjectURL(){return 'blob:verified-audio';}static revokeObjectURL(){}});
+ await startAt('S01-U001');expect(request).not.toHaveBeenCalled();expect(players).toHaveLength(0);
+ await fireEvent.click(screen.getByRole('button',{name:'Begin',exact:true}));await settle();await settle();
+ expect(request).toHaveBeenCalledTimes(1);expect(request.mock.calls[0][1]).toBe('/audio/source/S01-U001.mp3');expect(players.at(-1).src).toBe('blob:verified-audio');expect(players.at(-1).paused).toBe(false);
+});
+it('navigation cancels selected proxy loading and a late response cannot start playback',async()=>{
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});
+ vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[{path:'/audio/source/S01-U001.mp3'}]});
+ let resolve;const request=vi.spyOn(libraryAdapter,'playMedia').mockImplementation(()=>new Promise(r=>resolve=r));
+ await startAt('S01-U001');await fireEvent.click(screen.getByRole('button',{name:'Begin',exact:true}));await settle();
+ await fireEvent.click(screen.getByRole('button',{name:'Skip to next activity'}));expect(request.mock.calls[0][3].aborted).toBe(true);
+ resolve({bytes:new Uint8Array([1]).buffer,mime:'audio/ogg'});await settle();await settle();expect(players).toHaveLength(0);
+});
 const settle=async()=>{await Promise.resolve();await tick();};
 async function startAt(id,status='ready',prefs={}){const session=createSession(activities);session.index=activities.findIndex(a=>a.id===id);session.status=status;Object.assign(session.preferences,prefs);localStorage.setItem('fia-v3-session@2',JSON.stringify({session}));render(App);await settle();await settle();await settle();}
 const originalRelated=assets.a112.relatedIds;
@@ -59,8 +82,8 @@ it('visual toggle queues description behind active FIA and disabling stops only 
  await toggleDescriptions();expect(state().preferences.describeImages).toBe(true);expect(players).toHaveLength(1);expect(players[0].paused).toBe(false);
  players[0].end();await settle();const description=players.at(-1);expect(description.src).toBe(assets.a112.descriptionAudio);await toggleDescriptions();expect(description.paused).toBe(true);expect(state().preferences.describeImages).toBe(false);expect(state().status).toBe('waiting');
 });
-it('settings and visual toggle share one preference, and enabling at a pause reads the current visual',async()=>{
- assets.a112.relatedIds=[];await startAt('S02-U005','waiting');await toggleDescriptions();await settle();expect(players.at(-1).src).toBe(assets.a112.descriptionAudio);
+it('settings share one preference without granting playback; explicit Play reads the visual',async()=>{
+ assets.a112.relatedIds=[];await startAt('S02-U005','waiting');await toggleDescriptions();await settle();expect(players).toHaveLength(0);await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();expect(players.at(-1).src).toBe(assets.a112.descriptionAudio);
  await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Settings',exact:true}));const setting=screen.getByRole('checkbox',{name:/Describe images and maps/});expect(setting.checked).toBe(true);await fireEvent.click(setting);await settle();expect(state().preferences.describeImages).toBe(false);expect(players.at(-1).paused).toBe(true);
  await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));expect(screen.queryByRole('button',{name:'Image and map descriptions'})).toBeNull();
 });
@@ -134,7 +157,7 @@ it('section boundaries hold a title transition and Continue reads the first inst
  expect(screen.getByRole('heading',{name:'Setting the Stage'})).toBeTruthy();
  expect(activities[state().index].id).toBe('S02-U001');expect(players).toHaveLength(0);
  await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));await settle();
- expect(players.at(-1).src).toBe('/audio/source/S02-U001.mp3');
+ expect(players).toHaveLength(0);await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();expect(players.at(-1).src).toBe('/audio/source/S02-U001.mp3');
  players.at(-1).end();await settle();await vi.advanceTimersByTimeAsync(700);
  expect(activities[state().index].kind).toBe('scripture');
 });
@@ -144,7 +167,7 @@ it('the visual overview selects a section without marking prior content complete
  await fireEvent.click(screen.getByRole('button',{name:'Filling the Gaps',exact:true}));await settle();
  expect(screen.getByRole('heading',{name:'Filling the Gaps'})).toBeTruthy();expect(state().completed).toEqual([]);
  await fireEvent.click(screen.getByRole('button',{name:'Skip to next activity'}));await settle();
- expect(activities[state().index].id).toBe('S05-U001');expect(players.at(-1).src).toBe('/audio/source/S05-U001.mp3');
+ expect(activities[state().index].id).toBe('S05-U001');expect(players).toHaveLength(0);await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();expect(players.at(-1).src).toBe('/audio/source/S05-U001.mp3');
 });
 it('dark colors persist without changing the primary control or interrupting narration',async()=>{
  assets.a112.relatedIds=[];await startAt('S02-U005');await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();const player=players.at(-1);player.currentTime=4;
@@ -325,5 +348,5 @@ it('consolidates settings and explicit Scripture Play overrides its automatic se
 });
 it('automatic Scripture reading is independent of automatic guide narration',async()=>{
  vi.useFakeTimers();const session=createSession(activities);session.index=activities.findIndex(a=>a.id==='S01-U002');localStorage.setItem('fia-v3-session@2',JSON.stringify({session,muted:true}));render(App);await settle();await settle();await settle();
- await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));await vi.advanceTimersByTimeAsync(700);await settle();expect(players.at(-1).src).toBe(assets['scripture-BereanStandardBible'].descriptionAudio);expect(JSON.parse(localStorage.getItem('fia-v3-session@2')).muted).toBe(true);
+ await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));await vi.advanceTimersByTimeAsync(700);await settle();expect(players).toHaveLength(0);await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();expect(players.at(-1).src).toBe(assets['scripture-BereanStandardBible'].descriptionAudio);expect(JSON.parse(localStorage.getItem('fia-v3-session@2')).muted).toBe(true);
 });
