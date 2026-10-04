@@ -25,6 +25,19 @@ it('prepared online recording is silent until Play and does not require an offli
  await fireEvent.click(screen.getByRole('button',{name:'Begin',exact:true}));await settle();await settle();
  expect(request).toHaveBeenCalledTimes(1);expect(request.mock.calls[0][1]).toBe('/audio/source/S01-U001.mp3');expect(players.at(-1).src).toBe('blob:verified-audio');expect(players.at(-1).paused).toBe(false);
 });
+it('gesture-denied verified audio retries synchronously without fetching again and navigation releases it',async()=>{
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});
+ vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[{path:'/audio/source/S01-U001.mp3'}]});
+ const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array([1]).buffer,mime:'audio/ogg',timing:{status:'not-applicable'}});
+ const revoked=vi.fn();vi.stubGlobal('URL',class extends URL{static createObjectURL(){return 'blob:verified-retry';}static revokeObjectURL(url){revoked(url);}});
+ const play=vi.spyOn(FakeAudio.prototype,'play').mockRejectedValueOnce(Object.assign(Error('gesture required'),{name:'NotAllowedError'}));
+ await startAt('S01-U001');await fireEvent.click(screen.getByRole('button',{name:'Begin',exact:true}));await settle();await settle();
+ expect(request).toHaveBeenCalledTimes(1);expect(players).toHaveLength(1);expect(players[0].paused).toBe(true);
+ await fireEvent.click(screen.getByRole('button',{name:'Resume',exact:true}));await settle();
+ expect(play).toHaveBeenCalledTimes(2);expect(request).toHaveBeenCalledTimes(1);expect(players).toHaveLength(1);expect(players[0].paused).toBe(false);
+ await fireEvent.click(screen.getByRole('button',{name:'Skip to next activity'}));await settle();
+ expect(players[0].paused).toBe(true);expect(revoked).toHaveBeenCalledWith('blob:verified-retry');
+});
 it('navigation cancels selected proxy loading and a late response cannot start playback',async()=>{
  vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});
  vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[{path:'/audio/source/S01-U001.mp3'}]});
