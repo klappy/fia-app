@@ -14,7 +14,7 @@
   }catch(e){if(alive)error=e.message;}finally{if(alive)loading=false;}
  }
  onMount(()=>{refresh();return()=>alive=false;});
- const labels={core:'Text and images',audio:'Text, images and audio',all:'Everything, including videos'};
+ const labels={core:'Text only',audio:'Text and audio',all:'Text and all available resources'};
  async function chooseLanguage(id){onlanguage(id);passages=await libraryAdapter.passages(id);}
  async function selectPack(id){try{busy=true;await onselect(id);}catch(e){error=e.message;}finally{busy=false;}}
  async function save(){busy=true;error='';transfer=null;try{await libraryAdapter.download(selection,value=>transfer=value,selectedPack);downloadFinished=true;}catch(e){error=e.message;}finally{busy=false;const failure=error;await refresh();error=failure||error;}}
@@ -48,7 +48,7 @@
     {#if download.updateAvailable}<p>A newer download is available. Your saved copy stays usable until the update finishes.</p>{/if}
     {#if download.pending&&!busy}<p>{download.pending.running?'A download is running in another window.':'Interrupted download'} · {formatBytes(download.pending.received)} of {formatBytes(download.pending.bytes)} verified. {download.pending.running?'Refresh to check its progress.':'Resume checks and reuses saved files.'}</p>{/if}
     <fieldset disabled={busy||download.pending?.running}><legend>Include in download</legend>{#each download.choices as choice}<label class="download-choice"><input type="radio" name="download-selection" value={choice.id} bind:group={selection}/><span><strong>{labels[choice.id]}</strong><small>{formatBytes(choice.bytes)} total</small></span></label>{/each}</fieldset>
-    <p class="fine-print">Text and images includes the app, Scripture and guide. Audio adds recordings. Videos adds the available companions. Resources stay unavailable until you explicitly download them. Sizes are file bytes, not browser storage overhead.</p>
+    <p class="fine-print">Text only includes the app, Scripture and guide. Audio adds recordings. All available resources adds the packaged images and videos. Resources stay unavailable until you explicitly download them. Sizes are file bytes, not browser storage overhead.</p>
     {#if transfer}<progress aria-label="Download progress" value={transfer.received} max={transfer.bytes||1}></progress><p role="status">{formatBytes(transfer.received)} of {formatBytes(transfer.bytes)} verified · {transfer.count} / {transfer.total} files</p>{/if}
     {#if busy}<button class="secondary full" onclick={pause}><Pause size={18}/>Pause download</button>{:else}<button class="secondary full" disabled={!download.manifest||download.pending?.running} onclick={save}><Download size={18}/>{download.pending&&selection===download.pending.selection?'Resume download':download.updateAvailable?'Update download':download.saved?'Save selection again':'Download selection'}</button>{/if}
     {#if download.active||download.pending}

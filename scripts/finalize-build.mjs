@@ -10,7 +10,7 @@ for(const file of ['V3-BLUEPRINT.md','TEST-GUIDE.md','CONTENT-RECEIPT.md']){
  writeFileSync(join('dist/docs',file.replace('.md','.html')),html);
 }
 function walk(dir){return readdirSync(dir).flatMap(name=>{const path=join(dir,name);return statSync(path).isDirectory()?walk(path):[path];});}
-const digest=path=>({path:'/'+path.slice(5),bytes:statSync(path).size,sha256:createHash('sha256').update(readFileSync(path)).digest('hex'),group:/\.(mp3|m4a|wav|ogg)$/.test(path)?'audio':/\.(mp4|webm)$/.test(path)?'video':'core'});
+const digest=path=>({path:'/'+path.slice(5),bytes:statSync(path).size,sha256:createHash('sha256').update(readFileSync(path)).digest('hex'),group:/\.(mp3|m4a|wav|ogg)$/.test(path)?'audio':/\.(mp4|webm)$/.test(path)?'video':/\.(jpe?g|png|webp)$/.test(path)&&!path.includes('/assets/fia-')?'image':'core'});
 const allFiles=walk('dist').filter(p=>!p.endsWith('/version.json')&&!p.endsWith('/sw.js')&&!p.endsWith('/offline-manifest.json')&&!p.includes('/offline/')&&!p.includes('/docs/')&&!p.includes('/content/'));
 const mediaPath=path=>/\.(mp3|m4a|wav|ogg|mp4|webm|jpe?g|png|webp)$/.test(path)&&!path.includes('/assets/fia-');
 const shell=allFiles.filter(path=>!mediaPath(path)).map(digest);

@@ -72,3 +72,5 @@ test('two installed passages isolate removal and verify media before explicit do
  await w.message({type:'PACK_SELECT',packId:eng,revision:'a'.repeat(64)},null,'page');
  assert.equal(await(await w.fetch(new Request('https://fia.test/audio.m4a'),{clientId:'page'})).text(),'recording');
 });
+
+test('text-only selection excludes resource images until an explicit all-resources download',async()=>{const w=worker();const m=manifest();m.files.push({path:'/image.png',bytes:4,sha256:createHash('sha256').update('live').digest('hex'),group:'image'});w.manifest(m);await w.message({type:'DOWNLOAD_START',selection:'core'});assert.equal(w.calls.includes('/image.png'),false);await w.message({type:'DOWNLOAD_START',selection:'all'});assert.equal(w.calls.includes('/image.png'),true);});
