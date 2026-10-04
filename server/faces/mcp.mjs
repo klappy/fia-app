@@ -31,8 +31,8 @@ export async function serveMcp(req,res,operations) {
   if(rpc.method==='tools/list'){reply({tools});return;}
   if(rpc.method!=='tools/call'){error(404,rpc.id,-32601,'Method not found');return;}
   let result;
-  if(params.name==='read_pack')result=operations.readPack(params.arguments);
-  else if(params.name==='read_artifact')result=operations.readArtifact(params.arguments);
+  if(params.name==='read_pack')result=await operations.readPack(params.arguments);
+  else if(params.name==='read_artifact')result=await operations.readArtifact(params.arguments);
   else result={status:'refused',code:'unsupported-operation'};
   reply({content:[{type:'text',text:JSON.stringify(result)}],structuredContent:result,isError:result.status==='refused'});
 }
