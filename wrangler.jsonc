@@ -5,23 +5,26 @@
   //   npx wrangler deploy --env staging     (branch staging)    -> staging.fiaguide.app
   //   npx wrangler deploy --env production  (branch production) -> fiaguide.app
   // Custom domains are attached account-side (Otto); no routes live in this file.
-  // Build command: `npm run build` = `vite build` only — tests gate the PR in CI, never the build.
-  // No LLM secret here: this Worker serves static assets only. The BL4c text route key (ANTHROPIC_API_KEY)
-  // lives in CI secrets now and, once the API+MCP server Worker exists, on that Worker via
-  // `wrangler secret put ANTHROPIC_API_KEY` (host only; never in this file or vars).
+  // Build command: `npm run build` = Vite, offline finalization and the pinned read bundle — tests gate the PR in CI, never the build.
+  // Static assets plus reviewed read-only HTTP/MCP; no model calls or generation secrets.
+  // Existing Workers and domains remain unchanged.
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "fia-app",
   "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "server/faces/worker/entry.mjs",
   "workers_dev": true,
   "assets": {
     "directory": "./dist",
+    "binding": "ASSETS",
+    "run_worker_first": ["/v1", "/v1/*", "/mcp", "/mcp/*"],
     "not_found_handling": "single-page-application",
     "html_handling": "auto-trailing-slash",
   },
   "observability": { "enabled": true },
   "env": {
-    "dev": { "name": "fia-app-dev" },
-    "staging": { "name": "fia-app-staging" },
-    "production": { "name": "fia-app" },
+    "dev": { "name": "fia-app-dev", "vars": { "FIA_API_ORIGIN": "https://dev.fiaguide.app" } },
+    "staging": { "name": "fia-app-staging", "vars": { "FIA_API_ORIGIN": "https://staging.fiaguide.app" } },
+    "production": { "name": "fia-app", "vars": { "FIA_API_ORIGIN": "https://fiaguide.app" } },
   },
 }
