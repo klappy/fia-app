@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.0.0-alpha.2 — Shared read API on the existing Worker (2026-10-04)
+
+Adds read-only HTTP and MCP access to three explicitly accepted immutable artifacts, including the complete approved presentation pack. The web application continues using its unchanged bundled pack, media and offline worker. No new content, generation, client switching or user-state service. See [release note](release/changes/3.0.0-alpha.2-worker-read.md).
+
 ## 3.0.0-alpha.1 — Approved v3 guided experience (2026-10-04)
 
 Restores the approved Svelte interface and guided flow with English Mark 1:1–13, 143 existing recordings, eight images/maps, three videos, local progress, consolidated settings and verified browser downloads. The compatible worker replaces the earlier retirement-only draft. Public build status, build provenance and the sequential release train are preserved. See [release note](release/changes/3.0.0-alpha.1-fresh-v3.md).
