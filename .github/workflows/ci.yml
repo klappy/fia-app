@@ -1,56 +1,56 @@
 name: ci
-
-# Tests gate the PR, never the deploy build (LESSONS-3D-REVIEW § 6.5). The Workers build
-# command is `npm run build` only; this workflow is the gate.
 on:
   push:
     branches: ['**']
   pull_request:
-
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
-
 permissions:
   contents: read
-
 jobs:
   check:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run lint
-      - run: npm run typecheck
-      - run: npx vitest run
-      - run: npm run test:contracts
+      - run: npm test
       - run: npm run build
+      - run: npm run test:release
       - run: npx playwright install --with-deps chromium
-      - run: npx playwright test
+      - run: npx playwright test e2e/deployed.spec.js e2e/full-journey.spec.js e2e/upgrade.spec.js
       - uses: actions/upload-artifact@v4
-        if: failure()
+        if: always()
         with:
-          name: test-results
+          name: fresh-journey-results
           path: test-results
           retention-days: 7
-  # Pipeline unit + data tests (rights lines, tier bytes, contracts). Offline: reads committed data/ only.
-  pipeline:
+  visual:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    defaults:
-      run:
-        working-directory: pipeline
+    timeout-minutes: 15
+    container:
+      image: mcr.microsoft.com/playwright:v1.56.1-noble
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: pipeline/package-lock.json
       - run: npm ci
-      - run: npm test
+      - run: npm run build
+      - run: npm run test:visual
+      # Initial v3 evidence requires independent visual review before main merge.
+      # No v2 baseline is silently accepted for a different product.
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fresh-design-shots
+          path: test-results
+          retention-days: 7

@@ -1,0 +1,142 @@
+{
+  "referenceCommit": "0af90274f13b32a776466e436cd114e6de759783",
+  "recipeCommit": "35fcbe52170dacea23ffe9f0aa070a1c92fed508",
+  "files": [
+    {
+      "path": "apps/web/src/App.svelte",
+      "sha256": "1c79777ea001eafc53bd00e9e5ef2e0972bde20178e80195c2018871a03260af"
+    },
+    {
+      "path": "apps/web/src/app.css",
+      "sha256": "66ca571fd281f121dcda5cd7594f65a0c4e98e631e4d2f25548f70f3b2edfb0f"
+    },
+    {
+      "path": "apps/web/src/components/AlignedReading.svelte",
+      "sha256": "9e3170fbdd24b83c9552392e942a0c3ed1fbb0a775f75c03f36ec9b0da67d478"
+    },
+    {
+      "path": "apps/web/src/components/FiaMark.svelte",
+      "sha256": "6c68c471fa02e3a7d1602961d5a97f7e9d8d01b9b25a5fa70f066b779416186c"
+    },
+    {
+      "path": "apps/web/src/components/GuidePrimary.svelte",
+      "sha256": "f2b692b700c04087eea08fa578bf9d79681f8387095832c8e602618c5408507b"
+    },
+    {
+      "path": "apps/web/src/components/LibraryPanel.svelte",
+      "sha256": "d5d8a0d493ab0336ac4dddcdb1dced416d266e88173a1720deebd6c4425b5d70"
+    },
+    {
+      "path": "apps/web/src/components/MediaStage.svelte",
+      "sha256": "66b0a369488ff07fc80bc013726e6e67e2fa7f5122eb380fbb4e9f9c3e55cce2"
+    },
+    {
+      "path": "apps/web/src/components/ResourceIdentification.svelte",
+      "sha256": "6d17d336b5bdbb70acbcf6392308d602f99ddbe5726709537852e0e65ff63079"
+    },
+    {
+      "path": "apps/web/src/components/SectionTransition.svelte",
+      "sha256": "685f4444262865b796514d0e11fcdcb1446457f0687b49bee214fa5c2cf3bf0d"
+    },
+    {
+      "path": "apps/web/src/components/SessionProgress.svelte",
+      "sha256": "d99eb2ef1d388578cf5015174ac41ff3a44d89e56954cc97cfc8a88aee5fe2a2"
+    },
+    {
+      "path": "apps/web/src/components/Sheet.svelte",
+      "sha256": "5e20d1f218b47ba204a33f79c225f43f2ae1db52453a0a7041575fb2ecc5b5a2"
+    },
+    {
+      "path": "apps/web/src/components/ZoomableVisual.svelte",
+      "sha256": "472654dce580be5540d5d0454127be2835fe06a229cb05723102d79ef51ff2af"
+    },
+    {
+      "path": "apps/web/src/cookbook-materials.css",
+      "sha256": "253f7ea7907513f13f83665d2e8e76be65116284c7925de71d0c73845354c56f"
+    },
+    {
+      "path": "apps/web/src/lib/alignment.js",
+      "sha256": "5e4eb8dc33244e688606e2bfe42f9583778428952d78109aaf9bf95fb72ce652"
+    },
+    {
+      "path": "apps/web/src/lib/audio.js",
+      "sha256": "976f589455888662616c1871e8d80e97f6f0aa10f3fbf3e4088623d454cdc02c"
+    },
+    {
+      "path": "apps/web/src/lib/commands.js",
+      "sha256": "1912423fedd840a6cdb03487fc728eeab5a5810dfdaa787f0bc0b7c08ad06d20"
+    },
+    {
+      "path": "apps/web/src/lib/content.js",
+      "sha256": "381a80b03998af06d9b96493eb79eaee9ddcea9c666bee23bdf44c155aaed2ae"
+    },
+    {
+      "path": "apps/web/src/lib/engine.js",
+      "sha256": "995a196b1d84f0d565e79d243f844dde9ba168e5e9f53584003c51c080f05018"
+    },
+    {
+      "path": "apps/web/src/lib/library.js",
+      "sha256": "884bb2e26d5dea76b50df2e0350b08771ec8bb22e07c7e40d404787f8d562999"
+    },
+    {
+      "path": "apps/web/src/lib/pack.json",
+      "sha256": "ccd72f23c23f932651b500b730b285f32fabd37e50037b5af91d8881f1403975"
+    },
+    {
+      "path": "apps/web/src/lib/progress-icons.js",
+      "sha256": "9c9ffae0560d06d1fd43dbf5d0f2c78184b13a566b25e1c4be32c3f0e996e9dd"
+    },
+    {
+      "path": "apps/web/src/lib/progress.js",
+      "sha256": "2948430b473d75b8aee6e3cbbead5d6afa37b72246205653f38b5380921a3fc7"
+    },
+    {
+      "path": "apps/web/src/lib/session-store.js",
+      "sha256": "58225de301e44d038924c4bf62fdd5674ca57815436e9d0631b27b7426f08993"
+    },
+    {
+      "path": "apps/web/src/lib/smooth-follow.js",
+      "sha256": "aa9462a1759cc126a859946a245759036569d2c67b263e25ad4d33ed62bc2a27"
+    },
+    {
+      "path": "apps/web/src/lib/visual-view.js",
+      "sha256": "2f610d706d5bf28c0819e6d8234f3fc206fc72ff88a942d047a45393116ae137"
+    },
+    {
+      "path": "apps/web/src/main.js",
+      "sha256": "166e124419f10551a1f5e5e8db865e066b90c9c49c51f1fee8e8d6e70d052a85"
+    },
+    {
+      "path": "apps/web/src/vendor/glass/tokens/colors.css",
+      "sha256": "722d14f41e77d9ae4b76e9cca4f545db2afc795f8a2d2aa2854299ef63558d76"
+    },
+    {
+      "path": "apps/web/src/vendor/glass/tokens/elevation.css",
+      "sha256": "a65971989b1569ff2ae38ea6ca8cf252de26c5c0c7c61c044e667979e80b3b9f"
+    },
+    {
+      "path": "apps/web/src/vendor/glass/tokens/glass.css",
+      "sha256": "6377a863545bb2b4e23cabf92b1bc527531755fc9ffe557cd4c514f9f1c81c65"
+    },
+    {
+      "path": "apps/web/src/vendor/glass/tokens/motion.css",
+      "sha256": "ff0e0901723b127f952e021de717eeaed92cf92c570ab4aec5165e513600604c"
+    },
+    {
+      "path": "apps/web/src/vendor/glass/tokens/radius.css",
+      "sha256": "79afe3a50ee04d00682373e8e8f630bf762fd0fa98f8e939606d82e588a83ace"
+    },
+    {
+      "path": "apps/web/src/vendor/glass/tokens/spacing.css",
+      "sha256": "3d94c244187d5cb6e3bd81f6e0350abc35cbfdb39db6683220cb8e64e356508a"
+    },
+    {
+      "path": "apps/web/src/vendor/glass/tokens/typography.css",
+      "sha256": "db244caa413149246c65ce6ae42e04e699898e92018a38fc6a4690cf926b5b80"
+    },
+    {
+      "path": "apps/web/index.html",
+      "sha256": "f4f0aa27898ec916dff1b26ef29085e935ecd362af3ed54d48b66295c6f3599d"
+    }
+  ]
+}
