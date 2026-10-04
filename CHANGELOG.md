@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.0.0-alpha.5 — All Mark presentations through HTTP and MCP (2026-10-04)
+
+Adds immutable catalog discovery and read access to all136 accepted English/Spanish Mark presentations through the existing shared HTTP/MCP operations. Original three records and browser/media behavior remain unchanged. Requested static payloads are verified before delivery; no generation or write operation is added. See [release note](release/changes/3.0.0-alpha.5-mark-read-api.md).
+
 ## 3.0.0-alpha.4 — Mark text in English and Spanish (2026-10-04)
 
 Adds all68 Mark pericopes in each language through one source-bound compiler, verified catalog loading, separate progress and per-pack text downloads. Resources require explicit download; no new audio is generated. Reviewed list/example mappings repeat across the corpus; other instructions remain readable with conservative continuation. See [release note](release/changes/3.0.0-alpha.4-mark-text.md).
