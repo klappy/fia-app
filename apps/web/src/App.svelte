@@ -1,7 +1,7 @@
 <script>
  import { onMount, tick } from 'svelte';
  import { MoreHorizontal, Speech, Play, Pause, ChevronRight, ChevronLeft, Send, Settings2, List, BookOpen, Image, Map, Film, Users, RotateCcw, ArrowLeft, PinOff, Info, Download, MessageCircle, X, CircleHelp, ExternalLink } from 'lucide-svelte';
- import { activities, assets, readingGroups, contentContract, sections, examples, defaultScriptureId } from './lib/content.js';
+ import {bundledPresentation,presentationContent} from './lib/content.js';
  import { createSession, reduceSession, currentActivity, presentStage } from './lib/engine.js';
  import { parseCommand } from './lib/commands.js';
  import { createAudioController } from './lib/audio.js';
@@ -14,17 +14,35 @@
  import GuidePrimary from './components/GuidePrimary.svelte';
  import FiaMark from './components/FiaMark.svelte';
  import LibraryPanel from './components/LibraryPanel.svelte';
- import {bundledPack} from './lib/library.js';
- import {saveProgress,restoreProgress} from './lib/session-store.js';
+ import {bundledPack,libraryAdapter,hasUnresolvedInstructions} from './lib/library.js';
+ import {saveProgress,restoreProgress,resetProgress} from './lib/session-store.js';
+ let selectedPack=$state(bundledPack),rawPresentation=$state.raw(bundledPresentation),downloadedPaths=$state(new Set());
+ let content=$derived(presentationContent(mediaForDevice(rawPresentation,downloadedPaths),selectedPack));
+ let activities=$derived(content.activities),assets=$derived(content.assets),sections=$derived(content.sections),examples=$derived(content.examples),readingGroups=$derived(content.readingGroups),contentContract=$derived(content.contentContract),defaultScriptureId=$derived(content.defaultScriptureId);
+ let selectionGeneration=0;
+ function mediaForDevice(pack,paths){return {...pack,activities:pack.activities.map(a=>({...a,audioSrc:paths.has(a.audioSrc)?a.audioSrc:null})),assets:Object.fromEntries(Object.entries(pack.assets).map(([id,a])=>[id,{...a,src:paths.has(a.src)?a.src:undefined,poster:paths.has(a.poster)?a.poster:undefined,descriptionAudio:paths.has(a.descriptionAudio)?a.descriptionAudio:undefined,downloadRequired:['image','map','video'].includes(a.kind)&&!paths.has(a.src),downloadPrepared:typeof a.src==='string'&&a.src.startsWith('/')&&!a.src.startsWith('//')}]))};}
+ async function updateDownloaded(){
+  const generation=selectionGeneration,pack=selectedPack;
+  try{
+   const status=await libraryAdapter.downloadStatus(pack);if(generation!==selectionGeneration)return;
+   const verified=!!status.saved&&status.active.manifest?.presentationRevision===pack.revision;
+   if(verified){await libraryAdapter.activate(pack);if(generation!==selectionGeneration)return;}
+   saved=verified;downloadedPaths=new Set(verified?status.active.files.map(f=>f.path):[]);
+  }catch{if(generation===selectionGeneration){saved=false;downloadedPaths=new Set();}}
+ }
+
+ function applyStored(){const stored=restoreProgress(localStorage,selectedPack,activities,assets);if(stored?.resetRequired)notice='This passage changed. Your previous place could not be matched; starting at the beginning.';session=stored?.session||createSession(activities);if(stored){scale=[1,1.25,1.5].includes(stored.scale)?stored.scale:1;rate=[.85,1,1.15].includes(stored.rate)?stored.rate:1;muted=!!stored.muted;dark=!!stored.dark;termDefinition=stored.termDefinition===activities[session.index]?.id?stored.termDefinition:null;transitionSection=stored.transitionSection===activities[session.index]?.sectionId?stored.transitionSection:null;}started=session.index>0||session.status!=='ready';}
+ async function selectPack(id){const generation=++selectionGeneration;const loaded=await libraryAdapter.select(id);if(generation!==selectionGeneration)return;persist();cancel();selectedPack=loaded.descriptor;rawPresentation=loaded.presentation;downloadedPaths=new Set();introduced=new Set();manualStarts=new Set();visualHeard=null;termDefinition=null;transitionSection=null;messages=[];language=selectedPack.language;session=createSession(loaded.presentation.activities);try{applyStored();localStorage.setItem('fia-v3-selected-pack',id);}catch{notice='Your saved place could not be read.';}sheet=null;await libraryAdapter.activate(selectedPack).catch(()=>{});if(generation!==selectionGeneration)return;await updateDownloaded();}
+ function restartPack(id){resetProgress(localStorage,{id});if(id===selectedPack.id)reset();}
  let language=$state('eng');
  function selectLanguage(id){language=id;try{localStorage.setItem('fia-v3-library-language',id);}catch{notice='Language choice could not be saved on this device.';}}
  let automaticOff=$derived(activity?.kind==='scripture'?!session.preferences.readScripture:muted);
- const progressGroups=progressSections(sections,activities,assets);
+ let progressGroups=$derived(progressSections(sections,activities,assets));
  let dark=$state(false),transitionSection=$state(null),termDefinition=$state(null);
  let progress=$derived(progressState(progressGroups,session,activities));
  let inTransition=$derived(transitionSection===activity?.sectionId&&!session.detour&&session.status!=='complete');
  $effect(()=>{document.documentElement.dataset.theme=dark?'dark':'light';});
- let session=$state(createSession(activities));
+ let session=$state(createSession(bundledPresentation.activities));
  let audioState=$state({playing:false,elapsed:0,duration:0}); let videoPlaying=$state(false); let videoState=$state({elapsed:0,duration:0}); let serviceWorkerError=''; let isPlaying=$derived(audioState.playing||videoPlaying);
  let sheet=$state(null), command=$state(''), messages=$state([]), notice=$state(''), online=$state(true), started=$state(false), scale=$state(1), rate=$state(1), muted=$state(false), saved=$state(false);
  let audio, timer; let audioContext=$state(null); let chatInput=$state(), chatLog=$state();
@@ -40,14 +58,14 @@
  let phoneLandscape=$state(false),landscapeDismissed=$state(false);
  let immersive=$derived(phoneLandscape&&!landscapeDismissed&&!sheet&&!inTransition&&!finished&&['image','map','video'].includes(focal?.kind));
  let inlineVideo=$state(null);
- let matchingVideo=$derived((focal?.relatedIds||[]).map(id=>assets[id]).find(a=>a?.kind==='video'));
+ let matchingVideo=$derived((focal?.relatedIds||[]).map(id=>assets[id]).find(a=>a?.kind==='video'&&a.src));
  let visualHeard=$state(null);
  let visual=$derived(['image','map'].includes(focal?.kind));
  let videoPending=$derived(visual&&!!matchingVideo&&visualHeard!==focal.id);
  let visualPending=$derived(visual&&!matchingVideo&&session.preferences.describeImages&&!muted&&!!focal.descriptionAudio&&visualHeard!==focal.id);
- let primaryLabel=$derived(finished?'Begin again':inTransition?'Continue':automaticOff&&!session.detour?'Continue':isPlaying?'Pause':inlineVideo?'Resume':audio?.active&&audioContext?'Resume':videoPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)?'Play video':visualPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)?'Play':session.detour?(visual?'Return':focal?.kind==='video'?'Play video':focal?.descriptionAudio?'Listen':'Return'):session.status==='waiting'||automaticOff?'Continue':session.status==='paused'?'Resume':!started?'Begin':'Play');
+ let primaryLabel=$derived(finished?'Begin again':inTransition?'Continue':automaticOff&&!session.detour?'Continue':isPlaying?'Pause':inlineVideo?'Resume':audio?.active&&audioContext?'Resume':videoPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)?'Play video':visualPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)?'Play':session.detour?(visual?'Return':focal?.kind==='video'?'Play video':focal?.descriptionAudio?'Listen':'Return'):session.status==='waiting'||automaticOff||!activity?.audioSrc?'Continue':session.status==='paused'?'Resume':!started?'Begin':'Play');
  let manualStarts=new Set();let listeningHint=$state(false),hintShown=false;
- let manualAvailable=$derived(!!(matchingVideo||focal?.kind==='video'||focal?.descriptionAudio||activity?.audioSrc));
+ let manualAvailable=$derived(!!(matchingVideo||focal?.kind==='video'&&focal.src||focal?.descriptionAudio||activity?.audioSrc));
  let manualLabel=$derived(isPlaying?'Pause':inlineVideo||audioContext&&audio?.active?'Resume':'Play');
  function manualPlay(restart=false){
   if(!restart&&isPlaying){audio?.pause();document.querySelectorAll('video').forEach(v=>v.pause());dispatch({type:'PAUSE'});return;}
@@ -65,7 +83,7 @@
  }
  let introduced=$state(new Set());
  let mediaTools=$state(false); let noticeTimer;
- function persist(){try{saveProgress(localStorage,bundledPack,activities,{session,scale,rate,muted,dark,transitionSection,termDefinition});}catch{notice='Your browser could not save your place. This session still works.';}}
+ function persist(){try{saveProgress(localStorage,selectedPack,activities,{session,scale,rate,muted,dark,transitionSection,termDefinition});}catch{notice='Your browser could not save your place. This session still works.';}}
  function dispatch(event){
   const priorActivity=activities[session.index]?.id;
   const priorSection=activities[session.index]?.sectionId;
@@ -82,8 +100,8 @@
   }
   if(queued&&!session.queued&&session.detour===queued){timer=setTimeout(()=>{if(session.detour===queued&&!muted)describe(queued);},350);}
  }
- function resolveAsset(id){if(assets[id])return id;return (activity.relatedAssetIds||[]).find(key=>assets[key]?.kind===id)||(focal?.kind===id?focal.id:null)||({map:'c168',image:'a112',video:'a13',scripture:defaultScriptureId})[id]||id;}
- function settleSilent(){if(!inTransition&&!session.detour&&!finished&&!activity.audioSrc){dispatch({type:'PLAY'});dispatch({type:'NARRATION_END',activityId:activity.id});}}
+ function resolveAsset(id){if(assets[id])return id;return (activity.relatedAssetIds||[]).find(key=>assets[key]?.kind===id)||(focal?.kind===id?focal.id:null)||(id==='scripture'?defaultScriptureId:Object.values(assets).find(a=>a.kind===id)?.id)||id;}
+ function settleSilent(){if(!inTransition&&!session.detour&&!finished&&!activity.audioSrc){session={...session,status:'waiting'};persist();}}
  function cancel(){videoState={elapsed:0,duration:0};inlineVideo=null;videoPlaying=false;clearTimeout(timer);timer=null;audio?.stop();document.querySelectorAll('video').forEach(v=>v.pause());audioContext=null;}
  function message(text){messages=[...messages.slice(-11),{role:'assistant',text}];tick().then(()=>chatLog?.scrollTo({top:chatLog.scrollHeight,behavior:'smooth'}));}
  function finishAudio(){
@@ -101,9 +119,9 @@
   if(session.status==='complete'||session.detour||inTransition)return;
   if(!activity.audioSrc){settleSilent();if(visual&&(session.preferences.autoplayVideo&&matchingVideo||session.preferences.describeImages&&focal?.descriptionAudio)||focal?.kind==='term'&&!muted&&focal.descriptionAudio)describe(focal.id);return;}
   if(automaticOff&&visual&&(session.preferences.autoplayVideo&&matchingVideo||session.preferences.describeImages&&focal?.descriptionAudio)){describe(focal.id);return;}
-  const id=activity.id;
+  const id=activity.id,generation=selectionGeneration;
   if(activity.kind==='scripture'&&!session.preferences.readScripture){notice='The passage is ready for you to read. Continue when you’re ready.';return;}
-  if(!automaticOff)timer=setTimeout(()=>{if(activity.id===id&&!session.detour)playActivity(false,true);},650);
+  if(!automaticOff)timer=setTimeout(()=>{if(generation===selectionGeneration&&activity.id===id&&!session.detour)playActivity(false,true);},650);
  }
  function playActivity(forceReading=false,automatic=false){
   if(inTransition){transitionSection=null;persist();}
@@ -125,6 +143,7 @@
  }
 
  function primary(){
+  if(!activity.audioSrc&&!session.detour&&!inTransition&&!finished&&!videoPending&&!visualPending){navigate({type:'CONTINUE'},true);return;}
   if(inTransition){transitionSection=null;persist();playActivity();return;}
   if(finished){reset();return;}
   if(automaticOff&&!session.detour){navigate({type:'CONTINUE'},true);return;}
@@ -155,6 +174,7 @@
  function reset(){cancel();const preferences={...session.preferences};const mode=session.mode;dispatch({type:'RESET'});session={...session,preferences,mode};introduced=new Set();started=false;messages=[];persist();}
  function describe(id,explicit=false){const a=assets[id];if(!a)return;if(['image','map'].includes(a.kind)&&matchingVideo&&focal.id===id&&(explicit||session.preferences.autoplayVideo)){openMatchingVideo();return;}if(!session.detour&&a.kind==='term'&&activity.assetId===id){termDefinition=activity.id;persist();}cancel();dispatch({type:'PAUSE'});message(a.description);if(!a.descriptionAudio){notice='No source recording is available for this resource.';return;}audioContext={type:'description',id};audio.play(a.description,a.descriptionAudio,rate);}
  function playVideo(){
+  if(!(inlineVideo||focal)?.src){notice='Download this resource before playback.';return;}
   audio?.stop();audioContext=null;
   const v=document.querySelector('.media-stage video');
   if(v){v.playbackRate=rate;v.play().catch(()=>notice='Use the video’s Play button to start.');}
@@ -194,14 +214,16 @@
   const landscape=window.matchMedia?.('(orientation: landscape) and (pointer: coarse) and (max-height: 600px)');
   const rotate=()=>{phoneLandscape=!!landscape?.matches;if(!phoneLandscape)landscapeDismissed=false;};
   rotate();landscape?.addEventListener('change',rotate);
-  try{const stored=restoreProgress(localStorage,bundledPack,activities);if(stored?.resetRequired)notice='This passage changed. Your previous place could not be matched; starting at the beginning.';if(stored?.session&&Number.isInteger(stored.session.index)&&stored.session.index>=0&&stored.session.index<activities.length){const fresh=createSession(activities);session={...fresh,...stored.session,status:stored.session.status==='playing'?'paused':stored.session.status,preferences:{...fresh.preferences,...stored.session.preferences}};scale=[1,1.25,1.5].includes(stored.scale)?stored.scale:1;rate=[.85,1,1.15].includes(stored.rate)?stored.rate:1;muted=!!stored.muted;dark=!!stored.dark;termDefinition=stored.termDefinition===activities[session.index].id?stored.termDefinition:null;transitionSection=stored.transitionSection===activities[session.index].sectionId?stored.transitionSection:null;started=session.index>0||session.status!=='ready';}}catch{}
+  try{applyStored();}catch{}
+  updateDownloaded();
   audio=createAudioController(s=>audioState=s,finishAudio,text=>{notice=text;dispatch({type:'PAUSE'});},{allowSpeechFallback:false});
   const net=()=>online=navigator.onLine;net();window.addEventListener('online',net);window.addEventListener('offline',net);
-  if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{serviceWorkerError='Offline storage is unavailable here. Try the published HTTPS version.';});
+  if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js').then(()=>updateDownloaded()).catch(()=>{serviceWorkerError='Offline storage is unavailable here. Try the published HTTPS version.';});
+  try{const id=localStorage.getItem('fia-v3-selected-pack');if(id&&id!==selectedPack.id)selectPack(id).catch(e=>notice=e.message);}catch{}
   const context=document.modelContext;const lifecycle=new AbortController();
   const register=tool=>{try{Promise.resolve(context?.registerTool(tool,{signal:lifecycle.signal})).catch(()=>{});}catch{}};
   register({name:'fia_read_session',description:'Read the current FIA activity and stage without changing it.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true},execute:()=>({activityId:activity.id,status:session.status,mode:session.mode,stage:presentStage(session,activities)})});
-  register({name:'fia_present_resource',annotations:{readOnlyHint:false},description:'Open an approved resource as a detour, preserving the current guide position.',inputSchema:{type:'object',properties:{assetId:{type:'string',enum:Object.keys(assets)}},required:['assetId'],additionalProperties:false},execute:async input=>{if(!input||!Object.hasOwn(assets,input.assetId)||Object.keys(input).some(k=>k!=='assetId'))throw new Error('Unknown resource');navigate({type:'DETOUR',assetId:input.assetId});await tick();return {assetId:stage.focal,activityId:activity.id};}});
+  register({name:'fia_present_resource',annotations:{readOnlyHint:false},description:'Open an approved resource as a detour, preserving the current guide position.',inputSchema:{type:'object',properties:{assetId:{type:'string'}},required:['assetId'],additionalProperties:false},execute:async input=>{if(!input||!Object.hasOwn(assets,input.assetId)||Object.keys(input).some(k=>k!=='assetId'))throw new Error('Unknown resource');navigate({type:'DETOUR',assetId:input.assetId});await tick();return {assetId:stage.focal,activityId:activity.id};}});
   register({name:'fia_return_to_guide',description:'Close resource exploration and restore the held guide activity without advancing.',annotations:{readOnlyHint:false},inputSchema:{type:'object',properties:{},additionalProperties:false},execute:async input=>{if(input&&Object.keys(input).length)throw new Error('No arguments expected');navigate({type:'RETURN'});await tick();return {activityId:activity.id,status:session.status,stage:presentStage(session,activities)};}});
   register({name:'fia_complete_activity',annotations:{readOnlyHint:false},description:'Explicitly finish or skip the current activity and advance; this is a user decision, never a read.',inputSchema:{type:'object',properties:{activityId:{type:'string'}},required:['activityId'],additionalProperties:false},execute:async input=>{if(!input||input.activityId!==activity.id||session.detour||Object.keys(input).some(k=>k!=='activityId'))throw new Error('Activity changed or exploration is open');navigate({type:'CONTINUE'},true);await tick();return {activityId:activity.id,status:session.status};}});
   return()=>{landscape?.removeEventListener('change',rotate);clearTimeout(noticeTimer);cancel();lifecycle.abort();window.removeEventListener('online',net);window.removeEventListener('offline',net);};
@@ -221,7 +243,7 @@
   <section class="media-stage reading-stage" data-kind="term-instruction"><h1 class="sr-only">{focal.title}</h1>{#key activity.id}<AlignedReading asset={guideText} identification={focal} playback={audioState} suspended={!!sheet}/>{/key}</section>
  {:else if focal}
   <h1 class="sr-only">{session.detour?focal.title:activity.title}</h1>
-  {#key focal.id}<MediaStage asset={focal} {inlineVideo} {immersive} {matchingVideo} onvideo={openMatchingVideo} descriptionsEnabled={session.preferences.describeImages} ontoggledescription={()=>dispatch({type:'SET_PREFERENCE',key:'describeImages',value:!session.preferences.describeImages})} playback={audioState} suspended={!!sheet||mediaTools} toolsVisible={mediaTools} pinned={session.pinned===focal.id} onpin={()=>dispatch({type:session.pinned===focal.id?'UNPIN':'PIN',assetId:focal.id})} ondescribe={()=>describe(focal.id)} ontime={videoTime} onplay={videoStarted} onpause={()=>videoPlaying=false} onend={videoEnded} onerror={()=>notice='Video unavailable. Try again or continue without it.'}/>{/key}
+  {#key focal.id}<MediaStage asset={focal} {inlineVideo} {immersive} {matchingVideo} onvideo={openMatchingVideo} descriptionsEnabled={session.preferences.describeImages} ontoggledescription={()=>dispatch({type:'SET_PREFERENCE',key:'describeImages',value:!session.preferences.describeImages})} playback={audioState} suspended={!!sheet||mediaTools} toolsVisible={mediaTools} pinned={session.pinned===focal.id} onpin={()=>dispatch({type:session.pinned===focal.id?'UNPIN':'PIN',assetId:focal.id})} ondescribe={()=>describe(focal.id)} ontime={videoTime} onplay={videoStarted} onpause={()=>videoPlaying=false} onend={videoEnded} ondownload={()=>sheet='downloads'} onerror={()=>notice='Video unavailable. Try again or continue without it.'}/>{/key}
  {:else}
   <section class="media-stage reading-stage" data-kind="guide"><h1 class="sr-only">{activity.prompt}</h1>{#key guideText.id}<AlignedReading asset={guideText} playback={audioState} suspended={!!sheet}/>{/key}</section>
  {/if}
@@ -249,7 +271,7 @@
 </main>
 
 {#if sheet}
- <Sheet glass={true} title={{languages:'Language',passages:'Passages',downloads:'Downloads',progress:'',settings:'Settings',outline:'Mark 1:1–13',help:'Try the experience',about:'About this prototype',menu:'',conversation:'Ask the guide',words:'Words for this moment',resources:'Explore the passage',example:'Drama example'}[sheet]} onclose={()=>sheet=null}>
+ <Sheet glass={true} title={{languages:'Language',passages:'Passages',downloads:'Downloads',progress:'',settings:'Settings',outline:selectedPack.title,help:'Try the experience',about:'About this prototype',menu:'',conversation:'Ask the guide',words:'Words for this moment',resources:'Explore the passage',example:'Drama example'}[sheet]} onclose={()=>sheet=null}>
   {#if sheet==='menu'}
    <div class="scene-menu">
     <button onclick={()=>sheet='languages'}><MessageCircle size={19}/>Language<span class="menu-value">{language==='eng'?'English':'Español'}</span></button>
@@ -262,7 +284,7 @@
    </div>
   {:else if ['languages','passages','downloads'].includes(sheet)}
    <button class="sheet-back" onclick={()=>sheet='menu'}><ChevronLeft size={18}/>FIA menu</button>
-   {#key sheet}<LibraryPanel view={sheet} {language} onlanguage={selectLanguage} onview={view=>sheet=view} completed={session.completed.length} total={activities.length} onstatus={value=>saved=value} onselect={()=>sheet=null} onreset={()=>{reset();sheet=null;}}/>{/key}
+   {#key sheet}<LibraryPanel view={sheet} {selectedPack} {language} onlanguage={selectLanguage} onview={view=>sheet=view} completed={session.completed.length} total={activities.length} onstatus={value=>{saved=value;updateDownloaded();}} onselect={selectPack} onreset={restartPack}/>{/key}
   {:else if sheet==='conversation'}
    <p class="sheet-intro">Ask to show a resource, pause, or change how we continue. This prototype supports commands; open-ended AI is not connected.</p>
    <form class="command-form" onsubmit={e=>{e.preventDefault();runCommand();}}><label class="sr-only" for="command">Tell the guide what you need</label><input bind:this={chatInput} id="command" bind:value={command} placeholder="Show me the map…" autocomplete="off"/><button class="icon-button" type="submit" aria-label="Send command" disabled={!command.trim()}><Send size={18}/></button></form>
@@ -281,7 +303,7 @@
   {:else if sheet==='settings'}
    <div class="settings-panel">
     <button class="sheet-back" onclick={()=>sheet='menu'}><ChevronLeft size={18}/>FIA menu</button>
-    <p class="sheet-intro">Saved on this device for every passage. Play and Replay always let you listen without changing these settings.</p>
+    <p class="sheet-intro">Saved on this device for every passage. After downloading available recordings, Play and Replay let you listen without changing these settings.</p>
     <h3>Listening</h3>
     <label class="preference"><span><strong>Automatic guide narration</strong><small>Listen as you move through the guide. When off, Continue stays in the center and Play is beside it.</small></span><input type="checkbox" checked={!muted} onchange={e=>{muted=!e.currentTarget.checked;cancel();dispatch({type:'PAUSE'});persist();}}/></label>
     {#each [{key:'readScripture',title:'Automatic Scripture reading',detail:'Read Scripture aloud when a passage opens, independently of guide narration.'},{key:'describeImages',title:'Describe images and maps',detail:'Automatically play available descriptions after the guide instruction. Source recordings may be generated.'},{key:'autoplayVideo',title:'Automatic video playback',detail:'Use the companion video when available. Explicit Play can still start a video when this is off.'}] as pref}<label class="preference"><span><strong>{pref.title}</strong><small>{pref.detail}</small></span><input type="checkbox" checked={session.preferences[pref.key]} onchange={e=>{if(!e.currentTarget.checked&&pref.key==='readScripture'&&activity.kind==='scripture'){cancel();}if(!e.currentTarget.checked&&pref.key==='autoplayVideo'&&videoPlaying){document.querySelectorAll('video').forEach(v=>v.pause());}dispatch({type:'SET_PREFERENCE',key:pref.key,value:e.currentTarget.checked});}}/></label>{/each}
@@ -302,12 +324,12 @@
   {:else if sheet==='example'}
    <p class="sheet-intro">Optional authored example from Embodying the Text. The source provides text here without recordings.</p>{#each examples as unit}<p class="reading-transcript">{unit.text}</p>{/each}
   {:else if sheet==='help'}
-   <p class="sheet-intro">One flow. Two ways to guide it. Begin listening. Use More options → Conversation to type a request. Your place stays the same.</p>
+   <p class="sheet-intro">Original approved English Mark 1:1–13 example, after downloading its resources. Begin listening. Use More options → Conversation to type a request. Your place stays the same.</p>
    <ol class="test-list"><li><strong>Begin and listen.</strong> Scripture appears and is read automatically; the guide then returns.</li><li><strong>Stay with the image.</strong> The river appears with its prompt. Narration ends, but the image stays until your group continues.</li><li><strong>Explore the map.</strong> Zoom, drag and enlarge it. Keep it visible with the pin.</li><li><strong>Watch the video.</strong> Press Play; completion brings you back to the guide.</li><li><strong>Take a detour.</strong> In Conversation, type “show the map”, then “return to guide”. Your original place is preserved.</li></ol>
-   <div class="scope-note"><strong>What’s real in this prototype</strong><p>Svelte UI, activity engine, local narration, video, zoom/pan, session persistence, browser-supported voice commands, preferences and resource presentation.</p><strong>What’s simulated or pending</strong><p>Commands use a bounded local interpreter. There is no live LLM or Jev model, no external MCP server, and no native app wrapper. The complete default Mark 1:1–13 guide is included; the optional drama example is text-only.</p></div>
+   <div class="scope-note"><strong>What’s real in this prototype</strong><p>Svelte UI, activity engine, local narration, video, zoom/pan, session persistence, browser-supported voice commands, preferences and resource presentation.</p><strong>What’s simulated or pending</strong><p>Commands use a bounded local interpreter. There is no live LLM or Jev model, no external MCP server, and no native app wrapper. Passage text is available from the library. Resource downloads and recording availability are shown separately for each passage.</p></div>
    <a class="secondary full" href="/docs/V3-BLUEPRINT.html" target="_blank" rel="noreferrer"><BookOpen size={17}/>Read the design blueprint</a><a class="quiet full" href="/docs/TEST-GUIDE.html" target="_blank" rel="noreferrer">Detailed test guide<ExternalLink size={14}/></a>
   {:else}
-   <p class="sheet-intro">FIA v3 · Functional concept, October 3, 2026.</p><p>Built from the conversation’s content-first blueprint. This sequence uses the complete six-stage source guide, its existing recordings, three Scripture translations, and linked FIA resources. Authored Scripture calls enter a reading and return to the next guide unit. This remains a prototype for testing.</p><p>Scripture: Berean Standard Bible, unfoldingWord Literal Text and unfoldingWord Simplified Text; each edition’s rights are retained in the source records. Images: © 2025 Word Collective. Map metadata credits © 2025 Biblica. Video: © 2025 Word Collective. FIA media is provided under <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noreferrer">CC BY-SA 4.0</a>. Video is compressed for this prototype; visual assets otherwise unchanged.</p><p>Narration uses the existing source app’s AI-generated recordings, copied unchanged. No new prototype voice is substituted. It is distinct from the source video’s recording. Video captions/transcript are not supplied in this prototype.</p><a class="quiet" href="/content/source/audio-manifest.json" target="_blank" rel="noreferrer">View recording provenance<ExternalLink size={14}/></a><a class="quiet full" href="/docs/CONTENT-RECEIPT.html" target="_blank" rel="noreferrer">Content and design-system receipt<ExternalLink size={14}/></a>
+   <p class="sheet-intro">FIA v3 · {selectedPack.title}</p><p>Passage text is available. Guide recordings: {selectedPack.capabilities.guideNarration.count}. Scripture recordings: {selectedPack.capabilities.scriptureAudio.count}. Resources must be downloaded before playback or viewing. {hasUnresolvedInstructions(selectedPack)?'Some source instructions or requested resource links remain unresolved; their text is retained for your group.':''}</p><p>Built from the conversation’s content-first blueprint. The original approved English Mark 1:1–13 sequence uses the complete six-stage source guide, its existing recordings, three Scripture translations, and linked FIA resources. Authored Scripture calls enter a reading and return to the next guide unit. This remains a prototype for testing.</p><p>Original approved English Mark 1:1–13 sources: Berean Standard Bible, unfoldingWord Literal Text and unfoldingWord Simplified Text; each edition’s rights are retained in the source records. Images: © 2025 Word Collective. Map metadata credits © 2025 Biblica. Video: © 2025 Word Collective. FIA media is provided under <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noreferrer">CC BY-SA 4.0</a>. Video is compressed for this prototype; visual assets otherwise unchanged.</p><p>The original approved English pack uses the existing source app’s AI-generated recordings, copied unchanged. No new prototype voice is substituted. It is distinct from the source video’s recording. Video captions/transcript are not supplied in this prototype.</p><a class="quiet" href="/content/source/audio-manifest.json" target="_blank" rel="noreferrer">View recording provenance<ExternalLink size={14}/></a><a class="quiet full" href="/docs/CONTENT-RECEIPT.html" target="_blank" rel="noreferrer">Content and design-system receipt<ExternalLink size={14}/></a>
   {/if}
  </Sheet>
 {/if}
