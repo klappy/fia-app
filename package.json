@@ -4,26 +4,33 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "vite build",
-    "test": "node --test tests/web-shell/*.test.js",
+    "build": "vite build && node scripts/finalize-build.mjs",
+    "test": "node --test tests/web-shell/*.test.js && npm run test:reference",
     "preview": "vite preview",
     "test:release": "node --test tests/release/*.test.js",
     "test:e2e": "playwright test",
     "test:visual": "playwright test e2e/visual.spec.js",
     "smoke:deployed": "playwright test e2e/deployed.spec.js",
-    "test:upgrade": "playwright test e2e/upgrade.spec.js"
+    "test:upgrade": "playwright test e2e/upgrade.spec.js",
+    "test:reference": "cd apps/web && node --test tests/*.test.js && vitest run"
   },
   "dependencies": {
-    "svelte": "^5.0.0"
+    "svelte": "5.57.1",
+    "lucide-svelte": "0.468.0"
   },
   "devDependencies": {
-    "@sveltejs/vite-plugin-svelte": "^5.0.0",
-    "vite": "^6.0.0",
+    "@sveltejs/vite-plugin-svelte": "5.1.1",
+    "vite": "6.4.3",
     "@playwright/test": "1.56.1",
-    "wrangler": "^4.40.0"
+    "wrangler": "^4.40.0",
+    "marked": "15.0.12",
+    "@testing-library/dom": "10.4.2",
+    "@testing-library/svelte": "5.4.2",
+    "jsdom": "26.1.0",
+    "vitest": "4.1.11"
   },
   "version": "3.0.0-alpha.1",
-  "description": "Fresh FIA v3: bundled English passage text with local progress.",
+  "description": "Approved FIA v3 experience with bundled English Mark 1:1\u201313, real media and verified local downloads.",
   "engines": {
     "node": ">=22"
   }

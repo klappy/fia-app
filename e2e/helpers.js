@@ -1,13 +1,14 @@
 import {expect} from '@playwright/test';
-export async function openPassage(page){await page.goto('/');await expect(page.locator('.reading')).toBeVisible();}
+import {createSession} from '../apps/web/src/lib/engine.js';
+import {activities} from '../apps/web/src/lib/content.js';
+export async function openPassage(page){await page.goto('/');await expect(page.getByRole('navigation',{name:'Session controls'})).toBeVisible();}
+export async function seedPassage(page,id='S01-U001',preferences={}){const session=createSession(activities);session.index=activities.findIndex(a=>a.id===id);session.preferences={...session.preferences,readScripture:false,...preferences};await page.addInitScript(value=>{if(!localStorage.getItem('fia-v3-session@2'))localStorage.setItem('fia-v3-session@2',JSON.stringify(value));},{session,muted:true});await openPassage(page);}
+export const saved=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('fia-v3-session@2')).session);
 export async function journey(page){
- await openPassage(page);const before=await page.locator('.reading').textContent();
- await page.getByRole('button',{name:'Continue',exact:true}).click();await expect(page.locator('.reading')).not.toHaveText(before);
- const next=await page.locator('.reading').textContent();await page.reload();await expect(page.locator('.reading')).toHaveText(next);
- await page.getByRole('button',{name:'Play',exact:true}).click();await expect(page.locator('.notice')).toContainText(/unavailable|pending/i);await expect(page.getByRole('button',{name:'Pause',exact:true})).toHaveCount(0);
- await page.getByRole('button',{name:'Open library and settings'}).click();await expect(page.getByRole('dialog')).toContainText('downloads are unavailable');
- await page.getByRole('button',{name:'Español · Unavailable'}).click();await expect(page.getByRole('dialog')).toContainText('English remains active');
- await page.getByRole('checkbox').check();await page.getByRole('button',{name:'Close library and settings'}).click();await page.reload();await expect(page.locator('.reading')).toHaveText(next);
- await page.getByRole('button',{name:'Open library and settings'}).click();await expect(page.getByRole('checkbox')).toBeChecked();await page.getByRole('button',{name:'Close library and settings'}).click();
- await page.getByRole('button',{name:'Back',exact:true}).click();await expect(page.locator('.reading')).toHaveText(before);
+ await seedPassage(page);const initial=(await saved(page)).index;
+ await page.getByRole('button',{name:'Continue',exact:true}).click();await expect.poll(async()=>(await saved(page)).index).toBeGreaterThan(initial);
+ const next=(await saved(page)).index;await page.reload();expect((await saved(page)).index).toBe(next);
+ await page.getByRole('button',{name:'More options'}).click();await page.getByRole('button',{name:'Language',exact:false}).click();await page.getByRole('button',{name:/Español/}).click();await expect(page.getByRole('dialog')).toContainText('Your English passage and saved place are unchanged');await page.getByRole('button',{name:'Close',exact:true}).click();expect((await saved(page)).index).toBe(next);
+ await page.getByRole('button',{name:'More options'}).click();await page.getByRole('button',{name:'Settings',exact:true}).click();await expect(page.getByRole('dialog')).toContainText('Listening');await page.getByRole('button',{name:'Close',exact:true}).click();
+ await page.getByRole('button',{name:'More options'}).click();await page.getByRole('button',{name:'Downloads',exact:true}).click();await expect(page.getByRole('group',{name:'Include in download'})).toBeVisible();await page.getByRole('button',{name:'Close',exact:true}).click();
 }
