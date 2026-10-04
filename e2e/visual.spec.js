@@ -52,17 +52,36 @@ async function openState(browser,url,viewport,dark,state,{verifiedFixture=false}
  await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
  return {page,context};
 }
+// Cookbook123: settle the demonstrated Chromium partial-paint artifact symmetrically.
+async function settlePrimaryPaint(page){
+ const inspect=()=>{
+  const control=document.querySelector('.guide-primary');if(!control)return null;
+  return {html:control.outerHTML,storage:JSON.stringify({...localStorage}),elements:Object.fromEntries(['.guide-primary','.primary-orbit','.primary-disc','.playback-ring','.scene-controls'].map(selector=>{const element=document.querySelector(selector);if(!element)return [selector,null];const style=getComputedStyle(element);return [selector,{rect:element.getBoundingClientRect().toJSON(),style:Object.fromEntries([...style].map(key=>[key,style.getPropertyValue(key)]))}];}))};
+ };
+ const before=await page.evaluate(inspect);
+ if(!before)return {applicable:false};
+ await page.evaluate(()=>{const control=document.querySelector('.guide-primary'),original=control.getAttribute('style');try{control.style.display='none';document.body.offsetHeight;}finally{if(original===null)control.removeAttribute('style');else control.setAttribute('style',original);document.body.offsetHeight;}});
+ await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+ const after=await page.evaluate(inspect);
+ return {applicable:true,unchanged:JSON.stringify(after)===JSON.stringify(before),before,after};
+}
 for(const width of [390,1280])for(const dark of [false,true])test('approved reference pixel parity '+width+' '+(dark?'dark':'light'),async({browser,baseURL,request},info)=>{
  test.setTimeout(240000);mkdirSync(info.outputDir,{recursive:true});
  const viewport={width,height:width===390?844:800},stamp=await (await request.get('/version.json')).json();
- const evidence={referenceCommit:referenceManifest.referenceCommit,candidateCheckout:process.env.GITHUB_SHA||stamp.commit,build:stamp,viewport,dark,comparison:'each page requires consecutive identical captures within eight attempts, then exact cross-page PNG bytes; no pixel tolerance',states:[],newStates:[],limitations:['Static downloaded-state fixture supplies exact build-verified manifest metadata; this is not installation proof. Actual worker/media transfer tested by upgrade/journey suite.','Help and conversation have no exposed entry in the pinned menu; no new access route invented.','Audible quality, physical devices and playing-video frame parity are not established by static captures.']};
+ const evidence={referenceCommit:referenceManifest.referenceCommit,candidateCheckout:process.env.GITHUB_SHA||stamp.commit,build:stamp,viewport,dark,comparison:'retain pre-settlement captures, verify symmetric full-paint settlement preserves DOM/styles/geometry/progress, then consecutive identical captures within eight attempts and exact cross-page PNG bytes; no pixel tolerance',states:[],newStates:[],limitations:['Static downloaded-state fixture supplies exact build-verified manifest metadata; this is not installation proof. Actual worker/media transfer tested by upgrade/journey suite.','Help and conversation have no exposed entry in the pinned menu; no new access route invented.','Audible quality, physical devices and playing-video frame parity are not established by static captures.']};
  try{for(const state of states.filter(s=>!['settings','languages','passages','about'].includes(s.name))){let baseline,candidate;
   try{
    baseline=await openState(browser,reference.url,viewport,dark,state);candidate=await openState(browser,baseURL,viewport,dark,state,{verifiedFixture:true});
    const capture=async(page,path)=>{const result=await stableScreenshot(async()=>{await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));const image=await page.screenshot({animations:'disabled'});writeFileSync(path,image);return image;});return result;};
+   const beforeExpected=await capture(baseline.page,info.outputPath(state.name+'-before-reference.png'));
+   const beforeActual=await capture(candidate.page,info.outputPath(state.name+'-before-candidate.png'));
+   const stateEvidence={name:state.name,preSettlementEqual:beforeActual.image.equals(beforeExpected.image),preSettlementReferenceSha256:createHash('sha256').update(beforeExpected.image).digest('hex'),preSettlementCandidateSha256:createHash('sha256').update(beforeActual.image).digest('hex')};evidence.states.push(stateEvidence);
+   stateEvidence.referenceSettlement=await settlePrimaryPaint(baseline.page);
+   stateEvidence.candidateSettlement=await settlePrimaryPaint(candidate.page);
+   for(const settlement of [stateEvidence.referenceSettlement,stateEvidence.candidateSettlement])if(settlement.applicable)expect(settlement.after,'Paint settlement must restore exact DOM, styles, geometry and progress').toEqual(settlement.before);
    const expected=await capture(baseline.page,info.outputPath(state.name+'-reference.png'));
    const actual=await capture(candidate.page,info.outputPath(state.name+'-candidate.png'));
-   const equal=actual.image.equals(expected.image);evidence.states.push({name:state.name,equal,referenceCaptures:expected.attempts,candidateCaptures:actual.attempts});
+   const equal=actual.image.equals(expected.image);Object.assign(stateEvidence,{equal,referenceCaptures:expected.attempts,candidateCaptures:actual.attempts});
    if(!equal){
     const diagnostic={name:state.name,purpose:'Failure-only paint investigation; original equality remains authoritative',browser:browser.version(),stages:[]};
     evidence.paintDiagnostics??=[];evidence.paintDiagnostics.push(diagnostic);
