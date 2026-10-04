@@ -100,3 +100,27 @@ run('playback state identifies the exact source during updates, pause and owner 
  e.controller.pause();assert.equal(e.states.at(-1).src,'/first.mp3');assert.equal(e.states.at(-1).playing,false);
  e.controller.play('second','/second.mp3');await tick();e.audio[0].ontimeupdate();assert.equal(e.states.at(-1).src,'/second.mp3');e.controller.stop();assert.equal(e.states.at(-1).src,null);
 });
+
+run('gesture denial retains the same paused owner for synchronous explicit retry', async e => {
+ let calls=0;
+ Audio.prototype.play=function(){calls++;if(calls===1)return Promise.reject(Object.assign(Error('gesture required'),{name:'NotAllowedError'}));this.paused=false;return Promise.resolve();};
+ e.controller.play('verified','blob:verified');await tick();
+ assert.equal(e.controller.active,true);assert.equal(e.controller.playing,false);assert.equal(e.states.at(-1).src,'blob:verified');assert.equal(e.errors.length,1);
+ assert.equal(e.controller.resume(),true);assert.equal(calls,2);await tick();
+ assert.equal(e.audio.length,1);assert.equal(e.controller.playing,true);
+ e.controller.stop();assert.equal(e.controller.active,false);assert.equal(e.audio[0].src,'');assert.equal(e.controller.resume(),false);
+});
+run('stale gesture rejection cannot resurrect an owner after navigation or replace a newer owner', async e => {
+ let reject;
+ Audio.prototype.play=function(){return new Promise((_,fail)=>{reject=fail;});};
+ e.controller.play('old','blob:old');const staleReject=reject;e.controller.stop();
+ Audio.prototype.play=function(){this.paused=false;return Promise.resolve();};
+ e.controller.play('new','blob:new');await tick();staleReject(Object.assign(Error('gesture'),{name:'NotAllowedError'}));await tick();
+ assert.equal(e.errors.length,0);assert.equal(e.controller.playing,true);assert.equal(e.states.at(-1).src,'blob:new');assert.equal(e.audio[0].src,'');
+});
+run('synchronous gesture denial is retryable but a subsequent codec rejection releases the owner', async e => {
+ Audio.prototype.play=function(){throw Object.assign(Error('gesture'),{name:'NotAllowedError'});};
+ e.controller.play('verified','blob:verified');assert.equal(e.controller.active,true);
+ Audio.prototype.play=function(){return Promise.reject(Object.assign(Error('codec'),{name:'NotSupportedError'}));};
+ e.controller.resume();await tick();assert.equal(e.controller.active,false);assert.equal(e.states.at(-1).src,null);
+});

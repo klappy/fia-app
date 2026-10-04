@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.0.0-alpha.7 — Verified on-demand audio (2026-10-04)
+
+Explicit Play can fetch the selected prepared recording without a full passage download. First-English audio and image downloads use source-bound optimized proxy outputs; offline copies remain verified and optional. Silent restore, cancellation and Scripture word alignment are preserved. No new speech or video transformation. See [release note](release/changes/3.0.0-alpha.7-proxy-playback.md).
+
 ## 3.0.0-alpha.6 — Restore verified downloads (2026-10-04)
 
 Excludes hosting control files from offline download manifests. Production consumed `_headers` as configuration and returned HTML at its URL, causing every download to fail verification before audio. Exact asset integrity checks remain enforced. No UI, recording or legacy-cache migration changes. See [release note](release/changes/3.0.0-alpha.6-download-integrity.md).

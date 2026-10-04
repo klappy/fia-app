@@ -9,7 +9,7 @@ function worker(){
  const handlers={},stores=new Map();let current=manifest(),calls=[],options=[],fail=null;const replies=new Map();
  const open=async name=>{if(!stores.has(name))stores.set(name,new Map());const store=stores.get(name);return {match:async key=>store.get(String(key))?.clone(),put:async(key,value)=>store.set(String(key),value.clone()),delete:async key=>store.delete(key),addAll:async()=>{}};};
  const context={self:{location:{origin:'https://fia.test'},addEventListener:(name,fn)=>handlers[name]=fn,clients:{claim:async()=>{}},skipWaiting:async()=>{}},caches:{open,keys:async()=>[...stores.keys()],delete:async name=>stores.delete(name)},fetch:async (url,init)=>{const key=typeof url==='string'?url:url.url,path=new URL(key,'https://fia.test').pathname;calls.push(key);options.push(init);if(fail===url||fail===key||fail===path)throw new Error('Network interrupted');if(replies.has(path))return replies.get(path).clone();return url==='/offline-manifest.json'?Response.json(current):new Response(bytes[String(url)]||'live');},Response,Request,Headers,URL,Promise,console,crypto:webcrypto,AbortController,setTimeout,clearTimeout};
- vm.runInNewContext(readFileSync('public/sw.js','utf8').replace('__BUILD_ID__','test123'),context);
+ vm.runInNewContext(readFileSync('src/lib/media-delivery.js','utf8').replace(/export (?=(?:async )?function)/g,'')+'\n'+readFileSync('public/sw.js','utf8').replace('__BUILD_ID__','test123'),context);
  return {stores,calls,options,reply:(path,response)=>replies.set(path,response),manifest:value=>current=value,fail:value=>fail=value,async fetch(request,client={}){let promise;handlers.fetch({request,...client,respondWith:p=>promise=p});return promise;},async message(data,onprogress,clientId){let task,result;handlers.message({data,source:clientId?{id:clientId}:null,ports:[{postMessage:r=>{if(r.progress)onprogress?.(r.progress);else result=r;}}],waitUntil:p=>task=p});await task;return result;}};
 }
 test('selected downloads verify hashes, report exact progress and do not fetch unselected video',async()=>{const w=worker();const progress=[];assert.equal((await w.message({type:'DOWNLOAD_START',selection:'audio'},p=>progress.push(p))).ok,true);assert.equal(w.calls.includes('/video.mp4'),false);assert.equal(progress.at(-1).received,12);const status=await w.message({type:'DOWNLOAD_STATUS'});assert.equal(status.saved,true);assert.equal(status.active.selection,'audio');assert.equal(status.choices.find(c=>c.id==='all').bytes,18);});
@@ -84,3 +84,19 @@ test('two installed passages isolate removal and verify media before explicit do
 });
 
 test('text-only selection excludes resource images until an explicit all-resources download',async()=>{const w=worker();const m=manifest();m.files.push({path:'/image.png',bytes:4,sha256:createHash('sha256').update('live').digest('hex'),group:'image'});w.manifest(m);await w.message({type:'DOWNLOAD_START',selection:'core'});assert.equal(w.calls.includes('/image.png'),false);await w.message({type:'DOWNLOAD_START',selection:'all'});assert.equal(w.calls.includes('/image.png'),true);});
+
+test('explicit online play and optional download use identical verified proxy derivative; passive requests stay blocked',async()=>{
+ const w=worker(),id='eng.MRK-1-1-13',revision='a'.repeat(64),deliveryRevision='b'.repeat(64),url='https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://fia.test/audio.m4a';
+ const m={...manifest(),packId:id,presentationRevision:revision,deliveryRevision};
+ const f=m.files.find(f=>f.path==='/audio.m4a');Object.assign(f,{bytes:3,sha256:createHash('sha256').update('abc').digest('hex'),mime:'audio/ogg',deliveryURL:url,sourceSha256:'c'.repeat(64),deliveryRevision,timing:{status:'not-applicable'}});
+ w.reply('/offline/'+id+'.json',Response.json(m));w.reply(new URL(url).pathname,new Response('abc',{headers:{'Content-Type':'audio/ogg'}}));
+ await w.message({type:'MEDIA_STATUS',packId:id,revision});assert.equal(w.calls.includes(url),false);
+ assert.equal((await w.fetch(new Request('https://fia.test/audio.m4a'))).status,409);
+ const args={type:'MEDIA_PLAY',packId:id,revision,deliveryRevision,path:'/audio.m4a',requestId:'one'};
+ let r=await w.message(args,null,'page');assert.equal(r.ok,true,r.error);assert.equal(new TextDecoder().decode(r.bytes),'abc');assert.equal((await w.message({type:'DOWNLOAD_STATUS',packId:id})).saved,false);
+ assert.equal(w.calls.filter(x=>x===url).length,1);
+ assert.equal((await w.message({type:'DOWNLOAD_START',packId:id,selection:'audio'})).ok,true);
+ w.calls.length=0;r=await w.message({...args,requestId:'two'},null,'page');assert.equal(r.ok,true);assert.equal(w.calls.includes(url),false);
+ assert.equal((await w.message({...args,requestId:'bad',revision:'d'.repeat(64)},null,'page')).ok,false);
+ await w.message({type:'MEDIA_CANCEL',packId:id,requestId:'canceled'},null,'page');assert.equal((await w.message({...args,requestId:'canceled'},null,'page')).ok,false);
+});

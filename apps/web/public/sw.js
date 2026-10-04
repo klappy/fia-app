@@ -2,7 +2,7 @@
 const VERSION='__BUILD_ID__';
 const isBuild=!VERSION.startsWith('__');
 const META='fia-v3-download-metadata@1', SHELL=`fia-v3-shell-${VERSION}`, PREFIX='fia-v3-pack-';
-const jobs=new Map();
+const jobs=new Map(),playbackJobs=new Map(),canceledPlayback=new Set();
 const legacy='fia-mark-authentic';
 const packKey=(id,key)=>id===legacy?key:`pack:${id}:${key}`;
 const validPack=id=>id===legacy||/^(eng|spa)\.MRK-\d+(?:-\d+)+$/.test(id);
@@ -12,7 +12,7 @@ async function write(key,value){await (await caches.open(META)).put('/'+key,json
 function validate(manifest){
  if(manifest?.schema!==1||!validPack(manifest.packId)||!/^\w[\w-]*$/.test(manifest.revision)||!Array.isArray(manifest.files)||!manifest.files.length)throw new Error('This download manifest is not supported.');
  const paths=new Set();
- for(const f of manifest.files){if(!/^\/(?!\/|.*(?:\.\.|[?#]))/.test(f.path)||paths.has(f.path)||!['core','audio','video','image'].includes(f.group)||!Number.isSafeInteger(f.bytes)||f.bytes<0||!/^[a-f0-9]{64}$/.test(f.sha256))throw new Error('Invalid download file.');paths.add(f.path);}
+ for(const f of manifest.files){if(!/^\/(?!\/|.*(?:\.\.|[?#]))/.test(f.path)||paths.has(f.path)||!['core','audio','video','image'].includes(f.group)||!Number.isSafeInteger(f.bytes)||f.bytes<0||!/^[a-f0-9]{64}$/.test(f.sha256))throw new Error('Invalid download file.');if(f.deliveryURL){const u=new URL(f.deliveryURL);if(u.origin!=='https://transcode.klappy.dev'||!/^\/(audio|image)\//.test(u.pathname)||!['audio','image'].includes(f.group)||!f.mime||!/^[a-f0-9]{64}$/.test(f.sourceSha256)||f.deliveryRevision!==manifest.deliveryRevision)throw Error('Invalid delivery descriptor.');}paths.add(f.path);}
  return manifest;
 }
 const selectedFiles=(manifest,selection)=>manifest.files.filter(f=>f.group==='core'||selection==='all'||selection==='audio'&&f.group==='audio');
@@ -106,7 +106,7 @@ async function start(selection,port,packId=legacy){
    let response=await cache.match(file.path);
    if(!await verified(response?.clone(),file)){
     const timeout=setTimeout(()=>controller.abort(),30000);
-    try{response=await fetch(file.path,{cache:'no-store',signal:controller.signal});if(!await verified(response.clone(),file))throw new Error('A file could not be verified. Retry to keep the files already downloaded.');
+    try{response=await fetch(file.deliveryURL||file.path,{cache:'no-store',signal:controller.signal});if(file.deliveryURL){const bytes=await readVerifiedMedia(response,file,{signal:controller.signal});response=new Response(bytes,{headers:{'Content-Type':file.mime}});}else if(!await verified(response.clone(),file))throw new Error('A file could not be verified. Retry to keep the files already downloaded.');
      const headers=new Headers(response.headers);headers.set('Content-Length',String(file.bytes));await cache.put(file.path,new Response(await response.arrayBuffer(),{headers}));
     }finally{clearTimeout(timeout);}
    }
@@ -130,7 +130,22 @@ self.addEventListener('message',event=>{
   try{
    if(!validPack(packId))throw new Error('Invalid passage identity.');
    let result={};
-   if(type==='PACK_SELECT'){
+   if(type==='MEDIA_CANCEL'){const key=(event.source?.id||'')+':'+event.data.requestId;canceledPlayback.add(key);if(canceledPlayback.size>256)canceledPlayback.delete(canceledPlayback.values().next().value);playbackJobs.get(key)?.abort();result={canceled:true};
+   }else if(type==='MEDIA_STATUS'||type==='MEDIA_PLAY'){
+    const active=await read(packKey(packId,'active'));let manifest;try{manifest=await latest(packId);}catch{manifest=active?.manifest;}
+    if(!manifest||manifest.presentationRevision!==event.data.revision)throw Error('The media revision is unavailable.');
+    if(type==='MEDIA_STATUS')result={deliveryRevision:manifest.deliveryRevision||null,files:manifest.files.filter(f=>f.deliveryURL)};
+    else{
+     const file=manifest.files.find(f=>f.path===event.data.path&&f.deliveryURL);
+     if(!file||manifest.deliveryRevision!==event.data.deliveryRevision)throw Error('This resource is not prepared for online playback.');
+     const key=(event.source?.id||'')+':'+event.data.requestId;if(canceledPlayback.delete(key))throw Error('Playback canceled.');if(!event.data.requestId||playbackJobs.has(key))throw Error('Invalid playback request.');
+     const controller=new AbortController();playbackJobs.set(key,controller);
+     try{let response=active?.cache&&await(await caches.open(active.cache)).match(file.path);
+      if(!response||!await verified(response.clone(),file))response=await fetch(file.deliveryURL,{cache:'no-store',signal:controller.signal});
+      const bytes=await readVerifiedMedia(response,file,{signal:controller.signal});if(controller.signal.aborted)throw Error('Playback canceled.');result={bytes:bytes.buffer,mime:file.mime,timing:file.timing};
+     }finally{playbackJobs.delete(key);canceledPlayback.delete(key);}
+    }
+   }else if(type==='PACK_SELECT'){
     const active=await read(packKey(packId,'active'));
     const matches=active&&active.manifest?.presentationRevision===event.data.revision;
     if(event.source?.id)await write('client-'+event.source.id,matches?active:{packId,revision:event.data.revision});

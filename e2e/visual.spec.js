@@ -5,6 +5,19 @@ import {startReference,referenceManifest} from '../scripts/parity-reference.mjs'
 import {stableScreenshot} from './stable-screenshot.js';
 const pack=JSON.parse(readFileSync('tests/parity-reference/source/src/lib/pack.json','utf8'));
 const approvedDownload=JSON.parse(readFileSync('dist/offline/eng.MRK-1-1-13.json','utf8'));
+// Same accepted derivative bytes on both sides isolate unchanged UI/artwork.
+// Lossy source-to-output image differences are reviewed separately, never masked.
+const deliveryIndex=JSON.parse(readFileSync('dist/content/delivery/index.json','utf8'));
+const deliveryRecord=deliveryIndex.packs.find(p=>p.packId==='eng.MRK-1-1-13');
+const deliveryBytes=readFileSync('dist'+deliveryRecord.delivery.url);
+if(deliveryBytes.length!==deliveryRecord.delivery.bytes||createHash('sha256').update(deliveryBytes).digest('hex')!==deliveryRecord.delivery.sha256)throw Error('Unverified visual delivery sidecar');
+const imageFixtures=new Map(JSON.parse(deliveryBytes).entries.filter(e=>e.delivery.kind==='image').map(e=>{
+ const body=readFileSync(`tests/parity-reference/derivative-media/${e.delivery.sha256}.webp`);
+ if(body.length!==e.delivery.bytes||createHash('sha256').update(body).digest('hex')!==e.delivery.sha256)throw Error('Unverified visual derivative '+e.path);
+ return [e.path,{body,mime:e.delivery.mime,sha256:e.delivery.sha256}];
+}));
+if(imageFixtures.size!==8)throw Error('Expected all eight reviewed image fixtures');
+
 let reference;
 test.describe.configure({mode:'serial'});
 test.beforeAll(async()=>{reference=await startReference();});
@@ -30,14 +43,21 @@ const states=[
 async function openState(browser,url,viewport,dark,state,{verifiedFixture=false}={}){
  const context=await browser.newContext({viewport,deviceScaleFactor:1,reducedMotion:'reduce',serviceWorkers:'block',colorScheme:dark?'dark':'light'});
  const page=await context.newPage(),activity=pack.activities[state.index];
- await page.addInitScript(({index,dark,id,sectionId,definition,transition,initial})=>{
+ await page.route('**/*',route=>{const fixture=imageFixtures.get(new URL(route.request().url()).pathname);return fixture?route.fulfill({status:200,contentType:fixture.mime,body:fixture.body}):route.continue();});
+ await page.addInitScript(({index,dark,id,sectionId,definition,transition,initial,packId})=>{
   const session={index,status:initial?'ready':'paused',completed:[],mode:'scripted',preferences:{readScripture:false,describeImages:false,autoplayVideo:false},detour:null,detourReturnStatus:null,queued:null,pinned:null,history:[],events:[]};
   localStorage.setItem('fia-v3-progress@1:fia-mark-authentic',JSON.stringify({revision:'1',activityId:id,session,transitionSection:transition?sectionId:null,termDefinition:definition?id:null}));
+  if(packId)localStorage.setItem('fia-v3-selected-pack',packId);
   localStorage.setItem('fia-v3-preferences@1',JSON.stringify({scale:1,rate:1,muted:!initial,dark,preferences:session.preferences}));
  },{...state,dark,id:activity.id,sectionId:activity.sectionId});
  if(verifiedFixture)await page.addInitScript(manifest=>{
   // Static visual fixture only: exact build-verified files. Real installation is tested separately.
   const active={postMessage(message,ports){ports[0].postMessage({ok:true,saved:true,active:{manifest,files:manifest.files}});}};Object.defineProperty(navigator,'serviceWorker',{value:{ready:Promise.resolve({active}),register:async()=>({active})},configurable:true});
+ },approvedDownload);
+ if(state.name==='online-available-initial')await page.addInitScript(manifest=>{
+  // Metadata-only availability fixture; no resource bytes requested or played.
+  const active={postMessage(message,ports){const response=message.type==='MEDIA_STATUS'?{ok:true,deliveryRevision:manifest.deliveryRevision,files:manifest.files.filter(f=>f.deliveryURL)}:{ok:true,saved:false,selected:true};ports[0].postMessage(response);}};
+  Object.defineProperty(navigator,'serviceWorker',{value:{ready:Promise.resolve({active}),register:async()=>({active})},configurable:true});
  },approvedDownload);
  await page.goto(url);await expect(page.locator('main.scene')).toBeVisible();
  await page.evaluate(()=>document.fonts.ready);
@@ -70,7 +90,7 @@ async function settlePrimaryPaint(page){
 for(const width of [390,1280])for(const dark of [false,true])test('approved reference pixel parity '+width+' '+(dark?'dark':'light'),async({browser,baseURL,request},info)=>{
  test.setTimeout(240000);mkdirSync(info.outputDir,{recursive:true});
  const viewport={width,height:width===390?844:800},stamp=await (await request.get('/version.json')).json();
- const evidence={referenceCommit:referenceManifest.referenceCommit,candidateCheckout:process.env.GITHUB_SHA||stamp.commit,build:stamp,viewport,dark,comparison:'retain pre-settlement captures, verify symmetric full-paint settlement preserves DOM/styles/geometry/progress, then consecutive identical captures within eight attempts and exact cross-page PNG bytes; no pixel tolerance',states:[],newStates:[],limitations:['Static downloaded-state fixture supplies exact build-verified manifest metadata; this is not installation proof. Actual worker/media transfer tested by upgrade/journey suite.','Help and conversation have no exposed entry in the pinned menu; no new access route invented.','Audible quality, physical devices and playing-video frame parity are not established by static captures.']};
+ const evidence={imageFixtureScope:'Same eight source-bound optimized derivatives on both pages; original-to-lossy-output comparison independently reviewed',imageFixtures:[...imageFixtures].map(([path,f])=>({path,sha256:f.sha256})),referenceCommit:referenceManifest.referenceCommit,candidateCheckout:process.env.GITHUB_SHA||stamp.commit,build:stamp,viewport,dark,comparison:'retain pre-settlement captures, verify symmetric full-paint settlement preserves DOM/styles/geometry/progress, then consecutive identical captures within eight attempts and exact cross-page PNG bytes; no pixel tolerance',states:[],newStates:[],limitations:['Static downloaded-state fixture supplies exact build-verified manifest metadata; this is not installation proof. Actual worker/media transfer tested by upgrade/journey suite.','Help and conversation have no exposed entry in the pinned menu; no new access route invented.','Audible quality, physical devices and playing-video frame parity are not established by static captures.']};
  try{for(const state of states.filter(s=>!['settings','languages','passages','about'].includes(s.name))){let baseline,candidate;
   try{
    baseline=await openState(browser,reference.url,viewport,dark,state);candidate=await openState(browser,baseURL,viewport,dark,state,{verifiedFixture:true});
@@ -102,10 +122,11 @@ for(const width of [390,1280])for(const dark of [false,true])test('approved refe
   }finally{await baseline?.context.close();await candidate?.context.close();}
  }
  // Authorized changed states are a separate evidence set, never a renamed parity PASS.
- for(const state of [...states.filter(s=>['settings','languages','passages','about'].includes(s.name)),{name:'manual-download-required',index:find(a=>pack.assets[a.assetId]?.kind==='image')},{name:'text-only-initial',index:0,initial:true}]){
+ for(const state of [...states.filter(s=>['settings','languages','passages','about'].includes(s.name)),{name:'manual-download-required',index:find(a=>pack.assets[a.assetId]?.kind==='image')},{name:'online-available-initial',index:0,initial:true},{name:'spanish-text-only-initial',index:0,initial:true,packId:'spa.MRK-1-1-13'}]){
   const candidate=await openState(browser,baseURL,viewport,dark,state);
   try{if(state.name==='manual-download-required'){await expect(candidate.page.getByRole('button',{name:'Open Downloads'})).toBeVisible();expect(await candidate.page.locator('img[src],video[src],audio[src]').count()).toBe(0);}
-   if(state.name==='text-only-initial')await expect(candidate.page.getByRole('button',{name:'Continue',exact:true})).toBeVisible();
+   if(state.name==='online-available-initial')await expect(candidate.page.getByRole('button',{name:'Begin',exact:true})).toBeVisible();
+   if(state.name==='spanish-text-only-initial')await expect(candidate.page.getByRole('button',{name:'Continue',exact:true})).toBeVisible();
    const actual=await stableScreenshot(()=>candidate.page.screenshot({animations:'disabled'}));writeFileSync(info.outputPath(state.name+'-new-state.png'),actual.image);evidence.newStates.push({name:state.name,referenceComparison:'not-applicable-user-authorized-content-or-availability-change',independentVisualReview:'required',captures:actual.attempts});
   }finally{await candidate.context.close();}
  }
