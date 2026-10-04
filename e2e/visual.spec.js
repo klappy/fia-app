@@ -56,12 +56,14 @@ async function openState(browser,url,viewport,dark,state,{verifiedFixture=false}
 async function settlePrimaryPaint(page){
  const inspect=()=>{
   const control=document.querySelector('.guide-primary');if(!control)return null;
-  return {html:control.outerHTML,storage:JSON.stringify({...localStorage}),elements:Object.fromEntries(['.guide-primary','.primary-orbit','.primary-disc','.playback-ring','.scene-controls'].map(selector=>{const element=document.querySelector(selector);if(!element)return [selector,null];const style=getComputedStyle(element);return [selector,{rect:element.getBoundingClientRect().toJSON(),style:Object.fromEntries([...style].map(key=>[key,style.getPropertyValue(key)]))}];}))};
+  return {styleAttribute:control.getAttribute('style'),html:control.outerHTML,storage:JSON.stringify({...localStorage}),elements:Object.fromEntries(['.guide-primary','.primary-orbit','.primary-disc','.playback-ring','.scene-controls'].map(selector=>{const element=document.querySelector(selector);if(!element)return [selector,null];const style=getComputedStyle(element);return [selector,{rect:element.getBoundingClientRect().toJSON(),style:Object.fromEntries([...style].map(key=>[key,style.getPropertyValue(key)]))}];}))};
  };
  const before=await page.evaluate(inspect);
  if(!before)return {applicable:false};
- await page.evaluate(()=>{const control=document.querySelector('.guide-primary'),original=control.getAttribute('style');try{control.style.display='none';document.body.offsetHeight;}finally{if(original===null)control.removeAttribute('style');else control.setAttribute('style',original);document.body.offsetHeight;}});
+ await page.evaluate(original=>{const control=document.querySelector('.guide-primary');try{control.style.display='none';document.body.offsetHeight;}finally{if(original===null)control.removeAttribute('style');else control.setAttribute('style',original);document.body.offsetHeight;}},before.styleAttribute);
  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+ // Restore the authoritative pre-operation attribute after browser style synchronization.
+ await page.evaluate(original=>{const control=document.querySelector('.guide-primary');if(original===null)control.removeAttribute('style');else control.setAttribute('style',original);document.body.offsetHeight;},before.styleAttribute);
  const after=await page.evaluate(inspect);
  return {applicable:true,unchanged:JSON.stringify(after)===JSON.stringify(before),before,after};
 }
