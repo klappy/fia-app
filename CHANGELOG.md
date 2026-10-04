@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.0.0-alpha.1 — Fresh v3 bundled text (2026-10-04)
+
+Fresh Svelte text journey, local progress and settings, truthful unavailable capabilities, public build status, build provenance and scoped previous-worker retirement. Existing sequential release train preserved. See [release note](release/changes/3.0.0-alpha.1-fresh-v3.md).
+
 All notable changes to the FIA App. One entry per train; the train note lives in `release/changes/<version>-<slug>.md`.
 
 ## 0.3.5 — Train 5: the app in Spanish (2026-10-03)
