@@ -15,6 +15,6 @@ const fixture=()=>({schema:1,packId:'eng.MRK-1-1-13',presentationRevision:'a'.re
 test('delivery identity rejects different pack, unsafe URL, duplicate paths and unverified timing',()=>{
  const valid=fixture(),identity={packId:valid.packId,presentationRevision:valid.presentationRevision};assert.equal(validateDelivery(valid,identity),valid);
  assert.throws(()=>validateDelivery(valid,{...identity,packId:'spa.MRK-1-1-13'}));
- for(const change of [s=>s.entries.push(s.entries[0]),s=>s.entries[0].delivery.url='https://evil.example/audio/a',s=>s.entries[0].timing.status='unverified',s=>s.entries[0].path='//host/file']){const s=fixture();change(s);assert.throws(()=>validateDelivery(s,identity));}
+ for(const change of [s=>s.entries.push(s.entries[0]),s=>s.entries[0].delivery.url='https://evil.example/audio/a',s=>s.entries[0].timing.status='unverified',s=>s.entries[0].delivery.q='low',s=>s.entries[0].path='//host/file']){const s=fixture();change(s);assert.throws(()=>validateDelivery(s,identity));}
  assert.throws(()=>validateDeliveryIndex({schema:1,packs:[{...identity,delivery:{url:'/mutable.json',sha256:'a'.repeat(64),bytes:3}}]}));
 });

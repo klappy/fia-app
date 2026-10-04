@@ -19,14 +19,14 @@ export function validateDelivery(sidecar,identity){
   if(d.duration!==undefined&&(!Number.isFinite(d.duration)||d.duration<=0))throw Error('Invalid recording duration.');
   if(d.kind==='image'&&(!positive(d.width)||!positive(d.height)))throw Error('Invalid image dimensions.');
   if(!['low','medium','high'].includes(d.q))throw Error('Invalid quality tier.');
+  const options=d.kind==='audio'?`preset=${d.preset},q=${d.q},f=${d.format}`:`q=${d.q},f=${d.format}`;
+  if(d.kind==='audio'&&(d.preset!=='voice'||d.format!=='opus')||d.kind==='image'&&!['webp','avif','jpeg'].includes(d.format)||d.url!==`https://transcode.klappy.dev/${d.kind}/${options}/${s.url}`)throw Error('Delivery options do not match the URL.');
   if(!new RegExp('^'+d.kind+'/').test(d.mime))throw Error('Invalid media MIME.');
   if(!t||!['verified','not-applicable'].includes(t.status))throw Error('Media timing is not verified.');
   if(t.status==='verified'){
-   if(t.sourceAudioSha256!==s.sha256||t.deliveryAudioSha256!==d.sha256||!sha.test(t.alignmentSha256)||!t.method||!t.evidence)throw Error('Media timing identity does not match.');
+   if(t.sourceAudioSha256!==s.sha256||t.deliveryAudioSha256!==d.sha256||(t.alignmentSha256!==undefined&&!sha.test(t.alignmentSha256))||!t.method||!t.evidence)throw Error('Media timing identity does not match.');
    if(t.mapping&&(!Number.isFinite(t.mapping.scale)||t.mapping.scale<=0||!Number.isFinite(t.mapping.offsetSeconds)))throw Error('Invalid media time mapping.');
    if(t.alignment)throw Error('Calibrated alignment delivery is not supported by this adapter yet.');
-   if(t.alignment&&(!local.test(t.alignment.url)||!sha.test(t.alignment.sha256)||!positive(t.alignment.bytes)))throw Error('Invalid calibrated alignment.');
-   if(t.mapping&&t.alignment)throw Error('Ambiguous media time mapping.');
   }
   seen.add(e.path);
  }return sidecar;

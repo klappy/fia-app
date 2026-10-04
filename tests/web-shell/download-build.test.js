@@ -36,7 +36,15 @@ test('finalizer keeps deployment controls in output but excludes them from all13
   const audio=updated.files.find(f=>f.path==='/audio/test.mp3');assert.equal(audio.bytes,3);assert.equal(audio.sha256,hash('ogg'));assert.equal(audio.sourceSha256,hash('audio'));assert.equal(updated.deliveryRevision,hash(body));
   const index=JSON.parse(readFileSync(join(dir,'dist/content/delivery/index.json')));assert.equal(index.packs[0].delivery.sha256,hash(body));assert.equal(index.packs[0].delivery.bytes,Buffer.byteLength(body));
   assert.ok(updated.files.some(f=>f.path==='/content/delivery/index.json'));assert.ok(updated.files.some(f=>f.path===sidecarPath.slice(4)));
-  rmSync(join(dir,sidecarPath));sidecar.entries[0].source.sha256='f'.repeat(64);const bad=JSON.stringify(sidecar);put(`dist/content/delivery/${packs[0].id}/${hash(bad)}.json`,bad);
-  assert.throws(()=>execFileSync(process.execPath,[resolve('scripts/finalize-build.mjs')],{cwd:dir,stdio:'pipe'}),/Delivery source mismatch/);
+  let currentPath=sidecarPath;
+  for(const [mutate,expected] of [
+   [s=>s.entries[0].source.sha256='f'.repeat(64),/Delivery source mismatch/],
+   [s=>{const e=s.entries[0];e.source.url='https://fia.test/wrong.mp3';e.delivery.url='https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/'+e.source.url;},/Delivery source URL mismatch/],
+   [s=>{const d=s.entries[0].delivery;Object.assign(d,{kind:'image',mime:'image/webp',format:'webp',width:2,height:2,url:'https://transcode.klappy.dev/image/q=medium,f=webp/'+s.entries[0].source.url});delete d.preset;},/Delivery media kind mismatch/]
+  ]){rmSync(join(dir,currentPath));const altered=JSON.parse(body);mutate(altered);const raw=JSON.stringify(altered);currentPath=`dist/content/delivery/${packs[0].id}/${hash(raw)}.json`;put(currentPath,raw);assert.throws(()=>execFileSync(process.execPath,[resolve('scripts/finalize-build.mjs')],{cwd:dir,stdio:'pipe'}),expected);}
+  rmSync(join(dir,currentPath));put(sidecarPath,body);
+  put('dist'+packs[0].presentation.url,JSON.stringify({assets:{scripture:{alignment:{audioSha256:hash('audio'),duration:1,verses:[]}}},activities:[{audioSrc:'/audio/test.mp3'}]}));
+  assert.throws(()=>execFileSync(process.execPath,[resolve('scripts/finalize-build.mjs')],{cwd:dir,stdio:'pipe'}),/Unverified Scripture alignment/);
+
  }finally{rmSync(dir,{recursive:true,force:true});}
 });

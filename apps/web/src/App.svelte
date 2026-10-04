@@ -21,14 +21,14 @@
  let activities=$derived(content.activities),assets=$derived(content.assets),sections=$derived(content.sections),examples=$derived(content.examples),readingGroups=$derived(content.readingGroups),contentContract=$derived(content.contentContract),defaultScriptureId=$derived(content.defaultScriptureId);
  let selectionGeneration=0;
  let onlineMedia=$state(new globalThis.Map()),deliveryRevision=$state(null),downloadedDeliveryRevision=$state(null),mediaLoading=$state(false),playbackPending=$state(false);
- let playbackConsent=false,mediaGeneration=0,mediaAbort=null,mediaBlob=null,mediaTiming=null;
+ let playbackConsent=false,mediaGeneration=0,mediaAbort=null,mediaBlob=null,mediaTiming=null,mediaLogicalPath=null;
  async function updateMedia(){const generation=selectionGeneration,pack=selectedPack;try{const status=await libraryAdapter.mediaStatus(pack);if(generation!==selectionGeneration)return;deliveryRevision=status.deliveryRevision;onlineMedia=new globalThis.Map(status.files.map(f=>[f.path,f]));}catch{if(generation===selectionGeneration){onlineMedia=new globalThis.Map();deliveryRevision=null;}}}
  function revokePlayback(){playbackConsent=false;playbackPending=false;clearTimeout(timer);timer=null;mediaGeneration++;mediaAbort?.abort();mediaAbort=null;mediaLoading=false;}
  async function startRecording(text,path,explicit=false){
   if(explicit)playbackConsent=true;if(!playbackConsent)return;
   const owner=++mediaGeneration,pack=selectedPack,activityId=activity.id;mediaAbort?.abort();mediaAbort=new AbortController();const signal=mediaAbort.signal;
   if(mediaBlob){URL.revokeObjectURL(mediaBlob);mediaBlob=null;}mediaTiming=null;
-  try{if(onlineMedia.has(path)){mediaLoading=true;const result=await libraryAdapter.playMedia(pack,path,deliveryRevision,signal);if(owner!==mediaGeneration||signal.aborted||pack!==selectedPack||activityId!==activity.id)return;mediaBlob=URL.createObjectURL(new Blob([result.bytes],{type:result.mime}));mediaTiming=result.timing;audio.play(text,mediaBlob,rate);}else if(downloadedPaths.has(path)){audio.play(text,path,rate);}else throw Error('This recording is unavailable.');}
+  try{if(onlineMedia.has(path)){mediaLoading=true;const result=await libraryAdapter.playMedia(pack,path,deliveryRevision,signal);if(owner!==mediaGeneration||signal.aborted||pack!==selectedPack||activityId!==activity.id)return;mediaBlob=URL.createObjectURL(new Blob([result.bytes],{type:result.mime}));mediaTiming=result.timing;mediaLogicalPath=path;audio.play(text,mediaBlob,rate);}else if(downloadedPaths.has(path)){audio.play(text,path,rate);}else throw Error('This recording is unavailable.');}
   catch(error){if(owner===mediaGeneration){revokePlayback();notice=error.message;dispatch({type:'PAUSE'});}}finally{if(owner===mediaGeneration)mediaLoading=false;}
  }
  function mediaForDevice(pack,paths){if(deliveryRevision&&downloadedDeliveryRevision!==deliveryRevision)paths=new Set([...paths].filter(path=>!onlineMedia.has(path)));return {...pack,activities:pack.activities.map(a=>({...a,audioSrc:paths.has(a.audioSrc)||onlineMedia.has(a.audioSrc)?a.audioSrc:null})),assets:Object.fromEntries(Object.entries(pack.assets).map(([id,a])=>[id,{...a,src:paths.has(a.src)?a.src:undefined,poster:paths.has(a.poster)?a.poster:undefined,descriptionAudio:paths.has(a.descriptionAudio)||onlineMedia.has(a.descriptionAudio)?a.descriptionAudio:undefined,downloadRequired:['image','map','video'].includes(a.kind)&&!paths.has(a.src),downloadPrepared:typeof a.src==='string'&&a.src.startsWith('/')&&!a.src.startsWith('//')}]))};}
@@ -113,7 +113,7 @@
  }
  function resolveAsset(id){if(assets[id])return id;return (activity.relatedAssetIds||[]).find(key=>assets[key]?.kind===id)||(focal?.kind===id?focal.id:null)||(id==='scripture'?defaultScriptureId:Object.values(assets).find(a=>a.kind===id)?.id)||id;}
  function settleSilent(){if(!inTransition&&!session.detour&&!finished&&!activity.audioSrc){session={...session,status:'waiting'};persist();}}
- function cancel(){playbackPending=false;mediaGeneration++;mediaAbort?.abort();mediaAbort=null;mediaLoading=false;if(mediaBlob){URL.revokeObjectURL(mediaBlob);mediaBlob=null;}mediaTiming=null;videoState={elapsed:0,duration:0};inlineVideo=null;videoPlaying=false;clearTimeout(timer);timer=null;audio?.stop();document.querySelectorAll('video').forEach(v=>v.pause());audioContext=null;}
+ function cancel(){playbackPending=false;mediaGeneration++;mediaAbort?.abort();mediaAbort=null;mediaLoading=false;if(mediaBlob){URL.revokeObjectURL(mediaBlob);mediaBlob=null;}mediaTiming=null;mediaLogicalPath=null;videoState={elapsed:0,duration:0};inlineVideo=null;videoPlaying=false;clearTimeout(timer);timer=null;audio?.stop();document.querySelectorAll('video').forEach(v=>v.pause());audioContext=null;}
  function message(text){messages=[...messages.slice(-11),{role:'assistant',text}];tick().then(()=>chatLog?.scrollTo({top:chatLog.scrollHeight,behavior:'smooth'}));}
  function finishAudio(){
   const context=audioContext;audioContext=null;if(!context)return;
@@ -206,19 +206,19 @@
    if(event.type==='PLAY'){
     if(!isPlaying){
      if(audio?.active&&audioContext){playbackConsent=true;if(audioContext.type!=='description')dispatch({type:'PLAY'});audio.resume();}
-     else if(session.detour){if(focal.kind==='video')playVideo();else describe(stage.focal);}
+     else if(session.detour){if(focal.kind==='video')playVideo();else describe(stage.focal,true);}
      else if(activity.kind==='video'&&introduced.has(activity.id))playVideo();
      else playActivity(true);
     }
    }
-   else if(event.type==='PAUSE'){audio?.pause();document.querySelectorAll('video').forEach(v=>v.pause());clearTimeout(timer);dispatch(event);}
+   else if(event.type==='PAUSE'){revokePlayback();audio?.pause();document.querySelectorAll('video').forEach(v=>v.pause());clearTimeout(timer);dispatch(event);}
    else if(['SET_MODE','SET_PREFERENCE','PIN','UNPIN','QUEUE_NEXT'].includes(event.type))dispatch(event);
    else if(event.type==='CONTINUE'&&termPrompt&&session.status==='waiting')primary();
    else navigate(event,event.type==='CONTINUE');
-   if(/\bdescribe\b/i.test(input)&&event.type==='DETOUR')describe(event.assetId);
+   if(/\bdescribe\b/i.test(input)&&event.type==='DETOUR')describe(event.assetId,true);
    else if(/\b(read|watch|play)\b/i.test(input)&&event.type==='DETOUR'){
     if(assets[event.assetId]?.kind==='video')tick().then(playVideo);
-    else if(assets[event.assetId]?.descriptionAudio)describe(event.assetId);
+    else if(assets[event.assetId]?.descriptionAudio)describe(event.assetId,true);
    }
   }
   message(result.response);notice=result.response;clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>{if(notice===result.response)notice='';},4500);
@@ -231,7 +231,7 @@
   rotate();landscape?.addEventListener('change',rotate);
   try{applyStored();}catch{}
   updateDownloaded();updateMedia();
-  audio=createAudioController(s=>{const m=mediaTiming?.mapping;audioState=m?{...s,elapsed:Math.max(0,(s.elapsed-m.offsetSeconds)/m.scale),duration:s.duration/m.scale}:s;},finishAudio,text=>{revokePlayback();notice=text;dispatch({type:'PAUSE'});},{allowSpeechFallback:false});
+  audio=createAudioController(s=>{const m=mediaTiming?.mapping;const logical={...s,src:s.src&&s.src===mediaBlob?mediaLogicalPath:s.src};audioState=m?{...logical,elapsed:Math.max(0,(s.elapsed-m.offsetSeconds)/m.scale),duration:Math.max(0,(s.duration-m.offsetSeconds)/m.scale)}:logical;},finishAudio,text=>{revokePlayback();notice=text;dispatch({type:'PAUSE'});},{allowSpeechFallback:false});
   const net=()=>online=navigator.onLine;net();window.addEventListener('online',net);window.addEventListener('offline',net);
   if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js').then(()=>{updateDownloaded();updateMedia();}).catch(()=>{serviceWorkerError='Offline storage is unavailable here. Try the published HTTPS version.';});
   try{const id=localStorage.getItem('fia-v3-selected-pack');if(id&&id!==selectedPack.id)selectPack(id).catch(e=>notice=e.message);}catch{}

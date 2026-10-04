@@ -47,7 +47,7 @@ if(registry){
   const delivery=deliveries.get(descriptor.id),media=Array.from(selected).sort().map(digest);
   if(delivery){
    const byPath=new Map(delivery.sidecar.entries.map(e=>[e.path,e]));
-   for(const f of media){if(f.group==='video')continue;const e=byPath.get(f.path);if(!e)throw Error('Incomplete delivery coverage: '+f.path);if(e.source.sha256!==f.sha256||e.source.bytes!==f.bytes)throw Error('Delivery source mismatch: '+f.path);
+   for(const f of media){if(f.group==='video')continue;const e=byPath.get(f.path);if(!e)throw Error('Incomplete delivery coverage: '+f.path);if(e.delivery.kind!==f.group)throw Error('Delivery media kind mismatch: '+f.path);if(new URL(e.source.url).pathname!==f.path)throw Error('Delivery source URL mismatch: '+f.path);if(e.source.sha256!==f.sha256||e.source.bytes!==f.bytes)throw Error('Delivery source mismatch: '+f.path);
     const aligned=Object.values(pack.assets).find(a=>a.alignment?.audioSha256===f.sha256);if(aligned&&(e.timing.status!=='verified'||e.timing.alignmentSha256!==createHash('sha256').update(JSON.stringify(aligned.alignment)).digest('hex')))throw Error('Unverified Scripture alignment: '+f.path);
     Object.assign(f,{sha256:e.delivery.sha256,bytes:e.delivery.bytes,mime:e.delivery.mime,deliveryURL:e.delivery.url,sourceSha256:e.source.sha256,deliveryRevision:delivery.sha256,timing:e.timing});
    }
