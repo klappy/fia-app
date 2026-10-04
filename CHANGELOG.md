@@ -1,8 +1,8 @@
 # Changelog
 
-## 3.0.0-alpha.1 — Fresh v3 bundled text (2026-10-04)
+## 3.0.0-alpha.1 — Approved v3 guided experience (2026-10-04)
 
-Fresh Svelte text journey, local progress and settings, truthful unavailable capabilities, public build status, build provenance and scoped previous-worker retirement. Existing sequential release train preserved. See [release note](release/changes/3.0.0-alpha.1-fresh-v3.md).
+Restores the approved Svelte interface and guided flow with English Mark 1:1–13, 143 existing recordings, eight images/maps, three videos, local progress, consolidated settings and verified browser downloads. The compatible worker replaces the earlier retirement-only draft. Public build status, build provenance and the sequential release train are preserved. See [release note](release/changes/3.0.0-alpha.1-fresh-v3.md).
 
 All notable changes to the FIA App. One entry per train; the train note lives in `release/changes/<version>-<slug>.md`.
 
