@@ -4,15 +4,16 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "vite build && node scripts/finalize-build.mjs",
-    "test": "node --test tests/web-shell/*.test.js && npm run test:reference",
+    "build": "vite build && node scripts/finalize-build.mjs && node scripts/package-worker.mjs",
+    "test": "node --test tests/web-shell/*.test.js && npm run test:reference && npm run test:worker",
     "preview": "vite preview",
-    "test:release": "node --test tests/release/*.test.js",
+    "test:release": "node --test tests/release/*.test.js && node --test tests/worker-serving/packaged.check.mjs",
     "test:e2e": "playwright test",
     "test:visual": "playwright test e2e/visual.spec.js",
     "smoke:deployed": "playwright test e2e/deployed.spec.js",
     "test:upgrade": "playwright test e2e/upgrade.spec.js",
-    "test:reference": "cd apps/web && node --test tests/*.test.js && vitest run"
+    "test:reference": "cd apps/web && node --test tests/*.test.js && vitest run",
+    "test:worker": "node --test tests/worker-serving/*.test.mjs"
   },
   "dependencies": {
     "svelte": "5.57.1",
@@ -29,7 +30,7 @@
     "jsdom": "26.1.0",
     "vitest": "4.1.11"
   },
-  "version": "3.0.0-alpha.1",
+  "version": "3.0.0-alpha.2",
   "description": "Approved FIA v3 experience with bundled English Mark 1:1\u201313, real media and verified local downloads.",
   "engines": {
     "node": ">=22"
