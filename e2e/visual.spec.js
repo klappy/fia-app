@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {createHash} from 'node:crypto';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
 import {startReference,referenceManifest} from '../scripts/parity-reference.mjs';
 import {stableScreenshot} from './stable-screenshot.js';
@@ -62,6 +63,20 @@ for(const width of [390,1280])for(const dark of [false,true])test('approved refe
    const expected=await capture(baseline.page,info.outputPath(state.name+'-reference.png'));
    const actual=await capture(candidate.page,info.outputPath(state.name+'-candidate.png'));
    const equal=actual.image.equals(expected.image);evidence.states.push({name:state.name,equal,referenceCaptures:expected.attempts,candidateCaptures:actual.attempts});
+   if(!equal){
+    const diagnostic={name:state.name,purpose:'Failure-only paint investigation; original equality remains authoritative',browser:browser.version(),stages:[]};
+    evidence.paintDiagnostics??=[];evidence.paintDiagnostics.push(diagnostic);
+    try{
+     const inspect=page=>page.evaluate(()=>Object.fromEntries(['.guide-primary','.primary-orbit','.primary-disc','.playback-ring','.scene-controls'].map(selector=>{const element=document.querySelector(selector);if(!element)return [selector,null];const style=getComputedStyle(element);return [selector,{rect:element.getBoundingClientRect().toJSON(),html:element.outerHTML,style:Object.fromEntries([...style].map(key=>[key,style.getPropertyValue(key)]))}];})));
+     diagnostic.original={reference:await inspect(baseline.page),candidate:await inspect(candidate.page)};
+     for(const stage of ['hide-show','clone']){
+      for(const page of [baseline.page,candidate.page])await page.evaluate(stage=>{const control=document.querySelector('.guide-primary');if(!control)throw Error('Missing primary control for paint diagnostic');if(stage==='clone')control.replaceWith(control.cloneNode(true));else{const original=control.style.display;control.style.display='none';document.body.offsetHeight;control.style.display=original;}},stage);
+      const referencePaint=await capture(baseline.page,info.outputPath(state.name+'-diagnostic-'+stage+'-reference.png'));
+      const candidatePaint=await capture(candidate.page,info.outputPath(state.name+'-diagnostic-'+stage+'-candidate.png'));
+      diagnostic.stages.push({stage,equal:referencePaint.image.equals(candidatePaint.image),referenceSha256:createHash('sha256').update(referencePaint.image).digest('hex'),candidateSha256:createHash('sha256').update(candidatePaint.image).digest('hex'),referenceCaptures:referencePaint.attempts,candidateCaptures:candidatePaint.attempts,reference:await inspect(baseline.page),candidate:await inspect(candidate.page)});
+     }
+    }catch(error){diagnostic.error=String(error?.stack||error);}
+   }
    expect(equal,'Visible parity failed: '+state.name+'; inspect both exact images').toBe(true);
   }finally{await baseline?.context.close();await candidate?.context.close();}
  }
