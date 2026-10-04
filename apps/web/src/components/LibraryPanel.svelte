@@ -4,12 +4,12 @@
  import {libraryAdapter,bundledPack,formatBytes} from '../lib/library.js';
  import {progressSummary} from '../lib/session-store.js';
  let {view,selectedPack=bundledPack,language='eng',onlanguage,onselect,onreset,onview,completed=0,total=0,onstatus=()=>{}}=$props();
- let languages=$state([]),passages=$state([]),loading=$state(true),error=$state(''),download=$state(null),selection=$state('all'),busy=$state(false),transfer=$state(null),confirmRemove=$state(false),confirmRestart=$state(null),downloadFinished=$state(false);
+ let languages=$state([]),passages=$state([]),loading=$state(true),error=$state(''),download=$state(null),selection=$state('core'),busy=$state(false),transfer=$state(null),confirmRemove=$state(false),confirmRestart=$state(null),downloadFinished=$state(false);
  let alive=true;
  async function refresh(){
   loading=true;error='';
   try{
-   if(view==='downloads'){download=await libraryAdapter.downloadStatus(selectedPack);onstatus(download.saved);if(download.pending)selection=download.pending.selection;else if(download.active)selection=download.active.selection;}
+   if(view==='downloads'){download=await libraryAdapter.downloadStatus(selectedPack);onstatus(download.saved);if(!download.choices?.some(c=>c.id===selection))selection=download.choices?.[0]?.id||'core';}
    else {languages=await libraryAdapter.languages();passages=await libraryAdapter.passages(language);}
   }catch(e){if(alive)error=e.message;}finally{if(alive)loading=false;}
  }

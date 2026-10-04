@@ -19,6 +19,7 @@ export function validatePresentation(pack,descriptor){
  return pack;
 }
 let catalogPromise;
+let activationQueue=Promise.resolve();
 export async function fetchCatalog(){
  if(!catalogPromise)catalogPromise=fetch('/content/registry.json').then(async r=>{if(!r.ok)throw new Error('The passage catalog is unavailable. Your current passage stays open.');return validateRegistry(await r.json());}).catch(error=>{catalogPromise=null;throw error;});
  return catalogPromise;
@@ -37,7 +38,7 @@ export const libraryAdapter={
  async download(selection,onprogress,pack=bundledPack){return workerRequest('DOWNLOAD_START',{selection,packId:pack.id},onprogress);},
  async pauseDownload(pack=bundledPack){return workerRequest('DOWNLOAD_PAUSE',{packId:pack.id});},
  async removeDownload(pack=bundledPack){return workerRequest('DOWNLOAD_REMOVE',{packId:pack.id});},
- async activate(pack){return workerRequest('PACK_SELECT',{packId:pack.id,revision:pack.revision});},
+ activate(pack){const selection={packId:pack.id,revision:pack.revision};activationQueue=activationQueue.catch(()=>{}).then(()=>workerRequest('PACK_SELECT',selection));return activationQueue;},
 };
 export function formatBytes(bytes){return Number.isFinite(bytes)?`${(bytes/1024/1024).toFixed(1)} MB`:'Size unavailable';}
 async function workerRequest(type,data={},onprogress){

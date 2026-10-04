@@ -18,3 +18,15 @@ for(const id of ['eng.MRK-1-1-13','spa.MRK-1-1-13','eng.MRK-1-14-20','spa.MRK-1-
  await waitFor(()=>expect(JSON.parse(localStorage.getItem('fia-v3-progress@1:'+id)).session.index).toBe(1));
  expect(audio).not.toHaveBeenCalled();expect(requests.every(url=>url==='/content/registry.json'||url===descriptor.presentation.url)).toBe(true);
 });
+it('late previous-pack download activation cannot expose media in the newly selected pack',async()=>{
+ const descriptor=registry.packs.find(p=>p.id==='spa.MRK-1-1-13'),presentation=JSON.parse(readFileSync('public'+descriptor.presentation.url,'utf8'));
+ presentation.assets.a112.src='/assets/stale-shared.png';presentation.activities[0].assetId='a112';
+ localStorage.setItem('fia-v3-selected-pack',descriptor.id);let release;const held=new Promise(resolve=>release=resolve);
+ vi.spyOn(libraryAdapter,'select').mockResolvedValue({descriptor,presentation});
+ vi.spyOn(libraryAdapter,'downloadStatus').mockImplementation(async pack=>pack.id==='eng.MRK-1-1-13'?{saved:true,active:{manifest:{presentationRevision:pack.revision},files:[{path:'/assets/stale-shared.png'}]}}:{saved:false});
+ vi.spyOn(libraryAdapter,'activate').mockImplementation(pack=>pack.id==='eng.MRK-1-1-13'?held:Promise.resolve({selected:true}));
+ vi.stubGlobal('Audio',vi.fn());HTMLMediaElement.prototype.pause=vi.fn();Element.prototype.scrollTo=vi.fn();
+ render(App);await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toBe(presentation.activities[0].title));
+ release({selected:true});await new Promise(resolve=>setTimeout(resolve,10));
+ expect(document.querySelector('img[src="/assets/stale-shared.png"]')).toBeNull();expect(screen.getByRole('button',{name:'Open Downloads'})).toBeTruthy();
+});
