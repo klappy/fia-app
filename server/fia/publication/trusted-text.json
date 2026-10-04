@@ -1,0 +1,172 @@
+{
+  "authority": {
+    "recipeCommit": "a3f6256476761ae26dca1626a066edc0359c71ea",
+    "recipePath": "product/guidance/shared-serving-v1.md",
+    "scope": "Exact unchanged supplied eight-position text only; not media or new teaching approval."
+  },
+  "expected": {
+    "schema": "fia.text-excerpt.v1",
+    "packId": "fia-mark-hear-heart-excerpt",
+    "language": "en",
+    "capability": "text-excerpt",
+    "cookbookRevision": "a3f6256476761ae26dca1626a066edc0359c71ea",
+    "source": {
+      "suppliedRevision": "0af90274f13b32a776466e436cd114e6de759783",
+      "packFileSha256": "ccd72f23c23f932651b500b730b285f32fabd37e50037b5af91d8881f1403975",
+      "upstream": {
+        "repository": "klappy/fia-functional-poc",
+        "commit": "df479a8a0a2003fcddab1303bf8f8c22b3f9ce88",
+        "guide": {
+          "repo": "FIATranslationGuide",
+          "commit": "5d6d59a22caa8f8539c5ff6a3e1ec74c4cfa5c6d",
+          "path": "eng/json/41.content.json",
+          "url": "https://raw.githubusercontent.com/BibleAquifer/FIATranslationGuide/5d6d59a22caa8f8539c5ff6a3e1ec74c4cfa5c6d/eng/json/41.content.json",
+          "retrievedAt": "2026-09-11T20:42:04.256Z",
+          "fileSha256": "938515635c9635e6ed614eab84c1a7e0a4cc3269a3231147431a88dd95bb321c",
+          "contentSha256": "2347d166bf34db52915f3a76f379f1f9afa9ca78a1af163be091541cbaccc898"
+        },
+        "rights": {
+          "repo": "FIATranslationGuide",
+          "commit": "5d6d59a22caa8f8539c5ff6a3e1ec74c4cfa5c6d",
+          "path": "eng/metadata.json",
+          "url": "https://raw.githubusercontent.com/BibleAquifer/FIATranslationGuide/5d6d59a22caa8f8539c5ff6a3e1ec74c4cfa5c6d/eng/metadata.json",
+          "retrievedAt": "2026-09-11T20:42:04.256Z",
+          "fileSha256": "9d013436d9e1afc08215552b447f642b1bd73c7e8b50ed52707de8bbeca72851",
+          "resourceTitle": "Familiarization, Internalization, Articulation (FIA)",
+          "metadataVersion": "1.1.2",
+          "licenseInfo": {
+            "title": "Familiarization, Internalization, Articulation (Fia)",
+            "copyright": {
+              "dates": "2025",
+              "holder": {
+                "name": "Word Collective",
+                "url": "https://wordcollective.com"
+              }
+            },
+            "licenses": [
+              {
+                "eng": {
+                  "name": "CC BY-SA 4.0 license",
+                  "url": "https://creativecommons.org/licenses/by-sa/4.0/legalcode.en"
+                }
+              }
+            ],
+            "showAdaptationNoticeForEnglish": false,
+            "showAdaptationNoticeForNonEnglish": true
+          },
+          "adaptationNotice": "<p><b>Familiarization, Internalization, Articulation (FIA) Translation Guide</b> © 2025 Word Collective Released under CC BY-SA 4.0 license. <cite>Familiarization, Internalization, Articulation (FIA) Translation Guide</cite> has been adapted in the following languages Tok Pisin, عربي, Français, हिंदी, Bahasa Indonesia, Português, Русский, Español, Kiswahili, 简体中文 from <cite>Familiarization, Internalization, Articulation (FIA)</cite> © 2025 Word Collective Released under CC BY-SA 4.0 license by Mission Mutual</p>"
+        }
+      }
+    },
+    "activities": [
+      {
+        "id": "S01-U001",
+        "kind": "guide",
+        "title": "Hear and Heart",
+        "label": "Hear and Heart",
+        "completion": "auto",
+        "sourceRef": {
+          "unitId": "S01-U001",
+          "assetId": null
+        },
+        "attribution": "FIA Translation Guide © 2025 Word Collective · CC BY-SA 4.0",
+        "textSha256": "affdc8e569fa818aab90d16b1fc2f88f95efe409a4ef711e03a028420334d818"
+      },
+      {
+        "id": "S01-U002",
+        "kind": "guide",
+        "title": "Hear and Heart",
+        "label": "Hear and Heart",
+        "completion": "auto",
+        "sourceRef": {
+          "unitId": "S01-U002",
+          "assetId": null
+        },
+        "attribution": "FIA Translation Guide © 2025 Word Collective · CC BY-SA 4.0",
+        "textSha256": "b30844ce00feb22d0c8bf5d0a92ed99a43d0de1311b21ca3833785dd5911dee7"
+      },
+      {
+        "id": "S01-U002-reading-1",
+        "kind": "scripture",
+        "title": "Mark 1:1–13",
+        "label": "Berean Standard Bible",
+        "completion": "auto",
+        "sourceRef": {
+          "unitId": "S01-U002",
+          "assetId": "scripture-BereanStandardBible"
+        },
+        "attribution": "Berean Standard Bible",
+        "textSha256": "0f6c3af7cddfdf77b2e6aafcd191c4166961ec853c5c248760c5f2aa57c8e946"
+      },
+      {
+        "id": "S01-U002-reading-2",
+        "kind": "scripture",
+        "title": "Mark 1:1–13",
+        "label": "unfoldingWord Literal Text",
+        "completion": "auto",
+        "sourceRef": {
+          "unitId": "S01-U002",
+          "assetId": "scripture-unfoldingWordLiteral"
+        },
+        "attribution": "unfoldingWord Literal Text",
+        "textSha256": "8e021cac0e54b8aaffa553989fd2cb398cc9709945171932d4d0e0fe6af9a6e6"
+      },
+      {
+        "id": "S01-U002-reading-3",
+        "kind": "scripture",
+        "title": "Mark 1:1–13",
+        "label": "unfoldingWord Simplified Text",
+        "completion": "auto",
+        "sourceRef": {
+          "unitId": "S01-U002",
+          "assetId": "scripture-unfoldingWordSimplified"
+        },
+        "attribution": "unfoldingWord Simplified Text",
+        "textSha256": "1aa69e9cc49e3fda2c79350a58a59962967b19b892be5c86611cccdcf257ea47"
+      },
+      {
+        "id": "S01-U003",
+        "kind": "discussion",
+        "title": "Hear and Heart",
+        "label": "Hear and Heart",
+        "completion": "confirm",
+        "sourceRef": {
+          "unitId": "S01-U003",
+          "assetId": null
+        },
+        "attribution": "FIA Translation Guide © 2025 Word Collective · CC BY-SA 4.0",
+        "textSha256": "c6ef6ed4d31b97cf4a0d03a8228505d052a8a780a5fe0413ebc441860df97b5d"
+      },
+      {
+        "id": "S01-U004",
+        "kind": "discussion",
+        "title": "Hear and Heart",
+        "label": "Hear and Heart",
+        "completion": "confirm",
+        "sourceRef": {
+          "unitId": "S01-U004",
+          "assetId": null
+        },
+        "attribution": "FIA Translation Guide © 2025 Word Collective · CC BY-SA 4.0",
+        "textSha256": "e8a93c2c61fe1a0f6f81fa58997b305e6fc98309b710e3a31ff8334e8644a3eb"
+      },
+      {
+        "id": "S01-U005",
+        "kind": "discussion",
+        "title": "Hear and Heart",
+        "label": "Hear and Heart",
+        "completion": "confirm",
+        "sourceRef": {
+          "unitId": "S01-U005",
+          "assetId": null
+        },
+        "attribution": "FIA Translation Guide © 2025 Word Collective · CC BY-SA 4.0",
+        "textSha256": "5df74ebc5c4225c3d54e1629cff92f39a1cc058f2ac30b59d75d68d496d1d0f5"
+      }
+    ],
+    "media": {
+      "status": "unavailable",
+      "reason": "applicability-unresolved"
+    }
+  }
+}
