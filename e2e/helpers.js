@@ -8,7 +8,13 @@ export async function journey(page){
  await seedPassage(page);const initial=(await saved(page)).index;
  await page.getByRole('button',{name:'Continue',exact:true}).click();await expect.poll(async()=>(await saved(page)).index).toBeGreaterThan(initial);
  const next=(await saved(page)).index;await page.reload();expect((await saved(page)).index).toBe(next);
- await page.getByRole('button',{name:'More options'}).click();await page.getByRole('button',{name:'Language',exact:false}).click();await page.getByRole('button',{name:/Español/}).click();await expect(page.getByRole('dialog')).toContainText('Your English passage and saved place are unchanged');await page.getByRole('button',{name:'Close',exact:true}).click();expect((await saved(page)).index).toBe(next);
+ await page.getByRole('button',{name:'More options'}).click();await page.getByRole('button',{name:'Language',exact:false}).click();await page.getByRole('button',{name:/Español/}).click();await expect(page.getByRole('dialog')).toContainText('68 passages with text available');await page.getByRole('button',{name:'Close',exact:true}).click();expect((await saved(page)).index).toBe(next);
  await page.getByRole('button',{name:'More options'}).click();await page.getByRole('button',{name:'Settings',exact:true}).click();await expect(page.getByRole('dialog')).toContainText('Listening');await page.getByRole('button',{name:'Close',exact:true}).click();
  await page.getByRole('button',{name:'More options'}).click();await page.getByRole('button',{name:'Downloads',exact:true}).click();await expect(page.getByRole('group',{name:'Include in download'})).toBeVisible();await page.getByRole('button',{name:'Close',exact:true}).click();
+}
+
+export async function downloadSelected(page,selection='core'){
+ await page.getByRole('button',{name:'More options'}).click();await page.getByRole('button',{name:'Downloads',exact:true}).click();await expect(page.getByRole('group',{name:'Include in download'})).toBeVisible();
+ await page.getByRole('radio',{name:selection==='core'?/^Text only/:selection==='audio'?/^Text and audio/:/^Text and all available resources/}).check();await page.getByRole('button',{name:'Download selection',exact:true}).click();
+ await expect(page.getByText('The download is verified. Reload to use the saved version. Your place is kept.')).toBeVisible({timeout:90000});await page.getByRole('button',{name:'Close',exact:true}).click();
 }

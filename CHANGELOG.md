@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.0.0-alpha.4 — Mark text in English and Spanish (2026-10-04)
+
+Adds all68 Mark pericopes in each language through one source-bound compiler, verified catalog loading, separate progress and per-pack text downloads. Resources require explicit download; no new audio is generated. Reviewed list/example mappings repeat across the corpus; other instructions remain readable with conservative continuation. See [release note](release/changes/3.0.0-alpha.4-mark-text.md).
+
 ## 3.0.0-alpha.3 — Online destinations with saved passages (2026-10-04)
 
 Keeps status, help, provenance and API destinations accessible after a passage download. Their network failures remain failures; installed app/session navigation still uses its pinned revision. No UI, content or media changes. See [release note](release/changes/3.0.0-alpha.3-installed-routes.md).
