@@ -63,6 +63,8 @@ async function cachedResponse(request,clientId){
 }
 self.addEventListener('fetch',event=>{
  if(!isBuild||event.request.method!=='GET'||new URL(event.request.url).origin!==self.location.origin)return;
+ // Deployment identity is live infrastructure metadata, never installed-pack content.
+ if(new URL(event.request.url).pathname==='/version.json'){event.respondWith(fetch(event.request,{cache:'no-store'}));return;}
  if(event.request.mode==='navigate')event.respondWith((async()=>{
   const active=await read('active');
   const cached=active&&await(await caches.open(active.cache)).match('/index.html');
