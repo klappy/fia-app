@@ -1,0 +1,20 @@
+import {it,expect,vi,afterEach} from 'vitest';
+import {render,screen,fireEvent,cleanup,waitFor} from '@testing-library/svelte';
+import {readFileSync} from 'node:fs';
+import {webcrypto} from 'node:crypto';
+import App from '../src/App.svelte';
+import {libraryAdapter} from '../src/lib/library.js';
+const registry=JSON.parse(readFileSync('public/content/registry.json','utf8'));
+afterEach(()=>{cleanup();vi.restoreAllMocks();vi.unstubAllGlobals();localStorage.clear();});
+for(const id of ['eng.MRK-1-1-13','spa.MRK-1-1-13','eng.MRK-1-14-20','spa.MRK-1-14-20'])it(`loads ${id} silently with explicit text continuation and no resource URL`,async()=>{
+ localStorage.setItem('fia-v3-selected-pack',id);const requests=[];
+ vi.stubGlobal('crypto',webcrypto);vi.stubGlobal('fetch',async url=>{requests.push(url);return new Response(readFileSync('public'+url));});
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});vi.spyOn(libraryAdapter,'activate').mockResolvedValue({selected:true});
+ const audio=vi.fn();vi.stubGlobal('Audio',audio);HTMLMediaElement.prototype.pause=vi.fn();Element.prototype.scrollTo=vi.fn();
+ render(App);const descriptor=registry.packs.find(p=>p.id===id),pack=JSON.parse(readFileSync('public'+descriptor.presentation.url,'utf8'));
+ await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toBe(pack.activities[0].prompt));
+ expect(audio).not.toHaveBeenCalled();expect(document.querySelectorAll('img[src],video[src],audio[src]')).toHaveLength(0);
+ await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));
+ await waitFor(()=>expect(JSON.parse(localStorage.getItem('fia-v3-progress@1:'+id)).session.index).toBe(1));
+ expect(audio).not.toHaveBeenCalled();expect(requests.every(url=>url==='/content/registry.json'||url===descriptor.presentation.url)).toBe(true);
+});

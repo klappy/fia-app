@@ -59,3 +59,16 @@ test('root, sessions and near-prefix routes retain installed revision and new-cl
   const pin=await w.stores.get('fia-v3-download-metadata@1').get('/client-'+id).clone().json();assert.equal(pin.revision,'r1');
  }
 });
+
+test('two installed passages isolate removal and verify media before explicit downloads',async()=>{
+ const w=worker(),eng='eng.MRK-1-1-13',spa='spa.MRK-1-14-20';
+ const perPack=id=>({...manifest(),packId:id,presentationRevision:'a'.repeat(64)});
+ w.reply('/offline/'+eng+'.json',Response.json(perPack(eng)));w.reply('/offline/'+spa+'.json',Response.json(perPack(spa)));
+ const blocked=await w.fetch(new Request('https://fia.test/audio.m4a'));assert.equal(blocked.status,409);assert.equal(w.calls.includes('https://fia.test/audio.m4a'),false);
+ assert.equal((await w.message({type:'DOWNLOAD_START',packId:eng,selection:'audio'})).ok,true);
+ assert.equal((await w.message({type:'DOWNLOAD_START',packId:spa,selection:'core'})).ok,true);
+ assert.equal((await w.message({type:'DOWNLOAD_STATUS',packId:eng})).saved,true);
+ await w.message({type:'DOWNLOAD_REMOVE',packId:spa});assert.equal((await w.message({type:'DOWNLOAD_STATUS',packId:eng})).saved,true);assert.equal((await w.message({type:'DOWNLOAD_STATUS',packId:spa})).saved,false);
+ await w.message({type:'PACK_SELECT',packId:eng,revision:'a'.repeat(64)},null,'page');
+ assert.equal(await(await w.fetch(new Request('https://fia.test/audio.m4a'),{clientId:'page'})).text(),'recording');
+});
