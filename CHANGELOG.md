@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.0.0-alpha.6 — Restore verified downloads (2026-10-04)
+
+Excludes hosting control files from offline download manifests. Production consumed `_headers` as configuration and returned HTML at its URL, causing every download to fail verification before audio. Exact asset integrity checks remain enforced. No UI, recording or legacy-cache migration changes. See [release note](release/changes/3.0.0-alpha.6-download-integrity.md).
+
 ## 3.0.0-alpha.5 — All Mark presentations through HTTP and MCP (2026-10-04)
 
 Adds immutable catalog discovery and read access to all136 accepted English/Spanish Mark presentations through the existing shared HTTP/MCP operations. Original three records and browser/media behavior remain unchanged. Requested static payloads are verified before delivery; no generation or write operation is added. See [release note](release/changes/3.0.0-alpha.5-mark-read-api.md).

@@ -32,6 +32,16 @@ test('live version bypasses a historic installed cache and never falls back to i
 });
 
 const onlineRoutes=['/version.json','/build-status','/build-status/','/build-status.html','/build-status/observations.json','/docs','/docs/TEST-GUIDE.html','/content/source','/content/source/audio-manifest.json','/v1','/v1/not-a-route','/mcp','/mcp/unsupported'];
+test('hosting HTML fallback for deployment config rejects old manifest; corrected explicit retry succeeds without weakening asset integrity',async()=>{
+ const w=worker(),control='/*\n X-Test: retained';
+ const old=manifest('bad-config');old.files.unshift({path:'/_headers',bytes:Buffer.byteLength(control),sha256:createHash('sha256').update(control).digest('hex'),group:'core'});
+ w.reply('/_headers',new Response('<html>app fallback</html>',{headers:{'Content-Type':'text/html'}}));w.manifest(old);
+ assert.equal((await w.message({type:'DOWNLOAD_START',selection:'audio'})).ok,false);assert.equal((await w.message({type:'DOWNLOAD_STATUS'})).pending.received,0);
+ w.manifest(manifest('public-assets-only'));w.calls.length=0;
+ assert.equal((await w.message({type:'DOWNLOAD_START',selection:'audio'})).ok,true);assert.equal(w.calls.includes('/_headers'),false);assert.equal((await w.message({type:'DOWNLOAD_STATUS'})).saved,true);
+ w.reply('/audio.m4a',new Response('corrupt'));w.manifest(manifest('corrupt-real-asset'));
+ assert.equal((await w.message({type:'DOWNLOAD_START',selection:'audio'})).ok,false);assert.equal((await w.message({type:'DOWNLOAD_STATUS'})).active.revision,'public-assets-only');
+});
 test('installed packs preserve online-only navigation response status, headers and body',async()=>{
  const w=worker();await w.message({type:'DOWNLOAD_START',selection:'core'});
  for(const path of onlineRoutes){
