@@ -11,7 +11,7 @@ test('public artifact contains only reviewed runtime closure and truthful genera
   if(/\.(html|md|json|js|css)$/.test(file))assert.doesNotMatch(bytes.toString('utf8'),/\/Users\/|chatgpt\.site|BEGIN (?:RSA |EC )?PRIVATE KEY|\bsk-[A-Za-z0-9]{20}/,file);
  }
  for(const file of exact.keys())assert.ok(files.includes(file),file);
- const manifest=JSON.parse(readFileSync(new URL('offline-manifest.json',root)));assert.equal(manifest.packId,'fia-mark-authentic');
+ const manifest=JSON.parse(readFileSync(new URL('offline-manifest.json',root)));assert.equal(manifest.packId,'fia-mark-authentic');assert.equal(manifest.files.some(f=>f.path==='/version.json'),false,'live version must never enter offline manifest');assert.ok(files.includes('version.json'),'live identity remains published');
  for(const f of manifest.files){const b=readFileSync(new URL(f.path.slice(1),root));assert.equal(b.length,f.bytes);assert.equal(hash(b),f.sha256);}
  assert.equal(manifest.revision,hash(JSON.stringify(manifest.files)).slice(0,12));
  assert.match(readFileSync(new URL('sw.js',root),'utf8'),new RegExp(`const VERSION='${manifest.revision}'`));
