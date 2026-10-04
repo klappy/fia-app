@@ -20,19 +20,30 @@
  let content=$derived(presentationContent(mediaForDevice(rawPresentation,downloadedPaths),selectedPack));
  let activities=$derived(content.activities),assets=$derived(content.assets),sections=$derived(content.sections),examples=$derived(content.examples),readingGroups=$derived(content.readingGroups),contentContract=$derived(content.contentContract),defaultScriptureId=$derived(content.defaultScriptureId);
  let selectionGeneration=0;
- function mediaForDevice(pack,paths){return {...pack,activities:pack.activities.map(a=>({...a,audioSrc:paths.has(a.audioSrc)?a.audioSrc:null})),assets:Object.fromEntries(Object.entries(pack.assets).map(([id,a])=>[id,{...a,src:paths.has(a.src)?a.src:undefined,poster:paths.has(a.poster)?a.poster:undefined,descriptionAudio:paths.has(a.descriptionAudio)?a.descriptionAudio:undefined,downloadRequired:['image','map','video'].includes(a.kind)&&!paths.has(a.src),downloadPrepared:typeof a.src==='string'&&a.src.startsWith('/')&&!a.src.startsWith('//')}]))};}
+ let onlineMedia=$state(new globalThis.Map()),deliveryRevision=$state(null),downloadedDeliveryRevision=$state(null),mediaLoading=$state(false),playbackPending=$state(false);
+ let playbackConsent=false,mediaGeneration=0,mediaAbort=null,mediaBlob=null,mediaTiming=null,mediaLogicalPath=null;
+ async function updateMedia(){const generation=selectionGeneration,pack=selectedPack;try{const status=await libraryAdapter.mediaStatus(pack);if(generation!==selectionGeneration)return;deliveryRevision=status.deliveryRevision;onlineMedia=new globalThis.Map(status.files.map(f=>[f.path,f]));}catch{if(generation===selectionGeneration){onlineMedia=new globalThis.Map();deliveryRevision=null;}}}
+ function revokePlayback(){playbackConsent=false;playbackPending=false;clearTimeout(timer);timer=null;mediaGeneration++;mediaAbort?.abort();mediaAbort=null;mediaLoading=false;}
+ async function startRecording(text,path,explicit=false){
+  if(explicit)playbackConsent=true;if(!playbackConsent)return;
+  const owner=++mediaGeneration,pack=selectedPack,activityId=activity.id;mediaAbort?.abort();mediaAbort=new AbortController();const signal=mediaAbort.signal;
+  if(mediaBlob){URL.revokeObjectURL(mediaBlob);mediaBlob=null;}mediaTiming=null;
+  try{if(onlineMedia.has(path)){mediaLoading=true;const result=await libraryAdapter.playMedia(pack,path,deliveryRevision,signal);if(owner!==mediaGeneration||signal.aborted||pack!==selectedPack||activityId!==activity.id)return;mediaBlob=URL.createObjectURL(new Blob([result.bytes],{type:result.mime}));mediaTiming=result.timing;mediaLogicalPath=path;audio.play(text,mediaBlob,rate);}else if(downloadedPaths.has(path)){audio.play(text,path,rate);}else throw Error('This recording is unavailable.');}
+  catch(error){if(owner===mediaGeneration){revokePlayback();notice=error.message;dispatch({type:'PAUSE'});}}finally{if(owner===mediaGeneration)mediaLoading=false;}
+ }
+ function mediaForDevice(pack,paths){if(deliveryRevision&&downloadedDeliveryRevision!==deliveryRevision)paths=new Set([...paths].filter(path=>!onlineMedia.has(path)));return {...pack,activities:pack.activities.map(a=>({...a,audioSrc:paths.has(a.audioSrc)||onlineMedia.has(a.audioSrc)?a.audioSrc:null})),assets:Object.fromEntries(Object.entries(pack.assets).map(([id,a])=>[id,{...a,src:paths.has(a.src)?a.src:undefined,poster:paths.has(a.poster)?a.poster:undefined,descriptionAudio:paths.has(a.descriptionAudio)||onlineMedia.has(a.descriptionAudio)?a.descriptionAudio:undefined,downloadRequired:['image','map','video'].includes(a.kind)&&!paths.has(a.src),downloadPrepared:typeof a.src==='string'&&a.src.startsWith('/')&&!a.src.startsWith('//')}]))};}
  async function updateDownloaded(){
   const generation=selectionGeneration,pack=selectedPack;
   try{
    const status=await libraryAdapter.downloadStatus(pack);if(generation!==selectionGeneration)return;
    const verified=!!status.saved&&status.active.manifest?.presentationRevision===pack.revision;
    if(verified){await libraryAdapter.activate(pack);if(generation!==selectionGeneration)return;}
-   saved=verified;downloadedPaths=new Set(verified?status.active.files.map(f=>f.path):[]);
+   saved=verified;downloadedDeliveryRevision=verified?status.active.manifest?.deliveryRevision||null:null;downloadedPaths=new Set(verified?status.active.files.map(f=>f.path):[]);
   }catch{if(generation===selectionGeneration){saved=false;downloadedPaths=new Set();}}
  }
 
  function applyStored(){const stored=restoreProgress(localStorage,selectedPack,activities,assets);if(stored?.resetRequired)notice='This passage changed. Your previous place could not be matched; starting at the beginning.';session=stored?.session||createSession(activities);if(stored){scale=[1,1.25,1.5].includes(stored.scale)?stored.scale:1;rate=[.85,1,1.15].includes(stored.rate)?stored.rate:1;muted=!!stored.muted;dark=!!stored.dark;termDefinition=stored.termDefinition===activities[session.index]?.id?stored.termDefinition:null;transitionSection=stored.transitionSection===activities[session.index]?.sectionId?stored.transitionSection:null;}started=session.index>0||session.status!=='ready';}
- async function selectPack(id){const generation=++selectionGeneration;const loaded=await libraryAdapter.select(id);if(generation!==selectionGeneration)return;persist();cancel();selectedPack=loaded.descriptor;rawPresentation=loaded.presentation;downloadedPaths=new Set();introduced=new Set();manualStarts=new Set();visualHeard=null;termDefinition=null;transitionSection=null;messages=[];language=selectedPack.language;session=createSession(loaded.presentation.activities);try{applyStored();localStorage.setItem('fia-v3-selected-pack',id);}catch{notice='Your saved place could not be read.';}sheet=null;await libraryAdapter.activate(selectedPack).catch(()=>{});if(generation!==selectionGeneration)return;await updateDownloaded();}
+ async function selectPack(id){const generation=++selectionGeneration;const loaded=await libraryAdapter.select(id);if(generation!==selectionGeneration)return;persist();cancel();selectedPack=loaded.descriptor;rawPresentation=loaded.presentation;downloadedPaths=new Set();onlineMedia=new globalThis.Map();deliveryRevision=null;revokePlayback();introduced=new Set();manualStarts=new Set();visualHeard=null;termDefinition=null;transitionSection=null;messages=[];language=selectedPack.language;session=createSession(loaded.presentation.activities);try{applyStored();localStorage.setItem('fia-v3-selected-pack',id);}catch{notice='Your saved place could not be read.';}sheet=null;await libraryAdapter.activate(selectedPack).catch(()=>{});if(generation!==selectionGeneration)return;await updateDownloaded();await updateMedia();}
  function restartPack(id){resetProgress(localStorage,{id});if(id===selectedPack.id)reset();}
  let language=$state('eng');
  function selectLanguage(id){language=id;try{localStorage.setItem('fia-v3-library-language',id);}catch{notice='Language choice could not be saved on this device.';}}
@@ -63,14 +74,14 @@
  let visual=$derived(['image','map'].includes(focal?.kind));
  let videoPending=$derived(visual&&!!matchingVideo&&visualHeard!==focal.id);
  let visualPending=$derived(visual&&!matchingVideo&&session.preferences.describeImages&&!muted&&!!focal.descriptionAudio&&visualHeard!==focal.id);
- let primaryLabel=$derived(finished?'Begin again':inTransition?'Continue':automaticOff&&!session.detour?'Continue':isPlaying?'Pause':inlineVideo?'Resume':audio?.active&&audioContext?'Resume':videoPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)?'Play video':visualPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)?'Play':session.detour?(visual?'Return':focal?.kind==='video'?'Play video':focal?.descriptionAudio?'Listen':'Return'):session.status==='waiting'||automaticOff||!activity?.audioSrc?'Continue':session.status==='paused'?'Resume':!started?'Begin':'Play');
+ let primaryLabel=$derived(mediaLoading?'Cancel loading':playbackPending?'Pause':finished?'Begin again':inTransition?'Continue':automaticOff&&!session.detour?'Continue':isPlaying?'Pause':inlineVideo?'Resume':audio?.active&&audioContext?'Resume':videoPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)?'Play video':visualPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)?'Play':session.detour?(visual?'Return':focal?.kind==='video'?'Play video':focal?.descriptionAudio?'Listen':'Return'):session.status==='waiting'||automaticOff||!activity?.audioSrc?'Continue':session.status==='paused'?'Resume':!started?'Begin':'Play');
  let manualStarts=new Set();let listeningHint=$state(false),hintShown=false;
  let manualAvailable=$derived(!!(matchingVideo||focal?.kind==='video'&&focal.src||focal?.descriptionAudio||activity?.audioSrc));
  let manualLabel=$derived(isPlaying?'Pause':inlineVideo||audioContext&&audio?.active?'Resume':'Play');
  function manualPlay(restart=false){
-  if(!restart&&isPlaying){audio?.pause();document.querySelectorAll('video').forEach(v=>v.pause());dispatch({type:'PAUSE'});return;}
+  if(!restart&&isPlaying){revokePlayback();audio?.pause();document.querySelectorAll('video').forEach(v=>v.pause());dispatch({type:'PAUSE'});return;}
   if(!restart&&inlineVideo){playVideo();return;}
-  if(!restart&&audioContext&&audio?.active){audio.resume();return;}
+  if(!restart&&audioContext&&audio?.active){playbackConsent=true;audio.resume();return;}
   manualStarts.add(activity.id);
   if(manualStarts.size>=3&&!hintShown){listeningHint=true;hintShown=true;}
   if(visual&&matchingVideo){openMatchingVideo();return;}
@@ -79,7 +90,7 @@
   if(!src)return;
   cancel();started=true;
   if(focal?.kind==='term')termDefinition=activity.id;
-  audioContext={type:'manual',id:activity.id};audio.play(focal?.description||activity.narration,src,rate);persist();
+  audioContext={type:'manual',id:activity.id};startRecording(focal?.description||activity.narration,src,true);persist();
  }
  let introduced=$state(new Set());
  let mediaTools=$state(false); let noticeTimer;
@@ -96,13 +107,13 @@
   persist();
   if(event.type==='SET_PREFERENCE'&&event.key==='describeImages'&&descriptionsBefore!==session.preferences.describeImages&&['image','map'].includes(focal?.kind)){
    if(!session.preferences.describeImages&&audioContext?.type==='description'&&audioContext.id===focal.id)cancel();
-   else if(session.preferences.describeImages&&!isPlaying&&(session.detour||session.status==='waiting'||!activity.audioSrc))describe(focal.id);
+   // Enabling a preference does not grant a new playback action.
   }
   if(queued&&!session.queued&&session.detour===queued){timer=setTimeout(()=>{if(session.detour===queued&&!muted)describe(queued);},350);}
  }
  function resolveAsset(id){if(assets[id])return id;return (activity.relatedAssetIds||[]).find(key=>assets[key]?.kind===id)||(focal?.kind===id?focal.id:null)||(id==='scripture'?defaultScriptureId:Object.values(assets).find(a=>a.kind===id)?.id)||id;}
  function settleSilent(){if(!inTransition&&!session.detour&&!finished&&!activity.audioSrc){session={...session,status:'waiting'};persist();}}
- function cancel(){videoState={elapsed:0,duration:0};inlineVideo=null;videoPlaying=false;clearTimeout(timer);timer=null;audio?.stop();document.querySelectorAll('video').forEach(v=>v.pause());audioContext=null;}
+ function cancel(){playbackPending=false;mediaGeneration++;mediaAbort?.abort();mediaAbort=null;mediaLoading=false;if(mediaBlob){URL.revokeObjectURL(mediaBlob);mediaBlob=null;}mediaTiming=null;mediaLogicalPath=null;videoState={elapsed:0,duration:0};inlineVideo=null;videoPlaying=false;clearTimeout(timer);timer=null;audio?.stop();document.querySelectorAll('video').forEach(v=>v.pause());audioContext=null;}
  function message(text){messages=[...messages.slice(-11),{role:'assistant',text}];tick().then(()=>chatLog?.scrollTo({top:chatLog.scrollHeight,behavior:'smooth'}));}
  function finishAudio(){
   const context=audioContext;audioContext=null;if(!context)return;
@@ -116,14 +127,16 @@
   else if(!session.detour&&activity?.kind==='video'&&session.preferences.autoplayVideo){timer=setTimeout(()=>{if(session.preferences.autoplayVideo)playVideo();},350);}
  }
  function scheduleNext(){
+  if(!playbackConsent)return;
   if(session.status==='complete'||session.detour||inTransition)return;
   if(!activity.audioSrc){settleSilent();if(visual&&(session.preferences.autoplayVideo&&matchingVideo||session.preferences.describeImages&&focal?.descriptionAudio)||focal?.kind==='term'&&!muted&&focal.descriptionAudio)describe(focal.id);return;}
   if(automaticOff&&visual&&(session.preferences.autoplayVideo&&matchingVideo||session.preferences.describeImages&&focal?.descriptionAudio)){describe(focal.id);return;}
   const id=activity.id,generation=selectionGeneration;
   if(activity.kind==='scripture'&&!session.preferences.readScripture){notice='The passage is ready for you to read. Continue when you’re ready.';return;}
-  if(!automaticOff)timer=setTimeout(()=>{if(generation===selectionGeneration&&activity.id===id&&!session.detour)playActivity(false,true);},650);
+  if(!automaticOff){playbackPending=true;timer=setTimeout(()=>{playbackPending=false;if(playbackConsent&&generation===selectionGeneration&&activity.id===id&&!session.detour)playActivity(false,true);},650);}
  }
  function playActivity(forceReading=false,automatic=false){
+  if(automatic&&!playbackConsent)return;
   if(inTransition){transitionSection=null;persist();}
   if(session.detour){describe(stage.focal);return;}
   if(finished){reset();return;}
@@ -139,17 +152,18 @@
   if(automaticOff&&activity.readingGroupId){navigate({type:'CONTINUE'});return;}
   if(automaticOff&&!forceReading){dispatch({type:'PLAY'});introduced=new Set([...introduced,activity.id]);dispatch({type:'NARRATION_END',activityId:activity.id});return;}
   cancel();dispatch({type:'PLAY'});
-  audioContext={type:'narration',id:activity.id};audio.play(activity.narration,activity.audioSrc,rate);
+  audioContext={type:'narration',id:activity.id};startRecording(activity.narration,activity.audioSrc,!automatic);
  }
 
  function primary(){
+  if(mediaLoading){revokePlayback();notice='Playback canceled.';return;}
   if(!activity.audioSrc&&!session.detour&&!inTransition&&!finished&&!videoPending&&!visualPending){navigate({type:'CONTINUE'},true);return;}
-  if(inTransition){transitionSection=null;persist();playActivity();return;}
+  if(inTransition){transitionSection=null;persist();return;}
   if(finished){reset();return;}
   if(automaticOff&&!session.detour){navigate({type:'CONTINUE'},true);return;}
-  if(isPlaying){audio?.pause();document.querySelectorAll('video').forEach(v=>v.pause());dispatch({type:'PAUSE'});return;}
+  if(isPlaying||playbackPending){revokePlayback();audio?.pause();document.querySelectorAll('video').forEach(v=>v.pause());dispatch({type:'PAUSE'});return;}
   if(inlineVideo){playVideo();return;}
-  if(audio?.active&&audioContext){if(!session.detour&&audioContext.type!=='description')dispatch({type:'PLAY'});if(audio.resume())return;}
+  if(audio?.active&&audioContext){playbackConsent=true;if(!session.detour&&audioContext.type!=='description')dispatch({type:'PLAY'});if(audio.resume())return;}
   if(videoPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)){openMatchingVideo();return;}
   if(visualPending){if(!session.detour&&activity.audioSrc&&!introduced.has(activity.id)&&session.status!=='waiting')playActivity();else describe(focal.id,true);return;}
   if(session.detour){if(visual)navigate({type:'RETURN'});else if(focal.kind==='video')playVideo();else if(focal.descriptionAudio)describe(focal.id,true);else navigate({type:'RETURN'});return;}
@@ -166,13 +180,14 @@
   await tick();if(inlineVideo?.id===target.id)playVideo();
  }
  function navigate(event,auto=false){
-  if(inTransition&&event.type==='CONTINUE'){transitionSection=null;persist();if(auto&&started)playActivity();return;}
+  revokePlayback();
+  if(inTransition&&event.type==='CONTINUE'){transitionSection=null;persist();return;}
   cancel();visualHeard=null;dispatch(event);notice='';settleSilent();
   if(event.type==='DETOUR'&&assets[event.assetId]?.kind==='video'&&session.preferences.autoplayVideo)tick().then(playVideo);
   if(auto&&started)scheduleNext();
  }
  function reset(){cancel();const preferences={...session.preferences};const mode=session.mode;dispatch({type:'RESET'});session={...session,preferences,mode};introduced=new Set();started=false;messages=[];persist();}
- function describe(id,explicit=false){const a=assets[id];if(!a)return;if(['image','map'].includes(a.kind)&&matchingVideo&&focal.id===id&&(explicit||session.preferences.autoplayVideo)){openMatchingVideo();return;}if(!session.detour&&a.kind==='term'&&activity.assetId===id){termDefinition=activity.id;persist();}cancel();dispatch({type:'PAUSE'});message(a.description);if(!a.descriptionAudio){notice='No source recording is available for this resource.';return;}audioContext={type:'description',id};audio.play(a.description,a.descriptionAudio,rate);}
+ function describe(id,explicit=false){const a=assets[id];if(!a)return;if(['image','map'].includes(a.kind)&&matchingVideo&&focal.id===id&&(explicit||session.preferences.autoplayVideo)){openMatchingVideo();return;}if(!session.detour&&a.kind==='term'&&activity.assetId===id){termDefinition=activity.id;persist();}cancel();dispatch({type:'PAUSE'});message(a.description);if(!a.descriptionAudio){notice='No source recording is available for this resource.';return;}audioContext={type:'description',id};startRecording(a.description,a.descriptionAudio,explicit);}
  function playVideo(){
   if(!(inlineVideo||focal)?.src){notice='Download this resource before playback.';return;}
   audio?.stop();audioContext=null;
@@ -190,20 +205,20 @@
    const event={...result.event};if(event.assetId)event.assetId=resolveAsset(event.assetId);
    if(event.type==='PLAY'){
     if(!isPlaying){
-     if(audio?.active&&audioContext){if(audioContext.type!=='description')dispatch({type:'PLAY'});audio.resume();}
-     else if(session.detour){if(focal.kind==='video')playVideo();else describe(stage.focal);}
+     if(audio?.active&&audioContext){playbackConsent=true;if(audioContext.type!=='description')dispatch({type:'PLAY'});audio.resume();}
+     else if(session.detour){if(focal.kind==='video')playVideo();else describe(stage.focal,true);}
      else if(activity.kind==='video'&&introduced.has(activity.id))playVideo();
      else playActivity(true);
     }
    }
-   else if(event.type==='PAUSE'){audio?.pause();document.querySelectorAll('video').forEach(v=>v.pause());clearTimeout(timer);dispatch(event);}
+   else if(event.type==='PAUSE'){revokePlayback();audio?.pause();document.querySelectorAll('video').forEach(v=>v.pause());clearTimeout(timer);dispatch(event);}
    else if(['SET_MODE','SET_PREFERENCE','PIN','UNPIN','QUEUE_NEXT'].includes(event.type))dispatch(event);
    else if(event.type==='CONTINUE'&&termPrompt&&session.status==='waiting')primary();
    else navigate(event,event.type==='CONTINUE');
-   if(/\bdescribe\b/i.test(input)&&event.type==='DETOUR')describe(event.assetId);
+   if(/\bdescribe\b/i.test(input)&&event.type==='DETOUR')describe(event.assetId,true);
    else if(/\b(read|watch|play)\b/i.test(input)&&event.type==='DETOUR'){
     if(assets[event.assetId]?.kind==='video')tick().then(playVideo);
-    else if(assets[event.assetId]?.descriptionAudio)describe(event.assetId);
+    else if(assets[event.assetId]?.descriptionAudio)describe(event.assetId,true);
    }
   }
   message(result.response);notice=result.response;clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>{if(notice===result.response)notice='';},4500);
@@ -215,10 +230,10 @@
   const rotate=()=>{phoneLandscape=!!landscape?.matches;if(!phoneLandscape)landscapeDismissed=false;};
   rotate();landscape?.addEventListener('change',rotate);
   try{applyStored();}catch{}
-  updateDownloaded();
-  audio=createAudioController(s=>audioState=s,finishAudio,text=>{notice=text;dispatch({type:'PAUSE'});},{allowSpeechFallback:false});
+  updateDownloaded();updateMedia();
+  audio=createAudioController(s=>{const m=mediaTiming?.mapping;const logical={...s,src:s.src&&s.src===mediaBlob?mediaLogicalPath:s.src};audioState=m?{...logical,elapsed:Math.max(0,(s.elapsed-m.offsetSeconds)/m.scale),duration:Math.max(0,(s.duration-m.offsetSeconds)/m.scale)}:logical;},finishAudio,text=>{revokePlayback();notice=text;dispatch({type:'PAUSE'});},{allowSpeechFallback:false});
   const net=()=>online=navigator.onLine;net();window.addEventListener('online',net);window.addEventListener('offline',net);
-  if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js').then(()=>updateDownloaded()).catch(()=>{serviceWorkerError='Offline storage is unavailable here. Try the published HTTPS version.';});
+  if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js').then(()=>{updateDownloaded();updateMedia();}).catch(()=>{serviceWorkerError='Offline storage is unavailable here. Try the published HTTPS version.';});
   try{const id=localStorage.getItem('fia-v3-selected-pack');if(id&&id!==selectedPack.id)selectPack(id).catch(e=>notice=e.message);}catch{}
   const context=document.modelContext;const lifecycle=new AbortController();
   const register=tool=>{try{Promise.resolve(context?.registerTool(tool,{signal:lifecycle.signal})).catch(()=>{});}catch{}};
@@ -243,7 +258,7 @@
   <section class="media-stage reading-stage" data-kind="term-instruction"><h1 class="sr-only">{focal.title}</h1>{#key activity.id}<AlignedReading asset={guideText} identification={focal} playback={audioState} suspended={!!sheet}/>{/key}</section>
  {:else if focal}
   <h1 class="sr-only">{session.detour?focal.title:activity.title}</h1>
-  {#key focal.id}<MediaStage asset={focal} {inlineVideo} {immersive} {matchingVideo} onvideo={openMatchingVideo} descriptionsEnabled={session.preferences.describeImages} ontoggledescription={()=>dispatch({type:'SET_PREFERENCE',key:'describeImages',value:!session.preferences.describeImages})} playback={audioState} suspended={!!sheet||mediaTools} toolsVisible={mediaTools} pinned={session.pinned===focal.id} onpin={()=>dispatch({type:session.pinned===focal.id?'UNPIN':'PIN',assetId:focal.id})} ondescribe={()=>describe(focal.id)} ontime={videoTime} onplay={videoStarted} onpause={()=>videoPlaying=false} onend={videoEnded} ondownload={()=>sheet='downloads'} onerror={()=>notice='Video unavailable. Try again or continue without it.'}/>{/key}
+  {#key focal.id}<MediaStage asset={focal} {inlineVideo} {immersive} {matchingVideo} onvideo={openMatchingVideo} descriptionsEnabled={session.preferences.describeImages} ontoggledescription={()=>dispatch({type:'SET_PREFERENCE',key:'describeImages',value:!session.preferences.describeImages})} playback={audioState} suspended={!!sheet||mediaTools} toolsVisible={mediaTools} pinned={session.pinned===focal.id} onpin={()=>dispatch({type:session.pinned===focal.id?'UNPIN':'PIN',assetId:focal.id})} ondescribe={()=>describe(focal.id,true)} ontime={videoTime} onplay={videoStarted} onpause={()=>videoPlaying=false} onend={videoEnded} ondownload={()=>sheet='downloads'} onerror={()=>notice='Video unavailable. Try again or continue without it.'}/>{/key}
  {:else}
   <section class="media-stage reading-stage" data-kind="guide"><h1 class="sr-only">{activity.prompt}</h1>{#key guideText.id}<AlignedReading asset={guideText} playback={audioState} suspended={!!sheet}/>{/key}</section>
  {/if}
@@ -305,7 +320,7 @@
     <button class="sheet-back" onclick={()=>sheet='menu'}><ChevronLeft size={18}/>FIA menu</button>
     <p class="sheet-intro">Saved on this device for every passage. After downloading available recordings, Play and Replay let you listen without changing these settings.</p>
     <h3>Listening</h3>
-    <label class="preference"><span><strong>Automatic guide narration</strong><small>Listen as you move through the guide. When off, Continue stays in the center and Play is beside it.</small></span><input type="checkbox" checked={!muted} onchange={e=>{muted=!e.currentTarget.checked;cancel();dispatch({type:'PAUSE'});persist();}}/></label>
+    <label class="preference"><span><strong>Automatic guide narration</strong><small>Listen as you move through the guide. When off, Continue stays in the center and Play is beside it.</small></span><input type="checkbox" checked={!muted} onchange={e=>{muted=!e.currentTarget.checked;revokePlayback();cancel();dispatch({type:'PAUSE'});persist();}}/></label>
     {#each [{key:'readScripture',title:'Automatic Scripture reading',detail:'Read Scripture aloud when a passage opens, independently of guide narration.'},{key:'describeImages',title:'Describe images and maps',detail:'Automatically play available descriptions after the guide instruction. Source recordings may be generated.'},{key:'autoplayVideo',title:'Automatic video playback',detail:'Use the companion video when available. Explicit Play can still start a video when this is off.'}] as pref}<label class="preference"><span><strong>{pref.title}</strong><small>{pref.detail}</small></span><input type="checkbox" checked={session.preferences[pref.key]} onchange={e=>{if(!e.currentTarget.checked&&pref.key==='readScripture'&&activity.kind==='scripture'){cancel();}if(!e.currentTarget.checked&&pref.key==='autoplayVideo'&&videoPlaying){document.querySelectorAll('video').forEach(v=>v.pause());}dispatch({type:'SET_PREFERENCE',key:pref.key,value:e.currentTarget.checked});}}/></label>{/each}
     {#if matchingVideo}<button class="secondary full" onclick={()=>{sheet=null;openMatchingVideo();}}><Play size={19}/>Play video: {matchingVideo.title}</button>{/if}
     <label class="select-row">Playback speed<select bind:value={rate} onchange={()=>persist()}><option value={.85}>Unhurried · 0.85×</option><option value={1}>Natural · 1×</option><option value={1.15}>Quicker · 1.15×</option></select></label>
@@ -329,7 +344,7 @@
    <div class="scope-note"><strong>What’s real in this prototype</strong><p>Svelte UI, activity engine, local narration, video, zoom/pan, session persistence, browser-supported voice commands, preferences and resource presentation.</p><strong>What’s simulated or pending</strong><p>Commands use a bounded local interpreter. There is no live LLM or Jev model, no external MCP server, and no native app wrapper. Passage text is available from the library. Resource downloads and recording availability are shown separately for each passage.</p></div>
    <a class="secondary full" href="/docs/V3-BLUEPRINT.html" target="_blank" rel="noreferrer"><BookOpen size={17}/>Read the design blueprint</a><a class="quiet full" href="/docs/TEST-GUIDE.html" target="_blank" rel="noreferrer">Detailed test guide<ExternalLink size={14}/></a>
   {:else}
-   <p class="sheet-intro">FIA v3 · {selectedPack.title}</p><p>Passage text is available. Guide recordings: {selectedPack.capabilities.guideNarration.count}. Scripture recordings: {selectedPack.capabilities.scriptureAudio.count}. Resources must be downloaded before playback or viewing. {hasUnresolvedInstructions(selectedPack)?'Some source instructions or requested resource links remain unresolved; their text is retained for your group.':''}</p><p>Built from the conversation’s content-first blueprint. The original approved English Mark 1:1–13 sequence uses the complete six-stage source guide, its existing recordings, three Scripture translations, and linked FIA resources. Authored Scripture calls enter a reading and return to the next guide unit. This remains a prototype for testing.</p><p>Original approved English Mark 1:1–13 sources: Berean Standard Bible, unfoldingWord Literal Text and unfoldingWord Simplified Text; each edition’s rights are retained in the source records. Images: © 2025 Word Collective. Map metadata credits © 2025 Biblica. Video: © 2025 Word Collective. FIA media is provided under <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noreferrer">CC BY-SA 4.0</a>. Video is compressed for this prototype; visual assets otherwise unchanged.</p><p>The original approved English pack uses the existing source app’s AI-generated recordings, copied unchanged. No new prototype voice is substituted. It is distinct from the source video’s recording. Video captions/transcript are not supplied in this prototype.</p><a class="quiet" href="/content/source/audio-manifest.json" target="_blank" rel="noreferrer">View recording provenance<ExternalLink size={14}/></a><a class="quiet full" href="/docs/CONTENT-RECEIPT.html" target="_blank" rel="noreferrer">Content and design-system receipt<ExternalLink size={14}/></a>
+   <p class="sheet-intro">FIA v3 · {selectedPack.title}</p><p>Passage text is available. Guide recordings: {selectedPack.capabilities.guideNarration.count}. Scripture recordings: {selectedPack.capabilities.scriptureAudio.count}. Prepared audio can play online when you press Play. Downloads keep media available offline; images and videos retain their explicit download controls. {hasUnresolvedInstructions(selectedPack)?'Some source instructions or requested resource links remain unresolved; their text is retained for your group.':''}</p><p>Built from the conversation’s content-first blueprint. The original approved English Mark 1:1–13 sequence uses the complete six-stage source guide, its existing recordings, three Scripture translations, and linked FIA resources. Authored Scripture calls enter a reading and return to the next guide unit. This remains a prototype for testing.</p><p>Original approved English Mark 1:1–13 sources: Berean Standard Bible, unfoldingWord Literal Text and unfoldingWord Simplified Text; each edition’s rights are retained in the source records. Images: © 2025 Word Collective. Map metadata credits © 2025 Biblica. Video: © 2025 Word Collective. FIA media is provided under <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noreferrer">CC BY-SA 4.0</a>. Video is compressed for this prototype; visual assets otherwise unchanged.</p><p>The original approved English pack uses the existing source app’s AI-generated recordings, preserved as source recordings. Reviewed delivery variants may optimize their format without substituting a new voice. It is distinct from the source video’s recording. Video captions/transcript are not supplied in this prototype.</p><a class="quiet" href="/content/source/audio-manifest.json" target="_blank" rel="noreferrer">View recording provenance<ExternalLink size={14}/></a><a class="quiet full" href="/docs/CONTENT-RECEIPT.html" target="_blank" rel="noreferrer">Content and design-system receipt<ExternalLink size={14}/></a>
   {/if}
  </Sheet>
 {/if}

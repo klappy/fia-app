@@ -25,17 +25,23 @@ export function createAudioController(onState, onEnd, onError, { allowSpeechFall
     stop();
     onEnd();
   }
+  function playbackRejected(error, owner, gen, message) {
+    if (gen !== generation || audio !== owner) return;
+    if (error?.name === 'NotAllowedError') {
+      // Keep verified bytes and the same owner for a synchronous explicit retry.
+      owner.pause(); paused = true; speaking = false; state();
+      onError(message);
+    } else fail(message);
+  }
   function startAudio(owner, gen, message) {
     try {
       Promise.resolve(owner.play()).then(() => {
         if (gen !== generation || audio !== owner) return;
         speaking = !paused && !owner.paused;
         state();
-      }).catch(() => {
-        if (gen === generation && audio === owner) fail(message);
-      });
-    } catch {
-      if (gen === generation && audio === owner) fail(message);
+      }).catch(error => playbackRejected(error, owner, gen, message));
+    } catch (error) {
+      playbackRejected(error, owner, gen, message);
     }
   }
   function speak(text, gen, rate) {

@@ -34,6 +34,8 @@ export const libraryAdapter={
  async languages(){const c=await fetchCatalog();return [{id:'eng',name:'English',nativeName:'English'},{id:'spa',name:'Spanish',nativeName:'Español'}].map(l=>({...l,ready:c.packs.filter(p=>p.language===l.id).length}));},
  async passages(language){return (await fetchCatalog()).packs.filter(p=>p.language===language);},
  async select(id){const descriptor=(await fetchCatalog()).packs.find(p=>p.id===id);if(!descriptor)throw new Error('This passage is not available.');return {descriptor,presentation:await loadPresentation(descriptor)};},
+ async mediaStatus(pack=bundledPack){return workerRequest('MEDIA_STATUS',{packId:pack.id,revision:pack.revision});},
+ async playMedia(pack,path,deliveryRevision,signal){const requestId=crypto.randomUUID();const cancel=()=>{workerRequest('MEDIA_CANCEL',{packId:pack.id,requestId}).catch(()=>{});};if(signal.aborted)throw Error('Playback canceled.');signal.addEventListener('abort',cancel,{once:true});try{const result=await workerRequest('MEDIA_PLAY',{packId:pack.id,revision:pack.revision,path,deliveryRevision,requestId});if(signal.aborted)throw Error('Playback canceled.');return result;}catch(error){cancel();throw error;}finally{signal.removeEventListener('abort',cancel);}},
  async downloadStatus(pack=bundledPack){return workerRequest('DOWNLOAD_STATUS',{packId:pack.id});},
  async download(selection,onprogress,pack=bundledPack){return workerRequest('DOWNLOAD_START',{selection,packId:pack.id},onprogress);},
  async pauseDownload(pack=bundledPack){return workerRequest('DOWNLOAD_PAUSE',{packId:pack.id});},

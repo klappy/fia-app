@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {readFileSync} from 'node:fs';
 import {activities} from '../apps/web/src/lib/content.js';
 import {seedPassage,saved,downloadSelected} from './helpers.js';
 test('approved manual journey preserves grouped readings and explicit holds through completion',async({page})=>{
@@ -11,10 +12,16 @@ test('approved manual journey preserves grouped readings and explicit holds thro
  }
  await expect(page.getByRole('heading',{name:'Carry the story with you.'})).toBeVisible();expect(count).toBeGreaterThan(90);expect((await saved(page)).completed.length).toBe(activities.length);
 });
-test('explicit Play uses real recording while automatic narration stays off',async({page})=>{
+test('explicit Play uses cached verified recording while automatic narration stays off',async({page,context})=>{
+ await page.addInitScript(()=>{const NativeAudio=window.Audio;window.__verifiedPlayers=[];window.Audio=class extends NativeAudio{constructor(...args){super(...args);window.__verifiedPlayers.push(this);}};});
  test.setTimeout(120000);await seedPassage(page,'S01-U002');await downloadSelected(page,'audio');const index=(await saved(page)).index;
- const response=page.waitForResponse(r=>r.url().endsWith('/audio/source/S01-U002.mp3'));
- await page.getByRole('button',{name:'Play',exact:true}).click();expect((await response).ok()).toBeTruthy();
+ const media=[];context.on('request',r=>{if((new URL(r.url()).origin==='https://transcode.klappy.dev'||/\.(mp3|m4a|wav|ogg|mp4|webm|jpe?g|png|webp)(?:$|\?)/.test(r.url()))&&!r.url().includes('/assets/fia-'))media.push(r.url());});
+ await context.setOffline(true);await page.getByRole('button',{name:'Play',exact:true}).click();
+ await expect.poll(()=>page.evaluate(()=>window.__verifiedPlayers.at(-1)?.currentTime||0)).toBeGreaterThan(.1);
+ const first=await page.evaluate(()=>window.__verifiedPlayers.at(-1).currentTime);await expect.poll(()=>page.evaluate(()=>window.__verifiedPlayers.at(-1).currentTime)).toBeGreaterThan(first);
+ const expected=JSON.parse(readFileSync('dist/offline/eng.MRK-1-1-13.json')).files.find(f=>f.path==='/audio/source/S01-U002.mp3');
+ const actual=await page.evaluate(async()=>{const src=window.__verifiedPlayers.at(-1).src;if(!src.startsWith('blob:'))throw Error('Expected verified playback blob');const b=await(await fetch(src)).arrayBuffer();return {bytes:b.byteLength,sha256:Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',b)),x=>x.toString(16).padStart(2,'0')).join('')};});
+ expect(actual).toEqual({bytes:expected.bytes,sha256:expected.sha256});expect(activities[(await saved(page)).index].id).toBe('S01-U002');expect(media).toEqual([]);
  await expect(page.getByRole('button',{name:'Pause',exact:true})).toBeVisible();
  await page.getByRole('button',{name:'Pause',exact:true}).click();await expect(page.getByRole('button',{name:'Resume',exact:true})).toBeVisible();expect((await saved(page)).index).toBe(index);
 });
@@ -30,6 +37,6 @@ test('explicit all-resource download verifies real bytes, survives offline reloa
 });
 
 test('text-only download and restore issue no resource media requests',async({page,context})=>{
- test.setTimeout(120000);const media=[];page.on('request',r=>{if(/\.(mp3|m4a|wav|ogg|mp4|webm|jpe?g|png|webp)(?:$|\?)/.test(r.url())&&!r.url().includes('/assets/fia-'))media.push(r.url());});
+ test.setTimeout(120000);const media=[];page.on('request',r=>{if((new URL(r.url()).origin==='https://transcode.klappy.dev'||/\.(mp3|m4a|wav|ogg|mp4|webm|jpe?g|png|webp)(?:$|\?)/.test(r.url()))&&!r.url().includes('/assets/fia-'))media.push(r.url());});
  await seedPassage(page,'S02-U005');await downloadSelected(page,'core');expect(media).toEqual([]);await context.setOffline(true);await page.reload();await expect(page.getByRole('navigation',{name:'Session controls'})).toBeVisible();expect(media).toEqual([]);await expect(page.getByRole('button',{name:'Open Downloads'})).toBeVisible();
 });
