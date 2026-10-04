@@ -1,1 +1,31 @@
-{"id": "/", "name": "FIA \u00b7 A guided conversation", "short_name": "FIA v3", "description": "A content-first, voice-ready guided Scripture prototype.", "start_url": "/", "scope": "/", "display": "standalone", "background_color": "#F7F8FB", "theme_color": "#0E1420", "icons": [{"src": "/assets/fia-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"}]}
+{
+  "id": "/",
+  "name": "FIA Guide",
+  "short_name": "FIA Guide",
+  "description": "Explore all 68 passages of Mark in English and Spanish with FIA guides, Scripture text, and resources.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F7F8FB",
+  "theme_color": "#0E1420",
+  "icons": [
+    {
+      "src": "/assets/fia-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/fia-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/fia-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
