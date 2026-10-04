@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "vite build && node scripts/finalize-build.mjs && node scripts/package-worker.mjs",
-    "test": "node --test tests/web-shell/*.test.js && npm run test:reference && npm run test:worker",
+    "test": "node --test tests/web-shell/*.test.js tests/compiler/presentation.test.mjs && npm run test:reference && npm run test:worker",
     "preview": "vite preview",
     "test:release": "node --test tests/release/*.test.js && node --test tests/worker-serving/packaged.check.mjs",
     "test:e2e": "playwright test",
@@ -30,8 +30,8 @@
     "jsdom": "26.1.0",
     "vitest": "4.1.11"
   },
-  "version": "3.0.0-alpha.3",
-  "description": "Approved FIA v3 experience with bundled English Mark 1:1\u201313, real media and verified local downloads.",
+  "version": "3.0.0-alpha.4",
+  "description": "FIA Mark text in English and Spanish with isolated progress and manual resource downloads.",
   "engines": {
     "node": ">=22"
   }

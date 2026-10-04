@@ -10,9 +10,30 @@ for(const file of ['V3-BLUEPRINT.md','TEST-GUIDE.md','CONTENT-RECEIPT.md']){
  writeFileSync(join('dist/docs',file.replace('.md','.html')),html);
 }
 function walk(dir){return readdirSync(dir).flatMap(name=>{const path=join(dir,name);return statSync(path).isDirectory()?walk(path):[path];});}
-const files=walk('dist').filter(p=>!p.endsWith('/version.json')&&!p.endsWith('/sw.js')&&!p.endsWith('/offline-manifest.json')&&!p.includes('/docs/')&&!p.includes('/content/'));
-const entries=files.sort().map(path=>({path:'/'+path.slice(5),bytes:statSync(path).size,sha256:createHash('sha256').update(readFileSync(path)).digest('hex'),group:/\.(mp3|m4a|wav|ogg)$/.test(path)?'audio':/\.(mp4|webm)$/.test(path)?'video':'core'}));
-const id=createHash('sha256').update(JSON.stringify(entries)).digest('hex').slice(0,12);
-writeFileSync('dist/sw.js',readFileSync('apps/web/public/sw.js','utf8').replace('__BUILD_ID__',id));
-writeFileSync('dist/offline-manifest.json',JSON.stringify({schema:1,packId:'fia-mark-authentic',revision:id,files:entries}));
-console.log(`Offline build ${id}: ${entries.length} verified files, ${(entries.reduce((n,f)=>n+f.bytes,0)/1024/1024).toFixed(1)} MB`);
+const digest=path=>({path:'/'+path.slice(5),bytes:statSync(path).size,sha256:createHash('sha256').update(readFileSync(path)).digest('hex'),group:/\.(mp3|m4a|wav|ogg)$/.test(path)?'audio':/\.(mp4|webm)$/.test(path)?'video':/\.(jpe?g|png|webp)$/.test(path)&&!path.includes('/assets/fia-')?'image':'core'});
+const allFiles=walk('dist').filter(p=>!p.endsWith('/version.json')&&!p.endsWith('/sw.js')&&!p.endsWith('/offline-manifest.json')&&!p.includes('/offline/')&&!p.includes('/docs/')&&!p.includes('/content/'));
+const mediaPath=path=>/\.(mp3|m4a|wav|ogg|mp4|webm|jpe?g|png|webp)$/.test(path)&&!path.includes('/assets/fia-');
+const shell=allFiles.filter(path=>!mediaPath(path)).map(digest);
+const buildId=createHash('sha256').update(JSON.stringify(shell)).digest('hex').slice(0,12);
+writeFileSync('dist/sw.js',readFileSync('apps/web/public/sw.js','utf8').replace('__BUILD_ID__',buildId));
+const registryPath='dist/content/registry.json';
+let registry;
+try{registry=JSON.parse(readFileSync(registryPath,'utf8'));}catch(error){if(error.code!=='ENOENT')throw error;}
+if(registry){
+ mkdirSync('dist/offline',{recursive:true});
+ for(const descriptor of registry.packs){
+  const payloadPath='dist'+descriptor.presentation.url,pack=JSON.parse(readFileSync(payloadPath,'utf8'));
+  const selected=new Set();
+  const include=url=>{if(typeof url==='string'&&url.startsWith('/')&&!url.startsWith('//')){try{if(statSync('dist'+url).isFile())selected.add('dist'+url);}catch{}}};
+  for(const a of Object.values(pack.assets)){include(a.src);include(a.poster);include(a.descriptionAudio);}
+  for(const a of pack.activities)include(a.audioSrc);
+  const entries=[...shell,digest(registryPath),digest(payloadPath),...Array.from(selected).sort().map(digest)];
+  const revision=createHash('sha256').update(JSON.stringify(entries)).digest('hex').slice(0,12);
+  const manifest={schema:1,packId:descriptor.id,presentationRevision:descriptor.revision,revision,files:entries};
+  writeFileSync(`dist/offline/${descriptor.id}.json`,JSON.stringify(manifest));
+ }
+}
+// Legacy manifest remains readable for already installed pre-registry clients.
+const legacyEntries=allFiles.sort().map(digest),legacyRevision=createHash('sha256').update(JSON.stringify(legacyEntries)).digest('hex').slice(0,12);
+writeFileSync('dist/offline-manifest.json',JSON.stringify({schema:1,packId:'fia-mark-authentic',revision:legacyRevision,files:legacyEntries}));
+console.log(`Offline build ${buildId}: ${registry?.packs.length||0} separate passage manifests`);

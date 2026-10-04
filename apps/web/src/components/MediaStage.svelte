@@ -4,7 +4,7 @@
   import AlignedReading from './AlignedReading.svelte';
   import ResourceIdentification from './ResourceIdentification.svelte';
   import { Pin, PinOff, Volume2, VolumeX, Play, X } from 'lucide-svelte';
-  let { asset, playback, inlineVideo=null, immersive=false, matchingVideo=null, onvideo=()=>{}, descriptionsEnabled=false, ontoggledescription=()=>{}, suspended=false, toolsVisible=false, pinned=false, onpin=()=>{}, ondescribe=()=>{}, ontime=()=>{}, onplay=()=>{}, onpause=()=>{}, onend=()=>{}, onerror=()=>{} } = $props();
+  let { asset, playback, inlineVideo=null, immersive=false, matchingVideo=null, onvideo=()=>{}, descriptionsEnabled=false, ontoggledescription=()=>{}, suspended=false, toolsVisible=false, pinned=false, onpin=()=>{}, ondescribe=()=>{}, ontime=()=>{}, onplay=()=>{}, onpause=()=>{}, onend=()=>{}, onerror=()=>{}, ondownload=()=>{} } = $props();
   let frameReady=$state(false);
   let poster=$derived(inlineVideo?asset.src:asset.poster);
   function awaitFrame(node){
@@ -31,14 +31,15 @@
 
 <div class:reading-stage={asset.kind==='scripture'||asset.kind==='term'} class:resource-visual={['image','map','video'].includes(asset.kind)} class="media-stage" data-kind={asset.kind}>
   {#if ['image','map','video'].includes(asset.kind)}<div class="visual-identification" use:balanceCredit><ResourceIdentification asset={inlineVideo&&frameReady?inlineVideo:asset}/></div>{/if}
-  {#if asset.kind==='scripture'}
+  {#if asset.downloadRequired}<div class="media-error">{#if asset.downloadPrepared}<p>This resource has not been downloaded. You can continue with the passage text.</p><button class="quiet" onclick={ondownload}>Open Downloads</button>{:else}<p>This source resource is not prepared for download yet. You can continue with the passage text.</p>{/if}</div>
+  {:else if asset.kind==='scripture'}
     <AlignedReading {asset} {playback} {suspended}/>
   {:else if asset.kind==='term'}
     <AlignedReading {asset} {playback} {suspended}/>
   {:else if asset.kind==='video'||inlineVideo}
     <div class="video-well">
       <!-- svelte-ignore a11y_media_has_caption (Source videos lack captions; documented as an accessibility gap, not disguised with a placeholder track.) -->
-      <video use:awaitFrame bind:this={video} src={(inlineVideo||asset).src} poster={poster} controls={toolsVisible} playsinline preload="metadata" ontimeupdate={ontime} onloadedmetadata={ontime} ondurationchange={ontime} onseeked={ontime} onplay={onplay} onpause={onpause} onended={onend} onerror={()=>{failed=true;onerror();}} aria-label={asset.title}>
+      <video use:awaitFrame bind:this={video} src={(inlineVideo||asset).src} poster={poster} controls={toolsVisible} playsinline preload="none" ontimeupdate={ontime} onloadedmetadata={ontime} ondurationchange={ontime} onseeked={ontime} onplay={onplay} onpause={onpause} onended={onend} onerror={()=>{failed=true;onerror();}} aria-label={asset.title}>
         <!-- Source videos do not supply caption tracks. -->
       </video>
       {#if poster&&!frameReady}<img class="video-loading-poster" src={poster} alt="" aria-hidden="true"/>{/if}
