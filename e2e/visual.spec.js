@@ -40,6 +40,9 @@ async function openState(browser,url,viewport,dark,state,{verifiedFixture=false}
  },approvedDownload);
  await page.goto(url);await expect(page.locator('main.scene')).toBeVisible();
  await page.evaluate(()=>document.fonts.ready);
+ // Downloaded initial-state parity requires the final verified availability state.
+ // Both pages must expose the same intended action before paint stabilization.
+ if(state.initial && (verifiedFixture || url===reference.url))await expect(page.getByRole('button',{name:'Begin',exact:true})).toBeVisible();
  if(state.progress)await page.getByRole('button',{name:'Session progress: open section overview',exact:true}).click();
  if(state.menu){await page.getByRole('button',{name:'More options',exact:true}).click();if(typeof state.menu==='string')await page.getByRole('button',{name:state.menu,exact:state.menu!=='Language'}).click();}
  await page.evaluate(async()=>{await Promise.all([...document.images].map(i=>i.decode().catch(()=>{})));});
