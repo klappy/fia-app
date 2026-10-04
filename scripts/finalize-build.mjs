@@ -2,6 +2,7 @@ import {readdirSync,readFileSync,writeFileSync,mkdirSync,copyFileSync,statSync} 
 import {join} from 'node:path';
 import {marked} from 'marked';
 import {createHash} from 'node:crypto';
+import {validateDelivery} from '../apps/web/src/lib/media-delivery.js';
 mkdirSync('dist/docs',{recursive:true});
 for(const file of ['V3-BLUEPRINT.md','TEST-GUIDE.md','CONTENT-RECEIPT.md']){
  const source=readFileSync(join('apps/web/docs',file),'utf8');copyFileSync(join('apps/web/docs',file),join('dist/docs',file));
@@ -17,11 +18,25 @@ const allFiles=walk('dist').filter(p=>!deploymentControls.has(p)&&!p.endsWith('/
 const mediaPath=path=>/\.(mp3|m4a|wav|ogg|mp4|webm|jpe?g|png|webp)$/.test(path)&&!path.includes('/assets/fia-');
 const shell=allFiles.filter(path=>!mediaPath(path)).map(digest);
 const buildId=createHash('sha256').update(JSON.stringify(shell)).digest('hex').slice(0,12);
-writeFileSync('dist/sw.js',readFileSync('apps/web/public/sw.js','utf8').replace('__BUILD_ID__',buildId));
+const deliveryHelpers=readFileSync(new URL('../apps/web/src/lib/media-delivery.js',import.meta.url),'utf8').replace(/export (?=(?:async )?function)/g,'');
+writeFileSync('dist/sw.js',deliveryHelpers+'\n'+readFileSync('apps/web/public/sw.js','utf8').replace('__BUILD_ID__',buildId));
 const registryPath='dist/content/registry.json';
 let registry;
 try{registry=JSON.parse(readFileSync(registryPath,'utf8'));}catch(error){if(error.code!=='ENOENT')throw error;}
 if(registry){
+ const deliveryIndex={schema:1,packs:[]};
+ const deliveries=new Map();
+ for(const descriptor of registry.packs){
+  const dir='dist/content/delivery/'+descriptor.id;
+  let names=[];try{names=readdirSync(dir).filter(n=>n.endsWith('.json'));}catch(error){if(error.code!=='ENOENT')throw error;}
+  if(names.length>1)throw Error('Ambiguous delivery sidecar: '+descriptor.id);
+  if(!names.length)continue;
+  const path=dir+'/'+names[0],bytes=readFileSync(path),sha256=createHash('sha256').update(bytes).digest('hex');
+  if(names[0]!==sha256+'.json')throw Error('Delivery filename must bind exact bytes.');
+  const sidecar=validateDelivery(JSON.parse(bytes),{packId:descriptor.id,presentationRevision:descriptor.revision});
+  deliveries.set(descriptor.id,{sidecar,path,sha256});deliveryIndex.packs.push({packId:descriptor.id,presentationRevision:descriptor.revision,delivery:{url:'/'+path.slice(5),sha256,bytes:bytes.length}});
+ }
+ mkdirSync('dist/content/delivery',{recursive:true});writeFileSync('dist/content/delivery/index.json',JSON.stringify(deliveryIndex));
  mkdirSync('dist/offline',{recursive:true});
  for(const descriptor of registry.packs){
   const payloadPath='dist'+descriptor.presentation.url,pack=JSON.parse(readFileSync(payloadPath,'utf8'));
@@ -29,9 +44,18 @@ if(registry){
   const include=url=>{if(typeof url==='string'&&url.startsWith('/')&&!url.startsWith('//')){try{if(statSync('dist'+url).isFile())selected.add('dist'+url);}catch{}}};
   for(const a of Object.values(pack.assets)){include(a.src);include(a.poster);include(a.descriptionAudio);}
   for(const a of pack.activities)include(a.audioSrc);
-  const entries=[...shell,digest(registryPath),digest(payloadPath),...Array.from(selected).sort().map(digest)];
+  const delivery=deliveries.get(descriptor.id),media=Array.from(selected).sort().map(digest);
+  if(delivery){
+   const byPath=new Map(delivery.sidecar.entries.map(e=>[e.path,e]));
+   for(const f of media){if(f.group==='video')continue;const e=byPath.get(f.path);if(!e)throw Error('Incomplete delivery coverage: '+f.path);if(e.delivery.kind!==f.group)throw Error('Delivery media kind mismatch: '+f.path);if(new URL(e.source.url).pathname!==f.path)throw Error('Delivery source URL mismatch: '+f.path);if(e.source.sha256!==f.sha256||e.source.bytes!==f.bytes)throw Error('Delivery source mismatch: '+f.path);
+    const aligned=Object.values(pack.assets).find(a=>a.alignment?.audioSha256===f.sha256);if(aligned&&(e.timing.status!=='verified'||e.timing.alignmentSha256!==createHash('sha256').update(JSON.stringify(aligned.alignment)).digest('hex')))throw Error('Unverified Scripture alignment: '+f.path);
+    Object.assign(f,{sha256:e.delivery.sha256,bytes:e.delivery.bytes,mime:e.delivery.mime,deliveryURL:e.delivery.url,sourceSha256:e.source.sha256,deliveryRevision:delivery.sha256,timing:e.timing});
+   }
+   if(byPath.size!==media.filter(f=>f.group!=='video').length)throw Error('Unexpected delivery entries.');
+  }
+  const entries=[...shell,digest(registryPath),digest(payloadPath),digest('dist/content/delivery/index.json'),...(delivery?[digest(delivery.path)]:[]),...media];
   const revision=createHash('sha256').update(JSON.stringify(entries)).digest('hex').slice(0,12);
-  const manifest={schema:1,packId:descriptor.id,presentationRevision:descriptor.revision,revision,files:entries};
+  const manifest={schema:1,packId:descriptor.id,presentationRevision:descriptor.revision,...(delivery?{deliveryRevision:delivery.sha256}:{}),revision,files:entries};
   writeFileSync(`dist/offline/${descriptor.id}.json`,JSON.stringify(manifest));
  }
 }
