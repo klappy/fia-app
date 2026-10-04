@@ -1,4 +1,0 @@
-# Workers static assets custom headers (developers.cloudflare.com/workers/static-assets/headers/).
-# version.json is the deploy stamp the post-deploy gate polls; never cache it.
-/version.json
-  Cache-Control: no-store
