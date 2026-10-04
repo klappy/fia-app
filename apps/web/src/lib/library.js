@@ -11,7 +11,7 @@ export function validateRegistry(value){
  }return value;
 }
 export function validatePresentation(pack,descriptor){
- const approved=descriptor.id===bundledPack.id&&pack.id==='fia-mark-authentic';
+ const approved=descriptor.id===bundledPack.id&&pack.id==='fia-mark-authentic@1';
  if(!pack||!approved&&pack.id!==descriptor.id||!pack.assets||!Array.isArray(pack.activities)||!pack.activities.length||!Array.isArray(pack.sections)||!Array.isArray(pack.listContracts)||!pack.assets[descriptor.defaultScriptureId]||pack.assets[descriptor.defaultScriptureId].kind!=='scripture')throw new Error('The passage presentation is not compatible.');
  const ids=new Set(),sections=new Set(pack.sections.map(s=>s.id));
  for(const a of pack.activities){if(!a.id||ids.has(a.id)||!sections.has(a.sectionId)||a.assetId&&!pack.assets[a.assetId]||!['auto','confirm','media'].includes(a.completion))throw new Error('The passage has an invalid activity.');ids.add(a.id);}
