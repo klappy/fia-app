@@ -1,24 +1,27 @@
 {
   "sourceCommit": "b7bad3a4e91981ca6aa4976fec2831a1cbd16a7a",
-  "purpose": "Exact proposed backend import closure; requires integration disclosure acceptance; no directory-wide copy",
+  "purpose": "Original publication plus separately reviewed generalized immutable read extension; original source identity retained.",
   "files": [
     {
       "path": "server/faces/http.mjs",
-      "sha256": "53461b89830354b54b9620343203eae95cfe4c9a0742cbf24a4cf4aadc0a0e67",
-      "bytes": 1692,
-      "role": "worker-runtime"
+      "sha256": "b110901ff910ba59f489af30f4dac71a956551d08d1403a753722ce75387eb00",
+      "bytes": 1743,
+      "role": "worker-runtime",
+      "originalSha256": "53461b89830354b54b9620343203eae95cfe4c9a0742cbf24a4cf4aadc0a0e67"
     },
     {
       "path": "server/faces/mcp.mjs",
-      "sha256": "65af1ff666ac7e1c89219b7c96d4c05c10204f20f5c74c48b2fb8b8bc179e9f3",
-      "bytes": 3502,
-      "role": "worker-runtime"
+      "sha256": "0941301ce865ac00fd237bb9751143c4f10ae0884a540bef7499a1b8ccb992f8",
+      "bytes": 3514,
+      "role": "worker-runtime",
+      "originalSha256": "65af1ff666ac7e1c89219b7c96d4c05c10204f20f5c74c48b2fb8b8bc179e9f3"
     },
     {
       "path": "server/fia/publication/read-operations.mjs",
-      "sha256": "0e1e1479151995958d8171a766524f4ca39dba84fc6c254e2aced64937a6995e",
-      "bytes": 1049,
-      "role": "worker-runtime"
+      "sha256": "dbf1d576e261b3b9861469efee4f8b98a4ea1263fac84cb51300bc22f2e66943",
+      "bytes": 1211,
+      "role": "worker-runtime",
+      "originalSha256": "0e1e1479151995958d8171a766524f4ca39dba84fc6c254e2aced64937a6995e"
     },
     {
       "path": "server/fia/publication/service.mjs",
@@ -73,6 +76,19 @@
       "sha256": "ccd72f23c23f932651b500b730b285f32fabd37e50037b5af91d8881f1403975",
       "bytes": 454295,
       "role": "build-only-publication"
+    },
+    {
+      "path": "server/fia/publication/generalized.mjs",
+      "sha256": "bf4e65f4353761350c3deae223ea4eb210629c30536f2b155736ed13e07697aa",
+      "bytes": 4037,
+      "role": "generalized-publication-build"
+    },
+    {
+      "path": "server/fia/publication/trusted-generalized.json",
+      "sha256": "a7c9fa8536c1e0632d1b7b35b27d0511112fd972c906aaaa88621e2df1a57f3f",
+      "bytes": 31433,
+      "role": "generalized-publication-build"
     }
-  ]
+  ],
+  "generalizedRecipeCommit": "60cc73ef68845d7750d34281503ab4543078e1ac"
 }
