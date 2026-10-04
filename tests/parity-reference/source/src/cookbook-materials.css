@@ -1,0 +1,225 @@
+/* Reversible material-only trial. Remove this import from main.js to restore
+   the previous treatment exactly. Recipes ported from the cookbook-referenced
+   glass kit: GlassIconButton, GlassSurface, GlassSheet (fia-app f8776d9).
+   Existing geometry, palette, reading clearance and control placement stay put. */
+
+/* GlassIconButton, light tone. */
+.glass-icon {
+  background: var(--glass-fill-3);
+  border: var(--border-glass);
+  -webkit-backdrop-filter: blur(var(--blur-medium)) var(--sat-glass);
+  backdrop-filter: blur(var(--blur-medium)) var(--sat-glass);
+  box-shadow: var(--shadow-rest), var(--inner-top);
+}
+/* GlassSurface level 2, medium blur, shadow none, edge-to-edge radius.
+   Retain the kit's specular edges and refraction without a floating-card shadow. */
+.scene-glass {
+  background: var(--glass-fill-2);
+  border: var(--border-glass);
+  -webkit-backdrop-filter: blur(var(--blur-medium)) var(--sat-glass);
+  backdrop-filter: blur(var(--blur-medium)) var(--sat-glass);
+  box-shadow: var(--inner-top), var(--inner-edge);
+}
+.scene-glass::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  background: var(--refraction); opacity: .6; pointer-events: none;
+}
+
+/* GlassSheet: floating material is intentionally backed by a solid surface.
+   All sheets share this recipe, including the mini map and preferences. */
+.sheet, .sheet.glass-sheet {
+  background: var(--material-floating);
+  border: var(--border-glass);
+  -webkit-backdrop-filter: blur(var(--blur-heavy)) var(--sat-glass);
+  backdrop-filter: blur(var(--blur-heavy)) var(--sat-glass);
+  box-shadow: var(--shadow-float), var(--inner-top);
+}
+.sheet .sheet-header, .glass-sheet .sheet-header {
+  background: var(--material-floating);
+  border-bottom: 0;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* Keep the approved dark palette; reduce the kit's white specular reflection. */
+:root[data-theme=dark] {
+  --inner-top: inset 0 1px 0 rgba(208,217,186,.16);
+  --inner-edge: inset 0 0 0 .5px rgba(208,217,186,.10);
+}
+:root[data-theme=dark] .scene-glass::before { display: none; }
+
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
+  .glass-icon, .scene-glass, .sheet, .sheet.glass-sheet,
+  .sheet .sheet-header { background: var(--surface); }
+}
+@media (prefers-reduced-transparency:reduce) {
+  .glass-icon, .scene-glass, .sheet, .sheet.glass-sheet,
+  .sheet .sheet-header {
+    background: var(--surface);
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+  }
+  .scene-glass::before { display: none; }
+}
+
+/* Selected progress markers use the same material as glass utility buttons. */
+.content-progress-bead.current,
+.glass-sheet .progress-map-item[aria-current=step],
+.progress-section-choice[aria-current=step] {
+  background: var(--glass-fill-3);
+  border: var(--border-glass);
+  border-radius: var(--r-pill);
+  color: var(--text-body);
+  -webkit-backdrop-filter: blur(var(--blur-medium)) var(--sat-glass);
+  backdrop-filter: blur(var(--blur-medium)) var(--sat-glass);
+  box-shadow: var(--shadow-rest), var(--inner-top);
+}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
+  .content-progress-bead.current,
+  .glass-sheet .progress-map-item[aria-current=step],
+  .progress-section-choice[aria-current=step] { background: var(--surface); }
+}
+@media (prefers-reduced-transparency:reduce) {
+  .content-progress-bead.current,
+  .glass-sheet .progress-map-item[aria-current=step],
+  .progress-section-choice[aria-current=step] {
+    background: var(--surface);
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+  }
+}
+
+/* The cookbook's original aurora supplies color beneath the glass ladder. */
+.scene, .scene.on-map, .visual-dialog {
+  background: var(--aurora-field);
+  background-size: 100vw 100dvh;
+  background-attachment: fixed;
+}
+/* Dark adaptation: cookbook aurora hues over its neutral night surfaces. */
+:root[data-theme=dark] .scene,
+:root[data-theme=dark] .scene.on-map,
+:root[data-theme=dark] .visual-dialog {
+  background-image:
+    radial-gradient(52% 34% at 22% 30%,rgba(188,214,244,.26) 0%,rgba(188,214,244,0) 70%),
+    radial-gradient(46% 30% at 78% 24%,rgba(251,216,189,.22) 0%,rgba(251,216,189,0) 72%),
+    radial-gradient(58% 38% at 62% 62%,rgba(201,195,240,.28) 0%,rgba(201,195,240,0) 72%),
+    radial-gradient(42% 28% at 30% 78%,rgba(246,239,198,.18) 0%,rgba(246,239,198,0) 74%),
+    radial-gradient(50% 36% at 88% 82%,rgba(242,207,219,.22) 0%,rgba(242,207,219,0) 74%),
+    linear-gradient(180deg,var(--night-800) 0%,var(--night-900) 100%);
+}
+@media (prefers-reduced-transparency:reduce) {
+  .scene, .scene.on-map, .visual-dialog { background: var(--paper-050); }
+  :root[data-theme=dark] .scene,
+  :root[data-theme=dark] .scene.on-map,
+  :root[data-theme=dark] .visual-dialog { background-image: none; }
+}
+
+/* Night palette from the cookbook kit, replacing the earlier olive theme. */
+:root[data-theme=dark] {
+  --paper-000: var(--night-700);
+  --paper-050: var(--night-800);
+  --paper-100: var(--night-600);
+  --paper-200: #363b43;
+  --paper-300: #454c56;
+  --paper-400: #59616c;
+  --ink-900: var(--on-night-900);
+  --ink-700: #e4e8ee;
+  --ink-500: var(--on-night-500);
+  --ink-400: #929ba7;
+  --ink-300: var(--on-night-400);
+  --ink-200: #68717d;
+  --glass-fill-1: rgba(22,24,28,.28);
+  --glass-fill-2: var(--glass-fill-night);
+  --glass-fill-3: var(--glass-fill-night-strong);
+  --glass-fill-4: rgba(22,24,28,.9);
+  --material-floating: var(--night-700);
+  --surface-inverse: var(--on-night-900);
+  --text-on-inverse: var(--night-900);
+  --border-glass: var(--border-night);
+  --border-glass-soft: var(--border-night);
+  --inner-top: inset 0 1px 0 rgba(255,255,255,.16);
+  --inner-edge: inset 0 0 0 .5px rgba(255,255,255,.10);
+  --fia-dotring: rgba(188,214,244,.45);
+  --focus-ring: var(--aurora-sky);
+}
+
+/* User-selected translucent modal variant, using GlassSurface materials
+   instead of GlassSheet's solid-backed floating material. */
+.sheet, .sheet.glass-sheet {
+  background: var(--glass-fill-3);
+  -webkit-backdrop-filter: blur(var(--blur-heavy)) var(--sat-glass);
+  backdrop-filter: blur(var(--blur-heavy)) var(--sat-glass);
+  box-shadow: var(--shadow-float), var(--inner-top), var(--inner-edge);
+}
+.sheet .sheet-header, .glass-sheet .sheet-header {
+  background: transparent;
+  -webkit-backdrop-filter: blur(var(--blur-medium)) var(--sat-glass);
+  backdrop-filter: blur(var(--blur-medium)) var(--sat-glass);
+}
+.sheet::backdrop {
+  background: rgba(20,28,45,.12);
+  -webkit-backdrop-filter: blur(var(--blur-sheer));
+  backdrop-filter: blur(var(--blur-sheer));
+}
+:root[data-theme=dark] .sheet,
+:root[data-theme=dark] .sheet.glass-sheet { background: var(--glass-fill-night); }
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
+  .sheet, .sheet.glass-sheet, :root[data-theme=dark] .sheet { background: var(--surface); }
+  .sheet .sheet-header { background: var(--surface); }
+}
+@media (prefers-reduced-transparency:reduce) {
+  .sheet, .sheet.glass-sheet, :root[data-theme=dark] .sheet,
+  .sheet .sheet-header {
+    background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none;
+  }
+  .sheet::backdrop { -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+
+/* Aurora-accent primary trial; independent of any future playback arc. */
+.primary-disc {
+  background: #454585;
+  color: #f4f3ff;
+  border-color: rgba(201,195,240,.38);
+}
+:root[data-theme=dark] .primary-disc {
+  background: var(--aurora-lavender);
+  color: #28284e;
+  border-color: rgba(255,255,255,.3);
+}
+.guide-primary { --fia-dotring: #7774b7; }
+:root[data-theme=dark] .guide-primary { --fia-dotring: var(--aurora-lavender); }
+.guide-primary.playing .ring-dots { animation: primary-dot-breathe 4s ease-in-out infinite; }
+@keyframes primary-dot-breathe { 0%,100% { opacity:.55; } 50% { opacity:1; } }
+@media (prefers-reduced-motion:reduce) {
+  .guide-primary.playing .ring-dots { animation:none; }
+}
+
+/* Playback replaces decorative dots. Ring and disc share one exact center. */
+.primary-orbit { width:72px; height:72px; position:relative; display:grid; place-items:center; }
+.playback-ring { position:absolute; width:96px; height:96px; left:-12px; top:-12px; transform:rotate(-90deg); pointer-events:none; }
+.playback-ring circle { fill:none; stroke-width:3; }
+.playback-track { stroke:color-mix(in srgb,var(--aurora-lavender) 35%,transparent); }
+.playback-arc { stroke:#6561ae; stroke-linecap:round; }
+.playback-arc.advancing { transition:stroke-dashoffset 250ms linear; }
+.primary-disc {
+ background:linear-gradient(140deg,#6266aa 0%,#454585 60%,#555080 100%);
+ box-shadow:var(--shadow-rest),inset 0 1px 0 rgba(255,255,255,.3);
+}
+:root[data-theme=dark] .primary-disc {
+ background:linear-gradient(140deg,var(--aurora-sky) 0%,var(--aurora-lavender) 65%,#d9c5e9 100%);
+}
+:root[data-theme=dark] .playback-arc { stroke:var(--aurora-lavender); }
+@media(prefers-reduced-motion:reduce) { .playback-arc.advancing { transition:none; } }
+
+/* FIA blue from the PoC brand token (#3b6086), matching the supplied FAB. */
+:root { --fia-brand: #3b6086; }
+.primary-disc, :root[data-theme=dark] .primary-disc {
+ background:linear-gradient(140deg,#52789c 0%,var(--fia-brand) 52%,#2c4c6d 100%);
+ color:#fff;
+ border-color:rgba(188,214,244,.4);
+ box-shadow:var(--shadow-rest),inset 0 1px 0 rgba(255,255,255,.3),inset 0 -2px 4px rgba(20,28,45,.16);
+}
+.playback-arc { stroke:var(--fia-brand); }
+:root[data-theme=dark] .playback-arc { stroke:var(--aurora-sky); }
+.playback-track { stroke:color-mix(in srgb,var(--fia-brand) 25%,transparent); }
+:root[data-theme=dark] .playback-track { stroke:rgba(188,214,244,.2); }
+.scene-controls .menu-control, .scene-controls .replay-control { color:var(--fia-brand); }
+:root[data-theme=dark] .scene-controls .menu-control, :root[data-theme=dark] .scene-controls .replay-control { color:#fff; }

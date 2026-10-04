@@ -1,57 +1,37 @@
 {
   "name": "fia-app",
-  "version": "0.3.3",
-  "description": "FIA App — Familiarization · Internalization · Articulation. Guided oral Bible engagement, offline-first PWA.",
-  "license": "MIT",
   "private": true,
   "type": "module",
-  "engines": {
-    "node": ">=22"
-  },
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build && node scripts/finalize-build.mjs",
+    "test": "node --test tests/web-shell/*.test.js && npm run test:reference",
     "preview": "vite preview",
-    "tokens": "node scripts/build-tokens.mjs",
-    "strings": "node scripts/extract-strings.mjs",
-    "lint": "eslint . && prettier --check .",
-    "check:css": "node scripts/check-css-budget.mjs",
-    "format": "prettier --write .",
-    "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run",
-    "test:contracts": "vitest run tests/contracts.test.ts",
+    "test:release": "node --test tests/release/*.test.js",
     "test:e2e": "playwright test",
-    "test:visual": "playwright test e2e/visual-baseline.spec.ts",
-    "smoke:deployed": "playwright test e2e/smoke.spec.ts e2e/deployed.spec.ts",
-    "generate": "npm run tokens && npm run strings",
-    "deploy": "wrangler deploy --env dev"
+    "test:visual": "playwright test e2e/visual.spec.js",
+    "smoke:deployed": "playwright test e2e/deployed.spec.js",
+    "test:upgrade": "playwright test e2e/upgrade.spec.js",
+    "test:reference": "cd apps/web && node --test tests/*.test.js && vitest run"
   },
   "dependencies": {
-    "ajv": "^8.17.1",
-    "ajv-formats": "^3.0.1",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "react-router-dom": "^7.9.0"
+    "svelte": "5.57.1",
+    "lucide-svelte": "0.468.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.36.0",
+    "@sveltejs/vite-plugin-svelte": "5.1.1",
+    "vite": "6.4.3",
     "@playwright/test": "1.56.1",
-    "@types/node": "^22.18.0",
-    "@types/react": "^19.1.0",
-    "@types/react-dom": "^19.1.0",
-    "@vitejs/plugin-react": "^5.0.0",
-    "eslint": "^9.36.0",
-    "eslint-config-prettier": "^10.1.0",
-    "eslint-plugin-react-hooks": "^6.1.0",
-    "eslint-plugin-react-refresh": "^0.4.20",
-    "globals": "^16.4.0",
-    "happy-dom": "^20.14.5",
-    "prettier": "^3.6.0",
-    "typescript": "^5.9.0",
-    "typescript-eslint": "^8.44.0",
-    "vite": "^7.1.0",
-    "vite-plugin-pwa": "^1.0.3",
-    "vitest": "^3.2.0",
-    "wrangler": "^4.40.0"
+    "wrangler": "^4.40.0",
+    "marked": "15.0.12",
+    "@testing-library/dom": "10.4.2",
+    "@testing-library/svelte": "5.4.2",
+    "jsdom": "26.1.0",
+    "vitest": "4.1.11"
+  },
+  "version": "3.0.0-alpha.1",
+  "description": "Approved FIA v3 experience with bundled English Mark 1:1\u201313, real media and verified local downloads.",
+  "engines": {
+    "node": ">=22"
   }
 }

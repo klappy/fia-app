@@ -1,13 +1,9 @@
 # NOTICE
 
-The MIT license in `LICENSE` covers the **application code** in this repository only.
+The MIT license in `LICENSE` covers application code only. Bundled FIA guide, Scripture, recordings and visual resources retain their source terms and attributions; the application license grants no additional content rights.
 
-Content the app loads and displays — FIA guide text, Scripture editions, key terms, images, maps, videos and recordings served from Aquifer — stays under its **own terms** (for example CC BY-SA 4.0 for the FIA Translation Guide by Word Collective, CC0 or other terms per edition and per source). Each content pack carries its rights record (contract C-13) and the app renders those attributions verbatim on the About / Rights screen.
+The Familiarization, Internalization, Articulation Translation Guide is © 2025 Word Collective, licensed CC BY-SA 4.0. The approved English Mark 1:1–13 pack includes existing source narration, Scripture readings, images/maps and three companion videos. Narration includes historical AI-generated recordings copied unchanged; this release generates no new voice or recording. The three videos retain the approved prototype's compressed bytes.
 
-AI-generated narration and AI translations of the English are derived works of the source content, are always marked as such in the app, and inherit the source's terms.
+The application's **About & sources** panel identifies the Scripture editions (Berean Standard Bible, unfoldingWord Literal Text and unfoldingWord Simplified Text), Word Collective image/video credits, Biblica map metadata credits and linked source records. Recording provenance is at `apps/web/public/content/source/audio-manifest.json`; content and design-system provenance is in `apps/web/docs/CONTENT-RECEIPT.md` and the public source records under `apps/web/public/content/source/`. Per-edition rights remain in those records. A description is not a substitute for its resource, and no new rights grant is implied by including the historical approved artifact.
 
-Nothing in this repository grants rights to the FIA name, logo or brand assets beyond their use in this app as supplied.
-
-Fonts: the scripture faces Noto Serif, Noto Serif Hebrew, Noto Naskh Arabic, Noto Serif Devanagari, Noto Serif Gujarati and Noto Serif TC (© The Noto Project Authors and Google Inc.) are self-hosted in the vendored BT Glass kit (`src/vendor/glass/assets/fonts/`, from npm `@fontsource/*` 5.3.0) under the **SIL Open Font License 1.1**; the licence text sits beside each family as `OFL.txt`.
-
-This file is a stub; the generated per-language attribution list lands with the content pipeline.
+The FIA name, logo and appearance tokens are supplied for this application. Approved interface byte identities are recorded in `tests/release/approved-source.json`, with the earlier bounded brand reference in `packages/views/BORROWED.json`. No broader trademark grant is implied.
