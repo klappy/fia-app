@@ -15,6 +15,7 @@ const registry={schemaVersion:1,sourceRevision:SOURCE,recipeRevision:RECIPE,pack
 for(const id of ids){
  const dir=input?join(input,'data/packs',id):null,files=['manifest','guide','guide-units','scripture','resources','rights','narration'];
  const sourceFiles=input?files.map(name=>{const bytes=readFileSync(join(dir,name+'.json'));return {path:`data/packs/${id}/${name}.json`,bytes:bytes.length,sha256:digest(bytes)};}):bundled.inventory.filter(f=>f.path.startsWith(`data/packs/${id}/`));
+ sourceFiles.sort((a,b)=>a.path<b.path?-1:a.path>b.path?1:0);
  if(input)for(const f of sourceFiles){const trusted=bundled.inventory.find(e=>e.path===f.path);if(!trusted||trusted.sha256!==f.sha256||trusted.bytes!==f.bytes)throw Error('pinned file identity mismatch');}
  const data=input?Object.fromEntries(files.map(name=>[name,json(join(dir,name+'.json'))])):bundled.packs[id];
  let bytes,result;
