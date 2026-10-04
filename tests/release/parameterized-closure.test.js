@@ -14,7 +14,7 @@ test('parameterized closure rejects wrong identity, duplicate stamp, and unrelat
   const version=JSON.parse(readFileSync(new URL('version.json',root))).version;
   const original=readFileSync(new URL('index.html',root),'utf8');
   const good=verifyBuildParameters(root,version);
-  writeFileSync(new URL('index.html',root),original.replace(/alpha\.4\+[a-f0-9]{7}/,'alpha.4+fffffff'));
+  writeFileSync(new URL('index.html',root),original.replace(/(<meta name="fia-release" content="[^"]+\+)[a-f0-9]{7}/,'$1fffffff'));
   assert.throws(()=>verifyBuildParameters(root,version));
   writeFileSync(new URL('index.html',root),original+original.match(/<meta name="fia-release"[^>]*>/)[0]);
   assert.throws(()=>verifyBuildParameters(root,version));
