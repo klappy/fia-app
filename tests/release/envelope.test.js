@@ -1,11 +1,12 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync,readdirSync,statSync} from 'node:fs';import {createHash} from 'node:crypto';import {createStamp} from '../../scripts/version-stamp.js';
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync,readdirSync,statSync} from 'node:fs';import {createHash} from 'node:crypto';import {normalizeGenerated,verifyBuildParameters} from './parameterized-closure.js';import {createStamp} from '../../scripts/version-stamp.js';
 const hash=x=>createHash('sha256').update(x).digest('hex');
 const closure=JSON.parse(readFileSync(new URL('./generalized-release-closure.json',import.meta.url)));
 test('stamp rejects absent source identity and honors trusted build precedence',()=>{const a='a'.repeat(40),b='b'.repeat(40);const s=createStamp({WORKERS_CI_COMMIT_SHA:a,GITHUB_SHA:b,WORKERS_CI_BRANCH:'production'});assert.equal(s.commit,a);assert.equal(s.branch,'production');assert.equal(s.built_at,s.builtAt);assert.equal(s.attestation,'unavailable');assert.throws(()=>createStamp({GITHUB_SHA:'unknown'}));});
 test('public artifact contains exactly reviewed runtime and generated closure',()=>{
  const root=new URL('../../dist/',import.meta.url),allow=JSON.parse(readFileSync(new URL('./runtime-allowlist.json',import.meta.url)));
+ const parameters=verifyBuildParameters(root,closure.version);
  const files=readdirSync(root,{recursive:true}).filter(x=>statSync(new URL(x,root)).isFile());const exact=new Map([...allow.files,...closure.generatedFiles].map(x=>[x.path,x.sha256]));
- for(const file of files){const bytes=readFileSync(new URL(file,root));if(file==='version.json'){const s=JSON.parse(bytes);assert.match(s.commit,/^[a-f0-9]{40}$/);assert.equal(s.version,closure.version);}else{assert.ok(exact.has(file),`Unreviewed output ${file}`);assert.equal(hash(bytes),exact.get(file),file);}
+ for(const file of files){const bytes=readFileSync(new URL(file,root));if(file==='version.json'){const s=JSON.parse(bytes);assert.match(s.commit,/^[a-f0-9]{40}$/);assert.equal(s.version,closure.version);}else{assert.ok(exact.has(file),`Unreviewed output ${file}`);assert.equal(hash(normalizeGenerated(file,bytes,parameters)),exact.get(file),file);}
  if(/\.(html|md|json|js|css)$/.test(file))assert.doesNotMatch(bytes.toString('utf8'),/\/Users\/|chatgpt\.site|BEGIN (?:RSA |EC )?PRIVATE KEY|\bsk-[A-Za-z0-9]{20}/,file);}
  for(const file of exact.keys())assert.ok(files.includes(file),file);
  assert.ok(files.includes('version.json'));assert.match(readFileSync(new URL('_headers',root),'utf8'),/\/version\.json\s+Cache-Control: no-store/);
