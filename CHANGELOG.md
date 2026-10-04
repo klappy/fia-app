@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.0.0-alpha.3 — Online destinations with saved passages (2026-10-04)
+
+Keeps status, help, provenance and API destinations accessible after a passage download. Their network failures remain failures; installed app/session navigation still uses its pinned revision. No UI, content or media changes. See [release note](release/changes/3.0.0-alpha.3-installed-routes.md).
+
 ## 3.0.0-alpha.2 — Shared read API on the existing Worker (2026-10-04)
 
 Adds read-only HTTP and MCP access to three explicitly accepted immutable artifacts, including the complete approved presentation pack. The web application continues using its unchanged bundled pack, media and offline worker. No new content, generation, client switching or user-state service. See [release note](release/changes/3.0.0-alpha.2-worker-read.md).

@@ -1,11 +1,12 @@
 // Read-only deployed gate; run only against the authorized environment after its Git deployment.
 import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {createHash} from 'node:crypto';
 const origin=process.env.FIA_API_URL,commit=process.env.EXPECTED_COMMIT;
+const expectedVersion=JSON.parse(readFileSync(new URL('../../package.json',import.meta.url),'utf8')).version;
 assert.ok(['https://dev.fiaguide.app','https://staging.fiaguide.app','https://fiaguide.app'].includes(origin),'explicit existing environment required');
 assert.match(commit||'',/^[a-f0-9]{40}$/,'exact deployed commit required');
 const hash=x=>createHash('sha256').update(x).digest('hex'),authority=JSON.parse(readFileSync('server/faces/worker/authority.json'));
 const get=async(path,options)=>{const r=await fetch(origin+path,{...options,signal:AbortSignal.timeout(20000)});return r;};
-const stamp=await(await get('/version.json',{headers:{'Cache-Control':'no-cache'}})).json();assert.equal(stamp.commit,commit);assert.equal(stamp.version,'3.0.0-alpha.2');
+const stamp=await(await get('/version.json',{headers:{'Cache-Control':'no-cache'}})).json();assert.equal(stamp.commit,commit);assert.equal(stamp.version,expectedVersion);
 const headers={'content-type':'application/json',accept:'application/json, text/event-stream','mcp-protocol-version':'2025-06-18'};
 for(const accepted of authority.artifacts){
  const r=await get('/v1/packs/'+accepted.packId);assert.equal(r.status,200);const record=await r.json();assert.equal(hash(JSON.stringify(record)),accepted.envelopeSha256);
