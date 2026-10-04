@@ -1,0 +1,78 @@
+{
+  "sourceCommit": "b7bad3a4e91981ca6aa4976fec2831a1cbd16a7a",
+  "purpose": "Exact proposed backend import closure; requires integration disclosure acceptance; no directory-wide copy",
+  "files": [
+    {
+      "path": "server/faces/http.mjs",
+      "sha256": "53461b89830354b54b9620343203eae95cfe4c9a0742cbf24a4cf4aadc0a0e67",
+      "bytes": 1692,
+      "role": "worker-runtime"
+    },
+    {
+      "path": "server/faces/mcp.mjs",
+      "sha256": "65af1ff666ac7e1c89219b7c96d4c05c10204f20f5c74c48b2fb8b8bc179e9f3",
+      "bytes": 3502,
+      "role": "worker-runtime"
+    },
+    {
+      "path": "server/fia/publication/read-operations.mjs",
+      "sha256": "0e1e1479151995958d8171a766524f4ca39dba84fc6c254e2aced64937a6995e",
+      "bytes": 1049,
+      "role": "worker-runtime"
+    },
+    {
+      "path": "server/fia/publication/service.mjs",
+      "sha256": "93f87ff43c516bf39a120417dfef2dd0bb51a97bc2455b85c04a6da61cd27257",
+      "bytes": 4662,
+      "role": "build-only-publication"
+    },
+    {
+      "path": "server/core/artifacts/store.mjs",
+      "sha256": "353f0a298849211264a7c05dcce53aa105b914a319941d4b89709a743fefe754",
+      "bytes": 739,
+      "role": "build-only-publication"
+    },
+    {
+      "path": "server/core/publication/catalog.mjs",
+      "sha256": "f50f799bd6b9572ed59ba6710ca9e1e95dcf884b9772e9ab311cf4eff0138b71",
+      "bytes": 1258,
+      "role": "build-only-publication"
+    },
+    {
+      "path": "server/fia/publication/trusted-text.json",
+      "sha256": "88d75538068e69add69669165ad459455994a83199f7f55d97c3e0fc62783047",
+      "bytes": 6926,
+      "role": "build-only-publication"
+    },
+    {
+      "path": "server/fia/publication/trusted-full-text.json",
+      "sha256": "e1eaec046d7247d7f0d39f64e06428478587ff1f3ef6892d21a922d08f0e5b43",
+      "bytes": 697,
+      "role": "build-only-publication"
+    },
+    {
+      "path": "server/fia/publication/trusted-approved-presentation.json",
+      "sha256": "6865399ed9b5bed129e465613a8524759ef0fea6235d977019834984e89451b6",
+      "bytes": 27780,
+      "role": "build-only-publication"
+    },
+    {
+      "path": "server/fia/publication/text-excerpt.json",
+      "sha256": "e34f0167135777e0ddf197f83ebcea91948a9ab7e28333b5b3f35a88c536c6ee",
+      "bytes": 11034,
+      "role": "build-only-publication"
+    },
+    {
+      "path": "server/fia/publication/full-text.json",
+      "sha256": "faa53e9e954dcf0f0661e3551f6fb96a9f4f2f532fff2d90ab128b4eab5d8843",
+      "bytes": 654260,
+      "role": "build-only-publication"
+    },
+    {
+      "path": "server/fia/publication/approved-presentation.json",
+      "sha256": "ccd72f23c23f932651b500b730b285f32fabd37e50037b5af91d8881f1403975",
+      "bytes": 454295,
+      "role": "build-only-publication"
+    }
+  ]
+}
