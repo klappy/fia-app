@@ -17,6 +17,7 @@ const states=[
  {name:'term-instruction',index:find(a=>pack.assets[a.assetId]?.kind==='term')},
  {name:'term-definition',index:find(a=>pack.assets[a.assetId]?.kind==='term'),definition:true},
  {name:'section-transition',index:find(a=>a.sectionId===pack.sections[1].id),transition:true},
+ {name:'progress-overview',index:0,progress:true},
  {name:'menu',index:0,menu:true},
  {name:'settings',index:0,menu:'Settings'},
  {name:'languages',index:0,menu:'Language'},
@@ -33,6 +34,7 @@ async function openState(browser,url,viewport,dark,state){
  },{...state,dark,id:activity.id,sectionId:activity.sectionId});
  await page.goto(url);await expect(page.locator('main.scene')).toBeVisible();
  await page.evaluate(()=>document.fonts.ready);
+ if(state.progress)await page.getByRole('button',{name:'Session progress: open section overview',exact:true}).click();
  if(state.menu){await page.getByRole('button',{name:'More options',exact:true}).click();if(typeof state.menu==='string')await page.getByRole('button',{name:state.menu,exact:state.menu!=='Language'}).click();}
  await page.evaluate(async()=>{await Promise.all([...document.images].map(i=>i.decode().catch(()=>{})));});
  await page.mouse.move(0,0);
