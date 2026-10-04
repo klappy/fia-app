@@ -2,15 +2,14 @@ const MAX_BYTES=1048576;
 const unavailable=reason=>({status:'unavailable',reason});
 export async function readStaticArtifact(item,fetchAsset){
  if(!fetchAsset)return unavailable('artifact-not-found');
- let response;
- try{response=await fetchAsset(item.staticPath);}catch{return unavailable('artifact-not-found');}
+ const response=await fetchAsset(item.staticPath);
  if(response.status===404){await response.body?.cancel();return unavailable('artifact-not-found');}
  const fail=async()=>{await response.body?.cancel().catch(()=>{});return unavailable('artifact-integrity-failed');};
  if(response.status!==200||response.redirected||response.headers.get('content-type')?.split(';')[0].trim().toLowerCase()!=='application/json'||item.descriptor.bytes>MAX_BYTES)return fail();
  const length=response.headers.get('content-length');if(length!==null&&(!/^\d+$/.test(length)||Number(length)!==item.descriptor.bytes))return fail();
  if(!response.body)return fail();
  const reader=response.body.getReader(),chunks=[];let total=0;
- try{while(true){const {done,value}=await reader.read();if(done)break;total+=value.byteLength;if(total>MAX_BYTES||total>item.descriptor.bytes){await reader.cancel();return unavailable('artifact-integrity-failed');}chunks.push(value);}}catch{await reader.cancel().catch(()=>{});return unavailable('artifact-integrity-failed');}finally{reader.releaseLock();}
+ try{while(true){const {done,value}=await reader.read();if(done)break;total+=value.byteLength;if(total>MAX_BYTES||total>item.descriptor.bytes){await reader.cancel();return unavailable('artifact-integrity-failed');}chunks.push(value);}}catch(error){await reader.cancel().catch(()=>{});throw error;}finally{reader.releaseLock();}
  if(total!==item.descriptor.bytes)return unavailable('artifact-integrity-failed');
  const bytes=new Uint8Array(total);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.byteLength;}
  const digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');if(digest!==item.descriptor.sha256)return unavailable('artifact-integrity-failed');
