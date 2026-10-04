@@ -11,10 +11,14 @@ test('approved manual journey preserves grouped readings and explicit holds thro
  }
  await expect(page.getByRole('heading',{name:'Carry the story with you.'})).toBeVisible();expect(count).toBeGreaterThan(90);expect((await saved(page)).completed.length).toBe(activities.length);
 });
-test('explicit Play uses real recording while automatic narration stays off',async({page})=>{
+test('explicit Play uses cached verified recording while automatic narration stays off',async({page,context})=>{
+ await page.addInitScript(()=>{const NativeAudio=window.Audio;window.__verifiedPlayers=[];window.Audio=class extends NativeAudio{constructor(...args){super(...args);window.__verifiedPlayers.push(this);}};});
  test.setTimeout(120000);await seedPassage(page,'S01-U002');await downloadSelected(page,'audio');const index=(await saved(page)).index;
- const response=page.waitForResponse(r=>r.url().endsWith('/audio/source/S01-U002.mp3'));
- await page.getByRole('button',{name:'Play',exact:true}).click();expect((await response).ok()).toBeTruthy();
+ const media=[];context.on('request',r=>{if(/\.(mp3|m4a|wav|ogg|mp4|webm|jpe?g|png|webp)(?:$|\?)/.test(r.url())&&!r.url().includes('/assets/fia-'))media.push(r.url());});
+ await context.setOffline(true);await page.getByRole('button',{name:'Play',exact:true}).click();
+ await expect.poll(()=>page.evaluate(()=>window.__verifiedPlayers.at(-1)?.currentTime||0)).toBeGreaterThan(.1);
+ const first=await page.evaluate(()=>window.__verifiedPlayers.at(-1).currentTime);await expect.poll(()=>page.evaluate(()=>window.__verifiedPlayers.at(-1).currentTime)).toBeGreaterThan(first);
+ expect(await page.evaluate(()=>window.__verifiedPlayers.at(-1).src.startsWith('blob:'))).toBe(true);expect(activities[(await saved(page)).index].id).toBe('S01-U002');expect(media).toEqual([]);
  await expect(page.getByRole('button',{name:'Pause',exact:true})).toBeVisible();
  await page.getByRole('button',{name:'Pause',exact:true}).click();await expect(page.getByRole('button',{name:'Resume',exact:true})).toBeVisible();expect((await saved(page)).index).toBe(index);
 });
