@@ -13,8 +13,8 @@ export function createHostedDispatch({storage,ledger,identity,activation,executo
  function validRecord(row,nodeKey,lane){
   if(!row)return;
   const required=['schema','nodeKey','ledger','state','attemptId','revision','startedAt','deadline','stopAttempts'];
-  const optional=['artifact','stopVerified','stopDeadline','reconciled','reason'];
-  if(Object.getPrototypeOf(row)!==Object.prototype||required.some(k=>!Object.hasOwn(row,k))||Object.keys(row).some(k=>!required.includes(k)&&!optional.includes(k))||row.schema!=='fia-hosted-asr-attempt@1'||row.nodeKey!==nodeKey||row.ledger!==lane||!['preparing','uncertain','completed'].includes(row.state)||typeof row.attemptId!=='string'||!row.attemptId||row.attemptId.length>128||row.revision!==1||!Number.isSafeInteger(row.startedAt)||row.startedAt<window.startedAt||row.startedAt>=window.expiresAt||!Number.isSafeInteger(row.deadline)||row.deadline<=row.startedAt||row.deadline>Math.min(row.startedAt+360000,window.expiresAt)||!Number.isSafeInteger(row.stopAttempts)||row.stopAttempts<0||row.stopAttempts>3||('stopVerified'in row&&typeof row.stopVerified!=='boolean')||('stopDeadline'in row&&(!Number.isSafeInteger(row.stopDeadline)||row.stopDeadline<=row.startedAt))||('reason'in row&&(typeof row.reason!=='string'||row.reason.length>128))||('reconciled'in row&&row.reconciled!==true)||('artifact'in row&&!artifactShape(row.artifact))||row.state==='completed'&&(!artifactShape(row.artifact)||row.stopVerified!==true))throw Error('corrupt-attempt');
+  const optional=['artifact','stopVerified','stopDeadline','reconciled','reason','alarmError'];
+  if(Object.getPrototypeOf(row)!==Object.prototype||required.some(k=>!Object.hasOwn(row,k))||Object.keys(row).some(k=>!required.includes(k)&&!optional.includes(k))||row.schema!=='fia-hosted-asr-attempt@1'||row.nodeKey!==nodeKey||row.ledger!==lane||!['preparing','uncertain','completed'].includes(row.state)||typeof row.attemptId!=='string'||!row.attemptId||row.attemptId.length>128||row.revision!==1||!Number.isSafeInteger(row.startedAt)||row.startedAt<window.startedAt||row.startedAt>=window.expiresAt||!Number.isSafeInteger(row.deadline)||row.deadline<=row.startedAt||row.deadline>Math.min(row.startedAt+360000,window.expiresAt)||!Number.isSafeInteger(row.stopAttempts)||row.stopAttempts<0||row.stopAttempts>3||('stopVerified'in row&&typeof row.stopVerified!=='boolean')||('stopDeadline'in row&&(!Number.isSafeInteger(row.stopDeadline)||row.stopDeadline<=row.startedAt))||(row.stopVerified===true&&(row.stopAttempts<1||!Number.isSafeInteger(row.stopDeadline)))||('alarmError'in row&&typeof row.alarmError!=='boolean')||('reason'in row&&(typeof row.reason!=='string'||row.reason.length>128))||('reconciled'in row&&row.reconciled!==true)||('artifact'in row&&!artifactShape(row.artifact))||row.state==='completed'&&(!artifactShape(row.artifact)||row.stopVerified!==true))throw Error('corrupt-attempt');
  }
  async function snapshot(tx,nodeKey){
   const budget=await tx.get('hosted:budget'),a=await tx.get(`hosted:A:${nodeKey}`),b=await tx.get(`hosted:B:${nodeKey}`);
@@ -27,12 +27,12 @@ export function createHostedDispatch({storage,ledger,identity,activation,executo
   const key=`hosted:${ledger}:${nodeKey}`;
   const row=await storage.transaction(async tx=>{const s=await snapshot(tx,nodeKey),current=s[ledger];if(!current||current.attemptId!==attempt.attemptId||current.revision!==attempt.revision)throw Error('stop-fence');if(current.stopVerified===true)return current;if(current.stopAttempts>=3)throw Error('stop-attempts-exhausted');if(completion&&now()>=current.deadline)throw Error('stop-fence');current.stopDeadline=completion?Math.min(current.deadline,now()+30000):now()+30000;if(completion)current.deadline=current.stopDeadline;current.stopAttempts++;await tx.put(key,current);return current;});
   if(row.stopVerified===true)return true;
-  await storage.setAlarm(row.stopDeadline);
+  let alarmError=false;try{await storage.setAlarm(row.stopDeadline);}catch{alarmError=true;}
   let timer,stopped=false;try{stopped=await Promise.race([Promise.resolve().then(()=>run.stop(copy(row))),new Promise(resolve=>{timer=setTimeout(()=>resolve(false),Math.max(0,row.stopDeadline-now()));})])===true;}catch{}finally{clearTimeout(timer);}
   if(now()>=row.stopDeadline)stopped=false;
-  await storage.transaction(async tx=>{const s=await snapshot(tx,nodeKey),current=s[ledger];if(current?.attemptId===row.attemptId&&current.state!=='completed'){current.stopVerified=stopped;await tx.put(key,current);}});
-  if(!stopped&&row.stopAttempts<3)await storage.setAlarm(now()+30000);
-  return stopped;
+  await storage.transaction(async tx=>{const s=await snapshot(tx,nodeKey),current=s[ledger];if(current?.attemptId===row.attemptId&&current.state!=='completed'){current.stopVerified=stopped;current.alarmError=alarmError;await tx.put(key,current);}});
+  if(!stopped&&row.stopAttempts<3){try{await storage.setAlarm(now()+30000);}catch{await storage.transaction(async tx=>{const s=await snapshot(tx,nodeKey),current=s[ledger];if(current?.attemptId===row.attemptId){current.alarmError=true;await tx.put(key,current);}});}}
+  return stopped&&!alarmError;
  }
  async function dispatch(){
   const nodeKey=await keyPromise,recordKey=`hosted:${ledger}:${nodeKey}`;
