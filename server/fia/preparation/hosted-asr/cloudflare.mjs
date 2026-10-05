@@ -8,8 +8,9 @@ const sourceURL='https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p2/s1
 const copy=x=>structuredClone(x);
 async function bounded(operation,milliseconds,label){let timer;try{return await Promise.race([Promise.resolve().then(operation),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error(label)),Math.max(1,milliseconds));})]);}finally{clearTimeout(timer);}}
 export function createCloudflarePilot({ctx,env,loadActivation,now=Date.now,readRetainedSource=readSource}){
- const storage=ctx.storage,container=ctx.container,bucket=env.FIA_ASR_ARTIFACTS;
+ const storage=ctx.storage,container=ctx.container,bucket=env.FIA_ORIGINALS;
  if(!storage?.transaction||typeof loadActivation!=='function')throw Error('private-pilot-bindings');
+ function assertSingleton(){if(!ctx.id||!env.FIA_ASR_EXECUTOR||ctx.id.toString()!==env.FIA_ASR_EXECUTOR.idFromName('asr-pilot-v1').toString())throw Error('private-pilot-identity');}
  async function stored(){const row=await storage.get(CONFIG_KEY);if(!row)return null;if(await sha256(canonicalJSONString(row.config))!==row.sha256)throw Error('integration-config-corrupt');return row.config;}
  async function configuration(){
   let config;try{config=copy(await loadActivation(env));}catch(error){const prior=await stored();if(!prior)throw error;return {...prior,enabled:false};}
@@ -35,7 +36,7 @@ export function createCloudflarePilot({ctx,env,loadActivation,now=Date.now,readR
    const port=container.getTcpPort(8080),readyDeadline=Math.min(attempt.startedAt+60000,attempt.deadline);
    let ready=false;
    while(now()<readyDeadline){
-    try{const response=await bounded(()=>port.fetch('http://container/ready',{signal:AbortSignal.timeout(Math.max(1,Math.min(1000,readyDeadline-now())))}),Math.min(1000,readyDeadline-now()),'ready-request-timeout');if(response.status===200){const body=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(await bounded(()=>readBounded(response,16384),Math.max(1,readyDeadline-now()),'ready-body-timeout')));if(body.schema!=='fia-asr-ready@1'||['modelSha256','runtimeSha256','scriptSha256','configSha256'].some(k=>body[k]!==config.identity[k]))throw Error('ready-identity-mismatch');ready=true;break;}}catch(error){if(error.message==='ready-identity-mismatch')throw error;}
+    try{const response=await bounded(()=>port.fetch('http://container/ready',{signal:AbortSignal.timeout(Math.max(1,Math.min(1000,readyDeadline-now())))}),Math.min(1000,readyDeadline-now()),'ready-request-timeout');if(response.status===200){const body=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(await bounded(()=>readBounded(response,16384),Math.max(1,readyDeadline-now()),'ready-body-timeout')));if(body.schema!=='fia-asr-ready@1'||body.guards?.schema!=='fia-image-guards@1'||body.guards.addressSpaceBytes!==4294967296||body.guards.scratchPolicy!=='landlock-no-filesystem-writes'||body.guards.scratchBytes!==0||!Number.isSafeInteger(body.guards.landlockAbi)||body.guards.landlockAbi<3||body.guards.anonymousFilesDenied!==true||['modelSha256','runtimeSha256','scriptSha256','configSha256'].some(k=>body[k]!==config.identity[k]))throw Error('ready-identity-mismatch');ready=true;break;}}catch(error){if(error.message==='ready-identity-mismatch')throw error;}
     await new Promise(resolve=>setTimeout(resolve,Math.min(100,Math.max(1,readyDeadline-now()))));
    }
    if(!ready)throw Error('readiness-expired');
@@ -47,13 +48,26 @@ export function createCloudflarePilot({ctx,env,loadActivation,now=Date.now,readR
   },stop};
   return createHostedDispatch({storage:laneStorage(lane),ledger:lane,identity:config.identity,activation:config.activation,executor,verifyArtifact:artifactBytes,validateResult:validateRawRecognition,now});
  }
- async function run(lane){const config=await configuration(),result=await service(config,lane).dispatch();if(result.stopVerified===true)await clearLane(lane);return result;}
- async function reconcile(lane,receipt){const config=await configuration(),result=await service(config,lane).reconcile(receipt);if(result.stopVerified===true)await clearLane(lane);return result;}
+ async function run(lane){assertSingleton();const config=await configuration(),result=await service(config,lane).dispatch();if(result.stopVerified===true)await clearLane(lane);return result;}
+ async function reconcile(lane,receipt){assertSingleton();const config=await configuration(),result=await service(config,lane).reconcile(receipt);if(result.stopVerified===true)await clearLane(lane);return result;}
  async function alarm(){
-  let config;try{config=await stored();}catch{await stop();throw Error('integration-config-corrupt');}
-  if(!config){await stop();return;}
-  // Captured configuration is cleanup evidence only; disabled or expired env never disables shutdown.
-  const results=[];for(const lane of ['A','B']){const result=await service({...config,enabled:false},lane).watchdog();results.push(result);if(!result||result.stopVerified===true||result.stopAttempts>=3)await clearLane(lane);}
+  let fallback;
+  async function emergencyStop(reason){
+   if(fallback)return fallback;
+   const stopped=await stop();fallback={state:'uncertain',reason,stopVerified:stopped};
+   const previous=await storage.get('hosted:cleanup-fallback'),attempts=Number.isSafeInteger(previous?.attempts)?previous.attempts+1:1;
+   await storage.put('hosted:cleanup-fallback',{...fallback,attempts,at:now()});
+   if(!stopped&&attempts<3)await storage.setAlarm(now()+30000);
+   return fallback;
+  }
+  let config;try{config=await stored();}catch{return emergencyStop('integration-config-corrupt');}
+  if(!config)return emergencyStop('integration-config-missing');
+  // Cleanup remains possible despite disabled activation or corrupt budget/attempt rows.
+  const results=[];for(const lane of ['A','B']){
+   try{const result=await service({...config,enabled:false},lane).watchdog();results.push(result);if(!result||result.stopVerified===true||result.stopAttempts>=3)await clearLane(lane);}
+   catch{results.push(await emergencyStop('dispatch-state-corrupt'));}
+  }
+  if(fallback&&!fallback.stopVerified){const record=await storage.get('hosted:cleanup-fallback');if(record.attempts<3)await storage.setAlarm(now()+30000);}
   return results;
  }
  return {pilotA:()=>run('A'),pilotB:()=>run('B'),reconcileA:receipt=>reconcile('A',receipt),reconcileB:receipt=>reconcile('B',receipt),alarm,fetch:()=>new Response('Not Found',{status:404})};
