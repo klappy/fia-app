@@ -1,0 +1,13 @@
+# Private hosted ASR pilot control prototype
+
+Recipe: cookbook PR180, merge `7f863cca354514bf365f7422d992e16f23f08b19`.
+
+`createHostedDispatch` accepts trusted constructor-only semantic identity, activation, fixed ledger A or B, durable transactional storage, an infrastructure executor, retained artifact reader and strict domain result validator. There is no HTTP interface. Both ledgers share one node identity, one two-start budget and singleton exclusion. A failed or ambiguous dispatch consumes its start and remains uncertain. Warm results are rehashed and domain-validated. A trusted explicit reconciliation can finish the same fenced attempt before its original deadline; it cannot allocate another attempt.
+
+The executor must establish actual enforced resource limits before setting `limitsEnforced`. This boolean is a trusted integration capability, **not evidence that this module enforces memory or scratch limits**. Docker is unavailable in the current environment, so no Linux cgroup, image, hosted readiness, provider or cloud-spend qualification has occurred. No live executor is wired. The deployment owner must bind an immutable enforcement receipt and the pinned pilot identity, and implement ready/recognition/idle subdeadlines before activation. The durable alarm must call `watchdog` for the appropriate fixed ledger after restart.
+
+`runBoundedProcess` is a Node development process-group supervisor with an absolute wall-clock deadline, output bound and TERM→KILL escalation. It does not enforce RSS or filesystem quotas and must not by itself authorize hosted dispatch. Stop verification concerns OS process-group absence, not infrastructure billing termination.
+
+Direct tests: `node --test tests/preparation-hosted-asr/dispatch.test.mjs tests/preparation-hosted-asr/watchdog.test.mjs`.
+
+Current tests use serialized in-memory transactional storage and real local child processes. They do not prove SQLite persistence or R2 publication. Immutable result publication and strict raw schema/source/model/runtime validation are required trusted adapter seams, not implemented provider calls. This is a bounded control prototype, not a deployable hosted ASR service.
