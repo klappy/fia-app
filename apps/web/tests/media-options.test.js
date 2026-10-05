@@ -7,3 +7,5 @@ test('legacy declared large is a prepared default, not evidence of phone912 rend
  const group=preparedDownloadSizes({files:[f]},'all').groups.video;assert.equal(group.prepared,true);assert.equal(group.requestable,true);assert.deepEqual(group.available,[]);
  const actual={...legacy,deliveryURL:legacy.deliveryURL.replace('f=mp4/','f=mp4,size=xlarge/')};assert.deepEqual(preparedDownloadSizes({files:[{...actual,variants:{large:actual}}]},'all').groups.video.available,['large']);
 });
+
+test('a profile-looking segment in the upstream source URL is not rendition size proof',()=>{const f={group:'video',deliveryURL:'https://transcode.klappy.dev/video/preset=fia,q=medium,f=mp4/https://source.test/size=xlarge/720p.mp4'};assert.deepEqual(preparedDownloadSizes({files:[f]},'all').groups.video.available,[]);});
