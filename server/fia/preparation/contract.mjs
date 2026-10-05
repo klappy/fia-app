@@ -31,10 +31,13 @@ export async function sha256(bytes){
   return Array.from(new Uint8Array(digest),v=>v.toString(16).padStart(2,'0')).join('');
 }
 function equal(actual,expected){if(canonicalJSONString(actual)!==canonicalJSONString(expected))throw Error('prepared-audio-binding-mismatch');}
-function media(value,delivery=false){
+function media(value,delivery=false,relativeURL=null){
   fields(value,delivery?['url','sha256','bytes','duration','mime','quality']:['url','sha256','bytes','duration']);
-  text(value.url);let url;try{url=new URL(value.url);}catch{throw Error('invalid-prepared-audio-url');}
-  if(url.protocol!=='https:'||url.username||url.password||url.hash)throw Error('invalid-prepared-audio-url');
+  text(value.url);
+  if(value.url!==relativeURL){
+    let url;try{url=new URL(value.url);}catch{throw Error('invalid-prepared-audio-url');}
+    if(url.protocol!=='https:'||url.username||url.password||url.hash)throw Error('invalid-prepared-audio-url');
+  }
   if(!hash(value.sha256)||!Number.isSafeInteger(value.bytes)||value.bytes<1||!Number.isFinite(value.duration)||value.duration<=0)throw Error('invalid-prepared-audio-media');
   if(delivery){if(!['audio/mpeg','audio/mp4','audio/ogg','audio/webm','audio/wav'].includes(value.mime))throw Error('invalid-prepared-audio-mime');text(value.quality);}
 }
@@ -47,7 +50,14 @@ export function validatePreparedAudio(result,expected){
   fields(result,['schema',...identityFields,'source','delivery','provenance','evidence','activities']);
   if(result.schema!=='fia-prepared-audio@1'||result.provenance!=='official-recording')throw Error('unsupported-prepared-audio');
   for(const key of identityFields){text(result[key]);if(['presentationRevision','configSha256'].includes(key)&&!hash(result[key]))throw Error('invalid-prepared-audio-identity');equal(result[key],expected.identity[key]);}
-  media(result.source);media(result.delivery,true);equal(result.source,expected.source);equal(result.delivery,expected.delivery);
+  media(result.source);
+  const original=result.delivery?.quality==='original';
+  const originalRoute=`/v1/preparation-audio/${result.source.sha256}.mp3`;
+  media(result.delivery,true,original?originalRoute:null);
+  if(original){
+    if(![originalRoute,result.source.url].includes(result.delivery.url)||result.delivery.mime!=='audio/mpeg'||['sha256','bytes','duration'].some(key=>result.delivery[key]!==result.source[key]))throw Error('invalid-original-audio-delivery');
+  }
+  equal(result.source,expected.source);equal(result.delivery,expected.delivery);
   fields(result.evidence,['acceptanceSha256','recordingLedgerSha256','timingSha256']);
   for(const v of Object.values(result.evidence))if(!hash(v))throw Error('invalid-prepared-audio-evidence');
   equal(result.evidence,{acceptanceSha256:expected.acceptanceSha256,...expected.evidence});

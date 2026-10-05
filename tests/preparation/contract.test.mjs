@@ -33,3 +33,15 @@ test('canonical encoding stable and unsupported input rejected without executing
  for(const value of [undefined,NaN,Infinity,new Date(),[,],{a:undefined},'\ud800',Object.defineProperty({},'x',{enumerable:true,get(){throw Error('getter executed');}})])assert.throws(()=>canonicalJSONString(value),/unsupported/);
  const cycle={};cycle.x=cycle;assert.throws(()=>canonicalJSONString(cycle));
 });
+test('original delivery permits only exact same-source HTTPS or canonical hash route',async()=>{
+ const {result,expected}=await fixture();
+ result.delivery={...result.source,mime:'audio/mpeg',quality:'original'};expected.delivery=structuredClone(result.delivery);
+ assert.doesNotThrow(()=>validatePreparedAudio(result,expected));
+ result.delivery.url=`/v1/preparation-audio/${result.source.sha256}.mp3`;expected.delivery=structuredClone(result.delivery);
+ assert.doesNotThrow(()=>validatePreparedAudio(result,expected));
+ const bytes=new TextEncoder().encode(JSON.stringify(result));expected.resultSha256=await sha256(bytes);assert.deepEqual(await readPreparedAudio(bytes,expected),result);
+ for(const mutate of [r=>r.delivery.url=`/v1/preparation-audio/${b}.mp3`,r=>r.delivery.url=`/v1/preparation-audio/../${h}.mp3`,r=>r.delivery.url+= '?x=1',r=>r.delivery.quality='medium',r=>r.delivery.sha256=b,r=>r.delivery.bytes++,r=>r.delivery.duration+=.1,r=>r.delivery.mime='audio/ogg',r=>r.delivery.url='https://other.example/file.mp3']){
+  const changed=structuredClone(result),trusted=structuredClone(expected);mutate(changed);trusted.delivery=structuredClone(changed.delivery);
+  assert.throws(()=>validatePreparedAudio(changed,trusted));
+ }
+});
