@@ -19,6 +19,21 @@ it('switching passage waits for native release and persists the actual selected 
  await waitFor(()=>expect(localStorage.getItem('fia-v3-selected-pack')).toBe(descriptor.id));expect(select).toHaveBeenCalledTimes(1);
  expect(screen.queryByText('Your saved place could not be read.')).toBeNull();expect(document.querySelector('video')).toBeNull();
 });
+it('newer passage intent survives an older load resolving during native presentation',async()=>{
+ const registry=JSON.parse(readFileSync('public/content/registry.json','utf8'));
+ const descriptors=['eng.MRK-1-14-20','eng.MRK-1-21-28'].map(id=>registry.packs.find(p=>p.id===id));
+ const loaded=descriptors.map(descriptor=>({descriptor,presentation:JSON.parse(readFileSync('public'+descriptor.presentation.url,'utf8'))}));
+ let resolveA;const select=vi.spyOn(libraryAdapter,'select').mockImplementation(id=>id===descriptors[0].id?new Promise(resolve=>resolveA=resolve):Promise.resolve(loaded[1]));
+ vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',nativeName:'English',ready:68}]);vi.spyOn(libraryAdapter,'passages').mockResolvedValue(descriptors);
+ assets.a112.relatedIds=[];await startAt('S02-U005','waiting');await command('watch the video');const video=document.querySelector('video');
+ await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passages',exact:true}));await settle();
+ await fireEvent.click(screen.getAllByRole('button',{name:'Open passage',exact:true})[0]);await settle();expect(select).toHaveBeenCalledTimes(1);
+ Object.defineProperty(video,'webkitDisplayingFullscreen',{value:true,writable:true});video.webkitExitFullscreen=vi.fn();await fireEvent(video,new Event('webkitbeginfullscreen'));
+ await fireEvent.click(screen.getAllByRole('button',{name:'Open passage',exact:true})[1]);await settle();expect(video.webkitExitFullscreen).toHaveBeenCalledTimes(1);
+ resolveA(loaded[0]);await settle();await settle();expect(document.querySelector('video')).toBe(video);expect(select).toHaveBeenCalledTimes(1);expect(localStorage.getItem('fia-v3-selected-pack')).toBeNull();
+ video.webkitDisplayingFullscreen=false;await fireEvent(video,new Event('webkitendfullscreen'));
+ await waitFor(()=>expect(localStorage.getItem('fia-v3-selected-pack')).toBe(descriptors[1].id));expect(select.mock.calls.map(([id])=>id)).toEqual(descriptors.map(p=>p.id));expect(document.querySelector('video')).toBeNull();
+});
 it('native video completion retains the same owner until exit then returns once without autoplay',async()=>{
  assets.a112.relatedIds=[];await startAt('S02-U005','waiting');await command('watch the video');
  const video=document.querySelector('video');video.currentTime=12;
