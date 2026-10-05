@@ -373,3 +373,69 @@ it('automatic Scripture reading is independent of automatic guide narration',asy
  vi.useFakeTimers();const session=createSession(activities);session.index=activities.findIndex(a=>a.id==='S01-U002');localStorage.setItem('fia-v3-session@2',JSON.stringify({session,muted:true}));render(App);await settle();await settle();await settle();
  await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));await vi.advanceTimersByTimeAsync(700);await settle();expect(players).toHaveLength(0);await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();expect(players.at(-1).src).toBe(assets['scripture-BereanStandardBible'].descriptionAudio);expect(JSON.parse(localStorage.getItem('fia-v3-session@2')).muted).toBe(true);
 });
+
+function preparedVisuals(){
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});
+ const visuals=Object.values(assets).filter(a=>['image','map'].includes(a.kind));
+ vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:'d'.repeat(64),files:visuals.map(a=>({path:a.src}))});
+ let serial=0;vi.stubGlobal('URL',class extends URL{static createObjectURL(){return `blob:visual-${++serial}`;}static revokeObjectURL(){}});
+ return visuals;
+}
+it('restored prepared image stays silent, then View loads it without an offline download',async()=>{
+ const visuals=preparedVisuals(),image=visuals.find(a=>a.kind==='image');const target=activities.find(a=>a.assetId===image.id);
+ const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array([1]).buffer,mime:'image/webp'});
+ await startAt(target.id);expect(request).not.toHaveBeenCalled();expect(screen.getByRole('button',{name:'View image'})).toBeTruthy();
+ await fireEvent.click(screen.getByRole('button',{name:'View image'}));await settle();await settle();
+ expect(request).toHaveBeenCalledTimes(1);expect(request.mock.calls[0][1]).toBe(image.src);expect(document.querySelector('.visual-viewport img').src).toContain('blob:visual-1');
+});
+it('explicit resource selection loads current map without a second View action',async()=>{
+ const map=preparedVisuals().find(a=>a.kind==='map');const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array([1]).buffer,mime:'image/webp'});
+ await startAt('S01-U001');await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passage resources',exact:true}));
+ const button=within(screen.getByRole('dialog')).getByRole('button',{name:map.subtitle||map.title,exact:false});await fireEvent.click(button);await settle();await settle();
+ expect(request).toHaveBeenCalledTimes(1);expect(request.mock.calls[0][1]).toBe(map.src);expect(document.querySelector('.visual-viewport img').src).toContain('blob:visual-1');
+});
+it('canceling an unfinished visual prevents late response from mounting',async()=>{
+ const image=preparedVisuals().find(a=>a.kind==='image');const target=activities.find(a=>a.assetId===image.id);let finish;
+ const request=vi.spyOn(libraryAdapter,'playMedia').mockImplementation(()=>new Promise(r=>finish=r));await startAt(target.id);
+ await fireEvent.click(screen.getByRole('button',{name:'View image'}));await settle();await fireEvent.click(screen.getByRole('button',{name:'Cancel loading'}));
+ expect(request.mock.calls[0][3].aborted).toBe(true);finish({bytes:new Uint8Array([1]).buffer,mime:'image/webp'});await settle();expect(document.querySelector('.visual-viewport img')).toBeNull();expect(screen.getByRole('button',{name:'View image'})).toBeTruthy();
+});
+it('all eight prepared visuals use the same explicit resource resolver without offline readiness',async()=>{
+ const visuals=preparedVisuals(),tools=new Map();document.modelContext={registerTool:tool=>tools.set(tool.name,tool)};
+ const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array([1]).buffer,mime:'image/webp'});
+ await startAt('S01-U001');expect(visuals).toHaveLength(8);
+ for(const visual of visuals){await tools.get('fia_present_resource').execute({assetId:visual.id});await settle();expect(document.querySelector('.visual-viewport img')).not.toBeNull();expect(request.mock.calls.at(-1)[1]).toBe(visual.src);}
+ expect(request).toHaveBeenCalledTimes(8);expect(localStorage.getItem('fia-v3-offline')).toBeNull();
+});
+it('active guide transition loads its current image while keeping recording ownership separate',async()=>{
+ const visuals=preparedVisuals(),before=activities.find(a=>a.id==='S02-U004');
+ vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[...visuals.map(a=>({path:a.src})),{path:before.audioSrc}]});
+ const request=vi.spyOn(libraryAdapter,'playMedia').mockImplementation(async(_pack,path)=>({bytes:new Uint8Array([1]).buffer,mime:path===before.audioSrc?'audio/ogg':'image/webp'}));
+ await startAt(before.id);expect(request).not.toHaveBeenCalled();await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();await settle();
+ const player=players.at(-1);expect(player.paused).toBe(false);player.end();await settle();await settle();
+ expect(activities[state().index].id).toBe('S02-U005');expect(request.mock.calls.map(c=>c[1])).toEqual([before.audioSrc,assets.a112.src]);expect(document.querySelector('.visual-viewport img')).not.toBeNull();
+});
+it('explicit navigation to an image with no recording loads it, but late previous visual cannot replace a new detour',async()=>{
+ const visuals=preparedVisuals(),tools=new Map();document.modelContext={registerTool:tool=>tools.set(tool.name,tool)};const pending=[];
+ const request=vi.spyOn(libraryAdapter,'playMedia').mockImplementation((_pack,path,_revision,signal)=>new Promise(resolve=>pending.push({path,signal,resolve})));
+ await startAt('S02-U004');await tools.get('fia_complete_activity').execute({activityId:'S02-U004'});await settle();expect(pending[0].path).toBe(assets.a112.src);
+ const next=visuals.find(v=>v.src!==assets.a112.src);await tools.get('fia_present_resource').execute({assetId:next.id});await settle();expect(pending[0].signal.aborted).toBe(true);
+ pending[1].resolve({bytes:new Uint8Array([1]).buffer,mime:'image/webp'});await settle();const url=document.querySelector('.visual-viewport img').src;
+ pending[0].resolve({bytes:new Uint8Array([2]).buffer,mime:'image/webp'});await settle();expect(document.querySelector('.visual-viewport img').src).toBe(url);expect(request).toHaveBeenCalledTimes(2);
+});
+
+it('failed visual waits for explicit retry despite an unrelated session preference update',async()=>{
+ const image=preparedVisuals().find(a=>a.kind==='image'),target=activities.find(a=>a.assetId===image.id);
+ const request=vi.spyOn(libraryAdapter,'playMedia').mockRejectedValueOnce(Error('Verification failed')).mockResolvedValue({bytes:new Uint8Array([1]).buffer,mime:'image/webp'});
+ await startAt(target.id);await fireEvent.click(screen.getByRole('button',{name:'View image'}));await settle();expect(request).toHaveBeenCalledTimes(1);
+ await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Settings',exact:true}));await fireEvent.click(screen.getByRole('checkbox',{name:/Automatic Scripture reading/}));await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));await settle();expect(request).toHaveBeenCalledTimes(1);
+ await fireEvent.click(screen.getByRole('button',{name:'Try again',exact:true}));await settle();expect(request).toHaveBeenCalledTimes(2);expect(document.querySelector('.visual-viewport img')).not.toBeNull();
+});
+it('canceling a concurrent pending image keeps the verified recording playing',async()=>{
+ const visuals=preparedVisuals(),target=activities.find(a=>a.id==='S02-U005');
+ vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[...visuals.map(a=>({path:a.src})),{path:target.audioSrc}]});
+ let resolveImage,imageSignal;const request=vi.spyOn(libraryAdapter,'playMedia').mockImplementation((_pack,path,_revision,signal)=>path===target.audioSrc?Promise.resolve({bytes:new Uint8Array([1]).buffer,mime:'audio/ogg'}):new Promise(r=>{resolveImage=r;imageSignal=signal;}));
+ await startAt(target.id);await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();await settle();expect(players.at(-1).paused).toBe(false);expect(request).toHaveBeenCalledTimes(2);
+ await fireEvent.click(screen.getByRole('button',{name:'Cancel loading',exact:true}));expect(imageSignal.aborted).toBe(true);expect(players.at(-1).paused).toBe(false);
+ resolveImage({bytes:new Uint8Array([2]).buffer,mime:'image/webp'});await settle();expect(document.querySelector('.visual-viewport img')).toBeNull();expect(players.at(-1).paused).toBe(false);
+});

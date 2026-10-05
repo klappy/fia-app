@@ -4,7 +4,7 @@
   import AlignedReading from './AlignedReading.svelte';
   import ResourceIdentification from './ResourceIdentification.svelte';
   import { Pin, PinOff, Volume2, VolumeX, Play, X } from 'lucide-svelte';
-  let { asset, playback, inlineVideo=null, immersive=false, matchingVideo=null, onvideo=()=>{}, descriptionsEnabled=false, ontoggledescription=()=>{}, suspended=false, toolsVisible=false, pinned=false, onpin=()=>{}, ondescribe=()=>{}, ontime=()=>{}, onplay=()=>{}, onpause=()=>{}, onend=()=>{}, onerror=()=>{}, ondownload=()=>{} } = $props();
+  let { asset, playback, inlineVideo=null, immersive=false, matchingVideo=null, onvideo=()=>{}, descriptionsEnabled=false, ontoggledescription=()=>{}, suspended=false, toolsVisible=false, pinned=false, onpin=()=>{}, ondescribe=()=>{}, ontime=()=>{}, onplay=()=>{}, onpause=()=>{}, onend=()=>{}, onerror=()=>{}, onview=()=>{}, oncancelvisual=()=>{}, ondownload=()=>{} } = $props();
   let frameReady=$state(false);
   let poster=$derived(inlineVideo?asset.src:asset.poster);
   function awaitFrame(node){
@@ -31,7 +31,7 @@
 
 <div class:reading-stage={asset.kind==='scripture'||asset.kind==='term'} class:resource-visual={['image','map','video'].includes(asset.kind)} class="media-stage" data-kind={asset.kind}>
   {#if ['image','map','video'].includes(asset.kind)}<div class="visual-identification" use:balanceCredit><ResourceIdentification asset={inlineVideo&&frameReady?inlineVideo:asset}/></div>{/if}
-  {#if asset.downloadRequired}<div class="media-error">{#if asset.downloadPrepared}<p>This resource has not been downloaded. You can continue with the passage text.</p><button class="quiet" onclick={ondownload}>Open Downloads</button>{:else}<p>This source resource is not prepared for download yet. You can continue with the passage text.</p>{/if}</div>
+  {#if asset.downloadRequired}<div class="media-error">{#if asset.visualPrepared}{#if asset.visualLoading}<p>Loading this {asset.kind==='map'?'map':'image'}…</p><button class="quiet" onclick={oncancelvisual}>Cancel loading</button>{:else}<p>{asset.visualError||`This ${asset.kind==='map'?'map':'image'} is available to view online.`}</p><button class="quiet" onclick={onview}>{asset.visualError?'Try again':asset.kind==='map'?'View map':'View image'}</button>{/if}{:else if asset.downloadPrepared}<p>This resource has not been downloaded. You can continue with the passage text.</p><button class="quiet" onclick={ondownload}>Open Downloads</button>{:else}<p>This source resource is not prepared for download yet. You can continue with the passage text.</p>{/if}</div>
   {:else if asset.kind==='scripture'}
     <AlignedReading {asset} {playback} {suspended}/>
   {:else if asset.kind==='term'}
