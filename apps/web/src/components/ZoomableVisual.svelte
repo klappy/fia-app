@@ -16,7 +16,7 @@
   if(ps.length>1&&gesture?.distance){const center={x:(ps[0].x+ps[1].x)/2,y:(ps[0].y+ps[1].y)/2};const distance=Math.hypot(ps[1].x-ps[0].x,ps[1].y-ps[0].y);const next=zoomAt(gesture.view,gesture.view.zoom*distance/gesture.distance,gesture.center);apply({...next,x:next.x+center.x-gesture.center.x,y:next.y+center.y-gesture.center.y});}
   else if(gesture?.point&&view.zoom>1)apply({...view,x:gesture.view.x+ps[0].x-gesture.point.x,y:gesture.view.y+ps[0].y-gesture.point.y});
  }
- function up(e){if(!fullscreen){inlinePointers.delete(e.pointerId);if(e.type!=='pointerup'||!tap||e.timeStamp-tap.time>700||Math.hypot(e.clientX-tap.x,e.clientY-tap.y)>10)suppressOpen=true;tap=null;return;}pointers.delete(e.pointerId);rebase();}
+ function up(e){if(!fullscreen){if(e.type==='lostpointercapture'&&!inlinePointers.has(e.pointerId))return;inlinePointers.delete(e.pointerId);if(e.type!=='pointerup'||!tap||e.timeStamp-tap.time>700||Math.hypot(e.clientX-tap.x,e.clientY-tap.y)>10)suppressOpen=true;tap=null;return;}pointers.delete(e.pointerId);rebase();}
  function open(e){pendingTap=false;if(suppressOpen){suppressOpen=false;return;}if(!fullscreen&&!e.target.closest?.('button'))expand();}
  function zoom(amount){apply(zoomAt(view,view.zoom+amount,{x:0,y:0}));}
  function reset(){apply({zoom:1,x:0,y:0});}
