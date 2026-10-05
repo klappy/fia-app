@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.0.0-alpha.8 — Images and maps on demand (2026-10-05)
+
+Prepared images and maps now appear when explicitly selected or reached during an active guide session, without requiring an offline download. Silent restore, verified proxy delivery, optional downloads and original layout are preserved. See [release note](release/changes/3.0.0-alpha.8-visual-on-demand.md).
+
 ## 3.0.0-alpha.7 — Verified on-demand audio (2026-10-04)
 
 Explicit Play can fetch the selected prepared recording without a full passage download. First-English audio and image downloads use source-bound optimized proxy outputs; offline copies remain verified and optional. Silent restore, cancellation and Scripture word alignment are preserved. No new speech or video transformation. See [release note](release/changes/3.0.0-alpha.7-proxy-playback.md).
