@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.0.0-alpha.11 — Native video owner retention (2026-10-05)
+
+Retains the current video until native fullscreen exit is acknowledged before applying navigation or passage selection. Reports deferred failures and preserves the latest selection intent. The reported installed-iPhone freeze remains unverified. See [release note](release/changes/3.0.0-alpha.11-native-video-owner.md).
+
 ## 3.0.0-alpha.10 — Guarded passage swipes (2026-10-05)
 
 Left/right swipes use existing Next/Back actions while preserving vertical scrolling, controls, media gestures and on-demand visual cancellation. No spacing or CSS changes. See [release note](release/changes/3.0.0-alpha.10-passage-swipes.md).
