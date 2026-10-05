@@ -1,11 +1,12 @@
 import {canonicalJSONString,sha256} from '../contract.mjs';
+import {PILOT_SOURCE_SHA256} from './artifact.mjs';
 const copy=x=>structuredClone(x);
 const hash=x=>typeof x==='string'&&/^[a-f0-9]{64}$/.test(x);
 // Private pilot only. A/B are trusted constructor settings, never request input.
 export function createHostedDispatch({storage,ledger,identity,activation,executor,verifyArtifact,validateResult,now=Date.now,uuid=()=>crypto.randomUUID()}){
  if(!['A','B'].includes(ledger)||!storage?.transaction||typeof verifyArtifact!=='function'||typeof validateResult!=='function')throw Error('invalid-private-dispatch');
  const pinned=copy(identity),window=copy(activation);
- if(!hash(pinned.sourceSha256)||!hash(pinned.configSha256)||!hash(pinned.modelSha256)||!hash(pinned.scriptSha256)||!Number.isSafeInteger(window.startedAt)||window.expiresAt!==window.startedAt+1200000)throw Error('invalid-pilot-pins');
+ if(pinned.sourceSha256!==PILOT_SOURCE_SHA256||pinned.sourceBytes!==867865||pinned.modelId!=='Systran/faster-whisper-small'||pinned.modelRevision!=='536b0662742c02347bc0e980a01041f333bce120'||pinned.language!=='eng'||!hash(pinned.runtimeSha256)||!hash(pinned.sourceSha256)||!hash(pinned.configSha256)||!hash(pinned.modelSha256)||!hash(pinned.scriptSha256)||!Number.isSafeInteger(window.startedAt)||window.expiresAt!==window.startedAt+1200000)throw Error('invalid-pilot-pins');
  canonicalJSONString(pinned);
  const keyPromise=sha256(canonicalJSONString({schema:'fia-hosted-asr-node@1',identity:pinned}));
  const check=async artifact=>{const saved=copy(artifact);if(!hash(saved?.sha256)||saved.reference!==`recognition/sha256/${saved.sha256}.json`)throw Error('invalid-result');const retained=await verifyArtifact(saved);if(!(retained instanceof Uint8Array))throw Error('invalid-retained-result');const bytes=retained.slice();if(bytes.length>1048576||await sha256(bytes)!==saved.sha256)throw Error('invalid-retained-result');if(await validateResult(bytes.slice(),copy(pinned))!==true)throw Error('result-provenance-mismatch');return saved;};

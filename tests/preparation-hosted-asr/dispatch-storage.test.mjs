@@ -18,7 +18,7 @@ export class FixtureDispatch {
  async fetch(request){
   const storage=this.storage;
   if(new URL(request.url).pathname==='/budget')return Response.json(await storage.get('hosted:budget'));
-  const service=createHostedDispatch({storage,ledger:'A',activation:${JSON.stringify(activation)},identity:{sourceSha256:'a'.repeat(64),configSha256:'b'.repeat(64),modelSha256:'c'.repeat(64),scriptSha256:'d'.repeat(64)},validateResult:async()=>true,verifyArtifact:async artifact=>storage.get(artifact.reference),executor:{limitsEnforced:true,stop:async()=>true,start:async()=>{
+  const service=createHostedDispatch({storage,ledger:'A',activation:${JSON.stringify(activation)},identity:{sourceSha256:'0f3fa9e77215f5050f9e22b7abee329c47e0e9ff71a5f0c4d248926a8f42268d',sourceBytes:867865,modelId:'Systran/faster-whisper-small',modelRevision:'536b0662742c02347bc0e980a01041f333bce120',language:'eng',runtimeSha256:'e'.repeat(64),configSha256:'b'.repeat(64),modelSha256:'c'.repeat(64),scriptSha256:'d'.repeat(64)},validateResult:async()=>true,verifyArtifact:async artifact=>storage.get(artifact.reference),executor:{limitsEnforced:true,stop:async()=>true,start:async()=>{
    if(this.env.OFFLINE)throw Error('offline');
    await new Promise(resolve=>setTimeout(resolve,50));
    const bytes=new TextEncoder().encode('{}'),digest=await sha256(bytes),reference='recognition/sha256/'+digest+'.json';await storage.put(reference,bytes);return {sha256:digest,reference};
