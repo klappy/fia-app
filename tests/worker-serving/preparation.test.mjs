@@ -1,0 +1,3 @@
+// Include focused preparation contracts/runtime in the existing required worker CI gate.
+import '../preparation/contract.test.mjs';
+import '../preparation/worker.test.mjs';
