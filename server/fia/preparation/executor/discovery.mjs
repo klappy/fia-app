@@ -8,6 +8,7 @@ const selectionKeys=['book','language','edition','passage','resource'];
 // The snapshot is trusted published metadata, not an accepted-audio catalog.
 // Hashes of recording bytes are deliberately absent until acquisition.
 export async function createGuideDiscoveryAdapter({metadataBytes,metadataSha256,bucket}){
+ if(metadataBytes instanceof Uint8Array)metadataBytes=new Uint8Array(metadataBytes);
  if(!(metadataBytes instanceof Uint8Array)||metadataBytes.length>2*1024*1024||!digest(metadataSha256)||await sha256(metadataBytes)!==metadataSha256)throw Error('guide-metadata-identity');
  const metadata=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(metadataBytes));
  if(metadata.schema!=='fia-published-guide-sources@1'||!Array.isArray(metadata.rows)||metadata.rows.length<1||metadata.rows.length>10000)throw Error('guide-metadata-schema');
@@ -51,6 +52,7 @@ export async function createGuideDiscoveryAdapter({metadataBytes,metadataSha256,
 // Converts the already-audited inventory without carrying private local paths.
 // Trust in the audit's source joins remains an explicit caller-owned boundary.
 export async function publishedGuideMetadataFromAudit(auditBytes,auditSha256){
+ if(auditBytes instanceof Uint8Array)auditBytes=new Uint8Array(auditBytes);
  if(!(auditBytes instanceof Uint8Array)||auditBytes.length>2*1024*1024||!digest(auditSha256)||await sha256(auditBytes)!==auditSha256)throw Error('guide-audit-identity');
  const audit=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(auditBytes));
  if(audit.schema!=='fia-dynamic-discovery-resolver-audit@1'||!Array.isArray(audit.guideSources))throw Error('guide-audit-schema');
