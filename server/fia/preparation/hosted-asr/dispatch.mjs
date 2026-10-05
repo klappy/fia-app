@@ -2,65 +2,76 @@ import {canonicalJSONString,sha256} from '../contract.mjs';
 import {PILOT_SOURCE_SHA256} from './artifact.mjs';
 const copy=x=>structuredClone(x);
 const hash=x=>typeof x==='string'&&/^[a-f0-9]{64}$/.test(x);
-// Private pilot only. A/B are trusted constructor settings, never request input.
+const shape=(x,keys)=>x&&Object.getPrototypeOf(x)===Object.prototype&&Object.keys(x).length===keys.length&&keys.every(k=>Object.hasOwn(x,k));
+// Private trusted composition only. There is no caller-selected namespace or HTTP route.
 export function createHostedDispatch({storage,ledger,identity,activation,executor,verifyArtifact,validateResult,now=Date.now,uuid=()=>crypto.randomUUID()}){
  if(!['A','B'].includes(ledger)||!storage?.transaction||typeof verifyArtifact!=='function'||typeof validateResult!=='function')throw Error('invalid-private-dispatch');
- const pinned=copy(identity),window=copy(activation);
- if(pinned.sourceSha256!==PILOT_SOURCE_SHA256||pinned.sourceBytes!==867865||pinned.modelId!=='Systran/faster-whisper-small'||pinned.modelRevision!=='536b0662742c02347bc0e980a01041f333bce120'||pinned.language!=='eng'||!hash(pinned.runtimeSha256)||!hash(pinned.sourceSha256)||!hash(pinned.configSha256)||!hash(pinned.modelSha256)||!hash(pinned.scriptSha256)||!Number.isSafeInteger(window.startedAt)||window.expiresAt!==window.startedAt+1200000)throw Error('invalid-pilot-pins');
- canonicalJSONString(pinned);
+ const pinned=copy(identity),window=copy(activation),run=executor?Object.freeze({...executor}):null;
+ if(!shape(pinned,['sourceSha256','sourceBytes','modelId','modelRevision','language','runtimeSha256','configSha256','modelSha256','scriptSha256'])||pinned.sourceSha256!==PILOT_SOURCE_SHA256||pinned.sourceBytes!==867865||pinned.modelId!=='Systran/faster-whisper-small'||pinned.modelRevision!=='536b0662742c02347bc0e980a01041f333bce120'||pinned.language!=='eng'||!['runtimeSha256','configSha256','modelSha256','scriptSha256'].every(k=>hash(pinned[k]))||!shape(window,['startedAt','expiresAt'])||!Number.isSafeInteger(window.startedAt)||window.expiresAt!==window.startedAt+1200000||new TextEncoder().encode(canonicalJSONString({identity:pinned,activation:window})).length>16384)throw Error('invalid-pilot-pins');
  const keyPromise=sha256(canonicalJSONString({schema:'fia-hosted-asr-node@1',identity:pinned}));
- const check=async artifact=>{const saved=copy(artifact);if(!hash(saved?.sha256)||saved.reference!==`recognition/sha256/${saved.sha256}.json`)throw Error('invalid-result');const retained=await verifyArtifact(saved);if(!(retained instanceof Uint8Array))throw Error('invalid-retained-result');const bytes=retained.slice();if(bytes.length>1048576||await sha256(bytes)!==saved.sha256)throw Error('invalid-retained-result');if(await validateResult(bytes.slice(),copy(pinned))!==true)throw Error('result-provenance-mismatch');return saved;};
- async function transact(fn){return storage.transaction(fn);}
- async function stopBeforeCompletion(recordKey,attempt){
-  const stopping=await transact(async tx=>{const row=await tx.get(recordKey);if(!row||row.attemptId!==attempt.attemptId||row.revision!==attempt.revision||!['preparing','uncertain'].includes(row.state)||now()>=row.deadline)throw Error('stop-fence');row.deadline=Math.min(row.deadline,now()+30000);await tx.put(recordKey,row);return row;});
-  await storage.setAlarm(stopping.deadline);
-  let timer;try{const stopped=await Promise.race([executor.stop(copy(stopping)),new Promise(resolve=>{timer=setTimeout(()=>resolve(false),Math.max(0,stopping.deadline-now()));})]);if(stopped!==true||now()>=stopping.deadline)throw Error('stop-unverified');}finally{clearTimeout(timer);}
+ const artifactShape=x=>shape(x,['sha256','reference'])&&hash(x.sha256)&&x.reference===`recognition/sha256/${x.sha256}.json`;
+ function validRecord(row,nodeKey,lane){
+  if(!row)return;
+  const required=['schema','nodeKey','ledger','state','attemptId','revision','startedAt','deadline','stopAttempts'];
+  const optional=['artifact','stopVerified','stopDeadline','reconciled','reason'];
+  if(Object.getPrototypeOf(row)!==Object.prototype||required.some(k=>!Object.hasOwn(row,k))||Object.keys(row).some(k=>!required.includes(k)&&!optional.includes(k))||row.schema!=='fia-hosted-asr-attempt@1'||row.nodeKey!==nodeKey||row.ledger!==lane||!['preparing','uncertain','completed'].includes(row.state)||typeof row.attemptId!=='string'||!row.attemptId||row.attemptId.length>128||row.revision!==1||!Number.isSafeInteger(row.startedAt)||row.startedAt<window.startedAt||row.startedAt>=window.expiresAt||!Number.isSafeInteger(row.deadline)||row.deadline<=row.startedAt||row.deadline>Math.min(row.startedAt+360000,window.expiresAt)||!Number.isSafeInteger(row.stopAttempts)||row.stopAttempts<0||row.stopAttempts>3||('stopVerified'in row&&typeof row.stopVerified!=='boolean')||('stopDeadline'in row&&(!Number.isSafeInteger(row.stopDeadline)||row.stopDeadline<=row.startedAt))||('reason'in row&&(typeof row.reason!=='string'||row.reason.length>128))||('reconciled'in row&&row.reconciled!==true)||('artifact'in row&&!artifactShape(row.artifact))||row.state==='completed'&&(!artifactShape(row.artifact)||row.stopVerified!==true))throw Error('corrupt-attempt');
  }
-
+ async function snapshot(tx,nodeKey){
+  const budget=await tx.get('hosted:budget'),a=await tx.get(`hosted:A:${nodeKey}`),b=await tx.get(`hosted:B:${nodeKey}`);
+  validRecord(a,nodeKey,'A');validRecord(b,nodeKey,'B');
+  if(budget){if(!shape(budget,['nodeKey','activation','starts'])||budget.nodeKey!==nodeKey||canonicalJSONString(budget.activation)!==canonicalJSONString(window)||!Number.isInteger(budget.starts)||budget.starts!==Number(Boolean(a))+Number(Boolean(b))||budget.starts<1||budget.starts>2)throw Error('budget-identity-conflict');}else if(a||b)throw Error('missing-budget');
+  return {budget,A:a,B:b};
+ }
+ const check=async artifact=>{const saved=copy(artifact);if(!artifactShape(saved))throw Error('invalid-result');const retained=await verifyArtifact(saved);if(!(retained instanceof Uint8Array))throw Error('invalid-retained-result');const bytes=retained.slice();if(bytes.length>1048576||await sha256(bytes)!==saved.sha256)throw Error('invalid-retained-result');if(await validateResult(bytes.slice(),copy(pinned))!==true)throw Error('result-provenance-mismatch');return saved;};
+ async function stopAttempt(nodeKey,attempt,completion=false){
+  const key=`hosted:${ledger}:${nodeKey}`;
+  const row=await storage.transaction(async tx=>{const s=await snapshot(tx,nodeKey),current=s[ledger];if(!current||current.attemptId!==attempt.attemptId||current.revision!==attempt.revision)throw Error('stop-fence');if(current.stopVerified===true)return current;if(current.stopAttempts>=3)throw Error('stop-attempts-exhausted');if(completion&&now()>=current.deadline)throw Error('stop-fence');current.stopDeadline=completion?Math.min(current.deadline,now()+30000):now()+30000;if(completion)current.deadline=current.stopDeadline;current.stopAttempts++;await tx.put(key,current);return current;});
+  if(row.stopVerified===true)return true;
+  await storage.setAlarm(row.stopDeadline);
+  let timer,stopped=false;try{stopped=await Promise.race([Promise.resolve().then(()=>run.stop(copy(row))),new Promise(resolve=>{timer=setTimeout(()=>resolve(false),Math.max(0,row.stopDeadline-now()));})])===true;}catch{}finally{clearTimeout(timer);}
+  if(now()>=row.stopDeadline)stopped=false;
+  await storage.transaction(async tx=>{const s=await snapshot(tx,nodeKey),current=s[ledger];if(current?.attemptId===row.attemptId&&current.state!=='completed'){current.stopVerified=stopped;await tx.put(key,current);}});
+  if(!stopped&&row.stopAttempts<3)await storage.setAlarm(now()+30000);
+  return stopped;
+ }
  async function dispatch(){
   const nodeKey=await keyPromise,recordKey=`hosted:${ledger}:${nodeKey}`;
-  const claim=await transact(async tx=>{
-   const budget=await tx.get('hosted:budget');
-   if(budget&&(budget.nodeKey!==nodeKey||canonicalJSONString(budget.activation)!==canonicalJSONString(window)||!Number.isInteger(budget.starts)||budget.starts<0||budget.starts>2))throw Error('budget-identity-conflict');
-   const old=await tx.get(recordKey);
-   if(old)return {owned:false,record:old};
-   const other=await tx.get(`hosted:${ledger==='A'?'B':'A'}:${nodeKey}`);
-   if(other&&['preparing','uncertain'].includes(other.state))return {owned:false,record:{state:'blocked',reason:'singleton-unresolved'}};
+  const claim=await storage.transaction(async tx=>{
+   const s=await snapshot(tx,nodeKey),old=s[ledger];if(old)return {owned:false,record:old};
+   const other=s[ledger==='A'?'B':'A'];if(other&&other.state!=='completed')return {owned:false,record:{state:'blocked',reason:'singleton-unresolved'}};
    if(now()<window.startedAt||now()>=window.expiresAt)return {owned:false,record:{state:'blocked',reason:'activation-expired'}};
-   if((budget?.starts??0)>=2)return {owned:false,record:{state:'blocked',reason:'start-budget-exhausted'}};
-   // A deployment must establish real enforcement, not environment variable assertions.
-   if(executor?.limitsEnforced!==true||typeof executor.start!=='function'||typeof executor.stop!=='function')return {owned:false,record:{state:'blocked',reason:'enforced-executor-unavailable'}};
-   const record={schema:'fia-hosted-asr-attempt@1',nodeKey,ledger,state:'preparing',attemptId:uuid(),revision:1,startedAt:now(),deadline:Math.min(now()+360000,window.expiresAt)};
-   await tx.put('hosted:budget',{nodeKey,activation:window,starts:(budget?.starts??0)+1});await tx.put(recordKey,record);
-   return {owned:true,record};
+   if((s.budget?.starts??0)>=2)return {owned:false,record:{state:'blocked',reason:'start-budget-exhausted'}};
+   if(run?.limitsEnforced!==true||typeof run.start!=='function'||typeof run.stop!=='function'||typeof storage.setAlarm!=='function')return {owned:false,record:{state:'blocked',reason:'enforced-executor-unavailable'}};
+   const startedAt=now(),record={schema:'fia-hosted-asr-attempt@1',nodeKey,ledger,state:'preparing',attemptId:uuid(),revision:1,startedAt,deadline:Math.min(startedAt+360000,window.expiresAt),stopAttempts:0};validRecord(record,nodeKey,ledger);
+   await tx.put('hosted:budget',{nodeKey,activation:window,starts:(s.budget?.starts??0)+1});await tx.put(recordKey,record);return {owned:true,record};
   });
   if(!claim.owned){if(claim.record.state==='completed'){try{return {...claim.record,artifact:await check(claim.record.artifact)};}catch{return {...claim.record,state:'unavailable',reason:'retained-result-invalid'};}}return claim.record;}
   const attempt=claim.record;
   try{
-   // Persisted absolute alarm precedes infrastructure dispatch. Failure consumes debit.
-   if(typeof storage.setAlarm!=='function')throw Error('durable-alarm-unavailable');
    await storage.setAlarm(attempt.deadline);
-   const artifact=await check(await executor.start({...copy(attempt),identity:copy(pinned)}));
-   if(now()>=attempt.deadline)throw Error('attempt-expired');
-   await stopBeforeCompletion(recordKey,attempt);
-   return await transact(async tx=>{const current=await tx.get(recordKey);if(current.attemptId!==attempt.attemptId||current.revision!==attempt.revision||current.state!=='preparing'||now()>=current.deadline)throw Error('stale-attempt');const done={...current,state:'completed',artifact,stopVerified:true};await tx.put(recordKey,done);return done;});
-  }catch(error){await transact(async tx=>{const row=await tx.get(recordKey);if(row?.attemptId===attempt.attemptId&&row.state==='preparing'){row.state='uncertain';row.reason='dispatch-or-result-unresolved';await tx.put(recordKey,row);}});return {...attempt,state:'uncertain',reason:'dispatch-or-result-unresolved'};}
+   const artifact=await check(await run.start({...copy(attempt),identity:copy(pinned)}));
+   if(!await stopAttempt(nodeKey,attempt,true))throw Error('stop-unverified');
+   return await storage.transaction(async tx=>{const s=await snapshot(tx,nodeKey),current=s[ledger];if(current.attemptId!==attempt.attemptId||current.revision!==attempt.revision||current.state!=='preparing'||now()>=current.deadline)throw Error('stale-attempt');const done={...current,state:'completed',artifact,stopVerified:true};await tx.put(recordKey,done);return done;});
+  }catch{
+   await storage.transaction(async tx=>{const s=await snapshot(tx,nodeKey),row=s[ledger];if(row?.attemptId===attempt.attemptId&&row.state==='preparing'){row.state='uncertain';row.reason='dispatch-or-result-unresolved';await tx.put(recordKey,row);}});
+   // A failed result/start also triggers immediate bounded shutdown; no compute replay.
+   try{await stopAttempt(nodeKey,attempt);}catch{}
+   return (await storage.transaction(tx=>snapshot(tx,nodeKey)))[ledger];
+  }
  }
  async function watchdog(){
-  const nodeKey=await keyPromise,key=`hosted:${ledger}:${nodeKey}`,row=await storage.get(key);
-  if(!row||row.state==='completed'&&row.stopVerified===true||now()<row.deadline)return row;
-  // No new attempt is authorized, including when stop itself cannot be confirmed.
-  let stopped=false;try{stopped=await executor.stop(copy(row))===true;}catch{}
-  return transact(async tx=>{const current=await tx.get(key);if(current?.attemptId!==row.attemptId||current.state==='completed'&&current.stopVerified===true)return current;const next={...current,state:'uncertain',reason:'deadline-expired',stopVerified:stopped};await tx.put(key,next);return next;});
+  const nodeKey=await keyPromise,key=`hosted:${ledger}:${nodeKey}`,row=(await storage.transaction(tx=>snapshot(tx,nodeKey)))[ledger];
+  if(!row||row.stopVerified===true||now()<Math.min(row.deadline,row.stopDeadline??Infinity))return row;
+  try{await stopAttempt(nodeKey,row);}catch{}
+  return storage.transaction(async tx=>{const s=await snapshot(tx,nodeKey),current=s[ledger];if(current?.attemptId!==row.attemptId||current.state==='completed')return current;const next={...current,state:'uncertain',reason:current.stopAttempts>=3&&current.stopVerified!==true?'stop-unresolved-manual-intervention':'deadline-expired'};await tx.put(key,next);return next;});
  }
  async function reconcile({attemptId,revision,artifact}){
   const nodeKey=await keyPromise,key=`hosted:${ledger}:${nodeKey}`;
   if(now()>=window.expiresAt)throw Error('activation-expired');
-  const verified=await check(artifact);
-  const before=await storage.get(key);
+  const verified=await check(artifact),before=(await storage.transaction(tx=>snapshot(tx,nodeKey)))[ledger];
   if(!before||before.attemptId!==attemptId||before.revision!==revision||!['preparing','uncertain'].includes(before.state)||now()>=before.deadline)throw Error('reconcile-fence');
-  await stopBeforeCompletion(key,before);
-  return transact(async tx=>{const row=await tx.get(key);if(!row||row.attemptId!==attemptId||row.revision!==revision||!['preparing','uncertain'].includes(row.state)||now()>=row.deadline)throw Error('reconcile-fence');const done={...row,state:'completed',artifact:verified,reconciled:true,stopVerified:true};await tx.put(key,done);return done;});
+  if(!await stopAttempt(nodeKey,before,true))throw Error('stop-unverified');
+  return storage.transaction(async tx=>{const s=await snapshot(tx,nodeKey),row=s[ledger];if(!row||row.attemptId!==attemptId||row.revision!==revision||!['preparing','uncertain'].includes(row.state)||now()>=row.deadline)throw Error('reconcile-fence');const done={...row,state:'completed',artifact:verified,reconciled:true,stopVerified:true};await tx.put(key,done);return done;});
  }
  return {dispatch,watchdog,reconcile};
 }
