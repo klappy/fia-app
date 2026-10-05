@@ -55,6 +55,7 @@ self.addEventListener('install',event=>{if(isBuild)event.waitUntil(caches.open(S
 self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));
 async function cachedResponse(request,clientId){
  const url=new URL(request.url);let active=clientId&&await read('client-'+clientId)||await read('active');
+ if(active?.shell==='network'&&/\.(?:js|css)$/.test(url.pathname))return fetch(request);
  const target=/^\/content\/packs\/([^/]+)\//.exec(url.pathname)?.[1];
  if(target&&validPack(target)&&active?.packId!==target)active=await read(packKey(target,'active'));
  if(url.pathname==='/content/registry.json'){try{const live=await fetch(request);if(live.ok)return live;}catch{} }
@@ -87,10 +88,21 @@ self.addEventListener('fetch',event=>{
  if(path==='/version.json'||path==='/build-status.html'||inFamily('/build-status')){event.respondWith(fetch(event.request,{cache:'no-store'}));return;}
  if(['/v1','/mcp','/docs','/content/source'].some(inFamily)){event.respondWith(fetch(event.request));return;}
  if(event.request.mode==='navigate')event.respondWith((async()=>{
+  let live;
+  try{
+   live=await fetch(event.request,{cache:'no-store'});
+   if(live.status===200&&/^text\/html(?:;|$)/i.test(live.headers.get('Content-Type')||'')){
+    const html=await live.clone().text();
+    if(/<div\b[^>]*\bid=["']app["']/i.test(html)&&/<script\b[^>]*\btype=["']module["'][^>]*\bsrc=["'][^"']+["']/i.test(html)){
+     if(event.resultingClientId)await write('client-'+event.resultingClientId,{shell:'network'});
+     return live;
+    }
+   }
+  }catch{}
   const preferred=await read('selected');const active=preferred&&await read(packKey(preferred.packId,'active'))||await read('active');
   const cached=active&&await(await caches.open(active.cache)).match('/index.html');
   if(cached){if(event.resultingClientId)await write('client-'+event.resultingClientId,active);return cached;}
-  return fetch(event.request).catch(async()=>await(await caches.open(SHELL)).match('/index.html')||Response.error());
+  return await(await caches.open(SHELL)).match('/index.html')||live||Response.error();
  })());
  else event.respondWith(cachedResponse(event.request,event.clientId));
 });
@@ -163,7 +175,7 @@ self.addEventListener('message',event=>{
    }else if(type==='PACK_SELECT'){
     const active=await read(packKey(packId,'active'));
     const matches=active&&active.manifest?.presentationRevision===event.data.revision;
-    if(event.source?.id)await write('client-'+event.source.id,matches?active:{packId,revision:event.data.revision});
+    if(event.source?.id){const prior=await read('client-'+event.source.id);await write('client-'+event.source.id,{...(matches?active:{packId,revision:event.data.revision}),...(prior?.shell==='network'?{shell:'network'}:{})});}
     await write('selected',{packId});result={selected:true};
    }else if(type==='DOWNLOAD_STATUS'||type==='CACHE_STATUS')result=await status(packId);
    else if(type==='DOWNLOAD_START'){const active=await read(packKey(packId,'active'));if(active&&event.source?.id&&!await read('client-'+event.source.id))await write('client-'+event.source.id,active);result=await start(event.data.selection,port,packId,event.data.sizes||{});}
