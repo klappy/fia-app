@@ -61,8 +61,9 @@ export function createCloudflarePilot({ctx,env,loadActivation,now=Date.now,readR
     await new Promise(resolve=>setTimeout(resolve,Math.min(100,Math.max(1,readyDeadline-now()))));
    }
    if(!ready)throw Error('readiness-expired');
-   const readinessReceipt={schema:'fia-hosted-readiness-receipt@1',status:'response-verified',evidenceClass:'container-readiness-report',ledger:lane,nodeKey:attempt.nodeKey,attemptId:attempt.attemptId,revision:attempt.revision,phase:'ready',observedAt:now(),binding:{configurationSha256:await sha256(canonicalJSONString(config)),image:config.image,enforcementSha256:config.enforcementSha256},...readyEvidence};
+   const readinessReceipt={schema:'fia-hosted-readiness-receipt@1',status:'response-verified',evidenceClass:'container-readiness-report',ledger:lane,nodeKey:attempt.nodeKey,attemptId:attempt.attemptId,revision:attempt.revision,phase:'ready',observedAt:now(),binding:{configurationSha256:await sha256(canonicalJSONString(config)),imageReferenceSha256:await sha256(config.image),enforcementSha256:config.enforcementSha256},...readyEvidence};
    const readiness={sha256:await sha256(canonicalJSONString(readinessReceipt)),receipt:readinessReceipt};
+   if(new TextEncoder().encode(canonicalJSONString(readiness)).length>2048)throw Error('readiness-receipt-limit');
    await fenced(attempt,()=>undefined,'ready',readiness);
    if(lane==='B'&&await storage.get('hosted:controlled-B')===true){
     await fenced(attempt,()=>undefined,'ready-for-interruption');
@@ -88,7 +89,7 @@ export function createCloudflarePilot({ctx,env,loadActivation,now=Date.now,readR
   try{
    const receipt=saved.receipt;
    if(!exactKeys(saved,['sha256','receipt'])||!exactKeys(receipt,['schema','status','evidenceClass','ledger','nodeKey','attemptId','revision','phase','observedAt','binding','identity','guards'])||new TextEncoder().encode(canonicalJSONString(saved)).length>2048||receipt.schema!=='fia-hosted-readiness-receipt@1'||receipt.status!=='response-verified'||receipt.evidenceClass!=='container-readiness-report'||receipt.ledger!==lane||receipt.nodeKey!==row.nodeKey||receipt.attemptId!==row.attemptId||receipt.revision!==row.revision||receipt.phase!=='ready'||!Number.isSafeInteger(receipt.observedAt)||receipt.observedAt<row.startedAt||receipt.observedAt>row.deadline||!exactKeys(receipt.identity,readinessHashes)||!exactKeys(receipt.guards,guardFields)||await sha256(canonicalJSONString(receipt))!==saved.sha256)throw Error('invalid-readiness-receipt');
-   const config=await stored();if(!exactKeys(receipt.binding,['configurationSha256','image','enforcementSha256'])||receipt.binding.configurationSha256!==await sha256(canonicalJSONString(config))||receipt.binding.image!==config.image||receipt.binding.enforcementSha256!==config.enforcementSha256)throw Error('readiness-config-mismatch');sanitizedReadiness({schema:'fia-asr-ready@1',...receipt.identity,guards:receipt.guards},config.identity);
+   const config=await stored();if(!exactKeys(receipt.binding,['configurationSha256','imageReferenceSha256','enforcementSha256'])||receipt.binding.configurationSha256!==await sha256(canonicalJSONString(config))||receipt.binding.imageReferenceSha256!==await sha256(config.image)||receipt.binding.enforcementSha256!==config.enforcementSha256)throw Error('readiness-config-mismatch');sanitizedReadiness({schema:'fia-asr-ready@1',...receipt.identity,guards:receipt.guards},config.identity);
    return {readiness:copy(saved),readinessEvidence:'response-verified'};
   }catch{return {readiness:null,readinessEvidence:'invalid'};}
  }
