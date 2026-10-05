@@ -4,7 +4,8 @@
   import AlignedReading from './AlignedReading.svelte';
   import ResourceIdentification from './ResourceIdentification.svelte';
   import { Pin, PinOff, Volume2, VolumeX, Play, X } from 'lucide-svelte';
-  let { asset, playback, inlineVideo=null, immersive=false, matchingVideo=null, onvideo=()=>{}, descriptionsEnabled=false, ontoggledescription=()=>{}, suspended=false, toolsVisible=false, pinned=false, onpin=()=>{}, ondescribe=()=>{}, ontime=()=>{}, onplay=()=>{}, onpause=()=>{}, onend=()=>{}, onerror=()=>{}, onview=()=>{}, oncancelvisual=()=>{}, ondownload=()=>{} } = $props();
+  let { asset, playback, onvideonode=()=>()=>{}, videoIdentity='', inlineVideo=null, immersive=false, matchingVideo=null, onvideo=()=>{}, descriptionsEnabled=false, ontoggledescription=()=>{}, suspended=false, toolsVisible=false, pinned=false, onpin=()=>{}, ondescribe=()=>{}, ontime=()=>{}, onplay=()=>{}, onpause=()=>{}, onend=()=>{}, onerror=()=>{}, onview=()=>{}, oncancelvisual=()=>{}, ondownload=()=>{} } = $props();
+  function ownVideo(node,identity){let clean=onvideonode(node,identity);return {update(next){if(next!==identity){clean?.();identity=next;clean=onvideonode(node,next);}},destroy(){clean?.();}};}
   let frameReady=$state(false);
   let poster=$derived(inlineVideo?asset.src:asset.poster);
   function awaitFrame(node){
@@ -39,7 +40,7 @@
   {:else if asset.kind==='video'||inlineVideo}
     <div class="video-well">
       <!-- svelte-ignore a11y_media_has_caption (Source videos lack captions; documented as an accessibility gap, not disguised with a placeholder track.) -->
-      <video use:awaitFrame bind:this={video} src={(inlineVideo||asset).src} poster={poster} controls={toolsVisible} playsinline preload="none" ontimeupdate={ontime} onloadedmetadata={ontime} ondurationchange={ontime} onseeked={ontime} onplay={onplay} onpause={onpause} onended={onend} onerror={()=>{failed=true;onerror();}} aria-label={asset.title}>
+      <video use:ownVideo={videoIdentity} use:awaitFrame bind:this={video} src={(inlineVideo||asset).src} poster={poster} controls={toolsVisible} playsinline preload="none" ontimeupdate={ontime} onloadedmetadata={ontime} ondurationchange={ontime} onseeked={ontime} onplay={onplay} onpause={onpause} onended={onend} onerror={()=>{failed=true;onerror();}} aria-label={asset.title}>
         <!-- Source videos do not supply caption tracks. -->
       </video>
       {#if poster&&!frameReady}<img class="video-loading-poster" src={poster} alt="" aria-hidden="true"/>{/if}
