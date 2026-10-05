@@ -16,11 +16,18 @@ export function createPipeline({storage,policyId,adapters,verifyArtifact,allowPa
  if(typeof policyId!=='string'||!policyId.trim()||typeof verifyArtifact!=='function'||typeof storage?.transaction!=='function')throw Error('invalid-pipeline-policy');
  const captured=Object.fromEntries(nodes.map(node=>[node,adapters?.[node]?Object.freeze({...adapters[node]}):null]));
  const verify=verifyArtifact;
- async function checked(output,input,node){const copy=artifact(output);if(await verify(clone(copy),{input:clone(input),node})!==true)throw Error('artifact-unavailable');return copy;}
+ async function checked(output,input,node){
+  const copy=artifact(output),retained=await verify(clone(copy),{input:clone(input),node});
+  if(!(retained instanceof Uint8Array))throw Error('artifact-unavailable');
+  const bytes=retained.slice();if(await sha256(bytes)!==copy.sha256)throw Error('artifact-unavailable');
+  const verified={sha256:copy.sha256,reference:copy.reference};
+  if(node==='accept'){const content=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));if(!['machine-accepted','review-accepted','review-required'].includes(content?.status))throw Error('invalid-acceptance-artifact');verified.status=content.status;}
+  return verified;
+ }
  async function keyFor(input){return sha256(canonicalJSONString({schema:'fia-preparation-operation@1',policyId,input}));}
  async function nodeIdentity(input,node,outputs){
   const base={schema:'fia-preparation-node@1',policyId,policyRevision:input.policyRevision,node};
-  if(node==='discover')return {...base,source:input.source};
+  if(node==='discover')return {...base,source:input.source,selection:{book:input.book,language:input.language,edition:input.edition,passage:input.passage,resource:input.resource}};
   if(node==='acquire')return {...base,discoverySha256:outputs.discover.sha256};
   if(node==='transcribe')return {...base,audioSha256:outputs.acquire.sha256,language:input.language,modelRecipe:input.modelRecipe};
   return {...base,input,parentHashes:Object.fromEntries(Object.entries(outputs).map(([name,item])=>[name,item.sha256]))};
