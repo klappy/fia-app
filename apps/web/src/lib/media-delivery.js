@@ -26,7 +26,35 @@ export function validateRecordedAudioEntry(entry){
  const check=e=>{validatePlaybackRange(e.playbackRange,e.delivery.duration);if(e.timing?.status!=='verified'||!e.timing.mapping||!Number.isFinite(e.timing.mapping.scale)||e.timing.mapping.scale<=0||!Number.isFinite(e.timing.mapping.offsetSeconds)||e.timing.sourceAudioSha256!==entry.source.sha256||e.timing.deliveryAudioSha256!==e.delivery.sha256||!sha.test(e.timing.mappingEvidenceSha256))throw Error('Recorded guide requires measured mapping evidence.');};
  check(entry);for(const v of Object.values(entry.variants||{}))check(v);
 }
+export function validateScriptureAlignment(a,{audioSha256,duration,assetId}={}){
+ videoKeys(a,'schemaVersion,id,clockDomain,audioSha256,duration,sourceSha256,verses');
+ if(a.schemaVersion!==2||(typeof a.id!=='string'||!a.id)||a.clockDomain!=='delivery-media-seconds'||a.audioSha256!==audioSha256||a.duration!==duration||!sha.test(a.sourceSha256)||!Array.isArray(a.verses)||!a.verses.length)throw Error('Invalid Scripture alignment identity.');
+ let lastEnd=0;const seen=new Set();
+ for(const v of a.verses){videoKeys(v,'verse,text,sourceId,start,end,highlightMode,words'+(v.reason!==undefined?',reason':''));
+  if(!Number.isSafeInteger(v.verse)||v.verse<1||seen.has(v.verse)||typeof v.text!=='string'||!v.text||typeof v.sourceId!=='string'||!v.sourceId||!Number.isFinite(v.start)||!Number.isFinite(v.end)||v.start<lastEnd||v.end<=v.start||v.end>duration||!Array.isArray(v.words)||!['word','verse'].includes(v.highlightMode))throw Error('Invalid Scripture verse interval.');
+  seen.add(v.verse);lastEnd=v.end;
+  if(v.highlightMode==='verse'){if(v.words.length||typeof v.reason!=='string'||!v.reason)throw Error('Verse-only alignment must explain untimed text.');continue;}
+  if(!v.words.length)throw Error('Word alignment is empty.');let charEnd=0,timeEnd=v.start;
+  for(const w of v.words){videoKeys(w,'from,to,start,end');if(!Number.isSafeInteger(w.from)||!Number.isSafeInteger(w.to)||w.from<charEnd||w.to<=w.from||w.to>v.text.length||!v.text.slice(w.from,w.to).trim()||!Number.isFinite(w.start)||!Number.isFinite(w.end)||w.start<timeEnd||w.end<=w.start||w.end>v.end)throw Error('Invalid Scripture word interval.');charEnd=w.to;timeEnd=w.end;}
+ }return a;
+}
+export function validateScriptureAudioEntry(entry){
+ videoKeys(entry.scriptureReplacement,'ledgerEntryId,assetId,logicalSource');videoKeys(entry.scriptureReplacement.logicalSource,'sha256,bytes');
+ const r=entry.scriptureReplacement;if(!r.ledgerEntryId||!r.assetId||!sha.test(r.logicalSource.sha256)||!positive(r.logicalSource.bytes)||entry.audioReplacement||entry.logicalSource||entry.delivery?.kind!=='audio')throw Error('Invalid Scripture replacement.');
+ const check=e=>{validatePlaybackRange(e.playbackRange,e.delivery.duration);const a=e.scriptureAlignment;videoKeys(a,'url,sha256,bytes,evidenceSha256');if(!sha.test(a.sha256)||!positive(a.bytes)||!sha.test(a.evidenceSha256)||a.url!==`/content/scripture-alignments/${a.sha256}.json`||e.timing?.status!=='verified'||e.timing.sourceAudioSha256!==entry.source.sha256||e.timing.deliveryAudioSha256!==e.delivery.sha256||!e.timing.mapping||!Number.isFinite(e.timing.mapping.scale)||e.timing.mapping.scale<=0||!Number.isFinite(e.timing.mapping.offsetSeconds)||!sha.test(e.timing.mappingEvidenceSha256))throw Error('Invalid Scripture alignment reference.');};
+ check(entry);for(const v of Object.values(entry.variants||{}))check(v);
+}
 export function validateDelivery(sidecar,identity){
+ if(sidecar?.schema===5){
+  videoKeys(sidecar,'schema,packId,presentationRevision,recipeRevision,sourceLedger,recordingLedger,scriptureSourceLedger,entries');
+  const ref=sidecar.scriptureSourceLedger;videoKeys(ref,'url,sha256,bytes');if(!sha.test(ref.sha256)||!positive(ref.bytes)||ref.url!==`/content/scripture-sources/${ref.sha256}.json`||!Array.isArray(sidecar.entries))throw Error('Invalid Scripture source ledger.');
+  const entries=sidecar.entries.map(entry=>{if(!entry.scriptureReplacement)return entry;
+   videoKeys(entry,'path,source,delivery,timing,defaultSize,variants,scriptureReplacement,playbackRange,scriptureAlignment');validateScriptureAudioEntry(entry);
+   const {scriptureReplacement,playbackRange,scriptureAlignment,...base}=entry;
+   base.variants=Object.fromEntries(Object.entries(entry.variants).map(([size,v])=>{videoKeys(v,'delivery,timing,playbackRange,scriptureAlignment');const {playbackRange,scriptureAlignment,...rest}=v;return [size,rest];}));
+   if(JSON.stringify(entry.variants[entry.defaultSize]?.playbackRange)!==JSON.stringify(playbackRange)||JSON.stringify(entry.variants[entry.defaultSize]?.scriptureAlignment)!==JSON.stringify(scriptureAlignment))throw Error('Default Scripture selection changed.');return base;
+  });const {scriptureSourceLedger,...base}=sidecar;validateDelivery({...base,schema:4,entries},identity);return sidecar;
+ }
  if(sidecar?.schema===4){
   videoKeys(sidecar,'schema,packId,presentationRevision,recipeRevision,sourceLedger,recordingLedger,entries');
   const ref=sidecar.recordingLedger;videoKeys(ref,'url,sha256,bytes');
@@ -63,7 +91,7 @@ export function validateDelivery(sidecar,identity){
  if(sidecar.schema===2){if(Object.keys(sidecar).sort().join(',')!=='entries,packId,presentationRevision,recipeRevision,schema,sourceLedger')throw Error('Unknown video sidecar field.');const l=sidecar.sourceLedger;videoKeys(l,'url,sha256,bytes');if(!l||!sha.test(l.sha256)||!positive(l.bytes)||l.url!==`/content/video-sources/${l.sha256}.json`)throw Error('Invalid video source ledger.');}
  const seen=new Set();
  for(const e of sidecar.entries){const s=e.source,d=e.delivery,t=e.timing;
-  if(e.audioReplacement||e.playbackRange)throw Error('Recorded guide ranges require schema4.');
+  if(e.audioReplacement||e.playbackRange||e.scriptureReplacement||e.scriptureAlignment)throw Error('Recorded guide ranges require schema4.');
   if(!local.test(e.path)||seen.has(e.path)||!s||!sha.test(s.sha256)||!positive(s.bytes)||!/^https:\/\//.test(s.url)||!d||!sha.test(d.sha256)||!positive(d.bytes)||!['audio','image','video'].includes(d.kind)||!['transformed','passthrough'].includes(d.status)||!d.format||!d.q)throw Error('Invalid media delivery entry.');
   const url=new URL(d.url);if(url.origin!=='https://transcode.klappy.dev'||!url.pathname.startsWith('/'+d.kind+'/')||url.username||url.password||url.hash||!d.url.endsWith('/'+s.url))throw Error('Unapproved media delivery URL.');
   if(d.status==='passthrough'&&(d.sha256!==s.sha256||d.bytes!==s.bytes))throw Error('Pass-through bytes changed.');

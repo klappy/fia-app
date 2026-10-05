@@ -137,3 +137,14 @@ test('recorded guide range survives online and saved playback and rejects altere
  const metadata=w.stores.get('fia-v3-download-metadata@1');for(const [key,response] of metadata){if(key.includes('active')){const value=await response.clone().json();value.files.find(x=>x.path===f.path).playbackRange={startSeconds:0,endSeconds:100};metadata.set(key,Response.json(value));}}
  const status=await w.message({type:'MEDIA_STATUS',packId:id,revision});assert.equal(status.savedFiles.length,0);
 });
+test('Scripture output-clock alignment survives online and saved playback; altered saved words are rejected',async()=>{
+ const w=worker(),id='eng.MRK-1-1-13',revision='a'.repeat(64),deliveryRevision='b'.repeat(64),url='https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://fia.test/bsb.mp3';
+ const m={...manifest(),packId:id,presentationRevision:revision,deliveryRevision},f=m.files.find(f=>f.path==='/audio.m4a'),range={startSeconds:4.4,endSeconds:6},audioSha=createHash('sha256').update('abc').digest('hex');
+ const alignment={schemaVersion:2,id:'bsb-output-medium',clockDomain:'delivery-media-seconds',audioSha256:audioSha,duration:100,sourceSha256:'f'.repeat(64),verses:[{verse:1,text:'This',sourceId:'MRK.1.1',start:4.4,end:6,highlightMode:'word',words:[{from:0,to:4,start:4.4,end:6}]}]};
+ Object.assign(f,{bytes:3,sha256:audioSha,mime:'audio/ogg',deliveryURL:url,sourceSha256:'c'.repeat(64),sourceBytes:100,logicalSourceSha256:'d'.repeat(64),logicalSourceBytes:9,scriptureLedgerSha256:'e'.repeat(64),scriptureLedgerEntryId:'bsb',scriptureAssetId:'BSB',scriptureAlignment:alignment,scriptureAlignmentSha256:createHash('sha256').update(JSON.stringify(alignment)).digest('hex'),duration:100,playbackRange:range,deliveryRevision,timing:{status:'verified'}});
+ w.reply('/offline/'+id+'.json',Response.json(m));w.reply(new URL(url).pathname,new Response('abc',{headers:{'Content-Type':'audio/ogg'}}));const args={type:'MEDIA_PLAY',packId:id,revision,deliveryRevision,path:f.path,requestId:'online'};
+ const online=await w.message(args);assert.equal(online.ok,true,online.error);assert.deepEqual(JSON.parse(JSON.stringify(online.scriptureAlignment)),alignment);assert.equal((await w.message({type:'DOWNLOAD_START',packId:id,selection:'audio'})).ok,true);w.calls.length=0;
+ const saved=await w.message({...args,requestId:'saved'});assert.equal(saved.ok,true,saved.error);assert.deepEqual(JSON.parse(JSON.stringify(saved.scriptureAlignment)),alignment);assert(!w.calls.includes(url));
+ const metadata=w.stores.get('fia-v3-download-metadata@1');for(const [key,response] of metadata){if(key.includes('active')){const value=await response.clone().json();value.files.find(x=>x.path===f.path).scriptureAlignment.verses[0].words[0].end=5;metadata.set(key,Response.json(value));}}
+ assert.equal((await w.message({type:'MEDIA_STATUS',packId:id,revision})).savedFiles.length,0);
+});
