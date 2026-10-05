@@ -30,3 +30,6 @@ test('Python raw segment serializer interoperates with actual JS artifact valida
  assert.equal(await validateRawRecognition(result.stdout,expected),true);assert.equal(raw.segments[0].avg_logprob,-0.1);assert.equal(raw.segments[0].compression_ratio,1);assert.equal(raw.segments[0].no_speech_prob,0.01);assert.equal(raw.text,' Hello');
  const tampered=structuredClone(raw);delete tampered.segments[0].avg_logprob;await assert.rejects(validateRawRecognition(new TextEncoder().encode(JSON.stringify(tampered)),expected),/raw-shape/);
 });
+test('preserved upstream model card bytes match recorded provenance',async()=>{
+ const root=new URL('../../deploy/hosted-asr/notices/',import.meta.url);const receipt=JSON.parse(await readFile(new URL('provenance.json',root)));const bytes=await readFile(new URL(receipt.path,root));assert.equal(bytes.length,receipt.bytes);assert.equal(sha(bytes),receipt.sha256);assert.ok(receipt.url.includes('/536b0662742c02347bc0e980a01041f333bce120/'));assert.match(bytes.toString(),/license: mit/);
+});

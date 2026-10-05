@@ -10,6 +10,7 @@ export async function prepareBuild(inputs,destination){
  // Re-verify copied assets: a changing source cannot enter a trusted build context.
  await verifyInputs(target);
  for(const name of ['Dockerfile','requirements.lock','proposal.json','transcribe-defaults.json','recognize.py'])await copyFile(new URL(name,import.meta.url),resolve(target,name));
+ await cp(new URL('./notices/',import.meta.url),resolve(target,'notices'),{recursive:true});
  await writeFile(resolve(target,'input-verification.json'),JSON.stringify(receipt,null,2)+'\n');return receipt;
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){try{if(process.argv.length!==4)throw Error('usage: prepare-build.mjs INPUT_DIRECTORY NEW_CONTEXT_DIRECTORY');console.log(await prepareBuild(process.argv[2],process.argv[3]));}catch(e){console.error(e.message);process.exitCode=1;}}
