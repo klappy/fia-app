@@ -37,3 +37,4 @@ test('actual finalizer embeds selected alignment and pins its core dependency',a
  const {verifyManifestFile}=await import('../release/delivery-closure.js');verifyManifestFile(file,Buffer.from('logical'),sidecar,hash(bytes),f.readAlignment);const bad=structuredClone(file);bad.scriptureAlignment.verses[0].words[0].end=99;assert.throws(()=>verifyManifestFile(bad,Buffer.from('logical'),sidecar,hash(bytes),f.readAlignment));
  }finally{rmSync(root,{recursive:true,force:true});}
 });
+test('word mode cannot silently omit displayed words between or after timed spans',()=>{for(const tail of [false,true]){const f=fixture(),a=f.alignment;a.verses[0].words.splice(tail?2:1,1);assert.throws(()=>validateScriptureAlignment(a,{audioSha256:a.audioSha256,duration:a.duration}),/word|Word/i);}});

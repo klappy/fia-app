@@ -35,7 +35,8 @@ export function validateScriptureAlignment(a,{audioSha256,duration,assetId}={}){
   seen.add(v.verse);lastEnd=v.end;
   if(v.highlightMode==='verse'){if(v.words.length||typeof v.reason!=='string'||!v.reason)throw Error('Verse-only alignment must explain untimed text.');continue;}
   if(!v.words.length)throw Error('Word alignment is empty.');let charEnd=0,timeEnd=v.start;
-  for(const w of v.words){videoKeys(w,'from,to,start,end');if(!Number.isSafeInteger(w.from)||!Number.isSafeInteger(w.to)||w.from<charEnd||w.to<=w.from||w.to>v.text.length||!v.text.slice(w.from,w.to).trim()||!Number.isFinite(w.start)||!Number.isFinite(w.end)||w.start<timeEnd||w.end<=w.start||w.end>v.end)throw Error('Invalid Scripture word interval.');charEnd=w.to;timeEnd=w.end;}
+  for(const w of v.words){videoKeys(w,'from,to,start,end');if(!Number.isSafeInteger(w.from)||!Number.isSafeInteger(w.to)||w.from<charEnd||/[\p{L}\p{N}]/u.test(v.text.slice(charEnd,w.from))||w.to<=w.from||w.to>v.text.length||!v.text.slice(w.from,w.to).trim()||!Number.isFinite(w.start)||!Number.isFinite(w.end)||w.start<timeEnd||w.end<=w.start||w.end>v.end)throw Error('Invalid Scripture word interval.');charEnd=w.to;timeEnd=w.end;}
+  if(/[\p{L}\p{N}]/u.test(v.text.slice(charEnd)))throw Error('Word alignment omits displayed text.');
  }return a;
 }
 export function validateScriptureAudioEntry(entry){
