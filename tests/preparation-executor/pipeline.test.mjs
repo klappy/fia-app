@@ -43,3 +43,16 @@ test('warm acceptance descriptor cannot promote review-required hashed content',
 test('different discovery selection cannot reuse another language or passage discovery',async()=>{
  const f=await fixture();await f.pipeline.run(input());await f.pipeline.run({...input(),language:'spa'});assert.equal(f.counts.discover,2);await f.pipeline.run({...input(),passage:'1:21-28'});assert.equal(f.counts.discover,3);assert.equal(f.counts.acquire,1);
 });
+test('proven free predispatch outage retries on next demand only and recovers',async()=>{
+ const f=await fixture(),success=f.adapters.discover.run;let calls=0;f.adapters.discover.retry={maxAttempts:2};f.adapters.discover.run=async context=>++calls===1?{kind:'retryable-failure',classification:'pre-dispatch',evidence:'connection failed before dispatch'}:success(context);const pipeline=createPipeline(f.options);
+ const first=await pipeline.run(input());assert.equal(first.state,'retryable');assert.equal(calls,1);assert.equal((await pipeline.run(input())).state,'ready');assert.equal(calls,2);assert.equal((await pipeline.run(input())).state,'ready');assert.equal(calls,2);
+});
+test('retry budget persists through restart and cannot be increased by changed adapter',async()=>{
+ const f=await fixture();let calls=0;f.adapters.discover.retry={maxAttempts:2};f.adapters.discover.run=async()=>{calls++;return {kind:'retryable-failure',classification:'idempotent-free-read',evidence:'safe GET unavailable'};};assert.equal((await createPipeline(f.options).run(input())).state,'retryable');f.adapters.discover.retry.maxAttempts=3;const fresh=createPipeline(f.options);assert.equal((await fresh.run(input())).state,'failed');assert.equal((await fresh.run(input())).state,'failed');assert.equal(calls,2);
+});
+test('ambiguous or paid classified failures never automatically retry',async()=>{
+ for(const paid of [false,true]){const f=await fixture();let calls=0;f.adapters.discover.paid=paid;f.adapters.discover.retry={maxAttempts:3};f.adapters.discover.run=async()=>{calls++;return {kind:'retryable-failure',classification:paid?'pre-dispatch':'unknown',evidence:'cannot prove safe retry'};};const pipeline=createPipeline({...f.options,allowPaid:true});assert.equal((await pipeline.run(input())).state,'uncertain');assert.equal((await pipeline.run(input())).state,'uncertain');assert.equal(calls,1);}
+});
+test('old attempt reconciliation cannot overwrite a retried attempt',async()=>{
+ const f=await fixture(),success=f.adapters.discover.run;let calls=0;f.adapters.discover.retry={maxAttempts:2};f.adapters.discover.run=async context=>++calls===1?{kind:'retryable-failure',classification:'pre-dispatch',evidence:'not dispatched'}:success(context);const pipeline=createPipeline(f.options),first=await pipeline.run(input());await pipeline.run(input());await assert.rejects(pipeline.reconcile(input(),'discover',{...first,revision:2,outcome:'failed',evidence:'stale report'}),/stale/);
+});

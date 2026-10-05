@@ -14,7 +14,7 @@ function artifact(value){
 }
 export function createPipeline({storage,policyId,adapters,verifyArtifact,allowPaid=false}){
  if(typeof policyId!=='string'||!policyId.trim()||typeof verifyArtifact!=='function'||typeof storage?.transaction!=='function')throw Error('invalid-pipeline-policy');
- const captured=Object.fromEntries(nodes.map(node=>[node,adapters?.[node]?Object.freeze({...adapters[node]}):null]));
+ const captured=Object.fromEntries(nodes.map(node=>[node,adapters?.[node]?Object.freeze({...adapters[node],retry:adapters[node].retry?Object.freeze({...adapters[node].retry}):undefined}):null]));
  const verify=verifyArtifact;
  async function checked(output,input,node){
   const copy=artifact(output),retained=await verify(clone(copy),{input:clone(input),node});
@@ -34,7 +34,7 @@ export function createPipeline({storage,policyId,adapters,verifyArtifact,allowPa
  }
  async function read(tx,nodeKey,identity){
   const row=await tx.get(nodeKey);if(!row)return null;
-  if(row.schema!=='fia-preparation-node@1'||row.nodeKey!==nodeKey||canonicalJSONString(row.identity)!==canonicalJSONString(identity)||!['preparing','completed','uncertain','failed'].includes(row.state)||typeof row.attemptId!=='string'||!Number.isSafeInteger(row.revision)||row.revision<1)throw Error('corrupt-pipeline-state');
+  if(row.schema!=='fia-preparation-node@1'||row.nodeKey!==nodeKey||canonicalJSONString(row.identity)!==canonicalJSONString(identity)||!['preparing','completed','uncertain','failed','retryable'].includes(row.state)||typeof row.attemptId!=='string'||!Number.isSafeInteger(row.revision)||row.revision<1||!Number.isSafeInteger(row.attemptCount)||row.attemptCount<1||!Number.isSafeInteger(row.maxAttempts)||row.maxAttempts<1||row.maxAttempts>3||row.attemptCount>row.maxAttempts)throw Error('corrupt-pipeline-state');
   return row;
  }
  async function run(raw){
@@ -43,9 +43,19 @@ export function createPipeline({storage,policyId,adapters,verifyArtifact,allowPa
    const identity=await nodeIdentity(input,node,outputs),nodeKey=await sha256(canonicalJSONString(identity));
    const acquired=await storage.transaction(async tx=>{
     const existing=await read(tx,nodeKey,identity);
-    if(existing){if(existing.nodeKey!==nodeKey)throw Error('pipeline-parent-mismatch');return {record:clone(existing),owned:false};}
-    const adapter=captured[node];if(!adapter||typeof adapter.run!=='function'||typeof adapter.paid!=='boolean'||adapter.paid&&!allowPaid)return {record:{state:'blocked',reason:'capability-unavailable',nodeKey},owned:false};
-    const record={schema:'fia-preparation-node@1',identity,context:clone(input),state:'preparing',nodeKey,revision:1,attemptId:globalThis.crypto.randomUUID()};await tx.put(nodeKey,record);return {record:clone(record),owned:true};
+    const adapter=captured[node];
+    if(existing){
+     if(existing.nodeKey!==nodeKey)throw Error('pipeline-parent-mismatch');
+     if(existing.state!=='retryable')return {record:clone(existing),owned:false};
+     if(adapter?.paid!==false||typeof adapter.run!=='function')return {record:{state:'blocked',reason:'capability-unavailable',nodeKey},owned:false};
+     if(existing.attemptCount>=existing.maxAttempts)throw Error('corrupt-retry-budget');
+     existing.state='preparing';existing.attemptCount++;existing.revision++;existing.attemptId=globalThis.crypto.randomUUID();
+     await tx.put(nodeKey,existing);return {record:clone(existing),owned:true};
+    }
+    if(!adapter||typeof adapter.run!=='function'||typeof adapter.paid!=='boolean'||adapter.paid&&!allowPaid)return {record:{state:'blocked',reason:'capability-unavailable',nodeKey},owned:false};
+    const maxAttempts=adapter.paid===false?(adapter.retry?.maxAttempts??1):1;
+    if(!Number.isSafeInteger(maxAttempts)||maxAttempts<1||maxAttempts>3)throw Error('invalid-retry-budget');
+    const record={maxAttempts,attemptCount:1,schema:'fia-preparation-node@1',identity,context:clone(input),state:'preparing',nodeKey,revision:1,attemptId:globalThis.crypto.randomUUID()};await tx.put(nodeKey,record);return {record:clone(record),owned:true};
    });
    const claim=acquired.record;
    if(claim.state==='completed'){
@@ -53,7 +63,16 @@ export function createPipeline({storage,policyId,adapters,verifyArtifact,allowPa
    }else if(claim.state!=='preparing'||!acquired.owned)return {key,node,...claim};
    else {
     let output;
-    try{output=await checked(await captured[node].run({input:clone(input),nodeOutputs:clone(outputs),attemptId:claim.attemptId}),input,node);}
+    try{
+     const result=await captured[node].run({input:clone(input),nodeOutputs:clone(outputs),attemptId:claim.attemptId});
+     if(result?.kind==='retryable-failure'){
+      const proven=captured[node].paid===false&&['pre-dispatch','idempotent-free-read'].includes(result.classification)&&typeof result.evidence==='string'&&result.evidence.trim()&&result.evidence.length<=4096;
+      const state=proven?(claim.attemptCount<claim.maxAttempts?'retryable':'failed'):'uncertain';
+      await settle(claim,{state,reason:proven?'proven-free-failure':'adapter-outcome-unresolved',...(proven?{classification:result.classification,evidence:result.evidence}:{})});
+      return {key,node,state,nodeKey,attemptId:claim.attemptId,attemptCount:claim.attemptCount,maxAttempts:claim.maxAttempts};
+     }
+     output=await checked(result,input,node);
+    }
     catch(error){await settle(claim,{state:'uncertain',reason:'adapter-outcome-unresolved'});return {key,node,state:'uncertain',attemptId:claim.attemptId};}
     await settle(claim,{state:'completed',artifact:output});outputs[node]=output;
    }
