@@ -25,6 +25,9 @@ it('forwards verified online range only after explicit manual Play and holds com
  const fetch=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(3),mime:'audio/mpeg',timing,playbackRange:range});
  render(App);await settle();expect(audio.play).not.toHaveBeenCalled();await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();
  expect(fetch).toHaveBeenCalledTimes(1);expect(audio.play).toHaveBeenCalledWith(expect.any(String),'blob:range',1,range);
+ audio.state({src:'blob:range',elapsed:5.5,duration:20,progressElapsed:2.5,progressDuration:5,playing:true});await settle();
+ const circle=document.querySelector('.playback-arc'),circumference=Number(circle.getAttribute('stroke-dasharray'));
+ expect(Number(circle.getAttribute('stroke-dashoffset'))/circumference).toBeCloseTo(0.5);
  audio.end();await settle();expect(audio.play).toHaveBeenCalledTimes(1);expect(screen.getByRole('button',{name:'Continue',exact:true})).toBeTruthy();
 });
 it('forwards selected verified offline descriptor rather than asynchronous savedMedia',async()=>{
@@ -51,7 +54,9 @@ for(const offline of [false,true])it(`uses verified ${offline?'offline':'online'
  else{libraryAdapter.mediaStatus.mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[file]});vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({...file,bytes:new Uint8Array(3)});}
  await mountScripture();await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();
  expect(audio.play).toHaveBeenCalledWith(expect.any(String),offline?file.path:'blob:range',1,file.playbackRange);
- audio.state({src:offline?file.path:'blob:range',elapsed:111,duration:400,playing:false});await settle();
+ audio.state({src:offline?file.path:'blob:range',elapsed:111,duration:400,progressElapsed:11,progressDuration:129,playing:false});await settle();
+ const circle=document.querySelector('.playback-arc'),circumference=Number(circle.getAttribute('stroke-dasharray'));
+ expect(Number(circle.getAttribute('stroke-dashoffset'))/circumference).toBeCloseTo(1-11/129);
  expect(currentVerse()).toBe(1);expect(document.querySelectorAll('[data-align-word]').length).toBe(0);
 });
 it('clears Scripture overlay on navigation before returning to the same recording',async()=>{
