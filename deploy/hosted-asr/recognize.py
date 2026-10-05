@@ -1,5 +1,8 @@
 """One offline pilot candidate; no HTTP listener, accepted timing or hosted authority."""
 import argparse
+import dataclasses
+import inspect
+import platform
 import hashlib
 import importlib.metadata
 import io
@@ -7,7 +10,6 @@ import json
 import os
 from pathlib import Path
 import signal
-import time
 
 os.environ['HF_HUB_OFFLINE'] = '1'
 os.environ['TRANSFORMERS_OFFLINE'] = '1'
@@ -19,7 +21,15 @@ def sha(data):
 
 
 def canonical(value):
-    return json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()
+    def normalize(item):
+        if isinstance(item, float) and item.is_integer():
+            return int(item)
+        if isinstance(item, dict):
+            return {key: normalize(value) for key, value in item.items()}
+        if isinstance(item, (list, tuple)):
+            return [normalize(value) for value in item]
+        return item
+    return json.dumps(normalize(value), sort_keys=True, separators=(',', ':'), ensure_ascii=False, allow_nan=False).encode()
 
 
 def validate_input(job):
@@ -29,6 +39,28 @@ def validate_input(job):
         raise ValueError('unapproved-pilot-source')
     if job['sourcePath'] != '/input/source.mp3':
         raise ValueError('fixed-source-path-required')
+
+
+def encode_result(segments, samples, pcm_sha256, runtime, transcribe_options):
+    # This pure serializer is exercised across the real JS contract without ASR.
+    effective = {**PROPOSAL['recognition'], 'modelId': PROPOSAL['model']['name'],
+                 'modelRevision': PROPOSAL['model']['revision'],
+                 'transcribeOptions': transcribe_options}
+    if len(segments) > 2000 or sum(len(s['words']) for s in segments) > 2000:
+        raise ValueError('word-output-limit')
+    result = {'schema': 'fia-hosted-raw-recognition@1', 'status': 'candidate',
+              'source': PROPOSAL['source'], 'modelSha256': sha(canonical(PROPOSAL['model'])),
+              'runtimeSha256': sha(canonical(runtime)), 'scriptSha256': sha(Path(__file__).read_bytes()),
+              'configSha256': sha(canonical(effective)), 'effectiveConfig': effective,
+              'decoder': {'samples': samples, 'sampleRate': 16000, 'sha256': pcm_sha256},
+              'durationSeconds': samples / 16000, 'segments': segments,
+              'text': ''.join(s['text'] for s in segments),
+              'uncertainty': ['Raw recognition and estimated word times remain uncalibrated candidates.',
+                              'No alignment, native browser clock, accepted ranges or highlighting qualification is implied.']}
+    encoded = canonical(result)
+    if len(encoded) > 1048576:
+        raise ValueError('serialized-output-limit')
+    return encoded
 
 
 def run(job):
@@ -74,18 +106,28 @@ def run(job):
             raise ValueError('empty-audio')
         pcm = np.concatenate(chunks).astype(np.float32)
     recognizer = WhisperModel(str(model), device='cpu', compute_type='int8', cpu_threads=2, num_workers=1, local_files_only=True)
-    segments, _ = recognizer.transcribe(pcm, language='en', task='transcribe', beam_size=5, word_timestamps=True, initial_prompt=None, prefix=None, hotwords=None, condition_on_previous_text=False, vad_filter=False)
-    words = []
+    options = {'language': 'en', 'task': 'transcribe', 'beam_size': 5,
+               'word_timestamps': True, 'initial_prompt': None, 'prefix': None,
+               'hotwords': None, 'condition_on_previous_text': False, 'vad_filter': False}
+    effective_options = {key: value.default for key, value in inspect.signature(recognizer.transcribe).parameters.items()
+                         if key != 'audio'}
+    locked_defaults = json.loads(Path(__file__).with_name('transcribe-defaults.json').read_text())
+    if canonical(effective_options) != canonical(locked_defaults):
+        raise ValueError('transcribe-defaults-drift')
+    effective_options.update(options)
+    segments, _ = recognizer.transcribe(pcm, **options)
+    rows, count = [], 0
     for segment in segments:
-        for word in segment.words or []:
-            words.append({'word': word.word, 'start': word.start, 'end': word.end, 'probability': word.probability})
-            if len(words) > 2000:
-                raise ValueError('word-output-limit')
-    result = {'schema': 'fia-hosted-asr-pilot-candidate@1', 'status': 'candidate', 'source': PROPOSAL['source'], 'model': PROPOSAL['model'], 'recognition': PROPOSAL['recognition'], 'runtime': {name: importlib.metadata.version(name) for name in ['faster-whisper', 'ctranslate2', 'av', 'numpy']}, 'scriptSha256': sha(Path(__file__).read_bytes()), 'decoder': {'samples': total, 'sampleRate': 16000, 'sha256': sha(pcm.tobytes())}, 'words': words}
-    encoded = canonical(result)
-    if len(encoded) > 1048576:
-        raise ValueError('serialized-output-limit')
-    return encoded
+        row = dataclasses.asdict(segment)
+        if row['words'] is None:
+            raise ValueError('missing-raw-word-evidence')
+        count += len(row['words'])
+        if count > 2000 or len(rows) >= 2000:
+            raise ValueError('word-output-limit')
+        rows.append(row)
+    runtime = {'python': platform.python_version(), 'packages': {
+        name: importlib.metadata.version(name) for name in ['faster-whisper', 'ctranslate2', 'av', 'numpy']}}
+    return encode_result(rows, total, sha(pcm.tobytes()), runtime, effective_options)
 
 
 def main():

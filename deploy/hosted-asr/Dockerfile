@@ -5,7 +5,7 @@ COPY wheels /wheels
 COPY requirements.lock /requirements.lock
 RUN python -m pip install --no-index --find-links=/wheels --require-hashes --no-cache-dir -r /requirements.lock && rm -rf /wheels
 COPY model /opt/model
-COPY proposal.json recognize.py /opt/fia/
+COPY proposal.json transcribe-defaults.json recognize.py /opt/fia/
 RUN chmod -R a-w /opt/model /opt/fia && mkdir /scratch && chmod 1777 /scratch
 USER 65532:65532
 WORKDIR /scratch
