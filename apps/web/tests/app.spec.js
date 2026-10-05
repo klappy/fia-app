@@ -423,3 +423,19 @@ it('explicit navigation to an image with no recording loads it, but late previou
  pending[1].resolve({bytes:new Uint8Array([1]).buffer,mime:'image/webp'});await settle();const url=document.querySelector('.visual-viewport img').src;
  pending[0].resolve({bytes:new Uint8Array([2]).buffer,mime:'image/webp'});await settle();expect(document.querySelector('.visual-viewport img').src).toBe(url);expect(request).toHaveBeenCalledTimes(2);
 });
+
+it('failed visual waits for explicit retry despite an unrelated session preference update',async()=>{
+ const image=preparedVisuals().find(a=>a.kind==='image'),target=activities.find(a=>a.assetId===image.id);
+ const request=vi.spyOn(libraryAdapter,'playMedia').mockRejectedValueOnce(Error('Verification failed')).mockResolvedValue({bytes:new Uint8Array([1]).buffer,mime:'image/webp'});
+ await startAt(target.id);await fireEvent.click(screen.getByRole('button',{name:'View image'}));await settle();expect(request).toHaveBeenCalledTimes(1);
+ await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Settings',exact:true}));await fireEvent.click(screen.getByRole('checkbox',{name:/Automatic Scripture reading/}));await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));await settle();expect(request).toHaveBeenCalledTimes(1);
+ await fireEvent.click(screen.getByRole('button',{name:'Try again',exact:true}));await settle();expect(request).toHaveBeenCalledTimes(2);expect(document.querySelector('.visual-viewport img')).not.toBeNull();
+});
+it('canceling a concurrent pending image keeps the verified recording playing',async()=>{
+ const visuals=preparedVisuals(),target=activities.find(a=>a.id==='S02-U005');
+ vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[...visuals.map(a=>({path:a.src})),{path:target.audioSrc}]});
+ let resolveImage,imageSignal;const request=vi.spyOn(libraryAdapter,'playMedia').mockImplementation((_pack,path,_revision,signal)=>path===target.audioSrc?Promise.resolve({bytes:new Uint8Array([1]).buffer,mime:'audio/ogg'}):new Promise(r=>{resolveImage=r;imageSignal=signal;}));
+ await startAt(target.id);await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();await settle();expect(players.at(-1).paused).toBe(false);expect(request).toHaveBeenCalledTimes(2);
+ await fireEvent.click(screen.getByRole('button',{name:'Cancel loading',exact:true}));expect(imageSignal.aborted).toBe(true);expect(players.at(-1).paused).toBe(false);
+ resolveImage({bytes:new Uint8Array([2]).buffer,mime:'image/webp'});await settle();expect(document.querySelector('.visual-viewport img')).toBeNull();expect(players.at(-1).paused).toBe(false);
+});

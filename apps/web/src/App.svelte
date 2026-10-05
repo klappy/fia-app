@@ -21,7 +21,7 @@
  let visualState=$state({entries:new globalThis.Map(),loading:null,error:null}),visualAuthorization=$state(null);
  const visualOwner=createVisualDelivery({fetch:(request,signal)=>libraryAdapter.playMedia(request.pack,request.path,request.revision,signal),create:result=>URL.createObjectURL(new Blob([result.bytes],{type:result.mime})),revoke:url=>tick().then(()=>URL.revokeObjectURL(url)),publish:value=>visualState=value});
  function visualIdentity(){const view=presentStage(session,rawPresentation.activities);return `${selectionGeneration}:${selectedPack.id}:${selectedPack.revision}:${session.index}:${view.focal}:${session.detour?.assetId||''}`;}
- function authorizeVisual(){visualAuthorization=visualIdentity();syncVisual();}
+ function authorizeVisual(retry=true){if(retry)visualOwner.retry();visualAuthorization=visualIdentity();syncVisual();}
  function stopVisual(){visualAuthorization=null;visualOwner.cancel();}
  function syncVisual(){const view=presentStage(session,rawPresentation.activities),asset=rawPresentation.assets[view.focal];visualOwner.retain([asset?.src,rawPresentation.assets[view.supporting]?.src].filter(Boolean));if(inTransition||finished||visualAuthorization!==visualIdentity()||!['image','map'].includes(asset?.kind)||!onlineMedia.has(asset.src)||!deliveryRevision)return;void visualOwner.load({pack:selectedPack,path:asset.src,revision:deliveryRevision,identity:visualAuthorization});}
  $effect(()=>{session;rawPresentation;selectedPack;deliveryRevision;onlineMedia;visualAuthorization;untrack(syncVisual);});
@@ -138,7 +138,7 @@
  function scheduleNext(){
   if(!playbackConsent)return;
   if(session.status==='complete'||session.detour||inTransition)return;
-  authorizeVisual();
+  authorizeVisual(false);
   if(!activity.audioSrc){settleSilent();if(visual&&(session.preferences.autoplayVideo&&matchingVideo||session.preferences.describeImages&&focal?.descriptionAudio)||focal?.kind==='term'&&!muted&&focal.descriptionAudio)describe(focal.id);return;}
   if(automaticOff&&visual&&(session.preferences.autoplayVideo&&matchingVideo||session.preferences.describeImages&&focal?.descriptionAudio)){describe(focal.id);return;}
   const id=activity.id,generation=selectionGeneration;
