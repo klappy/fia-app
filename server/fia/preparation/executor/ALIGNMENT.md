@@ -1,0 +1,13 @@
+# Raw recognition to per-unit review
+
+The concrete alignment adapter compares verified raw recognition to exact source-unit text from the trusted guide bundle. It validates source, model, model files, runtime, configuration, language and script identities before matching. A resolver must verify its source bundle and guide content binding, then provide unit text whose SHA-256 is independently checked by the adapter.
+
+Normalization is versioned: NFKC, lowercase and normalized internal apostrophes. No fuzzy matching, number expansion, forced timing or missing-word insertion occurs. Matching is exact, ordered and contiguous; repeated phrases remain ambiguous. Candidate ranges come only from observed model word timestamps with finite and ordered bounds. They remain ASR estimates, not accepted playback boundaries.
+
+The acceptance adapter produces a content-hashed `review-required` report with individual unit decisions. Exact units do not inherit neighboring units' wording failures. Each still needs its own calibrated confidence, measured quiet-boundary and browser-clock evidence before acceptance. Those policies are not implemented here. A future accepted subset may be published independently while unresolved units remain in review; no blanket all-units failure is implied. The raw eligible original remains reusable separately from excerpt timing and word highlights.
+
+The actual retained Mark 1:21–28 S01 source produced 115 raw words with the pinned local model. Three of eight units matched exactly; five did not. No accepted playback ranges were produced. The strict matcher counted 91 tokens outside its three complete unit matches. This is not 91 errors: a separate internal token diagnostic found 86 of 92 script tokens in ordered correspondence, plus recognized introductory/closing context, question numbering, spoken range connectors and a small set of possible wording/ASR differences. That diagnostic is not used to manufacture timings or accept paraphrases.
+
+Internal review work separates possible hear/here recognition, heart/hearts and in/into variation, do/did tense, a possible omitted relative pronoun, and context outside unit text. Distinguishing actual spoken variation from ASR mistakes requires listening or independently adequate evidence. Raw text and detailed review excerpts remain in private working evidence, not this public source repository. Nothing was sent to upstream staff.
+
+This completes a local source-to-review path, not a hosted source-to-playback service. Publication, authenticated hosted dispatch, calibrated per-unit acceptance and serving eligible coherent snapshots remain separate work. Unit tests use synthetic evidence; retained local real-source receipts are source/recognition/review evidence only.
