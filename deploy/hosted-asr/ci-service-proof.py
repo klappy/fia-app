@@ -84,7 +84,7 @@ except Exception:
     print(logs.stdout[-16384:].decode(errors='replace'))
     raise
 finally:
-    stopped = subprocess.run(['docker','rm','-f',NAME],stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=30)
+    stopped = subprocess.run(['docker','rm','-f',container_id or NAME],stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=30)
     inspected = subprocess.run(['docker','container','inspect',container_id or NAME],stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=5)
     check = subprocess.run(['docker','container','ls','--all','--quiet','--no-trunc'],stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=5)
     absent = inspected.returncode != 0 and check.returncode == 0 and container_id is not None and container_id not in check.stdout.decode().splitlines()

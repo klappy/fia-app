@@ -18,7 +18,8 @@ class CleanupTest(unittest.TestCase):
             if args[:2] == ['docker','run']: out,status=CID.encode(),0
             elif args[:2] == ['docker','exec']:
                 self.assertEqual(args[-2], 'ready');out,status=json.dumps(READY).encode(),0
-            elif args[:3] == ['docker','rm','-f']: out,status=CID.encode(),0
+            elif args[:3] == ['docker','rm','-f']:
+                self.assertEqual(args[-1],CID);out,status=CID.encode(),0
             elif args[:3] == ['docker','container','inspect']:
                 self.assertEqual(args[-1],CID);out,status=b'',1
             elif args[:3] == ['docker','container','ls']: out,status=remaining,daemon_status
