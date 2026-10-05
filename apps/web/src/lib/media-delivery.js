@@ -10,7 +10,8 @@ export function validateDeliveryIndex(index){
  }return index;
 }
 export function validateDelivery(sidecar,identity){
- if(sidecar?.schema!==1||sidecar.packId!==identity.packId||sidecar.presentationRevision!==identity.presentationRevision||!sidecar.recipeRevision||!Array.isArray(sidecar.entries))throw Error('Media belongs to a different passage revision.');
+ if(![1,2].includes(sidecar?.schema)||sidecar.packId!==identity.packId||sidecar.presentationRevision!==identity.presentationRevision||!sidecar.recipeRevision||!Array.isArray(sidecar.entries))throw Error('Media belongs to a different passage revision.');
+ if(sidecar.schema===2){if(Object.keys(sidecar).sort().join(',')!=='entries,packId,presentationRevision,recipeRevision,schema,sourceLedger')throw Error('Unknown video sidecar field.');const l=sidecar.sourceLedger;if(!l||!sha.test(l.sha256)||!positive(l.bytes)||l.url!==`/content/video-sources/${l.sha256}.json`)throw Error('Invalid video source ledger.');}
  const seen=new Set();
  for(const e of sidecar.entries){const s=e.source,d=e.delivery,t=e.timing;
   if(!local.test(e.path)||seen.has(e.path)||!s||!sha.test(s.sha256)||!positive(s.bytes)||!/^https:\/\//.test(s.url)||!d||!sha.test(d.sha256)||!positive(d.bytes)||!['audio','image','video'].includes(d.kind)||!['transformed','passthrough'].includes(d.status)||!d.format||!d.q)throw Error('Invalid media delivery entry.');
@@ -19,7 +20,8 @@ export function validateDelivery(sidecar,identity){
   if(d.duration!==undefined&&(!Number.isFinite(d.duration)||d.duration<=0))throw Error('Invalid recording duration.');
   if(d.kind==='image'&&(!positive(d.width)||!positive(d.height)))throw Error('Invalid image dimensions.');
   if(!['low','medium','high'].includes(d.q))throw Error('Invalid quality tier.');
-  const options=d.kind==='audio'?`preset=${d.preset},q=${d.q},f=${d.format}`:`q=${d.q},f=${d.format}`;
+  if(d.kind==='video'){if(sidecar.schema!==2)throw Error('Video requires delivery schema2.');validateVideoDelivery(e);}else if(e.logicalSource)throw Error('Source replacement is video-only.');
+  const options=['audio','video'].includes(d.kind)?`preset=${d.preset},q=${d.q},f=${d.format}`:`q=${d.q},f=${d.format}`;
   if(d.kind==='audio'&&(d.preset!=='voice'||d.format!=='opus')||d.kind==='image'&&!['webp','avif','jpeg'].includes(d.format)||d.url!==`https://transcode.klappy.dev/${d.kind}/${options}/${s.url}`)throw Error('Delivery options do not match the URL.');
   if(!new RegExp('^'+d.kind+'/').test(d.mime))throw Error('Invalid media MIME.');
   if(!t||!['verified','not-applicable'].includes(t.status))throw Error('Media timing is not verified.');
@@ -32,7 +34,17 @@ export function validateDelivery(sidecar,identity){
  }return sidecar;
 }
 
+export function validateVideoDelivery(e){
+ const d=e.delivery,l=e.logicalSource;
+ if(Object.keys(e).sort().join(',')!=='delivery,logicalSource,path,source,timing')throw Error('Unknown video replacement field.');
+ if(!l||Object.keys(l).sort().join(',')!=='assetId,bytes,ledgerEntryId,sha256'||!l.assetId||!l.ledgerEntryId||!sha.test(l.sha256)||!positive(l.bytes))throw Error('Invalid logical video source.');
+ if(d.kind!=='video'||d.mime!=='video/mp4'||d.format!=='mp4'||d.preset!=='fia'||d.q!=='medium'||d.status!=='transformed'||d.videoCodec!=='h264'||d.audioCodec!=='aac'||!positive(d.width)||!positive(d.height)||!Number.isFinite(d.duration)||d.duration<=0||!sha.test(d.encoderRevision)||!sha.test(d.serverContractSha256)||!d.recipeRevision||!/^video-v1\/[a-f0-9]{64}\.mp4$/.test(d.cacheKey)||!d.qualification?.evidenceUrl?.startsWith('https://')||!sha.test(d.qualification.evidenceSha256)||e.timing?.status!=='not-applicable'||Object.keys(e.timing).length!==1)throw Error('Unqualified video delivery.');
+ validateVideoSize({group:'video',bytes:d.bytes});
+}
+export function validateVideoSize(file){if((file.group==='video'||file.kind==='video')&&(!positive(file.bytes)||file.bytes>16777216))throw Error('Video exceeds the16 MiB app limit.');}
+
 export async function readVerifiedMedia(response,file,{signal}={}){
+ validateVideoSize(file);
  if(!response?.ok||response.type==='opaque')throw Error('The recording could not be received.');
  const mime=(response.headers.get('Content-Type')||'').split(';')[0].trim();
  if(mime!==file.mime)throw Error('The recording format did not match.');
@@ -41,7 +53,7 @@ export async function readVerifiedMedia(response,file,{signal}={}){
  const chunks=[];let count=0;
  try{while(true){if(signal?.aborted)throw Error('Playback canceled.');const {done,value}=await reader.read();if(done)break;count+=value.byteLength;if(count>file.bytes)throw Error('The recording exceeded its approved size.');chunks.push(value);}if(count!==file.bytes)throw Error('The recording size did not match.');}
  catch(error){await reader.cancel().catch(()=>{});throw error;}finally{reader.releaseLock();}
- const bytes=new Uint8Array(count);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.length;}
+ const bytes=new Uint8Array(count);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.length;}chunks.length=0;
  const digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),v=>v.toString(16).padStart(2,'0')).join('');
  if(digest!==file.sha256)throw Error('The recording could not be verified.');return bytes;
 }

@@ -7,6 +7,32 @@ import App from '../src/App.svelte';
 import {createSession} from '../src/lib/engine.js';
 import {activities,assets} from '../src/lib/content.js';
 let players=[];
+it.each(['a13','a184','a10'])('prepared video %s fetches only after Play',async(id)=>{
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});const path=assets[id].src;
+ vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[{path,bytes:3,group:'video'}]});
+ const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(3).buffer,mime:'video/mp4',timing:{status:'not-applicable'}});
+ vi.stubGlobal('URL',class extends URL{static createObjectURL(){return 'blob:verified-video';}static revokeObjectURL(){}});
+ await startAt('S02-U005','waiting');expect(request).not.toHaveBeenCalled();
+ await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passage resources'}));
+ await fireEvent.click(within(screen.getByText('Videos',{selector:'summary'}).parentElement).getByRole('button',{name:assets[id].subtitle||assets[id].title,exact:true}));await settle();expect(request).not.toHaveBeenCalled();
+ await fireEvent.click(screen.getByRole('button',{name:'Play video',exact:true}));await settle();await settle();await settle();
+ expect(request).toHaveBeenCalledTimes(1);expect(request.mock.calls[0][1]).toBe(path);expect(document.querySelector('video').getAttribute('src')).toBe('blob:verified-video');expect(HTMLMediaElement.prototype.play).toHaveBeenCalled();
+});
+it('cancel loading video blocks a late verified result from mounting or playing',async()=>{
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[{path:assets.a13.src,bytes:3,group:'video'}]});
+ let resolve;const request=vi.spyOn(libraryAdapter,'playMedia').mockImplementation(()=>new Promise(r=>resolve=r));
+ const make=vi.fn(()=> 'blob:late');vi.stubGlobal('URL',class extends URL{static createObjectURL=make;static revokeObjectURL(){}});
+ await startAt('S02-U005','waiting');await command('watch the video');await fireEvent.click(screen.getAllByRole('button',{name:'Cancel loading',exact:true})[0]);resolve({bytes:new Uint8Array(3).buffer,mime:'video/mp4'});await settle();await settle();expect(request.mock.calls[0][3].aborted).toBe(true);expect(make).not.toHaveBeenCalled();expect(document.querySelector('video')).toBeNull();
+});
+it('verified video survives denied play and native exit retains blob until the owner is released',async()=>{
+ const path=assets.a13.src;vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[{path,bytes:3,group:'video'}]});
+ const fetch=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(3).buffer,mime:'video/mp4'}),revoke=vi.fn();vi.stubGlobal('URL',class extends URL{static createObjectURL(){return 'blob:owned-video';}static revokeObjectURL=revoke;});
+ HTMLMediaElement.prototype.play.mockRejectedValueOnce(Object.assign(Error('gesture'),{name:'NotAllowedError'}));await startAt('S02-U005','waiting');await command('watch the video');await settle();await settle();
+ const video=document.querySelector('video');expect(video.src).toContain('blob:owned-video');expect(fetch).toHaveBeenCalledTimes(1);
+ await fireEvent.click(screen.getByRole('button',{name:'Play video',exact:true}));expect(fetch).toHaveBeenCalledTimes(1);expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(2);
+ Object.defineProperty(video,'webkitDisplayingFullscreen',{value:true,writable:true});video.webkitExitFullscreen=vi.fn();await fireEvent(video,new Event('webkitbeginfullscreen'));await fireEvent.click(screen.getByRole('button',{name:'Return to guide',exact:true}));await settle();expect(document.querySelector('video')).toBe(video);expect(revoke).not.toHaveBeenCalled();
+ video.webkitDisplayingFullscreen=false;await fireEvent(video,new Event('webkitendfullscreen'));await settle();await settle();expect(document.querySelector('video')).toBeNull();expect(revoke).toHaveBeenCalledWith('blob:owned-video');
+});
 it('switching passage waits for native release and persists the actual selected descriptor',async()=>{
  const registry=JSON.parse(readFileSync('public/content/registry.json','utf8')),descriptor=registry.packs.find(p=>p.id==='eng.MRK-1-14-20');
  const presentation=JSON.parse(readFileSync('public'+descriptor.presentation.url,'utf8'));
