@@ -21,7 +21,7 @@ test('remove clears active and interrupted files',async()=>{const w=worker();awa
 test('eviction during an update cannot activate or discard the prior saved revision',async()=>{const w=worker();await w.message({type:'DOWNLOAD_START',selection:'all'});w.manifest(manifest('r2'));const result=await w.message({type:'DOWNLOAD_START',selection:'all'},p=>{if(p.count===2)w.stores.get('fia-v3-pack-r2-all').delete('/index.html');});assert.equal(result.ok,false);assert.equal((await w.message({type:'DOWNLOAD_STATUS'})).active.revision,'r1');assert.equal((await w.message({type:'DOWNLOAD_STATUS'})).saved,true);});
 test('online navigation upgrades shell without discarding saved content',async()=>{
  const w=worker();await w.message({type:'DOWNLOAD_START',selection:'all'});const before=await w.message({type:'DOWNLOAD_STATUS'});
- const html='<div id="app"></div><script type="module" src="/assets/new.js"></script>';
+ const html='<meta name="application-name" content="FIA Guide"><div id="app"></div><script type="module" src="/assets/new.js"></script>';
  w.reply('/',new Response(html,{headers:{'Content-Type':'text/html'}}));
  const response=await w.fetch({url:'https://fia.test/',method:'GET',mode:'navigate'},{resultingClientId:'new'});
  assert.equal(await response.text(),html);assert.equal(w.calls.includes('https://fia.test/'),true);
@@ -33,7 +33,7 @@ test('online navigation upgrades shell without discarding saved content',async()
  assert.equal((await w.message({type:'DOWNLOAD_STATUS'})).saved,true);
 });
 test('invalid navigation response falls back to coherent installed shell',async()=>{
- for(const [status,type,body] of [[404,'text/html','missing'],[500,'text/html','error'],[200,'application/json','{}'],[200,'text/html','<html>maintenance</html>']]){
+ for(const [status,type,body] of [[404,'text/html','missing'],[500,'text/html','error'],[200,'application/json','{}'],[200,'text/html','<html>maintenance</html>'],[200,'text/html','<!-- <meta name="application-name" content="FIA Guide"><div id="app"></div><script type="module" src="/assets/old.js"></script> -->Maintenance'],[200,'text/html','<div id="app"></div><script type="module" src="/assets/other.js"></script>'],[200,'text/html','<meta name="application-name" content="FIA Guide"><div id="app"></div><script type="module" src="https://other.test/assets/app.js"></script>']]){
   const w=worker();await w.message({type:'DOWNLOAD_START',selection:'all'});w.reply('/',new Response(body,{status,headers:{'Content-Type':type}}));
   assert.equal(await(await w.fetch({url:'https://fia.test/',method:'GET',mode:'navigate'},{resultingClientId:'fallback'})).text(),'app');
   assert.equal((await w.stores.get('fia-v3-download-metadata@1').get('/client-fallback').json()).revision,'r1');

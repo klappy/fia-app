@@ -92,8 +92,8 @@ self.addEventListener('fetch',event=>{
   try{
    live=await fetch(event.request,{cache:'no-store'});
    if(live.status===200&&/^text\/html(?:;|$)/i.test(live.headers.get('Content-Type')||'')){
-    const html=await live.clone().text();
-    if(/<div\b[^>]*\bid=["']app["']/i.test(html)&&/<script\b[^>]*\btype=["']module["'][^>]*\bsrc=["'][^"']+["']/i.test(html)){
+    const html=(await live.clone().text()).replace(/<!--[\s\S]*?-->/g,'');
+    if(/<meta\b[^>]*\bname=["']application-name["'][^>]*\bcontent=["']FIA Guide["']/i.test(html)&&/<div\b[^>]*\bid=["']app["']/i.test(html)&&/<script\b[^>]*\btype=["']module["'][^>]*\bsrc=["']\/assets\/[^"'?#]+\.js["']/i.test(html)){
      if(event.resultingClientId)await write('client-'+event.resultingClientId,{shell:'network'});
      return live;
     }
