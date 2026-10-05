@@ -257,7 +257,7 @@
  });
 </script>
 
-<svelte:head><title>FIA · A guided conversation</title></svelte:head>
+<svelte:head><title>FIA Guide</title></svelte:head>
 
 <main class="scene" class:immersive style={`--reading-scale:${scale}`}>
  <div class="scene-glass scene-glass-top" aria-hidden="true"></div>

@@ -439,3 +439,5 @@ it('canceling a concurrent pending image keeps the verified recording playing',a
  await fireEvent.click(screen.getByRole('button',{name:'Cancel loading',exact:true}));expect(imageSignal.aborted).toBe(true);expect(players.at(-1).paused).toBe(false);
  resolveImage({bytes:new Uint8Array([2]).buffer,mime:'image/webp'});await settle();expect(document.querySelector('.visual-viewport img')).toBeNull();expect(players.at(-1).paused).toBe(false);
 });
+
+it('keeps FIA Guide browser title after hydration',async()=>{await startAt('S01-U001');expect(document.title).toBe('FIA Guide');});
