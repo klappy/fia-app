@@ -203,7 +203,7 @@
   if(!isPlaying&&!playbackPending&&!mediaLoading&&!['Continue','Return','Begin again'].includes(primaryLabel))authorizeVisual();
   if(videoDeliveryState.loading){videoDelivery.cancel();return;}if(mediaLoading){revokePlayback();notice='Playback canceled.';return;}
   if(!activity.audioSrc&&!session.detour&&!inTransition&&!finished&&!videoPending&&!visualPending){navigate({type:'CONTINUE'},true);return;}
-  if(inTransition){transitionSection=null;persist();return;}
+  if(inTransition){navigate({type:'CONTINUE'},true);return;}
   if(finished){reset();return;}
   if(automaticOff&&!session.detour){navigate({type:'CONTINUE'},true);return;}
   if(isPlaying||playbackPending){revokePlayback();audio?.pause();videoOwner.node?.pause();dispatch({type:'PAUSE'});return;}
@@ -225,14 +225,18 @@
   cancel();inlineVideo=target;
   await tick();if(pack===selectedPack&&generation===selectionGeneration&&activityId===activity.id&&inlineVideo?.id===target.id)playVideo();
  }
+ function beginForwardPlayback(){
+  if(automaticOff||session.detour||finished||inTransition)return;
+  started=true;playbackConsent=true;scheduleNext();
+ }
  function navigate(event,auto=false){
   if(deferVideo(()=>navigate(event,auto)))return;
   swipeGeneration++;
-  const hadPlaybackConsent=playbackConsent;revokePlayback();
-  if(inTransition&&event.type==='CONTINUE'){transitionSection=null;persist();authorizeVisual();return;}
+  const hadPlaybackConsent=playbackConsent,priorIndex=session.index,forward=auto&&event.type==='CONTINUE';revokePlayback();
+  if(inTransition&&event.type==='CONTINUE'){cancel();transitionSection=null;persist();authorizeVisual();if(forward)beginForwardPlayback();return;}
   cancel();visualHeard=null;dispatch(event);notice='';settleSilent();authorizeVisual();
   if(event.type==='DETOUR'&&assets[event.assetId]?.kind==='video'&&session.preferences.autoplayVideo&&hadPlaybackConsent){playbackConsent=true;queueVideoPlay();}
-  if(auto&&started)scheduleNext();
+  if(forward&&session.index!==priorIndex)beginForwardPlayback();
  }
  function reset(){if(deferVideo(reset))return;stopVisual();visualOwner.clear();cancel();const preferences={...session.preferences};const mode=session.mode;dispatch({type:'RESET'});session={...session,preferences,mode};introduced=new Set();started=false;messages=[];persist();}
  function describe(id,explicit=false){if(deferVideo(()=>describe(id,explicit)))return;const a=assets[id];if(!a)return;if(['image','map'].includes(a.kind)&&matchingVideo&&focal.id===id&&(explicit||session.preferences.autoplayVideo)){openMatchingVideo();return;}if(!session.detour&&a.kind==='term'&&activity.assetId===id){termDefinition=activity.id;persist();}cancel();dispatch({type:'PAUSE'});message(a.description);if(!a.descriptionAudio){notice='No source recording is available for this resource.';return;}audioContext={type:'description',id};startRecording(a.description,a.descriptionAudio,explicit);}
