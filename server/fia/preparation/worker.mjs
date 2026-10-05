@@ -1,7 +1,15 @@
 import catalog from './catalog.json';
-import {json,resolveSelection,operationId,indexedCatalog,readBounded,prepareAccepted} from './service.mjs';
+import {json,resolveSelection,operationId,indexedCatalog,readBounded,prepareAccepted,eligibleRows} from './service.mjs';
 import {readPreparedAudio} from './contract.mjs';
-import {acquireOriginal,storeOriginal,readOriginal,originalResponse} from './original.mjs';
+import {acquireOriginal,originalResponse} from './original.mjs';
+import {readSource,storeSource,sourceKey,verifySourceReference} from './source-store.mjs';
+
+async function requireSource(ctx,env,row){
+  const source=row.source,receipt=await ctx.storage.get('source');
+  if(receipt?.state!=='verified'||receipt.sha256!==source.sha256||receipt.bytes!==source.bytes||receipt.key!==sourceKey(source))throw Error('source-not-verified');
+  await verifySourceReference(env.FIA_ORIGINALS,source,row.identity.sourceVersion);
+  const bytes=await readSource(env.FIA_ORIGINALS,source);if(!bytes)throw Error('source-not-verified');return bytes;
+}
 
 const prefix='/v1/preparations';
 const statusBody=(record,reused)=>({schema:'fia-preparation-status@1',jobId:record.jobId,state:record.state,reason:record.reason,sourceState:record.sourceState??'queued',selection:record.selection,result:record.result??null,resultSha256:record.resultSha256??null,statusUrl:`${prefix}/${record.jobId}`,reused});
@@ -15,9 +23,9 @@ export async function servePreparation(request,env){
   let row,id;
   if(audioMatch){
     if(!['GET','HEAD'].includes(request.method))return json(405,{status:'refused',code:'method-not-allowed'});
-    row=catalog.entries.find(item=>item.source.sha256===audioMatch[1]);
+    row=eligibleRows(catalog).find(item=>item.source.sha256===audioMatch[1]);
     if(!row)return json(404,{status:'unavailable',code:'unknown-source'});
-    if(!env.FIA_PREPARATION_JOBS)return json(503,{status:'unavailable',code:'preparation-storage-unavailable'});
+    if(!env.FIA_PREPARATION_JOBS||!env.FIA_ORIGINALS)return json(503,{status:'unavailable',code:'preparation-storage-unavailable'});
     id=await operationId(row);
     const stub=env.FIA_PREPARATION_JOBS.get(env.FIA_PREPARATION_JOBS.idFromName(id));
     return stub.fetch(new Request(`https://preparation.internal/${id}/audio`,{method:request.method,headers:request.headers}));
@@ -37,7 +45,7 @@ export async function servePreparation(request,env){
     row=(await indexedCatalog(catalog)).find(entry=>entry.id===id)?.row;
     if(!row)return json(404,{status:'unavailable',code:'unknown-preparation'});
   }
-  if(!env.FIA_PREPARATION_JOBS)return json(503,{status:'unavailable',code:'preparation-storage-unavailable'});
+  if(!env.FIA_PREPARATION_JOBS||!env.FIA_ORIGINALS)return json(503,{status:'unavailable',code:'preparation-storage-unavailable'});
   const stub=env.FIA_PREPARATION_JOBS.get(env.FIA_PREPARATION_JOBS.idFromName(id));
   return stub.fetch(new Request(`https://preparation.internal/${id}`,{method:request.method}));
 }
@@ -50,7 +58,7 @@ export class FiaPreparationJobs{
     const parts=new URL(request.url).pathname.slice(1).split('/'),id=parts[0],audio=parts.length===2&&parts[1]==='audio';
     const row=(await indexedCatalog(catalog)).find(entry=>entry.id===id)?.row;
     if(!row)return json(404,{status:'unavailable',code:'unknown-preparation'});
-    if(audio){try{return originalResponse(request,row.source,await readOriginal(this.ctx.storage,row.source));}catch{return json(409,{status:'unavailable',code:'source-not-verified'});}}
+    if(audio){try{return originalResponse(request,row.source,await requireSource(this.ctx,this.env,row));}catch{return json(409,{status:'unavailable',code:'source-not-verified'});}}
     if(!['POST','GET'].includes(request.method))return json(405,{status:'refused',code:'method-not-allowed'});
     const {record,created}=await this.ctx.storage.transaction(async tx=>{
       const prior=await tx.get('job');
@@ -73,7 +81,7 @@ export class FiaPreparationJobs{
     });
     if(!record)return json(404,{status:'unavailable',code:'not-requested'});
     if(record.sourceState==='verified'){
-      try{await readOriginal(this.ctx.storage,row.source);}
+      try{await requireSource(this.ctx,this.env,row);}
       catch{return json(503,{status:'unavailable',code:'stored-source-invalid'});}
     }
     if(record.state==='ready'&&record.resultSha256!==row.accepted?.expected.resultSha256)return json(200,statusBody({...record,state:'blocked',reason:'accepted-result-changed',result:null,resultSha256:null},true));
@@ -96,18 +104,21 @@ export class FiaPreparationJobs{
       let outcome;
       try{
         const source=await this.ctx.storage.get('source');
-        if(source?.state==='attempting'){
-          await this.ctx.storage.put('job',{...record,state:'blocked',sourceState:'uncertain',reason:'source-attempt-interrupted'});return;
+        const retained=await readSource(this.env.FIA_ORIGINALS,row.source);
+        if(!retained&&source?.state==='attempting'){
+          throw Error('source-attempt-interrupted');
         }
-        if(source?.state!=='verified'){
+        if(!retained&&source?.state==='verified')throw Error('retained-source-missing');
+        if(!retained){
           await this.ctx.storage.put('source',{state:'attempting'});
           const bytes=await acquireOriginal(row.source);
-          await storeOriginal(this.ctx.storage,row.source,bytes);
-        }else await readOriginal(this.ctx.storage,row.source);
+          await storeSource(this.env.FIA_ORIGINALS,row.source,bytes,row.identity.sourceVersion);
+        }else await storeSource(this.env.FIA_ORIGINALS,row.source,retained,row.identity.sourceVersion);
+        await this.ctx.storage.put('source',{state:'verified',sha256:row.source.sha256,bytes:row.source.bytes,key:sourceKey(row.source)});
         record.sourceState='verified';
         outcome=await prepareAccepted(row,path=>this.env.ASSETS.fetch(new Request(new URL(path,this.env.FIA_API_ORIGIN),{redirect:'manual'})));
       }
-      catch{outcome={state:'blocked',sourceState:record.sourceState==='verified'?'verified':'failed',reason:record.sourceState==='verified'?'accepted-artifact-verification-failed':'source-verification-failed',result:null,resultSha256:null};}
+      catch(error){outcome=error.message==='source-attempt-interrupted'?{state:'blocked',sourceState:'uncertain',reason:'source-attempt-interrupted',result:null,resultSha256:null}:{state:'blocked',sourceState:record.sourceState==='verified'?'verified':'failed',reason:record.sourceState==='verified'?'accepted-artifact-verification-failed':'source-verification-failed',result:null,resultSha256:null};}
       await this.ctx.storage.transaction(async tx=>{
         const current=await tx.get('job');
         if(current.admissionSha256!==record.admissionSha256){await tx.setAlarm(Date.now()+1);return;}

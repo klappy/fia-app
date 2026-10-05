@@ -30,7 +30,9 @@ export async function readOriginal(storage,source){
   return bytes;
 }
 export function originalResponse(request,source,bytes){
-  const headers={'Content-Type':'audio/mpeg','Accept-Ranges':'bytes','ETag':`"${source.sha256}"`,'Cache-Control':'public, max-age=31536000, immutable','X-Content-Type-Options':'nosniff'};
+  // Immutable storage identity is separate from current serving eligibility.
+  // A browser cache must not bypass a later source revocation.
+  const headers={'Content-Type':'audio/mpeg','Accept-Ranges':'bytes','ETag':`"${source.sha256}"`,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'};
   if(!['GET','HEAD'].includes(request.method))return json(405,{status:'refused',code:'method-not-allowed'});
   const range=request.headers.get('Range'),ifRange=request.headers.get('If-Range');
   let start=0,end=bytes.byteLength-1,status=200;

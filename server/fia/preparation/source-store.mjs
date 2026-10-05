@@ -12,6 +12,14 @@ export async function readSource(bucket,source){
  const key=sourceKey(source),object=await bucket.get(key);if(object===null)return null;
  return verify(await body(object,source.bytes),source);
 }
+export async function verifySourceReference(bucket,source,sourceVersion){
+ validate(source);
+ const reference={schema:'fia-original-source-ref@1',url:source.url,sourceVersion,sha256:source.sha256,bytes:source.bytes};
+ const expected=new TextEncoder().encode(canonicalJSONString(reference));
+ const key=`originals/refs/${await sha256(canonicalJSONString({url:source.url,sourceVersion}))}/${source.sha256}.json`;
+ const object=await bucket.get(key);if(!object)throw Error('source-reference-missing');
+ if(await sha256(await body(object,expected.byteLength))!==await sha256(expected))throw Error('source-reference-conflict');
+}
 export async function storeSource(bucket,source,bytes,sourceVersion){
  const pinned=structuredClone(source);validate(pinned);
  if(typeof sourceVersion!=='string'||!sourceVersion.trim()||sourceVersion.length>4096)throw Error('invalid-source-version');

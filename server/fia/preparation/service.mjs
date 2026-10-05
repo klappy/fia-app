@@ -2,14 +2,15 @@ import {canonicalJSONString,sha256,readPreparedAudio} from './contract.mjs';
 
 export const json=(status,body)=>new Response(JSON.stringify(body),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 export const selectionKeys=['packId','presentationRevision','language','edition','quality'];
+export const eligibleRows=catalog=>catalog.entries.filter(row=>row.eligibility==='eligible');
 const requestKeys=[...selectionKeys,'activityId','sourceUnitId','sourceTextSha256'];
 export function resolveSelection(input,catalog){
   if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).sort().join()!==[...requestKeys].sort().join())return null;
-  return catalog.entries.find(row=>selectionKeys.every(key=>typeof input[key]==='string'&&input[key]===row.selection[key])&&row.activities.some(activity=>['activityId','sourceUnitId','sourceTextSha256'].every(key=>input[key]===activity[key])))??null;
+  return eligibleRows(catalog).find(row=>selectionKeys.every(key=>typeof input[key]==='string'&&input[key]===row.selection[key])&&row.activities.some(activity=>['activityId','sourceUnitId','sourceTextSha256'].every(key=>input[key]===activity[key])))??null;
 }
 // All identity components come from the reviewed server catalog, never caller keys.
 export async function operationId(row){return sha256(canonicalJSONString({schema:'fia-preparation-operation@1',selection:row.selection,identity:row.identity,scriptSha256:row.scriptSha256,unitsSha256:row.unitsSha256,source:row.source,activities:row.activities}));}
-export async function indexedCatalog(catalog){return Promise.all(catalog.entries.map(async row=>({id:await operationId(row),row})));}
+export async function indexedCatalog(catalog){return Promise.all(eligibleRows(catalog).map(async row=>({id:await operationId(row),row})));}
 export async function readBounded(response,maxBytes){
   if(!response.body)return new Uint8Array();
   const reader=response.body.getReader(),chunks=[];let length=0;

@@ -24,8 +24,8 @@
   "observability": { "enabled": true },
   "migrations": [{ "tag": "v1-preparation", "new_sqlite_classes": ["FiaPreparationJobs"] }],
   "env": {
-    "dev": { "durable_objects": { "bindings": [{ "name": "FIA_PREPARATION_JOBS", "class_name": "FiaPreparationJobs" }] }, "name": "fia-app-dev", "vars": { "FIA_API_ORIGIN": "https://dev.fiaguide.app" } },
-    "staging": { "durable_objects": { "bindings": [{ "name": "FIA_PREPARATION_JOBS", "class_name": "FiaPreparationJobs" }] }, "name": "fia-app-staging", "vars": { "FIA_API_ORIGIN": "https://staging.fiaguide.app" } },
-    "production": { "durable_objects": { "bindings": [{ "name": "FIA_PREPARATION_JOBS", "class_name": "FiaPreparationJobs" }] }, "name": "fia-app", "vars": { "FIA_API_ORIGIN": "https://fiaguide.app" } },
+    "dev": { "r2_buckets": [{ "binding": "FIA_ORIGINALS", "bucket_name": "fia-originals-development" }], "durable_objects": { "bindings": [{ "name": "FIA_PREPARATION_JOBS", "class_name": "FiaPreparationJobs" }] }, "name": "fia-app-dev", "vars": { "FIA_API_ORIGIN": "https://dev.fiaguide.app" } },
+    "staging": { "r2_buckets": [{ "binding": "FIA_ORIGINALS", "bucket_name": "fia-originals-staging" }], "durable_objects": { "bindings": [{ "name": "FIA_PREPARATION_JOBS", "class_name": "FiaPreparationJobs" }] }, "name": "fia-app-staging", "vars": { "FIA_API_ORIGIN": "https://staging.fiaguide.app" } },
+    "production": { "r2_buckets": [{ "binding": "FIA_ORIGINALS", "bucket_name": "fia-originals-production" }], "durable_objects": { "bindings": [{ "name": "FIA_PREPARATION_JOBS", "class_name": "FiaPreparationJobs" }] }, "name": "fia-app", "vars": { "FIA_API_ORIGIN": "https://fiaguide.app" } },
   },
 }
