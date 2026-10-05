@@ -4,6 +4,7 @@ import {describe,it,expect,beforeEach,afterEach,vi} from 'vitest';
 import {render,fireEvent,screen,cleanup,within,waitFor} from '@testing-library/svelte';
 import {tick} from 'svelte';
 import App from '../src/App.svelte';
+import * as videoDemo from '../src/lib/video-demo.js';
 import {createSession} from '../src/lib/engine.js';
 import {activities,assets} from '../src/lib/content.js';
 let players=[];
@@ -38,6 +39,17 @@ it('a verified companion video mounts even when its focal image is unavailable',
  await startAt('S02-U005','waiting');expect(document.querySelector('video')).toBeNull();expect(request).not.toHaveBeenCalled();
  await fireEvent.click(screen.getByRole('button',{name:'Play video',exact:true}));await settle();await settle();await settle();await settle();
  expect(request).toHaveBeenCalledTimes(1);expect(request.mock.calls[0][1]).toBe(assets.a13.src);expect(document.querySelector('video')?.getAttribute('src')).toBe('blob:companion-video');expect(HTMLMediaElement.prototype.play).toHaveBeenCalled();
+});
+it('demo HQ native source is assigned only by Play and cleared on return without proxy transfer',async()=>{
+ const resolve=videoDemo.demoVideoSource;vi.spyOn(videoDemo,'demoVideoSource').mockImplementation((pack,asset)=>resolve(pack,asset,{enabled:'true',hostname:'dev.fiaguide.app'}));
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[]});
+ const request=vi.spyOn(libraryAdapter,'playMedia');await startAt('S02-U005','waiting');
+ await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passage resources'}));
+ await fireEvent.click(within(screen.getByText('Videos',{selector:'summary'}).parentElement).getByRole('button',{name:assets.a13.subtitle||assets.a13.title,exact:true}));await settle();
+ expect(document.querySelector('video')).toBeNull();expect(request).not.toHaveBeenCalled();
+ await fireEvent.click(screen.getByRole('button',{name:'Play video',exact:true}));await settle();await settle();
+ expect(document.querySelector('video')?.getAttribute('src')).toBe('https://s3.amazonaws.com/cbbt-er.public/media/videos/a13/720p.mp4');expect(request).not.toHaveBeenCalled();
+ await fireEvent.click(screen.getByRole('button',{name:'Return to guide',exact:true}));await settle();expect(document.querySelector('video')).toBeNull();
 });
 it('cancel loading video blocks a late verified result from mounting or playing',async()=>{
  vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[{path:assets.a13.src,bytes:3,group:'video'}]});
