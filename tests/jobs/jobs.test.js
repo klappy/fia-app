@@ -142,3 +142,14 @@ test('async output validation cannot pass as a truthy Promise',async t=>{
   const store=new JobStore(directory,{operator:'test',capability:localFixtureCapability('test'),policy:{...audioPolicy,validateOutput:async()=>true}});
   const job=await store.enqueue('promise',request());assert.equal((await store.execute(job.id)).state,'uncertain');
 });
+test('validated metadata is detached before enqueue awaits the disk lock',async t=>{
+  const {directory}=await setup(t), shared={generationConfigSha256:requestBinding(request()).generationConfigSha256};
+  const store=new JobStore(directory,{operator:'test',capability:localFixtureCapability('test'),policy:{...audioPolicy,validateRequest:()=>shared}});
+  const pending=store.enqueue('metadata-alias',request());
+  const original=shared.generationConfigSha256;shared.generationConfigSha256='mutated-after-validation';
+  const job=await pending;assert.equal(job.metadata.generationConfigSha256,original);
+  const persisted=JSON.parse(await readFile(join(directory,'state.json'),'utf8'));
+  assert.equal(persisted.jobs[job.id].metadata.generationConfigSha256,original);
+  const fresh=new JobStore(directory,{operator:'test',capability:localFixtureCapability('test'),policy:audioPolicy});
+  assert.equal((await fresh.status(job.id)).metadata.generationConfigSha256,original);
+});

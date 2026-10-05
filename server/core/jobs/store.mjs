@@ -19,7 +19,7 @@ export class JobStore {
   binding(request) {
     const encoded=canonical(request);
     const metadata=this.policy.validateRequest(structuredClone(request));canonical(metadata);
-    return {buildKey:sha256(canonical({policyId:this.policy.id,payload:JSON.parse(encoded)})),metadata};
+    return {buildKey:sha256(canonical({policyId:this.policy.id,payload:JSON.parse(encoded)})),metadata:structuredClone(metadata)};
   }
   async init() { await mkdir(this.directory,{recursive:true,mode:0o700}); }
   async syncDirectory() { const handle=await open(this.directory,'r'); try { await handle.sync(); } finally { await handle.close(); } }
