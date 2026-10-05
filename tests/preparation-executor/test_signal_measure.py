@@ -51,4 +51,8 @@ class Measurements(unittest.TestCase):
    for window in item['windows']:self.assertEqual(window['startSample'],item['anchorSample']+window['offsetSamples']);self.assertEqual(window['endSampleExclusive']-window['startSample'],160)
   json.dumps(landmarks,allow_nan=False)
 
+ def test_multiple_qualifying_quiet_runs_block_without_inventing_discriminator(self):
+  pcm=np.ones(16000,dtype=np.float32);pcm[1601:2881]=0;pcm[3201:4641]=0;result=m.boundary(pcm,.1,.4)
+  self.assertEqual(result['state'],'blocked');self.assertEqual(result['reason'],'ambiguous-quiet-runs');self.assertEqual(len(result['quietRuns']),2);self.assertNotIn('cutSample',result);self.assertNotIn('selectedQuietRun',result)
+
 if __name__=='__main__':unittest.main()
