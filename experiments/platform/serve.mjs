@@ -19,8 +19,9 @@ export function startServer({port = 0, host = '127.0.0.1'} = {}) {
       const size = statSync(sample.file).size;
       const m = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range || '');
       if (!m) return createReadStream(sample.file).pipe(res.writeHead(200, {'content-type': sample.mime, 'content-length': size, 'accept-ranges': 'bytes'}));
-      let start = m[1] === '' ? size - Number(m[2]) : Number(m[1]);
-      let end = m[1] !== '' && m[2] !== '' ? Number(m[2]) : size - 1;
+      // Over-long ends and suffixes are capped at the file, per RFC 9110 14.1.2.
+      const start = m[1] === '' ? Math.max(0, size - Number(m[2])) : Number(m[1]);
+      const end = m[1] !== '' && m[2] !== '' ? Math.min(Number(m[2]), size - 1) : size - 1;
       if (!(start >= 0 && start <= end && end < size)) return res.writeHead(416, {'content-range': `bytes */${size}`}).end();
       return createReadStream(sample.file, {start, end}).pipe(res.writeHead(206, {'content-type': sample.mime, 'content-length': end - start + 1, 'content-range': `bytes ${start}-${end}/${size}`, 'accept-ranges': 'bytes'}));
     }

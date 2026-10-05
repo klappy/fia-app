@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {KEY, encode, decode, load, save} from '../../experiments/platform/shell/storage.js';
 import {resolveSample} from '../../experiments/platform/sample.mjs';
-import {probe} from '../../experiments/platform/probe-toolchain.mjs';
+import {probe, run} from '../../experiments/platform/probe-toolchain.mjs';
 import {startServer} from '../../experiments/platform/serve.mjs';
 
 const SHA = 'a'.repeat(64);
@@ -43,6 +43,12 @@ test('toolchain probe reports targets without inventing readiness', () => {
   if (r.host.platform !== 'darwin') assert.equal(r.ready.ios, false);
 });
 
+test('a command that exits nonzero counts as absent, not present', () => {
+  assert.equal(run(process.execPath, ['-e', 'console.error("xcode-select: error: requires Xcode"); process.exit(1)']), null);
+  assert.equal(run('definitely-not-a-real-tool-fia', []), null);
+  assert.match(run(process.execPath, ['--version']), /^v\d+/);
+});
+
 test('server serves byte ranges of the verified sample and refuses other paths', async t => {
   const {server, url, sample} = await startServer();
   t.after(() => server.close());
@@ -51,6 +57,9 @@ test('server serves byte ranges of the verified sample and refuses other paths',
   assert.equal(head.headers.get('content-range'), `bytes 0-99/${sample.bytes}`);
   assert.equal((await head.arrayBuffer()).byteLength, 100);
   assert.equal((await fetch(`${url}/sample.mp3`, {headers: {range: `bytes=${sample.bytes}-`}})).status, 416);
+  const over = await fetch(`${url}/sample.mp3`, {headers: {range: 'bytes=0-999999999'}});
+  assert.equal(over.headers.get('content-range'), `bytes 0-${sample.bytes - 1}/${sample.bytes}`);
+  await over.arrayBuffer();
   assert.equal((await fetch(`${url}/../package.json`)).status, 404);
   assert.equal((await fetch(`${url}/sample.json`).then(r => r.json())).sha256, sample.sha256);
 });

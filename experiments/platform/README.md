@@ -32,13 +32,13 @@ The same shell is what each native route wraps, so every route is measured again
 node experiments/platform/probe-toolchain.mjs                    # exit 0, JSON receipt
 node experiments/platform/probe-toolchain.mjs --require android  # exit 3
 node experiments/platform/probe-toolchain.mjs --require ios      # exit 3
-node --test tests/platform/harness.test.mjs                      # 5 pass, 0 fail
-npx playwright test -c tests/platform/playwright.config.mjs      # 4 pass, 0 fail (3 runs)
+node --test tests/platform/harness.test.mjs                      # 6 pass, 0 fail
+npx playwright test -c tests/platform/playwright.config.mjs      # 5 pass, 0 fail
 ```
 
 Host found: Linux x64, Node v22.22.0, OpenJDK 21.0.11, Gradle 8.14.3. Absent: Android SDK (`ANDROID_HOME`/`ANDROID_SDK_ROOT`), adb, sdkmanager, emulator, `/dev/kvm`, macOS, Xcode, `xcrun simctl`. No device attached or reachable.
 
-The Playwright run is a **harness self-test**: desktop Chromium headless at a 390×844 viewport. It proves the probe logic: manual play/pause/seek over byte ranges, a silent restore on reopen, recovery from damaged and cleared storage, and a save on an emulated `visibilitychange`. It is not Android WebView, Android Chrome, iOS WebKit or installed-PWA evidence.
+The Playwright run is a **harness self-test**: desktop Chromium headless at a 390×844 viewport. It proves the probe logic: manual play/pause/seek over byte ranges, a silent restore on reopen, no save before the restore finishes, recovery from damaged and cleared storage, and a save on an emulated `visibilitychange`. It is not Android WebView, Android Chrome, iOS WebKit or installed-PWA evidence.
 
 Finding from the self-test: pagehide saves the current position, so a store damaged while the shell is open is overwritten on exit before the next load reads it. Native routes should keep one writer for progress and test damage injected while the app is not running.
 

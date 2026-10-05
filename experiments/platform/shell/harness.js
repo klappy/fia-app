@@ -16,14 +16,19 @@ let record = restored.record;
 log('storage', {status: restored.status, position: record.position});
 statusEl.textContent = `Storage: ${restored.status}`;
 
+// No save may run until the restore has finished, or an early background
+// would write 0 over the stored position.
+let restoredReady = false;
 audio.src = sample.url;
 audio.addEventListener('loadedmetadata', () => {
   if (record.position > 0 && record.position < audio.duration) audio.currentTime = record.position;
+  restoredReady = true;
   log('loadedmetadata', {duration: audio.duration, restoredTo: audio.currentTime});
 }, {once: true});
 for (const type of ['play', 'pause', 'seeked', 'ended', 'error']) audio.addEventListener(type, () => log(type, {at: audio.currentTime}));
 
 const persist = reason => {
+  if (!restoredReady) return log('save-skipped', {reason});
   record = {...record, position: audio.currentTime, savedAt: new Date().toISOString()};
   log('save', {reason, ok: save(localStorage, record), position: record.position});
 };
