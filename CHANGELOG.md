@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.0.0-alpha.9 — FIA Guide identity and sharing (2026-10-05)
+
+Names the installed app and browser title FIA Guide, with official FIA navy/blue and white-mark icons and a whole-mission sharing card. Passage layout and on-demand media behavior are unchanged. See [release note](release/changes/3.0.0-alpha.9-fia-guide-branding.md).
+
 ## 3.0.0-alpha.8 — Images and maps on demand (2026-10-05)
 
 Prepared images and maps now appear when explicitly selected or reached during an active guide session, without requiring an offline download. Silent restore, verified proxy delivery, optional downloads and original layout are preserved. See [release note](release/changes/3.0.0-alpha.8-visual-on-demand.md).
