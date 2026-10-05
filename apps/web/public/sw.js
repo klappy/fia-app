@@ -12,7 +12,7 @@ async function write(key,value){await (await caches.open(META)).put('/'+key,json
 function validate(manifest){
  if(manifest?.schema!==1||!validPack(manifest.packId)||!/^\w[\w-]*$/.test(manifest.revision)||!Array.isArray(manifest.files)||!manifest.files.length)throw new Error('This download manifest is not supported.');
  const paths=new Set();
- for(const f of manifest.files){if(!/^\/(?!\/|.*(?:\.\.|[?#]))/.test(f.path)||paths.has(f.path)||!['core','audio','video','image'].includes(f.group)||!Number.isSafeInteger(f.bytes)||f.bytes<0||!/^[a-f0-9]{64}$/.test(f.sha256))throw new Error('Invalid download file.');if(f.deliveryURL){const u=new URL(f.deliveryURL);if(u.origin!=='https://transcode.klappy.dev'||!/^\/(audio|image|video)\//.test(u.pathname)||!['audio','image','video'].includes(f.group)||!f.mime||!/^[a-f0-9]{64}$/.test(f.sourceSha256)||f.deliveryRevision!==manifest.deliveryRevision)throw Error('Invalid delivery descriptor.');}if(f.deliveryURL&&f.group==='video'){validateVideoSize(f);if(!/^[a-f0-9]{64}$/.test(f.logicalSourceSha256)||!Number.isSafeInteger(f.logicalSourceBytes)||f.logicalSourceBytes<=0||!Number.isSafeInteger(f.sourceBytes)||f.sourceBytes<=0||f.mime!=='video/mp4')throw Error('Invalid video source binding.');}if(f.playbackRange||f.recordingLedgerEntryId||f.recordingLedgerSha256){if(f.group!=='audio'||!f.deliveryURL||!f.recordingLedgerEntryId||!/^[a-f0-9]{64}$/.test(f.recordingLedgerSha256)||!/^[a-f0-9]{64}$/.test(f.logicalSourceSha256)||!Number.isSafeInteger(f.logicalSourceBytes)||f.logicalSourceBytes<=0)throw Error('Invalid recorded guide binding.');validatePlaybackRange(f.playbackRange,f.duration); }if(f.variants){
+ for(const f of manifest.files){if(!/^\/(?!\/|.*(?:\.\.|[?#]))/.test(f.path)||paths.has(f.path)||!['core','audio','video','image'].includes(f.group)||!Number.isSafeInteger(f.bytes)||f.bytes<0||!/^[a-f0-9]{64}$/.test(f.sha256))throw new Error('Invalid download file.');if(f.deliveryURL){const u=new URL(f.deliveryURL);if(u.origin!=='https://transcode.klappy.dev'||!/^\/(audio|image|video)\//.test(u.pathname)||!['audio','image','video'].includes(f.group)||!f.mime||!/^[a-f0-9]{64}$/.test(f.sourceSha256)||f.deliveryRevision!==manifest.deliveryRevision)throw Error('Invalid delivery descriptor.');}if(f.deliveryURL&&f.group==='video'){validateVideoSize(f);if(!/^[a-f0-9]{64}$/.test(f.logicalSourceSha256)||!Number.isSafeInteger(f.logicalSourceBytes)||f.logicalSourceBytes<=0||!Number.isSafeInteger(f.sourceBytes)||f.sourceBytes<=0||f.mime!=='video/mp4')throw Error('Invalid video source binding.');}if((f.playbackRange&&!f.scriptureLedgerEntryId)||f.recordingLedgerEntryId||f.recordingLedgerSha256){if(f.group!=='audio'||!f.deliveryURL||!f.recordingLedgerEntryId||!/^[a-f0-9]{64}$/.test(f.recordingLedgerSha256)||!/^[a-f0-9]{64}$/.test(f.logicalSourceSha256)||!Number.isSafeInteger(f.logicalSourceBytes)||f.logicalSourceBytes<=0)throw Error('Invalid recorded guide binding.');validatePlaybackRange(f.playbackRange,f.duration); }if(f.scriptureLedgerEntryId||f.scriptureAlignment){if(f.group!=='audio'||!f.deliveryURL||!f.scriptureLedgerEntryId||!f.scriptureAssetId||!/^[a-f0-9]{64}$/.test(f.scriptureLedgerSha256)||!/^[a-f0-9]{64}$/.test(f.scriptureAlignmentSha256)||!/^[a-f0-9]{64}$/.test(f.logicalSourceSha256)||!Number.isSafeInteger(f.logicalSourceBytes)||f.logicalSourceBytes<=0)throw Error('Invalid Scripture binding.');validatePlaybackRange(f.playbackRange,f.duration);validateScriptureAlignment(f.scriptureAlignment,{audioSha256:f.sha256,duration:f.duration,assetId:f.scriptureAssetId});}if(f.variants){
   if(!['small','medium','large'].includes(f.defaultSize)||!f.variants[f.defaultSize]||Object.keys(f.variants).some(k=>!['small','medium','large'].includes(k)))throw Error('Invalid media variants.');
   for(const key of ['sha256','bytes','mime','deliveryURL'])if(f.variants[f.defaultSize][key]!==f[key])throw Error('Default variant changed.');
   for(const v of Object.values(f.variants)){if(v.variants||v.path!==f.path||v.group!==f.group||v.sourceSha256!==f.sourceSha256||v.logicalSourceSha256!==f.logicalSourceSha256)throw Error('Variant source identity changed.');validate({...manifest,files:[v]});}
@@ -23,13 +23,17 @@ const selectedFiles=(manifest,selection)=>manifest.files.filter(f=>f.group==='co
 function matchingSavedFile(file,active,manifest){
  if(active?.manifest?.deliveryRevision!==manifest.deliveryRevision)return null;
  const saved=active.files.find(f=>f.path===file.path&&f.deliveryURL);if(!saved)return null;
+ if(matchesObservedProxy(file,saved))return saved;
  const approved=[file,...Object.values(file.variants||{})];
- return approved.some(f=>['path','sha256','bytes','mime','deliveryURL','sourceSha256','sourceBytes','logicalSourceSha256','logicalSourceBytes'].every(k=>f[k]===saved[k])&&JSON.stringify(f.timing)===JSON.stringify(saved.timing)&&JSON.stringify(f.playbackRange)===JSON.stringify(saved.playbackRange)&&f.recordingLedgerSha256===saved.recordingLedgerSha256&&f.recordingLedgerEntryId===saved.recordingLedgerEntryId&&f.duration===saved.duration)?saved:null;
+ return approved.some(f=>['path','sha256','bytes','mime','deliveryURL','sourceSha256','sourceBytes','logicalSourceSha256','logicalSourceBytes'].every(k=>f[k]===saved[k])&&JSON.stringify(f.timing)===JSON.stringify(saved.timing)&&JSON.stringify(f.playbackRange)===JSON.stringify(saved.playbackRange)&&f.recordingLedgerSha256===saved.recordingLedgerSha256&&f.recordingLedgerEntryId===saved.recordingLedgerEntryId&&['scriptureLedgerEntryId','scriptureLedgerSha256','scriptureAssetId','scriptureAlignmentSha256'].every(k=>f[k]===saved[k])&&JSON.stringify(f.scriptureAlignment)===JSON.stringify(saved.scriptureAlignment)&&f.duration===saved.duration)?saved:null;
 }
 async function latest(packId=legacy){
  const response=await fetch(packId===legacy?'/offline-manifest.json':`/offline/${packId}.json`,{cache:'no-store'});
  if(!response.ok)throw new Error('Could not check the latest download. Connect and try again.');
- const manifest=validate(await response.json());if(manifest.packId!==packId)throw new Error('The download belongs to a different passage.');return manifest;
+ const manifest=validate(await response.json());if(manifest.packId!==packId)throw new Error('The download belongs to a different passage.');
+ const delivery=manifest.files.find(f=>f.group==='core'&&f.path===`/content/delivery/${packId}/${manifest.deliveryRevision}.json`);
+ if(delivery){const r=await fetch(delivery.path,{cache:'no-store'});if(!await verified(r.clone(),delivery))throw Error('Delivery source metadata changed.');const sidecar=validateDelivery(await r.json(),{packId,presentationRevision:manifest.presentationRevision});for(const f of manifest.files){const e=sidecar.entries.find(e=>e.path===f.path);if(e){if(e.source.sha256!==f.sourceSha256)throw Error('Source identity changed.');f.sourceBytes=e.source.bytes;for(const v of Object.values(f.variants||{}))v.sourceBytes=e.source.bytes;}}}
+ return manifest;
 }
 async function verified(response,file){
  if(!response?.ok)return false;
@@ -55,6 +59,7 @@ self.addEventListener('install',event=>{if(isBuild)event.waitUntil(caches.open(S
 self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));
 async function cachedResponse(request,clientId){
  const url=new URL(request.url);let active=clientId&&await read('client-'+clientId)||await read('active');
+ if(active?.shell==='network'&&/\.(?:js|css)$/.test(url.pathname))return fetch(request);
  const target=/^\/content\/packs\/([^/]+)\//.exec(url.pathname)?.[1];
  if(target&&validPack(target)&&active?.packId!==target)active=await read(packKey(target,'active'));
  if(url.pathname==='/content/registry.json'){try{const live=await fetch(request);if(live.ok)return live;}catch{} }
@@ -87,10 +92,21 @@ self.addEventListener('fetch',event=>{
  if(path==='/version.json'||path==='/build-status.html'||inFamily('/build-status')){event.respondWith(fetch(event.request,{cache:'no-store'}));return;}
  if(['/v1','/mcp','/docs','/content/source'].some(inFamily)){event.respondWith(fetch(event.request));return;}
  if(event.request.mode==='navigate')event.respondWith((async()=>{
+  let live;
+  try{
+   live=await fetch(event.request,{cache:'no-store'});
+   if(live.status===200&&/^text\/html(?:;|$)/i.test(live.headers.get('Content-Type')||'')){
+    const html=(await live.clone().text()).replace(/<!--[\s\S]*?-->/g,'');
+    if(/<meta\b[^>]*\bname=["']application-name["'][^>]*\bcontent=["']FIA Guide["']/i.test(html)&&/<div\b[^>]*\bid=["']app["']/i.test(html)&&/<script\b[^>]*\btype=["']module["'][^>]*\bsrc=["']\/assets\/[^"'?#]+\.js["']/i.test(html)){
+     if(event.resultingClientId)await write('client-'+event.resultingClientId,{shell:'network'});
+     return live;
+    }
+   }
+  }catch{}
   const preferred=await read('selected');const active=preferred&&await read(packKey(preferred.packId,'active'))||await read('active');
   const cached=active&&await(await caches.open(active.cache)).match('/index.html');
   if(cached){if(event.resultingClientId)await write('client-'+event.resultingClientId,active);return cached;}
-  return fetch(event.request).catch(async()=>await(await caches.open(SHELL)).match('/index.html')||Response.error());
+  return await(await caches.open(SHELL)).match('/index.html')||live||Response.error();
  })());
  else event.respondWith(cachedResponse(event.request,event.clientId));
 });
@@ -104,18 +120,24 @@ async function start(selection,port,packId=legacy,sizes={}){
   let manifest;
   try{manifest=await latest(packId);}catch(error){const previous=await read(packKey(packId,'pending'));if(!previous)throw error;manifest=validate(previous.manifest);}
   const priorPending=await read(packKey(packId,'pending'));if(!Object.keys(sizes).length&&priorPending?.selection===selection)sizes=priorPending.manifest.mediaSizes||{};
-  manifest=selectManifestSizes(manifest,selection,sizes);
+  manifest=planProxyDownload(manifest,selection,sizes);
   const files=selectedFiles(manifest,selection),cacheName=`${PREFIX}${packId===legacy?'':packId+'-'}${manifest.revision}-${selection}`;
   const active=await read(packKey(packId,'active'));
   // A repair stages separately from the last working copy, even at the same revision.
   const cacheId=active?.cache===cacheName?cacheName+'-repair':cacheName;
   const cache=await caches.open(cacheId);
-  pending={packId,cache:cacheId,revision:manifest.revision,selection,manifest,files,bytes:files.reduce((n,f)=>n+f.bytes,0),received:0,count:0,status:'downloading'};
+  pending={packId,cache:cacheId,revision:manifest.revision,selection,manifest,files,bytes:files.some(f=>f.bytes===null)?null:files.reduce((n,f)=>n+f.bytes,0),received:0,count:0,status:'downloading'};
   await write(packKey(packId,'pending'),pending);
   const report=()=>port?.postMessage({progress:{received:pending.received,bytes:pending.bytes,count:pending.count,total:files.length}});
   for(const file of files){
    if(controller.signal.aborted)throw new Error('Download paused. Verified files are kept for Resume.');
    let response=await cache.match(file.path);
+   if(file.proxyRequest){
+    const prior=priorPending?.files.find(f=>f.path===file.path&&observedProxyMatchesRequest(file.proxyRequest,f));
+    if(prior&&await verified(response?.clone(),prior)){Object.assign(file,{bytes:prior.bytes,sha256:prior.sha256,proxyReceipt:prior.proxyReceipt,timing:{status:file.timingDependent?'pending-qualification':'not-applicable'}});}
+    else {const result=await fetchProxyRequest(file.proxyRequest,{signal:controller.signal});Object.assign(file,{bytes:result.receipt.output.bytes,sha256:result.receipt.output.sha256,proxyReceipt:result.receipt,timing:{status:file.timingDependent?'pending-qualification':'not-applicable'}});await cache.put(file.path,new Response(result.bytes,{headers:{'Content-Type':file.mime,'Content-Length':String(file.bytes)}}));response=await cache.match(file.path);}
+    pending.bytes=files.some(f=>f.bytes===null)?null:files.reduce((n,f)=>n+f.bytes,0);
+   }
    if(!await verified(response?.clone(),file)){
     const timeout=setTimeout(()=>controller.abort(),30000);
     try{response=await fetch(file.deliveryURL||file.path,{cache:'no-store',signal:controller.signal});if(file.deliveryURL){const bytes=await readVerifiedMedia(response,file,{signal:controller.signal});response=new Response(bytes,{headers:{'Content-Type':file.mime}});}else if(!await verified(response.clone(),file))throw new Error('A file could not be verified. Retry to keep the files already downloaded.');
@@ -125,6 +147,7 @@ async function start(selection,port,packId=legacy,sizes={}){
    pending.received+=file.bytes;pending.count++;await write(packKey(packId,'pending'),pending);report();
   }
   if(controller.signal.aborted)throw new Error('Download paused. Verified files are kept for Resume.');
+  if(files.some(f=>f.timing?.status==='pending-qualification')){pending.status='timing-pending';pending.error='Files received. Recording timing must be qualified before this selection can play offline.';await write(packKey(packId,'pending'),pending);return {saved:false,received:true,timingPending:true};}
   if(!await complete(pending))throw new Error('Storage changed before verification finished. Retry the download.');
   // Single metadata write is the commit point. An interrupted update keeps active intact.
   await write(packKey(packId,'active'),pending);await(await caches.open(META)).delete('/'+packKey(packId,'pending'));
@@ -157,13 +180,13 @@ self.addEventListener('message',event=>{
      try{let response=active?.cache&&await(await caches.open(active.cache)).match(file.path),bytes=null;
       if(response){try{bytes=await readVerifiedMedia(response,file,{signal:controller.signal});}catch(error){if(controller.signal.aborted)throw error;}}
       if(!bytes){response=await fetch(file.deliveryURL,{cache:'no-store',signal:controller.signal});bytes=await readVerifiedMedia(response,file,{signal:controller.signal});}
-      if(controller.signal.aborted)throw Error('Playback canceled.');result={bytes:bytes.buffer,mime:file.mime,timing:file.timing,...(file.playbackRange?{playbackRange:file.playbackRange}:{}),file:{path:file.path,sha256:file.sha256,bytes:file.bytes,deliveryURL:file.deliveryURL}};
+      if(controller.signal.aborted)throw Error('Playback canceled.');result={bytes:bytes.buffer,mime:file.mime,timing:file.timing,...(file.playbackRange?{playbackRange:file.playbackRange}:{}),...(file.scriptureAlignment?{scriptureAlignment:file.scriptureAlignment,scriptureAlignmentSha256:file.scriptureAlignmentSha256}:{}),file:{path:file.path,sha256:file.sha256,bytes:file.bytes,deliveryURL:file.deliveryURL}};
      }finally{playbackJobs.delete(key);canceledPlayback.delete(key);}
     }
    }else if(type==='PACK_SELECT'){
     const active=await read(packKey(packId,'active'));
     const matches=active&&active.manifest?.presentationRevision===event.data.revision;
-    if(event.source?.id)await write('client-'+event.source.id,matches?active:{packId,revision:event.data.revision});
+    if(event.source?.id){const prior=await read('client-'+event.source.id);await write('client-'+event.source.id,{...(matches?active:{packId,revision:event.data.revision}),...(prior?.shell==='network'?{shell:'network'}:{})});}
     await write('selected',{packId});result={selected:true};
    }else if(type==='DOWNLOAD_STATUS'||type==='CACHE_STATUS')result=await status(packId);
    else if(type==='DOWNLOAD_START'){const active=await read(packKey(packId,'active'));if(active&&event.source?.id&&!await read('client-'+event.source.id))await write('client-'+event.source.id,active);result=await start(event.data.selection,port,packId,event.data.sizes||{});}

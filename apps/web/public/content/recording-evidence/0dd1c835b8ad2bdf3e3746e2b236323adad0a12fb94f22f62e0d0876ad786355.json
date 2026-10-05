@@ -1,0 +1,5643 @@
+{
+  "status": "candidate-boundary-analysis",
+  "sourceSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+  "alignmentSha256": "feaa789bc5d8fedd358d25ac51d714ed08e2c705628ed9bd99a256354ff80bec",
+  "rawTranscriptSha256": "ed47f3216a5e912866b3f79a1fdbe769e5ec80d70079e3c728a03bfec6ed4096",
+  "scriptSha256": "071dc23ef385960d1092f1d51198171f6d01ee425f6bb52510b4cb1fb0fc4db7",
+  "model": {
+    "name": "Systran/faster-whisper-tiny.en",
+    "snapshot": "0d3d19a32d3338f10357c0889762bd8d64bbdeba",
+    "files": {
+      "config.json": {
+        "sha256": "14b1b421a90349bc551b881461426b561a874049cb9e4c4864f2ca384f6a7cc5",
+        "bytes": 2317
+      },
+      "model.bin": {
+        "sha256": "1a5afae06a4db91c975c9a9d78be5cc110ee4ea022ad57d55492e4550e936b2a",
+        "bytes": 75537502
+      },
+      "tokenizer.json": {
+        "sha256": "929c5252409436dce1b38a75d1abbcb5e132d170d8e324e4e04ed915fa2d22df",
+        "bytes": 2128466
+      },
+      "vocabulary.txt": {
+        "sha256": "ff77588746d3a2595d32ab5b69ffd7b95ce2441ac57533cb66fc3eb575a115cf",
+        "bytes": 422309
+      }
+    },
+    "device": "cpu",
+    "computeType": "int8",
+    "cpuThreads": 4
+  },
+  "method": "Independentindependent short boundary-contextASR crops, no script prompt/forcedalignment; quiet100ms windows near padded word edges. PCM concatenated0 clock.",
+  "rows": [
+    {
+      "activityId": "S05-U001",
+      "sourceTextSha256": "40915459d3070b081f6298ca4a7a52a1f5a10ce875b7de37380cf051b9438494",
+      "completion": "auto",
+      "candidateRange": [
+        6.6,
+        12.91
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 6.82,
+          "candidateSeconds": 6.6,
+          "max10msRmsIn100msDbFS": -72.33316723764662,
+          "contextRange": [
+            6.0200000000000005,
+            9.32
+          ],
+          "contextRecognition": [
+            {
+              "text": " Listen to an audio version of Mark 1.",
+              "words": [
+                {
+                  "word": " Listen",
+                  "start": 6.0200000000000005,
+                  "end": 6.960000000000001,
+                  "probability": 0.7330498099327087
+                },
+                {
+                  "word": " to",
+                  "start": 6.960000000000001,
+                  "end": 7.24,
+                  "probability": 0.9965566396713257
+                },
+                {
+                  "word": " an",
+                  "start": 7.24,
+                  "end": 7.42,
+                  "probability": 0.9926974177360535
+                },
+                {
+                  "word": " audio",
+                  "start": 7.42,
+                  "end": 7.640000000000001,
+                  "probability": 0.9827908277511597
+                },
+                {
+                  "word": " version",
+                  "start": 7.640000000000001,
+                  "end": 8.120000000000001,
+                  "probability": 0.9992478489875793
+                },
+                {
+                  "word": " of",
+                  "start": 8.120000000000001,
+                  "end": 8.32,
+                  "probability": 0.9912047982215881
+                },
+                {
+                  "word": " Mark",
+                  "start": 8.32,
+                  "end": 8.600000000000001,
+                  "probability": 0.7750001549720764
+                },
+                {
+                  "word": " 1.",
+                  "start": 8.600000000000001,
+                  "end": 9.08,
+                  "probability": 0.6527114510536194
+                }
+              ]
+            },
+            {
+              "text": " 1.",
+              "words": [
+                {
+                  "word": " 1.",
+                  "start": 9.18,
+                  "end": 9.3,
+                  "probability": 0.5652322173118591
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 12.62,
+          "candidateSeconds": 12.91,
+          "max10msRmsIn100msDbFS": -76.10415939411692,
+          "contextRange": [
+            10.12,
+            13.42
+          ],
+          "contextRecognition": [
+            {
+              "text": " in the easiest to understand translation.",
+              "words": [
+                {
+                  "word": " in",
+                  "start": 10.12,
+                  "end": 10.26,
+                  "probability": 0.5637497305870056
+                },
+                {
+                  "word": " the",
+                  "start": 10.26,
+                  "end": 10.58,
+                  "probability": 0.9933367967605591
+                },
+                {
+                  "word": " easiest",
+                  "start": 10.58,
+                  "end": 10.94,
+                  "probability": 0.9952712655067444
+                },
+                {
+                  "word": " to",
+                  "start": 10.94,
+                  "end": 11.36,
+                  "probability": 0.9180511832237244
+                },
+                {
+                  "word": " understand",
+                  "start": 11.36,
+                  "end": 11.94,
+                  "probability": 0.9938632249832153
+                },
+                {
+                  "word": " translation.",
+                  "start": 11.94,
+                  "end": 12.54,
+                  "probability": 0.9900409579277039
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 9,
+        "lastExclusive": 26
+      },
+      "uncertainWordIndexes": [],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U002",
+      "sourceTextSha256": "4aaa74202fbcc82bd2279b539e7e73cdbff83bdaf1cd2545339d44e80e5f7a2e",
+      "completion": "auto",
+      "candidateRange": [
+        13.79,
+        18.79
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 14.12,
+          "candidateSeconds": 13.79,
+          "max10msRmsIn100msDbFS": -76.70481975204056,
+          "contextRange": [
+            13.319999999999999,
+            16.619999999999997
+          ],
+          "contextRecognition": [
+            {
+              "text": " In this step, the group will discuss key terms.",
+              "words": [
+                {
+                  "word": " In",
+                  "start": 13.319999999999999,
+                  "end": 14.179999999999998,
+                  "probability": 0.8653834462165833
+                },
+                {
+                  "word": " this",
+                  "start": 14.179999999999998,
+                  "end": 14.419999999999998,
+                  "probability": 0.9971290230751038
+                },
+                {
+                  "word": " step,",
+                  "start": 14.419999999999998,
+                  "end": 14.759999999999998,
+                  "probability": 0.9929591417312622
+                },
+                {
+                  "word": " the",
+                  "start": 14.939999999999998,
+                  "end": 15.019999999999998,
+                  "probability": 0.9800671935081482
+                },
+                {
+                  "word": " group",
+                  "start": 15.019999999999998,
+                  "end": 15.239999999999998,
+                  "probability": 0.9626801609992981
+                },
+                {
+                  "word": " will",
+                  "start": 15.239999999999998,
+                  "end": 15.499999999999998,
+                  "probability": 0.9776115417480469
+                },
+                {
+                  "word": " discuss",
+                  "start": 15.499999999999998,
+                  "end": 15.879999999999999,
+                  "probability": 0.9771455526351929
+                },
+                {
+                  "word": " key",
+                  "start": 15.879999999999999,
+                  "end": 16.34,
+                  "probability": 0.9843368530273438
+                },
+                {
+                  "word": " terms.",
+                  "start": 16.34,
+                  "end": 16.599999999999998,
+                  "probability": 0.9778203368186951
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 18.64,
+          "candidateSeconds": 18.79,
+          "max10msRmsIn100msDbFS": -77.35560546506447,
+          "contextRange": [
+            16.14,
+            19.44
+          ],
+          "contextRecognition": [
+            {
+              "text": " terms and words in this passage.",
+              "words": [
+                {
+                  "word": " terms",
+                  "start": 16.14,
+                  "end": 16.72,
+                  "probability": 0.8888800144195557
+                },
+                {
+                  "word": " and",
+                  "start": 16.72,
+                  "end": 17.1,
+                  "probability": 0.9884898066520691
+                },
+                {
+                  "word": " words",
+                  "start": 17.1,
+                  "end": 17.48,
+                  "probability": 0.9977096319198608
+                },
+                {
+                  "word": " in",
+                  "start": 17.48,
+                  "end": 17.84,
+                  "probability": 0.9871559143066406
+                },
+                {
+                  "word": " this",
+                  "start": 17.84,
+                  "end": 18.12,
+                  "probability": 0.9952534437179565
+                },
+                {
+                  "word": " passage.",
+                  "start": 18.12,
+                  "end": 18.44,
+                  "probability": 0.9977962970733643
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 26,
+        "lastExclusive": 40
+      },
+      "uncertainWordIndexes": [],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U003",
+      "sourceTextSha256": "8854a1c421960ed3035a668d1b742ebdeffd7902bbc5ecc6c50f0ed318d124db",
+      "completion": "auto",
+      "candidateRange": [
+        19.4,
+        37.4
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 19.56,
+          "candidateSeconds": 19.4,
+          "max10msRmsIn100msDbFS": -66.42183864128087,
+          "contextRange": [
+            18.759999999999998,
+            22.06
+          ],
+          "contextRecognition": [
+            {
+              "text": " Originally, Mark used the word gospels to mean that.",
+              "words": [
+                {
+                  "word": " Originally,",
+                  "start": 19.599999999999998,
+                  "end": 20.04,
+                  "probability": 0.9306238293647766
+                },
+                {
+                  "word": " Mark",
+                  "start": 20.4,
+                  "end": 20.54,
+                  "probability": 0.46637895703315735
+                },
+                {
+                  "word": " used",
+                  "start": 20.54,
+                  "end": 20.759999999999998,
+                  "probability": 0.9932035207748413
+                },
+                {
+                  "word": " the",
+                  "start": 20.759999999999998,
+                  "end": 20.939999999999998,
+                  "probability": 0.9837908148765564
+                },
+                {
+                  "word": " word",
+                  "start": 20.939999999999998,
+                  "end": 21.159999999999997,
+                  "probability": 0.9938203692436218
+                },
+                {
+                  "word": " gospels",
+                  "start": 21.159999999999997,
+                  "end": 21.619999999999997,
+                  "probability": 0.48575596511363983
+                },
+                {
+                  "word": " to",
+                  "start": 21.619999999999997,
+                  "end": 21.88,
+                  "probability": 0.8812658190727234
+                },
+                {
+                  "word": " mean",
+                  "start": 21.88,
+                  "end": 22.04,
+                  "probability": 0.9620161652565002
+                },
+                {
+                  "word": " that.",
+                  "start": 22.04,
+                  "end": 22.04,
+                  "probability": 0.288740336894989
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 37.28,
+          "candidateSeconds": 37.4,
+          "max10msRmsIn100msDbFS": -76.83659298905357,
+          "contextRange": [
+            34.78,
+            38.08
+          ],
+          "contextRecognition": [
+            {
+              "text": " He was excited about Jesus' message.",
+              "words": [
+                {
+                  "word": " He",
+                  "start": 34.78,
+                  "end": 35.02,
+                  "probability": 0.9201608896255493
+                },
+                {
+                  "word": " was",
+                  "start": 35.02,
+                  "end": 35.26,
+                  "probability": 0.9958886504173279
+                },
+                {
+                  "word": " excited",
+                  "start": 35.26,
+                  "end": 35.68,
+                  "probability": 0.9971235394477844
+                },
+                {
+                  "word": " about",
+                  "start": 35.68,
+                  "end": 36.26,
+                  "probability": 0.9989629983901978
+                },
+                {
+                  "word": " Jesus'",
+                  "start": 36.26,
+                  "end": 36.64,
+                  "probability": 0.9902204275131226
+                },
+                {
+                  "word": " message.",
+                  "start": 37.04,
+                  "end": 37.04,
+                  "probability": 0.9914466142654419
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 40,
+        "lastExclusive": 87
+      },
+      "uncertainWordIndexes": [
+        45,
+        57,
+        63,
+        69,
+        73,
+        74
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U004",
+      "sourceTextSha256": "29490817bc381de9d953a409f7b972afa925b99429535cead9c96efefb8161c5",
+      "completion": "confirm",
+      "candidateRange": [
+        38.37,
+        55.89
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 38.62,
+          "candidateSeconds": 38.37,
+          "max10msRmsIn100msDbFS": -79.2463400581911,
+          "contextRange": [
+            37.82,
+            41.12
+          ],
+          "contextRecognition": [
+            {
+              "text": " stop here and discuss as a group.",
+              "words": [
+                {
+                  "word": " stop",
+                  "start": 37.82,
+                  "end": 38.9,
+                  "probability": 0.37864625453948975
+                },
+                {
+                  "word": " here",
+                  "start": 38.9,
+                  "end": 39.44,
+                  "probability": 0.9872255921363831
+                },
+                {
+                  "word": " and",
+                  "start": 39.44,
+                  "end": 40.14,
+                  "probability": 0.9066973328590393
+                },
+                {
+                  "word": " discuss",
+                  "start": 40.14,
+                  "end": 40.6,
+                  "probability": 0.9921958446502686
+                },
+                {
+                  "word": " as",
+                  "start": 40.6,
+                  "end": 40.9,
+                  "probability": 0.9457976818084717
+                },
+                {
+                  "word": " a",
+                  "start": 40.9,
+                  "end": 41.1,
+                  "probability": 0.9000175595283508
+                },
+                {
+                  "word": " group.",
+                  "start": 41.1,
+                  "end": 41.1,
+                  "probability": 0.11454056203365326
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 55.72,
+          "candidateSeconds": 55.89,
+          "max10msRmsIn100msDbFS": -72.7207131666932,
+          "contextRange": [
+            53.22,
+            56.519999999999996
+          ],
+          "contextRecognition": []
+        }
+      ],
+      "rawWordSpan": {
+        "first": 87,
+        "lastExclusive": 117
+      },
+      "uncertainWordIndexes": [
+        87,
+        105,
+        108,
+        113
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U005",
+      "sourceTextSha256": "039b724dfcf54296b24f100c874b80a53ca4d1a7d95da38d6f2601cca4b4bab7",
+      "completion": "auto",
+      "candidateRange": [
+        58.58,
+        97.1
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 58.82,
+          "candidateSeconds": 58.58,
+          "max10msRmsIn100msDbFS": -78.79077741008741,
+          "contextRange": [
+            58.02,
+            61.32
+          ],
+          "contextRecognition": [
+            {
+              "text": " Mark said that this was the goss-",
+              "words": [
+                {
+                  "word": " Mark",
+                  "start": 58.02,
+                  "end": 59.120000000000005,
+                  "probability": 0.8568706512451172
+                },
+                {
+                  "word": " said",
+                  "start": 59.120000000000005,
+                  "end": 59.580000000000005,
+                  "probability": 0.9814229011535645
+                },
+                {
+                  "word": " that",
+                  "start": 59.580000000000005,
+                  "end": 60.32,
+                  "probability": 0.8059064149856567
+                },
+                {
+                  "word": " this",
+                  "start": 60.32,
+                  "end": 60.800000000000004,
+                  "probability": 0.9334700703620911
+                },
+                {
+                  "word": " was",
+                  "start": 60.800000000000004,
+                  "end": 61.06,
+                  "probability": 0.9939862489700317
+                },
+                {
+                  "word": " the",
+                  "start": 61.06,
+                  "end": 61.2,
+                  "probability": 0.965348482131958
+                },
+                {
+                  "word": " goss",
+                  "start": 61.2,
+                  "end": 61.300000000000004,
+                  "probability": 0.2632738724350929
+                },
+                {
+                  "word": "-",
+                  "start": 61.300000000000004,
+                  "end": 61.300000000000004,
+                  "probability": 0.1198737844824791
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 97.0,
+          "candidateSeconds": 97.1,
+          "max10msRmsIn100msDbFS": -75.55943846022971,
+          "contextRange": [
+            94.5,
+            97.8
+          ],
+          "contextRecognition": [
+            {
+              "text": " by God for a special task.",
+              "words": [
+                {
+                  "word": " by",
+                  "start": 94.5,
+                  "end": 94.96,
+                  "probability": 0.771236777305603
+                },
+                {
+                  "word": " God",
+                  "start": 94.96,
+                  "end": 95.46,
+                  "probability": 0.7397624850273132
+                },
+                {
+                  "word": " for",
+                  "start": 95.46,
+                  "end": 95.94,
+                  "probability": 0.8748207688331604
+                },
+                {
+                  "word": " a",
+                  "start": 95.94,
+                  "end": 96.08,
+                  "probability": 0.9584854245185852
+                },
+                {
+                  "word": " special",
+                  "start": 96.08,
+                  "end": 96.46,
+                  "probability": 0.9949283599853516
+                },
+                {
+                  "word": " task.",
+                  "start": 96.46,
+                  "end": 96.84,
+                  "probability": 0.9938336610794067
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 117,
+        "lastExclusive": 200
+      },
+      "uncertainWordIndexes": [
+        123,
+        124,
+        139,
+        151,
+        158,
+        159,
+        160,
+        162,
+        169,
+        171
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U006",
+      "sourceTextSha256": "d4bf7769ca076999e7dffb20147f5d60b2211429bf16b64713cf04be4c1841f6",
+      "completion": "confirm",
+      "candidateRange": [
+        98.2,
+        117.09
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 98.44,
+          "candidateSeconds": 98.2,
+          "max10msRmsIn100msDbFS": -78.81148980203052,
+          "contextRange": [
+            97.64,
+            100.94
+          ],
+          "contextRecognition": [
+            {
+              "text": " Stop here and discuss as a group.",
+              "words": [
+                {
+                  "word": " Stop",
+                  "start": 97.64,
+                  "end": 98.74,
+                  "probability": 0.5530369281768799
+                },
+                {
+                  "word": " here",
+                  "start": 98.74,
+                  "end": 99.36,
+                  "probability": 0.9941112399101257
+                },
+                {
+                  "word": " and",
+                  "start": 99.36,
+                  "end": 99.94,
+                  "probability": 0.7544638514518738
+                },
+                {
+                  "word": " discuss",
+                  "start": 99.94,
+                  "end": 100.36,
+                  "probability": 0.9681603312492371
+                },
+                {
+                  "word": " as",
+                  "start": 100.36,
+                  "end": 100.6,
+                  "probability": 0.9713960289955139
+                },
+                {
+                  "word": " a",
+                  "start": 100.6,
+                  "end": 100.76,
+                  "probability": 0.9865200519561768
+                },
+                {
+                  "word": " group.",
+                  "start": 100.76,
+                  "end": 100.92,
+                  "probability": 0.9935758709907532
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 116.76,
+          "candidateSeconds": 117.09,
+          "max10msRmsIn100msDbFS": -71.37574223982908,
+          "contextRange": [
+            114.26,
+            117.56
+          ],
+          "contextRecognition": [
+            {
+              "text": " audio here.",
+              "words": [
+                {
+                  "word": " audio",
+                  "start": 114.26,
+                  "end": 114.68,
+                  "probability": 0.662907600402832
+                },
+                {
+                  "word": " here.",
+                  "start": 114.68,
+                  "end": 115.36,
+                  "probability": 0.9073382616043091
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 200,
+        "lastExclusive": 233
+      },
+      "uncertainWordIndexes": [
+        209,
+        210,
+        214,
+        215,
+        224
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U007",
+      "sourceTextSha256": "59fc37f91c8d8e725539d6c4484177eb6f81cf09a55c25e8429aa496b8e8e8a4",
+      "completion": "auto",
+      "candidateRange": [
+        120.54,
+        156.6
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 120.62,
+          "candidateSeconds": 120.54,
+          "max10msRmsIn100msDbFS": -74.84971743153264,
+          "contextRange": [
+            119.82000000000001,
+            123.12
+          ],
+          "contextRecognition": [
+            {
+              "text": " In the New Testament, the singular term...",
+              "words": [
+                {
+                  "word": " In",
+                  "start": 119.82000000000001,
+                  "end": 120.96000000000001,
+                  "probability": 0.8145763278007507
+                },
+                {
+                  "word": " the",
+                  "start": 120.96000000000001,
+                  "end": 121.14,
+                  "probability": 0.9917677640914917
+                },
+                {
+                  "word": " New",
+                  "start": 121.14,
+                  "end": 121.28,
+                  "probability": 0.629894495010376
+                },
+                {
+                  "word": " Testament,",
+                  "start": 121.28,
+                  "end": 121.7,
+                  "probability": 0.9924854636192322
+                },
+                {
+                  "word": " the",
+                  "start": 122.36000000000001,
+                  "end": 122.44000000000001,
+                  "probability": 0.9682996273040771
+                },
+                {
+                  "word": " singular",
+                  "start": 122.44000000000001,
+                  "end": 122.72000000000001,
+                  "probability": 0.6880518794059753
+                },
+                {
+                  "word": " term...",
+                  "start": 122.72000000000001,
+                  "end": 123.10000000000001,
+                  "probability": 0.6448170840740204
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 156.44,
+          "candidateSeconds": 156.6,
+          "max10msRmsIn100msDbFS": -77.13114692768714,
+          "contextRange": [
+            153.94,
+            157.24
+          ],
+          "contextRecognition": [
+            {
+              "text": " prophesied about in the old testament.",
+              "words": [
+                {
+                  "word": " prophesied",
+                  "start": 153.94,
+                  "end": 154.78,
+                  "probability": 0.8182381987571716
+                },
+                {
+                  "word": " about",
+                  "start": 154.78,
+                  "end": 155.12,
+                  "probability": 0.9888889789581299
+                },
+                {
+                  "word": " in",
+                  "start": 155.12,
+                  "end": 155.38,
+                  "probability": 0.9769881963729858
+                },
+                {
+                  "word": " the",
+                  "start": 155.38,
+                  "end": 155.5,
+                  "probability": 0.9831704497337341
+                },
+                {
+                  "word": " old",
+                  "start": 155.5,
+                  "end": 155.78,
+                  "probability": 0.8014742732048035
+                },
+                {
+                  "word": " testament.",
+                  "start": 155.78,
+                  "end": 156.16,
+                  "probability": 0.7219259738922119
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 233,
+        "lastExclusive": 317
+      },
+      "uncertainWordIndexes": [
+        240,
+        254,
+        257,
+        258,
+        266,
+        269,
+        281,
+        292,
+        310
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U008",
+      "sourceTextSha256": "750d8069726098b9f40c7e843ece6a19e3b1c2addf603d9c3ba0923b347619d7",
+      "completion": "confirm",
+      "candidateRange": [
+        157.42,
+        174.45
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 157.7,
+          "candidateSeconds": 157.42,
+          "max10msRmsIn100msDbFS": -78.67986885268274,
+          "contextRange": [
+            156.89999999999998,
+            160.2
+          ],
+          "contextRecognition": [
+            {
+              "text": " stop here and discuss as a group.",
+              "words": [
+                {
+                  "word": " stop",
+                  "start": 156.89999999999998,
+                  "end": 157.93999999999997,
+                  "probability": 0.26631778478622437
+                },
+                {
+                  "word": " here",
+                  "start": 157.93999999999997,
+                  "end": 158.57999999999998,
+                  "probability": 0.9934862852096558
+                },
+                {
+                  "word": " and",
+                  "start": 158.57999999999998,
+                  "end": 159.21999999999997,
+                  "probability": 0.8754662275314331
+                },
+                {
+                  "word": " discuss",
+                  "start": 159.21999999999997,
+                  "end": 159.55999999999997,
+                  "probability": 0.9637776613235474
+                },
+                {
+                  "word": " as",
+                  "start": 159.55999999999997,
+                  "end": 159.79999999999998,
+                  "probability": 0.958386242389679
+                },
+                {
+                  "word": " a",
+                  "start": 159.79999999999998,
+                  "end": 160.01999999999998,
+                  "probability": 0.9901600480079651
+                },
+                {
+                  "word": " group.",
+                  "start": 160.01999999999998,
+                  "end": 160.17999999999998,
+                  "probability": 0.9937857389450073
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 174.4,
+          "candidateSeconds": 174.45,
+          "max10msRmsIn100msDbFS": -63.6636166031467,
+          "contextRange": [
+            171.9,
+            175.20000000000002
+          ],
+          "contextRecognition": []
+        }
+      ],
+      "rawWordSpan": {
+        "first": 317,
+        "lastExclusive": 349
+      },
+      "uncertainWordIndexes": [
+        330,
+        340,
+        343
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U009",
+      "sourceTextSha256": "e7f36b59157f751a102614386adfbf645c9ee5192b7fe9a22a0377f025054f28",
+      "completion": "auto",
+      "candidateRange": [
+        177.56,
+        189.26
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 177.78,
+          "candidateSeconds": 177.56,
+          "max10msRmsIn100msDbFS": -78.5760508599953,
+          "contextRange": [
+            176.98,
+            180.28
+          ],
+          "contextRecognition": [
+            {
+              "text": " Mark tells us what Isaiah the pro...",
+              "words": [
+                {
+                  "word": " Mark",
+                  "start": 176.98,
+                  "end": 178.32,
+                  "probability": 0.8638277649879456
+                },
+                {
+                  "word": " tells",
+                  "start": 178.32,
+                  "end": 178.6,
+                  "probability": 0.9948111772537231
+                },
+                {
+                  "word": " us",
+                  "start": 178.6,
+                  "end": 179.06,
+                  "probability": 0.9965142607688904
+                },
+                {
+                  "word": " what",
+                  "start": 179.06,
+                  "end": 179.32,
+                  "probability": 0.8933659791946411
+                },
+                {
+                  "word": " Isaiah",
+                  "start": 179.32,
+                  "end": 179.79999999999998,
+                  "probability": 0.8787245154380798
+                },
+                {
+                  "word": " the",
+                  "start": 179.79999999999998,
+                  "end": 180.26,
+                  "probability": 0.7647767663002014
+                },
+                {
+                  "word": " pro...",
+                  "start": 180.26,
+                  "end": 180.26,
+                  "probability": 0.293269619345665
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 188.94,
+          "candidateSeconds": 189.26,
+          "max10msRmsIn100msDbFS": -38.853459576631224,
+          "contextRange": [
+            186.44,
+            189.74
+          ],
+          "contextRecognition": [
+            {
+              "text": " to the Profits function. A profit.",
+              "words": [
+                {
+                  "word": " to",
+                  "start": 186.44,
+                  "end": 186.76,
+                  "probability": 0.18797069787979126
+                },
+                {
+                  "word": " the",
+                  "start": 186.76,
+                  "end": 186.94,
+                  "probability": 0.9636165499687195
+                },
+                {
+                  "word": " Profits",
+                  "start": 186.94,
+                  "end": 187.26,
+                  "probability": 0.6482255607843399
+                },
+                {
+                  "word": " function.",
+                  "start": 187.26,
+                  "end": 187.78,
+                  "probability": 0.9164980053901672
+                },
+                {
+                  "word": " A",
+                  "start": 188.88,
+                  "end": 188.96,
+                  "probability": 0.9324679970741272
+                },
+                {
+                  "word": " profit.",
+                  "start": 188.96,
+                  "end": 189.18,
+                  "probability": 0.6808825731277466
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 349,
+        "lastExclusive": 373
+      },
+      "uncertainWordIndexes": [
+        355,
+        360,
+        362,
+        365,
+        370,
+        372
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U010",
+      "sourceTextSha256": "786388b8d24c7fddaa0ec43cce0be55263201dfd8904ee93de771020082e7a42",
+      "completion": "auto",
+      "candidateRange": [
+        191.53,
+        193.47
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 191.62,
+          "candidateSeconds": 191.53,
+          "max10msRmsIn100msDbFS": -37.64191036411713,
+          "contextRange": [
+            190.82,
+            194.12
+          ],
+          "contextRecognition": [
+            {
+              "text": " receive the call and message from God.",
+              "words": [
+                {
+                  "word": " receive",
+                  "start": 190.82,
+                  "end": 191.35999999999999,
+                  "probability": 0.6195093989372253
+                },
+                {
+                  "word": " the",
+                  "start": 191.35999999999999,
+                  "end": 191.68,
+                  "probability": 0.9662399291992188
+                },
+                {
+                  "word": " call",
+                  "start": 191.68,
+                  "end": 192.01999999999998,
+                  "probability": 0.989162802696228
+                },
+                {
+                  "word": " and",
+                  "start": 192.01999999999998,
+                  "end": 192.26,
+                  "probability": 0.9878582954406738
+                },
+                {
+                  "word": " message",
+                  "start": 192.26,
+                  "end": 192.57999999999998,
+                  "probability": 0.9980208873748779
+                },
+                {
+                  "word": " from",
+                  "start": 192.57999999999998,
+                  "end": 192.9,
+                  "probability": 0.9951052665710449
+                },
+                {
+                  "word": " God.",
+                  "start": 192.9,
+                  "end": 193.5,
+                  "probability": 0.9536393880844116
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 193.26,
+          "candidateSeconds": 193.47,
+          "max10msRmsIn100msDbFS": -81.21087649951073,
+          "contextRange": [
+            190.76,
+            194.06
+          ],
+          "contextRecognition": [
+            {
+              "text": " receive the call and message from God.",
+              "words": [
+                {
+                  "word": " receive",
+                  "start": 190.76,
+                  "end": 191.35999999999999,
+                  "probability": 0.42137593030929565
+                },
+                {
+                  "word": " the",
+                  "start": 191.35999999999999,
+                  "end": 191.67999999999998,
+                  "probability": 0.9762722849845886
+                },
+                {
+                  "word": " call",
+                  "start": 191.67999999999998,
+                  "end": 192.01999999999998,
+                  "probability": 0.9873834252357483
+                },
+                {
+                  "word": " and",
+                  "start": 192.01999999999998,
+                  "end": 192.26,
+                  "probability": 0.9919420480728149
+                },
+                {
+                  "word": " message",
+                  "start": 192.26,
+                  "end": 192.56,
+                  "probability": 0.9982752799987793
+                },
+                {
+                  "word": " from",
+                  "start": 192.56,
+                  "end": 192.89999999999998,
+                  "probability": 0.9968851208686829
+                },
+                {
+                  "word": " God.",
+                  "start": 192.89999999999998,
+                  "end": 193.76,
+                  "probability": 0.949210524559021
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 377,
+        "lastExclusive": 382
+      },
+      "uncertainWordIndexes": [],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U011",
+      "sourceTextSha256": "0163102ec7340a8aa513ccb4a912481b73d99906e03d6e28f47d33002c9b1f57",
+      "completion": "auto",
+      "candidateRange": [
+        194.86,
+        197.23
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 194.96,
+          "candidateSeconds": 194.86,
+          "max10msRmsIn100msDbFS": -73.86650702255962,
+          "contextRange": [
+            194.16,
+            197.46
+          ],
+          "contextRecognition": [
+            {
+              "text": " takes God's message to people.",
+              "words": [
+                {
+                  "word": " takes",
+                  "start": 194.16,
+                  "end": 195.24,
+                  "probability": 0.18080517649650574
+                },
+                {
+                  "word": " God's",
+                  "start": 195.24,
+                  "end": 196.06,
+                  "probability": 0.9718600213527679
+                },
+                {
+                  "word": " message",
+                  "start": 196.06,
+                  "end": 196.06,
+                  "probability": 0.9951660633087158
+                },
+                {
+                  "word": " to",
+                  "start": 196.06,
+                  "end": 196.38,
+                  "probability": 0.9948124885559082
+                },
+                {
+                  "word": " people.",
+                  "start": 196.38,
+                  "end": 196.85999999999999,
+                  "probability": 0.9937198162078857
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 196.96,
+          "candidateSeconds": 197.23,
+          "max10msRmsIn100msDbFS": -76.3120150044203,
+          "contextRange": [
+            194.46,
+            197.76000000000002
+          ],
+          "contextRecognition": [
+            {
+              "text": " takes God's message to people.",
+              "words": [
+                {
+                  "word": " takes",
+                  "start": 194.46,
+                  "end": 195.3,
+                  "probability": 0.25844457745552063
+                },
+                {
+                  "word": " God's",
+                  "start": 195.3,
+                  "end": 196.04000000000002,
+                  "probability": 0.9738825559616089
+                },
+                {
+                  "word": " message",
+                  "start": 196.04000000000002,
+                  "end": 196.04000000000002,
+                  "probability": 0.995705783367157
+                },
+                {
+                  "word": " to",
+                  "start": 196.04000000000002,
+                  "end": 196.38,
+                  "probability": 0.9956541061401367
+                },
+                {
+                  "word": " people.",
+                  "start": 196.38,
+                  "end": 196.88,
+                  "probability": 0.9944602251052856
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 383,
+        "lastExclusive": 388
+      },
+      "uncertainWordIndexes": [],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U012",
+      "sourceTextSha256": "0fa82a8d5c49646352f7fae7611b31d11d8a1a2ad00f4eaae0a859f289a810a9",
+      "completion": "auto",
+      "candidateRange": [
+        198.84,
+        205.53
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 199.02,
+          "candidateSeconds": 198.84,
+          "max10msRmsIn100msDbFS": -48.392162890260764,
+          "contextRange": [
+            198.22,
+            201.52
+          ],
+          "contextRecognition": [
+            {
+              "text": " knows that his most important job.",
+              "words": [
+                {
+                  "word": " knows",
+                  "start": 198.22,
+                  "end": 199.35999999999999,
+                  "probability": 0.36500513553619385
+                },
+                {
+                  "word": " that",
+                  "start": 199.35999999999999,
+                  "end": 200.14,
+                  "probability": 0.9718405604362488
+                },
+                {
+                  "word": " his",
+                  "start": 200.14,
+                  "end": 200.44,
+                  "probability": 0.4478064477443695
+                },
+                {
+                  "word": " most",
+                  "start": 200.44,
+                  "end": 200.84,
+                  "probability": 0.9983569979667664
+                },
+                {
+                  "word": " important",
+                  "start": 200.84,
+                  "end": 201.3,
+                  "probability": 0.9953734278678894
+                },
+                {
+                  "word": " job.",
+                  "start": 201.3,
+                  "end": 201.5,
+                  "probability": 0.5034814476966858
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 205.18,
+          "candidateSeconds": 205.53,
+          "max10msRmsIn100msDbFS": -72.75277133004502,
+          "contextRange": [
+            202.68,
+            205.98000000000002
+          ],
+          "contextRecognition": [
+            {
+              "text": " or message of God to people.",
+              "words": [
+                {
+                  "word": " or",
+                  "start": 202.68,
+                  "end": 203.34,
+                  "probability": 0.4931217133998871
+                },
+                {
+                  "word": " message",
+                  "start": 203.34,
+                  "end": 203.68,
+                  "probability": 0.8790311217308044
+                },
+                {
+                  "word": " of",
+                  "start": 203.68,
+                  "end": 203.98000000000002,
+                  "probability": 0.985593855381012
+                },
+                {
+                  "word": " God",
+                  "start": 203.98000000000002,
+                  "end": 204.38,
+                  "probability": 0.9632884860038757
+                },
+                {
+                  "word": " to",
+                  "start": 204.38,
+                  "end": 204.66,
+                  "probability": 0.9914911389350891
+                },
+                {
+                  "word": " people.",
+                  "start": 204.66,
+                  "end": 204.92000000000002,
+                  "probability": 0.9896201491355896
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 389,
+        "lastExclusive": 406
+      },
+      "uncertainWordIndexes": [
+        391
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U013",
+      "sourceTextSha256": "76e052294d16f36c0e5976a63ae06263c41fd521564f2f5d67863e0d919f0cc5",
+      "completion": "confirm",
+      "candidateRange": [
+        205.94,
+        218.25
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 206.18,
+          "candidateSeconds": 205.94,
+          "max10msRmsIn100msDbFS": -78.80974834988538,
+          "contextRange": [
+            205.38,
+            208.68
+          ],
+          "contextRecognition": [
+            {
+              "text": " Stop here and discuss as a group.",
+              "words": [
+                {
+                  "word": " Stop",
+                  "start": 205.38,
+                  "end": 206.46,
+                  "probability": 0.5226780772209167
+                },
+                {
+                  "word": " here",
+                  "start": 206.46,
+                  "end": 206.96,
+                  "probability": 0.9945869445800781
+                },
+                {
+                  "word": " and",
+                  "start": 206.96,
+                  "end": 207.51999999999998,
+                  "probability": 0.8579980134963989
+                },
+                {
+                  "word": " discuss",
+                  "start": 207.51999999999998,
+                  "end": 207.84,
+                  "probability": 0.902435302734375
+                },
+                {
+                  "word": " as",
+                  "start": 207.84,
+                  "end": 208.07999999999998,
+                  "probability": 0.9322787523269653
+                },
+                {
+                  "word": " a",
+                  "start": 208.07999999999998,
+                  "end": 208.2,
+                  "probability": 0.9922325611114502
+                },
+                {
+                  "word": " group.",
+                  "start": 208.2,
+                  "end": 208.54,
+                  "probability": 0.9899471402168274
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 217.94,
+          "candidateSeconds": 218.25,
+          "max10msRmsIn100msDbFS": -69.53696371722509,
+          "contextRange": [
+            215.44,
+            218.74
+          ],
+          "contextRecognition": [
+            {
+              "text": " pause this audio here.",
+              "words": [
+                {
+                  "word": " pause",
+                  "start": 215.44,
+                  "end": 216.62,
+                  "probability": 0.4701675474643707
+                },
+                {
+                  "word": " this",
+                  "start": 216.62,
+                  "end": 217.06,
+                  "probability": 0.9808611273765564
+                },
+                {
+                  "word": " audio",
+                  "start": 217.06,
+                  "end": 217.42,
+                  "probability": 0.989144504070282
+                },
+                {
+                  "word": " here.",
+                  "start": 217.42,
+                  "end": 218.26,
+                  "probability": 0.970255434513092
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 406,
+        "lastExclusive": 433
+      },
+      "uncertainWordIndexes": [
+        408,
+        409,
+        412,
+        418,
+        424,
+        427
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U014",
+      "sourceTextSha256": "d84295ec51c2e17b7deec22a9ced29f64af516203735a4173ad1723a906dc195",
+      "completion": "auto",
+      "candidateRange": [
+        224.11,
+        253.42
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 224.32,
+          "candidateSeconds": 224.11,
+          "max10msRmsIn100msDbFS": -79.87601960629914,
+          "contextRange": [
+            223.51999999999998,
+            226.82
+          ],
+          "contextRecognition": [
+            {
+              "text": " Isaiah says someone will come like a v-",
+              "words": [
+                {
+                  "word": " Isaiah",
+                  "start": 224.48,
+                  "end": 225.04,
+                  "probability": 0.8938848376274109
+                },
+                {
+                  "word": " says",
+                  "start": 225.04,
+                  "end": 225.6,
+                  "probability": 0.8429619669914246
+                },
+                {
+                  "word": " someone",
+                  "start": 225.6,
+                  "end": 225.88,
+                  "probability": 0.8254038095474243
+                },
+                {
+                  "word": " will",
+                  "start": 225.88,
+                  "end": 226.15999999999997,
+                  "probability": 0.9937811493873596
+                },
+                {
+                  "word": " come",
+                  "start": 226.15999999999997,
+                  "end": 226.39999999999998,
+                  "probability": 0.9835892915725708
+                },
+                {
+                  "word": " like",
+                  "start": 226.39999999999998,
+                  "end": 226.61999999999998,
+                  "probability": 0.962537407875061
+                },
+                {
+                  "word": " a",
+                  "start": 226.61999999999998,
+                  "end": 226.79999999999998,
+                  "probability": 0.9552942514419556
+                },
+                {
+                  "word": " v",
+                  "start": 226.79999999999998,
+                  "end": 226.79999999999998,
+                  "probability": 0.21366076171398163
+                },
+                {
+                  "word": "-",
+                  "start": 226.79999999999998,
+                  "end": 226.79999999999998,
+                  "probability": 0.6033529043197632
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 253.2,
+          "candidateSeconds": 253.42,
+          "max10msRmsIn100msDbFS": -79.71597136668561,
+          "contextRange": [
+            250.7,
+            254.0
+          ],
+          "contextRecognition": [
+            {
+              "text": " Jesus is sent to the wilderness to be tempted.",
+              "words": [
+                {
+                  "word": " Jesus",
+                  "start": 250.7,
+                  "end": 251.04,
+                  "probability": 0.8618924021720886
+                },
+                {
+                  "word": " is",
+                  "start": 251.04,
+                  "end": 251.35999999999999,
+                  "probability": 0.858866274356842
+                },
+                {
+                  "word": " sent",
+                  "start": 251.35999999999999,
+                  "end": 251.6,
+                  "probability": 0.9961602687835693
+                },
+                {
+                  "word": " to",
+                  "start": 251.6,
+                  "end": 251.83999999999997,
+                  "probability": 0.9921160340309143
+                },
+                {
+                  "word": " the",
+                  "start": 251.83999999999997,
+                  "end": 251.94,
+                  "probability": 0.9917070269584656
+                },
+                {
+                  "word": " wilderness",
+                  "start": 251.94,
+                  "end": 252.2,
+                  "probability": 0.9938226938247681
+                },
+                {
+                  "word": " to",
+                  "start": 252.2,
+                  "end": 252.56,
+                  "probability": 0.9752106666564941
+                },
+                {
+                  "word": " be",
+                  "start": 252.56,
+                  "end": 252.76,
+                  "probability": 0.9990322589874268
+                },
+                {
+                  "word": " tempted.",
+                  "start": 252.76,
+                  "end": 253.04,
+                  "probability": 0.9948500990867615
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 433,
+        "lastExclusive": 513
+      },
+      "uncertainWordIndexes": [
+        433,
+        444,
+        449,
+        460,
+        461,
+        464,
+        467,
+        471,
+        475,
+        490,
+        503,
+        505
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U015",
+      "sourceTextSha256": "66d6d7381ad3e1d6354b0080ad9df455e8ad9af8e7fd5d45e59a488fb1f65cff",
+      "completion": "confirm",
+      "candidateRange": [
+        254.33,
+        272.92
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 254.56,
+          "candidateSeconds": 254.33,
+          "max10msRmsIn100msDbFS": -78.90449378514829,
+          "contextRange": [
+            253.76,
+            257.06
+          ],
+          "contextRecognition": [
+            {
+              "text": " Stop here and look at a picture of a vlog.",
+              "words": [
+                {
+                  "word": " Stop",
+                  "start": 253.76,
+                  "end": 254.85999999999999,
+                  "probability": 0.4170929193496704
+                },
+                {
+                  "word": " here",
+                  "start": 254.85999999999999,
+                  "end": 255.35999999999999,
+                  "probability": 0.995101273059845
+                },
+                {
+                  "word": " and",
+                  "start": 255.35999999999999,
+                  "end": 255.82,
+                  "probability": 0.8821725845336914
+                },
+                {
+                  "word": " look",
+                  "start": 255.82,
+                  "end": 255.95999999999998,
+                  "probability": 0.9962366223335266
+                },
+                {
+                  "word": " at",
+                  "start": 255.95999999999998,
+                  "end": 256.14,
+                  "probability": 0.9900445938110352
+                },
+                {
+                  "word": " a",
+                  "start": 256.14,
+                  "end": 256.3,
+                  "probability": 0.7582052946090698
+                },
+                {
+                  "word": " picture",
+                  "start": 256.3,
+                  "end": 256.74,
+                  "probability": 0.9992281198501587
+                },
+                {
+                  "word": " of",
+                  "start": 256.74,
+                  "end": 257.03999999999996,
+                  "probability": 0.9298757314682007
+                },
+                {
+                  "word": " a",
+                  "start": 257.03999999999996,
+                  "end": 257.03999999999996,
+                  "probability": 0.09544939547777176
+                },
+                {
+                  "word": " vlog.",
+                  "start": 257.03999999999996,
+                  "end": 257.03999999999996,
+                  "probability": 0.15379923954606056
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 272.74,
+          "candidateSeconds": 272.92,
+          "max10msRmsIn100msDbFS": -73.02379089033516,
+          "contextRange": [
+            270.24,
+            273.54
+          ],
+          "contextRecognition": [
+            {
+              "text": " Yeah.",
+              "words": [
+                {
+                  "word": " Yeah.",
+                  "start": 270.24,
+                  "end": 270.40000000000003,
+                  "probability": 0.12205588817596436
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 513,
+        "lastExclusive": 549
+      },
+      "uncertainWordIndexes": [
+        527,
+        531,
+        540,
+        543
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U016",
+      "sourceTextSha256": "32454b88612b0c55c8ca5d32c94cc66279f9de3aeb6a552c0882471bd65369eb",
+      "completion": "auto",
+      "candidateRange": [
+        275.85,
+        287.95
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 276.08,
+          "candidateSeconds": 275.85,
+          "max10msRmsIn100msDbFS": -79.9172751102523,
+          "contextRange": [
+            275.28,
+            278.58
+          ],
+          "contextRecognition": [
+            {
+              "text": " The voice will tell people to prepare.",
+              "words": [
+                {
+                  "word": " The",
+                  "start": 275.28,
+                  "end": 276.55999999999995,
+                  "probability": 0.7783727049827576
+                },
+                {
+                  "word": " voice",
+                  "start": 276.55999999999995,
+                  "end": 276.96,
+                  "probability": 0.9067279100418091
+                },
+                {
+                  "word": " will",
+                  "start": 276.96,
+                  "end": 277.32,
+                  "probability": 0.9922634363174438
+                },
+                {
+                  "word": " tell",
+                  "start": 277.32,
+                  "end": 277.65999999999997,
+                  "probability": 0.9952734112739563
+                },
+                {
+                  "word": " people",
+                  "start": 277.65999999999997,
+                  "end": 278.0,
+                  "probability": 0.9926129579544067
+                },
+                {
+                  "word": " to",
+                  "start": 278.0,
+                  "end": 278.23999999999995,
+                  "probability": 0.9974148273468018
+                },
+                {
+                  "word": " prepare.",
+                  "start": 278.23999999999995,
+                  "end": 278.55999999999995,
+                  "probability": 0.9946082830429077
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 287.9,
+          "candidateSeconds": 287.95,
+          "max10msRmsIn100msDbFS": -78.78626454249365,
+          "contextRange": [
+            285.4,
+            288.7
+          ],
+          "contextRecognition": [
+            {
+              "text": " it also refers to God himself.",
+              "words": [
+                {
+                  "word": " it",
+                  "start": 285.4,
+                  "end": 285.9,
+                  "probability": 0.5996140837669373
+                },
+                {
+                  "word": " also",
+                  "start": 285.9,
+                  "end": 286.21999999999997,
+                  "probability": 0.871798574924469
+                },
+                {
+                  "word": " refers",
+                  "start": 286.21999999999997,
+                  "end": 286.53999999999996,
+                  "probability": 0.9985456466674805
+                },
+                {
+                  "word": " to",
+                  "start": 286.53999999999996,
+                  "end": 286.91999999999996,
+                  "probability": 0.9977160692214966
+                },
+                {
+                  "word": " God",
+                  "start": 286.91999999999996,
+                  "end": 287.15999999999997,
+                  "probability": 0.9651956558227539
+                },
+                {
+                  "word": " himself.",
+                  "start": 287.15999999999997,
+                  "end": 287.7,
+                  "probability": 0.6960852742195129
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 549,
+        "lastExclusive": 579
+      },
+      "uncertainWordIndexes": [
+        549,
+        569,
+        578
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U017",
+      "sourceTextSha256": "d912af0d0f4541a47925c44e5549cbf9a9429d9cb89249c93b35207f81302839",
+      "completion": "confirm",
+      "candidateRange": [
+        288.88,
+        302.31
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 289.12,
+          "candidateSeconds": 288.88,
+          "max10msRmsIn100msDbFS": -78.70021978812736,
+          "contextRange": [
+            288.32,
+            291.62
+          ],
+          "contextRecognition": [
+            {
+              "text": " Stop here and discuss as a group.",
+              "words": [
+                {
+                  "word": " Stop",
+                  "start": 288.32,
+                  "end": 289.4,
+                  "probability": 0.42834025621414185
+                },
+                {
+                  "word": " here",
+                  "start": 289.4,
+                  "end": 289.96,
+                  "probability": 0.9924845099449158
+                },
+                {
+                  "word": " and",
+                  "start": 289.96,
+                  "end": 290.54,
+                  "probability": 0.8544254302978516
+                },
+                {
+                  "word": " discuss",
+                  "start": 290.54,
+                  "end": 290.94,
+                  "probability": 0.9791097640991211
+                },
+                {
+                  "word": " as",
+                  "start": 290.94,
+                  "end": 291.28,
+                  "probability": 0.8738716840744019
+                },
+                {
+                  "word": " a",
+                  "start": 291.28,
+                  "end": 291.48,
+                  "probability": 0.9892125129699707
+                },
+                {
+                  "word": " group.",
+                  "start": 291.48,
+                  "end": 291.59999999999997,
+                  "probability": 0.9913410544395447
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 302.26,
+          "candidateSeconds": 302.31,
+          "max10msRmsIn100msDbFS": -70.92896167535028,
+          "contextRange": [
+            299.76,
+            303.06
+          ],
+          "contextRecognition": [
+            {
+              "text": " Pause this audio here.",
+              "words": [
+                {
+                  "word": " Pause",
+                  "start": 299.76,
+                  "end": 300.26,
+                  "probability": 0.7647566795349121
+                },
+                {
+                  "word": " this",
+                  "start": 300.26,
+                  "end": 300.64,
+                  "probability": 0.997168242931366
+                },
+                {
+                  "word": " audio",
+                  "start": 300.64,
+                  "end": 300.98,
+                  "probability": 0.9940962791442871
+                },
+                {
+                  "word": " here.",
+                  "start": 300.98,
+                  "end": 301.71999999999997,
+                  "probability": 0.9680242538452148
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 579,
+        "lastExclusive": 607
+      },
+      "uncertainWordIndexes": [
+        581,
+        589,
+        592,
+        601
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U018",
+      "sourceTextSha256": "2bf3bc8db8555a2e8ffe4bb29f54310e35de2aee9a2738a903c090b734b2c041",
+      "completion": "auto",
+      "candidateRange": [
+        307.35,
+        351.08
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 307.56,
+          "candidateSeconds": 307.35,
+          "max10msRmsIn100msDbFS": -71.67387768060098,
+          "contextRange": [
+            306.76,
+            310.06
+          ],
+          "contextRecognition": [
+            {
+              "text": " John preached a baptism of repentance.",
+              "words": [
+                {
+                  "word": " John",
+                  "start": 306.76,
+                  "end": 308.12,
+                  "probability": 0.8546456694602966
+                },
+                {
+                  "word": " preached",
+                  "start": 308.12,
+                  "end": 308.68,
+                  "probability": 0.9665734767913818
+                },
+                {
+                  "word": " a",
+                  "start": 308.68,
+                  "end": 308.96,
+                  "probability": 0.9007311463356018
+                },
+                {
+                  "word": " baptism",
+                  "start": 308.96,
+                  "end": 309.36,
+                  "probability": 0.9826634526252747
+                },
+                {
+                  "word": " of",
+                  "start": 309.36,
+                  "end": 309.78,
+                  "probability": 0.9837861657142639
+                },
+                {
+                  "word": " repentance.",
+                  "start": 309.78,
+                  "end": 310.03999999999996,
+                  "probability": 0.9696694016456604
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 350.84,
+          "candidateSeconds": 351.08,
+          "max10msRmsIn100msDbFS": -73.41851506211826,
+          "contextRange": [
+            348.34,
+            351.64
+          ],
+          "contextRecognition": [
+            {
+              "text": " leads to a new way of life.",
+              "words": [
+                {
+                  "word": " leads",
+                  "start": 348.34,
+                  "end": 349.02,
+                  "probability": 0.1817379593849182
+                },
+                {
+                  "word": " to",
+                  "start": 349.02,
+                  "end": 349.32,
+                  "probability": 0.9920274615287781
+                },
+                {
+                  "word": " a",
+                  "start": 349.32,
+                  "end": 349.47999999999996,
+                  "probability": 0.9931064248085022
+                },
+                {
+                  "word": " new",
+                  "start": 349.47999999999996,
+                  "end": 349.7,
+                  "probability": 0.9928848147392273
+                },
+                {
+                  "word": " way",
+                  "start": 349.7,
+                  "end": 349.94,
+                  "probability": 0.9937361478805542
+                },
+                {
+                  "word": " of",
+                  "start": 349.94,
+                  "end": 350.15999999999997,
+                  "probability": 0.9967305660247803
+                },
+                {
+                  "word": " life.",
+                  "start": 350.15999999999997,
+                  "end": 350.5,
+                  "probability": 0.9988679885864258
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 607,
+        "lastExclusive": 715
+      },
+      "uncertainWordIndexes": [
+        620,
+        634,
+        672,
+        690
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U019",
+      "sourceTextSha256": "4e5864583ca1e8e3933e0101d5a73482379e8d79a82760ad82dc8464c72efa23",
+      "completion": "confirm",
+      "candidateRange": [
+        351.77,
+        368.73
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 352.04,
+          "candidateSeconds": 351.77,
+          "max10msRmsIn100msDbFS": -78.59989356083912,
+          "contextRange": [
+            351.24,
+            354.54
+          ],
+          "contextRecognition": [
+            {
+              "text": " Stop here and discuss as a group.",
+              "words": [
+                {
+                  "word": " Stop",
+                  "start": 351.24,
+                  "end": 352.28000000000003,
+                  "probability": 0.38028788566589355
+                },
+                {
+                  "word": " here",
+                  "start": 352.28000000000003,
+                  "end": 352.8,
+                  "probability": 0.991340696811676
+                },
+                {
+                  "word": " and",
+                  "start": 352.8,
+                  "end": 353.22,
+                  "probability": 0.8397505283355713
+                },
+                {
+                  "word": " discuss",
+                  "start": 353.22,
+                  "end": 353.56,
+                  "probability": 0.9530360698699951
+                },
+                {
+                  "word": " as",
+                  "start": 353.56,
+                  "end": 353.84000000000003,
+                  "probability": 0.9246017336845398
+                },
+                {
+                  "word": " a",
+                  "start": 353.84000000000003,
+                  "end": 353.94,
+                  "probability": 0.9910717606544495
+                },
+                {
+                  "word": " group.",
+                  "start": 353.94,
+                  "end": 354.38,
+                  "probability": 0.9951353669166565
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 368.68,
+          "candidateSeconds": 368.73,
+          "max10msRmsIn100msDbFS": -70.34277516571522,
+          "contextRange": [
+            366.18,
+            369.48
+          ],
+          "contextRecognition": [
+            {
+              "text": " this audio here.",
+              "words": [
+                {
+                  "word": " this",
+                  "start": 366.18,
+                  "end": 366.62,
+                  "probability": 0.5896351337432861
+                },
+                {
+                  "word": " audio",
+                  "start": 366.62,
+                  "end": 367.1,
+                  "probability": 0.9869895577430725
+                },
+                {
+                  "word": " here.",
+                  "start": 367.1,
+                  "end": 367.72,
+                  "probability": 0.9149680137634277
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 715,
+        "lastExclusive": 749
+      },
+      "uncertainWordIndexes": [
+        740
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U020",
+      "sourceTextSha256": "ab6d8f78ca7cd550112526a568ae72326367f3124cccf8de70cae2815549273b",
+      "completion": "auto",
+      "candidateRange": [
+        370.24,
+        425.49
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 370.29999999999995,
+          "candidateSeconds": 370.24,
+          "max10msRmsIn100msDbFS": -77.97150215508678,
+          "contextRange": [
+            369.49999999999994,
+            372.79999999999995
+          ],
+          "contextRecognition": [
+            {
+              "text": " John says that's his baptism.",
+              "words": [
+                {
+                  "word": " John",
+                  "start": 369.49999999999994,
+                  "end": 371.0199999999999,
+                  "probability": 0.7599043250083923
+                },
+                {
+                  "word": " says",
+                  "start": 371.0199999999999,
+                  "end": 371.55999999999995,
+                  "probability": 0.9936978220939636
+                },
+                {
+                  "word": " that's",
+                  "start": 371.55999999999995,
+                  "end": 372.21999999999997,
+                  "probability": 0.591453954577446
+                },
+                {
+                  "word": " his",
+                  "start": 372.21999999999997,
+                  "end": 372.41999999999996,
+                  "probability": 0.9731422662734985
+                },
+                {
+                  "word": " baptism.",
+                  "start": 372.41999999999996,
+                  "end": 372.7799999999999,
+                  "probability": 0.9718574285507202
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 425.44,
+          "candidateSeconds": 425.49,
+          "max10msRmsIn100msDbFS": -73.54343274834734,
+          "contextRange": [
+            422.94,
+            426.24
+          ],
+          "contextRecognition": [
+            {
+              "text": " Create a Word picture for your audience.",
+              "words": [
+                {
+                  "word": " Create",
+                  "start": 422.94,
+                  "end": 423.24,
+                  "probability": 0.47815778851509094
+                },
+                {
+                  "word": " a",
+                  "start": 423.24,
+                  "end": 423.48,
+                  "probability": 0.9942261576652527
+                },
+                {
+                  "word": " Word",
+                  "start": 423.48,
+                  "end": 423.74,
+                  "probability": 0.765148937702179
+                },
+                {
+                  "word": " picture",
+                  "start": 423.74,
+                  "end": 424.02,
+                  "probability": 0.6054483652114868
+                },
+                {
+                  "word": " for",
+                  "start": 424.02,
+                  "end": 424.28,
+                  "probability": 0.9910785555839539
+                },
+                {
+                  "word": " your",
+                  "start": 424.28,
+                  "end": 424.48,
+                  "probability": 0.9917587637901306
+                },
+                {
+                  "word": " audience.",
+                  "start": 424.48,
+                  "end": 424.86,
+                  "probability": 0.9856806993484497
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 749,
+        "lastExclusive": 877
+      },
+      "uncertainWordIndexes": [
+        752,
+        758,
+        781,
+        784,
+        799,
+        802,
+        804,
+        805,
+        817,
+        840,
+        863,
+        872,
+        873
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U021",
+      "sourceTextSha256": "b601a45d21f19855a4a5fd55e9d7d23766b249a04075c00aa75f51e075a7abab",
+      "completion": "auto",
+      "candidateRange": [
+        426.57,
+        429.17
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 426.92,
+          "candidateSeconds": 426.57,
+          "max10msRmsIn100msDbFS": -75.23228681158614,
+          "contextRange": [
+            426.12,
+            429.42
+          ],
+          "contextRecognition": [
+            {
+              "text": " To wipe away the sins of someone.",
+              "words": [
+                {
+                  "word": " To",
+                  "start": 426.12,
+                  "end": 427.1,
+                  "probability": 0.49851271510124207
+                },
+                {
+                  "word": " wipe",
+                  "start": 427.1,
+                  "end": 427.32,
+                  "probability": 0.9979844093322754
+                },
+                {
+                  "word": " away",
+                  "start": 427.32,
+                  "end": 427.68,
+                  "probability": 0.99899822473526
+                },
+                {
+                  "word": " the",
+                  "start": 427.68,
+                  "end": 427.92,
+                  "probability": 0.9766303300857544
+                },
+                {
+                  "word": " sins",
+                  "start": 427.92,
+                  "end": 428.14,
+                  "probability": 0.9377822875976562
+                },
+                {
+                  "word": " of",
+                  "start": 428.14,
+                  "end": 428.4,
+                  "probability": 0.9870645999908447
+                },
+                {
+                  "word": " someone.",
+                  "start": 428.4,
+                  "end": 428.72,
+                  "probability": 0.9737725853919983
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 429.12,
+          "candidateSeconds": 429.17,
+          "max10msRmsIn100msDbFS": -70.47059729125935,
+          "contextRange": [
+            426.62,
+            429.92
+          ],
+          "contextRecognition": [
+            {
+              "text": " to wipe away the sins of someone, to lift up.",
+              "words": [
+                {
+                  "word": " to",
+                  "start": 426.62,
+                  "end": 427.12,
+                  "probability": 0.6221698522567749
+                },
+                {
+                  "word": " wipe",
+                  "start": 427.12,
+                  "end": 427.34000000000003,
+                  "probability": 0.9949654936790466
+                },
+                {
+                  "word": " away",
+                  "start": 427.34000000000003,
+                  "end": 427.68,
+                  "probability": 0.9993001222610474
+                },
+                {
+                  "word": " the",
+                  "start": 427.68,
+                  "end": 427.94,
+                  "probability": 0.995149552822113
+                },
+                {
+                  "word": " sins",
+                  "start": 427.94,
+                  "end": 428.14,
+                  "probability": 0.9867951273918152
+                },
+                {
+                  "word": " of",
+                  "start": 428.14,
+                  "end": 428.4,
+                  "probability": 0.9942823648452759
+                },
+                {
+                  "word": " someone,",
+                  "start": 428.4,
+                  "end": 429.02,
+                  "probability": 0.9921125173568726
+                },
+                {
+                  "word": " to",
+                  "start": 429.48,
+                  "end": 429.64,
+                  "probability": 0.9723329544067383
+                },
+                {
+                  "word": " lift",
+                  "start": 429.64,
+                  "end": 429.9,
+                  "probability": 0.9872249364852905
+                },
+                {
+                  "word": " up.",
+                  "start": 429.9,
+                  "end": 429.9,
+                  "probability": 0.9116069674491882
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 877,
+        "lastExclusive": 884
+      },
+      "uncertainWordIndexes": [],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U022",
+      "sourceTextSha256": "4b5a59147eb2990b414fbb359e0ec0eb692ce8182032b7ab29b5e8beec772562",
+      "completion": "auto",
+      "candidateRange": [
+        429.13,
+        431.7
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 429.42,
+          "candidateSeconds": 429.13,
+          "max10msRmsIn100msDbFS": -73.12188042076113,
+          "contextRange": [
+            428.62,
+            431.92
+          ],
+          "contextRecognition": [
+            {
+              "text": " to lift up the sins of someone.",
+              "words": [
+                {
+                  "word": " to",
+                  "start": 428.62,
+                  "end": 429.62,
+                  "probability": 0.4481527805328369
+                },
+                {
+                  "word": " lift",
+                  "start": 429.62,
+                  "end": 429.9,
+                  "probability": 0.996890127658844
+                },
+                {
+                  "word": " up",
+                  "start": 429.9,
+                  "end": 430.24,
+                  "probability": 0.9982534050941467
+                },
+                {
+                  "word": " the",
+                  "start": 430.24,
+                  "end": 430.48,
+                  "probability": 0.9930428266525269
+                },
+                {
+                  "word": " sins",
+                  "start": 430.48,
+                  "end": 430.7,
+                  "probability": 0.9734748601913452
+                },
+                {
+                  "word": " of",
+                  "start": 430.7,
+                  "end": 430.94,
+                  "probability": 0.994381844997406
+                },
+                {
+                  "word": " someone.",
+                  "start": 430.94,
+                  "end": 431.68,
+                  "probability": 0.9966455101966858
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 431.58,
+          "candidateSeconds": 431.7,
+          "max10msRmsIn100msDbFS": -73.09430314720538,
+          "contextRange": [
+            429.08,
+            432.38
+          ],
+          "contextRecognition": [
+            {
+              "text": " to lift up the sins of someone, to lose.",
+              "words": [
+                {
+                  "word": " to",
+                  "start": 429.08,
+                  "end": 429.68,
+                  "probability": 0.6793151497840881
+                },
+                {
+                  "word": " lift",
+                  "start": 429.68,
+                  "end": 429.9,
+                  "probability": 0.9963756203651428
+                },
+                {
+                  "word": " up",
+                  "start": 429.9,
+                  "end": 430.24,
+                  "probability": 0.9961205124855042
+                },
+                {
+                  "word": " the",
+                  "start": 430.24,
+                  "end": 430.5,
+                  "probability": 0.9934383034706116
+                },
+                {
+                  "word": " sins",
+                  "start": 430.5,
+                  "end": 430.7,
+                  "probability": 0.9834350943565369
+                },
+                {
+                  "word": " of",
+                  "start": 430.7,
+                  "end": 430.94,
+                  "probability": 0.9931489825248718
+                },
+                {
+                  "word": " someone,",
+                  "start": 430.94,
+                  "end": 431.64,
+                  "probability": 0.9967159032821655
+                },
+                {
+                  "word": " to",
+                  "start": 432.09999999999997,
+                  "end": 432.15999999999997,
+                  "probability": 0.9838707447052002
+                },
+                {
+                  "word": " lose.",
+                  "start": 432.15999999999997,
+                  "end": 432.35999999999996,
+                  "probability": 0.4970608651638031
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 884,
+        "lastExclusive": 891
+      },
+      "uncertainWordIndexes": [],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U023",
+      "sourceTextSha256": "8f2f9d7281a70895660cfc0a487264f0e7e332dbb88411f43d9ed9e64923826e",
+      "completion": "auto",
+      "candidateRange": [
+        431.7,
+        433.71
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 431.96,
+          "candidateSeconds": 431.7,
+          "max10msRmsIn100msDbFS": -73.09430314720538,
+          "contextRange": [
+            431.15999999999997,
+            434.46
+          ],
+          "contextRecognition": [
+            {
+              "text": " to loose, release, to throw.",
+              "words": [
+                {
+                  "word": " to",
+                  "start": 431.15999999999997,
+                  "end": 432.09999999999997,
+                  "probability": 0.5167040824890137
+                },
+                {
+                  "word": " loose,",
+                  "start": 432.09999999999997,
+                  "end": 432.7,
+                  "probability": 0.6933274269104004
+                },
+                {
+                  "word": " release,",
+                  "start": 433.15999999999997,
+                  "end": 433.52,
+                  "probability": 0.9884017109870911
+                },
+                {
+                  "word": " to",
+                  "start": 434.03999999999996,
+                  "end": 434.17999999999995,
+                  "probability": 0.9838083386421204
+                },
+                {
+                  "word": " throw.",
+                  "start": 434.17999999999995,
+                  "end": 434.43999999999994,
+                  "probability": 0.9092041254043579
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 433.54,
+          "candidateSeconds": 433.71,
+          "max10msRmsIn100msDbFS": -72.54633612978114,
+          "contextRange": [
+            431.04,
+            434.34000000000003
+          ],
+          "contextRecognition": [
+            {
+              "text": " one, to loose release, to throw.",
+              "words": [
+                {
+                  "word": " one,",
+                  "start": 431.04,
+                  "end": 431.58000000000004,
+                  "probability": 0.11827152222394943
+                },
+                {
+                  "word": " to",
+                  "start": 432.06,
+                  "end": 432.12,
+                  "probability": 0.9175220727920532
+                },
+                {
+                  "word": " loose",
+                  "start": 432.12,
+                  "end": 432.68,
+                  "probability": 0.7149131894111633
+                },
+                {
+                  "word": " release,",
+                  "start": 432.68,
+                  "end": 433.52000000000004,
+                  "probability": 0.737479031085968
+                },
+                {
+                  "word": " to",
+                  "start": 434.1,
+                  "end": 434.12,
+                  "probability": 0.9843708872795105
+                },
+                {
+                  "word": " throw.",
+                  "start": 434.12,
+                  "end": 434.32,
+                  "probability": 0.42092612385749817
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 891,
+        "lastExclusive": 894
+      },
+      "uncertainWordIndexes": [
+        892
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U024",
+      "sourceTextSha256": "1d4edc695517dc6fe9ca8ab9bbc7e96761c27e36bc5bcd7e59dc0258b9476085",
+      "completion": "auto",
+      "candidateRange": [
+        433.71,
+        435.2
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 433.9,
+          "candidateSeconds": 433.71,
+          "max10msRmsIn100msDbFS": -72.54633612978114,
+          "contextRange": [
+            433.09999999999997,
+            436.4
+          ],
+          "contextRecognition": [
+            {
+              "text": " these to throw away, to cover over.",
+              "words": [
+                {
+                  "word": " these",
+                  "start": 433.09999999999997,
+                  "end": 433.64,
+                  "probability": 0.09262014180421829
+                },
+                {
+                  "word": " to",
+                  "start": 433.64,
+                  "end": 434.14,
+                  "probability": 0.7619180679321289
+                },
+                {
+                  "word": " throw",
+                  "start": 434.14,
+                  "end": 434.41999999999996,
+                  "probability": 0.9913051724433899
+                },
+                {
+                  "word": " away,",
+                  "start": 434.41999999999996,
+                  "end": 435.09999999999997,
+                  "probability": 0.9729596376419067
+                },
+                {
+                  "word": " to",
+                  "start": 435.53999999999996,
+                  "end": 435.61999999999995,
+                  "probability": 0.9528347849845886
+                },
+                {
+                  "word": " cover",
+                  "start": 435.61999999999995,
+                  "end": 435.85999999999996,
+                  "probability": 0.9983500242233276
+                },
+                {
+                  "word": " over.",
+                  "start": 435.85999999999996,
+                  "end": 436.21999999999997,
+                  "probability": 0.9824703335762024
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 435.08,
+          "candidateSeconds": 435.2,
+          "max10msRmsIn100msDbFS": -41.22543723681905,
+          "contextRange": [
+            432.58,
+            435.88
+          ],
+          "contextRecognition": [
+            {
+              "text": " release to throw away to cover",
+              "words": [
+                {
+                  "word": " release",
+                  "start": 432.58,
+                  "end": 433.56,
+                  "probability": 0.477383017539978
+                },
+                {
+                  "word": " to",
+                  "start": 433.56,
+                  "end": 434.15999999999997,
+                  "probability": 0.7746875882148743
+                },
+                {
+                  "word": " throw",
+                  "start": 434.15999999999997,
+                  "end": 434.41999999999996,
+                  "probability": 0.9898424744606018
+                },
+                {
+                  "word": " away",
+                  "start": 434.41999999999996,
+                  "end": 435.2,
+                  "probability": 0.9430914521217346
+                },
+                {
+                  "word": " to",
+                  "start": 435.2,
+                  "end": 435.62,
+                  "probability": 0.867526113986969
+                },
+                {
+                  "word": " cover",
+                  "start": 435.62,
+                  "end": 435.8,
+                  "probability": 0.9985617995262146
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 894,
+        "lastExclusive": 897
+      },
+      "uncertainWordIndexes": [],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U025",
+      "sourceTextSha256": "a2c4c221120e2921afeccd0ce1752219a30834cdf11a33183da9931b8febc3aa",
+      "completion": "auto",
+      "candidateRange": [
+        435.2,
+        436.56
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 435.44,
+          "candidateSeconds": 435.2,
+          "max10msRmsIn100msDbFS": -41.22543723681905,
+          "contextRange": [
+            434.64,
+            437.94
+          ],
+          "contextRecognition": [
+            {
+              "text": " to cover over to pass by.",
+              "words": [
+                {
+                  "word": " to",
+                  "start": 434.64,
+                  "end": 435.58,
+                  "probability": 0.5850579142570496
+                },
+                {
+                  "word": " cover",
+                  "start": 435.58,
+                  "end": 435.86,
+                  "probability": 0.991366446018219
+                },
+                {
+                  "word": " over",
+                  "start": 435.86,
+                  "end": 436.53999999999996,
+                  "probability": 0.9682900905609131
+                },
+                {
+                  "word": " to",
+                  "start": 436.53999999999996,
+                  "end": 437.03999999999996,
+                  "probability": 0.8149183988571167
+                },
+                {
+                  "word": " pass",
+                  "start": 437.03999999999996,
+                  "end": 437.34,
+                  "probability": 0.9835203289985657
+                },
+                {
+                  "word": " by.",
+                  "start": 437.34,
+                  "end": 437.91999999999996,
+                  "probability": 0.9885023832321167
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 436.48,
+          "candidateSeconds": 436.56,
+          "max10msRmsIn100msDbFS": -69.67131250172393,
+          "contextRange": [
+            433.98,
+            437.28000000000003
+          ],
+          "contextRecognition": [
+            {
+              "text": " throw away to cover over to pass.",
+              "words": [
+                {
+                  "word": " throw",
+                  "start": 433.98,
+                  "end": 434.36,
+                  "probability": 0.6240300536155701
+                },
+                {
+                  "word": " away",
+                  "start": 434.36,
+                  "end": 435.1,
+                  "probability": 0.8984776735305786
+                },
+                {
+                  "word": " to",
+                  "start": 435.1,
+                  "end": 435.62,
+                  "probability": 0.8830543160438538
+                },
+                {
+                  "word": " cover",
+                  "start": 435.62,
+                  "end": 435.86,
+                  "probability": 0.9967768788337708
+                },
+                {
+                  "word": " over",
+                  "start": 435.86,
+                  "end": 436.48,
+                  "probability": 0.9764736890792847
+                },
+                {
+                  "word": " to",
+                  "start": 436.48,
+                  "end": 436.98,
+                  "probability": 0.8110819458961487
+                },
+                {
+                  "word": " pass.",
+                  "start": 436.98,
+                  "end": 437.26,
+                  "probability": 0.5087647438049316
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 897,
+        "lastExclusive": 900
+      },
+      "uncertainWordIndexes": [],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U026",
+      "sourceTextSha256": "1ddb5c2b9b6047991cd19ecbb21e7d465d64141f57b949f4f9fcf0a7b8c15107",
+      "completion": "auto",
+      "candidateRange": [
+        436.57,
+        438.17
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 436.76,
+          "candidateSeconds": 436.57,
+          "max10msRmsIn100msDbFS": -69.67131250172393,
+          "contextRange": [
+            435.96,
+            439.26
+          ],
+          "contextRecognition": [
+            {
+              "text": " to pass by, to take away.",
+              "words": [
+                {
+                  "word": " to",
+                  "start": 435.96,
+                  "end": 436.82,
+                  "probability": 0.4228832423686981
+                },
+                {
+                  "word": " pass",
+                  "start": 436.82,
+                  "end": 437.28,
+                  "probability": 0.9656118154525757
+                },
+                {
+                  "word": " by,",
+                  "start": 437.28,
+                  "end": 437.94,
+                  "probability": 0.9883561730384827
+                },
+                {
+                  "word": " to",
+                  "start": 438.21999999999997,
+                  "end": 438.47999999999996,
+                  "probability": 0.9802404046058655
+                },
+                {
+                  "word": " take",
+                  "start": 438.47999999999996,
+                  "end": 438.78,
+                  "probability": 0.9966492056846619
+                },
+                {
+                  "word": " away.",
+                  "start": 438.78,
+                  "end": 439.0,
+                  "probability": 0.9909523725509644
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 437.96,
+          "candidateSeconds": 438.17,
+          "max10msRmsIn100msDbFS": -45.01250872104442,
+          "contextRange": [
+            435.46,
+            438.76
+          ],
+          "contextRecognition": [
+            {
+              "text": " cover over, to pass by, to take a-",
+              "words": [
+                {
+                  "word": " cover",
+                  "start": 435.46,
+                  "end": 435.88,
+                  "probability": 0.7563945651054382
+                },
+                {
+                  "word": " over,",
+                  "start": 435.88,
+                  "end": 436.53999999999996,
+                  "probability": 0.9384776949882507
+                },
+                {
+                  "word": " to",
+                  "start": 436.78,
+                  "end": 437.02,
+                  "probability": 0.9826594591140747
+                },
+                {
+                  "word": " pass",
+                  "start": 437.02,
+                  "end": 437.34,
+                  "probability": 0.9954818487167358
+                },
+                {
+                  "word": " by,",
+                  "start": 437.34,
+                  "end": 437.94,
+                  "probability": 0.9920927882194519
+                },
+                {
+                  "word": " to",
+                  "start": 438.23999999999995,
+                  "end": 438.47999999999996,
+                  "probability": 0.9808945059776306
+                },
+                {
+                  "word": " take",
+                  "start": 438.47999999999996,
+                  "end": 438.73999999999995,
+                  "probability": 0.9856781363487244
+                },
+                {
+                  "word": " a",
+                  "start": 438.73999999999995,
+                  "end": 438.73999999999995,
+                  "probability": 0.43893560767173767
+                },
+                {
+                  "word": "-",
+                  "start": 438.73999999999995,
+                  "end": 438.73999999999995,
+                  "probability": 0.12884663045406342
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 900,
+        "lastExclusive": 903
+      },
+      "uncertainWordIndexes": [],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U027",
+      "sourceTextSha256": "05e569172a190cbb6d8d2c5709ebaaa42301cec7dd7ed90e1ef8d4f473f25176",
+      "completion": "auto",
+      "candidateRange": [
+        438.03,
+        439.49
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 438.18,
+          "candidateSeconds": 438.03,
+          "max10msRmsIn100msDbFS": -44.68354654489396,
+          "contextRange": [
+            437.38,
+            440.68
+          ],
+          "contextRecognition": [
+            {
+              "text": " to take away, to turn one's beep.",
+              "words": [
+                {
+                  "word": " to",
+                  "start": 437.38,
+                  "end": 438.38,
+                  "probability": 0.280896931886673
+                },
+                {
+                  "word": " take",
+                  "start": 438.38,
+                  "end": 438.71999999999997,
+                  "probability": 0.9483143091201782
+                },
+                {
+                  "word": " away,",
+                  "start": 438.71999999999997,
+                  "end": 439.28,
+                  "probability": 0.9808104634284973
+                },
+                {
+                  "word": " to",
+                  "start": 439.76,
+                  "end": 439.88,
+                  "probability": 0.9631050229072571
+                },
+                {
+                  "word": " turn",
+                  "start": 439.88,
+                  "end": 440.36,
+                  "probability": 0.9966300129890442
+                },
+                {
+                  "word": " one's",
+                  "start": 440.36,
+                  "end": 440.65999999999997,
+                  "probability": 0.675938069820404
+                },
+                {
+                  "word": " beep.",
+                  "start": 440.65999999999997,
+                  "end": 440.65999999999997,
+                  "probability": 0.45365118980407715
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 439.34,
+          "candidateSeconds": 439.49,
+          "max10msRmsIn100msDbFS": -39.60936941135979,
+          "contextRange": [
+            436.84,
+            440.14
+          ],
+          "contextRecognition": [
+            {
+              "text": " pass by, to take away, to turn.",
+              "words": [
+                {
+                  "word": " pass",
+                  "start": 436.84,
+                  "end": 437.32,
+                  "probability": 0.43523991107940674
+                },
+                {
+                  "word": " by,",
+                  "start": 437.32,
+                  "end": 438.03999999999996,
+                  "probability": 0.9857394099235535
+                },
+                {
+                  "word": " to",
+                  "start": 438.35999999999996,
+                  "end": 438.47999999999996,
+                  "probability": 0.9643895030021667
+                },
+                {
+                  "word": " take",
+                  "start": 438.47999999999996,
+                  "end": 438.76,
+                  "probability": 0.9930845499038696
+                },
+                {
+                  "word": " away,",
+                  "start": 438.76,
+                  "end": 439.28,
+                  "probability": 0.9756548404693604
+                },
+                {
+                  "word": " to",
+                  "start": 439.67999999999995,
+                  "end": 439.88,
+                  "probability": 0.9722630977630615
+                },
+                {
+                  "word": " turn.",
+                  "start": 439.88,
+                  "end": 440.11999999999995,
+                  "probability": 0.9950323104858398
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 903,
+        "lastExclusive": 906
+      },
+      "uncertainWordIndexes": [],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U028",
+      "sourceTextSha256": "92a14ec9adf0ddaf64d22c77bfb7caa0a85304c0814c285a8433e6df2938c34d",
+      "completion": "auto",
+      "candidateRange": [
+        439.49,
+        441.79
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 439.6,
+          "candidateSeconds": 439.49,
+          "max10msRmsIn100msDbFS": -39.60936941135979,
+          "contextRange": [
+            438.8,
+            442.1
+          ],
+          "contextRecognition": [
+            {
+              "text": " to turn one's back.",
+              "words": [
+                {
+                  "word": " to",
+                  "start": 438.8,
+                  "end": 439.74,
+                  "probability": 0.18965215981006622
+                },
+                {
+                  "word": " turn",
+                  "start": 439.74,
+                  "end": 440.32,
+                  "probability": 0.9889004230499268
+                },
+                {
+                  "word": " one's",
+                  "start": 440.32,
+                  "end": 440.78000000000003,
+                  "probability": 0.7469887435436249
+                },
+                {
+                  "word": " back.",
+                  "start": 440.78000000000003,
+                  "end": 441.22,
+                  "probability": 0.998235821723938
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 441.66,
+          "candidateSeconds": 441.79,
+          "max10msRmsIn100msDbFS": -73.46649522415606,
+          "contextRange": [
+            439.16,
+            442.46000000000004
+          ],
+          "contextRecognition": [
+            {
+              "text": " to turn one's back.",
+              "words": [
+                {
+                  "word": " to",
+                  "start": 439.16,
+                  "end": 439.88000000000005,
+                  "probability": 0.6050670146942139
+                },
+                {
+                  "word": " turn",
+                  "start": 439.88000000000005,
+                  "end": 440.38000000000005,
+                  "probability": 0.9921137094497681
+                },
+                {
+                  "word": " one's",
+                  "start": 440.38000000000005,
+                  "end": 440.78000000000003,
+                  "probability": 0.8001980185508728
+                },
+                {
+                  "word": " back.",
+                  "start": 440.78000000000003,
+                  "end": 441.32000000000005,
+                  "probability": 0.9975035786628723
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 906,
+        "lastExclusive": 910
+      },
+      "uncertainWordIndexes": [],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U029",
+      "sourceTextSha256": "e9fba10b3565aa6a86591be3d907b9aeacee35b48a30d595e865b3f4db31043e",
+      "completion": "confirm",
+      "candidateRange": [
+        443.45,
+        471.07
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 443.68,
+          "candidateSeconds": 443.45,
+          "max10msRmsIn100msDbFS": -74.68445973982772,
+          "contextRange": [
+            442.88,
+            446.18
+          ],
+          "contextRecognition": [
+            {
+              "text": " teaching tool. In one way...",
+              "words": [
+                {
+                  "word": " teaching",
+                  "start": 442.88,
+                  "end": 444.18,
+                  "probability": 0.5714423060417175
+                },
+                {
+                  "word": " tool.",
+                  "start": 444.18,
+                  "end": 444.9,
+                  "probability": 0.9934373497962952
+                },
+                {
+                  "word": " In",
+                  "start": 445.68,
+                  "end": 445.9,
+                  "probability": 0.9120521545410156
+                },
+                {
+                  "word": " one",
+                  "start": 445.9,
+                  "end": 446.1,
+                  "probability": 0.9421354532241821
+                },
+                {
+                  "word": " way...",
+                  "start": 446.1,
+                  "end": 446.15999999999997,
+                  "probability": 0.25759054720401764
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 470.92,
+          "candidateSeconds": 471.07,
+          "max10msRmsIn100msDbFS": -69.83852577955918,
+          "contextRange": [
+            468.42,
+            471.72
+          ],
+          "contextRecognition": [
+            {
+              "text": " each of the characters in the scene.",
+              "words": [
+                {
+                  "word": " each",
+                  "start": 468.42,
+                  "end": 468.78000000000003,
+                  "probability": 0.7225304245948792
+                },
+                {
+                  "word": " of",
+                  "start": 468.78000000000003,
+                  "end": 468.98,
+                  "probability": 0.9933422207832336
+                },
+                {
+                  "word": " the",
+                  "start": 468.98,
+                  "end": 469.36,
+                  "probability": 0.9953429698944092
+                },
+                {
+                  "word": " characters",
+                  "start": 469.36,
+                  "end": 469.48,
+                  "probability": 0.994290828704834
+                },
+                {
+                  "word": " in",
+                  "start": 469.48,
+                  "end": 469.84000000000003,
+                  "probability": 0.9924855828285217
+                },
+                {
+                  "word": " the",
+                  "start": 469.84000000000003,
+                  "end": 470.1,
+                  "probability": 0.9654279351234436
+                },
+                {
+                  "word": " scene.",
+                  "start": 470.1,
+                  "end": 470.32,
+                  "probability": 0.9958036541938782
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 910,
+        "lastExclusive": 974
+      },
+      "uncertainWordIndexes": [
+        910,
+        911,
+        927,
+        939,
+        971
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U030",
+      "sourceTextSha256": "31421e07b0bf6f07e12f0bf88ebf75e7f4f8ec713f2ad84671689f0c2d84ba32",
+      "completion": "auto",
+      "candidateRange": [
+        472.21,
+        485.97
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 472.56,
+          "candidateSeconds": 472.21,
+          "max10msRmsIn100msDbFS": -71.3398959144256,
+          "contextRange": [
+            471.76,
+            475.06
+          ],
+          "contextRecognition": [
+            {
+              "text": " Sin refers to an act of disobedient.",
+              "words": [
+                {
+                  "word": " Sin",
+                  "start": 471.76,
+                  "end": 472.98,
+                  "probability": 0.489867240190506
+                },
+                {
+                  "word": " refers",
+                  "start": 472.98,
+                  "end": 473.48,
+                  "probability": 0.9733464121818542
+                },
+                {
+                  "word": " to",
+                  "start": 473.48,
+                  "end": 473.86,
+                  "probability": 0.9976611137390137
+                },
+                {
+                  "word": " an",
+                  "start": 473.86,
+                  "end": 473.98,
+                  "probability": 0.9873855113983154
+                },
+                {
+                  "word": " act",
+                  "start": 473.98,
+                  "end": 474.21999999999997,
+                  "probability": 0.9657447934150696
+                },
+                {
+                  "word": " of",
+                  "start": 474.21999999999997,
+                  "end": 474.48,
+                  "probability": 0.9978175163269043
+                },
+                {
+                  "word": " disobedient.",
+                  "start": 474.48,
+                  "end": 475.0,
+                  "probability": 0.6118238195776939
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 485.64,
+          "candidateSeconds": 485.97,
+          "max10msRmsIn100msDbFS": -72.00320655046623,
+          "contextRange": [
+            483.14,
+            486.44
+          ],
+          "contextRecognition": [
+            {
+              "text": " or following certain religious rules.",
+              "words": [
+                {
+                  "word": " or",
+                  "start": 483.14,
+                  "end": 483.64,
+                  "probability": 0.8228685259819031
+                },
+                {
+                  "word": " following",
+                  "start": 483.64,
+                  "end": 483.97999999999996,
+                  "probability": 0.9785376787185669
+                },
+                {
+                  "word": " certain",
+                  "start": 483.97999999999996,
+                  "end": 484.5,
+                  "probability": 0.9652318358421326
+                },
+                {
+                  "word": " religious",
+                  "start": 484.5,
+                  "end": 484.9,
+                  "probability": 0.9964126944541931
+                },
+                {
+                  "word": " rules.",
+                  "start": 484.9,
+                  "end": 485.36,
+                  "probability": 0.5927908420562744
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 974,
+        "lastExclusive": 1011
+      },
+      "uncertainWordIndexes": [
+        974
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U031",
+      "sourceTextSha256": "1b05943c2ebd0e4e872a0583e1dd4bc854179e19f97d53f6c0194d4d7a3c428d",
+      "completion": "confirm",
+      "candidateRange": [
+        486.57,
+        500.73
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 486.84,
+          "candidateSeconds": 486.57,
+          "max10msRmsIn100msDbFS": -74.79102758254997,
+          "contextRange": [
+            486.03999999999996,
+            489.34
+          ],
+          "contextRecognition": [
+            {
+              "text": " Stop here and discuss as a group.",
+              "words": [
+                {
+                  "word": " Stop",
+                  "start": 486.03999999999996,
+                  "end": 487.09999999999997,
+                  "probability": 0.4647420644760132
+                },
+                {
+                  "word": " here",
+                  "start": 487.09999999999997,
+                  "end": 487.55999999999995,
+                  "probability": 0.9915534853935242
+                },
+                {
+                  "word": " and",
+                  "start": 487.55999999999995,
+                  "end": 488.02,
+                  "probability": 0.8830684423446655
+                },
+                {
+                  "word": " discuss",
+                  "start": 488.02,
+                  "end": 488.31999999999994,
+                  "probability": 0.9571648240089417
+                },
+                {
+                  "word": " as",
+                  "start": 488.31999999999994,
+                  "end": 488.58,
+                  "probability": 0.9208722114562988
+                },
+                {
+                  "word": " a",
+                  "start": 488.58,
+                  "end": 488.67999999999995,
+                  "probability": 0.987744152545929
+                },
+                {
+                  "word": " group.",
+                  "start": 488.67999999999995,
+                  "end": 489.09999999999997,
+                  "probability": 0.9922488927841187
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 500.5,
+          "candidateSeconds": 500.73,
+          "max10msRmsIn100msDbFS": -71.91246786688254,
+          "contextRange": [
+            498.0,
+            501.3
+          ],
+          "contextRecognition": [
+            {
+              "text": " audio here.",
+              "words": [
+                {
+                  "word": " audio",
+                  "start": 498.0,
+                  "end": 498.44,
+                  "probability": 0.8963025212287903
+                },
+                {
+                  "word": " here.",
+                  "start": 498.44,
+                  "end": 499.04,
+                  "probability": 0.9467270970344543
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 1011,
+        "lastExclusive": 1041
+      },
+      "uncertainWordIndexes": [
+        1029,
+        1032
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U032",
+      "sourceTextSha256": "039a980368ab3a5f94b8eb747ee898160f6292eac8820b830d5a75e90a46ab10",
+      "completion": "auto",
+      "candidateRange": [
+        501.89,
+        553.19
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 502.12,
+          "candidateSeconds": 501.89,
+          "max10msRmsIn100msDbFS": -75.90837195598628,
+          "contextRange": [
+            501.32,
+            504.62
+          ],
+          "contextRecognition": [
+            {
+              "text": " John says that the person who is coming will baptize",
+              "words": [
+                {
+                  "word": " John",
+                  "start": 501.9,
+                  "end": 502.38,
+                  "probability": 0.9268578886985779
+                },
+                {
+                  "word": " says",
+                  "start": 502.38,
+                  "end": 502.65999999999997,
+                  "probability": 0.9916014075279236
+                },
+                {
+                  "word": " that",
+                  "start": 502.65999999999997,
+                  "end": 502.9,
+                  "probability": 0.9628291726112366
+                },
+                {
+                  "word": " the",
+                  "start": 502.9,
+                  "end": 503.08,
+                  "probability": 0.9776613116264343
+                },
+                {
+                  "word": " person",
+                  "start": 503.08,
+                  "end": 503.36,
+                  "probability": 0.9984128475189209
+                },
+                {
+                  "word": " who",
+                  "start": 503.36,
+                  "end": 503.54,
+                  "probability": 0.9826077818870544
+                },
+                {
+                  "word": " is",
+                  "start": 503.54,
+                  "end": 503.78,
+                  "probability": 0.9742584824562073
+                },
+                {
+                  "word": " coming",
+                  "start": 503.78,
+                  "end": 504.02,
+                  "probability": 0.9919388890266418
+                },
+                {
+                  "word": " will",
+                  "start": 504.02,
+                  "end": 504.26,
+                  "probability": 0.9832544922828674
+                },
+                {
+                  "word": " baptize",
+                  "start": 504.26,
+                  "end": 504.59999999999997,
+                  "probability": 0.8276967108249664
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 552.94,
+          "candidateSeconds": 553.19,
+          "max10msRmsIn100msDbFS": -74.40113291802592,
+          "contextRange": [
+            550.44,
+            553.74
+          ],
+          "contextRecognition": [
+            {
+              "text": " ask to carry a message from God to someone.",
+              "words": [
+                {
+                  "word": " ask",
+                  "start": 550.44,
+                  "end": 550.74,
+                  "probability": 0.31719207763671875
+                },
+                {
+                  "word": " to",
+                  "start": 550.74,
+                  "end": 550.9200000000001,
+                  "probability": 0.8026356101036072
+                },
+                {
+                  "word": " carry",
+                  "start": 550.9200000000001,
+                  "end": 551.24,
+                  "probability": 0.9962131977081299
+                },
+                {
+                  "word": " a",
+                  "start": 551.24,
+                  "end": 551.36,
+                  "probability": 0.9943683743476868
+                },
+                {
+                  "word": " message",
+                  "start": 551.36,
+                  "end": 551.6,
+                  "probability": 0.9993528723716736
+                },
+                {
+                  "word": " from",
+                  "start": 551.6,
+                  "end": 551.94,
+                  "probability": 0.9927149415016174
+                },
+                {
+                  "word": " God",
+                  "start": 551.94,
+                  "end": 552.22,
+                  "probability": 0.9390740990638733
+                },
+                {
+                  "word": " to",
+                  "start": 552.22,
+                  "end": 552.44,
+                  "probability": 0.9852414727210999
+                },
+                {
+                  "word": " someone.",
+                  "start": 552.44,
+                  "end": 552.6600000000001,
+                  "probability": 0.9956990480422974
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 1041,
+        "lastExclusive": 1171
+      },
+      "uncertainWordIndexes": [
+        1050,
+        1054,
+        1057,
+        1077,
+        1087,
+        1093,
+        1118,
+        1121,
+        1127,
+        1132,
+        1146,
+        1150
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U033",
+      "sourceTextSha256": "4520ee5390c426d7a7afa0008aab573566a90ca6a703583ac012446acfa9190c",
+      "completion": "auto",
+      "candidateRange": [
+        553.81,
+        563.38
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 553.98,
+          "candidateSeconds": 553.81,
+          "max10msRmsIn100msDbFS": -70.85530351874121,
+          "contextRange": [
+            553.1800000000001,
+            556.48
+          ],
+          "contextRecognition": [
+            {
+              "text": " In the New Testament the concept of holy",
+              "words": [
+                {
+                  "word": " In",
+                  "start": 553.1800000000001,
+                  "end": 554.1200000000001,
+                  "probability": 0.5126372575759888
+                },
+                {
+                  "word": " the",
+                  "start": 554.1200000000001,
+                  "end": 554.32,
+                  "probability": 0.9947957396507263
+                },
+                {
+                  "word": " New",
+                  "start": 554.32,
+                  "end": 554.44,
+                  "probability": 0.49863123893737793
+                },
+                {
+                  "word": " Testament",
+                  "start": 554.44,
+                  "end": 554.7600000000001,
+                  "probability": 0.9844660758972168
+                },
+                {
+                  "word": " the",
+                  "start": 554.7600000000001,
+                  "end": 555.24,
+                  "probability": 0.5159140825271606
+                },
+                {
+                  "word": " concept",
+                  "start": 555.24,
+                  "end": 555.48,
+                  "probability": 0.8919287919998169
+                },
+                {
+                  "word": " of",
+                  "start": 555.48,
+                  "end": 555.86,
+                  "probability": 0.9730023145675659
+                },
+                {
+                  "word": " holy",
+                  "start": 555.86,
+                  "end": 556.2,
+                  "probability": 0.3052186965942383
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 563.18,
+          "candidateSeconds": 563.38,
+          "max10msRmsIn100msDbFS": -77.41289488125612,
+          "contextRange": [
+            560.68,
+            563.9799999999999
+          ],
+          "contextRecognition": [
+            {
+              "text": " to him or I like him.",
+              "words": [
+                {
+                  "word": " to",
+                  "start": 560.68,
+                  "end": 560.9399999999999,
+                  "probability": 0.5181840062141418
+                },
+                {
+                  "word": " him",
+                  "start": 560.9399999999999,
+                  "end": 561.4799999999999,
+                  "probability": 0.9888383150100708
+                },
+                {
+                  "word": " or",
+                  "start": 561.4799999999999,
+                  "end": 562.2399999999999,
+                  "probability": 0.7747223377227783
+                },
+                {
+                  "word": " I",
+                  "start": 562.2399999999999,
+                  "end": 562.4599999999999,
+                  "probability": 0.8616275191307068
+                },
+                {
+                  "word": " like",
+                  "start": 562.4599999999999,
+                  "end": 562.6999999999999,
+                  "probability": 0.9358214735984802
+                },
+                {
+                  "word": " him.",
+                  "start": 562.6999999999999,
+                  "end": 563.4399999999999,
+                  "probability": 0.9987396597862244
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 1171,
+        "lastExclusive": 1196
+      },
+      "uncertainWordIndexes": [
+        1178,
+        1191,
+        1192
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U034",
+      "sourceTextSha256": "fdf76e10bda9745f4b4ff4b51c05e29c521518454e42bcece5717ac8bd97f7a0",
+      "completion": "auto",
+      "candidateRange": [
+        564.21,
+        583.31
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 564.28,
+          "candidateSeconds": 564.21,
+          "max10msRmsIn100msDbFS": -74.94683829238478,
+          "contextRange": [
+            563.48,
+            566.78
+          ],
+          "contextRecognition": [
+            {
+              "text": " If the term spirit is difficult to translate.",
+              "words": [
+                {
+                  "word": " If",
+                  "start": 563.48,
+                  "end": 564.58,
+                  "probability": 0.8121074438095093
+                },
+                {
+                  "word": " the",
+                  "start": 564.58,
+                  "end": 564.8000000000001,
+                  "probability": 0.9888550639152527
+                },
+                {
+                  "word": " term",
+                  "start": 564.8000000000001,
+                  "end": 565.08,
+                  "probability": 0.948638916015625
+                },
+                {
+                  "word": " spirit",
+                  "start": 565.08,
+                  "end": 565.58,
+                  "probability": 0.3537009358406067
+                },
+                {
+                  "word": " is",
+                  "start": 565.58,
+                  "end": 565.9200000000001,
+                  "probability": 0.9728652834892273
+                },
+                {
+                  "word": " difficult",
+                  "start": 565.9200000000001,
+                  "end": 566.22,
+                  "probability": 0.9973624348640442
+                },
+                {
+                  "word": " to",
+                  "start": 566.22,
+                  "end": 566.62,
+                  "probability": 0.9958968162536621
+                },
+                {
+                  "word": " translate.",
+                  "start": 566.62,
+                  "end": 566.76,
+                  "probability": 0.9436050057411194
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 583.1,
+          "candidateSeconds": 583.31,
+          "max10msRmsIn100msDbFS": -66.40653188507598,
+          "contextRange": [
+            580.6,
+            583.9
+          ],
+          "contextRecognition": [
+            {
+              "text": " God's Spirit is God's power.",
+              "words": [
+                {
+                  "word": " God's",
+                  "start": 580.6,
+                  "end": 581.4,
+                  "probability": 0.7523811757564545
+                },
+                {
+                  "word": " Spirit",
+                  "start": 581.4,
+                  "end": 581.4,
+                  "probability": 0.6845974922180176
+                },
+                {
+                  "word": " is",
+                  "start": 581.4,
+                  "end": 582.1,
+                  "probability": 0.8803196549415588
+                },
+                {
+                  "word": " God's",
+                  "start": 582.1,
+                  "end": 582.84,
+                  "probability": 0.995829164981842
+                },
+                {
+                  "word": " power.",
+                  "start": 582.84,
+                  "end": 582.84,
+                  "probability": 0.8986074328422546
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 1196,
+        "lastExclusive": 1251
+      },
+      "uncertainWordIndexes": [
+        1199,
+        1204,
+        1218,
+        1219,
+        1246,
+        1247
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U035",
+      "sourceTextSha256": "1cc6863506ee09682719a3747264a4d2550902ecc58267b360961934fa573acd",
+      "completion": "confirm",
+      "candidateRange": [
+        583.8,
+        596.65
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 584.04,
+          "candidateSeconds": 583.8,
+          "max10msRmsIn100msDbFS": -78.80435652849259,
+          "contextRange": [
+            583.24,
+            586.54
+          ],
+          "contextRecognition": [
+            {
+              "text": " Stop here and discuss as a group what word?",
+              "words": [
+                {
+                  "word": " Stop",
+                  "start": 583.24,
+                  "end": 584.32,
+                  "probability": 0.5621126890182495
+                },
+                {
+                  "word": " here",
+                  "start": 584.32,
+                  "end": 584.74,
+                  "probability": 0.9921200275421143
+                },
+                {
+                  "word": " and",
+                  "start": 584.74,
+                  "end": 585.02,
+                  "probability": 0.8813940286636353
+                },
+                {
+                  "word": " discuss",
+                  "start": 585.02,
+                  "end": 585.32,
+                  "probability": 0.97989821434021
+                },
+                {
+                  "word": " as",
+                  "start": 585.32,
+                  "end": 585.5600000000001,
+                  "probability": 0.9283174872398376
+                },
+                {
+                  "word": " a",
+                  "start": 585.5600000000001,
+                  "end": 585.6800000000001,
+                  "probability": 0.9904597997665405
+                },
+                {
+                  "word": " group",
+                  "start": 585.6800000000001,
+                  "end": 585.96,
+                  "probability": 0.9854748249053955
+                },
+                {
+                  "word": " what",
+                  "start": 585.96,
+                  "end": 586.24,
+                  "probability": 0.9113555550575256
+                },
+                {
+                  "word": " word?",
+                  "start": 586.24,
+                  "end": 586.52,
+                  "probability": 0.855161190032959
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 596.54,
+          "candidateSeconds": 596.65,
+          "max10msRmsIn100msDbFS": -56.44698347330898,
+          "contextRange": [
+            594.04,
+            597.3399999999999
+          ],
+          "contextRecognition": [
+            {
+              "text": " pause this audio here.",
+              "words": [
+                {
+                  "word": " pause",
+                  "start": 594.04,
+                  "end": 595.36,
+                  "probability": 0.12644554674625397
+                },
+                {
+                  "word": " this",
+                  "start": 595.36,
+                  "end": 595.78,
+                  "probability": 0.9819601774215698
+                },
+                {
+                  "word": " audio",
+                  "start": 595.78,
+                  "end": 596.12,
+                  "probability": 0.9938451647758484
+                },
+                {
+                  "word": " here.",
+                  "start": 596.12,
+                  "end": 597.0,
+                  "probability": 0.969372570514679
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 1251,
+        "lastExclusive": 1282
+      },
+      "uncertainWordIndexes": [
+        1273
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U036",
+      "sourceTextSha256": "2922f9849ba2a2ba71d8673d78da7bb18c0e677a7ac0edabc557cb3c43404a8a",
+      "completion": "auto",
+      "candidateRange": [
+        600.06,
+        624.23
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 600.16,
+          "candidateSeconds": 600.06,
+          "max10msRmsIn100msDbFS": -74.42307780783925,
+          "contextRange": [
+            599.36,
+            602.66
+          ],
+          "contextRecognition": [
+            {
+              "text": " When heaven is torn open.",
+              "words": [
+                {
+                  "word": " When",
+                  "start": 599.36,
+                  "end": 600.84,
+                  "probability": 0.6715420484542847
+                },
+                {
+                  "word": " heaven",
+                  "start": 600.84,
+                  "end": 601.0600000000001,
+                  "probability": 0.577068030834198
+                },
+                {
+                  "word": " is",
+                  "start": 601.0600000000001,
+                  "end": 601.62,
+                  "probability": 0.9901498556137085
+                },
+                {
+                  "word": " torn",
+                  "start": 601.62,
+                  "end": 601.84,
+                  "probability": 0.43923038244247437
+                },
+                {
+                  "word": " open.",
+                  "start": 601.84,
+                  "end": 602.32,
+                  "probability": 0.987880527973175
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 624.16,
+          "candidateSeconds": 624.23,
+          "max10msRmsIn100msDbFS": -74.00901994446839,
+          "contextRange": [
+            621.66,
+            624.9599999999999
+          ],
+          "contextRecognition": [
+            {
+              "text": " instead of that hyphen opened, you can.",
+              "words": [
+                {
+                  "word": " instead",
+                  "start": 621.66,
+                  "end": 622.14,
+                  "probability": 0.6059268116950989
+                },
+                {
+                  "word": " of",
+                  "start": 622.14,
+                  "end": 622.3399999999999,
+                  "probability": 0.9487149715423584
+                },
+                {
+                  "word": " that",
+                  "start": 622.3399999999999,
+                  "end": 622.6999999999999,
+                  "probability": 0.9222195744514465
+                },
+                {
+                  "word": " hyphen",
+                  "start": 622.6999999999999,
+                  "end": 622.9399999999999,
+                  "probability": 0.5611385330557823
+                },
+                {
+                  "word": " opened,",
+                  "start": 622.9399999999999,
+                  "end": 623.38,
+                  "probability": 0.8062366843223572
+                },
+                {
+                  "word": " you",
+                  "start": 623.7199999999999,
+                  "end": 623.78,
+                  "probability": 0.9937606453895569
+                },
+                {
+                  "word": " can.",
+                  "start": 623.78,
+                  "end": 624.06,
+                  "probability": 0.9957276582717896
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 1282,
+        "lastExclusive": 1351
+      },
+      "uncertainWordIndexes": [
+        1282,
+        1283,
+        1285,
+        1293,
+        1294
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U037",
+      "sourceTextSha256": "6f062520ed332b5943042d32a4fff7572bdf96432b58626e0c717f29e5b339c7",
+      "completion": "auto",
+      "candidateRange": [
+        624.73,
+        638.98
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 624.94,
+          "candidateSeconds": 624.73,
+          "max10msRmsIn100msDbFS": -77.97012801358755,
+          "contextRange": [
+            624.1400000000001,
+            627.44
+          ],
+          "contextRecognition": [
+            {
+              "text": " The voice from heaven is really",
+              "words": [
+                {
+                  "word": " The",
+                  "start": 624.1400000000001,
+                  "end": 625.6600000000001,
+                  "probability": 0.773850679397583
+                },
+                {
+                  "word": " voice",
+                  "start": 625.6600000000001,
+                  "end": 625.9000000000001,
+                  "probability": 0.9807828068733215
+                },
+                {
+                  "word": " from",
+                  "start": 625.9000000000001,
+                  "end": 626.2200000000001,
+                  "probability": 0.995786726474762
+                },
+                {
+                  "word": " heaven",
+                  "start": 626.2200000000001,
+                  "end": 626.6600000000001,
+                  "probability": 0.647438108921051
+                },
+                {
+                  "word": " is",
+                  "start": 626.6600000000001,
+                  "end": 627.2600000000001,
+                  "probability": 0.9640455842018127
+                },
+                {
+                  "word": " really",
+                  "start": 627.2600000000001,
+                  "end": 627.4200000000001,
+                  "probability": 0.9581906795501709
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 638.86,
+          "candidateSeconds": 638.98,
+          "max10msRmsIn100msDbFS": -79.45940957491206,
+          "contextRange": [
+            636.36,
+            639.66
+          ],
+          "contextRecognition": [
+            {
+              "text": " comes from the place where God lives.",
+              "words": [
+                {
+                  "word": " comes",
+                  "start": 636.36,
+                  "end": 637.04,
+                  "probability": 0.3426208794116974
+                },
+                {
+                  "word": " from",
+                  "start": 637.04,
+                  "end": 637.42,
+                  "probability": 0.9955660700798035
+                },
+                {
+                  "word": " the",
+                  "start": 637.42,
+                  "end": 637.64,
+                  "probability": 0.9889655113220215
+                },
+                {
+                  "word": " place",
+                  "start": 637.64,
+                  "end": 637.96,
+                  "probability": 0.9972854852676392
+                },
+                {
+                  "word": " where",
+                  "start": 637.96,
+                  "end": 638.2,
+                  "probability": 0.9898853302001953
+                },
+                {
+                  "word": " God",
+                  "start": 638.2,
+                  "end": 638.4,
+                  "probability": 0.7741101980209351
+                },
+                {
+                  "word": " lives.",
+                  "start": 638.4,
+                  "end": 638.64,
+                  "probability": 0.960753858089447
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 1351,
+        "lastExclusive": 1383
+      },
+      "uncertainWordIndexes": [
+        1351,
+        1354
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U038",
+      "sourceTextSha256": "14301f97a98f76438909cc98a2c23edbb166b3c45f424a8287931ab9c72da3a9",
+      "completion": "confirm",
+      "candidateRange": [
+        639.64,
+        651.71
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 639.88,
+          "candidateSeconds": 639.64,
+          "max10msRmsIn100msDbFS": -65.60549937024057,
+          "contextRange": [
+            639.08,
+            642.38
+          ],
+          "contextRecognition": [
+            {
+              "text": " Stop here and discuss as a group what word or",
+              "words": [
+                {
+                  "word": " Stop",
+                  "start": 639.08,
+                  "end": 640.14,
+                  "probability": 0.5986272096633911
+                },
+                {
+                  "word": " here",
+                  "start": 640.14,
+                  "end": 640.5,
+                  "probability": 0.9865536093711853
+                },
+                {
+                  "word": " and",
+                  "start": 640.5,
+                  "end": 640.6800000000001,
+                  "probability": 0.95371413230896
+                },
+                {
+                  "word": " discuss",
+                  "start": 640.6800000000001,
+                  "end": 641.0400000000001,
+                  "probability": 0.991075873374939
+                },
+                {
+                  "word": " as",
+                  "start": 641.0400000000001,
+                  "end": 641.36,
+                  "probability": 0.954510509967804
+                },
+                {
+                  "word": " a",
+                  "start": 641.36,
+                  "end": 641.5,
+                  "probability": 0.9736648797988892
+                },
+                {
+                  "word": " group",
+                  "start": 641.5,
+                  "end": 641.7800000000001,
+                  "probability": 0.9880741238594055
+                },
+                {
+                  "word": " what",
+                  "start": 641.7800000000001,
+                  "end": 642.1,
+                  "probability": 0.6769131422042847
+                },
+                {
+                  "word": " word",
+                  "start": 642.1,
+                  "end": 642.36,
+                  "probability": 0.758716881275177
+                },
+                {
+                  "word": " or",
+                  "start": 642.36,
+                  "end": 642.36,
+                  "probability": 0.12312328815460205
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 651.64,
+          "candidateSeconds": 651.71,
+          "max10msRmsIn100msDbFS": -75.51436929156785,
+          "contextRange": [
+            649.14,
+            652.4399999999999
+          ],
+          "contextRecognition": [
+            {
+              "text": " Pause this audio here.",
+              "words": [
+                {
+                  "word": " Pause",
+                  "start": 649.14,
+                  "end": 649.76,
+                  "probability": 0.6875976771116257
+                },
+                {
+                  "word": " this",
+                  "start": 649.76,
+                  "end": 650.1,
+                  "probability": 0.9973466396331787
+                },
+                {
+                  "word": " audio",
+                  "start": 650.1,
+                  "end": 650.4,
+                  "probability": 0.9903743267059326
+                },
+                {
+                  "word": " here.",
+                  "start": 650.4,
+                  "end": 651.1999999999999,
+                  "probability": 0.9658775925636292
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 1383,
+        "lastExclusive": 1413
+      },
+      "uncertainWordIndexes": [
+        1404
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U039",
+      "sourceTextSha256": "f1440ad39d62619c439173dd86cb3702da5ebd030c5e7a9732c11ec7983fd40f",
+      "completion": "auto",
+      "candidateRange": [
+        653.51,
+        659.05
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 653.7,
+          "candidateSeconds": 653.51,
+          "max10msRmsIn100msDbFS": -77.56321808973732,
+          "contextRange": [
+            652.9000000000001,
+            656.2
+          ],
+          "contextRecognition": [
+            {
+              "text": " Satan tempted Jesus.",
+              "words": [
+                {
+                  "word": " Satan",
+                  "start": 652.9000000000001,
+                  "end": 654.3000000000001,
+                  "probability": 0.9478738903999329
+                },
+                {
+                  "word": " tempted",
+                  "start": 654.3000000000001,
+                  "end": 655.1000000000001,
+                  "probability": 0.8886862397193909
+                },
+                {
+                  "word": " Jesus.",
+                  "start": 655.1000000000001,
+                  "end": 655.6200000000001,
+                  "probability": 0.9922866821289062
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 658.72,
+          "candidateSeconds": 659.05,
+          "max10msRmsIn100msDbFS": -74.15043325366618,
+          "contextRange": [
+            656.22,
+            659.52
+          ],
+          "contextRecognition": [
+            {
+              "text": " Tempted really means to test.",
+              "words": [
+                {
+                  "word": " Tempted",
+                  "start": 656.22,
+                  "end": 657.22,
+                  "probability": 0.7271848122278849
+                },
+                {
+                  "word": " really",
+                  "start": 657.22,
+                  "end": 657.5400000000001,
+                  "probability": 0.9392277002334595
+                },
+                {
+                  "word": " means",
+                  "start": 657.5400000000001,
+                  "end": 657.86,
+                  "probability": 0.9963363409042358
+                },
+                {
+                  "word": " to",
+                  "start": 657.86,
+                  "end": 658.14,
+                  "probability": 0.8766404986381531
+                },
+                {
+                  "word": " test.",
+                  "start": 658.14,
+                  "end": 658.52,
+                  "probability": 0.9908978343009949
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 1413,
+        "lastExclusive": 1421
+      },
+      "uncertainWordIndexes": [
+        1417
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U040",
+      "sourceTextSha256": "78184a33bfe4e9d056df07c2c6d82c5546c37d682bb7542afeee06b3276cf725",
+      "completion": "auto",
+      "candidateRange": [
+        659.66,
+        676.74
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 659.86,
+          "candidateSeconds": 659.66,
+          "max10msRmsIn100msDbFS": -72.61887237519363,
+          "contextRange": [
+            659.0600000000001,
+            662.36
+          ],
+          "contextRecognition": [
+            {
+              "text": " Satan refers to the spiritual being whom God",
+              "words": [
+                {
+                  "word": " Satan",
+                  "start": 659.0600000000001,
+                  "end": 660.1800000000001,
+                  "probability": 0.9557651281356812
+                },
+                {
+                  "word": " refers",
+                  "start": 660.1800000000001,
+                  "end": 660.5000000000001,
+                  "probability": 0.9703263640403748
+                },
+                {
+                  "word": " to",
+                  "start": 660.5000000000001,
+                  "end": 660.86,
+                  "probability": 0.9977312684059143
+                },
+                {
+                  "word": " the",
+                  "start": 660.86,
+                  "end": 661.0400000000001,
+                  "probability": 0.9896188378334045
+                },
+                {
+                  "word": " spiritual",
+                  "start": 661.0400000000001,
+                  "end": 661.3800000000001,
+                  "probability": 0.967457115650177
+                },
+                {
+                  "word": " being",
+                  "start": 661.3800000000001,
+                  "end": 662.0400000000001,
+                  "probability": 0.9897791743278503
+                },
+                {
+                  "word": " whom",
+                  "start": 662.0400000000001,
+                  "end": 662.34,
+                  "probability": 0.5048689842224121
+                },
+                {
+                  "word": " God",
+                  "start": 662.34,
+                  "end": 662.34,
+                  "probability": 0.5061689019203186
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 676.48,
+          "candidateSeconds": 676.74,
+          "max10msRmsIn100msDbFS": -75.66930900260697,
+          "contextRange": [
+            673.98,
+            677.28
+          ],
+          "contextRecognition": [
+            {
+              "text": " if Satan is unknown to your audience.",
+              "words": [
+                {
+                  "word": " if",
+                  "start": 673.98,
+                  "end": 674.54,
+                  "probability": 0.6251881122589111
+                },
+                {
+                  "word": " Satan",
+                  "start": 674.54,
+                  "end": 674.78,
+                  "probability": 0.9646268486976624
+                },
+                {
+                  "word": " is",
+                  "start": 674.78,
+                  "end": 675.1800000000001,
+                  "probability": 0.9946244359016418
+                },
+                {
+                  "word": " unknown",
+                  "start": 675.1800000000001,
+                  "end": 675.38,
+                  "probability": 0.997793436050415
+                },
+                {
+                  "word": " to",
+                  "start": 675.38,
+                  "end": 675.72,
+                  "probability": 0.9917715191841125
+                },
+                {
+                  "word": " your",
+                  "start": 675.72,
+                  "end": 675.9200000000001,
+                  "probability": 0.9896957874298096
+                },
+                {
+                  "word": " audience.",
+                  "start": 675.9200000000001,
+                  "end": 676.3000000000001,
+                  "probability": 0.9888426065444946
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 1421,
+        "lastExclusive": 1466
+      },
+      "uncertainWordIndexes": [
+        1454
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U041",
+      "sourceTextSha256": "88ac3f70bced86a8f240d4d3019a6bb0172c6c572c18d91752d779031ef0ecb2",
+      "completion": "confirm",
+      "candidateRange": [
+        676.89,
+        690.84
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 677.22,
+          "candidateSeconds": 676.89,
+          "max10msRmsIn100msDbFS": -73.51526736959248,
+          "contextRange": [
+            676.4200000000001,
+            679.72
+          ],
+          "contextRecognition": [
+            {
+              "text": " Stop here and discuss as a group what?",
+              "words": [
+                {
+                  "word": " Stop",
+                  "start": 677.3800000000001,
+                  "end": 677.8600000000001,
+                  "probability": 0.6056619882583618
+                },
+                {
+                  "word": " here",
+                  "start": 677.8600000000001,
+                  "end": 678.1,
+                  "probability": 0.9013572931289673
+                },
+                {
+                  "word": " and",
+                  "start": 678.1,
+                  "end": 678.2800000000001,
+                  "probability": 0.9341879487037659
+                },
+                {
+                  "word": " discuss",
+                  "start": 678.2800000000001,
+                  "end": 678.6400000000001,
+                  "probability": 0.9306937456130981
+                },
+                {
+                  "word": " as",
+                  "start": 678.6400000000001,
+                  "end": 678.94,
+                  "probability": 0.9420559406280518
+                },
+                {
+                  "word": " a",
+                  "start": 678.94,
+                  "end": 679.0400000000001,
+                  "probability": 0.9848907589912415
+                },
+                {
+                  "word": " group",
+                  "start": 679.0400000000001,
+                  "end": 679.3800000000001,
+                  "probability": 0.9961919784545898
+                },
+                {
+                  "word": " what?",
+                  "start": 679.3800000000001,
+                  "end": 679.6,
+                  "probability": 0.45049959421157837
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 690.5,
+          "candidateSeconds": 690.84,
+          "max10msRmsIn100msDbFS": -72.08635029828154,
+          "contextRange": [
+            688.0,
+            691.3
+          ],
+          "contextRecognition": [
+            {
+              "text": " audio here.",
+              "words": [
+                {
+                  "word": " audio",
+                  "start": 688.0,
+                  "end": 688.34,
+                  "probability": 0.35363081097602844
+                },
+                {
+                  "word": " here.",
+                  "start": 688.34,
+                  "end": 689.04,
+                  "probability": 0.9728666543960571
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 1466,
+        "lastExclusive": 1496
+      },
+      "uncertainWordIndexes": [
+        1466,
+        1481,
+        1487
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U042",
+      "sourceTextSha256": "71ec6b8881bb4156e393d94fcb6103cc48bdd2d861913ac904f6cc64dbae5521",
+      "completion": "auto",
+      "candidateRange": [
+        691.73,
+        731.1
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 691.92,
+          "candidateSeconds": 691.73,
+          "max10msRmsIn100msDbFS": -76.72166014927998,
+          "contextRange": [
+            691.12,
+            694.42
+          ],
+          "contextRecognition": [
+            {
+              "text": " Angels came and took care of Jesus.",
+              "words": [
+                {
+                  "word": " Angels",
+                  "start": 691.88,
+                  "end": 692.44,
+                  "probability": 0.6299026608467102
+                },
+                {
+                  "word": " came",
+                  "start": 692.44,
+                  "end": 693.0,
+                  "probability": 0.9919971823692322
+                },
+                {
+                  "word": " and",
+                  "start": 693.0,
+                  "end": 693.2,
+                  "probability": 0.938355028629303
+                },
+                {
+                  "word": " took",
+                  "start": 693.2,
+                  "end": 693.46,
+                  "probability": 0.9985331296920776
+                },
+                {
+                  "word": " care",
+                  "start": 693.46,
+                  "end": 693.68,
+                  "probability": 0.9997459053993225
+                },
+                {
+                  "word": " of",
+                  "start": 693.68,
+                  "end": 693.98,
+                  "probability": 0.9969024062156677
+                },
+                {
+                  "word": " Jesus.",
+                  "start": 693.98,
+                  "end": 694.28,
+                  "probability": 0.9972991347312927
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 730.78,
+          "candidateSeconds": 731.1,
+          "max10msRmsIn100msDbFS": -75.10196561164341,
+          "contextRange": [
+            728.28,
+            731.5799999999999
+          ],
+          "contextRecognition": [
+            {
+              "text": " messenger from God to this description.",
+              "words": [
+                {
+                  "word": " messenger",
+                  "start": 728.28,
+                  "end": 728.72,
+                  "probability": 0.9663238525390625
+                },
+                {
+                  "word": " from",
+                  "start": 728.72,
+                  "end": 729.12,
+                  "probability": 0.98949134349823
+                },
+                {
+                  "word": " God",
+                  "start": 729.12,
+                  "end": 729.54,
+                  "probability": 0.9528930187225342
+                },
+                {
+                  "word": " to",
+                  "start": 729.54,
+                  "end": 729.9,
+                  "probability": 0.922782838344574
+                },
+                {
+                  "word": " this",
+                  "start": 729.9,
+                  "end": 730.16,
+                  "probability": 0.986391544342041
+                },
+                {
+                  "word": " description.",
+                  "start": 730.16,
+                  "end": 730.54,
+                  "probability": 0.987503707408905
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 1496,
+        "lastExclusive": 1593
+      },
+      "uncertainWordIndexes": [
+        1496,
+        1503,
+        1504,
+        1511,
+        1523,
+        1551,
+        1552,
+        1555,
+        1576,
+        1586
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S05-U043",
+      "sourceTextSha256": "f244f5eaca5a8e2249591c38e3c24c7791a54621d82a6c45284df916f17985f9",
+      "completion": "confirm",
+      "candidateRange": [
+        731.93,
+        744.72
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 732.1600000000001,
+          "candidateSeconds": 731.93,
+          "max10msRmsIn100msDbFS": -78.33821208444168,
+          "contextRange": [
+            731.3600000000001,
+            734.6600000000001
+          ],
+          "contextRecognition": [
+            {
+              "text": " Stop here and discuss as a group.",
+              "words": [
+                {
+                  "word": " Stop",
+                  "start": 732.3600000000001,
+                  "end": 732.8400000000001,
+                  "probability": 0.5523601770401001
+                },
+                {
+                  "word": " here",
+                  "start": 732.8400000000001,
+                  "end": 733.0800000000002,
+                  "probability": 0.9639450907707214
+                },
+                {
+                  "word": " and",
+                  "start": 733.0800000000002,
+                  "end": 733.2600000000001,
+                  "probability": 0.9699894189834595
+                },
+                {
+                  "word": " discuss",
+                  "start": 733.2600000000001,
+                  "end": 733.6000000000001,
+                  "probability": 0.9619528651237488
+                },
+                {
+                  "word": " as",
+                  "start": 733.6000000000001,
+                  "end": 733.8800000000001,
+                  "probability": 0.9664188027381897
+                },
+                {
+                  "word": " a",
+                  "start": 733.8800000000001,
+                  "end": 733.9800000000001,
+                  "probability": 0.9907886385917664
+                },
+                {
+                  "word": " group.",
+                  "start": 733.9800000000001,
+                  "end": 734.3600000000001,
+                  "probability": 0.9915557503700256
+                }
+              ]
+            },
+            {
+              "text": " What?",
+              "words": [
+                {
+                  "word": " What?",
+                  "start": 734.5800000000002,
+                  "end": 734.6400000000001,
+                  "probability": 0.7651519775390625
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 744.58,
+          "candidateSeconds": 744.72,
+          "max10msRmsIn100msDbFS": -76.39994303293973,
+          "contextRange": [
+            742.08,
+            745.38
+          ],
+          "contextRecognition": [
+            {
+              "text": " Pause this audio here.",
+              "words": [
+                {
+                  "word": " Pause",
+                  "start": 742.08,
+                  "end": 742.8000000000001,
+                  "probability": 0.7257219702005386
+                },
+                {
+                  "word": " this",
+                  "start": 742.8000000000001,
+                  "end": 743.08,
+                  "probability": 0.9954555034637451
+                },
+                {
+                  "word": " audio",
+                  "start": 743.08,
+                  "end": 743.38,
+                  "probability": 0.9845134615898132
+                },
+                {
+                  "word": " here.",
+                  "start": 743.38,
+                  "end": 744.1,
+                  "probability": 0.8796699047088623
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 1593,
+        "lastExclusive": 1623
+      },
+      "uncertainWordIndexes": [
+        1593,
+        1600,
+        1605,
+        1608
+      ],
+      "status": "candidate-unaccepted"
+    }
+  ],
+  "limits": "Not certified verbatim transcript, source-unit acceptance, proxy clock or app readiness. Preserve ASR drift and explicit group pauses/Scripture handoffs.",
+  "elapsedSeconds": 27.445063082966954
+}

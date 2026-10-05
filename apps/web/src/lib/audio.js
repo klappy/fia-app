@@ -4,7 +4,12 @@ export function createAudioController(onState, onEnd, onError, { allowSpeechFall
   function clearBoundary() { boundaryEpoch++; clearTimeout(deadline); deadline = null; if (frame !== null && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(frame); frame = null; }
   let audio = null, utterance = null, generation = 0, speaking = false, paused = false;
   const pauseVideos = () => document.querySelectorAll('video').forEach(video => video.pause());
-  const state = () => onState({ src: source, playing: speaking, elapsed: audio?.currentTime || 0, duration: Number.isFinite(audio?.duration) ? audio.duration : 0 });
+  const state = () => {
+    const elapsed = audio?.currentTime || 0, duration = Number.isFinite(audio?.duration) ? audio.duration : 0;
+    // Keep absolute media time for alignment; the circle measures only this excerpt.
+    const progress = range ? { progressElapsed: Math.max(0, Math.min(range.endSeconds - range.startSeconds, elapsed - range.startSeconds)), progressDuration: range.endSeconds - range.startSeconds } : {};
+    onState({ src: source, playing: speaking, elapsed, duration, ...progress });
+  };
   function releaseAudio() {
     clearBoundary(); range = null; prepareRange = null;
     const old = audio;

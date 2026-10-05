@@ -1,0 +1,1709 @@
+{
+  "status": "candidate-boundary-analysis",
+  "sourceSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+  "alignmentSha256": "d7afe0e47a69c568c8eb91b46239c26ae42b205320e9307d2b60e722b46c0a34",
+  "rawTranscriptSha256": "879f5543e09398edba01ea43fa39e9a78a372a252a1ddab82de82369e5b5f8cb",
+  "scriptSha256": "29cf2b24061fa98fc70d88c057c7e75949c076e452b01aae2243a8c379bd00d0",
+  "model": {
+    "name": "Systran/faster-whisper-tiny.en",
+    "snapshot": "0d3d19a32d3338f10357c0889762bd8d64bbdeba",
+    "files": {
+      "config.json": {
+        "sha256": "14b1b421a90349bc551b881461426b561a874049cb9e4c4864f2ca384f6a7cc5",
+        "bytes": 2317
+      },
+      "model.bin": {
+        "sha256": "1a5afae06a4db91c975c9a9d78be5cc110ee4ea022ad57d55492e4550e936b2a",
+        "bytes": 75537502
+      },
+      "tokenizer.json": {
+        "sha256": "929c5252409436dce1b38a75d1abbcb5e132d170d8e324e4e04ed915fa2d22df",
+        "bytes": 2128466
+      },
+      "vocabulary.txt": {
+        "sha256": "ff77588746d3a2595d32ab5b69ffd7b95ce2441ac57533cb66fc3eb575a115cf",
+        "bytes": 422309
+      }
+    },
+    "device": "cpu",
+    "computeType": "int8",
+    "cpuThreads": 4
+  },
+  "method": "Independent24shortboundary-contextASR crops, no script prompt/forcedalignment; quiet100ms windows near padded word edges. PCM concatenated0 clock.",
+  "rows": [
+    {
+      "activityId": "S02-U001",
+      "sourceTextSha256": "40915459d3070b081f6298ca4a7a52a1f5a10ce875b7de37380cf051b9438494",
+      "completion": "auto",
+      "candidateRange": [
+        6.21,
+        14.2
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 6.56,
+          "candidateSeconds": 6.21,
+          "max10msRmsIn100msDbFS": -58.77397305297816,
+          "contextRange": [
+            5.76,
+            9.059999999999999
+          ],
+          "contextRecognition": [
+            {
+              "text": " listen to an audio version of",
+              "words": [
+                {
+                  "word": " listen",
+                  "start": 6.9399999999999995,
+                  "end": 7.54,
+                  "probability": 0.16903123259544373
+                },
+                {
+                  "word": " to",
+                  "start": 7.54,
+                  "end": 7.859999999999999,
+                  "probability": 0.9872670769691467
+                },
+                {
+                  "word": " an",
+                  "start": 7.859999999999999,
+                  "end": 8.14,
+                  "probability": 0.9836003184318542
+                },
+                {
+                  "word": " audio",
+                  "start": 8.14,
+                  "end": 8.34,
+                  "probability": 0.9881911873817444
+                },
+                {
+                  "word": " version",
+                  "start": 8.34,
+                  "end": 8.82,
+                  "probability": 0.997929573059082
+                },
+                {
+                  "word": " of",
+                  "start": 8.82,
+                  "end": 9.02,
+                  "probability": 0.9673700928688049
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 14.0,
+          "candidateSeconds": 14.2,
+          "max10msRmsIn100msDbFS": -63.44790205387045,
+          "contextRange": [
+            11.5,
+            14.8
+          ],
+          "contextRecognition": [
+            {
+              "text": " the easiest to understand translation.",
+              "words": [
+                {
+                  "word": " the",
+                  "start": 11.5,
+                  "end": 11.84,
+                  "probability": 0.6611223816871643
+                },
+                {
+                  "word": " easiest",
+                  "start": 11.84,
+                  "end": 12.24,
+                  "probability": 0.999064028263092
+                },
+                {
+                  "word": " to",
+                  "start": 12.24,
+                  "end": 12.64,
+                  "probability": 0.9341671466827393
+                },
+                {
+                  "word": " understand",
+                  "start": 12.64,
+                  "end": 13.18,
+                  "probability": 0.9870632290840149
+                },
+                {
+                  "word": " translation.",
+                  "start": 13.18,
+                  "end": 13.8,
+                  "probability": 0.9901251792907715
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 9,
+        "lastExclusive": 26
+      },
+      "uncertainWordIndexes": [
+        9
+      ],
+      "status": "candidate-unaccepted",
+      "sourceReview": "supported-candidate-not-published",
+      "notes": [
+        "Quiet edge windows and independent context recognition support these candidate edges; raw ASR wording uncertainty remains unchanged."
+      ]
+    },
+    {
+      "activityId": "S02-U002",
+      "sourceTextSha256": "8a8fb60f61f85a55bf45f5a52d58ff1da8fcab369bce6adb74e8e4433334a361",
+      "completion": "auto",
+      "candidateRange": [
+        15.09,
+        25.5
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 15.4,
+          "candidateSeconds": 15.09,
+          "max10msRmsIn100msDbFS": -68.84364834007998,
+          "contextRange": [
+            14.6,
+            17.9
+          ],
+          "contextRecognition": [
+            {
+              "text": " The book of Mark begins by setting the stage for the...",
+              "words": [
+                {
+                  "word": " The",
+                  "start": 14.6,
+                  "end": 15.42,
+                  "probability": 0.761457085609436
+                },
+                {
+                  "word": " book",
+                  "start": 15.42,
+                  "end": 15.62,
+                  "probability": 0.621877908706665
+                },
+                {
+                  "word": " of",
+                  "start": 15.62,
+                  "end": 15.84,
+                  "probability": 0.997212827205658
+                },
+                {
+                  "word": " Mark",
+                  "start": 15.84,
+                  "end": 16.08,
+                  "probability": 0.7447157502174377
+                },
+                {
+                  "word": " begins",
+                  "start": 16.08,
+                  "end": 16.4,
+                  "probability": 0.9926447868347168
+                },
+                {
+                  "word": " by",
+                  "start": 16.4,
+                  "end": 16.72,
+                  "probability": 0.9983093738555908
+                },
+                {
+                  "word": " setting",
+                  "start": 16.72,
+                  "end": 17.02,
+                  "probability": 0.98816978931427
+                },
+                {
+                  "word": " the",
+                  "start": 17.02,
+                  "end": 17.28,
+                  "probability": 0.9880989193916321
+                },
+                {
+                  "word": " stage",
+                  "start": 17.28,
+                  "end": 17.56,
+                  "probability": 0.9970882534980774
+                },
+                {
+                  "word": " for",
+                  "start": 17.56,
+                  "end": 17.74,
+                  "probability": 0.9866008162498474
+                },
+                {
+                  "word": " the...",
+                  "start": 17.74,
+                  "end": 17.88,
+                  "probability": 0.5715267285704613
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 25.28,
+          "candidateSeconds": 25.5,
+          "max10msRmsIn100msDbFS": -63.77425079155482,
+          "contextRange": [
+            22.78,
+            26.080000000000002
+          ],
+          "contextRecognition": [
+            {
+              "text": " his time of ministry or teaching.",
+              "words": [
+                {
+                  "word": " his",
+                  "start": 22.78,
+                  "end": 23.18,
+                  "probability": 0.8364288210868835
+                },
+                {
+                  "word": " time",
+                  "start": 23.18,
+                  "end": 23.5,
+                  "probability": 0.9459893703460693
+                },
+                {
+                  "word": " of",
+                  "start": 23.5,
+                  "end": 23.92,
+                  "probability": 0.9894983768463135
+                },
+                {
+                  "word": " ministry",
+                  "start": 23.92,
+                  "end": 24.240000000000002,
+                  "probability": 0.9728025794029236
+                },
+                {
+                  "word": " or",
+                  "start": 24.240000000000002,
+                  "end": 24.66,
+                  "probability": 0.7649814486503601
+                },
+                {
+                  "word": " teaching.",
+                  "start": 24.66,
+                  "end": 25.0,
+                  "probability": 0.9966014623641968
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 26,
+        "lastExclusive": 57
+      },
+      "uncertainWordIndexes": [
+        27,
+        40,
+        51
+      ],
+      "status": "candidate-unaccepted",
+      "sourceReview": "supported-candidate-not-published",
+      "notes": [
+        "Quiet edge windows and independent context recognition support these candidate edges; raw ASR wording uncertainty remains unchanged."
+      ]
+    },
+    {
+      "activityId": "S02-U003",
+      "sourceTextSha256": "a360a3105e69cf2a20bc47b04a38511cfee6e41c1eb7fb6055a846fb6e1064c5",
+      "completion": "auto",
+      "candidateRange": [
+        25.84,
+        58.1
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 26.16,
+          "candidateSeconds": 25.84,
+          "max10msRmsIn100msDbFS": -61.009545738676955,
+          "contextRange": [
+            25.36,
+            28.66
+          ],
+          "contextRecognition": [
+            {
+              "text": " Mark tells us that John will prepare.",
+              "words": [
+                {
+                  "word": " Mark",
+                  "start": 26.18,
+                  "end": 26.759999999999998,
+                  "probability": 0.8264957070350647
+                },
+                {
+                  "word": " tells",
+                  "start": 26.759999999999998,
+                  "end": 27.06,
+                  "probability": 0.9939893484115601
+                },
+                {
+                  "word": " us",
+                  "start": 27.06,
+                  "end": 27.38,
+                  "probability": 0.9985016584396362
+                },
+                {
+                  "word": " that",
+                  "start": 27.38,
+                  "end": 27.64,
+                  "probability": 0.9283732771873474
+                },
+                {
+                  "word": " John",
+                  "start": 27.64,
+                  "end": 27.919999999999998,
+                  "probability": 0.8561212420463562
+                },
+                {
+                  "word": " will",
+                  "start": 27.919999999999998,
+                  "end": 28.2,
+                  "probability": 0.9882247447967529
+                },
+                {
+                  "word": " prepare.",
+                  "start": 28.2,
+                  "end": 28.52,
+                  "probability": 0.9908097982406616
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 57.76,
+          "candidateSeconds": 58.1,
+          "max10msRmsIn100msDbFS": -73.56514667409259,
+          "contextRange": [
+            55.26,
+            58.559999999999995
+          ],
+          "contextRecognition": [
+            {
+              "text": " Jesus is in conflict with Satan.",
+              "words": [
+                {
+                  "word": " Jesus",
+                  "start": 55.26,
+                  "end": 56.16,
+                  "probability": 0.43187421560287476
+                },
+                {
+                  "word": " is",
+                  "start": 56.16,
+                  "end": 56.519999999999996,
+                  "probability": 0.9879675507545471
+                },
+                {
+                  "word": " in",
+                  "start": 56.519999999999996,
+                  "end": 56.66,
+                  "probability": 0.9952096343040466
+                },
+                {
+                  "word": " conflict",
+                  "start": 56.66,
+                  "end": 56.96,
+                  "probability": 0.9965397119522095
+                },
+                {
+                  "word": " with",
+                  "start": 56.96,
+                  "end": 57.4,
+                  "probability": 0.9924551248550415
+                },
+                {
+                  "word": " Satan.",
+                  "start": 57.4,
+                  "end": 57.699999999999996,
+                  "probability": 0.969639778137207
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 57,
+        "lastExclusive": 143
+      },
+      "uncertainWordIndexes": [
+        69,
+        81,
+        104
+      ],
+      "status": "candidate-unaccepted",
+      "sourceReview": "supported-candidate-not-published",
+      "notes": [
+        "Quiet edge windows and independent context recognition support these candidate edges; raw ASR wording uncertainty remains unchanged."
+      ]
+    },
+    {
+      "activityId": "S02-U004",
+      "sourceTextSha256": "e6cec1b6bfa8786fa41efb3a55d2534655426c3571121ef9a7f49ffa470f8a24",
+      "completion": "auto",
+      "candidateRange": [
+        58.19,
+        83.84
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 58.54,
+          "candidateSeconds": 58.19,
+          "max10msRmsIn100msDbFS": -75.59660480701632,
+          "contextRange": [
+            57.74,
+            61.04
+          ],
+          "contextRecognition": [
+            {
+              "text": " This story happens in the wilderness along the Jordan River.",
+              "words": [
+                {
+                  "word": " This",
+                  "start": 57.74,
+                  "end": 58.64,
+                  "probability": 0.7412417531013489
+                },
+                {
+                  "word": " story",
+                  "start": 58.64,
+                  "end": 59.06,
+                  "probability": 0.9936302304267883
+                },
+                {
+                  "word": " happens",
+                  "start": 59.06,
+                  "end": 59.38,
+                  "probability": 0.9910228252410889
+                },
+                {
+                  "word": " in",
+                  "start": 59.38,
+                  "end": 59.6,
+                  "probability": 0.9960227012634277
+                },
+                {
+                  "word": " the",
+                  "start": 59.6,
+                  "end": 59.7,
+                  "probability": 0.9745108485221863
+                },
+                {
+                  "word": " wilderness",
+                  "start": 59.7,
+                  "end": 60.1,
+                  "probability": 0.9459894895553589
+                },
+                {
+                  "word": " along",
+                  "start": 60.1,
+                  "end": 60.480000000000004,
+                  "probability": 0.8225157856941223
+                },
+                {
+                  "word": " the",
+                  "start": 60.480000000000004,
+                  "end": 60.72,
+                  "probability": 0.989962100982666
+                },
+                {
+                  "word": " Jordan",
+                  "start": 60.72,
+                  "end": 60.940000000000005,
+                  "probability": 0.9838643074035645
+                },
+                {
+                  "word": " River.",
+                  "start": 60.940000000000005,
+                  "end": 61.02,
+                  "probability": 0.17103275656700134
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 83.54,
+          "candidateSeconds": 83.84,
+          "max10msRmsIn100msDbFS": -61.27713949347775,
+          "contextRange": [
+            81.04,
+            84.34
+          ],
+          "contextRecognition": [
+            {
+              "text": " can easily cross it.",
+              "words": [
+                {
+                  "word": " can",
+                  "start": 81.04,
+                  "end": 81.52000000000001,
+                  "probability": 0.8517849445343018
+                },
+                {
+                  "word": " easily",
+                  "start": 81.52000000000001,
+                  "end": 82.0,
+                  "probability": 0.9968937635421753
+                },
+                {
+                  "word": " cross",
+                  "start": 82.0,
+                  "end": 82.28,
+                  "probability": 0.9921413660049438
+                },
+                {
+                  "word": " it.",
+                  "start": 82.28,
+                  "end": 82.74000000000001,
+                  "probability": 0.9895989894866943
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 143,
+        "lastExclusive": 207
+      },
+      "uncertainWordIndexes": [
+        152,
+        159,
+        163,
+        189,
+        196,
+        199,
+        200
+      ],
+      "status": "candidate-unaccepted",
+      "sourceReview": "supported-candidate-not-published",
+      "notes": [
+        "Quiet edge windows and independent context recognition support these candidate edges; raw ASR wording uncertainty remains unchanged."
+      ]
+    },
+    {
+      "activityId": "S02-U005",
+      "sourceTextSha256": "bcd0b87371b477506053d64c8d8b257bca25c314ada0742fc001b7e3f6620fd4",
+      "completion": "confirm",
+      "candidateRange": [
+        84.45,
+        95.18
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 84.78,
+          "candidateSeconds": 84.45,
+          "max10msRmsIn100msDbFS": -67.01724380366461,
+          "contextRange": [
+            83.98,
+            87.28
+          ],
+          "contextRecognition": [
+            {
+              "text": " stop here and look at a picture and",
+              "words": [
+                {
+                  "word": " stop",
+                  "start": 83.98,
+                  "end": 85.06,
+                  "probability": 0.33207187056541443
+                },
+                {
+                  "word": " here",
+                  "start": 85.06,
+                  "end": 85.52000000000001,
+                  "probability": 0.9964438080787659
+                },
+                {
+                  "word": " and",
+                  "start": 85.52000000000001,
+                  "end": 85.9,
+                  "probability": 0.9027476906776428
+                },
+                {
+                  "word": " look",
+                  "start": 85.9,
+                  "end": 86.12,
+                  "probability": 0.9922568798065186
+                },
+                {
+                  "word": " at",
+                  "start": 86.12,
+                  "end": 86.32000000000001,
+                  "probability": 0.9905023574829102
+                },
+                {
+                  "word": " a",
+                  "start": 86.32000000000001,
+                  "end": 86.52000000000001,
+                  "probability": 0.8096567988395691
+                },
+                {
+                  "word": " picture",
+                  "start": 86.52000000000001,
+                  "end": 86.98,
+                  "probability": 0.9966732263565063
+                },
+                {
+                  "word": " and",
+                  "start": 86.98,
+                  "end": 87.26,
+                  "probability": 0.8248955607414246
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 94.88,
+          "candidateSeconds": 95.18,
+          "max10msRmsIn100msDbFS": -60.41217180910452,
+          "contextRange": [
+            92.38,
+            95.67999999999999
+          ],
+          "contextRecognition": [
+            {
+              "text": " here.",
+              "words": [
+                {
+                  "word": " here.",
+                  "start": 92.38,
+                  "end": 92.58,
+                  "probability": 0.0819409117102623
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 207,
+        "lastExclusive": 227
+      },
+      "uncertainWordIndexes": [],
+      "status": "candidate-unaccepted",
+      "sourceReview": "supported-candidate-not-published",
+      "notes": [
+        "Quiet edge windows and independent context recognition support these candidate edges; raw ASR wording uncertainty remains unchanged.",
+        "Discussion/resource pause must remain manual completion; recording playback must not auto-advance across this handoff."
+      ]
+    },
+    {
+      "activityId": "S02-U006",
+      "sourceTextSha256": "6e97ed700aed65bc49795e0c47193e32f3520a13c4b8c2ba6f247023061dce04",
+      "completion": "auto",
+      "candidateRange": [
+        98.23,
+        165.05
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 98.56,
+          "candidateSeconds": 98.23,
+          "max10msRmsIn100msDbFS": -61.08925210748603,
+          "contextRange": [
+            97.76,
+            101.06
+          ],
+          "contextRecognition": [
+            {
+              "text": " Mark reminds us what the Jewish prophet",
+              "words": [
+                {
+                  "word": " Mark",
+                  "start": 97.76,
+                  "end": 98.80000000000001,
+                  "probability": 0.5479099154472351
+                },
+                {
+                  "word": " reminds",
+                  "start": 98.80000000000001,
+                  "end": 99.12,
+                  "probability": 0.9781709313392639
+                },
+                {
+                  "word": " us",
+                  "start": 99.12,
+                  "end": 99.76,
+                  "probability": 0.9934278130531311
+                },
+                {
+                  "word": " what",
+                  "start": 99.76,
+                  "end": 100.16000000000001,
+                  "probability": 0.9171376824378967
+                },
+                {
+                  "word": " the",
+                  "start": 100.16000000000001,
+                  "end": 100.44000000000001,
+                  "probability": 0.9661158323287964
+                },
+                {
+                  "word": " Jewish",
+                  "start": 100.44000000000001,
+                  "end": 100.80000000000001,
+                  "probability": 0.9850345253944397
+                },
+                {
+                  "word": " prophet",
+                  "start": 100.80000000000001,
+                  "end": 101.04,
+                  "probability": 0.5934020280838013
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 164.82,
+          "candidateSeconds": 165.05,
+          "max10msRmsIn100msDbFS": -60.072361769919304,
+          "contextRange": [
+            162.32,
+            165.62
+          ],
+          "contextRecognition": [
+            {
+              "text": " safe here. God's Son.",
+              "words": [
+                {
+                  "word": " safe",
+                  "start": 162.32,
+                  "end": 162.95999999999998,
+                  "probability": 0.08027466386556625
+                },
+                {
+                  "word": " here.",
+                  "start": 162.95999999999998,
+                  "end": 163.38,
+                  "probability": 0.26851093769073486
+                },
+                {
+                  "word": " God's",
+                  "start": 163.73999999999998,
+                  "end": 164.18,
+                  "probability": 0.6669723838567734
+                },
+                {
+                  "word": " Son.",
+                  "start": 164.18,
+                  "end": 164.54,
+                  "probability": 0.7578030824661255
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 227,
+        "lastExclusive": 388
+      },
+      "uncertainWordIndexes": [
+        227,
+        233,
+        234,
+        243,
+        255,
+        296,
+        306,
+        311,
+        360,
+        380,
+        385,
+        387
+      ],
+      "status": "candidate-unaccepted",
+      "sourceReview": "supported-candidate-not-published",
+      "notes": [
+        "Quiet edge windows and independent context recognition support these candidate edges; raw ASR wording uncertainty remains unchanged."
+      ]
+    },
+    {
+      "activityId": "S02-U007",
+      "sourceTextSha256": "f85875ff9de414c07038a7ce68af8dfe132a3c1cc134cc7cc93ec671fe906e0e",
+      "completion": "auto",
+      "candidateRange": [
+        166.23,
+        259.01
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 166.36,
+          "candidateSeconds": 166.23,
+          "max10msRmsIn100msDbFS": -55.831819495673834,
+          "contextRange": [
+            165.56,
+            168.86
+          ],
+          "contextRecognition": [
+            {
+              "text": " John lives in the wilderness and comes preaching.",
+              "words": [
+                {
+                  "word": " John",
+                  "start": 165.56,
+                  "end": 166.72,
+                  "probability": 0.8482663631439209
+                },
+                {
+                  "word": " lives",
+                  "start": 166.72,
+                  "end": 166.92000000000002,
+                  "probability": 0.9862609505653381
+                },
+                {
+                  "word": " in",
+                  "start": 166.92000000000002,
+                  "end": 167.14000000000001,
+                  "probability": 0.9979113936424255
+                },
+                {
+                  "word": " the",
+                  "start": 167.14000000000001,
+                  "end": 167.7,
+                  "probability": 0.9887253642082214
+                },
+                {
+                  "word": " wilderness",
+                  "start": 167.7,
+                  "end": 167.7,
+                  "probability": 0.9880384802818298
+                },
+                {
+                  "word": " and",
+                  "start": 167.7,
+                  "end": 168.26,
+                  "probability": 0.8807982206344604
+                },
+                {
+                  "word": " comes",
+                  "start": 168.26,
+                  "end": 168.56,
+                  "probability": 0.9821797609329224
+                },
+                {
+                  "word": " preaching.",
+                  "start": 168.56,
+                  "end": 168.84,
+                  "probability": 0.21824324131011963
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 258.72,
+          "candidateSeconds": 259.01,
+          "max10msRmsIn100msDbFS": -67.02760033883328,
+          "contextRange": [
+            256.22,
+            259.52000000000004
+          ],
+          "contextRecognition": [
+            {
+              "text": " be worthy to be that man servant.",
+              "words": [
+                {
+                  "word": " be",
+                  "start": 256.22,
+                  "end": 256.62,
+                  "probability": 0.8522694110870361
+                },
+                {
+                  "word": " worthy",
+                  "start": 256.62,
+                  "end": 256.94000000000005,
+                  "probability": 0.9956817626953125
+                },
+                {
+                  "word": " to",
+                  "start": 256.94000000000005,
+                  "end": 257.46000000000004,
+                  "probability": 0.9652124047279358
+                },
+                {
+                  "word": " be",
+                  "start": 257.46000000000004,
+                  "end": 257.66,
+                  "probability": 0.9959237575531006
+                },
+                {
+                  "word": " that",
+                  "start": 257.66,
+                  "end": 257.92,
+                  "probability": 0.9854499101638794
+                },
+                {
+                  "word": " man",
+                  "start": 257.92,
+                  "end": 258.24,
+                  "probability": 0.9343997240066528
+                },
+                {
+                  "word": " servant.",
+                  "start": 258.24,
+                  "end": 258.56,
+                  "probability": 0.4409104585647583
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 388,
+        "lastExclusive": 623
+      },
+      "uncertainWordIndexes": [
+        420,
+        421,
+        445,
+        450,
+        475,
+        489,
+        495,
+        513,
+        520,
+        531,
+        550,
+        596
+      ],
+      "status": "candidate-unaccepted",
+      "sourceReview": "supported-candidate-not-published",
+      "notes": [
+        "Quiet edge windows and independent context recognition support these candidate edges; raw ASR wording uncertainty remains unchanged."
+      ]
+    },
+    {
+      "activityId": "S02-U008",
+      "sourceTextSha256": "7d4cf4f969f14f97aaf3a855220cf6f46db606c8b4cec00eb8f4cca95cf23115",
+      "completion": "confirm",
+      "candidateRange": [
+        259.95,
+        267.85
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 260.16,
+          "candidateSeconds": 259.95,
+          "max10msRmsIn100msDbFS": -67.09458443742595,
+          "contextRange": [
+            259.36,
+            262.66
+          ],
+          "contextRecognition": [
+            {
+              "text": " Stop here and show the translation team.",
+              "words": [
+                {
+                  "word": " Stop",
+                  "start": 259.36,
+                  "end": 260.46000000000004,
+                  "probability": 0.456062376499176
+                },
+                {
+                  "word": " here",
+                  "start": 260.46000000000004,
+                  "end": 260.88,
+                  "probability": 0.9951600432395935
+                },
+                {
+                  "word": " and",
+                  "start": 260.88,
+                  "end": 261.32,
+                  "probability": 0.8768656253814697
+                },
+                {
+                  "word": " show",
+                  "start": 261.32,
+                  "end": 261.56,
+                  "probability": 0.9791312217712402
+                },
+                {
+                  "word": " the",
+                  "start": 261.56,
+                  "end": 262.22,
+                  "probability": 0.9910727143287659
+                },
+                {
+                  "word": " translation",
+                  "start": 262.22,
+                  "end": 262.3,
+                  "probability": 0.9090436100959778
+                },
+                {
+                  "word": " team.",
+                  "start": 262.3,
+                  "end": 262.64,
+                  "probability": 0.47311025857925415
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 267.8,
+          "candidateSeconds": 267.85,
+          "max10msRmsIn100msDbFS": -200.0,
+          "contextRange": [
+            265.3,
+            268.6
+          ],
+          "contextRecognition": [
+            {
+              "text": " Pause this audio here.",
+              "words": [
+                {
+                  "word": " Pause",
+                  "start": 265.3,
+                  "end": 266.12,
+                  "probability": 0.7957457900047302
+                },
+                {
+                  "word": " this",
+                  "start": 266.12,
+                  "end": 266.40000000000003,
+                  "probability": 0.9923256635665894
+                },
+                {
+                  "word": " audio",
+                  "start": 266.40000000000003,
+                  "end": 266.74,
+                  "probability": 0.9735032320022583
+                },
+                {
+                  "word": " here.",
+                  "start": 266.74,
+                  "end": 267.6,
+                  "probability": 0.9006631374359131
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 623,
+        "lastExclusive": 638
+      },
+      "uncertainWordIndexes": [
+        630
+      ],
+      "status": "candidate-unaccepted",
+      "sourceReview": "supported-candidate-not-published",
+      "notes": [
+        "Quiet edge windows and independent context recognition support these candidate edges; raw ASR wording uncertainty remains unchanged.",
+        "Discussion/resource pause must remain manual completion; recording playback must not auto-advance across this handoff."
+      ]
+    },
+    {
+      "activityId": "S02-U009",
+      "sourceTextSha256": "7994327e489022485b55ced0ffae3cb8d4e8d73463c6238431d15a181920cf82",
+      "completion": "auto",
+      "candidateRange": [
+        272.31,
+        304.5
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 272.66,
+          "candidateSeconds": 272.31,
+          "max10msRmsIn100msDbFS": -200.0,
+          "contextRange": [
+            271.86,
+            275.16
+          ],
+          "contextRecognition": [
+            {
+              "text": " That person who will come will battle.",
+              "words": [
+                {
+                  "word": " That",
+                  "start": 272.78000000000003,
+                  "end": 273.34000000000003,
+                  "probability": 0.669878363609314
+                },
+                {
+                  "word": " person",
+                  "start": 273.34000000000003,
+                  "end": 273.78000000000003,
+                  "probability": 0.9961381554603577
+                },
+                {
+                  "word": " who",
+                  "start": 273.78000000000003,
+                  "end": 274.0,
+                  "probability": 0.936436116695404
+                },
+                {
+                  "word": " will",
+                  "start": 274.0,
+                  "end": 274.16,
+                  "probability": 0.9793566465377808
+                },
+                {
+                  "word": " come",
+                  "start": 274.16,
+                  "end": 274.62,
+                  "probability": 0.996582567691803
+                },
+                {
+                  "word": " will",
+                  "start": 274.62,
+                  "end": 274.90000000000003,
+                  "probability": 0.9079942107200623
+                },
+                {
+                  "word": " battle.",
+                  "start": 274.90000000000003,
+                  "end": 275.14,
+                  "probability": 0.36610493063926697
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 304.32,
+          "candidateSeconds": 304.5,
+          "max10msRmsIn100msDbFS": -69.4975614474406,
+          "contextRange": [
+            301.82,
+            305.12
+          ],
+          "contextRecognition": [
+            {
+              "text": " It's here.",
+              "words": [
+                {
+                  "word": " It's",
+                  "start": 301.82,
+                  "end": 302.65999999999997,
+                  "probability": 0.7460919320583344
+                },
+                {
+                  "word": " here.",
+                  "start": 302.65999999999997,
+                  "end": 304.26,
+                  "probability": 0.9836163520812988
+                }
+              ]
+            },
+            {
+              "text": " Mucked.",
+              "words": [
+                {
+                  "word": " Mucked.",
+                  "start": 304.86,
+                  "end": 305.09999999999997,
+                  "probability": 0.5991862714290619
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 638,
+        "lastExclusive": 712
+      },
+      "uncertainWordIndexes": [
+        638,
+        644,
+        647,
+        655,
+        669,
+        679,
+        682,
+        694,
+        710
+      ],
+      "status": "candidate-unaccepted",
+      "sourceReview": "supported-candidate-not-published",
+      "notes": [
+        "Quiet edge windows and independent context recognition support these candidate edges; raw ASR wording uncertainty remains unchanged.",
+        "Adjacent units share one narrow quiet gap. U009 end304.50 and U010 start304.51 avoid overlap; end-context contains the next Mark onset outside the proposed range. Preserve these coordinated cuts rather than broadening independently."
+      ]
+    },
+    {
+      "activityId": "S02-U010",
+      "sourceTextSha256": "acb1792ea1d42d56298b93fd9f694e0a89a2188848543685cad7fdfa6d664388",
+      "completion": "auto",
+      "candidateRange": [
+        304.51,
+        403.61
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 304.86,
+          "candidateSeconds": 304.51,
+          "max10msRmsIn100msDbFS": -69.4975614474406,
+          "contextRange": [
+            304.06,
+            307.36
+          ],
+          "contextRecognition": [
+            {
+              "text": " Mark tells us that Jesus came from Nazareth together.",
+              "words": [
+                {
+                  "word": " Mark",
+                  "start": 304.06,
+                  "end": 305.14,
+                  "probability": 0.9374408721923828
+                },
+                {
+                  "word": " tells",
+                  "start": 305.14,
+                  "end": 305.42,
+                  "probability": 0.9937983155250549
+                },
+                {
+                  "word": " us",
+                  "start": 305.42,
+                  "end": 305.7,
+                  "probability": 0.9988018274307251
+                },
+                {
+                  "word": " that",
+                  "start": 305.7,
+                  "end": 305.9,
+                  "probability": 0.949051022529602
+                },
+                {
+                  "word": " Jesus",
+                  "start": 305.9,
+                  "end": 306.18,
+                  "probability": 0.9904981255531311
+                },
+                {
+                  "word": " came",
+                  "start": 306.18,
+                  "end": 306.5,
+                  "probability": 0.9886868000030518
+                },
+                {
+                  "word": " from",
+                  "start": 306.5,
+                  "end": 306.8,
+                  "probability": 0.9952881336212158
+                },
+                {
+                  "word": " Nazareth",
+                  "start": 306.8,
+                  "end": 307.18,
+                  "probability": 0.975877195596695
+                },
+                {
+                  "word": " together.",
+                  "start": 307.18,
+                  "end": 307.34,
+                  "probability": 0.2803706228733063
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 403.44,
+          "candidateSeconds": 403.61,
+          "max10msRmsIn100msDbFS": -62.743714351111635,
+          "contextRange": [
+            400.94,
+            404.24
+          ],
+          "contextRecognition": [
+            {
+              "text": " and people should listen to him.",
+              "words": [
+                {
+                  "word": " and",
+                  "start": 400.94,
+                  "end": 401.58,
+                  "probability": 0.6209074854850769
+                },
+                {
+                  "word": " people",
+                  "start": 401.58,
+                  "end": 401.86,
+                  "probability": 0.9940920472145081
+                },
+                {
+                  "word": " should",
+                  "start": 401.86,
+                  "end": 402.14,
+                  "probability": 0.9985383749008179
+                },
+                {
+                  "word": " listen",
+                  "start": 402.14,
+                  "end": 402.4,
+                  "probability": 0.9981452226638794
+                },
+                {
+                  "word": " to",
+                  "start": 402.4,
+                  "end": 402.62,
+                  "probability": 0.9992033839225769
+                },
+                {
+                  "word": " him.",
+                  "start": 402.62,
+                  "end": 403.16,
+                  "probability": 0.9795196056365967
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 712,
+        "lastExclusive": 968
+      },
+      "uncertainWordIndexes": [
+        724,
+        749,
+        774,
+        787,
+        806,
+        807,
+        821,
+        823,
+        851,
+        852,
+        868,
+        871,
+        897,
+        917,
+        921,
+        961,
+        962
+      ],
+      "status": "candidate-unaccepted",
+      "sourceReview": "supported-candidate-not-published",
+      "notes": [
+        "Quiet edge windows and independent context recognition support these candidate edges; raw ASR wording uncertainty remains unchanged.",
+        "Adjacent units share one narrow quiet gap. U009 end304.50 and U010 start304.51 avoid overlap; end-context contains the next Mark onset outside the proposed range. Preserve these coordinated cuts rather than broadening independently."
+      ]
+    },
+    {
+      "activityId": "S02-U011",
+      "sourceTextSha256": "4c6baa6d4173ad386b53b1d680c976984bf56679f29b37c8bb5beb2ae1c0a858",
+      "completion": "confirm",
+      "candidateRange": [
+        404.37,
+        422.27
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 404.6,
+          "candidateSeconds": 404.37,
+          "max10msRmsIn100msDbFS": -63.94681891085273,
+          "contextRange": [
+            403.8,
+            407.1
+          ],
+          "contextRecognition": [
+            {
+              "text": " Stop here and discuss this question.",
+              "words": [
+                {
+                  "word": " Stop",
+                  "start": 403.8,
+                  "end": 404.92,
+                  "probability": 0.3824802041053772
+                },
+                {
+                  "word": " here",
+                  "start": 404.92,
+                  "end": 405.48,
+                  "probability": 0.9903754591941833
+                },
+                {
+                  "word": " and",
+                  "start": 405.48,
+                  "end": 406.02000000000004,
+                  "probability": 0.9061272740364075
+                },
+                {
+                  "word": " discuss",
+                  "start": 406.02000000000004,
+                  "end": 406.40000000000003,
+                  "probability": 0.9959009289741516
+                },
+                {
+                  "word": " this",
+                  "start": 406.40000000000003,
+                  "end": 406.78000000000003,
+                  "probability": 0.9934644103050232
+                },
+                {
+                  "word": " question.",
+                  "start": 406.78000000000003,
+                  "end": 407.08,
+                  "probability": 0.9861615896224976
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 421.98,
+          "candidateSeconds": 422.27,
+          "max10msRmsIn100msDbFS": -64.30510664387415,
+          "contextRange": [
+            419.48,
+            422.78000000000003
+          ],
+          "contextRecognition": [
+            {
+              "text": " same or different than baptism.",
+              "words": [
+                {
+                  "word": " same",
+                  "start": 419.48,
+                  "end": 420.14000000000004,
+                  "probability": 0.7338714003562927
+                },
+                {
+                  "word": " or",
+                  "start": 420.14000000000004,
+                  "end": 420.46000000000004,
+                  "probability": 0.9034817814826965
+                },
+                {
+                  "word": " different",
+                  "start": 420.46000000000004,
+                  "end": 421.0,
+                  "probability": 0.9927840232849121
+                },
+                {
+                  "word": " than",
+                  "start": 421.0,
+                  "end": 421.46000000000004,
+                  "probability": 0.9752293825149536
+                },
+                {
+                  "word": " baptism.",
+                  "start": 421.46000000000004,
+                  "end": 421.84000000000003,
+                  "probability": 0.9863588213920593
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 968,
+        "lastExclusive": 1010
+      },
+      "uncertainWordIndexes": [
+        968,
+        980,
+        993,
+        997
+      ],
+      "status": "candidate-unaccepted",
+      "sourceReview": "supported-candidate-not-published",
+      "notes": [
+        "Quiet edge windows and independent context recognition support these candidate edges; raw ASR wording uncertainty remains unchanged.",
+        "Discussion/resource pause must remain manual completion; recording playback must not auto-advance across this handoff."
+      ]
+    },
+    {
+      "activityId": "S02-U013",
+      "sourceTextSha256": "3de5a3bf58f30f1306f4a27d0e3c8e241c5daed21a27de40e674ae72b944bde9",
+      "completion": "auto",
+      "candidateRange": [
+        429.48,
+        495.5
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 429.58,
+          "candidateSeconds": 429.48,
+          "max10msRmsIn100msDbFS": -66.4077559300177,
+          "contextRange": [
+            428.78,
+            432.08
+          ],
+          "contextRecognition": [
+            {
+              "text": " The Holy Spirit, very immediately and very...",
+              "words": [
+                {
+                  "word": " The",
+                  "start": 428.78,
+                  "end": 429.84,
+                  "probability": 0.5894963145256042
+                },
+                {
+                  "word": " Holy",
+                  "start": 429.84,
+                  "end": 430.03999999999996,
+                  "probability": 0.9602311253547668
+                },
+                {
+                  "word": " Spirit,",
+                  "start": 430.03999999999996,
+                  "end": 430.55999999999995,
+                  "probability": 0.9868605732917786
+                },
+                {
+                  "word": " very",
+                  "start": 431.05999999999995,
+                  "end": 431.05999999999995,
+                  "probability": 0.985611081123352
+                },
+                {
+                  "word": " immediately",
+                  "start": 431.05999999999995,
+                  "end": 431.55999999999995,
+                  "probability": 0.9861308932304382
+                },
+                {
+                  "word": " and",
+                  "start": 431.55999999999995,
+                  "end": 431.91999999999996,
+                  "probability": 0.8944141864776611
+                },
+                {
+                  "word": " very...",
+                  "start": 431.91999999999996,
+                  "end": 432.05999999999995,
+                  "probability": 0.6607538014650345
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 495.16,
+          "candidateSeconds": 495.5,
+          "max10msRmsIn100msDbFS": -67.5060255080238,
+          "contextRange": [
+            492.66,
+            495.96000000000004
+          ],
+          "contextRecognition": [
+            {
+              "text": " important step in Jesus' ministry.",
+              "words": [
+                {
+                  "word": " important",
+                  "start": 492.66,
+                  "end": 493.3,
+                  "probability": 0.8205986022949219
+                },
+                {
+                  "word": " step",
+                  "start": 493.3,
+                  "end": 493.74,
+                  "probability": 0.992084264755249
+                },
+                {
+                  "word": " in",
+                  "start": 493.74,
+                  "end": 494.28000000000003,
+                  "probability": 0.9938099980354309
+                },
+                {
+                  "word": " Jesus'",
+                  "start": 494.28000000000003,
+                  "end": 494.66,
+                  "probability": 0.9926185011863708
+                },
+                {
+                  "word": " ministry.",
+                  "start": 495.1,
+                  "end": 495.1,
+                  "probability": 0.9907357096672058
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 1014,
+        "lastExclusive": 1176
+      },
+      "uncertainWordIndexes": [
+        1017,
+        1048,
+        1058,
+        1063,
+        1074,
+        1090,
+        1094,
+        1097,
+        1098,
+        1108,
+        1121,
+        1167,
+        1172
+      ],
+      "status": "candidate-unaccepted",
+      "sourceReview": "supported-candidate-not-published",
+      "notes": [
+        "Quiet edge windows and independent context recognition support these candidate edges; raw ASR wording uncertainty remains unchanged."
+      ]
+    }
+  ],
+  "limits": "Not certified verbatim transcript, source-unit acceptance, proxy clock or app readiness. Preserve ASR drift and explicit group pauses/Scripture handoffs.",
+  "elapsedSeconds": 10.343331540934741,
+  "specificUncertainties": [
+    {
+      "kind": "omitted-authored-unit",
+      "id": "S02-U012",
+      "detail": "Actual app presentation has no U012; original ASR words1010\u20131013 say Pause this audio here at423.20\u2013425.05. U011 proposed end422.27 excludes that explicit recorded pause line. Keep app manual hold; do not silently append pause to U013 or claim full-recording coverage."
+    },
+    {
+      "kind": "wording",
+      "detail": "Short context ASR produces uncertain terms (e.g. U006 safe here / U010 together). This evidence checks acoustic edges, not exact verbal agreement or meaning; original transcript/alignment differences remain authoritative uncertainty."
+    },
+    {
+      "kind": "clock",
+      "detail": "Ranges are step2 decoded-PCM/ASR seconds. No step2 optimized-delivery clock mapping or browser proof has yet been measured."
+    }
+  ]
+}

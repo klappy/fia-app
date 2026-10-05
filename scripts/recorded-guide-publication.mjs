@@ -20,7 +20,7 @@ export function verifyRecordedGuideReplacement({entry,ledger,pack,descriptor,fil
  raw(script.fileSha256);raw(script.contentSha256);raw(transcript.sha256);raw(drift.reportSha256);
  const words=evidence(transcript.wordTimestampsSha256);
  if(words.recordingSha256!==recording.sha256||words.transcriptSha256!==transcript.sha256||words.clockDomain!==transcript.clockDomain||!Array.isArray(words.words)||!words.words.length)throw Error('Word timestamp evidence mismatch.');
- let previous=-1;for(const word of words.words){if(!text(word.text)||!Number.isFinite(word.startSeconds)||!Number.isFinite(word.endSeconds)||word.startSeconds<previous||word.startSeconds<0||word.endSeconds<=word.startSeconds||word.endSeconds>recording.duration)throw Error('Invalid recognized word timestamp.');previous=word.startSeconds;}
+ let previous=-1;for(const word of words.words){if(!text(word.text)||!Number.isFinite(word.startSeconds)||!Number.isFinite(word.endSeconds)||word.startSeconds<previous||word.startSeconds<0||word.endSeconds<word.startSeconds||word.endSeconds>recording.duration)throw Error('Invalid recognized word timestamp.');previous=word.startSeconds;}
  const rights=evidence(recording.rightsEvidenceSha256),review=evidence(drift.reviewEvidenceSha256);
  if(rights.status!=='accepted'||rights.recordingSha256!==recording.sha256||rights.recordingUrl!==recording.url||review.status!=='accepted'||review.reportSha256!==drift.reportSha256||review.scriptSha256!==script.contentSha256||review.transcriptSha256!==transcript.sha256)throw Error('Recorded guide rights or drift review incomplete.');
  const ids=new Set(),activities=new Set(),paths=new Set();let previousRangeEnd=0,previousWordEnd=0;

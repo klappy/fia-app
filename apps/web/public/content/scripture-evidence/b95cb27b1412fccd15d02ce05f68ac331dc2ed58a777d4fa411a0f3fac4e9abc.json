@@ -1,0 +1,91 @@
+{
+  "status": "source-boundary-candidate-supported; no app/proxy acceptance",
+  "sourceSha256": "ad82d1a49f696a421f87a0ba54e7079c35fb403462c1e2e335a1fabe515363ec",
+  "rawTranscriptSha256": "6c20aa554af84aab5ec07ed129d31c30191d1ebc5d05d60a05c92031af58dd32",
+  "candidateCropSha256": "e8deb4e55f8656dcd8d11ab15c2fb28840be938181b8932e223e2c9ea5e14f97",
+  "scriptureSha256": "ac3a3c56a04d63ca0e322983e7a6865bca3d9e4da500df298756f10d3c934cb7",
+  "publisherRange": [
+    4.6,
+    97.24
+  ],
+  "recommendedDecodedPcmRange": [
+    4.4,
+    97.1
+  ],
+  "reason": "Publisher start is inside initial voiced onset (~4.50); publisher end includes onset of verse14 After (~97.18). Padded start4.40 precedes onset; end97.10 lies in quiet gap after verse13 him (ASR96.42\u201396.54) and before verse14. Three unprompted crop checks retain first This and final ministered to him, without verse14.",
+  "clock": {
+    "reference": "concatenated decoded PCM zero",
+    "firstDecodedPresentationSeconds": 0.02505668934240363,
+    "warning": "Do not assume native MP3 or proxy clock offset; verify actual delivery independently."
+  },
+  "textAlignment": {
+    "method": "Separate normalized token comparison; raw recognition unchanged, not forced to script.",
+    "differences": [
+      {
+        "operation": "replace",
+        "scriptTokens": [
+          "camel",
+          "s",
+          "hair"
+        ],
+        "recognizedTokens": [
+          "camels",
+          "here"
+        ],
+        "scriptIndexes": [
+          102,
+          105
+        ],
+        "recognizedIndexes": [
+          102,
+          104
+        ]
+      },
+      {
+        "operation": "replace",
+        "scriptTokens": [
+          "he",
+          "proclaimed"
+        ],
+        "recognizedTokens": [
+          "it",
+          "began",
+          "to",
+          "proclaim"
+        ],
+        "scriptIndexes": [
+          120,
+          122
+        ],
+        "recognizedIndexes": [
+          119,
+          123
+        ]
+      },
+      {
+        "operation": "replace",
+        "scriptTokens": [
+          "the"
+        ],
+        "recognizedTokens": [
+          "a"
+        ],
+        "scriptIndexes": [
+          156,
+          157
+        ],
+        "recognizedIndexes": [
+          157,
+          158
+        ]
+      }
+    ],
+    "wordTimingsStatus": "raw ASR estimates, includes zero-duration/uncertain words; not reviewed forced alignment"
+  },
+  "limitations": [
+    "No human listening claim.",
+    "No derivative or browser clock mapping yet.",
+    "No ULT/UST change.",
+    "Source narration wording may differ from current versioned BSB script; differences retained, not silently repaired."
+  ]
+}

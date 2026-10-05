@@ -78,3 +78,22 @@ run('queued old callbacks cannot affect a resumed same-owner range',async e=>{
  const timerKeys=[...e.timers.keys()],frameKeys=[...e.frames.keys()];oldTimer();oldFrame();assert.deepEqual([...e.timers.keys()],timerKeys);assert.deepEqual([...e.frames.keys()],frameKeys);
  owner._time=8;[...e.timers.values()][0].callback();assert.equal(e.ends,1);
 });
+
+run('excerpt progress rebases and clamps while keeping the absolute alignment clock',async e=>{
+ const owner=await e.start();
+ assert.deepEqual([e.states.at(-1).elapsed,e.states.at(-1).duration,e.states.at(-1).progressElapsed,e.states.at(-1).progressDuration],[3,20,0,5]);
+ owner._time=5.5;owner.ontimeupdate();
+ assert.deepEqual([e.states.at(-1).elapsed,e.states.at(-1).duration,e.states.at(-1).progressElapsed,e.states.at(-1).progressDuration],[5.5,20,2.5,5]);
+ e.controller.pause();owner._time=2;e.controller.pause();assert.equal(e.states.at(-1).progressElapsed,0);assert.equal(e.states.at(-1).elapsed,2);
+ owner._time=8.5;e.controller.pause();assert.equal(e.states.at(-1).progressElapsed,5);assert.equal(e.states.at(-1).elapsed,8.5);
+});
+run('excerpt progress survives pause and resume and resets on replay',async e=>{
+ const owner=await e.start();owner._time=5.5;e.controller.pause();assert.equal(e.states.at(-1).progressElapsed,2.5);
+ e.controller.resume();await tick();assert.equal(e.states.at(-1).progressElapsed,2.5);
+ await e.start();assert.equal(e.states.at(-1).progressElapsed,0);assert.equal(e.states.at(-1).progressDuration,5);
+ e.controller.stop();assert.equal('progressElapsed' in e.states.at(-1),false);assert.equal('progressDuration' in e.states.at(-1),false);
+});
+run('unranged playback retains its original clock without excerpt fields',async e=>{
+ e.controller.play('source','blob:whole');await tick();const owner=e.owners.at(-1);owner._time=10;owner.ontimeupdate();
+ assert.deepEqual(e.states.at(-1),{src:'blob:whole',playing:true,elapsed:10,duration:20});
+});

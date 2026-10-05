@@ -1,0 +1,36 @@
+{
+  "status": "accepted",
+  "packId": "eng.MRK-1-1-13",
+  "presentationRevision": "ccd72f23c23f932651b500b730b285f32fabd37e50037b5af91d8881f1403975",
+  "recipeRevision": "recipe-sha256:66cddfed5e845151d0dddfc76af34e28162e86b100995a6b2a33185e17ec10df",
+  "entry": {
+    "id": "bsb-mark-1-1-13-bob-souer",
+    "assetId": "scripture-BereanStandardBible",
+    "logicalAudio": {
+      "path": "/audio/source/scripture-BereanStandardBible.mp3",
+      "sha256": "3e861a08555ab67fd93c86fa2e229d0f72d23a3699ecdddceb9b33d7b4da1910",
+      "bytes": 1236323
+    },
+    "recording": {
+      "url": "https://openbible.com/audio/souer/BSB_41_Mrk_001.mp3",
+      "sha256": "ad82d1a49f696a421f87a0ba54e7079c35fb403462c1e2e335a1fabe515363ec",
+      "bytes": 5135362,
+      "duration": 320.805375,
+      "rightsEvidenceSha256": "1ed9616b879acf1f7b18856fd03c5ea24a97e1f1224f86a6f78dbcf5ae208479"
+    },
+    "sourceRange": {
+      "startSeconds": 4.4,
+      "endSeconds": 97.1
+    }
+  },
+  "transcriptSha256": "6c20aa554af84aab5ec07ed129d31c30191d1ebc5d05d60a05c92031af58dd32",
+  "textSha256": "ac3a3c56a04d63ca0e322983e7a6865bca3d9e4da500df298756f10d3c934cb7",
+  "driftReportSha256": "3d1f38ded3ca61feba293bc22939d62dbd134d3a21f9c6291f25a881f5b9b4e8",
+  "rangeEvidenceSha256": "b95cb27b1412fccd15d02ce05f68ac331dc2ed58a777d4fa411a0f3fac4e9abc",
+  "acceptanceScope": "Parent publication acceptance of measured source/rights/range/data facts after independent source-data review. Original candidate reports retained unchanged. Word fallback verses 4,6,7,8,10; no fabricated timings.",
+  "limitations": [
+    "No human acoustic listening claim.",
+    "App playback and physical-device validation are separate gates.",
+    "Recognition is unmodified recognizer output, not certified speech."
+  ]
+}

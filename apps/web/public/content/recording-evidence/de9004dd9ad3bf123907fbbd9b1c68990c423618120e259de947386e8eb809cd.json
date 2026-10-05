@@ -1,0 +1,1075 @@
+{
+  "status": "candidate-boundary-analysis",
+  "sourceSha256": "d0f0c608fb2c8b59aaf16ce72047978d0056a109354997ae982e81bb32451ef6",
+  "alignmentSha256": "821107944ce0546a64a308bab9f9c55d416ebb68f6de961ab2d601b63725520e",
+  "rawTranscriptSha256": "6cd33a72bd9d328687a3551f504edb984931da90352dda461cb922880be831af",
+  "scriptSha256": "4986bb222a16b4a5436567263859b13c97c9e56e5ee9ca0c1ac13eb3fc991d54",
+  "model": {
+    "name": "Systran/faster-whisper-tiny.en",
+    "snapshot": "0d3d19a32d3338f10357c0889762bd8d64bbdeba",
+    "files": {
+      "config.json": {
+        "sha256": "14b1b421a90349bc551b881461426b561a874049cb9e4c4864f2ca384f6a7cc5",
+        "bytes": 2317
+      },
+      "model.bin": {
+        "sha256": "1a5afae06a4db91c975c9a9d78be5cc110ee4ea022ad57d55492e4550e936b2a",
+        "bytes": 75537502
+      },
+      "tokenizer.json": {
+        "sha256": "929c5252409436dce1b38a75d1abbcb5e132d170d8e324e4e04ed915fa2d22df",
+        "bytes": 2128466
+      },
+      "vocabulary.txt": {
+        "sha256": "ff77588746d3a2595d32ab5b69ffd7b95ce2441ac57533cb66fc3eb575a115cf",
+        "bytes": 422309
+      }
+    },
+    "device": "cpu",
+    "computeType": "int8",
+    "cpuThreads": 4
+  },
+  "method": "Independentindependent short boundary-contextASR crops, no script prompt/forcedalignment; quiet100ms windows near padded word edges. PCM concatenated0 clock.",
+  "rows": [
+    {
+      "activityId": "S06-U001",
+      "sourceTextSha256": "93b85bf4b7d209191fc1b2aab81af11a43aa2d1770cbfefc6d31a4ea7af57c75",
+      "completion": "auto",
+      "candidateRange": [
+        8.27,
+        13.21
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 8.62,
+          "candidateSeconds": 8.27,
+          "max10msRmsIn100msDbFS": -65.38995403492531,
+          "contextRange": [
+            7.819999999999999,
+            11.12
+          ],
+          "contextRecognition": [
+            {
+              "text": " Listen to an audio version of the passage in the easiest.",
+              "words": [
+                {
+                  "word": " Listen",
+                  "start": 7.819999999999999,
+                  "end": 8.7,
+                  "probability": 0.579988956451416
+                },
+                {
+                  "word": " to",
+                  "start": 8.7,
+                  "end": 8.979999999999999,
+                  "probability": 0.9962621331214905
+                },
+                {
+                  "word": " an",
+                  "start": 8.979999999999999,
+                  "end": 9.2,
+                  "probability": 0.9719507098197937
+                },
+                {
+                  "word": " audio",
+                  "start": 9.2,
+                  "end": 9.32,
+                  "probability": 0.9758995175361633
+                },
+                {
+                  "word": " version",
+                  "start": 9.32,
+                  "end": 9.76,
+                  "probability": 0.9977990984916687
+                },
+                {
+                  "word": " of",
+                  "start": 9.76,
+                  "end": 9.899999999999999,
+                  "probability": 0.9929532408714294
+                },
+                {
+                  "word": " the",
+                  "start": 9.899999999999999,
+                  "end": 10.139999999999999,
+                  "probability": 0.9895740151405334
+                },
+                {
+                  "word": " passage",
+                  "start": 10.139999999999999,
+                  "end": 10.379999999999999,
+                  "probability": 0.9904285669326782
+                },
+                {
+                  "word": " in",
+                  "start": 10.379999999999999,
+                  "end": 10.559999999999999,
+                  "probability": 0.7944271564483643
+                },
+                {
+                  "word": " the",
+                  "start": 10.559999999999999,
+                  "end": 10.84,
+                  "probability": 0.9814847707748413
+                },
+                {
+                  "word": " easiest.",
+                  "start": 10.84,
+                  "end": 11.1,
+                  "probability": 0.5622463226318359
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 12.9,
+          "candidateSeconds": 13.21,
+          "max10msRmsIn100msDbFS": -72.05297987240158,
+          "contextRange": [
+            10.4,
+            13.700000000000001
+          ],
+          "contextRecognition": [
+            {
+              "text": " in the easiest to understand translation.",
+              "words": [
+                {
+                  "word": " in",
+                  "start": 10.4,
+                  "end": 10.6,
+                  "probability": 0.6484520435333252
+                },
+                {
+                  "word": " the",
+                  "start": 10.6,
+                  "end": 10.940000000000001,
+                  "probability": 0.9943510293960571
+                },
+                {
+                  "word": " easiest",
+                  "start": 10.940000000000001,
+                  "end": 11.22,
+                  "probability": 0.9903233051300049
+                },
+                {
+                  "word": " to",
+                  "start": 11.22,
+                  "end": 11.68,
+                  "probability": 0.9374918937683105
+                },
+                {
+                  "word": " understand",
+                  "start": 11.68,
+                  "end": 12.120000000000001,
+                  "probability": 0.9906160235404968
+                },
+                {
+                  "word": " translation.",
+                  "start": 12.120000000000001,
+                  "end": 12.68,
+                  "probability": 0.9959113597869873
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 9,
+        "lastExclusive": 23
+      },
+      "uncertainWordIndexes": [],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S06-U002",
+      "sourceTextSha256": "f9a68c85da6011813d00235ff269684f4e41b2858ca7c885c662647027a65ac7",
+      "completion": "auto",
+      "candidateRange": [
+        13.55,
+        18.21
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 13.9,
+          "candidateSeconds": 13.55,
+          "max10msRmsIn100msDbFS": -71.39589574110279,
+          "contextRange": [
+            13.1,
+            16.4
+          ],
+          "contextRecognition": [
+            {
+              "text": " In this session, retell the passage as it...",
+              "words": [
+                {
+                  "word": " In",
+                  "start": 13.1,
+                  "end": 13.94,
+                  "probability": 0.795454204082489
+                },
+                {
+                  "word": " this",
+                  "start": 13.94,
+                  "end": 14.16,
+                  "probability": 0.997119665145874
+                },
+                {
+                  "word": " session,",
+                  "start": 14.16,
+                  "end": 14.719999999999999,
+                  "probability": 0.9917142987251282
+                },
+                {
+                  "word": " retell",
+                  "start": 15.2,
+                  "end": 15.459999999999999,
+                  "probability": 0.6816836297512054
+                },
+                {
+                  "word": " the",
+                  "start": 15.459999999999999,
+                  "end": 15.74,
+                  "probability": 0.9952958226203918
+                },
+                {
+                  "word": " passage",
+                  "start": 15.74,
+                  "end": 16.02,
+                  "probability": 0.9980822801589966
+                },
+                {
+                  "word": " as",
+                  "start": 16.02,
+                  "end": 16.34,
+                  "probability": 0.8552359938621521
+                },
+                {
+                  "word": " it...",
+                  "start": 16.34,
+                  "end": 16.38,
+                  "probability": 0.41124629974365234
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 18.08,
+          "candidateSeconds": 18.21,
+          "max10msRmsIn100msDbFS": -73.41610539193674,
+          "contextRange": [
+            15.579999999999998,
+            18.88
+          ],
+          "contextRecognition": [
+            {
+              "text": " passage as a group in your own language.",
+              "words": [
+                {
+                  "word": " passage",
+                  "start": 15.579999999999998,
+                  "end": 16.02,
+                  "probability": 0.4215180575847626
+                },
+                {
+                  "word": " as",
+                  "start": 16.02,
+                  "end": 16.419999999999998,
+                  "probability": 0.9822547435760498
+                },
+                {
+                  "word": " a",
+                  "start": 16.419999999999998,
+                  "end": 16.56,
+                  "probability": 0.9941462278366089
+                },
+                {
+                  "word": " group",
+                  "start": 16.56,
+                  "end": 16.9,
+                  "probability": 0.9937757253646851
+                },
+                {
+                  "word": " in",
+                  "start": 16.9,
+                  "end": 17.119999999999997,
+                  "probability": 0.9787594079971313
+                },
+                {
+                  "word": " your",
+                  "start": 17.119999999999997,
+                  "end": 17.4,
+                  "probability": 0.9944658875465393
+                },
+                {
+                  "word": " own",
+                  "start": 17.4,
+                  "end": 17.619999999999997,
+                  "probability": 0.9962782263755798
+                },
+                {
+                  "word": " language.",
+                  "start": 17.619999999999997,
+                  "end": 17.979999999999997,
+                  "probability": 0.9989940524101257
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 23,
+        "lastExclusive": 36
+      },
+      "uncertainWordIndexes": [
+        26
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S06-U003",
+      "sourceTextSha256": "118886b21590b72ad3c4b0741e745d23b3f371b2a70dc461fd00ca4426f83cf5",
+      "completion": "auto",
+      "candidateRange": [
+        18.75,
+        33.24
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 18.92,
+          "candidateSeconds": 18.75,
+          "max10msRmsIn100msDbFS": -72.90140266027191,
+          "contextRange": [
+            18.12,
+            21.42
+          ],
+          "contextRecognition": [
+            {
+              "text": " First, the whole group should practice telling the...",
+              "words": [
+                {
+                  "word": " First,",
+                  "start": 18.88,
+                  "end": 19.400000000000002,
+                  "probability": 0.8523616790771484
+                },
+                {
+                  "word": " the",
+                  "start": 19.720000000000002,
+                  "end": 19.880000000000003,
+                  "probability": 0.987223744392395
+                },
+                {
+                  "word": " whole",
+                  "start": 19.880000000000003,
+                  "end": 20.1,
+                  "probability": 0.9796644449234009
+                },
+                {
+                  "word": " group",
+                  "start": 20.1,
+                  "end": 20.36,
+                  "probability": 0.9786214232444763
+                },
+                {
+                  "word": " should",
+                  "start": 20.36,
+                  "end": 20.62,
+                  "probability": 0.9902716279029846
+                },
+                {
+                  "word": " practice",
+                  "start": 20.62,
+                  "end": 20.96,
+                  "probability": 0.6809477806091309
+                },
+                {
+                  "word": " telling",
+                  "start": 20.96,
+                  "end": 21.26,
+                  "probability": 0.9901310205459595
+                },
+                {
+                  "word": " the...",
+                  "start": 21.26,
+                  "end": 21.400000000000002,
+                  "probability": 0.5768869146704674
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 33.18,
+          "candidateSeconds": 33.24,
+          "max10msRmsIn100msDbFS": -78.05748767698408,
+          "contextRange": [
+            30.68,
+            33.98
+          ],
+          "contextRecognition": [
+            {
+              "text": " or anything else you discussed.",
+              "words": [
+                {
+                  "word": " or",
+                  "start": 30.68,
+                  "end": 31.66,
+                  "probability": 0.544655978679657
+                },
+                {
+                  "word": " anything",
+                  "start": 31.66,
+                  "end": 32.06,
+                  "probability": 0.9948830604553223
+                },
+                {
+                  "word": " else",
+                  "start": 32.06,
+                  "end": 32.4,
+                  "probability": 0.9995922446250916
+                },
+                {
+                  "word": " you",
+                  "start": 32.4,
+                  "end": 32.6,
+                  "probability": 0.9945658445358276
+                },
+                {
+                  "word": " discussed.",
+                  "start": 32.6,
+                  "end": 33.06,
+                  "probability": 0.7693191170692444
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 36,
+        "lastExclusive": 69
+      },
+      "uncertainWordIndexes": [
+        50
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S06-U004",
+      "sourceTextSha256": "cded91bffe9ced4e0136ec69f976de43e0099c882cd030cd653c7604eb3243df",
+      "completion": "confirm",
+      "candidateRange": [
+        34.27,
+        49.5
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 34.62,
+          "candidateSeconds": 34.27,
+          "max10msRmsIn100msDbFS": -76.96279386380795,
+          "contextRange": [
+            33.82,
+            37.12
+          ],
+          "contextRecognition": [
+            {
+              "text": " One group member should tell a few sentences of the past.",
+              "words": [
+                {
+                  "word": " One",
+                  "start": 34.42,
+                  "end": 34.86,
+                  "probability": 0.8203586935997009
+                },
+                {
+                  "word": " group",
+                  "start": 34.86,
+                  "end": 35.08,
+                  "probability": 0.9614668488502502
+                },
+                {
+                  "word": " member",
+                  "start": 35.08,
+                  "end": 35.4,
+                  "probability": 0.9768679141998291
+                },
+                {
+                  "word": " should",
+                  "start": 35.4,
+                  "end": 35.68,
+                  "probability": 0.9969333410263062
+                },
+                {
+                  "word": " tell",
+                  "start": 35.68,
+                  "end": 35.86,
+                  "probability": 0.9550894498825073
+                },
+                {
+                  "word": " a",
+                  "start": 35.86,
+                  "end": 35.980000000000004,
+                  "probability": 0.9815101623535156
+                },
+                {
+                  "word": " few",
+                  "start": 35.980000000000004,
+                  "end": 36.2,
+                  "probability": 0.9994981288909912
+                },
+                {
+                  "word": " sentences",
+                  "start": 36.2,
+                  "end": 36.58,
+                  "probability": 0.9811652898788452
+                },
+                {
+                  "word": " of",
+                  "start": 36.58,
+                  "end": 36.88,
+                  "probability": 0.9550370573997498
+                },
+                {
+                  "word": " the",
+                  "start": 36.88,
+                  "end": 37.0,
+                  "probability": 0.9903519749641418
+                },
+                {
+                  "word": " past.",
+                  "start": 37.0,
+                  "end": 37.1,
+                  "probability": 0.7956688404083252
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 49.42,
+          "candidateSeconds": 49.5,
+          "max10msRmsIn100msDbFS": -72.4137177263556,
+          "contextRange": [
+            46.92,
+            50.22
+          ],
+          "contextRecognition": [
+            {
+              "text": " members can correct each other in this step.",
+              "words": [
+                {
+                  "word": " members",
+                  "start": 46.92,
+                  "end": 47.24,
+                  "probability": 0.8864959478378296
+                },
+                {
+                  "word": " can",
+                  "start": 47.24,
+                  "end": 47.52,
+                  "probability": 0.980067789554596
+                },
+                {
+                  "word": " correct",
+                  "start": 47.52,
+                  "end": 47.760000000000005,
+                  "probability": 0.9909408688545227
+                },
+                {
+                  "word": " each",
+                  "start": 47.760000000000005,
+                  "end": 48.06,
+                  "probability": 0.9942978024482727
+                },
+                {
+                  "word": " other",
+                  "start": 48.06,
+                  "end": 48.42,
+                  "probability": 0.9892016649246216
+                },
+                {
+                  "word": " in",
+                  "start": 48.42,
+                  "end": 48.58,
+                  "probability": 0.9853809475898743
+                },
+                {
+                  "word": " this",
+                  "start": 48.58,
+                  "end": 48.82,
+                  "probability": 0.9736832976341248
+                },
+                {
+                  "word": " step.",
+                  "start": 48.82,
+                  "end": 49.6,
+                  "probability": 0.9913554787635803
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 69,
+        "lastExclusive": 115
+      },
+      "uncertainWordIndexes": [
+        101,
+        110
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S06-U006",
+      "sourceTextSha256": "f4ba80959043420736fb3866c4025abe767548564dce936e333f4afd7c1eb15b",
+      "completion": "confirm",
+      "candidateRange": [
+        54.26,
+        67.95
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 54.36,
+          "candidateSeconds": 54.26,
+          "max10msRmsIn100msDbFS": -77.92811691466423,
+          "contextRange": [
+            53.56,
+            56.86
+          ],
+          "contextRecognition": [
+            {
+              "text": " Next, each member of the group should.",
+              "words": [
+                {
+                  "word": " Next,",
+                  "start": 54.54,
+                  "end": 54.96,
+                  "probability": 0.8717354536056519
+                },
+                {
+                  "word": " each",
+                  "start": 55.78,
+                  "end": 56.0,
+                  "probability": 0.9832716584205627
+                },
+                {
+                  "word": " member",
+                  "start": 56.0,
+                  "end": 56.260000000000005,
+                  "probability": 0.9899232983589172
+                },
+                {
+                  "word": " of",
+                  "start": 56.260000000000005,
+                  "end": 56.46,
+                  "probability": 0.9944497346878052
+                },
+                {
+                  "word": " the",
+                  "start": 56.46,
+                  "end": 56.580000000000005,
+                  "probability": 0.9905076026916504
+                },
+                {
+                  "word": " group",
+                  "start": 56.580000000000005,
+                  "end": 56.78,
+                  "probability": 0.7487101554870605
+                },
+                {
+                  "word": " should.",
+                  "start": 56.78,
+                  "end": 56.84,
+                  "probability": 0.47463661432266235
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 67.76,
+          "candidateSeconds": 67.95,
+          "max10msRmsIn100msDbFS": -77.47171990205827,
+          "contextRange": [
+            65.26,
+            68.56
+          ],
+          "contextRecognition": [
+            {
+              "text": " the storyboard to help them remember the passage.",
+              "words": [
+                {
+                  "word": " the",
+                  "start": 65.26,
+                  "end": 65.78,
+                  "probability": 0.21636049449443817
+                },
+                {
+                  "word": " storyboard",
+                  "start": 65.78,
+                  "end": 66.10000000000001,
+                  "probability": 0.7410086989402771
+                },
+                {
+                  "word": " to",
+                  "start": 66.10000000000001,
+                  "end": 66.32000000000001,
+                  "probability": 0.954683780670166
+                },
+                {
+                  "word": " help",
+                  "start": 66.32000000000001,
+                  "end": 66.56,
+                  "probability": 0.9972163438796997
+                },
+                {
+                  "word": " them",
+                  "start": 66.56,
+                  "end": 66.82000000000001,
+                  "probability": 0.9891469478607178
+                },
+                {
+                  "word": " remember",
+                  "start": 66.82000000000001,
+                  "end": 67.10000000000001,
+                  "probability": 0.9933112859725952
+                },
+                {
+                  "word": " the",
+                  "start": 67.10000000000001,
+                  "end": 67.42,
+                  "probability": 0.9925486445426941
+                },
+                {
+                  "word": " passage.",
+                  "start": 67.42,
+                  "end": 67.68,
+                  "probability": 0.9920967817306519
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 119,
+        "lastExclusive": 154
+      },
+      "uncertainWordIndexes": [
+        147
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S06-U008",
+      "sourceTextSha256": "756d288e53b9577b559b2cc7fed8916f6d7894741a4f4175741af4c573a5c560",
+      "completion": "confirm",
+      "candidateRange": [
+        72.25,
+        84.45
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 72.52,
+          "candidateSeconds": 72.25,
+          "max10msRmsIn100msDbFS": -80.89587515648269,
+          "contextRange": [
+            71.72,
+            75.02
+          ],
+          "contextRecognition": [
+            {
+              "text": " Next, the group can decide who's for...",
+              "words": [
+                {
+                  "word": " Next,",
+                  "start": 72.38,
+                  "end": 72.98,
+                  "probability": 0.7761353850364685
+                },
+                {
+                  "word": " the",
+                  "start": 73.56,
+                  "end": 73.67999999999999,
+                  "probability": 0.9217726588249207
+                },
+                {
+                  "word": " group",
+                  "start": 73.67999999999999,
+                  "end": 73.88,
+                  "probability": 0.8626042604446411
+                },
+                {
+                  "word": " can",
+                  "start": 73.88,
+                  "end": 74.1,
+                  "probability": 0.9986257553100586
+                },
+                {
+                  "word": " decide",
+                  "start": 74.1,
+                  "end": 74.58,
+                  "probability": 0.997861921787262
+                },
+                {
+                  "word": " who's",
+                  "start": 74.58,
+                  "end": 74.96,
+                  "probability": 0.8463220000267029
+                },
+                {
+                  "word": " for...",
+                  "start": 74.96,
+                  "end": 75.0,
+                  "probability": 0.2929566949605942
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 84.4,
+          "candidateSeconds": 84.45,
+          "max10msRmsIn100msDbFS": -72.22893870933981,
+          "contextRange": [
+            81.9,
+            85.2
+          ],
+          "contextRecognition": [
+            {
+              "text": " front group member told another scene.",
+              "words": [
+                {
+                  "word": " front",
+                  "start": 81.9,
+                  "end": 82.32000000000001,
+                  "probability": 0.0735894963145256
+                },
+                {
+                  "word": " group",
+                  "start": 82.32000000000001,
+                  "end": 82.56,
+                  "probability": 0.9484053254127502
+                },
+                {
+                  "word": " member",
+                  "start": 82.56,
+                  "end": 82.96000000000001,
+                  "probability": 0.9825537800788879
+                },
+                {
+                  "word": " told",
+                  "start": 82.96000000000001,
+                  "end": 83.24000000000001,
+                  "probability": 0.9515753984451294
+                },
+                {
+                  "word": " another",
+                  "start": 83.24000000000001,
+                  "end": 83.56,
+                  "probability": 0.9954091906547546
+                },
+                {
+                  "word": " scene.",
+                  "start": 83.56,
+                  "end": 83.9,
+                  "probability": 0.968066930770874
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 158,
+        "lastExclusive": 198
+      },
+      "uncertainWordIndexes": [
+        163,
+        169,
+        184
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S06-U010",
+      "sourceTextSha256": "6c59b2b3205c917abe927dc91e5d1b0f96fc2ba542434a0400fbe757bb8c7236",
+      "completion": "confirm",
+      "candidateRange": [
+        88.01,
+        98.55
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 88.28,
+          "candidateSeconds": 88.01,
+          "max10msRmsIn100msDbFS": -120.17962176895901,
+          "contextRange": [
+            87.48,
+            90.78
+          ],
+          "contextRecognition": [
+            {
+              "text": " Finally, the group can put together a f-",
+              "words": [
+                {
+                  "word": " Finally,",
+                  "start": 88.34,
+                  "end": 88.84,
+                  "probability": 0.9092742800712585
+                },
+                {
+                  "word": " the",
+                  "start": 89.48,
+                  "end": 89.64,
+                  "probability": 0.9946886301040649
+                },
+                {
+                  "word": " group",
+                  "start": 89.64,
+                  "end": 89.86,
+                  "probability": 0.9846968650817871
+                },
+                {
+                  "word": " can",
+                  "start": 89.86,
+                  "end": 90.14,
+                  "probability": 0.997752845287323
+                },
+                {
+                  "word": " put",
+                  "start": 90.14,
+                  "end": 90.34,
+                  "probability": 0.9962059259414673
+                },
+                {
+                  "word": " together",
+                  "start": 90.34,
+                  "end": 90.62,
+                  "probability": 0.9956217408180237
+                },
+                {
+                  "word": " a",
+                  "start": 90.62,
+                  "end": 90.76,
+                  "probability": 0.9892581105232239
+                },
+                {
+                  "word": " f",
+                  "start": 90.76,
+                  "end": 90.76,
+                  "probability": 0.07247009873390198
+                },
+                {
+                  "word": "-",
+                  "start": 90.76,
+                  "end": 90.76,
+                  "probability": 0.37125951051712036
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 98.2,
+          "candidateSeconds": 98.55,
+          "max10msRmsIn100msDbFS": -68.3887922621116,
+          "contextRange": [
+            95.7,
+            99.0
+          ],
+          "contextRecognition": [
+            {
+              "text": " that is telling this final version of the passage.",
+              "words": [
+                {
+                  "word": " that",
+                  "start": 95.7,
+                  "end": 95.82000000000001,
+                  "probability": 0.17169322073459625
+                },
+                {
+                  "word": " is",
+                  "start": 95.82000000000001,
+                  "end": 96.02,
+                  "probability": 0.9815375804901123
+                },
+                {
+                  "word": " telling",
+                  "start": 96.02,
+                  "end": 96.3,
+                  "probability": 0.9720938205718994
+                },
+                {
+                  "word": " this",
+                  "start": 96.3,
+                  "end": 96.68,
+                  "probability": 0.9649786949157715
+                },
+                {
+                  "word": " final",
+                  "start": 96.68,
+                  "end": 96.92,
+                  "probability": 0.9947071671485901
+                },
+                {
+                  "word": " version",
+                  "start": 96.92,
+                  "end": 97.38000000000001,
+                  "probability": 0.9988901019096375
+                },
+                {
+                  "word": " of",
+                  "start": 97.38000000000001,
+                  "end": 97.72,
+                  "probability": 0.9866876006126404
+                },
+                {
+                  "word": " the",
+                  "start": 97.72,
+                  "end": 97.92,
+                  "probability": 0.9916296601295471
+                },
+                {
+                  "word": " passage.",
+                  "start": 97.92,
+                  "end": 98.14,
+                  "probability": 0.9842818379402161
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 202,
+        "lastExclusive": 230
+      },
+      "uncertainWordIndexes": [
+        222
+      ],
+      "status": "candidate-unaccepted"
+    }
+  ],
+  "limits": "Not certified verbatim transcript, source-unit acceptance, proxy clock or app readiness. Preserve ASR drift and explicit group pauses/Scripture handoffs.",
+  "elapsedSeconds": 4.169643458910286
+}

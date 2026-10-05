@@ -3,7 +3,9 @@
  let {label,playing=false,continuing=false,playback=null,onclick}= $props();
  // Cookbook CountdownRing geometry: 96px outer ring, 3px stroke, 72px disc.
  const radius=45.5, circumference=2*Math.PI*radius;
- let progress=$derived(playback?.duration>0?Math.max(0,Math.min(1,playback.elapsed/playback.duration)):0);
+ let progressElapsed=$derived(playback?.progressElapsed??playback?.elapsed);
+ let progressDuration=$derived(playback?.progressDuration??playback?.duration);
+ let progress=$derived(progressDuration>0?Math.max(0,Math.min(1,progressElapsed/progressDuration)):0);
 </script>
 <button class="guide-primary" aria-label={label} {onclick}>
  <span class="primary-orbit">

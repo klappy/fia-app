@@ -296,17 +296,17 @@ it('section boundaries hold a title transition and Continue reads the first inst
  expect(screen.getByRole('heading',{name:'Setting the Stage'})).toBeTruthy();
  expect(activities[state().index].id).toBe('S02-U001');expect(players).toHaveLength(0);
  await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));await settle();
- expect(players).toHaveLength(0);await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();expect(players.at(-1).src).toBe('/audio/source/S02-U001.mp3');
+ await vi.advanceTimersByTimeAsync(700);expect(players).toHaveLength(1);expect(players.at(-1).src).toBe('/audio/source/S02-U001.mp3');
  players.at(-1).end();await settle();await vi.advanceTimersByTimeAsync(700);
  expect(activities[state().index].kind).toBe('scripture');
 });
 it('the visual overview selects a section without marking prior content complete and skip enters its first screen',async()=>{
- await startAt('S03-U009');
+ vi.useFakeTimers();await startAt('S03-U009');
  await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));
  await fireEvent.click(screen.getByRole('button',{name:'Filling the Gaps',exact:true}));await settle();
  expect(screen.getByRole('heading',{name:'Filling the Gaps'})).toBeTruthy();expect(state().completed).toEqual([]);
  await fireEvent.click(screen.getByRole('button',{name:'Skip to next activity'}));await settle();
- expect(activities[state().index].id).toBe('S05-U001');expect(players).toHaveLength(0);await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();expect(players.at(-1).src).toBe('/audio/source/S05-U001.mp3');
+ expect(activities[state().index].id).toBe('S05-U001');await vi.advanceTimersByTimeAsync(700);expect(players).toHaveLength(1);expect(players.at(-1).src).toBe('/audio/source/S05-U001.mp3');
 });
 it('dark colors persist without changing the primary control or interrupting narration',async()=>{
  assets.a112.relatedIds=[];await startAt('S02-U005');await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();const player=players.at(-1);player.currentTime=4;
@@ -487,7 +487,7 @@ it('consolidates settings and explicit Scripture Play overrides its automatic se
 });
 it('automatic Scripture reading is independent of automatic guide narration',async()=>{
  vi.useFakeTimers();const session=createSession(activities);session.index=activities.findIndex(a=>a.id==='S01-U002');localStorage.setItem('fia-v3-session@2',JSON.stringify({session,muted:true}));render(App);await settle();await settle();await settle();
- await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));await vi.advanceTimersByTimeAsync(700);await settle();expect(players).toHaveLength(0);await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();expect(players.at(-1).src).toBe(assets['scripture-BereanStandardBible'].descriptionAudio);expect(JSON.parse(localStorage.getItem('fia-v3-session@2')).muted).toBe(true);
+ await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));await vi.advanceTimersByTimeAsync(700);await settle();expect(players).toHaveLength(1);expect(players.at(-1).src).toBe(assets['scripture-BereanStandardBible'].descriptionAudio);expect(JSON.parse(localStorage.getItem('fia-v3-session@2')).muted).toBe(true);
 });
 
 function preparedVisuals(){
@@ -497,11 +497,10 @@ function preparedVisuals(){
  let serial=0;vi.stubGlobal('URL',class extends URL{static createObjectURL(){return `blob:visual-${++serial}`;}static revokeObjectURL(){}});
  return visuals;
 }
-it('restored prepared image stays silent, then View loads it without an offline download',async()=>{
+it('restored prepared image loads automatically without audio or video playback',async()=>{
  const visuals=preparedVisuals(),image=visuals.find(a=>a.kind==='image');const target=activities.find(a=>a.assetId===image.id);
  const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array([1]).buffer,mime:'image/webp'});
- await startAt(target.id);expect(request).not.toHaveBeenCalled();expect(screen.getByRole('button',{name:'View image'})).toBeTruthy();
- await fireEvent.click(screen.getByRole('button',{name:'View image'}));await settle();await settle();
+ await startAt(target.id);await settle();await settle();expect(players).toHaveLength(0);expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled();
  expect(request).toHaveBeenCalledTimes(1);expect(request.mock.calls[0][1]).toBe(image.src);expect(document.querySelector('.visual-viewport img').src).toContain('blob:visual-1');
 });
 it('explicit resource selection loads current map without a second View action',async()=>{
@@ -513,8 +512,8 @@ it('explicit resource selection loads current map without a second View action',
 it('canceling an unfinished visual prevents late response from mounting',async()=>{
  const image=preparedVisuals().find(a=>a.kind==='image');const target=activities.find(a=>a.assetId===image.id);let finish;
  const request=vi.spyOn(libraryAdapter,'playMedia').mockImplementation(()=>new Promise(r=>finish=r));await startAt(target.id);
- await fireEvent.click(screen.getByRole('button',{name:'View image'}));await settle();await fireEvent.click(screen.getByRole('button',{name:'Cancel loading'}));
- expect(request.mock.calls[0][3].aborted).toBe(true);finish({bytes:new Uint8Array([1]).buffer,mime:'image/webp'});await settle();expect(document.querySelector('.visual-viewport img')).toBeNull();expect(screen.getByRole('button',{name:'View image'})).toBeTruthy();
+ await settle();await fireEvent.click(screen.getByRole('button',{name:'Cancel loading'}));
+ expect(request.mock.calls[0][3].aborted).toBe(true);finish({bytes:new Uint8Array([1]).buffer,mime:'image/webp'});await settle();expect(document.querySelector('.visual-viewport img')).toBeNull();expect(screen.getByRole('button',{name:'Try again',exact:true})).toBeTruthy();expect(request).toHaveBeenCalledTimes(1);
 });
 it('all eight prepared visuals use the same explicit resource resolver without offline readiness',async()=>{
  const visuals=preparedVisuals(),tools=new Map();document.modelContext={registerTool:tool=>tools.set(tool.name,tool)};
@@ -543,7 +542,7 @@ it('explicit navigation to an image with no recording loads it, but late previou
 it('failed visual waits for explicit retry despite an unrelated session preference update',async()=>{
  const image=preparedVisuals().find(a=>a.kind==='image'),target=activities.find(a=>a.assetId===image.id);
  const request=vi.spyOn(libraryAdapter,'playMedia').mockRejectedValueOnce(Error('Verification failed')).mockResolvedValue({bytes:new Uint8Array([1]).buffer,mime:'image/webp'});
- await startAt(target.id);await fireEvent.click(screen.getByRole('button',{name:'View image'}));await settle();expect(request).toHaveBeenCalledTimes(1);
+ await startAt(target.id);await settle();expect(request).toHaveBeenCalledTimes(1);
  await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Settings',exact:true}));await fireEvent.click(screen.getByRole('checkbox',{name:/Automatic Scripture reading/}));await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));await settle();expect(request).toHaveBeenCalledTimes(1);
  await fireEvent.click(screen.getByRole('button',{name:'Try again',exact:true}));await settle();expect(request).toHaveBeenCalledTimes(2);expect(document.querySelector('.visual-viewport img')).not.toBeNull();
 });
@@ -595,4 +594,40 @@ it('settings distinguish demo source from unavailable production streaming sizes
  expect(screen.getByRole('combobox',{name:'Streaming size'}).value).toBe('large');expect(screen.getByRole('option',{name:'Medium · 540p — not available yet'}).disabled).toBe(true);expect(request).not.toHaveBeenCalled();
  cleanup();const resolve=videoDemo.demoVideoSource;vi.spyOn(videoDemo,'demoVideoSource').mockImplementation((pack,asset)=>resolve(pack,asset,{enabled:'true',hostname:'staging.fiaguide.app'}));
  await startAt('S01-U001');await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Settings',exact:true}));expect(screen.getByText('Streaming: Demo source')).toBeTruthy();expect(screen.queryByRole('combobox',{name:'Streaming size'})).toBeNull();expect(request).not.toHaveBeenCalled();
+});
+
+it('explicit Next starts the destination without prior playback and cancels it on Back',async()=>{
+ vi.useFakeTimers();await startAt('S01-U003');expect(players).toHaveLength(0);
+ await fireEvent.click(screen.getByRole('button',{name:'Skip to next activity'}));await vi.advanceTimersByTimeAsync(700);
+ expect(activities[state().index].id).toBe('S01-U004');expect(players).toHaveLength(1);expect(players[0].src).toBe('/audio/source/S01-U004.mp3');expect(players[0].paused).toBe(false);
+ players[0].end();await settle();await vi.advanceTimersByTimeAsync(1000);expect(state().status).toBe('waiting');expect(activities[state().index].id).toBe('S01-U004');
+ await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));await vi.advanceTimersByTimeAsync(700);expect(players.at(-1).src).toBe('/audio/source/S01-U005.mp3');
+ await fireEvent.click(screen.getByRole('button',{name:'Previous activity'}));await vi.advanceTimersByTimeAsync(1000);expect(players).toHaveLength(2);expect(players.at(-1).paused).toBe(true);
+});
+it('explicit forward intent is canceled by a subsequent Back before playback starts',async()=>{
+ vi.useFakeTimers();await startAt('S01-U003');await fireEvent.click(screen.getByRole('button',{name:'Skip to next activity'}));await fireEvent.click(screen.getByRole('button',{name:'Previous activity'}));await vi.advanceTimersByTimeAsync(1000);expect(players).toHaveLength(0);expect(activities[state().index].id).toBe('S01-U003');
+});
+it('restored map loads only its focal resource and leaves media playback silent',async()=>{
+ const map=preparedVisuals().find(a=>a.kind==='map'),request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array([1]).buffer,mime:'image/webp'});
+ const session=createSession(activities);session.detour=map.id;localStorage.setItem('fia-v3-session@2',JSON.stringify({session}));render(App);await settle();await settle();await settle();
+ expect(request).toHaveBeenCalledTimes(1);expect(request.mock.calls[0][1]).toBe(map.src);expect(document.querySelector('.visual-viewport img')).toBeTruthy();expect(players).toHaveLength(0);expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled();
+});
+it('offline missing current image makes no request and reconnect loads it automatically',async()=>{
+ const connected=vi.spyOn(navigator,'onLine','get').mockReturnValue(false),image=preparedVisuals().find(a=>a.kind==='image'),target=activities.find(a=>a.assetId===image.id),request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array([1]).buffer,mime:'image/webp'});
+ await startAt(target.id);expect(request).not.toHaveBeenCalled();expect(screen.getByText(/Connect to the internet to view it/)).toBeTruthy();
+ connected.mockReturnValue(true);window.dispatchEvent(new Event('online'));await settle();await settle();expect(request).toHaveBeenCalledTimes(1);expect(document.querySelector('.visual-viewport img')).toBeTruthy();expect(players).toHaveLength(0);
+});
+it('explicit visual Cancel survives preference changes and offline/reconnect until Try again',async()=>{
+ const connected=vi.spyOn(navigator,'onLine','get').mockReturnValue(true),image=preparedVisuals().find(a=>a.kind==='image'),target=activities.find(a=>a.assetId===image.id);let resolve;
+ const request=vi.spyOn(libraryAdapter,'playMedia').mockImplementationOnce(()=>new Promise(r=>resolve=r)).mockResolvedValue({bytes:new Uint8Array([1]).buffer,mime:'image/webp'});
+ await startAt(target.id);await fireEvent.click(screen.getByRole('button',{name:'Cancel loading',exact:true}));await settle();
+ connected.mockReturnValue(false);window.dispatchEvent(new Event('offline'));connected.mockReturnValue(true);window.dispatchEvent(new Event('online'));await settle();
+ await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Settings',exact:true}));await fireEvent.click(screen.getByRole('checkbox',{name:/Automatic Scripture reading/}));await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));await settle();
+ resolve({bytes:new Uint8Array([2]).buffer,mime:'image/webp'});await settle();expect(request).toHaveBeenCalledTimes(1);expect(document.querySelector('.visual-viewport img')).toBeNull();await fireEvent.click(screen.getByRole('button',{name:'Try again',exact:true}));await settle();expect(request).toHaveBeenCalledTimes(2);expect(document.querySelector('.visual-viewport img')).toBeTruthy();
+});
+it('offline saved focal image remains available without requesting media',async()=>{
+ vi.spyOn(navigator,'onLine','get').mockReturnValue(false);const target=activities.find(a=>a.id==='S02-U005'),request=vi.spyOn(libraryAdapter,'playMedia');await startAt(target.id);expect(document.querySelector('.visual-viewport img')).toBeTruthy();expect(request).not.toHaveBeenCalled();
+});
+it('online unprepared visual does not falsely promise a download can prepare it',async()=>{
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:null,files:[]});await startAt('S02-U005');expect(screen.getByText(/not available online yet/)).toBeTruthy();expect(screen.queryByRole('button',{name:'Open Downloads',exact:true})).toBeNull();
 });
