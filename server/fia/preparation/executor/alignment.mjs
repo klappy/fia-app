@@ -9,13 +9,13 @@ export async function retainedJSON(descriptor,resolveArtifact){
  const bytes=resolved.slice();if(await sha256(bytes)!==descriptor.sha256)throw Error('alignment-artifact-hash');return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
 }
 export async function storeJSON(value,storeArtifact){const bytes=new TextEncoder().encode(canonicalJSONString(value)),digest=await sha256(bytes),stored=await storeArtifact(bytes);if(stored?.sha256!==digest||typeof stored.reference!=='string'||!stored.reference)throw Error('alignment-store-mismatch');return {sha256:digest,reference:stored.reference};}
-export function createAlignmentAdapter({resolveArtifact,resolveUnits,storeArtifact,normalizationRevision=NORMALIZATION_REVISION}){
- if(normalizationRevision!==NORMALIZATION_REVISION||[resolveArtifact,resolveUnits,storeArtifact].some(fn=>typeof fn!=='function'))throw Error('alignment-policy-unavailable');
+export function createAlignmentAdapter({resolveArtifact,resolveUnits,storeArtifact,normalizationRevision=NORMALIZATION_REVISION,recognitionValidator=validateRecognitionIdentity,recognitionSchema='fia-local-raw-recognition@1'}){
+ if(normalizationRevision!==NORMALIZATION_REVISION||[resolveArtifact,resolveUnits,storeArtifact,recognitionValidator].some(fn=>typeof fn!=='function'))throw Error('alignment-policy-unavailable');
  return {paid:false,async run({input,nodeOutputs}){
   input=structuredClone(input);nodeOutputs=structuredClone(nodeOutputs);
   const raw=await retainedJSON(nodeOutputs.transcribe,resolveArtifact),script=structuredClone(await resolveUnits(structuredClone(input)));
-  if(raw.schema!=='fia-local-raw-recognition@1'||raw.status!=='candidate'||raw.source?.sha256!==nodeOutputs.acquire?.sha256||!hash(raw.source?.sha256)||!Number.isFinite(raw.durationSeconds)||raw.durationSeconds<=0||raw.durationSeconds>600||!Array.isArray(raw.segments))throw Error('alignment-recognition-binding');
-  await validateRecognitionIdentity(raw,input);
+  if(raw.schema!==recognitionSchema||raw.status!=='candidate'||raw.source?.sha256!==nodeOutputs.acquire?.sha256||!hash(raw.source?.sha256)||!Number.isFinite(raw.durationSeconds)||raw.durationSeconds<=0||raw.durationSeconds>600||!Array.isArray(raw.segments))throw Error('alignment-recognition-binding');
+  await recognitionValidator(raw,input);
   if(script.scriptSha256!==input.scriptSha256||!hash(script.scriptSha256)||!Array.isArray(script.units)||!script.units.length||script.units.length>1000)throw Error('alignment-script-binding');
   const words=raw.segments.flatMap(segment=>{if(!Array.isArray(segment.words))throw Error('invalid-recognition-words');return segment.words;});if(words.length>10000)throw Error('alignment-word-limit');
   const heard=[],wordIndexes=[];let lastStart=0,lastEnd=0,wordTextLength=0;
