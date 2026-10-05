@@ -1,0 +1,129 @@
+{
+  "schema": 1,
+  "status": "source-review-candidate-not-browser-accepted",
+  "sourceSha256": "d0f0c608fb2c8b59aaf16ce72047978d0056a109354997ae982e81bb32451ef6",
+  "alignmentSha256": "821107944ce0546a64a308bab9f9c55d416ebb68f6de961ab2d601b63725520e",
+  "boundaryReviewSha256": "de9004dd9ad3bf123907fbbd9b1c68990c423618120e259de947386e8eb809cd",
+  "ranges": [
+    {
+      "activityId": "S06-U001",
+      "wordSpan": {
+        "first": 9,
+        "lastExclusive": 23
+      },
+      "sourceRange": {
+        "startSeconds": 8.27,
+        "endSeconds": 13.21,
+        "clockDomain": "decoded-pcm"
+      },
+      "review": {
+        "status": "candidate-for-independent-review",
+        "changedFromInitialBoundaryCandidate": {},
+        "basis": "Retained contextual recognition plus waveform; targeted corrected crops where required. Raw transcript untouched."
+      }
+    },
+    {
+      "activityId": "S06-U002",
+      "wordSpan": {
+        "first": 23,
+        "lastExclusive": 36
+      },
+      "sourceRange": {
+        "startSeconds": 13.55,
+        "endSeconds": 18.21,
+        "clockDomain": "decoded-pcm"
+      },
+      "review": {
+        "status": "candidate-for-independent-review",
+        "changedFromInitialBoundaryCandidate": {},
+        "basis": "Retained contextual recognition plus waveform; targeted corrected crops where required. Raw transcript untouched."
+      }
+    },
+    {
+      "activityId": "S06-U003",
+      "wordSpan": {
+        "first": 36,
+        "lastExclusive": 69
+      },
+      "sourceRange": {
+        "startSeconds": 18.75,
+        "endSeconds": 33.24,
+        "clockDomain": "decoded-pcm"
+      },
+      "review": {
+        "status": "candidate-for-independent-review",
+        "changedFromInitialBoundaryCandidate": {},
+        "basis": "Retained contextual recognition plus waveform; targeted corrected crops where required. Raw transcript untouched."
+      }
+    },
+    {
+      "activityId": "S06-U004",
+      "wordSpan": {
+        "first": 69,
+        "lastExclusive": 115
+      },
+      "sourceRange": {
+        "startSeconds": 34.27,
+        "endSeconds": 49.5,
+        "clockDomain": "decoded-pcm"
+      },
+      "review": {
+        "status": "candidate-for-independent-review",
+        "changedFromInitialBoundaryCandidate": {},
+        "basis": "Retained contextual recognition plus waveform; targeted corrected crops where required. Raw transcript untouched."
+      }
+    },
+    {
+      "activityId": "S06-U006",
+      "wordSpan": {
+        "first": 119,
+        "lastExclusive": 154
+      },
+      "sourceRange": {
+        "startSeconds": 54.26,
+        "endSeconds": 67.95,
+        "clockDomain": "decoded-pcm"
+      },
+      "review": {
+        "status": "candidate-for-independent-review",
+        "changedFromInitialBoundaryCandidate": {},
+        "basis": "Retained contextual recognition plus waveform; targeted corrected crops where required. Raw transcript untouched."
+      }
+    },
+    {
+      "activityId": "S06-U008",
+      "wordSpan": {
+        "first": 158,
+        "lastExclusive": 198
+      },
+      "sourceRange": {
+        "startSeconds": 72.25,
+        "endSeconds": 84.45,
+        "clockDomain": "decoded-pcm"
+      },
+      "review": {
+        "status": "candidate-for-independent-review",
+        "changedFromInitialBoundaryCandidate": {},
+        "basis": "Retained contextual recognition plus waveform; targeted corrected crops where required. Raw transcript untouched."
+      }
+    },
+    {
+      "activityId": "S06-U010",
+      "wordSpan": {
+        "first": 202,
+        "lastExclusive": 230
+      },
+      "sourceRange": {
+        "startSeconds": 88.01,
+        "endSeconds": 98.55,
+        "clockDomain": "decoded-pcm"
+      },
+      "review": {
+        "status": "candidate-for-independent-review",
+        "changedFromInitialBoundaryCandidate": {},
+        "basis": "Retained contextual recognition plus waveform; targeted corrected crops where required. Raw transcript untouched."
+      }
+    }
+  ],
+  "exclusions": "Keep app manual pauses and Scripture activities; do not insert source-only enumerations or closing announcement."
+}

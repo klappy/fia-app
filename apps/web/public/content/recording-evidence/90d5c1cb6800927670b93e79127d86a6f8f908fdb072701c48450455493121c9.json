@@ -1,0 +1,7616 @@
+{
+  "schema": 1,
+  "status": "raw-asr-unreviewed-not-verbatim-certified",
+  "scope": "Local recognition only; no TTS, paid calls, remote fetch, script prompt, forced alignment or product edits. Word timestamps are model estimates, not accepted playback boundaries.",
+  "source": {
+    "sha256": "6ac21beefbcc42b721de90e499b842c07f6a63f0e6a8f91391ce511613412538",
+    "bytes": 6498188,
+    "url": "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s3/v2.1/vbr0.mp3"
+  },
+  "model": {
+    "name": "Systran/faster-whisper-tiny.en",
+    "snapshot": "0d3d19a32d3338f10357c0889762bd8d64bbdeba",
+    "files": {
+      "config.json": {
+        "sha256": "14b1b421a90349bc551b881461426b561a874049cb9e4c4864f2ca384f6a7cc5",
+        "bytes": 2317
+      },
+      "model.bin": {
+        "sha256": "1a5afae06a4db91c975c9a9d78be5cc110ee4ea022ad57d55492e4550e936b2a",
+        "bytes": 75537502
+      },
+      "tokenizer.json": {
+        "sha256": "929c5252409436dce1b38a75d1abbcb5e132d170d8e324e4e04ed915fa2d22df",
+        "bytes": 2128466
+      },
+      "vocabulary.txt": {
+        "sha256": "ff77588746d3a2595d32ab5b69ffd7b95ce2441ac57533cb66fc3eb575a115cf",
+        "bytes": 422309
+      }
+    },
+    "device": "cpu",
+    "computeType": "int8",
+    "cpuThreads": 4
+  },
+  "runtime": {
+    "python": "3.12.14",
+    "faster-whisper": "1.2.1",
+    "ctranslate2": "4.8.2",
+    "av": "19.0.1",
+    "numpy": "2.5.3"
+  },
+  "recognitionConfig": {
+    "language": "en",
+    "task": "transcribe",
+    "log_progress": false,
+    "beam_size": 5,
+    "best_of": 5,
+    "patience": 1,
+    "length_penalty": 1,
+    "repetition_penalty": 1,
+    "no_repeat_ngram_size": 0,
+    "temperature": [
+      0.0,
+      0.2,
+      0.4,
+      0.6,
+      0.8,
+      1.0
+    ],
+    "compression_ratio_threshold": 2.4,
+    "log_prob_threshold": -1.0,
+    "no_speech_threshold": 0.6,
+    "condition_on_previous_text": false,
+    "prompt_reset_on_temperature": 0.5,
+    "initial_prompt": null,
+    "prefix": null,
+    "suppress_blank": true,
+    "suppress_tokens": [
+      -1
+    ],
+    "without_timestamps": false,
+    "max_initial_timestamp": 1.0,
+    "word_timestamps": true,
+    "prepend_punctuations": "\"'\u201c\u00bf([{-",
+    "append_punctuations": "\"'.\u3002,\uff0c!\uff01?\uff1f:\uff1a\u201d)]}\u3001",
+    "multilingual": false,
+    "vad_filter": false,
+    "vad_parameters": null,
+    "max_new_tokens": null,
+    "chunk_length": null,
+    "clip_timestamps": "0",
+    "hallucination_silence_threshold": null,
+    "hotwords": null,
+    "language_detection_threshold": 0.5,
+    "language_detection_segments": 1
+  },
+  "decoder": {
+    "library": "PyAV",
+    "output": "mono float32 16000Hz",
+    "samples": 5269063,
+    "sha256": "0ff4fb719f11b22f202596a12c7cedad08ddcf3aea88bf5871e329de93c5df96",
+    "timeline": "decoded PyAV samples beginning at zero; no conversion to Apple playback timeline asserted"
+  },
+  "duration": 329.3164375,
+  "elapsedSeconds": 17.15129533293657,
+  "scriptSha256": "c6c3dc670eff9aff2c80b560b359bd09bbcb74cdefb9fc76dc92ba644089f3f8",
+  "wordCount": 889,
+  "segments": [
+    {
+      "id": 1,
+      "seek": 0,
+      "start": 0.0,
+      "end": 2.4,
+      "text": " 3. Defining the Scenes",
+      "tokens": [
+        50363,
+        513,
+        13,
+        2896,
+        3191,
+        262,
+        49525,
+        50490
+      ],
+      "avg_logprob": -0.25073596176348234,
+      "compression_ratio": 1.7222222222222223,
+      "no_speech_prob": 0.06332723796367645,
+      "words": [
+        {
+          "start": 0.0,
+          "end": 0.8,
+          "word": " 3.",
+          "probability": 0.46662643551826477
+        },
+        {
+          "start": 1.18,
+          "end": 1.5,
+          "word": " Defining",
+          "probability": 0.9385369718074799
+        },
+        {
+          "start": 1.5,
+          "end": 2.4,
+          "word": " the",
+          "probability": 0.9649685025215149
+        },
+        {
+          "start": 2.4,
+          "end": 2.4,
+          "word": " Scenes",
+          "probability": 0.7044201493263245
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 2,
+      "seek": 0,
+      "start": 2.4,
+      "end": 4.82,
+      "text": " Mark 1 1 3 13",
+      "tokens": [
+        50490,
+        2940,
+        352,
+        352,
+        513,
+        1511,
+        50624
+      ],
+      "avg_logprob": -0.25073596176348234,
+      "compression_ratio": 1.7222222222222223,
+      "no_speech_prob": 0.06332723796367645,
+      "words": [
+        {
+          "start": 2.4,
+          "end": 3.02,
+          "word": " Mark",
+          "probability": 0.4996301233768463
+        },
+        {
+          "start": 3.02,
+          "end": 3.5,
+          "word": " 1",
+          "probability": 0.9353879690170288
+        },
+        {
+          "start": 3.5,
+          "end": 3.78,
+          "word": " 1",
+          "probability": 0.31407883763313293
+        },
+        {
+          "start": 3.78,
+          "end": 4.04,
+          "word": " 3",
+          "probability": 0.7356815934181213
+        },
+        {
+          "start": 4.04,
+          "end": 4.82,
+          "word": " 13",
+          "probability": 0.9620405435562134
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 3,
+      "seek": 0,
+      "start": 4.82,
+      "end": 10.88,
+      "text": " Listen to an audio version of Mark 1 1 3 13 in the easiest to understand translation.",
+      "tokens": [
+        50624,
+        20600,
+        284,
+        281,
+        6597,
+        2196,
+        286,
+        2940,
+        352,
+        352,
+        513,
+        1511,
+        287,
+        262,
+        16638,
+        284,
+        1833,
+        11059,
+        13,
+        50930
+      ],
+      "avg_logprob": -0.25073596176348234,
+      "compression_ratio": 1.7222222222222223,
+      "no_speech_prob": 0.06332723796367645,
+      "words": [
+        {
+          "start": 4.82,
+          "end": 5.62,
+          "word": " Listen",
+          "probability": 0.5398021340370178
+        },
+        {
+          "start": 5.62,
+          "end": 5.84,
+          "word": " to",
+          "probability": 0.9967672824859619
+        },
+        {
+          "start": 5.84,
+          "end": 6.12,
+          "word": " an",
+          "probability": 0.981754720211029
+        },
+        {
+          "start": 6.12,
+          "end": 6.22,
+          "word": " audio",
+          "probability": 0.9420724511146545
+        },
+        {
+          "start": 6.22,
+          "end": 6.6,
+          "word": " version",
+          "probability": 0.9984976053237915
+        },
+        {
+          "start": 6.6,
+          "end": 6.8,
+          "word": " of",
+          "probability": 0.9936832189559937
+        },
+        {
+          "start": 6.8,
+          "end": 7.06,
+          "word": " Mark",
+          "probability": 0.8362935185432434
+        },
+        {
+          "start": 7.06,
+          "end": 7.56,
+          "word": " 1",
+          "probability": 0.9916365742683411
+        },
+        {
+          "start": 7.56,
+          "end": 7.82,
+          "word": " 1",
+          "probability": 0.9684053659439087
+        },
+        {
+          "start": 7.82,
+          "end": 8.12,
+          "word": " 3",
+          "probability": 0.9797782897949219
+        },
+        {
+          "start": 8.12,
+          "end": 8.64,
+          "word": " 13",
+          "probability": 0.9779982566833496
+        },
+        {
+          "start": 8.64,
+          "end": 8.9,
+          "word": " in",
+          "probability": 0.9061328172683716
+        },
+        {
+          "start": 8.9,
+          "end": 9.1,
+          "word": " the",
+          "probability": 0.9923727512359619
+        },
+        {
+          "start": 9.1,
+          "end": 9.36,
+          "word": " easiest",
+          "probability": 0.9993231296539307
+        },
+        {
+          "start": 9.36,
+          "end": 9.78,
+          "word": " to",
+          "probability": 0.9671406149864197
+        },
+        {
+          "start": 9.78,
+          "end": 10.22,
+          "word": " understand",
+          "probability": 0.9734917879104614
+        },
+        {
+          "start": 10.22,
+          "end": 10.88,
+          "word": " translation.",
+          "probability": 0.980158805847168
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 4,
+      "seek": 0,
+      "start": 11.66,
+      "end": 15.56,
+      "text": " In this step the group will define the scenes characters and settings of this passage.",
+      "tokens": [
+        50930,
+        554,
+        428,
+        2239,
+        262,
+        1448,
+        481,
+        8160,
+        262,
+        8188,
+        3435,
+        290,
+        6460,
+        286,
+        428,
+        10066,
+        13,
+        51156
+      ],
+      "avg_logprob": -0.25073596176348234,
+      "compression_ratio": 1.7222222222222223,
+      "no_speech_prob": 0.06332723796367645,
+      "words": [
+        {
+          "start": 11.66,
+          "end": 11.66,
+          "word": " In",
+          "probability": 0.9701980352401733
+        },
+        {
+          "start": 11.66,
+          "end": 11.9,
+          "word": " this",
+          "probability": 0.9950433969497681
+        },
+        {
+          "start": 11.9,
+          "end": 12.12,
+          "word": " step",
+          "probability": 0.9798292517662048
+        },
+        {
+          "start": 12.12,
+          "end": 12.32,
+          "word": " the",
+          "probability": 0.6973689198493958
+        },
+        {
+          "start": 12.32,
+          "end": 12.5,
+          "word": " group",
+          "probability": 0.9903143048286438
+        },
+        {
+          "start": 12.5,
+          "end": 12.78,
+          "word": " will",
+          "probability": 0.9955412745475769
+        },
+        {
+          "start": 12.78,
+          "end": 13.0,
+          "word": " define",
+          "probability": 0.9917696714401245
+        },
+        {
+          "start": 13.0,
+          "end": 13.34,
+          "word": " the",
+          "probability": 0.989494264125824
+        },
+        {
+          "start": 13.34,
+          "end": 13.68,
+          "word": " scenes",
+          "probability": 0.9500188827514648
+        },
+        {
+          "start": 13.68,
+          "end": 14.04,
+          "word": " characters",
+          "probability": 0.8695225119590759
+        },
+        {
+          "start": 14.04,
+          "end": 14.36,
+          "word": " and",
+          "probability": 0.9941912293434143
+        },
+        {
+          "start": 14.36,
+          "end": 14.66,
+          "word": " settings",
+          "probability": 0.9828943610191345
+        },
+        {
+          "start": 14.66,
+          "end": 14.9,
+          "word": " of",
+          "probability": 0.9969140291213989
+        },
+        {
+          "start": 14.9,
+          "end": 15.2,
+          "word": " this",
+          "probability": 0.9965697526931763
+        },
+        {
+          "start": 15.2,
+          "end": 15.56,
+          "word": " passage.",
+          "probability": 0.9920696020126343
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 5,
+      "seek": 0,
+      "start": 16.04,
+      "end": 17.98,
+      "text": " Then the group will visualize this passage.",
+      "tokens": [
+        51156,
+        3244,
+        262,
+        1448,
+        481,
+        38350,
+        428,
+        10066,
+        13,
+        51280
+      ],
+      "avg_logprob": -0.25073596176348234,
+      "compression_ratio": 1.7222222222222223,
+      "no_speech_prob": 0.06332723796367645,
+      "words": [
+        {
+          "start": 16.04,
+          "end": 16.2,
+          "word": " Then",
+          "probability": 0.9838407635688782
+        },
+        {
+          "start": 16.2,
+          "end": 16.4,
+          "word": " the",
+          "probability": 0.9934818148612976
+        },
+        {
+          "start": 16.4,
+          "end": 16.58,
+          "word": " group",
+          "probability": 0.9988583326339722
+        },
+        {
+          "start": 16.58,
+          "end": 16.84,
+          "word": " will",
+          "probability": 0.9987316727638245
+        },
+        {
+          "start": 16.84,
+          "end": 17.16,
+          "word": " visualize",
+          "probability": 0.8976780772209167
+        },
+        {
+          "start": 17.16,
+          "end": 17.62,
+          "word": " this",
+          "probability": 0.9969218373298645
+        },
+        {
+          "start": 17.62,
+          "end": 17.98,
+          "word": " passage.",
+          "probability": 0.9975599050521851
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 6,
+      "seek": 0,
+      "start": 18.56,
+      "end": 20.08,
+      "text": " This passage has four scenes.",
+      "tokens": [
+        51280,
+        770,
+        10066,
+        468,
+        1440,
+        8188,
+        13,
+        51394
+      ],
+      "avg_logprob": -0.25073596176348234,
+      "compression_ratio": 1.7222222222222223,
+      "no_speech_prob": 0.06332723796367645,
+      "words": [
+        {
+          "start": 18.56,
+          "end": 18.76,
+          "word": " This",
+          "probability": 0.9925782084465027
+        },
+        {
+          "start": 18.76,
+          "end": 19.1,
+          "word": " passage",
+          "probability": 0.9966444969177246
+        },
+        {
+          "start": 19.1,
+          "end": 19.4,
+          "word": " has",
+          "probability": 0.9982323050498962
+        },
+        {
+          "start": 19.4,
+          "end": 19.68,
+          "word": " four",
+          "probability": 0.7673228979110718
+        },
+        {
+          "start": 19.68,
+          "end": 20.08,
+          "word": " scenes.",
+          "probability": 0.9752827882766724
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 7,
+      "seek": 0,
+      "start": 20.92,
+      "end": 26.04,
+      "text": " In the first scene, Mark begins by telling us that this is the start of Jesus' ministry.",
+      "tokens": [
+        51394,
+        554,
+        262,
+        717,
+        3715,
+        11,
+        2940,
+        6140,
+        416,
+        5149,
+        514,
+        326,
+        428,
+        318,
+        262,
+        923,
+        286,
+        5803,
+        6,
+        11957,
+        13,
+        51680
+      ],
+      "avg_logprob": -0.25073596176348234,
+      "compression_ratio": 1.7222222222222223,
+      "no_speech_prob": 0.06332723796367645,
+      "words": [
+        {
+          "start": 20.92,
+          "end": 20.98,
+          "word": " In",
+          "probability": 0.9459969401359558
+        },
+        {
+          "start": 20.98,
+          "end": 21.18,
+          "word": " the",
+          "probability": 0.9947739243507385
+        },
+        {
+          "start": 21.18,
+          "end": 21.44,
+          "word": " first",
+          "probability": 0.9963765740394592
+        },
+        {
+          "start": 21.44,
+          "end": 21.96,
+          "word": " scene,",
+          "probability": 0.9858872294425964
+        },
+        {
+          "start": 22.38,
+          "end": 22.42,
+          "word": " Mark",
+          "probability": 0.9583531618118286
+        },
+        {
+          "start": 22.42,
+          "end": 22.76,
+          "word": " begins",
+          "probability": 0.9949761629104614
+        },
+        {
+          "start": 22.76,
+          "end": 23.06,
+          "word": " by",
+          "probability": 0.9988580942153931
+        },
+        {
+          "start": 23.06,
+          "end": 23.34,
+          "word": " telling",
+          "probability": 0.9985912442207336
+        },
+        {
+          "start": 23.34,
+          "end": 23.92,
+          "word": " us",
+          "probability": 0.9972655773162842
+        },
+        {
+          "start": 23.92,
+          "end": 24.06,
+          "word": " that",
+          "probability": 0.9779474139213562
+        },
+        {
+          "start": 24.06,
+          "end": 24.26,
+          "word": " this",
+          "probability": 0.9777179956436157
+        },
+        {
+          "start": 24.26,
+          "end": 24.5,
+          "word": " is",
+          "probability": 0.9977110624313354
+        },
+        {
+          "start": 24.5,
+          "end": 24.6,
+          "word": " the",
+          "probability": 0.9938510656356812
+        },
+        {
+          "start": 24.6,
+          "end": 24.8,
+          "word": " start",
+          "probability": 0.9735448956489563
+        },
+        {
+          "start": 24.8,
+          "end": 25.04,
+          "word": " of",
+          "probability": 0.9980648159980774
+        },
+        {
+          "start": 25.04,
+          "end": 25.36,
+          "word": " Jesus'",
+          "probability": 0.9908221960067749
+        },
+        {
+          "start": 26.04,
+          "end": 26.04,
+          "word": " ministry.",
+          "probability": 0.9130156636238098
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 8,
+      "seek": 2604,
+      "start": 26.04,
+      "end": 39.42,
+      "text": " John is in the wilderness at the Jordan River fulfilling scripture from the Old Testament where Isaiah told us that someone would come to prepare the way for the Lord's coming, shouting and making a pathway for God to come to us.",
+      "tokens": [
+        50363,
+        1757,
+        318,
+        287,
+        262,
+        22775,
+        379,
+        262,
+        8078,
+        5866,
+        26187,
+        36739,
+        422,
+        262,
+        5706,
+        18318,
+        810,
+        29756,
+        1297,
+        514,
+        326,
+        2130,
+        561,
+        1282,
+        284,
+        8335,
+        262,
+        835,
+        329,
+        262,
+        4453,
+        338,
+        2406,
+        11,
+        19642,
+        290,
+        1642,
+        257,
+        21182,
+        329,
+        1793,
+        284,
+        1282,
+        284,
+        514,
+        13,
+        51013
+      ],
+      "avg_logprob": -0.14467422679370764,
+      "compression_ratio": 1.7411764705882353,
+      "no_speech_prob": 0.03126658871769905,
+      "words": [
+        {
+          "start": 26.04,
+          "end": 26.72,
+          "word": " John",
+          "probability": 0.6166586875915527
+        },
+        {
+          "start": 26.72,
+          "end": 26.88,
+          "word": " is",
+          "probability": 0.9901401400566101
+        },
+        {
+          "start": 26.88,
+          "end": 26.98,
+          "word": " in",
+          "probability": 0.9926485419273376
+        },
+        {
+          "start": 26.98,
+          "end": 27.12,
+          "word": " the",
+          "probability": 0.992893636226654
+        },
+        {
+          "start": 27.12,
+          "end": 27.42,
+          "word": " wilderness",
+          "probability": 0.9887555241584778
+        },
+        {
+          "start": 27.42,
+          "end": 27.88,
+          "word": " at",
+          "probability": 0.9686518311500549
+        },
+        {
+          "start": 27.88,
+          "end": 28.08,
+          "word": " the",
+          "probability": 0.9902980923652649
+        },
+        {
+          "start": 28.08,
+          "end": 28.34,
+          "word": " Jordan",
+          "probability": 0.9818980097770691
+        },
+        {
+          "start": 28.34,
+          "end": 28.76,
+          "word": " River",
+          "probability": 0.7158945798873901
+        },
+        {
+          "start": 28.76,
+          "end": 29.2,
+          "word": " fulfilling",
+          "probability": 0.9463791251182556
+        },
+        {
+          "start": 29.2,
+          "end": 29.72,
+          "word": " scripture",
+          "probability": 0.5335379242897034
+        },
+        {
+          "start": 29.72,
+          "end": 30.0,
+          "word": " from",
+          "probability": 0.9927736520767212
+        },
+        {
+          "start": 30.0,
+          "end": 30.16,
+          "word": " the",
+          "probability": 0.994462788105011
+        },
+        {
+          "start": 30.16,
+          "end": 30.42,
+          "word": " Old",
+          "probability": 0.9637542963027954
+        },
+        {
+          "start": 30.42,
+          "end": 30.9,
+          "word": " Testament",
+          "probability": 0.9955946803092957
+        },
+        {
+          "start": 30.9,
+          "end": 31.48,
+          "word": " where",
+          "probability": 0.5365973711013794
+        },
+        {
+          "start": 31.48,
+          "end": 31.94,
+          "word": " Isaiah",
+          "probability": 0.9785928130149841
+        },
+        {
+          "start": 31.94,
+          "end": 32.26,
+          "word": " told",
+          "probability": 0.9990743398666382
+        },
+        {
+          "start": 32.26,
+          "end": 32.52,
+          "word": " us",
+          "probability": 0.9988971948623657
+        },
+        {
+          "start": 32.52,
+          "end": 32.68,
+          "word": " that",
+          "probability": 0.9712921977043152
+        },
+        {
+          "start": 32.68,
+          "end": 32.88,
+          "word": " someone",
+          "probability": 0.9814891219139099
+        },
+        {
+          "start": 32.88,
+          "end": 33.16,
+          "word": " would",
+          "probability": 0.9968013763427734
+        },
+        {
+          "start": 33.16,
+          "end": 33.4,
+          "word": " come",
+          "probability": 0.9980620741844177
+        },
+        {
+          "start": 33.4,
+          "end": 33.68,
+          "word": " to",
+          "probability": 0.9985767602920532
+        },
+        {
+          "start": 33.68,
+          "end": 33.92,
+          "word": " prepare",
+          "probability": 0.9959459900856018
+        },
+        {
+          "start": 33.92,
+          "end": 34.2,
+          "word": " the",
+          "probability": 0.9889128804206848
+        },
+        {
+          "start": 34.2,
+          "end": 34.72,
+          "word": " way",
+          "probability": 0.9931498169898987
+        },
+        {
+          "start": 34.72,
+          "end": 34.92,
+          "word": " for",
+          "probability": 0.9938090443611145
+        },
+        {
+          "start": 34.92,
+          "end": 35.06,
+          "word": " the",
+          "probability": 0.9966703057289124
+        },
+        {
+          "start": 35.06,
+          "end": 35.9,
+          "word": " Lord's",
+          "probability": 0.962267130613327
+        },
+        {
+          "start": 35.9,
+          "end": 35.9,
+          "word": " coming,",
+          "probability": 0.970734715461731
+        },
+        {
+          "start": 36.48,
+          "end": 36.64,
+          "word": " shouting",
+          "probability": 0.994599461555481
+        },
+        {
+          "start": 36.64,
+          "end": 37.06,
+          "word": " and",
+          "probability": 0.9489539861679077
+        },
+        {
+          "start": 37.06,
+          "end": 37.34,
+          "word": " making",
+          "probability": 0.9993277788162231
+        },
+        {
+          "start": 37.34,
+          "end": 37.6,
+          "word": " a",
+          "probability": 0.9938538074493408
+        },
+        {
+          "start": 37.6,
+          "end": 37.82,
+          "word": " pathway",
+          "probability": 0.9766356945037842
+        },
+        {
+          "start": 37.82,
+          "end": 38.16,
+          "word": " for",
+          "probability": 0.9945515990257263
+        },
+        {
+          "start": 38.16,
+          "end": 38.36,
+          "word": " God",
+          "probability": 0.9916549921035767
+        },
+        {
+          "start": 38.36,
+          "end": 38.56,
+          "word": " to",
+          "probability": 0.9985911250114441
+        },
+        {
+          "start": 38.56,
+          "end": 38.78,
+          "word": " come",
+          "probability": 0.9974024891853333
+        },
+        {
+          "start": 38.78,
+          "end": 38.92,
+          "word": " to",
+          "probability": 0.9987831711769104
+        },
+        {
+          "start": 38.92,
+          "end": 39.42,
+          "word": " us.",
+          "probability": 0.9992881417274475
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 9,
+      "seek": 2604,
+      "start": 40.16,
+      "end": 53.7,
+      "text": " In the second scene, John is baptizing people in the Jordan River. John is telling people that someone is coming who is more powerful than he is, who will baptize people not just in water, but with the Holy Spirit.",
+      "tokens": [
+        51013,
+        554,
+        262,
+        1218,
+        3715,
+        11,
+        1757,
+        318,
+        20452,
+        2890,
+        661,
+        287,
+        262,
+        8078,
+        5866,
+        13,
+        1757,
+        318,
+        5149,
+        661,
+        326,
+        2130,
+        318,
+        2406,
+        508,
+        318,
+        517,
+        3665,
+        621,
+        339,
+        318,
+        11,
+        508,
+        481,
+        20452,
+        1096,
+        661,
+        407,
+        655,
+        287,
+        1660,
+        11,
+        475,
+        351,
+        262,
+        7439,
+        7710,
+        13,
+        51763
+      ],
+      "avg_logprob": -0.14467422679370764,
+      "compression_ratio": 1.7411764705882353,
+      "no_speech_prob": 0.03126658871769905,
+      "words": [
+        {
+          "start": 40.16,
+          "end": 40.32,
+          "word": " In",
+          "probability": 0.9772365093231201
+        },
+        {
+          "start": 40.32,
+          "end": 40.5,
+          "word": " the",
+          "probability": 0.9951170682907104
+        },
+        {
+          "start": 40.5,
+          "end": 40.78,
+          "word": " second",
+          "probability": 0.958625316619873
+        },
+        {
+          "start": 40.78,
+          "end": 41.38,
+          "word": " scene,",
+          "probability": 0.9870655536651611
+        },
+        {
+          "start": 41.82,
+          "end": 41.82,
+          "word": " John",
+          "probability": 0.9749064445495605
+        },
+        {
+          "start": 41.82,
+          "end": 42.02,
+          "word": " is",
+          "probability": 0.9971626400947571
+        },
+        {
+          "start": 42.02,
+          "end": 42.56,
+          "word": " baptizing",
+          "probability": 0.8404693901538849
+        },
+        {
+          "start": 42.56,
+          "end": 43.08,
+          "word": " people",
+          "probability": 0.9976928234100342
+        },
+        {
+          "start": 43.08,
+          "end": 43.26,
+          "word": " in",
+          "probability": 0.9982023239135742
+        },
+        {
+          "start": 43.26,
+          "end": 43.48,
+          "word": " the",
+          "probability": 0.9980104565620422
+        },
+        {
+          "start": 43.48,
+          "end": 43.78,
+          "word": " Jordan",
+          "probability": 0.9939815402030945
+        },
+        {
+          "start": 43.78,
+          "end": 44.28,
+          "word": " River.",
+          "probability": 0.8820684552192688
+        },
+        {
+          "start": 44.96,
+          "end": 44.98,
+          "word": " John",
+          "probability": 0.9956102967262268
+        },
+        {
+          "start": 44.98,
+          "end": 45.16,
+          "word": " is",
+          "probability": 0.9988018274307251
+        },
+        {
+          "start": 45.16,
+          "end": 45.4,
+          "word": " telling",
+          "probability": 0.9988164901733398
+        },
+        {
+          "start": 45.4,
+          "end": 45.78,
+          "word": " people",
+          "probability": 0.9979345798492432
+        },
+        {
+          "start": 45.78,
+          "end": 46.04,
+          "word": " that",
+          "probability": 0.9967353940010071
+        },
+        {
+          "start": 46.04,
+          "end": 46.24,
+          "word": " someone",
+          "probability": 0.9771382808685303
+        },
+        {
+          "start": 46.24,
+          "end": 46.52,
+          "word": " is",
+          "probability": 0.9968628883361816
+        },
+        {
+          "start": 46.52,
+          "end": 46.84,
+          "word": " coming",
+          "probability": 0.9978693723678589
+        },
+        {
+          "start": 46.84,
+          "end": 47.06,
+          "word": " who",
+          "probability": 0.8993263840675354
+        },
+        {
+          "start": 47.06,
+          "end": 47.2,
+          "word": " is",
+          "probability": 0.9960883855819702
+        },
+        {
+          "start": 47.2,
+          "end": 47.52,
+          "word": " more",
+          "probability": 0.9988792538642883
+        },
+        {
+          "start": 47.52,
+          "end": 48.0,
+          "word": " powerful",
+          "probability": 0.9991402626037598
+        },
+        {
+          "start": 48.0,
+          "end": 48.68,
+          "word": " than",
+          "probability": 0.986130952835083
+        },
+        {
+          "start": 48.68,
+          "end": 48.9,
+          "word": " he",
+          "probability": 0.924124002456665
+        },
+        {
+          "start": 48.9,
+          "end": 49.32,
+          "word": " is,",
+          "probability": 0.9989020824432373
+        },
+        {
+          "start": 49.56,
+          "end": 49.7,
+          "word": " who",
+          "probability": 0.9960005879402161
+        },
+        {
+          "start": 49.7,
+          "end": 49.84,
+          "word": " will",
+          "probability": 0.9886302947998047
+        },
+        {
+          "start": 49.84,
+          "end": 50.34,
+          "word": " baptize",
+          "probability": 0.939488559961319
+        },
+        {
+          "start": 50.34,
+          "end": 50.68,
+          "word": " people",
+          "probability": 0.9991047978401184
+        },
+        {
+          "start": 50.68,
+          "end": 51.02,
+          "word": " not",
+          "probability": 0.9440106749534607
+        },
+        {
+          "start": 51.02,
+          "end": 51.3,
+          "word": " just",
+          "probability": 0.9962669014930725
+        },
+        {
+          "start": 51.3,
+          "end": 51.52,
+          "word": " in",
+          "probability": 0.9996411800384521
+        },
+        {
+          "start": 51.52,
+          "end": 51.9,
+          "word": " water,",
+          "probability": 0.9934054613113403
+        },
+        {
+          "start": 52.34,
+          "end": 52.48,
+          "word": " but",
+          "probability": 0.9990254640579224
+        },
+        {
+          "start": 52.48,
+          "end": 52.76,
+          "word": " with",
+          "probability": 0.9978123903274536
+        },
+        {
+          "start": 52.76,
+          "end": 52.94,
+          "word": " the",
+          "probability": 0.9445291757583618
+        },
+        {
+          "start": 52.94,
+          "end": 53.14,
+          "word": " Holy",
+          "probability": 0.8831390142440796
+        },
+        {
+          "start": 53.14,
+          "end": 53.7,
+          "word": " Spirit.",
+          "probability": 0.9761448502540588
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 10,
+      "seek": 5370,
+      "start": 53.7,
+      "end": 60.06,
+      "text": " In the third scene, Jesus comes from Nazareth to Galilee where John baptizes Jesus.",
+      "tokens": [
+        50363,
+        554,
+        262,
+        2368,
+        3715,
+        11,
+        5803,
+        2058,
+        422,
+        12819,
+        26659,
+        284,
+        32422,
+        68,
+        810,
+        1757,
+        20452,
+        4340,
+        5803,
+        13,
+        50733
+      ],
+      "avg_logprob": -0.17271099267182527,
+      "compression_ratio": 1.6331658291457287,
+      "no_speech_prob": 0.07983117550611496,
+      "words": [
+        {
+          "start": 53.7,
+          "end": 54.74,
+          "word": " In",
+          "probability": 0.8523549437522888
+        },
+        {
+          "start": 54.74,
+          "end": 54.92,
+          "word": " the",
+          "probability": 0.9901589751243591
+        },
+        {
+          "start": 54.92,
+          "end": 55.24,
+          "word": " third",
+          "probability": 0.8010780215263367
+        },
+        {
+          "start": 55.24,
+          "end": 55.74,
+          "word": " scene,",
+          "probability": 0.9864796996116638
+        },
+        {
+          "start": 56.1,
+          "end": 56.32,
+          "word": " Jesus",
+          "probability": 0.9707607626914978
+        },
+        {
+          "start": 56.32,
+          "end": 56.68,
+          "word": " comes",
+          "probability": 0.9886482357978821
+        },
+        {
+          "start": 56.68,
+          "end": 56.94,
+          "word": " from",
+          "probability": 0.9988462924957275
+        },
+        {
+          "start": 56.94,
+          "end": 57.4,
+          "word": " Nazareth",
+          "probability": 0.9134045541286469
+        },
+        {
+          "start": 57.4,
+          "end": 57.7,
+          "word": " to",
+          "probability": 0.9350942373275757
+        },
+        {
+          "start": 57.7,
+          "end": 58.16,
+          "word": " Galilee",
+          "probability": 0.9889546930789948
+        },
+        {
+          "start": 58.16,
+          "end": 58.34,
+          "word": " where",
+          "probability": 0.7377710938453674
+        },
+        {
+          "start": 58.34,
+          "end": 58.68,
+          "word": " John",
+          "probability": 0.9818896055221558
+        },
+        {
+          "start": 58.68,
+          "end": 59.26,
+          "word": " baptizes",
+          "probability": 0.8729309439659119
+        },
+        {
+          "start": 59.26,
+          "end": 60.06,
+          "word": " Jesus.",
+          "probability": 0.9961851239204407
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 11,
+      "seek": 5370,
+      "start": 60.76,
+      "end": 66.06,
+      "text": " Immediately after Jesus comes out of the water, the heavens are torn open and the Holy",
+      "tokens": [
+        50733,
+        34528,
+        706,
+        5803,
+        2058,
+        503,
+        286,
+        262,
+        1660,
+        11,
+        262,
+        27636,
+        389,
+        12445,
+        1280,
+        290,
+        262,
+        7439,
+        50971
+      ],
+      "avg_logprob": -0.17271099267182527,
+      "compression_ratio": 1.6331658291457287,
+      "no_speech_prob": 0.07983117550611496,
+      "words": [
+        {
+          "start": 60.76,
+          "end": 61.18,
+          "word": " Immediately",
+          "probability": 0.9464108347892761
+        },
+        {
+          "start": 61.18,
+          "end": 61.62,
+          "word": " after",
+          "probability": 0.9979369640350342
+        },
+        {
+          "start": 61.62,
+          "end": 62.0,
+          "word": " Jesus",
+          "probability": 0.9978836178779602
+        },
+        {
+          "start": 62.0,
+          "end": 62.3,
+          "word": " comes",
+          "probability": 0.9973759651184082
+        },
+        {
+          "start": 62.3,
+          "end": 62.6,
+          "word": " out",
+          "probability": 0.9979584217071533
+        },
+        {
+          "start": 62.6,
+          "end": 62.76,
+          "word": " of",
+          "probability": 0.993347704410553
+        },
+        {
+          "start": 62.76,
+          "end": 62.88,
+          "word": " the",
+          "probability": 0.997636079788208
+        },
+        {
+          "start": 62.88,
+          "end": 63.34,
+          "word": " water,",
+          "probability": 0.9825698733329773
+        },
+        {
+          "start": 63.82,
+          "end": 63.82,
+          "word": " the",
+          "probability": 0.9187745451927185
+        },
+        {
+          "start": 63.82,
+          "end": 64.04,
+          "word": " heavens",
+          "probability": 0.9735317826271057
+        },
+        {
+          "start": 64.04,
+          "end": 64.44,
+          "word": " are",
+          "probability": 0.9610892534255981
+        },
+        {
+          "start": 64.44,
+          "end": 64.58,
+          "word": " torn",
+          "probability": 0.9936583638191223
+        },
+        {
+          "start": 64.58,
+          "end": 65.12,
+          "word": " open",
+          "probability": 0.9981916546821594
+        },
+        {
+          "start": 65.12,
+          "end": 65.62,
+          "word": " and",
+          "probability": 0.6939859986305237
+        },
+        {
+          "start": 65.62,
+          "end": 65.8,
+          "word": " the",
+          "probability": 0.9903342127799988
+        },
+        {
+          "start": 65.8,
+          "end": 66.06,
+          "word": " Holy",
+          "probability": 0.9792150259017944
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 12,
+      "seek": 5370,
+      "start": 66.06,
+      "end": 67.84,
+      "text": " Spirit comes upon Jesus.",
+      "tokens": [
+        50971,
+        7710,
+        2058,
+        2402,
+        5803,
+        13,
+        51135
+      ],
+      "avg_logprob": -0.17271099267182527,
+      "compression_ratio": 1.6331658291457287,
+      "no_speech_prob": 0.07983117550611496,
+      "words": [
+        {
+          "start": 66.06,
+          "end": 66.44,
+          "word": " Spirit",
+          "probability": 0.9835378527641296
+        },
+        {
+          "start": 66.44,
+          "end": 66.86,
+          "word": " comes",
+          "probability": 0.996900200843811
+        },
+        {
+          "start": 66.86,
+          "end": 67.2,
+          "word": " upon",
+          "probability": 0.9956307411193848
+        },
+        {
+          "start": 67.2,
+          "end": 67.84,
+          "word": " Jesus.",
+          "probability": 0.9987500905990601
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 13,
+      "seek": 5370,
+      "start": 69.02,
+      "end": 73.44,
+      "text": " Pause the audio here and show your group a map that shows the region of Galilee that",
+      "tokens": [
+        51135,
+        350,
+        682,
+        262,
+        6597,
+        994,
+        290,
+        905,
+        534,
+        1448,
+        257,
+        3975,
+        326,
+        2523,
+        262,
+        3814,
+        286,
+        32422,
+        68,
+        326,
+        51343
+      ],
+      "avg_logprob": -0.17271099267182527,
+      "compression_ratio": 1.6331658291457287,
+      "no_speech_prob": 0.07983117550611496,
+      "words": [
+        {
+          "start": 69.02,
+          "end": 69.24,
+          "word": " Pause",
+          "probability": 0.8574238717556
+        },
+        {
+          "start": 69.24,
+          "end": 69.52,
+          "word": " the",
+          "probability": 0.9982240796089172
+        },
+        {
+          "start": 69.52,
+          "end": 69.74,
+          "word": " audio",
+          "probability": 0.9548904895782471
+        },
+        {
+          "start": 69.74,
+          "end": 70.26,
+          "word": " here",
+          "probability": 0.9867254495620728
+        },
+        {
+          "start": 70.26,
+          "end": 70.5,
+          "word": " and",
+          "probability": 0.9010541439056396
+        },
+        {
+          "start": 70.5,
+          "end": 70.68,
+          "word": " show",
+          "probability": 0.9982617497444153
+        },
+        {
+          "start": 70.68,
+          "end": 70.88,
+          "word": " your",
+          "probability": 0.9860354661941528
+        },
+        {
+          "start": 70.88,
+          "end": 71.08,
+          "word": " group",
+          "probability": 0.9618682861328125
+        },
+        {
+          "start": 71.08,
+          "end": 71.3,
+          "word": " a",
+          "probability": 0.9727697372436523
+        },
+        {
+          "start": 71.3,
+          "end": 71.5,
+          "word": " map",
+          "probability": 0.9927822351455688
+        },
+        {
+          "start": 71.5,
+          "end": 71.74,
+          "word": " that",
+          "probability": 0.9945093989372253
+        },
+        {
+          "start": 71.74,
+          "end": 71.98,
+          "word": " shows",
+          "probability": 0.9987338185310364
+        },
+        {
+          "start": 71.98,
+          "end": 72.26,
+          "word": " the",
+          "probability": 0.9967533946037292
+        },
+        {
+          "start": 72.26,
+          "end": 72.4,
+          "word": " region",
+          "probability": 0.9634103178977966
+        },
+        {
+          "start": 72.4,
+          "end": 72.64,
+          "word": " of",
+          "probability": 0.9990112781524658
+        },
+        {
+          "start": 72.64,
+          "end": 73.34,
+          "word": " Galilee",
+          "probability": 0.9909709095954895
+        },
+        {
+          "start": 73.34,
+          "end": 73.44,
+          "word": " that",
+          "probability": 0.935830295085907
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 14,
+      "seek": 5370,
+      "start": 73.44,
+      "end": 76.5,
+      "text": " includes Nazareth and the Jordan River area.",
+      "tokens": [
+        51343,
+        3407,
+        12819,
+        26659,
+        290,
+        262,
+        8078,
+        5866,
+        1989,
+        13,
+        51595
+      ],
+      "avg_logprob": -0.17271099267182527,
+      "compression_ratio": 1.6331658291457287,
+      "no_speech_prob": 0.07983117550611496,
+      "words": [
+        {
+          "start": 73.44,
+          "end": 73.86,
+          "word": " includes",
+          "probability": 0.9679550528526306
+        },
+        {
+          "start": 73.86,
+          "end": 74.48,
+          "word": " Nazareth",
+          "probability": 0.998111754655838
+        },
+        {
+          "start": 74.48,
+          "end": 75.1,
+          "word": " and",
+          "probability": 0.9863404035568237
+        },
+        {
+          "start": 75.1,
+          "end": 75.34,
+          "word": " the",
+          "probability": 0.9938932657241821
+        },
+        {
+          "start": 75.34,
+          "end": 75.64,
+          "word": " Jordan",
+          "probability": 0.9792375564575195
+        },
+        {
+          "start": 75.64,
+          "end": 75.92,
+          "word": " River",
+          "probability": 0.8650341629981995
+        },
+        {
+          "start": 75.92,
+          "end": 76.5,
+          "word": " area.",
+          "probability": 0.9144697785377502
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 15,
+      "seek": 7650,
+      "start": 77.6,
+      "end": 84.34,
+      "text": " In the fourth scene, immediately after Jesus' baptism, the Holy Spirit sends Jesus",
+      "tokens": [
+        50363,
+        554,
+        262,
+        5544,
+        3715,
+        11,
+        3393,
+        706,
+        5803,
+        6,
+        33422,
+        11,
+        262,
+        7439,
+        7710,
+        12800,
+        5803,
+        50753
+      ],
+      "avg_logprob": -0.22922655001078565,
+      "compression_ratio": 1.547872340425532,
+      "no_speech_prob": 0.18178950250148773,
+      "words": [
+        {
+          "start": 77.6,
+          "end": 78.42,
+          "word": " In",
+          "probability": 0.7056673765182495
+        },
+        {
+          "start": 78.42,
+          "end": 78.68,
+          "word": " the",
+          "probability": 0.987522304058075
+        },
+        {
+          "start": 78.68,
+          "end": 78.98,
+          "word": " fourth",
+          "probability": 0.8946763277053833
+        },
+        {
+          "start": 78.98,
+          "end": 79.52,
+          "word": " scene,",
+          "probability": 0.9865505695343018
+        },
+        {
+          "start": 80.14,
+          "end": 80.28,
+          "word": " immediately",
+          "probability": 0.956392228603363
+        },
+        {
+          "start": 80.28,
+          "end": 80.78,
+          "word": " after",
+          "probability": 0.9925762414932251
+        },
+        {
+          "start": 80.78,
+          "end": 81.16,
+          "word": " Jesus'",
+          "probability": 0.9970508813858032
+        },
+        {
+          "start": 81.88,
+          "end": 81.88,
+          "word": " baptism,",
+          "probability": 0.9874782562255859
+        },
+        {
+          "start": 82.62,
+          "end": 82.7,
+          "word": " the",
+          "probability": 0.9716719388961792
+        },
+        {
+          "start": 82.7,
+          "end": 82.96,
+          "word": " Holy",
+          "probability": 0.9923037886619568
+        },
+        {
+          "start": 82.96,
+          "end": 83.38,
+          "word": " Spirit",
+          "probability": 0.981016218662262
+        },
+        {
+          "start": 83.38,
+          "end": 83.74,
+          "word": " sends",
+          "probability": 0.9960851669311523
+        },
+        {
+          "start": 83.74,
+          "end": 84.34,
+          "word": " Jesus",
+          "probability": 0.9968478083610535
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 16,
+      "seek": 7650,
+      "start": 84.34,
+      "end": 88.9,
+      "text": " out into the wilderness for forty days, Satan tests Jesus.",
+      "tokens": [
+        50753,
+        503,
+        656,
+        262,
+        22775,
+        329,
+        16571,
+        1528,
+        11,
+        14918,
+        5254,
+        5803,
+        13,
+        51023
+      ],
+      "avg_logprob": -0.22922655001078565,
+      "compression_ratio": 1.547872340425532,
+      "no_speech_prob": 0.18178950250148773,
+      "words": [
+        {
+          "start": 84.34,
+          "end": 84.72,
+          "word": " out",
+          "probability": 0.9928481578826904
+        },
+        {
+          "start": 84.72,
+          "end": 85.0,
+          "word": " into",
+          "probability": 0.992385745048523
+        },
+        {
+          "start": 85.0,
+          "end": 85.18,
+          "word": " the",
+          "probability": 0.9959962368011475
+        },
+        {
+          "start": 85.18,
+          "end": 85.48,
+          "word": " wilderness",
+          "probability": 0.9898768067359924
+        },
+        {
+          "start": 85.48,
+          "end": 85.92,
+          "word": " for",
+          "probability": 0.9964842796325684
+        },
+        {
+          "start": 85.92,
+          "end": 86.12,
+          "word": " forty",
+          "probability": 0.2748968005180359
+        },
+        {
+          "start": 86.12,
+          "end": 86.82,
+          "word": " days,",
+          "probability": 0.9971657395362854
+        },
+        {
+          "start": 87.46,
+          "end": 87.62,
+          "word": " Satan",
+          "probability": 0.904298722743988
+        },
+        {
+          "start": 87.62,
+          "end": 88.16,
+          "word": " tests",
+          "probability": 0.964579701423645
+        },
+        {
+          "start": 88.16,
+          "end": 88.9,
+          "word": " Jesus.",
+          "probability": 0.9988135099411011
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 17,
+      "seek": 7650,
+      "start": 89.44,
+      "end": 91.74,
+      "text": " Angels are with Jesus helping him.",
+      "tokens": [
+        51023,
+        17654,
+        389,
+        351,
+        5803,
+        5742,
+        683,
+        13,
+        51161
+      ],
+      "avg_logprob": -0.22922655001078565,
+      "compression_ratio": 1.547872340425532,
+      "no_speech_prob": 0.18178950250148773,
+      "words": [
+        {
+          "start": 89.44,
+          "end": 89.72,
+          "word": " Angels",
+          "probability": 0.9655163884162903
+        },
+        {
+          "start": 89.72,
+          "end": 90.08,
+          "word": " are",
+          "probability": 0.9990045428276062
+        },
+        {
+          "start": 90.08,
+          "end": 90.36,
+          "word": " with",
+          "probability": 0.9781850576400757
+        },
+        {
+          "start": 90.36,
+          "end": 90.76,
+          "word": " Jesus",
+          "probability": 0.9977195858955383
+        },
+        {
+          "start": 90.76,
+          "end": 91.1,
+          "word": " helping",
+          "probability": 0.9265488386154175
+        },
+        {
+          "start": 91.1,
+          "end": 91.74,
+          "word": " him.",
+          "probability": 0.9212390184402466
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 18,
+      "seek": 7650,
+      "start": 92.52,
+      "end": 99.24,
+      "text": " The characters in this passage are John the Baptist, crowds of people, Jesus, the Holy",
+      "tokens": [
+        51161,
+        383,
+        3435,
+        287,
+        428,
+        10066,
+        389,
+        1757,
+        262,
+        21724,
+        11,
+        15779,
+        286,
+        661,
+        11,
+        5803,
+        11,
+        262,
+        7439,
+        51491
+      ],
+      "avg_logprob": -0.22922655001078565,
+      "compression_ratio": 1.547872340425532,
+      "no_speech_prob": 0.18178950250148773,
+      "words": [
+        {
+          "start": 92.52,
+          "end": 92.68,
+          "word": " The",
+          "probability": 0.973488986492157
+        },
+        {
+          "start": 92.68,
+          "end": 92.92,
+          "word": " characters",
+          "probability": 0.9743514657020569
+        },
+        {
+          "start": 92.92,
+          "end": 93.16,
+          "word": " in",
+          "probability": 0.9970176219940186
+        },
+        {
+          "start": 93.16,
+          "end": 93.48,
+          "word": " this",
+          "probability": 0.9927686452865601
+        },
+        {
+          "start": 93.48,
+          "end": 93.74,
+          "word": " passage",
+          "probability": 0.6449238657951355
+        },
+        {
+          "start": 93.74,
+          "end": 94.34,
+          "word": " are",
+          "probability": 0.9968748092651367
+        },
+        {
+          "start": 94.34,
+          "end": 94.82,
+          "word": " John",
+          "probability": 0.6170206069946289
+        },
+        {
+          "start": 94.82,
+          "end": 95.04,
+          "word": " the",
+          "probability": 0.9762699007987976
+        },
+        {
+          "start": 95.04,
+          "end": 95.48,
+          "word": " Baptist,",
+          "probability": 0.9879004955291748
+        },
+        {
+          "start": 96.08,
+          "end": 96.34,
+          "word": " crowds",
+          "probability": 0.8680759072303772
+        },
+        {
+          "start": 96.34,
+          "end": 96.62,
+          "word": " of",
+          "probability": 0.9978532195091248
+        },
+        {
+          "start": 96.62,
+          "end": 97.18,
+          "word": " people,",
+          "probability": 0.9941309094429016
+        },
+        {
+          "start": 97.56,
+          "end": 98.0,
+          "word": " Jesus,",
+          "probability": 0.9945598244667053
+        },
+        {
+          "start": 98.8,
+          "end": 98.94,
+          "word": " the",
+          "probability": 0.9834813475608826
+        },
+        {
+          "start": 98.94,
+          "end": 99.24,
+          "word": " Holy",
+          "probability": 0.9885984659194946
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 19,
+      "seek": 7650,
+      "start": 99.24,
+      "end": 102.86,
+      "text": " Spirit, God, Satan, angels.",
+      "tokens": [
+        51491,
+        7710,
+        11,
+        1793,
+        11,
+        14918,
+        11,
+        21981,
+        13,
+        51743
+      ],
+      "avg_logprob": -0.22922655001078565,
+      "compression_ratio": 1.547872340425532,
+      "no_speech_prob": 0.18178950250148773,
+      "words": [
+        {
+          "start": 99.24,
+          "end": 99.92,
+          "word": " Spirit,",
+          "probability": 0.9938615560531616
+        },
+        {
+          "start": 100.24,
+          "end": 100.8,
+          "word": " God,",
+          "probability": 0.9870158433914185
+        },
+        {
+          "start": 101.34,
+          "end": 101.8,
+          "word": " Satan,",
+          "probability": 0.9905818700790405
+        },
+        {
+          "start": 102.42,
+          "end": 102.86,
+          "word": " angels.",
+          "probability": 0.9165537357330322
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 20,
+      "seek": 10286,
+      "start": 103.66,
+      "end": 107.78,
+      "text": " As a group, pay attention to these parts of the passages setting.",
+      "tokens": [
+        50363,
+        1081,
+        257,
+        1448,
+        11,
+        1414,
+        3241,
+        284,
+        777,
+        3354,
+        286,
+        262,
+        22674,
+        4634,
+        13,
+        50655
+      ],
+      "avg_logprob": -0.16694889664649964,
+      "compression_ratio": 1.7975206611570247,
+      "no_speech_prob": 0.060818225145339966,
+      "words": [
+        {
+          "start": 103.66,
+          "end": 104.22,
+          "word": " As",
+          "probability": 0.8847372531890869
+        },
+        {
+          "start": 104.22,
+          "end": 104.42,
+          "word": " a",
+          "probability": 0.9950816631317139
+        },
+        {
+          "start": 104.42,
+          "end": 104.84,
+          "word": " group,",
+          "probability": 0.9915665984153748
+        },
+        {
+          "start": 105.12,
+          "end": 105.24,
+          "word": " pay",
+          "probability": 0.9726777076721191
+        },
+        {
+          "start": 105.24,
+          "end": 105.62,
+          "word": " attention",
+          "probability": 0.9997391104698181
+        },
+        {
+          "start": 105.62,
+          "end": 105.86,
+          "word": " to",
+          "probability": 0.9982203841209412
+        },
+        {
+          "start": 105.86,
+          "end": 106.12,
+          "word": " these",
+          "probability": 0.9776104092597961
+        },
+        {
+          "start": 106.12,
+          "end": 106.44,
+          "word": " parts",
+          "probability": 0.9957624077796936
+        },
+        {
+          "start": 106.44,
+          "end": 106.66,
+          "word": " of",
+          "probability": 0.9963488578796387
+        },
+        {
+          "start": 106.66,
+          "end": 106.86,
+          "word": " the",
+          "probability": 0.994244396686554
+        },
+        {
+          "start": 106.86,
+          "end": 107.1,
+          "word": " passages",
+          "probability": 0.7563358545303345
+        },
+        {
+          "start": 107.1,
+          "end": 107.78,
+          "word": " setting.",
+          "probability": 0.7053886651992798
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 21,
+      "seek": 10286,
+      "start": 108.86,
+      "end": 113.58,
+      "text": " The story takes place in the wilderness near the Jordan River and later in another area",
+      "tokens": [
+        50655,
+        383,
+        1621,
+        2753,
+        1295,
+        287,
+        262,
+        22775,
+        1474,
+        262,
+        8078,
+        5866,
+        290,
+        1568,
+        287,
+        1194,
+        1989,
+        50897
+      ],
+      "avg_logprob": -0.16694889664649964,
+      "compression_ratio": 1.7975206611570247,
+      "no_speech_prob": 0.060818225145339966,
+      "words": [
+        {
+          "start": 108.86,
+          "end": 108.94,
+          "word": " The",
+          "probability": 0.966782808303833
+        },
+        {
+          "start": 108.94,
+          "end": 109.2,
+          "word": " story",
+          "probability": 0.9912440776824951
+        },
+        {
+          "start": 109.2,
+          "end": 109.6,
+          "word": " takes",
+          "probability": 0.9987794756889343
+        },
+        {
+          "start": 109.6,
+          "end": 109.94,
+          "word": " place",
+          "probability": 0.9991317391395569
+        },
+        {
+          "start": 109.94,
+          "end": 110.14,
+          "word": " in",
+          "probability": 0.9967085123062134
+        },
+        {
+          "start": 110.14,
+          "end": 110.28,
+          "word": " the",
+          "probability": 0.9931314587593079
+        },
+        {
+          "start": 110.28,
+          "end": 110.58,
+          "word": " wilderness",
+          "probability": 0.9915560483932495
+        },
+        {
+          "start": 110.58,
+          "end": 110.96,
+          "word": " near",
+          "probability": 0.9973244667053223
+        },
+        {
+          "start": 110.96,
+          "end": 111.18,
+          "word": " the",
+          "probability": 0.9969569444656372
+        },
+        {
+          "start": 111.18,
+          "end": 111.46,
+          "word": " Jordan",
+          "probability": 0.9754255414009094
+        },
+        {
+          "start": 111.46,
+          "end": 111.8,
+          "word": " River",
+          "probability": 0.8314423561096191
+        },
+        {
+          "start": 111.8,
+          "end": 112.42,
+          "word": " and",
+          "probability": 0.7747508883476257
+        },
+        {
+          "start": 112.42,
+          "end": 112.72,
+          "word": " later",
+          "probability": 0.9917049407958984
+        },
+        {
+          "start": 112.72,
+          "end": 112.94,
+          "word": " in",
+          "probability": 0.9879783391952515
+        },
+        {
+          "start": 112.94,
+          "end": 113.3,
+          "word": " another",
+          "probability": 0.9955303072929382
+        },
+        {
+          "start": 113.3,
+          "end": 113.58,
+          "word": " area",
+          "probability": 0.9982213377952576
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 22,
+      "seek": 10286,
+      "start": 113.58,
+      "end": 116.36,
+      "text": " of wilderness where Jesus is tested by Satan.",
+      "tokens": [
+        50897,
+        286,
+        22775,
+        810,
+        5803,
+        318,
+        6789,
+        416,
+        14918,
+        13,
+        51093
+      ],
+      "avg_logprob": -0.16694889664649964,
+      "compression_ratio": 1.7975206611570247,
+      "no_speech_prob": 0.060818225145339966,
+      "words": [
+        {
+          "start": 113.58,
+          "end": 113.86,
+          "word": " of",
+          "probability": 0.9974143505096436
+        },
+        {
+          "start": 113.86,
+          "end": 114.22,
+          "word": " wilderness",
+          "probability": 0.9804553389549255
+        },
+        {
+          "start": 114.22,
+          "end": 114.66,
+          "word": " where",
+          "probability": 0.7779757380485535
+        },
+        {
+          "start": 114.66,
+          "end": 114.98,
+          "word": " Jesus",
+          "probability": 0.9916121959686279
+        },
+        {
+          "start": 114.98,
+          "end": 115.3,
+          "word": " is",
+          "probability": 0.9972098469734192
+        },
+        {
+          "start": 115.3,
+          "end": 115.66,
+          "word": " tested",
+          "probability": 0.9913130402565002
+        },
+        {
+          "start": 115.66,
+          "end": 116.02,
+          "word": " by",
+          "probability": 0.99852055311203
+        },
+        {
+          "start": 116.02,
+          "end": 116.36,
+          "word": " Satan.",
+          "probability": 0.8226049542427063
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 23,
+      "seek": 10286,
+      "start": 117.48,
+      "end": 122.14,
+      "text": " The setting of the wilderness is important as it shows us that Isaiah's prophecy that",
+      "tokens": [
+        51093,
+        383,
+        4634,
+        286,
+        262,
+        22775,
+        318,
+        1593,
+        355,
+        340,
+        2523,
+        514,
+        326,
+        29756,
+        338,
+        28322,
+        326,
+        51323
+      ],
+      "avg_logprob": -0.16694889664649964,
+      "compression_ratio": 1.7975206611570247,
+      "no_speech_prob": 0.060818225145339966,
+      "words": [
+        {
+          "start": 117.48,
+          "end": 117.68,
+          "word": " The",
+          "probability": 0.9944618344306946
+        },
+        {
+          "start": 117.68,
+          "end": 117.92,
+          "word": " setting",
+          "probability": 0.9969072937965393
+        },
+        {
+          "start": 117.92,
+          "end": 118.12,
+          "word": " of",
+          "probability": 0.9975132942199707
+        },
+        {
+          "start": 118.12,
+          "end": 118.26,
+          "word": " the",
+          "probability": 0.9983407258987427
+        },
+        {
+          "start": 118.26,
+          "end": 118.54,
+          "word": " wilderness",
+          "probability": 0.9954507946968079
+        },
+        {
+          "start": 118.54,
+          "end": 118.98,
+          "word": " is",
+          "probability": 0.9971724152565002
+        },
+        {
+          "start": 118.98,
+          "end": 119.34,
+          "word": " important",
+          "probability": 0.9991845488548279
+        },
+        {
+          "start": 119.34,
+          "end": 119.7,
+          "word": " as",
+          "probability": 0.9277302026748657
+        },
+        {
+          "start": 119.7,
+          "end": 119.92,
+          "word": " it",
+          "probability": 0.9971747398376465
+        },
+        {
+          "start": 119.92,
+          "end": 120.1,
+          "word": " shows",
+          "probability": 0.998149037361145
+        },
+        {
+          "start": 120.1,
+          "end": 120.38,
+          "word": " us",
+          "probability": 0.9969314336776733
+        },
+        {
+          "start": 120.38,
+          "end": 120.56,
+          "word": " that",
+          "probability": 0.7421647906303406
+        },
+        {
+          "start": 120.56,
+          "end": 121.2,
+          "word": " Isaiah's",
+          "probability": 0.852656364440918
+        },
+        {
+          "start": 121.2,
+          "end": 121.5,
+          "word": " prophecy",
+          "probability": 0.9945642948150635
+        },
+        {
+          "start": 121.5,
+          "end": 122.14,
+          "word": " that",
+          "probability": 0.8377470970153809
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 24,
+      "seek": 10286,
+      "start": 122.14,
+      "end": 125.28,
+      "text": " there would be a voice shouting in the wilderness has come true.",
+      "tokens": [
+        51323,
+        612,
+        561,
+        307,
+        257,
+        3809,
+        19642,
+        287,
+        262,
+        22775,
+        468,
+        1282,
+        2081,
+        13,
+        51547
+      ],
+      "avg_logprob": -0.16694889664649964,
+      "compression_ratio": 1.7975206611570247,
+      "no_speech_prob": 0.060818225145339966,
+      "words": [
+        {
+          "start": 122.14,
+          "end": 122.32,
+          "word": " there",
+          "probability": 0.9719682335853577
+        },
+        {
+          "start": 122.32,
+          "end": 122.44,
+          "word": " would",
+          "probability": 0.9735113382339478
+        },
+        {
+          "start": 122.44,
+          "end": 122.58,
+          "word": " be",
+          "probability": 0.999075174331665
+        },
+        {
+          "start": 122.58,
+          "end": 122.72,
+          "word": " a",
+          "probability": 0.9841863512992859
+        },
+        {
+          "start": 122.72,
+          "end": 122.94,
+          "word": " voice",
+          "probability": 0.9956153631210327
+        },
+        {
+          "start": 122.94,
+          "end": 123.28,
+          "word": " shouting",
+          "probability": 0.9312762022018433
+        },
+        {
+          "start": 123.28,
+          "end": 123.52,
+          "word": " in",
+          "probability": 0.9935325384140015
+        },
+        {
+          "start": 123.52,
+          "end": 123.66,
+          "word": " the",
+          "probability": 0.9960591793060303
+        },
+        {
+          "start": 123.66,
+          "end": 123.98,
+          "word": " wilderness",
+          "probability": 0.9949001669883728
+        },
+        {
+          "start": 123.98,
+          "end": 124.38,
+          "word": " has",
+          "probability": 0.9927536845207214
+        },
+        {
+          "start": 124.38,
+          "end": 124.7,
+          "word": " come",
+          "probability": 0.9961340427398682
+        },
+        {
+          "start": 124.7,
+          "end": 125.28,
+          "word": " true.",
+          "probability": 0.9903109073638916
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 25,
+      "seek": 10286,
+      "start": 126.38,
+      "end": 130.96,
+      "text": " Pause the audio here and show your group a picture of the Jordan River and a picture",
+      "tokens": [
+        51547,
+        350,
+        682,
+        262,
+        6597,
+        994,
+        290,
+        905,
+        534,
+        1448,
+        257,
+        4286,
+        286,
+        262,
+        8078,
+        5866,
+        290,
+        257,
+        4286,
+        51765
+      ],
+      "avg_logprob": -0.16694889664649964,
+      "compression_ratio": 1.7975206611570247,
+      "no_speech_prob": 0.060818225145339966,
+      "words": [
+        {
+          "start": 126.38,
+          "end": 126.58,
+          "word": " Pause",
+          "probability": 0.8945111632347107
+        },
+        {
+          "start": 126.58,
+          "end": 126.82,
+          "word": " the",
+          "probability": 0.9976804256439209
+        },
+        {
+          "start": 126.82,
+          "end": 127.0,
+          "word": " audio",
+          "probability": 0.9400367736816406
+        },
+        {
+          "start": 127.0,
+          "end": 127.66,
+          "word": " here",
+          "probability": 0.994513750076294
+        },
+        {
+          "start": 127.66,
+          "end": 128.08,
+          "word": " and",
+          "probability": 0.8686715960502625
+        },
+        {
+          "start": 128.08,
+          "end": 128.26,
+          "word": " show",
+          "probability": 0.9975897073745728
+        },
+        {
+          "start": 128.26,
+          "end": 128.48,
+          "word": " your",
+          "probability": 0.9836556911468506
+        },
+        {
+          "start": 128.48,
+          "end": 128.72,
+          "word": " group",
+          "probability": 0.9960694313049316
+        },
+        {
+          "start": 128.72,
+          "end": 128.96,
+          "word": " a",
+          "probability": 0.9977242350578308
+        },
+        {
+          "start": 128.96,
+          "end": 129.06,
+          "word": " picture",
+          "probability": 0.9988538026809692
+        },
+        {
+          "start": 129.06,
+          "end": 129.3,
+          "word": " of",
+          "probability": 0.9963865280151367
+        },
+        {
+          "start": 129.3,
+          "end": 129.44,
+          "word": " the",
+          "probability": 0.9956310987472534
+        },
+        {
+          "start": 129.44,
+          "end": 129.68,
+          "word": " Jordan",
+          "probability": 0.9905614256858826
+        },
+        {
+          "start": 129.68,
+          "end": 130.1,
+          "word": " River",
+          "probability": 0.8613413572311401
+        },
+        {
+          "start": 130.1,
+          "end": 130.68,
+          "word": " and",
+          "probability": 0.9787014722824097
+        },
+        {
+          "start": 130.68,
+          "end": 130.84,
+          "word": " a",
+          "probability": 0.9938595294952393
+        },
+        {
+          "start": 130.84,
+          "end": 130.96,
+          "word": " picture",
+          "probability": 0.9986863732337952
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 26,
+      "seek": 13096,
+      "start": 130.96,
+      "end": 137.9,
+      "text": " the wilderness. In the second scene, the people have come from all over Judea and Jerusalem.",
+      "tokens": [
+        50363,
+        262,
+        22775,
+        13,
+        554,
+        262,
+        1218,
+        3715,
+        11,
+        262,
+        661,
+        423,
+        1282,
+        422,
+        477,
+        625,
+        30044,
+        64,
+        290,
+        10843,
+        13,
+        50711
+      ],
+      "avg_logprob": -0.13256541348021963,
+      "compression_ratio": 1.6946902654867257,
+      "no_speech_prob": 0.14053796231746674,
+      "words": [
+        {
+          "start": 130.96,
+          "end": 131.2,
+          "word": " the",
+          "probability": 0.190107062458992
+        },
+        {
+          "start": 131.2,
+          "end": 131.86,
+          "word": " wilderness.",
+          "probability": 0.9204213619232178
+        },
+        {
+          "start": 133.94,
+          "end": 134.12,
+          "word": " In",
+          "probability": 0.872089147567749
+        },
+        {
+          "start": 134.12,
+          "end": 134.3,
+          "word": " the",
+          "probability": 0.9855960607528687
+        },
+        {
+          "start": 134.3,
+          "end": 134.7,
+          "word": " second",
+          "probability": 0.8187294006347656
+        },
+        {
+          "start": 134.7,
+          "end": 135.0,
+          "word": " scene,",
+          "probability": 0.989987313747406
+        },
+        {
+          "start": 135.14,
+          "end": 135.18,
+          "word": " the",
+          "probability": 0.9775012731552124
+        },
+        {
+          "start": 135.18,
+          "end": 135.48,
+          "word": " people",
+          "probability": 0.9909365773200989
+        },
+        {
+          "start": 135.48,
+          "end": 135.72,
+          "word": " have",
+          "probability": 0.9811128377914429
+        },
+        {
+          "start": 135.72,
+          "end": 135.94,
+          "word": " come",
+          "probability": 0.9961285591125488
+        },
+        {
+          "start": 135.94,
+          "end": 136.24,
+          "word": " from",
+          "probability": 0.9947882890701294
+        },
+        {
+          "start": 136.24,
+          "end": 136.48,
+          "word": " all",
+          "probability": 0.9953514337539673
+        },
+        {
+          "start": 136.48,
+          "end": 136.76,
+          "word": " over",
+          "probability": 0.9490223526954651
+        },
+        {
+          "start": 136.76,
+          "end": 137.32,
+          "word": " Judea",
+          "probability": 0.849253237247467
+        },
+        {
+          "start": 137.32,
+          "end": 137.48,
+          "word": " and",
+          "probability": 0.795296311378479
+        },
+        {
+          "start": 137.48,
+          "end": 137.9,
+          "word": " Jerusalem.",
+          "probability": 0.9925745725631714
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 27,
+      "seek": 13096,
+      "start": 138.7,
+      "end": 143.66,
+      "text": " John is baptising them. They're confessing their sins, turning away from their old ways of living",
+      "tokens": [
+        50739,
+        1757,
+        318,
+        20452,
+        1710,
+        606,
+        13,
+        1119,
+        821,
+        22127,
+        278,
+        511,
+        18377,
+        11,
+        6225,
+        1497,
+        422,
+        511,
+        1468,
+        2842,
+        286,
+        2877,
+        50995
+      ],
+      "avg_logprob": -0.13256541348021963,
+      "compression_ratio": 1.6946902654867257,
+      "no_speech_prob": 0.14053796231746674,
+      "words": [
+        {
+          "start": 138.7,
+          "end": 138.84,
+          "word": " John",
+          "probability": 0.9282266497612
+        },
+        {
+          "start": 138.84,
+          "end": 139.04,
+          "word": " is",
+          "probability": 0.9976789355278015
+        },
+        {
+          "start": 139.04,
+          "end": 139.58,
+          "word": " baptising",
+          "probability": 0.7907166182994843
+        },
+        {
+          "start": 139.58,
+          "end": 140.34,
+          "word": " them.",
+          "probability": 0.9958601593971252
+        },
+        {
+          "start": 140.52,
+          "end": 140.72,
+          "word": " They're",
+          "probability": 0.812134712934494
+        },
+        {
+          "start": 140.72,
+          "end": 141.08,
+          "word": " confessing",
+          "probability": 0.9466509819030762
+        },
+        {
+          "start": 141.08,
+          "end": 141.34,
+          "word": " their",
+          "probability": 0.994175374507904
+        },
+        {
+          "start": 141.34,
+          "end": 141.66,
+          "word": " sins,",
+          "probability": 0.9991814494132996
+        },
+        {
+          "start": 141.98,
+          "end": 142.1,
+          "word": " turning",
+          "probability": 0.9966340661048889
+        },
+        {
+          "start": 142.1,
+          "end": 142.44,
+          "word": " away",
+          "probability": 0.9987623691558838
+        },
+        {
+          "start": 142.44,
+          "end": 142.66,
+          "word": " from",
+          "probability": 0.9980091452598572
+        },
+        {
+          "start": 142.66,
+          "end": 142.86,
+          "word": " their",
+          "probability": 0.9976736903190613
+        },
+        {
+          "start": 142.86,
+          "end": 143.08,
+          "word": " old",
+          "probability": 0.9962659478187561
+        },
+        {
+          "start": 143.08,
+          "end": 143.28,
+          "word": " ways",
+          "probability": 0.9888355135917664
+        },
+        {
+          "start": 143.28,
+          "end": 143.5,
+          "word": " of",
+          "probability": 0.9974270462989807
+        },
+        {
+          "start": 143.5,
+          "end": 143.66,
+          "word": " living",
+          "probability": 0.9989826083183289
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 28,
+      "seek": 13096,
+      "start": 143.66,
+      "end": 149.54,
+      "text": " and starting a new way, obeying God. John is telling the people that soon someone will come who",
+      "tokens": [
+        50995,
+        290,
+        3599,
+        257,
+        649,
+        835,
+        11,
+        45653,
+        1112,
+        1793,
+        13,
+        1757,
+        318,
+        5149,
+        262,
+        661,
+        326,
+        2582,
+        2130,
+        481,
+        1282,
+        508,
+        51287
+      ],
+      "avg_logprob": -0.13256541348021963,
+      "compression_ratio": 1.6946902654867257,
+      "no_speech_prob": 0.14053796231746674,
+      "words": [
+        {
+          "start": 143.66,
+          "end": 143.94,
+          "word": " and",
+          "probability": 0.8008210062980652
+        },
+        {
+          "start": 143.94,
+          "end": 144.26,
+          "word": " starting",
+          "probability": 0.9912652373313904
+        },
+        {
+          "start": 144.26,
+          "end": 144.52,
+          "word": " a",
+          "probability": 0.9700425863265991
+        },
+        {
+          "start": 144.52,
+          "end": 144.7,
+          "word": " new",
+          "probability": 0.9969223141670227
+        },
+        {
+          "start": 144.7,
+          "end": 145.1,
+          "word": " way,",
+          "probability": 0.9983235001564026
+        },
+        {
+          "start": 145.28,
+          "end": 145.58,
+          "word": " obeying",
+          "probability": 0.9934243261814117
+        },
+        {
+          "start": 145.58,
+          "end": 146.12,
+          "word": " God.",
+          "probability": 0.9781898856163025
+        },
+        {
+          "start": 146.88,
+          "end": 147.02,
+          "word": " John",
+          "probability": 0.9901356101036072
+        },
+        {
+          "start": 147.02,
+          "end": 147.2,
+          "word": " is",
+          "probability": 0.9976778626441956
+        },
+        {
+          "start": 147.2,
+          "end": 147.44,
+          "word": " telling",
+          "probability": 0.9988089799880981
+        },
+        {
+          "start": 147.44,
+          "end": 147.7,
+          "word": " the",
+          "probability": 0.9797506928443909
+        },
+        {
+          "start": 147.7,
+          "end": 147.98,
+          "word": " people",
+          "probability": 0.9980394244194031
+        },
+        {
+          "start": 147.98,
+          "end": 148.24,
+          "word": " that",
+          "probability": 0.9855839014053345
+        },
+        {
+          "start": 148.24,
+          "end": 148.56,
+          "word": " soon",
+          "probability": 0.9689697027206421
+        },
+        {
+          "start": 148.56,
+          "end": 148.8,
+          "word": " someone",
+          "probability": 0.8112332820892334
+        },
+        {
+          "start": 148.8,
+          "end": 149.08,
+          "word": " will",
+          "probability": 0.9975455403327942
+        },
+        {
+          "start": 149.08,
+          "end": 149.36,
+          "word": " come",
+          "probability": 0.9978567957878113
+        },
+        {
+          "start": 149.36,
+          "end": 149.54,
+          "word": " who",
+          "probability": 0.8687965869903564
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 29,
+      "seek": 13096,
+      "start": 149.54,
+      "end": 155.48,
+      "text": " will be more powerful than he is. John talks about untying the sandals of someone more important",
+      "tokens": [
+        51287,
+        481,
+        307,
+        517,
+        3665,
+        621,
+        339,
+        318,
+        13,
+        1757,
+        6130,
+        546,
+        1418,
+        1112,
+        262,
+        6450,
+        874,
+        286,
+        2130,
+        517,
+        1593,
+        51583
+      ],
+      "avg_logprob": -0.13256541348021963,
+      "compression_ratio": 1.6946902654867257,
+      "no_speech_prob": 0.14053796231746674,
+      "words": [
+        {
+          "start": 149.54,
+          "end": 149.64,
+          "word": " will",
+          "probability": 0.9792854189872742
+        },
+        {
+          "start": 149.64,
+          "end": 149.88,
+          "word": " be",
+          "probability": 0.9983861446380615
+        },
+        {
+          "start": 149.88,
+          "end": 150.2,
+          "word": " more",
+          "probability": 0.993209183216095
+        },
+        {
+          "start": 150.2,
+          "end": 150.54,
+          "word": " powerful",
+          "probability": 0.9984353184700012
+        },
+        {
+          "start": 150.54,
+          "end": 150.86,
+          "word": " than",
+          "probability": 0.9938766360282898
+        },
+        {
+          "start": 150.86,
+          "end": 151.04,
+          "word": " he",
+          "probability": 0.7726597189903259
+        },
+        {
+          "start": 151.04,
+          "end": 151.4,
+          "word": " is.",
+          "probability": 0.9957577586174011
+        },
+        {
+          "start": 152.1,
+          "end": 152.26,
+          "word": " John",
+          "probability": 0.9905282258987427
+        },
+        {
+          "start": 152.26,
+          "end": 152.64,
+          "word": " talks",
+          "probability": 0.9958860278129578
+        },
+        {
+          "start": 152.64,
+          "end": 153.12,
+          "word": " about",
+          "probability": 0.9976375102996826
+        },
+        {
+          "start": 153.12,
+          "end": 153.64,
+          "word": " untying",
+          "probability": 0.9815953969955444
+        },
+        {
+          "start": 153.64,
+          "end": 153.9,
+          "word": " the",
+          "probability": 0.9975366592407227
+        },
+        {
+          "start": 153.9,
+          "end": 154.24,
+          "word": " sandals",
+          "probability": 0.9841033518314362
+        },
+        {
+          "start": 154.24,
+          "end": 154.46,
+          "word": " of",
+          "probability": 0.9955607652664185
+        },
+        {
+          "start": 154.46,
+          "end": 154.72,
+          "word": " someone",
+          "probability": 0.8941338062286377
+        },
+        {
+          "start": 154.72,
+          "end": 155.06,
+          "word": " more",
+          "probability": 0.9934921860694885
+        },
+        {
+          "start": 155.06,
+          "end": 155.48,
+          "word": " important",
+          "probability": 0.9953836798667908
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 30,
+      "seek": 15548,
+      "start": 155.48,
+      "end": 161.56,
+      "text": " than he is. Servants would do that for their master. John said he is not even important",
+      "tokens": [
+        50363,
+        621,
+        339,
+        318,
+        13,
+        3116,
+        1187,
+        561,
+        466,
+        326,
+        329,
+        511,
+        4958,
+        13,
+        1757,
+        531,
+        339,
+        318,
+        407,
+        772,
+        1593,
+        50667
+      ],
+      "avg_logprob": -0.14100486937571655,
+      "compression_ratio": 1.599056603773585,
+      "no_speech_prob": 0.0803426057100296,
+      "words": [
+        {
+          "start": 155.48,
+          "end": 155.72,
+          "word": " than",
+          "probability": 0.3999105393886566
+        },
+        {
+          "start": 155.72,
+          "end": 155.88,
+          "word": " he",
+          "probability": 0.9127715826034546
+        },
+        {
+          "start": 155.88,
+          "end": 156.54,
+          "word": " is.",
+          "probability": 0.9952240586280823
+        },
+        {
+          "start": 157.24,
+          "end": 157.46,
+          "word": " Servants",
+          "probability": 0.9319334328174591
+        },
+        {
+          "start": 157.46,
+          "end": 157.7,
+          "word": " would",
+          "probability": 0.9697968363761902
+        },
+        {
+          "start": 157.7,
+          "end": 157.9,
+          "word": " do",
+          "probability": 0.9971253275871277
+        },
+        {
+          "start": 157.9,
+          "end": 158.12,
+          "word": " that",
+          "probability": 0.9976292252540588
+        },
+        {
+          "start": 158.12,
+          "end": 158.28,
+          "word": " for",
+          "probability": 0.9914929270744324
+        },
+        {
+          "start": 158.28,
+          "end": 158.5,
+          "word": " their",
+          "probability": 0.9959765076637268
+        },
+        {
+          "start": 158.5,
+          "end": 158.92,
+          "word": " master.",
+          "probability": 0.7868396639823914
+        },
+        {
+          "start": 159.58,
+          "end": 159.86,
+          "word": " John",
+          "probability": 0.9032875895500183
+        },
+        {
+          "start": 159.86,
+          "end": 160.06,
+          "word": " said",
+          "probability": 0.5659403204917908
+        },
+        {
+          "start": 160.06,
+          "end": 160.26,
+          "word": " he",
+          "probability": 0.9381707906723022
+        },
+        {
+          "start": 160.26,
+          "end": 160.44,
+          "word": " is",
+          "probability": 0.9620087742805481
+        },
+        {
+          "start": 160.44,
+          "end": 160.76,
+          "word": " not",
+          "probability": 0.9766550064086914
+        },
+        {
+          "start": 160.76,
+          "end": 161.06,
+          "word": " even",
+          "probability": 0.9943785071372986
+        },
+        {
+          "start": 161.06,
+          "end": 161.56,
+          "word": " important",
+          "probability": 0.9929816722869873
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 31,
+      "seek": 15548,
+      "start": 161.56,
+      "end": 166.94,
+      "text": " enough to untie the sandals of the man who is coming. This important man will baptise",
+      "tokens": [
+        50667,
+        1576,
+        284,
+        1418,
+        494,
+        262,
+        6450,
+        874,
+        286,
+        262,
+        582,
+        508,
+        318,
+        2406,
+        13,
+        770,
+        1593,
+        582,
+        481,
+        20452,
+        786,
+        50931
+      ],
+      "avg_logprob": -0.14100486937571655,
+      "compression_ratio": 1.599056603773585,
+      "no_speech_prob": 0.0803426057100296,
+      "words": [
+        {
+          "start": 161.56,
+          "end": 161.9,
+          "word": " enough",
+          "probability": 0.9970486760139465
+        },
+        {
+          "start": 161.9,
+          "end": 162.24,
+          "word": " to",
+          "probability": 0.9983047246932983
+        },
+        {
+          "start": 162.24,
+          "end": 162.54,
+          "word": " untie",
+          "probability": 0.977624386548996
+        },
+        {
+          "start": 162.54,
+          "end": 162.8,
+          "word": " the",
+          "probability": 0.9967255592346191
+        },
+        {
+          "start": 162.8,
+          "end": 163.16,
+          "word": " sandals",
+          "probability": 0.9734438955783844
+        },
+        {
+          "start": 163.16,
+          "end": 163.34,
+          "word": " of",
+          "probability": 0.9967710375785828
+        },
+        {
+          "start": 163.34,
+          "end": 163.5,
+          "word": " the",
+          "probability": 0.9924420118331909
+        },
+        {
+          "start": 163.5,
+          "end": 163.74,
+          "word": " man",
+          "probability": 0.9881433844566345
+        },
+        {
+          "start": 163.74,
+          "end": 163.9,
+          "word": " who",
+          "probability": 0.9902026653289795
+        },
+        {
+          "start": 163.9,
+          "end": 164.08,
+          "word": " is",
+          "probability": 0.9928479194641113
+        },
+        {
+          "start": 164.08,
+          "end": 164.4,
+          "word": " coming.",
+          "probability": 0.9979528188705444
+        },
+        {
+          "start": 165.1,
+          "end": 165.4,
+          "word": " This",
+          "probability": 0.9683780670166016
+        },
+        {
+          "start": 165.4,
+          "end": 165.78,
+          "word": " important",
+          "probability": 0.9972783923149109
+        },
+        {
+          "start": 165.78,
+          "end": 166.12,
+          "word": " man",
+          "probability": 0.9977239966392517
+        },
+        {
+          "start": 166.12,
+          "end": 166.36,
+          "word": " will",
+          "probability": 0.9983668923377991
+        },
+        {
+          "start": 166.36,
+          "end": 166.94,
+          "word": " baptise",
+          "probability": 0.7452881038188934
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 32,
+      "seek": 15548,
+      "start": 166.94,
+      "end": 171.96,
+      "text": " the people with the Holy Spirit. The Spirit of God will be put into people's hearts",
+      "tokens": [
+        50931,
+        262,
+        661,
+        351,
+        262,
+        7439,
+        7710,
+        13,
+        383,
+        7710,
+        286,
+        1793,
+        481,
+        307,
+        1234,
+        656,
+        661,
+        338,
+        11954,
+        51181
+      ],
+      "avg_logprob": -0.14100486937571655,
+      "compression_ratio": 1.599056603773585,
+      "no_speech_prob": 0.0803426057100296,
+      "words": [
+        {
+          "start": 166.94,
+          "end": 167.16,
+          "word": " the",
+          "probability": 0.9960399866104126
+        },
+        {
+          "start": 167.16,
+          "end": 167.44,
+          "word": " people",
+          "probability": 0.9970333576202393
+        },
+        {
+          "start": 167.44,
+          "end": 167.74,
+          "word": " with",
+          "probability": 0.9975103139877319
+        },
+        {
+          "start": 167.74,
+          "end": 167.88,
+          "word": " the",
+          "probability": 0.9917265176773071
+        },
+        {
+          "start": 167.88,
+          "end": 168.08,
+          "word": " Holy",
+          "probability": 0.9628806114196777
+        },
+        {
+          "start": 168.08,
+          "end": 168.58,
+          "word": " Spirit.",
+          "probability": 0.968966543674469
+        },
+        {
+          "start": 169.18,
+          "end": 169.44,
+          "word": " The",
+          "probability": 0.9845364689826965
+        },
+        {
+          "start": 169.44,
+          "end": 169.68,
+          "word": " Spirit",
+          "probability": 0.6145004034042358
+        },
+        {
+          "start": 169.68,
+          "end": 169.9,
+          "word": " of",
+          "probability": 0.9989192485809326
+        },
+        {
+          "start": 169.9,
+          "end": 170.14,
+          "word": " God",
+          "probability": 0.9976733326911926
+        },
+        {
+          "start": 170.14,
+          "end": 170.34,
+          "word": " will",
+          "probability": 0.9948946237564087
+        },
+        {
+          "start": 170.34,
+          "end": 170.56,
+          "word": " be",
+          "probability": 0.9709854125976562
+        },
+        {
+          "start": 170.56,
+          "end": 170.76,
+          "word": " put",
+          "probability": 0.9995825886726379
+        },
+        {
+          "start": 170.76,
+          "end": 171.08,
+          "word": " into",
+          "probability": 0.9539649486541748
+        },
+        {
+          "start": 171.08,
+          "end": 171.96,
+          "word": " people's",
+          "probability": 0.9141741693019867
+        },
+        {
+          "start": 171.96,
+          "end": 171.96,
+          "word": " hearts",
+          "probability": 0.9916831254959106
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 33,
+      "seek": 15548,
+      "start": 171.96,
+      "end": 178.26,
+      "text": " and minds. Pause the audio here and show your group a map of Judea and Jerusalem.",
+      "tokens": [
+        51181,
+        290,
+        9017,
+        13,
+        350,
+        682,
+        262,
+        6597,
+        994,
+        290,
+        905,
+        534,
+        1448,
+        257,
+        3975,
+        286,
+        30044,
+        64,
+        290,
+        10843,
+        13,
+        51665
+      ],
+      "avg_logprob": -0.14100486937571655,
+      "compression_ratio": 1.599056603773585,
+      "no_speech_prob": 0.0803426057100296,
+      "words": [
+        {
+          "start": 171.96,
+          "end": 172.2,
+          "word": " and",
+          "probability": 0.9977151155471802
+        },
+        {
+          "start": 172.2,
+          "end": 172.78,
+          "word": " minds.",
+          "probability": 0.9891758561134338
+        },
+        {
+          "start": 173.64,
+          "end": 173.92,
+          "word": " Pause",
+          "probability": 0.9361979365348816
+        },
+        {
+          "start": 173.92,
+          "end": 174.2,
+          "word": " the",
+          "probability": 0.9990411400794983
+        },
+        {
+          "start": 174.2,
+          "end": 174.44,
+          "word": " audio",
+          "probability": 0.9512527585029602
+        },
+        {
+          "start": 174.44,
+          "end": 175.14,
+          "word": " here",
+          "probability": 0.9957026839256287
+        },
+        {
+          "start": 175.14,
+          "end": 175.84,
+          "word": " and",
+          "probability": 0.7495788335800171
+        },
+        {
+          "start": 175.84,
+          "end": 176.1,
+          "word": " show",
+          "probability": 0.9967175126075745
+        },
+        {
+          "start": 176.1,
+          "end": 176.32,
+          "word": " your",
+          "probability": 0.990580141544342
+        },
+        {
+          "start": 176.32,
+          "end": 176.56,
+          "word": " group",
+          "probability": 0.986249566078186
+        },
+        {
+          "start": 176.56,
+          "end": 176.74,
+          "word": " a",
+          "probability": 0.9937001466751099
+        },
+        {
+          "start": 176.74,
+          "end": 176.94,
+          "word": " map",
+          "probability": 0.9791737794876099
+        },
+        {
+          "start": 176.94,
+          "end": 177.18,
+          "word": " of",
+          "probability": 0.9984891414642334
+        },
+        {
+          "start": 177.18,
+          "end": 177.64,
+          "word": " Judea",
+          "probability": 0.9761377573013306
+        },
+        {
+          "start": 177.64,
+          "end": 177.9,
+          "word": " and",
+          "probability": 0.9926982522010803
+        },
+        {
+          "start": 177.9,
+          "end": 178.26,
+          "word": " Jerusalem.",
+          "probability": 0.997818112373352
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 34,
+      "seek": 17826,
+      "start": 180.62,
+      "end": 184.4,
+      "text": " In the third scene we see John baptising Jesus.",
+      "tokens": [
+        50363,
+        554,
+        262,
+        2368,
+        3715,
+        356,
+        766,
+        1757,
+        20452,
+        1710,
+        5803,
+        13,
+        50663
+      ],
+      "avg_logprob": -0.14086765738633963,
+      "compression_ratio": 1.5983935742971886,
+      "no_speech_prob": 0.09345511347055435,
+      "words": [
+        {
+          "start": 180.62,
+          "end": 181.22,
+          "word": " In",
+          "probability": 0.4142599403858185
+        },
+        {
+          "start": 181.22,
+          "end": 181.82,
+          "word": " the",
+          "probability": 0.9804829359054565
+        },
+        {
+          "start": 181.82,
+          "end": 182.18,
+          "word": " third",
+          "probability": 0.8838855624198914
+        },
+        {
+          "start": 182.18,
+          "end": 182.48,
+          "word": " scene",
+          "probability": 0.987798273563385
+        },
+        {
+          "start": 182.48,
+          "end": 182.66,
+          "word": " we",
+          "probability": 0.534182071685791
+        },
+        {
+          "start": 182.66,
+          "end": 182.92,
+          "word": " see",
+          "probability": 0.9948065876960754
+        },
+        {
+          "start": 182.92,
+          "end": 183.2,
+          "word": " John",
+          "probability": 0.9515596032142639
+        },
+        {
+          "start": 183.2,
+          "end": 183.82,
+          "word": " baptising",
+          "probability": 0.7500020563602448
+        },
+        {
+          "start": 183.82,
+          "end": 184.4,
+          "word": " Jesus.",
+          "probability": 0.9851978421211243
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 35,
+      "seek": 17826,
+      "start": 185.20000000000002,
+      "end": 192.56,
+      "text": " It's important to remember that although Jesus is being baptized, he does not need forgiveness as he has never done anything wrong.",
+      "tokens": [
+        50663,
+        632,
+        338,
+        1593,
+        284,
+        3505,
+        326,
+        3584,
+        5803,
+        318,
+        852,
+        40357,
+        11,
+        339,
+        857,
+        407,
+        761,
+        26027,
+        355,
+        339,
+        468,
+        1239,
+        1760,
+        1997,
+        2642,
+        13,
+        51063
+      ],
+      "avg_logprob": -0.14086765738633963,
+      "compression_ratio": 1.5983935742971886,
+      "no_speech_prob": 0.09345511347055435,
+      "words": [
+        {
+          "start": 185.20000000000002,
+          "end": 185.8,
+          "word": " It's",
+          "probability": 0.8974576890468597
+        },
+        {
+          "start": 185.8,
+          "end": 185.8,
+          "word": " important",
+          "probability": 0.9993182420730591
+        },
+        {
+          "start": 185.8,
+          "end": 186.06,
+          "word": " to",
+          "probability": 0.9985334873199463
+        },
+        {
+          "start": 186.06,
+          "end": 186.4,
+          "word": " remember",
+          "probability": 0.9990690350532532
+        },
+        {
+          "start": 186.4,
+          "end": 186.64,
+          "word": " that",
+          "probability": 0.9555944800376892
+        },
+        {
+          "start": 186.64,
+          "end": 186.98,
+          "word": " although",
+          "probability": 0.9563080668449402
+        },
+        {
+          "start": 186.98,
+          "end": 187.38,
+          "word": " Jesus",
+          "probability": 0.9967080354690552
+        },
+        {
+          "start": 187.38,
+          "end": 187.64,
+          "word": " is",
+          "probability": 0.9767276644706726
+        },
+        {
+          "start": 187.64,
+          "end": 187.88,
+          "word": " being",
+          "probability": 0.9930701851844788
+        },
+        {
+          "start": 187.88,
+          "end": 188.42,
+          "word": " baptized,",
+          "probability": 0.586459219455719
+        },
+        {
+          "start": 189.1,
+          "end": 189.22,
+          "word": " he",
+          "probability": 0.8883770704269409
+        },
+        {
+          "start": 189.22,
+          "end": 189.42,
+          "word": " does",
+          "probability": 0.9933710098266602
+        },
+        {
+          "start": 189.42,
+          "end": 189.62,
+          "word": " not",
+          "probability": 0.9902659058570862
+        },
+        {
+          "start": 189.62,
+          "end": 189.9,
+          "word": " need",
+          "probability": 0.9989681243896484
+        },
+        {
+          "start": 189.9,
+          "end": 190.28,
+          "word": " forgiveness",
+          "probability": 0.9973248243331909
+        },
+        {
+          "start": 190.28,
+          "end": 190.78,
+          "word": " as",
+          "probability": 0.7808794975280762
+        },
+        {
+          "start": 190.78,
+          "end": 190.94,
+          "word": " he",
+          "probability": 0.9871705174446106
+        },
+        {
+          "start": 190.94,
+          "end": 191.16,
+          "word": " has",
+          "probability": 0.9958369731903076
+        },
+        {
+          "start": 191.16,
+          "end": 191.34,
+          "word": " never",
+          "probability": 0.9966111779212952
+        },
+        {
+          "start": 191.34,
+          "end": 191.64,
+          "word": " done",
+          "probability": 0.998501181602478
+        },
+        {
+          "start": 191.64,
+          "end": 192.08,
+          "word": " anything",
+          "probability": 0.9972182512283325
+        },
+        {
+          "start": 192.08,
+          "end": 192.56,
+          "word": " wrong.",
+          "probability": 0.9991539716720581
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 36,
+      "seek": 17826,
+      "start": 193.32,
+      "end": 200.38,
+      "text": " His baptism is the start of his new life of public ministry or teaching and shows us that God is appointing him for this task.",
+      "tokens": [
+        51063,
+        2399,
+        33422,
+        318,
+        262,
+        923,
+        286,
+        465,
+        649,
+        1204,
+        286,
+        1171,
+        11957,
+        393,
+        7743,
+        290,
+        2523,
+        514,
+        326,
+        1793,
+        318,
+        47680,
+        683,
+        329,
+        428,
+        4876,
+        13,
+        51463
+      ],
+      "avg_logprob": -0.14086765738633963,
+      "compression_ratio": 1.5983935742971886,
+      "no_speech_prob": 0.09345511347055435,
+      "words": [
+        {
+          "start": 193.32,
+          "end": 193.44,
+          "word": " His",
+          "probability": 0.9866125583648682
+        },
+        {
+          "start": 193.44,
+          "end": 193.78,
+          "word": " baptism",
+          "probability": 0.9914931654930115
+        },
+        {
+          "start": 193.78,
+          "end": 194.2,
+          "word": " is",
+          "probability": 0.9986398816108704
+        },
+        {
+          "start": 194.2,
+          "end": 194.38,
+          "word": " the",
+          "probability": 0.9969865679740906
+        },
+        {
+          "start": 194.38,
+          "end": 194.64,
+          "word": " start",
+          "probability": 0.9950718283653259
+        },
+        {
+          "start": 194.64,
+          "end": 194.78,
+          "word": " of",
+          "probability": 0.9977707862854004
+        },
+        {
+          "start": 194.78,
+          "end": 194.96,
+          "word": " his",
+          "probability": 0.9853068590164185
+        },
+        {
+          "start": 194.96,
+          "end": 195.2,
+          "word": " new",
+          "probability": 0.9925436973571777
+        },
+        {
+          "start": 195.2,
+          "end": 195.44,
+          "word": " life",
+          "probability": 0.9951300621032715
+        },
+        {
+          "start": 195.44,
+          "end": 195.74,
+          "word": " of",
+          "probability": 0.996659517288208
+        },
+        {
+          "start": 195.74,
+          "end": 196.0,
+          "word": " public",
+          "probability": 0.901810884475708
+        },
+        {
+          "start": 196.0,
+          "end": 196.42,
+          "word": " ministry",
+          "probability": 0.9950579404830933
+        },
+        {
+          "start": 196.42,
+          "end": 196.84,
+          "word": " or",
+          "probability": 0.8726679682731628
+        },
+        {
+          "start": 196.84,
+          "end": 197.26,
+          "word": " teaching",
+          "probability": 0.9972510933876038
+        },
+        {
+          "start": 197.26,
+          "end": 197.56,
+          "word": " and",
+          "probability": 0.8197843432426453
+        },
+        {
+          "start": 197.56,
+          "end": 197.82,
+          "word": " shows",
+          "probability": 0.9934456944465637
+        },
+        {
+          "start": 197.82,
+          "end": 198.08,
+          "word": " us",
+          "probability": 0.9971603155136108
+        },
+        {
+          "start": 198.08,
+          "end": 198.32,
+          "word": " that",
+          "probability": 0.9929469227790833
+        },
+        {
+          "start": 198.32,
+          "end": 198.46,
+          "word": " God",
+          "probability": 0.9736879467964172
+        },
+        {
+          "start": 198.46,
+          "end": 198.7,
+          "word": " is",
+          "probability": 0.9968120455741882
+        },
+        {
+          "start": 198.7,
+          "end": 199.02,
+          "word": " appointing",
+          "probability": 0.9738273024559021
+        },
+        {
+          "start": 199.02,
+          "end": 199.42,
+          "word": " him",
+          "probability": 0.9744002819061279
+        },
+        {
+          "start": 199.42,
+          "end": 199.54,
+          "word": " for",
+          "probability": 0.9939129948616028
+        },
+        {
+          "start": 199.54,
+          "end": 199.82,
+          "word": " this",
+          "probability": 0.8872510194778442
+        },
+        {
+          "start": 199.82,
+          "end": 200.38,
+          "word": " task.",
+          "probability": 0.997463583946228
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 37,
+      "seek": 17826,
+      "start": 201.36,
+      "end": 206.98,
+      "text": " Mark likes to use short sentences and fast action to tell his stories and we see this here.",
+      "tokens": [
+        51463,
+        2940,
+        7832,
+        284,
+        779,
+        1790,
+        13439,
+        290,
+        3049,
+        2223,
+        284,
+        1560,
+        465,
+        3923,
+        290,
+        356,
+        766,
+        428,
+        994,
+        13,
+        51763
+      ],
+      "avg_logprob": -0.14086765738633963,
+      "compression_ratio": 1.5983935742971886,
+      "no_speech_prob": 0.09345511347055435,
+      "words": [
+        {
+          "start": 201.36,
+          "end": 201.52,
+          "word": " Mark",
+          "probability": 0.9073265790939331
+        },
+        {
+          "start": 201.52,
+          "end": 201.86,
+          "word": " likes",
+          "probability": 0.9487543702125549
+        },
+        {
+          "start": 201.86,
+          "end": 202.0,
+          "word": " to",
+          "probability": 0.9987102746963501
+        },
+        {
+          "start": 202.0,
+          "end": 202.22,
+          "word": " use",
+          "probability": 0.9969670176506042
+        },
+        {
+          "start": 202.22,
+          "end": 202.54,
+          "word": " short",
+          "probability": 0.9969850182533264
+        },
+        {
+          "start": 202.54,
+          "end": 202.98,
+          "word": " sentences",
+          "probability": 0.9944772124290466
+        },
+        {
+          "start": 202.98,
+          "end": 203.46,
+          "word": " and",
+          "probability": 0.9830700159072876
+        },
+        {
+          "start": 203.46,
+          "end": 203.78,
+          "word": " fast",
+          "probability": 0.9917455315589905
+        },
+        {
+          "start": 203.78,
+          "end": 204.14,
+          "word": " action",
+          "probability": 0.8278314471244812
+        },
+        {
+          "start": 204.14,
+          "end": 204.4,
+          "word": " to",
+          "probability": 0.9949396848678589
+        },
+        {
+          "start": 204.4,
+          "end": 204.58,
+          "word": " tell",
+          "probability": 0.9991355538368225
+        },
+        {
+          "start": 204.58,
+          "end": 204.82,
+          "word": " his",
+          "probability": 0.9856345057487488
+        },
+        {
+          "start": 204.82,
+          "end": 205.18,
+          "word": " stories",
+          "probability": 0.9585573077201843
+        },
+        {
+          "start": 205.18,
+          "end": 205.84,
+          "word": " and",
+          "probability": 0.41438329219818115
+        },
+        {
+          "start": 205.84,
+          "end": 206.06,
+          "word": " we",
+          "probability": 0.9933125376701355
+        },
+        {
+          "start": 206.06,
+          "end": 206.22,
+          "word": " see",
+          "probability": 0.9984775185585022
+        },
+        {
+          "start": 206.22,
+          "end": 206.48,
+          "word": " this",
+          "probability": 0.9955924153327942
+        },
+        {
+          "start": 206.48,
+          "end": 206.98,
+          "word": " here.",
+          "probability": 0.9922916293144226
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 38,
+      "seek": 20698,
+      "start": 207.61999999999998,
+      "end": 212.56,
+      "text": " First, Jesus comes out of the water. The original language is unclear if Jesus comes",
+      "tokens": [
+        50363,
+        3274,
+        11,
+        5803,
+        2058,
+        503,
+        286,
+        262,
+        1660,
+        13,
+        383,
+        2656,
+        3303,
+        318,
+        10061,
+        611,
+        5803,
+        2058,
+        50638
+      ],
+      "avg_logprob": -0.15605806320905685,
+      "compression_ratio": 1.9861751152073732,
+      "no_speech_prob": 0.06948618590831757,
+      "words": [
+        {
+          "start": 207.61999999999998,
+          "end": 208.14,
+          "word": " First,",
+          "probability": 0.3872126340866089
+        },
+        {
+          "start": 208.38,
+          "end": 208.54,
+          "word": " Jesus",
+          "probability": 0.9628252387046814
+        },
+        {
+          "start": 208.54,
+          "end": 208.86,
+          "word": " comes",
+          "probability": 0.9941669702529907
+        },
+        {
+          "start": 208.86,
+          "end": 209.1,
+          "word": " out",
+          "probability": 0.9980999827384949
+        },
+        {
+          "start": 209.1,
+          "end": 209.28,
+          "word": " of",
+          "probability": 0.9941957592964172
+        },
+        {
+          "start": 209.28,
+          "end": 209.38,
+          "word": " the",
+          "probability": 0.9958308339118958
+        },
+        {
+          "start": 209.38,
+          "end": 209.66,
+          "word": " water.",
+          "probability": 0.9807149171829224
+        },
+        {
+          "start": 210.22,
+          "end": 210.36,
+          "word": " The",
+          "probability": 0.9790471196174622
+        },
+        {
+          "start": 210.36,
+          "end": 210.74,
+          "word": " original",
+          "probability": 0.9943041205406189
+        },
+        {
+          "start": 210.74,
+          "end": 211.08,
+          "word": " language",
+          "probability": 0.9954363703727722
+        },
+        {
+          "start": 211.08,
+          "end": 211.32,
+          "word": " is",
+          "probability": 0.9957036375999451
+        },
+        {
+          "start": 211.32,
+          "end": 211.74,
+          "word": " unclear",
+          "probability": 0.9959012866020203
+        },
+        {
+          "start": 211.74,
+          "end": 211.94,
+          "word": " if",
+          "probability": 0.9854700565338135
+        },
+        {
+          "start": 211.94,
+          "end": 212.28,
+          "word": " Jesus",
+          "probability": 0.9940539002418518
+        },
+        {
+          "start": 212.28,
+          "end": 212.56,
+          "word": " comes",
+          "probability": 0.9925175905227661
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 39,
+      "seek": 20698,
+      "start": 212.56,
+      "end": 217.82,
+      "text": " out from under the surface of the water, or if he comes completely out of the river. Most",
+      "tokens": [
+        50638,
+        503,
+        422,
+        739,
+        262,
+        4417,
+        286,
+        262,
+        1660,
+        11,
+        393,
+        611,
+        339,
+        2058,
+        3190,
+        503,
+        286,
+        262,
+        7850,
+        13,
+        4042,
+        50900
+      ],
+      "avg_logprob": -0.15605806320905685,
+      "compression_ratio": 1.9861751152073732,
+      "no_speech_prob": 0.06948618590831757,
+      "words": [
+        {
+          "start": 212.56,
+          "end": 212.82,
+          "word": " out",
+          "probability": 0.9781426191329956
+        },
+        {
+          "start": 212.82,
+          "end": 212.98,
+          "word": " from",
+          "probability": 0.9813017249107361
+        },
+        {
+          "start": 212.98,
+          "end": 213.22,
+          "word": " under",
+          "probability": 0.9942840933799744
+        },
+        {
+          "start": 213.22,
+          "end": 213.56,
+          "word": " the",
+          "probability": 0.9971948862075806
+        },
+        {
+          "start": 213.56,
+          "end": 213.66,
+          "word": " surface",
+          "probability": 0.9948683977127075
+        },
+        {
+          "start": 213.66,
+          "end": 213.96,
+          "word": " of",
+          "probability": 0.9980366826057434
+        },
+        {
+          "start": 213.96,
+          "end": 214.1,
+          "word": " the",
+          "probability": 0.9902986288070679
+        },
+        {
+          "start": 214.1,
+          "end": 214.46,
+          "word": " water,",
+          "probability": 0.9954813718795776
+        },
+        {
+          "start": 214.78,
+          "end": 215.0,
+          "word": " or",
+          "probability": 0.9942612648010254
+        },
+        {
+          "start": 215.0,
+          "end": 215.16,
+          "word": " if",
+          "probability": 0.5753109455108643
+        },
+        {
+          "start": 215.16,
+          "end": 215.32,
+          "word": " he",
+          "probability": 0.9407089948654175
+        },
+        {
+          "start": 215.32,
+          "end": 215.66,
+          "word": " comes",
+          "probability": 0.9810173511505127
+        },
+        {
+          "start": 215.66,
+          "end": 216.14,
+          "word": " completely",
+          "probability": 0.9875755310058594
+        },
+        {
+          "start": 216.14,
+          "end": 216.42,
+          "word": " out",
+          "probability": 0.9988372921943665
+        },
+        {
+          "start": 216.42,
+          "end": 216.62,
+          "word": " of",
+          "probability": 0.9891575574874878
+        },
+        {
+          "start": 216.62,
+          "end": 216.7,
+          "word": " the",
+          "probability": 0.9976006150245667
+        },
+        {
+          "start": 216.7,
+          "end": 216.98,
+          "word": " river.",
+          "probability": 0.9983612895011902
+        },
+        {
+          "start": 217.58,
+          "end": 217.82,
+          "word": " Most",
+          "probability": 0.9929019808769226
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 40,
+      "seek": 20698,
+      "start": 217.82,
+      "end": 222.48,
+      "text": " likely, Jesus comes from under the surface of the water, but you should leave this",
+      "tokens": [
+        50900,
+        1884,
+        11,
+        5803,
+        2058,
+        422,
+        739,
+        262,
+        4417,
+        286,
+        262,
+        1660,
+        11,
+        475,
+        345,
+        815,
+        2666,
+        428,
+        51128
+      ],
+      "avg_logprob": -0.15605806320905685,
+      "compression_ratio": 1.9861751152073732,
+      "no_speech_prob": 0.06948618590831757,
+      "words": [
+        {
+          "start": 217.82,
+          "end": 218.4,
+          "word": " likely,",
+          "probability": 0.9980661273002625
+        },
+        {
+          "start": 218.72,
+          "end": 218.84,
+          "word": " Jesus",
+          "probability": 0.9914295077323914
+        },
+        {
+          "start": 218.84,
+          "end": 219.26,
+          "word": " comes",
+          "probability": 0.9960291385650635
+        },
+        {
+          "start": 219.26,
+          "end": 219.56,
+          "word": " from",
+          "probability": 0.9740211367607117
+        },
+        {
+          "start": 219.56,
+          "end": 219.8,
+          "word": " under",
+          "probability": 0.9925242066383362
+        },
+        {
+          "start": 219.8,
+          "end": 220.04,
+          "word": " the",
+          "probability": 0.9980401396751404
+        },
+        {
+          "start": 220.04,
+          "end": 220.22,
+          "word": " surface",
+          "probability": 0.9960083961486816
+        },
+        {
+          "start": 220.22,
+          "end": 220.54,
+          "word": " of",
+          "probability": 0.9982044696807861
+        },
+        {
+          "start": 220.54,
+          "end": 220.72,
+          "word": " the",
+          "probability": 0.9892682433128357
+        },
+        {
+          "start": 220.72,
+          "end": 220.98,
+          "word": " water,",
+          "probability": 0.9981168508529663
+        },
+        {
+          "start": 221.36,
+          "end": 221.5,
+          "word": " but",
+          "probability": 0.9083095192909241
+        },
+        {
+          "start": 221.5,
+          "end": 221.62,
+          "word": " you",
+          "probability": 0.988491415977478
+        },
+        {
+          "start": 221.62,
+          "end": 221.82,
+          "word": " should",
+          "probability": 0.9976184964179993
+        },
+        {
+          "start": 221.82,
+          "end": 222.06,
+          "word": " leave",
+          "probability": 0.9957161545753479
+        },
+        {
+          "start": 222.06,
+          "end": 222.48,
+          "word": " this",
+          "probability": 0.9938350915908813
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 41,
+      "seek": 20698,
+      "start": 222.48,
+      "end": 227.94,
+      "text": " unclear in your translation if possible. Immediately after Jesus comes out of the water,",
+      "tokens": [
+        51128,
+        10061,
+        287,
+        534,
+        11059,
+        611,
+        1744,
+        13,
+        34528,
+        706,
+        5803,
+        2058,
+        503,
+        286,
+        262,
+        1660,
+        11,
+        51430
+      ],
+      "avg_logprob": -0.15605806320905685,
+      "compression_ratio": 1.9861751152073732,
+      "no_speech_prob": 0.06948618590831757,
+      "words": [
+        {
+          "start": 222.48,
+          "end": 222.92,
+          "word": " unclear",
+          "probability": 0.9580088257789612
+        },
+        {
+          "start": 222.92,
+          "end": 223.12,
+          "word": " in",
+          "probability": 0.9939870834350586
+        },
+        {
+          "start": 223.12,
+          "end": 223.52,
+          "word": " your",
+          "probability": 0.9969384670257568
+        },
+        {
+          "start": 223.52,
+          "end": 223.92,
+          "word": " translation",
+          "probability": 0.994228720664978
+        },
+        {
+          "start": 223.92,
+          "end": 224.18,
+          "word": " if",
+          "probability": 0.7434616088867188
+        },
+        {
+          "start": 224.18,
+          "end": 224.72,
+          "word": " possible.",
+          "probability": 0.9996814727783203
+        },
+        {
+          "start": 225.8,
+          "end": 226.16,
+          "word": " Immediately",
+          "probability": 0.9725192785263062
+        },
+        {
+          "start": 226.16,
+          "end": 226.52,
+          "word": " after",
+          "probability": 0.989825427532196
+        },
+        {
+          "start": 226.52,
+          "end": 226.8,
+          "word": " Jesus",
+          "probability": 0.9902547001838684
+        },
+        {
+          "start": 226.8,
+          "end": 227.04,
+          "word": " comes",
+          "probability": 0.9960339665412903
+        },
+        {
+          "start": 227.04,
+          "end": 227.3,
+          "word": " out",
+          "probability": 0.9974468946456909
+        },
+        {
+          "start": 227.3,
+          "end": 227.5,
+          "word": " of",
+          "probability": 0.990564227104187
+        },
+        {
+          "start": 227.5,
+          "end": 227.6,
+          "word": " the",
+          "probability": 0.9957225322723389
+        },
+        {
+          "start": 227.6,
+          "end": 227.94,
+          "word": " water,",
+          "probability": 0.9978926777839661
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 42,
+      "seek": 20698,
+      "start": 228.38,
+      "end": 233.20000000000002,
+      "text": " the heavens are torn open. This does not mean the heavens or sky were destroyed, but",
+      "tokens": [
+        51430,
+        262,
+        27636,
+        389,
+        12445,
+        1280,
+        13,
+        770,
+        857,
+        407,
+        1612,
+        262,
+        27636,
+        393,
+        6766,
+        547,
+        6572,
+        11,
+        475,
+        51674
+      ],
+      "avg_logprob": -0.15605806320905685,
+      "compression_ratio": 1.9861751152073732,
+      "no_speech_prob": 0.06948618590831757,
+      "words": [
+        {
+          "start": 228.38,
+          "end": 228.5,
+          "word": " the",
+          "probability": 0.9756203293800354
+        },
+        {
+          "start": 228.5,
+          "end": 228.7,
+          "word": " heavens",
+          "probability": 0.9640493392944336
+        },
+        {
+          "start": 228.7,
+          "end": 229.08,
+          "word": " are",
+          "probability": 0.9611461758613586
+        },
+        {
+          "start": 229.08,
+          "end": 229.24,
+          "word": " torn",
+          "probability": 0.9864460229873657
+        },
+        {
+          "start": 229.24,
+          "end": 229.64,
+          "word": " open.",
+          "probability": 0.9980219602584839
+        },
+        {
+          "start": 230.22,
+          "end": 230.44,
+          "word": " This",
+          "probability": 0.9975454211235046
+        },
+        {
+          "start": 230.44,
+          "end": 230.6,
+          "word": " does",
+          "probability": 0.9975606203079224
+        },
+        {
+          "start": 230.6,
+          "end": 230.76,
+          "word": " not",
+          "probability": 0.998162567615509
+        },
+        {
+          "start": 230.76,
+          "end": 230.94,
+          "word": " mean",
+          "probability": 0.999584972858429
+        },
+        {
+          "start": 230.94,
+          "end": 231.3,
+          "word": " the",
+          "probability": 0.9856948256492615
+        },
+        {
+          "start": 231.3,
+          "end": 231.34,
+          "word": " heavens",
+          "probability": 0.9913890957832336
+        },
+        {
+          "start": 231.34,
+          "end": 231.68,
+          "word": " or",
+          "probability": 0.8305026292800903
+        },
+        {
+          "start": 231.68,
+          "end": 231.94,
+          "word": " sky",
+          "probability": 0.9637621641159058
+        },
+        {
+          "start": 231.94,
+          "end": 232.18,
+          "word": " were",
+          "probability": 0.731835663318634
+        },
+        {
+          "start": 232.18,
+          "end": 232.68,
+          "word": " destroyed,",
+          "probability": 0.9993419051170349
+        },
+        {
+          "start": 233.08,
+          "end": 233.34,
+          "word": " but",
+          "probability": 0.9986124038696289
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 43,
+      "seek": 23334,
+      "start": 233.34,
+      "end": 235.34,
+      "text": " Instead means they were opening up.",
+      "tokens": [
+        50363,
+        5455,
+        1724,
+        484,
+        547,
+        4756,
+        510,
+        13,
+        50503
+      ],
+      "avg_logprob": -0.19646202748427627,
+      "compression_ratio": 1.7385892116182573,
+      "no_speech_prob": 0.06036529690027237,
+      "words": [
+        {
+          "start": 233.34,
+          "end": 233.66,
+          "word": " Instead",
+          "probability": 0.4118904173374176
+        },
+        {
+          "start": 233.66,
+          "end": 234.06,
+          "word": " means",
+          "probability": 0.9712368845939636
+        },
+        {
+          "start": 234.06,
+          "end": 234.28,
+          "word": " they",
+          "probability": 0.9324051737785339
+        },
+        {
+          "start": 234.28,
+          "end": 234.52,
+          "word": " were",
+          "probability": 0.9773787260055542
+        },
+        {
+          "start": 234.52,
+          "end": 234.86,
+          "word": " opening",
+          "probability": 0.9562804698944092
+        },
+        {
+          "start": 234.86,
+          "end": 235.34,
+          "word": " up.",
+          "probability": 0.9971054196357727
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 44,
+      "seek": 23334,
+      "start": 236.04,
+      "end": 238.68,
+      "text": " From the opening came the Holy Spirit like a dove.",
+      "tokens": [
+        50503,
+        3574,
+        262,
+        4756,
+        1625,
+        262,
+        7439,
+        7710,
+        588,
+        257,
+        38862,
+        13,
+        50669
+      ],
+      "avg_logprob": -0.19646202748427627,
+      "compression_ratio": 1.7385892116182573,
+      "no_speech_prob": 0.06036529690027237,
+      "words": [
+        {
+          "start": 236.04,
+          "end": 236.2,
+          "word": " From",
+          "probability": 0.8482728004455566
+        },
+        {
+          "start": 236.2,
+          "end": 236.46,
+          "word": " the",
+          "probability": 0.9831719398498535
+        },
+        {
+          "start": 236.46,
+          "end": 236.68,
+          "word": " opening",
+          "probability": 0.9973192811012268
+        },
+        {
+          "start": 236.68,
+          "end": 237.04,
+          "word": " came",
+          "probability": 0.992440938949585
+        },
+        {
+          "start": 237.04,
+          "end": 237.3,
+          "word": " the",
+          "probability": 0.9615272283554077
+        },
+        {
+          "start": 237.3,
+          "end": 237.5,
+          "word": " Holy",
+          "probability": 0.9132052063941956
+        },
+        {
+          "start": 237.5,
+          "end": 237.94,
+          "word": " Spirit",
+          "probability": 0.9837309122085571
+        },
+        {
+          "start": 237.94,
+          "end": 238.22,
+          "word": " like",
+          "probability": 0.8584871292114258
+        },
+        {
+          "start": 238.22,
+          "end": 238.46,
+          "word": " a",
+          "probability": 0.8691036105155945
+        },
+        {
+          "start": 238.46,
+          "end": 238.68,
+          "word": " dove.",
+          "probability": 0.8136265873908997
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 45,
+      "seek": 23334,
+      "start": 239.4,
+      "end": 243.76,
+      "text": " This could mean that the Holy Spirit came in the form of a dove, or the Holy Spirit",
+      "tokens": [
+        50669,
+        770,
+        714,
+        1612,
+        326,
+        262,
+        7439,
+        7710,
+        1625,
+        287,
+        262,
+        1296,
+        286,
+        257,
+        38862,
+        11,
+        393,
+        262,
+        7439,
+        7710,
+        50879
+      ],
+      "avg_logprob": -0.19646202748427627,
+      "compression_ratio": 1.7385892116182573,
+      "no_speech_prob": 0.06036529690027237,
+      "words": [
+        {
+          "start": 239.4,
+          "end": 239.6,
+          "word": " This",
+          "probability": 0.9845573902130127
+        },
+        {
+          "start": 239.6,
+          "end": 239.84,
+          "word": " could",
+          "probability": 0.9947699904441833
+        },
+        {
+          "start": 239.84,
+          "end": 240.08,
+          "word": " mean",
+          "probability": 0.9980547428131104
+        },
+        {
+          "start": 240.08,
+          "end": 240.3,
+          "word": " that",
+          "probability": 0.9346575736999512
+        },
+        {
+          "start": 240.3,
+          "end": 240.38,
+          "word": " the",
+          "probability": 0.9857607483863831
+        },
+        {
+          "start": 240.38,
+          "end": 240.6,
+          "word": " Holy",
+          "probability": 0.9882810711860657
+        },
+        {
+          "start": 240.6,
+          "end": 240.94,
+          "word": " Spirit",
+          "probability": 0.9929961562156677
+        },
+        {
+          "start": 240.94,
+          "end": 241.24,
+          "word": " came",
+          "probability": 0.9929869771003723
+        },
+        {
+          "start": 241.24,
+          "end": 241.36,
+          "word": " in",
+          "probability": 0.9865994453430176
+        },
+        {
+          "start": 241.36,
+          "end": 241.56,
+          "word": " the",
+          "probability": 0.9873675107955933
+        },
+        {
+          "start": 241.56,
+          "end": 241.78,
+          "word": " form",
+          "probability": 0.997826874256134
+        },
+        {
+          "start": 241.78,
+          "end": 241.96,
+          "word": " of",
+          "probability": 0.9983102083206177
+        },
+        {
+          "start": 241.96,
+          "end": 242.14,
+          "word": " a",
+          "probability": 0.9892520308494568
+        },
+        {
+          "start": 242.14,
+          "end": 242.38,
+          "word": " dove,",
+          "probability": 0.9963141083717346
+        },
+        {
+          "start": 242.82,
+          "end": 242.98,
+          "word": " or",
+          "probability": 0.9822643399238586
+        },
+        {
+          "start": 242.98,
+          "end": 243.1,
+          "word": " the",
+          "probability": 0.9882609248161316
+        },
+        {
+          "start": 243.1,
+          "end": 243.38,
+          "word": " Holy",
+          "probability": 0.9910003542900085
+        },
+        {
+          "start": 243.38,
+          "end": 243.76,
+          "word": " Spirit",
+          "probability": 0.9957677125930786
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 46,
+      "seek": 23334,
+      "start": 243.76,
+      "end": 246.1,
+      "text": " came down like a dove comes down.",
+      "tokens": [
+        50879,
+        1625,
+        866,
+        588,
+        257,
+        38862,
+        2058,
+        866,
+        13,
+        51033
+      ],
+      "avg_logprob": -0.19646202748427627,
+      "compression_ratio": 1.7385892116182573,
+      "no_speech_prob": 0.06036529690027237,
+      "words": [
+        {
+          "start": 243.76,
+          "end": 244.08,
+          "word": " came",
+          "probability": 0.9891191720962524
+        },
+        {
+          "start": 244.08,
+          "end": 244.48,
+          "word": " down",
+          "probability": 0.9950525164604187
+        },
+        {
+          "start": 244.48,
+          "end": 244.74,
+          "word": " like",
+          "probability": 0.9947565793991089
+        },
+        {
+          "start": 244.74,
+          "end": 244.96,
+          "word": " a",
+          "probability": 0.9955441355705261
+        },
+        {
+          "start": 244.96,
+          "end": 245.14,
+          "word": " dove",
+          "probability": 0.9973878264427185
+        },
+        {
+          "start": 245.14,
+          "end": 245.52,
+          "word": " comes",
+          "probability": 0.9856847524642944
+        },
+        {
+          "start": 245.52,
+          "end": 246.1,
+          "word": " down.",
+          "probability": 0.998829185962677
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 47,
+      "seek": 23334,
+      "start": 246.68,
+      "end": 249.52,
+      "text": " It is best to keep the translation unclear also.",
+      "tokens": [
+        51033,
+        632,
+        318,
+        1266,
+        284,
+        1394,
+        262,
+        11059,
+        10061,
+        635,
+        13,
+        51207
+      ],
+      "avg_logprob": -0.19646202748427627,
+      "compression_ratio": 1.7385892116182573,
+      "no_speech_prob": 0.06036529690027237,
+      "words": [
+        {
+          "start": 246.68,
+          "end": 246.8,
+          "word": " It",
+          "probability": 0.9259371161460876
+        },
+        {
+          "start": 246.8,
+          "end": 246.96,
+          "word": " is",
+          "probability": 0.9924739003181458
+        },
+        {
+          "start": 246.96,
+          "end": 247.22,
+          "word": " best",
+          "probability": 0.9965189695358276
+        },
+        {
+          "start": 247.22,
+          "end": 247.32,
+          "word": " to",
+          "probability": 0.9988935589790344
+        },
+        {
+          "start": 247.32,
+          "end": 247.46,
+          "word": " keep",
+          "probability": 0.9963504076004028
+        },
+        {
+          "start": 247.46,
+          "end": 247.76,
+          "word": " the",
+          "probability": 0.9921556115150452
+        },
+        {
+          "start": 247.76,
+          "end": 248.18,
+          "word": " translation",
+          "probability": 0.9933534860610962
+        },
+        {
+          "start": 248.18,
+          "end": 248.78,
+          "word": " unclear",
+          "probability": 0.9448804259300232
+        },
+        {
+          "start": 248.78,
+          "end": 249.52,
+          "word": " also.",
+          "probability": 0.9630022048950195
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 48,
+      "seek": 23334,
+      "start": 250.22,
+      "end": 252.16,
+      "text": " Jesus heard a voice that said,",
+      "tokens": [
+        51207,
+        5803,
+        2982,
+        257,
+        3809,
+        326,
+        531,
+        11,
+        51305
+      ],
+      "avg_logprob": -0.19646202748427627,
+      "compression_ratio": 1.7385892116182573,
+      "no_speech_prob": 0.06036529690027237,
+      "words": [
+        {
+          "start": 250.22,
+          "end": 250.46,
+          "word": " Jesus",
+          "probability": 0.763701319694519
+        },
+        {
+          "start": 250.46,
+          "end": 250.74,
+          "word": " heard",
+          "probability": 0.9810280203819275
+        },
+        {
+          "start": 250.74,
+          "end": 250.94,
+          "word": " a",
+          "probability": 0.9886520504951477
+        },
+        {
+          "start": 250.94,
+          "end": 251.14,
+          "word": " voice",
+          "probability": 0.9993963241577148
+        },
+        {
+          "start": 251.14,
+          "end": 251.42,
+          "word": " that",
+          "probability": 0.9828548431396484
+        },
+        {
+          "start": 251.42,
+          "end": 252.16,
+          "word": " said,",
+          "probability": 0.976264476776123
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 49,
+      "seek": 23334,
+      "start": 252.32,
+      "end": 253.24,
+      "text": " You are my son.",
+      "tokens": [
+        51305,
+        921,
+        389,
+        616,
+        3367,
+        13,
+        51377
+      ],
+      "avg_logprob": -0.19646202748427627,
+      "compression_ratio": 1.7385892116182573,
+      "no_speech_prob": 0.06036529690027237,
+      "words": [
+        {
+          "start": 252.32,
+          "end": 252.42,
+          "word": " You",
+          "probability": 0.04713159799575806
+        },
+        {
+          "start": 252.42,
+          "end": 252.58,
+          "word": " are",
+          "probability": 0.9808262586593628
+        },
+        {
+          "start": 252.58,
+          "end": 252.84,
+          "word": " my",
+          "probability": 0.9255676865577698
+        },
+        {
+          "start": 252.84,
+          "end": 253.24,
+          "word": " son.",
+          "probability": 0.5354315638542175
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 50,
+      "seek": 23334,
+      "start": 253.7,
+      "end": 254.54,
+      "text": " I love you.",
+      "tokens": [
+        51377,
+        314,
+        1842,
+        345,
+        13,
+        51431
+      ],
+      "avg_logprob": -0.19646202748427627,
+      "compression_ratio": 1.7385892116182573,
+      "no_speech_prob": 0.06036529690027237,
+      "words": [
+        {
+          "start": 253.7,
+          "end": 253.88,
+          "word": " I",
+          "probability": 0.9892053604125977
+        },
+        {
+          "start": 253.88,
+          "end": 254.1,
+          "word": " love",
+          "probability": 0.9946512579917908
+        },
+        {
+          "start": 254.1,
+          "end": 254.54,
+          "word": " you.",
+          "probability": 0.9547427892684937
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 51,
+      "seek": 23334,
+      "start": 254.7,
+      "end": 256.1,
+      "text": " I am pleased with you.",
+      "tokens": [
+        51431,
+        314,
+        716,
+        10607,
+        351,
+        345,
+        13,
+        51519
+      ],
+      "avg_logprob": -0.19646202748427627,
+      "compression_ratio": 1.7385892116182573,
+      "no_speech_prob": 0.06036529690027237,
+      "words": [
+        {
+          "start": 254.7,
+          "end": 254.84,
+          "word": " I",
+          "probability": 0.9963148236274719
+        },
+        {
+          "start": 254.84,
+          "end": 255.1,
+          "word": " am",
+          "probability": 0.9112277030944824
+        },
+        {
+          "start": 255.1,
+          "end": 255.4,
+          "word": " pleased",
+          "probability": 0.9944615364074707
+        },
+        {
+          "start": 255.4,
+          "end": 255.68,
+          "word": " with",
+          "probability": 0.9993392825126648
+        },
+        {
+          "start": 255.68,
+          "end": 256.1,
+          "word": " you.",
+          "probability": 0.9919052124023438
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 52,
+      "seek": 23334,
+      "start": 256.4,
+      "end": 258.2,
+      "text": " Although we know that this is God's voice,",
+      "tokens": [
+        51519,
+        4900,
+        356,
+        760,
+        326,
+        428,
+        318,
+        1793,
+        338,
+        3809,
+        11,
+        51619
+      ],
+      "avg_logprob": -0.19646202748427627,
+      "compression_ratio": 1.7385892116182573,
+      "no_speech_prob": 0.06036529690027237,
+      "words": [
+        {
+          "start": 256.4,
+          "end": 256.66,
+          "word": " Although",
+          "probability": 0.9890931844711304
+        },
+        {
+          "start": 256.66,
+          "end": 256.84,
+          "word": " we",
+          "probability": 0.9877431392669678
+        },
+        {
+          "start": 256.84,
+          "end": 257.04,
+          "word": " know",
+          "probability": 0.9978963136672974
+        },
+        {
+          "start": 257.04,
+          "end": 257.2,
+          "word": " that",
+          "probability": 0.9553484320640564
+        },
+        {
+          "start": 257.2,
+          "end": 257.38,
+          "word": " this",
+          "probability": 0.9858851432800293
+        },
+        {
+          "start": 257.38,
+          "end": 257.52,
+          "word": " is",
+          "probability": 0.9874134063720703
+        },
+        {
+          "start": 257.52,
+          "end": 257.84,
+          "word": " God's",
+          "probability": 0.9908824265003204
+        },
+        {
+          "start": 257.84,
+          "end": 258.2,
+          "word": " voice,",
+          "probability": 0.9904341697692871
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 53,
+      "seek": 23334,
+      "start": 258.48,
+      "end": 261.5,
+      "text": " the text does not say who's voice it is.",
+      "tokens": [
+        51619,
+        262,
+        2420,
+        857,
+        407,
+        910,
+        508,
+        338,
+        3809,
+        340,
+        318,
+        13,
+        51807
+      ],
+      "avg_logprob": -0.19646202748427627,
+      "compression_ratio": 1.7385892116182573,
+      "no_speech_prob": 0.06036529690027237,
+      "words": [
+        {
+          "start": 258.48,
+          "end": 258.76,
+          "word": " the",
+          "probability": 0.975009560585022
+        },
+        {
+          "start": 258.76,
+          "end": 259.12,
+          "word": " text",
+          "probability": 0.9913856983184814
+        },
+        {
+          "start": 259.12,
+          "end": 259.4,
+          "word": " does",
+          "probability": 0.9943293929100037
+        },
+        {
+          "start": 259.4,
+          "end": 259.66,
+          "word": " not",
+          "probability": 0.992805540561676
+        },
+        {
+          "start": 259.66,
+          "end": 259.96,
+          "word": " say",
+          "probability": 0.9927797913551331
+        },
+        {
+          "start": 259.96,
+          "end": 260.5,
+          "word": " who's",
+          "probability": 0.7027711570262909
+        },
+        {
+          "start": 260.5,
+          "end": 260.88,
+          "word": " voice",
+          "probability": 0.9935156106948853
+        },
+        {
+          "start": 260.88,
+          "end": 261.14,
+          "word": " it",
+          "probability": 0.9112295508384705
+        },
+        {
+          "start": 261.14,
+          "end": 261.5,
+          "word": " is.",
+          "probability": 0.9992425441741943
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 54,
+      "seek": 26150,
+      "start": 261.5,
+      "end": 265.92,
+      "text": " You may say something like, Jesus heard a sound like a voice.",
+      "tokens": [
+        50363,
+        921,
+        743,
+        910,
+        1223,
+        588,
+        11,
+        5803,
+        2982,
+        257,
+        2128,
+        588,
+        257,
+        3809,
+        13,
+        50613
+      ],
+      "avg_logprob": -0.17097460637067227,
+      "compression_ratio": 1.6652542372881356,
+      "no_speech_prob": 0.07022301107645035,
+      "words": [
+        {
+          "start": 261.5,
+          "end": 262.28,
+          "word": " You",
+          "probability": 0.43745267391204834
+        },
+        {
+          "start": 262.28,
+          "end": 262.56,
+          "word": " may",
+          "probability": 0.9956978559494019
+        },
+        {
+          "start": 262.56,
+          "end": 262.78,
+          "word": " say",
+          "probability": 0.997658371925354
+        },
+        {
+          "start": 262.78,
+          "end": 263.14,
+          "word": " something",
+          "probability": 0.9899770617485046
+        },
+        {
+          "start": 263.14,
+          "end": 263.94,
+          "word": " like,",
+          "probability": 0.9918889403343201
+        },
+        {
+          "start": 264.22,
+          "end": 264.22,
+          "word": " Jesus",
+          "probability": 0.2125358283519745
+        },
+        {
+          "start": 264.22,
+          "end": 264.5,
+          "word": " heard",
+          "probability": 0.9644218683242798
+        },
+        {
+          "start": 264.5,
+          "end": 264.8,
+          "word": " a",
+          "probability": 0.9848751425743103
+        },
+        {
+          "start": 264.8,
+          "end": 265.08,
+          "word": " sound",
+          "probability": 0.997860848903656
+        },
+        {
+          "start": 265.08,
+          "end": 265.36,
+          "word": " like",
+          "probability": 0.956333339214325
+        },
+        {
+          "start": 265.36,
+          "end": 265.56,
+          "word": " a",
+          "probability": 0.9926378726959229
+        },
+        {
+          "start": 265.56,
+          "end": 265.92,
+          "word": " voice.",
+          "probability": 0.9991105198860168
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 55,
+      "seek": 26150,
+      "start": 266.72,
+      "end": 269.42,
+      "text": " Jesus seems to be the only person to hear the voice.",
+      "tokens": [
+        50613,
+        5803,
+        2331,
+        284,
+        307,
+        262,
+        691,
+        1048,
+        284,
+        3285,
+        262,
+        3809,
+        13,
+        50763
+      ],
+      "avg_logprob": -0.17097460637067227,
+      "compression_ratio": 1.6652542372881356,
+      "no_speech_prob": 0.07022301107645035,
+      "words": [
+        {
+          "start": 266.72,
+          "end": 266.84,
+          "word": " Jesus",
+          "probability": 0.9670706987380981
+        },
+        {
+          "start": 266.84,
+          "end": 267.22,
+          "word": " seems",
+          "probability": 0.9909405708312988
+        },
+        {
+          "start": 267.22,
+          "end": 267.32,
+          "word": " to",
+          "probability": 0.9990046620368958
+        },
+        {
+          "start": 267.32,
+          "end": 267.5,
+          "word": " be",
+          "probability": 0.9986780285835266
+        },
+        {
+          "start": 267.5,
+          "end": 267.66,
+          "word": " the",
+          "probability": 0.9870947003364563
+        },
+        {
+          "start": 267.66,
+          "end": 267.94,
+          "word": " only",
+          "probability": 0.9983324408531189
+        },
+        {
+          "start": 267.94,
+          "end": 268.3,
+          "word": " person",
+          "probability": 0.998082160949707
+        },
+        {
+          "start": 268.3,
+          "end": 268.56,
+          "word": " to",
+          "probability": 0.999464213848114
+        },
+        {
+          "start": 268.56,
+          "end": 268.68,
+          "word": " hear",
+          "probability": 0.9995284080505371
+        },
+        {
+          "start": 268.68,
+          "end": 268.88,
+          "word": " the",
+          "probability": 0.9942521452903748
+        },
+        {
+          "start": 268.88,
+          "end": 269.42,
+          "word": " voice.",
+          "probability": 0.9975038170814514
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 56,
+      "seek": 26150,
+      "start": 270.56,
+      "end": 276.14,
+      "text": " Immediately after Jesus baptism, a Holy Spirit sends Jesus to the wilderness for 40 days.",
+      "tokens": [
+        50763,
+        34528,
+        706,
+        5803,
+        33422,
+        11,
+        257,
+        7439,
+        7710,
+        12800,
+        5803,
+        284,
+        262,
+        22775,
+        329,
+        2319,
+        1528,
+        13,
+        51113
+      ],
+      "avg_logprob": -0.17097460637067227,
+      "compression_ratio": 1.6652542372881356,
+      "no_speech_prob": 0.07022301107645035,
+      "words": [
+        {
+          "start": 270.56,
+          "end": 270.84,
+          "word": " Immediately",
+          "probability": 0.9060503244400024
+        },
+        {
+          "start": 270.84,
+          "end": 271.26,
+          "word": " after",
+          "probability": 0.9921935796737671
+        },
+        {
+          "start": 271.26,
+          "end": 271.62,
+          "word": " Jesus",
+          "probability": 0.9971689581871033
+        },
+        {
+          "start": 271.62,
+          "end": 272.08,
+          "word": " baptism,",
+          "probability": 0.18975114822387695
+        },
+        {
+          "start": 272.64,
+          "end": 272.72,
+          "word": " a",
+          "probability": 0.5560638904571533
+        },
+        {
+          "start": 272.72,
+          "end": 273.0,
+          "word": " Holy",
+          "probability": 0.8187613487243652
+        },
+        {
+          "start": 273.0,
+          "end": 273.44,
+          "word": " Spirit",
+          "probability": 0.9711220860481262
+        },
+        {
+          "start": 273.44,
+          "end": 273.76,
+          "word": " sends",
+          "probability": 0.9959249496459961
+        },
+        {
+          "start": 273.76,
+          "end": 274.16,
+          "word": " Jesus",
+          "probability": 0.9962665438652039
+        },
+        {
+          "start": 274.16,
+          "end": 274.34,
+          "word": " to",
+          "probability": 0.9966283440589905
+        },
+        {
+          "start": 274.34,
+          "end": 274.48,
+          "word": " the",
+          "probability": 0.991554319858551
+        },
+        {
+          "start": 274.48,
+          "end": 274.78,
+          "word": " wilderness",
+          "probability": 0.9733067750930786
+        },
+        {
+          "start": 274.78,
+          "end": 275.18,
+          "word": " for",
+          "probability": 0.9940178394317627
+        },
+        {
+          "start": 275.18,
+          "end": 275.5,
+          "word": " 40",
+          "probability": 0.6950863003730774
+        },
+        {
+          "start": 275.5,
+          "end": 276.14,
+          "word": " days.",
+          "probability": 0.99882572889328
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 57,
+      "seek": 26150,
+      "start": 276.76,
+      "end": 281.54,
+      "text": " Although the Holy Spirit sends Jesus, this does not mean he forces Jesus to go.",
+      "tokens": [
+        51113,
+        4900,
+        262,
+        7439,
+        7710,
+        12800,
+        5803,
+        11,
+        428,
+        857,
+        407,
+        1612,
+        339,
+        3386,
+        5803,
+        284,
+        467,
+        13,
+        51363
+      ],
+      "avg_logprob": -0.17097460637067227,
+      "compression_ratio": 1.6652542372881356,
+      "no_speech_prob": 0.07022301107645035,
+      "words": [
+        {
+          "start": 276.76,
+          "end": 276.88,
+          "word": " Although",
+          "probability": 0.9583857655525208
+        },
+        {
+          "start": 276.88,
+          "end": 277.1,
+          "word": " the",
+          "probability": 0.9867335557937622
+        },
+        {
+          "start": 277.1,
+          "end": 277.34,
+          "word": " Holy",
+          "probability": 0.9963362216949463
+        },
+        {
+          "start": 277.34,
+          "end": 277.66,
+          "word": " Spirit",
+          "probability": 0.9978511333465576
+        },
+        {
+          "start": 277.66,
+          "end": 277.98,
+          "word": " sends",
+          "probability": 0.99594646692276
+        },
+        {
+          "start": 277.98,
+          "end": 278.5,
+          "word": " Jesus,",
+          "probability": 0.9971828460693359
+        },
+        {
+          "start": 278.92,
+          "end": 279.16,
+          "word": " this",
+          "probability": 0.9879814982414246
+        },
+        {
+          "start": 279.16,
+          "end": 279.36,
+          "word": " does",
+          "probability": 0.9972176551818848
+        },
+        {
+          "start": 279.36,
+          "end": 279.68,
+          "word": " not",
+          "probability": 0.9734766483306885
+        },
+        {
+          "start": 279.68,
+          "end": 280.04,
+          "word": " mean",
+          "probability": 0.9990183115005493
+        },
+        {
+          "start": 280.04,
+          "end": 280.28,
+          "word": " he",
+          "probability": 0.8641365170478821
+        },
+        {
+          "start": 280.28,
+          "end": 280.54,
+          "word": " forces",
+          "probability": 0.7960872054100037
+        },
+        {
+          "start": 280.54,
+          "end": 281.0,
+          "word": " Jesus",
+          "probability": 0.9975662231445312
+        },
+        {
+          "start": 281.0,
+          "end": 281.26,
+          "word": " to",
+          "probability": 0.9988462924957275
+        },
+        {
+          "start": 281.26,
+          "end": 281.54,
+          "word": " go.",
+          "probability": 0.9959434866905212
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 58,
+      "seek": 26150,
+      "start": 282.22,
+      "end": 287.98,
+      "text": " Jesus would have known that this was a special task God has for Jesus and an important step in his ministry.",
+      "tokens": [
+        51363,
+        5803,
+        561,
+        423,
+        1900,
+        326,
+        428,
+        373,
+        257,
+        2041,
+        4876,
+        1793,
+        468,
+        329,
+        5803,
+        290,
+        281,
+        1593,
+        2239,
+        287,
+        465,
+        11957,
+        13,
+        51713
+      ],
+      "avg_logprob": -0.17097460637067227,
+      "compression_ratio": 1.6652542372881356,
+      "no_speech_prob": 0.07022301107645035,
+      "words": [
+        {
+          "start": 282.22,
+          "end": 282.5,
+          "word": " Jesus",
+          "probability": 0.9916172623634338
+        },
+        {
+          "start": 282.5,
+          "end": 282.78,
+          "word": " would",
+          "probability": 0.9952568411827087
+        },
+        {
+          "start": 282.78,
+          "end": 283.0,
+          "word": " have",
+          "probability": 0.9951493144035339
+        },
+        {
+          "start": 283.0,
+          "end": 283.42,
+          "word": " known",
+          "probability": 0.9976740479469299
+        },
+        {
+          "start": 283.42,
+          "end": 283.68,
+          "word": " that",
+          "probability": 0.9865432977676392
+        },
+        {
+          "start": 283.68,
+          "end": 283.86,
+          "word": " this",
+          "probability": 0.9924138188362122
+        },
+        {
+          "start": 283.86,
+          "end": 284.06,
+          "word": " was",
+          "probability": 0.9968878626823425
+        },
+        {
+          "start": 284.06,
+          "end": 284.44,
+          "word": " a",
+          "probability": 0.9950816631317139
+        },
+        {
+          "start": 284.44,
+          "end": 284.52,
+          "word": " special",
+          "probability": 0.9942824840545654
+        },
+        {
+          "start": 284.52,
+          "end": 284.88,
+          "word": " task",
+          "probability": 0.9747306704521179
+        },
+        {
+          "start": 284.88,
+          "end": 285.16,
+          "word": " God",
+          "probability": 0.9661279916763306
+        },
+        {
+          "start": 285.16,
+          "end": 285.4,
+          "word": " has",
+          "probability": 0.9686394929885864
+        },
+        {
+          "start": 285.4,
+          "end": 285.62,
+          "word": " for",
+          "probability": 0.9933526515960693
+        },
+        {
+          "start": 285.62,
+          "end": 285.96,
+          "word": " Jesus",
+          "probability": 0.9983149766921997
+        },
+        {
+          "start": 285.96,
+          "end": 286.18,
+          "word": " and",
+          "probability": 0.9295883178710938
+        },
+        {
+          "start": 286.18,
+          "end": 286.38,
+          "word": " an",
+          "probability": 0.9936490654945374
+        },
+        {
+          "start": 286.38,
+          "end": 286.72,
+          "word": " important",
+          "probability": 0.9930196404457092
+        },
+        {
+          "start": 286.72,
+          "end": 287.1,
+          "word": " step",
+          "probability": 0.9985803365707397
+        },
+        {
+          "start": 287.1,
+          "end": 287.22,
+          "word": " in",
+          "probability": 0.998903751373291
+        },
+        {
+          "start": 287.22,
+          "end": 287.6,
+          "word": " his",
+          "probability": 0.5881312489509583
+        },
+        {
+          "start": 287.6,
+          "end": 287.98,
+          "word": " ministry.",
+          "probability": 0.998170018196106
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 59,
+      "seek": 28798,
+      "start": 287.98,
+      "end": 293.18,
+      "text": " The wilderness is a place like a desert where wild animals live and know people.",
+      "tokens": [
+        50363,
+        383,
+        22775,
+        318,
+        257,
+        1295,
+        588,
+        257,
+        10326,
+        810,
+        4295,
+        4695,
+        2107,
+        290,
+        760,
+        661,
+        13,
+        50663
+      ],
+      "avg_logprob": -0.20057833939790726,
+      "compression_ratio": 1.6359832635983265,
+      "no_speech_prob": 0.10444331169128418,
+      "words": [
+        {
+          "start": 287.98,
+          "end": 289.08,
+          "word": " The",
+          "probability": 0.5714151859283447
+        },
+        {
+          "start": 289.08,
+          "end": 289.46,
+          "word": " wilderness",
+          "probability": 0.8407031297683716
+        },
+        {
+          "start": 289.46,
+          "end": 289.74,
+          "word": " is",
+          "probability": 0.8022783398628235
+        },
+        {
+          "start": 289.74,
+          "end": 289.84,
+          "word": " a",
+          "probability": 0.9888486862182617
+        },
+        {
+          "start": 289.84,
+          "end": 290.08,
+          "word": " place",
+          "probability": 0.9992504715919495
+        },
+        {
+          "start": 290.08,
+          "end": 290.34,
+          "word": " like",
+          "probability": 0.9949959516525269
+        },
+        {
+          "start": 290.34,
+          "end": 290.52,
+          "word": " a",
+          "probability": 0.8639984726905823
+        },
+        {
+          "start": 290.52,
+          "end": 290.68,
+          "word": " desert",
+          "probability": 0.9911077618598938
+        },
+        {
+          "start": 290.68,
+          "end": 291.04,
+          "word": " where",
+          "probability": 0.9690839648246765
+        },
+        {
+          "start": 291.04,
+          "end": 291.34,
+          "word": " wild",
+          "probability": 0.9974063038825989
+        },
+        {
+          "start": 291.34,
+          "end": 291.64,
+          "word": " animals",
+          "probability": 0.9992932081222534
+        },
+        {
+          "start": 291.64,
+          "end": 292.0,
+          "word": " live",
+          "probability": 0.9978674650192261
+        },
+        {
+          "start": 292.0,
+          "end": 292.2,
+          "word": " and",
+          "probability": 0.9076957106590271
+        },
+        {
+          "start": 292.2,
+          "end": 292.46,
+          "word": " know",
+          "probability": 0.6719681620597839
+        },
+        {
+          "start": 292.46,
+          "end": 293.18,
+          "word": " people.",
+          "probability": 0.9978346228599548
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 60,
+      "seek": 28798,
+      "start": 293.98,
+      "end": 295.68,
+      "text": " Very little grows in the wilderness.",
+      "tokens": [
+        50663,
+        9576,
+        1310,
+        13676,
+        287,
+        262,
+        22775,
+        13,
+        50781
+      ],
+      "avg_logprob": -0.20057833939790726,
+      "compression_ratio": 1.6359832635983265,
+      "no_speech_prob": 0.10444331169128418,
+      "words": [
+        {
+          "start": 293.98,
+          "end": 294.1,
+          "word": " Very",
+          "probability": 0.9711767435073853
+        },
+        {
+          "start": 294.1,
+          "end": 294.46,
+          "word": " little",
+          "probability": 0.9814148545265198
+        },
+        {
+          "start": 294.46,
+          "end": 294.82,
+          "word": " grows",
+          "probability": 0.946214497089386
+        },
+        {
+          "start": 294.82,
+          "end": 295.04,
+          "word": " in",
+          "probability": 0.9969375133514404
+        },
+        {
+          "start": 295.04,
+          "end": 295.68,
+          "word": " the",
+          "probability": 0.9957122802734375
+        },
+        {
+          "start": 295.68,
+          "end": 295.68,
+          "word": " wilderness.",
+          "probability": 0.9976045489311218
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 61,
+      "seek": 28798,
+      "start": 296.3,
+      "end": 300.5,
+      "text": " In Jesus' time, in the wilderness, Satan tests or tempts Jesus.",
+      "tokens": [
+        50781,
+        554,
+        5803,
+        6,
+        640,
+        11,
+        287,
+        262,
+        22775,
+        11,
+        14918,
+        5254,
+        393,
+        12475,
+        82,
+        5803,
+        13,
+        51059
+      ],
+      "avg_logprob": -0.20057833939790726,
+      "compression_ratio": 1.6359832635983265,
+      "no_speech_prob": 0.10444331169128418,
+      "words": [
+        {
+          "start": 296.3,
+          "end": 296.52,
+          "word": " In",
+          "probability": 0.9896848201751709
+        },
+        {
+          "start": 296.52,
+          "end": 296.84,
+          "word": " Jesus'",
+          "probability": 0.993750274181366
+        },
+        {
+          "start": 297.0,
+          "end": 297.4,
+          "word": " time,",
+          "probability": 0.9971877932548523
+        },
+        {
+          "start": 297.58,
+          "end": 297.7,
+          "word": " in",
+          "probability": 0.9819841980934143
+        },
+        {
+          "start": 297.7,
+          "end": 297.88,
+          "word": " the",
+          "probability": 0.9971262812614441
+        },
+        {
+          "start": 297.88,
+          "end": 298.3,
+          "word": " wilderness,",
+          "probability": 0.9975054860115051
+        },
+        {
+          "start": 298.4,
+          "end": 298.78,
+          "word": " Satan",
+          "probability": 0.8401037454605103
+        },
+        {
+          "start": 298.78,
+          "end": 299.22,
+          "word": " tests",
+          "probability": 0.9471029043197632
+        },
+        {
+          "start": 299.22,
+          "end": 299.6,
+          "word": " or",
+          "probability": 0.9793283343315125
+        },
+        {
+          "start": 299.6,
+          "end": 300.18,
+          "word": " tempts",
+          "probability": 0.9477022886276245
+        },
+        {
+          "start": 300.18,
+          "end": 300.5,
+          "word": " Jesus.",
+          "probability": 0.9976175427436829
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 62,
+      "seek": 28798,
+      "start": 301.3,
+      "end": 306.24,
+      "text": " Temptation is a test or trial designed to give people the opportunity to do evil and sin",
+      "tokens": [
+        51059,
+        309,
+        1791,
+        341,
+        318,
+        257,
+        1332,
+        393,
+        4473,
+        3562,
+        284,
+        1577,
+        661,
+        262,
+        3663,
+        284,
+        466,
+        6181,
+        290,
+        7813,
+        51271
+      ],
+      "avg_logprob": -0.20057833939790726,
+      "compression_ratio": 1.6359832635983265,
+      "no_speech_prob": 0.10444331169128418,
+      "words": [
+        {
+          "start": 301.3,
+          "end": 301.88,
+          "word": " Temptation",
+          "probability": 0.8804936210314432
+        },
+        {
+          "start": 301.88,
+          "end": 302.18,
+          "word": " is",
+          "probability": 0.9972979426383972
+        },
+        {
+          "start": 302.18,
+          "end": 302.32,
+          "word": " a",
+          "probability": 0.9969154596328735
+        },
+        {
+          "start": 302.32,
+          "end": 302.56,
+          "word": " test",
+          "probability": 0.9785094857215881
+        },
+        {
+          "start": 302.56,
+          "end": 302.88,
+          "word": " or",
+          "probability": 0.9902016520500183
+        },
+        {
+          "start": 302.88,
+          "end": 303.16,
+          "word": " trial",
+          "probability": 0.9927231669425964
+        },
+        {
+          "start": 303.16,
+          "end": 303.54,
+          "word": " designed",
+          "probability": 0.9804162383079529
+        },
+        {
+          "start": 303.54,
+          "end": 303.68,
+          "word": " to",
+          "probability": 0.9990664124488831
+        },
+        {
+          "start": 303.68,
+          "end": 303.88,
+          "word": " give",
+          "probability": 0.9991289973258972
+        },
+        {
+          "start": 303.88,
+          "end": 304.16,
+          "word": " people",
+          "probability": 0.9963163137435913
+        },
+        {
+          "start": 304.16,
+          "end": 304.36,
+          "word": " the",
+          "probability": 0.9978870749473572
+        },
+        {
+          "start": 304.36,
+          "end": 304.82,
+          "word": " opportunity",
+          "probability": 0.9972219467163086
+        },
+        {
+          "start": 304.82,
+          "end": 305.16,
+          "word": " to",
+          "probability": 0.998630940914154
+        },
+        {
+          "start": 305.16,
+          "end": 305.52,
+          "word": " do",
+          "probability": 0.9964457154273987
+        },
+        {
+          "start": 305.52,
+          "end": 305.8,
+          "word": " evil",
+          "probability": 0.9981058835983276
+        },
+        {
+          "start": 305.8,
+          "end": 306.08,
+          "word": " and",
+          "probability": 0.9959806203842163
+        },
+        {
+          "start": 306.08,
+          "end": 306.24,
+          "word": " sin",
+          "probability": 0.9955671429634094
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 63,
+      "seek": 28798,
+      "start": 306.24,
+      "end": 307.14,
+      "text": " against God.",
+      "tokens": [
+        51271,
+        1028,
+        1793,
+        13,
+        51361
+      ],
+      "avg_logprob": -0.20057833939790726,
+      "compression_ratio": 1.6359832635983265,
+      "no_speech_prob": 0.10444331169128418,
+      "words": [
+        {
+          "start": 306.24,
+          "end": 306.64,
+          "word": " against",
+          "probability": 0.9982835054397583
+        },
+        {
+          "start": 306.64,
+          "end": 307.14,
+          "word": " God.",
+          "probability": 0.9948858618736267
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 64,
+      "seek": 28798,
+      "start": 307.84,
+      "end": 310.7,
+      "text": " Mark doesn't tell us specifically how Jesus is tested.",
+      "tokens": [
+        51361,
+        2940,
+        1595,
+        470,
+        1560,
+        514,
+        5734,
+        703,
+        5803,
+        318,
+        6789,
+        13,
+        51531
+      ],
+      "avg_logprob": -0.20057833939790726,
+      "compression_ratio": 1.6359832635983265,
+      "no_speech_prob": 0.10444331169128418,
+      "words": [
+        {
+          "start": 307.84,
+          "end": 308.06,
+          "word": " Mark",
+          "probability": 0.9870457649230957
+        },
+        {
+          "start": 308.06,
+          "end": 308.38,
+          "word": " doesn't",
+          "probability": 0.9942674934864044
+        },
+        {
+          "start": 308.38,
+          "end": 308.56,
+          "word": " tell",
+          "probability": 0.9973280429840088
+        },
+        {
+          "start": 308.56,
+          "end": 308.84,
+          "word": " us",
+          "probability": 0.9915527701377869
+        },
+        {
+          "start": 308.84,
+          "end": 309.34,
+          "word": " specifically",
+          "probability": 0.978861391544342
+        },
+        {
+          "start": 309.34,
+          "end": 309.72,
+          "word": " how",
+          "probability": 0.9909217953681946
+        },
+        {
+          "start": 309.72,
+          "end": 309.98,
+          "word": " Jesus",
+          "probability": 0.997887909412384
+        },
+        {
+          "start": 309.98,
+          "end": 310.4,
+          "word": " is",
+          "probability": 0.9540901780128479
+        },
+        {
+          "start": 310.4,
+          "end": 310.7,
+          "word": " tested.",
+          "probability": 0.9927714467048645
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 65,
+      "seek": 28798,
+      "start": 311.34,
+      "end": 314.78,
+      "text": " We are told that angels are with Jesus, helping him.",
+      "tokens": [
+        51531,
+        775,
+        389,
+        1297,
+        326,
+        21981,
+        389,
+        351,
+        5803,
+        11,
+        5742,
+        683,
+        13,
+        51707
+      ],
+      "avg_logprob": -0.20057833939790726,
+      "compression_ratio": 1.6359832635983265,
+      "no_speech_prob": 0.10444331169128418,
+      "words": [
+        {
+          "start": 311.34,
+          "end": 311.44,
+          "word": " We",
+          "probability": 0.9884987473487854
+        },
+        {
+          "start": 311.44,
+          "end": 311.7,
+          "word": " are",
+          "probability": 0.8964719176292419
+        },
+        {
+          "start": 311.7,
+          "end": 311.92,
+          "word": " told",
+          "probability": 0.9996370077133179
+        },
+        {
+          "start": 311.92,
+          "end": 312.16,
+          "word": " that",
+          "probability": 0.964611828327179
+        },
+        {
+          "start": 312.16,
+          "end": 312.44,
+          "word": " angels",
+          "probability": 0.9857882857322693
+        },
+        {
+          "start": 312.44,
+          "end": 312.82,
+          "word": " are",
+          "probability": 0.998680055141449
+        },
+        {
+          "start": 312.82,
+          "end": 313.1,
+          "word": " with",
+          "probability": 0.9796088337898254
+        },
+        {
+          "start": 313.1,
+          "end": 313.6,
+          "word": " Jesus,",
+          "probability": 0.9989093542098999
+        },
+        {
+          "start": 314.0,
+          "end": 314.14,
+          "word": " helping",
+          "probability": 0.9968699812889099
+        },
+        {
+          "start": 314.14,
+          "end": 314.78,
+          "word": " him.",
+          "probability": 0.9039691090583801
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 66,
+      "seek": 31478,
+      "start": 314.78,
+      "end": 319.44,
+      "text": " Again, Mark does not tell us in what ways the angels are helping.",
+      "tokens": [
+        50363,
+        6521,
+        11,
+        2940,
+        857,
+        407,
+        1560,
+        514,
+        287,
+        644,
+        2842,
+        262,
+        21981,
+        389,
+        5742,
+        13,
+        50613
+      ],
+      "avg_logprob": -0.19549652819450086,
+      "compression_ratio": 1.36986301369863,
+      "no_speech_prob": 0.00573298055678606,
+      "words": [
+        {
+          "start": 314.78,
+          "end": 315.6,
+          "word": " Again,",
+          "probability": 0.7683417201042175
+        },
+        {
+          "start": 315.98,
+          "end": 316.0,
+          "word": " Mark",
+          "probability": 0.7239035964012146
+        },
+        {
+          "start": 316.0,
+          "end": 316.28,
+          "word": " does",
+          "probability": 0.9532617330551147
+        },
+        {
+          "start": 316.28,
+          "end": 316.58,
+          "word": " not",
+          "probability": 0.9409352540969849
+        },
+        {
+          "start": 316.58,
+          "end": 316.8,
+          "word": " tell",
+          "probability": 0.997958779335022
+        },
+        {
+          "start": 316.8,
+          "end": 317.44,
+          "word": " us",
+          "probability": 0.9979841709136963
+        },
+        {
+          "start": 317.44,
+          "end": 317.68,
+          "word": " in",
+          "probability": 0.8469783067703247
+        },
+        {
+          "start": 317.68,
+          "end": 317.94,
+          "word": " what",
+          "probability": 0.9757954478263855
+        },
+        {
+          "start": 317.94,
+          "end": 318.24,
+          "word": " ways",
+          "probability": 0.9851480722427368
+        },
+        {
+          "start": 318.24,
+          "end": 318.48,
+          "word": " the",
+          "probability": 0.99349445104599
+        },
+        {
+          "start": 318.48,
+          "end": 318.68,
+          "word": " angels",
+          "probability": 0.8795610666275024
+        },
+        {
+          "start": 318.68,
+          "end": 318.96,
+          "word": " are",
+          "probability": 0.996559202671051
+        },
+        {
+          "start": 318.96,
+          "end": 319.44,
+          "word": " helping.",
+          "probability": 0.9982274174690247
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 67,
+      "seek": 31478,
+      "start": 320.32,
+      "end": 326.9,
+      "text": " Now, the group should storyboard, draw or use objects to visualize the passage and the action in it.",
+      "tokens": [
+        50613,
+        2735,
+        11,
+        262,
+        1448,
+        815,
+        1621,
+        3526,
+        11,
+        3197,
+        393,
+        779,
+        5563,
+        284,
+        38350,
+        262,
+        10066,
+        290,
+        262,
+        2223,
+        287,
+        340,
+        13,
+        50963
+      ],
+      "avg_logprob": -0.19549652819450086,
+      "compression_ratio": 1.36986301369863,
+      "no_speech_prob": 0.00573298055678606,
+      "words": [
+        {
+          "start": 320.32,
+          "end": 320.68,
+          "word": " Now,",
+          "probability": 0.98540198802948
+        },
+        {
+          "start": 320.84,
+          "end": 320.96,
+          "word": " the",
+          "probability": 0.9782928824424744
+        },
+        {
+          "start": 320.96,
+          "end": 321.18,
+          "word": " group",
+          "probability": 0.916980504989624
+        },
+        {
+          "start": 321.18,
+          "end": 321.5,
+          "word": " should",
+          "probability": 0.9915743470191956
+        },
+        {
+          "start": 321.5,
+          "end": 322.42,
+          "word": " storyboard,",
+          "probability": 0.7715223431587219
+        },
+        {
+          "start": 322.5,
+          "end": 322.86,
+          "word": " draw",
+          "probability": 0.9578977823257446
+        },
+        {
+          "start": 322.86,
+          "end": 323.16,
+          "word": " or",
+          "probability": 0.6614107489585876
+        },
+        {
+          "start": 323.16,
+          "end": 323.42,
+          "word": " use",
+          "probability": 0.9939020872116089
+        },
+        {
+          "start": 323.42,
+          "end": 323.74,
+          "word": " objects",
+          "probability": 0.9903581738471985
+        },
+        {
+          "start": 323.74,
+          "end": 324.24,
+          "word": " to",
+          "probability": 0.9952542781829834
+        },
+        {
+          "start": 324.24,
+          "end": 324.42,
+          "word": " visualize",
+          "probability": 0.8297997713088989
+        },
+        {
+          "start": 324.42,
+          "end": 324.86,
+          "word": " the",
+          "probability": 0.9988981485366821
+        },
+        {
+          "start": 324.86,
+          "end": 325.18,
+          "word": " passage",
+          "probability": 0.9918633699417114
+        },
+        {
+          "start": 325.18,
+          "end": 325.52,
+          "word": " and",
+          "probability": 0.9728332757949829
+        },
+        {
+          "start": 325.52,
+          "end": 325.68,
+          "word": " the",
+          "probability": 0.9888195395469666
+        },
+        {
+          "start": 325.68,
+          "end": 325.98,
+          "word": " action",
+          "probability": 0.9981435537338257
+        },
+        {
+          "start": 325.98,
+          "end": 326.26,
+          "word": " in",
+          "probability": 0.9935287833213806
+        },
+        {
+          "start": 326.26,
+          "end": 326.9,
+          "word": " it.",
+          "probability": 0.9968175888061523
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 68,
+      "seek": 31478,
+      "start": 327.28,
+      "end": 328.72,
+      "text": " This is the end of the recording.",
+      "tokens": [
+        50963,
+        770,
+        318,
+        262,
+        886,
+        286,
+        262,
+        8296,
+        13,
+        51113
+      ],
+      "avg_logprob": -0.19549652819450086,
+      "compression_ratio": 1.36986301369863,
+      "no_speech_prob": 0.00573298055678606,
+      "words": [
+        {
+          "start": 327.28,
+          "end": 327.5,
+          "word": " This",
+          "probability": 0.9936100840568542
+        },
+        {
+          "start": 327.5,
+          "end": 327.7,
+          "word": " is",
+          "probability": 0.9974787831306458
+        },
+        {
+          "start": 327.7,
+          "end": 327.82,
+          "word": " the",
+          "probability": 0.9948775172233582
+        },
+        {
+          "start": 327.82,
+          "end": 328.08,
+          "word": " end",
+          "probability": 0.9949179887771606
+        },
+        {
+          "start": 328.08,
+          "end": 328.26,
+          "word": " of",
+          "probability": 0.9964323043823242
+        },
+        {
+          "start": 328.26,
+          "end": 328.46,
+          "word": " the",
+          "probability": 0.9962336421012878
+        },
+        {
+          "start": 328.46,
+          "end": 328.72,
+          "word": " recording.",
+          "probability": 0.9990967512130737
+        }
+      ],
+      "temperature": 0.0
+    }
+  ],
+  "text": " 3. Defining the Scenes Mark 1 1 3 13 Listen to an audio version of Mark 1 1 3 13 in the easiest to understand translation. In this step the group will define the scenes characters and settings of this passage. Then the group will visualize this passage. This passage has four scenes. In the first scene, Mark begins by telling us that this is the start of Jesus' ministry. John is in the wilderness at the Jordan River fulfilling scripture from the Old Testament where Isaiah told us that someone would come to prepare the way for the Lord's coming, shouting and making a pathway for God to come to us. In the second scene, John is baptizing people in the Jordan River. John is telling people that someone is coming who is more powerful than he is, who will baptize people not just in water, but with the Holy Spirit. In the third scene, Jesus comes from Nazareth to Galilee where John baptizes Jesus. Immediately after Jesus comes out of the water, the heavens are torn open and the Holy Spirit comes upon Jesus. Pause the audio here and show your group a map that shows the region of Galilee that includes Nazareth and the Jordan River area. In the fourth scene, immediately after Jesus' baptism, the Holy Spirit sends Jesus out into the wilderness for forty days, Satan tests Jesus. Angels are with Jesus helping him. The characters in this passage are John the Baptist, crowds of people, Jesus, the Holy Spirit, God, Satan, angels. As a group, pay attention to these parts of the passages setting. The story takes place in the wilderness near the Jordan River and later in another area of wilderness where Jesus is tested by Satan. The setting of the wilderness is important as it shows us that Isaiah's prophecy that there would be a voice shouting in the wilderness has come true. Pause the audio here and show your group a picture of the Jordan River and a picture the wilderness. In the second scene, the people have come from all over Judea and Jerusalem. John is baptising them. They're confessing their sins, turning away from their old ways of living and starting a new way, obeying God. John is telling the people that soon someone will come who will be more powerful than he is. John talks about untying the sandals of someone more important than he is. Servants would do that for their master. John said he is not even important enough to untie the sandals of the man who is coming. This important man will baptise the people with the Holy Spirit. The Spirit of God will be put into people's hearts and minds. Pause the audio here and show your group a map of Judea and Jerusalem. In the third scene we see John baptising Jesus. It's important to remember that although Jesus is being baptized, he does not need forgiveness as he has never done anything wrong. His baptism is the start of his new life of public ministry or teaching and shows us that God is appointing him for this task. Mark likes to use short sentences and fast action to tell his stories and we see this here. First, Jesus comes out of the water. The original language is unclear if Jesus comes out from under the surface of the water, or if he comes completely out of the river. Most likely, Jesus comes from under the surface of the water, but you should leave this unclear in your translation if possible. Immediately after Jesus comes out of the water, the heavens are torn open. This does not mean the heavens or sky were destroyed, but Instead means they were opening up. From the opening came the Holy Spirit like a dove. This could mean that the Holy Spirit came in the form of a dove, or the Holy Spirit came down like a dove comes down. It is best to keep the translation unclear also. Jesus heard a voice that said, You are my son. I love you. I am pleased with you. Although we know that this is God's voice, the text does not say who's voice it is. You may say something like, Jesus heard a sound like a voice. Jesus seems to be the only person to hear the voice. Immediately after Jesus baptism, a Holy Spirit sends Jesus to the wilderness for 40 days. Although the Holy Spirit sends Jesus, this does not mean he forces Jesus to go. Jesus would have known that this was a special task God has for Jesus and an important step in his ministry. The wilderness is a place like a desert where wild animals live and know people. Very little grows in the wilderness. In Jesus' time, in the wilderness, Satan tests or tempts Jesus. Temptation is a test or trial designed to give people the opportunity to do evil and sin against God. Mark doesn't tell us specifically how Jesus is tested. We are told that angels are with Jesus, helping him. Again, Mark does not tell us in what ways the angels are helping. Now, the group should storyboard, draw or use objects to visualize the passage and the action in it. This is the end of the recording."
+}
