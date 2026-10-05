@@ -13,3 +13,11 @@ it('shows interrupted state and keeps removal separate from progress reset',asyn
 it('retains an actionable error after a failed download',async()=>{vi.spyOn(libraryAdapter,'download').mockRejectedValue(new Error('Storage is full. Choose a smaller download.'));render(LibraryPanel,{view:'downloads'});await settle();await fireEvent.click(screen.getByRole('button',{name:'Download selection'}));await settle();expect(screen.getByRole('alert').textContent).toContain('Storage is full');expect(screen.getByRole('button',{name:'Download selection'})).toBeTruthy();});
 
 it('defaults to text only even when all resources are available',async()=>{render(LibraryPanel,{view:'downloads'});await settle();expect(screen.getByRole('radio',{name:/Text only/}).checked).toBe(true);expect(screen.getByRole('radio',{name:/Text and all available resources/}).checked).toBe(false);});
+it('shows actual mixed offline sizes without claiming unavailable presets or downloading on selection',async()=>{
+ libraryAdapter.downloadStatus.mockResolvedValue({...available,manifest:{revision:'fixture',files:[{group:'audio',deliveryURL:'https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/x'},{group:'image',deliveryURL:'https://transcode.klappy.dev/image/q=medium,f=webp/x'},{group:'video',deliveryURL:'https://transcode.klappy.dev/video/preset=fia,q=medium,f=mp4/x'}]}});
+ const download=vi.spyOn(libraryAdapter,'download');render(LibraryPanel,{view:'downloads'});await settle();expect(screen.queryByText('Download size')).toBeNull();
+ await fireEvent.click(screen.getByRole('radio',{name:/Text and all available resources/}));expect(screen.getByText(/Custom sizes ·/)).toBeTruthy();
+ expect(screen.getByRole('combobox',{name:'Video download size'}).value).toBe('large');expect(screen.getByRole('combobox',{name:'Audio download size'}).value).toBe('medium');
+ expect(screen.getByRole('option',{name:'Small · 480p — not available yet'}).disabled).toBe(true);expect(download).not.toHaveBeenCalled();
+ await fireEvent.click(screen.getByRole('radio',{name:/Text and audio/}));expect(screen.getByRole('radio',{name:'Medium',exact:true}).checked).toBe(true);expect(screen.getByRole('combobox',{name:'Video download size'}).disabled).toBe(true);expect(download).not.toHaveBeenCalled();
+});

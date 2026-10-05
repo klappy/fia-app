@@ -3,8 +3,10 @@
  import {Check,ChevronRight,Download,RotateCcw,Trash2,Pause} from 'lucide-svelte';
  import {libraryAdapter,bundledPack,formatBytes} from '../lib/library.js';
  import {progressSummary} from '../lib/session-store.js';
+ import {preparedDownloadSizes} from '../lib/media-options.js';
  let {view,selectedPack=bundledPack,language='eng',onlanguage,onselect,onreset,onview,completed=0,total=0,onstatus=()=>{}}=$props();
  let languages=$state([]),passages=$state([]),loading=$state(true),error=$state(''),download=$state(null),selection=$state('core'),busy=$state(false),transfer=$state(null),confirmRemove=$state(false),confirmRestart=$state(null),downloadFinished=$state(false);
+ let sizes=$derived(preparedDownloadSizes(download?.manifest,selection));
  let alive=true;
  async function refresh(){
   loading=true;error='';
@@ -41,15 +43,18 @@
   {:else}{#if !loading}<p class="library-message">No passages in this language are included yet. Your current passage stays open.</p><button class="secondary full" onclick={()=>{chooseLanguage('eng');}}>Show English passages</button>{/if}{/each}
   <p class="fine-print">Selecting a language shows its existing source text; it does not translate a passage.</p>
  {:else if view==='downloads'}
-  <article class="pack-card"><span class="library-eyebrow">{selectedPack.language==='spa'?'Español':'English'} · {selectedPack.title}</span><h3>Keep this passage on your device</h3>
+  <article class="pack-card"><span class="library-eyebrow">{selectedPack.language==='spa'?'Español':'English'} · {selectedPack.title}</span><h3>Save this passage</h3>
    {#if download?.available}
-    <p class="library-message" role="status">{download.saved?`Saved · ${labels[download.active.selection]} · ${formatBytes(download.active.bytes)}`:download.active?'Download incomplete or cleared by the device. Download again to repair it.':'Not saved for offline use'}</p>
+    <p class="library-message" role="status">{download.saved?`Saved · ${labels[download.active.selection]} · ${formatBytes(download.active.bytes)}`:download.active?'Download incomplete or cleared by the device. Download again to repair it.':'Not saved on this device'}</p>
     {#if downloadFinished}<p>The download is verified. Reload to use the saved version. Your place is kept.</p><button class="secondary full" onclick={()=>window.location.reload()}>Reload saved version</button>{/if}
     {#if download.updateAvailable}<p>A newer download is available. Your saved copy stays usable until the update finishes.</p>{/if}
     {#if download.pending&&!busy}<p>{download.pending.running?'A download is running in another window.':'Interrupted download'} · {formatBytes(download.pending.received)} of {formatBytes(download.pending.bytes)} verified. {download.pending.running?'Refresh to check its progress.':'Resume checks and reuses saved files.'}</p>{/if}
     <fieldset disabled={busy||download.pending?.running}><legend>Include in download</legend>{#each download.choices as choice}<label class="download-choice"><input type="radio" name="download-selection" value={choice.id} bind:group={selection}/><span><strong>{labels[choice.id]}</strong><small>{formatBytes(choice.bytes)} total</small></span></label>{/each}</fieldset>
-    <p class="fine-print">Text only includes the app, Scripture and guide. Audio adds recordings. All available resources adds the packaged images and videos. Prepared audio can play online when you press Play. Downloads save recordings for offline use. Images and videos require an explicit download. Sizes are file bytes, not browser storage overhead.</p>
+    {#if selection!=='core'}<fieldset disabled={busy||download.pending?.running}><legend>Download size</legend><p class="fine-print">Smaller files use less storage. Only prepared sizes are available.</p>{#each ['small','medium','large'] as size}<label class="download-choice"><input type="radio" name="download-size" value={size} checked={sizes.preset===size} disabled={sizes.preset!==size}/><span>{sizes.labels[size]}{sizes.preset!==size?' — not available for this selection':''}</span></label>{/each}{#if sizes.preset==='custom'}<p>Custom sizes · the prepared files use different sizes.</p>{/if}
+    <details><summary>Choose sizes by media</summary>{#each [{id:'image',label:'Images and maps'},{id:'audio',label:'Audio'},{id:'video',label:'Video'}] as category}{@const group=sizes.groups[category.id]}<label class="select-row">{category.label}<select aria-label={category.label+' download size'} value={group.size||''} disabled={!group.included||!group.count}>{#if !group.size}<option value="">{!group.included?'Not included':'No prepared size'}</option>{/if}{#each ['small','medium','large'] as size}<option value={size} disabled={group.size!==size}>{sizes.labels[size]}{category.id==='video'?({small:' · 480p',medium:' · 540p',large:' · 720p'}[size]):''}{group.size!==size?' — not available yet':''}</option>{/each}</select></label>{#if !group.included}<p class="fine-print">Not included</p>{/if}{/each}</details></fieldset>{/if}
+    <p class="fine-print">Text only includes the app, Scripture and guide. Audio adds recordings. All available resources adds the packaged images and videos. Prepared audio can play online when you press Play. Downloads save recordings for offline use. Prepared images and videos can open online. Downloads are optional for offline use. Sizes are file bytes, not browser storage overhead.</p>
     {#if transfer}<progress aria-label="Download progress" value={transfer.received} max={transfer.bytes||1}></progress><p role="status">{formatBytes(transfer.received)} of {formatBytes(transfer.bytes)} verified · {transfer.count} / {transfer.total} files</p>{/if}
+    <p>{formatBytes(download.choices.find(c=>c.id===selection)?.bytes||0)} to download</p>
     {#if busy}<button class="secondary full" onclick={pause}><Pause size={18}/>Pause download</button>{:else}<button class="secondary full" disabled={!download.manifest||download.pending?.running} onclick={save}><Download size={18}/>{download.pending&&selection===download.pending.selection?'Resume download':download.updateAvailable?'Update download':download.saved?'Save selection again':'Download selection'}</button>{/if}
     {#if download.active||download.pending}
      {#if confirmRemove}<p>Remove downloaded files? Your passage progress and settings will stay.</p><div class="library-actions"><button class="secondary" disabled={busy||download.pending?.running} onclick={remove}>Remove download</button><button class="quiet" onclick={()=>confirmRemove=false}>Keep download</button></div>{:else}<button class="quiet full" disabled={busy||download.pending?.running} onclick={()=>confirmRemove=true}><Trash2 size={16}/>Remove from device</button>{/if}
@@ -58,6 +63,6 @@
     {#if download.error}<p class="fine-print">{download.error} {download.manifest?'Showing the last saved file list.':''}</p>{/if}
    {:else if download}<p class="library-message">{download.reason}</p>{/if}
   </article>
-  <p class="fine-print">An update may temporarily keep a previous copy for open windows. Remove from device clears this passage’s copies. Browser storage can be cleared by your device. Your other downloaded passages and saved progress stay on this device.</p>
+  <p class="fine-print">Your device may clear downloaded files. Your place in the guide is saved separately. An update keeps the prior usable copy until the replacement is verified.</p>
  {/if}
 </div>

@@ -590,3 +590,9 @@ it('image-origin swipe invokes saved navigation once without opening fullscreen'
  expect(state().index).toBe(initial+1);expect(screen.queryByRole('dialog')).toBeNull();
  await fireEvent.click(document.querySelector('.scene'),{clientX:120,clientY:350});await settle();expect(state().index).toBe(initial+1);expect(screen.queryByRole('dialog')).toBeNull();
 });
+it('settings distinguish demo source from unavailable production streaming sizes without loading media',async()=>{
+ const request=vi.spyOn(libraryAdapter,'playMedia');await startAt('S01-U001');await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Settings',exact:true}));
+ expect(screen.getByRole('combobox',{name:'Streaming size'}).value).toBe('large');expect(screen.getByRole('option',{name:'Medium · 540p — not available yet'}).disabled).toBe(true);expect(request).not.toHaveBeenCalled();
+ cleanup();const resolve=videoDemo.demoVideoSource;vi.spyOn(videoDemo,'demoVideoSource').mockImplementation((pack,asset)=>resolve(pack,asset,{enabled:'true',hostname:'staging.fiaguide.app'}));
+ await startAt('S01-U001');await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Settings',exact:true}));expect(screen.getByText('Streaming: Demo source')).toBeTruthy();expect(screen.queryByRole('combobox',{name:'Streaming size'})).toBeNull();expect(request).not.toHaveBeenCalled();
+});
