@@ -69,6 +69,10 @@ def run(job):
         raw = handle.read(job['sourceBytes'] + 1)
     if len(raw) != job['sourceBytes'] or sha(raw) != job['sourceSha256']:
         raise ValueError('source-identity')
+    return recognize_bytes(raw, load_model())
+
+
+def load_model():
     model = Path('/opt/model')
     if sorted(p.name for p in model.iterdir()) != sorted(f['path'] for f in PROPOSAL['model']['files']):
         raise ValueError('model-file-set')
@@ -82,9 +86,15 @@ def run(job):
                 h.update(chunk)
         if h.hexdigest() != entry['sha256']:
             raise ValueError('model-file-hash')
+    from faster_whisper import WhisperModel
+    return WhisperModel(str(model), device='cpu', compute_type='int8', cpu_threads=2, num_workers=1, local_files_only=True)
+
+
+def recognize_bytes(raw, recognizer):
+    if len(raw) != PROPOSAL['source']['bytes'] or sha(raw) != PROPOSAL['source']['sha256']:
+        raise ValueError('source-identity')
     import av
     import numpy as np
-    from faster_whisper import WhisperModel
     with av.open(io.BytesIO(raw)) as container:
         if len(container.streams.audio) != 1:
             raise ValueError('audio-stream-count')
@@ -105,7 +115,6 @@ def run(job):
         if total == 0:
             raise ValueError('empty-audio')
         pcm = np.concatenate(chunks).astype(np.float32)
-    recognizer = WhisperModel(str(model), device='cpu', compute_type='int8', cpu_threads=2, num_workers=1, local_files_only=True)
     options = {'language': 'en', 'task': 'transcribe', 'beam_size': 5,
                'word_timestamps': True, 'initial_prompt': None, 'prefix': None,
                'hotwords': None, 'condition_on_previous_text': False, 'vad_filter': False}

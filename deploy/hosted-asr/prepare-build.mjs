@@ -9,7 +9,7 @@ export async function prepareBuild(inputs,destination){
  for(const directory of ['model','wheels'])await cp(resolve(inputs,directory),resolve(target,directory),{recursive:true,dereference:false});
  // Re-verify copied assets: a changing source cannot enter a trusted build context.
  await verifyInputs(target);
- for(const name of ['Dockerfile','requirements.lock','proposal.json','transcribe-defaults.json','recognize.py'])await copyFile(new URL(name,import.meta.url),resolve(target,name));
+ for(const name of ['Dockerfile','Dockerfile.integration','service.py','service-guards.py','requirements.lock','proposal.json','transcribe-defaults.json','recognize.py'])await copyFile(new URL(name,import.meta.url),resolve(target,name));
  await cp(new URL('./notices/',import.meta.url),resolve(target,'notices'),{recursive:true});
  await writeFile(resolve(target,'input-verification.json'),JSON.stringify(receipt,null,2)+'\n');return receipt;
 }
