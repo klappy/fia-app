@@ -29,7 +29,7 @@ jobs:
       - name: Acquire only hash-pinned model and binary wheels
         run: |
           python deploy/hosted-asr/ci-acquire.py work/asr-inputs
-          python -m pip download --only-binary=:all: --require-hashes -r deploy/hosted-asr/requirements.lock -d work/asr-inputs/wheels
+          python -m pip download --only-binary=:all: --platform manylinux2014_x86_64 --platform manylinux_2_28_x86_64 --python-version 312 --implementation cp --abi cp312 --require-hashes -r deploy/hosted-asr/requirements.lock -d work/asr-inputs/wheels
           node deploy/hosted-asr/prepare-build.mjs work/asr-inputs work/asr-context
       - name: Build offline image from verified inputs
         run: docker build --network=none --platform=linux/amd64 -t fia-asr-ci-proof work/asr-context
