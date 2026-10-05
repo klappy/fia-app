@@ -124,3 +124,16 @@ test('saved media metadata cannot substitute an unlisted delivery under the same
  const meta=w.stores.get('fia-v3-download-metadata@1'),active=await meta.get('/active').json();active.files.find(x=>x.path===f.path).deliveryURL='https://transcode.klappy.dev/audio/unlisted';meta.set('/active',Response.json(active));
  const status=await w.message({type:'MEDIA_STATUS',revision});assert.equal(status.savedFiles.length,0);w.calls.length=0;const result=await w.message({type:'MEDIA_PLAY',revision,deliveryRevision,path:f.path,requestId:'metadata'});assert.equal(result.ok,true);assert.equal(result.file.deliveryURL,f.deliveryURL);assert(!w.calls.includes('https://transcode.klappy.dev/audio/unlisted'));
 });
+
+test('recorded guide range survives online and saved playback and rejects altered saved range',async()=>{
+ const w=worker(),id='eng.MRK-1-1-13',revision='a'.repeat(64),deliveryRevision='b'.repeat(64),url='https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://fia.test/original.mp3';
+ const m={...manifest(),packId:id,presentationRevision:revision,deliveryRevision},f=m.files.find(f=>f.path==='/audio.m4a'),range={startSeconds:12.012,endSeconds:19.512};
+ Object.assign(f,{bytes:3,sha256:createHash('sha256').update('abc').digest('hex'),mime:'audio/ogg',deliveryURL:url,sourceSha256:'c'.repeat(64),sourceBytes:100,logicalSourceSha256:'d'.repeat(64),logicalSourceBytes:9,recordingLedgerSha256:'e'.repeat(64),recordingLedgerEntryId:'U1',duration:100,playbackRange:range,deliveryRevision,timing:{status:'verified'}});
+ w.reply('/offline/'+id+'.json',Response.json(m));w.reply(new URL(url).pathname,new Response('abc',{headers:{'Content-Type':'audio/ogg'}}));
+ const args={type:'MEDIA_PLAY',packId:id,revision,deliveryRevision,path:f.path,requestId:'online'};
+ const online=await w.message(args);assert.equal(online.ok,true,online.error);assert.deepEqual(JSON.parse(JSON.stringify(online.playbackRange)),range);
+ assert.equal((await w.message({type:'DOWNLOAD_START',packId:id,selection:'audio'})).ok,true);
+ w.calls.length=0;const saved=await w.message({...args,requestId:'saved'});assert.equal(saved.ok,true,saved.error);assert.deepEqual(JSON.parse(JSON.stringify(saved.playbackRange)),range);assert(!w.calls.includes(url));
+ const metadata=w.stores.get('fia-v3-download-metadata@1');for(const [key,response] of metadata){if(key.includes('active')){const value=await response.clone().json();value.files.find(x=>x.path===f.path).playbackRange={startSeconds:0,endSeconds:100};metadata.set(key,Response.json(value));}}
+ const status=await w.message({type:'MEDIA_STATUS',packId:id,revision});assert.equal(status.savedFiles.length,0);
+});

@@ -14,7 +14,33 @@ export function deliveryVariant(entry,size){
  const variant=entry.variants?.[size];if(!variant)throw Error('This media size is not prepared.');
  const {variants,defaultSize,...base}=entry;return {...base,...variant};
 }
+export function validatePlaybackRange(range,duration){
+ videoKeys(range,'startSeconds,endSeconds');
+ if(!Number.isFinite(range.startSeconds)||!Number.isFinite(range.endSeconds)||range.startSeconds<0||range.endSeconds<=range.startSeconds||!Number.isFinite(duration)||duration<=0||range.endSeconds>duration)throw Error('Invalid recorded guide playback range.');
+ return range;
+}
+export function validateRecordedAudioEntry(entry){
+ videoKeys(entry.audioReplacement,'ledgerEntryId,logicalSource');videoKeys(entry.audioReplacement.logicalSource,'sha256,bytes');
+ if(entry.delivery?.kind!=='audio'||!entry.audioReplacement.ledgerEntryId||typeof entry.audioReplacement.ledgerEntryId!=='string'||!sha.test(entry.audioReplacement.logicalSource.sha256)||!positive(entry.audioReplacement.logicalSource.bytes)||entry.logicalSource)throw Error('Invalid recorded guide replacement.');
+ videoKeys(entry.source,'url,sha256,bytes');
+ const check=e=>{validatePlaybackRange(e.playbackRange,e.delivery.duration);if(e.timing?.status!=='verified'||!e.timing.mapping||!Number.isFinite(e.timing.mapping.scale)||e.timing.mapping.scale<=0||!Number.isFinite(e.timing.mapping.offsetSeconds)||e.timing.sourceAudioSha256!==entry.source.sha256||e.timing.deliveryAudioSha256!==e.delivery.sha256||!sha.test(e.timing.mappingEvidenceSha256))throw Error('Recorded guide requires measured mapping evidence.');};
+ check(entry);for(const v of Object.values(entry.variants||{}))check(v);
+}
 export function validateDelivery(sidecar,identity){
+ if(sidecar?.schema===4){
+  videoKeys(sidecar,'schema,packId,presentationRevision,recipeRevision,sourceLedger,recordingLedger,entries');
+  const ref=sidecar.recordingLedger;videoKeys(ref,'url,sha256,bytes');
+  if(!sha.test(ref.sha256)||!positive(ref.bytes)||ref.url!==`/content/recording-sources/${ref.sha256}.json`||!Array.isArray(sidecar.entries))throw Error('Invalid recording ledger reference.');
+  const entries=sidecar.entries.map(entry=>{
+   if(!entry.audioReplacement){if(entry.playbackRange||Object.values(entry.variants||{}).some(v=>v.playbackRange))throw Error('Unbound playback range.');return entry;}
+   videoKeys(entry,'path,source,delivery,timing,defaultSize,variants,audioReplacement,playbackRange');validateRecordedAudioEntry(entry);
+   const {audioReplacement,playbackRange,...base}=entry;
+   base.variants=Object.fromEntries(Object.entries(entry.variants).map(([size,v])=>{videoKeys(v,'delivery,timing,playbackRange');const {playbackRange,...rest}=v;return [size,rest];}));
+   if(JSON.stringify(entry.variants[entry.defaultSize]?.playbackRange)!==JSON.stringify(playbackRange))throw Error('Default recorded range changed.');
+   return base;
+  });
+  const {recordingLedger,...base}=sidecar;validateDelivery({...base,schema:3,entries},identity);return sidecar;
+ }
  if(sidecar?.schema===3){
   validateDelivery({...sidecar,schema:2,entries:[]},identity);
   videoKeys(sidecar,'schema,packId,presentationRevision,recipeRevision,sourceLedger,entries');
@@ -37,6 +63,7 @@ export function validateDelivery(sidecar,identity){
  if(sidecar.schema===2){if(Object.keys(sidecar).sort().join(',')!=='entries,packId,presentationRevision,recipeRevision,schema,sourceLedger')throw Error('Unknown video sidecar field.');const l=sidecar.sourceLedger;videoKeys(l,'url,sha256,bytes');if(!l||!sha.test(l.sha256)||!positive(l.bytes)||l.url!==`/content/video-sources/${l.sha256}.json`)throw Error('Invalid video source ledger.');}
  const seen=new Set();
  for(const e of sidecar.entries){const s=e.source,d=e.delivery,t=e.timing;
+  if(e.audioReplacement||e.playbackRange)throw Error('Recorded guide ranges require schema4.');
   if(!local.test(e.path)||seen.has(e.path)||!s||!sha.test(s.sha256)||!positive(s.bytes)||!/^https:\/\//.test(s.url)||!d||!sha.test(d.sha256)||!positive(d.bytes)||!['audio','image','video'].includes(d.kind)||!['transformed','passthrough'].includes(d.status)||!d.format||!d.q)throw Error('Invalid media delivery entry.');
   const url=new URL(d.url);if(url.origin!=='https://transcode.klappy.dev'||!url.pathname.startsWith('/'+d.kind+'/')||url.username||url.password||url.hash||!d.url.endsWith('/'+s.url))throw Error('Unapproved media delivery URL.');
   if(d.status==='passthrough'&&(d.sha256!==s.sha256||d.bytes!==s.bytes))throw Error('Pass-through bytes changed.');
