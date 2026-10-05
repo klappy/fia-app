@@ -34,6 +34,15 @@ it('newer passage intent survives an older load resolving during native presenta
  video.webkitDisplayingFullscreen=false;await fireEvent(video,new Event('webkitendfullscreen'));
  await waitFor(()=>expect(localStorage.getItem('fia-v3-selected-pack')).toBe(descriptors[1].id));expect(select.mock.calls.map(([id])=>id)).toEqual(descriptors.map(p=>p.id));expect(document.querySelector('video')).toBeNull();
 });
+it('failed deferred passage load reports the error after native exit and preserves the current passage',async()=>{
+ const registry=JSON.parse(readFileSync('public/content/registry.json','utf8')),descriptor=registry.packs.find(p=>p.id==='eng.MRK-1-14-20');
+ vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',nativeName:'English',ready:68}]);vi.spyOn(libraryAdapter,'passages').mockResolvedValue([descriptor]);const select=vi.spyOn(libraryAdapter,'select').mockRejectedValue(Error('Passage verification failed. Try again.'));
+ assets.a112.relatedIds=[];await startAt('S02-U005','waiting');await command('watch the video');const video=document.querySelector('video');
+ Object.defineProperty(video,'webkitDisplayingFullscreen',{value:true,writable:true});video.webkitExitFullscreen=vi.fn();await fireEvent(video,new Event('webkitbeginfullscreen'));
+ await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passages',exact:true}));await settle();await fireEvent.click(screen.getByRole('button',{name:'Open passage',exact:true}));await settle();expect(select).not.toHaveBeenCalled();
+ video.webkitDisplayingFullscreen=false;await fireEvent(video,new Event('webkitendfullscreen'));
+ await waitFor(()=>expect(screen.getByText('Passage verification failed. Try again.')).toBeTruthy());expect(select).toHaveBeenCalledTimes(1);expect(localStorage.getItem('fia-v3-selected-pack')).toBeNull();expect(document.querySelector('video')).toBe(video);
+});
 it('native video completion retains the same owner until exit then returns once without autoplay',async()=>{
  assets.a112.relatedIds=[];await startAt('S02-U005','waiting');await command('watch the video');
  const video=document.querySelector('video');video.currentTime=12;
