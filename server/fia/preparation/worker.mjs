@@ -72,9 +72,13 @@ export class FiaPreparationJobs{
       return {record:next,created:true};
     });
     if(!record)return json(404,{status:'unavailable',code:'not-requested'});
+    if(record.sourceState==='verified'){
+      try{await readOriginal(this.ctx.storage,row.source);}
+      catch{return json(503,{status:'unavailable',code:'stored-source-invalid'});}
+    }
     if(record.state==='ready'&&record.resultSha256!==row.accepted?.expected.resultSha256)return json(200,statusBody({...record,state:'blocked',reason:'accepted-result-changed',result:null,resultSha256:null},true));
     if(record.state==='ready'){
-      try{await readOriginal(this.ctx.storage,row.source);record.result=await readPreparedAudio(new TextEncoder().encode(record.resultSerialized),row.accepted.expected);}
+      try{record.result=await readPreparedAudio(new TextEncoder().encode(record.resultSerialized),row.accepted.expected);}
       catch{return json(503,{status:'unavailable',code:'stored-result-invalid'});}
     }
     return json(created?201:200,statusBody(record,!created));
@@ -103,7 +107,7 @@ export class FiaPreparationJobs{
         record.sourceState='verified';
         outcome=await prepareAccepted(row,path=>this.env.ASSETS.fetch(new Request(new URL(path,this.env.FIA_API_ORIGIN),{redirect:'manual'})));
       }
-      catch{outcome={state:'blocked',reason:record.sourceState==='verified'?'accepted-artifact-verification-failed':'source-verification-failed',result:null,resultSha256:null};}
+      catch{outcome={state:'blocked',sourceState:record.sourceState==='verified'?'verified':'failed',reason:record.sourceState==='verified'?'accepted-artifact-verification-failed':'source-verification-failed',result:null,resultSha256:null};}
       await this.ctx.storage.transaction(async tx=>{
         const current=await tx.get('job');
         if(current.admissionSha256!==record.admissionSha256){await tx.setAlarm(Date.now()+1);return;}
