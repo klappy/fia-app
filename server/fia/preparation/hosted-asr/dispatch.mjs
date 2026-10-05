@@ -13,7 +13,9 @@ export function createHostedDispatch({storage,ledger,identity,activation,executo
  function validRecord(row,nodeKey,lane){
   if(!row)return;
   const required=['schema','nodeKey','ledger','state','attemptId','revision','startedAt','deadline','stopAttempts'];
-  const optional=['artifact','stopVerified','stopDeadline','reconciled','reason','alarmError','interrupted'];
+  const optional=['artifact','stopVerified','stopDeadline','reconciled','reason','alarmError','interrupted','stopLease'];
+  const lease=row.stopLease;
+  if(row.stopAttempts>0&&(!shape(lease,['token','claimedAt','state'])||typeof lease.token!=='string'||!lease.token||lease.token.length>128||!Number.isSafeInteger(lease.claimedAt)||lease.claimedAt<row.startedAt||!['pending','verified'].includes(lease.state)||lease.state==='verified'&&row.stopVerified!==true||lease.state==='pending'&&row.stopVerified===true)||row.stopAttempts===0&&lease!==undefined)throw Error('corrupt-stop-lease');
   if(Object.getPrototypeOf(row)!==Object.prototype||required.some(k=>!Object.hasOwn(row,k))||Object.keys(row).some(k=>!required.includes(k)&&!optional.includes(k))||row.schema!=='fia-hosted-asr-attempt@1'||row.nodeKey!==nodeKey||row.ledger!==lane||!['preparing','uncertain','completed'].includes(row.state)||typeof row.attemptId!=='string'||!row.attemptId||row.attemptId.length>128||row.revision!==1||!Number.isSafeInteger(row.startedAt)||row.startedAt<window.startedAt||row.startedAt>=window.expiresAt||!Number.isSafeInteger(row.deadline)||row.deadline<=row.startedAt||row.deadline>Math.min(row.startedAt+360000,window.expiresAt)||!Number.isSafeInteger(row.stopAttempts)||row.stopAttempts<0||row.stopAttempts>3||('stopVerified'in row&&typeof row.stopVerified!=='boolean')||('stopDeadline'in row&&(!Number.isSafeInteger(row.stopDeadline)||row.stopDeadline<=row.startedAt))||(row.stopVerified===true&&(row.stopAttempts<1||!Number.isSafeInteger(row.stopDeadline)))||('alarmError'in row&&typeof row.alarmError!=='boolean')||('interrupted'in row&&(row.interrupted!==true||row.state!=='uncertain'))||('reason'in row&&(typeof row.reason!=='string'||row.reason.length>128))||('reconciled'in row&&row.reconciled!==true)||('artifact'in row&&!artifactShape(row.artifact))||row.state==='completed'&&(!artifactShape(row.artifact)||row.stopVerified!==true))throw Error('corrupt-attempt');
  }
  async function snapshot(tx,nodeKey){
@@ -25,15 +27,35 @@ export function createHostedDispatch({storage,ledger,identity,activation,executo
  const check=async artifact=>{const saved=copy(artifact);if(!artifactShape(saved))throw Error('invalid-result');const retained=await verifyArtifact(saved);if(!(retained instanceof Uint8Array))throw Error('invalid-retained-result');const bytes=retained.slice();if(bytes.length>1048576||await sha256(bytes)!==saved.sha256)throw Error('invalid-retained-result');if(await validateResult(bytes.slice(),copy(pinned))!==true)throw Error('result-provenance-mismatch');return saved;};
  async function stopAttempt(nodeKey,attempt,completion=false){
   const key=`hosted:${ledger}:${nodeKey}`;
-  const row=await storage.transaction(async tx=>{const s=await snapshot(tx,nodeKey),current=s[ledger];if(!current||current.attemptId!==attempt.attemptId||current.revision!==attempt.revision)throw Error('stop-fence');if(current.stopVerified===true)return current;if(current.stopAttempts>=3)throw Error('stop-attempts-exhausted');if(completion&&(current.interrupted===true||now()>=current.deadline))throw Error('stop-fence');current.stopDeadline=completion?Math.min(current.deadline,now()+30000):now()+30000;if(completion)current.deadline=current.stopDeadline;current.stopAttempts++;await tx.put(key,current);return current;});
-  if(row.stopVerified===true)return true;
+  const claim=await storage.transaction(async tx=>{
+   const s=await snapshot(tx,nodeKey),current=s[ledger];
+   if(!current||current.attemptId!==attempt.attemptId||current.revision!==attempt.revision)throw Error('stop-fence');
+   if(current.stopVerified===true)return {owned:false,row:current};
+   // An unresolved native call may still fire. No second call may certify its absence.
+   if(current.stopLease?.state==='pending')return {owned:false,row:current};
+   if(current.stopAttempts>=3)throw Error('stop-attempts-exhausted');
+   if(completion&&(current.interrupted===true||now()>=current.deadline))throw Error('stop-fence');
+   current.stopDeadline=completion?Math.min(current.deadline,now()+30000):now()+30000;
+   if(completion)current.deadline=current.stopDeadline;
+   current.stopAttempts++;current.stopLease={token:uuid(),claimedAt:now(),state:'pending'};
+   validRecord(current,nodeKey,ledger);await tx.put(key,current);return {owned:true,row:current};
+  });
+  const row=claim.row;if(!claim.owned)return row.stopVerified===true;
+  // Lease is durable before both alarm persistence and the first native shutdown await.
   let alarmError=false;try{await storage.setAlarm(row.stopDeadline);}catch{alarmError=true;}
   let timer,stopped=false;try{stopped=await Promise.race([Promise.resolve().then(()=>run.stop(copy(row))),new Promise(resolve=>{timer=setTimeout(()=>resolve(false),Math.max(0,row.stopDeadline-now()));})])===true;}catch{}finally{clearTimeout(timer);}
   if(now()>=row.stopDeadline)stopped=false;
-  await storage.transaction(async tx=>{const s=await snapshot(tx,nodeKey),current=s[ledger];if(current?.attemptId===row.attemptId&&current.state!=='completed'){current.stopVerified=stopped;current.alarmError=alarmError;await tx.put(key,current);}});
-  if(!stopped&&row.stopAttempts<3){try{await storage.setAlarm(now()+30000);}catch{await storage.transaction(async tx=>{const s=await snapshot(tx,nodeKey),current=s[ledger];if(current?.attemptId===row.attemptId){current.alarmError=true;await tx.put(key,current);}});}}
+  await storage.transaction(async tx=>{
+   const s=await snapshot(tx,nodeKey),current=s[ledger];
+   if(current?.attemptId!==row.attemptId||current.revision!==row.revision||current.stopLease?.token!==row.stopLease.token||current.stopLease.state!=='pending')throw Error('stop-lease-fence');
+   current.stopVerified=stopped;current.alarmError=alarmError;
+   if(stopped)current.stopLease.state='verified';
+   // False, throw and timeout retain the pending lease forever: timeout is not cancellation.
+   await tx.put(key,current);
+  });
   return stopped&&!alarmError;
  }
+
  async function dispatch(){
   const nodeKey=await keyPromise,recordKey=`hosted:${ledger}:${nodeKey}`;
   const claim=await storage.transaction(async tx=>{
@@ -63,7 +85,7 @@ export function createHostedDispatch({storage,ledger,identity,activation,executo
   const nodeKey=await keyPromise,key=`hosted:${ledger}:${nodeKey}`,row=(await storage.transaction(tx=>snapshot(tx,nodeKey)))[ledger];
   if(!row||row.stopVerified===true||now()<Math.min(row.deadline,row.stopDeadline??Infinity))return row;
   try{await stopAttempt(nodeKey,row);}catch{}
-  return storage.transaction(async tx=>{const s=await snapshot(tx,nodeKey),current=s[ledger];if(current?.attemptId!==row.attemptId||current.state==='completed')return current;const next={...current,state:'uncertain',reason:current.stopAttempts>=3&&current.stopVerified!==true?'stop-unresolved-manual-intervention':'deadline-expired'};await tx.put(key,next);return next;});
+  return storage.transaction(async tx=>{const s=await snapshot(tx,nodeKey),current=s[ledger];if(current?.attemptId!==row.attemptId||current.state==='completed')return current;const next={...current,state:'uncertain',reason:current.stopLease?.state==='pending'?'stop-outcome-unresolved-manual-intervention':'deadline-expired'};await tx.put(key,next);return next;});
  }
  async function reconcile({attemptId,revision,artifact}){
   const nodeKey=await keyPromise,key=`hosted:${ledger}:${nodeKey}`;
