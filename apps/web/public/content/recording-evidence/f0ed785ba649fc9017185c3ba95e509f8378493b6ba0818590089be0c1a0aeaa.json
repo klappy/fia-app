@@ -1,0 +1,6396 @@
+{
+  "schema": 1,
+  "status": "raw-asr-unreviewed-not-verbatim-certified",
+  "scope": "Local recognition only; no TTS, paid calls, remote fetch, script prompt, forced alignment or product edits. Word timestamps are model estimates, not accepted playback boundaries.",
+  "source": {
+    "sha256": "826f6f1efb3c71277c68ee2fca2b49c4d0f929e9232f2cc2f8e74eb63222dd0f",
+    "bytes": 5680172,
+    "url": "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s4/v2/vbr0.mp3"
+  },
+  "model": {
+    "name": "Systran/faster-whisper-tiny.en",
+    "snapshot": "0d3d19a32d3338f10357c0889762bd8d64bbdeba",
+    "files": {
+      "config.json": {
+        "sha256": "14b1b421a90349bc551b881461426b561a874049cb9e4c4864f2ca384f6a7cc5",
+        "bytes": 2317
+      },
+      "model.bin": {
+        "sha256": "1a5afae06a4db91c975c9a9d78be5cc110ee4ea022ad57d55492e4550e936b2a",
+        "bytes": 75537502
+      },
+      "tokenizer.json": {
+        "sha256": "929c5252409436dce1b38a75d1abbcb5e132d170d8e324e4e04ed915fa2d22df",
+        "bytes": 2128466
+      },
+      "vocabulary.txt": {
+        "sha256": "ff77588746d3a2595d32ab5b69ffd7b95ce2441ac57533cb66fc3eb575a115cf",
+        "bytes": 422309
+      }
+    },
+    "device": "cpu",
+    "computeType": "int8",
+    "cpuThreads": 4
+  },
+  "runtime": {
+    "python": "3.12.14",
+    "faster-whisper": "1.2.1",
+    "ctranslate2": "4.8.2",
+    "av": "19.0.1",
+    "numpy": "2.5.3"
+  },
+  "recognitionConfig": {
+    "language": "en",
+    "task": "transcribe",
+    "log_progress": false,
+    "beam_size": 5,
+    "best_of": 5,
+    "patience": 1,
+    "length_penalty": 1,
+    "repetition_penalty": 1,
+    "no_repeat_ngram_size": 0,
+    "temperature": [
+      0.0,
+      0.2,
+      0.4,
+      0.6,
+      0.8,
+      1.0
+    ],
+    "compression_ratio_threshold": 2.4,
+    "log_prob_threshold": -1.0,
+    "no_speech_threshold": 0.6,
+    "condition_on_previous_text": false,
+    "prompt_reset_on_temperature": 0.5,
+    "initial_prompt": null,
+    "prefix": null,
+    "suppress_blank": true,
+    "suppress_tokens": [
+      -1
+    ],
+    "without_timestamps": false,
+    "max_initial_timestamp": 1.0,
+    "word_timestamps": true,
+    "prepend_punctuations": "\"'\u201c\u00bf([{-",
+    "append_punctuations": "\"'.\u3002,\uff0c!\uff01?\uff1f:\uff1a\u201d)]}\u3001",
+    "multilingual": false,
+    "vad_filter": false,
+    "vad_parameters": null,
+    "max_new_tokens": null,
+    "chunk_length": null,
+    "clip_timestamps": "0",
+    "hallucination_silence_threshold": null,
+    "hotwords": null,
+    "language_detection_threshold": 0.5,
+    "language_detection_segments": 1
+  },
+  "decoder": {
+    "library": "PyAV",
+    "output": "mono float32 16000Hz",
+    "samples": 5760000,
+    "sha256": "e7b4f17a61a248e09fcf9d8ba377ef9d839630d98ae02d1355c5100d6f146b9d",
+    "timeline": "decoded PyAV samples beginning at zero; no conversion to Apple playback timeline asserted"
+  },
+  "duration": 360.0,
+  "elapsedSeconds": 10.844767999835312,
+  "scriptSha256": "c6c3dc670eff9aff2c80b560b359bd09bbcb74cdefb9fc76dc92ba644089f3f8",
+  "wordCount": 742,
+  "segments": [
+    {
+      "id": 1,
+      "seek": 0,
+      "start": 0.0,
+      "end": 9.98,
+      "text": " 4. Embodying the text. Mark 1 1 through 13. Listen to an audio version of",
+      "tokens": [
+        50363,
+        604,
+        13,
+        13302,
+        375,
+        1112,
+        262,
+        2420,
+        13,
+        2940,
+        352,
+        352,
+        832,
+        1511,
+        13,
+        20600,
+        284,
+        281,
+        6597,
+        2196,
+        286,
+        50854
+      ],
+      "avg_logprob": -0.23170042721951595,
+      "compression_ratio": 1.4591194968553458,
+      "no_speech_prob": 0.14468415081501007,
+      "words": [
+        {
+          "start": 0.0,
+          "end": 1.42,
+          "word": " 4.",
+          "probability": 0.652904748916626
+        },
+        {
+          "start": 2.36,
+          "end": 2.88,
+          "word": " Embodying",
+          "probability": 0.9338279167811075
+        },
+        {
+          "start": 2.88,
+          "end": 3.18,
+          "word": " the",
+          "probability": 0.9821346998214722
+        },
+        {
+          "start": 3.18,
+          "end": 3.8,
+          "word": " text.",
+          "probability": 0.817414402961731
+        },
+        {
+          "start": 4.7,
+          "end": 4.7,
+          "word": " Mark",
+          "probability": 0.8875828981399536
+        },
+        {
+          "start": 4.7,
+          "end": 5.52,
+          "word": " 1",
+          "probability": 0.934384822845459
+        },
+        {
+          "start": 5.52,
+          "end": 5.9,
+          "word": " 1",
+          "probability": 0.35739049315452576
+        },
+        {
+          "start": 5.9,
+          "end": 6.32,
+          "word": " through",
+          "probability": 0.674811065196991
+        },
+        {
+          "start": 6.32,
+          "end": 7.0,
+          "word": " 13.",
+          "probability": 0.9793179035186768
+        },
+        {
+          "start": 8.38,
+          "end": 8.62,
+          "word": " Listen",
+          "probability": 0.9503918290138245
+        },
+        {
+          "start": 8.62,
+          "end": 8.84,
+          "word": " to",
+          "probability": 0.9985466599464417
+        },
+        {
+          "start": 8.84,
+          "end": 9.14,
+          "word": " an",
+          "probability": 0.9785467982292175
+        },
+        {
+          "start": 9.14,
+          "end": 9.22,
+          "word": " audio",
+          "probability": 0.9534914493560791
+        },
+        {
+          "start": 9.22,
+          "end": 9.7,
+          "word": " version",
+          "probability": 0.9988558292388916
+        },
+        {
+          "start": 9.7,
+          "end": 9.98,
+          "word": " of",
+          "probability": 0.9973303079605103
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 2,
+      "seek": 0,
+      "start": 9.98,
+      "end": 17.42,
+      "text": " Mark 1 1 through 13 in the easiest to understand translation. In this step the",
+      "tokens": [
+        50854,
+        2940,
+        352,
+        352,
+        832,
+        1511,
+        287,
+        262,
+        16638,
+        284,
+        1833,
+        11059,
+        13,
+        554,
+        428,
+        2239,
+        262,
+        51225
+      ],
+      "avg_logprob": -0.23170042721951595,
+      "compression_ratio": 1.4591194968553458,
+      "no_speech_prob": 0.14468415081501007,
+      "words": [
+        {
+          "start": 9.98,
+          "end": 10.28,
+          "word": " Mark",
+          "probability": 0.9557697772979736
+        },
+        {
+          "start": 10.28,
+          "end": 10.94,
+          "word": " 1",
+          "probability": 0.9933075904846191
+        },
+        {
+          "start": 10.94,
+          "end": 11.32,
+          "word": " 1",
+          "probability": 0.9005486369132996
+        },
+        {
+          "start": 11.32,
+          "end": 11.5,
+          "word": " through",
+          "probability": 0.9812001585960388
+        },
+        {
+          "start": 11.5,
+          "end": 12.14,
+          "word": " 13",
+          "probability": 0.9954981803894043
+        },
+        {
+          "start": 12.14,
+          "end": 12.76,
+          "word": " in",
+          "probability": 0.8826391696929932
+        },
+        {
+          "start": 12.76,
+          "end": 13.1,
+          "word": " the",
+          "probability": 0.984970211982727
+        },
+        {
+          "start": 13.1,
+          "end": 13.4,
+          "word": " easiest",
+          "probability": 0.9978728294372559
+        },
+        {
+          "start": 13.4,
+          "end": 13.94,
+          "word": " to",
+          "probability": 0.9331846833229065
+        },
+        {
+          "start": 13.94,
+          "end": 14.46,
+          "word": " understand",
+          "probability": 0.9835826754570007
+        },
+        {
+          "start": 14.46,
+          "end": 15.3,
+          "word": " translation.",
+          "probability": 0.9958756566047668
+        },
+        {
+          "start": 16.58,
+          "end": 16.62,
+          "word": " In",
+          "probability": 0.9903558492660522
+        },
+        {
+          "start": 16.62,
+          "end": 16.88,
+          "word": " this",
+          "probability": 0.9991350769996643
+        },
+        {
+          "start": 16.88,
+          "end": 17.18,
+          "word": " step",
+          "probability": 0.9916713237762451
+        },
+        {
+          "start": 17.18,
+          "end": 17.42,
+          "word": " the",
+          "probability": 0.5922686457633972
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 3,
+      "seek": 0,
+      "start": 17.42,
+      "end": 24.52,
+      "text": " group will dramatize the passage. This story has four scenes. The characters in",
+      "tokens": [
+        51225,
+        1448,
+        481,
+        4850,
+        265,
+        1096,
+        262,
+        10066,
+        13,
+        770,
+        1621,
+        468,
+        1440,
+        8188,
+        13,
+        383,
+        3435,
+        287,
+        51579
+      ],
+      "avg_logprob": -0.23170042721951595,
+      "compression_ratio": 1.4591194968553458,
+      "no_speech_prob": 0.14468415081501007,
+      "words": [
+        {
+          "start": 17.42,
+          "end": 17.66,
+          "word": " group",
+          "probability": 0.996799111366272
+        },
+        {
+          "start": 17.66,
+          "end": 17.96,
+          "word": " will",
+          "probability": 0.9910962581634521
+        },
+        {
+          "start": 17.96,
+          "end": 18.48,
+          "word": " dramatize",
+          "probability": 0.9331952134768168
+        },
+        {
+          "start": 18.48,
+          "end": 18.74,
+          "word": " the",
+          "probability": 0.9968439340591431
+        },
+        {
+          "start": 18.74,
+          "end": 19.2,
+          "word": " passage.",
+          "probability": 0.9916165471076965
+        },
+        {
+          "start": 20.32,
+          "end": 20.62,
+          "word": " This",
+          "probability": 0.9850664138793945
+        },
+        {
+          "start": 20.62,
+          "end": 20.98,
+          "word": " story",
+          "probability": 0.9940152764320374
+        },
+        {
+          "start": 20.98,
+          "end": 21.5,
+          "word": " has",
+          "probability": 0.9960380792617798
+        },
+        {
+          "start": 21.5,
+          "end": 21.98,
+          "word": " four",
+          "probability": 0.5358743071556091
+        },
+        {
+          "start": 21.98,
+          "end": 22.6,
+          "word": " scenes.",
+          "probability": 0.40795186161994934
+        },
+        {
+          "start": 23.58,
+          "end": 23.76,
+          "word": " The",
+          "probability": 0.9916456341743469
+        },
+        {
+          "start": 23.76,
+          "end": 24.08,
+          "word": " characters",
+          "probability": 0.9961884617805481
+        },
+        {
+          "start": 24.08,
+          "end": 24.52,
+          "word": " in",
+          "probability": 0.9902703762054443
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 4,
+      "seek": 2452,
+      "start": 24.52,
+      "end": 37.5,
+      "text": " passage are, John the Baptist, crowds of people, Jesus, the Holy Spirit, God, Satan, angels.",
+      "tokens": [
+        50363,
+        10066,
+        389,
+        11,
+        1757,
+        262,
+        21724,
+        11,
+        15779,
+        286,
+        661,
+        11,
+        5803,
+        11,
+        262,
+        7439,
+        7710,
+        11,
+        1793,
+        11,
+        14918,
+        11,
+        21981,
+        13,
+        51011
+      ],
+      "avg_logprob": -0.15520036398474849,
+      "compression_ratio": 1.5,
+      "no_speech_prob": 0.14275038242340088,
+      "words": [
+        {
+          "start": 24.52,
+          "end": 25.1,
+          "word": " passage",
+          "probability": 0.38751429319381714
+        },
+        {
+          "start": 25.1,
+          "end": 26.12,
+          "word": " are,",
+          "probability": 0.7470724582672119
+        },
+        {
+          "start": 26.44,
+          "end": 26.66,
+          "word": " John",
+          "probability": 0.6771418452262878
+        },
+        {
+          "start": 26.66,
+          "end": 26.86,
+          "word": " the",
+          "probability": 0.9643853902816772
+        },
+        {
+          "start": 26.86,
+          "end": 27.38,
+          "word": " Baptist,",
+          "probability": 0.9908419847488403
+        },
+        {
+          "start": 28.26,
+          "end": 28.66,
+          "word": " crowds",
+          "probability": 0.6664578914642334
+        },
+        {
+          "start": 28.66,
+          "end": 29.0,
+          "word": " of",
+          "probability": 0.9945284724235535
+        },
+        {
+          "start": 29.0,
+          "end": 29.78,
+          "word": " people,",
+          "probability": 0.9948515295982361
+        },
+        {
+          "start": 30.44,
+          "end": 30.9,
+          "word": " Jesus,",
+          "probability": 0.9906629323959351
+        },
+        {
+          "start": 31.98,
+          "end": 32.14,
+          "word": " the",
+          "probability": 0.9331432580947876
+        },
+        {
+          "start": 32.14,
+          "end": 32.44,
+          "word": " Holy",
+          "probability": 0.9915317893028259
+        },
+        {
+          "start": 32.44,
+          "end": 33.04,
+          "word": " Spirit,",
+          "probability": 0.9795716404914856
+        },
+        {
+          "start": 34.8,
+          "end": 34.8,
+          "word": " God,",
+          "probability": 0.992124617099762
+        },
+        {
+          "start": 35.38,
+          "end": 35.8,
+          "word": " Satan,",
+          "probability": 0.9642949104309082
+        },
+        {
+          "start": 37.02,
+          "end": 37.5,
+          "word": " angels.",
+          "probability": 0.5983636379241943
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 5,
+      "seek": 2452,
+      "start": 39.2,
+      "end": 45.6,
+      "text": " As a group, act out the passage twice. You should act out the passage in your own language.",
+      "tokens": [
+        51087,
+        1081,
+        257,
+        1448,
+        11,
+        719,
+        503,
+        262,
+        10066,
+        5403,
+        13,
+        921,
+        815,
+        719,
+        503,
+        262,
+        10066,
+        287,
+        534,
+        898,
+        3303,
+        13,
+        51407
+      ],
+      "avg_logprob": -0.15520036398474849,
+      "compression_ratio": 1.5,
+      "no_speech_prob": 0.14275038242340088,
+      "words": [
+        {
+          "start": 39.2,
+          "end": 39.46,
+          "word": " As",
+          "probability": 0.9850432872772217
+        },
+        {
+          "start": 39.46,
+          "end": 39.64,
+          "word": " a",
+          "probability": 0.995001494884491
+        },
+        {
+          "start": 39.64,
+          "end": 40.08,
+          "word": " group,",
+          "probability": 0.9904230833053589
+        },
+        {
+          "start": 40.48,
+          "end": 40.56,
+          "word": " act",
+          "probability": 0.9723026156425476
+        },
+        {
+          "start": 40.56,
+          "end": 40.8,
+          "word": " out",
+          "probability": 0.9897891879081726
+        },
+        {
+          "start": 40.8,
+          "end": 41.3,
+          "word": " the",
+          "probability": 0.9957242012023926
+        },
+        {
+          "start": 41.3,
+          "end": 41.32,
+          "word": " passage",
+          "probability": 0.9846499562263489
+        },
+        {
+          "start": 41.32,
+          "end": 41.96,
+          "word": " twice.",
+          "probability": 0.9978362917900085
+        },
+        {
+          "start": 42.86,
+          "end": 42.94,
+          "word": " You",
+          "probability": 0.9905374646186829
+        },
+        {
+          "start": 42.94,
+          "end": 43.12,
+          "word": " should",
+          "probability": 0.9904941916465759
+        },
+        {
+          "start": 43.12,
+          "end": 43.32,
+          "word": " act",
+          "probability": 0.9971631169319153
+        },
+        {
+          "start": 43.32,
+          "end": 43.52,
+          "word": " out",
+          "probability": 0.9963703155517578
+        },
+        {
+          "start": 43.52,
+          "end": 43.78,
+          "word": " the",
+          "probability": 0.9951103329658508
+        },
+        {
+          "start": 43.78,
+          "end": 44.08,
+          "word": " passage",
+          "probability": 0.9973689317703247
+        },
+        {
+          "start": 44.08,
+          "end": 44.3,
+          "word": " in",
+          "probability": 0.995086133480072
+        },
+        {
+          "start": 44.3,
+          "end": 44.6,
+          "word": " your",
+          "probability": 0.994451105594635
+        },
+        {
+          "start": 44.6,
+          "end": 44.98,
+          "word": " own",
+          "probability": 0.9981839060783386
+        },
+        {
+          "start": 44.98,
+          "end": 45.6,
+          "word": " language.",
+          "probability": 0.9988252520561218
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 6,
+      "seek": 2452,
+      "start": 46.68,
+      "end": 51.8,
+      "text": " First, act out the story without stopping. Pay attention to the dialogue,",
+      "tokens": [
+        51467,
+        3274,
+        11,
+        719,
+        503,
+        262,
+        1621,
+        1231,
+        12225,
+        13,
+        7119,
+        3241,
+        284,
+        262,
+        10721,
+        11,
+        51747
+      ],
+      "avg_logprob": -0.15520036398474849,
+      "compression_ratio": 1.5,
+      "no_speech_prob": 0.14275038242340088,
+      "words": [
+        {
+          "start": 46.68,
+          "end": 47.26,
+          "word": " First,",
+          "probability": 0.9706266522407532
+        },
+        {
+          "start": 47.86,
+          "end": 47.94,
+          "word": " act",
+          "probability": 0.9935397505760193
+        },
+        {
+          "start": 47.94,
+          "end": 48.16,
+          "word": " out",
+          "probability": 0.998513400554657
+        },
+        {
+          "start": 48.16,
+          "end": 48.38,
+          "word": " the",
+          "probability": 0.9973830580711365
+        },
+        {
+          "start": 48.38,
+          "end": 48.68,
+          "word": " story",
+          "probability": 0.9965378046035767
+        },
+        {
+          "start": 48.68,
+          "end": 49.14,
+          "word": " without",
+          "probability": 0.9949210286140442
+        },
+        {
+          "start": 49.14,
+          "end": 49.6,
+          "word": " stopping.",
+          "probability": 0.9973810315132141
+        },
+        {
+          "start": 50.5,
+          "end": 50.72,
+          "word": " Pay",
+          "probability": 0.9927331209182739
+        },
+        {
+          "start": 50.72,
+          "end": 51.02,
+          "word": " attention",
+          "probability": 0.9996434450149536
+        },
+        {
+          "start": 51.02,
+          "end": 51.32,
+          "word": " to",
+          "probability": 0.9987515211105347
+        },
+        {
+          "start": 51.32,
+          "end": 51.54,
+          "word": " the",
+          "probability": 0.9958398342132568
+        },
+        {
+          "start": 51.54,
+          "end": 51.8,
+          "word": " dialogue,",
+          "probability": 0.8547481894493103
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 7,
+      "seek": 5180,
+      "start": 51.8,
+      "end": 59.2,
+      "text": " flow, plotline, and chronology of the story. Make sure you do not skip acting",
+      "tokens": [
+        50363,
+        5202,
+        11,
+        7110,
+        1370,
+        11,
+        290,
+        16199,
+        1435,
+        286,
+        262,
+        1621,
+        13,
+        6889,
+        1654,
+        345,
+        466,
+        407,
+        14267,
+        7205,
+        50733
+      ],
+      "avg_logprob": -0.26792433395467957,
+      "compression_ratio": 1.5202702702702702,
+      "no_speech_prob": 0.09790734946727753,
+      "words": [
+        {
+          "start": 51.8,
+          "end": 52.88,
+          "word": " flow,",
+          "probability": 0.03632092848420143
+        },
+        {
+          "start": 53.42,
+          "end": 54.18,
+          "word": " plotline,",
+          "probability": 0.7336896806955338
+        },
+        {
+          "start": 54.6,
+          "end": 54.74,
+          "word": " and",
+          "probability": 0.9908592104911804
+        },
+        {
+          "start": 54.74,
+          "end": 55.26,
+          "word": " chronology",
+          "probability": 0.9974327981472015
+        },
+        {
+          "start": 55.26,
+          "end": 55.5,
+          "word": " of",
+          "probability": 0.981755256652832
+        },
+        {
+          "start": 55.5,
+          "end": 55.7,
+          "word": " the",
+          "probability": 0.9963483214378357
+        },
+        {
+          "start": 55.7,
+          "end": 56.26,
+          "word": " story.",
+          "probability": 0.9907830953598022
+        },
+        {
+          "start": 57.24,
+          "end": 57.56,
+          "word": " Make",
+          "probability": 0.9748611450195312
+        },
+        {
+          "start": 57.56,
+          "end": 57.88,
+          "word": " sure",
+          "probability": 0.9994409680366516
+        },
+        {
+          "start": 57.88,
+          "end": 58.0,
+          "word": " you",
+          "probability": 0.9912111163139343
+        },
+        {
+          "start": 58.0,
+          "end": 58.16,
+          "word": " do",
+          "probability": 0.9321852326393127
+        },
+        {
+          "start": 58.16,
+          "end": 58.48,
+          "word": " not",
+          "probability": 0.9945153594017029
+        },
+        {
+          "start": 58.48,
+          "end": 58.84,
+          "word": " skip",
+          "probability": 0.9954921007156372
+        },
+        {
+          "start": 58.84,
+          "end": 59.2,
+          "word": " acting",
+          "probability": 0.9743263721466064
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 8,
+      "seek": 5180,
+      "start": 59.2,
+      "end": 64.42,
+      "text": " out the difficult or important parts of the story. Help each other remember",
+      "tokens": [
+        50733,
+        503,
+        262,
+        2408,
+        393,
+        1593,
+        3354,
+        286,
+        262,
+        1621,
+        13,
+        10478,
+        1123,
+        584,
+        3505,
+        50991
+      ],
+      "avg_logprob": -0.26792433395467957,
+      "compression_ratio": 1.5202702702702702,
+      "no_speech_prob": 0.09790734946727753,
+      "words": [
+        {
+          "start": 59.2,
+          "end": 59.42,
+          "word": " out",
+          "probability": 0.9947191476821899
+        },
+        {
+          "start": 59.42,
+          "end": 59.7,
+          "word": " the",
+          "probability": 0.9673371911048889
+        },
+        {
+          "start": 59.7,
+          "end": 60.08,
+          "word": " difficult",
+          "probability": 0.9529375433921814
+        },
+        {
+          "start": 60.08,
+          "end": 60.46,
+          "word": " or",
+          "probability": 0.982056736946106
+        },
+        {
+          "start": 60.46,
+          "end": 60.9,
+          "word": " important",
+          "probability": 0.9973145127296448
+        },
+        {
+          "start": 60.9,
+          "end": 61.3,
+          "word": " parts",
+          "probability": 0.807830274105072
+        },
+        {
+          "start": 61.3,
+          "end": 61.5,
+          "word": " of",
+          "probability": 0.9968528151512146
+        },
+        {
+          "start": 61.5,
+          "end": 61.64,
+          "word": " the",
+          "probability": 0.9981873631477356
+        },
+        {
+          "start": 61.64,
+          "end": 62.12,
+          "word": " story.",
+          "probability": 0.9954061508178711
+        },
+        {
+          "start": 63.18,
+          "end": 63.44,
+          "word": " Help",
+          "probability": 0.9928072690963745
+        },
+        {
+          "start": 63.44,
+          "end": 63.7,
+          "word": " each",
+          "probability": 0.9997308850288391
+        },
+        {
+          "start": 63.7,
+          "end": 63.94,
+          "word": " other",
+          "probability": 0.9941814541816711
+        },
+        {
+          "start": 63.94,
+          "end": 64.42,
+          "word": " remember",
+          "probability": 0.9631381630897522
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 9,
+      "seek": 5180,
+      "start": 64.42,
+      "end": 71.32,
+      "text": " every part of the story. Pause this audio here and act out the passage.",
+      "tokens": [
+        50991,
+        790,
+        636,
+        286,
+        262,
+        1621,
+        13,
+        350,
+        682,
+        428,
+        6597,
+        994,
+        290,
+        719,
+        503,
+        262,
+        10066,
+        13,
+        51427
+      ],
+      "avg_logprob": -0.26792433395467957,
+      "compression_ratio": 1.5202702702702702,
+      "no_speech_prob": 0.09790734946727753,
+      "words": [
+        {
+          "start": 64.42,
+          "end": 65.06,
+          "word": " every",
+          "probability": 0.9836432337760925
+        },
+        {
+          "start": 65.06,
+          "end": 65.46,
+          "word": " part",
+          "probability": 0.9972165822982788
+        },
+        {
+          "start": 65.46,
+          "end": 65.66,
+          "word": " of",
+          "probability": 0.9983206391334534
+        },
+        {
+          "start": 65.66,
+          "end": 65.8,
+          "word": " the",
+          "probability": 0.9962071180343628
+        },
+        {
+          "start": 65.8,
+          "end": 66.44,
+          "word": " story.",
+          "probability": 0.9983956217765808
+        },
+        {
+          "start": 67.56,
+          "end": 67.8,
+          "word": " Pause",
+          "probability": 0.8060372769832611
+        },
+        {
+          "start": 67.8,
+          "end": 68.1,
+          "word": " this",
+          "probability": 0.9941653609275818
+        },
+        {
+          "start": 68.1,
+          "end": 68.36,
+          "word": " audio",
+          "probability": 0.9953574538230896
+        },
+        {
+          "start": 68.36,
+          "end": 69.2,
+          "word": " here",
+          "probability": 0.9949363470077515
+        },
+        {
+          "start": 69.2,
+          "end": 69.68,
+          "word": " and",
+          "probability": 0.8260073661804199
+        },
+        {
+          "start": 69.68,
+          "end": 70.0,
+          "word": " act",
+          "probability": 0.9527410864830017
+        },
+        {
+          "start": 70.0,
+          "end": 70.6,
+          "word": " out",
+          "probability": 0.9978703260421753
+        },
+        {
+          "start": 70.6,
+          "end": 70.82,
+          "word": " the",
+          "probability": 0.9965708255767822
+        },
+        {
+          "start": 70.82,
+          "end": 71.32,
+          "word": " passage.",
+          "probability": 0.9942785501480103
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 10,
+      "seek": 7132,
+      "start": 76.54,
+      "end": 80.56,
+      "text": " The group should act out this passage a second time.",
+      "tokens": [
+        50363,
+        383,
+        1448,
+        815,
+        719,
+        503,
+        428,
+        10066,
+        257,
+        1218,
+        640,
+        13,
+        50843
+      ],
+      "avg_logprob": -0.19334608376831622,
+      "compression_ratio": 1.8470588235294119,
+      "no_speech_prob": 0.06454577296972275,
+      "words": [
+        {
+          "start": 76.54,
+          "end": 77.18,
+          "word": " The",
+          "probability": 0.5733751654624939
+        },
+        {
+          "start": 77.18,
+          "end": 77.6,
+          "word": " group",
+          "probability": 0.9764513969421387
+        },
+        {
+          "start": 77.6,
+          "end": 77.94,
+          "word": " should",
+          "probability": 0.9642520546913147
+        },
+        {
+          "start": 77.94,
+          "end": 78.18,
+          "word": " act",
+          "probability": 0.9871059656143188
+        },
+        {
+          "start": 78.18,
+          "end": 78.42,
+          "word": " out",
+          "probability": 0.9860219359397888
+        },
+        {
+          "start": 78.42,
+          "end": 78.64,
+          "word": " this",
+          "probability": 0.9791738986968994
+        },
+        {
+          "start": 78.64,
+          "end": 78.92,
+          "word": " passage",
+          "probability": 0.9857953786849976
+        },
+        {
+          "start": 78.92,
+          "end": 79.24,
+          "word": " a",
+          "probability": 0.9619077444076538
+        },
+        {
+          "start": 79.24,
+          "end": 79.52,
+          "word": " second",
+          "probability": 0.9864973425865173
+        },
+        {
+          "start": 79.52,
+          "end": 80.56,
+          "word": " time.",
+          "probability": 0.998330295085907
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 11,
+      "seek": 7132,
+      "start": 80.86,
+      "end": 85.76,
+      "text": " At certain points in the drama, pause the drama and ask the person playing the character",
+      "tokens": [
+        50843,
+        1629,
+        1728,
+        2173,
+        287,
+        262,
+        10512,
+        11,
+        14985,
+        262,
+        10512,
+        290,
+        1265,
+        262,
+        1048,
+        2712,
+        262,
+        2095,
+        51119
+      ],
+      "avg_logprob": -0.19334608376831622,
+      "compression_ratio": 1.8470588235294119,
+      "no_speech_prob": 0.06454577296972275,
+      "words": [
+        {
+          "start": 80.86,
+          "end": 81.14,
+          "word": " At",
+          "probability": 0.9576365351676941
+        },
+        {
+          "start": 81.14,
+          "end": 81.5,
+          "word": " certain",
+          "probability": 0.9777438640594482
+        },
+        {
+          "start": 81.5,
+          "end": 81.84,
+          "word": " points",
+          "probability": 0.9345334768295288
+        },
+        {
+          "start": 81.84,
+          "end": 82.0,
+          "word": " in",
+          "probability": 0.9931402802467346
+        },
+        {
+          "start": 82.0,
+          "end": 82.14,
+          "word": " the",
+          "probability": 0.993070662021637
+        },
+        {
+          "start": 82.14,
+          "end": 82.46,
+          "word": " drama,",
+          "probability": 0.9351327419281006
+        },
+        {
+          "start": 82.96,
+          "end": 83.16,
+          "word": " pause",
+          "probability": 0.9764977693557739
+        },
+        {
+          "start": 83.16,
+          "end": 83.4,
+          "word": " the",
+          "probability": 0.9978047013282776
+        },
+        {
+          "start": 83.4,
+          "end": 83.64,
+          "word": " drama",
+          "probability": 0.9912593960762024
+        },
+        {
+          "start": 83.64,
+          "end": 83.98,
+          "word": " and",
+          "probability": 0.9195852875709534
+        },
+        {
+          "start": 83.98,
+          "end": 84.28,
+          "word": " ask",
+          "probability": 0.9828761219978333
+        },
+        {
+          "start": 84.28,
+          "end": 84.52,
+          "word": " the",
+          "probability": 0.9948163628578186
+        },
+        {
+          "start": 84.52,
+          "end": 84.84,
+          "word": " person",
+          "probability": 0.998955249786377
+        },
+        {
+          "start": 84.84,
+          "end": 85.2,
+          "word": " playing",
+          "probability": 0.9844986796379089
+        },
+        {
+          "start": 85.2,
+          "end": 85.44,
+          "word": " the",
+          "probability": 0.9960085153579712
+        },
+        {
+          "start": 85.44,
+          "end": 85.76,
+          "word": " character",
+          "probability": 0.9987950325012207
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 12,
+      "seek": 7132,
+      "start": 86.44000000000001,
+      "end": 88.52,
+      "text": " what are you feeling or thinking?",
+      "tokens": [
+        51119,
+        644,
+        389,
+        345,
+        4203,
+        393,
+        3612,
+        30,
+        51283
+      ],
+      "avg_logprob": -0.19334608376831622,
+      "compression_ratio": 1.8470588235294119,
+      "no_speech_prob": 0.06454577296972275,
+      "words": [
+        {
+          "start": 86.41999999999999,
+          "end": 86.74,
+          "word": " what",
+          "probability": 0.2653267979621887
+        },
+        {
+          "start": 86.74,
+          "end": 86.94,
+          "word": " are",
+          "probability": 0.9778895974159241
+        },
+        {
+          "start": 86.94,
+          "end": 87.16,
+          "word": " you",
+          "probability": 0.9737633466720581
+        },
+        {
+          "start": 87.16,
+          "end": 87.52,
+          "word": " feeling",
+          "probability": 0.9873019456863403
+        },
+        {
+          "start": 87.52,
+          "end": 87.96,
+          "word": " or",
+          "probability": 0.9094355702400208
+        },
+        {
+          "start": 87.96,
+          "end": 88.52,
+          "word": " thinking?",
+          "probability": 0.9963183403015137
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 13,
+      "seek": 7132,
+      "start": 89.72,
+      "end": 94.08,
+      "text": " The person playing the character should answer what they would be feeling or thinking if",
+      "tokens": [
+        51283,
+        383,
+        1048,
+        2712,
+        262,
+        2095,
+        815,
+        3280,
+        644,
+        484,
+        561,
+        307,
+        4203,
+        393,
+        3612,
+        611,
+        51491
+      ],
+      "avg_logprob": -0.19334608376831622,
+      "compression_ratio": 1.8470588235294119,
+      "no_speech_prob": 0.06454577296972275,
+      "words": [
+        {
+          "start": 89.72,
+          "end": 89.88,
+          "word": " The",
+          "probability": 0.9611270427703857
+        },
+        {
+          "start": 89.88,
+          "end": 90.2,
+          "word": " person",
+          "probability": 0.99801105260849
+        },
+        {
+          "start": 90.2,
+          "end": 90.5,
+          "word": " playing",
+          "probability": 0.9926493763923645
+        },
+        {
+          "start": 90.5,
+          "end": 90.9,
+          "word": " the",
+          "probability": 0.9951626062393188
+        },
+        {
+          "start": 90.9,
+          "end": 91.06,
+          "word": " character",
+          "probability": 0.99581378698349
+        },
+        {
+          "start": 91.06,
+          "end": 91.34,
+          "word": " should",
+          "probability": 0.9905407428741455
+        },
+        {
+          "start": 91.34,
+          "end": 91.66,
+          "word": " answer",
+          "probability": 0.993569016456604
+        },
+        {
+          "start": 91.66,
+          "end": 91.96,
+          "word": " what",
+          "probability": 0.9856296181678772
+        },
+        {
+          "start": 91.96,
+          "end": 92.28,
+          "word": " they",
+          "probability": 0.9951837658882141
+        },
+        {
+          "start": 92.28,
+          "end": 92.46,
+          "word": " would",
+          "probability": 0.9916068315505981
+        },
+        {
+          "start": 92.46,
+          "end": 92.78,
+          "word": " be",
+          "probability": 0.9956707954406738
+        },
+        {
+          "start": 92.78,
+          "end": 93.06,
+          "word": " feeling",
+          "probability": 0.9927099943161011
+        },
+        {
+          "start": 93.06,
+          "end": 93.28,
+          "word": " or",
+          "probability": 0.9505000710487366
+        },
+        {
+          "start": 93.28,
+          "end": 93.7,
+          "word": " thinking",
+          "probability": 0.997312068939209
+        },
+        {
+          "start": 93.7,
+          "end": 94.08,
+          "word": " if",
+          "probability": 0.971318781375885
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 14,
+      "seek": 7132,
+      "start": 94.08,
+      "end": 95.6,
+      "text": " they were that character.",
+      "tokens": [
+        51491,
+        484,
+        547,
+        326,
+        2095,
+        13,
+        51621
+      ],
+      "avg_logprob": -0.19334608376831622,
+      "compression_ratio": 1.8470588235294119,
+      "no_speech_prob": 0.06454577296972275,
+      "words": [
+        {
+          "start": 94.08,
+          "end": 94.4,
+          "word": " they",
+          "probability": 0.9962161183357239
+        },
+        {
+          "start": 94.4,
+          "end": 94.62,
+          "word": " were",
+          "probability": 0.9979639053344727
+        },
+        {
+          "start": 94.62,
+          "end": 94.94,
+          "word": " that",
+          "probability": 0.9886921644210815
+        },
+        {
+          "start": 94.94,
+          "end": 95.6,
+          "word": " character.",
+          "probability": 0.9982579350471497
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 15,
+      "seek": 7132,
+      "start": 96.32,
+      "end": 98.1,
+      "text": " Then restart the drama.",
+      "tokens": [
+        51621,
+        3244,
+        15765,
+        262,
+        10512,
+        13,
+        51767
+      ],
+      "avg_logprob": -0.19334608376831622,
+      "compression_ratio": 1.8470588235294119,
+      "no_speech_prob": 0.06454577296972275,
+      "words": [
+        {
+          "start": 96.32,
+          "end": 96.62,
+          "word": " Then",
+          "probability": 0.9851945042610168
+        },
+        {
+          "start": 96.62,
+          "end": 97.02,
+          "word": " restart",
+          "probability": 0.9685741066932678
+        },
+        {
+          "start": 97.02,
+          "end": 98.1,
+          "word": " the",
+          "probability": 0.9978488683700562
+        },
+        {
+          "start": 98.1,
+          "end": 98.1,
+          "word": " drama.",
+          "probability": 0.9958971738815308
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 16,
+      "seek": 9810,
+      "start": 98.1,
+      "end": 105.44,
+      "text": " Pause this audio here and act out the passage a second time.",
+      "tokens": [
+        50363,
+        350,
+        682,
+        428,
+        6597,
+        994,
+        290,
+        719,
+        503,
+        262,
+        10066,
+        257,
+        1218,
+        640,
+        13,
+        50871
+      ],
+      "avg_logprob": -0.20384062369984965,
+      "compression_ratio": 1.5119047619047619,
+      "no_speech_prob": 0.07138487696647644,
+      "words": [
+        {
+          "start": 98.1,
+          "end": 99.46,
+          "word": " Pause",
+          "probability": 0.7474202811717987
+        },
+        {
+          "start": 99.46,
+          "end": 99.78,
+          "word": " this",
+          "probability": 0.9901464581489563
+        },
+        {
+          "start": 99.78,
+          "end": 100.0,
+          "word": " audio",
+          "probability": 0.9890745282173157
+        },
+        {
+          "start": 100.0,
+          "end": 100.82,
+          "word": " here",
+          "probability": 0.9908209443092346
+        },
+        {
+          "start": 100.82,
+          "end": 101.3,
+          "word": " and",
+          "probability": 0.8056649565696716
+        },
+        {
+          "start": 101.3,
+          "end": 101.56,
+          "word": " act",
+          "probability": 0.7942987084388733
+        },
+        {
+          "start": 101.56,
+          "end": 101.78,
+          "word": " out",
+          "probability": 0.995469331741333
+        },
+        {
+          "start": 101.78,
+          "end": 102.08,
+          "word": " the",
+          "probability": 0.9960018992424011
+        },
+        {
+          "start": 102.08,
+          "end": 102.4,
+          "word": " passage",
+          "probability": 0.9861512780189514
+        },
+        {
+          "start": 102.4,
+          "end": 102.96,
+          "word": " a",
+          "probability": 0.8802022933959961
+        },
+        {
+          "start": 102.96,
+          "end": 103.36,
+          "word": " second",
+          "probability": 0.9743185639381409
+        },
+        {
+          "start": 103.36,
+          "end": 105.44,
+          "word": " time.",
+          "probability": 0.9967740178108215
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 17,
+      "seek": 9810,
+      "start": 108.24,
+      "end": 112.1,
+      "text": " The following is an example of the drama and possible responses.",
+      "tokens": [
+        50871,
+        383,
+        1708,
+        318,
+        281,
+        1672,
+        286,
+        262,
+        10512,
+        290,
+        1744,
+        9109,
+        13,
+        51129
+      ],
+      "avg_logprob": -0.20384062369984965,
+      "compression_ratio": 1.5119047619047619,
+      "no_speech_prob": 0.07138487696647644,
+      "words": [
+        {
+          "start": 108.24,
+          "end": 108.42,
+          "word": " The",
+          "probability": 0.947382390499115
+        },
+        {
+          "start": 108.42,
+          "end": 108.78,
+          "word": " following",
+          "probability": 0.9943021535873413
+        },
+        {
+          "start": 108.78,
+          "end": 109.34,
+          "word": " is",
+          "probability": 0.994316041469574
+        },
+        {
+          "start": 109.34,
+          "end": 109.48,
+          "word": " an",
+          "probability": 0.9977715015411377
+        },
+        {
+          "start": 109.48,
+          "end": 109.84,
+          "word": " example",
+          "probability": 0.9990450739860535
+        },
+        {
+          "start": 109.84,
+          "end": 110.08,
+          "word": " of",
+          "probability": 0.9963156580924988
+        },
+        {
+          "start": 110.08,
+          "end": 110.24,
+          "word": " the",
+          "probability": 0.9819633960723877
+        },
+        {
+          "start": 110.24,
+          "end": 110.48,
+          "word": " drama",
+          "probability": 0.9809337258338928
+        },
+        {
+          "start": 110.48,
+          "end": 110.82,
+          "word": " and",
+          "probability": 0.9782125353813171
+        },
+        {
+          "start": 110.82,
+          "end": 111.3,
+          "word": " possible",
+          "probability": 0.9951747059822083
+        },
+        {
+          "start": 111.3,
+          "end": 112.1,
+          "word": " responses.",
+          "probability": 0.9963008165359497
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 18,
+      "seek": 9810,
+      "start": 113.48,
+      "end": 115.94,
+      "text": " The beginning scene of this story sets the background.",
+      "tokens": [
+        51129,
+        383,
+        3726,
+        3715,
+        286,
+        428,
+        1621,
+        5621,
+        262,
+        4469,
+        13,
+        51309
+      ],
+      "avg_logprob": -0.20384062369984965,
+      "compression_ratio": 1.5119047619047619,
+      "no_speech_prob": 0.07138487696647644,
+      "words": [
+        {
+          "start": 113.48,
+          "end": 113.58,
+          "word": " The",
+          "probability": 0.9820687174797058
+        },
+        {
+          "start": 113.58,
+          "end": 113.86,
+          "word": " beginning",
+          "probability": 0.9945229291915894
+        },
+        {
+          "start": 113.86,
+          "end": 114.26,
+          "word": " scene",
+          "probability": 0.9809641242027283
+        },
+        {
+          "start": 114.26,
+          "end": 114.36,
+          "word": " of",
+          "probability": 0.9968560934066772
+        },
+        {
+          "start": 114.36,
+          "end": 114.62,
+          "word": " this",
+          "probability": 0.9864543080329895
+        },
+        {
+          "start": 114.62,
+          "end": 114.98,
+          "word": " story",
+          "probability": 0.9970635771751404
+        },
+        {
+          "start": 114.98,
+          "end": 115.3,
+          "word": " sets",
+          "probability": 0.9912868142127991
+        },
+        {
+          "start": 115.3,
+          "end": 115.52,
+          "word": " the",
+          "probability": 0.9965067505836487
+        },
+        {
+          "start": 115.52,
+          "end": 115.94,
+          "word": " background.",
+          "probability": 0.998936116695404
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 19,
+      "seek": 9810,
+      "start": 116.96,
+      "end": 119.02,
+      "text": " This story happens in the wilderness.",
+      "tokens": [
+        51309,
+        770,
+        1621,
+        4325,
+        287,
+        262,
+        22775,
+        13,
+        51447
+      ],
+      "avg_logprob": -0.20384062369984965,
+      "compression_ratio": 1.5119047619047619,
+      "no_speech_prob": 0.07138487696647644,
+      "words": [
+        {
+          "start": 116.96,
+          "end": 117.24,
+          "word": " This",
+          "probability": 0.9911162853240967
+        },
+        {
+          "start": 117.24,
+          "end": 117.6,
+          "word": " story",
+          "probability": 0.9977568984031677
+        },
+        {
+          "start": 117.6,
+          "end": 118.06,
+          "word": " happens",
+          "probability": 0.9962434768676758
+        },
+        {
+          "start": 118.06,
+          "end": 118.34,
+          "word": " in",
+          "probability": 0.9977176189422607
+        },
+        {
+          "start": 118.34,
+          "end": 118.58,
+          "word": " the",
+          "probability": 0.8400587439537048
+        },
+        {
+          "start": 118.58,
+          "end": 119.02,
+          "word": " wilderness.",
+          "probability": 0.9825066924095154
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 20,
+      "seek": 9810,
+      "start": 119.8,
+      "end": 121.7,
+      "text": " It is the fulfillment of Scripture.",
+      "tokens": [
+        51447,
+        632,
+        318,
+        262,
+        32402,
+        286,
+        25595,
+        13,
+        51611
+      ],
+      "avg_logprob": -0.20384062369984965,
+      "compression_ratio": 1.5119047619047619,
+      "no_speech_prob": 0.07138487696647644,
+      "words": [
+        {
+          "start": 119.8,
+          "end": 119.9,
+          "word": " It",
+          "probability": 0.9902876615524292
+        },
+        {
+          "start": 119.9,
+          "end": 120.1,
+          "word": " is",
+          "probability": 0.9863196015357971
+        },
+        {
+          "start": 120.1,
+          "end": 120.32,
+          "word": " the",
+          "probability": 0.996320366859436
+        },
+        {
+          "start": 120.32,
+          "end": 120.74,
+          "word": " fulfillment",
+          "probability": 0.8542036414146423
+        },
+        {
+          "start": 120.74,
+          "end": 121.14,
+          "word": " of",
+          "probability": 0.9993283748626709
+        },
+        {
+          "start": 121.14,
+          "end": 121.7,
+          "word": " Scripture.",
+          "probability": 0.6545326113700867
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 21,
+      "seek": 12170,
+      "start": 121.7,
+      "end": 128.02,
+      "text": " Act out John telling the crowd to be baptized, to turn away from their old ways of living",
+      "tokens": [
+        50363,
+        2191,
+        503,
+        1757,
+        5149,
+        262,
+        4315,
+        284,
+        307,
+        40357,
+        11,
+        284,
+        1210,
+        1497,
+        422,
+        511,
+        1468,
+        2842,
+        286,
+        2877,
+        50675
+      ],
+      "avg_logprob": -0.2709206802977456,
+      "compression_ratio": 1.5885167464114833,
+      "no_speech_prob": 0.14337463676929474,
+      "words": [
+        {
+          "start": 121.7,
+          "end": 122.94,
+          "word": " Act",
+          "probability": 0.5541622638702393
+        },
+        {
+          "start": 122.94,
+          "end": 123.32,
+          "word": " out",
+          "probability": 0.996623158454895
+        },
+        {
+          "start": 123.32,
+          "end": 123.64,
+          "word": " John",
+          "probability": 0.9093874096870422
+        },
+        {
+          "start": 123.64,
+          "end": 124.04,
+          "word": " telling",
+          "probability": 0.8274816870689392
+        },
+        {
+          "start": 124.04,
+          "end": 124.3,
+          "word": " the",
+          "probability": 0.9922221302986145
+        },
+        {
+          "start": 124.3,
+          "end": 124.56,
+          "word": " crowd",
+          "probability": 0.9566842913627625
+        },
+        {
+          "start": 124.56,
+          "end": 124.76,
+          "word": " to",
+          "probability": 0.9958096742630005
+        },
+        {
+          "start": 124.76,
+          "end": 124.9,
+          "word": " be",
+          "probability": 0.9929841756820679
+        },
+        {
+          "start": 124.9,
+          "end": 125.46,
+          "word": " baptized,",
+          "probability": 0.904356837272644
+        },
+        {
+          "start": 125.92,
+          "end": 126.18,
+          "word": " to",
+          "probability": 0.9319066405296326
+        },
+        {
+          "start": 126.18,
+          "end": 126.42,
+          "word": " turn",
+          "probability": 0.9968026876449585
+        },
+        {
+          "start": 126.42,
+          "end": 126.72,
+          "word": " away",
+          "probability": 0.9989266991615295
+        },
+        {
+          "start": 126.72,
+          "end": 126.92,
+          "word": " from",
+          "probability": 0.9979717135429382
+        },
+        {
+          "start": 126.92,
+          "end": 127.1,
+          "word": " their",
+          "probability": 0.9794910550117493
+        },
+        {
+          "start": 127.1,
+          "end": 127.32,
+          "word": " old",
+          "probability": 0.9911172389984131
+        },
+        {
+          "start": 127.32,
+          "end": 127.54,
+          "word": " ways",
+          "probability": 0.9922159314155579
+        },
+        {
+          "start": 127.54,
+          "end": 127.7,
+          "word": " of",
+          "probability": 0.9984560012817383
+        },
+        {
+          "start": 127.7,
+          "end": 128.02,
+          "word": " living",
+          "probability": 0.9988657236099243
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 22,
+      "seek": 12170,
+      "start": 128.02,
+      "end": 131.8,
+      "text": " and to follow God and be forgiven for their sins.",
+      "tokens": [
+        50675,
+        290,
+        284,
+        1061,
+        1793,
+        290,
+        307,
+        32350,
+        329,
+        511,
+        18377,
+        13,
+        50963
+      ],
+      "avg_logprob": -0.2709206802977456,
+      "compression_ratio": 1.5885167464114833,
+      "no_speech_prob": 0.14337463676929474,
+      "words": [
+        {
+          "start": 128.02,
+          "end": 128.34,
+          "word": " and",
+          "probability": 0.7642056345939636
+        },
+        {
+          "start": 128.34,
+          "end": 128.52,
+          "word": " to",
+          "probability": 0.9899595975875854
+        },
+        {
+          "start": 128.52,
+          "end": 128.76,
+          "word": " follow",
+          "probability": 0.9922018051147461
+        },
+        {
+          "start": 128.76,
+          "end": 129.4,
+          "word": " God",
+          "probability": 0.9902452230453491
+        },
+        {
+          "start": 129.4,
+          "end": 129.6,
+          "word": " and",
+          "probability": 0.8254585862159729
+        },
+        {
+          "start": 129.6,
+          "end": 129.78,
+          "word": " be",
+          "probability": 0.9924173355102539
+        },
+        {
+          "start": 129.78,
+          "end": 130.2,
+          "word": " forgiven",
+          "probability": 0.996437668800354
+        },
+        {
+          "start": 130.2,
+          "end": 130.82,
+          "word": " for",
+          "probability": 0.9866297245025635
+        },
+        {
+          "start": 130.82,
+          "end": 131.08,
+          "word": " their",
+          "probability": 0.9962463974952698
+        },
+        {
+          "start": 131.08,
+          "end": 131.8,
+          "word": " sins.",
+          "probability": 0.9984233379364014
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 23,
+      "seek": 12170,
+      "start": 133.52,
+      "end": 134.44,
+      "text": " Pause the drama.",
+      "tokens": [
+        50963,
+        350,
+        682,
+        262,
+        10512,
+        13,
+        51083
+      ],
+      "avg_logprob": -0.2709206802977456,
+      "compression_ratio": 1.5885167464114833,
+      "no_speech_prob": 0.14337463676929474,
+      "words": [
+        {
+          "start": 133.52,
+          "end": 133.86,
+          "word": " Pause",
+          "probability": 0.8989674150943756
+        },
+        {
+          "start": 133.86,
+          "end": 134.12,
+          "word": " the",
+          "probability": 0.994297444820404
+        },
+        {
+          "start": 134.12,
+          "end": 134.44,
+          "word": " drama.",
+          "probability": 0.911491334438324
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 24,
+      "seek": 12170,
+      "start": 135.88,
+      "end": 137.76,
+      "text": " Ask the people playing the crowd.",
+      "tokens": [
+        51083,
+        16981,
+        262,
+        661,
+        2712,
+        262,
+        4315,
+        13,
+        51203
+      ],
+      "avg_logprob": -0.2709206802977456,
+      "compression_ratio": 1.5885167464114833,
+      "no_speech_prob": 0.14337463676929474,
+      "words": [
+        {
+          "start": 135.88,
+          "end": 136.2,
+          "word": " Ask",
+          "probability": 0.9501010179519653
+        },
+        {
+          "start": 136.2,
+          "end": 136.44,
+          "word": " the",
+          "probability": 0.9916808009147644
+        },
+        {
+          "start": 136.44,
+          "end": 136.8,
+          "word": " people",
+          "probability": 0.996492326259613
+        },
+        {
+          "start": 136.8,
+          "end": 137.12,
+          "word": " playing",
+          "probability": 0.98850017786026
+        },
+        {
+          "start": 137.12,
+          "end": 137.38,
+          "word": " the",
+          "probability": 0.998227059841156
+        },
+        {
+          "start": 137.38,
+          "end": 137.76,
+          "word": " crowd.",
+          "probability": 0.9962397813796997
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 25,
+      "seek": 12170,
+      "start": 138.46,
+      "end": 139.86,
+      "text": " What are you feeling of thinking?",
+      "tokens": [
+        51203,
+        1867,
+        389,
+        345,
+        4203,
+        286,
+        3612,
+        30,
+        51311
+      ],
+      "avg_logprob": -0.2709206802977456,
+      "compression_ratio": 1.5885167464114833,
+      "no_speech_prob": 0.14337463676929474,
+      "words": [
+        {
+          "start": 138.46,
+          "end": 138.68,
+          "word": " What",
+          "probability": 0.9741388559341431
+        },
+        {
+          "start": 138.68,
+          "end": 138.84,
+          "word": " are",
+          "probability": 0.9958947896957397
+        },
+        {
+          "start": 138.84,
+          "end": 139.04,
+          "word": " you",
+          "probability": 0.9961411356925964
+        },
+        {
+          "start": 139.04,
+          "end": 139.32,
+          "word": " feeling",
+          "probability": 0.9929290413856506
+        },
+        {
+          "start": 139.32,
+          "end": 139.54,
+          "word": " of",
+          "probability": 0.4761795699596405
+        },
+        {
+          "start": 139.54,
+          "end": 139.86,
+          "word": " thinking?",
+          "probability": 0.9984242916107178
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 26,
+      "seek": 12170,
+      "start": 140.66,
+      "end": 144.5,
+      "text": " The people might answer things like, can we trust this man?",
+      "tokens": [
+        51311,
+        383,
+        661,
+        1244,
+        3280,
+        1243,
+        588,
+        11,
+        460,
+        356,
+        3774,
+        428,
+        582,
+        30,
+        51533
+      ],
+      "avg_logprob": -0.2709206802977456,
+      "compression_ratio": 1.5885167464114833,
+      "no_speech_prob": 0.14337463676929474,
+      "words": [
+        {
+          "start": 140.66,
+          "end": 140.82,
+          "word": " The",
+          "probability": 0.9744434952735901
+        },
+        {
+          "start": 140.82,
+          "end": 141.2,
+          "word": " people",
+          "probability": 0.99832683801651
+        },
+        {
+          "start": 141.2,
+          "end": 141.48,
+          "word": " might",
+          "probability": 0.5861294269561768
+        },
+        {
+          "start": 141.48,
+          "end": 141.74,
+          "word": " answer",
+          "probability": 0.9912213087081909
+        },
+        {
+          "start": 141.74,
+          "end": 142.06,
+          "word": " things",
+          "probability": 0.9980960488319397
+        },
+        {
+          "start": 142.06,
+          "end": 142.94,
+          "word": " like,",
+          "probability": 0.9980825185775757
+        },
+        {
+          "start": 142.96,
+          "end": 143.16,
+          "word": " can",
+          "probability": 0.3391386866569519
+        },
+        {
+          "start": 143.16,
+          "end": 143.4,
+          "word": " we",
+          "probability": 0.9981946349143982
+        },
+        {
+          "start": 143.4,
+          "end": 143.62,
+          "word": " trust",
+          "probability": 0.9970948696136475
+        },
+        {
+          "start": 143.62,
+          "end": 143.96,
+          "word": " this",
+          "probability": 0.9973350167274475
+        },
+        {
+          "start": 143.96,
+          "end": 144.5,
+          "word": " man?",
+          "probability": 0.9890763759613037
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 27,
+      "seek": 12170,
+      "start": 145.06,
+      "end": 148.34,
+      "text": " Or, I'm excited to be baptized and be forgiven?",
+      "tokens": [
+        51533,
+        1471,
+        11,
+        314,
+        1101,
+        6568,
+        284,
+        307,
+        40357,
+        290,
+        307,
+        32350,
+        30,
+        51743
+      ],
+      "avg_logprob": -0.2709206802977456,
+      "compression_ratio": 1.5885167464114833,
+      "no_speech_prob": 0.14337463676929474,
+      "words": [
+        {
+          "start": 145.06,
+          "end": 145.5,
+          "word": " Or,",
+          "probability": 0.94022136926651
+        },
+        {
+          "start": 145.98,
+          "end": 146.3,
+          "word": " I'm",
+          "probability": 0.9526038467884064
+        },
+        {
+          "start": 146.3,
+          "end": 146.66,
+          "word": " excited",
+          "probability": 0.9976806640625
+        },
+        {
+          "start": 146.66,
+          "end": 146.96,
+          "word": " to",
+          "probability": 0.9991418123245239
+        },
+        {
+          "start": 146.96,
+          "end": 147.04,
+          "word": " be",
+          "probability": 0.9978138208389282
+        },
+        {
+          "start": 147.04,
+          "end": 147.5,
+          "word": " baptized",
+          "probability": 0.9777112603187561
+        },
+        {
+          "start": 147.5,
+          "end": 147.82,
+          "word": " and",
+          "probability": 0.9947835803031921
+        },
+        {
+          "start": 147.82,
+          "end": 147.94,
+          "word": " be",
+          "probability": 0.9926683306694031
+        },
+        {
+          "start": 147.94,
+          "end": 148.34,
+          "word": " forgiven?",
+          "probability": 0.9984707236289978
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 28,
+      "seek": 14834,
+      "start": 148.34,
+      "end": 160.8,
+      "text": " Or is this man a prophet? Or expectant? Is the Messiah going to come soon? Continue the drama.",
+      "tokens": [
+        50363,
+        1471,
+        318,
+        428,
+        582,
+        257,
+        22298,
+        30,
+        1471,
+        1607,
+        415,
+        30,
+        1148,
+        262,
+        38216,
+        1016,
+        284,
+        1282,
+        2582,
+        30,
+        10054,
+        262,
+        10512,
+        13,
+        50905
+      ],
+      "avg_logprob": -0.2584603541139243,
+      "compression_ratio": 1.5195530726256983,
+      "no_speech_prob": 0.3055505156517029,
+      "words": [
+        {
+          "start": 148.34,
+          "end": 149.52,
+          "word": " Or",
+          "probability": 0.24294430017471313
+        },
+        {
+          "start": 149.52,
+          "end": 150.4,
+          "word": " is",
+          "probability": 0.46038636565208435
+        },
+        {
+          "start": 150.4,
+          "end": 150.68,
+          "word": " this",
+          "probability": 0.9878317713737488
+        },
+        {
+          "start": 150.68,
+          "end": 150.88,
+          "word": " man",
+          "probability": 0.8331170678138733
+        },
+        {
+          "start": 150.88,
+          "end": 151.2,
+          "word": " a",
+          "probability": 0.9839539527893066
+        },
+        {
+          "start": 151.2,
+          "end": 151.64,
+          "word": " prophet?",
+          "probability": 0.7283440232276917
+        },
+        {
+          "start": 153.38,
+          "end": 153.38,
+          "word": " Or",
+          "probability": 0.8989014029502869
+        },
+        {
+          "start": 153.38,
+          "end": 154.68,
+          "word": " expectant?",
+          "probability": 0.8589612543582916
+        },
+        {
+          "start": 154.9,
+          "end": 155.1,
+          "word": " Is",
+          "probability": 0.9320015907287598
+        },
+        {
+          "start": 155.1,
+          "end": 155.36,
+          "word": " the",
+          "probability": 0.9850935935974121
+        },
+        {
+          "start": 155.36,
+          "end": 155.64,
+          "word": " Messiah",
+          "probability": 0.9692394137382507
+        },
+        {
+          "start": 155.64,
+          "end": 156.0,
+          "word": " going",
+          "probability": 0.9802282452583313
+        },
+        {
+          "start": 156.0,
+          "end": 156.34,
+          "word": " to",
+          "probability": 0.997989296913147
+        },
+        {
+          "start": 156.34,
+          "end": 156.42,
+          "word": " come",
+          "probability": 0.9797035455703735
+        },
+        {
+          "start": 156.42,
+          "end": 157.44,
+          "word": " soon?",
+          "probability": 0.9969755411148071
+        },
+        {
+          "start": 158.7,
+          "end": 158.7,
+          "word": " Continue",
+          "probability": 0.9224298000335693
+        },
+        {
+          "start": 158.7,
+          "end": 160.8,
+          "word": " the",
+          "probability": 0.9944307208061218
+        },
+        {
+          "start": 160.8,
+          "end": 160.8,
+          "word": " drama.",
+          "probability": 0.9464147686958313
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 29,
+      "seek": 14834,
+      "start": 162.34,
+      "end": 167.54,
+      "text": " Act out John baptising people in the river and the people confessing their sins.",
+      "tokens": [
+        50905,
+        2191,
+        503,
+        1757,
+        20452,
+        1710,
+        661,
+        287,
+        262,
+        7850,
+        290,
+        262,
+        661,
+        22127,
+        278,
+        511,
+        18377,
+        13,
+        51323
+      ],
+      "avg_logprob": -0.2584603541139243,
+      "compression_ratio": 1.5195530726256983,
+      "no_speech_prob": 0.3055505156517029,
+      "words": [
+        {
+          "start": 162.34,
+          "end": 162.64,
+          "word": " Act",
+          "probability": 0.8801398873329163
+        },
+        {
+          "start": 162.64,
+          "end": 163.02,
+          "word": " out",
+          "probability": 0.9959476590156555
+        },
+        {
+          "start": 163.02,
+          "end": 163.48,
+          "word": " John",
+          "probability": 0.9220350980758667
+        },
+        {
+          "start": 163.48,
+          "end": 164.3,
+          "word": " baptising",
+          "probability": 0.7437699437141418
+        },
+        {
+          "start": 164.3,
+          "end": 164.7,
+          "word": " people",
+          "probability": 0.9956762194633484
+        },
+        {
+          "start": 164.7,
+          "end": 164.88,
+          "word": " in",
+          "probability": 0.9968546032905579
+        },
+        {
+          "start": 164.88,
+          "end": 165.06,
+          "word": " the",
+          "probability": 0.9977032542228699
+        },
+        {
+          "start": 165.06,
+          "end": 165.34,
+          "word": " river",
+          "probability": 0.9893903136253357
+        },
+        {
+          "start": 165.34,
+          "end": 165.94,
+          "word": " and",
+          "probability": 0.9005534052848816
+        },
+        {
+          "start": 165.94,
+          "end": 166.16,
+          "word": " the",
+          "probability": 0.9775170087814331
+        },
+        {
+          "start": 166.16,
+          "end": 166.48,
+          "word": " people",
+          "probability": 0.9975087642669678
+        },
+        {
+          "start": 166.48,
+          "end": 167.12,
+          "word": " confessing",
+          "probability": 0.9862687587738037
+        },
+        {
+          "start": 167.12,
+          "end": 167.42,
+          "word": " their",
+          "probability": 0.9968001842498779
+        },
+        {
+          "start": 167.42,
+          "end": 167.76,
+          "word": " sins.",
+          "probability": 0.9993969202041626
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 30,
+      "seek": 14834,
+      "start": 169.73999999999998,
+      "end": 178.12,
+      "text": " Pause the drama. Ask the person playing John. What are you feeling of thinking? The person might",
+      "tokens": [
+        51323,
+        350,
+        682,
+        262,
+        10512,
+        13,
+        16981,
+        262,
+        1048,
+        2712,
+        1757,
+        13,
+        1867,
+        389,
+        345,
+        4203,
+        286,
+        3612,
+        30,
+        383,
+        1048,
+        1244,
+        51843
+      ],
+      "avg_logprob": -0.2584603541139243,
+      "compression_ratio": 1.5195530726256983,
+      "no_speech_prob": 0.3055505156517029,
+      "words": [
+        {
+          "start": 169.73999999999998,
+          "end": 170.42,
+          "word": " Pause",
+          "probability": 0.8774569630622864
+        },
+        {
+          "start": 170.42,
+          "end": 171.1,
+          "word": " the",
+          "probability": 0.9979642629623413
+        },
+        {
+          "start": 171.1,
+          "end": 171.1,
+          "word": " drama.",
+          "probability": 0.9875577688217163
+        },
+        {
+          "start": 172.62,
+          "end": 172.9,
+          "word": " Ask",
+          "probability": 0.8459298014640808
+        },
+        {
+          "start": 172.9,
+          "end": 173.12,
+          "word": " the",
+          "probability": 0.9954498410224915
+        },
+        {
+          "start": 173.12,
+          "end": 173.38,
+          "word": " person",
+          "probability": 0.9983818531036377
+        },
+        {
+          "start": 173.38,
+          "end": 173.78,
+          "word": " playing",
+          "probability": 0.9717583656311035
+        },
+        {
+          "start": 173.78,
+          "end": 174.3,
+          "word": " John.",
+          "probability": 0.9612286686897278
+        },
+        {
+          "start": 174.88,
+          "end": 175.08,
+          "word": " What",
+          "probability": 0.9388420581817627
+        },
+        {
+          "start": 175.08,
+          "end": 175.22,
+          "word": " are",
+          "probability": 0.9858021140098572
+        },
+        {
+          "start": 175.22,
+          "end": 175.4,
+          "word": " you",
+          "probability": 0.995540201663971
+        },
+        {
+          "start": 175.4,
+          "end": 175.72,
+          "word": " feeling",
+          "probability": 0.9902933835983276
+        },
+        {
+          "start": 175.72,
+          "end": 175.96,
+          "word": " of",
+          "probability": 0.9269213676452637
+        },
+        {
+          "start": 175.96,
+          "end": 176.48,
+          "word": " thinking?",
+          "probability": 0.9968256950378418
+        },
+        {
+          "start": 177.26,
+          "end": 177.48,
+          "word": " The",
+          "probability": 0.9870320558547974
+        },
+        {
+          "start": 177.48,
+          "end": 177.84,
+          "word": " person",
+          "probability": 0.996857762336731
+        },
+        {
+          "start": 177.84,
+          "end": 178.12,
+          "word": " might",
+          "probability": 0.9200165867805481
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 31,
+      "seek": 17812,
+      "start": 178.12,
+      "end": 185.34,
+      "text": " to things like, happy to see so many people hearing God's message or surprised at the crowd.",
+      "tokens": [
+        50363,
+        284,
+        1243,
+        588,
+        11,
+        3772,
+        284,
+        766,
+        523,
+        867,
+        661,
+        4854,
+        1793,
+        338,
+        3275,
+        393,
+        6655,
+        379,
+        262,
+        4315,
+        13,
+        50703
+      ],
+      "avg_logprob": -0.17052370267254965,
+      "compression_ratio": 1.5052631578947369,
+      "no_speech_prob": 0.2713315486907959,
+      "words": [
+        {
+          "start": 178.12,
+          "end": 178.44,
+          "word": " to",
+          "probability": 0.20304261147975922
+        },
+        {
+          "start": 178.44,
+          "end": 178.66,
+          "word": " things",
+          "probability": 0.8000389933586121
+        },
+        {
+          "start": 178.66,
+          "end": 179.56,
+          "word": " like,",
+          "probability": 0.9912877678871155
+        },
+        {
+          "start": 179.64,
+          "end": 179.82,
+          "word": " happy",
+          "probability": 0.25157228112220764
+        },
+        {
+          "start": 179.82,
+          "end": 180.06,
+          "word": " to",
+          "probability": 0.997398853302002
+        },
+        {
+          "start": 180.06,
+          "end": 180.32,
+          "word": " see",
+          "probability": 0.9981551766395569
+        },
+        {
+          "start": 180.32,
+          "end": 180.64,
+          "word": " so",
+          "probability": 0.9870492815971375
+        },
+        {
+          "start": 180.64,
+          "end": 180.82,
+          "word": " many",
+          "probability": 0.999006450176239
+        },
+        {
+          "start": 180.82,
+          "end": 181.24,
+          "word": " people",
+          "probability": 0.9981392621994019
+        },
+        {
+          "start": 181.24,
+          "end": 181.58,
+          "word": " hearing",
+          "probability": 0.8510966897010803
+        },
+        {
+          "start": 181.58,
+          "end": 182.04,
+          "word": " God's",
+          "probability": 0.9742630422115326
+        },
+        {
+          "start": 182.04,
+          "end": 182.46,
+          "word": " message",
+          "probability": 0.9942367076873779
+        },
+        {
+          "start": 182.46,
+          "end": 183.78,
+          "word": " or",
+          "probability": 0.5038458108901978
+        },
+        {
+          "start": 183.78,
+          "end": 184.36,
+          "word": " surprised",
+          "probability": 0.89756178855896
+        },
+        {
+          "start": 184.36,
+          "end": 184.64,
+          "word": " at",
+          "probability": 0.998097836971283
+        },
+        {
+          "start": 184.64,
+          "end": 184.76,
+          "word": " the",
+          "probability": 0.9949906468391418
+        },
+        {
+          "start": 184.76,
+          "end": 185.34,
+          "word": " crowd.",
+          "probability": 0.9963717460632324
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 32,
+      "seek": 17812,
+      "start": 187.32,
+      "end": 194.6,
+      "text": " Continue the drama. Act out John telling the crowd that someone is coming who is more powerful",
+      "tokens": [
+        50779,
+        10054,
+        262,
+        10512,
+        13,
+        2191,
+        503,
+        1757,
+        5149,
+        262,
+        4315,
+        326,
+        2130,
+        318,
+        2406,
+        508,
+        318,
+        517,
+        3665,
+        51183
+      ],
+      "avg_logprob": -0.17052370267254965,
+      "compression_ratio": 1.5052631578947369,
+      "no_speech_prob": 0.2713315486907959,
+      "words": [
+        {
+          "start": 187.32,
+          "end": 187.95999999999998,
+          "word": " Continue",
+          "probability": 0.9168055653572083
+        },
+        {
+          "start": 187.95999999999998,
+          "end": 188.6,
+          "word": " the",
+          "probability": 0.993902325630188
+        },
+        {
+          "start": 188.6,
+          "end": 188.6,
+          "word": " drama.",
+          "probability": 0.951679527759552
+        },
+        {
+          "start": 190.24,
+          "end": 190.58,
+          "word": " Act",
+          "probability": 0.944942057132721
+        },
+        {
+          "start": 190.58,
+          "end": 190.98,
+          "word": " out",
+          "probability": 0.9921112060546875
+        },
+        {
+          "start": 190.98,
+          "end": 191.3,
+          "word": " John",
+          "probability": 0.8409865498542786
+        },
+        {
+          "start": 191.3,
+          "end": 191.62,
+          "word": " telling",
+          "probability": 0.9319548010826111
+        },
+        {
+          "start": 191.62,
+          "end": 191.9,
+          "word": " the",
+          "probability": 0.9945120811462402
+        },
+        {
+          "start": 191.9,
+          "end": 192.22,
+          "word": " crowd",
+          "probability": 0.9935156106948853
+        },
+        {
+          "start": 192.22,
+          "end": 192.54,
+          "word": " that",
+          "probability": 0.9867680668830872
+        },
+        {
+          "start": 192.54,
+          "end": 192.8,
+          "word": " someone",
+          "probability": 0.9917889833450317
+        },
+        {
+          "start": 192.8,
+          "end": 193.08,
+          "word": " is",
+          "probability": 0.9961334466934204
+        },
+        {
+          "start": 193.08,
+          "end": 193.46,
+          "word": " coming",
+          "probability": 0.995629072189331
+        },
+        {
+          "start": 193.46,
+          "end": 193.66,
+          "word": " who",
+          "probability": 0.9631333947181702
+        },
+        {
+          "start": 193.66,
+          "end": 193.9,
+          "word": " is",
+          "probability": 0.9950510859489441
+        },
+        {
+          "start": 193.9,
+          "end": 194.26,
+          "word": " more",
+          "probability": 0.9965800642967224
+        },
+        {
+          "start": 194.26,
+          "end": 194.6,
+          "word": " powerful",
+          "probability": 0.9988523721694946
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 33,
+      "seek": 17812,
+      "start": 194.6,
+      "end": 204.52,
+      "text": " than him. He will not baptise with water but with the Holy Spirit. Pause the drama. Ask the people",
+      "tokens": [
+        51183,
+        621,
+        683,
+        13,
+        679,
+        481,
+        407,
+        20452,
+        786,
+        351,
+        1660,
+        475,
+        351,
+        262,
+        7439,
+        7710,
+        13,
+        350,
+        682,
+        262,
+        10512,
+        13,
+        16981,
+        262,
+        661,
+        51679
+      ],
+      "avg_logprob": -0.17052370267254965,
+      "compression_ratio": 1.5052631578947369,
+      "no_speech_prob": 0.2713315486907959,
+      "words": [
+        {
+          "start": 194.6,
+          "end": 194.92,
+          "word": " than",
+          "probability": 0.9961990714073181
+        },
+        {
+          "start": 194.92,
+          "end": 195.56,
+          "word": " him.",
+          "probability": 0.9249189496040344
+        },
+        {
+          "start": 195.98,
+          "end": 196.1,
+          "word": " He",
+          "probability": 0.9920418858528137
+        },
+        {
+          "start": 196.1,
+          "end": 196.28,
+          "word": " will",
+          "probability": 0.9989251494407654
+        },
+        {
+          "start": 196.28,
+          "end": 196.52,
+          "word": " not",
+          "probability": 0.997861921787262
+        },
+        {
+          "start": 196.52,
+          "end": 197.06,
+          "word": " baptise",
+          "probability": 0.7174373269081116
+        },
+        {
+          "start": 197.06,
+          "end": 197.34,
+          "word": " with",
+          "probability": 0.9971545934677124
+        },
+        {
+          "start": 197.34,
+          "end": 197.84,
+          "word": " water",
+          "probability": 0.987250030040741
+        },
+        {
+          "start": 197.84,
+          "end": 198.48,
+          "word": " but",
+          "probability": 0.6554506421089172
+        },
+        {
+          "start": 198.48,
+          "end": 198.72,
+          "word": " with",
+          "probability": 0.9985582232475281
+        },
+        {
+          "start": 198.72,
+          "end": 198.84,
+          "word": " the",
+          "probability": 0.9687170386314392
+        },
+        {
+          "start": 198.84,
+          "end": 199.06,
+          "word": " Holy",
+          "probability": 0.9403696656227112
+        },
+        {
+          "start": 199.06,
+          "end": 199.82,
+          "word": " Spirit.",
+          "probability": 0.9839067459106445
+        },
+        {
+          "start": 201.64,
+          "end": 201.9,
+          "word": " Pause",
+          "probability": 0.8907146453857422
+        },
+        {
+          "start": 201.9,
+          "end": 202.14,
+          "word": " the",
+          "probability": 0.9983727335929871
+        },
+        {
+          "start": 202.14,
+          "end": 202.46,
+          "word": " drama.",
+          "probability": 0.9856496453285217
+        },
+        {
+          "start": 203.88,
+          "end": 204.1,
+          "word": " Ask",
+          "probability": 0.9631403684616089
+        },
+        {
+          "start": 204.1,
+          "end": 204.3,
+          "word": " the",
+          "probability": 0.9957569241523743
+        },
+        {
+          "start": 204.3,
+          "end": 204.52,
+          "word": " people",
+          "probability": 0.9989410042762756
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 34,
+      "seek": 20452,
+      "start": 204.52,
+      "end": 209.48000000000002,
+      "text": " the crowd, what they are feeling or thinking. They might answer with things like,",
+      "tokens": [
+        50363,
+        262,
+        4315,
+        11,
+        644,
+        484,
+        389,
+        4203,
+        393,
+        3612,
+        13,
+        1119,
+        1244,
+        3280,
+        351,
+        1243,
+        588,
+        11,
+        50611
+      ],
+      "avg_logprob": -0.13153696094436207,
+      "compression_ratio": 1.6192660550458715,
+      "no_speech_prob": 0.12189057469367981,
+      "words": [
+        {
+          "start": 204.52,
+          "end": 204.8,
+          "word": " the",
+          "probability": 0.3674200177192688
+        },
+        {
+          "start": 204.8,
+          "end": 205.32,
+          "word": " crowd,",
+          "probability": 0.9823102355003357
+        },
+        {
+          "start": 205.96,
+          "end": 206.02,
+          "word": " what",
+          "probability": 0.9588751196861267
+        },
+        {
+          "start": 206.02,
+          "end": 206.2,
+          "word": " they",
+          "probability": 0.9914757013320923
+        },
+        {
+          "start": 206.2,
+          "end": 206.44,
+          "word": " are",
+          "probability": 0.9826676249504089
+        },
+        {
+          "start": 206.44,
+          "end": 206.82,
+          "word": " feeling",
+          "probability": 0.9854907989501953
+        },
+        {
+          "start": 206.82,
+          "end": 207.08,
+          "word": " or",
+          "probability": 0.908013641834259
+        },
+        {
+          "start": 207.08,
+          "end": 207.52,
+          "word": " thinking.",
+          "probability": 0.9976435303688049
+        },
+        {
+          "start": 208.16,
+          "end": 208.3,
+          "word": " They",
+          "probability": 0.967037558555603
+        },
+        {
+          "start": 208.3,
+          "end": 208.56,
+          "word": " might",
+          "probability": 0.9635980725288391
+        },
+        {
+          "start": 208.56,
+          "end": 208.86,
+          "word": " answer",
+          "probability": 0.993539035320282
+        },
+        {
+          "start": 208.86,
+          "end": 209.1,
+          "word": " with",
+          "probability": 0.9639464616775513
+        },
+        {
+          "start": 209.1,
+          "end": 209.32,
+          "word": " things",
+          "probability": 0.9855731129646301
+        },
+        {
+          "start": 209.32,
+          "end": 209.60999999999999,
+          "word": " like,",
+          "probability": 0.993889331817627
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 35,
+      "seek": 20452,
+      "start": 210.44,
+      "end": 218.02,
+      "text": " when will they come? Or what does it mean to be baptized with the Holy Spirit? Or can we believe",
+      "tokens": [
+        50651,
+        618,
+        481,
+        484,
+        1282,
+        30,
+        1471,
+        644,
+        857,
+        340,
+        1612,
+        284,
+        307,
+        40357,
+        351,
+        262,
+        7439,
+        7710,
+        30,
+        1471,
+        460,
+        356,
+        1975,
+        51035
+      ],
+      "avg_logprob": -0.13153696094436207,
+      "compression_ratio": 1.6192660550458715,
+      "no_speech_prob": 0.12189057469367981,
+      "words": [
+        {
+          "start": 210.44,
+          "end": 210.58,
+          "word": " when",
+          "probability": 0.28951478004455566
+        },
+        {
+          "start": 210.58,
+          "end": 210.8,
+          "word": " will",
+          "probability": 0.9929443001747131
+        },
+        {
+          "start": 210.8,
+          "end": 210.96,
+          "word": " they",
+          "probability": 0.9977399110794067
+        },
+        {
+          "start": 210.96,
+          "end": 211.62,
+          "word": " come?",
+          "probability": 0.9966366291046143
+        },
+        {
+          "start": 212.0,
+          "end": 212.42,
+          "word": " Or",
+          "probability": 0.8314439058303833
+        },
+        {
+          "start": 212.42,
+          "end": 212.86,
+          "word": " what",
+          "probability": 0.6979833841323853
+        },
+        {
+          "start": 212.86,
+          "end": 213.0,
+          "word": " does",
+          "probability": 0.9909343123435974
+        },
+        {
+          "start": 213.0,
+          "end": 213.18,
+          "word": " it",
+          "probability": 0.9973281621932983
+        },
+        {
+          "start": 213.18,
+          "end": 213.48,
+          "word": " mean",
+          "probability": 0.9957011342048645
+        },
+        {
+          "start": 213.48,
+          "end": 213.62,
+          "word": " to",
+          "probability": 0.9952892065048218
+        },
+        {
+          "start": 213.62,
+          "end": 213.84,
+          "word": " be",
+          "probability": 0.9902870655059814
+        },
+        {
+          "start": 213.84,
+          "end": 214.26,
+          "word": " baptized",
+          "probability": 0.769719660282135
+        },
+        {
+          "start": 214.26,
+          "end": 214.6,
+          "word": " with",
+          "probability": 0.9652208685874939
+        },
+        {
+          "start": 214.6,
+          "end": 214.74,
+          "word": " the",
+          "probability": 0.9857471585273743
+        },
+        {
+          "start": 214.74,
+          "end": 214.92,
+          "word": " Holy",
+          "probability": 0.986478865146637
+        },
+        {
+          "start": 214.92,
+          "end": 215.52,
+          "word": " Spirit?",
+          "probability": 0.9844704866409302
+        },
+        {
+          "start": 216.92,
+          "end": 216.92,
+          "word": " Or",
+          "probability": 0.9833884239196777
+        },
+        {
+          "start": 216.92,
+          "end": 217.38,
+          "word": " can",
+          "probability": 0.8618223071098328
+        },
+        {
+          "start": 217.38,
+          "end": 217.64,
+          "word": " we",
+          "probability": 0.9971151351928711
+        },
+        {
+          "start": 217.64,
+          "end": 218.02,
+          "word": " believe",
+          "probability": 0.9951183795928955
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 36,
+      "seek": 20452,
+      "start": 218.02,
+      "end": 225.3,
+      "text": " what John is telling us? Or who is the person who is coming? Continue the drama.",
+      "tokens": [
+        51035,
+        644,
+        1757,
+        318,
+        5149,
+        514,
+        30,
+        1471,
+        508,
+        318,
+        262,
+        1048,
+        508,
+        318,
+        2406,
+        30,
+        10054,
+        262,
+        10512,
+        13,
+        51359
+      ],
+      "avg_logprob": -0.13153696094436207,
+      "compression_ratio": 1.6192660550458715,
+      "no_speech_prob": 0.12189057469367981,
+      "words": [
+        {
+          "start": 218.02,
+          "end": 218.3,
+          "word": " what",
+          "probability": 0.9880451560020447
+        },
+        {
+          "start": 218.3,
+          "end": 218.44,
+          "word": " John",
+          "probability": 0.8369168639183044
+        },
+        {
+          "start": 218.44,
+          "end": 218.62,
+          "word": " is",
+          "probability": 0.9978271126747131
+        },
+        {
+          "start": 218.62,
+          "end": 218.88,
+          "word": " telling",
+          "probability": 0.9988976716995239
+        },
+        {
+          "start": 218.88,
+          "end": 219.7,
+          "word": " us?",
+          "probability": 0.9976713061332703
+        },
+        {
+          "start": 220.44,
+          "end": 220.44,
+          "word": " Or",
+          "probability": 0.9725064039230347
+        },
+        {
+          "start": 220.44,
+          "end": 220.94,
+          "word": " who",
+          "probability": 0.9170759320259094
+        },
+        {
+          "start": 220.94,
+          "end": 221.12,
+          "word": " is",
+          "probability": 0.9964422583580017
+        },
+        {
+          "start": 221.12,
+          "end": 221.32,
+          "word": " the",
+          "probability": 0.9968648552894592
+        },
+        {
+          "start": 221.32,
+          "end": 221.68,
+          "word": " person",
+          "probability": 0.9916623830795288
+        },
+        {
+          "start": 221.68,
+          "end": 221.8,
+          "word": " who",
+          "probability": 0.9861722588539124
+        },
+        {
+          "start": 221.8,
+          "end": 222.0,
+          "word": " is",
+          "probability": 0.9967032074928284
+        },
+        {
+          "start": 222.0,
+          "end": 222.76,
+          "word": " coming?",
+          "probability": 0.9966335892677307
+        },
+        {
+          "start": 223.9,
+          "end": 223.94,
+          "word": " Continue",
+          "probability": 0.9798576235771179
+        },
+        {
+          "start": 223.94,
+          "end": 225.3,
+          "word": " the",
+          "probability": 0.9956795573234558
+        },
+        {
+          "start": 225.3,
+          "end": 225.3,
+          "word": " drama.",
+          "probability": 0.9638299345970154
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 37,
+      "seek": 20452,
+      "start": 226.7,
+      "end": 233.32,
+      "text": " Act out Jesus being baptized by John. Think about how you connect out the sky being torn open",
+      "tokens": [
+        51463,
+        2191,
+        503,
+        5803,
+        852,
+        40357,
+        416,
+        1757,
+        13,
+        11382,
+        546,
+        703,
+        345,
+        2018,
+        503,
+        262,
+        6766,
+        852,
+        12445,
+        1280,
+        51799
+      ],
+      "avg_logprob": -0.13153696094436207,
+      "compression_ratio": 1.6192660550458715,
+      "no_speech_prob": 0.12189057469367981,
+      "words": [
+        {
+          "start": 226.7,
+          "end": 226.98,
+          "word": " Act",
+          "probability": 0.9192655682563782
+        },
+        {
+          "start": 226.98,
+          "end": 227.26,
+          "word": " out",
+          "probability": 0.9820442199707031
+        },
+        {
+          "start": 227.26,
+          "end": 227.56,
+          "word": " Jesus",
+          "probability": 0.9533049464225769
+        },
+        {
+          "start": 227.56,
+          "end": 228.0,
+          "word": " being",
+          "probability": 0.9848509430885315
+        },
+        {
+          "start": 228.0,
+          "end": 228.54,
+          "word": " baptized",
+          "probability": 0.9404115080833435
+        },
+        {
+          "start": 228.54,
+          "end": 229.02,
+          "word": " by",
+          "probability": 0.9970653653144836
+        },
+        {
+          "start": 229.02,
+          "end": 229.48,
+          "word": " John.",
+          "probability": 0.9945277571678162
+        },
+        {
+          "start": 230.06,
+          "end": 230.28,
+          "word": " Think",
+          "probability": 0.9949264526367188
+        },
+        {
+          "start": 230.28,
+          "end": 230.7,
+          "word": " about",
+          "probability": 0.998649537563324
+        },
+        {
+          "start": 230.7,
+          "end": 230.94,
+          "word": " how",
+          "probability": 0.9969801306724548
+        },
+        {
+          "start": 230.94,
+          "end": 231.08,
+          "word": " you",
+          "probability": 0.8460832238197327
+        },
+        {
+          "start": 231.08,
+          "end": 231.4,
+          "word": " connect",
+          "probability": 0.5637057423591614
+        },
+        {
+          "start": 231.4,
+          "end": 231.72,
+          "word": " out",
+          "probability": 0.9701942205429077
+        },
+        {
+          "start": 231.72,
+          "end": 231.98,
+          "word": " the",
+          "probability": 0.9972949624061584
+        },
+        {
+          "start": 231.98,
+          "end": 232.26,
+          "word": " sky",
+          "probability": 0.9950790405273438
+        },
+        {
+          "start": 232.26,
+          "end": 232.68,
+          "word": " being",
+          "probability": 0.9091280102729797
+        },
+        {
+          "start": 232.68,
+          "end": 232.92,
+          "word": " torn",
+          "probability": 0.9909125566482544
+        },
+        {
+          "start": 232.92,
+          "end": 233.32,
+          "word": " open",
+          "probability": 0.9969614148139954
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 38,
+      "seek": 23332,
+      "start": 233.32,
+      "end": 239.23999999999998,
+      "text": " the Holy Spirit coming upon Jesus. Could you use random objects to help you visualize this?",
+      "tokens": [
+        50363,
+        262,
+        7439,
+        7710,
+        2406,
+        2402,
+        5803,
+        13,
+        10347,
+        345,
+        779,
+        4738,
+        5563,
+        284,
+        1037,
+        345,
+        38350,
+        428,
+        30,
+        50659
+      ],
+      "avg_logprob": -0.1624518783613183,
+      "compression_ratio": 1.5042735042735043,
+      "no_speech_prob": 0.08438944071531296,
+      "words": [
+        {
+          "start": 233.32,
+          "end": 233.62,
+          "word": " the",
+          "probability": 0.1343214511871338
+        },
+        {
+          "start": 233.62,
+          "end": 234.0,
+          "word": " Holy",
+          "probability": 0.8828489184379578
+        },
+        {
+          "start": 234.0,
+          "end": 234.42,
+          "word": " Spirit",
+          "probability": 0.9700608253479004
+        },
+        {
+          "start": 234.42,
+          "end": 234.68,
+          "word": " coming",
+          "probability": 0.9886387586593628
+        },
+        {
+          "start": 234.68,
+          "end": 235.08,
+          "word": " upon",
+          "probability": 0.61656653881073
+        },
+        {
+          "start": 235.08,
+          "end": 235.62,
+          "word": " Jesus.",
+          "probability": 0.987972617149353
+        },
+        {
+          "start": 236.7,
+          "end": 236.9,
+          "word": " Could",
+          "probability": 0.8758159279823303
+        },
+        {
+          "start": 236.9,
+          "end": 237.08,
+          "word": " you",
+          "probability": 0.9699777364730835
+        },
+        {
+          "start": 237.08,
+          "end": 237.32,
+          "word": " use",
+          "probability": 0.9937180280685425
+        },
+        {
+          "start": 237.32,
+          "end": 237.64,
+          "word": " random",
+          "probability": 0.9764140248298645
+        },
+        {
+          "start": 237.64,
+          "end": 237.98,
+          "word": " objects",
+          "probability": 0.9952235817909241
+        },
+        {
+          "start": 237.98,
+          "end": 238.24,
+          "word": " to",
+          "probability": 0.9962679743766785
+        },
+        {
+          "start": 238.24,
+          "end": 238.44,
+          "word": " help",
+          "probability": 0.9982105493545532
+        },
+        {
+          "start": 238.44,
+          "end": 238.7,
+          "word": " you",
+          "probability": 0.9900919198989868
+        },
+        {
+          "start": 238.7,
+          "end": 239.0,
+          "word": " visualize",
+          "probability": 0.9261355400085449
+        },
+        {
+          "start": 239.0,
+          "end": 239.28,
+          "word": " this?",
+          "probability": 0.9878771305084229
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 39,
+      "seek": 23332,
+      "start": 240.34,
+      "end": 246.34,
+      "text": " You could tear a piece of cloth into to show the sky openly. Act out God's voice speaking to",
+      "tokens": [
+        50695,
+        921,
+        714,
+        11626,
+        257,
+        3704,
+        286,
+        16270,
+        656,
+        284,
+        905,
+        262,
+        6766,
+        11764,
+        13,
+        2191,
+        503,
+        1793,
+        338,
+        3809,
+        5486,
+        284,
+        51003
+      ],
+      "avg_logprob": -0.1624518783613183,
+      "compression_ratio": 1.5042735042735043,
+      "no_speech_prob": 0.08438944071531296,
+      "words": [
+        {
+          "start": 240.34,
+          "end": 240.42,
+          "word": " You",
+          "probability": 0.9672836661338806
+        },
+        {
+          "start": 240.42,
+          "end": 240.7,
+          "word": " could",
+          "probability": 0.9939630627632141
+        },
+        {
+          "start": 240.7,
+          "end": 240.9,
+          "word": " tear",
+          "probability": 0.4508531987667084
+        },
+        {
+          "start": 240.9,
+          "end": 241.08,
+          "word": " a",
+          "probability": 0.9972983002662659
+        },
+        {
+          "start": 241.08,
+          "end": 241.22,
+          "word": " piece",
+          "probability": 0.9981127977371216
+        },
+        {
+          "start": 241.22,
+          "end": 241.52,
+          "word": " of",
+          "probability": 0.9952817559242249
+        },
+        {
+          "start": 241.52,
+          "end": 241.76,
+          "word": " cloth",
+          "probability": 0.9898221492767334
+        },
+        {
+          "start": 241.76,
+          "end": 242.14,
+          "word": " into",
+          "probability": 0.9389423727989197
+        },
+        {
+          "start": 242.14,
+          "end": 242.42,
+          "word": " to",
+          "probability": 0.9406847357749939
+        },
+        {
+          "start": 242.42,
+          "end": 242.66,
+          "word": " show",
+          "probability": 0.998714804649353
+        },
+        {
+          "start": 242.66,
+          "end": 242.86,
+          "word": " the",
+          "probability": 0.9859536290168762
+        },
+        {
+          "start": 242.86,
+          "end": 243.14,
+          "word": " sky",
+          "probability": 0.98637855052948
+        },
+        {
+          "start": 243.14,
+          "end": 243.78,
+          "word": " openly.",
+          "probability": 0.6013931035995483
+        },
+        {
+          "start": 244.58,
+          "end": 244.82,
+          "word": " Act",
+          "probability": 0.9339406490325928
+        },
+        {
+          "start": 244.82,
+          "end": 245.08,
+          "word": " out",
+          "probability": 0.9773312211036682
+        },
+        {
+          "start": 245.08,
+          "end": 245.42,
+          "word": " God's",
+          "probability": 0.9844086766242981
+        },
+        {
+          "start": 245.42,
+          "end": 245.74,
+          "word": " voice",
+          "probability": 0.9914817810058594
+        },
+        {
+          "start": 245.74,
+          "end": 246.02,
+          "word": " speaking",
+          "probability": 0.9880831837654114
+        },
+        {
+          "start": 246.02,
+          "end": 246.34,
+          "word": " to",
+          "probability": 0.9960054755210876
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 40,
+      "seek": 23332,
+      "start": 246.34,
+      "end": 251.32,
+      "text": " Jesus, telling him that Jesus is his loved son and he is pleased with him.",
+      "tokens": [
+        51003,
+        5803,
+        11,
+        5149,
+        683,
+        326,
+        5803,
+        318,
+        465,
+        6151,
+        3367,
+        290,
+        339,
+        318,
+        10607,
+        351,
+        683,
+        13,
+        51263
+      ],
+      "avg_logprob": -0.1624518783613183,
+      "compression_ratio": 1.5042735042735043,
+      "no_speech_prob": 0.08438944071531296,
+      "words": [
+        {
+          "start": 246.34,
+          "end": 246.76,
+          "word": " Jesus,",
+          "probability": 0.9988874793052673
+        },
+        {
+          "start": 247.22,
+          "end": 247.48,
+          "word": " telling",
+          "probability": 0.9944337010383606
+        },
+        {
+          "start": 247.48,
+          "end": 247.8,
+          "word": " him",
+          "probability": 0.9107972979545593
+        },
+        {
+          "start": 247.8,
+          "end": 248.04,
+          "word": " that",
+          "probability": 0.9605184197425842
+        },
+        {
+          "start": 248.04,
+          "end": 248.3,
+          "word": " Jesus",
+          "probability": 0.996009111404419
+        },
+        {
+          "start": 248.3,
+          "end": 248.6,
+          "word": " is",
+          "probability": 0.8781948685646057
+        },
+        {
+          "start": 248.6,
+          "end": 248.84,
+          "word": " his",
+          "probability": 0.8370926976203918
+        },
+        {
+          "start": 248.84,
+          "end": 249.18,
+          "word": " loved",
+          "probability": 0.8134896159172058
+        },
+        {
+          "start": 249.18,
+          "end": 249.72,
+          "word": " son",
+          "probability": 0.7869898080825806
+        },
+        {
+          "start": 249.72,
+          "end": 250.24,
+          "word": " and",
+          "probability": 0.6446318030357361
+        },
+        {
+          "start": 250.24,
+          "end": 250.44,
+          "word": " he",
+          "probability": 0.9259973168373108
+        },
+        {
+          "start": 250.44,
+          "end": 250.66,
+          "word": " is",
+          "probability": 0.9866535067558289
+        },
+        {
+          "start": 250.66,
+          "end": 251.02,
+          "word": " pleased",
+          "probability": 0.9778245091438293
+        },
+        {
+          "start": 251.02,
+          "end": 251.24,
+          "word": " with",
+          "probability": 0.9987688660621643
+        },
+        {
+          "start": 251.24,
+          "end": 251.52,
+          "word": " him.",
+          "probability": 0.9609920382499695
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 41,
+      "seek": 23332,
+      "start": 252.86,
+      "end": 259.76,
+      "text": " Pause the drama. Ask the person playing John. How are you feeling at this moment? The person",
+      "tokens": [
+        51331,
+        350,
+        682,
+        262,
+        10512,
+        13,
+        16981,
+        262,
+        1048,
+        2712,
+        1757,
+        13,
+        1374,
+        389,
+        345,
+        4203,
+        379,
+        428,
+        2589,
+        30,
+        383,
+        1048,
+        51679
+      ],
+      "avg_logprob": -0.1624518783613183,
+      "compression_ratio": 1.5042735042735043,
+      "no_speech_prob": 0.08438944071531296,
+      "words": [
+        {
+          "start": 252.86,
+          "end": 253.16,
+          "word": " Pause",
+          "probability": 0.8399029672145844
+        },
+        {
+          "start": 253.16,
+          "end": 253.38,
+          "word": " the",
+          "probability": 0.9945776462554932
+        },
+        {
+          "start": 253.38,
+          "end": 253.66,
+          "word": " drama.",
+          "probability": 0.9377987384796143
+        },
+        {
+          "start": 255.0,
+          "end": 255.26,
+          "word": " Ask",
+          "probability": 0.9328296780586243
+        },
+        {
+          "start": 255.26,
+          "end": 255.52,
+          "word": " the",
+          "probability": 0.9963892698287964
+        },
+        {
+          "start": 255.52,
+          "end": 255.78,
+          "word": " person",
+          "probability": 0.9925400614738464
+        },
+        {
+          "start": 255.78,
+          "end": 256.16,
+          "word": " playing",
+          "probability": 0.9850377440452576
+        },
+        {
+          "start": 256.16,
+          "end": 256.54,
+          "word": " John.",
+          "probability": 0.943439245223999
+        },
+        {
+          "start": 257.04,
+          "end": 257.26,
+          "word": " How",
+          "probability": 0.9168128967285156
+        },
+        {
+          "start": 257.26,
+          "end": 257.44,
+          "word": " are",
+          "probability": 0.9901310205459595
+        },
+        {
+          "start": 257.44,
+          "end": 257.64,
+          "word": " you",
+          "probability": 0.9981694221496582
+        },
+        {
+          "start": 257.64,
+          "end": 257.94,
+          "word": " feeling",
+          "probability": 0.9924627542495728
+        },
+        {
+          "start": 257.94,
+          "end": 258.16,
+          "word": " at",
+          "probability": 0.9911605715751648
+        },
+        {
+          "start": 258.16,
+          "end": 258.38,
+          "word": " this",
+          "probability": 0.9984139204025269
+        },
+        {
+          "start": 258.38,
+          "end": 258.78,
+          "word": " moment?",
+          "probability": 0.9994916915893555
+        },
+        {
+          "start": 259.4,
+          "end": 259.5,
+          "word": " The",
+          "probability": 0.9678028225898743
+        },
+        {
+          "start": 259.5,
+          "end": 259.76,
+          "word": " person",
+          "probability": 0.9979050159454346
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 42,
+      "seek": 25976,
+      "start": 259.76,
+      "end": 269.62,
+      "text": " answer unworthy or excited that he is here or amazed or confused. Why does Jesus",
+      "tokens": [
+        50363,
+        3280,
+        49284,
+        393,
+        6568,
+        326,
+        339,
+        318,
+        994,
+        393,
+        24562,
+        393,
+        10416,
+        13,
+        4162,
+        857,
+        5803,
+        50853
+      ],
+      "avg_logprob": -0.22934203694264094,
+      "compression_ratio": 1.4082840236686391,
+      "no_speech_prob": 0.26036959886550903,
+      "words": [
+        {
+          "start": 259.76,
+          "end": 260.72,
+          "word": " answer",
+          "probability": 0.39003071188926697
+        },
+        {
+          "start": 260.72,
+          "end": 261.64,
+          "word": " unworthy",
+          "probability": 0.5122998952865601
+        },
+        {
+          "start": 261.64,
+          "end": 262.94,
+          "word": " or",
+          "probability": 0.881493091583252
+        },
+        {
+          "start": 262.94,
+          "end": 263.68,
+          "word": " excited",
+          "probability": 0.9716057777404785
+        },
+        {
+          "start": 263.68,
+          "end": 264.06,
+          "word": " that",
+          "probability": 0.9605425000190735
+        },
+        {
+          "start": 264.06,
+          "end": 264.2,
+          "word": " he",
+          "probability": 0.8197494745254517
+        },
+        {
+          "start": 264.2,
+          "end": 264.32,
+          "word": " is",
+          "probability": 0.8960173726081848
+        },
+        {
+          "start": 264.32,
+          "end": 265.04,
+          "word": " here",
+          "probability": 0.9936324954032898
+        },
+        {
+          "start": 265.04,
+          "end": 265.86,
+          "word": " or",
+          "probability": 0.741783082485199
+        },
+        {
+          "start": 265.86,
+          "end": 266.44,
+          "word": " amazed",
+          "probability": 0.9940010905265808
+        },
+        {
+          "start": 266.44,
+          "end": 267.72,
+          "word": " or",
+          "probability": 0.9509447813034058
+        },
+        {
+          "start": 267.72,
+          "end": 268.44,
+          "word": " confused.",
+          "probability": 0.9919072389602661
+        },
+        {
+          "start": 269.0,
+          "end": 269.0,
+          "word": " Why",
+          "probability": 0.9390931129455566
+        },
+        {
+          "start": 269.0,
+          "end": 269.24,
+          "word": " does",
+          "probability": 0.9908637404441833
+        },
+        {
+          "start": 269.24,
+          "end": 269.62,
+          "word": " Jesus",
+          "probability": 0.9890843033790588
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 43,
+      "seek": 25976,
+      "start": 269.62,
+      "end": 275.9,
+      "text": " need to be baptized? Ask the person playing God. How are you feeling at this",
+      "tokens": [
+        50853,
+        761,
+        284,
+        307,
+        40357,
+        30,
+        16981,
+        262,
+        1048,
+        2712,
+        1793,
+        13,
+        1374,
+        389,
+        345,
+        4203,
+        379,
+        428,
+        51161
+      ],
+      "avg_logprob": -0.22934203694264094,
+      "compression_ratio": 1.4082840236686391,
+      "no_speech_prob": 0.26036959886550903,
+      "words": [
+        {
+          "start": 269.62,
+          "end": 269.96,
+          "word": " need",
+          "probability": 0.99069744348526
+        },
+        {
+          "start": 269.96,
+          "end": 270.04,
+          "word": " to",
+          "probability": 0.9972780346870422
+        },
+        {
+          "start": 270.04,
+          "end": 270.2,
+          "word": " be",
+          "probability": 0.9973965883255005
+        },
+        {
+          "start": 270.2,
+          "end": 270.78,
+          "word": " baptized?",
+          "probability": 0.7394015192985535
+        },
+        {
+          "start": 272.44,
+          "end": 272.7,
+          "word": " Ask",
+          "probability": 0.785122811794281
+        },
+        {
+          "start": 272.7,
+          "end": 272.9,
+          "word": " the",
+          "probability": 0.9819114804267883
+        },
+        {
+          "start": 272.9,
+          "end": 273.14,
+          "word": " person",
+          "probability": 0.9935083389282227
+        },
+        {
+          "start": 273.14,
+          "end": 273.52,
+          "word": " playing",
+          "probability": 0.8988987803459167
+        },
+        {
+          "start": 273.52,
+          "end": 274.04,
+          "word": " God.",
+          "probability": 0.9504972696304321
+        },
+        {
+          "start": 274.66,
+          "end": 274.74,
+          "word": " How",
+          "probability": 0.9568794369697571
+        },
+        {
+          "start": 274.74,
+          "end": 274.96,
+          "word": " are",
+          "probability": 0.995940089225769
+        },
+        {
+          "start": 274.96,
+          "end": 275.18,
+          "word": " you",
+          "probability": 0.9950331449508667
+        },
+        {
+          "start": 275.18,
+          "end": 275.5,
+          "word": " feeling",
+          "probability": 0.9962018132209778
+        },
+        {
+          "start": 275.5,
+          "end": 275.7,
+          "word": " at",
+          "probability": 0.9882605075836182
+        },
+        {
+          "start": 275.7,
+          "end": 275.9,
+          "word": " this",
+          "probability": 0.9986514449119568
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 44,
+      "seek": 25976,
+      "start": 275.9,
+      "end": 282.36,
+      "text": " moment? The person my answer thinks like, I'm feeling so much love for my son or",
+      "tokens": [
+        51161,
+        2589,
+        30,
+        383,
+        1048,
+        616,
+        3280,
+        6834,
+        588,
+        11,
+        314,
+        1101,
+        4203,
+        523,
+        881,
+        1842,
+        329,
+        616,
+        3367,
+        393,
+        51493
+      ],
+      "avg_logprob": -0.22934203694264094,
+      "compression_ratio": 1.4082840236686391,
+      "no_speech_prob": 0.26036959886550903,
+      "words": [
+        {
+          "start": 275.9,
+          "end": 276.2,
+          "word": " moment?",
+          "probability": 0.9992571473121643
+        },
+        {
+          "start": 276.92,
+          "end": 277.02,
+          "word": " The",
+          "probability": 0.9758036136627197
+        },
+        {
+          "start": 277.02,
+          "end": 277.34,
+          "word": " person",
+          "probability": 0.9980660080909729
+        },
+        {
+          "start": 277.34,
+          "end": 277.62,
+          "word": " my",
+          "probability": 0.4248958230018616
+        },
+        {
+          "start": 277.62,
+          "end": 277.86,
+          "word": " answer",
+          "probability": 0.9604293704032898
+        },
+        {
+          "start": 277.86,
+          "end": 278.18,
+          "word": " thinks",
+          "probability": 0.47040656208992004
+        },
+        {
+          "start": 278.18,
+          "end": 278.96,
+          "word": " like,",
+          "probability": 0.9552994966506958
+        },
+        {
+          "start": 279.16,
+          "end": 279.38,
+          "word": " I'm",
+          "probability": 0.6961234509944916
+        },
+        {
+          "start": 279.38,
+          "end": 279.64,
+          "word": " feeling",
+          "probability": 0.9961368441581726
+        },
+        {
+          "start": 279.64,
+          "end": 280.12,
+          "word": " so",
+          "probability": 0.9982110261917114
+        },
+        {
+          "start": 280.12,
+          "end": 280.36,
+          "word": " much",
+          "probability": 0.9993568062782288
+        },
+        {
+          "start": 280.36,
+          "end": 280.7,
+          "word": " love",
+          "probability": 0.9947697520256042
+        },
+        {
+          "start": 280.7,
+          "end": 280.88,
+          "word": " for",
+          "probability": 0.9768239855766296
+        },
+        {
+          "start": 280.88,
+          "end": 281.18,
+          "word": " my",
+          "probability": 0.9947285056114197
+        },
+        {
+          "start": 281.18,
+          "end": 281.7,
+          "word": " son",
+          "probability": 0.9505673050880432
+        },
+        {
+          "start": 281.7,
+          "end": 282.36,
+          "word": " or",
+          "probability": 0.7909591794013977
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 45,
+      "seek": 28236,
+      "start": 282.36,
+      "end": 289.94,
+      "text": " proud. Ask the person playing Jesus, how are you feeling in this moment? The",
+      "tokens": [
+        50363,
+        6613,
+        13,
+        16981,
+        262,
+        1048,
+        2712,
+        5803,
+        11,
+        703,
+        389,
+        345,
+        4203,
+        287,
+        428,
+        2589,
+        30,
+        383,
+        50735
+      ],
+      "avg_logprob": -0.21617557657392403,
+      "compression_ratio": 1.4366197183098592,
+      "no_speech_prob": 0.3318398892879486,
+      "words": [
+        {
+          "start": 282.36,
+          "end": 283.56,
+          "word": " proud.",
+          "probability": 0.07504922151565552
+        },
+        {
+          "start": 285.26,
+          "end": 285.5,
+          "word": " Ask",
+          "probability": 0.8065099716186523
+        },
+        {
+          "start": 285.5,
+          "end": 285.66,
+          "word": " the",
+          "probability": 0.9496451616287231
+        },
+        {
+          "start": 285.66,
+          "end": 285.94,
+          "word": " person",
+          "probability": 0.9922155737876892
+        },
+        {
+          "start": 285.94,
+          "end": 286.24,
+          "word": " playing",
+          "probability": 0.9366633296012878
+        },
+        {
+          "start": 286.24,
+          "end": 286.74,
+          "word": " Jesus,",
+          "probability": 0.9742133021354675
+        },
+        {
+          "start": 287.2,
+          "end": 287.38,
+          "word": " how",
+          "probability": 0.6055024862289429
+        },
+        {
+          "start": 287.38,
+          "end": 287.48,
+          "word": " are",
+          "probability": 0.989997923374176
+        },
+        {
+          "start": 287.48,
+          "end": 287.66,
+          "word": " you",
+          "probability": 0.9969916343688965
+        },
+        {
+          "start": 287.66,
+          "end": 288.04,
+          "word": " feeling",
+          "probability": 0.9928522706031799
+        },
+        {
+          "start": 288.04,
+          "end": 288.32,
+          "word": " in",
+          "probability": 0.976416289806366
+        },
+        {
+          "start": 288.32,
+          "end": 288.56,
+          "word": " this",
+          "probability": 0.9980851411819458
+        },
+        {
+          "start": 288.56,
+          "end": 288.98,
+          "word": " moment?",
+          "probability": 0.9988681077957153
+        },
+        {
+          "start": 289.86,
+          "end": 289.94,
+          "word": " The",
+          "probability": 0.9484972357749939
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 46,
+      "seek": 28236,
+      "start": 289.94,
+      "end": 296.5,
+      "text": " person might answer things like, so happy to hear God's voice or overwhelm by",
+      "tokens": [
+        50735,
+        1048,
+        1244,
+        3280,
+        1243,
+        588,
+        11,
+        523,
+        3772,
+        284,
+        3285,
+        1793,
+        338,
+        3809,
+        393,
+        43334,
+        416,
+        51065
+      ],
+      "avg_logprob": -0.21617557657392403,
+      "compression_ratio": 1.4366197183098592,
+      "no_speech_prob": 0.3318398892879486,
+      "words": [
+        {
+          "start": 289.94,
+          "end": 290.28,
+          "word": " person",
+          "probability": 0.9974799752235413
+        },
+        {
+          "start": 290.28,
+          "end": 290.6,
+          "word": " might",
+          "probability": 0.9914786219596863
+        },
+        {
+          "start": 290.6,
+          "end": 290.82,
+          "word": " answer",
+          "probability": 0.99716717004776
+        },
+        {
+          "start": 290.82,
+          "end": 291.16,
+          "word": " things",
+          "probability": 0.9962542057037354
+        },
+        {
+          "start": 291.16,
+          "end": 292.08,
+          "word": " like,",
+          "probability": 0.997524082660675
+        },
+        {
+          "start": 292.38,
+          "end": 292.44,
+          "word": " so",
+          "probability": 0.39670851826667786
+        },
+        {
+          "start": 292.44,
+          "end": 292.78,
+          "word": " happy",
+          "probability": 0.9944148063659668
+        },
+        {
+          "start": 292.78,
+          "end": 293.12,
+          "word": " to",
+          "probability": 0.9954050779342651
+        },
+        {
+          "start": 293.12,
+          "end": 293.36,
+          "word": " hear",
+          "probability": 0.9993255138397217
+        },
+        {
+          "start": 293.36,
+          "end": 293.74,
+          "word": " God's",
+          "probability": 0.9941943287849426
+        },
+        {
+          "start": 293.74,
+          "end": 294.22,
+          "word": " voice",
+          "probability": 0.9976937174797058
+        },
+        {
+          "start": 294.22,
+          "end": 295.42,
+          "word": " or",
+          "probability": 0.6269782781600952
+        },
+        {
+          "start": 295.42,
+          "end": 295.98,
+          "word": " overwhelm",
+          "probability": 0.8623147010803223
+        },
+        {
+          "start": 295.98,
+          "end": 296.5,
+          "word": " by",
+          "probability": 0.9820917248725891
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 47,
+      "seek": 28236,
+      "start": 296.5,
+      "end": 305.68,
+      "text": " the task ahead or love. Continue the drama. Finally, act out Jesus going to the",
+      "tokens": [
+        51065,
+        262,
+        4876,
+        4058,
+        393,
+        1842,
+        13,
+        10054,
+        262,
+        10512,
+        13,
+        9461,
+        11,
+        719,
+        503,
+        5803,
+        1016,
+        284,
+        262,
+        51523
+      ],
+      "avg_logprob": -0.21617557657392403,
+      "compression_ratio": 1.4366197183098592,
+      "no_speech_prob": 0.3318398892879486,
+      "words": [
+        {
+          "start": 296.5,
+          "end": 296.76,
+          "word": " the",
+          "probability": 0.9961516261100769
+        },
+        {
+          "start": 296.76,
+          "end": 296.96,
+          "word": " task",
+          "probability": 0.9828500151634216
+        },
+        {
+          "start": 296.96,
+          "end": 297.66,
+          "word": " ahead",
+          "probability": 0.9940615296363831
+        },
+        {
+          "start": 297.66,
+          "end": 298.84,
+          "word": " or",
+          "probability": 0.625382125377655
+        },
+        {
+          "start": 298.84,
+          "end": 299.38,
+          "word": " love.",
+          "probability": 0.54476398229599
+        },
+        {
+          "start": 300.52,
+          "end": 300.72,
+          "word": " Continue",
+          "probability": 0.9719901084899902
+        },
+        {
+          "start": 300.72,
+          "end": 300.98,
+          "word": " the",
+          "probability": 0.9957793951034546
+        },
+        {
+          "start": 300.98,
+          "end": 301.32,
+          "word": " drama.",
+          "probability": 0.9224026203155518
+        },
+        {
+          "start": 303.4,
+          "end": 303.72,
+          "word": " Finally,",
+          "probability": 0.9922520518302917
+        },
+        {
+          "start": 304.26,
+          "end": 304.3,
+          "word": " act",
+          "probability": 0.8439444899559021
+        },
+        {
+          "start": 304.3,
+          "end": 304.62,
+          "word": " out",
+          "probability": 0.9976638555526733
+        },
+        {
+          "start": 304.62,
+          "end": 304.96,
+          "word": " Jesus",
+          "probability": 0.9961383938789368
+        },
+        {
+          "start": 304.96,
+          "end": 305.32,
+          "word": " going",
+          "probability": 0.9065006971359253
+        },
+        {
+          "start": 305.32,
+          "end": 305.54,
+          "word": " to",
+          "probability": 0.9966476559638977
+        },
+        {
+          "start": 305.54,
+          "end": 305.68,
+          "word": " the",
+          "probability": 0.9883408546447754
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 48,
+      "seek": 28236,
+      "start": 305.68,
+      "end": 310.46,
+      "text": " wilderness for 40 days where he is tested by Satan. Angels are with him",
+      "tokens": [
+        51523,
+        22775,
+        329,
+        2319,
+        1528,
+        810,
+        339,
+        318,
+        6789,
+        416,
+        14918,
+        13,
+        17654,
+        389,
+        351,
+        683,
+        51763
+      ],
+      "avg_logprob": -0.21617557657392403,
+      "compression_ratio": 1.4366197183098592,
+      "no_speech_prob": 0.3318398892879486,
+      "words": [
+        {
+          "start": 305.68,
+          "end": 305.96,
+          "word": " wilderness",
+          "probability": 0.992942214012146
+        },
+        {
+          "start": 305.96,
+          "end": 306.44,
+          "word": " for",
+          "probability": 0.9959368705749512
+        },
+        {
+          "start": 306.44,
+          "end": 306.64,
+          "word": " 40",
+          "probability": 0.5924070477485657
+        },
+        {
+          "start": 306.64,
+          "end": 307.06,
+          "word": " days",
+          "probability": 0.9989129304885864
+        },
+        {
+          "start": 307.06,
+          "end": 307.32,
+          "word": " where",
+          "probability": 0.9433608651161194
+        },
+        {
+          "start": 307.32,
+          "end": 307.44,
+          "word": " he",
+          "probability": 0.7718495726585388
+        },
+        {
+          "start": 307.44,
+          "end": 307.8,
+          "word": " is",
+          "probability": 0.993119478225708
+        },
+        {
+          "start": 307.8,
+          "end": 307.96,
+          "word": " tested",
+          "probability": 0.9946808218955994
+        },
+        {
+          "start": 307.96,
+          "end": 308.32,
+          "word": " by",
+          "probability": 0.9981524348258972
+        },
+        {
+          "start": 308.32,
+          "end": 308.76,
+          "word": " Satan.",
+          "probability": 0.8809068202972412
+        },
+        {
+          "start": 309.5,
+          "end": 309.82,
+          "word": " Angels",
+          "probability": 0.9164848923683167
+        },
+        {
+          "start": 309.82,
+          "end": 310.08,
+          "word": " are",
+          "probability": 0.9891869425773621
+        },
+        {
+          "start": 310.08,
+          "end": 310.3,
+          "word": " with",
+          "probability": 0.9951695799827576
+        },
+        {
+          "start": 310.3,
+          "end": 310.46,
+          "word": " him",
+          "probability": 0.9676203727722168
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 49,
+      "seek": 31046,
+      "start": 310.46,
+      "end": 317.24,
+      "text": " helping him. Think about in what ways the angels may be helping Jesus. Mark doesn't tell",
+      "tokens": [
+        50363,
+        5742,
+        683,
+        13,
+        11382,
+        546,
+        287,
+        644,
+        2842,
+        262,
+        21981,
+        743,
+        307,
+        5742,
+        5803,
+        13,
+        2940,
+        1595,
+        470,
+        1560,
+        50713
+      ],
+      "avg_logprob": -0.17837249970698094,
+      "compression_ratio": 1.6523809523809523,
+      "no_speech_prob": 0.44662463665008545,
+      "words": [
+        {
+          "start": 310.46,
+          "end": 310.76,
+          "word": " helping",
+          "probability": 0.020317750051617622
+        },
+        {
+          "start": 310.76,
+          "end": 311.44,
+          "word": " him.",
+          "probability": 0.863415002822876
+        },
+        {
+          "start": 312.04,
+          "end": 312.28,
+          "word": " Think",
+          "probability": 0.9363367557525635
+        },
+        {
+          "start": 312.28,
+          "end": 312.86,
+          "word": " about",
+          "probability": 0.9909874796867371
+        },
+        {
+          "start": 312.86,
+          "end": 313.12,
+          "word": " in",
+          "probability": 0.6700151562690735
+        },
+        {
+          "start": 313.12,
+          "end": 313.44,
+          "word": " what",
+          "probability": 0.9729814529418945
+        },
+        {
+          "start": 313.44,
+          "end": 313.76,
+          "word": " ways",
+          "probability": 0.9939442276954651
+        },
+        {
+          "start": 313.76,
+          "end": 313.96,
+          "word": " the",
+          "probability": 0.987528920173645
+        },
+        {
+          "start": 313.96,
+          "end": 314.3,
+          "word": " angels",
+          "probability": 0.907805860042572
+        },
+        {
+          "start": 314.3,
+          "end": 314.62,
+          "word": " may",
+          "probability": 0.977609395980835
+        },
+        {
+          "start": 314.62,
+          "end": 314.84,
+          "word": " be",
+          "probability": 0.9935063123703003
+        },
+        {
+          "start": 314.84,
+          "end": 315.2,
+          "word": " helping",
+          "probability": 0.9947208166122437
+        },
+        {
+          "start": 315.2,
+          "end": 315.76,
+          "word": " Jesus.",
+          "probability": 0.9934788942337036
+        },
+        {
+          "start": 316.7,
+          "end": 316.7,
+          "word": " Mark",
+          "probability": 0.9848074913024902
+        },
+        {
+          "start": 316.7,
+          "end": 316.98,
+          "word": " doesn't",
+          "probability": 0.9730342924594879
+        },
+        {
+          "start": 316.98,
+          "end": 317.24,
+          "word": " tell",
+          "probability": 0.9966038465499878
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 50,
+      "seek": 31046,
+      "start": 317.24,
+      "end": 325.66,
+      "text": " us. Mark also doesn't tell us in what ways Satan tests Jesus. Pause the drama. Ask the",
+      "tokens": [
+        50713,
+        514,
+        13,
+        2940,
+        635,
+        1595,
+        470,
+        1560,
+        514,
+        287,
+        644,
+        2842,
+        14918,
+        5254,
+        5803,
+        13,
+        350,
+        682,
+        262,
+        10512,
+        13,
+        16981,
+        262,
+        51113
+      ],
+      "avg_logprob": -0.17837249970698094,
+      "compression_ratio": 1.6523809523809523,
+      "no_speech_prob": 0.44662463665008545,
+      "words": [
+        {
+          "start": 317.24,
+          "end": 318.0,
+          "word": " us.",
+          "probability": 0.9990304708480835
+        },
+        {
+          "start": 318.34,
+          "end": 318.64,
+          "word": " Mark",
+          "probability": 0.9942362904548645
+        },
+        {
+          "start": 318.64,
+          "end": 318.98,
+          "word": " also",
+          "probability": 0.9962557554244995
+        },
+        {
+          "start": 318.98,
+          "end": 319.3,
+          "word": " doesn't",
+          "probability": 0.9893783330917358
+        },
+        {
+          "start": 319.3,
+          "end": 319.52,
+          "word": " tell",
+          "probability": 0.9956473708152771
+        },
+        {
+          "start": 319.52,
+          "end": 319.96,
+          "word": " us",
+          "probability": 0.9984806180000305
+        },
+        {
+          "start": 319.96,
+          "end": 320.18,
+          "word": " in",
+          "probability": 0.9511639475822449
+        },
+        {
+          "start": 320.18,
+          "end": 320.42,
+          "word": " what",
+          "probability": 0.9940395355224609
+        },
+        {
+          "start": 320.42,
+          "end": 320.72,
+          "word": " ways",
+          "probability": 0.8372166752815247
+        },
+        {
+          "start": 320.72,
+          "end": 321.06,
+          "word": " Satan",
+          "probability": 0.9671977758407593
+        },
+        {
+          "start": 321.06,
+          "end": 321.64,
+          "word": " tests",
+          "probability": 0.9761000871658325
+        },
+        {
+          "start": 321.64,
+          "end": 322.2,
+          "word": " Jesus.",
+          "probability": 0.9972860813140869
+        },
+        {
+          "start": 323.02,
+          "end": 323.26,
+          "word": " Pause",
+          "probability": 0.8888494372367859
+        },
+        {
+          "start": 323.26,
+          "end": 323.52,
+          "word": " the",
+          "probability": 0.9976575374603271
+        },
+        {
+          "start": 323.52,
+          "end": 323.8,
+          "word": " drama.",
+          "probability": 0.9573292136192322
+        },
+        {
+          "start": 325.18,
+          "end": 325.44,
+          "word": " Ask",
+          "probability": 0.9423556923866272
+        },
+        {
+          "start": 325.44,
+          "end": 325.66,
+          "word": " the",
+          "probability": 0.9954352974891663
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 51,
+      "seek": 31046,
+      "start": 325.66,
+      "end": 330.9,
+      "text": " person playing Satan. What are you feeling of thinking? The person might answer things",
+      "tokens": [
+        51113,
+        1048,
+        2712,
+        14918,
+        13,
+        1867,
+        389,
+        345,
+        4203,
+        286,
+        3612,
+        30,
+        383,
+        1048,
+        1244,
+        3280,
+        1243,
+        51380
+      ],
+      "avg_logprob": -0.17837249970698094,
+      "compression_ratio": 1.6523809523809523,
+      "no_speech_prob": 0.44662463665008545,
+      "words": [
+        {
+          "start": 325.66,
+          "end": 325.92,
+          "word": " person",
+          "probability": 0.9975505471229553
+        },
+        {
+          "start": 325.92,
+          "end": 326.28,
+          "word": " playing",
+          "probability": 0.9538344740867615
+        },
+        {
+          "start": 326.28,
+          "end": 326.84,
+          "word": " Satan.",
+          "probability": 0.989702582359314
+        },
+        {
+          "start": 327.44,
+          "end": 327.58,
+          "word": " What",
+          "probability": 0.9650766253471375
+        },
+        {
+          "start": 327.58,
+          "end": 327.7,
+          "word": " are",
+          "probability": 0.9892441034317017
+        },
+        {
+          "start": 327.7,
+          "end": 327.88,
+          "word": " you",
+          "probability": 0.9972720742225647
+        },
+        {
+          "start": 327.88,
+          "end": 328.2,
+          "word": " feeling",
+          "probability": 0.9933480620384216
+        },
+        {
+          "start": 328.2,
+          "end": 328.4,
+          "word": " of",
+          "probability": 0.7998476028442383
+        },
+        {
+          "start": 328.4,
+          "end": 328.82,
+          "word": " thinking?",
+          "probability": 0.9967214465141296
+        },
+        {
+          "start": 329.6,
+          "end": 329.76,
+          "word": " The",
+          "probability": 0.9748953580856323
+        },
+        {
+          "start": 329.76,
+          "end": 330.02,
+          "word": " person",
+          "probability": 0.9945597052574158
+        },
+        {
+          "start": 330.02,
+          "end": 330.28,
+          "word": " might",
+          "probability": 0.6819877624511719
+        },
+        {
+          "start": 330.28,
+          "end": 330.58,
+          "word": " answer",
+          "probability": 0.9701808094978333
+        },
+        {
+          "start": 330.58,
+          "end": 330.9,
+          "word": " things",
+          "probability": 0.9974506497383118
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 52,
+      "seek": 31046,
+      "start": 330.9,
+      "end": 339.94,
+      "text": " like, I can make Jesus listen to me. Or, I want Jesus to fail. Or, I'm more powerful",
+      "tokens": [
+        51380,
+        588,
+        11,
+        314,
+        460,
+        787,
+        5803,
+        6004,
+        284,
+        502,
+        13,
+        1471,
+        11,
+        314,
+        765,
+        5803,
+        284,
+        2038,
+        13,
+        1471,
+        11,
+        314,
+        1101,
+        517,
+        3665,
+        51854
+      ],
+      "avg_logprob": -0.17837249970698094,
+      "compression_ratio": 1.6523809523809523,
+      "no_speech_prob": 0.44662463665008545,
+      "words": [
+        {
+          "start": 330.9,
+          "end": 331.64,
+          "word": " like,",
+          "probability": 0.9989355206489563
+        },
+        {
+          "start": 331.96,
+          "end": 332.18,
+          "word": " I",
+          "probability": 0.3450459837913513
+        },
+        {
+          "start": 332.18,
+          "end": 332.38,
+          "word": " can",
+          "probability": 0.9974768757820129
+        },
+        {
+          "start": 332.38,
+          "end": 332.7,
+          "word": " make",
+          "probability": 0.9960867166519165
+        },
+        {
+          "start": 332.7,
+          "end": 333.1,
+          "word": " Jesus",
+          "probability": 0.9960322976112366
+        },
+        {
+          "start": 333.1,
+          "end": 333.48,
+          "word": " listen",
+          "probability": 0.9753113389015198
+        },
+        {
+          "start": 333.48,
+          "end": 333.66,
+          "word": " to",
+          "probability": 0.9988596439361572
+        },
+        {
+          "start": 333.66,
+          "end": 334.3,
+          "word": " me.",
+          "probability": 0.986789882183075
+        },
+        {
+          "start": 334.56,
+          "end": 334.96,
+          "word": " Or,",
+          "probability": 0.9599000811576843
+        },
+        {
+          "start": 335.52,
+          "end": 335.74,
+          "word": " I",
+          "probability": 0.9942187070846558
+        },
+        {
+          "start": 335.74,
+          "end": 335.98,
+          "word": " want",
+          "probability": 0.9920309782028198
+        },
+        {
+          "start": 335.98,
+          "end": 336.34,
+          "word": " Jesus",
+          "probability": 0.995707631111145
+        },
+        {
+          "start": 336.34,
+          "end": 336.74,
+          "word": " to",
+          "probability": 0.9994505047798157
+        },
+        {
+          "start": 336.74,
+          "end": 337.22,
+          "word": " fail.",
+          "probability": 0.9938523769378662
+        },
+        {
+          "start": 337.96,
+          "end": 338.38,
+          "word": " Or,",
+          "probability": 0.9888562560081482
+        },
+        {
+          "start": 338.98,
+          "end": 339.12,
+          "word": " I'm",
+          "probability": 0.9169468581676483
+        },
+        {
+          "start": 339.12,
+          "end": 339.44,
+          "word": " more",
+          "probability": 0.9981682300567627
+        },
+        {
+          "start": 339.44,
+          "end": 339.94,
+          "word": " powerful",
+          "probability": 0.9958555102348328
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 53,
+      "seek": 33994,
+      "start": 339.94,
+      "end": 341.46,
+      "text": " than this man.",
+      "tokens": [
+        50363,
+        621,
+        428,
+        582,
+        13,
+        50517
+      ],
+      "avg_logprob": -0.24046132961908975,
+      "compression_ratio": 1.4411764705882353,
+      "no_speech_prob": 0.16190610826015472,
+      "words": [
+        {
+          "start": 339.94,
+          "end": 340.52,
+          "word": " than",
+          "probability": 0.8734128475189209
+        },
+        {
+          "start": 340.52,
+          "end": 340.8,
+          "word": " this",
+          "probability": 0.9854556918144226
+        },
+        {
+          "start": 340.8,
+          "end": 341.46,
+          "word": " man.",
+          "probability": 0.9834561944007874
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 54,
+      "seek": 33994,
+      "start": 343.02,
+      "end": 348.9,
+      "text": " At the end, ask the group, what do you think about the Holy Spirit sending Jesus to the",
+      "tokens": [
+        50517,
+        1629,
+        262,
+        886,
+        11,
+        1265,
+        262,
+        1448,
+        11,
+        644,
+        466,
+        345,
+        892,
+        546,
+        262,
+        7439,
+        7710,
+        7216,
+        5803,
+        284,
+        262,
+        50801
+      ],
+      "avg_logprob": -0.24046132961908975,
+      "compression_ratio": 1.4411764705882353,
+      "no_speech_prob": 0.16190610826015472,
+      "words": [
+        {
+          "start": 343.02,
+          "end": 343.3,
+          "word": " At",
+          "probability": 0.7049393057823181
+        },
+        {
+          "start": 343.3,
+          "end": 343.5,
+          "word": " the",
+          "probability": 0.9910436868667603
+        },
+        {
+          "start": 343.5,
+          "end": 343.94,
+          "word": " end,",
+          "probability": 0.9930287003517151
+        },
+        {
+          "start": 344.38,
+          "end": 344.42,
+          "word": " ask",
+          "probability": 0.9166295528411865
+        },
+        {
+          "start": 344.42,
+          "end": 344.62,
+          "word": " the",
+          "probability": 0.9881584048271179
+        },
+        {
+          "start": 344.62,
+          "end": 345.18,
+          "word": " group,",
+          "probability": 0.9863253235816956
+        },
+        {
+          "start": 345.5,
+          "end": 345.72,
+          "word": " what",
+          "probability": 0.3678286075592041
+        },
+        {
+          "start": 345.72,
+          "end": 345.86,
+          "word": " do",
+          "probability": 0.9979878664016724
+        },
+        {
+          "start": 345.86,
+          "end": 346.08,
+          "word": " you",
+          "probability": 0.9968485236167908
+        },
+        {
+          "start": 346.08,
+          "end": 346.32,
+          "word": " think",
+          "probability": 0.9982481002807617
+        },
+        {
+          "start": 346.32,
+          "end": 346.7,
+          "word": " about",
+          "probability": 0.997043788433075
+        },
+        {
+          "start": 346.7,
+          "end": 346.92,
+          "word": " the",
+          "probability": 0.9942435622215271
+        },
+        {
+          "start": 346.92,
+          "end": 347.18,
+          "word": " Holy",
+          "probability": 0.9619868397712708
+        },
+        {
+          "start": 347.18,
+          "end": 347.62,
+          "word": " Spirit",
+          "probability": 0.9862709045410156
+        },
+        {
+          "start": 347.62,
+          "end": 348.0,
+          "word": " sending",
+          "probability": 0.9490730166435242
+        },
+        {
+          "start": 348.0,
+          "end": 348.44,
+          "word": " Jesus",
+          "probability": 0.990492045879364
+        },
+        {
+          "start": 348.44,
+          "end": 348.78,
+          "word": " to",
+          "probability": 0.9954860806465149
+        },
+        {
+          "start": 348.78,
+          "end": 348.9,
+          "word": " the",
+          "probability": 0.9952791929244995
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 55,
+      "seek": 33994,
+      "start": 348.9,
+      "end": 351.4,
+      "text": " wilderness to be tested or tempted by Satan?",
+      "tokens": [
+        50801,
+        22775,
+        284,
+        307,
+        6789,
+        393,
+        26194,
+        416,
+        14918,
+        30,
+        50999
+      ],
+      "avg_logprob": -0.24046132961908975,
+      "compression_ratio": 1.4411764705882353,
+      "no_speech_prob": 0.16190610826015472,
+      "words": [
+        {
+          "start": 348.9,
+          "end": 349.18,
+          "word": " wilderness",
+          "probability": 0.9764070510864258
+        },
+        {
+          "start": 349.18,
+          "end": 349.52,
+          "word": " to",
+          "probability": 0.9911602139472961
+        },
+        {
+          "start": 349.52,
+          "end": 349.7,
+          "word": " be",
+          "probability": 0.999121367931366
+        },
+        {
+          "start": 349.7,
+          "end": 350.04,
+          "word": " tested",
+          "probability": 0.9931142926216125
+        },
+        {
+          "start": 350.04,
+          "end": 350.46,
+          "word": " or",
+          "probability": 0.9845218062400818
+        },
+        {
+          "start": 350.46,
+          "end": 350.68,
+          "word": " tempted",
+          "probability": 0.984431803226471
+        },
+        {
+          "start": 350.68,
+          "end": 351.06,
+          "word": " by",
+          "probability": 0.9980512857437134
+        },
+        {
+          "start": 351.06,
+          "end": 351.4,
+          "word": " Satan?",
+          "probability": 0.8529995083808899
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 56,
+      "seek": 33994,
+      "start": 352.52,
+      "end": 356.04,
+      "text": " How do you feel about their ending to the story?",
+      "tokens": [
+        50999,
+        1374,
+        466,
+        345,
+        1254,
+        546,
+        511,
+        7464,
+        284,
+        262,
+        1621,
+        30,
+        51239
+      ],
+      "avg_logprob": -0.24046132961908975,
+      "compression_ratio": 1.4411764705882353,
+      "no_speech_prob": 0.16190610826015472,
+      "words": [
+        {
+          "start": 352.52,
+          "end": 352.88,
+          "word": " How",
+          "probability": 0.981202244758606
+        },
+        {
+          "start": 352.88,
+          "end": 353.0,
+          "word": " do",
+          "probability": 0.9979202151298523
+        },
+        {
+          "start": 353.0,
+          "end": 353.24,
+          "word": " you",
+          "probability": 0.997704803943634
+        },
+        {
+          "start": 353.24,
+          "end": 353.76,
+          "word": " feel",
+          "probability": 0.9953550100326538
+        },
+        {
+          "start": 353.76,
+          "end": 354.54,
+          "word": " about",
+          "probability": 0.9937693476676941
+        },
+        {
+          "start": 354.54,
+          "end": 354.76,
+          "word": " their",
+          "probability": 0.6511935591697693
+        },
+        {
+          "start": 354.76,
+          "end": 355.16,
+          "word": " ending",
+          "probability": 0.9878040552139282
+        },
+        {
+          "start": 355.16,
+          "end": 355.42,
+          "word": " to",
+          "probability": 0.9870482087135315
+        },
+        {
+          "start": 355.42,
+          "end": 355.66,
+          "word": " the",
+          "probability": 0.9897655248641968
+        },
+        {
+          "start": 355.66,
+          "end": 356.04,
+          "word": " story?",
+          "probability": 0.9898086190223694
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 57,
+      "seek": 35604,
+      "start": 357.15999999999997,
+      "end": 359.16,
+      "text": " This is the end of the recording.",
+      "tokens": [
+        50413,
+        770,
+        318,
+        262,
+        886,
+        286,
+        262,
+        8296,
+        13,
+        50563
+      ],
+      "avg_logprob": -0.4176856441931291,
+      "compression_ratio": 0.9166666666666666,
+      "no_speech_prob": 0.0433611162006855,
+      "words": [
+        {
+          "start": 357.15999999999997,
+          "end": 357.64,
+          "word": " This",
+          "probability": 0.8783706426620483
+        },
+        {
+          "start": 357.64,
+          "end": 357.86,
+          "word": " is",
+          "probability": 0.9958957433700562
+        },
+        {
+          "start": 357.86,
+          "end": 358.06,
+          "word": " the",
+          "probability": 0.9943310022354126
+        },
+        {
+          "start": 358.06,
+          "end": 358.52,
+          "word": " end",
+          "probability": 0.9919067621231079
+        },
+        {
+          "start": 358.52,
+          "end": 358.74,
+          "word": " of",
+          "probability": 0.9914982914924622
+        },
+        {
+          "start": 358.74,
+          "end": 358.9,
+          "word": " the",
+          "probability": 0.9935240745544434
+        },
+        {
+          "start": 358.9,
+          "end": 359.16,
+          "word": " recording.",
+          "probability": 0.9987784028053284
+        }
+      ],
+      "temperature": 0.0
+    }
+  ],
+  "text": " 4. Embodying the text. Mark 1 1 through 13. Listen to an audio version of Mark 1 1 through 13 in the easiest to understand translation. In this step the group will dramatize the passage. This story has four scenes. The characters in passage are, John the Baptist, crowds of people, Jesus, the Holy Spirit, God, Satan, angels. As a group, act out the passage twice. You should act out the passage in your own language. First, act out the story without stopping. Pay attention to the dialogue, flow, plotline, and chronology of the story. Make sure you do not skip acting out the difficult or important parts of the story. Help each other remember every part of the story. Pause this audio here and act out the passage. The group should act out this passage a second time. At certain points in the drama, pause the drama and ask the person playing the character what are you feeling or thinking? The person playing the character should answer what they would be feeling or thinking if they were that character. Then restart the drama. Pause this audio here and act out the passage a second time. The following is an example of the drama and possible responses. The beginning scene of this story sets the background. This story happens in the wilderness. It is the fulfillment of Scripture. Act out John telling the crowd to be baptized, to turn away from their old ways of living and to follow God and be forgiven for their sins. Pause the drama. Ask the people playing the crowd. What are you feeling of thinking? The people might answer things like, can we trust this man? Or, I'm excited to be baptized and be forgiven? Or is this man a prophet? Or expectant? Is the Messiah going to come soon? Continue the drama. Act out John baptising people in the river and the people confessing their sins. Pause the drama. Ask the person playing John. What are you feeling of thinking? The person might to things like, happy to see so many people hearing God's message or surprised at the crowd. Continue the drama. Act out John telling the crowd that someone is coming who is more powerful than him. He will not baptise with water but with the Holy Spirit. Pause the drama. Ask the people the crowd, what they are feeling or thinking. They might answer with things like, when will they come? Or what does it mean to be baptized with the Holy Spirit? Or can we believe what John is telling us? Or who is the person who is coming? Continue the drama. Act out Jesus being baptized by John. Think about how you connect out the sky being torn open the Holy Spirit coming upon Jesus. Could you use random objects to help you visualize this? You could tear a piece of cloth into to show the sky openly. Act out God's voice speaking to Jesus, telling him that Jesus is his loved son and he is pleased with him. Pause the drama. Ask the person playing John. How are you feeling at this moment? The person answer unworthy or excited that he is here or amazed or confused. Why does Jesus need to be baptized? Ask the person playing God. How are you feeling at this moment? The person my answer thinks like, I'm feeling so much love for my son or proud. Ask the person playing Jesus, how are you feeling in this moment? The person might answer things like, so happy to hear God's voice or overwhelm by the task ahead or love. Continue the drama. Finally, act out Jesus going to the wilderness for 40 days where he is tested by Satan. Angels are with him helping him. Think about in what ways the angels may be helping Jesus. Mark doesn't tell us. Mark also doesn't tell us in what ways Satan tests Jesus. Pause the drama. Ask the person playing Satan. What are you feeling of thinking? The person might answer things like, I can make Jesus listen to me. Or, I want Jesus to fail. Or, I'm more powerful than this man. At the end, ask the group, what do you think about the Holy Spirit sending Jesus to the wilderness to be tested or tempted by Satan? How do you feel about their ending to the story? This is the end of the recording."
+}

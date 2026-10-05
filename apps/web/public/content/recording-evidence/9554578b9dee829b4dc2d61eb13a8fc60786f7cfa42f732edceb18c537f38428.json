@@ -1,0 +1,451 @@
+{
+  "schema": 1,
+  "status": "source-review-candidate-not-browser-accepted",
+  "sourceSha256": "6ac21beefbcc42b721de90e499b842c07f6a63f0e6a8f91391ce511613412538",
+  "alignmentSha256": "0e6012ae3d238d622cbd3dc1a99f3c97d9d141c3cc2f63d86cbe610fa7be786b",
+  "boundaryReviewSha256": "3bce23b761fabf14b9099d585f31ec03e2e4c3ee2e3bd16a67b4bea983ec8f16",
+  "ranges": [
+    {
+      "activityId": "S03-U001",
+      "wordSpan": {
+        "first": 9,
+        "lastExclusive": 26
+      },
+      "sourceRange": {
+        "startSeconds": 4.67,
+        "endSeconds": 11.04,
+        "clockDomain": "decoded-pcm"
+      },
+      "review": {
+        "status": "candidate-for-independent-review",
+        "changedFromInitialBoundaryCandidate": {},
+        "basis": "Retained contextual recognition plus waveform; targeted corrected crops where required. Raw transcript untouched."
+      }
+    },
+    {
+      "activityId": "S03-U002",
+      "wordSpan": {
+        "first": 26,
+        "lastExclusive": 48
+      },
+      "sourceRange": {
+        "startSeconds": 11.31,
+        "endSeconds": 18.11,
+        "clockDomain": "decoded-pcm"
+      },
+      "review": {
+        "status": "candidate-for-independent-review",
+        "changedFromInitialBoundaryCandidate": {},
+        "basis": "Retained contextual recognition plus waveform; targeted corrected crops where required. Raw transcript untouched."
+      }
+    },
+    {
+      "activityId": "S03-U003",
+      "wordSpan": {
+        "first": 48,
+        "lastExclusive": 53
+      },
+      "sourceRange": {
+        "startSeconds": 18.21,
+        "endSeconds": 20.24,
+        "clockDomain": "decoded-pcm"
+      },
+      "review": {
+        "status": "candidate-for-independent-review",
+        "changedFromInitialBoundaryCandidate": {},
+        "basis": "Retained contextual recognition plus waveform; targeted corrected crops where required. Raw transcript untouched."
+      }
+    },
+    {
+      "activityId": "S03-U004",
+      "wordSpan": {
+        "first": 53,
+        "lastExclusive": 112
+      },
+      "sourceRange": {
+        "startSeconds": 20.59,
+        "endSeconds": 39.59,
+        "clockDomain": "decoded-pcm"
+      },
+      "review": {
+        "status": "candidate-for-independent-review",
+        "changedFromInitialBoundaryCandidate": {},
+        "basis": "Retained contextual recognition plus waveform; targeted corrected crops where required. Raw transcript untouched."
+      }
+    },
+    {
+      "activityId": "S03-U005",
+      "wordSpan": {
+        "first": 112,
+        "lastExclusive": 152
+      },
+      "sourceRange": {
+        "startSeconds": 39.98,
+        "endSeconds": 53.7,
+        "clockDomain": "decoded-pcm"
+      },
+      "review": {
+        "status": "candidate-for-independent-review",
+        "changedFromInitialBoundaryCandidate": {
+          "end": 53.7
+        },
+        "basis": "Retained contextual recognition plus waveform; targeted corrected crops where required. Raw transcript untouched."
+      }
+    },
+    {
+      "activityId": "S03-U006",
+      "wordSpan": {
+        "first": 152,
+        "lastExclusive": 186
+      },
+      "sourceRange": {
+        "startSeconds": 53.7,
+        "endSeconds": 68.16,
+        "clockDomain": "decoded-pcm"
+      },
+      "review": {
+        "status": "candidate-for-independent-review",
+        "changedFromInitialBoundaryCandidate": {
+          "start": 53.7
+        },
+        "basis": "Retained contextual recognition plus waveform; targeted corrected crops where required. Raw transcript untouched."
+      }
+    },
+    {
+      "activityId": "S03-U007",
+      "wordSpan": {
+        "first": 186,
+        "lastExclusive": 210
+      },
+      "sourceRange": {
+        "startSeconds": 68.69,
+        "endSeconds": 76.56,
+        "clockDomain": "decoded-pcm"
+      },
+      "review": {
+        "status": "candidate-for-independent-review",
+        "changedFromInitialBoundaryCandidate": {},
+        "basis": "Retained contextual recognition plus waveform; targeted corrected crops where required. Raw transcript untouched."
+      }
+    },
+    {
+      "activityId": "S03-U008",
+      "wordSpan": {
+        "first": 210,
+        "lastExclusive": 239
+      },
+      "sourceRange": {
+        "startSeconds": 77.51,
+        "endSeconds": 92.09,
+        "clockDomain": "decoded-pcm"
+      },
+      "review": {
+        "status": "candidate-for-independent-review",
+        "changedFromInitialBoundaryCandidate": {},
+        "basis": "Retained contextual recognition plus waveform; targeted corrected crops where required. Raw transcript untouched."
+      }
+    },
+    {
+      "activityId": "S03-U009",
+      "wordSpan": {
+        "first": 239,
+        "lastExclusive": 245
+      },
+      "sourceRange": {
+        "startSeconds": 92.17,
+        "endSeconds": 94.34,
+        "clockDomain": "decoded-pcm"
+      },
+      "review": {
+        "status": "candidate-for-independent-review",
+        "changedFromInitialBoundaryCandidate": {
+          "end": 94.34
+        },
+        "basis": "Retained contextual recognition plus waveform; targeted corrected crops where required. Raw transcript untouched."
+      }
+    },
+    {
+      "activityId": "S03-U010",
+      "wordSpan": {
+        "first": 245,
+        "lastExclusive": 248
+      },
+      "sourceRange": {
+        "startSeconds": 94.34,
+        "endSeconds": 95.74,
+        "clockDomain": "decoded-pcm"
+      },
+      "review": {
+        "status": "candidate-for-independent-review",
+        "changedFromInitialBoundaryCandidate": {
+          "start": 94.34
+        },
+        "basis": "Retained contextual recognition plus waveform; targeted corrected crops where required. Raw transcript untouched."
+      }
+    },
+    {
+      "activityId": "S03-U011",
+      "wordSpan": {
+        "first": 248,
+        "lastExclusive": 251
+      },
+      "sourceRange": {
+        "startSeconds": 95.74,
+        "endSeconds": 97.31,
+        "clockDomain": "decoded-pcm"
+      },
+      "review": {
+        "status": "candidate-for-independent-review",
+        "changedFromInitialBoundaryCandidate": {},
+        "basis": "Retained contextual recognition plus waveform; targeted corrected crops where required. Raw transcript untouched."
+      }
+    },
+    {
+      "activityId": "S03-U012",
+      "wordSpan": {
+        "first": 251,
+        "lastExclusive": 252
+      },
+      "sourceRange": {
+        "startSeconds": 97.31,
+        "endSeconds": 98.29,
+        "clockDomain": "decoded-pcm"
+      },
+      "review": {
+        "status": "candidate-for-independent-review",
+        "changedFromInitialBoundaryCandidate": {},
+        "basis": "Retained contextual recognition plus waveform; targeted corrected crops where required. Raw transcript untouched."
+      }
+    },
+    {
+      "activityId": "S03-U013",
+      "wordSpan": {
+        "first": 252,
+        "lastExclusive": 255
+      },
+      "sourceRange": {
+        "startSeconds": 98.45,
+        "endSeconds": 100.03,
+        "clockDomain": "decoded-pcm"
+      },
+      "review": {
+        "status": "candidate-for-independent-review",
+        "changedFromInitialBoundaryCandidate": {},
+        "basis": "Retained contextual recognition plus waveform; targeted corrected crops where required. Raw transcript untouched."
+      }
+    },
+    {
+      "activityId": "S03-U014",
+      "wordSpan": {
+        "first": 255,
+        "lastExclusive": 256
+      },
+      "sourceRange": {
+        "startSeconds": 100.03,
+        "endSeconds": 100.85,
+        "clockDomain": "decoded-pcm"
+      },
+      "review": {
+        "status": "candidate-for-independent-review",
+        "changedFromInitialBoundaryCandidate": {},
+        "basis": "Retained contextual recognition plus waveform; targeted corrected crops where required. Raw transcript untouched."
+      }
+    },
+    {
+      "activityId": "S03-U015",
+      "wordSpan": {
+        "first": 256,
+        "lastExclusive": 257
+      },
+      "sourceRange": {
+        "startSeconds": 100.9,
+        "endSeconds": 102.04,
+        "clockDomain": "decoded-pcm"
+      },
+      "review": {
+        "status": "candidate-for-independent-review",
+        "changedFromInitialBoundaryCandidate": {
+          "start": 100.9
+        },
+        "basis": "Retained contextual recognition plus waveform; targeted corrected crops where required. Raw transcript untouched."
+      }
+    },
+    {
+      "activityId": "S03-U016",
+      "wordSpan": {
+        "first": 257,
+        "lastExclusive": 258
+      },
+      "sourceRange": {
+        "startSeconds": 102.07,
+        "endSeconds": 103.13,
+        "clockDomain": "decoded-pcm"
+      },
+      "review": {
+        "status": "candidate-for-independent-review",
+        "changedFromInitialBoundaryCandidate": {},
+        "basis": "Retained contextual recognition plus waveform; targeted corrected crops where required. Raw transcript untouched."
+      }
+    },
+    {
+      "activityId": "S03-U017",
+      "wordSpan": {
+        "first": 258,
+        "lastExclusive": 270
+      },
+      "sourceRange": {
+        "startSeconds": 103.58,
+        "endSeconds": 107.93,
+        "clockDomain": "decoded-pcm"
+      },
+      "review": {
+        "status": "candidate-for-independent-review",
+        "changedFromInitialBoundaryCandidate": {},
+        "basis": "Retained contextual recognition plus waveform; targeted corrected crops where required. Raw transcript untouched."
+      }
+    },
+    {
+      "activityId": "S03-U018",
+      "wordSpan": {
+        "first": 270,
+        "lastExclusive": 321
+      },
+      "sourceRange": {
+        "startSeconds": 108.51,
+        "endSeconds": 125.53,
+        "clockDomain": "decoded-pcm"
+      },
+      "review": {
+        "status": "candidate-for-independent-review",
+        "changedFromInitialBoundaryCandidate": {},
+        "basis": "Retained contextual recognition plus waveform; targeted corrected crops where required. Raw transcript untouched."
+      }
+    },
+    {
+      "activityId": "S03-U019",
+      "wordSpan": {
+        "first": 321,
+        "lastExclusive": 340
+      },
+      "sourceRange": {
+        "startSeconds": 126.15,
+        "endSeconds": 132.17,
+        "clockDomain": "decoded-pcm"
+      },
+      "review": {
+        "status": "candidate-for-independent-review",
+        "changedFromInitialBoundaryCandidate": {},
+        "basis": "Retained contextual recognition plus waveform; targeted corrected crops where required. Raw transcript untouched."
+      }
+    },
+    {
+      "activityId": "S03-U020",
+      "wordSpan": {
+        "first": 340,
+        "lastExclusive": 456
+      },
+      "sourceRange": {
+        "startSeconds": 133.66,
+        "endSeconds": 172.88,
+        "clockDomain": "decoded-pcm"
+      },
+      "review": {
+        "status": "candidate-for-independent-review",
+        "changedFromInitialBoundaryCandidate": {},
+        "basis": "Retained contextual recognition plus waveform; targeted corrected crops where required. Raw transcript untouched."
+      }
+    },
+    {
+      "activityId": "S03-U021",
+      "wordSpan": {
+        "first": 456,
+        "lastExclusive": 470
+      },
+      "sourceRange": {
+        "startSeconds": 173.29,
+        "endSeconds": 178.59,
+        "clockDomain": "decoded-pcm"
+      },
+      "review": {
+        "status": "candidate-for-independent-review",
+        "changedFromInitialBoundaryCandidate": {},
+        "basis": "Retained contextual recognition plus waveform; targeted corrected crops where required. Raw transcript untouched."
+      }
+    },
+    {
+      "activityId": "S03-U022",
+      "wordSpan": {
+        "first": 470,
+        "lastExclusive": 730
+      },
+      "sourceRange": {
+        "startSeconds": 179.85,
+        "endSeconds": 269.58,
+        "clockDomain": "decoded-pcm"
+      },
+      "review": {
+        "status": "candidate-for-independent-review",
+        "changedFromInitialBoundaryCandidate": {
+          "start": 179.85
+        },
+        "basis": "Retained contextual recognition plus waveform; targeted corrected crops where required. Raw transcript untouched."
+      }
+    },
+    {
+      "activityId": "S03-U023",
+      "wordSpan": {
+        "first": 730,
+        "lastExclusive": 781
+      },
+      "sourceRange": {
+        "startSeconds": 270.3,
+        "endSeconds": 287.98,
+        "clockDomain": "decoded-pcm"
+      },
+      "review": {
+        "status": "candidate-for-independent-review",
+        "changedFromInitialBoundaryCandidate": {
+          "end": 287.98
+        },
+        "basis": "Retained contextual recognition plus waveform; targeted corrected crops where required. Raw transcript untouched."
+      }
+    },
+    {
+      "activityId": "S03-U024",
+      "wordSpan": {
+        "first": 781,
+        "lastExclusive": 864
+      },
+      "sourceRange": {
+        "startSeconds": 287.98,
+        "endSeconds": 319.67,
+        "clockDomain": "decoded-pcm"
+      },
+      "review": {
+        "status": "candidate-for-independent-review",
+        "changedFromInitialBoundaryCandidate": {
+          "start": 287.98
+        },
+        "basis": "Retained contextual recognition plus waveform; targeted corrected crops where required. Raw transcript untouched."
+      }
+    },
+    {
+      "activityId": "S03-U025",
+      "wordSpan": {
+        "first": 864,
+        "lastExclusive": 882
+      },
+      "sourceRange": {
+        "startSeconds": 320.01,
+        "endSeconds": 327.1,
+        "clockDomain": "decoded-pcm"
+      },
+      "review": {
+        "status": "candidate-for-independent-review",
+        "changedFromInitialBoundaryCandidate": {},
+        "basis": "Retained contextual recognition plus waveform; targeted corrected crops where required. Raw transcript untouched."
+      }
+    }
+  ],
+  "exclusions": "Keep app manual pauses and Scripture activities; do not insert source-only enumerations or closing announcement."
+}

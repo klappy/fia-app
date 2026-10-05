@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "status": "accepted",
+  "scope": "Source identity and rights metadata only. No transformed output, visual quality, server deployment, browser playback, memory or physical-device acceptance.",
+  "reviewer": "root independent review",
+  "reviewedCandidateSha256": "c798a1b8748bf84ffc414471b2651b509df584d35c91b7e1d6d5479bce462351",
+  "recipeRevision": "33bbd2b9664a3d0fc91a77f295c7e1b2e93ca500",
+  "assetId": "a184",
+  "packId": "eng.MRK-1-1-13",
+  "presentationRevision": "ccd72f23c23f932651b500b730b285f32fabd37e50037b5af91d8881f1403975",
+  "path": "/assets/sandals.mp4",
+  "bundled": {
+    "sha256": "c411779a6788334d9f3616bf84882f53cfacfa4243aee0ddb35072dd1c56d5e0",
+    "bytes": 1858745
+  },
+  "published": {
+    "url": "https://s3.amazonaws.com/cbbt-er.public/media/videos/a184/720p.mp4",
+    "sha256": "6e792600f8e6befa70a81f19f70358b0b9dae7f2f791325e0b4103335425fa4f",
+    "bytes": 18665321,
+    "width": 1280,
+    "height": 720,
+    "duration": 56.453
+  },
+  "metadataSha256": "f5084d0a8d3487b9a0bc6335c92ca71635e5bfbadd2ea495b0a7bad37536b550",
+  "rightsSha256": "cea47724dbe681d99154df819d694d1d55cb32a58e2f00a3eac1cc87ff300071",
+  "checks": [
+    "Pinned metadata content record, individual version and verbatim published URL verified.",
+    "Exact collection metadata version, holder, license and adaptation notice preserved.",
+    "Existing HQ and bundled files independently rehashed; bytes and hashes match.",
+    "Approved presentation hash, logical asset mapping and absence of authored video cues verified."
+  ],
+  "assetVersion": "1.0.4",
+  "collectionVersion": "1.1.2"
+}

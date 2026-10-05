@@ -1,0 +1,1812 @@
+{
+  "status": "candidate-boundary-analysis",
+  "sourceSha256": "826f6f1efb3c71277c68ee2fca2b49c4d0f929e9232f2cc2f8e74eb63222dd0f",
+  "alignmentSha256": "e76096bc64100885f44637228df08807e6d3ba0095418707d0557c190f1467ae",
+  "rawTranscriptSha256": "f0ed785ba649fc9017185c3ba95e509f8378493b6ba0818590089be0c1a0aeaa",
+  "scriptSha256": "cf3f1779d8b2baa06837854f7d0c88f3983ea31f95595e8c02e7680e1ba546e0",
+  "model": {
+    "name": "Systran/faster-whisper-tiny.en",
+    "snapshot": "0d3d19a32d3338f10357c0889762bd8d64bbdeba",
+    "files": {
+      "config.json": {
+        "sha256": "14b1b421a90349bc551b881461426b561a874049cb9e4c4864f2ca384f6a7cc5",
+        "bytes": 2317
+      },
+      "model.bin": {
+        "sha256": "1a5afae06a4db91c975c9a9d78be5cc110ee4ea022ad57d55492e4550e936b2a",
+        "bytes": 75537502
+      },
+      "tokenizer.json": {
+        "sha256": "929c5252409436dce1b38a75d1abbcb5e132d170d8e324e4e04ed915fa2d22df",
+        "bytes": 2128466
+      },
+      "vocabulary.txt": {
+        "sha256": "ff77588746d3a2595d32ab5b69ffd7b95ce2441ac57533cb66fc3eb575a115cf",
+        "bytes": 422309
+      }
+    },
+    "device": "cpu",
+    "computeType": "int8",
+    "cpuThreads": 4
+  },
+  "method": "Independentindependent short boundary-contextASR crops, no script prompt/forcedalignment; quiet100ms windows near padded word edges. PCM concatenated0 clock.",
+  "rows": [
+    {
+      "activityId": "S04-U001",
+      "sourceTextSha256": "40915459d3070b081f6298ca4a7a52a1f5a10ce875b7de37380cf051b9438494",
+      "completion": "auto",
+      "candidateRange": [
+        8.16,
+        15.6
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 8.38,
+          "candidateSeconds": 8.16,
+          "max10msRmsIn100msDbFS": -85.064181223699,
+          "contextRange": [
+            7.580000000000001,
+            10.88
+          ],
+          "contextRecognition": [
+            {
+              "text": " Listen to an audio version of Mark 1.",
+              "words": [
+                {
+                  "word": " Listen",
+                  "start": 7.580000000000001,
+                  "end": 8.600000000000001,
+                  "probability": 0.7496970295906067
+                },
+                {
+                  "word": " to",
+                  "start": 8.600000000000001,
+                  "end": 8.860000000000001,
+                  "probability": 0.9961186647415161
+                },
+                {
+                  "word": " an",
+                  "start": 8.860000000000001,
+                  "end": 9.020000000000001,
+                  "probability": 0.9667210578918457
+                },
+                {
+                  "word": " audio",
+                  "start": 9.020000000000001,
+                  "end": 9.200000000000001,
+                  "probability": 0.9688431024551392
+                },
+                {
+                  "word": " version",
+                  "start": 9.200000000000001,
+                  "end": 9.680000000000001,
+                  "probability": 0.9977191090583801
+                },
+                {
+                  "word": " of",
+                  "start": 9.680000000000001,
+                  "end": 9.96,
+                  "probability": 0.9938097596168518
+                },
+                {
+                  "word": " Mark",
+                  "start": 9.96,
+                  "end": 10.260000000000002,
+                  "probability": 0.832018256187439
+                },
+                {
+                  "word": " 1.",
+                  "start": 10.260000000000002,
+                  "end": 10.8,
+                  "probability": 0.5817043781280518
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 15.3,
+          "candidateSeconds": 15.6,
+          "max10msRmsIn100msDbFS": -82.94360012451754,
+          "contextRange": [
+            12.8,
+            16.1
+          ],
+          "contextRecognition": [
+            {
+              "text": " easiest to understand translation.",
+              "words": [
+                {
+                  "word": " easiest",
+                  "start": 12.8,
+                  "end": 13.440000000000001,
+                  "probability": 0.611536979675293
+                },
+                {
+                  "word": " to",
+                  "start": 13.440000000000001,
+                  "end": 13.96,
+                  "probability": 0.9929112792015076
+                },
+                {
+                  "word": " understand",
+                  "start": 13.96,
+                  "end": 14.48,
+                  "probability": 0.9853981733322144
+                },
+                {
+                  "word": " translation.",
+                  "start": 14.48,
+                  "end": 15.08,
+                  "probability": 0.9924992918968201
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 9,
+        "lastExclusive": 26
+      },
+      "uncertainWordIndexes": [],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S04-U002",
+      "sourceTextSha256": "2fd7c0db6cfe4e027441daa2ae31223b2a3868244e364e4424e06154b777aca5",
+      "completion": "auto",
+      "candidateRange": [
+        16.34,
+        19.3
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 16.58,
+          "candidateSeconds": 16.34,
+          "max10msRmsIn100msDbFS": -77.77787930868706,
+          "contextRange": [
+            15.779999999999998,
+            19.08
+          ],
+          "contextRecognition": [
+            {
+              "text": " In this step, the group will dramatize the passage.",
+              "words": [
+                {
+                  "word": " In",
+                  "start": 15.779999999999998,
+                  "end": 16.619999999999997,
+                  "probability": 0.9106919765472412
+                },
+                {
+                  "word": " this",
+                  "start": 16.619999999999997,
+                  "end": 16.88,
+                  "probability": 0.9983739852905273
+                },
+                {
+                  "word": " step,",
+                  "start": 16.88,
+                  "end": 17.139999999999997,
+                  "probability": 0.9968609809875488
+                },
+                {
+                  "word": " the",
+                  "start": 17.38,
+                  "end": 17.439999999999998,
+                  "probability": 0.9881095290184021
+                },
+                {
+                  "word": " group",
+                  "start": 17.439999999999998,
+                  "end": 17.659999999999997,
+                  "probability": 0.949874758720398
+                },
+                {
+                  "word": " will",
+                  "start": 17.659999999999997,
+                  "end": 17.9,
+                  "probability": 0.9936017394065857
+                },
+                {
+                  "word": " dramatize",
+                  "start": 17.9,
+                  "end": 18.479999999999997,
+                  "probability": 0.8679258823394775
+                },
+                {
+                  "word": " the",
+                  "start": 18.479999999999997,
+                  "end": 18.779999999999998,
+                  "probability": 0.9956159591674805
+                },
+                {
+                  "word": " passage.",
+                  "start": 18.779999999999998,
+                  "end": 19.06,
+                  "probability": 0.9638304710388184
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 19.2,
+          "candidateSeconds": 19.3,
+          "max10msRmsIn100msDbFS": -85.42642731597569,
+          "contextRange": [
+            16.7,
+            20.0
+          ],
+          "contextRecognition": [
+            {
+              "text": " step the group will dramatize the passage.",
+              "words": [
+                {
+                  "word": " step",
+                  "start": 16.7,
+                  "end": 17.16,
+                  "probability": 0.4999614357948303
+                },
+                {
+                  "word": " the",
+                  "start": 17.16,
+                  "end": 17.439999999999998,
+                  "probability": 0.9012958407402039
+                },
+                {
+                  "word": " group",
+                  "start": 17.439999999999998,
+                  "end": 17.68,
+                  "probability": 0.8912573456764221
+                },
+                {
+                  "word": " will",
+                  "start": 17.68,
+                  "end": 17.96,
+                  "probability": 0.9913182258605957
+                },
+                {
+                  "word": " dramatize",
+                  "start": 17.96,
+                  "end": 18.5,
+                  "probability": 0.8619884252548218
+                },
+                {
+                  "word": " the",
+                  "start": 18.5,
+                  "end": 18.78,
+                  "probability": 0.9940323233604431
+                },
+                {
+                  "word": " passage.",
+                  "start": 18.78,
+                  "end": 19.08,
+                  "probability": 0.977443516254425
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 26,
+        "lastExclusive": 35
+      },
+      "uncertainWordIndexes": [
+        29
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S04-U003",
+      "sourceTextSha256": "0768ac8577dc54ab734ff27899b86d605a9f8917fe37cf82be0822c2a6981c39",
+      "completion": "auto",
+      "candidateRange": [
+        20.14,
+        22.9
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 20.32,
+          "candidateSeconds": 20.14,
+          "max10msRmsIn100msDbFS": -82.4251404793917,
+          "contextRange": [
+            19.52,
+            22.82
+          ],
+          "contextRecognition": [
+            {
+              "text": " This story has four scenes.",
+              "words": [
+                {
+                  "word": " This",
+                  "start": 19.52,
+                  "end": 20.64,
+                  "probability": 0.8186822533607483
+                },
+                {
+                  "word": " story",
+                  "start": 20.64,
+                  "end": 20.96,
+                  "probability": 0.9892792105674744
+                },
+                {
+                  "word": " has",
+                  "start": 20.96,
+                  "end": 21.439999999999998,
+                  "probability": 0.9944883584976196
+                },
+                {
+                  "word": " four",
+                  "start": 21.439999999999998,
+                  "end": 22.0,
+                  "probability": 0.7747504115104675
+                },
+                {
+                  "word": " scenes.",
+                  "start": 22.0,
+                  "end": 22.48,
+                  "probability": 0.6139735579490662
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 22.6,
+          "candidateSeconds": 22.9,
+          "max10msRmsIn100msDbFS": -82.41512989172185,
+          "contextRange": [
+            20.1,
+            23.400000000000002
+          ],
+          "contextRecognition": [
+            {
+              "text": " This story has four scenes.",
+              "words": [
+                {
+                  "word": " This",
+                  "start": 20.1,
+                  "end": 20.64,
+                  "probability": 0.8346336483955383
+                },
+                {
+                  "word": " story",
+                  "start": 20.64,
+                  "end": 20.96,
+                  "probability": 0.9912075400352478
+                },
+                {
+                  "word": " has",
+                  "start": 20.96,
+                  "end": 21.46,
+                  "probability": 0.9960103034973145
+                },
+                {
+                  "word": " four",
+                  "start": 21.46,
+                  "end": 22.0,
+                  "probability": 0.7975530028343201
+                },
+                {
+                  "word": " scenes.",
+                  "start": 22.0,
+                  "end": 22.380000000000003,
+                  "probability": 0.6101125478744507
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 35,
+        "lastExclusive": 40
+      },
+      "uncertainWordIndexes": [
+        38,
+        39
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S04-U004",
+      "sourceTextSha256": "fbbf57c5c98a0646849fbb07a7c2a3e082e2843e68cdf2caf14c5ec01273f693",
+      "completion": "auto",
+      "candidateRange": [
+        23.37,
+        26.25
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 23.58,
+          "candidateSeconds": 23.37,
+          "max10msRmsIn100msDbFS": -81.73775266865906,
+          "contextRange": [
+            22.779999999999998,
+            26.08
+          ],
+          "contextRecognition": [
+            {
+              "text": " The characters in this passage are...",
+              "words": [
+                {
+                  "word": " The",
+                  "start": 22.779999999999998,
+                  "end": 23.759999999999998,
+                  "probability": 0.6751222610473633
+                },
+                {
+                  "word": " characters",
+                  "start": 23.759999999999998,
+                  "end": 24.08,
+                  "probability": 0.988101601600647
+                },
+                {
+                  "word": " in",
+                  "start": 24.08,
+                  "end": 24.519999999999996,
+                  "probability": 0.9870971441268921
+                },
+                {
+                  "word": " this",
+                  "start": 24.519999999999996,
+                  "end": 24.839999999999996,
+                  "probability": 0.9963746666908264
+                },
+                {
+                  "word": " passage",
+                  "start": 24.839999999999996,
+                  "end": 25.119999999999997,
+                  "probability": 0.99142986536026
+                },
+                {
+                  "word": " are...",
+                  "start": 25.119999999999997,
+                  "end": 26.06,
+                  "probability": 0.8002665638923645
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 26.12,
+          "candidateSeconds": 26.25,
+          "max10msRmsIn100msDbFS": -77.22015388393136,
+          "contextRange": [
+            23.62,
+            26.92
+          ],
+          "contextRecognition": [
+            {
+              "text": " characters in this passage are John the Bette.",
+              "words": [
+                {
+                  "word": " characters",
+                  "start": 23.62,
+                  "end": 24.1,
+                  "probability": 0.5980948209762573
+                },
+                {
+                  "word": " in",
+                  "start": 24.1,
+                  "end": 24.52,
+                  "probability": 0.97846919298172
+                },
+                {
+                  "word": " this",
+                  "start": 24.52,
+                  "end": 24.84,
+                  "probability": 0.9888342022895813
+                },
+                {
+                  "word": " passage",
+                  "start": 24.84,
+                  "end": 25.16,
+                  "probability": 0.9922356009483337
+                },
+                {
+                  "word": " are",
+                  "start": 25.16,
+                  "end": 26.1,
+                  "probability": 0.981181800365448
+                },
+                {
+                  "word": " John",
+                  "start": 26.1,
+                  "end": 26.64,
+                  "probability": 0.28809139132499695
+                },
+                {
+                  "word": " the",
+                  "start": 26.64,
+                  "end": 26.82,
+                  "probability": 0.8995715379714966
+                },
+                {
+                  "word": " Bette.",
+                  "start": 26.82,
+                  "end": 26.900000000000002,
+                  "probability": 0.2616531401872635
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 40,
+        "lastExclusive": 45
+      },
+      "uncertainWordIndexes": [
+        43,
+        44
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S04-U005",
+      "sourceTextSha256": "3210be4a83fcb7c3537a69105d10900aede1d43c29858ca4f238cd7d897cb2ba",
+      "completion": "auto",
+      "candidateRange": [
+        26.25,
+        27.71
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 26.44,
+          "candidateSeconds": 26.25,
+          "max10msRmsIn100msDbFS": -77.22015388393136,
+          "contextRange": [
+            25.64,
+            28.94
+          ],
+          "contextRecognition": [
+            {
+              "text": " John the Baptist crowds of",
+              "words": [
+                {
+                  "word": " John",
+                  "start": 25.64,
+                  "end": 26.66,
+                  "probability": 0.16035543382167816
+                },
+                {
+                  "word": " the",
+                  "start": 26.66,
+                  "end": 26.88,
+                  "probability": 0.917180597782135
+                },
+                {
+                  "word": " Baptist",
+                  "start": 26.88,
+                  "end": 27.42,
+                  "probability": 0.9904382824897766
+                },
+                {
+                  "word": " crowds",
+                  "start": 27.42,
+                  "end": 28.62,
+                  "probability": 0.23176570236682892
+                },
+                {
+                  "word": " of",
+                  "start": 28.62,
+                  "end": 28.92,
+                  "probability": 0.920416533946991
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 27.38,
+          "candidateSeconds": 27.71,
+          "max10msRmsIn100msDbFS": -82.19946841087142,
+          "contextRange": [
+            24.88,
+            28.18
+          ],
+          "contextRecognition": [
+            {
+              "text": " stage R, join the Baptist.",
+              "words": [
+                {
+                  "word": " stage",
+                  "start": 24.88,
+                  "end": 25.259999999999998,
+                  "probability": 0.01756139285862446
+                },
+                {
+                  "word": " R,",
+                  "start": 25.259999999999998,
+                  "end": 26.08,
+                  "probability": 0.688474178314209
+                },
+                {
+                  "word": " join",
+                  "start": 26.419999999999998,
+                  "end": 26.66,
+                  "probability": 0.6126644015312195
+                },
+                {
+                  "word": " the",
+                  "start": 26.66,
+                  "end": 26.86,
+                  "probability": 0.9797239303588867
+                },
+                {
+                  "word": " Baptist.",
+                  "start": 26.86,
+                  "end": 27.299999999999997,
+                  "probability": 0.9309424757957458
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 45,
+        "lastExclusive": 48
+      },
+      "uncertainWordIndexes": [
+        45
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S04-U006",
+      "sourceTextSha256": "af7179dc3a21918f422d1bb678b9b5f7ae18deb8c8e8fa6f5c6ee90a11b86944",
+      "completion": "auto",
+      "candidateRange": [
+        27.91,
+        29.84
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 28.26,
+          "candidateSeconds": 27.91,
+          "max10msRmsIn100msDbFS": -79.60507299413246,
+          "contextRange": [
+            27.46,
+            30.76
+          ],
+          "contextRecognition": [
+            {
+              "text": " Crowds of people. Jesus.",
+              "words": [
+                {
+                  "word": " Crowds",
+                  "start": 27.46,
+                  "end": 28.8,
+                  "probability": 0.48057400186856586
+                },
+                {
+                  "word": " of",
+                  "start": 28.8,
+                  "end": 29.02,
+                  "probability": 0.9809607267379761
+                },
+                {
+                  "word": " people.",
+                  "start": 29.02,
+                  "end": 29.94,
+                  "probability": 0.9350575804710388
+                },
+                {
+                  "word": " Jesus.",
+                  "start": 30.44,
+                  "end": 30.68,
+                  "probability": 0.627803385257721
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 29.78,
+          "candidateSeconds": 29.84,
+          "max10msRmsIn100msDbFS": -86.38464518310874,
+          "contextRange": [
+            27.28,
+            30.580000000000002
+          ],
+          "contextRecognition": [
+            {
+              "text": " crowds of people, Jesus.",
+              "words": [
+                {
+                  "word": " crowds",
+                  "start": 27.28,
+                  "end": 28.6,
+                  "probability": 0.35123777389526367
+                },
+                {
+                  "word": " of",
+                  "start": 28.6,
+                  "end": 29.0,
+                  "probability": 0.9906228184700012
+                },
+                {
+                  "word": " people,",
+                  "start": 29.0,
+                  "end": 30.0,
+                  "probability": 0.9961485862731934
+                },
+                {
+                  "word": " Jesus.",
+                  "start": 30.44,
+                  "end": 30.560000000000002,
+                  "probability": 0.43400686979293823
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 48,
+        "lastExclusive": 51
+      },
+      "uncertainWordIndexes": [
+        48
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S04-U007",
+      "sourceTextSha256": "62fe4843ff9d2d79c52749cb0073c8490e7e490f03b98911d3acd4661ea69b5b",
+      "completion": "auto",
+      "candidateRange": [
+        30.09,
+        31.11
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 30.44,
+          "candidateSeconds": 30.09,
+          "max10msRmsIn100msDbFS": -79.60440485130806,
+          "contextRange": [
+            29.64,
+            32.94
+          ],
+          "contextRecognition": [
+            {
+              "text": " Jesus, the Holy Spirit.",
+              "words": [
+                {
+                  "word": " Jesus,",
+                  "start": 29.64,
+                  "end": 30.94,
+                  "probability": 0.9165988564491272
+                },
+                {
+                  "word": " the",
+                  "start": 31.94,
+                  "end": 32.14,
+                  "probability": 0.8896516561508179
+                },
+                {
+                  "word": " Holy",
+                  "start": 32.14,
+                  "end": 32.42,
+                  "probability": 0.9884926080703735
+                },
+                {
+                  "word": " Spirit.",
+                  "start": 32.42,
+                  "end": 32.82,
+                  "probability": 0.9925467371940613
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 30.9,
+          "candidateSeconds": 31.11,
+          "max10msRmsIn100msDbFS": -70.64553649433057,
+          "contextRange": [
+            28.4,
+            31.7
+          ],
+          "contextRecognition": [
+            {
+              "text": " of people. Jesus!",
+              "words": [
+                {
+                  "word": " of",
+                  "start": 28.4,
+                  "end": 28.86,
+                  "probability": 0.5231181979179382
+                },
+                {
+                  "word": " people.",
+                  "start": 28.86,
+                  "end": 29.72,
+                  "probability": 0.9557420015335083
+                },
+                {
+                  "word": " Jesus!",
+                  "start": 30.419999999999998,
+                  "end": 30.74,
+                  "probability": 0.973172664642334
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 51,
+        "lastExclusive": 52
+      },
+      "uncertainWordIndexes": [],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S04-U008",
+      "sourceTextSha256": "c8f425825c9b066be4a1f9794957e55b243a9445eefc657daff3586b2e9ead86",
+      "completion": "auto",
+      "candidateRange": [
+        31.7,
+        33.36
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 31.98,
+          "candidateSeconds": 31.7,
+          "max10msRmsIn100msDbFS": -84.85480906659794,
+          "contextRange": [
+            31.18,
+            34.480000000000004
+          ],
+          "contextRecognition": [
+            {
+              "text": " The Holy Spirit. God.",
+              "words": [
+                {
+                  "word": " The",
+                  "start": 31.18,
+                  "end": 32.14,
+                  "probability": 0.5735711455345154
+                },
+                {
+                  "word": " Holy",
+                  "start": 32.14,
+                  "end": 32.42,
+                  "probability": 0.9718063473701477
+                },
+                {
+                  "word": " Spirit.",
+                  "start": 32.42,
+                  "end": 33.0,
+                  "probability": 0.9862218499183655
+                },
+                {
+                  "word": " God.",
+                  "start": 33.9,
+                  "end": 34.16,
+                  "probability": 0.9637681245803833
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 33.04,
+          "candidateSeconds": 33.36,
+          "max10msRmsIn100msDbFS": -56.00781707963375,
+          "contextRange": [
+            30.54,
+            33.839999999999996
+          ],
+          "contextRecognition": [
+            {
+              "text": " Jesus, the Holy Spirit.",
+              "words": [
+                {
+                  "word": " Jesus,",
+                  "start": 30.54,
+                  "end": 31.0,
+                  "probability": 0.6699738502502441
+                },
+                {
+                  "word": " the",
+                  "start": 31.939999999999998,
+                  "end": 32.16,
+                  "probability": 0.8170604705810547
+                },
+                {
+                  "word": " Holy",
+                  "start": 32.16,
+                  "end": 32.44,
+                  "probability": 0.9861695766448975
+                },
+                {
+                  "word": " Spirit.",
+                  "start": 32.44,
+                  "end": 32.839999999999996,
+                  "probability": 0.9923960566520691
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 52,
+        "lastExclusive": 55
+      },
+      "uncertainWordIndexes": [],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S04-U009",
+      "sourceTextSha256": "9c544d96b0c84c52ace0ae1c9ea1414c153ad9e8ec7dd0c5bd12e828fc74317b",
+      "completion": "auto",
+      "candidateRange": [
+        34.62,
+        34.86
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 34.8,
+          "candidateSeconds": 34.62,
+          "max10msRmsIn100msDbFS": -75.24791302696154,
+          "contextRange": [
+            34.0,
+            37.3
+          ],
+          "contextRecognition": [
+            {
+              "text": " God Satan Angel.",
+              "words": [
+                {
+                  "word": " God",
+                  "start": 34.0,
+                  "end": 34.74,
+                  "probability": 0.24647383391857147
+                },
+                {
+                  "word": " Satan",
+                  "start": 34.74,
+                  "end": 36.14,
+                  "probability": 0.8034710884094238
+                },
+                {
+                  "word": " Angel.",
+                  "start": 36.14,
+                  "end": 37.28,
+                  "probability": 0.745915412902832
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 34.8,
+          "candidateSeconds": 34.86,
+          "max10msRmsIn100msDbFS": -79.44666043768348,
+          "contextRange": [
+            32.3,
+            35.599999999999994
+          ],
+          "contextRecognition": [
+            {
+              "text": " Spirit, God, Satan.",
+              "words": [
+                {
+                  "word": " Spirit,",
+                  "start": 32.3,
+                  "end": 32.919999999999995,
+                  "probability": 0.7435267567634583
+                },
+                {
+                  "word": " God,",
+                  "start": 33.9,
+                  "end": 34.4,
+                  "probability": 0.9678829908370972
+                },
+                {
+                  "word": " Satan.",
+                  "start": 35.339999999999996,
+                  "end": 35.58,
+                  "probability": 0.849272608757019
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 55,
+        "lastExclusive": 56
+      },
+      "uncertainWordIndexes": [],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S04-U010",
+      "sourceTextSha256": "c50d310cc268c44b1f99bf0dd61ad8d575f225e52f27847b08b2433bd9b97ee8",
+      "completion": "auto",
+      "candidateRange": [
+        35.08,
+        36.14
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 35.38,
+          "candidateSeconds": 35.08,
+          "max10msRmsIn100msDbFS": -77.804454434189,
+          "contextRange": [
+            34.580000000000005,
+            37.88
+          ],
+          "contextRecognition": [
+            {
+              "text": " Satan Angels",
+              "words": [
+                {
+                  "word": " Satan",
+                  "start": 34.580000000000005,
+                  "end": 36.080000000000005,
+                  "probability": 0.9019845724105835
+                },
+                {
+                  "word": " Angels",
+                  "start": 36.080000000000005,
+                  "end": 37.480000000000004,
+                  "probability": 0.43464741110801697
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 35.8,
+          "candidateSeconds": 36.14,
+          "max10msRmsIn100msDbFS": -73.60931108219772,
+          "contextRange": [
+            33.3,
+            36.599999999999994
+          ],
+          "contextRecognition": [
+            {
+              "text": " God Satan.",
+              "words": [
+                {
+                  "word": " God",
+                  "start": 33.3,
+                  "end": 34.5,
+                  "probability": 0.7882030606269836
+                },
+                {
+                  "word": " Satan.",
+                  "start": 34.5,
+                  "end": 35.64,
+                  "probability": 0.7463740110397339
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 56,
+        "lastExclusive": 57
+      },
+      "uncertainWordIndexes": [],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S04-U011",
+      "sourceTextSha256": "36b1476682f7077fd01742ab6c1f8f2d276053df9fac5a2ee56e804130177216",
+      "completion": "auto",
+      "candidateRange": [
+        36.67,
+        37.84
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 37.02,
+          "candidateSeconds": 36.67,
+          "max10msRmsIn100msDbFS": -82.30809842628994,
+          "contextRange": [
+            36.220000000000006,
+            39.52
+          ],
+          "contextRecognition": [
+            {
+              "text": " Angels.",
+              "words": [
+                {
+                  "word": " Angels.",
+                  "start": 36.220000000000006,
+                  "end": 37.660000000000004,
+                  "probability": 0.7861321568489075
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 37.5,
+          "candidateSeconds": 37.84,
+          "max10msRmsIn100msDbFS": -80.0760749202564,
+          "contextRange": [
+            35.0,
+            38.3
+          ],
+          "contextRecognition": [
+            {
+              "text": " Satan. Angels.",
+              "words": [
+                {
+                  "word": " Satan.",
+                  "start": 35.0,
+                  "end": 36.12,
+                  "probability": 0.9372347593307495
+                },
+                {
+                  "word": " Angels.",
+                  "start": 36.98,
+                  "end": 37.38,
+                  "probability": 0.9494306445121765
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 57,
+        "lastExclusive": 58
+      },
+      "uncertainWordIndexes": [
+        57
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S04-U012",
+      "sourceTextSha256": "7573595555c3d9a146babfe97d649789dc91b59b2f30464a47fe0b1df653c2df",
+      "completion": "auto",
+      "candidateRange": [
+        39.11,
+        45.75
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 39.2,
+          "candidateSeconds": 39.11,
+          "max10msRmsIn100msDbFS": -78.20488148602482,
+          "contextRange": [
+            38.400000000000006,
+            41.7
+          ],
+          "contextRecognition": [
+            {
+              "text": " As a group, act out the passage twice.",
+              "words": [
+                {
+                  "word": " As",
+                  "start": 38.400000000000006,
+                  "end": 39.46000000000001,
+                  "probability": 0.8286113142967224
+                },
+                {
+                  "word": " a",
+                  "start": 39.46000000000001,
+                  "end": 39.660000000000004,
+                  "probability": 0.9852930903434753
+                },
+                {
+                  "word": " group,",
+                  "start": 39.660000000000004,
+                  "end": 40.040000000000006,
+                  "probability": 0.9858185648918152
+                },
+                {
+                  "word": " act",
+                  "start": 40.34,
+                  "end": 40.540000000000006,
+                  "probability": 0.9725598692893982
+                },
+                {
+                  "word": " out",
+                  "start": 40.540000000000006,
+                  "end": 40.82000000000001,
+                  "probability": 0.9944637417793274
+                },
+                {
+                  "word": " the",
+                  "start": 40.82000000000001,
+                  "end": 41.28000000000001,
+                  "probability": 0.9873823523521423
+                },
+                {
+                  "word": " passage",
+                  "start": 41.28000000000001,
+                  "end": 41.28000000000001,
+                  "probability": 0.957589328289032
+                },
+                {
+                  "word": " twice.",
+                  "start": 41.28000000000001,
+                  "end": 41.68000000000001,
+                  "probability": 0.9968984127044678
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 45.6,
+          "candidateSeconds": 45.75,
+          "max10msRmsIn100msDbFS": -84.95629180487519,
+          "contextRange": [
+            43.1,
+            46.4
+          ],
+          "contextRecognition": [
+            {
+              "text": " out the passage in your own language.",
+              "words": [
+                {
+                  "word": " out",
+                  "start": 43.1,
+                  "end": 43.440000000000005,
+                  "probability": 0.1572176069021225
+                },
+                {
+                  "word": " the",
+                  "start": 43.440000000000005,
+                  "end": 43.7,
+                  "probability": 0.992827832698822
+                },
+                {
+                  "word": " passage",
+                  "start": 43.7,
+                  "end": 44.04,
+                  "probability": 0.9913820624351501
+                },
+                {
+                  "word": " in",
+                  "start": 44.04,
+                  "end": 44.32,
+                  "probability": 0.99044269323349
+                },
+                {
+                  "word": " your",
+                  "start": 44.32,
+                  "end": 44.58,
+                  "probability": 0.9942733645439148
+                },
+                {
+                  "word": " own",
+                  "start": 44.58,
+                  "end": 44.980000000000004,
+                  "probability": 0.9978542923927307
+                },
+                {
+                  "word": " language.",
+                  "start": 44.980000000000004,
+                  "end": 45.32,
+                  "probability": 0.9983338713645935
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 58,
+        "lastExclusive": 76
+      },
+      "uncertainWordIndexes": [],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S04-U013",
+      "sourceTextSha256": "a947f01f636ae97da69da57c29f04c5c75a41c5cfeda65b9790ae72dbf3bfc03",
+      "completion": "auto",
+      "candidateRange": [
+        46.55,
+        66.68
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 46.68,
+          "candidateSeconds": 46.55,
+          "max10msRmsIn100msDbFS": -66.2422461533069,
+          "contextRange": [
+            45.88,
+            49.18
+          ],
+          "contextRecognition": [
+            {
+              "text": " First, act out the story without stopping.",
+              "words": [
+                {
+                  "word": " First,",
+                  "start": 46.68,
+                  "end": 47.2,
+                  "probability": 0.7161048650741577
+                },
+                {
+                  "word": " act",
+                  "start": 47.7,
+                  "end": 47.940000000000005,
+                  "probability": 0.9646006226539612
+                },
+                {
+                  "word": " out",
+                  "start": 47.940000000000005,
+                  "end": 48.160000000000004,
+                  "probability": 0.9984776377677917
+                },
+                {
+                  "word": " the",
+                  "start": 48.160000000000004,
+                  "end": 48.400000000000006,
+                  "probability": 0.9880315065383911
+                },
+                {
+                  "word": " story",
+                  "start": 48.400000000000006,
+                  "end": 48.68,
+                  "probability": 0.9884682297706604
+                },
+                {
+                  "word": " without",
+                  "start": 48.68,
+                  "end": 49.080000000000005,
+                  "probability": 0.9660117030143738
+                },
+                {
+                  "word": " stopping.",
+                  "start": 49.080000000000005,
+                  "end": 49.160000000000004,
+                  "probability": 0.07653017342090607
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 66.44,
+          "candidateSeconds": 66.68,
+          "max10msRmsIn100msDbFS": -74.05212972786332,
+          "contextRange": [
+            63.94,
+            67.24
+          ],
+          "contextRecognition": [
+            {
+              "text": " remember every part of the story.",
+              "words": [
+                {
+                  "word": " remember",
+                  "start": 63.94,
+                  "end": 64.44,
+                  "probability": 0.5794275403022766
+                },
+                {
+                  "word": " every",
+                  "start": 64.44,
+                  "end": 65.03999999999999,
+                  "probability": 0.8625802993774414
+                },
+                {
+                  "word": " part",
+                  "start": 65.03999999999999,
+                  "end": 65.44,
+                  "probability": 0.9926274418830872
+                },
+                {
+                  "word": " of",
+                  "start": 65.44,
+                  "end": 65.66,
+                  "probability": 0.9978965520858765
+                },
+                {
+                  "word": " the",
+                  "start": 65.66,
+                  "end": 65.8,
+                  "probability": 0.9921247363090515
+                },
+                {
+                  "word": " story.",
+                  "start": 65.8,
+                  "end": 66.03999999999999,
+                  "probability": 0.9957291483879089
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 76,
+        "lastExclusive": 120
+      },
+      "uncertainWordIndexes": [
+        88,
+        89
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S04-U014",
+      "sourceTextSha256": "966faa38a0db72824fcf7681804def536b6550e7587d3c45cc70646d6008d598",
+      "completion": "confirm",
+      "candidateRange": [
+        67.25,
+        71.45
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 67.56,
+          "candidateSeconds": 67.25,
+          "max10msRmsIn100msDbFS": -85.51824736612163,
+          "contextRange": [
+            66.76,
+            70.06
+          ],
+          "contextRecognition": [
+            {
+              "text": " pause this audio here and act",
+              "words": [
+                {
+                  "word": " pause",
+                  "start": 66.76,
+                  "end": 67.86,
+                  "probability": 0.1607639640569687
+                },
+                {
+                  "word": " this",
+                  "start": 67.86,
+                  "end": 68.12,
+                  "probability": 0.9178400039672852
+                },
+                {
+                  "word": " audio",
+                  "start": 68.12,
+                  "end": 68.34,
+                  "probability": 0.9973660111427307
+                },
+                {
+                  "word": " here",
+                  "start": 68.34,
+                  "end": 69.16000000000001,
+                  "probability": 0.9918889403343201
+                },
+                {
+                  "word": " and",
+                  "start": 69.16000000000001,
+                  "end": 69.68,
+                  "probability": 0.888761579990387
+                },
+                {
+                  "word": " act",
+                  "start": 69.68,
+                  "end": 70.04,
+                  "probability": 0.91292405128479
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 71.32,
+          "candidateSeconds": 71.45,
+          "max10msRmsIn100msDbFS": -84.89187614770694,
+          "contextRange": [
+            68.82,
+            72.11999999999999
+          ],
+          "contextRecognition": [
+            {
+              "text": " and act out the passage.",
+              "words": [
+                {
+                  "word": " and",
+                  "start": 68.82,
+                  "end": 69.63999999999999,
+                  "probability": 0.7833518385887146
+                },
+                {
+                  "word": " act",
+                  "start": 69.63999999999999,
+                  "end": 70.0,
+                  "probability": 0.9572996497154236
+                },
+                {
+                  "word": " out",
+                  "start": 70.0,
+                  "end": 70.58,
+                  "probability": 0.9941463470458984
+                },
+                {
+                  "word": " the",
+                  "start": 70.58,
+                  "end": 70.89999999999999,
+                  "probability": 0.9938344955444336
+                },
+                {
+                  "word": " passage.",
+                  "start": 70.89999999999999,
+                  "end": 71.16,
+                  "probability": 0.9934486746788025
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 120,
+        "lastExclusive": 129
+      },
+      "uncertainWordIndexes": [],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S04-U015",
+      "sourceTextSha256": "d1e4eafbd6c5622d600d72387e9c79110870cd0494002fc26625848b12179c1d",
+      "completion": "auto",
+      "candidateRange": [
+        76.23,
+        98.15
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 76.54,
+          "candidateSeconds": 76.23,
+          "max10msRmsIn100msDbFS": -83.09364416961364,
+          "contextRange": [
+            75.74000000000001,
+            79.04
+          ],
+          "contextRecognition": [
+            {
+              "text": " the group should act out this passage as",
+              "words": [
+                {
+                  "word": " the",
+                  "start": 76.72000000000001,
+                  "end": 77.22000000000001,
+                  "probability": 0.2218473255634308
+                },
+                {
+                  "word": " group",
+                  "start": 77.22000000000001,
+                  "end": 77.62,
+                  "probability": 0.966703474521637
+                },
+                {
+                  "word": " should",
+                  "start": 77.62,
+                  "end": 77.92000000000002,
+                  "probability": 0.9208078384399414
+                },
+                {
+                  "word": " act",
+                  "start": 77.92000000000002,
+                  "end": 78.18,
+                  "probability": 0.9638392329216003
+                },
+                {
+                  "word": " out",
+                  "start": 78.18,
+                  "end": 78.42000000000002,
+                  "probability": 0.9925011992454529
+                },
+                {
+                  "word": " this",
+                  "start": 78.42000000000002,
+                  "end": 78.62,
+                  "probability": 0.9931174516677856
+                },
+                {
+                  "word": " passage",
+                  "start": 78.62,
+                  "end": 78.86000000000001,
+                  "probability": 0.7224039435386658
+                },
+                {
+                  "word": " as",
+                  "start": 78.86000000000001,
+                  "end": 79.02000000000001,
+                  "probability": 0.3603518009185791
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 98.1,
+          "candidateSeconds": 98.15,
+          "max10msRmsIn100msDbFS": -81.69534278749964,
+          "contextRange": [
+            95.6,
+            98.89999999999999
+          ],
+          "contextRecognition": [
+            {
+              "text": " then restart the drama.",
+              "words": [
+                {
+                  "word": " then",
+                  "start": 95.6,
+                  "end": 96.66,
+                  "probability": 0.41529878973960876
+                },
+                {
+                  "word": " restart",
+                  "start": 96.66,
+                  "end": 97.02,
+                  "probability": 0.8809840083122253
+                },
+                {
+                  "word": " the",
+                  "start": 97.02,
+                  "end": 97.36,
+                  "probability": 0.9966448545455933
+                },
+                {
+                  "word": " drama.",
+                  "start": 97.36,
+                  "end": 97.58,
+                  "probability": 0.9685884118080139
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 129,
+        "lastExclusive": 184
+      },
+      "uncertainWordIndexes": [
+        129,
+        155
+      ],
+      "status": "candidate-unaccepted"
+    },
+    {
+      "activityId": "S04-U016",
+      "sourceTextSha256": "f87e85b2e1245e9c147233d6faa94b15e20b9ffde9c4b18348274fb3afb6ec70",
+      "completion": "confirm",
+      "candidateRange": [
+        97.84,
+        105.65
+      ],
+      "edges": [
+        {
+          "edge": "start",
+          "estimatedWordBoundary": 98.1,
+          "candidateSeconds": 97.84,
+          "max10msRmsIn100msDbFS": -84.1036544987,
+          "contextRange": [
+            97.3,
+            100.6
+          ],
+          "contextRecognition": [
+            {
+              "text": " primer. Pause this audio here.",
+              "words": [
+                {
+                  "word": " primer.",
+                  "start": 98.12,
+                  "end": 98.64,
+                  "probability": 0.10146496444940567
+                },
+                {
+                  "word": " Pause",
+                  "start": 99.24,
+                  "end": 99.48,
+                  "probability": 0.8955792188644409
+                },
+                {
+                  "word": " this",
+                  "start": 99.48,
+                  "end": 99.74,
+                  "probability": 0.9896357655525208
+                },
+                {
+                  "word": " audio",
+                  "start": 99.74,
+                  "end": 99.96,
+                  "probability": 0.9867202639579773
+                },
+                {
+                  "word": " here.",
+                  "start": 99.96,
+                  "end": 100.53999999999999,
+                  "probability": 0.9816908240318298
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "edge": "end",
+          "estimatedWordBoundary": 105.44,
+          "candidateSeconds": 105.65,
+          "max10msRmsIn100msDbFS": -77.47012939870524,
+          "contextRange": [
+            102.94,
+            106.24
+          ],
+          "contextRecognition": [
+            {
+              "text": " Second time.",
+              "words": [
+                {
+                  "word": " Second",
+                  "start": 102.94,
+                  "end": 103.24,
+                  "probability": 0.48095640540122986
+                },
+                {
+                  "word": " time.",
+                  "start": 103.24,
+                  "end": 103.67999999999999,
+                  "probability": 0.9623520374298096
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "rawWordSpan": {
+        "first": 184,
+        "lastExclusive": 196
+      },
+      "uncertainWordIndexes": [
+        184,
+        189
+      ],
+      "status": "candidate-unaccepted"
+    }
+  ],
+  "limits": "Not certified verbatim transcript, source-unit acceptance, proxy clock or app readiness. Preserve ASR drift and explicit group pauses/Scripture handoffs.",
+  "elapsedSeconds": 8.6142018341925
+}

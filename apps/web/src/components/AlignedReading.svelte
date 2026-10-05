@@ -34,7 +34,7 @@
    return;
   }
   if(!position)return;
-  const target=viewport.querySelector(`[data-align-word="${position.verseIndex}-${position.wordIndex}"]`);
+  const target=position.wordIndex<0?viewport.querySelectorAll('.reading-verses > p')[position.verseIndex]:viewport.querySelector(`[data-align-word="${position.verseIndex}-${position.wordIndex}"]`);
   if(!target)return;
   const top=followScrollTop(clearViewport(),target.getBoundingClientRect(),viewport.scrollTop,viewport.scrollHeight);
   if(top!==null&&(lastScrollTarget===null||Math.abs(top-lastScrollTarget)>=1)){lastScrollTarget=top;scroller?.to(top,reducedMotion);}

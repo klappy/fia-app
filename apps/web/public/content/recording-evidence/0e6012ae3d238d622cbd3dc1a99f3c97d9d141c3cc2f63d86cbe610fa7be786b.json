@@ -1,0 +1,1048 @@
+{
+  "schema": 1,
+  "method": "global-sequence-comparison-v1",
+  "recognizerWordsUnmodified": true,
+  "normalization": "casefold and punctuation tokenization only; no number or homophone substitution",
+  "wordCount": 889,
+  "differences": [
+    {
+      "kind": "extra-recognized-speech",
+      "scriptTokenSpan": [
+        0,
+        0
+      ],
+      "recognizedTokenSpan": [
+        0,
+        9
+      ],
+      "scriptTokens": [],
+      "recognizedTokens": [
+        "3",
+        "defining",
+        "the",
+        "scenes",
+        "mark",
+        "1",
+        "1",
+        "3",
+        "13"
+      ],
+      "wordSpan": [
+        0,
+        9
+      ],
+      "activityIds": [],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "extra-recognized-speech",
+      "scriptTokenSpan": [
+        9,
+        9
+      ],
+      "recognizedTokenSpan": [
+        18,
+        19
+      ],
+      "scriptTokens": [],
+      "recognizedTokens": [
+        "3"
+      ],
+      "wordSpan": [
+        18,
+        19
+      ],
+      "activityIds": [],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "substitution",
+      "scriptTokenSpan": [
+        27,
+        28
+      ],
+      "recognizedTokenSpan": [
+        37,
+        38
+      ],
+      "scriptTokens": [
+        "setting"
+      ],
+      "recognizedTokens": [
+        "settings"
+      ],
+      "wordSpan": [
+        37,
+        38
+      ],
+      "activityIds": [
+        "S03-U002"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "substitution",
+      "scriptTokenSpan": [
+        41,
+        42
+      ],
+      "recognizedTokenSpan": [
+        51,
+        52
+      ],
+      "scriptTokens": [
+        "4"
+      ],
+      "recognizedTokens": [
+        "four"
+      ],
+      "wordSpan": [
+        51,
+        52
+      ],
+      "activityIds": [
+        "S03-U003"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "script-not-recognized",
+      "scriptTokenSpan": [
+        129,
+        130
+      ],
+      "recognizedTokenSpan": [
+        139,
+        139
+      ],
+      "scriptTokens": [
+        "and"
+      ],
+      "recognizedTokens": [],
+      "wordSpan": null,
+      "activityIds": [
+        "S03-U005"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "substitution",
+      "scriptTokenSpan": [
+        207,
+        208
+      ],
+      "recognizedTokenSpan": [
+        216,
+        217
+      ],
+      "scriptTokens": [
+        "jesus's"
+      ],
+      "recognizedTokens": [
+        "jesus"
+      ],
+      "wordSpan": [
+        216,
+        217
+      ],
+      "activityIds": [
+        "S03-U008"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "substitution",
+      "scriptTokenSpan": [
+        219,
+        220
+      ],
+      "recognizedTokenSpan": [
+        228,
+        229
+      ],
+      "scriptTokens": [
+        "40"
+      ],
+      "recognizedTokens": [
+        "forty"
+      ],
+      "wordSpan": [
+        228,
+        229
+      ],
+      "activityIds": [
+        "S03-U008"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "substitution",
+      "scriptTokenSpan": [
+        259,
+        260
+      ],
+      "recognizedTokenSpan": [
+        268,
+        269
+      ],
+      "scriptTokens": [
+        "passage's"
+      ],
+      "recognizedTokens": [
+        "passages"
+      ],
+      "wordSpan": [
+        268,
+        269
+      ],
+      "activityIds": [
+        "S03-U017"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "script-not-recognized",
+      "scriptTokenSpan": [
+        329,
+        330
+      ],
+      "recognizedTokenSpan": [
+        338,
+        338
+      ],
+      "scriptTokens": [
+        "of"
+      ],
+      "recognizedTokens": [],
+      "wordSpan": null,
+      "activityIds": [
+        "S03-U019"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "substitution",
+      "scriptTokenSpan": [
+        348,
+        349
+      ],
+      "recognizedTokenSpan": [
+        356,
+        357
+      ],
+      "scriptTokens": [
+        "baptizing"
+      ],
+      "recognizedTokens": [
+        "baptising"
+      ],
+      "wordSpan": [
+        356,
+        357
+      ],
+      "activityIds": [
+        "S03-U020"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "substitution",
+      "scriptTokenSpan": [
+        350,
+        352
+      ],
+      "recognizedTokenSpan": [
+        358,
+        359
+      ],
+      "scriptTokens": [
+        "they",
+        "are"
+      ],
+      "recognizedTokens": [
+        "they're"
+      ],
+      "wordSpan": [
+        358,
+        359
+      ],
+      "activityIds": [
+        "S03-U020"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "substitution",
+      "scriptTokenSpan": [
+        409,
+        410
+      ],
+      "recognizedTokenSpan": [
+        416,
+        417
+      ],
+      "scriptTokens": [
+        "says"
+      ],
+      "recognizedTokens": [
+        "said"
+      ],
+      "wordSpan": [
+        416,
+        417
+      ],
+      "activityIds": [
+        "S03-U020"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "substitution",
+      "scriptTokenSpan": [
+        430,
+        431
+      ],
+      "recognizedTokenSpan": [
+        437,
+        438
+      ],
+      "scriptTokens": [
+        "baptize"
+      ],
+      "recognizedTokens": [
+        "baptise"
+      ],
+      "wordSpan": [
+        437,
+        438
+      ],
+      "activityIds": [
+        "S03-U020"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "substitution",
+      "scriptTokenSpan": [
+        470,
+        471
+      ],
+      "recognizedTokenSpan": [
+        477,
+        478
+      ],
+      "scriptTokens": [
+        "baptizing"
+      ],
+      "recognizedTokens": [
+        "baptising"
+      ],
+      "wordSpan": [
+        477,
+        478
+      ],
+      "activityIds": [
+        "S03-U022"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "script-not-recognized",
+      "scriptTokenSpan": [
+        573,
+        574
+      ],
+      "recognizedTokenSpan": [
+        580,
+        580
+      ],
+      "scriptTokens": [
+        "out"
+      ],
+      "recognizedTokens": [],
+      "wordSpan": null,
+      "activityIds": [
+        "S03-U022"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "substitution",
+      "scriptTokenSpan": [
+        662,
+        663
+      ],
+      "recognizedTokenSpan": [
+        668,
+        669
+      ],
+      "scriptTokens": [
+        "this"
+      ],
+      "recognizedTokens": [
+        "the"
+      ],
+      "wordSpan": [
+        668,
+        669
+      ],
+      "activityIds": [
+        "S03-U022"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "extra-recognized-speech",
+      "scriptTokenSpan": [
+        687,
+        687
+      ],
+      "recognizedTokenSpan": [
+        693,
+        694
+      ],
+      "scriptTokens": [],
+      "recognizedTokens": [
+        "that"
+      ],
+      "wordSpan": [
+        693,
+        694
+      ],
+      "activityIds": [],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "substitution",
+      "scriptTokenSpan": [
+        696,
+        697
+      ],
+      "recognizedTokenSpan": [
+        703,
+        704
+      ],
+      "scriptTokens": [
+        "whose"
+      ],
+      "recognizedTokens": [
+        "who's"
+      ],
+      "wordSpan": [
+        703,
+        704
+      ],
+      "activityIds": [
+        "S03-U022"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "substitution",
+      "scriptTokenSpan": [
+        727,
+        728
+      ],
+      "recognizedTokenSpan": [
+        734,
+        735
+      ],
+      "scriptTokens": [
+        "the"
+      ],
+      "recognizedTokens": [
+        "a"
+      ],
+      "wordSpan": [
+        734,
+        735
+      ],
+      "activityIds": [
+        "S03-U023"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "substitution",
+      "scriptTokenSpan": [
+        787,
+        788
+      ],
+      "recognizedTokenSpan": [
+        794,
+        795
+      ],
+      "scriptTokens": [
+        "no"
+      ],
+      "recognizedTokens": [
+        "know"
+      ],
+      "wordSpan": [
+        794,
+        795
+      ],
+      "activityIds": [
+        "S03-U024"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "extra-recognized-speech",
+      "scriptTokenSpan": [
+        875,
+        875
+      ],
+      "recognizedTokenSpan": [
+        882,
+        889
+      ],
+      "scriptTokens": [],
+      "recognizedTokens": [
+        "this",
+        "is",
+        "the",
+        "end",
+        "of",
+        "the",
+        "recording"
+      ],
+      "wordSpan": [
+        882,
+        889
+      ],
+      "activityIds": [],
+      "status": "comparison-not-confirmed-spoken-drift"
+    }
+  ],
+  "mappings": [
+    {
+      "activityId": "S03-U001",
+      "sourceTextSha256": "40915459d3070b081f6298ca4a7a52a1f5a10ce875b7de37380cf051b9438494",
+      "wordSpan": {
+        "first": 9,
+        "lastExclusive": 26
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 4.82,
+        "endSeconds": 10.88,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 16,
+      "scriptTokens": 16,
+      "uncertainWordIndexes": [
+        9
+      ],
+      "completion": "auto",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S03-U002",
+      "sourceTextSha256": "a61b9e3354ad33e5fa08433737e96e7439154607a4ec97a2a555911bb35f83e7",
+      "wordSpan": {
+        "first": 26,
+        "lastExclusive": 48
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 11.66,
+        "endSeconds": 17.98,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 21,
+      "scriptTokens": 22,
+      "uncertainWordIndexes": [
+        29
+      ],
+      "completion": "auto",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S03-U003",
+      "sourceTextSha256": "71a746201a0ba153e32fc1be0737ddb3c9e11691715f63485a9aa14445e4f1ba",
+      "wordSpan": {
+        "first": 48,
+        "lastExclusive": 53
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 18.56,
+        "endSeconds": 20.08,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 4,
+      "scriptTokens": 5,
+      "uncertainWordIndexes": [
+        51
+      ],
+      "completion": "auto",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S03-U004",
+      "sourceTextSha256": "7b523bfca29e22f7b0339e59c4b4281b9761a965ed6f20db5811063b88605791",
+      "wordSpan": {
+        "first": 53,
+        "lastExclusive": 112
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 20.92,
+        "endSeconds": 39.42,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 59,
+      "scriptTokens": 59,
+      "uncertainWordIndexes": [
+        70,
+        78,
+        80,
+        85
+      ],
+      "completion": "auto",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S03-U005",
+      "sourceTextSha256": "ad07e3462b3d5f7f1f32b8af389c2411998b5282126d24dee10a51f1cecb5e12",
+      "wordSpan": {
+        "first": 112,
+        "lastExclusive": 152
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 40.16,
+        "endSeconds": 53.7,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 40,
+      "scriptTokens": 41,
+      "uncertainWordIndexes": [],
+      "completion": "auto",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S03-U006",
+      "sourceTextSha256": "5300ade473d596e84f857c89e73a93aa3ad39c64162ae211edbac4c1a31b8ad4",
+      "wordSpan": {
+        "first": 152,
+        "lastExclusive": 186
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 53.7,
+        "endSeconds": 67.84,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 34,
+      "scriptTokens": 34,
+      "uncertainWordIndexes": [
+        162,
+        179
+      ],
+      "completion": "auto",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S03-U007",
+      "sourceTextSha256": "b20ae2038847bcb26a2cd941f7a836befdddb740bb6cfc69fd02e54c225035be",
+      "wordSpan": {
+        "first": 186,
+        "lastExclusive": 210
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 69.02,
+        "endSeconds": 76.5,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 24,
+      "scriptTokens": 24,
+      "uncertainWordIndexes": [],
+      "completion": "confirm",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S03-U008",
+      "sourceTextSha256": "f47355b104297c74e46370c8e03d556bcc1c33cf7440b92f123d50efd9152064",
+      "wordSpan": {
+        "first": 210,
+        "lastExclusive": 239
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 77.6,
+        "endSeconds": 91.74,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 27,
+      "scriptTokens": 29,
+      "uncertainWordIndexes": [
+        210,
+        228
+      ],
+      "completion": "auto",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S03-U009",
+      "sourceTextSha256": "fbbf57c5c98a0646849fbb07a7c2a3e082e2843e68cdf2caf14c5ec01273f693",
+      "wordSpan": {
+        "first": 239,
+        "lastExclusive": 245
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 92.52,
+        "endSeconds": 94.34,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 6,
+      "scriptTokens": 6,
+      "uncertainWordIndexes": [
+        243
+      ],
+      "completion": "auto",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S03-U010",
+      "sourceTextSha256": "3210be4a83fcb7c3537a69105d10900aede1d43c29858ca4f238cd7d897cb2ba",
+      "wordSpan": {
+        "first": 245,
+        "lastExclusive": 248
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 94.34,
+        "endSeconds": 95.48,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 3,
+      "scriptTokens": 3,
+      "uncertainWordIndexes": [
+        245
+      ],
+      "completion": "auto",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S03-U011",
+      "sourceTextSha256": "af7179dc3a21918f422d1bb678b9b5f7ae18deb8c8e8fa6f5c6ee90a11b86944",
+      "wordSpan": {
+        "first": 248,
+        "lastExclusive": 251
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 96.08,
+        "endSeconds": 97.18,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 3,
+      "scriptTokens": 3,
+      "uncertainWordIndexes": [],
+      "completion": "auto",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S03-U012",
+      "sourceTextSha256": "62fe4843ff9d2d79c52749cb0073c8490e7e490f03b98911d3acd4661ea69b5b",
+      "wordSpan": {
+        "first": 251,
+        "lastExclusive": 252
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 97.56,
+        "endSeconds": 98.0,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 1,
+      "scriptTokens": 1,
+      "uncertainWordIndexes": [],
+      "completion": "auto",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S03-U013",
+      "sourceTextSha256": "c8f425825c9b066be4a1f9794957e55b243a9445eefc657daff3586b2e9ead86",
+      "wordSpan": {
+        "first": 252,
+        "lastExclusive": 255
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 98.8,
+        "endSeconds": 99.92,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 3,
+      "scriptTokens": 3,
+      "uncertainWordIndexes": [],
+      "completion": "auto",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S03-U014",
+      "sourceTextSha256": "9c544d96b0c84c52ace0ae1c9ea1414c153ad9e8ec7dd0c5bd12e828fc74317b",
+      "wordSpan": {
+        "first": 255,
+        "lastExclusive": 256
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 100.24,
+        "endSeconds": 100.8,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 1,
+      "scriptTokens": 1,
+      "uncertainWordIndexes": [],
+      "completion": "auto",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S03-U015",
+      "sourceTextSha256": "c50d310cc268c44b1f99bf0dd61ad8d575f225e52f27847b08b2433bd9b97ee8",
+      "wordSpan": {
+        "first": 256,
+        "lastExclusive": 257
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 101.34,
+        "endSeconds": 101.8,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 1,
+      "scriptTokens": 1,
+      "uncertainWordIndexes": [],
+      "completion": "auto",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S03-U016",
+      "sourceTextSha256": "36b1476682f7077fd01742ab6c1f8f2d276053df9fac5a2ee56e804130177216",
+      "wordSpan": {
+        "first": 257,
+        "lastExclusive": 258
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 102.42,
+        "endSeconds": 102.86,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 1,
+      "scriptTokens": 1,
+      "uncertainWordIndexes": [],
+      "completion": "auto",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S03-U017",
+      "sourceTextSha256": "a908f9e33277ed8e48a81473a63156422261b854494e695602d4779b94a64824",
+      "wordSpan": {
+        "first": 258,
+        "lastExclusive": 270
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 103.66,
+        "endSeconds": 107.78,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 11,
+      "scriptTokens": 12,
+      "uncertainWordIndexes": [
+        268,
+        269
+      ],
+      "completion": "auto",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S03-U018",
+      "sourceTextSha256": "7ef580b8a590e5654b4a82a4f034971397041c6a38a35ea5caa47cc011c31b68",
+      "wordSpan": {
+        "first": 270,
+        "lastExclusive": 321
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 108.86,
+        "endSeconds": 125.28,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 51,
+      "scriptTokens": 51,
+      "uncertainWordIndexes": [
+        281,
+        288,
+        305
+      ],
+      "completion": "auto",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S03-U019",
+      "sourceTextSha256": "d0fd48782f2bdfed479cd29f71cc00f1f5ee8103beaa85033846d227a2f855ee",
+      "wordSpan": {
+        "first": 321,
+        "lastExclusive": 340
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 126.38,
+        "endSeconds": 131.86,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 19,
+      "scriptTokens": 20,
+      "uncertainWordIndexes": [
+        338
+      ],
+      "completion": "confirm",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S03-U020",
+      "sourceTextSha256": "7c9d8cb68e4b3d73a5643265397d222e0877fe02c558bddaa10e43d88b7dd2ec",
+      "wordSpan": {
+        "first": 340,
+        "lastExclusive": 456
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 133.94,
+        "endSeconds": 172.78,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 112,
+      "scriptTokens": 117,
+      "uncertainWordIndexes": [
+        352,
+        356,
+        393,
+        405,
+        414,
+        416,
+        437,
+        445
+      ],
+      "completion": "auto",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S03-U021",
+      "sourceTextSha256": "0ac2d39638e0d6f2d3c32e018be548237acd81f8f89171924ed6f869e9a8e3dc",
+      "wordSpan": {
+        "first": 456,
+        "lastExclusive": 470
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 173.64,
+        "endSeconds": 178.26,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 14,
+      "scriptTokens": 14,
+      "uncertainWordIndexes": [
+        460
+      ],
+      "completion": "confirm",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S03-U022",
+      "sourceTextSha256": "8094616fb19936cfadeb6d8b048cad551d9594f3d0d9c28f197130d8328547d2",
+      "wordSpan": {
+        "first": 470,
+        "lastExclusive": 730
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 180.62,
+        "endSeconds": 269.42,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 256,
+      "scriptTokens": 260,
+      "uncertainWordIndexes": [
+        470,
+        474,
+        477,
+        488,
+        494,
+        539,
+        544,
+        568,
+        596,
+        619,
+        622,
+        672,
+        678,
+        681,
+        703,
+        707,
+        712
+      ],
+      "completion": "auto",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S03-U023",
+      "sourceTextSha256": "c2208ead0dd6b1671c6f78cc99e279463a372489d19106caabbca71324b1cc9c",
+      "wordSpan": {
+        "first": 730,
+        "lastExclusive": 781
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 270.56,
+        "endSeconds": 287.98,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 50,
+      "scriptTokens": 51,
+      "uncertainWordIndexes": [
+        733,
+        734,
+        743,
+        756,
+        779
+      ],
+      "completion": "auto",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S03-U024",
+      "sourceTextSha256": "0cd16fe6e894203273ebe12c251c1cce11d080d734354b6c007ced78081ec5ad",
+      "wordSpan": {
+        "first": 781,
+        "lastExclusive": 864
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 287.98,
+        "endSeconds": 319.44,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 82,
+      "scriptTokens": 83,
+      "uncertainWordIndexes": [
+        781,
+        794,
+        851,
+        852
+      ],
+      "completion": "auto",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S03-U025",
+      "sourceTextSha256": "b7266b611527910b5407eb63cf64130dfb09d6a31dadfe22523f17d433ce8278",
+      "wordSpan": {
+        "first": 864,
+        "lastExclusive": 882
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 320.32,
+        "endSeconds": 326.9,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 18,
+      "scriptTokens": 18,
+      "uncertainWordIndexes": [
+        868,
+        870
+      ],
+      "completion": "confirm",
+      "status": "candidate-needs-boundary-and-drift-review"
+    }
+  ],
+  "acceptedPlaybackRanges": [],
+  "transcriptSha256": "90d5c1cb6800927670b93e79127d86a6f8f908fdb072701c48450455493121c9",
+  "presentationSha256": "ccd72f23c23f932651b500b730b285f32fabd37e50037b5af91d8881f1403975",
+  "recordingSha256": "6ac21beefbcc42b721de90e499b842c07f6a63f0e6a8f91391ce511613412538",
+  "alignmentScriptSha256": "184f53e8864179a44e56183145eaa92270f296d754553a5c21f54579c57cd47a"
+}

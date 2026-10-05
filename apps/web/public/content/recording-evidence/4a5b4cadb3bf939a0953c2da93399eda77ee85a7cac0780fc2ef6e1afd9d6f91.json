@@ -1,0 +1,1099 @@
+{
+  "schema": 1,
+  "status": "raw-asr-unreviewed-not-verbatim-certified",
+  "scope": "Local recognition only; no TTS, paid calls, remote fetch, script prompt, forced alignment or product edits. Word timestamps are model estimates, not accepted playback boundaries.",
+  "source": {
+    "sha256": "9834ac98fdc57c34e4cc2cb5f813fc5bf050a2283ffc4ce994963bbfa9649d25",
+    "bytes": 1079948,
+    "url": "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s1/v2/vbr0.mp3"
+  },
+  "model": {
+    "name": "Systran/faster-whisper-tiny.en",
+    "snapshot": "0d3d19a32d3338f10357c0889762bd8d64bbdeba",
+    "files": {
+      "config.json": {
+        "sha256": "14b1b421a90349bc551b881461426b561a874049cb9e4c4864f2ca384f6a7cc5",
+        "bytes": 2317
+      },
+      "model.bin": {
+        "sha256": "1a5afae06a4db91c975c9a9d78be5cc110ee4ea022ad57d55492e4550e936b2a",
+        "bytes": 75537502
+      },
+      "tokenizer.json": {
+        "sha256": "929c5252409436dce1b38a75d1abbcb5e132d170d8e324e4e04ed915fa2d22df",
+        "bytes": 2128466
+      },
+      "vocabulary.txt": {
+        "sha256": "ff77588746d3a2595d32ab5b69ffd7b95ce2441ac57533cb66fc3eb575a115cf",
+        "bytes": 422309
+      }
+    },
+    "device": "cpu",
+    "computeType": "int8",
+    "cpuThreads": 4
+  },
+  "runtime": {
+    "python": "3.12.14",
+    "faster-whisper": "1.2.1",
+    "ctranslate2": "4.8.2",
+    "av": "19.0.1",
+    "numpy": "2.5.3"
+  },
+  "recognitionConfig": {
+    "language": "en",
+    "task": "transcribe",
+    "log_progress": false,
+    "beam_size": 5,
+    "best_of": 5,
+    "patience": 1,
+    "length_penalty": 1,
+    "repetition_penalty": 1,
+    "no_repeat_ngram_size": 0,
+    "temperature": [
+      0.0,
+      0.2,
+      0.4,
+      0.6,
+      0.8,
+      1.0
+    ],
+    "compression_ratio_threshold": 2.4,
+    "log_prob_threshold": -1.0,
+    "no_speech_threshold": 0.6,
+    "condition_on_previous_text": false,
+    "prompt_reset_on_temperature": 0.5,
+    "initial_prompt": null,
+    "prefix": null,
+    "suppress_blank": true,
+    "suppress_tokens": [
+      -1
+    ],
+    "without_timestamps": false,
+    "max_initial_timestamp": 1.0,
+    "word_timestamps": true,
+    "prepend_punctuations": "\"'\u201c\u00bf([{-",
+    "append_punctuations": "\"'.\u3002,\uff0c!\uff01?\uff1f:\uff1a\u201d)]}\u3001",
+    "multilingual": false,
+    "vad_filter": false,
+    "vad_parameters": null,
+    "max_new_tokens": null,
+    "chunk_length": null,
+    "clip_timestamps": "0",
+    "hallucination_silence_threshold": null,
+    "hotwords": null,
+    "language_detection_threshold": 0.5,
+    "language_detection_segments": 1
+  },
+  "decoder": {
+    "library": "PyAV",
+    "output": "mono float32 16000Hz",
+    "samples": 974437,
+    "sha256": "f8fe926326325176a7d74b0b88808165a6d165e8a73de43a28ee4f6d34deb590",
+    "timeline": "decoded PyAV samples beginning at zero; no conversion to Apple playback timeline asserted"
+  },
+  "duration": 60.9023125,
+  "elapsedSeconds": 2.0469327501486987,
+  "scriptSha256": "9ed3570a56cc9e0bf3ff5b645f8ecd227abeeeec41dd8df2f62d5c332284f12f",
+  "wordCount": 116,
+  "segments": [
+    {
+      "id": 1,
+      "seek": 0,
+      "start": 0.0,
+      "end": 11.08,
+      "text": " 1. Here and heart, mark 1, 1, 3, 13. In this step, here mark 1, 1, 3, 13, and put it in your",
+      "tokens": [
+        50363,
+        352,
+        13,
+        3423,
+        290,
+        2612,
+        11,
+        1317,
+        352,
+        11,
+        352,
+        11,
+        513,
+        11,
+        1511,
+        13,
+        554,
+        428,
+        2239,
+        11,
+        994,
+        1317,
+        352,
+        11,
+        352,
+        11,
+        513,
+        11,
+        1511,
+        11,
+        290,
+        1234,
+        340,
+        287,
+        534,
+        50907
+      ],
+      "avg_logprob": -0.24348095474363882,
+      "compression_ratio": 1.5515151515151515,
+      "no_speech_prob": 0.11321824043989182,
+      "words": [
+        {
+          "start": 0.0,
+          "end": 0.88,
+          "word": " 1.",
+          "probability": 0.8807117938995361
+        },
+        {
+          "start": 1.6,
+          "end": 1.88,
+          "word": " Here",
+          "probability": 0.7580175399780273
+        },
+        {
+          "start": 1.88,
+          "end": 2.18,
+          "word": " and",
+          "probability": 0.9691153168678284
+        },
+        {
+          "start": 2.18,
+          "end": 2.68,
+          "word": " heart,",
+          "probability": 0.7167138457298279
+        },
+        {
+          "start": 3.28,
+          "end": 3.54,
+          "word": " mark",
+          "probability": 0.5031675100326538
+        },
+        {
+          "start": 3.54,
+          "end": 4.16,
+          "word": " 1,",
+          "probability": 0.7982203960418701
+        },
+        {
+          "start": 4.2,
+          "end": 4.52,
+          "word": " 1,",
+          "probability": 0.9823470115661621
+        },
+        {
+          "start": 4.64,
+          "end": 4.78,
+          "word": " 3,",
+          "probability": 0.9642505049705505
+        },
+        {
+          "start": 4.82,
+          "end": 5.32,
+          "word": " 13.",
+          "probability": 0.9357947111129761
+        },
+        {
+          "start": 6.46,
+          "end": 6.54,
+          "word": " In",
+          "probability": 0.9715366363525391
+        },
+        {
+          "start": 6.54,
+          "end": 6.76,
+          "word": " this",
+          "probability": 0.9991810917854309
+        },
+        {
+          "start": 6.76,
+          "end": 7.14,
+          "word": " step,",
+          "probability": 0.9970255494117737
+        },
+        {
+          "start": 7.54,
+          "end": 7.8,
+          "word": " here",
+          "probability": 0.7889200448989868
+        },
+        {
+          "start": 7.8,
+          "end": 8.06,
+          "word": " mark",
+          "probability": 0.7908720374107361
+        },
+        {
+          "start": 8.06,
+          "end": 8.6,
+          "word": " 1,",
+          "probability": 0.990476131439209
+        },
+        {
+          "start": 8.6,
+          "end": 8.86,
+          "word": " 1,",
+          "probability": 0.9930082559585571
+        },
+        {
+          "start": 8.96,
+          "end": 9.1,
+          "word": " 3,",
+          "probability": 0.9756016135215759
+        },
+        {
+          "start": 9.12,
+          "end": 9.6,
+          "word": " 13,",
+          "probability": 0.9901031255722046
+        },
+        {
+          "start": 10.22,
+          "end": 10.44,
+          "word": " and",
+          "probability": 0.9948921203613281
+        },
+        {
+          "start": 10.44,
+          "end": 10.52,
+          "word": " put",
+          "probability": 0.9962074756622314
+        },
+        {
+          "start": 10.52,
+          "end": 10.76,
+          "word": " it",
+          "probability": 0.9909738898277283
+        },
+        {
+          "start": 10.76,
+          "end": 10.84,
+          "word": " in",
+          "probability": 0.9826075434684753
+        },
+        {
+          "start": 10.84,
+          "end": 11.08,
+          "word": " your",
+          "probability": 0.9967281818389893
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 2,
+      "seek": 0,
+      "start": 11.08,
+      "end": 19.08,
+      "text": " hearts. Listen to an audio version of mark 1, 1, 3, 13, three times in three different",
+      "tokens": [
+        50907,
+        11954,
+        13,
+        20600,
+        284,
+        281,
+        6597,
+        2196,
+        286,
+        1317,
+        352,
+        11,
+        352,
+        11,
+        513,
+        11,
+        1511,
+        11,
+        1115,
+        1661,
+        287,
+        1115,
+        1180,
+        51311
+      ],
+      "avg_logprob": -0.24348095474363882,
+      "compression_ratio": 1.5515151515151515,
+      "no_speech_prob": 0.11321824043989182,
+      "words": [
+        {
+          "start": 11.08,
+          "end": 11.6,
+          "word": " hearts.",
+          "probability": 0.7480116486549377
+        },
+        {
+          "start": 13.38,
+          "end": 13.64,
+          "word": " Listen",
+          "probability": 0.9697970747947693
+        },
+        {
+          "start": 13.64,
+          "end": 13.78,
+          "word": " to",
+          "probability": 0.9987807869911194
+        },
+        {
+          "start": 13.78,
+          "end": 14.04,
+          "word": " an",
+          "probability": 0.9919483661651611
+        },
+        {
+          "start": 14.04,
+          "end": 14.16,
+          "word": " audio",
+          "probability": 0.9823973178863525
+        },
+        {
+          "start": 14.16,
+          "end": 14.66,
+          "word": " version",
+          "probability": 0.996245801448822
+        },
+        {
+          "start": 14.66,
+          "end": 14.98,
+          "word": " of",
+          "probability": 0.9949959516525269
+        },
+        {
+          "start": 14.98,
+          "end": 15.26,
+          "word": " mark",
+          "probability": 0.6935366988182068
+        },
+        {
+          "start": 15.26,
+          "end": 15.74,
+          "word": " 1,",
+          "probability": 0.9877080917358398
+        },
+        {
+          "start": 15.76,
+          "end": 16.04,
+          "word": " 1,",
+          "probability": 0.9937261939048767
+        },
+        {
+          "start": 16.08,
+          "end": 16.3,
+          "word": " 3,",
+          "probability": 0.9922216534614563
+        },
+        {
+          "start": 16.48,
+          "end": 16.82,
+          "word": " 13,",
+          "probability": 0.989175021648407
+        },
+        {
+          "start": 17.14,
+          "end": 17.22,
+          "word": " three",
+          "probability": 0.48402655124664307
+        },
+        {
+          "start": 17.22,
+          "end": 17.68,
+          "word": " times",
+          "probability": 0.9935882091522217
+        },
+        {
+          "start": 17.68,
+          "end": 18.32,
+          "word": " in",
+          "probability": 0.9022833108901978
+        },
+        {
+          "start": 18.32,
+          "end": 18.66,
+          "word": " three",
+          "probability": 0.953875720500946
+        },
+        {
+          "start": 18.66,
+          "end": 19.08,
+          "word": " different",
+          "probability": 0.9938693046569824
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 3,
+      "seek": 0,
+      "start": 19.08,
+      "end": 25.16,
+      "text": " translations if possible. Then, as a group, discuss the following questions.",
+      "tokens": [
+        51311,
+        25231,
+        611,
+        1744,
+        13,
+        3244,
+        11,
+        355,
+        257,
+        1448,
+        11,
+        2112,
+        262,
+        1708,
+        2683,
+        13,
+        51629
+      ],
+      "avg_logprob": -0.24348095474363882,
+      "compression_ratio": 1.5515151515151515,
+      "no_speech_prob": 0.11321824043989182,
+      "words": [
+        {
+          "start": 19.08,
+          "end": 19.68,
+          "word": " translations",
+          "probability": 0.9912659525871277
+        },
+        {
+          "start": 19.68,
+          "end": 20.14,
+          "word": " if",
+          "probability": 0.47586289048194885
+        },
+        {
+          "start": 20.14,
+          "end": 20.58,
+          "word": " possible.",
+          "probability": 0.9994706511497498
+        },
+        {
+          "start": 21.38,
+          "end": 21.88,
+          "word": " Then,",
+          "probability": 0.9932589530944824
+        },
+        {
+          "start": 22.2,
+          "end": 22.44,
+          "word": " as",
+          "probability": 0.997583270072937
+        },
+        {
+          "start": 22.44,
+          "end": 22.54,
+          "word": " a",
+          "probability": 0.9937353730201721
+        },
+        {
+          "start": 22.54,
+          "end": 22.96,
+          "word": " group,",
+          "probability": 0.99870765209198
+        },
+        {
+          "start": 23.34,
+          "end": 23.68,
+          "word": " discuss",
+          "probability": 0.9913492202758789
+        },
+        {
+          "start": 23.68,
+          "end": 24.12,
+          "word": " the",
+          "probability": 0.9981069564819336
+        },
+        {
+          "start": 24.12,
+          "end": 24.34,
+          "word": " following",
+          "probability": 0.9974833130836487
+        },
+        {
+          "start": 24.34,
+          "end": 25.16,
+          "word": " questions.",
+          "probability": 0.9878469705581665
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 4,
+      "seek": 2516,
+      "start": 25.16,
+      "end": 29.18,
+      "text": " 1. What do you like in this passage?",
+      "tokens": [
+        50363,
+        352,
+        13,
+        1867,
+        466,
+        345,
+        588,
+        287,
+        428,
+        10066,
+        30,
+        50573
+      ],
+      "avg_logprob": -0.17412019726158917,
+      "compression_ratio": 1.8671875,
+      "no_speech_prob": 0.4731724262237549,
+      "words": [
+        {
+          "start": 25.16,
+          "end": 26.4,
+          "word": " 1.",
+          "probability": 0.3284296691417694
+        },
+        {
+          "start": 27.28,
+          "end": 27.44,
+          "word": " What",
+          "probability": 0.9572288393974304
+        },
+        {
+          "start": 27.44,
+          "end": 27.58,
+          "word": " do",
+          "probability": 0.9868116974830627
+        },
+        {
+          "start": 27.58,
+          "end": 27.72,
+          "word": " you",
+          "probability": 0.9941110014915466
+        },
+        {
+          "start": 27.72,
+          "end": 28.04,
+          "word": " like",
+          "probability": 0.9916069507598877
+        },
+        {
+          "start": 28.04,
+          "end": 28.24,
+          "word": " in",
+          "probability": 0.9943122863769531
+        },
+        {
+          "start": 28.24,
+          "end": 28.48,
+          "word": " this",
+          "probability": 0.9962361454963684
+        },
+        {
+          "start": 28.48,
+          "end": 29.18,
+          "word": " passage?",
+          "probability": 0.9932824373245239
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 5,
+      "seek": 2516,
+      "start": 30.3,
+      "end": 35.86,
+      "text": " 2. What do you not like or not understand in this passage?",
+      "tokens": [
+        50573,
+        362,
+        13,
+        1867,
+        466,
+        345,
+        407,
+        588,
+        393,
+        407,
+        1833,
+        287,
+        428,
+        10066,
+        30,
+        50913
+      ],
+      "avg_logprob": -0.17412019726158917,
+      "compression_ratio": 1.8671875,
+      "no_speech_prob": 0.4731724262237549,
+      "words": [
+        {
+          "start": 30.3,
+          "end": 30.64,
+          "word": " 2.",
+          "probability": 0.9128140807151794
+        },
+        {
+          "start": 31.46,
+          "end": 31.7,
+          "word": " What",
+          "probability": 0.9879961609840393
+        },
+        {
+          "start": 31.7,
+          "end": 31.86,
+          "word": " do",
+          "probability": 0.9927241206169128
+        },
+        {
+          "start": 31.86,
+          "end": 32.06,
+          "word": " you",
+          "probability": 0.9738480448722839
+        },
+        {
+          "start": 32.06,
+          "end": 32.36,
+          "word": " not",
+          "probability": 0.9309836626052856
+        },
+        {
+          "start": 32.36,
+          "end": 32.82,
+          "word": " like",
+          "probability": 0.9965456128120422
+        },
+        {
+          "start": 32.82,
+          "end": 33.36,
+          "word": " or",
+          "probability": 0.8626791834831238
+        },
+        {
+          "start": 33.36,
+          "end": 33.82,
+          "word": " not",
+          "probability": 0.9823906421661377
+        },
+        {
+          "start": 33.82,
+          "end": 34.6,
+          "word": " understand",
+          "probability": 0.9916926622390747
+        },
+        {
+          "start": 34.6,
+          "end": 35.02,
+          "word": " in",
+          "probability": 0.9802423119544983
+        },
+        {
+          "start": 35.02,
+          "end": 35.22,
+          "word": " this",
+          "probability": 0.9946474432945251
+        },
+        {
+          "start": 35.22,
+          "end": 35.86,
+          "word": " passage?",
+          "probability": 0.9975787997245789
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 6,
+      "seek": 2516,
+      "start": 36.98,
+      "end": 41.1,
+      "text": " 3. What does this passage tell us about Jesus?",
+      "tokens": [
+        50913,
+        513,
+        13,
+        1867,
+        857,
+        428,
+        10066,
+        1560,
+        514,
+        546,
+        5803,
+        30,
+        51163
+      ],
+      "avg_logprob": -0.17412019726158917,
+      "compression_ratio": 1.8671875,
+      "no_speech_prob": 0.4731724262237549,
+      "words": [
+        {
+          "start": 36.98,
+          "end": 37.32,
+          "word": " 3.",
+          "probability": 0.9372309446334839
+        },
+        {
+          "start": 38.26,
+          "end": 38.48,
+          "word": " What",
+          "probability": 0.9872077107429504
+        },
+        {
+          "start": 38.48,
+          "end": 38.68,
+          "word": " does",
+          "probability": 0.9973036050796509
+        },
+        {
+          "start": 38.68,
+          "end": 38.9,
+          "word": " this",
+          "probability": 0.997376561164856
+        },
+        {
+          "start": 38.9,
+          "end": 39.34,
+          "word": " passage",
+          "probability": 0.9928075075149536
+        },
+        {
+          "start": 39.34,
+          "end": 39.68,
+          "word": " tell",
+          "probability": 0.9952167272567749
+        },
+        {
+          "start": 39.68,
+          "end": 40.06,
+          "word": " us",
+          "probability": 0.9985343217849731
+        },
+        {
+          "start": 40.06,
+          "end": 40.48,
+          "word": " about",
+          "probability": 0.9975441098213196
+        },
+        {
+          "start": 40.48,
+          "end": 41.1,
+          "word": " Jesus?",
+          "probability": 0.9938055276870728
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 7,
+      "seek": 2516,
+      "start": 42.4,
+      "end": 46.16,
+      "text": " 4. What does this passage tell us about people?",
+      "tokens": [
+        51163,
+        604,
+        13,
+        1867,
+        857,
+        428,
+        10066,
+        1560,
+        514,
+        546,
+        661,
+        30,
+        51413
+      ],
+      "avg_logprob": -0.17412019726158917,
+      "compression_ratio": 1.8671875,
+      "no_speech_prob": 0.4731724262237549,
+      "words": [
+        {
+          "start": 42.4,
+          "end": 42.78,
+          "word": " 4.",
+          "probability": 0.9639993906021118
+        },
+        {
+          "start": 43.62,
+          "end": 43.84,
+          "word": " What",
+          "probability": 0.9942061901092529
+        },
+        {
+          "start": 43.84,
+          "end": 44.04,
+          "word": " does",
+          "probability": 0.9968026876449585
+        },
+        {
+          "start": 44.04,
+          "end": 44.26,
+          "word": " this",
+          "probability": 0.995577335357666
+        },
+        {
+          "start": 44.26,
+          "end": 44.74,
+          "word": " passage",
+          "probability": 0.9964935183525085
+        },
+        {
+          "start": 44.74,
+          "end": 44.94,
+          "word": " tell",
+          "probability": 0.9939035773277283
+        },
+        {
+          "start": 44.94,
+          "end": 45.38,
+          "word": " us",
+          "probability": 0.9971946477890015
+        },
+        {
+          "start": 45.38,
+          "end": 45.8,
+          "word": " about",
+          "probability": 0.994666337966919
+        },
+        {
+          "start": 45.8,
+          "end": 46.22,
+          "word": " people?",
+          "probability": 0.9687690734863281
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 8,
+      "seek": 2516,
+      "start": 47.64,
+      "end": 51.94,
+      "text": " 5. How does this passage affect our daily lives?",
+      "tokens": [
+        51413,
+        642,
+        13,
+        1374,
+        857,
+        428,
+        10066,
+        2689,
+        674,
+        4445,
+        3160,
+        30,
+        51713
+      ],
+      "avg_logprob": -0.17412019726158917,
+      "compression_ratio": 1.8671875,
+      "no_speech_prob": 0.4731724262237549,
+      "words": [
+        {
+          "start": 47.64,
+          "end": 48.12,
+          "word": " 5.",
+          "probability": 0.969205379486084
+        },
+        {
+          "start": 48.94,
+          "end": 49.2,
+          "word": " How",
+          "probability": 0.9966707825660706
+        },
+        {
+          "start": 49.2,
+          "end": 49.38,
+          "word": " does",
+          "probability": 0.9959824085235596
+        },
+        {
+          "start": 49.38,
+          "end": 49.64,
+          "word": " this",
+          "probability": 0.9958208799362183
+        },
+        {
+          "start": 49.64,
+          "end": 50.04,
+          "word": " passage",
+          "probability": 0.9880867004394531
+        },
+        {
+          "start": 50.04,
+          "end": 50.62,
+          "word": " affect",
+          "probability": 0.9224625825881958
+        },
+        {
+          "start": 50.62,
+          "end": 51.04,
+          "word": " our",
+          "probability": 0.9406391978263855
+        },
+        {
+          "start": 51.04,
+          "end": 51.22,
+          "word": " daily",
+          "probability": 0.9988411068916321
+        },
+        {
+          "start": 51.22,
+          "end": 51.94,
+          "word": " lives?",
+          "probability": 0.9980823993682861
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 9,
+      "seek": 5194,
+      "start": 53.099999999999994,
+      "end": 60.14,
+      "text": " 6. Who do you know who needs to hear this passage? This is the end of the recording.",
+      "tokens": [
+        50363,
+        718,
+        13,
+        5338,
+        466,
+        345,
+        760,
+        508,
+        2476,
+        284,
+        3285,
+        428,
+        10066,
+        30,
+        770,
+        318,
+        262,
+        886,
+        286,
+        262,
+        8296,
+        13,
+        50713
+      ],
+      "avg_logprob": -0.2673499658703804,
+      "compression_ratio": 1.05,
+      "no_speech_prob": 0.09265586733818054,
+      "words": [
+        {
+          "start": 53.099999999999994,
+          "end": 53.58,
+          "word": " 6.",
+          "probability": 0.5857221484184265
+        },
+        {
+          "start": 54.52,
+          "end": 54.72,
+          "word": " Who",
+          "probability": 0.941757321357727
+        },
+        {
+          "start": 54.72,
+          "end": 54.84,
+          "word": " do",
+          "probability": 0.9856442213058472
+        },
+        {
+          "start": 54.84,
+          "end": 55.02,
+          "word": " you",
+          "probability": 0.9962683320045471
+        },
+        {
+          "start": 55.02,
+          "end": 55.54,
+          "word": " know",
+          "probability": 0.9967567324638367
+        },
+        {
+          "start": 55.54,
+          "end": 55.98,
+          "word": " who",
+          "probability": 0.875911295413971
+        },
+        {
+          "start": 55.98,
+          "end": 56.22,
+          "word": " needs",
+          "probability": 0.9927574396133423
+        },
+        {
+          "start": 56.22,
+          "end": 56.48,
+          "word": " to",
+          "probability": 0.9974405765533447
+        },
+        {
+          "start": 56.48,
+          "end": 56.7,
+          "word": " hear",
+          "probability": 0.9852668046951294
+        },
+        {
+          "start": 56.7,
+          "end": 56.98,
+          "word": " this",
+          "probability": 0.9937310218811035
+        },
+        {
+          "start": 56.98,
+          "end": 57.44,
+          "word": " passage?",
+          "probability": 0.994731068611145
+        },
+        {
+          "start": 58.76,
+          "end": 58.94,
+          "word": " This",
+          "probability": 0.9775637984275818
+        },
+        {
+          "start": 58.94,
+          "end": 59.16,
+          "word": " is",
+          "probability": 0.9974428415298462
+        },
+        {
+          "start": 59.16,
+          "end": 59.28,
+          "word": " the",
+          "probability": 0.9871735572814941
+        },
+        {
+          "start": 59.28,
+          "end": 59.5,
+          "word": " end",
+          "probability": 0.9883871674537659
+        },
+        {
+          "start": 59.5,
+          "end": 59.74,
+          "word": " of",
+          "probability": 0.9963635802268982
+        },
+        {
+          "start": 59.74,
+          "end": 59.88,
+          "word": " the",
+          "probability": 0.9903061389923096
+        },
+        {
+          "start": 59.88,
+          "end": 60.14,
+          "word": " recording.",
+          "probability": 0.9986616373062134
+        }
+      ],
+      "temperature": 0.0
+    }
+  ],
+  "text": " 1. Here and heart, mark 1, 1, 3, 13. In this step, here mark 1, 1, 3, 13, and put it in your hearts. Listen to an audio version of mark 1, 1, 3, 13, three times in three different translations if possible. Then, as a group, discuss the following questions. 1. What do you like in this passage? 2. What do you not like or not understand in this passage? 3. What does this passage tell us about Jesus? 4. What does this passage tell us about people? 5. How does this passage affect our daily lives? 6. Who do you know who needs to hear this passage? This is the end of the recording."
+}
