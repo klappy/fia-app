@@ -20,6 +20,12 @@ function validate(manifest){
  return manifest;
 }
 const selectedFiles=(manifest,selection)=>manifest.files.filter(f=>f.group==='core'||selection==='all'||selection==='audio'&&f.group==='audio');
+function matchingSavedFile(file,active,manifest){
+ if(active?.manifest?.deliveryRevision!==manifest.deliveryRevision)return null;
+ const saved=active.files.find(f=>f.path===file.path&&f.deliveryURL);if(!saved)return null;
+ const approved=[file,...Object.values(file.variants||{})];
+ return approved.some(f=>['path','sha256','bytes','mime','deliveryURL','sourceSha256','sourceBytes','logicalSourceSha256','logicalSourceBytes'].every(k=>f[k]===saved[k])&&JSON.stringify(f.timing)===JSON.stringify(saved.timing))?saved:null;
+}
 async function latest(packId=legacy){
  const response=await fetch(packId===legacy?'/offline-manifest.json':`/offline/${packId}.json`,{cache:'no-store'});
  if(!response.ok)throw new Error('Could not check the latest download. Connect and try again.');
@@ -140,10 +146,10 @@ self.addEventListener('message',event=>{
    }else if(type==='MEDIA_STATUS'||type==='MEDIA_PLAY'){
     const active=await read(packKey(packId,'active'));let manifest;try{manifest=await latest(packId);}catch{manifest=active?.manifest;}
     if(!manifest||manifest.presentationRevision!==event.data.revision)throw Error('The media revision is unavailable.');
-    if(type==='MEDIA_STATUS')result={deliveryRevision:manifest.deliveryRevision||null,files:manifest.files.filter(f=>f.deliveryURL),savedFiles:active?.manifest?.deliveryRevision===manifest.deliveryRevision?active.files.filter(f=>f.deliveryURL):[]};
+    if(type==='MEDIA_STATUS')result={deliveryRevision:manifest.deliveryRevision||null,files:manifest.files.filter(f=>f.deliveryURL),savedFiles:manifest.files.filter(f=>f.deliveryURL).map(f=>matchingSavedFile(f,active,manifest)).filter(Boolean)};
     else{
      let file=manifest.files.find(f=>f.path===event.data.path&&f.deliveryURL);
-     const saved=active?.manifest?.deliveryRevision===manifest.deliveryRevision&&active.files.find(f=>f.path===event.data.path&&f.deliveryURL);
+     const saved=file&&matchingSavedFile(file,active,manifest);
      if(saved)file=saved;else if(event.data.size){normalizeMediaSizes({[file?.group]:event.data.size});const variant=file?.variants?.[event.data.size];if(variant)file=variant;else if(file?.defaultSize!==event.data.size)throw Error('This media size is not prepared.');}
      if(!file||manifest.deliveryRevision!==event.data.deliveryRevision)throw Error('This resource is not prepared for online playback.');
      const key=(event.source?.id||'')+':'+event.data.requestId;if(canceledPlayback.delete(key))throw Error('Playback canceled.');if(!event.data.requestId||playbackJobs.has(key))throw Error('Invalid playback request.');
