@@ -20,7 +20,7 @@ export function validatePlaybackRange(range,duration){
  return range;
 }
 export function validateRecordedAudioEntry(entry){
- videoKeys(entry.audioReplacement,'ledgerEntryId,logicalSource');videoKeys(entry.audioReplacement.logicalSource,'sha256,bytes');
+ videoKeys(entry.audioReplacement,'ledgerEntryId,logicalSource'+(Object.hasOwn(entry.audioReplacement,'recordingLedgerSha256')?',recordingLedgerSha256':''));if(entry.audioReplacement.recordingLedgerSha256&&!sha.test(entry.audioReplacement.recordingLedgerSha256))throw Error('Invalid selected recording ledger.');videoKeys(entry.audioReplacement.logicalSource,'sha256,bytes');
  if(entry.delivery?.kind!=='audio'||!entry.audioReplacement.ledgerEntryId||typeof entry.audioReplacement.ledgerEntryId!=='string'||!sha.test(entry.audioReplacement.logicalSource.sha256)||!positive(entry.audioReplacement.logicalSource.bytes)||entry.logicalSource)throw Error('Invalid recorded guide replacement.');
  videoKeys(entry.source,'url,sha256,bytes');
  const check=e=>{validatePlaybackRange(e.playbackRange,e.delivery.duration);if(e.timing?.status!=='verified'||!e.timing.mapping||!Number.isFinite(e.timing.mapping.scale)||e.timing.mapping.scale<=0||!Number.isFinite(e.timing.mapping.offsetSeconds)||e.timing.sourceAudioSha256!==entry.source.sha256||e.timing.deliveryAudioSha256!==e.delivery.sha256||!sha.test(e.timing.mappingEvidenceSha256))throw Error('Recorded guide requires measured mapping evidence.');};
@@ -47,7 +47,7 @@ export function validateScriptureAudioEntry(entry){
 }
 export function validateDelivery(sidecar,identity){
  if(sidecar?.schema===5){
-  videoKeys(sidecar,'schema,packId,presentationRevision,recipeRevision,sourceLedger,recordingLedger,scriptureSourceLedger,entries');
+  videoKeys(sidecar,'schema,packId,presentationRevision,recipeRevision,sourceLedger,recordingLedger,scriptureSourceLedger,entries'+(Object.hasOwn(sidecar,'recordingLedgers')?',recordingLedgers':''));
   const ref=sidecar.scriptureSourceLedger;videoKeys(ref,'url,sha256,bytes');if(!sha.test(ref.sha256)||!positive(ref.bytes)||ref.url!==`/content/scripture-sources/${ref.sha256}.json`||!Array.isArray(sidecar.entries))throw Error('Invalid Scripture source ledger.');
   const entries=sidecar.entries.map(entry=>{if(!entry.scriptureReplacement)return entry;
    videoKeys(entry,'path,source,delivery,timing,defaultSize,variants,scriptureReplacement,playbackRange,scriptureAlignment');validateScriptureAudioEntry(entry);
@@ -57,18 +57,19 @@ export function validateDelivery(sidecar,identity){
   });const {scriptureSourceLedger,...base}=sidecar;validateDelivery({...base,schema:4,entries},identity);return sidecar;
  }
  if(sidecar?.schema===4){
-  videoKeys(sidecar,'schema,packId,presentationRevision,recipeRevision,sourceLedger,recordingLedger,entries');
+  videoKeys(sidecar,'schema,packId,presentationRevision,recipeRevision,sourceLedger,recordingLedger,entries'+(Object.hasOwn(sidecar,'recordingLedgers')?',recordingLedgers':''));
   const ref=sidecar.recordingLedger;videoKeys(ref,'url,sha256,bytes');
   if(!sha.test(ref.sha256)||!positive(ref.bytes)||ref.url!==`/content/recording-sources/${ref.sha256}.json`||!Array.isArray(sidecar.entries))throw Error('Invalid recording ledger reference.');
+  const refs=sidecar.recordingLedgers||[];if(!Array.isArray(refs)||sidecar.recordingLedgers&&!refs.length)throw Error('Invalid recording ledgers.');const known=new Set([ref.sha256]);for(const r of refs){videoKeys(r,'url,sha256,bytes');if(!sha.test(r.sha256)||!positive(r.bytes)||r.url!==`/content/recording-sources/${r.sha256}.json`||known.has(r.sha256))throw Error('Invalid duplicate recording ledger.');known.add(r.sha256);}const used=new Set();
   const entries=sidecar.entries.map(entry=>{
    if(!entry.audioReplacement){if(entry.playbackRange||Object.values(entry.variants||{}).some(v=>v.playbackRange))throw Error('Unbound playback range.');return entry;}
-   videoKeys(entry,'path,source,delivery,timing,defaultSize,variants,audioReplacement,playbackRange');validateRecordedAudioEntry(entry);
+   videoKeys(entry,'path,source,delivery,timing,defaultSize,variants,audioReplacement,playbackRange');validateRecordedAudioEntry(entry);const selected=entry.audioReplacement.recordingLedgerSha256||ref.sha256;if(!known.has(selected))throw Error('Unknown recording ledger.');used.add(selected);
    const {audioReplacement,playbackRange,...base}=entry;
    base.variants=Object.fromEntries(Object.entries(entry.variants).map(([size,v])=>{videoKeys(v,'delivery,timing,playbackRange');const {playbackRange,...rest}=v;return [size,rest];}));
    if(JSON.stringify(entry.variants[entry.defaultSize]?.playbackRange)!==JSON.stringify(playbackRange))throw Error('Default recorded range changed.');
    return base;
   });
-  const {recordingLedger,...base}=sidecar;validateDelivery({...base,schema:3,entries},identity);return sidecar;
+  if(refs.some(r=>!used.has(r.sha256)))throw Error('Unused recording ledger.');const {recordingLedger,recordingLedgers,...base}=sidecar;validateDelivery({...base,schema:3,entries},identity);return sidecar;
  }
  if(sidecar?.schema===3){
   validateDelivery({...sidecar,schema:2,entries:[]},identity);

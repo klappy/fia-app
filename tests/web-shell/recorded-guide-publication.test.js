@@ -83,3 +83,17 @@ test('source range must contain every spanned word even when recognizer word end
  const {acceptance,...mapping}=row;row.acceptance.evidenceSha256=put({status:'accepted',recipeRevision:acceptance.recipeRevision,packId:f.descriptor.id,presentationRevision:f.descriptor.revision,mapping,script:f.ledger.script,recording:f.ledger.recording,transcript:f.ledger.transcript,drift:f.ledger.drift});
  assert.throws(()=>verifyRecordedGuideReplacement(f),/Invalid or unaccepted recorded guide range/);
 });
+
+test('multiple source ledgers resolve explicit identities and reject duplicate unknown or unused references',()=>{
+ const f=fixture(),entry={...f.entry,defaultSize:'medium',variants:{medium:{delivery:f.entry.delivery,timing:f.entry.timing,playbackRange:f.entry.playbackRange}}};
+ const ref=n=>({url:`/content/recording-sources/${n.repeat(64)}.json`,sha256:n.repeat(64),bytes:10});
+ const side={schema:4,packId:f.descriptor.id,presentationRevision:f.descriptor.revision,recipeRevision:'recipe',sourceLedger:{...ref('1'),url:`/content/video-sources/${'1'.repeat(64)}.json`},recordingLedger:ref('2'),recordingLedgers:[ref('3')],entries:[entry]};entry.audioReplacement.recordingLedgerSha256='3'.repeat(64);
+ const identity={packId:f.descriptor.id,presentationRevision:f.descriptor.revision};assert.equal(validateDelivery(side,identity),side);
+ for(const mutate of [s=>s.recordingLedgers.push(ref('2')),s=>s.entries[0].audioReplacement.recordingLedgerSha256='4'.repeat(64),s=>delete s.entries[0].audioReplacement.recordingLedgerSha256]){const bad=structuredClone(side);mutate(bad);assert.throws(()=>validateDelivery(bad,identity));}
+});
+test('preserved zero-duration ASR points are not fabricated intervals; reversed evidence fails',()=>{
+ for(const end of [2,1.9]){const f=fixture(),put=value=>{const b=Buffer.from(JSON.stringify(value)),s=hash(b);f.evidence.set(s,b);return s;};
+ f.ledger.transcript.wordTimestampsSha256=put({recordingSha256:f.ledger.recording.sha256,transcriptSha256:f.ledger.transcript.sha256,clockDomain:f.ledger.transcript.clockDomain,words:[{text:'Welcome.',startSeconds:2,endSeconds:end}]});
+ const row=f.ledger.mappings[0],{acceptance,...mapping}=row;row.acceptance.evidenceSha256=put({status:'accepted',recipeRevision:acceptance.recipeRevision,packId:f.descriptor.id,presentationRevision:f.descriptor.revision,mapping,script:f.ledger.script,recording:f.ledger.recording,transcript:f.ledger.transcript,drift:f.ledger.drift});
+ if(end===2)assert.doesNotThrow(()=>verifyRecordedGuideReplacement(f));else assert.throws(()=>verifyRecordedGuideReplacement(f));}
+});
