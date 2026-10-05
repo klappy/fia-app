@@ -40,6 +40,15 @@ class Measurements(unittest.TestCase):
    self.assertEqual(result['pcm']['samples'],16000);self.assertEqual(result['units'][0]['state'],'measured')
    source.write_bytes(source_bytes);job_path=directory/'input.json';job_path.write_text(json.dumps(job));output=directory/'output.json'
    process=subprocess.run([sys.executable,str(Path(m.__file__)),'--input',str(job_path),'--output',str(output)],capture_output=True,text=True,timeout=10)
-   self.assertEqual(process.returncode,0,process.stderr);parsed=json.loads(output.read_text());self.assertEqual(parsed['status'],'candidate');self.assertNotIn('NaN',output.read_text());self.assertNotIn('Infinity',output.read_text())
+   self.assertEqual(process.returncode,0,process.stderr);parsed=json.loads(output.read_text());self.assertEqual(parsed['status'],'candidate');self.assertEqual(len(parsed['clockLandmarks']),9);self.assertNotIn('NaN',output.read_text());self.assertNotIn('Infinity',output.read_text())
+
+
+ def test_distributed_clock_landmarks_measure_non_silent_shape_without_acceptance(self):
+  pcm=np.linspace(0,.3,16000,dtype=np.float32);landmarks=m.clock_landmarks(pcm)
+  self.assertEqual([item['percent'] for item in landmarks],list(range(10,100,10)));self.assertEqual(landmarks[4]['anchorSample'],8000)
+  self.assertTrue(all(item['windows'] for item in landmarks));self.assertTrue(any(window['linearRms']>0 for item in landmarks for window in item['windows']))
+  for item in landmarks:
+   for window in item['windows']:self.assertEqual(window['startSample'],item['anchorSample']+window['offsetSamples']);self.assertEqual(window['endSampleExclusive']-window['startSample'],160)
+  json.dumps(landmarks,allow_nan=False)
 
 if __name__=='__main__':unittest.main()

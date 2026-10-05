@@ -82,6 +82,19 @@ def measure(pcm, raw, alignment):
         units.append(unit)
     return units
 
+def clock_landmarks(pcm):
+    landmarks=[]
+    for percent in range(10,100,10):
+        anchor=(len(pcm)*percent)//100
+        windows=[]
+        for offset in range(-3200,3200,WINDOW):
+            start=anchor+offset
+            if start>=0 and start+WINDOW<=len(pcm):
+                samples=pcm[start:start+WINDOW]
+                windows.append({'startSample':start,'endSampleExclusive':start+WINDOW,'offsetSamples':offset,'linearRms':linear_rms(samples),'dbfs':dbfs(samples)})
+        landmarks.append({'percent':percent,'anchorSample':anchor,'windows':windows})
+    return landmarks
+
 def execute(job):
     import av, numpy as np
     if set(job)!={'sourcePath','sourceSha256','sourceBytes','rawPath','rawSha256','alignmentPath','alignmentSha256'}:raise ValueError('invalid-job')
@@ -107,7 +120,7 @@ def execute(job):
         pcm=np.concatenate(chunks).astype(np.float32)
     pcm_sha=digest(pcm.tobytes())
     if raw['decoder']['sha256']!=pcm_sha or raw['decoder']['samples']!=len(pcm):raise ValueError('pcm-reproduction-mismatch')
-    return {'schema':'fia-signal-boundary-measurements@1','status':'candidate','sourceSha256':job['sourceSha256'],'rawRecognitionSha256':job['rawSha256'],'alignmentSha256':job['alignmentSha256'],'guideScriptSha256':alignment['scriptSha256'],'pcm':{'sha256':pcm_sha,'samples':len(pcm),'sampleRate':RATE},'policy':{'windowSamples':WINDOW,'thresholdDbfsExclusive':THRESHOLD_DBFS,'minimumQuietSamples':MIN_QUIET,'dbfsFloor':-200,'selection':'longest-run-earliest-tie-midpoint'},'sourceMetadata':metadata,'runtime':{'python':platform.python_version(),'av':importlib.metadata.version('av'),'numpy':importlib.metadata.version('numpy')},'scriptSha256':digest(Path(__file__).read_bytes()),'units':measure(pcm,raw,alignment),'limits':['Acoustic measurements only; no calibrated confidence, accepted ranges or browser clock claim.']}
+    return {'schema':'fia-signal-boundary-measurements@1','status':'candidate','sourceSha256':job['sourceSha256'],'rawRecognitionSha256':job['rawSha256'],'alignmentSha256':job['alignmentSha256'],'guideScriptSha256':alignment['scriptSha256'],'pcm':{'sha256':pcm_sha,'samples':len(pcm),'sampleRate':RATE},'policy':{'windowSamples':WINDOW,'thresholdDbfsExclusive':THRESHOLD_DBFS,'minimumQuietSamples':MIN_QUIET,'dbfsFloor':-200,'selection':'longest-run-earliest-tie-midpoint'},'sourceMetadata':metadata,'runtime':{'python':platform.python_version(),'av':importlib.metadata.version('av'),'numpy':importlib.metadata.version('numpy')},'scriptSha256':digest(Path(__file__).read_bytes()),'clockLandmarks':clock_landmarks(pcm),'units':measure(pcm,raw,alignment),'limits':['Acoustic measurements only; no calibrated confidence, accepted ranges or browser clock claim.']}
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('--input',required=True);parser.add_argument('--output',required=True);args=parser.parse_args()
