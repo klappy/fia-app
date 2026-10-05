@@ -441,3 +441,30 @@ it('canceling a concurrent pending image keeps the verified recording playing',a
 });
 
 it('keeps FIA Guide browser title after hydration',async()=>{await startAt('S01-U001');expect(document.title).toBe('FIA Guide');});
+
+function touchSequence(target,type,x,y){const event=new Event(type,{bubbles:true});Object.defineProperties(event,{touches:{value:type==='touchend'?[]:[{clientX:x,clientY:y}]},changedTouches:{value:[{clientX:x,clientY:y}]}});target.dispatchEvent(event);}
+it('stage swipe uses existing cancellation and saved next/back actions once',async()=>{
+ await startAt('S01-U001');await fireEvent.click(screen.getByRole('button',{name:'Begin',exact:true}));await settle();const owner=players[0],initial=state().index,stage=document.querySelector('.scene');
+ touchSequence(stage,'touchstart',270,350);touchSequence(stage,'touchmove',120,350);touchSequence(stage,'touchend',120,350);await settle();expect(state().index).toBe(initial+1);expect(owner.paused).toBe(true);expect(players).toHaveLength(1);
+ touchSequence(stage,'touchend',120,350);await settle();expect(state().index).toBe(initial+1);
+ touchSequence(stage,'touchstart',120,350);touchSequence(stage,'touchend',270,350);await settle();expect(state().index).toBe(initial);
+});
+it('swipe rejects stale activity, open sheet and interactive control origins',async()=>{
+ await startAt('S01-U001');const stage=document.querySelector('.scene');touchSequence(stage,'touchstart',270,350);
+ await fireEvent.click(screen.getByRole('button',{name:'Skip to next activity'}));const after=state().index;touchSequence(stage,'touchend',120,350);await settle();expect(state().index).toBe(after);
+ const control=screen.getByRole('button',{name:'Skip to next activity'});touchSequence(control,'touchstart',270,350);touchSequence(control,'touchend',120,350);await settle();expect(state().index).toBe(after);
+ await fireEvent.click(screen.getByRole('button',{name:'More options'}));touchSequence(stage,'touchstart',270,350);touchSequence(stage,'touchend',120,350);await settle();expect(state().index).toBe(after);
+});
+
+it('activity round trip invalidates a swipe that began before navigation',async()=>{
+ await startAt('S01-U001');const stage=document.querySelector('.scene'),initial=state().index;touchSequence(stage,'touchstart',270,350);
+ await fireEvent.click(screen.getByRole('button',{name:'Skip to next activity'}));await fireEvent.click(screen.getByRole('button',{name:'Previous activity'}));expect(state().index).toBe(initial);
+ touchSequence(stage,'touchend',120,350);await settle();expect(state().index).toBe(initial);
+});
+it('swipe navigation preserves explicit visual authorization and cancels it on Back',async()=>{
+ preparedVisuals();let finish;const request=vi.spyOn(libraryAdapter,'playMedia').mockImplementation(()=>new Promise(resolve=>finish=resolve));
+ await startAt('S02-U004');const stage=document.querySelector('.scene'),initial=state().index;
+ touchSequence(stage,'touchstart',270,350);touchSequence(stage,'touchend',120,350);await settle();expect(state().index).toBe(initial+1);expect(request).toHaveBeenCalledTimes(1);expect(request.mock.calls[0][1]).toBe(assets.a112.src);
+ touchSequence(stage,'touchstart',120,350);touchSequence(stage,'touchend',270,350);await settle();expect(state().index).toBe(initial);expect(request.mock.calls[0][3].aborted).toBe(true);
+ finish({bytes:new Uint8Array([1]).buffer,mime:'image/webp'});await settle();expect(document.querySelector('.visual-viewport img')).toBeNull();expect(document.title).toBe('FIA Guide');
+});

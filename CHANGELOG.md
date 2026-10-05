@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.0.0-alpha.10 — Guarded passage swipes (2026-10-05)
+
+Left/right swipes use existing Next/Back actions while preserving vertical scrolling, controls, media gestures and on-demand visual cancellation. No spacing or CSS changes. See [release note](release/changes/3.0.0-alpha.10-passage-swipes.md).
+
 ## 3.0.0-alpha.9 — FIA Guide identity and sharing (2026-10-05)
 
 Names the installed app and browser title FIA Guide, with official FIA navy/blue and white-mark icons and a whole-mission sharing card. Passage layout and on-demand media behavior are unchanged. See [release note](release/changes/3.0.0-alpha.9-fia-guide-branding.md).
