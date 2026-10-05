@@ -30,6 +30,15 @@ it('Auto-off manual Play enables a prepared direct video without a recording or 
   await fireEvent.click(play);await settle();await settle();await settle();expect(request).toHaveBeenCalledTimes(1);expect(request.mock.calls[0][1]).toBe(assets.a13.src);expect(document.querySelector('video').src).toContain('blob:manual-video');
  }finally{cleanup();activities[0]=original;}
 });
+it('a verified companion video mounts even when its focal image is unavailable',async()=>{
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});
+ vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[{path:assets.a13.src,bytes:3,group:'video'}]});
+ const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(3).buffer,mime:'video/mp4'});
+ vi.stubGlobal('URL',class extends URL{static createObjectURL(){return 'blob:companion-video';}static revokeObjectURL(){}});
+ await startAt('S02-U005','waiting');expect(document.querySelector('video')).toBeNull();expect(request).not.toHaveBeenCalled();
+ await fireEvent.click(screen.getByRole('button',{name:'Play video',exact:true}));await settle();await settle();await settle();await settle();
+ expect(request).toHaveBeenCalledTimes(1);expect(request.mock.calls[0][1]).toBe(assets.a13.src);expect(document.querySelector('video')?.getAttribute('src')).toBe('blob:companion-video');expect(HTMLMediaElement.prototype.play).toHaveBeenCalled();
+});
 it('cancel loading video blocks a late verified result from mounting or playing',async()=>{
  vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[{path:assets.a13.src,bytes:3,group:'video'}]});
  let resolve;const request=vi.spyOn(libraryAdapter,'playMedia').mockImplementation(()=>new Promise(r=>resolve=r));
