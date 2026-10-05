@@ -133,8 +133,8 @@ async function start(selection,port,packId=legacy,sizes={}){
    if(controller.signal.aborted)throw new Error('Download paused. Verified files are kept for Resume.');
    let response=await cache.match(file.path);
    if(file.proxyRequest){
-    const prior=priorPending?.files.find(f=>f.path===file.path&&f.proxyReceipt?.proxyUrl===file.proxyRequest.proxyUrl&&f.proxyReceipt?.source.sha256===file.sourceSha256);
-    if(prior&&await verified(response?.clone(),prior)){Object.assign(file,prior);}
+    const prior=priorPending?.files.find(f=>f.path===file.path&&observedProxyMatchesRequest(file.proxyRequest,f));
+    if(prior&&await verified(response?.clone(),prior)){Object.assign(file,{bytes:prior.bytes,sha256:prior.sha256,proxyReceipt:prior.proxyReceipt,timing:{status:file.timingDependent?'pending-qualification':'not-applicable'}});}
     else {const result=await fetchProxyRequest(file.proxyRequest,{signal:controller.signal});Object.assign(file,{bytes:result.receipt.output.bytes,sha256:result.receipt.output.sha256,proxyReceipt:result.receipt,timing:{status:file.timingDependent?'pending-qualification':'not-applicable'}});await cache.put(file.path,new Response(result.bytes,{headers:{'Content-Type':file.mime,'Content-Length':String(file.bytes)}}));response=await cache.match(file.path);}
     pending.bytes=files.some(f=>f.bytes===null)?null:files.reduce((n,f)=>n+f.bytes,0);
    }
