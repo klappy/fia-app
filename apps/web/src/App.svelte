@@ -5,6 +5,7 @@
  import { createSession, reduceSession, currentActivity, presentStage } from './lib/engine.js';
  import { parseCommand } from './lib/commands.js';
  import { createAudioController } from './lib/audio.js';
+ import {swipeNavigation,createSelectionTracker} from './lib/swipe.js';
  import {createVisualDelivery} from './lib/visual-delivery.js';
  import MediaStage from './components/MediaStage.svelte';
  import AlignedReading from './components/AlignedReading.svelte';
@@ -51,7 +52,9 @@
  }
 
  function applyStored(){const stored=restoreProgress(localStorage,selectedPack,activities,assets);if(stored?.resetRequired)notice='This passage changed. Your previous place could not be matched; starting at the beginning.';session=stored?.session||createSession(activities);if(stored){scale=[1,1.25,1.5].includes(stored.scale)?stored.scale:1;rate=[.85,1,1.15].includes(stored.rate)?stored.rate:1;muted=!!stored.muted;dark=!!stored.dark;termDefinition=stored.termDefinition===activities[session.index]?.id?stored.termDefinition:null;transitionSection=stored.transitionSection===activities[session.index]?.sectionId?stored.transitionSection:null;}started=session.index>0||session.status!=='ready';}
- async function selectPack(id){stopVisual();visualOwner.clear();const generation=++selectionGeneration;const loaded=await libraryAdapter.select(id);if(generation!==selectionGeneration)return;persist();cancel();selectedPack=loaded.descriptor;rawPresentation=loaded.presentation;downloadedPaths=new Set();onlineMedia=new globalThis.Map();deliveryRevision=null;revokePlayback();introduced=new Set();manualStarts=new Set();visualHeard=null;termDefinition=null;transitionSection=null;messages=[];language=selectedPack.language;session=createSession(loaded.presentation.activities);try{applyStored();localStorage.setItem('fia-v3-selected-pack',id);}catch{notice='Your saved place could not be read.';}sheet=null;await libraryAdapter.activate(selectedPack).catch(()=>{});if(generation!==selectionGeneration)return;await updateDownloaded();await updateMedia();}
+ let selectionPending=$state(false);const trackSelection=createSelectionTracker(value=>selectionPending=value);let swipeGeneration=0;
+ async function selectPack(id){const finish=trackSelection();try{await loadSelectedPack(id);}finally{finish();}}
+ async function loadSelectedPack(id){stopVisual();visualOwner.clear();const generation=++selectionGeneration;const loaded=await libraryAdapter.select(id);if(generation!==selectionGeneration)return;persist();cancel();selectedPack=loaded.descriptor;rawPresentation=loaded.presentation;downloadedPaths=new Set();onlineMedia=new globalThis.Map();deliveryRevision=null;revokePlayback();introduced=new Set();manualStarts=new Set();visualHeard=null;termDefinition=null;transitionSection=null;messages=[];language=selectedPack.language;session=createSession(loaded.presentation.activities);try{applyStored();localStorage.setItem('fia-v3-selected-pack',id);}catch{notice='Your saved place could not be read.';}sheet=null;await libraryAdapter.activate(selectedPack).catch(()=>{});if(generation!==selectionGeneration)return;await updateDownloaded();await updateMedia();}
  function restartPack(id){resetProgress(localStorage,{id});if(id===selectedPack.id)reset();}
  let language=$state('eng');
  function selectLanguage(id){language=id;try{localStorage.setItem('fia-v3-library-language',id);}catch{notice='Language choice could not be saved on this device.';}}
@@ -110,7 +113,7 @@
   const queued=session.queued;const descriptionsBefore=session.preferences.describeImages;
   session=reduceSession(session,event,activities);
   const nextSection=activities[session.index]?.sectionId;
-  if(activities[session.index]?.id!==priorActivity||event.type==='RESET')termDefinition=null;
+  if(activities[session.index]?.id!==priorActivity||event.type==='RESET'){swipeGeneration++;termDefinition=null;}
   if(nextSection!==priorSection&&event.type!=='RESET')transitionSection=nextSection;
   if(event.type==='RESET'||event.type==='SEEK_ACTIVITY'&&nextSection===priorSection)transitionSection=null;
   persist();
@@ -191,6 +194,7 @@
   await tick();if(inlineVideo?.id===target.id)playVideo();
  }
  function navigate(event,auto=false){
+  swipeGeneration++;
   revokePlayback();
   if(inTransition&&event.type==='CONTINUE'){transitionSection=null;persist();authorizeVisual();return;}
   cancel();visualHeard=null;dispatch(event);notice='';settleSilent();authorizeVisual();
@@ -259,7 +263,7 @@
 
 <svelte:head><title>FIA Guide</title></svelte:head>
 
-<main class="scene" class:immersive style={`--reading-scale:${scale}`}>
+<main class="scene" class:immersive style={`--reading-scale:${scale}`} use:swipeNavigation={()=>({identity:`${swipeGeneration}:${selectionGeneration}:${selectedPack.id}:${activity.id}:${inTransition}:${JSON.stringify(session.detour)}`,blocked:!!sheet||immersive||selectionPending,next:!finished&&!session.detour,back:!!session.detour||session.index!==0||finished,navigate:direction=>navigate({type:direction==='next'?'CONTINUE':'BACK'},direction==='next')})}>
  <div class="scene-glass scene-glass-top" aria-hidden="true"></div>
  <div class="scene-glass scene-glass-bottom" aria-hidden="true"></div>
  {#if finished}
