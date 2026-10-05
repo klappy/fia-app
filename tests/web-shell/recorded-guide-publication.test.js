@@ -6,7 +6,7 @@ import {validateDelivery} from '../../apps/web/src/lib/media-delivery.js';
 const hash=b=>createHash('sha256').update(b).digest('hex');
 function fixture(){
  const evidence=new Map(),put=value=>{const bytes=Buffer.from(typeof value==='string'?value:JSON.stringify(value)),sha=hash(bytes);evidence.set(sha,bytes);return sha;};
- const pack={activities:[{id:'U1',kind:'guide',sourceText:'Welcome.',audioSrc:'/audio/source/U1.mp3'}]},descriptor={id:'eng.MRK-1-1-13',revision:'a'.repeat(64)},file={path:'/audio/source/U1.mp3',group:'audio',sha256:hash('logical clip'),bytes:12};
+ const pack={activities:[{id:'U1',sourceUnitId:'U1',kind:'guide',sourceText:'Welcome.',audioSrc:'/audio/source/U1.mp3'}]},descriptor={id:'eng.MRK-1-1-13',revision:'a'.repeat(64)},file={path:'/audio/source/U1.mp3',group:'audio',sha256:hash('logical clip'),bytes:12};
  const script={fileSha256:put('script file'),contentSha256:put('Welcome.'),repository:'owner/repo',commit:'c'.repeat(40),path:'guide.md'};
  const recording={url:'https://publisher.example/guide.mp3',sha256:'d'.repeat(64),bytes:100,duration:100,publisherStepVersion:'1',rightsEvidenceSha256:null};
  recording.rightsEvidenceSha256=put({status:'accepted',recordingSha256:recording.sha256,recordingUrl:recording.url});
@@ -58,4 +58,20 @@ test('actual finalizer carries schema4 original ranges into every selected manif
   const manifest=JSON.parse(readFileSync(join(root,`dist/offline/${descriptor.id}.json`))),file=manifest.files.find(x=>x.path===entry.path);
   assert.deepEqual(file.playbackRange,entry.playbackRange);assert.deepEqual(file.variants.medium.playbackRange,entry.playbackRange);assert.equal(file.sourceSha256,f.ledger.recording.sha256);assert.equal(file.logicalSourceSha256,hash('logical clip'));assert.equal(file.recordingLedgerSha256,hash(ledgerBytes));assert(manifest.files.some(x=>x.path===sidecar.recordingLedger.url));
  }finally{rmSync(root,{recursive:true,force:true});}
+});
+
+test('explicit discussion narration is supported without changing completion behavior',()=>{const f=fixture();f.pack.activities[0].kind='discussion';f.pack.activities[0].completion='manual';assert.doesNotThrow(()=>verifyRecordedGuideReplacement(f));assert.equal(f.pack.activities[0].completion,'manual');f.pack.activities[0].kind='scripture';assert.throws(()=>verifyRecordedGuideReplacement(f));});
+test('ledger rejects reordered or overlapping accepted recording ranges and word spans',()=>{
+ for(const mode of ['reversed','range-overlap','word-overlap']){
+  const f=fixture(),put=value=>{const bytes=Buffer.from(JSON.stringify(value)),sha=hash(bytes);f.evidence.set(sha,bytes);return sha;};
+  const words={recordingSha256:f.ledger.recording.sha256,transcriptSha256:f.ledger.transcript.sha256,clockDomain:f.ledger.transcript.clockDomain,words:[{text:'Welcome.',startSeconds:2,endSeconds:3},{text:'Again.',startSeconds:5,endSeconds:6}]};
+  f.ledger.transcript.wordTimestampsSha256=put(words);
+  f.pack.activities.push({id:'U2',sourceUnitId:'U2',kind:'discussion',sourceText:'Again.',audioSrc:'/audio/source/U2.mp3',completion:'manual'});
+  const second={...structuredClone(f.ledger.mappings[0]),id:'range-2',activityId:'U2',sourceTextSha256:hash('Again.'),logicalAudio:{path:'/audio/source/U2.mp3',sha256:'9'.repeat(64),bytes:10},wordSpan:{first:1,lastExclusive:2},sourceRange:{startSeconds:4.9,endSeconds:6.1,clockDomain:words.clockDomain}};
+  if(mode==='range-overlap')second.sourceRange.startSeconds=3;
+  if(mode==='word-overlap'){second.wordSpan.first=0;second.sourceRange.startSeconds=1.9;}
+  f.ledger.mappings.push(second);if(mode==='reversed')f.ledger.mappings.reverse();
+  for(const row of f.ledger.mappings){const {acceptance,...mapping}=row;row.acceptance.evidenceSha256=put({status:'accepted',recipeRevision:acceptance.recipeRevision,packId:f.descriptor.id,presentationRevision:f.descriptor.revision,mapping,script:f.ledger.script,recording:f.ledger.recording,transcript:f.ledger.transcript,drift:f.ledger.drift});}
+  assert.throws(()=>verifyRecordedGuideReplacement(f),undefined,mode);
+ }
 });
