@@ -6,7 +6,7 @@ function shape(value,keys){if(!value||Object.getPrototypeOf(value)!==Object.prot
 function inputIdentity(input){
  canonicalJSONString(input);shape(input,['packId','book','language','edition','passage','resource','scriptSha256','source','modelRecipe','policyRevision']);
  shape(input.source,['publisherId','resourceId','version']);shape(input.modelRecipe,['modelId','modelRevision','configSha256']);
- for(const value of [...Object.values(input).filter(v=>typeof v!=='object'),...Object.values(input.source),...Object.values(input.modelRecipe)])if(typeof value!=='string'||!value.trim()||value.length>4096)throw Error('invalid-pipeline-input');
+ for(const value of [...['packId','book','language','edition','passage','resource','scriptSha256','policyRevision'].map(key=>input[key]),...Object.values(input.source),...Object.values(input.modelRecipe)])if(typeof value!=='string'||!value.trim()||value.length>4096)throw Error('invalid-pipeline-input');
  if(!hash(input.scriptSha256)||!hash(input.modelRecipe.configSha256))throw Error('invalid-pipeline-input');return clone(input);
 }
 function artifact(value){

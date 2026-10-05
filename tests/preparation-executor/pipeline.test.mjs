@@ -56,3 +56,5 @@ test('ambiguous or paid classified failures never automatically retry',async()=>
 test('old attempt reconciliation cannot overwrite a retried attempt',async()=>{
  const f=await fixture(),success=f.adapters.discover.run;let calls=0;f.adapters.discover.retry={maxAttempts:2};f.adapters.discover.run=async context=>++calls===1?{kind:'retryable-failure',classification:'pre-dispatch',evidence:'not dispatched'}:success(context);const pipeline=createPipeline(f.options),first=await pipeline.run(input());await pipeline.run(input());await assert.rejects(pipeline.reconcile(input(),'discover',{...first,revision:2,outcome:'failed',evidence:'stale report'}),/stale/);
 });
+
+test('all semantic scalar fields reject object null array and numeric values before claiming',async()=>{const f=await fixture();for(const key of ['packId','book','language','edition','passage','resource','scriptSha256','policyRevision'])for(const value of [null,{},[],42])await assert.rejects(f.pipeline.run({...input(),[key]:value}),/invalid-pipeline-input/);assert.equal(f.storage.values.size,0);assert.equal(f.counts.discover,undefined);});
