@@ -45,7 +45,7 @@ for(const kind of ['map','video'])test(`${kind} gestures do not navigate the pas
   await expect(page.locator('.visual-viewport img')).toBeVisible();
   await swipe(page,'.visual-viewport',[270,350],[120,350]);expect((await saved(page)).index).toBe(initial);
   await page.locator('.visual-viewport').click();await expect(page.locator('.visual-dialog[open]')).toBeVisible();
-  const viewport=page.locator('.visual-dialog .visual-viewport');await viewport.focus();await viewport.press('+');
+  const viewport=page.locator('.visual-dialog .visual-viewport');await viewport.locator('img').evaluate(img=>img.decode());await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));await viewport.focus();await viewport.press('+');
   await expect(viewport.locator('img')).toHaveAttribute('style',/scale\(1\.5\)/);
   const before=await viewport.locator('img').getAttribute('style');await viewport.press('ArrowRight');
   expect(await viewport.locator('img').getAttribute('style')).not.toBe(before);
