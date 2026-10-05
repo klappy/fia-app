@@ -24,3 +24,16 @@ test('schema3 release closure binds each variant independently',()=>{
  const f={...file,defaultSize:'medium',variants:{medium:file,small:{...file,sha256:low.delivery.sha256,bytes:7,deliveryURL:low.delivery.url}}};
  verifyManifestFile(f,raw,{schema:3,entries:[e]},revision);const bad=structuredClone(f);bad.variants.small.sha256=file.sha256;assert.throws(()=>verifyManifestFile(bad,raw,{schema:3,entries:[e]},revision));delete bad.variants.small;assert.throws(()=>verifyManifestFile(bad,raw,{schema:3,entries:[e]},revision));
 });
+test('schema4 release closure binds original audio ledger, measured range and every selected member',()=>{
+ const e={...structuredClone(entry),source:{url:'https://publisher.test/original.mp3',sha256:'e'.repeat(64),bytes:100},audioReplacement:{ledgerEntryId:'U1',logicalSource:{sha256:sha,bytes:raw.length}},delivery:{...entry.delivery,duration:100},playbackRange:{startSeconds:2.012,endSeconds:4.012}};
+ const f={...file,sourceSha256:e.source.sha256,sourceBytes:100,logicalSourceSha256:sha,logicalSourceBytes:raw.length,recordingLedgerEntryId:'U1',recordingLedgerSha256:'f'.repeat(64),duration:100,playbackRange:e.playbackRange};
+ e.defaultSize='medium';e.variants={medium:{delivery:e.delivery,timing:e.timing,playbackRange:e.playbackRange}};
+ const sidecar={schema:4,recordingLedger:{sha256:'f'.repeat(64)},entries:[e]},full={...f,defaultSize:'medium',variants:{medium:f}};
+ verifyManifestFile(full,raw,sidecar,revision);
+ for(const [key,value] of Object.entries({recordingLedgerSha256:'0'.repeat(64),recordingLedgerEntryId:'other',logicalSourceBytes:999,sourceBytes:99,duration:99,playbackRange:{startSeconds:0,endSeconds:100}})){
+  assert.throws(()=>verifyManifestFile({...full,[key]:value},raw,sidecar,revision),key);
+  assert.throws(()=>verifyManifestFile({...full,variants:{medium:{...f,[key]:value}}},raw,sidecar,revision),'variant '+key);
+ }
+ assert.throws(()=>verifyManifestFile(full,raw,{...sidecar,schema:3},revision));
+ assert.throws(()=>verifyManifestFile({...file,playbackRange:e.playbackRange},raw,{entries:[entry]},revision));
+});
