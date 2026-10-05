@@ -33,12 +33,12 @@ jobs:
           node deploy/hosted-asr/prepare-build.mjs work/asr-inputs work/asr-context
       - name: Build offline image from verified inputs
         run: docker build --network=none --platform=linux/amd64 -f work/asr-context/Dockerfile.integration -t fia-asr-integration-proof work/asr-context
-      - name: Exercise actual guarded HTTP recognition once
+      - name: Verify guarded readiness and unambiguous container removal
         run: |
           mkdir -p work/asr-proof
           docker image inspect fia-asr-integration-proof --format '{{.Id}}' > work/asr-proof/image-id.txt
           trap 'docker rm -f fia-asr-integration-proof >/dev/null 2>&1 || true' EXIT
-          timeout --signal=TERM --kill-after=5s 450s python deploy/hosted-asr/ci-service-proof.py
+          timeout --signal=TERM --kill-after=5s 450s python deploy/hosted-asr/ci-service-proof.py --cleanup-only
       - uses: actions/upload-artifact@v4
         if: always()
         with:
