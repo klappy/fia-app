@@ -89,7 +89,7 @@ test('multiple source ledgers resolve explicit identities and reject duplicate u
  const ref=n=>({url:`/content/recording-sources/${n.repeat(64)}.json`,sha256:n.repeat(64),bytes:10});
  const side={schema:4,packId:f.descriptor.id,presentationRevision:f.descriptor.revision,recipeRevision:'recipe',sourceLedger:{...ref('1'),url:`/content/video-sources/${'1'.repeat(64)}.json`},recordingLedger:ref('2'),recordingLedgers:[ref('3')],entries:[entry]};entry.audioReplacement.recordingLedgerSha256='3'.repeat(64);
  const identity={packId:f.descriptor.id,presentationRevision:f.descriptor.revision};assert.equal(validateDelivery(side,identity),side);
- for(const mutate of [s=>s.recordingLedgers.push(ref('2')),s=>s.entries[0].audioReplacement.recordingLedgerSha256='4'.repeat(64),s=>delete s.entries[0].audioReplacement.recordingLedgerSha256]){const bad=structuredClone(side);mutate(bad);assert.throws(()=>validateDelivery(bad,identity));}
+ for(const mutate of [s=>s.recordingLedgers=null,s=>s.entries[0].audioReplacement.recordingLedgerSha256='',s=>s.entries[0].audioReplacement.recordingLedgerSha256=null,s=>s.recordingLedgers.push(ref('2')),s=>s.entries[0].audioReplacement.recordingLedgerSha256='4'.repeat(64),s=>delete s.entries[0].audioReplacement.recordingLedgerSha256]){const bad=structuredClone(side);mutate(bad);assert.throws(()=>validateDelivery(bad,identity));}
 });
 test('preserved zero-duration ASR points are not fabricated intervals; reversed evidence fails',()=>{
  for(const end of [2,1.9]){const f=fixture(),put=value=>{const b=Buffer.from(JSON.stringify(value)),s=hash(b);f.evidence.set(s,b);return s;};
