@@ -1,4 +1,4 @@
-const interactive = 'button,a,input,select,textarea,summary,[contenteditable],[role="button"],.session-progress,.scene-controls,.sheet,dialog,video,audio,.visual-explorer,.image-well,.video-well,.visual-dialog';
+const interactive = 'button,a,input,select,textarea,summary,[contenteditable],.session-progress,.scene-controls,.sheet,dialog,audio,.visual-dialog';
 
 // Passive touch observation leaves scrolling, selection and media gestures native.
 export function createSwipeRecognizer() {
@@ -24,15 +24,19 @@ export function createSwipeRecognizer() {
 }
 
 export function swipeNavigation(node, read) {
- const gesture=createSwipeRecognizer();
+ const gesture=createSwipeRecognizer();let suppressClick=null;
  const selected=()=>Boolean(window.getSelection()?.toString());
- const blocked=target=>Boolean(target?.closest?.(interactive))||selected();
- const start=e=>{const p=e.touches[0];if(!p)return;const s=read();gesture.begin({x:p.clientX,y:p.clientY,time:e.timeStamp,count:e.touches.length,width:window.innerWidth,blocked:s.blocked||blocked(e.target),identity:s.identity});};
+ const blocked=target=>{const role=target?.closest?.('[role="button"]');const video=target?.closest?.('video');return Boolean(target?.closest?.(interactive))||Boolean(role&&!role.matches('.visual-viewport'))||Boolean(target?.closest?.('.visual-explorer.fullscreen'))||Boolean(video?.controls)||selected();};
+ const start=e=>{suppressClick=null;const p=e.touches[0];if(!p)return;const s=read();gesture.begin({x:p.clientX,y:p.clientY,time:e.timeStamp,count:e.touches.length,width:window.innerWidth,blocked:s.blocked||blocked(e.target),identity:s.identity});};
  const move=e=>{const p=e.touches[0];if(p)gesture.move({x:p.clientX,y:p.clientY,count:e.touches.length});else gesture.cancel();};
- const end=e=>{const p=e.changedTouches[0];if(!p||e.touches.length){gesture.cancel();return;}const s=read();const direction=gesture.end({x:p.clientX,y:p.clientY,time:e.timeStamp,identity:s.identity,blocked:s.blocked||selected()});if(direction&&s[direction])s.navigate(direction);};
+ const end=e=>{const p=e.changedTouches[0];if(!p||e.touches.length){gesture.cancel();return;}const s=read();const direction=gesture.end({x:p.clientX,y:p.clientY,time:e.timeStamp,identity:s.identity,blocked:s.blocked||selected()});if(direction&&s[direction]){suppressClick={target:e.target?.closest?.('.visual-viewport,video')||e.target,x:p.clientX,y:p.clientY,until:performance.now()+800};e.preventDefault();s.navigate(direction);}};
+ const click=e=>{const pending=suppressClick;suppressClick=null;if(pending&&e.detail!==0&&(e.target===pending.target||pending.target?.contains?.(e.target))&&performance.now()<=pending.until&&Math.hypot(e.clientX-pending.x,e.clientY-pending.y)<=40){e.preventDefault();e.stopImmediatePropagation();}};
+ const newPointer=()=>{suppressClick=null;};
+ node.addEventListener('pointerdown',newPointer,true);
+ node.addEventListener('click',click,true);
  const handlers={touchstart:start,touchmove:move,touchend:end,touchcancel:gesture.cancel};
- for(const [type,handler] of Object.entries(handlers))node.addEventListener(type,handler,{passive:true});
- return {destroy(){gesture.cancel();for(const [type,handler] of Object.entries(handlers))node.removeEventListener(type,handler);}};
+ for(const [type,handler] of Object.entries(handlers))node.addEventListener(type,handler,{passive:type!=='touchend'});
+ return {destroy(){gesture.cancel();suppressClick=null;node.removeEventListener('click',click,true);node.removeEventListener('pointerdown',newPointer,true);for(const [type,handler] of Object.entries(handlers))node.removeEventListener(type,handler);}};
 }
 
 // Only the latest selection can control the loading guard; obsolete work cannot

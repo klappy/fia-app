@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.0.0-alpha.12 — Media tap and swipe intent (2026-10-05)
+
+Resting media surfaces support existing previous/next passage swipes without opening a visual. A completed tap opens images/maps; pinch, drag, stale activity changes and native video controls retain their separate behavior. No spacing changes. See [release note](release/changes/3.0.0-alpha.12-media-gestures.md).
+
 ## 3.0.0-alpha.11 — Native video owner retention (2026-10-05)
 
 Retains the current video until native fullscreen exit is acknowledged before applying navigation or passage selection. Reports deferred failures and preserves the latest selection intent. The reported installed-iPhone freeze remains unverified. See [release note](release/changes/3.0.0-alpha.11-native-video-owner.md).

@@ -525,3 +525,9 @@ it('swipe navigation preserves explicit visual authorization and cancels it on B
  touchSequence(stage,'touchstart',120,350);touchSequence(stage,'touchend',270,350);await settle();expect(state().index).toBe(initial);expect(request.mock.calls[0][3].aborted).toBe(true);
  finish({bytes:new Uint8Array([1]).buffer,mime:'image/webp'});await settle();expect(document.querySelector('.visual-viewport img')).toBeNull();expect(document.title).toBe('FIA Guide');
 });
+it('image-origin swipe invokes saved navigation once without opening fullscreen',async()=>{
+ assets.a112.relatedIds=[];await startAt('S02-U005');const initial=state().index,visual=document.querySelector('.visual-viewport img');expect(visual).toBeTruthy();
+ touchSequence(visual,'touchstart',270,350);touchSequence(visual,'touchmove',120,350);touchSequence(visual,'touchend',120,350);await settle();
+ expect(state().index).toBe(initial+1);expect(screen.queryByRole('dialog')).toBeNull();
+ await fireEvent.click(document.querySelector('.scene'),{clientX:120,clientY:350});await settle();expect(state().index).toBe(initial+1);expect(screen.queryByRole('dialog')).toBeNull();
+});
