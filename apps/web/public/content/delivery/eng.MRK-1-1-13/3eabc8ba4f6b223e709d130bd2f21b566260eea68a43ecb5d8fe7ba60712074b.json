@@ -1,8 +1,8 @@
 {
-  "schema": 4,
+  "schema": 5,
   "packId": "eng.MRK-1-1-13",
   "presentationRevision": "ccd72f23c23f932651b500b730b285f32fabd37e50037b5af91d8881f1403975",
-  "recipeRevision": "cookbook-8688a126-original-guide-ranges-v1",
+  "recipeRevision": "recipe-sha256:66cddfed5e845151d0dddfc76af34e28162e86b100995a6b2a33185e17ec10df",
   "entries": [
     {
       "path": "/assets/mark-1-1-13/a111.jpg",
@@ -7244,78 +7244,90 @@
     {
       "path": "/audio/source/scripture-BereanStandardBible.mp3",
       "source": {
-        "url": "https://fiaguide.app/audio/source/scripture-BereanStandardBible.mp3",
-        "sha256": "3e861a08555ab67fd93c86fa2e229d0f72d23a3699ecdddceb9b33d7b4da1910",
-        "bytes": 1236323,
-        "provenance": {
-          "id": "scripture-BereanStandardBible",
-          "path": "/audio/source/scripture-BereanStandardBible.mp3",
-          "bytes": 1236323,
-          "sha256": "3e861a08555ab67fd93c86fa2e229d0f72d23a3699ecdddceb9b33d7b4da1910",
-          "mime": "audio/mpeg",
-          "sourceSha256": "0710426b5a0fa1f3a9afd7776dd0ebee8a24d1f9c820b1de2fe92de56ba23a9d",
-          "sourceCharacters": 1325,
-          "spokenCharacters": 1325,
-          "receivedAt": "2026-09-11T22:02:01.757Z",
-          "httpStatus": 200,
-          "expectedSpokenProjectionSha256": "ddbb26361f4eab1173d96f53f5cc72b53f8091fb47fbba926d301869cd9fe8e5",
-          "manifest": "mark-1-1-13",
-          "recordingSource": "generated",
-          "ai": true
-        }
+        "url": "https://openbible.com/audio/souer/BSB_41_Mrk_001.mp3",
+        "sha256": "ad82d1a49f696a421f87a0ba54e7079c35fb403462c1e2e335a1fabe515363ec",
+        "bytes": 5135362
       },
       "delivery": {
-        "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://fiaguide.app/audio/source/scripture-BereanStandardBible.mp3",
-        "sha256": "b3afa1da1d6c4622b02f50e40952a77381d8bc9c2ac9075fa8db8d5eb64106d5",
-        "bytes": 161068,
+        "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://openbible.com/audio/souer/BSB_41_Mrk_001.mp3",
+        "sha256": "0599996af6b15cf55853cfee33d2b4405e5ee95bd9068f297c5b4b4c24284235",
+        "bytes": 641001,
         "mime": "audio/ogg",
         "kind": "audio",
         "preset": "voice",
         "q": "medium",
         "format": "opus",
         "status": "transformed",
-        "duration": 77.276687
+        "duration": 320.8055
       },
       "timing": {
         "status": "verified",
-        "sourceAudioSha256": "3e861a08555ab67fd93c86fa2e229d0f72d23a3699ecdddceb9b33d7b4da1910",
-        "deliveryAudioSha256": "b3afa1da1d6c4622b02f50e40952a77381d8bc9c2ac9075fa8db8d5eb64106d5",
-        "alignmentSha256": "99c2f6f01bedbabae96ccf85012fa85bf9b5002f8be9b1ae99b2483cd81397eb",
-        "method": "Native decoded PCM anchor correlation with independent selected-media browser clock and boundary verification; retained exact recording identities",
-        "evidence": "https://github.com/klappy/fia-app-cookbook/blob/1068111d5fac7b5900150672afcf01ea8899c750/work/active/2026-10-03-fia-v3-integrated-delivery/evidence/2026-10-04-proxy-media-timing-review.md",
+        "sourceAudioSha256": "ad82d1a49f696a421f87a0ba54e7079c35fb403462c1e2e335a1fabe515363ec",
+        "deliveryAudioSha256": "0599996af6b15cf55853cfee33d2b4405e5ee95bd9068f297c5b4b4c24284235",
+        "method": "Decoded PCM waveform correlation in source decoded-sample and delivery-media clocks",
+        "evidence": "/content/scripture-evidence/ddf2312f7defeb307fc2f0ce0c61e7fd114832ba9d1a1cc1f0397708c6d65456.json",
         "mapping": {
           "scale": 1,
-          "offsetSeconds": 0.012
-        }
+          "offsetSeconds": 0
+        },
+        "mappingEvidenceSha256": "ddf2312f7defeb307fc2f0ce0c61e7fd114832ba9d1a1cc1f0397708c6d65456"
       },
       "defaultSize": "medium",
       "variants": {
         "medium": {
           "delivery": {
-            "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://fiaguide.app/audio/source/scripture-BereanStandardBible.mp3",
-            "sha256": "b3afa1da1d6c4622b02f50e40952a77381d8bc9c2ac9075fa8db8d5eb64106d5",
-            "bytes": 161068,
+            "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://openbible.com/audio/souer/BSB_41_Mrk_001.mp3",
+            "sha256": "0599996af6b15cf55853cfee33d2b4405e5ee95bd9068f297c5b4b4c24284235",
+            "bytes": 641001,
             "mime": "audio/ogg",
             "kind": "audio",
             "preset": "voice",
             "q": "medium",
             "format": "opus",
             "status": "transformed",
-            "duration": 77.276687
+            "duration": 320.8055
           },
           "timing": {
             "status": "verified",
-            "sourceAudioSha256": "3e861a08555ab67fd93c86fa2e229d0f72d23a3699ecdddceb9b33d7b4da1910",
-            "deliveryAudioSha256": "b3afa1da1d6c4622b02f50e40952a77381d8bc9c2ac9075fa8db8d5eb64106d5",
-            "alignmentSha256": "99c2f6f01bedbabae96ccf85012fa85bf9b5002f8be9b1ae99b2483cd81397eb",
-            "method": "Native decoded PCM anchor correlation with independent selected-media browser clock and boundary verification; retained exact recording identities",
-            "evidence": "https://github.com/klappy/fia-app-cookbook/blob/1068111d5fac7b5900150672afcf01ea8899c750/work/active/2026-10-03-fia-v3-integrated-delivery/evidence/2026-10-04-proxy-media-timing-review.md",
+            "sourceAudioSha256": "ad82d1a49f696a421f87a0ba54e7079c35fb403462c1e2e335a1fabe515363ec",
+            "deliveryAudioSha256": "0599996af6b15cf55853cfee33d2b4405e5ee95bd9068f297c5b4b4c24284235",
+            "method": "Decoded PCM waveform correlation in source decoded-sample and delivery-media clocks",
+            "evidence": "/content/scripture-evidence/ddf2312f7defeb307fc2f0ce0c61e7fd114832ba9d1a1cc1f0397708c6d65456.json",
             "mapping": {
               "scale": 1,
-              "offsetSeconds": 0.012
-            }
+              "offsetSeconds": 0
+            },
+            "mappingEvidenceSha256": "ddf2312f7defeb307fc2f0ce0c61e7fd114832ba9d1a1cc1f0397708c6d65456"
+          },
+          "playbackRange": {
+            "startSeconds": 4.4,
+            "endSeconds": 97.1
+          },
+          "scriptureAlignment": {
+            "url": "/content/scripture-alignments/8a69afa1133b2cad7f90cfcd64fdb29bfaba2d84752d0552c896b4c7a651db01.json",
+            "sha256": "8a69afa1133b2cad7f90cfcd64fdb29bfaba2d84752d0552c896b4c7a651db01",
+            "bytes": 21001,
+            "evidenceSha256": "1fa79eaae9e6035e1e79c6812254323009511943164b03e55294a4f439552289"
           }
         }
+      },
+      "scriptureReplacement": {
+        "ledgerEntryId": "bsb-mark-1-1-13-bob-souer",
+        "assetId": "scripture-BereanStandardBible",
+        "logicalSource": {
+          "sha256": "3e861a08555ab67fd93c86fa2e229d0f72d23a3699ecdddceb9b33d7b4da1910",
+          "bytes": 1236323
+        }
+      },
+      "playbackRange": {
+        "startSeconds": 4.4,
+        "endSeconds": 97.1
+      },
+      "scriptureAlignment": {
+        "url": "/content/scripture-alignments/8a69afa1133b2cad7f90cfcd64fdb29bfaba2d84752d0552c896b4c7a651db01.json",
+        "sha256": "8a69afa1133b2cad7f90cfcd64fdb29bfaba2d84752d0552c896b4c7a651db01",
+        "bytes": 21001,
+        "evidenceSha256": "1fa79eaae9e6035e1e79c6812254323009511943164b03e55294a4f439552289"
       }
     },
     {
@@ -9420,5 +9432,10 @@
     "url": "/content/recording-sources/66cfb3cb236e2e1072f16c78b5de895c5bff8d058a1526c667d78a9c063e34dd.json",
     "sha256": "66cfb3cb236e2e1072f16c78b5de895c5bff8d058a1526c667d78a9c063e34dd",
     "bytes": 7984
+  },
+  "scriptureSourceLedger": {
+    "url": "/content/scripture-sources/06e59519f48c8dbf6ac3410ff45f2f2f5d18eaef4beb550b2efb9f59526c5ec5.json",
+    "sha256": "06e59519f48c8dbf6ac3410ff45f2f2f5d18eaef4beb550b2efb9f59526c5ec5",
+    "bytes": 1165
   }
 }

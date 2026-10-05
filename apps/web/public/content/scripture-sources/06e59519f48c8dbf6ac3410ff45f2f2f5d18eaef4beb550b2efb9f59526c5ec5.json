@@ -1,0 +1,31 @@
+{
+  "schema": "fia-scripture-audio-sources@1",
+  "packId": "eng.MRK-1-1-13",
+  "presentationRevision": "ccd72f23c23f932651b500b730b285f32fabd37e50037b5af91d8881f1403975",
+  "entries": [
+    {
+      "id": "bsb-mark-1-1-13-bob-souer",
+      "assetId": "scripture-BereanStandardBible",
+      "logicalAudio": {
+        "path": "/audio/source/scripture-BereanStandardBible.mp3",
+        "sha256": "3e861a08555ab67fd93c86fa2e229d0f72d23a3699ecdddceb9b33d7b4da1910",
+        "bytes": 1236323
+      },
+      "recording": {
+        "url": "https://openbible.com/audio/souer/BSB_41_Mrk_001.mp3",
+        "sha256": "ad82d1a49f696a421f87a0ba54e7079c35fb403462c1e2e335a1fabe515363ec",
+        "bytes": 5135362,
+        "duration": 320.805375,
+        "rightsEvidenceSha256": "1ed9616b879acf1f7b18856fd03c5ea24a97e1f1224f86a6f78dbcf5ae208479"
+      },
+      "sourceRange": {
+        "startSeconds": 4.4,
+        "endSeconds": 97.1
+      },
+      "review": {
+        "recipeRevision": "recipe-sha256:66cddfed5e845151d0dddfc76af34e28162e86b100995a6b2a33185e17ec10df",
+        "evidenceSha256": "1a1f2576041a485a33215d1de06e8de05cf739ef3e1a30816a1c9629600016e6"
+      }
+    }
+  ]
+}
