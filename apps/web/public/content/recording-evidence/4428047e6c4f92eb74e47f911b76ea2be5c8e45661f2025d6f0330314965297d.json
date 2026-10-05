@@ -1,0 +1,58 @@
+{
+  "status": "accepted",
+  "recipeRevision": "cookbook-8688a126-original-guide-ranges-v1",
+  "packId": "eng.MRK-1-1-13",
+  "presentationRevision": "ccd72f23c23f932651b500b730b285f32fabd37e50037b5af91d8881f1403975",
+  "mapping": {
+    "id": "S01-U003",
+    "activityId": "S01-U003",
+    "sourceTextSha256": "c6ef6ed4d31b97cf4a0d03a8228505d052a8a780a5fe0413ebc441860df97b5d",
+    "logicalAudio": {
+      "path": "/audio/source/S01-U003.mp3",
+      "sha256": "6e20ea66bac6afb6d8660c85cf4d14ea93b569e93933b881b995d604731bbf9a",
+      "bytes": 29675
+    },
+    "wordSpan": {
+      "first": 52,
+      "lastExclusive": 59
+    },
+    "sourceRange": {
+      "startSeconds": 27.08,
+      "endSeconds": 29.38,
+      "clockDomain": "decoded-pcm"
+    }
+  },
+  "script": {
+    "fileSha256": "938515635c9635e6ed614eab84c1a7e0a4cc3269a3231147431a88dd95bb321c",
+    "contentSha256": "2347d166bf34db52915f3a76f379f1f9afa9ca78a1af163be091541cbaccc898",
+    "repository": "BibleAquifer/FIATranslationGuide",
+    "commit": "5d6d59a22caa8f8539c5ff6a3e1ec74c4cfa5c6d",
+    "path": "eng/json/41.content.json"
+  },
+  "recording": {
+    "url": "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s1/v2/vbr0.mp3",
+    "sha256": "9834ac98fdc57c34e4cc2cb5f813fc5bf050a2283ffc4ce994963bbfa9649d25",
+    "bytes": 1079948,
+    "duration": 60.9023125,
+    "publisherStepVersion": "v2",
+    "rightsEvidenceSha256": "5b057574403eed32278ea1445333537e85b49dcf2c1c8a0ff7f288e78ddf3de7"
+  },
+  "transcript": {
+    "sha256": "4a5b4cadb3bf939a0953c2da93399eda77ee85a7cac0780fc2ef6e1afd9d6f91",
+    "wordTimestampsSha256": "315fde5baad926aa5b8ababe858ee4819054832fc788d107e4847a77e7db700f",
+    "method": "unmodified faster-whisper recognition; verbatim means retained ASR output, not certified speech",
+    "modelRevision": "0d3d19a32d3338f10357c0889762bd8d64bbdeba",
+    "clockDomain": "decoded-pcm",
+    "verbatim": true
+  },
+  "drift": {
+    "reportSha256": "9fdcc3ed0bedb5647c2f1bf04e78f5a4fb71504bac295a6826141308c0dd00c2",
+    "scriptSha256": "2347d166bf34db52915f3a76f379f1f9afa9ca78a1af163be091541cbaccc898",
+    "transcriptSha256": "4a5b4cadb3bf939a0953c2da93399eda77ee85a7cac0780fc2ef6e1afd9d6f91",
+    "reviewEvidenceSha256": "d0337fc86f68d1d93bdf8ae3347aea33c3036d639a9524dec34243d11274a242"
+  },
+  "method": "Independent contextual recognition and acoustic range review, measured waveform clock mapping, actual Chrome range completion; no human listening claimed.",
+  "rangeReviewSha256": "40e55a6f184b3f7482e85956b58a0a4dfbce260b2dd567759b61b1666ef43898",
+  "browserProofSha256": "c1fd7a4496ad030224f2af9e2edd9ca54c1464470d85628714646b255033d72a",
+  "handoffProofSha256": "ebf488aeb4b26c9286b1d619b82e4bb739c50e2ec4e6163678a4fc2580dcf688"
+}
