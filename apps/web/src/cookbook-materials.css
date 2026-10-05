@@ -150,11 +150,12 @@
   box-shadow: var(--shadow-float), var(--inner-top), var(--inner-edge);
 }
 .sheet .sheet-header, .glass-sheet .sheet-header {
-  /* Keep scrolled sheet content out of the sticky title in both themes. */
-  background: var(--paper-000);
+  background: var(--sheet-header-background, transparent);
   -webkit-backdrop-filter: blur(var(--blur-medium)) var(--sat-glass);
   backdrop-filter: blur(var(--blur-medium)) var(--sat-glass);
 }
+/* Only Settings and Downloads need a solid sticky title over scrolling rows. */
+.sheet.opaque-sheet-header { --sheet-header-background: var(--paper-000); }
 .sheet::backdrop {
   background: rgba(20,28,45,.12);
   -webkit-backdrop-filter: blur(var(--blur-sheer));
