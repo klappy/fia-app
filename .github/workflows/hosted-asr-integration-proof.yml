@@ -1,7 +1,7 @@
-name: hosted-asr-integration-proof
+name: hosted-asr-image-size-proof
 on:
   push:
-    branches: [parallel/hosted-asr-integration]
+    branches: [parallel/hosted-asr-image-size]
     paths:
       - 'deploy/hosted-asr/**'
       - 'server/fia/preparation/hosted-asr/**'
@@ -24,25 +24,22 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Verify private contracts and real process-group stop
-        run: node --test tests/preparation-hosted-asr/dispatch.test.mjs tests/preparation-hosted-asr/watchdog.test.mjs tests/preparation-hosted-asr/locks.test.mjs tests/preparation-hosted-asr/dispatch-artifact.test.mjs
       - name: Acquire only hash-pinned model and binary wheels
         run: |
           python deploy/hosted-asr/ci-acquire.py work/asr-inputs
           python -m pip download --only-binary=:all: --platform manylinux2014_x86_64 --platform manylinux_2_28_x86_64 --python-version 312 --implementation cp --abi cp312 --require-hashes -r deploy/hosted-asr/requirements.lock -d work/asr-inputs/wheels
           node deploy/hosted-asr/prepare-build.mjs work/asr-inputs work/asr-context
-      - name: Build offline image from verified inputs
-        run: docker build --network=none --platform=linux/amd64 -f work/asr-context/Dockerfile.integration -t fia-asr-integration-proof work/asr-context
-      - name: Verify guarded readiness and unambiguous container removal
+      - uses: docker/setup-buildx-action@v3
+      - name: Build exact offline image and local OCI export only
         run: |
           mkdir -p work/asr-proof
-          docker image inspect fia-asr-integration-proof --format '{{.Id}}' > work/asr-proof/image-id.txt
-          trap 'docker rm -f fia-asr-integration-proof >/dev/null 2>&1 || true' EXIT
-          timeout --signal=TERM --kill-after=5s 450s python deploy/hosted-asr/ci-service-proof.py --cleanup-only
+          docker buildx build --network=none --platform=linux/amd64 --provenance=false --sbom=false -f work/asr-context/Dockerfile.integration -t fia-asr-size-proof --output type=oci,dest=work/asr-image.tar,compression=gzip --load work/asr-context
+          docker image inspect fia-asr-size-proof > work/asr-image-inspect.json
+          python deploy/hosted-asr/ci-image-size.py work/asr-image.tar work/asr-image-inspect.json deploy/hosted-asr work/asr-proof/image-size.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: hosted-asr-guarded-http-proof
-          path: work/asr-proof
+          name: hosted-asr-image-size-proof
+          path: work/asr-proof/image-size.json
           retention-days: 1
           if-no-files-found: ignore
