@@ -150,7 +150,8 @@
   box-shadow: var(--shadow-float), var(--inner-top), var(--inner-edge);
 }
 .sheet .sheet-header, .glass-sheet .sheet-header {
-  background: transparent;
+  /* Keep scrolled sheet content out of the sticky title in both themes. */
+  background: var(--paper-000);
   -webkit-backdrop-filter: blur(var(--blur-medium)) var(--sat-glass);
   backdrop-filter: blur(var(--blur-medium)) var(--sat-glass);
 }

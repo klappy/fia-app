@@ -144,7 +144,7 @@ button{min-height:48px}.scene-notice button{min-width:48px;min-height:48px}.kept
 
 /* The content map uses the same frosted material as the anchored controls. */
 .sheet.glass-sheet{background:var(--glass-fill-4);border:var(--border-glass);-webkit-backdrop-filter:blur(var(--blur-strong)) var(--sat-glass);backdrop-filter:blur(var(--blur-strong)) var(--sat-glass)}
-.glass-sheet .sheet-header{background:var(--surface);border-bottom:0;-webkit-backdrop-filter:blur(var(--blur-medium));backdrop-filter:blur(var(--blur-medium))}
+.glass-sheet .sheet-header{background:var(--glass-fill-4);border-bottom:0;-webkit-backdrop-filter:blur(var(--blur-medium));backdrop-filter:blur(var(--blur-medium))}
 .progress-map-section{display:block;padding:12px 0 22px}
 .progress-map-heading{font:var(--type-label);margin:0 0 10px}
 .progress-map-section .progress-section-choice{width:100%;position:static;min-height:52px;justify-content:flex-start;gap:16px;text-align:left}
