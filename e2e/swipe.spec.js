@@ -35,7 +35,7 @@ test('native touch scroll remains available and horizontal touch uses existing n
 
 // Availability is a static fixture here; real delivery integrity remains in the
 // worker/journey suites. The rendered map and native video controls are real DOM.
-for(const kind of ['map','video'])test(`${kind} gestures do not navigate the passage`,async({page})=>{
+for(const kind of ['map','video'])test(`${kind} resting navigation and interactive exclusions remain distinct`,async({page})=>{
  const manifest=JSON.parse(readFileSync(new URL('../dist/offline/eng.MRK-1-1-13.json',import.meta.url),'utf8'));
  await page.addInitScript(manifest=>{const active={postMessage(message,ports){ports[0].postMessage({ok:true,saved:true,active:{manifest,files:manifest.files}});}};Object.defineProperty(navigator,'serviceWorker',{value:{ready:Promise.resolve({active}),register:async()=>({active})},configurable:true});},manifest);
  const activity=kind==='map'?activities.find(a=>assets[a.assetId]?.kind==='map'):activities[0];expect(activity).toBeTruthy();
@@ -43,7 +43,8 @@ for(const kind of ['map','video'])test(`${kind} gestures do not navigate the pas
  if(kind==='video'){await page.getByRole('button',{name:'More options'}).click();await page.getByRole('button',{name:'Passage resources',exact:true}).click();await page.locator('summary').filter({hasText:/^Videos$/}).click();await page.getByRole('dialog').getByRole('button',{name:'Jordan River',exact:false}).click();}
  if(kind==='map'){
   await expect(page.locator('.visual-viewport img')).toBeVisible();
-  await swipe(page,'.visual-viewport',[270,350],[120,350]);expect((await saved(page)).index).toBe(initial);
+  await swipe(page,'.visual-viewport',[270,350],[120,350]);await expect.poll(async()=>(await saved(page)).index).toBeGreaterThan(initial);await expect(page.locator('.visual-dialog[open]')).toHaveCount(0);
+  await page.getByRole('button',{name:'Previous activity'}).click();await expect.poll(async()=>(await saved(page)).index).toBe(initial);
   await page.locator('.visual-viewport').click();await expect(page.locator('.visual-dialog[open]')).toBeVisible();
   const viewport=page.locator('.visual-dialog .visual-viewport');await viewport.locator('img').evaluate(img=>img.decode());await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));await viewport.focus();await viewport.press('+');
   await expect(viewport.locator('img')).toHaveAttribute('style',/scale\(1\.5\)/);
@@ -51,7 +52,7 @@ for(const kind of ['map','video'])test(`${kind} gestures do not navigate the pas
   expect(await viewport.locator('img').getAttribute('style')).not.toBe(before);
   await swipe(page,'.visual-dialog .visual-viewport',[270,350],[120,350]);expect((await saved(page)).index).toBe(initial);
  }else{
-  await expect(page.locator('video')).toBeVisible();await swipe(page,'video',[270,350],[120,350]);expect((await saved(page)).index).toBe(initial);
+  await expect(page.locator('video')).toBeVisible();await page.locator('video').evaluate(v=>v.controls=true);await swipe(page,'video',[270,350],[120,350]);expect((await saved(page)).index).toBe(initial);
   expect(await page.locator('video').evaluate(v=>v.paused)).toBe(true);
  }
 });
@@ -61,4 +62,18 @@ test('selected text prevents passage swipe',async({page})=>{
  await page.locator('.scripture-scroll').evaluate(el=>{const range=document.createRange();range.selectNodeContents(el);const selection=window.getSelection();selection.removeAllRanges();selection.addRange(range);});
  expect(await page.evaluate(()=>window.getSelection().toString().length)).toBeGreaterThan(0);
  await swipe(page,'.scene',[270,350],[120,350]);expect((await saved(page)).index).toBe(initial);
+});
+
+test('native media touch separates tap, swipe and pinch without opening after navigation',async({page,context,browserName})=>{
+ test.skip(browserName!=='chromium','CDP touch is desktop-engine evidence, not physical iPhone proof');
+ await page.setViewportSize({width:390,height:844});
+ const manifest=JSON.parse(readFileSync(new URL('../dist/offline/eng.MRK-1-1-13.json',import.meta.url),'utf8'));
+ await page.addInitScript(manifest=>{const active={postMessage(message,ports){ports[0].postMessage({ok:true,saved:true,active:{manifest,files:manifest.files}});}};Object.defineProperty(navigator,'serviceWorker',{value:{ready:Promise.resolve({active}),register:async()=>({active})},configurable:true});},manifest);
+ const activity=activities.find(a=>assets[a.assetId]?.kind==='map');await seedPassage(page,activity.id);const initial=(await saved(page)).index,input=await context.newCDPSession(page);
+ const viewport=page.locator('.visual-viewport');await viewport.locator('img').evaluate(img=>img.decode());const r=await viewport.boundingBox(),x=r.x+r.width/2,y=r.y+r.height/2;
+ const send=(type,points)=>input.send('Input.dispatchTouchEvent',{type,touchPoints:points.map(([x,y,id=0])=>({x,y,id}))});
+ await send('touchStart',[[x,y]]);await expect(page.locator('.visual-dialog[open]')).toHaveCount(0);await send('touchEnd',[]);await expect(page.locator('.visual-dialog[open]')).toBeVisible();await page.getByRole('button',{name:'Close full screen'}).click();
+ await send('touchStart',[[x-30,y,0],[x+30,y,1]]);await send('touchMove',[[x-60,y,0],[x+60,y,1]]);await send('touchEnd',[]);await expect(page.locator('.visual-dialog[open]')).toHaveCount(0);expect((await saved(page)).index).toBe(initial);
+ await send('touchStart',[[270,y]]);for(let i=1;i<=8;i++){await send('touchMove',[[270-150*i/8,y]]);await page.waitForTimeout(20);}await send('touchEnd',[]);
+ await expect.poll(async()=>(await saved(page)).index).toBeGreaterThan(initial);await expect(page.locator('.visual-dialog[open]')).toHaveCount(0);await page.screenshot({path:test.info().outputPath('media-swipe-after.png')});await input.detach();
 });
