@@ -1,0 +1,38 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createPipeline} from '../../server/fia/preparation/executor/pipeline.mjs';
+import {sha256} from '../../server/fia/preparation/contract.mjs';
+const names=['discover','acquire','transcribe','align','accept','publish'];
+const input=()=>({packId:'eng.MRK-1-14-20',book:'MRK',language:'eng',edition:'publisher',passage:'1:14-20',resource:'S01',scriptSha256:'a'.repeat(64),source:{publisherId:'publisher',resourceId:'p2s1',version:'v2'},modelRecipe:{modelId:'local',modelRevision:'model@1',configSha256:'b'.repeat(64)},policyRevision:'policy@1'});
+function disk(){const values=new Map();let tail=Promise.resolve();return {values,transaction(action){const job=tail.then(async()=>{const staging=new Map(structuredClone([...values]));const result=await action({get:async k=>structuredClone(staging.get(k)),put:async(k,v)=>staging.set(k,structuredClone(v))});values.clear();for(const [k,v] of staging)values.set(k,v);return result;});tail=job.catch(()=>{});return job;}};}
+async function fixture(){const storage=disk(),counts={},retained=new Map(),adapters={};for(const node of names)adapters[node]={paid:false,run:async()=>{counts[node]=(counts[node]||0)+1;const bytes=new TextEncoder().encode(node),digest=await sha256(bytes),value={sha256:digest,reference:`immutable:${digest}`,...(node==='accept'?{status:'machine-accepted'}:{})};retained.set(value.reference,bytes);return value;}};const options={storage,policyId:'local-reference@1',adapters,verifyArtifact:async artifact=>{const bytes=retained.get(artifact.reference);return !!bytes&&await sha256(bytes)===artifact.sha256;}};return {storage,counts,retained,adapters,options,pipeline:createPipeline(options)};}
+test('two simultaneous callers persist one claim before provider and never duplicate',async()=>{
+ const f=await fixture();let release,entered;const arrival=new Promise(r=>entered=r),wait=new Promise(r=>release=r);const run=f.adapters.discover.run;f.adapters.discover.run=async context=>{entered();await wait;return run(context);};const pipeline=createPipeline(f.options),first=pipeline.run(input());await arrival;const second=await pipeline.run(input());assert.equal(second.state,'preparing');assert.equal(second.revision,1);release();assert.equal((await first).state,'ready');assert.deepEqual(Object.values(f.counts),[1,1,1,1,1,1]);
+});
+test('restart leaves persisted preparing unresolved and no automatic replay',async()=>{
+ const f=await fixture();let entered;const arrival=new Promise(r=>entered=r);f.adapters.discover.run=async()=>{entered();return new Promise(()=>{});};createPipeline(f.options).run(input());await arrival;const restart=createPipeline(f.options);assert.equal((await restart.run(input())).state,'preparing');assert.equal(f.storage.values.size,1);
+});
+test('trusted reconciliation fences late provider and requires exact attempt revision',async()=>{
+ const f=await fixture();let release,entered;const arrival=new Promise(r=>entered=r),wait=new Promise(r=>release=r);const run=f.adapters.discover.run;f.adapters.discover.run=async context=>{entered();await wait;return run(context);};const pipeline=createPipeline(f.options),pending=pipeline.run(input());await arrival;const current=await pipeline.run(input());
+ await assert.rejects(pipeline.reconcile(input(),'discover',{...current,outcome:'failed',revision:99,evidence:'trusted evidence'}),/stale/);
+ await pipeline.reconcile(input(),'discover',{...current,outcome:'failed',evidence:'definitive no result'});release();await assert.rejects(pending,/stale/);assert.equal((await pipeline.run(input())).state,'failed');
+});
+test('warm completed bytes reuse works offline and corrupt artifacts never rerun',async()=>{
+ const f=await fixture();assert.equal((await f.pipeline.run(input())).state,'ready');const offline=Object.fromEntries(names.map(node=>[node,{paid:false,run:async()=>{throw Error('upstream offline');}}]));assert.equal((await createPipeline({...f.options,adapters:offline}).run(input())).state,'ready');assert.equal(f.counts.discover,1);f.retained.clear();assert.equal((await f.pipeline.run(input())).state,'unavailable');assert.equal(f.counts.discover,1);
+});
+test('missing recognition capability and review-required acceptance never publish',async()=>{
+ const f=await fixture();delete f.adapters.transcribe;const blocked=await createPipeline(f.options).run(input());assert.equal(blocked.state,'blocked');assert.equal(blocked.node,'transcribe');assert.equal(f.counts.publish,undefined);
+ const g=await fixture(),accept=g.adapters.accept.run;g.adapters.accept.run=async c=>({...await accept(c),status:'review-required'});assert.equal((await createPipeline(g.options).run(input())).reason,'review-required');assert.equal(g.counts.publish,undefined);
+});
+test('same recording recognition shares across consumers while consumer stages remain separate',async()=>{
+ const f=await fixture();await f.pipeline.run(input());const changed={...input(),packId:'other-consumer',scriptSha256:'c'.repeat(64)};assert.equal((await f.pipeline.run(changed)).state,'ready');assert.equal(f.counts.discover,1);assert.equal(f.counts.acquire,1);assert.equal(f.counts.transcribe,1);assert.equal(f.counts.align,2);assert.equal(f.counts.accept,2);assert.equal(f.counts.publish,2);
+});
+test('paid adapters blocked by default and semantic input rejects arbitrary locators',async()=>{
+ const f=await fixture();f.adapters.discover.paid=true;assert.equal((await createPipeline(f.options).run(input())).state,'blocked');assert.equal(f.counts.discover,undefined);await assert.rejects(f.pipeline.run({...input(),source:{...input().source,url:'https://arbitrary.example'}}));
+});
+test('provider exception persists uncertainty and a new caller cannot retry it',async()=>{
+ const f=await fixture();let calls=0;f.adapters.discover.run=async()=>{calls++;throw Error('outcome unknown');};const pipeline=createPipeline(f.options);assert.equal((await pipeline.run(input())).state,'uncertain');assert.equal((await createPipeline(f.options).run(input())).state,'uncertain');assert.equal(calls,1);
+});
+test('changed recognition configuration invalidates downstream nodes but reuses acquisition',async()=>{
+ const f=await fixture();await f.pipeline.run(input());await f.pipeline.run({...input(),modelRecipe:{...input().modelRecipe,configSha256:'d'.repeat(64)}});assert.equal(f.counts.discover,1);assert.equal(f.counts.acquire,1);assert.equal(f.counts.transcribe,2);assert.equal(f.counts.publish,2);
+});
