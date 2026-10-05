@@ -75,3 +75,11 @@ test('ledger rejects reordered or overlapping accepted recording ranges and word
   assert.throws(()=>verifyRecordedGuideReplacement(f),undefined,mode);
  }
 });
+
+test('source range must contain every spanned word even when recognizer word ends overlap',()=>{
+ const f=fixture(),put=value=>{const bytes=Buffer.from(JSON.stringify(value)),sha=hash(bytes);f.evidence.set(sha,bytes);return sha;};
+ const words={recordingSha256:f.ledger.recording.sha256,transcriptSha256:f.ledger.transcript.sha256,clockDomain:f.ledger.transcript.clockDomain,words:[{text:'Long',startSeconds:2,endSeconds:9},{text:'word',startSeconds:2.5,endSeconds:3}]};
+ f.ledger.transcript.wordTimestampsSha256=put(words);const row=f.ledger.mappings[0];row.wordSpan.lastExclusive=2;
+ const {acceptance,...mapping}=row;row.acceptance.evidenceSha256=put({status:'accepted',recipeRevision:acceptance.recipeRevision,packId:f.descriptor.id,presentationRevision:f.descriptor.revision,mapping,script:f.ledger.script,recording:f.ledger.recording,transcript:f.ledger.transcript,drift:f.ledger.drift});
+ assert.throws(()=>verifyRecordedGuideReplacement(f),/Invalid or unaccepted recorded guide range/);
+});
