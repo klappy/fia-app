@@ -3,8 +3,8 @@ import {spawn} from 'node:child_process';
 import {mkdtemp,readFile,writeFile,stat} from 'node:fs/promises';
 import {join,resolve} from 'node:path';
 import {canonicalJSONString,sha256} from '../contract.mjs';
-export const LOCAL_RECOGNITION_CONFIG=Object.freeze({device:'cpu',computeType:'int8',cpuThreads:4,task:'transcribe',beam_size:5,word_timestamps:true,condition_on_previous_text:false,initial_prompt:null,prefix:null,hotwords:null,vad_filter:false});
-export async function localRecognitionConfigSha256(scriptSha256,runtimeManifest){return sha256(canonicalJSONString({scriptSha256,runtimeManifest,settings:LOCAL_RECOGNITION_CONFIG}));}
+import {LOCAL_RECOGNITION_CONFIG,localRecognitionConfigSha256} from './recognition-identity.mjs';
+export {LOCAL_RECOGNITION_CONFIG,localRecognitionConfigSha256};
 const isHash=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
 export function createLocalRecognitionAdapter({pythonPath,scriptPath,scriptSha256,modelDirectory,modelId,modelManifestSha256,runtimeManifest,workDirectory,resolveSource,storeArtifact,supportedLanguages=['eng'],spawnProcess=spawn}){
  if(!isHash(scriptSha256)||!isHash(modelManifestSha256)||typeof modelId!=='string'||!modelId||typeof resolveSource!=='function'||typeof storeArtifact!=='function')throw Error('invalid-local-adapter-configuration');

@@ -1,4 +1,5 @@
 import {canonicalJSONString,sha256} from '../contract.mjs';
+import {validateRecognitionIdentity} from './recognition-identity.mjs';
 export const NORMALIZATION_REVISION='unicode-nfkc-lowercase-apostrophe@1';
 const hash=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
 export function tokens(text){if(typeof text!=='string')throw Error('invalid-alignment-text');if(text.length>200000)throw Error('alignment-text-limit');return text.normalize('NFKC').toLowerCase().replaceAll('’',"'").match(/[\p{L}\p{N}]+(?:['’][\p{L}\p{N}]+)*/gu)||[];}
@@ -14,6 +15,7 @@ export function createAlignmentAdapter({resolveArtifact,resolveUnits,storeArtifa
   input=structuredClone(input);nodeOutputs=structuredClone(nodeOutputs);
   const raw=await retainedJSON(nodeOutputs.transcribe,resolveArtifact),script=structuredClone(await resolveUnits(structuredClone(input)));
   if(raw.schema!=='fia-local-raw-recognition@1'||raw.status!=='candidate'||raw.source?.sha256!==nodeOutputs.acquire?.sha256||!hash(raw.source?.sha256)||!Number.isFinite(raw.durationSeconds)||raw.durationSeconds<=0||raw.durationSeconds>600||!Array.isArray(raw.segments))throw Error('alignment-recognition-binding');
+  await validateRecognitionIdentity(raw,input);
   if(script.scriptSha256!==input.scriptSha256||!hash(script.scriptSha256)||!Array.isArray(script.units)||!script.units.length||script.units.length>1000)throw Error('alignment-script-binding');
   const words=raw.segments.flatMap(segment=>{if(!Array.isArray(segment.words))throw Error('invalid-recognition-words');return segment.words;});if(words.length>10000)throw Error('alignment-word-limit');
   const heard=[],wordIndexes=[];let lastStart=0,lastEnd=0,wordTextLength=0;
