@@ -38,3 +38,10 @@ test('actual finalizer publishes all three fixture replacements with distinct id
   for(const f of fixtures){const current=manifest.files.find(x=>x.path===f.args.entry.path),old=legacy.files.find(x=>x.path===f.args.entry.path);assert.equal(current.sha256,f.args.entry.delivery.sha256);assert.equal(current.logicalSourceSha256,old.sha256);assert.equal(current.sourceSha256,f.args.entry.source.sha256);assert.notEqual(current.sha256,old.sha256);assert.equal(current.sourceBytes,f.args.entry.source.bytes);}
  }finally{rmSync(root,{recursive:true,force:true});}
 });
+
+test('version2 refuses unknown nested replacement fields and extraneous publication rows',()=>{
+ for(const select of [f=>f.sidecar.sourceLedger,f=>f.args.entry.source,f=>f.args.entry.delivery,f=>f.args.entry.delivery.qualification,f=>f.args.entry.source.provenance,f=>f.args.entry.source.provenance.metadata,f=>f.args.entry.source.provenance.rights,f=>f.args.entry.source.provenance.review]){const f=fixture();select(f).unexpected=true;assert.throws(()=>validateDelivery(f.sidecar,{packId:f.sidecar.packId,presentationRevision:f.sidecar.presentationRevision}),/field/);}
+ for(const select of [f=>f.args.ledger,f=>f.args.ledger.entries[0],f=>f.args.ledger.entries[0].bundled,f=>f.args.ledger.entries[0].published,f=>f.args.ledger.entries[0].metadata,f=>f.args.ledger.entries[0].rights,f=>f.args.ledger.entries[0].review]){const f=fixture();select(f).unexpected=true;assert.throws(()=>verifyVideoReplacement(f.args),/field/);}
+ const extra=fixture();extra.args.ledger.entries.push({...extra.args.ledger.entries[0],id:'unmapped',assetId:'a999',path:'/unknown.mp4'});assert.throws(()=>verifyVideoReplacement(extra.args),/publication set/);
+ const unknown=fixture();unknown.args.ledger.entries[0].assetId='a999';assert.throws(()=>verifyVideoReplacement(unknown.args),/publication mapping/);
+});

@@ -2,6 +2,7 @@ const sha=/^[a-f0-9]{64}$/;
 const local=/^\/(?!\/|.*(?:\.\.|[?#]))/;
 const pack=/^(eng|spa)\.MRK-\d+(?:-\d+)+$/;
 const positive=n=>Number.isSafeInteger(n)&&n>0;
+function videoKeys(value,keys){if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).sort().join(',')!==keys.split(',').sort().join(','))throw Error('Unknown or missing video contract field.');}
 export function validateDeliveryIndex(index){
  if(index?.schema!==1||!Array.isArray(index.packs))throw Error('Invalid media delivery index.');
  const seen=new Set();
@@ -11,7 +12,7 @@ export function validateDeliveryIndex(index){
 }
 export function validateDelivery(sidecar,identity){
  if(![1,2].includes(sidecar?.schema)||sidecar.packId!==identity.packId||sidecar.presentationRevision!==identity.presentationRevision||!sidecar.recipeRevision||!Array.isArray(sidecar.entries))throw Error('Media belongs to a different passage revision.');
- if(sidecar.schema===2){if(Object.keys(sidecar).sort().join(',')!=='entries,packId,presentationRevision,recipeRevision,schema,sourceLedger')throw Error('Unknown video sidecar field.');const l=sidecar.sourceLedger;if(!l||!sha.test(l.sha256)||!positive(l.bytes)||l.url!==`/content/video-sources/${l.sha256}.json`)throw Error('Invalid video source ledger.');}
+ if(sidecar.schema===2){if(Object.keys(sidecar).sort().join(',')!=='entries,packId,presentationRevision,recipeRevision,schema,sourceLedger')throw Error('Unknown video sidecar field.');const l=sidecar.sourceLedger;videoKeys(l,'url,sha256,bytes');if(!l||!sha.test(l.sha256)||!positive(l.bytes)||l.url!==`/content/video-sources/${l.sha256}.json`)throw Error('Invalid video source ledger.');}
  const seen=new Set();
  for(const e of sidecar.entries){const s=e.source,d=e.delivery,t=e.timing;
   if(!local.test(e.path)||seen.has(e.path)||!s||!sha.test(s.sha256)||!positive(s.bytes)||!/^https:\/\//.test(s.url)||!d||!sha.test(d.sha256)||!positive(d.bytes)||!['audio','image','video'].includes(d.kind)||!['transformed','passthrough'].includes(d.status)||!d.format||!d.q)throw Error('Invalid media delivery entry.');
@@ -36,6 +37,8 @@ export function validateDelivery(sidecar,identity){
 
 export function validateVideoDelivery(e){
  const d=e.delivery,l=e.logicalSource;
+ videoKeys(e.source,'url,sha256,bytes,provenance');videoKeys(e.source.provenance,'metadata,rights,review');videoKeys(e.source.provenance.metadata,'repository,revision,path,sha256,contentId,assetVersion,collectionVersion');videoKeys(e.source.provenance.rights,'metadataPath,metadataSha256,holder,licenseUrl');videoKeys(e.source.provenance.review,'recipeRevision,evidenceUrl,evidenceSha256');
+ videoKeys(d,'url,sha256,bytes,mime,kind,format,preset,q,status,duration,width,height,videoCodec,audioCodec,encoderRevision,recipeRevision,serverContractSha256,cacheKey,qualification');videoKeys(d.qualification,'evidenceUrl,evidenceSha256');
  if(Object.keys(e).sort().join(',')!=='delivery,logicalSource,path,source,timing')throw Error('Unknown video replacement field.');
  if(!l||Object.keys(l).sort().join(',')!=='assetId,bytes,ledgerEntryId,sha256'||!l.assetId||!l.ledgerEntryId||!sha.test(l.sha256)||!positive(l.bytes))throw Error('Invalid logical video source.');
  if(d.kind!=='video'||d.mime!=='video/mp4'||d.format!=='mp4'||d.preset!=='fia'||d.q!=='medium'||d.status!=='transformed'||d.videoCodec!=='h264'||d.audioCodec!=='aac'||!positive(d.width)||!positive(d.height)||!Number.isFinite(d.duration)||d.duration<=0||!sha.test(d.encoderRevision)||!sha.test(d.serverContractSha256)||!d.recipeRevision||!/^video-v1\/[a-f0-9]{64}\.mp4$/.test(d.cacheKey)||!d.qualification?.evidenceUrl?.startsWith('https://')||!sha.test(d.qualification.evidenceSha256)||e.timing?.status!=='not-applicable'||Object.keys(e.timing).length!==1)throw Error('Unqualified video delivery.');
