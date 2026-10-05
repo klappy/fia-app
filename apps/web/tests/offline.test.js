@@ -19,7 +19,26 @@ test('failed update preserves last good copy; successful retry atomically activa
 test('hash mismatch cannot activate and eviction cannot be reported as saved',async()=>{const w=worker();const bad=manifest();bad.files[1].sha256='a'.repeat(64);w.manifest(bad);assert.equal((await w.message({type:'DOWNLOAD_START',selection:'all'})).ok,false);assert.equal((await w.message({type:'DOWNLOAD_STATUS'})).saved,false);w.manifest(manifest());await w.message({type:'DOWNLOAD_START',selection:'all'});const s=await w.message({type:'DOWNLOAD_STATUS'});w.stores.get(s.active.cache).delete('/audio.m4a');assert.equal((await w.message({type:'DOWNLOAD_STATUS'})).saved,false);});
 test('remove clears active and interrupted files',async()=>{const w=worker();await w.message({type:'DOWNLOAD_START',selection:'core'});w.manifest(manifest('r2'));w.fail('/video.mp4');await w.message({type:'DOWNLOAD_START',selection:'all'});await w.message({type:'DOWNLOAD_REMOVE'});const s=await w.message({type:'DOWNLOAD_STATUS'});assert.equal(s.saved,false);assert.equal(s.pending,null);assert.equal([...w.stores.keys()].some(k=>k.startsWith('fia-v3-pack-')),false);});
 test('eviction during an update cannot activate or discard the prior saved revision',async()=>{const w=worker();await w.message({type:'DOWNLOAD_START',selection:'all'});w.manifest(manifest('r2'));const result=await w.message({type:'DOWNLOAD_START',selection:'all'},p=>{if(p.count===2)w.stores.get('fia-v3-pack-r2-all').delete('/index.html');});assert.equal(result.ok,false);assert.equal((await w.message({type:'DOWNLOAD_STATUS'})).active.revision,'r1');assert.equal((await w.message({type:'DOWNLOAD_STATUS'})).saved,true);});
-test('navigation stays on the installed app instead of mixing network HTML with old media',async()=>{const w=worker();await w.message({type:'DOWNLOAD_START',selection:'all'});const response=await w.fetch({url:'https://fia.test/',method:'GET',mode:'navigate'});assert.equal(await response.text(),'app');assert.equal(w.calls.includes('https://fia.test/'),false);});
+test('online navigation upgrades shell without discarding saved content',async()=>{
+ const w=worker();await w.message({type:'DOWNLOAD_START',selection:'all'});const before=await w.message({type:'DOWNLOAD_STATUS'});
+ const html='<meta name="application-name" content="FIA Guide"><div id="app"></div><script type="module" src="/assets/new.js"></script>';
+ w.reply('/',new Response(html,{headers:{'Content-Type':'text/html'}}));
+ const response=await w.fetch({url:'https://fia.test/',method:'GET',mode:'navigate'},{resultingClientId:'new'});
+ assert.equal(await response.text(),html);assert.equal(w.calls.includes('https://fia.test/'),true);
+ assert.equal((await w.message({type:'DOWNLOAD_STATUS'})).active.cache,before.active.cache);
+ w.stores.get(before.active.cache).set('/assets/new.js',new Response('old-conflict'));
+ w.reply('/assets/new.js',new Response('new-code'));
+ await w.message({type:'PACK_SELECT',revision:before.active.manifest.presentationRevision},null,'new');
+ assert.equal(await(await w.fetch(new Request('https://fia.test/assets/new.js'),{clientId:'new'})).text(),'new-code');
+ assert.equal((await w.message({type:'DOWNLOAD_STATUS'})).saved,true);
+});
+test('invalid navigation response falls back to coherent installed shell',async()=>{
+ for(const [status,type,body] of [[404,'text/html','missing'],[500,'text/html','error'],[200,'application/json','{}'],[200,'text/html','<html>maintenance</html>'],[200,'text/html','<!-- <meta name="application-name" content="FIA Guide"><div id="app"></div><script type="module" src="/assets/old.js"></script> -->Maintenance'],[200,'text/html','<div id="app"></div><script type="module" src="/assets/other.js"></script>'],[200,'text/html','<meta name="application-name" content="FIA Guide"><div id="app"></div><script type="module" src="https://other.test/assets/app.js"></script>']]){
+  const w=worker();await w.message({type:'DOWNLOAD_START',selection:'all'});w.reply('/',new Response(body,{status,headers:{'Content-Type':type}}));
+  assert.equal(await(await w.fetch({url:'https://fia.test/',method:'GET',mode:'navigate'},{resultingClientId:'fallback'})).text(),'app');
+  assert.equal((await w.stores.get('fia-v3-download-metadata@1').get('/client-fallback').json()).revision,'r1');
+ }
+});
 
 test('repeated saves do not move an unchanged open page to another content revision',async()=>{const w=worker();await w.message({type:'DOWNLOAD_START',selection:'all'});w.manifest(manifest('r2'));await w.message({type:'DOWNLOAD_START',selection:'all'},null,'page-a');w.manifest(manifest('r3'));await w.message({type:'DOWNLOAD_START',selection:'all'},null,'page-a');const pin=await w.stores.get('fia-v3-download-metadata@1').get('/client-page-a').clone().json();assert.equal(pin.revision,'r1');assert.equal((await w.message({type:'DOWNLOAD_STATUS'})).active.revision,'r3');});
 
@@ -64,7 +83,7 @@ test('online-only network failure never falls back to installed or shell-only HT
 test('root, sessions and near-prefix routes retain installed revision and new-client pin',async()=>{
  const w=worker();await w.message({type:'DOWNLOAD_START',selection:'core'});
  for(const [i,path]of ['/','/session/continuation','/v10/example','/mcp-other','/docs-extra','/content/sources','/build-status-extra'].entries()){
-  const id='page-'+i,response=await w.fetch({url:'https://fia.test'+path,method:'GET',mode:'navigate'},{resultingClientId:id});
+  w.fail(path);const id='page-'+i,response=await w.fetch({url:'https://fia.test'+path,method:'GET',mode:'navigate'},{resultingClientId:id});
   assert.equal(await response.text(),'app',path);
   const pin=await w.stores.get('fia-v3-download-metadata@1').get('/client-'+id).clone().json();assert.equal(pin.revision,'r1');
  }
