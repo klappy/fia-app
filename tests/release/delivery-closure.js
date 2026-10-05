@@ -7,8 +7,14 @@ export function verifyManifestFile(file,raw,sidecar,revision){
  if(!file.deliveryURL){assert.equal(raw.length,file.bytes);assert.equal(hash(raw),file.sha256);return;}
  assert.ok(sidecar,'Missing reviewed delivery sidecar');
  const entry=sidecar.entries.find(e=>e.path===file.path);assert.ok(entry,'Unreviewed derivative path');
+ if(file.variants){
+  assert.equal(sidecar.schema,3);assert.equal(file.defaultSize,entry.defaultSize);assert.deepEqual(Object.keys(file.variants).sort(),Object.keys(entry.variants).sort());
+  const {variants,defaultSize,...base}=entry;
+  for(const [size,variant] of Object.entries(file.variants))verifyManifestFile(variant,raw,{...sidecar,entries:[{...base,...entry.variants[size]}]},revision);
+ }
+
  if(entry.logicalSource){
-  assert.equal(sidecar.schema,2);assert.equal(file.group,'video');
+  assert.ok([2,3].includes(sidecar.schema));assert.equal(file.group,'video');
   assert.equal(raw.length,entry.logicalSource.bytes);assert.equal(hash(raw),entry.logicalSource.sha256);
   assert.equal(file.logicalSourceBytes,entry.logicalSource.bytes);assert.equal(file.logicalSourceSha256,entry.logicalSource.sha256);
   assert.equal(file.sourceBytes,entry.source.bytes);

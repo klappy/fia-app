@@ -18,3 +18,9 @@ test('v2 replacement binds bundled, published and derivative identities separate
  assert.throws(()=>verifyManifestFile(f,Buffer.from('corrupt'),{schema:2,entries:[e]},revision));
  assert.throws(()=>verifyManifestFile(f,raw,{schema:1,entries:[e]},revision));
 });
+test('schema3 release closure binds each variant independently',()=>{
+ const low={delivery:{...entry.delivery,sha256:'1'.repeat(64),bytes:7,url:entry.delivery.url.replace('q=medium','q=low')},timing:entry.timing};
+ const e={...entry,defaultSize:'medium',variants:{medium:{delivery:entry.delivery,timing:entry.timing},small:low}};
+ const f={...file,defaultSize:'medium',variants:{medium:file,small:{...file,sha256:low.delivery.sha256,bytes:7,deliveryURL:low.delivery.url}}};
+ verifyManifestFile(f,raw,{schema:3,entries:[e]},revision);const bad=structuredClone(f);bad.variants.small.sha256=file.sha256;assert.throws(()=>verifyManifestFile(bad,raw,{schema:3,entries:[e]},revision));delete bad.variants.small;assert.throws(()=>verifyManifestFile(bad,raw,{schema:3,entries:[e]},revision));
+});
