@@ -195,7 +195,7 @@
   ],
   "blockers": [
     "Docker executable unavailable (exit 127); no image built",
-    "Exact base image and final image digest not acquired",
+    "Base image manifest pinned; layers not acquired and final image not built",
     "Python patch version, runtime compatibility, enforceable process limits and independent image review remain unqualified"
   ]
 }

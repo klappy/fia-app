@@ -11,7 +11,7 @@ import {verifyInputs} from './deploy/hosted-asr/verify.mjs';
 console.log(await verifyInputs('/absolute/path/to/work/hosted-asr-build'));
 ```
 
-Docker is absent on the acquisition host (`docker: command not found`, exit 127). There is no built image, exact base image digest, actual Python patch-version receipt or demonstrated Linux resource enforcement. `lock.template.json` deliberately fails verification. This is an actual missing-runtime blocker, not a claim that acquisition was prohibited.
+Docker is absent on the acquisition host (`docker: command not found`, exit 127). The base registry manifest is now pinned; there is no built image, acquired base layer set, actual Python patch-version receipt or demonstrated Linux resource enforcement. `lock.template.json` deliberately fails verification. This is an actual missing-runtime blocker, not a claim that acquisition was prohibited.
 
 The next build must use an independently reviewed immutable Linux/amd64 base image, install only the retained hash-locked wheels with network disabled, copy the verified model and recognizer, preserve notices, and measure the real Python/runtime versions. Its image must run nonroot with read-only model files, enforce a 4 GiB process budget and 256 MiB scratch budget, and use CPU/int8 with two threads. The recognizer, private Worker entrypoint, runtime manifest and measured limit receipt must all be retained by hash. The current local reference recognizer has different limits/thread settings and cannot be relabeled as this runtime.
 
