@@ -1,18 +1,19 @@
+import {audioPolicy,fixtureBytes,fixtureProvider,requestBinding} from '../../server/fia/audio/policy.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,readFile,writeFile,rm,mkdir} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {spawn} from 'node:child_process';
-import {canonical,sha256,requestBinding} from '../../server/core/jobs/codec.mjs';
-import {JobStore,fixtureBytes} from '../../server/core/jobs/store.mjs';
+import {canonical,sha256} from '../../server/core/jobs/codec.mjs';
+import {JobStore} from '../../server/core/jobs/store.mjs';
 import {localFixtureCapability} from '../../server/core/budget/fixture.mjs';
 import {audioPlan} from '../../server/fia/audio/plan.mjs';
 import {request} from './fixture.mjs';
 const childFile=new URL('./child.mjs',import.meta.url);
 async function setup(t) {
   const directory=await mkdtemp(join(tmpdir(),'fia-j-'));t.after(()=>rm(directory,{recursive:true,force:true}));
-  return {directory,store:new JobStore(directory,{operator:'test',capability:localFixtureCapability('test')})};
+  return {directory,store:new JobStore(directory,{operator:'test',capability:localFixtureCapability('test'),policy:audioPolicy})};
 }
 function child(directory,id,mode) {return run([childFile.pathname,directory,id,mode]);}
 function run(arguments_) {
@@ -107,7 +108,7 @@ test('corrupt snapshots and completed artifacts fail closed',async t=>{
 });
 
 test('actual local CLI creates, executes, reads and plans one fixture',async t=>{
-  const {directory}=await setup(t), cli=new URL('../../server/core/jobs/cli.mjs',import.meta.url).pathname;
+  const {directory}=await setup(t), cli=new URL('../../server/fia/audio/cli.mjs',import.meta.url).pathname;
   const input=join(directory,'request.json');await writeFile(input,JSON.stringify(request()));
   const enqueued=await run([cli,'enqueue',directory,'test','cli-key',input]);assert.equal(enqueued.code,0,enqueued.stderr);
   const id=JSON.parse(enqueued.stdout).id;
@@ -122,4 +123,22 @@ test('extra snapshot aliases and undeclared records fail closed',async t=>{
   for(const mutate of [state=>state.extra=true,state=>state.jobs[job.id].extra=true,state=>state.requests['a'.repeat(64)]=job.id,state=>state.jobs[job.id].attempt='invented',state=>state.jobs[job.id].reservation.monetaryCap='1']) {
     const state=structuredClone(original);mutate(state);await writeFile(path,JSON.stringify(state));await assert.rejects(store.status(job.id),/corrupt/);
   }
+});
+test('same opaque core accepts a nonaudio policy and refuses changed policy on reopen',async t=>{
+  const {directory}=await setup(t);
+  const policy={id:'document-fixture@1',outputMetadata:{type:'document-fixture'},validateRequest(payload){assert.deepEqual(Object.keys(payload),['document']);return {type:'document'};},validateOutput(payload,bytes,metadata){return metadata.type==='document-fixture'&&bytes.equals(Buffer.from(payload.document));},provider:async payload=>({kind:'output',bytes:Buffer.from(payload.document)})};
+  const options={operator:'test',capability:localFixtureCapability('test'),policy};
+  const store=new JobStore(directory,options), job=await store.enqueue('document',{document:'Fixture document'});
+  policy.id='caller-mutated';policy.validateRequest=()=>{throw Error('caller mutation');};
+  assert.equal((await store.execute(job.id)).state,'completed');
+  const reopen=new JobStore(directory,{...options,policy:{...policy,id:'document-fixture@1',validateRequest(){return {type:'document'};}}});
+  assert.equal((await reopen.status(job.id)).state,'completed');
+  const changed=new JobStore(directory,{...options,policy:{...policy,id:'document-fixture@2'}});
+  await assert.rejects(changed.status(job.id),/policy-mismatch/);
+  await assert.rejects(audioPlan(reopen,[job.id]),/audio-policy-required/);
+});
+test('async output validation cannot pass as a truthy Promise',async t=>{
+  const {directory}=await setup(t);
+  const store=new JobStore(directory,{operator:'test',capability:localFixtureCapability('test'),policy:{...audioPolicy,validateOutput:async()=>true}});
+  const job=await store.enqueue('promise',request());assert.equal((await store.execute(job.id)).state,'uncertain');
 });

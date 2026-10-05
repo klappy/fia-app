@@ -4,8 +4,9 @@ export async function audioPlan(store, jobIds) {
   const entries=[];
   for(const id of jobIds) {
     const job=await store.status(id);
+    if(job.policyId!=='fia-audio-fixture-policy@1')throw Error('audio-policy-required');
     if(job.state!=='completed')throw Error('audio-unavailable');
-    entries.push({jobId:id,portion:job.request.portion,source:job.request.source,language:job.request.language,effectiveTextSha256:job.request.effectiveTextSha256,generationConfigSha256:job.generationConfigSha256,output:job.output,provenance:'synthetic-fixture',attribution:'Local fixture; not a recording',completion:'confirm'});
+    entries.push({jobId:id,portion:job.request.portion,source:job.request.source,language:job.request.language,effectiveTextSha256:job.request.effectiveTextSha256,generationConfigSha256:job.metadata.generationConfigSha256,output:job.output,provenance:'synthetic-fixture',attribution:'Local fixture; not a recording',completion:'confirm'});
   }
   const plan={schema:'fia-fixture-audio-plan@1',evidenceClass:'synthetic-fixture',playable:false,entries};
   // Canonical JSON's restricted number policy is explicit for byte counts.

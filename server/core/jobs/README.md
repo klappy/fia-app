@@ -1,5 +1,7 @@
 # Local fixture preparation
 
+Boundary correction: accepted cookbook `9b5e9fb3afc533c7bd21d79be98b75f8dc664b32`. Generic core stores opaque canonical payload and metadata under one injected trusted policy identity. FIA request validation, provider, output semantics and CLI composition live in `server/fia/audio`. Reopening with a different policy fails closed. Old experimental snapshots lacking policy identity are rejected rather than silently migrated. The existing request cookbook pin remains compatible; the boundary amendment changes implementation layering, not the audio payload contract.
+
 Recipe: cookbook merged revision `254864c8f02e31ac6da422146e16ffed231d9e8d`, `product/guidance/bounded-audio-job-proof-v1.md` (reviewed candidate `48565d846d0d0ef4e577100f0eaf6bda743da52c`).
 
 This is a zero-cost local fixture CLI, not a hosted operator API, speech generator or playable audio publisher. The operating-system account is trusted; operator text is audit metadata. Programmatic capabilities are supplied by trusted local callers, not accepted as proof of remote identity. The injected provider/fault hooks are trusted test code, not a network sandbox. The built-in provider returns deterministic JSON fixture bytes and makes no external calls.
@@ -7,10 +9,10 @@ This is a zero-cost local fixture CLI, not a hosted operator API, speech generat
 From repository root, save a fixture request matching `tests/jobs/fixture.mjs` as JSON, then run:
 
 ```sh
-node server/core/jobs/cli.mjs enqueue /absolute/local/store operator request-key /absolute/request.json
-node server/core/jobs/cli.mjs execute /absolute/local/store operator JOB_ID
-node server/core/jobs/cli.mjs status /absolute/local/store operator JOB_ID
-node server/core/jobs/cli.mjs plan /absolute/local/store operator JOB_ID
+node server/fia/audio/cli.mjs enqueue /absolute/local/store operator request-key /absolute/request.json
+node server/fia/audio/cli.mjs execute /absolute/local/store operator JOB_ID
+node server/fia/audio/cli.mjs status /absolute/local/store operator JOB_ID
+node server/fia/audio/cli.mjs plan /absolute/local/store operator JOB_ID
 node --test tests/jobs/*.test.js
 ```
 

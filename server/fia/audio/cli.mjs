@@ -1,13 +1,14 @@
+import {audioPolicy} from './policy.mjs';
 import {readFile} from 'node:fs/promises';
-import {JobStore} from './store.mjs';
-import {localFixtureCapability} from '../budget/fixture.mjs';
-import {audioPlan} from '../../fia/audio/plan.mjs';
+import {JobStore} from '../../core/jobs/store.mjs';
+import {localFixtureCapability} from '../../core/budget/fixture.mjs';
+import {audioPlan} from './plan.mjs';
 
 // The OS account running this local command is the authority. --operator is audit metadata.
 const [command,directory,operator,...args]=process.argv.slice(2);
 try {
   if(!command||!directory||!operator)throw Error('usage: cli.mjs <enqueue|execute|status|reconcile|plan|recover-lock> <store-dir> <operator> [arguments]');
-  const store=new JobStore(directory,{operator,capability:localFixtureCapability(operator)});
+  const store=new JobStore(directory,{operator,capability:localFixtureCapability(operator),policy:audioPolicy});
   let result;
   if(command==='enqueue')result=await store.enqueue(args[0],JSON.parse(await readFile(args[1],'utf8')));
   else if(command==='execute')result=await store.execute(args[0]);

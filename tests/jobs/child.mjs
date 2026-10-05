@@ -1,8 +1,9 @@
+import {audioPolicy,fixtureBytes,fixtureProvider,requestBinding} from '../../server/fia/audio/policy.mjs';
 import {appendFile,writeFile} from 'node:fs/promises';
-import {JobStore,fixtureProvider} from '../../server/core/jobs/store.mjs';
+import {JobStore} from '../../server/core/jobs/store.mjs';
 import {localFixtureCapability} from '../../server/core/budget/fixture.mjs';
 const [directory,id,mode]=process.argv.slice(2);
-const store=new JobStore(directory,{operator:'test',capability:localFixtureCapability('test'),fault:async phase=>{
+const store=new JobStore(directory,{operator:'test',capability:localFixtureCapability('test'),policy:audioPolicy,fault:async phase=>{
   if((mode==='crash-preparing'&&phase==='after-preparing')||(mode==='crash-output'&&phase==='after-output'))process.exit(77);
 }});
 try {
