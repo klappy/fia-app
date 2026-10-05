@@ -23,7 +23,7 @@ it('shows actual mixed offline sizes without claiming unavailable presets or dow
 });
 it('one preset sets all included sizes and a custom change sends the exact tuple only on Download',async()=>{
  localStorage.removeItem('fia-download-media-sizes');const levels=['small','medium','large'];
- const files=[{path:'/index.html',group:'core',bytes:10},...['audio','image','video'].map((group,g)=>({path:'/'+group,group,bytes:5,deliveryURL:`https://transcode.klappy.dev/${group}/q=medium/f`,variants:Object.fromEntries(levels.map((size,i)=>[size,{path:'/'+group,group,bytes:10*g+i+1}])) ,defaultSize:'medium'}))];
+ const files=[{path:'/index.html',group:'core',bytes:10},...['audio','image','video'].map((group,g)=>({path:'/'+group,group,bytes:5,deliveryURL:`https://transcode.klappy.dev/${group}/q=medium/f`,variants:Object.fromEntries(levels.map((size,i)=>[size,{path:'/'+group,group,bytes:10*g+i+1,...(group==='video'?{deliveryURL:`https://transcode.klappy.dev/video/preset=fia,q=medium,f=mp4,size=${{small:'xsmall',medium:'medium',large:'xlarge'}[size]}/https://source.test/video.mp4`}:{})}])) ,defaultSize:'medium'}))];
  libraryAdapter.downloadStatus.mockResolvedValue({...available,manifest:{revision:'fixture',files}});const download=vi.spyOn(libraryAdapter,'download').mockResolvedValue({saved:true});render(LibraryPanel,{view:'downloads'});await settle();
  await fireEvent.click(screen.getByRole('radio',{name:/Text and all available resources/}));await fireEvent.click(screen.getByRole('radio',{name:'Small',exact:true}));expect(screen.getByRole('combobox',{name:'Video download size'}).value).toBe('small');
  await fireEvent.change(screen.getByRole('combobox',{name:'Audio download size'}),{target:{value:'large'}});expect(screen.getByText(/Custom sizes/)).toBeTruthy();expect(download).not.toHaveBeenCalled();
@@ -41,4 +41,19 @@ it('labels the saved tuple independently of current size preferences and omits s
 it('requests a source-bound missing quality with unknown total only after Download',async()=>{
  localStorage.removeItem('fia-download-media-sizes');const f={path:'/map.webp',group:'image',bytes:100,sha256:'a'.repeat(64),sourceSha256:'b'.repeat(64),sourceBytes:1000,mime:'image/webp',defaultSize:'medium',deliveryURL:'https://transcode.klappy.dev/image/q=medium,f=webp/https://source.test/map.jpg'};f.variants={medium:{...f}};
  libraryAdapter.downloadStatus.mockResolvedValue({...available,manifest:{revision:'dynamic',files:[f]}});const download=vi.spyOn(libraryAdapter,'download').mockResolvedValue({saved:true});render(LibraryPanel,{view:'downloads'});await settle();await fireEvent.click(screen.getByRole('radio',{name:/Text and all available resources/}));await fireEvent.click(screen.getByRole('radio',{name:'Small',exact:true}));expect(screen.getByText('Size determined during download.')).toBeTruthy();expect(download).not.toHaveBeenCalled();await fireEvent.click(screen.getByRole('button',{name:'Download selection',exact:true}));expect(download.mock.calls[0][3]).toEqual({image:'small'});
+});
+
+it('untouched qualified legacy video is Prepared version; explicit Large remains a separate912 request',async()=>{
+ localStorage.removeItem('fia-download-media-sizes');
+ const file={path:'/v.mp4',group:'video',bytes:3,sha256:'a'.repeat(64),sourceSha256:'b'.repeat(64),sourceBytes:5,mime:'video/mp4',deliveryURL:'https://transcode.klappy.dev/video/preset=fia,q=medium,f=mp4/https://source.test/720p.mp4',timing:{status:'not-applicable'}};
+ const manifest={revision:'qualified',files:[{path:'/index.html',group:'core',bytes:10},{...file,defaultSize:'large',variants:{large:file}}]};
+ libraryAdapter.downloadStatus.mockResolvedValue({...available,manifest});const download=vi.spyOn(libraryAdapter,'download').mockResolvedValue({saved:true});render(LibraryPanel,{view:'downloads'});await settle();await fireEvent.click(screen.getByRole('radio',{name:/Text and all available resources/}));
+ expect(screen.getByRole('combobox',{name:'Video download size'}).value).toBe('prepared');expect(screen.getByRole('option',{name:'Prepared version'}).selected).toBe(true);expect(screen.getByRole('option',{name:'Large · 912p'}).selected).toBe(false);
+ await fireEvent.click(screen.getByRole('button',{name:'Download selection',exact:true}));expect(download.mock.calls[0][3]).toEqual({video:'prepared'});await settle();
+ await fireEvent.change(screen.getByRole('combobox',{name:'Video download size'}),{target:{value:'large'}});await fireEvent.click(screen.getByRole('button',{name:'Download selection',exact:true}));expect(download.mock.calls[1][3]).toEqual({video:'large'});
+});
+it('prepared default selection can resume without silently restoring an explicitphone size',async()=>{
+ localStorage.removeItem('fia-download-media-sizes');const file={path:'/v.mp4',group:'video',bytes:3,sha256:'a'.repeat(64),sourceSha256:'b'.repeat(64),sourceBytes:5,mime:'video/mp4',deliveryURL:'https://transcode.klappy.dev/video/preset=fia,q=medium,f=mp4/https://source.test/720p.mp4'};
+ const manifest={revision:'qualified',files:[file]};libraryAdapter.downloadStatus.mockResolvedValue({...available,manifest,pending:{selection:'all',received:1,bytes:3,running:false,manifest:{mediaSizes:{video:'prepared'}}}});
+ const download=vi.spyOn(libraryAdapter,'download').mockResolvedValue({saved:true});render(LibraryPanel,{view:'downloads'});await settle();await fireEvent.click(screen.getByRole('radio',{name:/Text and all available resources/}));await fireEvent.click(screen.getByRole('button',{name:'Resume download'}));expect(download.mock.calls[0][3]).toEqual({video:'prepared'});
 });

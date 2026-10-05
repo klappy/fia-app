@@ -54,10 +54,15 @@ export async function fetchProxyRequest(request,{fetchImpl=globalThis.fetch,sign
 
 /** Request planning has unknown totals until missing outputs have been received. */
 export function planProxyDownload(manifest,selection,sizes={}){
- if(!['core','audio','all'].includes(selection)||Object.keys(sizes).some(k=>!['audio','image','video'].includes(k))||Object.values(sizes).some(s=>!quality[s]))throw Error('Invalid download selection.');
+ if(!['core','audio','all'].includes(selection)||Object.keys(sizes).some(k=>!['audio','image','video'].includes(k))||Object.values(sizes).some(s=>s!=='prepared'&&!quality[s]))throw Error('Invalid download selection.');
  const selectedSizes={};const files=manifest.files.map(file=>{
   if(file.group==='core'||selection==='core'||selection==='audio'&&file.group!=='audio')return file;
-  const size=sizes[file.group]||file.defaultSize;if(!file.deliveryURL||!size)return file;
+  const size=sizes[file.group]||(file.group==='video'?'prepared':file.defaultSize);if(!file.deliveryURL||!size)return file;
+  if(size==='prepared'){
+   // An untouched qualified default is a distinct choice, not a phone-size claim.
+   const {format}=parse(file);if(!SHA.test(file.sha256)||!Number.isSafeInteger(file.bytes)||file.bytes<=0||!mimeFor[format].includes(file.mime))throw Error('The prepared output identity is unavailable.');
+   selectedSizes[file.group]='prepared';return {...file,selectedSize:'prepared'};
+  }
   if(!file.sourceBytes){const declared=file.variants?.[size]||(!file.variants?file:null);if(declared?.deliveryURL&&file.group!=='video'&&declared.deliveryURL.includes(`q=${quality[size]},`)){selectedSizes[file.group]=size;return {...declared,selectedSize:size};}throw Error('Source metadata is required for this request.');}
   const request=createProxyRequest(file,size);selectedSizes[file.group]=size;
   const declared=[file,...Object.values(file.variants||{})].find(v=>v.deliveryURL===request.proxyUrl&&v.sha256===request.expected?.sha256);

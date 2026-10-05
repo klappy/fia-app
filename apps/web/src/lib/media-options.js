@@ -1,4 +1,8 @@
-const labels={small:'Small',medium:'Medium',large:'Large'};
+function declaredPhoneVideoSize(file,size){
+ const options=/^https:\/\/transcode\.klappy\.dev\/video\/([^/]+)\/https:\/\//.exec(file?.deliveryURL||'')?.[1]?.split(',');
+ return !!options?.includes(`size=${{small:'xsmall',medium:'medium',large:'xlarge'}[size]}`);
+}
+const labels={small:'Small',medium:'Medium',large:'Large',prepared:'Prepared version'};
 export function preparedDownloadSizes(manifest,selection){
  const included=selection==='all'?['image','audio','video']:selection==='audio'?['audio']:[];
  const groups={};for(const group of ['image','audio','video']){
@@ -7,9 +11,10 @@ export function preparedDownloadSizes(manifest,selection){
    if(group==='video')return /(?:,|\/)size=small(?:,|\/)/.test(f.deliveryURL)?'small':/(?:,|\/)size=medium(?:,|\/)/.test(f.deliveryURL)?'medium':'large';
    const q=f.deliveryURL.match(/(?:,|\/)q=(low|medium|high)(?:,|\/)/)?.[1];return {low:'small',medium:'medium',high:'large'}[q]||null;
   }));
-  const available=['small','medium','large'].filter(size=>files.length&&files.every(f=>f.variants?!!f.variants[size]:sizes.size===1&&sizes.has(size)));
+  const available=['small','medium','large'].filter(size=>files.length&&files.every(f=>{const selected=f.variants?.[size]||f;if(group==='video')return declaredPhoneVideoSize(selected,size);return f.variants?!!f.variants[size]:sizes.size===1&&sizes.has(size);}));
   const requestable=files.length>0&&files.every(f=>f.deliveryURL&&f.sourceSha256&&Number.isSafeInteger(f.sourceBytes)&&f.sourceBytes>0);
-  groups[group]={requestable,included:included.includes(group),count:files.length,available,size:files.length&&sizes.size===1?[...sizes][0]:null};
+  const prepared=files.length>0&&files.every(f=>f.deliveryURL&&/^[a-f0-9]{64}$/.test(f.sha256)&&Number.isSafeInteger(f.bytes)&&f.bytes>0&&f.sourceSha256&&Number.isSafeInteger(f.sourceBytes)&&f.sourceBytes>0);
+  groups[group]={requestable,prepared,included:included.includes(group),count:files.length,available,size:files.length&&sizes.size===1?[...sizes][0]:null};
  }
  const active=Object.values(groups).filter(g=>g.included&&g.count),sizes=new Set(active.map(g=>g.size));
  return {groups,preset:active.length&&sizes.size===1&&[...sizes][0]?[...sizes][0]:'custom',labels};
