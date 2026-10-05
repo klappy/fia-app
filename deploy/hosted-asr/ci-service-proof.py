@@ -15,7 +15,12 @@ private = Path('work/asr-private')
 proof = Path('work/asr-proof')
 private.mkdir(parents=True, exist_ok=False)
 proof.mkdir(parents=True, exist_ok=True)
-with urllib.request.urlopen(URL, timeout=30) as response:
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, *args, **kwargs):
+        raise RuntimeError('source-redirect-refused')
+with urllib.request.build_opener(NoRedirect).open(URL, timeout=30) as response:
+    if response.status != 200 or response.headers.get_content_type() != 'audio/mpeg':
+        raise RuntimeError('source-response-refused')
     source = response.read(SOURCE_BYTES + 1)
 if len(source) != SOURCE_BYTES or hashlib.sha256(source).hexdigest() != SOURCE_SHA:
     raise RuntimeError('official-source-byte-mismatch')
