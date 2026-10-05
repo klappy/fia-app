@@ -6,6 +6,14 @@ import {readBounded} from '../service.mjs';
 const CONFIG_KEY='hosted:integration-config';
 const sourceURL='https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p2/s1/v2/vbr0.mp3';
 const copy=x=>structuredClone(x);
+const readinessHashes=['modelSha256','runtimeSha256','scriptSha256','configSha256'];
+const guardFields=['schema','addressSpaceBytes','scratchPolicy','scratchBytes','landlockAbi','anonymousFilesDenied'];
+const exactKeys=(value,keys)=>value&&Object.getPrototypeOf(value)===Object.prototype&&Object.keys(value).length===keys.length&&keys.every(key=>Object.hasOwn(value,key));
+function sanitizedReadiness(body,identity){
+ if(body?.schema!=='fia-asr-ready@1'||body.guards?.schema!=='fia-image-guards@1'||body.guards.addressSpaceBytes!==4294967296||body.guards.scratchPolicy!=='landlock-no-filesystem-writes'||body.guards.scratchBytes!==0||!Number.isSafeInteger(body.guards.landlockAbi)||body.guards.landlockAbi<3||body.guards.anonymousFilesDenied!==true||readinessHashes.some(key=>body[key]!==identity[key]))throw Error('ready-identity-mismatch');
+ return {identity:Object.fromEntries(readinessHashes.map(key=>[key,body[key]])),guards:Object.fromEntries(guardFields.map(key=>[key,body.guards[key]]))};
+}
+
 async function bounded(operation,milliseconds,label){let timer;try{return await Promise.race([Promise.resolve().then(operation),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error(label)),Math.max(1,milliseconds));})]);}finally{clearTimeout(timer);}}
 export function createCloudflarePilot({ctx,env,loadActivation,now=Date.now,readRetainedSource=readSource}){
  const storage=ctx.storage,container=ctx.container,bucket=env.FIA_ORIGINALS;
@@ -25,7 +33,16 @@ export function createCloudflarePilot({ctx,env,loadActivation,now=Date.now,readR
  async function stop(){if(!container)return false;try{return await bounded(async()=>{await container.destroy();return await container.inspect()===null&&container.running===false;},25000,'container-stop-timeout');}catch{return false;}}
  async function artifactBytes(artifact){if(!bucket)throw Error('artifact-bucket-unavailable');const object=await bucket.get(artifact.reference);if(!object)throw Error('artifact-missing');return readBounded(new Response(object.body),1048576);}
  function service(config,lane){
-  async function fenced(attempt,action,phase){return storage.transaction(async tx=>{if(phase)await tx.put(`hosted:phase:${lane}`,{nodeKey:attempt.nodeKey,attemptId:attempt.attemptId,revision:attempt.revision,phase,at:now()});const row=await tx.get(`hosted:${lane}:${attempt.nodeKey}`);if(!row||row.attemptId!==attempt.attemptId||row.revision!==attempt.revision||row.state!=='preparing'||row.interrupted===true||now()>=row.deadline)throw Error('execution-fence');/* No await between this final durable check and starting the side effect. */return {value:action()};});}
+  async function fenced(attempt,action,phase,readiness){return storage.transaction(async tx=>{
+   const key=`hosted:${lane}:${attempt.nodeKey}`;
+   const assertLive=row=>{if(!row||row.attemptId!==attempt.attemptId||row.revision!==attempt.revision||row.state!=='preparing'||row.interrupted===true||now()>=row.deadline)throw Error('execution-fence');};
+   assertLive(await tx.get(key));
+   if(phase)await tx.put(`hosted:phase:${lane}`,{nodeKey:attempt.nodeKey,attemptId:attempt.attemptId,revision:attempt.revision,phase,at:now()});
+   if(readiness){const prior=await tx.get(`hosted:readiness:${lane}`);if(prior&&canonicalJSONString(prior)!==canonicalJSONString(readiness))throw Error('readiness-receipt-conflict');await tx.put(`hosted:readiness:${lane}`,readiness);}
+   assertLive(await tx.get(key));
+   /* No await between this final durable check and starting the side effect. */return {value:action()};
+  });}
+
 
   const executor={limitsEnforced:config.enabled===true&&!!container&&!!bucket,start:async attempt=>{
    const bytes=await bounded(()=>readRetainedSource(bucket,{url:sourceURL,sha256:config.identity.sourceSha256,bytes:config.identity.sourceBytes}),Math.min(10000,attempt.deadline-now()),'retained-source-timeout');if(!bytes)throw Error('retained-source-missing');
@@ -36,14 +53,16 @@ export function createCloudflarePilot({ctx,env,loadActivation,now=Date.now,readR
    ctx.waitUntil?.(container.monitor().catch(()=>{}));
    await bounded(()=>container.setInactivityTimeout(30000),Math.min(5000,attempt.deadline-now()),'inactivity-timeout');
    const port=container.getTcpPort(8080),readyDeadline=Math.min(attempt.startedAt+60000,attempt.deadline);
-   let ready=false;
+   let ready=false,readyEvidence;
    while(now()<readyDeadline){
     await fenced(attempt,()=>undefined);
-    try{const response=await bounded(()=>port.fetch('http://container/ready',{signal:AbortSignal.timeout(Math.max(1,Math.min(1000,readyDeadline-now())))}),Math.min(1000,readyDeadline-now()),'ready-request-timeout');if(response.status===200){const body=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(await bounded(()=>readBounded(response,16384),Math.max(1,readyDeadline-now()),'ready-body-timeout')));if(body.schema!=='fia-asr-ready@1'||body.guards?.schema!=='fia-image-guards@1'||body.guards.addressSpaceBytes!==4294967296||body.guards.scratchPolicy!=='landlock-no-filesystem-writes'||body.guards.scratchBytes!==0||!Number.isSafeInteger(body.guards.landlockAbi)||body.guards.landlockAbi<3||body.guards.anonymousFilesDenied!==true||['modelSha256','runtimeSha256','scriptSha256','configSha256'].some(k=>body[k]!==config.identity[k]))throw Error('ready-identity-mismatch');ready=true;break;}}catch(error){if(error.message==='ready-identity-mismatch')throw error;}
+    try{const response=await bounded(()=>port.fetch('http://container/ready',{signal:AbortSignal.timeout(Math.max(1,Math.min(1000,readyDeadline-now())))}),Math.min(1000,readyDeadline-now()),'ready-request-timeout');if(response.status===200){const body=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(await bounded(()=>readBounded(response,16384),Math.max(1,readyDeadline-now()),'ready-body-timeout')));readyEvidence=sanitizedReadiness(body,config.identity);ready=true;break;}}catch(error){if(error.message==='ready-identity-mismatch')throw error;}
     await new Promise(resolve=>setTimeout(resolve,Math.min(100,Math.max(1,readyDeadline-now()))));
    }
    if(!ready)throw Error('readiness-expired');
-   await fenced(attempt,()=>undefined,'ready');
+   const readinessReceipt={schema:'fia-hosted-readiness-receipt@1',status:'response-verified',evidenceClass:'container-readiness-report',ledger:lane,nodeKey:attempt.nodeKey,attemptId:attempt.attemptId,revision:attempt.revision,phase:'ready',observedAt:now(),...readyEvidence};
+   const readiness={sha256:await sha256(canonicalJSONString(readinessReceipt)),receipt:readinessReceipt};
+   await fenced(attempt,()=>undefined,'ready',readiness);
    if(lane==='B'&&await storage.get('hosted:controlled-B')===true){
     await fenced(attempt,()=>undefined,'ready-for-interruption');
     while(now()<attempt.deadline){await new Promise(resolve=>setTimeout(resolve,100));await fenced(attempt,()=>undefined);}
@@ -63,7 +82,17 @@ export function createCloudflarePilot({ctx,env,loadActivation,now=Date.now,readR
  async function run(lane){assertSingleton();const config=await configuration(),result=await service(config,lane).dispatch();if(result.stopVerified===true)await clearLane(lane);return result;}
  async function reconcile(lane,receipt){assertSingleton();const config=await configuration(),result=await service(config,lane).reconcile(receipt);if(result.stopVerified===true)await clearLane(lane);return result;}
  async function controlService(lane){assertSingleton();const config=await stored();if(!config)throw Error('operator-config-missing');return service({...config,enabled:false},lane);}
- async function status(lane){const row=await(await controlService(lane)).status();if(!row)return null;const phase=await storage.get(`hosted:phase:${lane}`);return {...row,phase:phase&&phase.attemptId===row.attemptId&&phase.revision===row.revision?phase.phase:null};}
+ async function readinessStatus(lane,row){
+  const saved=await storage.get(`hosted:readiness:${lane}`);if(!saved)return {readiness:null,readinessEvidence:'missing'};
+  try{
+   const receipt=saved.receipt;
+   if(!exactKeys(saved,['sha256','receipt'])||!exactKeys(receipt,['schema','status','evidenceClass','ledger','nodeKey','attemptId','revision','phase','observedAt','identity','guards'])||new TextEncoder().encode(canonicalJSONString(saved)).length>2048||receipt.schema!=='fia-hosted-readiness-receipt@1'||receipt.status!=='response-verified'||receipt.evidenceClass!=='container-readiness-report'||receipt.ledger!==lane||receipt.nodeKey!==row.nodeKey||receipt.attemptId!==row.attemptId||receipt.revision!==row.revision||receipt.phase!=='ready'||!Number.isSafeInteger(receipt.observedAt)||receipt.observedAt<row.startedAt||receipt.observedAt>row.deadline||!exactKeys(receipt.identity,readinessHashes)||!exactKeys(receipt.guards,guardFields)||await sha256(canonicalJSONString(receipt))!==saved.sha256)throw Error('invalid-readiness-receipt');
+   const config=await stored();sanitizedReadiness({schema:'fia-asr-ready@1',...receipt.identity,guards:receipt.guards},config.identity);
+   return {readiness:copy(saved),readinessEvidence:'response-verified'};
+  }catch{return {readiness:null,readinessEvidence:'invalid'};}
+ }
+ async function status(lane){const row=await(await controlService(lane)).status();if(!row)return null;const phase=await storage.get(`hosted:phase:${lane}`);return {...row,phase:phase&&phase.nodeKey===row.nodeKey&&phase.attemptId===row.attemptId&&phase.revision===row.revision?phase.phase:null,...await readinessStatus(lane,row)};}
+
  async function operatorStop(lane,request,controlled=false){
   const control=await controlService(lane);
   if(controlled){const phase=await storage.get('hosted:phase:B');if(!phase||phase.phase!=='ready-for-interruption'||phase.attemptId!==request?.attemptId||phase.revision!==request?.revision)throw Error('pilot-B-interruption-stage');}
