@@ -36,7 +36,7 @@ test('explicit all-resource download verifies real bytes, survives offline reloa
  await context.setOffline(false);await downloads();await page.getByRole('button',{name:'Remove from device',exact:true}).click();await page.getByRole('button',{name:'Remove download',exact:true}).click();await expect(page.getByText('Not saved on this device',{exact:true})).toBeVisible();expect((await saved(page)).index).toBe(index);
 });
 
-test('text-only download and restore issue no resource media requests',async({page,context})=>{
+test('text-only offline restore requests no missing media after current online visual autoload',async({page,context})=>{
  test.setTimeout(120000);const media=[];page.on('request',r=>{if((new URL(r.url()).origin==='https://transcode.klappy.dev'||/\.(mp3|m4a|wav|ogg|mp4|webm|jpe?g|png|webp)(?:$|\?)/.test(r.url()))&&!r.url().includes('/assets/fia-'))media.push(r.url());});
- await seedPassage(page,'S02-U005');await downloadSelected(page,'core');expect(media).toEqual([]);await context.setOffline(true);await page.reload();await expect(page.getByRole('navigation',{name:'Session controls'})).toBeVisible();expect(media).toEqual([]);await expect(page.getByRole('button',{name:'View image',exact:true})).toBeVisible();
+ await seedPassage(page,'S02-U005');await expect.poll(()=>page.locator('.visual-viewport img').first().evaluate(img=>img.complete&&img.naturalWidth>0)).toBeTruthy();await downloadSelected(page,'core');await context.setOffline(true);media.length=0;await page.reload();await expect(page.getByRole('navigation',{name:'Session controls'})).toBeVisible();await expect(page.getByText(/is not saved on this device\. Connect to the internet to view it\./)).toBeVisible();expect(media).toEqual([]);expect(await page.locator('video[src],audio[src]').count()).toBe(0);
 });
