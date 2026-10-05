@@ -29,3 +29,11 @@ it('one preset sets all included sizes and a custom change sends the exact tuple
  await fireEvent.change(screen.getByRole('combobox',{name:'Audio download size'}),{target:{value:'large'}});expect(screen.getByText(/Custom sizes/)).toBeTruthy();expect(download).not.toHaveBeenCalled();
  await fireEvent.click(screen.getByRole('button',{name:'Download selection',exact:true}));expect(download.mock.calls[0][3]).toEqual({image:'small',audio:'large',video:'small'});
 });
+
+it('labels the saved tuple independently of current size preferences and omits stale include totals',async()=>{
+ localStorage.setItem('fia-download-media-sizes',JSON.stringify({audio:'large',image:'large',video:'large'}));
+ const manifest={revision:'saved',mediaSizes:{audio:'small',image:'medium',video:'large'},files:[{group:'audio',deliveryURL:'https://transcode.klappy.dev/audio/q=low/f'},{group:'image',deliveryURL:'https://transcode.klappy.dev/image/q=medium/f'},{group:'video',deliveryURL:'https://transcode.klappy.dev/video/q=medium/f'}]};
+ libraryAdapter.downloadStatus.mockResolvedValue({...available,saved:true,active:{selection:'all',bytes:4096,manifest}});render(LibraryPanel,{view:'downloads'});await settle();
+ expect(screen.getByRole('status').textContent).toContain('Saved · Text and all available resources · Custom ·');
+ expect(screen.queryByText(/total$/)).toBeNull();localStorage.removeItem('fia-download-media-sizes');
+});

@@ -20,6 +20,7 @@
  function chooseSizes(next){mediaSizes={...mediaSizes,...next};localStorage.setItem('fia-download-media-sizes',JSON.stringify(mediaSizes));}
  function choosePreset(size){chooseSizes(Object.fromEntries(Object.keys(effectiveSizes).map(k=>[k,size])));}
 
+ let savedSizes=$derived.by(()=>{const active=download?.active;if(!active||active.selection==='core')return '';const prepared=preparedDownloadSizes(active.manifest,active.selection);const values=Object.entries(prepared.groups).filter(([,g])=>g.included&&g.count).map(([key,g])=>active.manifest?.mediaSizes?.[key]||g.size);if(!values.length||values.some(v=>!prepared.labels[v]))return 'Saved sizes unavailable';return new Set(values).size===1?prepared.labels[values[0]]:'Custom';});
  let alive=true;
  async function refresh(){
   loading=true;error='';
@@ -58,14 +59,14 @@
  {:else if view==='downloads'}
   <article class="pack-card"><span class="library-eyebrow">{selectedPack.language==='spa'?'Español':'English'} · {selectedPack.title}</span><h3>Save this passage</h3>
    {#if download?.available}
-    <p class="library-message" role="status">{download.saved?`Saved · ${labels[download.active.selection]} · ${formatBytes(download.active.bytes)}`:download.active?'Download incomplete or cleared by the device. Download again to repair it.':'Not saved on this device'}</p>
+    <p class="library-message" role="status">{download.saved?`Saved · ${labels[download.active.selection]}${savedSizes?` · ${savedSizes}`:''} · ${formatBytes(download.active.bytes)}`:download.active?'Download incomplete or cleared by the device. Download again to repair it.':'Not saved on this device'}</p>
     {#if downloadFinished}<p>The download is verified. Reload to use the saved version. Your place is kept.</p><button class="secondary full" onclick={()=>window.location.reload()}>Reload saved version</button>{/if}
     {#if download.updateAvailable}<p>A newer download is available. Your saved copy stays usable until the update finishes.</p>{/if}
     {#if download.pending&&!busy}<p>{download.pending.running?'A download is running in another window.':'Interrupted download'} · {formatBytes(download.pending.received)} of {formatBytes(download.pending.bytes)} verified. {download.pending.running?'Refresh to check its progress.':'Resume checks and reuses saved files.'}</p>{/if}
-    <fieldset disabled={busy||download.pending?.running}><legend>Include in download</legend>{#each download.choices as choice}<label class="download-choice"><input type="radio" name="download-selection" value={choice.id} bind:group={selection}/><span><strong>{labels[choice.id]}</strong><small>{formatBytes(choice.bytes)} total</small></span></label>{/each}</fieldset>
+    <fieldset disabled={busy||download.pending?.running}><legend>Include in download</legend>{#each download.choices as choice}<label class="download-choice"><input type="radio" name="download-selection" value={choice.id} bind:group={selection}/><span><strong>{labels[choice.id]}</strong></span></label>{/each}</fieldset>
     {#if selection!=='core'}<fieldset disabled={busy||download.pending?.running}><legend>Download size</legend><p class="fine-print">Smaller files use less storage. Only prepared sizes are available.</p>{#each ['small','medium','large'] as size}<label class="download-choice"><input type="radio" name="download-size" value={size} checked={preset===size} disabled={!availablePresets.includes(size)} onchange={()=>choosePreset(size)}/><span>{sizes.labels[size]}{!availablePresets.includes(size)?' — not available for this selection':''}</span></label>{/each}{#if preset==='custom'||!preset}<p>Custom sizes · the prepared files use different sizes.</p>{/if}
     <details><summary>Choose sizes by media</summary>{#each [{id:'image',label:'Images and maps'},{id:'audio',label:'Audio'},{id:'video',label:'Video'}] as category}{@const group=sizes.groups[category.id]}<label class="select-row">{category.label}<select aria-label={category.label+' download size'} value={effectiveSizes[category.id]||group.size||''} onchange={e=>chooseSizes({[category.id]:e.currentTarget.value})} disabled={!group.included||!group.count}>{#if !group.size}<option value="">{!group.included?'Not included':'No prepared size'}</option>{/if}{#each ['small','medium','large'] as size}<option value={size} disabled={!group.available.includes(size)}>{sizes.labels[size]}{category.id==='video'?({small:' · 480p',medium:' · 540p',large:' · 720p'}[size]):''}{!group.available.includes(size)?' — not available yet':''}</option>{/each}</select></label>{#if !group.included}<p class="fine-print">Not included</p>{/if}{/each}</details></fieldset>{/if}
-    <p class="fine-print">Text only includes the app, Scripture and guide. Audio adds recordings. All available resources adds the packaged images and videos. Prepared audio can play online when you press Play. Downloads save recordings for offline use. Prepared images and videos can open online. Downloads are optional for offline use. Sizes are file bytes, not browser storage overhead.</p>
+    <p class="fine-print">Text includes the app, Scripture and guide. Audio adds recordings; all resources also adds images and videos. Download for offline use.</p>
     {#if transfer}<progress aria-label="Download progress" value={transfer.received} max={transfer.bytes||1}></progress><p role="status">{formatBytes(transfer.received)} of {formatBytes(transfer.bytes)} verified · {transfer.count} / {transfer.total} files</p>{/if}
     <p>{selectedTotal===null?'This size selection is not prepared yet.':formatBytes(selectedTotal)+' to download'}</p>
     {#if busy}<button class="secondary full" onclick={pause}><Pause size={18}/>Pause download</button>{:else}<button class="secondary full" disabled={!download.manifest||download.pending?.running||!ready||selectedTotal===null} onclick={save}><Download size={18}/>{download.pending&&resumeMatches?'Resume download':download.updateAvailable?'Update download':download.saved?'Save selection again':'Download selection'}</button>{/if}
@@ -76,6 +77,6 @@
     {#if download.error}<p class="fine-print">{download.error} {download.manifest?'Showing the last saved file list.':''}</p>{/if}
    {:else if download}<p class="library-message">{download.reason}</p>{/if}
   </article>
-  <p class="fine-print">Your device may clear downloaded files. Your place in the guide is saved separately. An update keeps the prior usable copy until the replacement is verified.</p>
+  <p class="fine-print">Sizes are file bytes, not browser storage overhead. Your device may clear downloaded files. Your place in the guide is saved separately. An update keeps the prior usable copy until the replacement is verified.</p>
  {/if}
 </div>
