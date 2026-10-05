@@ -18,7 +18,7 @@ it('shows actual mixed offline sizes without claiming unavailable presets or dow
  const download=vi.spyOn(libraryAdapter,'download');render(LibraryPanel,{view:'downloads'});await settle();expect(screen.queryByText('Download size')).toBeNull();
  await fireEvent.click(screen.getByRole('radio',{name:/Text and all available resources/}));expect(screen.getByText(/Custom sizes ·/)).toBeTruthy();
  expect(screen.getByRole('combobox',{name:'Video download size'}).value).toBe('large');expect(screen.getByRole('combobox',{name:'Audio download size'}).value).toBe('medium');
- expect(screen.getByRole('option',{name:'Small · 480p — not available yet'}).disabled).toBe(true);expect(download).not.toHaveBeenCalled();
+ expect(screen.getByRole('option',{name:'Small · 320p — not available yet'}).disabled).toBe(true);expect(download).not.toHaveBeenCalled();
  await fireEvent.click(screen.getByRole('radio',{name:/Text and audio/}));expect(screen.getByRole('radio',{name:'Medium',exact:true}).checked).toBe(true);expect(screen.getByRole('combobox',{name:'Video download size'}).disabled).toBe(true);expect(download).not.toHaveBeenCalled();
 });
 it('one preset sets all included sizes and a custom change sends the exact tuple only on Download',async()=>{
@@ -36,4 +36,9 @@ it('labels the saved tuple independently of current size preferences and omits s
  libraryAdapter.downloadStatus.mockResolvedValue({...available,saved:true,active:{selection:'all',bytes:4096,manifest}});render(LibraryPanel,{view:'downloads'});await settle();
  expect(screen.getByRole('status').textContent).toContain('Saved · Text and all available resources · Custom ·');
  expect(screen.queryByText(/total$/)).toBeNull();localStorage.removeItem('fia-download-media-sizes');
+});
+
+it('requests a source-bound missing quality with unknown total only after Download',async()=>{
+ localStorage.removeItem('fia-download-media-sizes');const f={path:'/map.webp',group:'image',bytes:100,sha256:'a'.repeat(64),sourceSha256:'b'.repeat(64),sourceBytes:1000,mime:'image/webp',defaultSize:'medium',deliveryURL:'https://transcode.klappy.dev/image/q=medium,f=webp/https://source.test/map.jpg'};f.variants={medium:{...f}};
+ libraryAdapter.downloadStatus.mockResolvedValue({...available,manifest:{revision:'dynamic',files:[f]}});const download=vi.spyOn(libraryAdapter,'download').mockResolvedValue({saved:true});render(LibraryPanel,{view:'downloads'});await settle();await fireEvent.click(screen.getByRole('radio',{name:/Text and all available resources/}));await fireEvent.click(screen.getByRole('radio',{name:'Small',exact:true}));expect(screen.getByText('Size determined during download.')).toBeTruthy();expect(download).not.toHaveBeenCalled();await fireEvent.click(screen.getByRole('button',{name:'Download selection',exact:true}));expect(download.mock.calls[0][3]).toEqual({image:'small'});
 });

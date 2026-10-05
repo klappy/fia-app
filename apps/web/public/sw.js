@@ -23,13 +23,17 @@ const selectedFiles=(manifest,selection)=>manifest.files.filter(f=>f.group==='co
 function matchingSavedFile(file,active,manifest){
  if(active?.manifest?.deliveryRevision!==manifest.deliveryRevision)return null;
  const saved=active.files.find(f=>f.path===file.path&&f.deliveryURL);if(!saved)return null;
+ if(matchesObservedProxy(file,saved))return saved;
  const approved=[file,...Object.values(file.variants||{})];
  return approved.some(f=>['path','sha256','bytes','mime','deliveryURL','sourceSha256','sourceBytes','logicalSourceSha256','logicalSourceBytes'].every(k=>f[k]===saved[k])&&JSON.stringify(f.timing)===JSON.stringify(saved.timing)&&JSON.stringify(f.playbackRange)===JSON.stringify(saved.playbackRange)&&f.recordingLedgerSha256===saved.recordingLedgerSha256&&f.recordingLedgerEntryId===saved.recordingLedgerEntryId&&['scriptureLedgerEntryId','scriptureLedgerSha256','scriptureAssetId','scriptureAlignmentSha256'].every(k=>f[k]===saved[k])&&JSON.stringify(f.scriptureAlignment)===JSON.stringify(saved.scriptureAlignment)&&f.duration===saved.duration)?saved:null;
 }
 async function latest(packId=legacy){
  const response=await fetch(packId===legacy?'/offline-manifest.json':`/offline/${packId}.json`,{cache:'no-store'});
  if(!response.ok)throw new Error('Could not check the latest download. Connect and try again.');
- const manifest=validate(await response.json());if(manifest.packId!==packId)throw new Error('The download belongs to a different passage.');return manifest;
+ const manifest=validate(await response.json());if(manifest.packId!==packId)throw new Error('The download belongs to a different passage.');
+ const delivery=manifest.files.find(f=>f.group==='core'&&f.path===`/content/delivery/${packId}/${manifest.deliveryRevision}.json`);
+ if(delivery){const r=await fetch(delivery.path,{cache:'no-store'});if(!await verified(r.clone(),delivery))throw Error('Delivery source metadata changed.');const sidecar=validateDelivery(await r.json(),{packId,presentationRevision:manifest.presentationRevision});for(const f of manifest.files){const e=sidecar.entries.find(e=>e.path===f.path);if(e){if(e.source.sha256!==f.sourceSha256)throw Error('Source identity changed.');f.sourceBytes=e.source.bytes;for(const v of Object.values(f.variants||{}))v.sourceBytes=e.source.bytes;}}}
+ return manifest;
 }
 async function verified(response,file){
  if(!response?.ok)return false;
@@ -116,18 +120,24 @@ async function start(selection,port,packId=legacy,sizes={}){
   let manifest;
   try{manifest=await latest(packId);}catch(error){const previous=await read(packKey(packId,'pending'));if(!previous)throw error;manifest=validate(previous.manifest);}
   const priorPending=await read(packKey(packId,'pending'));if(!Object.keys(sizes).length&&priorPending?.selection===selection)sizes=priorPending.manifest.mediaSizes||{};
-  manifest=selectManifestSizes(manifest,selection,sizes);
+  manifest=planProxyDownload(manifest,selection,sizes);
   const files=selectedFiles(manifest,selection),cacheName=`${PREFIX}${packId===legacy?'':packId+'-'}${manifest.revision}-${selection}`;
   const active=await read(packKey(packId,'active'));
   // A repair stages separately from the last working copy, even at the same revision.
   const cacheId=active?.cache===cacheName?cacheName+'-repair':cacheName;
   const cache=await caches.open(cacheId);
-  pending={packId,cache:cacheId,revision:manifest.revision,selection,manifest,files,bytes:files.reduce((n,f)=>n+f.bytes,0),received:0,count:0,status:'downloading'};
+  pending={packId,cache:cacheId,revision:manifest.revision,selection,manifest,files,bytes:files.some(f=>f.bytes===null)?null:files.reduce((n,f)=>n+f.bytes,0),received:0,count:0,status:'downloading'};
   await write(packKey(packId,'pending'),pending);
   const report=()=>port?.postMessage({progress:{received:pending.received,bytes:pending.bytes,count:pending.count,total:files.length}});
   for(const file of files){
    if(controller.signal.aborted)throw new Error('Download paused. Verified files are kept for Resume.');
    let response=await cache.match(file.path);
+   if(file.proxyRequest){
+    const prior=priorPending?.files.find(f=>f.path===file.path&&f.proxyReceipt?.proxyUrl===file.proxyRequest.proxyUrl&&f.proxyReceipt?.source.sha256===file.sourceSha256);
+    if(prior&&await verified(response?.clone(),prior)){Object.assign(file,prior);}
+    else {const result=await fetchProxyRequest(file.proxyRequest,{signal:controller.signal});Object.assign(file,{bytes:result.receipt.output.bytes,sha256:result.receipt.output.sha256,proxyReceipt:result.receipt,timing:{status:file.timingDependent?'pending-qualification':'not-applicable'}});await cache.put(file.path,new Response(result.bytes,{headers:{'Content-Type':file.mime,'Content-Length':String(file.bytes)}}));response=await cache.match(file.path);}
+    pending.bytes=files.some(f=>f.bytes===null)?null:files.reduce((n,f)=>n+f.bytes,0);
+   }
    if(!await verified(response?.clone(),file)){
     const timeout=setTimeout(()=>controller.abort(),30000);
     try{response=await fetch(file.deliveryURL||file.path,{cache:'no-store',signal:controller.signal});if(file.deliveryURL){const bytes=await readVerifiedMedia(response,file,{signal:controller.signal});response=new Response(bytes,{headers:{'Content-Type':file.mime}});}else if(!await verified(response.clone(),file))throw new Error('A file could not be verified. Retry to keep the files already downloaded.');
@@ -137,6 +147,7 @@ async function start(selection,port,packId=legacy,sizes={}){
    pending.received+=file.bytes;pending.count++;await write(packKey(packId,'pending'),pending);report();
   }
   if(controller.signal.aborted)throw new Error('Download paused. Verified files are kept for Resume.');
+  if(files.some(f=>f.timing?.status==='pending-qualification')){pending.status='timing-pending';pending.error='Files received. Recording timing must be qualified before this selection can play offline.';await write(packKey(packId,'pending'),pending);return {saved:false,received:true,timingPending:true};}
   if(!await complete(pending))throw new Error('Storage changed before verification finished. Retry the download.');
   // Single metadata write is the commit point. An interrupted update keeps active intact.
   await write(packKey(packId,'active'),pending);await(await caches.open(META)).delete('/'+packKey(packId,'pending'));
