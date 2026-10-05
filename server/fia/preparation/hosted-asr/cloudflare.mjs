@@ -91,7 +91,7 @@ export function createCloudflarePilot({ctx,env,loadActivation,now=Date.now,readR
   if(!config)return emergencyStop('integration-config-missing');
   // Cleanup remains possible despite disabled activation or corrupt budget/attempt rows.
   const results=[];for(const lane of ['A','B']){
-   try{const result=await service({...config,enabled:false},lane).watchdog();results.push(result);if(!result||result.stopVerified===true||result.stopAttempts>=3)await clearLane(lane);}
+   try{const result=await service({...config,enabled:false},lane).watchdog();results.push(result);if(!result||result.stopVerified===true||result.stopAttempts>=3||result.reason==='stop-outcome-unresolved-manual-intervention')await clearLane(lane);}
    catch{results.push(await emergencyStop('dispatch-state-corrupt'));}
   }
   if(fallback&&!fallback.stopVerified){const record=await storage.get('hosted:cleanup-fallback');if(record.attempts<3)await storage.setAlarm(now()+30000);}
