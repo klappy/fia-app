@@ -25,7 +25,7 @@ function admit(row,revision='a'){
  return body;
 }
 async function runtime(catalog,directory,counters,{storage=true,body='',wrongSource=false}={}){
- const output=await build({stdin:{contents:`import {FiaPreparationJobs as Base,servePreparation} from ${JSON.stringify(worker)};export class FiaPreparationJobs extends Base {async fetch(r){if(new URL(r.url).pathname==='/test-corrupt'){await this.ctx.storage.put('source:0',new Uint8Array(65536));return new Response('corrupted-test-chunk');}return super.fetch(r);}}export default {async fetch(r,e){if(new URL(r.url).pathname==='/test-corrupt'){const ns=e.FIA_PREPARATION_JOBS;return ns.get(ns.idFromName(r.headers.get('x-job-id'))).fetch(r);}return await servePreparation(r,e)||new Response('missing',{status:404});}};`,resolveDir:resolve('.')},bundle:true,format:'esm',platform:'browser',write:false,plugins:[{name:'synthetic-catalog',setup(b){b.onLoad({filter:/preparation\/catalog\.json$/},()=>({contents:JSON.stringify(catalog),loader:'json'}));}}]});
+ const output=await build({stdin:{contents:`import {FiaPreparationJobs as Base,servePreparation} from ${JSON.stringify(worker)};export class FiaPreparationJobs extends Base {async fetch(r){if(new URL(r.url).pathname==='/test-seed-interrupted'){await this.ctx.storage.put('job',await r.json());await this.ctx.storage.put('source',{state:'attempting'});return new Response('seeded');}if(new URL(r.url).pathname==='/test-trigger-alarm'){await this.ctx.storage.setAlarm(Date.now()+1);return new Response('scheduled');}if(new URL(r.url).pathname==='/test-corrupt'){await this.ctx.storage.put('source:0',new Uint8Array(65536));return new Response('corrupted-test-chunk');}return super.fetch(r);}}export default {async fetch(r,e){if(['/test-corrupt','/test-seed-interrupted','/test-trigger-alarm'].includes(new URL(r.url).pathname)){const ns=e.FIA_PREPARATION_JOBS;return ns.get(ns.idFromName(r.headers.get('x-job-id'))).fetch(r);}return await servePreparation(r,e)||new Response('missing',{status:404});}};`,resolveDir:resolve('.')},bundle:true,format:'esm',platform:'browser',write:false,plugins:[{name:'synthetic-catalog',setup(b){b.onLoad({filter:/preparation\/catalog\.json$/},()=>({contents:JSON.stringify(catalog),loader:'json'}));}}]});
  const row=catalog.entries[0];
  return new Miniflare({...convertV4MiniflareOptions({modules:true,script:output.outputFiles[0].text,compatibilityDate:'2026-09-01',compatibilityFlags:['nodejs_compat'],bindings:{FIA_API_ORIGIN:origin},...(storage?{durableObjects:{FIA_PREPARATION_JOBS:{className:'FiaPreparationJobs',useSQLite:true}}}:{}),outboundService:request=>{
   // This replaces ALL outbound network; unexpected requests never reach internet.
@@ -63,6 +63,7 @@ test('source alarm verifies once; SQLite restart reuses chunks and serves verifi
   const part=await mf.dispatchFetch(path,{headers:{Range:'bytes=65530-65550'}});assert.equal(part.status,206);assert.equal(part.headers.get('content-range'),`bytes 65530-65550/${sourceBytes.length}`);assert.deepEqual(Buffer.from(await part.arrayBuffer()),sourceBytes.subarray(65530,65551));
   assert.equal((await mf.dispatchFetch(path,{headers:{Range:'bytes=999999-'}})).status,416);
   await mf.dispatchFetch(origin+'/test-corrupt',{headers:{'x-job-id':done.jobId}});
+  const corruptStatus=await mf.dispatchFetch(origin+done.statusUrl);assert.equal(corruptStatus.status,503);assert.equal((await corruptStatus.json()).code,'stored-source-invalid');
   for(const options of [{},{method:'HEAD'},{headers:{Range:'bytes=0-2'}}])assert.equal((await mf.dispatchFetch(path,options)).status,409,'corrupt chunk never serves partial bytes');
   assert.equal(n.source,1);assert.equal(n.unexpected,0);
  }finally{if(mf)await mf.dispose();await rm(dir,{recursive:true,force:true});}
@@ -87,4 +88,20 @@ test('wrong source hash cannot become verified or playable and repeat does not b
   assert.equal((await mf.dispatchFetch(origin+`/v1/preparation-audio/${r.source.sha256}.mp3`)).status,409);
   await post(mf,r);assert.equal(n.source,1);assert.equal(n.unexpected,0);
  }finally{await mf.dispose();}
+});
+
+test('persisted started source attempt survives restart and blocks uncertain without another acquisition',async()=>{
+ const {operationId}=await import('../../server/fia/preparation/service.mjs');
+ const c=fixture(),r=c.entries[0],n=counts(),dir=await mkdtemp(join(tmpdir(),'fia-interrupted-'));let mf;
+ const id=await operationId(r),statusUrl='/v1/preparations/'+id;
+ try{
+  mf=await runtime(c,dir,n);
+  const seed={schema:'fia-preparation-job@1',jobId:id,selection:r.selection,state:'preparing',sourceState:'queued',reason:null,result:null,resultSha256:null,admissionSha256:null};
+  assert.equal((await mf.dispatchFetch(origin+'/test-seed-interrupted',{method:'POST',headers:{'x-job-id':id},body:JSON.stringify(seed)})).status,200);
+  await mf.dispose();mf=await runtime(c,dir,n);
+  assert.equal((await(await mf.dispatchFetch(origin+statusUrl)).json()).state,'preparing');
+  await mf.dispatchFetch(origin+'/test-trigger-alarm',{headers:{'x-job-id':id}});
+  const interrupted=await settle(mf,{state:'preparing',statusUrl});assert.equal(interrupted.state,'blocked');assert.equal(interrupted.sourceState,'uncertain');assert.equal(interrupted.reason,'source-attempt-interrupted');assert.equal(interrupted.result,null);
+  assert.equal((await(await post(mf,r)).json()).state,'blocked');assert.deepEqual(n,counts());
+ }finally{if(mf)await mf.dispose();await rm(dir,{recursive:true,force:true});}
 });
