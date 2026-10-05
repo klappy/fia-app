@@ -127,3 +127,22 @@ test('interrupted DO attempt reconciles verified existing R2 bytes without upstr
   const recovered=await settle(mf,{state:'preparing',statusUrl});assert.equal(recovered.sourceState,'verified');assert.equal(recovered.state,'blocked');assert.equal(recovered.reason,r.blockedReason);assert.deepEqual(n,counts());
  }finally{if(mf)await mf.dispose();await rm(dir,{recursive:true,force:true});}
 });
+
+test('orphan R2 bytes require ensure receipt and source reference; corrupt reference refuses status and audio',async()=>{
+ const c=fixture(),r=c.entries[0],n=counts(),mf=await runtime(c,undefined,n,{offline:true});
+ const path=origin+`/v1/preparation-audio/${r.source.sha256}.mp3`;
+ try{
+  const bucket=await mf.getR2Bucket('FIA_ORIGINALS');await bucket.put(`originals/sha256/${r.source.sha256}.mp3`,sourceBytes);
+  for(const options of [{},{method:'HEAD'},{headers:{Range:'bytes=0-2'}}])assert.equal((await mf.dispatchFetch(path,options)).status,409,'orphan bytes have no accepted DO receipt/reference');
+  assert.deepEqual(n,counts());
+  const prepared=await settle(mf,await(await post(mf,r)).json());assert.equal(prepared.sourceState,'verified');assert.equal(prepared.state,'blocked');assert.deepEqual(n,counts());
+  const audio=await mf.dispatchFetch(path);assert.equal(audio.status,200);assert.equal(hash(Buffer.from(await audio.arrayBuffer())),r.source.sha256);
+  const referenceId=hash(canonicalJSONString({url:r.source.url,sourceVersion:r.identity.sourceVersion}));
+  const referenceKey=`originals/refs/${referenceId}/${r.source.sha256}.json`;
+  assert.notEqual(await bucket.get(referenceKey),null,'ensure recorded exact source reference');
+  await bucket.put(referenceKey,'corrupt-reference');
+  const status=await mf.dispatchFetch(origin+prepared.statusUrl);assert.equal(status.status,503);assert.equal((await status.json()).code,'stored-source-invalid');
+  for(const options of [{},{method:'HEAD'},{headers:{Range:'bytes=0-2'}}])assert.equal((await mf.dispatchFetch(path,options)).status,409);
+  assert.deepEqual(n,counts());
+ }finally{await mf.dispose();}
+});
