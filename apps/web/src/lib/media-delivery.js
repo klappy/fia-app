@@ -2,6 +2,7 @@ const sha=/^[a-f0-9]{64}$/;
 const local=/^\/(?!\/|.*(?:\.\.|[?#]))/;
 const pack=/^(eng|spa)\.MRK-\d+(?:-\d+)+$/;
 const positive=n=>Number.isSafeInteger(n)&&n>0;
+function videoKeys(value,keys){if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).sort().join(',')!==keys.split(',').sort().join(','))throw Error('Unknown or missing video contract field.');}
 export function validateDeliveryIndex(index){
  if(index?.schema!==1||!Array.isArray(index.packs))throw Error('Invalid media delivery index.');
  const seen=new Set();
@@ -9,17 +10,68 @@ export function validateDeliveryIndex(index){
   if(!pack.test(p.packId)||seen.has(p.packId)||!sha.test(p.presentationRevision)||!d||!sha.test(d.sha256)||!positive(d.bytes)||d.url!==`/content/delivery/${p.packId}/${d.sha256}.json`)throw Error('Invalid media delivery identity.');seen.add(p.packId);
  }return index;
 }
+export function deliveryVariant(entry,size){
+ const variant=entry.variants?.[size];if(!variant)throw Error('This media size is not prepared.');
+ const {variants,defaultSize,...base}=entry;return {...base,...variant};
+}
+export function validatePlaybackRange(range,duration){
+ videoKeys(range,'startSeconds,endSeconds');
+ if(!Number.isFinite(range.startSeconds)||!Number.isFinite(range.endSeconds)||range.startSeconds<0||range.endSeconds<=range.startSeconds||!Number.isFinite(duration)||duration<=0||range.endSeconds>duration)throw Error('Invalid recorded guide playback range.');
+ return range;
+}
+export function validateRecordedAudioEntry(entry){
+ videoKeys(entry.audioReplacement,'ledgerEntryId,logicalSource');videoKeys(entry.audioReplacement.logicalSource,'sha256,bytes');
+ if(entry.delivery?.kind!=='audio'||!entry.audioReplacement.ledgerEntryId||typeof entry.audioReplacement.ledgerEntryId!=='string'||!sha.test(entry.audioReplacement.logicalSource.sha256)||!positive(entry.audioReplacement.logicalSource.bytes)||entry.logicalSource)throw Error('Invalid recorded guide replacement.');
+ videoKeys(entry.source,'url,sha256,bytes');
+ const check=e=>{validatePlaybackRange(e.playbackRange,e.delivery.duration);if(e.timing?.status!=='verified'||!e.timing.mapping||!Number.isFinite(e.timing.mapping.scale)||e.timing.mapping.scale<=0||!Number.isFinite(e.timing.mapping.offsetSeconds)||e.timing.sourceAudioSha256!==entry.source.sha256||e.timing.deliveryAudioSha256!==e.delivery.sha256||!sha.test(e.timing.mappingEvidenceSha256))throw Error('Recorded guide requires measured mapping evidence.');};
+ check(entry);for(const v of Object.values(entry.variants||{}))check(v);
+}
 export function validateDelivery(sidecar,identity){
- if(sidecar?.schema!==1||sidecar.packId!==identity.packId||sidecar.presentationRevision!==identity.presentationRevision||!sidecar.recipeRevision||!Array.isArray(sidecar.entries))throw Error('Media belongs to a different passage revision.');
+ if(sidecar?.schema===4){
+  videoKeys(sidecar,'schema,packId,presentationRevision,recipeRevision,sourceLedger,recordingLedger,entries');
+  const ref=sidecar.recordingLedger;videoKeys(ref,'url,sha256,bytes');
+  if(!sha.test(ref.sha256)||!positive(ref.bytes)||ref.url!==`/content/recording-sources/${ref.sha256}.json`||!Array.isArray(sidecar.entries))throw Error('Invalid recording ledger reference.');
+  const entries=sidecar.entries.map(entry=>{
+   if(!entry.audioReplacement){if(entry.playbackRange||Object.values(entry.variants||{}).some(v=>v.playbackRange))throw Error('Unbound playback range.');return entry;}
+   videoKeys(entry,'path,source,delivery,timing,defaultSize,variants,audioReplacement,playbackRange');validateRecordedAudioEntry(entry);
+   const {audioReplacement,playbackRange,...base}=entry;
+   base.variants=Object.fromEntries(Object.entries(entry.variants).map(([size,v])=>{videoKeys(v,'delivery,timing,playbackRange');const {playbackRange,...rest}=v;return [size,rest];}));
+   if(JSON.stringify(entry.variants[entry.defaultSize]?.playbackRange)!==JSON.stringify(playbackRange))throw Error('Default recorded range changed.');
+   return base;
+  });
+  const {recordingLedger,...base}=sidecar;validateDelivery({...base,schema:3,entries},identity);return sidecar;
+ }
+ if(sidecar?.schema===3){
+  validateDelivery({...sidecar,schema:2,entries:[]},identity);
+  videoKeys(sidecar,'schema,packId,presentationRevision,recipeRevision,sourceLedger,entries');
+  if(!Array.isArray(sidecar.entries))throw Error('Invalid variant entries.');const seen=new Set();
+  for(const entry of sidecar.entries){
+   videoKeys(entry,'path,source,delivery,timing,defaultSize,variants'+(entry.logicalSource?',logicalSource':''));
+   const {defaultSize,variants,...base}=entry;
+   if(seen.has(entry.path)||!['small','medium','large'].includes(defaultSize)||!variants||!Object.keys(variants).length||Object.keys(variants).some(k=>!['small','medium','large'].includes(k)))throw Error('Invalid media size catalog.');seen.add(entry.path);
+   if(JSON.stringify(variants[defaultSize])!==JSON.stringify({delivery:base.delivery,timing:base.timing}))throw Error('Default media size changed.');
+   for(const size of Object.keys(variants)){
+    videoKeys(variants[size],'delivery,timing');const selected=deliveryVariant(entry,size),d=selected.delivery;
+    if(d.kind==='video'){if((d.size||'large')!==size)throw Error('Video size does not match variant.');}
+    else if(d.q!==({small:'low',medium:'medium',large:'high'}[size]))throw Error('Media quality does not match variant.');
+    validateDelivery({...sidecar,schema:2,entries:[selected]},identity);
+   }
+  }return sidecar;
+ }
+
+ if(![1,2].includes(sidecar?.schema)||sidecar.packId!==identity.packId||sidecar.presentationRevision!==identity.presentationRevision||!sidecar.recipeRevision||!Array.isArray(sidecar.entries))throw Error('Media belongs to a different passage revision.');
+ if(sidecar.schema===2){if(Object.keys(sidecar).sort().join(',')!=='entries,packId,presentationRevision,recipeRevision,schema,sourceLedger')throw Error('Unknown video sidecar field.');const l=sidecar.sourceLedger;videoKeys(l,'url,sha256,bytes');if(!l||!sha.test(l.sha256)||!positive(l.bytes)||l.url!==`/content/video-sources/${l.sha256}.json`)throw Error('Invalid video source ledger.');}
  const seen=new Set();
  for(const e of sidecar.entries){const s=e.source,d=e.delivery,t=e.timing;
+  if(e.audioReplacement||e.playbackRange)throw Error('Recorded guide ranges require schema4.');
   if(!local.test(e.path)||seen.has(e.path)||!s||!sha.test(s.sha256)||!positive(s.bytes)||!/^https:\/\//.test(s.url)||!d||!sha.test(d.sha256)||!positive(d.bytes)||!['audio','image','video'].includes(d.kind)||!['transformed','passthrough'].includes(d.status)||!d.format||!d.q)throw Error('Invalid media delivery entry.');
   const url=new URL(d.url);if(url.origin!=='https://transcode.klappy.dev'||!url.pathname.startsWith('/'+d.kind+'/')||url.username||url.password||url.hash||!d.url.endsWith('/'+s.url))throw Error('Unapproved media delivery URL.');
   if(d.status==='passthrough'&&(d.sha256!==s.sha256||d.bytes!==s.bytes))throw Error('Pass-through bytes changed.');
   if(d.duration!==undefined&&(!Number.isFinite(d.duration)||d.duration<=0))throw Error('Invalid recording duration.');
   if(d.kind==='image'&&(!positive(d.width)||!positive(d.height)))throw Error('Invalid image dimensions.');
   if(!['low','medium','high'].includes(d.q))throw Error('Invalid quality tier.');
-  const options=d.kind==='audio'?`preset=${d.preset},q=${d.q},f=${d.format}`:`q=${d.q},f=${d.format}`;
+  if(d.kind==='video'){if(sidecar.schema!==2)throw Error('Video requires delivery schema2.');validateVideoDelivery(e);}else if(e.logicalSource)throw Error('Source replacement is video-only.');
+  const options=['audio','video'].includes(d.kind)?`preset=${d.preset},q=${d.q},f=${d.format}${d.kind==='video'&&d.size?',size='+d.size:''}`:`q=${d.q},f=${d.format}`;
   if(d.kind==='audio'&&(d.preset!=='voice'||d.format!=='opus')||d.kind==='image'&&!['webp','avif','jpeg'].includes(d.format)||d.url!==`https://transcode.klappy.dev/${d.kind}/${options}/${s.url}`)throw Error('Delivery options do not match the URL.');
   if(!new RegExp('^'+d.kind+'/').test(d.mime))throw Error('Invalid media MIME.');
   if(!t||!['verified','not-applicable'].includes(t.status))throw Error('Media timing is not verified.');
@@ -32,7 +84,20 @@ export function validateDelivery(sidecar,identity){
  }return sidecar;
 }
 
+export function validateVideoDelivery(e){
+ const d=e.delivery,l=e.logicalSource;
+ videoKeys(e.source,'url,sha256,bytes,provenance');videoKeys(e.source.provenance,'metadata,rights,review');videoKeys(e.source.provenance.metadata,'repository,revision,path,sha256,contentId,assetVersion,collectionVersion');videoKeys(e.source.provenance.rights,'metadataPath,metadataSha256,holder,licenseUrl');videoKeys(e.source.provenance.review,'recipeRevision,evidenceUrl,evidenceSha256');
+ videoKeys(d,'url,sha256,bytes,mime,kind,format,preset,q,status,duration,width,height,videoCodec,audioCodec,encoderRevision,recipeRevision,serverContractSha256,cacheKey,qualification'+(d.size!==undefined?',size':''));
+ if(d.size!==undefined&&(!['small','medium','large'].includes(d.size)||d.width!==({small:854,medium:960,large:1280}[d.size])||d.height!==({small:480,medium:540,large:720}[d.size])))throw Error('Invalid video rendition size.');videoKeys(d.qualification,'evidenceUrl,evidenceSha256');
+ if(Object.keys(e).sort().join(',')!=='delivery,logicalSource,path,source,timing')throw Error('Unknown video replacement field.');
+ if(!l||Object.keys(l).sort().join(',')!=='assetId,bytes,ledgerEntryId,sha256'||!l.assetId||!l.ledgerEntryId||!sha.test(l.sha256)||!positive(l.bytes))throw Error('Invalid logical video source.');
+ if(d.kind!=='video'||d.mime!=='video/mp4'||d.format!=='mp4'||d.preset!=='fia'||d.q!=='medium'||d.status!=='transformed'||d.videoCodec!=='h264'||d.audioCodec!=='aac'||!positive(d.width)||!positive(d.height)||!Number.isFinite(d.duration)||d.duration<=0||!sha.test(d.encoderRevision)||!sha.test(d.serverContractSha256)||!d.recipeRevision||!/^video-v1\/[a-f0-9]{64}\.mp4$/.test(d.cacheKey)||!d.qualification?.evidenceUrl?.startsWith('https://')||!sha.test(d.qualification.evidenceSha256)||e.timing?.status!=='not-applicable'||Object.keys(e.timing).length!==1)throw Error('Unqualified video delivery.');
+ validateVideoSize({group:'video',bytes:d.bytes});
+}
+export function validateVideoSize(file){if((file.group==='video'||file.kind==='video')&&(!positive(file.bytes)||file.bytes>16777216))throw Error('Video exceeds the16 MiB app limit.');}
+
 export async function readVerifiedMedia(response,file,{signal}={}){
+ validateVideoSize(file);
  if(!response?.ok||response.type==='opaque')throw Error('The recording could not be received.');
  const mime=(response.headers.get('Content-Type')||'').split(';')[0].trim();
  if(mime!==file.mime)throw Error('The recording format did not match.');
@@ -41,7 +106,24 @@ export async function readVerifiedMedia(response,file,{signal}={}){
  const chunks=[];let count=0;
  try{while(true){if(signal?.aborted)throw Error('Playback canceled.');const {done,value}=await reader.read();if(done)break;count+=value.byteLength;if(count>file.bytes)throw Error('The recording exceeded its approved size.');chunks.push(value);}if(count!==file.bytes)throw Error('The recording size did not match.');}
  catch(error){await reader.cancel().catch(()=>{});throw error;}finally{reader.releaseLock();}
- const bytes=new Uint8Array(count);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.length;}
+ const bytes=new Uint8Array(count);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.length;}chunks.length=0;
  const digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),v=>v.toString(16).padStart(2,'0')).join('');
  if(digest!==file.sha256)throw Error('The recording could not be verified.');return bytes;
+}
+
+export function normalizeMediaSizes(sizes={}){
+ if(!sizes||typeof sizes!=='object'||Array.isArray(sizes)||Object.keys(sizes).some(k=>!['audio','image','video'].includes(k)))throw Error('Invalid media size selection.');
+ for(const value of Object.values(sizes))if(!['small','medium','large'].includes(value))throw Error('Invalid media size selection.');return {...sizes};
+}
+export function selectManifestSizes(manifest,selection,sizes={}){
+ sizes=normalizeMediaSizes(sizes);const included=group=>selection==='all'||selection==='audio'&&group==='audio';
+ const selectedSizes={};const files=manifest.files.map(file=>{
+  if(file.group==='core'||!included(file.group))return file;
+  const size=sizes[file.group]||file.defaultSize;
+  if(!size){if(sizes[file.group])throw Error('This media size is not prepared.');return file;}
+  const variant=file.variants?.[size]||(!file.variants&&file.selectedSize===size?file:null);if(!variant)throw Error('This media size is not prepared.');
+  selectedSizes[file.group]=size;return {...variant,selectedSize:size};
+ });
+ const tuple=['audio','image','video'].map(g=>selectedSizes[g]||'none').join('-');
+ return {...manifest,catalogRevision:manifest.catalogRevision||manifest.revision,revision:Object.keys(selectedSizes).length?`${manifest.catalogRevision||manifest.revision}-${selection}-${tuple}`:manifest.revision,mediaSizes:selectedSizes,files};
 }

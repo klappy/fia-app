@@ -2,7 +2,9 @@ import {readdirSync,readFileSync,writeFileSync,mkdirSync,copyFileSync,statSync} 
 import {join} from 'node:path';
 import {marked} from 'marked';
 import {createHash} from 'node:crypto';
-import {validateDelivery} from '../apps/web/src/lib/media-delivery.js';
+import {verifyRecordedGuideReplacement} from './recorded-guide-publication.mjs';
+import {verifyVideoReplacement} from './video-publication.mjs';
+import {validateDelivery,deliveryVariant} from '../apps/web/src/lib/media-delivery.js';
 mkdirSync('dist/docs',{recursive:true});
 for(const file of ['V3-BLUEPRINT.md','TEST-GUIDE.md','CONTENT-RECEIPT.md']){
  const source=readFileSync(join('apps/web/docs',file),'utf8');copyFileSync(join('apps/web/docs',file),join('dist/docs',file));
@@ -34,7 +36,9 @@ if(registry){
   const path=dir+'/'+names[0],bytes=readFileSync(path),sha256=createHash('sha256').update(bytes).digest('hex');
   if(names[0]!==sha256+'.json')throw Error('Delivery filename must bind exact bytes.');
   const sidecar=validateDelivery(JSON.parse(bytes),{packId:descriptor.id,presentationRevision:descriptor.revision});
-  deliveries.set(descriptor.id,{sidecar,path,sha256});deliveryIndex.packs.push({packId:descriptor.id,presentationRevision:descriptor.revision,delivery:{url:'/'+path.slice(5),sha256,bytes:bytes.length}});
+  let ledger=null;if(sidecar.schema>=2){const ref=sidecar.sourceLedger,raw=readFileSync('dist'+ref.url);if(raw.length!==ref.bytes||createHash('sha256').update(raw).digest('hex')!==ref.sha256)throw Error('Video source ledger integrity mismatch.');ledger=JSON.parse(raw);}
+  let recordingLedger=null;if(sidecar.schema===4){const ref=sidecar.recordingLedger,raw=readFileSync('dist'+ref.url);if(raw.length!==ref.bytes||createHash('sha256').update(raw).digest('hex')!==ref.sha256)throw Error('Recording ledger integrity mismatch.');recordingLedger=JSON.parse(raw);}
+  deliveries.set(descriptor.id,{sidecar,path,sha256,ledger,recordingLedger});deliveryIndex.packs.push({packId:descriptor.id,presentationRevision:descriptor.revision,delivery:{url:'/'+path.slice(5),sha256,bytes:bytes.length}});
  }
  mkdirSync('dist/content/delivery',{recursive:true});writeFileSync('dist/content/delivery/index.json',JSON.stringify(deliveryIndex));
  mkdirSync('dist/offline',{recursive:true});
@@ -47,13 +51,21 @@ if(registry){
   const delivery=deliveries.get(descriptor.id),media=Array.from(selected).sort().map(digest);
   if(delivery){
    const byPath=new Map(delivery.sidecar.entries.map(e=>[e.path,e]));
-   for(const f of media){if(f.group==='video')continue;const e=byPath.get(f.path);if(!e)throw Error('Incomplete delivery coverage: '+f.path);if(e.delivery.kind!==f.group)throw Error('Delivery media kind mismatch: '+f.path);if(new URL(e.source.url).pathname!==f.path)throw Error('Delivery source URL mismatch: '+f.path);if(e.source.sha256!==f.sha256||e.source.bytes!==f.bytes)throw Error('Delivery source mismatch: '+f.path);
+   const apply=(f,e)=>{
+if(e.delivery.kind!==f.group)throw Error('Delivery media kind mismatch: '+f.path);if(f.group==='video'){Object.assign(f,verifyVideoReplacement({entry:e,ledger:delivery.ledger,pack,descriptor,file:f,readEvidence:hash=>readFileSync('dist/content/video-evidence/'+hash+'.json')}));}else if(e.audioReplacement){Object.assign(f,verifyRecordedGuideReplacement({entry:e,ledger:delivery.recordingLedger,pack,descriptor,file:f,readEvidence:hash=>readFileSync('dist/content/recording-evidence/'+hash+'.json')}),{recordingLedgerSha256:delivery.sidecar.recordingLedger.sha256});}else {if(new URL(e.source.url).pathname!==f.path)throw Error('Delivery source URL mismatch: '+f.path);if(e.source.sha256!==f.sha256||e.source.bytes!==f.bytes)throw Error('Delivery source mismatch: '+f.path);}
     const aligned=Object.values(pack.assets).find(a=>a.alignment?.audioSha256===f.sha256);if(aligned&&(e.timing.status!=='verified'||e.timing.alignmentSha256!==createHash('sha256').update(JSON.stringify(aligned.alignment)).digest('hex')))throw Error('Unverified Scripture alignment: '+f.path);
     Object.assign(f,{sha256:e.delivery.sha256,bytes:e.delivery.bytes,mime:e.delivery.mime,deliveryURL:e.delivery.url,sourceSha256:e.source.sha256,deliveryRevision:delivery.sha256,timing:e.timing});
+    return f;
+   };
+   for(const f of media){
+    if(f.group==='video'&&delivery.sidecar.schema===1)continue;
+    const e=byPath.get(f.path);if(!e)throw Error('Incomplete delivery coverage: '+f.path);const raw={...f};
+    apply(f,e);
+    if(delivery.sidecar.schema>=3){f.defaultSize=e.defaultSize;f.variants=Object.fromEntries(Object.keys(e.variants).map(size=>[size,apply({...raw},deliveryVariant(e,size))]));}
    }
-   if(byPath.size!==media.filter(f=>f.group!=='video').length)throw Error('Unexpected delivery entries.');
+   if(byPath.size!==media.filter(f=>delivery.sidecar.schema>=2||f.group!=='video').length)throw Error('Unexpected delivery entries.');
   }
-  const entries=[...shell,digest(registryPath),digest(payloadPath),digest('dist/content/delivery/index.json'),...(delivery?[digest(delivery.path)]:[]),...media];
+  const entries=[...shell,digest(registryPath),digest(payloadPath),digest('dist/content/delivery/index.json'),...(delivery?[digest(delivery.path),...(delivery.ledger?[digest('dist'+delivery.sidecar.sourceLedger.url)]:[]),...(delivery.recordingLedger?[digest('dist'+delivery.sidecar.recordingLedger.url)]:[])]:[]),...media];
   const revision=createHash('sha256').update(JSON.stringify(entries)).digest('hex').slice(0,12);
   const manifest={schema:1,packId:descriptor.id,presentationRevision:descriptor.revision,...(delivery?{deliveryRevision:delivery.sha256}:{}),revision,files:entries};
   writeFileSync(`dist/offline/${descriptor.id}.json`,JSON.stringify(manifest));

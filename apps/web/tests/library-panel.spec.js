@@ -4,7 +4,7 @@ import {tick} from 'svelte';
 import LibraryPanel from '../src/components/LibraryPanel.svelte';
 import {libraryAdapter} from '../src/lib/library.js';
 const settle=async()=>{await Promise.resolve();await tick();};
-const available={available:true,saved:false,manifest:{revision:'fixture'},choices:[{id:'core',bytes:1024},{id:'audio',bytes:2048},{id:'all',bytes:4096}]};
+const available={available:true,saved:false,manifest:{revision:'fixture',files:[{path:'/index.html',group:'core',bytes:1024}]},choices:[{id:'core',bytes:1024},{id:'audio',bytes:2048},{id:'all',bytes:4096}]};
 beforeEach(()=>vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue(available));
 afterEach(()=>{cleanup();vi.restoreAllMocks();});
 it('keeps development downloads unavailable instead of offering a simulated action',async()=>{libraryAdapter.downloadStatus.mockResolvedValue({available:false,reason:'Downloads work on the published Site.'});render(LibraryPanel,{view:'downloads'});await settle();expect(screen.getByText('Downloads work on the published Site.')).toBeTruthy();expect(screen.queryByRole('button',{name:'Download selection'})).toBeNull();});
@@ -13,3 +13,27 @@ it('shows interrupted state and keeps removal separate from progress reset',asyn
 it('retains an actionable error after a failed download',async()=>{vi.spyOn(libraryAdapter,'download').mockRejectedValue(new Error('Storage is full. Choose a smaller download.'));render(LibraryPanel,{view:'downloads'});await settle();await fireEvent.click(screen.getByRole('button',{name:'Download selection'}));await settle();expect(screen.getByRole('alert').textContent).toContain('Storage is full');expect(screen.getByRole('button',{name:'Download selection'})).toBeTruthy();});
 
 it('defaults to text only even when all resources are available',async()=>{render(LibraryPanel,{view:'downloads'});await settle();expect(screen.getByRole('radio',{name:/Text only/}).checked).toBe(true);expect(screen.getByRole('radio',{name:/Text and all available resources/}).checked).toBe(false);});
+it('shows actual mixed offline sizes without claiming unavailable presets or downloading on selection',async()=>{
+ libraryAdapter.downloadStatus.mockResolvedValue({...available,manifest:{revision:'fixture',files:[{group:'audio',deliveryURL:'https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/x'},{group:'image',deliveryURL:'https://transcode.klappy.dev/image/q=medium,f=webp/x'},{group:'video',deliveryURL:'https://transcode.klappy.dev/video/preset=fia,q=medium,f=mp4/x'}]}});
+ const download=vi.spyOn(libraryAdapter,'download');render(LibraryPanel,{view:'downloads'});await settle();expect(screen.queryByText('Download size')).toBeNull();
+ await fireEvent.click(screen.getByRole('radio',{name:/Text and all available resources/}));expect(screen.getByText(/Custom sizes ·/)).toBeTruthy();
+ expect(screen.getByRole('combobox',{name:'Video download size'}).value).toBe('large');expect(screen.getByRole('combobox',{name:'Audio download size'}).value).toBe('medium');
+ expect(screen.getByRole('option',{name:'Small · 480p — not available yet'}).disabled).toBe(true);expect(download).not.toHaveBeenCalled();
+ await fireEvent.click(screen.getByRole('radio',{name:/Text and audio/}));expect(screen.getByRole('radio',{name:'Medium',exact:true}).checked).toBe(true);expect(screen.getByRole('combobox',{name:'Video download size'}).disabled).toBe(true);expect(download).not.toHaveBeenCalled();
+});
+it('one preset sets all included sizes and a custom change sends the exact tuple only on Download',async()=>{
+ localStorage.removeItem('fia-download-media-sizes');const levels=['small','medium','large'];
+ const files=[{path:'/index.html',group:'core',bytes:10},...['audio','image','video'].map((group,g)=>({path:'/'+group,group,bytes:5,deliveryURL:`https://transcode.klappy.dev/${group}/q=medium/f`,variants:Object.fromEntries(levels.map((size,i)=>[size,{path:'/'+group,group,bytes:10*g+i+1}])) ,defaultSize:'medium'}))];
+ libraryAdapter.downloadStatus.mockResolvedValue({...available,manifest:{revision:'fixture',files}});const download=vi.spyOn(libraryAdapter,'download').mockResolvedValue({saved:true});render(LibraryPanel,{view:'downloads'});await settle();
+ await fireEvent.click(screen.getByRole('radio',{name:/Text and all available resources/}));await fireEvent.click(screen.getByRole('radio',{name:'Small',exact:true}));expect(screen.getByRole('combobox',{name:'Video download size'}).value).toBe('small');
+ await fireEvent.change(screen.getByRole('combobox',{name:'Audio download size'}),{target:{value:'large'}});expect(screen.getByText(/Custom sizes/)).toBeTruthy();expect(download).not.toHaveBeenCalled();
+ await fireEvent.click(screen.getByRole('button',{name:'Download selection',exact:true}));expect(download.mock.calls[0][3]).toEqual({image:'small',audio:'large',video:'small'});
+});
+
+it('labels the saved tuple independently of current size preferences and omits stale include totals',async()=>{
+ localStorage.setItem('fia-download-media-sizes',JSON.stringify({audio:'large',image:'large',video:'large'}));
+ const manifest={revision:'saved',mediaSizes:{audio:'small',image:'medium',video:'large'},files:[{group:'audio',deliveryURL:'https://transcode.klappy.dev/audio/q=low/f'},{group:'image',deliveryURL:'https://transcode.klappy.dev/image/q=medium/f'},{group:'video',deliveryURL:'https://transcode.klappy.dev/video/q=medium/f'}]};
+ libraryAdapter.downloadStatus.mockResolvedValue({...available,saved:true,active:{selection:'all',bytes:4096,manifest}});render(LibraryPanel,{view:'downloads'});await settle();
+ expect(screen.getByRole('status').textContent).toContain('Saved · Text and all available resources · Custom ·');
+ expect(screen.queryByText(/total$/)).toBeNull();localStorage.removeItem('fia-download-media-sizes');
+});

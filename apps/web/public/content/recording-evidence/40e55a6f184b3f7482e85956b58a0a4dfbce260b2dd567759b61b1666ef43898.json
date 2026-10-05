@@ -1,0 +1,307 @@
+{
+  "status": "source-acoustic-review",
+  "sourceSha256": "9834ac98fdc57c34e4cc2cb5f813fc5bf050a2283ffc4ce994963bbfa9649d25",
+  "boundariesSha256": "d1c5e6b595e07fdaf36174b76e296c24b809425ab4cd2a8d8de846b79af9b85a",
+  "analysisSha256": "3730aab34fd7a9657ad84a9417fcdc80d0f2120538b3fa01e286d0986d07eb2b",
+  "scriptSha256": "a904d9d95f8c429b00f7ef2b0f7bcc833afc25a2eb64fb0c458a449e645a9382",
+  "modelConfigEvidence": "asr/raw-transcript.json model hashes; same existing localtiny.en CPUint8, beam5, no forced script/prompt, no VAD",
+  "methodology": "16 independent local recognitions (8exact/8context), fullsource PCM,100msedge RMS/peak, focused50ms U006tail scan; no human listening claim",
+  "clockMapping": {
+    "from": "decoded PCM / ASR",
+    "to": "verified step1 Opus",
+    "scale": 1,
+    "offsetSeconds": 0,
+    "evidenceSha256": "c9efafab6d22a93d21529db4738921308a0c37ade5955b36800ae7682365a619"
+  },
+  "rows": [
+    {
+      "activityId": "S01-U001",
+      "verdict": "pass-source-acoustic-range",
+      "submittedRange": [
+        6.2,
+        11.75
+      ],
+      "reviewedRange": [
+        6.2,
+        11.75
+      ],
+      "reason": "Exact crop and \u00b1500ms context independently recognize the same complete instruction; both edge windows are low energy and no adjacent enumerator/closing sentence appears.",
+      "exactCropText": "In this step, here mark 1, 1, 3, 13 and put it in your hearts.",
+      "contextText": "In this step, here mark 1, 1, 3, 13 and put it in your hearts.",
+      "edgeEnergy": {
+        "start": {
+          "windowSeconds": [
+            6.15,
+            6.25
+          ],
+          "rmsDbFS": -68.66522884190303,
+          "peakDbFS": -61.36213080959688
+        },
+        "end": {
+          "windowSeconds": [
+            11.7,
+            11.8
+          ],
+          "rmsDbFS": -77.92334491910219,
+          "peakDbFS": -67.58913691351796
+        }
+      },
+      "recognizedDriftUncertaintyRetained": [
+        12,
+        13,
+        23
+      ],
+      "enumerationPolicy": "Question numbers intentionally omitted per operator direction; wording mismatch is not an edge rejection."
+    },
+    {
+      "activityId": "S01-U002",
+      "verdict": "pass-source-acoustic-range",
+      "submittedRange": [
+        13.15,
+        25.5
+      ],
+      "reviewedRange": [
+        13.15,
+        25.5
+      ],
+      "reason": "Exact crop and \u00b1500ms context independently recognize the same complete instruction; both edge windows are low energy and no adjacent enumerator/closing sentence appears.",
+      "exactCropText": "Listen to an audio version of Mark 1, 1, 3, 13, 3 times in three different translations, if possible.  Then, as a group, discuss the following questions.",
+      "contextText": "Listen to an audio version of Mark 1, 1, 3, 13, 3 times in three different translations  if possible.  Then as a group discuss the following questions.",
+      "edgeEnergy": {
+        "start": {
+          "windowSeconds": [
+            13.1,
+            13.200000000000001
+          ],
+          "rmsDbFS": -69.17301378828266,
+          "peakDbFS": -62.82545137271966
+        },
+        "end": {
+          "windowSeconds": [
+            25.45,
+            25.55
+          ],
+          "rmsDbFS": -66.66648138357155,
+          "peakDbFS": -58.24149221844097
+        }
+      },
+      "recognizedDriftUncertaintyRetained": [
+        30,
+        35,
+        41
+      ],
+      "enumerationPolicy": "Question numbers intentionally omitted per operator direction; wording mismatch is not an edge rejection."
+    },
+    {
+      "activityId": "S01-U003",
+      "verdict": "pass-source-acoustic-range",
+      "submittedRange": [
+        27.08,
+        29.38
+      ],
+      "reviewedRange": [
+        27.08,
+        29.38
+      ],
+      "reason": "Exact crop and \u00b1500ms context independently recognize the same complete instruction; both edge windows are low energy and no adjacent enumerator/closing sentence appears.",
+      "exactCropText": "What do you like in this passage?",
+      "contextText": "What do you like in this passage?",
+      "edgeEnergy": {
+        "start": {
+          "windowSeconds": [
+            27.029999999999998,
+            27.13
+          ],
+          "rmsDbFS": -74.34120641786683,
+          "peakDbFS": -56.19393597559288
+        },
+        "end": {
+          "windowSeconds": [
+            29.33,
+            29.43
+          ],
+          "rmsDbFS": -76.37403965565635,
+          "peakDbFS": -66.871678559676
+        }
+      },
+      "recognizedDriftUncertaintyRetained": [],
+      "enumerationPolicy": "Question numbers intentionally omitted per operator direction; wording mismatch is not an edge rejection."
+    },
+    {
+      "activityId": "S01-U004",
+      "verdict": "pass-source-acoustic-range",
+      "submittedRange": [
+        31.26,
+        36.06
+      ],
+      "reviewedRange": [
+        31.26,
+        36.06
+      ],
+      "reason": "Exact crop and \u00b1500ms context independently recognize the same complete instruction; both edge windows are low energy and no adjacent enumerator/closing sentence appears.",
+      "exactCropText": "What do you not like or not understand in this passage?",
+      "contextText": "What do you not like or not understand in this passage?",
+      "edgeEnergy": {
+        "start": {
+          "windowSeconds": [
+            31.21,
+            31.310000000000002
+          ],
+          "rmsDbFS": -60.07314843451404,
+          "peakDbFS": -52.74239438493234
+        },
+        "end": {
+          "windowSeconds": [
+            36.010000000000005,
+            36.11
+          ],
+          "rmsDbFS": -80.87284619360084,
+          "peakDbFS": -69.93126626051533
+        }
+      },
+      "recognizedDriftUncertaintyRetained": [],
+      "enumerationPolicy": "Question numbers intentionally omitted per operator direction; wording mismatch is not an edge rejection."
+    },
+    {
+      "activityId": "S01-U005",
+      "verdict": "pass-source-acoustic-range",
+      "submittedRange": [
+        38.06,
+        41.3
+      ],
+      "reviewedRange": [
+        38.06,
+        41.3
+      ],
+      "reason": "Exact crop and \u00b1500ms context independently recognize the same complete instruction; both edge windows are low energy and no adjacent enumerator/closing sentence appears.",
+      "exactCropText": "What does this passage tell us about Jesus?",
+      "contextText": "What does this passage tell us about Jesus?",
+      "edgeEnergy": {
+        "start": {
+          "windowSeconds": [
+            38.010000000000005,
+            38.11
+          ],
+          "rmsDbFS": -70.52740698696469,
+          "peakDbFS": -59.496912602116225
+        },
+        "end": {
+          "windowSeconds": [
+            41.25,
+            41.349999999999994
+          ],
+          "rmsDbFS": -74.14594800277345,
+          "peakDbFS": -62.94238749840791
+        }
+      },
+      "recognizedDriftUncertaintyRetained": [],
+      "enumerationPolicy": "Question numbers intentionally omitted per operator direction; wording mismatch is not an edge rejection."
+    },
+    {
+      "activityId": "S01-U006",
+      "verdict": "hold-current-edge-accept-proposed-extension",
+      "submittedRange": [
+        43.42,
+        46.46
+      ],
+      "reviewedRange": [
+        43.42,
+        46.85
+      ],
+      "reason": "Submitted46.46s ends amid residual acoustic energy (100msedgeRMS-40.2dBFS). Extend throughtail to46.85s quietgap (~-75dBFS following50ms), before next enumerator at47.64s. Contextrecognition already extends46.96s with same complete sentence and no adjacent words.",
+      "exactCropText": "What does this passage tell us about people?",
+      "contextText": "What does this passage tell us about people?",
+      "edgeEnergy": {
+        "start": {
+          "windowSeconds": [
+            43.370000000000005,
+            43.47
+          ],
+          "rmsDbFS": -73.5954528294296,
+          "peakDbFS": -63.274987589666154
+        },
+        "end": {
+          "windowSeconds": [
+            46.410000000000004,
+            46.51
+          ],
+          "rmsDbFS": -40.197306626806125,
+          "peakDbFS": -32.51805723838336
+        }
+      },
+      "recognizedDriftUncertaintyRetained": [],
+      "enumerationPolicy": "Question numbers intentionally omitted per operator direction; wording mismatch is not an edge rejection."
+    },
+    {
+      "activityId": "S01-U007",
+      "verdict": "pass-source-acoustic-range",
+      "submittedRange": [
+        48.74,
+        52.14
+      ],
+      "reviewedRange": [
+        48.74,
+        52.14
+      ],
+      "reason": "Exact crop and \u00b1500ms context independently recognize the same complete instruction; both edge windows are low energy and no adjacent enumerator/closing sentence appears.",
+      "exactCropText": "How does this passage affect our daily lives?",
+      "contextText": "How does this passage affect our daily lives?",
+      "edgeEnergy": {
+        "start": {
+          "windowSeconds": [
+            48.690000000000005,
+            48.79
+          ],
+          "rmsDbFS": -78.10474355563912,
+          "peakDbFS": -68.17533532910963
+        },
+        "end": {
+          "windowSeconds": [
+            52.09,
+            52.19
+          ],
+          "rmsDbFS": -79.77386489662977,
+          "peakDbFS": -68.05549324443932
+        }
+      },
+      "recognizedDriftUncertaintyRetained": [],
+      "enumerationPolicy": "Question numbers intentionally omitted per operator direction; wording mismatch is not an edge rejection."
+    },
+    {
+      "activityId": "S01-U008",
+      "verdict": "pass-source-acoustic-range",
+      "submittedRange": [
+        54.32,
+        57.64
+      ],
+      "reviewedRange": [
+        54.32,
+        57.64
+      ],
+      "reason": "Exact crop and \u00b1500ms context independently recognize the same complete instruction; both edge windows are low energy and no adjacent enumerator/closing sentence appears.",
+      "exactCropText": "Who do you know who needs to hear this passage?",
+      "contextText": "Who do you know who needs to hear this passage?",
+      "edgeEnergy": {
+        "start": {
+          "windowSeconds": [
+            54.27,
+            54.37
+          ],
+          "rmsDbFS": -84.92684667318639,
+          "peakDbFS": -73.96079070051825
+        },
+        "end": {
+          "windowSeconds": [
+            57.59,
+            57.69
+          ],
+          "rmsDbFS": -69.4828500603124,
+          "peakDbFS": -60.98798576314725
+        }
+      },
+      "recognizedDriftUncertaintyRetained": [],
+      "enumerationPolicy": "Question numbers intentionally omitted per operator direction; wording mismatch is not an edge rejection."
+    }
+  ],
+  "limits": "Source boundary review only; recognition remains uncertain transcript evidence, not certified verbatim speech. U006 submitted endpoint requires the specified change. No automatic advance, Scripture handoff, browser or publication approval implied."
+}

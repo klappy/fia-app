@@ -1,0 +1,228 @@
+{
+  "schema": "fia-recorded-guide-ranges@1",
+  "packId": "eng.MRK-1-1-13",
+  "presentationRevision": "ccd72f23c23f932651b500b730b285f32fabd37e50037b5af91d8881f1403975",
+  "script": {
+    "fileSha256": "938515635c9635e6ed614eab84c1a7e0a4cc3269a3231147431a88dd95bb321c",
+    "contentSha256": "2347d166bf34db52915f3a76f379f1f9afa9ca78a1af163be091541cbaccc898",
+    "repository": "BibleAquifer/FIATranslationGuide",
+    "commit": "5d6d59a22caa8f8539c5ff6a3e1ec74c4cfa5c6d",
+    "path": "eng/json/41.content.json"
+  },
+  "recording": {
+    "url": "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s1/v2/vbr0.mp3",
+    "sha256": "9834ac98fdc57c34e4cc2cb5f813fc5bf050a2283ffc4ce994963bbfa9649d25",
+    "bytes": 1079948,
+    "duration": 60.9023125,
+    "publisherStepVersion": "v2",
+    "rightsEvidenceSha256": "5b057574403eed32278ea1445333537e85b49dcf2c1c8a0ff7f288e78ddf3de7"
+  },
+  "transcript": {
+    "sha256": "4a5b4cadb3bf939a0953c2da93399eda77ee85a7cac0780fc2ef6e1afd9d6f91",
+    "wordTimestampsSha256": "315fde5baad926aa5b8ababe858ee4819054832fc788d107e4847a77e7db700f",
+    "method": "unmodified faster-whisper recognition; verbatim means retained ASR output, not certified speech",
+    "modelRevision": "0d3d19a32d3338f10357c0889762bd8d64bbdeba",
+    "clockDomain": "decoded-pcm",
+    "verbatim": true
+  },
+  "drift": {
+    "reportSha256": "9fdcc3ed0bedb5647c2f1bf04e78f5a4fb71504bac295a6826141308c0dd00c2",
+    "scriptSha256": "2347d166bf34db52915f3a76f379f1f9afa9ca78a1af163be091541cbaccc898",
+    "transcriptSha256": "4a5b4cadb3bf939a0953c2da93399eda77ee85a7cac0780fc2ef6e1afd9d6f91",
+    "reviewEvidenceSha256": "d0337fc86f68d1d93bdf8ae3347aea33c3036d639a9524dec34243d11274a242"
+  },
+  "mappings": [
+    {
+      "id": "S01-U001",
+      "activityId": "S01-U001",
+      "sourceTextSha256": "affdc8e569fa818aab90d16b1fc2f88f95efe409a4ef711e03a028420334d818",
+      "logicalAudio": {
+        "path": "/audio/source/S01-U001.mp3",
+        "sha256": "9287a51008bf6e9c94d8e12e1cbf1bd7abc3c9e985b808bfa23e15e6f19820a6",
+        "bytes": 68127
+      },
+      "wordSpan": {
+        "first": 9,
+        "lastExclusive": 24
+      },
+      "sourceRange": {
+        "startSeconds": 6.2,
+        "endSeconds": 11.75,
+        "clockDomain": "decoded-pcm"
+      },
+      "acceptance": {
+        "recipeRevision": "cookbook-8688a126-original-guide-ranges-v1",
+        "evidenceSha256": "5080c0bca3a242fd84d9ae7e04a736ad5a34113c40b491139793b1f351e2d102",
+        "status": "accepted"
+      }
+    },
+    {
+      "id": "S01-U002",
+      "activityId": "S01-U002",
+      "sourceTextSha256": "b30844ce00feb22d0c8bf5d0a92ed99a43d0de1311b21ca3833785dd5911dee7",
+      "logicalAudio": {
+        "path": "/audio/source/S01-U002.mp3",
+        "sha256": "273ebb9f89f1a92fa833ea17f3917cc7209d888e7366020b52582cb6c0ee02b6",
+        "bytes": 152137
+      },
+      "wordSpan": {
+        "first": 24,
+        "lastExclusive": 51
+      },
+      "sourceRange": {
+        "startSeconds": 13.15,
+        "endSeconds": 25.5,
+        "clockDomain": "decoded-pcm"
+      },
+      "acceptance": {
+        "recipeRevision": "cookbook-8688a126-original-guide-ranges-v1",
+        "evidenceSha256": "82b33c25cbd2d4ee95288df856046ff70bd5111278ecee7f6dc458f64df2d498",
+        "status": "accepted"
+      }
+    },
+    {
+      "id": "S01-U003",
+      "activityId": "S01-U003",
+      "sourceTextSha256": "c6ef6ed4d31b97cf4a0d03a8228505d052a8a780a5fe0413ebc441860df97b5d",
+      "logicalAudio": {
+        "path": "/audio/source/S01-U003.mp3",
+        "sha256": "6e20ea66bac6afb6d8660c85cf4d14ea93b569e93933b881b995d604731bbf9a",
+        "bytes": 29675
+      },
+      "wordSpan": {
+        "first": 52,
+        "lastExclusive": 59
+      },
+      "sourceRange": {
+        "startSeconds": 27.08,
+        "endSeconds": 29.38,
+        "clockDomain": "decoded-pcm"
+      },
+      "acceptance": {
+        "recipeRevision": "cookbook-8688a126-original-guide-ranges-v1",
+        "evidenceSha256": "4428047e6c4f92eb74e47f911b76ea2be5c8e45661f2025d6f0330314965297d",
+        "status": "accepted"
+      }
+    },
+    {
+      "id": "S01-U004",
+      "activityId": "S01-U004",
+      "sourceTextSha256": "e8a93c2c61fe1a0f6f81fa58997b305e6fc98309b710e3a31ff8334e8644a3eb",
+      "logicalAudio": {
+        "path": "/audio/source/S01-U004.mp3",
+        "sha256": "4ea49217dcb16b027d96efedbd4f8e374ece5ae24780a8a0be3fd8c70eeb1bb3",
+        "bytes": 43885
+      },
+      "wordSpan": {
+        "first": 60,
+        "lastExclusive": 71
+      },
+      "sourceRange": {
+        "startSeconds": 31.26,
+        "endSeconds": 36.06,
+        "clockDomain": "decoded-pcm"
+      },
+      "acceptance": {
+        "recipeRevision": "cookbook-8688a126-original-guide-ranges-v1",
+        "evidenceSha256": "6009d43ee546f3ec60b91fa85c9096603ecd207db8d383496985facd1f3fa7f7",
+        "status": "accepted"
+      }
+    },
+    {
+      "id": "S01-U005",
+      "activityId": "S01-U005",
+      "sourceTextSha256": "5df74ebc5c4225c3d54e1629cff92f39a1cc058f2ac30b59d75d68d496d1d0f5",
+      "logicalAudio": {
+        "path": "/audio/source/S01-U005.mp3",
+        "sha256": "fdf8ef831df2082b916eeaaa5fcf615cbde98a8dfed707d8839b11f681c2e35b",
+        "bytes": 34690
+      },
+      "wordSpan": {
+        "first": 72,
+        "lastExclusive": 80
+      },
+      "sourceRange": {
+        "startSeconds": 38.06,
+        "endSeconds": 41.3,
+        "clockDomain": "decoded-pcm"
+      },
+      "acceptance": {
+        "recipeRevision": "cookbook-8688a126-original-guide-ranges-v1",
+        "evidenceSha256": "40ddfe313340e37d80dd21ec12520154b6d53cb65fc4ac6518544bf8ae60c4a7",
+        "status": "accepted"
+      }
+    },
+    {
+      "id": "S01-U006",
+      "activityId": "S01-U006",
+      "sourceTextSha256": "5ec46dee57eb35404b2cea3f9aaa67f2973ac8781088fa05d8073f9e72fdf4c3",
+      "logicalAudio": {
+        "path": "/audio/source/S01-U006.mp3",
+        "sha256": "464fa35de39536b597c6876e5d5fcb5d463068dd69c462e83772571c316ec099",
+        "bytes": 34690
+      },
+      "wordSpan": {
+        "first": 81,
+        "lastExclusive": 89
+      },
+      "sourceRange": {
+        "startSeconds": 43.42,
+        "endSeconds": 46.85,
+        "clockDomain": "decoded-pcm"
+      },
+      "acceptance": {
+        "recipeRevision": "cookbook-8688a126-original-guide-ranges-v1",
+        "evidenceSha256": "83c36f306bd5a09958d220b708f8a0f1b24aab39916a415ab51fdc44ec21dfd7",
+        "status": "accepted"
+      }
+    },
+    {
+      "id": "S01-U007",
+      "activityId": "S01-U007",
+      "sourceTextSha256": "97dd8ff3c182bdac8fd7e57ffe1bf62350452bd66178db6560b7909eb5237842",
+      "logicalAudio": {
+        "path": "/audio/source/S01-U007.mp3",
+        "sha256": "145d0157ed9de5c9422ae9893cc7024d5cdd10d547c5cf03da73a33d2c3b04c7",
+        "bytes": 37198
+      },
+      "wordSpan": {
+        "first": 90,
+        "lastExclusive": 98
+      },
+      "sourceRange": {
+        "startSeconds": 48.74,
+        "endSeconds": 52.14,
+        "clockDomain": "decoded-pcm"
+      },
+      "acceptance": {
+        "recipeRevision": "cookbook-8688a126-original-guide-ranges-v1",
+        "evidenceSha256": "d9714560ebdcaf5b75ce0c087e6d5f9fb2890a5dc87175a218d591e5ee9f6a1c",
+        "status": "accepted"
+      }
+    },
+    {
+      "id": "S01-U008",
+      "activityId": "S01-U008",
+      "sourceTextSha256": "d7a5f7f06349c901d886647055b1f48f7251a9fbfe2b37e509b26e0538704e46",
+      "logicalAudio": {
+        "path": "/audio/source/S01-U008.mp3",
+        "sha256": "0461bbe188579e8adf4f4e4ac1f5eaaa7ee27dc47d58a400773678158bd9f8d3",
+        "bytes": 37198
+      },
+      "wordSpan": {
+        "first": 99,
+        "lastExclusive": 109
+      },
+      "sourceRange": {
+        "startSeconds": 54.32,
+        "endSeconds": 57.64,
+        "clockDomain": "decoded-pcm"
+      },
+      "acceptance": {
+        "recipeRevision": "cookbook-8688a126-original-guide-ranges-v1",
+        "evidenceSha256": "849462351f31dc641e8bbad96d0e7ba5b9fee6e4d76c1b6fa7ea69d7c0d48935",
+        "status": "accepted"
+      }
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "status": "accepted",
+  "scope": "Source/output/R2 identity, full decode and desktop browser media qualification. Application integration, offline playback and physical-device validation are separate release gates.",
+  "runtimeCandidate": "0ee52e39b93b36ad3fe5c92ceb645c18ae97eb5d",
+  "sourceUrl": "https://s3.amazonaws.com/cbbt-er.public/media/videos/a184/720p.mp4",
+  "sourceSha256": "6e792600f8e6befa70a81f19f70358b0b9dae7f2f791325e0b4103335425fa4f",
+  "sourceBytes": 18665321,
+  "delivery": {
+    "url": "https://transcode.klappy.dev/video/preset=fia,q=medium,f=mp4/https://s3.amazonaws.com/cbbt-er.public/media/videos/a184/720p.mp4",
+    "sha256": "bb1e991a78c8bdf146599efc4170caee51b284e7bf48bc23e4a59754f8789d99",
+    "bytes": 3958360,
+    "width": 1280,
+    "height": 720,
+    "duration": 56.469,
+    "mime": "video/mp4",
+    "format": "mp4",
+    "preset": "fia",
+    "q": "medium",
+    "videoCodec": "h264",
+    "audioCodec": "aac",
+    "encoderRevision": "0b97de1099d35e6d8515c4d4fba98ab599487dbb2fa5e34893d6a7b8464c9f8a",
+    "recipeRevision": "fia-video@2",
+    "serverContractSha256": "06ae2a79c1c2ac8e8f0390a3b01807b6494d56c892bc13d1464f4d226aede78d",
+    "cacheKey": "video-v1/696209695af2e9509125149a57eafc45007f054300fa3aee0d071a2de9dd56dd.mp4"
+  },
+  "allocationProof": {
+    "status": "accepted",
+    "maxApplicationPayloadBytes": 50331648,
+    "receiptSha256": "79388d5a7176d6b21c61f6246a2966509292905823c674ed4fef04015a81564a",
+    "scope": "16MiB fixture chunk+contiguous+Blob payload accounting; excludes browser/decoder/GC memory."
+  },
+  "evidence": {
+    "reconciliationSha256": "d28b39026b3382bdb08e0f9169747e516e6273ca448716f8ca1f9d9a10518e74",
+    "browserScope": "a13 previously accepted production Large; a184/a10 actual deployed-media fixture accepted by root",
+    "browserReceiptSha256": "479f5b0f68fae71acae3668d95e20378672e3c7ee1ada5a6dab9b5305c87c617"
+  }
+}

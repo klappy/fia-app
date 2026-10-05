@@ -33,7 +33,7 @@ test('explicit all-resource download verifies real bytes, survives offline reloa
  await page.getByRole('button',{name:'Reload saved version'}).click();await expect(page.getByRole('navigation',{name:'Session controls'})).toBeVisible();
  await context.setOffline(true);await page.reload();await expect(page.getByRole('navigation',{name:'Session controls'})).toBeVisible();expect((await saved(page)).index).toBe(index);
  await expect.poll(()=>page.locator('.visual-viewport img').first().evaluate(img=>img.complete&&img.naturalWidth>0)).toBeTruthy();
- await context.setOffline(false);await downloads();await page.getByRole('button',{name:'Remove from device',exact:true}).click();await page.getByRole('button',{name:'Remove download',exact:true}).click();await expect(page.getByText('Not saved for offline use',{exact:true})).toBeVisible();expect((await saved(page)).index).toBe(index);
+ await context.setOffline(false);await downloads();await page.getByRole('button',{name:'Remove from device',exact:true}).click();await page.getByRole('button',{name:'Remove download',exact:true}).click();await expect(page.getByText('Not saved on this device',{exact:true})).toBeVisible();expect((await saved(page)).index).toBe(index);
 });
 
 test('text-only download and restore issue no resource media requests',async({page,context})=>{
