@@ -9,3 +9,12 @@ test('release closure rejects corrupted source and every mismatched output bindi
  assert.throws(()=>verifyManifestFile(file,raw,null,revision));assert.throws(()=>verifyManifestFile(file,raw,{entries:[]},revision));
  const wrong=structuredClone(entry);wrong.source.url='https://fiaguide.app/audio/other.mp3';assert.throws(()=>verifyManifestFile(file,raw,{entries:[wrong]},revision));
 });
+
+test('v2 replacement binds bundled, published and derivative identities separately',()=>{
+ const e={...structuredClone(entry),logicalSource:{sha256:sha,bytes:raw.length},source:{url:'https://publisher.test/hq.mp4',sha256:'e'.repeat(64),bytes:100},delivery:{...entry.delivery,kind:'video',mime:'video/mp4'}};
+ const f={...file,sourceSha256:e.source.sha256,sourceBytes:100,logicalSourceSha256:sha,logicalSourceBytes:raw.length,group:'video',mime:'video/mp4'};
+ verifyManifestFile(f,raw,{schema:2,entries:[e]},revision);
+ for(const key of ['sourceSha256','logicalSourceSha256','sourceBytes','logicalSourceBytes','sha256'])assert.throws(()=>verifyManifestFile({...f,[key]:0},raw,{schema:2,entries:[e]},revision));
+ assert.throws(()=>verifyManifestFile(f,Buffer.from('corrupt'),{schema:2,entries:[e]},revision));
+ assert.throws(()=>verifyManifestFile(f,raw,{schema:1,entries:[e]},revision));
+});

@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.0.0-alpha.13 — Prepared videos on demand (2026-10-05)
+
+The three first-English companion videos can play after explicit Play without an offline download. Verified proxy outputs retain separate bundled-source and published-source provenance, bounded loading and native video ownership. See [release note](release/changes/3.0.0-alpha.13-video-on-demand.md).
+
 ## 3.0.0-alpha.12 — Media tap and swipe intent (2026-10-05)
 
 Resting media surfaces support existing previous/next passage swipes without opening a visual. A completed tap opens images/maps; pinch, drag, stale activity changes and native video controls retain their separate behavior. No spacing changes. See [release note](release/changes/3.0.0-alpha.12-media-gestures.md).
