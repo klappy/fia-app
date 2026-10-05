@@ -29,3 +29,5 @@ test('real retained pilot source traverses generic pipeline and warm restart avo
  const first=await createPipeline(base).run(input);assert.equal(first.reason,'review-required');assert.equal(f.calls,1);assert.equal(publishes,0);
  const second=await createPipeline({...base,adapters:{...adapters,transcribe:{paid:true,run:()=>{throw Error('offline');}}}}).run(input);assert.equal(second.reason,'review-required');assert.equal(f.calls,1);assert.equal(publishes,0);
 });
+
+test('alignment refuses false or missing validation acknowledgement',async()=>{const f=await fixture();for(const value of [false,undefined])await assert.rejects(createAlignmentAdapter({resolveArtifact:f.resolveArtifact,storeArtifact:f.storeArtifact,resolveUnits:async()=>({}),recognitionSchema:'fia-hosted-raw-recognition@1',recognitionValidator:async()=>value}).run({...f.context,nodeOutputs:{...f.context.nodeOutputs,transcribe:f.artifact}}),/recognition-validation/);});

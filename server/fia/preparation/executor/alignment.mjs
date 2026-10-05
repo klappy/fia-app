@@ -15,7 +15,7 @@ export function createAlignmentAdapter({resolveArtifact,resolveUnits,storeArtifa
   input=structuredClone(input);nodeOutputs=structuredClone(nodeOutputs);
   const raw=await retainedJSON(nodeOutputs.transcribe,resolveArtifact),script=structuredClone(await resolveUnits(structuredClone(input)));
   if(raw.schema!==recognitionSchema||raw.status!=='candidate'||raw.source?.sha256!==nodeOutputs.acquire?.sha256||!hash(raw.source?.sha256)||!Number.isFinite(raw.durationSeconds)||raw.durationSeconds<=0||raw.durationSeconds>600||!Array.isArray(raw.segments))throw Error('alignment-recognition-binding');
-  await recognitionValidator(raw,input);
+  if(await recognitionValidator(raw,input)!==true)throw Error('alignment-recognition-validation');
   if(script.scriptSha256!==input.scriptSha256||!hash(script.scriptSha256)||!Array.isArray(script.units)||!script.units.length||script.units.length>1000)throw Error('alignment-script-binding');
   const words=raw.segments.flatMap(segment=>{if(!Array.isArray(segment.words))throw Error('invalid-recognition-words');return segment.words;});if(words.length>10000)throw Error('alignment-word-limit');
   const heard=[],wordIndexes=[];let lastStart=0,lastEnd=0,wordTextLength=0;

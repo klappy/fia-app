@@ -14,8 +14,10 @@ export function createHostedRecognitionAdapter({namespace,config,resolveArtifact
   if(canonicalJSONString(request.modelRecipe)!==canonicalJSONString(await hostedModelRecipe(pinned))||request.language!==pinned.identity.language||outputs.acquire?.sha256!==pinned.identity.sourceSha256)throw Error('hosted-pipeline-identity');
   const result=await namespace.get(namespace.idFromName('asr-pilot-v1')).pilotA();
   if(result?.state!=='completed'||result.stopVerified!==true||!result.artifact)throw Error('hosted-pipeline-unresolved');
-  const descriptor=structuredClone(result.artifact),bytes=await resolveArtifact(descriptor);
-  if(!(bytes instanceof Uint8Array)||bytes.length>1048576||await sha256(bytes)!==descriptor.sha256||descriptor.reference!==`recognition/sha256/${descriptor.sha256}.json`)throw Error('hosted-pipeline-artifact');
+  const descriptor=structuredClone(result.artifact),retained=await resolveArtifact(structuredClone(descriptor));
+  if(!(retained instanceof Uint8Array)||retained.length>1048576)throw Error('hosted-pipeline-artifact');
+  const bytes=retained.slice();
+  if(await sha256(bytes)!==descriptor.sha256||descriptor.reference!==`recognition/sha256/${descriptor.sha256}.json`)throw Error('hosted-pipeline-artifact');
   await validateRawRecognition(bytes,pinned.identity);
   return descriptor;
  }};
