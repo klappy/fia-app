@@ -26,7 +26,7 @@ it('opens by tapping the visual or keyboard activation without a zoom toolbar',a
  await fireEvent.keyDown(visual,{key:'Enter'});await fireEvent.keyDown(visual,{key:' '});expect(onexpand).toHaveBeenCalledTimes(3);
 });
 
-it.each(['pointer','wheel','keyboard'])('%s interaction expands the inline image without changing its fitted view',async(method)=>{
+it.each(['pointer','wheel','keyboard'])('%s interaction respects inline intent without changing its fitted view',async(method)=>{
  const onexpand=vi.fn();render(ZoomableVisual,{asset,onexpand});const visual=screen.getByRole('button');
  if(method==='pointer'){
   await fireEvent.pointerDown(visual,{pointerId:1,clientX:100,clientY:100});
@@ -34,6 +34,6 @@ it.each(['pointer','wheel','keyboard'])('%s interaction expands the inline image
   await fireEvent.pointerMove(visual,{pointerId:2,clientX:300,clientY:150});
  }else if(method==='wheel')await fireEvent.wheel(visual,{deltaY:-100,clientX:200,clientY:200});
  else{await fireEvent.keyDown(visual,{key:'+'});await fireEvent.keyDown(visual,{key:'ArrowLeft'});}
- expect(onexpand).toHaveBeenCalled();
+ if(method==='pointer')expect(onexpand).not.toHaveBeenCalled();else expect(onexpand).toHaveBeenCalled();
  expect(screen.getByRole('img').style.transform).toBe('translate(0px,0px) scale(1)');
 });
