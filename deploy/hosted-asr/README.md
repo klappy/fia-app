@@ -20,3 +20,19 @@ The next build must use an independently reviewed immutable Linux/amd64 base ima
 The two fixed test ledgers A/B share one durable two-start budget. The `sharedBudget` name here is a contract requirement, not enforcement. Server dispatch/budget/watchdog code is independently owned and must be reviewed with this image before any start. Warm reuse, failure/uncertainty fencing, shutdown evidence and output validation remain required. No public caller key or public ledger selection is introduced. Production/staging and current app Wrangler files are untouched.
 
 Focused tests: `node --test tests/preparation-hosted-asr/locks.test.mjs`. Root test discovery is not changed. Input acquisition did not build/run a container or demonstrate hosted transcription, accepted timing, highlighting, deployment readiness or universal recognition confidence.
+
+## Executable local build handoff
+
+No existing `docker`, `podman`, `nerdctl`, `finch`, `colima` or `limactl` executable was found on PATH; the standard Docker.app CLI path and common Homebrew Docker/Podman/Colima paths were also absent. No runtime was installed. `base-image.lock.json` records the primary Docker registry's Linux/amd64 manifest, whose actual response bytes matched both the selected child digest and the registry digest header. Image layers have **not** been acquired or executed. The Dockerfile uses that immutable digest, not the discovery tag.
+
+`prepare-build.mjs` verifies retained inputs, copies into a new context, then verifies the copies before adding the Dockerfile and recognizer. It performs no build or start. Example from the repository:
+
+```sh
+node deploy/hosted-asr/prepare-build.mjs /absolute/path/work/hosted-asr-build /absolute/path/work/hosted-asr-context
+```
+
+With an authorized existing Linux container runtime, the next operator can build that context with `docker build --platform linux/amd64 --network=none -t fia-asr-local:review /absolute/path/work/hosted-asr-context`. The base-image retrieval is a separate prerequisite if it is not already local. The pip layer installs only retained wheels using `--no-index --require-hashes`. Record the resulting image digest and actual runtime versions; an image tag is not a deployment pin.
+
+`recognize.py` is an executable single-job container candidate, **not** the HTTP/private hosted dispatch integration. It accepts only the pinned p2 bytes at `/input/source.mp3`; verifies all model bytes; enforces the 16 KiB input, 90-second decoded audio, 2,000-word and 1 MiB output bounds; and sets a 300-second process alarm. It writes candidate words and immutable raw/model/script/decoder identities, never accepted playback ranges. Its local Python validation tests do not load a model. Actual decoding/inference compatibility remains untested.
+
+The proposed local runner must mount `/input` read-only, use an immutable image digest, and supply `--network=none --read-only --memory=4g --memory-swap=4g --cpus=2 --pids-limit=128 --cap-drop=ALL --security-opt=no-new-privileges --tmpfs /scratch:rw,noexec,nosuid,size=268435456,mode=1777`. Copy the result from the bounded scratch mount before removing the stopped container. These are executable Docker settings, **not measured enforcement evidence**. Do not pass `executor.limitsEnforced:true` until independent real-runtime tests prove enforcement. SIGALRM alone cannot prove timely termination of a blocked native library: the separately owned external watchdog must stop the entire process/container and verify stopped state. Container readiness, idle and activation deadlines, durable two-start debit, fixed ledgers, private transport, output validator and image-limit receipts remain integration gates before activation.
