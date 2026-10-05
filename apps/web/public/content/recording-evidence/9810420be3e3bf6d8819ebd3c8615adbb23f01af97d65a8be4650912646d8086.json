@@ -1,0 +1,56 @@
+{
+  "status": "accepted",
+  "recipeRevision": "multiple-recorded-guide-sources-344959d",
+  "packId": "eng.MRK-1-1-13",
+  "presentationRevision": "ccd72f23c23f932651b500b730b285f32fabd37e50037b5af91d8881f1403975",
+  "mapping": {
+    "id": "S02-U001",
+    "activityId": "S02-U001",
+    "sourceTextSha256": "40915459d3070b081f6298ca4a7a52a1f5a10ce875b7de37380cf051b9438494",
+    "logicalAudio": {
+      "path": "/audio/source/S02-U001.mp3",
+      "sha256": "4a315a8a787be527bd9ac4925950e677a7cd2679250fbe084693e63418ba514d",
+      "bytes": 93622
+    },
+    "wordSpan": {
+      "first": 9,
+      "lastExclusive": 26
+    },
+    "sourceRange": {
+      "startSeconds": 6.21,
+      "endSeconds": 14.2,
+      "clockDomain": "decoded-pcm"
+    }
+  },
+  "script": {
+    "fileSha256": "938515635c9635e6ed614eab84c1a7e0a4cc3269a3231147431a88dd95bb321c",
+    "contentSha256": "2347d166bf34db52915f3a76f379f1f9afa9ca78a1af163be091541cbaccc898",
+    "repository": "BibleAquifer/FIATranslationGuide",
+    "commit": "5d6d59a22caa8f8539c5ff6a3e1ec74c4cfa5c6d",
+    "path": "eng/json/41.content.json"
+  },
+  "recording": {
+    "url": "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+    "sha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+    "bytes": 8975276,
+    "duration": 498.75925,
+    "publisherStepVersion": "v2.1",
+    "rightsEvidenceSha256": "492a145f5bc3c1f288bb5cb5dadcaa60f7b144cba243f84aeb44c43832cb1860"
+  },
+  "transcript": {
+    "sha256": "879f5543e09398edba01ea43fa39e9a78a372a252a1ddab82de82369e5b5f8cb",
+    "wordTimestampsSha256": "ad9a079f4534ea2a7e3b2657c5820c3b9091a8bd2cf8bb0d11d0557145ce2dfd",
+    "method": "Unmodified ASR recognition; zero-duration points retained as uncertain estimates, not word highlights.",
+    "modelRevision": "0d3d19a32d3338f10357c0889762bd8d64bbdeba",
+    "clockDomain": "decoded-pcm",
+    "verbatim": true
+  },
+  "drift": {
+    "reportSha256": "d7afe0e47a69c568c8eb91b46239c26ae42b205320e9307d2b60e722b46c0a34",
+    "scriptSha256": "2347d166bf34db52915f3a76f379f1f9afa9ca78a1af163be091541cbaccc898",
+    "transcriptSha256": "879f5543e09398edba01ea43fa39e9a78a372a252a1ddab82de82369e5b5f8cb",
+    "reviewEvidenceSha256": "9460ad440f1fa11cfb91c0a928dc95e9c856fa085bb6391f18a7a0e998f3a58f"
+  },
+  "scope": "Source-range candidate for private browser verification; publication gate pending actual browser.",
+  "rangeReviewSha256": "32a51f38d52cc7460bcadf15a0560a6bf09f8bcd76960143b1a0669335829c6e"
+}

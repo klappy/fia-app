@@ -1,6 +1,13 @@
 /** Timings are media seconds, never wall-clock estimates. Hold the last word in gaps. */
 export function alignmentPosition(alignment, elapsed) {
   if (!alignment?.verses?.length || !Number.isFinite(elapsed) || elapsed < 0 || elapsed > alignment.duration) return null;
+  if(alignment.schemaVersion===2){
+    const verseIndex=alignment.verses.findIndex(v=>elapsed>=v.start&&elapsed<v.end);
+    if(verseIndex<0)return null;
+    const verse=alignment.verses[verseIndex];
+    const wordIndex=verse.highlightMode==='verse'?-1:verse.words.findIndex(w=>elapsed>=w.start&&elapsed<w.end);
+    return {verseIndex,wordIndex};
+  }
   let verseIndex = 0;
   for (let i = 1; i < alignment.verses.length; i++) {
     if (alignment.verses[i].start > elapsed) break;

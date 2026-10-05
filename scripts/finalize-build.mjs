@@ -2,7 +2,10 @@ import {readdirSync,readFileSync,writeFileSync,mkdirSync,copyFileSync,statSync} 
 import {join} from 'node:path';
 import {marked} from 'marked';
 import {createHash} from 'node:crypto';
-import {validateDelivery} from '../apps/web/src/lib/media-delivery.js';
+import {verifyScriptureAudioReplacement} from './scripture-audio-publication.mjs';
+import {verifyRecordedGuideReplacement} from './recorded-guide-publication.mjs';
+import {verifyVideoReplacement} from './video-publication.mjs';
+import {validateDelivery,deliveryVariant} from '../apps/web/src/lib/media-delivery.js';
 mkdirSync('dist/docs',{recursive:true});
 for(const file of ['V3-BLUEPRINT.md','TEST-GUIDE.md','CONTENT-RECEIPT.md']){
  const source=readFileSync(join('apps/web/docs',file),'utf8');copyFileSync(join('apps/web/docs',file),join('dist/docs',file));
@@ -19,7 +22,8 @@ const mediaPath=path=>/\.(mp3|m4a|wav|ogg|mp4|webm|jpe?g|png|webp)$/.test(path)&
 const shell=allFiles.filter(path=>!mediaPath(path)).map(digest);
 const buildId=createHash('sha256').update(JSON.stringify(shell)).digest('hex').slice(0,12);
 const deliveryHelpers=readFileSync(new URL('../apps/web/src/lib/media-delivery.js',import.meta.url),'utf8').replace(/export (?=(?:async )?function)/g,'');
-writeFileSync('dist/sw.js',deliveryHelpers+'\n'+readFileSync('apps/web/public/sw.js','utf8').replace('__BUILD_ID__',buildId));
+const proxyHelpers=readFileSync(new URL('../apps/web/src/lib/proxy-request.js',import.meta.url),'utf8').replace(/export (?=(?:async )?function)/g,'');
+writeFileSync('dist/sw.js',deliveryHelpers+'\n'+proxyHelpers+'\n'+readFileSync('apps/web/public/sw.js','utf8').replace('__BUILD_ID__',buildId));
 const registryPath='dist/content/registry.json';
 let registry;
 try{registry=JSON.parse(readFileSync(registryPath,'utf8'));}catch(error){if(error.code!=='ENOENT')throw error;}
@@ -34,7 +38,10 @@ if(registry){
   const path=dir+'/'+names[0],bytes=readFileSync(path),sha256=createHash('sha256').update(bytes).digest('hex');
   if(names[0]!==sha256+'.json')throw Error('Delivery filename must bind exact bytes.');
   const sidecar=validateDelivery(JSON.parse(bytes),{packId:descriptor.id,presentationRevision:descriptor.revision});
-  deliveries.set(descriptor.id,{sidecar,path,sha256});deliveryIndex.packs.push({packId:descriptor.id,presentationRevision:descriptor.revision,delivery:{url:'/'+path.slice(5),sha256,bytes:bytes.length}});
+  let ledger=null;if(sidecar.schema>=2){const ref=sidecar.sourceLedger,raw=readFileSync('dist'+ref.url);if(raw.length!==ref.bytes||createHash('sha256').update(raw).digest('hex')!==ref.sha256)throw Error('Video source ledger integrity mismatch.');ledger=JSON.parse(raw);}
+  const recordingLedgers=new Map();let recordingLedger=null;if(sidecar.schema>=4){const ref=sidecar.recordingLedger,raw=readFileSync('dist'+ref.url);if(raw.length!==ref.bytes||createHash('sha256').update(raw).digest('hex')!==ref.sha256)throw Error('Recording ledger integrity mismatch.');recordingLedger=JSON.parse(raw);recordingLedgers.set(ref.sha256,recordingLedger);for(const extra of sidecar.recordingLedgers||[]){const b=readFileSync('dist'+extra.url);if(b.length!==extra.bytes||createHash('sha256').update(b).digest('hex')!==extra.sha256)throw Error('Recording ledger integrity mismatch.');recordingLedgers.set(extra.sha256,JSON.parse(b));}}
+  let scriptureLedger=null;if(sidecar.schema===5){const ref=sidecar.scriptureSourceLedger,raw=readFileSync('dist'+ref.url);if(raw.length!==ref.bytes||createHash('sha256').update(raw).digest('hex')!==ref.sha256)throw Error('Scripture ledger integrity mismatch.');scriptureLedger=JSON.parse(raw);}
+  deliveries.set(descriptor.id,{sidecar,path,sha256,ledger,recordingLedger,recordingLedgers,scriptureLedger});deliveryIndex.packs.push({packId:descriptor.id,presentationRevision:descriptor.revision,delivery:{url:'/'+path.slice(5),sha256,bytes:bytes.length}});
  }
  mkdirSync('dist/content/delivery',{recursive:true});writeFileSync('dist/content/delivery/index.json',JSON.stringify(deliveryIndex));
  mkdirSync('dist/offline',{recursive:true});
@@ -47,13 +54,21 @@ if(registry){
   const delivery=deliveries.get(descriptor.id),media=Array.from(selected).sort().map(digest);
   if(delivery){
    const byPath=new Map(delivery.sidecar.entries.map(e=>[e.path,e]));
-   for(const f of media){if(f.group==='video')continue;const e=byPath.get(f.path);if(!e)throw Error('Incomplete delivery coverage: '+f.path);if(e.delivery.kind!==f.group)throw Error('Delivery media kind mismatch: '+f.path);if(new URL(e.source.url).pathname!==f.path)throw Error('Delivery source URL mismatch: '+f.path);if(e.source.sha256!==f.sha256||e.source.bytes!==f.bytes)throw Error('Delivery source mismatch: '+f.path);
-    const aligned=Object.values(pack.assets).find(a=>a.alignment?.audioSha256===f.sha256);if(aligned&&(e.timing.status!=='verified'||e.timing.alignmentSha256!==createHash('sha256').update(JSON.stringify(aligned.alignment)).digest('hex')))throw Error('Unverified Scripture alignment: '+f.path);
+   const apply=(f,e)=>{
+if(e.delivery.kind!==f.group)throw Error('Delivery media kind mismatch: '+f.path);if(f.group==='video'){Object.assign(f,verifyVideoReplacement({entry:e,ledger:delivery.ledger,pack,descriptor,file:f,readEvidence:hash=>readFileSync('dist/content/video-evidence/'+hash+'.json')}));}else if(e.scriptureReplacement){Object.assign(f,verifyScriptureAudioReplacement({entry:e,ledger:delivery.scriptureLedger,pack,descriptor,file:f,readEvidence:hash=>readFileSync('dist/content/scripture-evidence/'+hash+'.json'),readAlignment:url=>readFileSync('dist'+url)}),{scriptureLedgerSha256:delivery.sidecar.scriptureSourceLedger.sha256});}else if(e.audioReplacement){Object.assign(f,verifyRecordedGuideReplacement({entry:e,ledger:delivery.recordingLedgers.get(e.audioReplacement.recordingLedgerSha256||delivery.sidecar.recordingLedger.sha256),pack,descriptor,file:f,readEvidence:hash=>readFileSync('dist/content/recording-evidence/'+hash+'.json')}),{recordingLedgerSha256:e.audioReplacement.recordingLedgerSha256||delivery.sidecar.recordingLedger.sha256});}else {if(new URL(e.source.url).pathname!==f.path)throw Error('Delivery source URL mismatch: '+f.path);if(e.source.sha256!==f.sha256||e.source.bytes!==f.bytes)throw Error('Delivery source mismatch: '+f.path);}
+    const aligned=Object.values(pack.assets).find(a=>a.alignment?.audioSha256===f.sha256);if(aligned&&!e.scriptureReplacement&&(e.timing.status!=='verified'||e.timing.alignmentSha256!==createHash('sha256').update(JSON.stringify(aligned.alignment)).digest('hex')))throw Error('Unverified Scripture alignment: '+f.path);
     Object.assign(f,{sha256:e.delivery.sha256,bytes:e.delivery.bytes,mime:e.delivery.mime,deliveryURL:e.delivery.url,sourceSha256:e.source.sha256,deliveryRevision:delivery.sha256,timing:e.timing});
+    return f;
+   };
+   for(const f of media){
+    if(f.group==='video'&&delivery.sidecar.schema===1)continue;
+    const e=byPath.get(f.path);if(!e)throw Error('Incomplete delivery coverage: '+f.path);const raw={...f};
+    apply(f,e);
+    if(delivery.sidecar.schema>=3){f.defaultSize=e.defaultSize;f.variants=Object.fromEntries(Object.keys(e.variants).map(size=>[size,apply({...raw},deliveryVariant(e,size))]));}
    }
-   if(byPath.size!==media.filter(f=>f.group!=='video').length)throw Error('Unexpected delivery entries.');
+   if(byPath.size!==media.filter(f=>delivery.sidecar.schema>=2||f.group!=='video').length)throw Error('Unexpected delivery entries.');
   }
-  const entries=[...shell,digest(registryPath),digest(payloadPath),digest('dist/content/delivery/index.json'),...(delivery?[digest(delivery.path)]:[]),...media];
+  const entries=[...shell,digest(registryPath),digest(payloadPath),digest('dist/content/delivery/index.json'),...(delivery?[digest(delivery.path),...(delivery.ledger?[digest('dist'+delivery.sidecar.sourceLedger.url)]:[]),...(delivery.recordingLedger?[digest('dist'+delivery.sidecar.recordingLedger.url),...(delivery.sidecar.recordingLedgers||[]).map(r=>digest('dist'+r.url))]:[]),...(delivery.scriptureLedger?[digest('dist'+delivery.sidecar.scriptureSourceLedger.url),...Array.from(new Set(delivery.sidecar.entries.flatMap(e=>e.scriptureReplacement?[e.scriptureAlignment.url,...Object.values(e.variants).map(v=>v.scriptureAlignment.url)]:[]))).map(url=>digest('dist'+url))]:[])]:[]),...media];
   const revision=createHash('sha256').update(JSON.stringify(entries)).digest('hex').slice(0,12);
   const manifest={schema:1,packId:descriptor.id,presentationRevision:descriptor.revision,...(delivery?{deliveryRevision:delivery.sha256}:{}),revision,files:entries};
   writeFileSync(`dist/offline/${descriptor.id}.json`,JSON.stringify(manifest));

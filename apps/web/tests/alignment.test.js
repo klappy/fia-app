@@ -56,3 +56,16 @@ test('glass reading area excludes asymmetric chrome while preserving its clear c
  assert.equal(followScrollTop(rect,{top:450,bottom:480},0,1800),136);
  assert.equal(clearReadingRect({top:0,bottom:200,height:200},154,64).height,0);
 });
+
+ test('delivery alignment uses half-open verse boundaries and honest verse-only fallback',()=>{
+ const a={schemaVersion:2,duration:100,verses:[
+ {start:70,end:77.76,highlightMode:'verse',words:[]},
+ {start:77.76,end:80,highlightMode:'word',words:[{start:77.76,end:78},{start:79,end:80}]},
+ {start:81,end:85,highlightMode:'verse',words:[]}]};
+ assert.deepEqual(alignmentPosition(a,77.75),{verseIndex:0,wordIndex:-1});
+ assert.deepEqual(alignmentPosition(a,77.76),{verseIndex:1,wordIndex:0});
+ assert.deepEqual(alignmentPosition(a,78.5),{verseIndex:1,wordIndex:-1});
+ assert.equal(alignmentPosition(a,80),null);
+ assert.deepEqual(alignmentPosition(a,82),{verseIndex:2,wordIndex:-1});
+ assert.equal(alignmentPosition(a,85),null);
+ });

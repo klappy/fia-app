@@ -1,0 +1,2210 @@
+{
+  "schema": 1,
+  "status": "raw-asr-unreviewed-not-verbatim-certified",
+  "scope": "Local recognition only; no TTS, paid calls, remote fetch, script prompt, forced alignment or product edits. Word timestamps are model estimates, not accepted playback boundaries.",
+  "source": {
+    "sha256": "d0f0c608fb2c8b59aaf16ce72047978d0056a109354997ae982e81bb32451ef6",
+    "bytes": 1733204,
+    "url": "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s6/v2/vbr0.mp3"
+  },
+  "model": {
+    "name": "Systran/faster-whisper-tiny.en",
+    "snapshot": "0d3d19a32d3338f10357c0889762bd8d64bbdeba",
+    "files": {
+      "config.json": {
+        "sha256": "14b1b421a90349bc551b881461426b561a874049cb9e4c4864f2ca384f6a7cc5",
+        "bytes": 2317
+      },
+      "model.bin": {
+        "sha256": "1a5afae06a4db91c975c9a9d78be5cc110ee4ea022ad57d55492e4550e936b2a",
+        "bytes": 75537502
+      },
+      "tokenizer.json": {
+        "sha256": "929c5252409436dce1b38a75d1abbcb5e132d170d8e324e4e04ed915fa2d22df",
+        "bytes": 2128466
+      },
+      "vocabulary.txt": {
+        "sha256": "ff77588746d3a2595d32ab5b69ffd7b95ce2441ac57533cb66fc3eb575a115cf",
+        "bytes": 422309
+      }
+    },
+    "device": "cpu",
+    "computeType": "int8",
+    "cpuThreads": 4
+  },
+  "runtime": {
+    "python": "3.12.14",
+    "faster-whisper": "1.2.1",
+    "ctranslate2": "4.8.2",
+    "av": "19.0.1",
+    "numpy": "2.5.3"
+  },
+  "recognitionConfig": {
+    "language": "en",
+    "task": "transcribe",
+    "log_progress": false,
+    "beam_size": 5,
+    "best_of": 5,
+    "patience": 1,
+    "length_penalty": 1,
+    "repetition_penalty": 1,
+    "no_repeat_ngram_size": 0,
+    "temperature": [
+      0.0,
+      0.2,
+      0.4,
+      0.6,
+      0.8,
+      1.0
+    ],
+    "compression_ratio_threshold": 2.4,
+    "log_prob_threshold": -1.0,
+    "no_speech_threshold": 0.6,
+    "condition_on_previous_text": false,
+    "prompt_reset_on_temperature": 0.5,
+    "initial_prompt": null,
+    "prefix": null,
+    "suppress_blank": true,
+    "suppress_tokens": [
+      -1
+    ],
+    "without_timestamps": false,
+    "max_initial_timestamp": 1.0,
+    "word_timestamps": true,
+    "prepend_punctuations": "\"'\u201c\u00bf([{-",
+    "append_punctuations": "\"'.\u3002,\uff0c!\uff01?\uff1f:\uff1a\u201d)]}\u3001",
+    "multilingual": false,
+    "vad_filter": false,
+    "vad_parameters": null,
+    "max_new_tokens": null,
+    "chunk_length": null,
+    "clip_timestamps": "0",
+    "hallucination_silence_threshold": null,
+    "hotwords": null,
+    "language_detection_threshold": 0.5,
+    "language_detection_segments": 1
+  },
+  "decoder": {
+    "library": "PyAV",
+    "output": "mono float32 16000Hz",
+    "samples": 1619696,
+    "sha256": "9a7ecf51df9ddb526cdde587d080d65366d1f6c43a6844f1fe308f2c90cbdbef",
+    "timeline": "decoded PyAV samples beginning at zero; no conversion to Apple playback timeline asserted"
+  },
+  "duration": 101.231,
+  "elapsedSeconds": 3.4898453750647604,
+  "scriptSha256": "c6c3dc670eff9aff2c80b560b359bd09bbcb74cdefb9fc76dc92ba644089f3f8",
+  "wordCount": 237,
+  "segments": [
+    {
+      "id": 1,
+      "seek": 0,
+      "start": 1.4800000000000058,
+      "end": 7.38,
+      "text": " 6. Speaking the word, Mark 1, 1 through 13.",
+      "tokens": [
+        50363,
+        718,
+        13,
+        21393,
+        262,
+        1573,
+        11,
+        2940,
+        352,
+        11,
+        352,
+        832,
+        1511,
+        13,
+        50789
+      ],
+      "avg_logprob": -0.23522061492715562,
+      "compression_ratio": 1.5628415300546448,
+      "no_speech_prob": 0.11649305373430252,
+      "words": [
+        {
+          "start": 1.4800000000000058,
+          "end": 2.08,
+          "word": " 6.",
+          "probability": 0.45742952823638916
+        },
+        {
+          "start": 2.86,
+          "end": 3.16,
+          "word": " Speaking",
+          "probability": 0.8503204584121704
+        },
+        {
+          "start": 3.16,
+          "end": 3.62,
+          "word": " the",
+          "probability": 0.9757803678512573
+        },
+        {
+          "start": 3.62,
+          "end": 4.38,
+          "word": " word,",
+          "probability": 0.910798966884613
+        },
+        {
+          "start": 4.92,
+          "end": 5.18,
+          "word": " Mark",
+          "probability": 0.4782730042934418
+        },
+        {
+          "start": 5.18,
+          "end": 5.92,
+          "word": " 1,",
+          "probability": 0.9221851229667664
+        },
+        {
+          "start": 5.96,
+          "end": 6.48,
+          "word": " 1",
+          "probability": 0.9140830636024475
+        },
+        {
+          "start": 6.48,
+          "end": 6.72,
+          "word": " through",
+          "probability": 0.7619122266769409
+        },
+        {
+          "start": 6.72,
+          "end": 7.38,
+          "word": " 13.",
+          "probability": 0.9847555756568909
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 2,
+      "seek": 0,
+      "start": 8.62,
+      "end": 12.9,
+      "text": " Listen to an audio version of the passage in the easiest to understand translation.",
+      "tokens": [
+        50789,
+        20600,
+        284,
+        281,
+        6597,
+        2196,
+        286,
+        262,
+        10066,
+        287,
+        262,
+        16638,
+        284,
+        1833,
+        11059,
+        13,
+        51055
+      ],
+      "avg_logprob": -0.23522061492715562,
+      "compression_ratio": 1.5628415300546448,
+      "no_speech_prob": 0.11649305373430252,
+      "words": [
+        {
+          "start": 8.62,
+          "end": 8.74,
+          "word": " Listen",
+          "probability": 0.931786060333252
+        },
+        {
+          "start": 8.74,
+          "end": 8.96,
+          "word": " to",
+          "probability": 0.9986318945884705
+        },
+        {
+          "start": 8.96,
+          "end": 9.3,
+          "word": " an",
+          "probability": 0.9798690676689148
+        },
+        {
+          "start": 9.3,
+          "end": 9.3,
+          "word": " audio",
+          "probability": 0.9407801032066345
+        },
+        {
+          "start": 9.3,
+          "end": 9.74,
+          "word": " version",
+          "probability": 0.997786283493042
+        },
+        {
+          "start": 9.74,
+          "end": 9.9,
+          "word": " of",
+          "probability": 0.9957365989685059
+        },
+        {
+          "start": 9.9,
+          "end": 10.1,
+          "word": " the",
+          "probability": 0.9924445748329163
+        },
+        {
+          "start": 10.1,
+          "end": 10.36,
+          "word": " passage",
+          "probability": 0.9956525564193726
+        },
+        {
+          "start": 10.36,
+          "end": 10.6,
+          "word": " in",
+          "probability": 0.9709349274635315
+        },
+        {
+          "start": 10.6,
+          "end": 10.9,
+          "word": " the",
+          "probability": 0.9933716058731079
+        },
+        {
+          "start": 10.9,
+          "end": 11.16,
+          "word": " easiest",
+          "probability": 0.9958939552307129
+        },
+        {
+          "start": 11.16,
+          "end": 11.64,
+          "word": " to",
+          "probability": 0.9517245888710022
+        },
+        {
+          "start": 11.64,
+          "end": 12.12,
+          "word": " understand",
+          "probability": 0.9910265803337097
+        },
+        {
+          "start": 12.12,
+          "end": 12.9,
+          "word": " translation.",
+          "probability": 0.997766375541687
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 3,
+      "seek": 0,
+      "start": 13.9,
+      "end": 18.08,
+      "text": " In this session, retell the passage as a group in your own language.",
+      "tokens": [
+        51055,
+        554,
+        428,
+        6246,
+        11,
+        302,
+        33331,
+        262,
+        10066,
+        355,
+        257,
+        1448,
+        287,
+        534,
+        898,
+        3303,
+        13,
+        51287
+      ],
+      "avg_logprob": -0.23522061492715562,
+      "compression_ratio": 1.5628415300546448,
+      "no_speech_prob": 0.11649305373430252,
+      "words": [
+        {
+          "start": 13.9,
+          "end": 13.92,
+          "word": " In",
+          "probability": 0.9855108261108398
+        },
+        {
+          "start": 13.92,
+          "end": 14.18,
+          "word": " this",
+          "probability": 0.9978037476539612
+        },
+        {
+          "start": 14.18,
+          "end": 14.7,
+          "word": " session,",
+          "probability": 0.9801816344261169
+        },
+        {
+          "start": 15.16,
+          "end": 15.44,
+          "word": " retell",
+          "probability": 0.7384390234947205
+        },
+        {
+          "start": 15.44,
+          "end": 15.72,
+          "word": " the",
+          "probability": 0.9967735409736633
+        },
+        {
+          "start": 15.72,
+          "end": 16.0,
+          "word": " passage",
+          "probability": 0.9961821436882019
+        },
+        {
+          "start": 16.0,
+          "end": 16.38,
+          "word": " as",
+          "probability": 0.9951790571212769
+        },
+        {
+          "start": 16.38,
+          "end": 16.56,
+          "word": " a",
+          "probability": 0.9958174824714661
+        },
+        {
+          "start": 16.56,
+          "end": 16.92,
+          "word": " group",
+          "probability": 0.9958091974258423
+        },
+        {
+          "start": 16.92,
+          "end": 17.1,
+          "word": " in",
+          "probability": 0.9930106997489929
+        },
+        {
+          "start": 17.1,
+          "end": 17.4,
+          "word": " your",
+          "probability": 0.9963721036911011
+        },
+        {
+          "start": 17.4,
+          "end": 17.6,
+          "word": " own",
+          "probability": 0.9938644766807556
+        },
+        {
+          "start": 17.6,
+          "end": 18.08,
+          "word": " language.",
+          "probability": 0.9993870258331299
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 4,
+      "seek": 0,
+      "start": 18.92,
+      "end": 23.9,
+      "text": " First, the whole group should practice telling the passage in your own language. Remember",
+      "tokens": [
+        51287,
+        3274,
+        11,
+        262,
+        2187,
+        1448,
+        815,
+        3357,
+        5149,
+        262,
+        10066,
+        287,
+        534,
+        898,
+        3303,
+        13,
+        11436,
+        51557
+      ],
+      "avg_logprob": -0.23522061492715562,
+      "compression_ratio": 1.5628415300546448,
+      "no_speech_prob": 0.11649305373430252,
+      "words": [
+        {
+          "start": 18.92,
+          "end": 19.42,
+          "word": " First,",
+          "probability": 0.9345387816429138
+        },
+        {
+          "start": 19.72,
+          "end": 19.88,
+          "word": " the",
+          "probability": 0.9855915307998657
+        },
+        {
+          "start": 19.88,
+          "end": 20.1,
+          "word": " whole",
+          "probability": 0.9986904263496399
+        },
+        {
+          "start": 20.1,
+          "end": 20.36,
+          "word": " group",
+          "probability": 0.986851155757904
+        },
+        {
+          "start": 20.36,
+          "end": 20.62,
+          "word": " should",
+          "probability": 0.9948797225952148
+        },
+        {
+          "start": 20.62,
+          "end": 20.96,
+          "word": " practice",
+          "probability": 0.8602493405342102
+        },
+        {
+          "start": 20.96,
+          "end": 21.28,
+          "word": " telling",
+          "probability": 0.9986714124679565
+        },
+        {
+          "start": 21.28,
+          "end": 21.54,
+          "word": " the",
+          "probability": 0.9973995685577393
+        },
+        {
+          "start": 21.54,
+          "end": 21.8,
+          "word": " passage",
+          "probability": 0.9982607960700989
+        },
+        {
+          "start": 21.8,
+          "end": 22.04,
+          "word": " in",
+          "probability": 0.9969220757484436
+        },
+        {
+          "start": 22.04,
+          "end": 22.28,
+          "word": " your",
+          "probability": 0.9976615905761719
+        },
+        {
+          "start": 22.28,
+          "end": 22.46,
+          "word": " own",
+          "probability": 0.9972840547561646
+        },
+        {
+          "start": 22.46,
+          "end": 23.1,
+          "word": " language.",
+          "probability": 0.9989450573921204
+        },
+        {
+          "start": 23.68,
+          "end": 23.9,
+          "word": " Remember",
+          "probability": 0.9922602772712708
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 5,
+      "seek": 2390,
+      "start": 23.9,
+      "end": 30.0,
+      "text": " to include the things you decided in previous steps, like chronology, words, phrases,",
+      "tokens": [
+        50363,
+        284,
+        2291,
+        262,
+        1243,
+        345,
+        3066,
+        287,
+        2180,
+        4831,
+        11,
+        588,
+        16199,
+        1435,
+        11,
+        2456,
+        11,
+        20144,
+        11,
+        50687
+      ],
+      "avg_logprob": -0.16482462117701402,
+      "compression_ratio": 1.7661691542288558,
+      "no_speech_prob": 0.006744392216205597,
+      "words": [
+        {
+          "start": 23.9,
+          "end": 24.1,
+          "word": " to",
+          "probability": 0.12067662924528122
+        },
+        {
+          "start": 24.1,
+          "end": 24.46,
+          "word": " include",
+          "probability": 0.9958475232124329
+        },
+        {
+          "start": 24.46,
+          "end": 24.7,
+          "word": " the",
+          "probability": 0.9742164611816406
+        },
+        {
+          "start": 24.7,
+          "end": 24.88,
+          "word": " things",
+          "probability": 0.9859201312065125
+        },
+        {
+          "start": 24.88,
+          "end": 25.12,
+          "word": " you",
+          "probability": 0.9884859323501587
+        },
+        {
+          "start": 25.12,
+          "end": 25.56,
+          "word": " decided",
+          "probability": 0.8866019248962402
+        },
+        {
+          "start": 25.56,
+          "end": 25.96,
+          "word": " in",
+          "probability": 0.9957650899887085
+        },
+        {
+          "start": 25.96,
+          "end": 26.3,
+          "word": " previous",
+          "probability": 0.997767448425293
+        },
+        {
+          "start": 26.3,
+          "end": 26.78,
+          "word": " steps,",
+          "probability": 0.9901419281959534
+        },
+        {
+          "start": 27.22,
+          "end": 27.46,
+          "word": " like",
+          "probability": 0.9555268287658691
+        },
+        {
+          "start": 27.46,
+          "end": 28.12,
+          "word": " chronology,",
+          "probability": 0.9740358591079712
+        },
+        {
+          "start": 28.52,
+          "end": 29.0,
+          "word": " words,",
+          "probability": 0.9851118922233582
+        },
+        {
+          "start": 29.52,
+          "end": 30.0,
+          "word": " phrases,",
+          "probability": 0.9978267550468445
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 6,
+      "seek": 2390,
+      "start": 30.5,
+      "end": 36.56,
+      "text": " emotions, or anything else you discussed. One group member should tell a few sentences",
+      "tokens": [
+        50687,
+        10825,
+        11,
+        393,
+        1997,
+        2073,
+        345,
+        6693,
+        13,
+        1881,
+        1448,
+        2888,
+        815,
+        1560,
+        257,
+        1178,
+        13439,
+        50997
+      ],
+      "avg_logprob": -0.16482462117701402,
+      "compression_ratio": 1.7661691542288558,
+      "no_speech_prob": 0.006744392216205597,
+      "words": [
+        {
+          "start": 30.5,
+          "end": 31.0,
+          "word": " emotions,",
+          "probability": 0.9680383801460266
+        },
+        {
+          "start": 31.48,
+          "end": 31.78,
+          "word": " or",
+          "probability": 0.9873194694519043
+        },
+        {
+          "start": 31.78,
+          "end": 32.08,
+          "word": " anything",
+          "probability": 0.998114824295044
+        },
+        {
+          "start": 32.08,
+          "end": 32.42,
+          "word": " else",
+          "probability": 0.9997950196266174
+        },
+        {
+          "start": 32.42,
+          "end": 32.6,
+          "word": " you",
+          "probability": 0.9951502680778503
+        },
+        {
+          "start": 32.6,
+          "end": 33.18,
+          "word": " discussed.",
+          "probability": 0.9713916778564453
+        },
+        {
+          "start": 34.62,
+          "end": 34.84,
+          "word": " One",
+          "probability": 0.9734997153282166
+        },
+        {
+          "start": 34.84,
+          "end": 35.1,
+          "word": " group",
+          "probability": 0.9694925546646118
+        },
+        {
+          "start": 35.1,
+          "end": 35.36,
+          "word": " member",
+          "probability": 0.9609794616699219
+        },
+        {
+          "start": 35.36,
+          "end": 35.68,
+          "word": " should",
+          "probability": 0.9986476302146912
+        },
+        {
+          "start": 35.68,
+          "end": 35.86,
+          "word": " tell",
+          "probability": 0.9780217409133911
+        },
+        {
+          "start": 35.86,
+          "end": 35.98,
+          "word": " a",
+          "probability": 0.984339714050293
+        },
+        {
+          "start": 35.98,
+          "end": 36.18,
+          "word": " few",
+          "probability": 0.9993497729301453
+        },
+        {
+          "start": 36.18,
+          "end": 36.56,
+          "word": " sentences",
+          "probability": 0.9367174506187439
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 7,
+      "seek": 2390,
+      "start": 36.56,
+      "end": 41.5,
+      "text": " of the passage and pause. Another group member should tell the next part of the passage",
+      "tokens": [
+        50997,
+        286,
+        262,
+        10066,
+        290,
+        14985,
+        13,
+        6023,
+        1448,
+        2888,
+        815,
+        1560,
+        262,
+        1306,
+        636,
+        286,
+        262,
+        10066,
+        51247
+      ],
+      "avg_logprob": -0.16482462117701402,
+      "compression_ratio": 1.7661691542288558,
+      "no_speech_prob": 0.006744392216205597,
+      "words": [
+        {
+          "start": 36.56,
+          "end": 36.9,
+          "word": " of",
+          "probability": 0.9919158816337585
+        },
+        {
+          "start": 36.9,
+          "end": 37.1,
+          "word": " the",
+          "probability": 0.9960854053497314
+        },
+        {
+          "start": 37.1,
+          "end": 37.28,
+          "word": " passage",
+          "probability": 0.9798067808151245
+        },
+        {
+          "start": 37.28,
+          "end": 37.72,
+          "word": " and",
+          "probability": 0.9908272624015808
+        },
+        {
+          "start": 37.72,
+          "end": 38.06,
+          "word": " pause.",
+          "probability": 0.9731336832046509
+        },
+        {
+          "start": 38.82,
+          "end": 39.1,
+          "word": " Another",
+          "probability": 0.9950569868087769
+        },
+        {
+          "start": 39.1,
+          "end": 39.46,
+          "word": " group",
+          "probability": 0.9975696206092834
+        },
+        {
+          "start": 39.46,
+          "end": 39.8,
+          "word": " member",
+          "probability": 0.9928383231163025
+        },
+        {
+          "start": 39.8,
+          "end": 40.02,
+          "word": " should",
+          "probability": 0.9945532083511353
+        },
+        {
+          "start": 40.02,
+          "end": 40.24,
+          "word": " tell",
+          "probability": 0.9969660639762878
+        },
+        {
+          "start": 40.24,
+          "end": 40.38,
+          "word": " the",
+          "probability": 0.9965702295303345
+        },
+        {
+          "start": 40.38,
+          "end": 40.62,
+          "word": " next",
+          "probability": 0.9987383484840393
+        },
+        {
+          "start": 40.62,
+          "end": 40.86,
+          "word": " part",
+          "probability": 0.9785044193267822
+        },
+        {
+          "start": 40.86,
+          "end": 41.04,
+          "word": " of",
+          "probability": 0.9967530369758606
+        },
+        {
+          "start": 41.04,
+          "end": 41.22,
+          "word": " the",
+          "probability": 0.9976344108581543
+        },
+        {
+          "start": 41.22,
+          "end": 41.5,
+          "word": " passage",
+          "probability": 0.997026264667511
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 8,
+      "seek": 2390,
+      "start": 41.5,
+      "end": 47.76,
+      "text": " and pause. Do this until the group has retold the whole passage. The group members can correct",
+      "tokens": [
+        51247,
+        290,
+        14985,
+        13,
+        2141,
+        428,
+        1566,
+        262,
+        1448,
+        468,
+        1005,
+        727,
+        262,
+        2187,
+        10066,
+        13,
+        383,
+        1448,
+        1866,
+        460,
+        3376,
+        51551
+      ],
+      "avg_logprob": -0.16482462117701402,
+      "compression_ratio": 1.7661691542288558,
+      "no_speech_prob": 0.006744392216205597,
+      "words": [
+        {
+          "start": 41.5,
+          "end": 41.94,
+          "word": " and",
+          "probability": 0.9792749285697937
+        },
+        {
+          "start": 41.94,
+          "end": 42.36,
+          "word": " pause.",
+          "probability": 0.9984890222549438
+        },
+        {
+          "start": 42.94,
+          "end": 43.16,
+          "word": " Do",
+          "probability": 0.9732793569564819
+        },
+        {
+          "start": 43.16,
+          "end": 43.44,
+          "word": " this",
+          "probability": 0.9994416832923889
+        },
+        {
+          "start": 43.44,
+          "end": 43.7,
+          "word": " until",
+          "probability": 0.9937839508056641
+        },
+        {
+          "start": 43.7,
+          "end": 43.98,
+          "word": " the",
+          "probability": 0.994775652885437
+        },
+        {
+          "start": 43.98,
+          "end": 44.04,
+          "word": " group",
+          "probability": 0.9937159419059753
+        },
+        {
+          "start": 44.04,
+          "end": 44.28,
+          "word": " has",
+          "probability": 0.9930481910705566
+        },
+        {
+          "start": 44.28,
+          "end": 44.62,
+          "word": " retold",
+          "probability": 0.7130290865898132
+        },
+        {
+          "start": 44.62,
+          "end": 44.86,
+          "word": " the",
+          "probability": 0.9972931742668152
+        },
+        {
+          "start": 44.86,
+          "end": 45.1,
+          "word": " whole",
+          "probability": 0.9988729357719421
+        },
+        {
+          "start": 45.1,
+          "end": 45.6,
+          "word": " passage.",
+          "probability": 0.997473418712616
+        },
+        {
+          "start": 46.4,
+          "end": 46.62,
+          "word": " The",
+          "probability": 0.9955636262893677
+        },
+        {
+          "start": 46.62,
+          "end": 46.86,
+          "word": " group",
+          "probability": 0.9979137778282166
+        },
+        {
+          "start": 46.86,
+          "end": 47.2,
+          "word": " members",
+          "probability": 0.9866830706596375
+        },
+        {
+          "start": 47.2,
+          "end": 47.5,
+          "word": " can",
+          "probability": 0.9969569444656372
+        },
+        {
+          "start": 47.5,
+          "end": 47.76,
+          "word": " correct",
+          "probability": 0.9974628686904907
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 9,
+      "seek": 4776,
+      "start": 47.76,
+      "end": 49.42,
+      "text": " each other in this step.",
+      "tokens": [
+        50363,
+        1123,
+        584,
+        287,
+        428,
+        2239,
+        13,
+        50475
+      ],
+      "avg_logprob": -0.20352118285660892,
+      "compression_ratio": 1.75,
+      "no_speech_prob": 0.08742528408765793,
+      "words": [
+        {
+          "start": 47.76,
+          "end": 48.02,
+          "word": " each",
+          "probability": 0.22485630214214325
+        },
+        {
+          "start": 48.02,
+          "end": 48.34,
+          "word": " other",
+          "probability": 0.9595662951469421
+        },
+        {
+          "start": 48.34,
+          "end": 48.58,
+          "word": " in",
+          "probability": 0.9787296652793884
+        },
+        {
+          "start": 48.58,
+          "end": 48.82,
+          "word": " this",
+          "probability": 0.9634659290313721
+        },
+        {
+          "start": 48.82,
+          "end": 49.42,
+          "word": " step.",
+          "probability": 0.9826566576957703
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 10,
+      "seek": 4776,
+      "start": 50.24,
+      "end": 51.76,
+      "text": " Pause this audio here.",
+      "tokens": [
+        50475,
+        350,
+        682,
+        428,
+        6597,
+        994,
+        13,
+        50563
+      ],
+      "avg_logprob": -0.20352118285660892,
+      "compression_ratio": 1.75,
+      "no_speech_prob": 0.08742528408765793,
+      "words": [
+        {
+          "start": 50.24,
+          "end": 50.36,
+          "word": " Pause",
+          "probability": 0.8518461287021637
+        },
+        {
+          "start": 50.36,
+          "end": 50.7,
+          "word": " this",
+          "probability": 0.9913769960403442
+        },
+        {
+          "start": 50.7,
+          "end": 51.02,
+          "word": " audio",
+          "probability": 0.9707693457603455
+        },
+        {
+          "start": 51.02,
+          "end": 51.76,
+          "word": " here.",
+          "probability": 0.866043746471405
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 11,
+      "seek": 4776,
+      "start": 54.36,
+      "end": 56.78,
+      "text": " Next, each member of the group",
+      "tokens": [
+        50699,
+        7406,
+        11,
+        1123,
+        2888,
+        286,
+        262,
+        1448,
+        50813
+      ],
+      "avg_logprob": -0.20352118285660892,
+      "compression_ratio": 1.75,
+      "no_speech_prob": 0.08742528408765793,
+      "words": [
+        {
+          "start": 54.36,
+          "end": 54.96,
+          "word": " Next,",
+          "probability": 0.9637277126312256
+        },
+        {
+          "start": 55.84,
+          "end": 55.98,
+          "word": " each",
+          "probability": 0.9939325451850891
+        },
+        {
+          "start": 55.98,
+          "end": 56.28,
+          "word": " member",
+          "probability": 0.9721084833145142
+        },
+        {
+          "start": 56.28,
+          "end": 56.4,
+          "word": " of",
+          "probability": 0.9990110397338867
+        },
+        {
+          "start": 56.4,
+          "end": 56.58,
+          "word": " the",
+          "probability": 0.9937693476676941
+        },
+        {
+          "start": 56.58,
+          "end": 56.78,
+          "word": " group",
+          "probability": 0.9786741733551025
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 12,
+      "seek": 4776,
+      "start": 56.78,
+      "end": 59.12,
+      "text": " should tell the whole passage without interruption",
+      "tokens": [
+        50813,
+        815,
+        1560,
+        262,
+        2187,
+        10066,
+        1231,
+        41728,
+        50939
+      ],
+      "avg_logprob": -0.20352118285660892,
+      "compression_ratio": 1.75,
+      "no_speech_prob": 0.08742528408765793,
+      "words": [
+        {
+          "start": 56.78,
+          "end": 57.02,
+          "word": " should",
+          "probability": 0.9947964549064636
+        },
+        {
+          "start": 57.02,
+          "end": 57.28,
+          "word": " tell",
+          "probability": 0.9961748123168945
+        },
+        {
+          "start": 57.28,
+          "end": 57.5,
+          "word": " the",
+          "probability": 0.9923170804977417
+        },
+        {
+          "start": 57.5,
+          "end": 57.8,
+          "word": " whole",
+          "probability": 0.9976626634597778
+        },
+        {
+          "start": 57.8,
+          "end": 58.18,
+          "word": " passage",
+          "probability": 0.9914408922195435
+        },
+        {
+          "start": 58.18,
+          "end": 58.58,
+          "word": " without",
+          "probability": 0.9761291742324829
+        },
+        {
+          "start": 58.58,
+          "end": 59.12,
+          "word": " interruption",
+          "probability": 0.9887226819992065
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 13,
+      "seek": 4776,
+      "start": 59.12,
+      "end": 60.78,
+      "text": " at least one time.",
+      "tokens": [
+        50939,
+        379,
+        1551,
+        530,
+        640,
+        13,
+        51057
+      ],
+      "avg_logprob": -0.20352118285660892,
+      "compression_ratio": 1.75,
+      "no_speech_prob": 0.08742528408765793,
+      "words": [
+        {
+          "start": 59.12,
+          "end": 59.56,
+          "word": " at",
+          "probability": 0.9369151592254639
+        },
+        {
+          "start": 59.56,
+          "end": 59.94,
+          "word": " least",
+          "probability": 0.9976094961166382
+        },
+        {
+          "start": 59.94,
+          "end": 60.3,
+          "word": " one",
+          "probability": 0.9905283451080322
+        },
+        {
+          "start": 60.3,
+          "end": 60.78,
+          "word": " time.",
+          "probability": 0.9985985159873962
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 14,
+      "seek": 4776,
+      "start": 61.76,
+      "end": 64.68,
+      "text": " A group member can use random objects, motions,",
+      "tokens": [
+        51057,
+        317,
+        1448,
+        2888,
+        460,
+        779,
+        4738,
+        5563,
+        11,
+        25530,
+        11,
+        51229
+      ],
+      "avg_logprob": -0.20352118285660892,
+      "compression_ratio": 1.75,
+      "no_speech_prob": 0.08742528408765793,
+      "words": [
+        {
+          "start": 61.76,
+          "end": 61.82,
+          "word": " A",
+          "probability": 0.9898163080215454
+        },
+        {
+          "start": 61.82,
+          "end": 62.06,
+          "word": " group",
+          "probability": 0.9850114583969116
+        },
+        {
+          "start": 62.06,
+          "end": 62.46,
+          "word": " member",
+          "probability": 0.9974763989448547
+        },
+        {
+          "start": 62.46,
+          "end": 62.86,
+          "word": " can",
+          "probability": 0.99703049659729
+        },
+        {
+          "start": 62.86,
+          "end": 63.12,
+          "word": " use",
+          "probability": 0.9974370002746582
+        },
+        {
+          "start": 63.12,
+          "end": 63.4,
+          "word": " random",
+          "probability": 0.9550754427909851
+        },
+        {
+          "start": 63.4,
+          "end": 63.92,
+          "word": " objects,",
+          "probability": 0.9977850914001465
+        },
+        {
+          "start": 64.28,
+          "end": 64.68,
+          "word": " motions,",
+          "probability": 0.9528194069862366
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 15,
+      "seek": 4776,
+      "start": 65.02,
+      "end": 67.76,
+      "text": " or their story board to help them remember the passage.",
+      "tokens": [
+        51229,
+        393,
+        511,
+        1621,
+        3096,
+        284,
+        1037,
+        606,
+        3505,
+        262,
+        10066,
+        13,
+        51413
+      ],
+      "avg_logprob": -0.20352118285660892,
+      "compression_ratio": 1.75,
+      "no_speech_prob": 0.08742528408765793,
+      "words": [
+        {
+          "start": 65.02,
+          "end": 65.26,
+          "word": " or",
+          "probability": 0.9964404702186584
+        },
+        {
+          "start": 65.26,
+          "end": 65.52,
+          "word": " their",
+          "probability": 0.992155909538269
+        },
+        {
+          "start": 65.52,
+          "end": 65.88,
+          "word": " story",
+          "probability": 0.9563058614730835
+        },
+        {
+          "start": 65.88,
+          "end": 66.1,
+          "word": " board",
+          "probability": 0.4942069947719574
+        },
+        {
+          "start": 66.1,
+          "end": 66.3,
+          "word": " to",
+          "probability": 0.9909153580665588
+        },
+        {
+          "start": 66.3,
+          "end": 66.56,
+          "word": " help",
+          "probability": 0.999121367931366
+        },
+        {
+          "start": 66.56,
+          "end": 66.8,
+          "word": " them",
+          "probability": 0.9954982995986938
+        },
+        {
+          "start": 66.8,
+          "end": 67.1,
+          "word": " remember",
+          "probability": 0.9958113431930542
+        },
+        {
+          "start": 67.1,
+          "end": 67.4,
+          "word": " the",
+          "probability": 0.9973857998847961
+        },
+        {
+          "start": 67.4,
+          "end": 67.76,
+          "word": " passage.",
+          "probability": 0.9959288239479065
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 16,
+      "seek": 4776,
+      "start": 68.84,
+      "end": 71.12,
+      "text": " Pause this audio here.",
+      "tokens": [
+        51413,
+        350,
+        682,
+        428,
+        6597,
+        994,
+        13,
+        51599
+      ],
+      "avg_logprob": -0.20352118285660892,
+      "compression_ratio": 1.75,
+      "no_speech_prob": 0.08742528408765793,
+      "words": [
+        {
+          "start": 68.84,
+          "end": 69.06,
+          "word": " Pause",
+          "probability": 0.9969094693660736
+        },
+        {
+          "start": 69.06,
+          "end": 69.36,
+          "word": " this",
+          "probability": 0.9979945421218872
+        },
+        {
+          "start": 69.36,
+          "end": 69.66,
+          "word": " audio",
+          "probability": 0.998245120048523
+        },
+        {
+          "start": 69.66,
+          "end": 71.12,
+          "word": " here.",
+          "probability": 0.9949591159820557
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 17,
+      "seek": 4776,
+      "start": 72.52,
+      "end": 75.86,
+      "text": " Next, the group can decide who's version of the passage",
+      "tokens": [
+        51599,
+        7406,
+        11,
+        262,
+        1448,
+        460,
+        5409,
+        508,
+        338,
+        2196,
+        286,
+        262,
+        10066,
+        51769
+      ],
+      "avg_logprob": -0.20352118285660892,
+      "compression_ratio": 1.75,
+      "no_speech_prob": 0.08742528408765793,
+      "words": [
+        {
+          "start": 72.52,
+          "end": 73.04,
+          "word": " Next,",
+          "probability": 0.9906172156333923
+        },
+        {
+          "start": 73.54,
+          "end": 73.68,
+          "word": " the",
+          "probability": 0.9940639138221741
+        },
+        {
+          "start": 73.68,
+          "end": 73.88,
+          "word": " group",
+          "probability": 0.9988027811050415
+        },
+        {
+          "start": 73.88,
+          "end": 74.12,
+          "word": " can",
+          "probability": 0.9996322393417358
+        },
+        {
+          "start": 74.12,
+          "end": 74.54,
+          "word": " decide",
+          "probability": 0.9987836480140686
+        },
+        {
+          "start": 74.54,
+          "end": 74.98,
+          "word": " who's",
+          "probability": 0.659649521112442
+        },
+        {
+          "start": 74.98,
+          "end": 75.28,
+          "word": " version",
+          "probability": 0.9977745413780212
+        },
+        {
+          "start": 75.28,
+          "end": 75.44,
+          "word": " of",
+          "probability": 0.9985787868499756
+        },
+        {
+          "start": 75.44,
+          "end": 75.66,
+          "word": " the",
+          "probability": 0.99730384349823
+        },
+        {
+          "start": 75.66,
+          "end": 75.86,
+          "word": " passage",
+          "probability": 0.9975407123565674
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 18,
+      "seek": 4776,
+      "start": 75.86,
+      "end": 76.7,
+      "text": " you like the most.",
+      "tokens": [
+        51769,
+        345,
+        588,
+        262,
+        749,
+        13,
+        51845
+      ],
+      "avg_logprob": -0.20352118285660892,
+      "compression_ratio": 1.75,
+      "no_speech_prob": 0.08742528408765793,
+      "words": [
+        {
+          "start": 75.86,
+          "end": 76.04,
+          "word": " you",
+          "probability": 0.9971259236335754
+        },
+        {
+          "start": 76.04,
+          "end": 76.22,
+          "word": " like",
+          "probability": 0.7061818242073059
+        },
+        {
+          "start": 76.22,
+          "end": 76.4,
+          "word": " the",
+          "probability": 0.9952042102813721
+        },
+        {
+          "start": 76.4,
+          "end": 76.7,
+          "word": " most.",
+          "probability": 0.9987010955810547
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 19,
+      "seek": 7670,
+      "start": 76.7,
+      "end": 81.3,
+      "text": " You may decide that you like the way one group member told one scene, but you",
+      "tokens": [
+        50363,
+        921,
+        743,
+        5409,
+        326,
+        345,
+        588,
+        262,
+        835,
+        530,
+        1448,
+        2888,
+        1297,
+        530,
+        3715,
+        11,
+        475,
+        345,
+        50587
+      ],
+      "avg_logprob": -0.22636214574409086,
+      "compression_ratio": 1.8418367346938775,
+      "no_speech_prob": 0.0262120570987463,
+      "words": [
+        {
+          "start": 76.7,
+          "end": 77.6,
+          "word": " You",
+          "probability": 0.8456616997718811
+        },
+        {
+          "start": 77.6,
+          "end": 77.8,
+          "word": " may",
+          "probability": 0.9563025832176208
+        },
+        {
+          "start": 77.8,
+          "end": 78.26,
+          "word": " decide",
+          "probability": 0.9971588850021362
+        },
+        {
+          "start": 78.26,
+          "end": 78.44,
+          "word": " that",
+          "probability": 0.9321045279502869
+        },
+        {
+          "start": 78.44,
+          "end": 78.54,
+          "word": " you",
+          "probability": 0.9949111342430115
+        },
+        {
+          "start": 78.54,
+          "end": 78.8,
+          "word": " like",
+          "probability": 0.9203228950500488
+        },
+        {
+          "start": 78.8,
+          "end": 78.94,
+          "word": " the",
+          "probability": 0.9888256192207336
+        },
+        {
+          "start": 78.94,
+          "end": 79.1,
+          "word": " way",
+          "probability": 0.9491286873817444
+        },
+        {
+          "start": 79.1,
+          "end": 79.36,
+          "word": " one",
+          "probability": 0.9704938530921936
+        },
+        {
+          "start": 79.36,
+          "end": 79.56,
+          "word": " group",
+          "probability": 0.9694100022315979
+        },
+        {
+          "start": 79.56,
+          "end": 79.86,
+          "word": " member",
+          "probability": 0.9931015968322754
+        },
+        {
+          "start": 79.86,
+          "end": 80.16,
+          "word": " told",
+          "probability": 0.9909666776657104
+        },
+        {
+          "start": 80.16,
+          "end": 80.48,
+          "word": " one",
+          "probability": 0.7761304378509521
+        },
+        {
+          "start": 80.48,
+          "end": 80.82,
+          "word": " scene,",
+          "probability": 0.9852611422538757
+        },
+        {
+          "start": 81.04,
+          "end": 81.18,
+          "word": " but",
+          "probability": 0.9944955706596375
+        },
+        {
+          "start": 81.18,
+          "end": 81.3,
+          "word": " you",
+          "probability": 0.9934996366500854
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 20,
+      "seek": 7670,
+      "start": 81.3,
+      "end": 84.4,
+      "text": " like the way a different group member told another scene.",
+      "tokens": [
+        50587,
+        588,
+        262,
+        835,
+        257,
+        1180,
+        1448,
+        2888,
+        1297,
+        1194,
+        3715,
+        13,
+        50727
+      ],
+      "avg_logprob": -0.22636214574409086,
+      "compression_ratio": 1.8418367346938775,
+      "no_speech_prob": 0.0262120570987463,
+      "words": [
+        {
+          "start": 81.3,
+          "end": 81.5,
+          "word": " like",
+          "probability": 0.9445693492889404
+        },
+        {
+          "start": 81.5,
+          "end": 81.64,
+          "word": " the",
+          "probability": 0.9902645349502563
+        },
+        {
+          "start": 81.64,
+          "end": 81.82,
+          "word": " way",
+          "probability": 0.9937922358512878
+        },
+        {
+          "start": 81.82,
+          "end": 82.06,
+          "word": " a",
+          "probability": 0.9852767586708069
+        },
+        {
+          "start": 82.06,
+          "end": 82.22,
+          "word": " different",
+          "probability": 0.9660788178443909
+        },
+        {
+          "start": 82.22,
+          "end": 82.62,
+          "word": " group",
+          "probability": 0.9934020638465881
+        },
+        {
+          "start": 82.62,
+          "end": 82.96,
+          "word": " member",
+          "probability": 0.9986675977706909
+        },
+        {
+          "start": 82.96,
+          "end": 83.22,
+          "word": " told",
+          "probability": 0.9935449361801147
+        },
+        {
+          "start": 83.22,
+          "end": 83.56,
+          "word": " another",
+          "probability": 0.9979902505874634
+        },
+        {
+          "start": 83.56,
+          "end": 84.4,
+          "word": " scene.",
+          "probability": 0.9960047602653503
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 21,
+      "seek": 7670,
+      "start": 84.8,
+      "end": 87.1,
+      "text": " Pause this audio here.",
+      "tokens": [
+        50727,
+        350,
+        682,
+        428,
+        6597,
+        994,
+        13,
+        50921
+      ],
+      "avg_logprob": -0.22636214574409086,
+      "compression_ratio": 1.8418367346938775,
+      "no_speech_prob": 0.0262120570987463,
+      "words": [
+        {
+          "start": 84.8,
+          "end": 84.98,
+          "word": " Pause",
+          "probability": 0.8576663136482239
+        },
+        {
+          "start": 84.98,
+          "end": 85.32,
+          "word": " this",
+          "probability": 0.994763195514679
+        },
+        {
+          "start": 85.32,
+          "end": 85.48,
+          "word": " audio",
+          "probability": 0.9846097230911255
+        },
+        {
+          "start": 85.48,
+          "end": 87.1,
+          "word": " here.",
+          "probability": 0.9924039244651794
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 22,
+      "seek": 7670,
+      "start": 88.28,
+      "end": 92.86,
+      "text": " Finally, the group can put together a final version of the passage that everyone",
+      "tokens": [
+        50921,
+        9461,
+        11,
+        262,
+        1448,
+        460,
+        1234,
+        1978,
+        257,
+        2457,
+        2196,
+        286,
+        262,
+        10066,
+        326,
+        2506,
+        51169
+      ],
+      "avg_logprob": -0.22636214574409086,
+      "compression_ratio": 1.8418367346938775,
+      "no_speech_prob": 0.0262120570987463,
+      "words": [
+        {
+          "start": 88.28,
+          "end": 88.84,
+          "word": " Finally,",
+          "probability": 0.9850451350212097
+        },
+        {
+          "start": 89.42,
+          "end": 89.62,
+          "word": " the",
+          "probability": 0.9935153722763062
+        },
+        {
+          "start": 89.62,
+          "end": 89.84,
+          "word": " group",
+          "probability": 0.9938415288925171
+        },
+        {
+          "start": 89.84,
+          "end": 90.12,
+          "word": " can",
+          "probability": 0.998630166053772
+        },
+        {
+          "start": 90.12,
+          "end": 90.34,
+          "word": " put",
+          "probability": 0.9958070516586304
+        },
+        {
+          "start": 90.34,
+          "end": 90.68,
+          "word": " together",
+          "probability": 0.9978476762771606
+        },
+        {
+          "start": 90.68,
+          "end": 91.0,
+          "word": " a",
+          "probability": 0.9958284497261047
+        },
+        {
+          "start": 91.0,
+          "end": 91.18,
+          "word": " final",
+          "probability": 0.9979357719421387
+        },
+        {
+          "start": 91.18,
+          "end": 91.54,
+          "word": " version",
+          "probability": 0.9994058609008789
+        },
+        {
+          "start": 91.54,
+          "end": 91.72,
+          "word": " of",
+          "probability": 0.9985755681991577
+        },
+        {
+          "start": 91.72,
+          "end": 91.92,
+          "word": " the",
+          "probability": 0.9951930046081543
+        },
+        {
+          "start": 91.92,
+          "end": 92.1,
+          "word": " passage",
+          "probability": 0.9943530559539795
+        },
+        {
+          "start": 92.1,
+          "end": 92.48,
+          "word": " that",
+          "probability": 0.9394371509552002
+        },
+        {
+          "start": 92.48,
+          "end": 92.86,
+          "word": " everyone",
+          "probability": 0.8989716172218323
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 23,
+      "seek": 7670,
+      "start": 92.86,
+      "end": 97.9,
+      "text": " agrees on. Each group member should practice telling this final version of the",
+      "tokens": [
+        51169,
+        14386,
+        319,
+        13,
+        5501,
+        1448,
+        2888,
+        815,
+        3357,
+        5149,
+        428,
+        2457,
+        2196,
+        286,
+        262,
+        51411
+      ],
+      "avg_logprob": -0.22636214574409086,
+      "compression_ratio": 1.8418367346938775,
+      "no_speech_prob": 0.0262120570987463,
+      "words": [
+        {
+          "start": 92.86,
+          "end": 93.22,
+          "word": " agrees",
+          "probability": 0.9987074136734009
+        },
+        {
+          "start": 93.22,
+          "end": 93.96,
+          "word": " on.",
+          "probability": 0.9983008503913879
+        },
+        {
+          "start": 94.34,
+          "end": 94.66,
+          "word": " Each",
+          "probability": 0.9963064193725586
+        },
+        {
+          "start": 94.66,
+          "end": 94.98,
+          "word": " group",
+          "probability": 0.9933390021324158
+        },
+        {
+          "start": 94.98,
+          "end": 95.26,
+          "word": " member",
+          "probability": 0.9972457885742188
+        },
+        {
+          "start": 95.26,
+          "end": 95.6,
+          "word": " should",
+          "probability": 0.9990246295928955
+        },
+        {
+          "start": 95.6,
+          "end": 95.92,
+          "word": " practice",
+          "probability": 0.7855638265609741
+        },
+        {
+          "start": 95.92,
+          "end": 96.28,
+          "word": " telling",
+          "probability": 0.9939361214637756
+        },
+        {
+          "start": 96.28,
+          "end": 96.68,
+          "word": " this",
+          "probability": 0.9923492670059204
+        },
+        {
+          "start": 96.68,
+          "end": 96.92,
+          "word": " final",
+          "probability": 0.9994027614593506
+        },
+        {
+          "start": 96.92,
+          "end": 97.36,
+          "word": " version",
+          "probability": 0.9984173774719238
+        },
+        {
+          "start": 97.36,
+          "end": 97.72,
+          "word": " of",
+          "probability": 0.9957255125045776
+        },
+        {
+          "start": 97.72,
+          "end": 97.9,
+          "word": " the",
+          "probability": 0.99470055103302
+        }
+      ],
+      "temperature": 0.0
+    },
+    {
+      "id": 24,
+      "seek": 7670,
+      "start": 97.9,
+      "end": 100.98,
+      "text": " passage. This is the end of the recording.",
+      "tokens": [
+        51411,
+        10066,
+        13,
+        770,
+        318,
+        262,
+        886,
+        286,
+        262,
+        8296,
+        13,
+        51679
+      ],
+      "avg_logprob": -0.22636214574409086,
+      "compression_ratio": 1.8418367346938775,
+      "no_speech_prob": 0.0262120570987463,
+      "words": [
+        {
+          "start": 97.9,
+          "end": 98.2,
+          "word": " passage.",
+          "probability": 0.997896671295166
+        },
+        {
+          "start": 99.2,
+          "end": 99.72,
+          "word": " This",
+          "probability": 0.9942247271537781
+        },
+        {
+          "start": 99.72,
+          "end": 99.98,
+          "word": " is",
+          "probability": 0.9948373436927795
+        },
+        {
+          "start": 99.98,
+          "end": 100.12,
+          "word": " the",
+          "probability": 0.9946905970573425
+        },
+        {
+          "start": 100.12,
+          "end": 100.36,
+          "word": " end",
+          "probability": 0.9893799424171448
+        },
+        {
+          "start": 100.36,
+          "end": 100.58,
+          "word": " of",
+          "probability": 0.9949374198913574
+        },
+        {
+          "start": 100.58,
+          "end": 100.72,
+          "word": " the",
+          "probability": 0.9958853125572205
+        },
+        {
+          "start": 100.72,
+          "end": 100.98,
+          "word": " recording.",
+          "probability": 0.9992555975914001
+        }
+      ],
+      "temperature": 0.0
+    }
+  ],
+  "text": " 6. Speaking the word, Mark 1, 1 through 13. Listen to an audio version of the passage in the easiest to understand translation. In this session, retell the passage as a group in your own language. First, the whole group should practice telling the passage in your own language. Remember to include the things you decided in previous steps, like chronology, words, phrases, emotions, or anything else you discussed. One group member should tell a few sentences of the passage and pause. Another group member should tell the next part of the passage and pause. Do this until the group has retold the whole passage. The group members can correct each other in this step. Pause this audio here. Next, each member of the group should tell the whole passage without interruption at least one time. A group member can use random objects, motions, or their story board to help them remember the passage. Pause this audio here. Next, the group can decide who's version of the passage you like the most. You may decide that you like the way one group member told one scene, but you like the way a different group member told another scene. Pause this audio here. Finally, the group can put together a final version of the passage that everyone agrees on. Each group member should practice telling this final version of the passage. This is the end of the recording."
+}

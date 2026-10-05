@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.0.0-alpha.13 — Original six-step guide audio and excerpt playback (2026-10-05)
+
+English Mark 1:1–13 now uses six original FIA publisher recordings for 111 narrated guide activities across all six steps, with reviewed excerpt ranges and existing Scripture handoffs or manual holds. Its official Berean Standard Bible recording remains a separate Scripture source. The progress circle runs from each guide or BSB excerpt’s own start to its own end while word highlighting retains the recording’s absolute clock. Recording coverage for other passages and languages remains narrower; original human recordings take priority when available, with generated narration allowed as fallback. See [recorded guide scope](release/changes/3.0.0-alpha.13-original-guide.md).
+
+Explicit Next, easy-button Continue and forward swipes start eligible destination narration; Back and restored sessions remain silent. See [navigation playback note](release/changes/3.0.0-alpha.13-explicit-next.md).
+
+The three first-English companion videos can play after explicit Play without an offline download. Verified proxy outputs retain separate bundled-source and published-source provenance, bounded loading and native video ownership. See [release note](release/changes/3.0.0-alpha.13-video-on-demand.md).
+
 ## 3.0.0-alpha.12 — Media tap and swipe intent (2026-10-05)
 
 Resting media surfaces support existing previous/next passage swipes without opening a visual. A completed tap opens images/maps; pinch, drag, stale activity changes and native video controls retain their separate behavior. No spacing changes. See [release note](release/changes/3.0.0-alpha.12-media-gestures.md).

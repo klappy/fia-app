@@ -1,0 +1,59 @@
+{
+  "status": "accepted",
+  "recipeRevision": "multiple-recorded-guide-sources-344959d",
+  "packId": "eng.MRK-1-1-13",
+  "presentationRevision": "ccd72f23c23f932651b500b730b285f32fabd37e50037b5af91d8881f1403975",
+  "mapping": {
+    "id": "S04-U002",
+    "activityId": "S04-U002",
+    "sourceTextSha256": "2fd7c0db6cfe4e027441daa2ae31223b2a3868244e364e4424e06154b777aca5",
+    "logicalAudio": {
+      "path": "/audio/source/S04-U002.mp3",
+      "sha256": "ef74b449d81a9f8511cb2f480cbf4143352493db5921bfef940b87a4b902a1fe",
+      "bytes": 45139
+    },
+    "wordSpan": {
+      "first": 26,
+      "lastExclusive": 35
+    },
+    "sourceRange": {
+      "startSeconds": 16.34,
+      "endSeconds": 19.3,
+      "clockDomain": "decoded-pcm"
+    }
+  },
+  "script": {
+    "fileSha256": "938515635c9635e6ed614eab84c1a7e0a4cc3269a3231147431a88dd95bb321c",
+    "contentSha256": "2347d166bf34db52915f3a76f379f1f9afa9ca78a1af163be091541cbaccc898",
+    "repository": "BibleAquifer/FIATranslationGuide",
+    "commit": "5d6d59a22caa8f8539c5ff6a3e1ec74c4cfa5c6d",
+    "path": "eng/json/41.content.json"
+  },
+  "recording": {
+    "url": "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s4/v2/vbr0.mp3",
+    "sha256": "826f6f1efb3c71277c68ee2fca2b49c4d0f929e9232f2cc2f8e74eb63222dd0f",
+    "bytes": 5680172,
+    "duration": 360.0,
+    "publisherStepVersion": "v2",
+    "rightsEvidenceSha256": "d120de4d2754fe8f2a2d736104460540c15ab177a55ef73936174104ff61cae3"
+  },
+  "transcript": {
+    "sha256": "f0ed785ba649fc9017185c3ba95e509f8378493b6ba0818590089be0c1a0aeaa",
+    "wordTimestampsSha256": "44293f3a0fc66e1af24028fd5a0ac165cd49d70725fc8b20f1a19ce1502d3668",
+    "method": "Unmodified ASR recognition; zero-duration points retained as uncertain estimates, not word highlights.",
+    "modelRevision": "0d3d19a32d3338f10357c0889762bd8d64bbdeba",
+    "clockDomain": "decoded-pcm",
+    "verbatim": true
+  },
+  "drift": {
+    "reportSha256": "e76096bc64100885f44637228df08807e6d3ba0095418707d0557c190f1467ae",
+    "scriptSha256": "2347d166bf34db52915f3a76f379f1f9afa9ca78a1af163be091541cbaccc898",
+    "transcriptSha256": "f0ed785ba649fc9017185c3ba95e509f8378493b6ba0818590089be0c1a0aeaa",
+    "reviewEvidenceSha256": "a7fcee3fbade1d90a2b0e92a37552b3b6ce08f537b6ea13ae354263c2e78bad1"
+  },
+  "scope": "Source-range candidate for private browser verification; publication gate pending actual browser.",
+  "rangeReviewSha256": "7e2948ecebfc7cce868b35a2ef1e9bfa7dbd846d08c405a2aaed95fbd491ce40",
+  "rangeDecisionSha256": "29ebad7dd65cd1b7da291ba37694f95cb5b0b13fd2d594902de9a36330db83a8",
+  "correctedCropSha256": "36e26c4fc62aabac844d0b38004d59e1a596c79da8aca5efc8a6efebd8f7f9cd",
+  "edgeEnergySha256": "c400d2fedb4564149d128b1406085586576d5d7e853f36c004d339d671a416d0"
+}

@@ -1,0 +1,5638 @@
+{
+  "sourceSha256": "ad82d1a49f696a421f87a0ba54e7079c35fb403462c1e2e335a1fabe515363ec",
+  "decode": {
+    "codec": "mp3float",
+    "sampleRate": 44100,
+    "channels": 1,
+    "streamStartSeconds": 0.02505668934240363,
+    "containerDurationSeconds": 320.805442,
+    "firstDecodedFrameSeconds": 0.02505668934240363,
+    "decodedDurationSeconds": 320.8054375,
+    "decodedMono16kSha256": "feebbde90c3298a27fc5760b59ed35a3cf1146b0532056aac4fdfca53f173b61"
+  },
+  "clock": "concatenated decoded PCM starts at zero; first decoded presentation timestamp recorded separately",
+  "model": {
+    "name": "Systran/faster-whisper-tiny.en",
+    "revision": "0d3d19a32d3338f10357c0889762bd8d64bbdeba",
+    "files": [
+      {
+        "file": "model.bin",
+        "sha256": "1a5afae06a4db91c975c9a9d78be5cc110ee4ea022ad57d55492e4550e936b2a"
+      },
+      {
+        "file": "config.json",
+        "sha256": "14b1b421a90349bc551b881461426b561a874049cb9e4c4864f2ca384f6a7cc5"
+      },
+      {
+        "file": "tokenizer.json",
+        "sha256": "929c5252409436dce1b38a75d1abbcb5e132d170d8e324e4e04ed915fa2d22df"
+      },
+      {
+        "file": "vocabulary.txt",
+        "sha256": "ff77588746d3a2595d32ab5b69ffd7b95ce2441ac57533cb66fc3eb575a115cf"
+      }
+    ]
+  },
+  "config": {
+    "language": "en",
+    "beam_size": 5,
+    "word_timestamps": true,
+    "condition_on_previous_text": false,
+    "vad_filter": false
+  },
+  "segments": [
+    {
+      "start": 2.4600000000000017,
+      "end": 10.0,
+      "text": " Mark 1. This is the beginning of the Gospel of Jesus Christ, the Son of God. As it is",
+      "words": [
+        {
+          "word": " Mark",
+          "start": 2.4600000000000017,
+          "end": 3.080000000000001,
+          "probability": 0.6226487755775452
+        },
+        {
+          "word": " 1.",
+          "start": 3.080000000000001,
+          "end": 3.7,
+          "probability": 0.17669740319252014
+        },
+        {
+          "word": " This",
+          "start": 4.6,
+          "end": 4.84,
+          "probability": 0.7438536286354065
+        },
+        {
+          "word": " is",
+          "start": 4.84,
+          "end": 5.22,
+          "probability": 0.9973767995834351
+        },
+        {
+          "word": " the",
+          "start": 5.22,
+          "end": 5.38,
+          "probability": 0.990816593170166
+        },
+        {
+          "word": " beginning",
+          "start": 5.38,
+          "end": 5.6,
+          "probability": 0.9918277263641357
+        },
+        {
+          "word": " of",
+          "start": 5.6,
+          "end": 5.92,
+          "probability": 0.9974982142448425
+        },
+        {
+          "word": " the",
+          "start": 5.92,
+          "end": 6.0,
+          "probability": 0.9885285496711731
+        },
+        {
+          "word": " Gospel",
+          "start": 6.0,
+          "end": 6.36,
+          "probability": 0.4097767472267151
+        },
+        {
+          "word": " of",
+          "start": 6.36,
+          "end": 6.6,
+          "probability": 0.9969678521156311
+        },
+        {
+          "word": " Jesus",
+          "start": 6.6,
+          "end": 7.0,
+          "probability": 0.9967998266220093
+        },
+        {
+          "word": " Christ,",
+          "start": 7.0,
+          "end": 7.58,
+          "probability": 0.9932965636253357
+        },
+        {
+          "word": " the",
+          "start": 7.74,
+          "end": 7.8,
+          "probability": 0.9523351788520813
+        },
+        {
+          "word": " Son",
+          "start": 7.8,
+          "end": 7.98,
+          "probability": 0.9787266254425049
+        },
+        {
+          "word": " of",
+          "start": 7.98,
+          "end": 8.18,
+          "probability": 0.9988228678703308
+        },
+        {
+          "word": " God.",
+          "start": 8.18,
+          "end": 8.56,
+          "probability": 0.9994695782661438
+        },
+        {
+          "word": " As",
+          "start": 9.28,
+          "end": 9.6,
+          "probability": 0.8302331566810608
+        },
+        {
+          "word": " it",
+          "start": 9.6,
+          "end": 9.8,
+          "probability": 0.9943576455116272
+        },
+        {
+          "word": " is",
+          "start": 9.8,
+          "end": 10.0,
+          "probability": 0.9983021020889282
+        }
+      ]
+    },
+    {
+      "start": 10.0,
+      "end": 15.88,
+      "text": " written in Isaiah the prophet, behold, I will send my messenger ahead of you who will prepare",
+      "words": [
+        {
+          "word": " written",
+          "start": 10.0,
+          "end": 10.36,
+          "probability": 0.9995317459106445
+        },
+        {
+          "word": " in",
+          "start": 10.36,
+          "end": 10.64,
+          "probability": 0.9644452929496765
+        },
+        {
+          "word": " Isaiah",
+          "start": 10.64,
+          "end": 11.02,
+          "probability": 0.9970621466636658
+        },
+        {
+          "word": " the",
+          "start": 11.02,
+          "end": 11.26,
+          "probability": 0.9876672029495239
+        },
+        {
+          "word": " prophet,",
+          "start": 11.26,
+          "end": 11.66,
+          "probability": 0.8443650603294373
+        },
+        {
+          "word": " behold,",
+          "start": 12.32,
+          "end": 12.66,
+          "probability": 0.278129518032074
+        },
+        {
+          "word": " I",
+          "start": 12.9,
+          "end": 13.0,
+          "probability": 0.9794185161590576
+        },
+        {
+          "word": " will",
+          "start": 13.0,
+          "end": 13.24,
+          "probability": 0.994310736656189
+        },
+        {
+          "word": " send",
+          "start": 13.24,
+          "end": 13.54,
+          "probability": 0.9923600554466248
+        },
+        {
+          "word": " my",
+          "start": 13.54,
+          "end": 13.88,
+          "probability": 0.9667344093322754
+        },
+        {
+          "word": " messenger",
+          "start": 13.88,
+          "end": 14.36,
+          "probability": 0.9910749197006226
+        },
+        {
+          "word": " ahead",
+          "start": 14.36,
+          "end": 14.72,
+          "probability": 0.9531465768814087
+        },
+        {
+          "word": " of",
+          "start": 14.72,
+          "end": 14.92,
+          "probability": 0.9983789920806885
+        },
+        {
+          "word": " you",
+          "start": 14.92,
+          "end": 15.14,
+          "probability": 0.9887546300888062
+        },
+        {
+          "word": " who",
+          "start": 15.14,
+          "end": 15.36,
+          "probability": 0.8803079724311829
+        },
+        {
+          "word": " will",
+          "start": 15.36,
+          "end": 15.5,
+          "probability": 0.9771597981452942
+        },
+        {
+          "word": " prepare",
+          "start": 15.5,
+          "end": 15.88,
+          "probability": 0.9963321089744568
+        }
+      ]
+    },
+    {
+      "start": 15.88,
+      "end": 21.88,
+      "text": " your way. A voice of one calling in the wilderness, prepare the way for the Lord, make",
+      "words": [
+        {
+          "word": " your",
+          "start": 15.88,
+          "end": 16.26,
+          "probability": 0.9883728623390198
+        },
+        {
+          "word": " way.",
+          "start": 16.26,
+          "end": 16.7,
+          "probability": 0.997421145439148
+        },
+        {
+          "word": " A",
+          "start": 17.24,
+          "end": 17.36,
+          "probability": 0.9195862412452698
+        },
+        {
+          "word": " voice",
+          "start": 17.36,
+          "end": 17.6,
+          "probability": 0.9874968528747559
+        },
+        {
+          "word": " of",
+          "start": 17.6,
+          "end": 17.8,
+          "probability": 0.9988648891448975
+        },
+        {
+          "word": " one",
+          "start": 17.8,
+          "end": 18.08,
+          "probability": 0.9610663652420044
+        },
+        {
+          "word": " calling",
+          "start": 18.08,
+          "end": 18.46,
+          "probability": 0.9596648216247559
+        },
+        {
+          "word": " in",
+          "start": 18.46,
+          "end": 18.74,
+          "probability": 0.9727135896682739
+        },
+        {
+          "word": " the",
+          "start": 18.74,
+          "end": 18.96,
+          "probability": 0.9941961765289307
+        },
+        {
+          "word": " wilderness,",
+          "start": 18.96,
+          "end": 19.46,
+          "probability": 0.9979148507118225
+        },
+        {
+          "word": " prepare",
+          "start": 19.86,
+          "end": 20.12,
+          "probability": 0.6956726312637329
+        },
+        {
+          "word": " the",
+          "start": 20.12,
+          "end": 20.44,
+          "probability": 0.9945846199989319
+        },
+        {
+          "word": " way",
+          "start": 20.44,
+          "end": 20.66,
+          "probability": 0.9971237778663635
+        },
+        {
+          "word": " for",
+          "start": 20.66,
+          "end": 20.8,
+          "probability": 0.9969927072525024
+        },
+        {
+          "word": " the",
+          "start": 20.8,
+          "end": 20.96,
+          "probability": 0.998689591884613
+        },
+        {
+          "word": " Lord,",
+          "start": 20.96,
+          "end": 21.28,
+          "probability": 0.9696030616760254
+        },
+        {
+          "word": " make",
+          "start": 21.7,
+          "end": 21.88,
+          "probability": 0.9061376452445984
+        }
+      ]
+    },
+    {
+      "start": 21.88,
+      "end": 28.14,
+      "text": " straight paths for him. John the Baptist appeared in the wilderness, preaching a baptism",
+      "words": [
+        {
+          "word": " straight",
+          "start": 21.88,
+          "end": 22.32,
+          "probability": 0.9716733694076538
+        },
+        {
+          "word": " paths",
+          "start": 22.32,
+          "end": 22.74,
+          "probability": 0.989197313785553
+        },
+        {
+          "word": " for",
+          "start": 22.74,
+          "end": 23.08,
+          "probability": 0.9973552227020264
+        },
+        {
+          "word": " him.",
+          "start": 23.08,
+          "end": 23.66,
+          "probability": 0.5120875835418701
+        },
+        {
+          "word": " John",
+          "start": 24.54,
+          "end": 24.82,
+          "probability": 0.9616900682449341
+        },
+        {
+          "word": " the",
+          "start": 24.82,
+          "end": 25.02,
+          "probability": 0.935854434967041
+        },
+        {
+          "word": " Baptist",
+          "start": 25.02,
+          "end": 25.38,
+          "probability": 0.9234446287155151
+        },
+        {
+          "word": " appeared",
+          "start": 25.38,
+          "end": 25.96,
+          "probability": 0.981153130531311
+        },
+        {
+          "word": " in",
+          "start": 25.96,
+          "end": 26.24,
+          "probability": 0.994446873664856
+        },
+        {
+          "word": " the",
+          "start": 26.24,
+          "end": 26.98,
+          "probability": 0.998846173286438
+        },
+        {
+          "word": " wilderness,",
+          "start": 26.98,
+          "end": 26.98,
+          "probability": 0.9977109432220459
+        },
+        {
+          "word": " preaching",
+          "start": 27.24,
+          "end": 27.46,
+          "probability": 0.9897583723068237
+        },
+        {
+          "word": " a",
+          "start": 27.46,
+          "end": 27.68,
+          "probability": 0.9439281225204468
+        },
+        {
+          "word": " baptism",
+          "start": 27.68,
+          "end": 28.14,
+          "probability": 0.9864553213119507
+        }
+      ]
+    },
+    {
+      "start": 28.14,
+      "end": 33.58,
+      "text": " of repentance for the forgiveness of sins. People went out to him from all of Jerusalem",
+      "words": [
+        {
+          "word": " of",
+          "start": 28.14,
+          "end": 28.44,
+          "probability": 0.6634939312934875
+        },
+        {
+          "word": " repentance",
+          "start": 28.44,
+          "end": 29.02,
+          "probability": 0.9901160597801208
+        },
+        {
+          "word": " for",
+          "start": 29.02,
+          "end": 29.36,
+          "probability": 0.988385796546936
+        },
+        {
+          "word": " the",
+          "start": 29.36,
+          "end": 29.76,
+          "probability": 0.9938640594482422
+        },
+        {
+          "word": " forgiveness",
+          "start": 29.76,
+          "end": 29.9,
+          "probability": 0.9937676191329956
+        },
+        {
+          "word": " of",
+          "start": 29.9,
+          "end": 30.28,
+          "probability": 0.9979689717292786
+        },
+        {
+          "word": " sins.",
+          "start": 30.28,
+          "end": 30.64,
+          "probability": 0.9949437975883484
+        },
+        {
+          "word": " People",
+          "start": 31.38,
+          "end": 31.66,
+          "probability": 0.9770134091377258
+        },
+        {
+          "word": " went",
+          "start": 31.66,
+          "end": 31.94,
+          "probability": 0.9986476302146912
+        },
+        {
+          "word": " out",
+          "start": 31.94,
+          "end": 32.16,
+          "probability": 0.997352123260498
+        },
+        {
+          "word": " to",
+          "start": 32.16,
+          "end": 32.32,
+          "probability": 0.9955234527587891
+        },
+        {
+          "word": " him",
+          "start": 32.32,
+          "end": 32.56,
+          "probability": 0.8412390947341919
+        },
+        {
+          "word": " from",
+          "start": 32.56,
+          "end": 32.8,
+          "probability": 0.9934306740760803
+        },
+        {
+          "word": " all",
+          "start": 32.8,
+          "end": 33.06,
+          "probability": 0.9978455305099487
+        },
+        {
+          "word": " of",
+          "start": 33.06,
+          "end": 33.2,
+          "probability": 0.988750159740448
+        },
+        {
+          "word": " Jerusalem",
+          "start": 33.2,
+          "end": 33.58,
+          "probability": 0.9903440475463867
+        }
+      ]
+    },
+    {
+      "start": 33.58,
+      "end": 39.28,
+      "text": " and the countryside of Judea, confessing their sins they were baptized by him in the Jordan",
+      "words": [
+        {
+          "word": " and",
+          "start": 33.58,
+          "end": 33.96,
+          "probability": 0.9338735342025757
+        },
+        {
+          "word": " the",
+          "start": 33.96,
+          "end": 34.5,
+          "probability": 0.9978736639022827
+        },
+        {
+          "word": " countryside",
+          "start": 34.5,
+          "end": 34.66,
+          "probability": 0.9860671162605286
+        },
+        {
+          "word": " of",
+          "start": 34.66,
+          "end": 35.04,
+          "probability": 0.9993681311607361
+        },
+        {
+          "word": " Judea,",
+          "start": 35.04,
+          "end": 35.84,
+          "probability": 0.9625321328639984
+        },
+        {
+          "word": " confessing",
+          "start": 36.08,
+          "end": 36.48,
+          "probability": 0.9840238392353058
+        },
+        {
+          "word": " their",
+          "start": 36.48,
+          "end": 36.76,
+          "probability": 0.9920274615287781
+        },
+        {
+          "word": " sins",
+          "start": 36.76,
+          "end": 37.06,
+          "probability": 0.9993442893028259
+        },
+        {
+          "word": " they",
+          "start": 37.06,
+          "end": 37.3,
+          "probability": 0.8577312231063843
+        },
+        {
+          "word": " were",
+          "start": 37.3,
+          "end": 37.52,
+          "probability": 0.9981164932250977
+        },
+        {
+          "word": " baptized",
+          "start": 37.52,
+          "end": 37.88,
+          "probability": 0.9301427006721497
+        },
+        {
+          "word": " by",
+          "start": 37.88,
+          "end": 38.4,
+          "probability": 0.9976263642311096
+        },
+        {
+          "word": " him",
+          "start": 38.4,
+          "end": 38.66,
+          "probability": 0.9311215281486511
+        },
+        {
+          "word": " in",
+          "start": 38.66,
+          "end": 38.86,
+          "probability": 0.9981276392936707
+        },
+        {
+          "word": " the",
+          "start": 38.86,
+          "end": 39.0,
+          "probability": 0.9979556798934937
+        },
+        {
+          "word": " Jordan",
+          "start": 39.0,
+          "end": 39.28,
+          "probability": 0.9672451615333557
+        }
+      ]
+    },
+    {
+      "start": 39.28,
+      "end": 46.34,
+      "text": " River. John was clothed in camels here with a leather belt around his waist. His food was",
+      "words": [
+        {
+          "word": " River.",
+          "start": 39.28,
+          "end": 39.7,
+          "probability": 0.8235290050506592
+        },
+        {
+          "word": " John",
+          "start": 40.74,
+          "end": 41.06,
+          "probability": 0.9877899885177612
+        },
+        {
+          "word": " was",
+          "start": 41.06,
+          "end": 41.46,
+          "probability": 0.9984221458435059
+        },
+        {
+          "word": " clothed",
+          "start": 41.46,
+          "end": 41.9,
+          "probability": 0.9971665740013123
+        },
+        {
+          "word": " in",
+          "start": 41.9,
+          "end": 42.26,
+          "probability": 0.994141161441803
+        },
+        {
+          "word": " camels",
+          "start": 42.26,
+          "end": 42.66,
+          "probability": 0.9238407015800476
+        },
+        {
+          "word": " here",
+          "start": 42.66,
+          "end": 42.98,
+          "probability": 0.7578612565994263
+        },
+        {
+          "word": " with",
+          "start": 42.98,
+          "end": 43.18,
+          "probability": 0.9517175555229187
+        },
+        {
+          "word": " a",
+          "start": 43.18,
+          "end": 43.36,
+          "probability": 0.9266492128372192
+        },
+        {
+          "word": " leather",
+          "start": 43.36,
+          "end": 43.58,
+          "probability": 0.9941205382347107
+        },
+        {
+          "word": " belt",
+          "start": 43.58,
+          "end": 43.88,
+          "probability": 0.9779777526855469
+        },
+        {
+          "word": " around",
+          "start": 43.88,
+          "end": 44.26,
+          "probability": 0.9966061115264893
+        },
+        {
+          "word": " his",
+          "start": 44.26,
+          "end": 44.56,
+          "probability": 0.992878258228302
+        },
+        {
+          "word": " waist.",
+          "start": 44.56,
+          "end": 44.94,
+          "probability": 0.9643251895904541
+        },
+        {
+          "word": " His",
+          "start": 45.6,
+          "end": 45.66,
+          "probability": 0.9971460700035095
+        },
+        {
+          "word": " food",
+          "start": 45.66,
+          "end": 45.98,
+          "probability": 0.9897058010101318
+        },
+        {
+          "word": " was",
+          "start": 45.98,
+          "end": 46.34,
+          "probability": 0.9986422657966614
+        }
+      ]
+    },
+    {
+      "start": 46.34,
+      "end": 53.26,
+      "text": " locusts and wild honey. And it began to proclaim, after me will come one more powerful than I,",
+      "words": [
+        {
+          "word": " locusts",
+          "start": 46.34,
+          "end": 46.92,
+          "probability": 0.984296997388204
+        },
+        {
+          "word": " and",
+          "start": 46.92,
+          "end": 47.14,
+          "probability": 0.9953255653381348
+        },
+        {
+          "word": " wild",
+          "start": 47.14,
+          "end": 47.5,
+          "probability": 0.9780498147010803
+        },
+        {
+          "word": " honey.",
+          "start": 47.5,
+          "end": 47.76,
+          "probability": 0.8879720568656921
+        },
+        {
+          "word": " And",
+          "start": 48.52,
+          "end": 48.72,
+          "probability": 0.947756290435791
+        },
+        {
+          "word": " it",
+          "start": 48.72,
+          "end": 48.8,
+          "probability": 0.44177037477493286
+        },
+        {
+          "word": " began",
+          "start": 48.8,
+          "end": 49.12,
+          "probability": 0.999406099319458
+        },
+        {
+          "word": " to",
+          "start": 49.12,
+          "end": 49.3,
+          "probability": 0.9995552897453308
+        },
+        {
+          "word": " proclaim,",
+          "start": 49.3,
+          "end": 49.82,
+          "probability": 0.9971440434455872
+        },
+        {
+          "word": " after",
+          "start": 50.52,
+          "end": 50.82,
+          "probability": 0.04373445361852646
+        },
+        {
+          "word": " me",
+          "start": 50.82,
+          "end": 51.08,
+          "probability": 0.9579424262046814
+        },
+        {
+          "word": " will",
+          "start": 51.08,
+          "end": 51.28,
+          "probability": 0.7097616195678711
+        },
+        {
+          "word": " come",
+          "start": 51.28,
+          "end": 51.54,
+          "probability": 0.9958400726318359
+        },
+        {
+          "word": " one",
+          "start": 51.54,
+          "end": 51.9,
+          "probability": 0.9955028891563416
+        },
+        {
+          "word": " more",
+          "start": 51.9,
+          "end": 52.32,
+          "probability": 0.9978594183921814
+        },
+        {
+          "word": " powerful",
+          "start": 52.32,
+          "end": 52.68,
+          "probability": 0.9968075752258301
+        },
+        {
+          "word": " than",
+          "start": 52.68,
+          "end": 52.92,
+          "probability": 0.9987602233886719
+        },
+        {
+          "word": " I,",
+          "start": 52.92,
+          "end": 53.26,
+          "probability": 0.9931259155273438
+        }
+      ]
+    },
+    {
+      "start": 53.26,
+      "end": 59.96,
+      "text": " the straps of whose sandals I am not worthy to stoop down and untie. I baptize you with water,",
+      "words": [
+        {
+          "word": " the",
+          "start": 53.26,
+          "end": 53.66,
+          "probability": 0.2005240023136139
+        },
+        {
+          "word": " straps",
+          "start": 53.66,
+          "end": 54.0,
+          "probability": 0.9400070905685425
+        },
+        {
+          "word": " of",
+          "start": 54.0,
+          "end": 54.24,
+          "probability": 0.9946860074996948
+        },
+        {
+          "word": " whose",
+          "start": 54.24,
+          "end": 54.52,
+          "probability": 0.9718695878982544
+        },
+        {
+          "word": " sandals",
+          "start": 54.52,
+          "end": 54.94,
+          "probability": 0.9854801595211029
+        },
+        {
+          "word": " I",
+          "start": 54.94,
+          "end": 55.18,
+          "probability": 0.9535200595855713
+        },
+        {
+          "word": " am",
+          "start": 55.18,
+          "end": 55.36,
+          "probability": 0.990301787853241
+        },
+        {
+          "word": " not",
+          "start": 55.36,
+          "end": 55.66,
+          "probability": 0.9910463690757751
+        },
+        {
+          "word": " worthy",
+          "start": 55.66,
+          "end": 55.94,
+          "probability": 0.9906466007232666
+        },
+        {
+          "word": " to",
+          "start": 55.94,
+          "end": 56.28,
+          "probability": 0.9838634729385376
+        },
+        {
+          "word": " stoop",
+          "start": 56.28,
+          "end": 56.54,
+          "probability": 0.9573172926902771
+        },
+        {
+          "word": " down",
+          "start": 56.54,
+          "end": 56.92,
+          "probability": 0.9963098168373108
+        },
+        {
+          "word": " and",
+          "start": 56.92,
+          "end": 57.22,
+          "probability": 0.9821860194206238
+        },
+        {
+          "word": " untie.",
+          "start": 57.22,
+          "end": 57.84,
+          "probability": 0.9794780015945435
+        },
+        {
+          "word": " I",
+          "start": 58.5,
+          "end": 58.76,
+          "probability": 0.9523280262947083
+        },
+        {
+          "word": " baptize",
+          "start": 58.76,
+          "end": 59.3,
+          "probability": 0.8469241857528687
+        },
+        {
+          "word": " you",
+          "start": 59.3,
+          "end": 59.48,
+          "probability": 0.960794985294342
+        },
+        {
+          "word": " with",
+          "start": 59.48,
+          "end": 59.66,
+          "probability": 0.9986361861228943
+        },
+        {
+          "word": " water,",
+          "start": 59.66,
+          "end": 59.96,
+          "probability": 0.9980446100234985
+        }
+      ]
+    },
+    {
+      "start": 60.1,
+      "end": 67.28,
+      "text": " but he will baptize you with a Holy Spirit. In those days, Jesus came from Nazareth in Galilee",
+      "words": [
+        {
+          "word": " but",
+          "start": 60.1,
+          "end": 60.38,
+          "probability": 0.9961024522781372
+        },
+        {
+          "word": " he",
+          "start": 60.38,
+          "end": 60.64,
+          "probability": 0.744018018245697
+        },
+        {
+          "word": " will",
+          "start": 60.64,
+          "end": 60.9,
+          "probability": 0.9976174235343933
+        },
+        {
+          "word": " baptize",
+          "start": 60.9,
+          "end": 61.4,
+          "probability": 0.9921760261058807
+        },
+        {
+          "word": " you",
+          "start": 61.4,
+          "end": 61.58,
+          "probability": 0.9982348680496216
+        },
+        {
+          "word": " with",
+          "start": 61.58,
+          "end": 61.74,
+          "probability": 0.9975577592849731
+        },
+        {
+          "word": " a",
+          "start": 61.74,
+          "end": 61.86,
+          "probability": 0.7166529297828674
+        },
+        {
+          "word": " Holy",
+          "start": 61.86,
+          "end": 62.1,
+          "probability": 0.6561451554298401
+        },
+        {
+          "word": " Spirit.",
+          "start": 62.1,
+          "end": 62.62,
+          "probability": 0.9818280339241028
+        },
+        {
+          "word": " In",
+          "start": 63.46,
+          "end": 63.66,
+          "probability": 0.9825953245162964
+        },
+        {
+          "word": " those",
+          "start": 63.66,
+          "end": 64.0,
+          "probability": 0.998571515083313
+        },
+        {
+          "word": " days,",
+          "start": 64.0,
+          "end": 64.52,
+          "probability": 0.9996633529663086
+        },
+        {
+          "word": " Jesus",
+          "start": 64.64,
+          "end": 64.96,
+          "probability": 0.9916957020759583
+        },
+        {
+          "word": " came",
+          "start": 64.96,
+          "end": 65.42,
+          "probability": 0.9985558390617371
+        },
+        {
+          "word": " from",
+          "start": 65.42,
+          "end": 65.78,
+          "probability": 0.998596727848053
+        },
+        {
+          "word": " Nazareth",
+          "start": 65.78,
+          "end": 66.28,
+          "probability": 0.9918968975543976
+        },
+        {
+          "word": " in",
+          "start": 66.28,
+          "end": 66.64,
+          "probability": 0.9581228494644165
+        },
+        {
+          "word": " Galilee",
+          "start": 66.64,
+          "end": 67.28,
+          "probability": 0.9743839800357819
+        }
+      ]
+    },
+    {
+      "start": 67.28,
+      "end": 73.14,
+      "text": " and was baptized by John in the Jordan. As soon as Jesus came up out of the water,",
+      "words": [
+        {
+          "word": " and",
+          "start": 67.28,
+          "end": 67.36,
+          "probability": 0.914389967918396
+        },
+        {
+          "word": " was",
+          "start": 67.36,
+          "end": 67.64,
+          "probability": 0.9987861514091492
+        },
+        {
+          "word": " baptized",
+          "start": 67.64,
+          "end": 68.12,
+          "probability": 0.8763754367828369
+        },
+        {
+          "word": " by",
+          "start": 68.12,
+          "end": 68.64,
+          "probability": 0.9984598159790039
+        },
+        {
+          "word": " John",
+          "start": 68.64,
+          "end": 68.94,
+          "probability": 0.9897977113723755
+        },
+        {
+          "word": " in",
+          "start": 68.94,
+          "end": 69.22,
+          "probability": 0.9950972199440002
+        },
+        {
+          "word": " the",
+          "start": 69.22,
+          "end": 69.32,
+          "probability": 0.9875844120979309
+        },
+        {
+          "word": " Jordan.",
+          "start": 69.32,
+          "end": 69.62,
+          "probability": 0.9875085949897766
+        },
+        {
+          "word": " As",
+          "start": 70.38,
+          "end": 70.62,
+          "probability": 0.9960476756095886
+        },
+        {
+          "word": " soon",
+          "start": 70.62,
+          "end": 70.94,
+          "probability": 0.998711347579956
+        },
+        {
+          "word": " as",
+          "start": 70.94,
+          "end": 71.24,
+          "probability": 0.9973721504211426
+        },
+        {
+          "word": " Jesus",
+          "start": 71.24,
+          "end": 71.66,
+          "probability": 0.9938002228736877
+        },
+        {
+          "word": " came",
+          "start": 71.66,
+          "end": 71.94,
+          "probability": 0.9989157915115356
+        },
+        {
+          "word": " up",
+          "start": 71.94,
+          "end": 72.2,
+          "probability": 0.981400728225708
+        },
+        {
+          "word": " out",
+          "start": 72.2,
+          "end": 72.4,
+          "probability": 0.9979071617126465
+        },
+        {
+          "word": " of",
+          "start": 72.4,
+          "end": 72.54,
+          "probability": 0.9943285584449768
+        },
+        {
+          "word": " the",
+          "start": 72.54,
+          "end": 73.14,
+          "probability": 0.9988934397697449
+        },
+        {
+          "word": " water,",
+          "start": 73.14,
+          "end": 73.14,
+          "probability": 0.9945067763328552
+        }
+      ]
+    },
+    {
+      "start": 73.38,
+      "end": 77.76,
+      "text": " he saw the heavens breaking open and the Spirit descending on him like a dove,",
+      "words": [
+        {
+          "word": " he",
+          "start": 73.38,
+          "end": 73.56,
+          "probability": 0.8542596697807312
+        },
+        {
+          "word": " saw",
+          "start": 73.56,
+          "end": 73.78,
+          "probability": 0.9992380142211914
+        },
+        {
+          "word": " the",
+          "start": 73.78,
+          "end": 74.3,
+          "probability": 0.9976288676261902
+        },
+        {
+          "word": " heavens",
+          "start": 74.3,
+          "end": 74.3,
+          "probability": 0.9523829221725464
+        },
+        {
+          "word": " breaking",
+          "start": 74.3,
+          "end": 74.8,
+          "probability": 0.9738396406173706
+        },
+        {
+          "word": " open",
+          "start": 74.8,
+          "end": 75.3,
+          "probability": 0.9981254935264587
+        },
+        {
+          "word": " and",
+          "start": 75.3,
+          "end": 75.56,
+          "probability": 0.8512586951255798
+        },
+        {
+          "word": " the",
+          "start": 75.56,
+          "end": 75.76,
+          "probability": 0.9973204731941223
+        },
+        {
+          "word": " Spirit",
+          "start": 75.76,
+          "end": 76.12,
+          "probability": 0.7530502080917358
+        },
+        {
+          "word": " descending",
+          "start": 76.12,
+          "end": 76.58,
+          "probability": 0.9719011187553406
+        },
+        {
+          "word": " on",
+          "start": 76.58,
+          "end": 76.9,
+          "probability": 0.9986340403556824
+        },
+        {
+          "word": " him",
+          "start": 76.9,
+          "end": 77.08,
+          "probability": 0.9006732106208801
+        },
+        {
+          "word": " like",
+          "start": 77.08,
+          "end": 77.3,
+          "probability": 0.9808080196380615
+        },
+        {
+          "word": " a",
+          "start": 77.3,
+          "end": 77.48,
+          "probability": 0.9966097474098206
+        },
+        {
+          "word": " dove,",
+          "start": 77.48,
+          "end": 77.76,
+          "probability": 0.9605573415756226
+        }
+      ]
+    },
+    {
+      "start": 77.76,
+      "end": 84.06,
+      "text": " And a voice came from heaven, you are my beloved Son, in you I am well pleased.",
+      "words": [
+        {
+          "word": " And",
+          "start": 77.76,
+          "end": 78.48,
+          "probability": 0.15495780110359192
+        },
+        {
+          "word": " a",
+          "start": 78.48,
+          "end": 78.64,
+          "probability": 0.43267855048179626
+        },
+        {
+          "word": " voice",
+          "start": 78.64,
+          "end": 78.86,
+          "probability": 0.9962837100028992
+        },
+        {
+          "word": " came",
+          "start": 78.86,
+          "end": 79.26,
+          "probability": 0.9967113733291626
+        },
+        {
+          "word": " from",
+          "start": 79.26,
+          "end": 79.52,
+          "probability": 0.9947620034217834
+        },
+        {
+          "word": " heaven,",
+          "start": 79.52,
+          "end": 79.94,
+          "probability": 0.8840875625610352
+        },
+        {
+          "word": " you",
+          "start": 80.34,
+          "end": 80.72,
+          "probability": 0.2524380683898926
+        },
+        {
+          "word": " are",
+          "start": 80.72,
+          "end": 80.96,
+          "probability": 0.9648032188415527
+        },
+        {
+          "word": " my",
+          "start": 80.96,
+          "end": 81.14,
+          "probability": 0.9302052855491638
+        },
+        {
+          "word": " beloved",
+          "start": 81.14,
+          "end": 81.56,
+          "probability": 0.9948908090591431
+        },
+        {
+          "word": " Son,",
+          "start": 81.56,
+          "end": 82.14,
+          "probability": 0.5438426733016968
+        },
+        {
+          "word": " in",
+          "start": 82.24,
+          "end": 82.46,
+          "probability": 0.9787907600402832
+        },
+        {
+          "word": " you",
+          "start": 82.46,
+          "end": 82.82,
+          "probability": 0.9541795253753662
+        },
+        {
+          "word": " I",
+          "start": 82.82,
+          "end": 83.04,
+          "probability": 0.7869688868522644
+        },
+        {
+          "word": " am",
+          "start": 83.04,
+          "end": 83.16,
+          "probability": 0.9728225469589233
+        },
+        {
+          "word": " well",
+          "start": 83.16,
+          "end": 83.5,
+          "probability": 0.9930716156959534
+        },
+        {
+          "word": " pleased.",
+          "start": 83.5,
+          "end": 84.06,
+          "probability": 0.930401086807251
+        }
+      ]
+    },
+    {
+      "start": 84.98,
+      "end": 90.86,
+      "text": " At once the Spirit drove Jesus into the wilderness, and he was there for forty days being",
+      "words": [
+        {
+          "word": " At",
+          "start": 84.98,
+          "end": 85.3,
+          "probability": 0.8982241749763489
+        },
+        {
+          "word": " once",
+          "start": 85.3,
+          "end": 85.7,
+          "probability": 0.9991567134857178
+        },
+        {
+          "word": " the",
+          "start": 85.7,
+          "end": 85.98,
+          "probability": 0.5087214708328247
+        },
+        {
+          "word": " Spirit",
+          "start": 85.98,
+          "end": 86.32,
+          "probability": 0.7982696890830994
+        },
+        {
+          "word": " drove",
+          "start": 86.32,
+          "end": 86.7,
+          "probability": 0.9986584186553955
+        },
+        {
+          "word": " Jesus",
+          "start": 86.7,
+          "end": 87.16,
+          "probability": 0.9974769949913025
+        },
+        {
+          "word": " into",
+          "start": 87.16,
+          "end": 87.6,
+          "probability": 0.9938127994537354
+        },
+        {
+          "word": " the",
+          "start": 87.6,
+          "end": 87.8,
+          "probability": 0.9974827170372009
+        },
+        {
+          "word": " wilderness,",
+          "start": 87.8,
+          "end": 88.28,
+          "probability": 0.9962828755378723
+        },
+        {
+          "word": " and",
+          "start": 88.52,
+          "end": 88.82,
+          "probability": 0.9949118494987488
+        },
+        {
+          "word": " he",
+          "start": 88.82,
+          "end": 88.96,
+          "probability": 0.4846020042896271
+        },
+        {
+          "word": " was",
+          "start": 88.96,
+          "end": 89.18,
+          "probability": 0.9997462630271912
+        },
+        {
+          "word": " there",
+          "start": 89.18,
+          "end": 89.48,
+          "probability": 0.9989927411079407
+        },
+        {
+          "word": " for",
+          "start": 89.48,
+          "end": 89.72,
+          "probability": 0.9983566403388977
+        },
+        {
+          "word": " forty",
+          "start": 89.72,
+          "end": 90.02,
+          "probability": 0.6245743632316589
+        },
+        {
+          "word": " days",
+          "start": 90.02,
+          "end": 90.44,
+          "probability": 0.9982682466506958
+        },
+        {
+          "word": " being",
+          "start": 90.44,
+          "end": 90.86,
+          "probability": 0.9501221776008606
+        }
+      ]
+    },
+    {
+      "start": 90.86,
+      "end": 91.92,
+      "text": " tempted by Satan.",
+      "words": [
+        {
+          "word": " tempted",
+          "start": 90.86,
+          "end": 91.18,
+          "probability": 0.9977059364318848
+        },
+        {
+          "word": " by",
+          "start": 91.18,
+          "end": 91.6,
+          "probability": 0.998822033405304
+        },
+        {
+          "word": " Satan.",
+          "start": 91.6,
+          "end": 91.92,
+          "probability": 0.9678060412406921
+        }
+      ]
+    },
+    {
+      "start": 92.4,
+      "end": 96.42,
+      "text": " He was with the wild animals and the angels ministered to him.",
+      "words": [
+        {
+          "word": " He",
+          "start": 92.4,
+          "end": 92.58,
+          "probability": 0.9941877126693726
+        },
+        {
+          "word": " was",
+          "start": 92.58,
+          "end": 92.8,
+          "probability": 0.9992376565933228
+        },
+        {
+          "word": " with",
+          "start": 92.8,
+          "end": 92.98,
+          "probability": 0.9956318140029907
+        },
+        {
+          "word": " the",
+          "start": 92.98,
+          "end": 93.2,
+          "probability": 0.9978345036506653
+        },
+        {
+          "word": " wild",
+          "start": 93.2,
+          "end": 93.54,
+          "probability": 0.9684392213821411
+        },
+        {
+          "word": " animals",
+          "start": 93.54,
+          "end": 93.98,
+          "probability": 0.9981061220169067
+        },
+        {
+          "word": " and",
+          "start": 93.98,
+          "end": 94.46,
+          "probability": 0.7420210242271423
+        },
+        {
+          "word": " the",
+          "start": 94.46,
+          "end": 94.62,
+          "probability": 0.9939178228378296
+        },
+        {
+          "word": " angels",
+          "start": 94.62,
+          "end": 95.08,
+          "probability": 0.9891153573989868
+        },
+        {
+          "word": " ministered",
+          "start": 95.08,
+          "end": 95.64,
+          "probability": 0.9407991170883179
+        },
+        {
+          "word": " to",
+          "start": 95.64,
+          "end": 95.96,
+          "probability": 0.9986691474914551
+        },
+        {
+          "word": " him.",
+          "start": 95.96,
+          "end": 96.42,
+          "probability": 0.9283240437507629
+        }
+      ]
+    },
+    {
+      "start": 97.18,
+      "end": 102.18,
+      "text": " After the arrest of John, Jesus went into Galilee and proclaimed the gospel of God.",
+      "words": [
+        {
+          "word": " After",
+          "start": 97.18,
+          "end": 97.54,
+          "probability": 0.9689546823501587
+        },
+        {
+          "word": " the",
+          "start": 97.54,
+          "end": 97.76,
+          "probability": 0.9988679885864258
+        },
+        {
+          "word": " arrest",
+          "start": 97.76,
+          "end": 98.02,
+          "probability": 0.9754741191864014
+        },
+        {
+          "word": " of",
+          "start": 98.02,
+          "end": 98.3,
+          "probability": 0.99800044298172
+        },
+        {
+          "word": " John,",
+          "start": 98.3,
+          "end": 98.64,
+          "probability": 0.9903360605239868
+        },
+        {
+          "word": " Jesus",
+          "start": 99.04,
+          "end": 99.2,
+          "probability": 0.9939186573028564
+        },
+        {
+          "word": " went",
+          "start": 99.2,
+          "end": 99.48,
+          "probability": 0.9989268183708191
+        },
+        {
+          "word": " into",
+          "start": 99.48,
+          "end": 99.74,
+          "probability": 0.9818228483200073
+        },
+        {
+          "word": " Galilee",
+          "start": 99.74,
+          "end": 100.34,
+          "probability": 0.9694559276103973
+        },
+        {
+          "word": " and",
+          "start": 100.34,
+          "end": 100.52,
+          "probability": 0.9791343212127686
+        },
+        {
+          "word": " proclaimed",
+          "start": 100.52,
+          "end": 100.9,
+          "probability": 0.9897168874740601
+        },
+        {
+          "word": " the",
+          "start": 100.9,
+          "end": 101.48,
+          "probability": 0.9965853691101074
+        },
+        {
+          "word": " gospel",
+          "start": 101.48,
+          "end": 101.48,
+          "probability": 0.6690877079963684
+        },
+        {
+          "word": " of",
+          "start": 101.48,
+          "end": 101.74,
+          "probability": 0.9995070695877075
+        },
+        {
+          "word": " God.",
+          "start": 101.74,
+          "end": 102.18,
+          "probability": 0.9981010556221008
+        }
+      ]
+    },
+    {
+      "start": 102.18,
+      "end": 108.44,
+      "text": " The time is fulfilled, he said, and the kingdom of God is near, repent and believe in",
+      "words": [
+        {
+          "word": " The",
+          "start": 102.18,
+          "end": 102.8,
+          "probability": 0.14344008266925812
+        },
+        {
+          "word": " time",
+          "start": 102.8,
+          "end": 103.28,
+          "probability": 0.9746169447898865
+        },
+        {
+          "word": " is",
+          "start": 103.28,
+          "end": 103.6,
+          "probability": 0.9974697828292847
+        },
+        {
+          "word": " fulfilled,",
+          "start": 103.6,
+          "end": 104.06,
+          "probability": 0.9977871179580688
+        },
+        {
+          "word": " he",
+          "start": 104.14,
+          "end": 104.34,
+          "probability": 0.7548672556877136
+        },
+        {
+          "word": " said,",
+          "start": 104.34,
+          "end": 104.8,
+          "probability": 0.9992744326591492
+        },
+        {
+          "word": " and",
+          "start": 104.88,
+          "end": 104.96,
+          "probability": 0.9868436455726624
+        },
+        {
+          "word": " the",
+          "start": 104.96,
+          "end": 105.24,
+          "probability": 0.9960401058197021
+        },
+        {
+          "word": " kingdom",
+          "start": 105.24,
+          "end": 105.42,
+          "probability": 0.8872410655021667
+        },
+        {
+          "word": " of",
+          "start": 105.42,
+          "end": 105.7,
+          "probability": 0.9993150234222412
+        },
+        {
+          "word": " God",
+          "start": 105.7,
+          "end": 105.96,
+          "probability": 0.9950194358825684
+        },
+        {
+          "word": " is",
+          "start": 105.96,
+          "end": 106.24,
+          "probability": 0.9981198906898499
+        },
+        {
+          "word": " near,",
+          "start": 106.24,
+          "end": 106.72,
+          "probability": 0.9953566193580627
+        },
+        {
+          "word": " repent",
+          "start": 107.12,
+          "end": 107.38,
+          "probability": 0.8933711647987366
+        },
+        {
+          "word": " and",
+          "start": 107.38,
+          "end": 107.94,
+          "probability": 0.5449021458625793
+        },
+        {
+          "word": " believe",
+          "start": 107.94,
+          "end": 108.24,
+          "probability": 0.8865264654159546
+        },
+        {
+          "word": " in",
+          "start": 108.24,
+          "end": 108.44,
+          "probability": 0.9991437196731567
+        }
+      ]
+    },
+    {
+      "start": 108.44,
+      "end": 109.06,
+      "text": " the gospel.",
+      "words": [
+        {
+          "word": " the",
+          "start": 108.44,
+          "end": 108.62,
+          "probability": 0.9981206059455872
+        },
+        {
+          "word": " gospel.",
+          "start": 108.62,
+          "end": 109.06,
+          "probability": 0.8069905042648315
+        }
+      ]
+    },
+    {
+      "start": 110.78,
+      "end": 116.16,
+      "text": " As Jesus was walking beside the sea of Galilee, he saw Simon and his brother Andrew.",
+      "words": [
+        {
+          "word": " As",
+          "start": 110.78,
+          "end": 111.1,
+          "probability": 0.8706830739974976
+        },
+        {
+          "word": " Jesus",
+          "start": 111.1,
+          "end": 111.58,
+          "probability": 0.9921683669090271
+        },
+        {
+          "word": " was",
+          "start": 111.58,
+          "end": 111.96,
+          "probability": 0.9987922310829163
+        },
+        {
+          "word": " walking",
+          "start": 111.96,
+          "end": 112.32,
+          "probability": 0.9985369443893433
+        },
+        {
+          "word": " beside",
+          "start": 112.32,
+          "end": 112.66,
+          "probability": 0.991204023361206
+        },
+        {
+          "word": " the",
+          "start": 112.66,
+          "end": 112.98,
+          "probability": 0.9972795844078064
+        },
+        {
+          "word": " sea",
+          "start": 112.98,
+          "end": 113.08,
+          "probability": 0.7989885807037354
+        },
+        {
+          "word": " of",
+          "start": 113.08,
+          "end": 113.26,
+          "probability": 0.9992017149925232
+        },
+        {
+          "word": " Galilee,",
+          "start": 113.26,
+          "end": 113.84,
+          "probability": 0.9951324164867401
+        },
+        {
+          "word": " he",
+          "start": 113.86,
+          "end": 114.02,
+          "probability": 0.685211181640625
+        },
+        {
+          "word": " saw",
+          "start": 114.02,
+          "end": 114.34,
+          "probability": 0.9933093786239624
+        },
+        {
+          "word": " Simon",
+          "start": 114.34,
+          "end": 114.7,
+          "probability": 0.9314391613006592
+        },
+        {
+          "word": " and",
+          "start": 114.7,
+          "end": 115.1,
+          "probability": 0.9834506511688232
+        },
+        {
+          "word": " his",
+          "start": 115.1,
+          "end": 115.34,
+          "probability": 0.940751314163208
+        },
+        {
+          "word": " brother",
+          "start": 115.34,
+          "end": 115.68,
+          "probability": 0.9861010909080505
+        },
+        {
+          "word": " Andrew.",
+          "start": 115.68,
+          "end": 116.16,
+          "probability": 0.959340512752533
+        }
+      ]
+    },
+    {
+      "start": 116.6,
+      "end": 119.7,
+      "text": " They were casting a net into the sea for they were fishermen.",
+      "words": [
+        {
+          "word": " They",
+          "start": 116.6,
+          "end": 116.86,
+          "probability": 0.9822469353675842
+        },
+        {
+          "word": " were",
+          "start": 116.86,
+          "end": 117.12,
+          "probability": 0.9993407130241394
+        },
+        {
+          "word": " casting",
+          "start": 117.12,
+          "end": 117.56,
+          "probability": 0.9936070442199707
+        },
+        {
+          "word": " a",
+          "start": 117.56,
+          "end": 117.76,
+          "probability": 0.9972195625305176
+        },
+        {
+          "word": " net",
+          "start": 117.76,
+          "end": 117.96,
+          "probability": 0.9661210775375366
+        },
+        {
+          "word": " into",
+          "start": 117.96,
+          "end": 118.28,
+          "probability": 0.9776563048362732
+        },
+        {
+          "word": " the",
+          "start": 118.28,
+          "end": 118.6,
+          "probability": 0.9988648891448975
+        },
+        {
+          "word": " sea",
+          "start": 118.6,
+          "end": 118.82,
+          "probability": 0.9750710129737854
+        },
+        {
+          "word": " for",
+          "start": 118.82,
+          "end": 119.0,
+          "probability": 0.8603276014328003
+        },
+        {
+          "word": " they",
+          "start": 119.0,
+          "end": 119.14,
+          "probability": 0.9916965961456299
+        },
+        {
+          "word": " were",
+          "start": 119.14,
+          "end": 119.4,
+          "probability": 0.9993144273757935
+        },
+        {
+          "word": " fishermen.",
+          "start": 119.4,
+          "end": 119.7,
+          "probability": 0.8179934620857239
+        }
+      ]
+    },
+    {
+      "start": 120.5,
+      "end": 126.64,
+      "text": " Come follow me, Jesus said, and I will make you fishers of men, and at once they left",
+      "words": [
+        {
+          "word": " Come",
+          "start": 120.5,
+          "end": 120.9,
+          "probability": 0.3752213418483734
+        },
+        {
+          "word": " follow",
+          "start": 120.9,
+          "end": 121.18,
+          "probability": 0.9322414994239807
+        },
+        {
+          "word": " me,",
+          "start": 121.18,
+          "end": 121.7,
+          "probability": 0.9504123330116272
+        },
+        {
+          "word": " Jesus",
+          "start": 121.76,
+          "end": 122.12,
+          "probability": 0.9947073459625244
+        },
+        {
+          "word": " said,",
+          "start": 122.12,
+          "end": 122.78,
+          "probability": 0.9442694187164307
+        },
+        {
+          "word": " and",
+          "start": 122.78,
+          "end": 123.02,
+          "probability": 0.5916328430175781
+        },
+        {
+          "word": " I",
+          "start": 123.02,
+          "end": 123.28,
+          "probability": 0.9771142601966858
+        },
+        {
+          "word": " will",
+          "start": 123.28,
+          "end": 123.44,
+          "probability": 0.9986475110054016
+        },
+        {
+          "word": " make",
+          "start": 123.44,
+          "end": 123.68,
+          "probability": 0.9992710947990417
+        },
+        {
+          "word": " you",
+          "start": 123.68,
+          "end": 123.94,
+          "probability": 0.9840499758720398
+        },
+        {
+          "word": " fishers",
+          "start": 123.94,
+          "end": 124.42,
+          "probability": 0.8871458172798157
+        },
+        {
+          "word": " of",
+          "start": 124.42,
+          "end": 124.56,
+          "probability": 0.998881995677948
+        },
+        {
+          "word": " men,",
+          "start": 124.56,
+          "end": 124.96,
+          "probability": 0.9967197775840759
+        },
+        {
+          "word": " and",
+          "start": 125.18,
+          "end": 125.52,
+          "probability": 0.9961318969726562
+        },
+        {
+          "word": " at",
+          "start": 125.52,
+          "end": 125.74,
+          "probability": 0.9386176466941833
+        },
+        {
+          "word": " once",
+          "start": 125.74,
+          "end": 126.02,
+          "probability": 0.9967944025993347
+        },
+        {
+          "word": " they",
+          "start": 126.02,
+          "end": 126.32,
+          "probability": 0.9043790698051453
+        },
+        {
+          "word": " left",
+          "start": 126.32,
+          "end": 126.64,
+          "probability": 0.9961864352226257
+        }
+      ]
+    },
+    {
+      "start": 126.64,
+      "end": 128.54,
+      "text": " their nets and followed him.",
+      "words": [
+        {
+          "word": " their",
+          "start": 126.64,
+          "end": 126.96,
+          "probability": 0.9907227158546448
+        },
+        {
+          "word": " nets",
+          "start": 126.96,
+          "end": 127.3,
+          "probability": 0.9738569259643555
+        },
+        {
+          "word": " and",
+          "start": 127.3,
+          "end": 127.68,
+          "probability": 0.9911900758743286
+        },
+        {
+          "word": " followed",
+          "start": 127.68,
+          "end": 127.88,
+          "probability": 0.9973184466362
+        },
+        {
+          "word": " him.",
+          "start": 127.88,
+          "end": 128.54,
+          "probability": 0.8229728937149048
+        }
+      ]
+    },
+    {
+      "start": 128.54,
+      "end": 134.0,
+      "text": " Going on a little farther, he saw James, son of Zebedee, and his brother John.",
+      "words": [
+        {
+          "word": " Going",
+          "start": 128.54,
+          "end": 129.26,
+          "probability": 0.20361465215682983
+        },
+        {
+          "word": " on",
+          "start": 129.26,
+          "end": 129.6,
+          "probability": 0.9961779117584229
+        },
+        {
+          "word": " a",
+          "start": 129.6,
+          "end": 129.7,
+          "probability": 0.9870976805686951
+        },
+        {
+          "word": " little",
+          "start": 129.7,
+          "end": 129.98,
+          "probability": 0.9978899359703064
+        },
+        {
+          "word": " farther,",
+          "start": 129.98,
+          "end": 130.32,
+          "probability": 0.9600728750228882
+        },
+        {
+          "word": " he",
+          "start": 130.68,
+          "end": 130.86,
+          "probability": 0.8895297646522522
+        },
+        {
+          "word": " saw",
+          "start": 130.86,
+          "end": 131.12,
+          "probability": 0.9981155395507812
+        },
+        {
+          "word": " James,",
+          "start": 131.12,
+          "end": 131.62,
+          "probability": 0.9952151775360107
+        },
+        {
+          "word": " son",
+          "start": 131.98,
+          "end": 132.06,
+          "probability": 0.894411563873291
+        },
+        {
+          "word": " of",
+          "start": 132.06,
+          "end": 132.26,
+          "probability": 0.9990430474281311
+        },
+        {
+          "word": " Zebedee,",
+          "start": 132.26,
+          "end": 132.72,
+          "probability": 0.6887635067105293
+        },
+        {
+          "word": " and",
+          "start": 132.8,
+          "end": 132.94,
+          "probability": 0.9982447624206543
+        },
+        {
+          "word": " his",
+          "start": 132.94,
+          "end": 133.2,
+          "probability": 0.9907656908035278
+        },
+        {
+          "word": " brother",
+          "start": 133.2,
+          "end": 133.5,
+          "probability": 0.9953343272209167
+        },
+        {
+          "word": " John.",
+          "start": 133.5,
+          "end": 134.0,
+          "probability": 0.8884952664375305
+        }
+      ]
+    },
+    {
+      "start": 134.78,
+      "end": 136.76,
+      "text": " They were in a boat, mending their nets.",
+      "words": [
+        {
+          "word": " They",
+          "start": 134.78,
+          "end": 134.78,
+          "probability": 0.9792301058769226
+        },
+        {
+          "word": " were",
+          "start": 134.78,
+          "end": 135.02,
+          "probability": 0.9986446499824524
+        },
+        {
+          "word": " in",
+          "start": 135.02,
+          "end": 135.18,
+          "probability": 0.9971942901611328
+        },
+        {
+          "word": " a",
+          "start": 135.18,
+          "end": 135.3,
+          "probability": 0.9831725358963013
+        },
+        {
+          "word": " boat,",
+          "start": 135.3,
+          "end": 135.62,
+          "probability": 0.9963938593864441
+        },
+        {
+          "word": " mending",
+          "start": 135.84,
+          "end": 136.0,
+          "probability": 0.8426894843578339
+        },
+        {
+          "word": " their",
+          "start": 136.0,
+          "end": 136.34,
+          "probability": 0.9982959628105164
+        },
+        {
+          "word": " nets.",
+          "start": 136.34,
+          "end": 136.76,
+          "probability": 0.9907378554344177
+        }
+      ]
+    },
+    {
+      "start": 137.36,
+      "end": 141.72,
+      "text": " Immediately Jesus called them, and they left their father's Ebony in the boat with",
+      "words": [
+        {
+          "word": " Immediately",
+          "start": 137.36,
+          "end": 137.8,
+          "probability": 0.9765558838844299
+        },
+        {
+          "word": " Jesus",
+          "start": 137.8,
+          "end": 138.42,
+          "probability": 0.4669756591320038
+        },
+        {
+          "word": " called",
+          "start": 138.42,
+          "end": 138.82,
+          "probability": 0.9970353841781616
+        },
+        {
+          "word": " them,",
+          "start": 138.82,
+          "end": 139.26,
+          "probability": 0.9928678274154663
+        },
+        {
+          "word": " and",
+          "start": 139.26,
+          "end": 139.4,
+          "probability": 0.9961686730384827
+        },
+        {
+          "word": " they",
+          "start": 139.4,
+          "end": 139.64,
+          "probability": 0.9809529185295105
+        },
+        {
+          "word": " left",
+          "start": 139.64,
+          "end": 139.86,
+          "probability": 0.9981910586357117
+        },
+        {
+          "word": " their",
+          "start": 139.86,
+          "end": 140.2,
+          "probability": 0.9977891445159912
+        },
+        {
+          "word": " father's",
+          "start": 140.2,
+          "end": 140.62,
+          "probability": 0.8865634799003601
+        },
+        {
+          "word": " Ebony",
+          "start": 140.62,
+          "end": 140.88,
+          "probability": 0.2971063479781151
+        },
+        {
+          "word": " in",
+          "start": 140.88,
+          "end": 141.08,
+          "probability": 0.9634678363800049
+        },
+        {
+          "word": " the",
+          "start": 141.08,
+          "end": 141.22,
+          "probability": 0.9964203834533691
+        },
+        {
+          "word": " boat",
+          "start": 141.22,
+          "end": 141.42,
+          "probability": 0.9979477524757385
+        },
+        {
+          "word": " with",
+          "start": 141.42,
+          "end": 141.72,
+          "probability": 0.874844491481781
+        }
+      ]
+    },
+    {
+      "start": 141.72,
+      "end": 143.9,
+      "text": " the hired men and followed him.",
+      "words": [
+        {
+          "word": " the",
+          "start": 141.72,
+          "end": 141.92,
+          "probability": 0.9697788953781128
+        },
+        {
+          "word": " hired",
+          "start": 141.92,
+          "end": 142.14,
+          "probability": 0.9671893119812012
+        },
+        {
+          "word": " men",
+          "start": 142.14,
+          "end": 142.68,
+          "probability": 0.9829509854316711
+        },
+        {
+          "word": " and",
+          "start": 142.68,
+          "end": 143.04,
+          "probability": 0.6940128803253174
+        },
+        {
+          "word": " followed",
+          "start": 143.04,
+          "end": 143.24,
+          "probability": 0.9984851479530334
+        },
+        {
+          "word": " him.",
+          "start": 143.24,
+          "end": 143.9,
+          "probability": 0.8688342571258545
+        }
+      ]
+    },
+    {
+      "start": 144.9,
+      "end": 150.96,
+      "text": " Then Jesus and his companions went to Capernaum, and right away Jesus entered the synagogue",
+      "words": [
+        {
+          "word": " Then",
+          "start": 144.9,
+          "end": 145.4,
+          "probability": 0.9654355645179749
+        },
+        {
+          "word": " Jesus",
+          "start": 145.4,
+          "end": 145.8,
+          "probability": 0.6536979675292969
+        },
+        {
+          "word": " and",
+          "start": 145.8,
+          "end": 146.08,
+          "probability": 0.9693074822425842
+        },
+        {
+          "word": " his",
+          "start": 146.08,
+          "end": 146.42,
+          "probability": 0.8919982314109802
+        },
+        {
+          "word": " companions",
+          "start": 146.42,
+          "end": 146.92,
+          "probability": 0.9956680536270142
+        },
+        {
+          "word": " went",
+          "start": 146.92,
+          "end": 147.42,
+          "probability": 0.9968031644821167
+        },
+        {
+          "word": " to",
+          "start": 147.42,
+          "end": 147.7,
+          "probability": 0.9989346861839294
+        },
+        {
+          "word": " Capernaum,",
+          "start": 147.7,
+          "end": 148.24,
+          "probability": 0.7916068434715271
+        },
+        {
+          "word": " and",
+          "start": 148.58,
+          "end": 148.92,
+          "probability": 0.9967484474182129
+        },
+        {
+          "word": " right",
+          "start": 148.92,
+          "end": 149.18,
+          "probability": 0.9561160802841187
+        },
+        {
+          "word": " away",
+          "start": 149.18,
+          "end": 149.54,
+          "probability": 0.9444078207015991
+        },
+        {
+          "word": " Jesus",
+          "start": 149.54,
+          "end": 150.04,
+          "probability": 0.5248228311538696
+        },
+        {
+          "word": " entered",
+          "start": 150.04,
+          "end": 150.4,
+          "probability": 0.9967293739318848
+        },
+        {
+          "word": " the",
+          "start": 150.4,
+          "end": 150.7,
+          "probability": 0.9952355027198792
+        },
+        {
+          "word": " synagogue",
+          "start": 150.7,
+          "end": 150.96,
+          "probability": 0.9686991572380066
+        }
+      ]
+    },
+    {
+      "start": 150.96,
+      "end": 153.18,
+      "text": " on the Sabbath and began to teach.",
+      "words": [
+        {
+          "word": " on",
+          "start": 150.96,
+          "end": 151.36,
+          "probability": 0.9972671270370483
+        },
+        {
+          "word": " the",
+          "start": 151.36,
+          "end": 151.64,
+          "probability": 0.9940599203109741
+        },
+        {
+          "word": " Sabbath",
+          "start": 151.64,
+          "end": 151.9,
+          "probability": 0.983075737953186
+        },
+        {
+          "word": " and",
+          "start": 151.9,
+          "end": 152.18,
+          "probability": 0.8468872308731079
+        },
+        {
+          "word": " began",
+          "start": 152.18,
+          "end": 152.5,
+          "probability": 0.9971453547477722
+        },
+        {
+          "word": " to",
+          "start": 152.5,
+          "end": 152.78,
+          "probability": 0.9995360374450684
+        },
+        {
+          "word": " teach.",
+          "start": 152.78,
+          "end": 153.18,
+          "probability": 0.995370090007782
+        }
+      ]
+    },
+    {
+      "start": 153.18,
+      "end": 158.74,
+      "text": " The people were astonished at His teaching because He taught as one who had authority",
+      "words": [
+        {
+          "word": " The",
+          "start": 153.18,
+          "end": 154.14,
+          "probability": 0.41599833965301514
+        },
+        {
+          "word": " people",
+          "start": 154.14,
+          "end": 154.54,
+          "probability": 0.9931240677833557
+        },
+        {
+          "word": " were",
+          "start": 154.54,
+          "end": 154.92,
+          "probability": 0.9973300695419312
+        },
+        {
+          "word": " astonished",
+          "start": 154.92,
+          "end": 155.4,
+          "probability": 0.9922581315040588
+        },
+        {
+          "word": " at",
+          "start": 155.4,
+          "end": 155.62,
+          "probability": 0.9961804151535034
+        },
+        {
+          "word": " His",
+          "start": 155.62,
+          "end": 155.82,
+          "probability": 0.5693753957748413
+        },
+        {
+          "word": " teaching",
+          "start": 155.82,
+          "end": 156.3,
+          "probability": 0.9969421029090881
+        },
+        {
+          "word": " because",
+          "start": 156.3,
+          "end": 156.82,
+          "probability": 0.8189604878425598
+        },
+        {
+          "word": " He",
+          "start": 156.82,
+          "end": 157.04,
+          "probability": 0.9037954211235046
+        },
+        {
+          "word": " taught",
+          "start": 157.04,
+          "end": 157.3,
+          "probability": 0.9963318705558777
+        },
+        {
+          "word": " as",
+          "start": 157.3,
+          "end": 157.56,
+          "probability": 0.9762563705444336
+        },
+        {
+          "word": " one",
+          "start": 157.56,
+          "end": 157.82,
+          "probability": 0.9495437741279602
+        },
+        {
+          "word": " who",
+          "start": 157.82,
+          "end": 158.0,
+          "probability": 0.9970415234565735
+        },
+        {
+          "word": " had",
+          "start": 158.0,
+          "end": 158.24,
+          "probability": 0.9983475208282471
+        },
+        {
+          "word": " authority",
+          "start": 158.24,
+          "end": 158.74,
+          "probability": 0.9994372725486755
+        }
+      ]
+    },
+    {
+      "start": 158.74,
+      "end": 160.7,
+      "text": " and not as the scribes.",
+      "words": [
+        {
+          "word": " and",
+          "start": 158.74,
+          "end": 159.12,
+          "probability": 0.9166592359542847
+        },
+        {
+          "word": " not",
+          "start": 159.12,
+          "end": 159.52,
+          "probability": 0.9961681962013245
+        },
+        {
+          "word": " as",
+          "start": 159.52,
+          "end": 159.8,
+          "probability": 0.9895765781402588
+        },
+        {
+          "word": " the",
+          "start": 159.8,
+          "end": 160.0,
+          "probability": 0.9977385997772217
+        },
+        {
+          "word": " scribes.",
+          "start": 160.0,
+          "end": 160.7,
+          "probability": 0.9544077217578888
+        }
+      ]
+    },
+    {
+      "start": 161.66,
+      "end": 165.12,
+      "text": " Suddenly, a man with an unclean spirit cried out in the synagogue,",
+      "words": [
+        {
+          "word": " Suddenly,",
+          "start": 161.66,
+          "end": 162.02,
+          "probability": 0.7461423277854919
+        },
+        {
+          "word": " a",
+          "start": 162.2,
+          "end": 162.24,
+          "probability": 0.9827449917793274
+        },
+        {
+          "word": " man",
+          "start": 162.24,
+          "end": 162.52,
+          "probability": 0.9984390139579773
+        },
+        {
+          "word": " with",
+          "start": 162.52,
+          "end": 162.7,
+          "probability": 0.9968023300170898
+        },
+        {
+          "word": " an",
+          "start": 162.7,
+          "end": 162.96,
+          "probability": 0.9939202070236206
+        },
+        {
+          "word": " unclean",
+          "start": 162.96,
+          "end": 163.42,
+          "probability": 0.9809346497058868
+        },
+        {
+          "word": " spirit",
+          "start": 163.42,
+          "end": 163.88,
+          "probability": 0.972464919090271
+        },
+        {
+          "word": " cried",
+          "start": 163.88,
+          "end": 164.12,
+          "probability": 0.9909533262252808
+        },
+        {
+          "word": " out",
+          "start": 164.12,
+          "end": 164.44,
+          "probability": 0.9978825449943542
+        },
+        {
+          "word": " in",
+          "start": 164.44,
+          "end": 164.62,
+          "probability": 0.9931294322013855
+        },
+        {
+          "word": " the",
+          "start": 164.62,
+          "end": 164.76,
+          "probability": 0.9912528395652771
+        },
+        {
+          "word": " synagogue,",
+          "start": 164.76,
+          "end": 165.12,
+          "probability": 0.9810505509376526
+        }
+      ]
+    },
+    {
+      "start": 165.8,
+      "end": 168.18,
+      "text": " what do you want with us, Jesus of Nazareth?",
+      "words": [
+        {
+          "word": " what",
+          "start": 165.8,
+          "end": 166.0,
+          "probability": 0.051411569118499756
+        },
+        {
+          "word": " do",
+          "start": 166.0,
+          "end": 166.26,
+          "probability": 0.9955702424049377
+        },
+        {
+          "word": " you",
+          "start": 166.26,
+          "end": 166.26,
+          "probability": 0.973456859588623
+        },
+        {
+          "word": " want",
+          "start": 166.26,
+          "end": 166.52,
+          "probability": 0.998842716217041
+        },
+        {
+          "word": " with",
+          "start": 166.52,
+          "end": 166.72,
+          "probability": 0.9959866404533386
+        },
+        {
+          "word": " us,",
+          "start": 166.72,
+          "end": 167.02,
+          "probability": 0.9914851784706116
+        },
+        {
+          "word": " Jesus",
+          "start": 167.08,
+          "end": 167.4,
+          "probability": 0.960273027420044
+        },
+        {
+          "word": " of",
+          "start": 167.4,
+          "end": 167.74,
+          "probability": 0.989300549030304
+        },
+        {
+          "word": " Nazareth?",
+          "start": 167.74,
+          "end": 168.18,
+          "probability": 0.990605890750885
+        }
+      ]
+    },
+    {
+      "start": 168.6,
+      "end": 170.26,
+      "text": " Have you come to destroy us?",
+      "words": [
+        {
+          "word": " Have",
+          "start": 168.6,
+          "end": 168.74,
+          "probability": 0.9717926979064941
+        },
+        {
+          "word": " you",
+          "start": 168.74,
+          "end": 168.94,
+          "probability": 0.9755227565765381
+        },
+        {
+          "word": " come",
+          "start": 168.94,
+          "end": 169.2,
+          "probability": 0.9978850483894348
+        },
+        {
+          "word": " to",
+          "start": 169.2,
+          "end": 169.52,
+          "probability": 0.9992263317108154
+        },
+        {
+          "word": " destroy",
+          "start": 169.52,
+          "end": 169.78,
+          "probability": 0.9927822351455688
+        },
+        {
+          "word": " us?",
+          "start": 169.78,
+          "end": 170.26,
+          "probability": 0.9986043572425842
+        }
+      ]
+    },
+    {
+      "start": 170.4,
+      "end": 173.04,
+      "text": " I know who you are, the Holy One of God.",
+      "words": [
+        {
+          "word": " I",
+          "start": 170.4,
+          "end": 170.62,
+          "probability": 0.9931950569152832
+        },
+        {
+          "word": " know",
+          "start": 170.62,
+          "end": 170.88,
+          "probability": 0.998116135597229
+        },
+        {
+          "word": " who",
+          "start": 170.88,
+          "end": 171.12,
+          "probability": 0.9984468817710876
+        },
+        {
+          "word": " you",
+          "start": 171.12,
+          "end": 171.28,
+          "probability": 0.9849735498428345
+        },
+        {
+          "word": " are,",
+          "start": 171.28,
+          "end": 171.56,
+          "probability": 0.9994186162948608
+        },
+        {
+          "word": " the",
+          "start": 171.88,
+          "end": 172.0,
+          "probability": 0.9951707720756531
+        },
+        {
+          "word": " Holy",
+          "start": 172.0,
+          "end": 172.26,
+          "probability": 0.6312623620033264
+        },
+        {
+          "word": " One",
+          "start": 172.26,
+          "end": 172.42,
+          "probability": 0.8870454430580139
+        },
+        {
+          "word": " of",
+          "start": 172.42,
+          "end": 172.6,
+          "probability": 0.998256504535675
+        },
+        {
+          "word": " God.",
+          "start": 172.6,
+          "end": 173.04,
+          "probability": 0.9989105463027954
+        }
+      ]
+    },
+    {
+      "start": 173.64,
+      "end": 175.56,
+      "text": " But Jesus rebuked the Spirit.",
+      "words": [
+        {
+          "word": " But",
+          "start": 173.64,
+          "end": 173.92,
+          "probability": 0.9714789390563965
+        },
+        {
+          "word": " Jesus",
+          "start": 173.92,
+          "end": 174.42,
+          "probability": 0.9892898201942444
+        },
+        {
+          "word": " rebuked",
+          "start": 174.42,
+          "end": 174.86,
+          "probability": 0.9724234342575073
+        },
+        {
+          "word": " the",
+          "start": 174.86,
+          "end": 175.14,
+          "probability": 0.9626682996749878
+        },
+        {
+          "word": " Spirit.",
+          "start": 175.14,
+          "end": 175.56,
+          "probability": 0.4999609589576721
+        }
+      ]
+    },
+    {
+      "start": 175.92,
+      "end": 178.96,
+      "text": " Be silent,\" He said, come out of Him.",
+      "words": [
+        {
+          "word": " Be",
+          "start": 175.92,
+          "end": 176.24,
+          "probability": 0.8315057754516602
+        },
+        {
+          "word": " silent,\"",
+          "start": 176.24,
+          "end": 176.92,
+          "probability": 0.6060681343078613
+        },
+        {
+          "word": " He",
+          "start": 176.92,
+          "end": 177.08,
+          "probability": 0.7224434018135071
+        },
+        {
+          "word": " said,",
+          "start": 177.08,
+          "end": 177.72,
+          "probability": 0.9990399479866028
+        },
+        {
+          "word": " come",
+          "start": 177.82,
+          "end": 177.98,
+          "probability": 0.2818506360054016
+        },
+        {
+          "word": " out",
+          "start": 177.98,
+          "end": 178.22,
+          "probability": 0.9973449110984802
+        },
+        {
+          "word": " of",
+          "start": 178.22,
+          "end": 178.34,
+          "probability": 0.9982450008392334
+        },
+        {
+          "word": " Him.",
+          "start": 178.34,
+          "end": 178.96,
+          "probability": 0.9247395992279053
+        }
+      ]
+    },
+    {
+      "start": 178.96,
+      "end": 184.98,
+      "text": " At this the unclean spirit threw the man into convulsions and came out with a loud shriek.",
+      "words": [
+        {
+          "word": " At",
+          "start": 178.96,
+          "end": 179.6,
+          "probability": 0.4655815362930298
+        },
+        {
+          "word": " this",
+          "start": 179.6,
+          "end": 179.88,
+          "probability": 0.9912209510803223
+        },
+        {
+          "word": " the",
+          "start": 179.88,
+          "end": 180.12,
+          "probability": 0.7637298107147217
+        },
+        {
+          "word": " unclean",
+          "start": 180.12,
+          "end": 180.66,
+          "probability": 0.9578626155853271
+        },
+        {
+          "word": " spirit",
+          "start": 180.66,
+          "end": 181.04,
+          "probability": 0.9127888679504395
+        },
+        {
+          "word": " threw",
+          "start": 181.04,
+          "end": 181.36,
+          "probability": 0.8617877960205078
+        },
+        {
+          "word": " the",
+          "start": 181.36,
+          "end": 181.52,
+          "probability": 0.984572172164917
+        },
+        {
+          "word": " man",
+          "start": 181.52,
+          "end": 181.78,
+          "probability": 0.9851856827735901
+        },
+        {
+          "word": " into",
+          "start": 181.78,
+          "end": 182.06,
+          "probability": 0.9936298727989197
+        },
+        {
+          "word": " convulsions",
+          "start": 182.06,
+          "end": 182.86,
+          "probability": 0.9894125858942667
+        },
+        {
+          "word": " and",
+          "start": 182.86,
+          "end": 183.22,
+          "probability": 0.8711715340614319
+        },
+        {
+          "word": " came",
+          "start": 183.22,
+          "end": 183.52,
+          "probability": 0.9975106716156006
+        },
+        {
+          "word": " out",
+          "start": 183.52,
+          "end": 183.78,
+          "probability": 0.9985872507095337
+        },
+        {
+          "word": " with",
+          "start": 183.78,
+          "end": 183.94,
+          "probability": 0.9983701109886169
+        },
+        {
+          "word": " a",
+          "start": 183.94,
+          "end": 184.14,
+          "probability": 0.9951733946800232
+        },
+        {
+          "word": " loud",
+          "start": 184.14,
+          "end": 184.44,
+          "probability": 0.8743329048156738
+        },
+        {
+          "word": " shriek.",
+          "start": 184.44,
+          "end": 184.98,
+          "probability": 0.9890214800834656
+        }
+      ]
+    },
+    {
+      "start": 186.04,
+      "end": 189.34,
+      "text": " All the people were amazed and began to ask one another,",
+      "words": [
+        {
+          "word": " All",
+          "start": 186.04,
+          "end": 186.34,
+          "probability": 0.9310429692268372
+        },
+        {
+          "word": " the",
+          "start": 186.34,
+          "end": 186.56,
+          "probability": 0.994659960269928
+        },
+        {
+          "word": " people",
+          "start": 186.56,
+          "end": 186.88,
+          "probability": 0.9986521601676941
+        },
+        {
+          "word": " were",
+          "start": 186.88,
+          "end": 187.14,
+          "probability": 0.998540997505188
+        },
+        {
+          "word": " amazed",
+          "start": 187.14,
+          "end": 187.58,
+          "probability": 0.9937925934791565
+        },
+        {
+          "word": " and",
+          "start": 187.58,
+          "end": 187.8,
+          "probability": 0.9661263227462769
+        },
+        {
+          "word": " began",
+          "start": 187.8,
+          "end": 188.18,
+          "probability": 0.9924681782722473
+        },
+        {
+          "word": " to",
+          "start": 188.18,
+          "end": 188.38,
+          "probability": 0.99925297498703
+        },
+        {
+          "word": " ask",
+          "start": 188.38,
+          "end": 188.66,
+          "probability": 0.9985547661781311
+        },
+        {
+          "word": " one",
+          "start": 188.66,
+          "end": 188.88,
+          "probability": 0.9969622492790222
+        },
+        {
+          "word": " another,",
+          "start": 188.88,
+          "end": 189.34,
+          "probability": 0.998138427734375
+        }
+      ]
+    },
+    {
+      "start": 189.78,
+      "end": 192.46,
+      "text": " what is this? A new teaching with authority?",
+      "words": [
+        {
+          "word": " what",
+          "start": 189.78,
+          "end": 189.98,
+          "probability": 0.08336114138364792
+        },
+        {
+          "word": " is",
+          "start": 189.98,
+          "end": 190.24,
+          "probability": 0.994989812374115
+        },
+        {
+          "word": " this?",
+          "start": 190.24,
+          "end": 190.84,
+          "probability": 0.9990008473396301
+        },
+        {
+          "word": " A",
+          "start": 191.0,
+          "end": 191.08,
+          "probability": 0.9668606519699097
+        },
+        {
+          "word": " new",
+          "start": 191.08,
+          "end": 191.32,
+          "probability": 0.9907754063606262
+        },
+        {
+          "word": " teaching",
+          "start": 191.32,
+          "end": 191.72,
+          "probability": 0.9974982142448425
+        },
+        {
+          "word": " with",
+          "start": 191.72,
+          "end": 191.92,
+          "probability": 0.9939817786216736
+        },
+        {
+          "word": " authority?",
+          "start": 191.92,
+          "end": 192.46,
+          "probability": 0.9961698651313782
+        }
+      ]
+    },
+    {
+      "start": 193.12,
+      "end": 196.92,
+      "text": " He commands even the unclean spirits and they obey him.",
+      "words": [
+        {
+          "word": " He",
+          "start": 193.12,
+          "end": 193.24,
+          "probability": 0.9920185208320618
+        },
+        {
+          "word": " commands",
+          "start": 193.24,
+          "end": 193.64,
+          "probability": 0.9755209684371948
+        },
+        {
+          "word": " even",
+          "start": 193.64,
+          "end": 194.06,
+          "probability": 0.9817224144935608
+        },
+        {
+          "word": " the",
+          "start": 194.06,
+          "end": 194.36,
+          "probability": 0.9967321157455444
+        },
+        {
+          "word": " unclean",
+          "start": 194.36,
+          "end": 194.86,
+          "probability": 0.9982932507991791
+        },
+        {
+          "word": " spirits",
+          "start": 194.86,
+          "end": 195.46,
+          "probability": 0.9686383008956909
+        },
+        {
+          "word": " and",
+          "start": 195.46,
+          "end": 195.72,
+          "probability": 0.752233624458313
+        },
+        {
+          "word": " they",
+          "start": 195.72,
+          "end": 195.96,
+          "probability": 0.9733191728591919
+        },
+        {
+          "word": " obey",
+          "start": 195.96,
+          "end": 196.14,
+          "probability": 0.9821626543998718
+        },
+        {
+          "word": " him.",
+          "start": 196.14,
+          "end": 196.92,
+          "probability": 0.688254714012146
+        }
+      ]
+    },
+    {
+      "start": 197.28,
+      "end": 202.12,
+      "text": " And the news about Jesus spread quickly through the whole region of Galilee.",
+      "words": [
+        {
+          "word": " And",
+          "start": 197.28,
+          "end": 197.5,
+          "probability": 0.9452798366546631
+        },
+        {
+          "word": " the",
+          "start": 197.5,
+          "end": 197.64,
+          "probability": 0.9853668212890625
+        },
+        {
+          "word": " news",
+          "start": 197.64,
+          "end": 197.9,
+          "probability": 0.9938254356384277
+        },
+        {
+          "word": " about",
+          "start": 197.9,
+          "end": 198.26,
+          "probability": 0.9973323345184326
+        },
+        {
+          "word": " Jesus",
+          "start": 198.26,
+          "end": 198.7,
+          "probability": 0.9985939860343933
+        },
+        {
+          "word": " spread",
+          "start": 198.7,
+          "end": 199.14,
+          "probability": 0.9928545355796814
+        },
+        {
+          "word": " quickly",
+          "start": 199.14,
+          "end": 199.56,
+          "probability": 0.9986769556999207
+        },
+        {
+          "word": " through",
+          "start": 199.56,
+          "end": 199.98,
+          "probability": 0.9794932007789612
+        },
+        {
+          "word": " the",
+          "start": 199.98,
+          "end": 200.14,
+          "probability": 0.9983140230178833
+        },
+        {
+          "word": " whole",
+          "start": 200.14,
+          "end": 200.52,
+          "probability": 0.9992602467536926
+        },
+        {
+          "word": " region",
+          "start": 200.52,
+          "end": 200.82,
+          "probability": 0.9889945387840271
+        },
+        {
+          "word": " of",
+          "start": 200.82,
+          "end": 201.08,
+          "probability": 0.9995051622390747
+        },
+        {
+          "word": " Galilee.",
+          "start": 201.08,
+          "end": 202.12,
+          "probability": 0.9918806552886963
+        }
+      ]
+    },
+    {
+      "start": 202.92,
+      "end": 206.18,
+      "text": " As soon as Jesus and his companions had left this synagogue,",
+      "words": [
+        {
+          "word": " As",
+          "start": 202.92,
+          "end": 203.16,
+          "probability": 0.9711453914642334
+        },
+        {
+          "word": " soon",
+          "start": 203.16,
+          "end": 203.38,
+          "probability": 0.9981258511543274
+        },
+        {
+          "word": " as",
+          "start": 203.38,
+          "end": 203.62,
+          "probability": 0.9993657469749451
+        },
+        {
+          "word": " Jesus",
+          "start": 203.62,
+          "end": 204.0,
+          "probability": 0.992779552936554
+        },
+        {
+          "word": " and",
+          "start": 204.0,
+          "end": 204.22,
+          "probability": 0.8843914866447449
+        },
+        {
+          "word": " his",
+          "start": 204.22,
+          "end": 204.56,
+          "probability": 0.796581506729126
+        },
+        {
+          "word": " companions",
+          "start": 204.56,
+          "end": 204.96,
+          "probability": 0.9966411590576172
+        },
+        {
+          "word": " had",
+          "start": 204.96,
+          "end": 205.4,
+          "probability": 0.9948155283927917
+        },
+        {
+          "word": " left",
+          "start": 205.4,
+          "end": 205.6,
+          "probability": 0.9984729886054993
+        },
+        {
+          "word": " this",
+          "start": 205.6,
+          "end": 205.86,
+          "probability": 0.9651792049407959
+        },
+        {
+          "word": " synagogue,",
+          "start": 205.86,
+          "end": 206.18,
+          "probability": 0.8303619623184204
+        }
+      ]
+    },
+    {
+      "start": 206.18,
+      "end": 212.56,
+      "text": " they went with James and John to the home of Simon and Andrew. Simon's mother-in-law was sick in",
+      "words": [
+        {
+          "word": " they",
+          "start": 206.18,
+          "end": 206.44,
+          "probability": 0.2339099496603012
+        },
+        {
+          "word": " went",
+          "start": 206.44,
+          "end": 206.76,
+          "probability": 0.9723615646362305
+        },
+        {
+          "word": " with",
+          "start": 206.76,
+          "end": 207.08,
+          "probability": 0.992961585521698
+        },
+        {
+          "word": " James",
+          "start": 207.08,
+          "end": 207.46,
+          "probability": 0.9861960411071777
+        },
+        {
+          "word": " and",
+          "start": 207.46,
+          "end": 207.72,
+          "probability": 0.8441452383995056
+        },
+        {
+          "word": " John",
+          "start": 207.72,
+          "end": 207.98,
+          "probability": 0.9813714623451233
+        },
+        {
+          "word": " to",
+          "start": 207.98,
+          "end": 208.18,
+          "probability": 0.989061713218689
+        },
+        {
+          "word": " the",
+          "start": 208.18,
+          "end": 208.3,
+          "probability": 0.9983371496200562
+        },
+        {
+          "word": " home",
+          "start": 208.3,
+          "end": 208.52,
+          "probability": 0.9757059216499329
+        },
+        {
+          "word": " of",
+          "start": 208.52,
+          "end": 208.8,
+          "probability": 0.9983443021774292
+        },
+        {
+          "word": " Simon",
+          "start": 208.8,
+          "end": 209.08,
+          "probability": 0.9715871810913086
+        },
+        {
+          "word": " and",
+          "start": 209.08,
+          "end": 209.58,
+          "probability": 0.9918442368507385
+        },
+        {
+          "word": " Andrew.",
+          "start": 209.58,
+          "end": 210.08,
+          "probability": 0.9907205104827881
+        },
+        {
+          "word": " Simon's",
+          "start": 210.88,
+          "end": 211.32,
+          "probability": 0.987656444311142
+        },
+        {
+          "word": " mother",
+          "start": 211.32,
+          "end": 211.52,
+          "probability": 0.9839726686477661
+        },
+        {
+          "word": "-in",
+          "start": 211.52,
+          "end": 211.66,
+          "probability": 0.9919154942035675
+        },
+        {
+          "word": "-law",
+          "start": 211.66,
+          "end": 211.88,
+          "probability": 0.9989514946937561
+        },
+        {
+          "word": " was",
+          "start": 211.88,
+          "end": 212.16,
+          "probability": 0.9938090443611145
+        },
+        {
+          "word": " sick",
+          "start": 212.16,
+          "end": 212.34,
+          "probability": 0.9951974749565125
+        },
+        {
+          "word": " in",
+          "start": 212.34,
+          "end": 212.56,
+          "probability": 0.6184067130088806
+        }
+      ]
+    },
+    {
+      "start": 212.56,
+      "end": 219.24,
+      "text": " bed with a fever, and they promptly told Jesus about her. So he went to her, took her by the hand",
+      "words": [
+        {
+          "word": " bed",
+          "start": 212.56,
+          "end": 212.82,
+          "probability": 0.9991756081581116
+        },
+        {
+          "word": " with",
+          "start": 212.82,
+          "end": 212.98,
+          "probability": 0.9897865056991577
+        },
+        {
+          "word": " a",
+          "start": 212.98,
+          "end": 213.46,
+          "probability": 0.8666914701461792
+        },
+        {
+          "word": " fever,",
+          "start": 213.46,
+          "end": 213.46,
+          "probability": 0.9888863563537598
+        },
+        {
+          "word": " and",
+          "start": 213.8,
+          "end": 214.02,
+          "probability": 0.9967478513717651
+        },
+        {
+          "word": " they",
+          "start": 214.02,
+          "end": 214.3,
+          "probability": 0.9976014494895935
+        },
+        {
+          "word": " promptly",
+          "start": 214.3,
+          "end": 214.64,
+          "probability": 0.9914218783378601
+        },
+        {
+          "word": " told",
+          "start": 214.64,
+          "end": 215.04,
+          "probability": 0.997635006904602
+        },
+        {
+          "word": " Jesus",
+          "start": 215.04,
+          "end": 215.48,
+          "probability": 0.9932716488838196
+        },
+        {
+          "word": " about",
+          "start": 215.48,
+          "end": 215.86,
+          "probability": 0.999121367931366
+        },
+        {
+          "word": " her.",
+          "start": 215.86,
+          "end": 216.42,
+          "probability": 0.9978197813034058
+        },
+        {
+          "word": " So",
+          "start": 216.82,
+          "end": 217.12,
+          "probability": 0.9702200293540955
+        },
+        {
+          "word": " he",
+          "start": 217.12,
+          "end": 217.3,
+          "probability": 0.8072385191917419
+        },
+        {
+          "word": " went",
+          "start": 217.3,
+          "end": 217.58,
+          "probability": 0.9990960359573364
+        },
+        {
+          "word": " to",
+          "start": 217.58,
+          "end": 217.72,
+          "probability": 0.9970957040786743
+        },
+        {
+          "word": " her,",
+          "start": 217.72,
+          "end": 218.06,
+          "probability": 0.999595582485199
+        },
+        {
+          "word": " took",
+          "start": 218.26,
+          "end": 218.46,
+          "probability": 0.9216115474700928
+        },
+        {
+          "word": " her",
+          "start": 218.46,
+          "end": 218.64,
+          "probability": 0.9996792078018188
+        },
+        {
+          "word": " by",
+          "start": 218.64,
+          "end": 218.78,
+          "probability": 0.9984757304191589
+        },
+        {
+          "word": " the",
+          "start": 218.78,
+          "end": 218.96,
+          "probability": 0.992936909198761
+        },
+        {
+          "word": " hand",
+          "start": 218.96,
+          "end": 219.24,
+          "probability": 0.9981876015663147
+        }
+      ]
+    },
+    {
+      "start": 219.24,
+      "end": 226.18,
+      "text": " and helped her up. The fever left her, and she began to serve them. That evening, after sunset,",
+      "words": [
+        {
+          "word": " and",
+          "start": 219.24,
+          "end": 219.56,
+          "probability": 0.5189328789710999
+        },
+        {
+          "word": " helped",
+          "start": 219.56,
+          "end": 219.76,
+          "probability": 0.9837534427642822
+        },
+        {
+          "word": " her",
+          "start": 219.76,
+          "end": 219.96,
+          "probability": 0.9997145533561707
+        },
+        {
+          "word": " up.",
+          "start": 219.96,
+          "end": 220.38,
+          "probability": 0.9483106136322021
+        },
+        {
+          "word": " The",
+          "start": 220.74,
+          "end": 220.98,
+          "probability": 0.9757639765739441
+        },
+        {
+          "word": " fever",
+          "start": 220.98,
+          "end": 221.2,
+          "probability": 0.9944722056388855
+        },
+        {
+          "word": " left",
+          "start": 221.2,
+          "end": 221.5,
+          "probability": 0.9986982345581055
+        },
+        {
+          "word": " her,",
+          "start": 221.5,
+          "end": 221.9,
+          "probability": 0.9980323910713196
+        },
+        {
+          "word": " and",
+          "start": 221.9,
+          "end": 222.04,
+          "probability": 0.9986635446548462
+        },
+        {
+          "word": " she",
+          "start": 222.04,
+          "end": 222.24,
+          "probability": 0.9972836971282959
+        },
+        {
+          "word": " began",
+          "start": 222.24,
+          "end": 222.58,
+          "probability": 0.9986429810523987
+        },
+        {
+          "word": " to",
+          "start": 222.58,
+          "end": 222.84,
+          "probability": 0.9997789263725281
+        },
+        {
+          "word": " serve",
+          "start": 222.84,
+          "end": 223.04,
+          "probability": 0.9899619817733765
+        },
+        {
+          "word": " them.",
+          "start": 223.04,
+          "end": 223.64,
+          "probability": 0.9948174357414246
+        },
+        {
+          "word": " That",
+          "start": 224.54,
+          "end": 224.82,
+          "probability": 0.9577779173851013
+        },
+        {
+          "word": " evening,",
+          "start": 224.82,
+          "end": 225.2,
+          "probability": 0.9982054233551025
+        },
+        {
+          "word": " after",
+          "start": 225.38,
+          "end": 225.64,
+          "probability": 0.9987297654151917
+        },
+        {
+          "word": " sunset,",
+          "start": 225.64,
+          "end": 226.18,
+          "probability": 0.7150265574455261
+        }
+      ]
+    },
+    {
+      "start": 226.5,
+      "end": 231.56,
+      "text": " people brought to Jesus all who were sick and demon-possessed, and the whole town gathered",
+      "words": [
+        {
+          "word": " people",
+          "start": 226.5,
+          "end": 226.76,
+          "probability": 0.9938867688179016
+        },
+        {
+          "word": " brought",
+          "start": 226.76,
+          "end": 227.14,
+          "probability": 0.9981951117515564
+        },
+        {
+          "word": " to",
+          "start": 227.14,
+          "end": 227.38,
+          "probability": 0.9922894835472107
+        },
+        {
+          "word": " Jesus",
+          "start": 227.38,
+          "end": 227.74,
+          "probability": 0.9982454776763916
+        },
+        {
+          "word": " all",
+          "start": 227.74,
+          "end": 228.2,
+          "probability": 0.9859122633934021
+        },
+        {
+          "word": " who",
+          "start": 228.2,
+          "end": 228.34,
+          "probability": 0.9967970252037048
+        },
+        {
+          "word": " were",
+          "start": 228.34,
+          "end": 228.64,
+          "probability": 0.98155677318573
+        },
+        {
+          "word": " sick",
+          "start": 228.64,
+          "end": 228.78,
+          "probability": 0.9991620779037476
+        },
+        {
+          "word": " and",
+          "start": 228.78,
+          "end": 229.08,
+          "probability": 0.9922404289245605
+        },
+        {
+          "word": " demon",
+          "start": 229.08,
+          "end": 229.38,
+          "probability": 0.9747308492660522
+        },
+        {
+          "word": "-possessed,",
+          "start": 229.38,
+          "end": 229.9,
+          "probability": 0.8450157046318054
+        },
+        {
+          "word": " and",
+          "start": 230.34,
+          "end": 230.52,
+          "probability": 0.9975898265838623
+        },
+        {
+          "word": " the",
+          "start": 230.52,
+          "end": 230.64,
+          "probability": 0.9970895648002625
+        },
+        {
+          "word": " whole",
+          "start": 230.64,
+          "end": 230.88,
+          "probability": 0.99277263879776
+        },
+        {
+          "word": " town",
+          "start": 230.88,
+          "end": 231.24,
+          "probability": 0.9978731870651245
+        },
+        {
+          "word": " gathered",
+          "start": 231.24,
+          "end": 231.56,
+          "probability": 0.9949079155921936
+        }
+      ]
+    },
+    {
+      "start": 231.56,
+      "end": 237.28,
+      "text": " the door, and he healed many who were ill with various diseases and drove out many demons,",
+      "words": [
+        {
+          "word": " the",
+          "start": 231.56,
+          "end": 231.82,
+          "probability": 0.25903788208961487
+        },
+        {
+          "word": " door,",
+          "start": 231.82,
+          "end": 232.28,
+          "probability": 0.9568071961402893
+        },
+        {
+          "word": " and",
+          "start": 232.82,
+          "end": 232.98,
+          "probability": 0.980773389339447
+        },
+        {
+          "word": " he",
+          "start": 232.98,
+          "end": 233.2,
+          "probability": 0.7504531145095825
+        },
+        {
+          "word": " healed",
+          "start": 233.2,
+          "end": 233.44,
+          "probability": 0.9774442315101624
+        },
+        {
+          "word": " many",
+          "start": 233.44,
+          "end": 233.72,
+          "probability": 0.9956373572349548
+        },
+        {
+          "word": " who",
+          "start": 233.72,
+          "end": 233.88,
+          "probability": 0.9955560564994812
+        },
+        {
+          "word": " were",
+          "start": 233.88,
+          "end": 234.12,
+          "probability": 0.991549015045166
+        },
+        {
+          "word": " ill",
+          "start": 234.12,
+          "end": 234.34,
+          "probability": 0.9855576157569885
+        },
+        {
+          "word": " with",
+          "start": 234.34,
+          "end": 234.68,
+          "probability": 0.9897634983062744
+        },
+        {
+          "word": " various",
+          "start": 234.68,
+          "end": 235.06,
+          "probability": 0.9958029389381409
+        },
+        {
+          "word": " diseases",
+          "start": 235.06,
+          "end": 235.62,
+          "probability": 0.9973155856132507
+        },
+        {
+          "word": " and",
+          "start": 235.62,
+          "end": 236.04,
+          "probability": 0.8790834546089172
+        },
+        {
+          "word": " drove",
+          "start": 236.04,
+          "end": 236.24,
+          "probability": 0.9972028732299805
+        },
+        {
+          "word": " out",
+          "start": 236.24,
+          "end": 236.58,
+          "probability": 0.9980812072753906
+        },
+        {
+          "word": " many",
+          "start": 236.58,
+          "end": 236.82,
+          "probability": 0.9985162615776062
+        },
+        {
+          "word": " demons,",
+          "start": 236.82,
+          "end": 237.28,
+          "probability": 0.9921126365661621
+        }
+      ]
+    },
+    {
+      "start": 237.74,
+      "end": 241.96,
+      "text": " but he would not allow the demons to speak because they knew who he was.",
+      "words": [
+        {
+          "word": " but",
+          "start": 237.74,
+          "end": 238.06,
+          "probability": 0.9965811371803284
+        },
+        {
+          "word": " he",
+          "start": 238.06,
+          "end": 238.22,
+          "probability": 0.9749071598052979
+        },
+        {
+          "word": " would",
+          "start": 238.22,
+          "end": 238.44,
+          "probability": 0.9967678785324097
+        },
+        {
+          "word": " not",
+          "start": 238.44,
+          "end": 238.68,
+          "probability": 0.9991779923439026
+        },
+        {
+          "word": " allow",
+          "start": 238.68,
+          "end": 238.88,
+          "probability": 0.9986067414283752
+        },
+        {
+          "word": " the",
+          "start": 238.88,
+          "end": 239.12,
+          "probability": 0.9977946281433105
+        },
+        {
+          "word": " demons",
+          "start": 239.12,
+          "end": 239.44,
+          "probability": 0.9873011112213135
+        },
+        {
+          "word": " to",
+          "start": 239.44,
+          "end": 239.82,
+          "probability": 0.9989120960235596
+        },
+        {
+          "word": " speak",
+          "start": 239.82,
+          "end": 240.18,
+          "probability": 0.9992384910583496
+        },
+        {
+          "word": " because",
+          "start": 240.18,
+          "end": 240.72,
+          "probability": 0.9652657508850098
+        },
+        {
+          "word": " they",
+          "start": 240.72,
+          "end": 240.92,
+          "probability": 0.9973682761192322
+        },
+        {
+          "word": " knew",
+          "start": 240.92,
+          "end": 241.14,
+          "probability": 0.9993103742599487
+        },
+        {
+          "word": " who",
+          "start": 241.14,
+          "end": 241.32,
+          "probability": 0.9982560276985168
+        },
+        {
+          "word": " he",
+          "start": 241.32,
+          "end": 241.52,
+          "probability": 0.9653264880180359
+        },
+        {
+          "word": " was.",
+          "start": 241.52,
+          "end": 241.96,
+          "probability": 0.9990901947021484
+        }
+      ]
+    },
+    {
+      "start": 242.92,
+      "end": 248.0,
+      "text": " Early in the morning, while it was still dark, Jesus got up and slipped out to a solitary",
+      "words": [
+        {
+          "word": " Early",
+          "start": 242.92,
+          "end": 243.18,
+          "probability": 0.9556857347488403
+        },
+        {
+          "word": " in",
+          "start": 243.18,
+          "end": 243.34,
+          "probability": 0.9980348944664001
+        },
+        {
+          "word": " the",
+          "start": 243.34,
+          "end": 243.5,
+          "probability": 0.9992471933364868
+        },
+        {
+          "word": " morning,",
+          "start": 243.5,
+          "end": 243.9,
+          "probability": 0.9991756081581116
+        },
+        {
+          "word": " while",
+          "start": 244.12,
+          "end": 244.28,
+          "probability": 0.9986187219619751
+        },
+        {
+          "word": " it",
+          "start": 244.28,
+          "end": 244.38,
+          "probability": 0.9984117746353149
+        },
+        {
+          "word": " was",
+          "start": 244.38,
+          "end": 244.62,
+          "probability": 0.9988910555839539
+        },
+        {
+          "word": " still",
+          "start": 244.62,
+          "end": 244.92,
+          "probability": 0.9988202452659607
+        },
+        {
+          "word": " dark,",
+          "start": 244.92,
+          "end": 245.28,
+          "probability": 0.9990065693855286
+        },
+        {
+          "word": " Jesus",
+          "start": 245.56,
+          "end": 245.84,
+          "probability": 0.9799088835716248
+        },
+        {
+          "word": " got",
+          "start": 245.84,
+          "end": 246.18,
+          "probability": 0.9941457509994507
+        },
+        {
+          "word": " up",
+          "start": 246.18,
+          "end": 246.4,
+          "probability": 0.9987577199935913
+        },
+        {
+          "word": " and",
+          "start": 246.4,
+          "end": 246.76,
+          "probability": 0.9925826787948608
+        },
+        {
+          "word": " slipped",
+          "start": 246.76,
+          "end": 246.96,
+          "probability": 0.9901482462882996
+        },
+        {
+          "word": " out",
+          "start": 246.96,
+          "end": 247.3,
+          "probability": 0.9989081621170044
+        },
+        {
+          "word": " to",
+          "start": 247.3,
+          "end": 247.44,
+          "probability": 0.9907229542732239
+        },
+        {
+          "word": " a",
+          "start": 247.44,
+          "end": 247.62,
+          "probability": 0.9932942390441895
+        },
+        {
+          "word": " solitary",
+          "start": 247.62,
+          "end": 248.0,
+          "probability": 0.9984707236289978
+        }
+      ]
+    },
+    {
+      "start": 248.0,
+      "end": 254.54,
+      "text": " place to pray. Simon and his companions went to look for him, and when they found him they said,",
+      "words": [
+        {
+          "word": " place",
+          "start": 248.0,
+          "end": 248.52,
+          "probability": 0.9995312690734863
+        },
+        {
+          "word": " to",
+          "start": 248.52,
+          "end": 248.76,
+          "probability": 0.99868243932724
+        },
+        {
+          "word": " pray.",
+          "start": 248.76,
+          "end": 249.28,
+          "probability": 0.9915028810501099
+        },
+        {
+          "word": " Simon",
+          "start": 250.08,
+          "end": 250.2,
+          "probability": 0.9200981855392456
+        },
+        {
+          "word": " and",
+          "start": 250.2,
+          "end": 250.52,
+          "probability": 0.9819005131721497
+        },
+        {
+          "word": " his",
+          "start": 250.52,
+          "end": 250.84,
+          "probability": 0.9898694157600403
+        },
+        {
+          "word": " companions",
+          "start": 250.84,
+          "end": 251.32,
+          "probability": 0.9972803592681885
+        },
+        {
+          "word": " went",
+          "start": 251.32,
+          "end": 251.72,
+          "probability": 0.9856579899787903
+        },
+        {
+          "word": " to",
+          "start": 251.72,
+          "end": 251.84,
+          "probability": 0.9982430934906006
+        },
+        {
+          "word": " look",
+          "start": 251.84,
+          "end": 252.06,
+          "probability": 0.9974426031112671
+        },
+        {
+          "word": " for",
+          "start": 252.06,
+          "end": 252.26,
+          "probability": 0.998808741569519
+        },
+        {
+          "word": " him,",
+          "start": 252.26,
+          "end": 252.66,
+          "probability": 0.9687488079071045
+        },
+        {
+          "word": " and",
+          "start": 252.66,
+          "end": 252.98,
+          "probability": 0.9985938668251038
+        },
+        {
+          "word": " when",
+          "start": 252.98,
+          "end": 253.16,
+          "probability": 0.9759563207626343
+        },
+        {
+          "word": " they",
+          "start": 253.16,
+          "end": 253.34,
+          "probability": 0.9973185658454895
+        },
+        {
+          "word": " found",
+          "start": 253.34,
+          "end": 253.6,
+          "probability": 0.9988526105880737
+        },
+        {
+          "word": " him",
+          "start": 253.6,
+          "end": 253.88,
+          "probability": 0.9839380383491516
+        },
+        {
+          "word": " they",
+          "start": 253.88,
+          "end": 254.12,
+          "probability": 0.718587338924408
+        },
+        {
+          "word": " said,",
+          "start": 254.12,
+          "end": 254.54,
+          "probability": 0.9994292855262756
+        }
+      ]
+    },
+    {
+      "start": 254.54,
+      "end": 258.28,
+      "text": " Everyone is looking for you, but Jesus answered,",
+      "words": [
+        {
+          "word": " Everyone",
+          "start": 254.54,
+          "end": 255.24,
+          "probability": 0.2037755250930786
+        },
+        {
+          "word": " is",
+          "start": 255.24,
+          "end": 255.66,
+          "probability": 0.9957114458084106
+        },
+        {
+          "word": " looking",
+          "start": 255.66,
+          "end": 255.96,
+          "probability": 0.9977188110351562
+        },
+        {
+          "word": " for",
+          "start": 255.96,
+          "end": 256.26,
+          "probability": 0.9981873631477356
+        },
+        {
+          "word": " you,",
+          "start": 256.26,
+          "end": 256.74,
+          "probability": 0.9891996383666992
+        },
+        {
+          "word": " but",
+          "start": 256.9,
+          "end": 257.18,
+          "probability": 0.9842483401298523
+        },
+        {
+          "word": " Jesus",
+          "start": 257.18,
+          "end": 257.54,
+          "probability": 0.9849461317062378
+        },
+        {
+          "word": " answered,",
+          "start": 257.54,
+          "end": 258.28,
+          "probability": 0.9958211183547974
+        }
+      ]
+    },
+    {
+      "start": 258.62,
+      "end": 262.44,
+      "text": " let us go on to the neighboring town so I can preach there as well,",
+      "words": [
+        {
+          "word": " let",
+          "start": 258.62,
+          "end": 258.74,
+          "probability": 0.05628708377480507
+        },
+        {
+          "word": " us",
+          "start": 258.74,
+          "end": 258.94,
+          "probability": 0.9920146465301514
+        },
+        {
+          "word": " go",
+          "start": 258.94,
+          "end": 259.16,
+          "probability": 0.9989460110664368
+        },
+        {
+          "word": " on",
+          "start": 259.16,
+          "end": 259.36,
+          "probability": 0.7663605809211731
+        },
+        {
+          "word": " to",
+          "start": 259.36,
+          "end": 259.52,
+          "probability": 0.9949978590011597
+        },
+        {
+          "word": " the",
+          "start": 259.52,
+          "end": 259.72,
+          "probability": 0.9962282180786133
+        },
+        {
+          "word": " neighboring",
+          "start": 259.72,
+          "end": 260.02,
+          "probability": 0.9080835580825806
+        },
+        {
+          "word": " town",
+          "start": 260.02,
+          "end": 260.46,
+          "probability": 0.9536896347999573
+        },
+        {
+          "word": " so",
+          "start": 260.46,
+          "end": 260.7,
+          "probability": 0.8385003209114075
+        },
+        {
+          "word": " I",
+          "start": 260.7,
+          "end": 260.88,
+          "probability": 0.9906372427940369
+        },
+        {
+          "word": " can",
+          "start": 260.88,
+          "end": 261.12,
+          "probability": 0.9992037415504456
+        },
+        {
+          "word": " preach",
+          "start": 261.12,
+          "end": 261.48,
+          "probability": 0.9970629811286926
+        },
+        {
+          "word": " there",
+          "start": 261.48,
+          "end": 261.78,
+          "probability": 0.9899368286132812
+        },
+        {
+          "word": " as",
+          "start": 261.78,
+          "end": 262.04,
+          "probability": 0.9793691039085388
+        },
+        {
+          "word": " well,",
+          "start": 262.04,
+          "end": 262.44,
+          "probability": 0.9972699284553528
+        }
+      ]
+    },
+    {
+      "start": 262.64,
+      "end": 264.36,
+      "text": " for that is why I have come.",
+      "words": [
+        {
+          "word": " for",
+          "start": 262.64,
+          "end": 262.8,
+          "probability": 0.9929125905036926
+        },
+        {
+          "word": " that",
+          "start": 262.8,
+          "end": 263.04,
+          "probability": 0.9956589937210083
+        },
+        {
+          "word": " is",
+          "start": 263.04,
+          "end": 263.26,
+          "probability": 0.993454098701477
+        },
+        {
+          "word": " why",
+          "start": 263.26,
+          "end": 263.52,
+          "probability": 0.9953698515892029
+        },
+        {
+          "word": " I",
+          "start": 263.52,
+          "end": 263.7,
+          "probability": 0.997855007648468
+        },
+        {
+          "word": " have",
+          "start": 263.7,
+          "end": 263.92,
+          "probability": 0.9873921275138855
+        },
+        {
+          "word": " come.",
+          "start": 263.92,
+          "end": 264.36,
+          "probability": 0.9984765648841858
+        }
+      ]
+    },
+    {
+      "start": 264.88,
+      "end": 269.32,
+      "text": " So he went throughout Galilee, preaching in their synagogues and driving out demons.",
+      "words": [
+        {
+          "word": " So",
+          "start": 264.88,
+          "end": 265.14,
+          "probability": 0.9739150404930115
+        },
+        {
+          "word": " he",
+          "start": 265.14,
+          "end": 265.26,
+          "probability": 0.6227574348449707
+        },
+        {
+          "word": " went",
+          "start": 265.26,
+          "end": 265.6,
+          "probability": 0.998923122882843
+        },
+        {
+          "word": " throughout",
+          "start": 265.6,
+          "end": 265.96,
+          "probability": 0.9432350397109985
+        },
+        {
+          "word": " Galilee,",
+          "start": 265.96,
+          "end": 266.58,
+          "probability": 0.9852310121059418
+        },
+        {
+          "word": " preaching",
+          "start": 266.62,
+          "end": 266.98,
+          "probability": 0.9956948757171631
+        },
+        {
+          "word": " in",
+          "start": 266.98,
+          "end": 267.18,
+          "probability": 0.9991150498390198
+        },
+        {
+          "word": " their",
+          "start": 267.18,
+          "end": 267.44,
+          "probability": 0.9878959655761719
+        },
+        {
+          "word": " synagogues",
+          "start": 267.44,
+          "end": 267.98,
+          "probability": 0.9621386130650839
+        },
+        {
+          "word": " and",
+          "start": 267.98,
+          "end": 268.26,
+          "probability": 0.7106773257255554
+        },
+        {
+          "word": " driving",
+          "start": 268.26,
+          "end": 268.6,
+          "probability": 0.994290828704834
+        },
+        {
+          "word": " out",
+          "start": 268.6,
+          "end": 268.9,
+          "probability": 0.9854007363319397
+        },
+        {
+          "word": " demons.",
+          "start": 268.9,
+          "end": 269.32,
+          "probability": 0.9876518249511719
+        }
+      ]
+    },
+    {
+      "start": 270.66,
+      "end": 274.14,
+      "text": " Then a leper came to Jesus, begging on his knees,",
+      "words": [
+        {
+          "word": " Then",
+          "start": 270.66,
+          "end": 271.08,
+          "probability": 0.8669063448905945
+        },
+        {
+          "word": " a",
+          "start": 271.08,
+          "end": 271.4,
+          "probability": 0.8489198088645935
+        },
+        {
+          "word": " leper",
+          "start": 271.4,
+          "end": 271.64,
+          "probability": 0.9024058282375336
+        },
+        {
+          "word": " came",
+          "start": 271.64,
+          "end": 272.06,
+          "probability": 0.999153733253479
+        },
+        {
+          "word": " to",
+          "start": 272.06,
+          "end": 272.28,
+          "probability": 0.9979451298713684
+        },
+        {
+          "word": " Jesus,",
+          "start": 272.28,
+          "end": 272.8,
+          "probability": 0.9977717995643616
+        },
+        {
+          "word": " begging",
+          "start": 273.1,
+          "end": 273.26,
+          "probability": 0.9592023491859436
+        },
+        {
+          "word": " on",
+          "start": 273.26,
+          "end": 273.48,
+          "probability": 0.9981441497802734
+        },
+        {
+          "word": " his",
+          "start": 273.48,
+          "end": 273.7,
+          "probability": 0.8511959910392761
+        },
+        {
+          "word": " knees,",
+          "start": 273.7,
+          "end": 274.14,
+          "probability": 0.9972527623176575
+        }
+      ]
+    },
+    {
+      "start": 274.56,
+      "end": 276.94,
+      "text": " if you are willing, you can make me clean.",
+      "words": [
+        {
+          "word": " if",
+          "start": 274.56,
+          "end": 274.8,
+          "probability": 0.2361915558576584
+        },
+        {
+          "word": " you",
+          "start": 274.8,
+          "end": 275.0,
+          "probability": 0.9646825194358826
+        },
+        {
+          "word": " are",
+          "start": 275.0,
+          "end": 275.14,
+          "probability": 0.9612054228782654
+        },
+        {
+          "word": " willing,",
+          "start": 275.14,
+          "end": 275.5,
+          "probability": 0.9956287145614624
+        },
+        {
+          "word": " you",
+          "start": 275.64,
+          "end": 275.78,
+          "probability": 0.989638090133667
+        },
+        {
+          "word": " can",
+          "start": 275.78,
+          "end": 275.96,
+          "probability": 0.9987633228302002
+        },
+        {
+          "word": " make",
+          "start": 275.96,
+          "end": 276.18,
+          "probability": 0.9986536502838135
+        },
+        {
+          "word": " me",
+          "start": 276.18,
+          "end": 276.46,
+          "probability": 0.9778903126716614
+        },
+        {
+          "word": " clean.",
+          "start": 276.46,
+          "end": 276.94,
+          "probability": 0.9642927050590515
+        }
+      ]
+    },
+    {
+      "start": 277.6,
+      "end": 282.26,
+      "text": " Moved with compassion, Jesus reached out his hand and touched the man.",
+      "words": [
+        {
+          "word": " Moved",
+          "start": 277.6,
+          "end": 277.96,
+          "probability": 0.8179424405097961
+        },
+        {
+          "word": " with",
+          "start": 277.96,
+          "end": 278.32,
+          "probability": 0.9960271120071411
+        },
+        {
+          "word": " compassion,",
+          "start": 278.32,
+          "end": 278.82,
+          "probability": 0.9976649284362793
+        },
+        {
+          "word": " Jesus",
+          "start": 279.4,
+          "end": 279.76,
+          "probability": 0.9936165809631348
+        },
+        {
+          "word": " reached",
+          "start": 279.76,
+          "end": 280.2,
+          "probability": 0.9936373233795166
+        },
+        {
+          "word": " out",
+          "start": 280.2,
+          "end": 280.4,
+          "probability": 0.9985597729682922
+        },
+        {
+          "word": " his",
+          "start": 280.4,
+          "end": 280.62,
+          "probability": 0.9772987961769104
+        },
+        {
+          "word": " hand",
+          "start": 280.62,
+          "end": 281.0,
+          "probability": 0.9967260360717773
+        },
+        {
+          "word": " and",
+          "start": 281.0,
+          "end": 281.38,
+          "probability": 0.9716128706932068
+        },
+        {
+          "word": " touched",
+          "start": 281.38,
+          "end": 281.64,
+          "probability": 0.9939828515052795
+        },
+        {
+          "word": " the",
+          "start": 281.64,
+          "end": 281.9,
+          "probability": 0.9900321960449219
+        },
+        {
+          "word": " man.",
+          "start": 281.9,
+          "end": 282.26,
+          "probability": 0.9914002418518066
+        }
+      ]
+    },
+    {
+      "start": 282.26,
+      "end": 288.82,
+      "text": " I am willing,\" he said, be clean, and immediately the leprosy left him and the man was",
+      "words": [
+        {
+          "word": " I",
+          "start": 282.26,
+          "end": 282.92,
+          "probability": 0.2745237946510315
+        },
+        {
+          "word": " am",
+          "start": 282.92,
+          "end": 283.14,
+          "probability": 0.9794800281524658
+        },
+        {
+          "word": " willing,\"",
+          "start": 283.14,
+          "end": 283.58,
+          "probability": 0.7163229733705521
+        },
+        {
+          "word": " he",
+          "start": 283.58,
+          "end": 283.74,
+          "probability": 0.9287289977073669
+        },
+        {
+          "word": " said,",
+          "start": 283.74,
+          "end": 284.42,
+          "probability": 0.9993346333503723
+        },
+        {
+          "word": " be",
+          "start": 284.5,
+          "end": 284.8,
+          "probability": 0.37019670009613037
+        },
+        {
+          "word": " clean,",
+          "start": 284.8,
+          "end": 285.26,
+          "probability": 0.958798348903656
+        },
+        {
+          "word": " and",
+          "start": 285.8,
+          "end": 286.02,
+          "probability": 0.9852818846702576
+        },
+        {
+          "word": " immediately",
+          "start": 286.02,
+          "end": 286.46,
+          "probability": 0.8672618269920349
+        },
+        {
+          "word": " the",
+          "start": 286.46,
+          "end": 286.88,
+          "probability": 0.9823870658874512
+        },
+        {
+          "word": " leprosy",
+          "start": 286.88,
+          "end": 287.26,
+          "probability": 0.9309632778167725
+        },
+        {
+          "word": " left",
+          "start": 287.26,
+          "end": 287.54,
+          "probability": 0.9952030181884766
+        },
+        {
+          "word": " him",
+          "start": 287.54,
+          "end": 287.98,
+          "probability": 0.8765391111373901
+        },
+        {
+          "word": " and",
+          "start": 287.98,
+          "end": 288.16,
+          "probability": 0.5743463635444641
+        },
+        {
+          "word": " the",
+          "start": 288.16,
+          "end": 288.34,
+          "probability": 0.9932621121406555
+        },
+        {
+          "word": " man",
+          "start": 288.34,
+          "end": 288.54,
+          "probability": 0.9949111342430115
+        },
+        {
+          "word": " was",
+          "start": 288.54,
+          "end": 288.82,
+          "probability": 0.9984720349311829
+        }
+      ]
+    },
+    {
+      "start": 288.82,
+      "end": 289.68,
+      "text": " cleansed.",
+      "words": [
+        {
+          "word": " cleansed.",
+          "start": 288.82,
+          "end": 289.68,
+          "probability": 0.9894838035106659
+        }
+      ]
+    },
+    {
+      "start": 290.66,
+      "end": 296.66,
+      "text": " Jesus promptly sent him away with a stern warning, see that you don't tell anyone, but",
+      "words": [
+        {
+          "word": " Jesus",
+          "start": 290.66,
+          "end": 291.08,
+          "probability": 0.6477433443069458
+        },
+        {
+          "word": " promptly",
+          "start": 291.08,
+          "end": 291.78,
+          "probability": 0.9975499510765076
+        },
+        {
+          "word": " sent",
+          "start": 291.78,
+          "end": 292.02,
+          "probability": 0.9992421865463257
+        },
+        {
+          "word": " him",
+          "start": 292.02,
+          "end": 292.22,
+          "probability": 0.9572279453277588
+        },
+        {
+          "word": " away",
+          "start": 292.22,
+          "end": 292.44,
+          "probability": 0.9977261424064636
+        },
+        {
+          "word": " with",
+          "start": 292.44,
+          "end": 292.68,
+          "probability": 0.9972662925720215
+        },
+        {
+          "word": " a",
+          "start": 292.68,
+          "end": 292.88,
+          "probability": 0.9829370379447937
+        },
+        {
+          "word": " stern",
+          "start": 292.88,
+          "end": 293.16,
+          "probability": 0.995208203792572
+        },
+        {
+          "word": " warning,",
+          "start": 293.16,
+          "end": 293.6,
+          "probability": 0.9971471428871155
+        },
+        {
+          "word": " see",
+          "start": 294.22,
+          "end": 294.54,
+          "probability": 0.3241922855377197
+        },
+        {
+          "word": " that",
+          "start": 294.54,
+          "end": 294.78,
+          "probability": 0.9906806349754333
+        },
+        {
+          "word": " you",
+          "start": 294.78,
+          "end": 294.92,
+          "probability": 0.975117027759552
+        },
+        {
+          "word": " don't",
+          "start": 294.92,
+          "end": 295.22,
+          "probability": 0.9867806434631348
+        },
+        {
+          "word": " tell",
+          "start": 295.22,
+          "end": 295.56,
+          "probability": 0.9988194108009338
+        },
+        {
+          "word": " anyone,",
+          "start": 295.56,
+          "end": 296.14,
+          "probability": 0.9869256019592285
+        },
+        {
+          "word": " but",
+          "start": 296.46,
+          "end": 296.66,
+          "probability": 0.9845924973487854
+        }
+      ]
+    },
+    {
+      "start": 296.66,
+      "end": 301.66,
+      "text": " go, show yourself to the priest and present the offering Moses prescribed for your cleansing",
+      "words": [
+        {
+          "word": " go,",
+          "start": 296.66,
+          "end": 297.16,
+          "probability": 0.9901148080825806
+        },
+        {
+          "word": " show",
+          "start": 297.26,
+          "end": 297.44,
+          "probability": 0.9598498940467834
+        },
+        {
+          "word": " yourself",
+          "start": 297.44,
+          "end": 297.86,
+          "probability": 0.996027946472168
+        },
+        {
+          "word": " to",
+          "start": 297.86,
+          "end": 298.06,
+          "probability": 0.9980040192604065
+        },
+        {
+          "word": " the",
+          "start": 298.06,
+          "end": 298.26,
+          "probability": 0.9988260865211487
+        },
+        {
+          "word": " priest",
+          "start": 298.26,
+          "end": 298.54,
+          "probability": 0.9857289791107178
+        },
+        {
+          "word": " and",
+          "start": 298.54,
+          "end": 298.94,
+          "probability": 0.6870498061180115
+        },
+        {
+          "word": " present",
+          "start": 298.94,
+          "end": 299.1,
+          "probability": 0.9944295883178711
+        },
+        {
+          "word": " the",
+          "start": 299.1,
+          "end": 299.46,
+          "probability": 0.9983761310577393
+        },
+        {
+          "word": " offering",
+          "start": 299.46,
+          "end": 299.74,
+          "probability": 0.9939814209938049
+        },
+        {
+          "word": " Moses",
+          "start": 299.74,
+          "end": 300.16,
+          "probability": 0.9720887541770935
+        },
+        {
+          "word": " prescribed",
+          "start": 300.16,
+          "end": 300.74,
+          "probability": 0.8810100555419922
+        },
+        {
+          "word": " for",
+          "start": 300.74,
+          "end": 301.06,
+          "probability": 0.9973522424697876
+        },
+        {
+          "word": " your",
+          "start": 301.06,
+          "end": 301.3,
+          "probability": 0.9872918128967285
+        },
+        {
+          "word": " cleansing",
+          "start": 301.3,
+          "end": 301.66,
+          "probability": 0.9939747452735901
+        }
+      ]
+    },
+    {
+      "start": 301.66,
+      "end": 303.56,
+      "text": " as a testimony to them.",
+      "words": [
+        {
+          "word": " as",
+          "start": 301.66,
+          "end": 302.1,
+          "probability": 0.9834040999412537
+        },
+        {
+          "word": " a",
+          "start": 302.1,
+          "end": 302.62,
+          "probability": 0.9885544180870056
+        },
+        {
+          "word": " testimony",
+          "start": 302.62,
+          "end": 302.66,
+          "probability": 0.9974328875541687
+        },
+        {
+          "word": " to",
+          "start": 302.66,
+          "end": 303.08,
+          "probability": 0.99798583984375
+        },
+        {
+          "word": " them.",
+          "start": 303.08,
+          "end": 303.56,
+          "probability": 0.9934285283088684
+        }
+      ]
+    },
+    {
+      "start": 304.38,
+      "end": 308.44,
+      "text": " But the man went out and openly began to proclaim and spread the news.",
+      "words": [
+        {
+          "word": " But",
+          "start": 304.38,
+          "end": 304.6,
+          "probability": 0.9781750440597534
+        },
+        {
+          "word": " the",
+          "start": 304.6,
+          "end": 304.76,
+          "probability": 0.9951465725898743
+        },
+        {
+          "word": " man",
+          "start": 304.76,
+          "end": 304.92,
+          "probability": 0.9960930943489075
+        },
+        {
+          "word": " went",
+          "start": 304.92,
+          "end": 305.08,
+          "probability": 0.9994662404060364
+        },
+        {
+          "word": " out",
+          "start": 305.08,
+          "end": 305.36,
+          "probability": 0.9994781613349915
+        },
+        {
+          "word": " and",
+          "start": 305.36,
+          "end": 305.66,
+          "probability": 0.958152711391449
+        },
+        {
+          "word": " openly",
+          "start": 305.66,
+          "end": 306.02,
+          "probability": 0.9649006724357605
+        },
+        {
+          "word": " began",
+          "start": 306.02,
+          "end": 306.58,
+          "probability": 0.9961115717887878
+        },
+        {
+          "word": " to",
+          "start": 306.58,
+          "end": 306.78,
+          "probability": 0.9995200634002686
+        },
+        {
+          "word": " proclaim",
+          "start": 306.78,
+          "end": 307.16,
+          "probability": 0.9990290403366089
+        },
+        {
+          "word": " and",
+          "start": 307.16,
+          "end": 307.64,
+          "probability": 0.9931730628013611
+        },
+        {
+          "word": " spread",
+          "start": 307.64,
+          "end": 307.82,
+          "probability": 0.996825098991394
+        },
+        {
+          "word": " the",
+          "start": 307.82,
+          "end": 308.04,
+          "probability": 0.9985332489013672
+        },
+        {
+          "word": " news.",
+          "start": 308.04,
+          "end": 308.44,
+          "probability": 0.9813193082809448
+        }
+      ]
+    },
+    {
+      "start": 309.18,
+      "end": 315.22,
+      "text": " Consequently, Jesus could no longer enter a town in plain view, but he stayed out in solitary",
+      "words": [
+        {
+          "word": " Consequently,",
+          "start": 309.18,
+          "end": 309.74,
+          "probability": 0.9693620204925537
+        },
+        {
+          "word": " Jesus",
+          "start": 310.5,
+          "end": 310.72,
+          "probability": 0.9856552481651306
+        },
+        {
+          "word": " could",
+          "start": 310.72,
+          "end": 311.04,
+          "probability": 0.9790234565734863
+        },
+        {
+          "word": " no",
+          "start": 311.04,
+          "end": 311.26,
+          "probability": 0.9987986087799072
+        },
+        {
+          "word": " longer",
+          "start": 311.26,
+          "end": 311.56,
+          "probability": 0.9996256828308105
+        },
+        {
+          "word": " enter",
+          "start": 311.56,
+          "end": 311.88,
+          "probability": 0.9959426522254944
+        },
+        {
+          "word": " a",
+          "start": 311.88,
+          "end": 312.1,
+          "probability": 0.9947029948234558
+        },
+        {
+          "word": " town",
+          "start": 312.1,
+          "end": 312.3,
+          "probability": 0.9949835538864136
+        },
+        {
+          "word": " in",
+          "start": 312.3,
+          "end": 312.58,
+          "probability": 0.982619047164917
+        },
+        {
+          "word": " plain",
+          "start": 312.58,
+          "end": 312.86,
+          "probability": 0.8186770677566528
+        },
+        {
+          "word": " view,",
+          "start": 312.86,
+          "end": 313.32,
+          "probability": 0.598674476146698
+        },
+        {
+          "word": " but",
+          "start": 313.64,
+          "end": 313.78,
+          "probability": 0.9972689747810364
+        },
+        {
+          "word": " he",
+          "start": 313.78,
+          "end": 314.02,
+          "probability": 0.8763617873191833
+        },
+        {
+          "word": " stayed",
+          "start": 314.02,
+          "end": 314.22,
+          "probability": 0.9965288043022156
+        },
+        {
+          "word": " out",
+          "start": 314.22,
+          "end": 314.48,
+          "probability": 0.9955501556396484
+        },
+        {
+          "word": " in",
+          "start": 314.48,
+          "end": 314.76,
+          "probability": 0.9980084300041199
+        },
+        {
+          "word": " solitary",
+          "start": 314.76,
+          "end": 315.22,
+          "probability": 0.9972750544548035
+        }
+      ]
+    },
+    {
+      "start": 315.22,
+      "end": 318.56,
+      "text": " places, yet people came to him from every quarter.",
+      "words": [
+        {
+          "word": " places,",
+          "start": 315.22,
+          "end": 315.94,
+          "probability": 0.9994483590126038
+        },
+        {
+          "word": " yet",
+          "start": 316.52,
+          "end": 316.7,
+          "probability": 0.9883407354354858
+        },
+        {
+          "word": " people",
+          "start": 316.7,
+          "end": 316.96,
+          "probability": 0.9901461005210876
+        },
+        {
+          "word": " came",
+          "start": 316.96,
+          "end": 317.3,
+          "probability": 0.997634768486023
+        },
+        {
+          "word": " to",
+          "start": 317.3,
+          "end": 317.48,
+          "probability": 0.9977205395698547
+        },
+        {
+          "word": " him",
+          "start": 317.48,
+          "end": 317.76,
+          "probability": 0.8846448063850403
+        },
+        {
+          "word": " from",
+          "start": 317.76,
+          "end": 318.0,
+          "probability": 0.9980406165122986
+        },
+        {
+          "word": " every",
+          "start": 318.0,
+          "end": 318.3,
+          "probability": 0.9990684390068054
+        },
+        {
+          "word": " quarter.",
+          "start": 318.3,
+          "end": 318.56,
+          "probability": 0.9759904742240906
+        }
+      ]
+    }
+  ],
+  "elapsedSeconds": 10.423635167069733
+}

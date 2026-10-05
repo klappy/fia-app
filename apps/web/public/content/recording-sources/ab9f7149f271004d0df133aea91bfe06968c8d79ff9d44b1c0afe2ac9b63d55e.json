@@ -1,0 +1,420 @@
+{
+  "schema": "fia-recorded-guide-ranges@1",
+  "packId": "eng.MRK-1-1-13",
+  "presentationRevision": "ccd72f23c23f932651b500b730b285f32fabd37e50037b5af91d8881f1403975",
+  "script": {
+    "fileSha256": "938515635c9635e6ed614eab84c1a7e0a4cc3269a3231147431a88dd95bb321c",
+    "contentSha256": "2347d166bf34db52915f3a76f379f1f9afa9ca78a1af163be091541cbaccc898",
+    "repository": "BibleAquifer/FIATranslationGuide",
+    "commit": "5d6d59a22caa8f8539c5ff6a3e1ec74c4cfa5c6d",
+    "path": "eng/json/41.content.json"
+  },
+  "recording": {
+    "url": "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s4/v2/vbr0.mp3",
+    "sha256": "826f6f1efb3c71277c68ee2fca2b49c4d0f929e9232f2cc2f8e74eb63222dd0f",
+    "bytes": 5680172,
+    "duration": 360.0,
+    "publisherStepVersion": "v2",
+    "rightsEvidenceSha256": "d120de4d2754fe8f2a2d736104460540c15ab177a55ef73936174104ff61cae3"
+  },
+  "transcript": {
+    "sha256": "f0ed785ba649fc9017185c3ba95e509f8378493b6ba0818590089be0c1a0aeaa",
+    "wordTimestampsSha256": "44293f3a0fc66e1af24028fd5a0ac165cd49d70725fc8b20f1a19ce1502d3668",
+    "method": "Unmodified ASR recognition; zero-duration points retained as uncertain estimates, not word highlights.",
+    "modelRevision": "0d3d19a32d3338f10357c0889762bd8d64bbdeba",
+    "clockDomain": "decoded-pcm",
+    "verbatim": true
+  },
+  "drift": {
+    "reportSha256": "e76096bc64100885f44637228df08807e6d3ba0095418707d0557c190f1467ae",
+    "scriptSha256": "2347d166bf34db52915f3a76f379f1f9afa9ca78a1af163be091541cbaccc898",
+    "transcriptSha256": "f0ed785ba649fc9017185c3ba95e509f8378493b6ba0818590089be0c1a0aeaa",
+    "reviewEvidenceSha256": "a7fcee3fbade1d90a2b0e92a37552b3b6ce08f537b6ea13ae354263c2e78bad1"
+  },
+  "mappings": [
+    {
+      "id": "S04-U001",
+      "activityId": "S04-U001",
+      "sourceTextSha256": "40915459d3070b081f6298ca4a7a52a1f5a10ce875b7de37380cf051b9438494",
+      "logicalAudio": {
+        "path": "/audio/source/S04-U001.mp3",
+        "sha256": "4a315a8a787be527bd9ac4925950e677a7cd2679250fbe084693e63418ba514d",
+        "bytes": 93622
+      },
+      "wordSpan": {
+        "first": 9,
+        "lastExclusive": 26
+      },
+      "sourceRange": {
+        "startSeconds": 8.16,
+        "endSeconds": 15.6,
+        "clockDomain": "decoded-pcm"
+      },
+      "acceptance": {
+        "status": "accepted",
+        "recipeRevision": "multiple-recorded-guide-sources-344959d",
+        "evidenceSha256": "a21fca0be99a0b3e480bc0ac1802cd982d3797212cf3ed1213921c126c9369e0"
+      }
+    },
+    {
+      "id": "S04-U002",
+      "activityId": "S04-U002",
+      "sourceTextSha256": "2fd7c0db6cfe4e027441daa2ae31223b2a3868244e364e4424e06154b777aca5",
+      "logicalAudio": {
+        "path": "/audio/source/S04-U002.mp3",
+        "sha256": "ef74b449d81a9f8511cb2f480cbf4143352493db5921bfef940b87a4b902a1fe",
+        "bytes": 45139
+      },
+      "wordSpan": {
+        "first": 26,
+        "lastExclusive": 35
+      },
+      "sourceRange": {
+        "startSeconds": 16.34,
+        "endSeconds": 19.3,
+        "clockDomain": "decoded-pcm"
+      },
+      "acceptance": {
+        "status": "accepted",
+        "recipeRevision": "multiple-recorded-guide-sources-344959d",
+        "evidenceSha256": "d2df6abe43edddddc76367caff4847e1f4cde4899176cd03fe8eef38bdf41f42"
+      }
+    },
+    {
+      "id": "S04-U003",
+      "activityId": "S04-U003",
+      "sourceTextSha256": "0768ac8577dc54ab734ff27899b86d605a9f8917fe37cf82be0822c2a6981c39",
+      "logicalAudio": {
+        "path": "/audio/source/S04-U003.mp3",
+        "sha256": "907bb408c4fb0070635edb052d6b96cb899607d47ec8722cd091878f6b11836f",
+        "bytes": 25077
+      },
+      "wordSpan": {
+        "first": 35,
+        "lastExclusive": 40
+      },
+      "sourceRange": {
+        "startSeconds": 20.14,
+        "endSeconds": 22.9,
+        "clockDomain": "decoded-pcm"
+      },
+      "acceptance": {
+        "status": "accepted",
+        "recipeRevision": "multiple-recorded-guide-sources-344959d",
+        "evidenceSha256": "021b770d4941976b87be03adb5cd5bb0ec3e4a6b1fcb5283e4ad4d664bf26118"
+      }
+    },
+    {
+      "id": "S04-U004",
+      "activityId": "S04-U004",
+      "sourceTextSha256": "fbbf57c5c98a0646849fbb07a7c2a3e082e2843e68cdf2caf14c5ec01273f693",
+      "logicalAudio": {
+        "path": "/audio/source/S04-U004.mp3",
+        "sha256": "863c9671e0307bff8d5ff74a69731ce56013452c14febb60c1e92737ab530dc6",
+        "bytes": 31764
+      },
+      "wordSpan": {
+        "first": 40,
+        "lastExclusive": 45
+      },
+      "sourceRange": {
+        "startSeconds": 23.37,
+        "endSeconds": 26.25,
+        "clockDomain": "decoded-pcm"
+      },
+      "acceptance": {
+        "status": "accepted",
+        "recipeRevision": "multiple-recorded-guide-sources-344959d",
+        "evidenceSha256": "ef2847529fc0b682264a162b78704d8505fbf6b20c5bb916eb43f1f5207d16a9"
+      }
+    },
+    {
+      "id": "S04-U005",
+      "activityId": "S04-U005",
+      "sourceTextSha256": "3210be4a83fcb7c3537a69105d10900aede1d43c29858ca4f238cd7d897cb2ba",
+      "logicalAudio": {
+        "path": "/audio/source/S04-U005.mp3",
+        "sha256": "732de103a53dd6bd3a67175cb37d08bfd56a96be451939e09254162187190a4c",
+        "bytes": 20480
+      },
+      "wordSpan": {
+        "first": 45,
+        "lastExclusive": 48
+      },
+      "sourceRange": {
+        "startSeconds": 26.25,
+        "endSeconds": 27.71,
+        "clockDomain": "decoded-pcm"
+      },
+      "acceptance": {
+        "status": "accepted",
+        "recipeRevision": "multiple-recorded-guide-sources-344959d",
+        "evidenceSha256": "c0308fcce5641efdac2f99a414560cf1389621388d194132096d850d5371350e"
+      }
+    },
+    {
+      "id": "S04-U006",
+      "activityId": "S04-U006",
+      "sourceTextSha256": "af7179dc3a21918f422d1bb678b9b5f7ae18deb8c8e8fa6f5c6ee90a11b86944",
+      "logicalAudio": {
+        "path": "/audio/source/S04-U006.mp3",
+        "sha256": "3d874958327e3ed2542f8587f91bfb0616813ed8c9882e9bd0ca20d17ccdfacf",
+        "bytes": 20062
+      },
+      "wordSpan": {
+        "first": 48,
+        "lastExclusive": 51
+      },
+      "sourceRange": {
+        "startSeconds": 27.91,
+        "endSeconds": 29.84,
+        "clockDomain": "decoded-pcm"
+      },
+      "acceptance": {
+        "status": "accepted",
+        "recipeRevision": "multiple-recorded-guide-sources-344959d",
+        "evidenceSha256": "1fdf6bbb3b25f2ef5013b8d0df24a6eb546a65beb785b936e2a53103622932f9"
+      }
+    },
+    {
+      "id": "S04-U007",
+      "activityId": "S04-U007",
+      "sourceTextSha256": "62fe4843ff9d2d79c52749cb0073c8490e7e490f03b98911d3acd4661ea69b5b",
+      "logicalAudio": {
+        "path": "/audio/source/S04-U007.mp3",
+        "sha256": "ea63c9847d080ecd4498e2c666691f4efe873e13ef38c29a78baf793b957d061",
+        "bytes": 13374
+      },
+      "wordSpan": {
+        "first": 51,
+        "lastExclusive": 52
+      },
+      "sourceRange": {
+        "startSeconds": 30.09,
+        "endSeconds": 31.11,
+        "clockDomain": "decoded-pcm"
+      },
+      "acceptance": {
+        "status": "accepted",
+        "recipeRevision": "multiple-recorded-guide-sources-344959d",
+        "evidenceSha256": "4ceea4be1aec63eb591ea4a9897098defd844e66ac8a839d14994264dd115bf7"
+      }
+    },
+    {
+      "id": "S04-U008",
+      "activityId": "S04-U008",
+      "sourceTextSha256": "c8f425825c9b066be4a1f9794957e55b243a9445eefc657daff3586b2e9ead86",
+      "logicalAudio": {
+        "path": "/audio/source/S04-U008.mp3",
+        "sha256": "6bb9c897c25dd46a3c50852253d161013933a1183d064af4820a13faed7bc540",
+        "bytes": 19226
+      },
+      "wordSpan": {
+        "first": 52,
+        "lastExclusive": 55
+      },
+      "sourceRange": {
+        "startSeconds": 31.7,
+        "endSeconds": 33.36,
+        "clockDomain": "decoded-pcm"
+      },
+      "acceptance": {
+        "status": "accepted",
+        "recipeRevision": "multiple-recorded-guide-sources-344959d",
+        "evidenceSha256": "4245394113a2070e59ca663faddd3c972b8c6890f964f80b100ee128bc236a82"
+      }
+    },
+    {
+      "id": "S04-U009",
+      "activityId": "S04-U009",
+      "sourceTextSha256": "9c544d96b0c84c52ace0ae1c9ea1414c153ad9e8ec7dd0c5bd12e828fc74317b",
+      "logicalAudio": {
+        "path": "/audio/source/S04-U009.mp3",
+        "sha256": "20940423e64cd196c67344fe4d710b3fb07569c37c31c59ed0dcdea8daf78568",
+        "bytes": 12538
+      },
+      "wordSpan": {
+        "first": 55,
+        "lastExclusive": 56
+      },
+      "sourceRange": {
+        "startSeconds": 33.64,
+        "endSeconds": 34.86,
+        "clockDomain": "decoded-pcm"
+      },
+      "acceptance": {
+        "status": "accepted",
+        "recipeRevision": "multiple-recorded-guide-sources-344959d",
+        "evidenceSha256": "4d45c2fa657fabc613a5db8baa7c799d633673fab06b4d3dff5b96c5447dec25"
+      }
+    },
+    {
+      "id": "S04-U010",
+      "activityId": "S04-U010",
+      "sourceTextSha256": "c50d310cc268c44b1f99bf0dd61ad8d575f225e52f27847b08b2433bd9b97ee8",
+      "logicalAudio": {
+        "path": "/audio/source/S04-U010.mp3",
+        "sha256": "bc8958ad14d50feb5d57a2d0cacd847f2c86ccb8d3c6ef542c3533f1d554dc86",
+        "bytes": 16300
+      },
+      "wordSpan": {
+        "first": 56,
+        "lastExclusive": 57
+      },
+      "sourceRange": {
+        "startSeconds": 35.08,
+        "endSeconds": 36.14,
+        "clockDomain": "decoded-pcm"
+      },
+      "acceptance": {
+        "status": "accepted",
+        "recipeRevision": "multiple-recorded-guide-sources-344959d",
+        "evidenceSha256": "7a5d360e47d9dc649f1dd480af918faf2842555ef4adc6961f3a43b6926dad05"
+      }
+    },
+    {
+      "id": "S04-U011",
+      "activityId": "S04-U011",
+      "sourceTextSha256": "36b1476682f7077fd01742ab6c1f8f2d276053df9fac5a2ee56e804130177216",
+      "logicalAudio": {
+        "path": "/audio/source/S04-U011.mp3",
+        "sha256": "f8ee870f1c962096c2fc42ad8790f9542f3a629a4d17ca71bff393b5fc617862",
+        "bytes": 12538
+      },
+      "wordSpan": {
+        "first": 57,
+        "lastExclusive": 58
+      },
+      "sourceRange": {
+        "startSeconds": 36.67,
+        "endSeconds": 37.84,
+        "clockDomain": "decoded-pcm"
+      },
+      "acceptance": {
+        "status": "accepted",
+        "recipeRevision": "multiple-recorded-guide-sources-344959d",
+        "evidenceSha256": "a65ae418b4d375fee0165920f11052a5a62750e786a6bb38a89defb0ea03b6d4"
+      }
+    },
+    {
+      "id": "S04-U012",
+      "activityId": "S04-U012",
+      "sourceTextSha256": "7573595555c3d9a146babfe97d649789dc91b59b2f30464a47fe0b1df653c2df",
+      "logicalAudio": {
+        "path": "/audio/source/S04-U012.mp3",
+        "sha256": "fdb5ee6213f9a997622b28d71d5a871484f6caeebdb57c407c024aa25651b0d3",
+        "bytes": 64365
+      },
+      "wordSpan": {
+        "first": 58,
+        "lastExclusive": 76
+      },
+      "sourceRange": {
+        "startSeconds": 39.11,
+        "endSeconds": 45.75,
+        "clockDomain": "decoded-pcm"
+      },
+      "acceptance": {
+        "status": "accepted",
+        "recipeRevision": "multiple-recorded-guide-sources-344959d",
+        "evidenceSha256": "abc2aa2899685101970af7c9ae3cc9abca893c44825fb72b80811391c4856f86"
+      }
+    },
+    {
+      "id": "S04-U013",
+      "activityId": "S04-U013",
+      "sourceTextSha256": "a947f01f636ae97da69da57c29f04c5c75a41c5cfeda65b9790ae72dbf3bfc03",
+      "logicalAudio": {
+        "path": "/audio/source/S04-U013.mp3",
+        "sha256": "d6a470c0baa6e38bcd1787fd53a1be80cf107ec99f7ee95ea39598f1bfd2e833",
+        "bytes": 224444
+      },
+      "wordSpan": {
+        "first": 76,
+        "lastExclusive": 120
+      },
+      "sourceRange": {
+        "startSeconds": 46.55,
+        "endSeconds": 66.68,
+        "clockDomain": "decoded-pcm"
+      },
+      "acceptance": {
+        "status": "accepted",
+        "recipeRevision": "multiple-recorded-guide-sources-344959d",
+        "evidenceSha256": "385997b91974b303800e8c358b670a0730ddfa1509dc3df694695ef9d9103d6f"
+      }
+    },
+    {
+      "id": "S04-U014",
+      "activityId": "S04-U014",
+      "sourceTextSha256": "966faa38a0db72824fcf7681804def536b6550e7587d3c45cc70646d6008d598",
+      "logicalAudio": {
+        "path": "/audio/source/S04-U014.mp3",
+        "sha256": "25bc949e47e1a8da3ea3889de332f98d2ebbc4ef671ade4023bf6e58b6c06672",
+        "bytes": 47229
+      },
+      "wordSpan": {
+        "first": 120,
+        "lastExclusive": 129
+      },
+      "sourceRange": {
+        "startSeconds": 67.25,
+        "endSeconds": 71.45,
+        "clockDomain": "decoded-pcm"
+      },
+      "acceptance": {
+        "status": "accepted",
+        "recipeRevision": "multiple-recorded-guide-sources-344959d",
+        "evidenceSha256": "a83ef71753839ad1dbbe3195dcfa1d13ce0fba77c647276bebf9926e15a11ed5"
+      }
+    },
+    {
+      "id": "S04-U015",
+      "activityId": "S04-U015",
+      "sourceTextSha256": "d1e4eafbd6c5622d600d72387e9c79110870cd0494002fc26625848b12179c1d",
+      "logicalAudio": {
+        "path": "/audio/source/S04-U015.mp3",
+        "sha256": "d942d9f73cfde0140d0a3a8ff2c07c560c50e15acb9972607166dd29c7d0924a",
+        "bytes": 278360
+      },
+      "wordSpan": {
+        "first": 129,
+        "lastExclusive": 184
+      },
+      "sourceRange": {
+        "startSeconds": 76.23,
+        "endSeconds": 98.1,
+        "clockDomain": "decoded-pcm"
+      },
+      "acceptance": {
+        "status": "accepted",
+        "recipeRevision": "multiple-recorded-guide-sources-344959d",
+        "evidenceSha256": "924cd730d84abb5cad51332f745b210e774cb040498ffbe931bd90715b119edb"
+      }
+    },
+    {
+      "id": "S04-U016",
+      "activityId": "S04-U016",
+      "sourceTextSha256": "f87e85b2e1245e9c147233d6faa94b15e20b9ffde9c4b18348274fb3afb6ec70",
+      "logicalAudio": {
+        "path": "/audio/source/S04-U016.mp3",
+        "sha256": "03ab3b0b74b407199b45ee08af61cad3d25e772eee0e6e97b131944b0e75e9d2",
+        "bytes": 56424
+      },
+      "wordSpan": {
+        "first": 184,
+        "lastExclusive": 196
+      },
+      "sourceRange": {
+        "startSeconds": 98.1,
+        "endSeconds": 105.65,
+        "clockDomain": "decoded-pcm"
+      },
+      "acceptance": {
+        "status": "accepted",
+        "recipeRevision": "multiple-recorded-guide-sources-344959d",
+        "evidenceSha256": "58687c94390d07a07335f0c40daa3b61e11f4fa723525bba2915edfcf0780036"
+      }
+    }
+  ]
+}

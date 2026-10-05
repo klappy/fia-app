@@ -54,11 +54,12 @@ async function openState(browser,url,viewport,dark,state,{verifiedFixture=false}
   // Static visual fixture only: exact build-verified files. Real installation is tested separately.
   const active={postMessage(message,ports){ports[0].postMessage({ok:true,saved:true,active:{manifest,files:manifest.files}});}};Object.defineProperty(navigator,'serviceWorker',{value:{ready:Promise.resolve({active}),register:async()=>({active})},configurable:true});
  },approvedDownload);
- if(['online-available-initial','prepared-online-visual'].includes(state.name))await page.addInitScript(manifest=>{
-  // Metadata-only availability fixture; no resource bytes requested or played.
-  const active={postMessage(message,ports){const response=message.type==='MEDIA_STATUS'?{ok:true,deliveryRevision:manifest.deliveryRevision,files:manifest.files.filter(f=>f.deliveryURL)}:{ok:true,saved:false,selected:true};ports[0].postMessage(response);}};
+ if(['online-available-initial','prepared-online-visual'].includes(state.name))await page.addInitScript(({manifest,visuals})=>{
+  // Current-visual autoload fixture uses the same hash-verified image bytes as parity.
+  window.__visualFixtureRequests=[];
+  const active={postMessage(message,ports){if(message.type==='MEDIA_PLAY'){window.__visualFixtureRequests.push(message.path);const visual=visuals[message.path];ports[0].postMessage(visual?{ok:true,mime:visual.mime,bytes:Uint8Array.from(visual.bytes).buffer}:{ok:false,error:'Unexpected nonvisual playback'});return;}const response=message.type==='MEDIA_STATUS'?{ok:true,deliveryRevision:manifest.deliveryRevision,files:manifest.files.filter(f=>f.deliveryURL)}:{ok:true,saved:false,selected:true};ports[0].postMessage(response);}};
   Object.defineProperty(navigator,'serviceWorker',{value:{ready:Promise.resolve({active}),register:async()=>({active})},configurable:true});
- },approvedDownload);
+ },{manifest:approvedDownload,visuals:Object.fromEntries([...imageFixtures].map(([path,f])=>[path,{mime:f.mime,bytes:[...f.body]}]))});
  await page.goto(url);await expect(page.locator('main.scene')).toBeVisible();
  await page.evaluate(()=>document.fonts.ready);
  // Downloaded initial-state parity requires the final verified availability state.
@@ -125,8 +126,8 @@ for(const width of [390,1280])for(const dark of [false,true])test('approved refe
  // Authorized changed states are a separate evidence set, never a renamed parity PASS.
  for(const state of [...states.filter(s=>['settings','languages','passages','about'].includes(s.name)),{name:'manual-download-required',index:find(a=>pack.assets[a.assetId]?.kind==='image')},{name:'online-available-initial',index:0,initial:true},{name:'prepared-online-visual',index:find(a=>pack.assets[a.assetId]?.kind==='image')},{name:'spanish-text-only-initial',index:0,initial:true,packId:'spa.MRK-1-1-13'}]){
   const candidate=await openState(browser,baseURL,viewport,dark,state);
-  try{if(state.name==='manual-download-required'){await expect(candidate.page.getByRole('button',{name:'Open Downloads'})).toBeVisible();expect(await candidate.page.locator('img[src],video[src],audio[src]').count()).toBe(0);}
-   if(state.name==='prepared-online-visual'){await expect(candidate.page.getByRole('button',{name:'View image',exact:true})).toBeVisible();expect(await candidate.page.locator('img[src],video[src],audio[src]').count()).toBe(0);}
+  try{if(state.name==='manual-download-required'){await expect(candidate.page.getByText('This image is not available online yet. You can continue with the passage text.',{exact:true})).toBeVisible();expect(await candidate.page.locator('img[src],video[src],audio[src]').count()).toBe(0);}
+   if(state.name==='prepared-online-visual'){await expect.poll(()=>candidate.page.locator('.visual-viewport img').first().evaluate(img=>img.complete&&img.naturalWidth>0)).toBe(true);expect(await candidate.page.evaluate(()=>window.__visualFixtureRequests)).toEqual([pack.assets[pack.activities[state.index].assetId].src]);expect(await candidate.page.locator('video[src],audio[src]').count()).toBe(0);}
    if(state.name==='online-available-initial')await expect(candidate.page.getByRole('button',{name:'Begin',exact:true})).toBeVisible();
    if(state.name==='spanish-text-only-initial')await expect(candidate.page.getByRole('button',{name:'Continue',exact:true})).toBeVisible();
    const actual=await stableScreenshot(()=>candidate.page.screenshot({animations:'disabled'}));writeFileSync(info.outputPath(state.name+'-new-state.png'),actual.image);evidence.newStates.push({name:state.name,referenceComparison:'not-applicable-user-authorized-content-or-availability-change',independentVisualReview:'required',captures:actual.attempts});

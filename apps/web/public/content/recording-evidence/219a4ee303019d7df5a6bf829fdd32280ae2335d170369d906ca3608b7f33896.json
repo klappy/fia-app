@@ -1,0 +1,67 @@
+{
+  "source": "https://fia.bible/",
+  "homepageSha256": "eb906f22b820c6b9161f551b2aef8339f601dcf9e81689cb0152d66c8d2ac79f",
+  "queryKey": [
+    "pericope-explorer",
+    "eng",
+    "mrk",
+    "p1"
+  ],
+  "urls": [
+    "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s1/v2/vbr0.mp3",
+    "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+    "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s3/v2.1/vbr0.mp3",
+    "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s4/v2/vbr0.mp3",
+    "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s5/v2.1/vbr0.mp3",
+    "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s6/v2/vbr0.mp3"
+  ],
+  "downloadedAudio": false,
+  "unitAlignmentVerified": false,
+  "steps": [
+    {
+      "step": 1,
+      "version": "v2",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s1/v2/vbr0.mp3"
+    },
+    {
+      "step": 2,
+      "version": "v2.1",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3"
+    },
+    {
+      "step": 3,
+      "version": "v2.1",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s3/v2.1/vbr0.mp3"
+    },
+    {
+      "step": 4,
+      "version": "v2",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s4/v2/vbr0.mp3"
+    },
+    {
+      "step": 5,
+      "version": "v2.1",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s5/v2.1/vbr0.mp3"
+    },
+    {
+      "step": 6,
+      "version": "v2",
+      "url": "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s6/v2/vbr0.mp3"
+    }
+  ],
+  "findings": [
+    "Official homepage directly publishes all six URLs, not inferred from a path template.",
+    "Player selects pericopeStep.audioUrlVbr0; audio metadata identifies a whole step, not a unit.",
+    "Current approved per-unit audio cannot be replaced merely by matching step number: transcript and timing/source-version comparison required.",
+    "Publisher homepage says completed English steps are consultant checked and available in audio and text; narrator and recording-specific license were not established by this bounded inspection.",
+    "Developer API landing page was unavailable through web reader; this does not negate public homepage metadata."
+  ],
+  "playerChunk": {
+    "url": "https://fia.bible/_next/static/chunks/2bc420b120e1da58.js",
+    "sha256": "df6b8d9257f242b23563ee74136f31544c3dd3a9ef671e3c898a3fa3e36e38ba"
+  },
+  "nextAcquisition": {
+    "scope": "Root authorized only first explicitly published step URL; measure HTTP status/MIME/SHA/duration, at most20MiB/60seconds",
+    "mapping": "Keep unbound until original transcript comparison and reviewed timing segmentation; no synthetic generation."
+  }
+}
