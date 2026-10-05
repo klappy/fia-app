@@ -3,10 +3,23 @@
  import {Check,ChevronRight,Download,RotateCcw,Trash2,Pause} from 'lucide-svelte';
  import {libraryAdapter,bundledPack,formatBytes} from '../lib/library.js';
  import {progressSummary} from '../lib/session-store.js';
+ import {selectManifestSizes} from '../lib/media-delivery.js';
  import {preparedDownloadSizes} from '../lib/media-options.js';
  let {view,selectedPack=bundledPack,language='eng',onlanguage,onselect,onreset,onview,completed=0,total=0,onstatus=()=>{}}=$props();
  let languages=$state([]),passages=$state([]),loading=$state(true),error=$state(''),download=$state(null),selection=$state('core'),busy=$state(false),transfer=$state(null),confirmRemove=$state(false),confirmRestart=$state(null),downloadFinished=$state(false);
  let sizes=$derived(preparedDownloadSizes(download?.manifest,selection));
+ function storedSizes(){try{return JSON.parse(localStorage.getItem('fia-download-media-sizes')||'{}');}catch{return {};}}
+ let mediaSizes=$state(storedSizes());
+ let effectiveSizes=$derived(Object.fromEntries(Object.entries(sizes.groups).filter(([,g])=>g.included&&g.count).map(([k,g])=>[k,mediaSizes[k]||g.size])));
+ let preset=$derived(new Set(Object.values(effectiveSizes)).size===1?Object.values(effectiveSizes)[0]:'custom');
+ let availablePresets=$derived(['small','medium','large'].filter(size=>Object.values(sizes.groups).filter(g=>g.included&&g.count).every(g=>g.available.includes(size))));
+ let ready=$derived(Object.entries(effectiveSizes).every(([k,v])=>sizes.groups[k].available.includes(v)));
+ let requestSizes=$derived(Object.fromEntries(Object.entries(effectiveSizes).filter(([group])=>download?.manifest?.files.some(f=>f.group===group&&f.variants))));
+ let resumeMatches=$derived(download?.pending?.selection===selection&&['audio','image','video'].every(g=>(download.pending.manifest?.mediaSizes?.[g]||null)===(requestSizes[g]||null)));
+ let selectedTotal=$derived.by(()=>{if(!ready||!download?.manifest)return null;try{const m=selectManifestSizes(download.manifest,selection,requestSizes);return m.files.filter(f=>f.group==='core'||selection==='all'||selection==='audio'&&f.group==='audio').reduce((n,f)=>n+f.bytes,0);}catch{return null;}});
+ function chooseSizes(next){mediaSizes={...mediaSizes,...next};localStorage.setItem('fia-download-media-sizes',JSON.stringify(mediaSizes));}
+ function choosePreset(size){chooseSizes(Object.fromEntries(Object.keys(effectiveSizes).map(k=>[k,size])));}
+
  let alive=true;
  async function refresh(){
   loading=true;error='';
@@ -19,7 +32,7 @@
  const labels={core:'Text only',audio:'Text and audio',all:'Text and all available resources'};
  async function chooseLanguage(id){onlanguage(id);passages=await libraryAdapter.passages(id);}
  async function selectPack(id){try{busy=true;await onselect(id);}catch(e){error=e.message;}finally{busy=false;}}
- async function save(){busy=true;error='';transfer=null;try{await libraryAdapter.download(selection,value=>transfer=value,selectedPack);downloadFinished=true;}catch(e){error=e.message;}finally{busy=false;const failure=error;await refresh();error=failure||error;}}
+ async function save(){busy=true;error='';transfer=null;try{await libraryAdapter.download(selection,value=>transfer=value,selectedPack,requestSizes);downloadFinished=true;}catch(e){error=e.message;}finally{busy=false;const failure=error;await refresh();error=failure||error;}}
  async function pause(){try{await libraryAdapter.pauseDownload(selectedPack);}catch(e){error=e.message;}}
  async function remove(){try{await libraryAdapter.removeDownload(selectedPack);confirmRemove=false;await refresh();}catch(e){error=e.message;}}
 </script>
@@ -50,12 +63,12 @@
     {#if download.updateAvailable}<p>A newer download is available. Your saved copy stays usable until the update finishes.</p>{/if}
     {#if download.pending&&!busy}<p>{download.pending.running?'A download is running in another window.':'Interrupted download'} · {formatBytes(download.pending.received)} of {formatBytes(download.pending.bytes)} verified. {download.pending.running?'Refresh to check its progress.':'Resume checks and reuses saved files.'}</p>{/if}
     <fieldset disabled={busy||download.pending?.running}><legend>Include in download</legend>{#each download.choices as choice}<label class="download-choice"><input type="radio" name="download-selection" value={choice.id} bind:group={selection}/><span><strong>{labels[choice.id]}</strong><small>{formatBytes(choice.bytes)} total</small></span></label>{/each}</fieldset>
-    {#if selection!=='core'}<fieldset disabled={busy||download.pending?.running}><legend>Download size</legend><p class="fine-print">Smaller files use less storage. Only prepared sizes are available.</p>{#each ['small','medium','large'] as size}<label class="download-choice"><input type="radio" name="download-size" value={size} checked={sizes.preset===size} disabled={sizes.preset!==size}/><span>{sizes.labels[size]}{sizes.preset!==size?' — not available for this selection':''}</span></label>{/each}{#if sizes.preset==='custom'}<p>Custom sizes · the prepared files use different sizes.</p>{/if}
-    <details><summary>Choose sizes by media</summary>{#each [{id:'image',label:'Images and maps'},{id:'audio',label:'Audio'},{id:'video',label:'Video'}] as category}{@const group=sizes.groups[category.id]}<label class="select-row">{category.label}<select aria-label={category.label+' download size'} value={group.size||''} disabled={!group.included||!group.count}>{#if !group.size}<option value="">{!group.included?'Not included':'No prepared size'}</option>{/if}{#each ['small','medium','large'] as size}<option value={size} disabled={group.size!==size}>{sizes.labels[size]}{category.id==='video'?({small:' · 480p',medium:' · 540p',large:' · 720p'}[size]):''}{group.size!==size?' — not available yet':''}</option>{/each}</select></label>{#if !group.included}<p class="fine-print">Not included</p>{/if}{/each}</details></fieldset>{/if}
+    {#if selection!=='core'}<fieldset disabled={busy||download.pending?.running}><legend>Download size</legend><p class="fine-print">Smaller files use less storage. Only prepared sizes are available.</p>{#each ['small','medium','large'] as size}<label class="download-choice"><input type="radio" name="download-size" value={size} checked={preset===size} disabled={!availablePresets.includes(size)} onchange={()=>choosePreset(size)}/><span>{sizes.labels[size]}{!availablePresets.includes(size)?' — not available for this selection':''}</span></label>{/each}{#if preset==='custom'||!preset}<p>Custom sizes · the prepared files use different sizes.</p>{/if}
+    <details><summary>Choose sizes by media</summary>{#each [{id:'image',label:'Images and maps'},{id:'audio',label:'Audio'},{id:'video',label:'Video'}] as category}{@const group=sizes.groups[category.id]}<label class="select-row">{category.label}<select aria-label={category.label+' download size'} value={effectiveSizes[category.id]||group.size||''} onchange={e=>chooseSizes({[category.id]:e.currentTarget.value})} disabled={!group.included||!group.count}>{#if !group.size}<option value="">{!group.included?'Not included':'No prepared size'}</option>{/if}{#each ['small','medium','large'] as size}<option value={size} disabled={!group.available.includes(size)}>{sizes.labels[size]}{category.id==='video'?({small:' · 480p',medium:' · 540p',large:' · 720p'}[size]):''}{!group.available.includes(size)?' — not available yet':''}</option>{/each}</select></label>{#if !group.included}<p class="fine-print">Not included</p>{/if}{/each}</details></fieldset>{/if}
     <p class="fine-print">Text only includes the app, Scripture and guide. Audio adds recordings. All available resources adds the packaged images and videos. Prepared audio can play online when you press Play. Downloads save recordings for offline use. Prepared images and videos can open online. Downloads are optional for offline use. Sizes are file bytes, not browser storage overhead.</p>
     {#if transfer}<progress aria-label="Download progress" value={transfer.received} max={transfer.bytes||1}></progress><p role="status">{formatBytes(transfer.received)} of {formatBytes(transfer.bytes)} verified · {transfer.count} / {transfer.total} files</p>{/if}
-    <p>{formatBytes(download.choices.find(c=>c.id===selection)?.bytes||0)} to download</p>
-    {#if busy}<button class="secondary full" onclick={pause}><Pause size={18}/>Pause download</button>{:else}<button class="secondary full" disabled={!download.manifest||download.pending?.running} onclick={save}><Download size={18}/>{download.pending&&selection===download.pending.selection?'Resume download':download.updateAvailable?'Update download':download.saved?'Save selection again':'Download selection'}</button>{/if}
+    <p>{selectedTotal===null?'This size selection is not prepared yet.':formatBytes(selectedTotal)+' to download'}</p>
+    {#if busy}<button class="secondary full" onclick={pause}><Pause size={18}/>Pause download</button>{:else}<button class="secondary full" disabled={!download.manifest||download.pending?.running||!ready||selectedTotal===null} onclick={save}><Download size={18}/>{download.pending&&resumeMatches?'Resume download':download.updateAvailable?'Update download':download.saved?'Save selection again':'Download selection'}</button>{/if}
     {#if download.active||download.pending}
      {#if confirmRemove}<p>Remove downloaded files? Your passage progress and settings will stay.</p><div class="library-actions"><button class="secondary" disabled={busy||download.pending?.running} onclick={remove}>Remove download</button><button class="quiet" onclick={()=>confirmRemove=false}>Keep download</button></div>{:else}<button class="quiet full" disabled={busy||download.pending?.running} onclick={()=>confirmRemove=true}><Trash2 size={16}/>Remove from device</button>{/if}
     {/if}
