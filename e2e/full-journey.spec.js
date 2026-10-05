@@ -38,5 +38,5 @@ test('explicit all-resource download verifies real bytes, survives offline reloa
 
 test('text-only download and restore issue no resource media requests',async({page,context})=>{
  test.setTimeout(120000);const media=[];page.on('request',r=>{if((new URL(r.url()).origin==='https://transcode.klappy.dev'||/\.(mp3|m4a|wav|ogg|mp4|webm|jpe?g|png|webp)(?:$|\?)/.test(r.url()))&&!r.url().includes('/assets/fia-'))media.push(r.url());});
- await seedPassage(page,'S02-U005');await downloadSelected(page,'core');expect(media).toEqual([]);await context.setOffline(true);await page.reload();await expect(page.getByRole('navigation',{name:'Session controls'})).toBeVisible();expect(media).toEqual([]);await expect(page.getByRole('button',{name:'Open Downloads'})).toBeVisible();
+ await seedPassage(page,'S02-U005');await downloadSelected(page,'core');expect(media).toEqual([]);await context.setOffline(true);await page.reload();await expect(page.getByRole('navigation',{name:'Session controls'})).toBeVisible();expect(media).toEqual([]);await expect(page.getByRole('button',{name:'View image',exact:true})).toBeVisible();
 });
