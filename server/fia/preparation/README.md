@@ -60,13 +60,24 @@ generated fallback under separately authorized policies.
 
 ## Activation and rollback
 
-The proposed `FiaPreparationJobs` SQLite class and `FIA_PREPARATION_JOBS` binding
-remain in the existing Worker stack. FIA_ORIGINALS binds separate private fia-originals-development, fia-originals-staging and fia-originals-production buckets; these names are proposed configuration, not provisioned-resource claims. Namespace provisioning, migration
-`v1-preparation`, and DEV activation require the captain's scoped disposition and
-the existing reviewed release train. No direct deployment is authorized here.
-Each environment owns its own namespace and original-source bucket. This slice persists one867865-byte
-source in R2 plus metadata; storage/requests/CPU have costs, and no zero-cost claim is
-made. No provider credentials, paid ASR or generation call is present.
+Only `env.dev` declares the `FiaPreparationJobs` SQLite migration `v1-preparation`,
+`FIA_PREPARATION_JOBS` binding and `FIA_ORIGINALS` R2 binding to
+`fia-originals-development`. The default, staging and production configurations
+contain none of these preparation bindings or migrations. Their existing read
+and static-asset behavior remains available; preparation requests fail closed
+with storage-unavailable until separately authorized configuration is reviewed.
+Exporting the class in the shared source does not authorize another environment's
+migration. No staging/production bucket provisioning or activation is part of this delta.
+
+[Cloudflare's environment documentation](https://developers.cloudflare.com/durable-objects/reference/environments/)
+states that Durable Object bindings are per-environment and migrations may be
+environment-specific. Keep this migration under `env.dev`, not at the top level,
+so unrelated environment deployments do not inherit it. DEV deployment still
+follows the sole owner's approved release train; this configuration change does
+not itself deploy or provision resources.
+
+This slice persists one 867865-byte source in R2 plus metadata. Storage, requests
+and CPU have costs; no provider credentials, paid ASR or generation call is present.
 
 Rollback disables request routing while retaining class export, migration history
 and stored data. Do not delete the class or namespace. Actual hosted acceptance
