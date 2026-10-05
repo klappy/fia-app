@@ -69,8 +69,84 @@
           "sourceTextSha256": "d7a5f7f06349c901d886647055b1f48f7251a9fbfe2b37e509b26e0538704e46"
         }
       ],
-      "accepted": null,
-      "blockedReason": "recording-timing-review-required",
+      "accepted": {
+        "bytes": 2718,
+        "expected": {
+          "acceptanceSha256": "89d875833fe3d9355525d8ad172429dbc256928842b743d4e7bdb9bbcb544676",
+          "activities": [
+            {
+              "activityId": "S01-U001",
+              "sourceTextSha256": "0878d96b6158892fbe45a734a35e5017a172bc3ffbbfbd3d8478611327b18890",
+              "sourceUnitId": "S01-U001"
+            },
+            {
+              "activityId": "S01-U002",
+              "sourceTextSha256": "63fc098411c6228d314f6b5bc64a048a86130679b3b484fe56dcc774bd73258f",
+              "sourceUnitId": "S01-U002"
+            },
+            {
+              "activityId": "S01-U003",
+              "sourceTextSha256": "c6ef6ed4d31b97cf4a0d03a8228505d052a8a780a5fe0413ebc441860df97b5d",
+              "sourceUnitId": "S01-U003"
+            },
+            {
+              "activityId": "S01-U004",
+              "sourceTextSha256": "e8a93c2c61fe1a0f6f81fa58997b305e6fc98309b710e3a31ff8334e8644a3eb",
+              "sourceUnitId": "S01-U004"
+            },
+            {
+              "activityId": "S01-U005",
+              "sourceTextSha256": "5df74ebc5c4225c3d54e1629cff92f39a1cc058f2ac30b59d75d68d496d1d0f5",
+              "sourceUnitId": "S01-U005"
+            },
+            {
+              "activityId": "S01-U006",
+              "sourceTextSha256": "5ec46dee57eb35404b2cea3f9aaa67f2973ac8781088fa05d8073f9e72fdf4c3",
+              "sourceUnitId": "S01-U006"
+            },
+            {
+              "activityId": "S01-U007",
+              "sourceTextSha256": "97dd8ff3c182bdac8fd7e57ffe1bf62350452bd66178db6560b7909eb5237842",
+              "sourceUnitId": "S01-U007"
+            },
+            {
+              "activityId": "S01-U008",
+              "sourceTextSha256": "d7a5f7f06349c901d886647055b1f48f7251a9fbfe2b37e509b26e0538704e46",
+              "sourceUnitId": "S01-U008"
+            }
+          ],
+          "delivery": {
+            "bytes": 867865,
+            "duration": 58.2936875,
+            "mime": "audio/mpeg",
+            "quality": "original",
+            "sha256": "0f3fa9e77215f5050f9e22b7abee329c47e0e9ff71a5f0c4d248926a8f42268d",
+            "url": "/v1/preparation-audio/0f3fa9e77215f5050f9e22b7abee329c47e0e9ff71a5f0c4d248926a8f42268d.mp3"
+          },
+          "evidence": {
+            "recordingLedgerSha256": "c4b971b103fbf51529d2928432dbb9e4a79a28c72392a6bc636edf243ce7ca3a",
+            "timingSha256": "2a28d385c557a5bde4b4866efb22c7730ef757ff13b46c31f3f53d0630c8cfac"
+          },
+          "identity": {
+            "configSha256": "f1e2b4cafb7cfad08255966f593003ed94a088ffeb9a07b11c92afb8d8d010fb",
+            "edition": "fia-guide",
+            "language": "eng",
+            "packId": "eng.MRK-1-14-20",
+            "presentationRevision": "92ad518474f159f6567124052ae12d180a482c949509da0b725593442e62f746",
+            "recipeRevision": "fia-lazy-original-audio@1",
+            "sourceVersion": "publisher-p2-s1-v2"
+          },
+          "resultSha256": "186956fb526a0671025180f637c0f6e6b336129085e21951da6e59e89b33fcee",
+          "source": {
+            "bytes": 867865,
+            "duration": 58.2936875,
+            "sha256": "0f3fa9e77215f5050f9e22b7abee329c47e0e9ff71a5f0c4d248926a8f42268d",
+            "url": "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p2/s1/v2/vbr0.mp3"
+          }
+        },
+        "path": "/content/prepared-audio/186956fb526a0671025180f637c0f6e6b336129085e21951da6e59e89b33fcee.json"
+      },
+      "blockedReason": null,
       "eligibility": "eligible"
     }
   ]

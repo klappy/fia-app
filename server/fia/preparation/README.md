@@ -54,8 +54,7 @@ A new reviewed admission can unblock the same operation on explicit POST.
 Revoked/replaced admission is never returned as ready; a late attempt cannot
 overwrite a newer admission. Failed unchanged admissions do not repeat work.
 
-Current p2 source is pinned, but `accepted:null` deliberately withholds playback
-until reviewed timing and browser presentation-clock evidence are admitted.
+Current p2 source and the eight activity ranges are admitted through separately reviewed source and observed Chromium presentation-clock evidence. This is prior accepted timing; it is not hosted ASR execution or a universal-device claim.
 The official-recording adapter does not change the broader policy permitting
 generated fallback under separately authorized policies.
 

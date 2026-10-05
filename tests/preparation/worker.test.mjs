@@ -14,7 +14,7 @@ const worker=fileURLToPath(new URL('../../server/fia/preparation/worker.mjs',imp
 const template=JSON.parse(await readFile(new URL('../../server/fia/preparation/catalog.json',import.meta.url),'utf8'));
 const origin='https://dev.fiaguide.app',hash=b=>createHash('sha256').update(b).digest('hex');
 const sourceBytes=Buffer.alloc(70003,42); // Bounded synthetic original, not actual publisher media.
-const fixture=()=>{const c=structuredClone(template),r=c.entries[0];r.source={url:'https://source.fixture.invalid/original.mp3',sha256:hash(sourceBytes),bytes:sourceBytes.length,duration:58.2936875};r.accepted=null;return c;};
+const fixture=()=>{const c=structuredClone(template),r=c.entries[0];r.source={url:'https://source.fixture.invalid/original.mp3',sha256:hash(sourceBytes),bytes:sourceBytes.length,duration:58.2936875};r.accepted=null;r.blockedReason="recording-timing-review-required";return c;};
 const requestFor=(row,n=0)=>Object.fromEntries([...['packId','presentationRevision','language','edition','quality'].map(k=>[k,row.selection[k]]),...Object.entries(row.activities[n])]);
 const post=(mf,row,body=requestFor(row),headers={})=>mf.dispatchFetch(origin+'/v1/preparations',{method:'POST',headers:{'Content-Type':'application/json',...headers},body:typeof body==='string'?body:JSON.stringify(body)});
 function admit(row,revision='a'){
