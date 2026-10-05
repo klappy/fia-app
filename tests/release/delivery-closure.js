@@ -23,7 +23,7 @@ export function verifyManifestFile(file,raw,sidecar,revision,readAlignment){
   const logical=entry.audioReplacement.logicalSource;
   assert.equal(raw.length,logical.bytes);assert.equal(hash(raw),logical.sha256);
   assert.equal(file.logicalSourceBytes,logical.bytes);assert.equal(file.logicalSourceSha256,logical.sha256);assert.equal(file.sourceBytes,entry.source.bytes);
-  assert.equal(file.recordingLedgerEntryId,entry.audioReplacement.ledgerEntryId);assert.equal(file.recordingLedgerSha256,sidecar.recordingLedger.sha256);
+  assert.equal(file.recordingLedgerEntryId,entry.audioReplacement.ledgerEntryId);const selected=entry.audioReplacement.recordingLedgerSha256||sidecar.recordingLedger.sha256;assert.ok([sidecar.recordingLedger,...(sidecar.recordingLedgers||[])].some(r=>r.sha256===selected));assert.equal(file.recordingLedgerSha256,selected);
   assert.equal(file.duration,entry.delivery.duration);assert.deepEqual(file.playbackRange,entry.playbackRange);
   assert.ok(Number.isFinite(file.playbackRange.startSeconds)&&Number.isFinite(file.playbackRange.endSeconds)&&file.playbackRange.startSeconds>=0&&file.playbackRange.endSeconds>file.playbackRange.startSeconds&&file.playbackRange.endSeconds<=file.duration);
  }else if(entry.logicalSource){

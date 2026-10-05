@@ -1,0 +1,943 @@
+{
+  "schema": 1,
+  "method": "global-sequence-comparison-v1",
+  "recognizerWordsUnmodified": true,
+  "normalization": "casefold and punctuation tokenization only; no number or homophone substitution",
+  "wordCount": 1183,
+  "differences": [
+    {
+      "kind": "extra-recognized-speech",
+      "scriptTokenSpan": [
+        0,
+        0
+      ],
+      "recognizedTokenSpan": [
+        0,
+        9
+      ],
+      "scriptTokens": [],
+      "recognizedTokens": [
+        "2",
+        "setting",
+        "the",
+        "stage",
+        "mark",
+        "1",
+        "1",
+        "3",
+        "13"
+      ],
+      "wordSpan": [
+        0,
+        9
+      ],
+      "activityIds": [],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "extra-recognized-speech",
+      "scriptTokenSpan": [
+        9,
+        9
+      ],
+      "recognizedTokenSpan": [
+        18,
+        19
+      ],
+      "scriptTokens": [],
+      "recognizedTokens": [
+        "3"
+      ],
+      "wordSpan": [
+        18,
+        19
+      ],
+      "activityIds": [],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "substitution",
+      "scriptTokenSpan": [
+        125,
+        126
+      ],
+      "recognizedTokenSpan": [
+        135,
+        136
+      ],
+      "scriptTokens": [
+        "jesus's"
+      ],
+      "recognizedTokens": [
+        "jesus"
+      ],
+      "wordSpan": [
+        135,
+        136
+      ],
+      "activityIds": [
+        "S02-U003"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "substitution",
+      "scriptTokenSpan": [
+        179,
+        180
+      ],
+      "recognizedTokenSpan": [
+        189,
+        190
+      ],
+      "scriptTokens": [
+        "km"
+      ],
+      "recognizedTokens": [
+        "kilometers"
+      ],
+      "wordSpan": [
+        189,
+        190
+      ],
+      "activityIds": [
+        "S02-U004"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "substitution",
+      "scriptTokenSpan": [
+        189,
+        190
+      ],
+      "recognizedTokenSpan": [
+        199,
+        200
+      ],
+      "scriptTokens": [
+        "3"
+      ],
+      "recognizedTokens": [
+        "three"
+      ],
+      "wordSpan": [
+        199,
+        200
+      ],
+      "activityIds": [
+        "S02-U004"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "script-not-recognized",
+      "scriptTokenSpan": [
+        220,
+        221
+      ],
+      "recognizedTokenSpan": [
+        230,
+        230
+      ],
+      "scriptTokens": [
+        "of"
+      ],
+      "recognizedTokens": [],
+      "wordSpan": null,
+      "activityIds": [
+        "S02-U006"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "script-not-recognized",
+      "scriptTokenSpan": [
+        234,
+        235
+      ],
+      "recognizedTokenSpan": [
+        243,
+        243
+      ],
+      "scriptTokens": [
+        "who"
+      ],
+      "recognizedTokens": [],
+      "wordSpan": null,
+      "activityIds": [
+        "S02-U006"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "script-not-recognized",
+      "scriptTokenSpan": [
+        303,
+        304
+      ],
+      "recognizedTokenSpan": [
+        311,
+        311
+      ],
+      "scriptTokens": [
+        "to"
+      ],
+      "recognizedTokens": [],
+      "wordSpan": null,
+      "activityIds": [
+        "S02-U006"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "substitution",
+      "scriptTokenSpan": [
+        468,
+        469
+      ],
+      "recognizedTokenSpan": [
+        475,
+        476
+      ],
+      "scriptTokens": [
+        "baptizes"
+      ],
+      "recognizedTokens": [
+        "baptises"
+      ],
+      "wordSpan": [
+        475,
+        476
+      ],
+      "activityIds": [
+        "S02-U007"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "substitution",
+      "scriptTokenSpan": [
+        480,
+        481
+      ],
+      "recognizedTokenSpan": [
+        487,
+        488
+      ],
+      "scriptTokens": [
+        "that"
+      ],
+      "recognizedTokens": [
+        "the"
+      ],
+      "wordSpan": [
+        487,
+        488
+      ],
+      "activityIds": [
+        "S02-U007"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "substitution",
+      "scriptTokenSpan": [
+        505,
+        506
+      ],
+      "recognizedTokenSpan": [
+        512,
+        513
+      ],
+      "scriptTokens": [
+        "stop"
+      ],
+      "recognizedTokens": [
+        "stopped"
+      ],
+      "wordSpan": [
+        512,
+        513
+      ],
+      "activityIds": [
+        "S02-U007"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "substitution",
+      "scriptTokenSpan": [
+        511,
+        512
+      ],
+      "recognizedTokenSpan": [
+        518,
+        519
+      ],
+      "scriptTokens": [
+        "follow"
+      ],
+      "recognizedTokens": [
+        "followed"
+      ],
+      "wordSpan": [
+        518,
+        519
+      ],
+      "activityIds": [
+        "S02-U007"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "extra-recognized-speech",
+      "scriptTokenSpan": [
+        567,
+        567
+      ],
+      "recognizedTokenSpan": [
+        574,
+        575
+      ],
+      "scriptTokens": [],
+      "recognizedTokens": [
+        "the"
+      ],
+      "wordSpan": [
+        574,
+        575
+      ],
+      "activityIds": [],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "substitution",
+      "scriptTokenSpan": [
+        587,
+        588
+      ],
+      "recognizedTokenSpan": [
+        595,
+        596
+      ],
+      "scriptTokens": [
+        "that"
+      ],
+      "recognizedTokens": [
+        "the"
+      ],
+      "wordSpan": [
+        595,
+        596
+      ],
+      "activityIds": [
+        "S02-U007"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "substitution",
+      "scriptTokenSpan": [
+        639,
+        640
+      ],
+      "recognizedTokenSpan": [
+        647,
+        648
+      ],
+      "scriptTokens": [
+        "the"
+      ],
+      "recognizedTokens": [
+        "a"
+      ],
+      "wordSpan": [
+        647,
+        648
+      ],
+      "activityIds": [
+        "S02-U009"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "substitution",
+      "scriptTokenSpan": [
+        716,
+        717
+      ],
+      "recognizedTokenSpan": [
+        724,
+        725
+      ],
+      "scriptTokens": [
+        "baptised"
+      ],
+      "recognizedTokens": [
+        "baptized"
+      ],
+      "wordSpan": [
+        724,
+        725
+      ],
+      "activityIds": [
+        "S02-U010"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "substitution",
+      "scriptTokenSpan": [
+        823,
+        824
+      ],
+      "recognizedTokenSpan": [
+        831,
+        832
+      ],
+      "scriptTokens": [
+        "open"
+      ],
+      "recognizedTokens": [
+        "opens"
+      ],
+      "wordSpan": [
+        831,
+        832
+      ],
+      "activityIds": [
+        "S02-U010"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "script-not-recognized",
+      "scriptTokenSpan": [
+        843,
+        844
+      ],
+      "recognizedTokenSpan": [
+        851,
+        851
+      ],
+      "scriptTokens": [
+        "form"
+      ],
+      "recognizedTokens": [],
+      "wordSpan": null,
+      "activityIds": [
+        "S02-U010"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "substitution",
+      "scriptTokenSpan": [
+        864,
+        865
+      ],
+      "recognizedTokenSpan": [
+        871,
+        872
+      ],
+      "scriptTokens": [
+        "open"
+      ],
+      "recognizedTokens": [
+        "opened"
+      ],
+      "wordSpan": [
+        871,
+        872
+      ],
+      "activityIds": [
+        "S02-U010"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "substitution",
+      "scriptTokenSpan": [
+        971,
+        972
+      ],
+      "recognizedTokenSpan": [
+        978,
+        979
+      ],
+      "scriptTokens": [
+        "kinds"
+      ],
+      "recognizedTokens": [
+        "kind"
+      ],
+      "wordSpan": [
+        978,
+        979
+      ],
+      "activityIds": [
+        "S02-U011"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "script-not-recognized",
+      "scriptTokenSpan": [
+        986,
+        987
+      ],
+      "recognizedTokenSpan": [
+        993,
+        993
+      ],
+      "scriptTokens": [
+        "a"
+      ],
+      "recognizedTokens": [],
+      "wordSpan": null,
+      "activityIds": [
+        "S02-U011"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "script-not-recognized",
+      "scriptTokenSpan": [
+        992,
+        993
+      ],
+      "recognizedTokenSpan": [
+        998,
+        998
+      ],
+      "scriptTokens": [
+        "an"
+      ],
+      "recognizedTokens": [],
+      "wordSpan": null,
+      "activityIds": [
+        "S02-U011"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "extra-recognized-speech",
+      "scriptTokenSpan": [
+        1005,
+        1005
+      ],
+      "recognizedTokenSpan": [
+        1010,
+        1014
+      ],
+      "scriptTokens": [],
+      "recognizedTokens": [
+        "pause",
+        "this",
+        "audio",
+        "here"
+      ],
+      "wordSpan": [
+        1010,
+        1014
+      ],
+      "activityIds": [],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "substitution",
+      "scriptTokenSpan": [
+        1081,
+        1082
+      ],
+      "recognizedTokenSpan": [
+        1090,
+        1091
+      ],
+      "scriptTokens": [
+        "traveling"
+      ],
+      "recognizedTokens": [
+        "travelling"
+      ],
+      "wordSpan": [
+        1090,
+        1091
+      ],
+      "activityIds": [
+        "S02-U013"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "substitution",
+      "scriptTokenSpan": [
+        1088,
+        1089
+      ],
+      "recognizedTokenSpan": [
+        1097,
+        1099
+      ],
+      "scriptTokens": [
+        "israel's"
+      ],
+      "recognizedTokens": [
+        "his",
+        "rails"
+      ],
+      "wordSpan": [
+        1097,
+        1099
+      ],
+      "activityIds": [
+        "S02-U013"
+      ],
+      "status": "comparison-not-confirmed-spoken-drift"
+    },
+    {
+      "kind": "extra-recognized-speech",
+      "scriptTokenSpan": [
+        1166,
+        1166
+      ],
+      "recognizedTokenSpan": [
+        1176,
+        1183
+      ],
+      "scriptTokens": [],
+      "recognizedTokens": [
+        "this",
+        "is",
+        "the",
+        "end",
+        "of",
+        "the",
+        "recording"
+      ],
+      "wordSpan": [
+        1176,
+        1183
+      ],
+      "activityIds": [],
+      "status": "comparison-not-confirmed-spoken-drift"
+    }
+  ],
+  "mappings": [
+    {
+      "activityId": "S02-U001",
+      "sourceTextSha256": "40915459d3070b081f6298ca4a7a52a1f5a10ce875b7de37380cf051b9438494",
+      "wordSpan": {
+        "first": 9,
+        "lastExclusive": 26
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 6.56,
+        "endSeconds": 14.0,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 16,
+      "scriptTokens": 16,
+      "uncertainWordIndexes": [
+        9
+      ],
+      "completion": "auto",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S02-U002",
+      "sourceTextSha256": "8a8fb60f61f85a55bf45f5a52d58ff1da8fcab369bce6adb74e8e4433334a361",
+      "wordSpan": {
+        "first": 26,
+        "lastExclusive": 57
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 15.4,
+        "endSeconds": 25.28,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 31,
+      "scriptTokens": 31,
+      "uncertainWordIndexes": [
+        27,
+        40,
+        51
+      ],
+      "completion": "auto",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S02-U003",
+      "sourceTextSha256": "a360a3105e69cf2a20bc47b04a38511cfee6e41c1eb7fb6055a846fb6e1064c5",
+      "wordSpan": {
+        "first": 57,
+        "lastExclusive": 143
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 26.16,
+        "endSeconds": 57.76,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 85,
+      "scriptTokens": 86,
+      "uncertainWordIndexes": [
+        69,
+        81,
+        104
+      ],
+      "completion": "auto",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S02-U004",
+      "sourceTextSha256": "e6cec1b6bfa8786fa41efb3a55d2534655426c3571121ef9a7f49ffa470f8a24",
+      "wordSpan": {
+        "first": 143,
+        "lastExclusive": 207
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 58.54,
+        "endSeconds": 83.54,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 62,
+      "scriptTokens": 64,
+      "uncertainWordIndexes": [
+        152,
+        159,
+        163,
+        189,
+        196,
+        199,
+        200
+      ],
+      "completion": "auto",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S02-U005",
+      "sourceTextSha256": "bcd0b87371b477506053d64c8d8b257bca25c314ada0742fc001b7e3f6620fd4",
+      "wordSpan": {
+        "first": 207,
+        "lastExclusive": 227
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 84.78,
+        "endSeconds": 94.88,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 20,
+      "scriptTokens": 20,
+      "uncertainWordIndexes": [],
+      "completion": "confirm",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S02-U006",
+      "sourceTextSha256": "6e97ed700aed65bc49795e0c47193e32f3520a13c4b8c2ba6f247023061dce04",
+      "wordSpan": {
+        "first": 227,
+        "lastExclusive": 388
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 98.56,
+        "endSeconds": 164.82,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 161,
+      "scriptTokens": 164,
+      "uncertainWordIndexes": [
+        227,
+        233,
+        234,
+        243,
+        255,
+        296,
+        306,
+        311,
+        360,
+        380,
+        385,
+        387
+      ],
+      "completion": "auto",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S02-U007",
+      "sourceTextSha256": "f85875ff9de414c07038a7ce68af8dfe132a3c1cc134cc7cc93ec671fe906e0e",
+      "wordSpan": {
+        "first": 388,
+        "lastExclusive": 623
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 166.36,
+        "endSeconds": 258.72,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 229,
+      "scriptTokens": 234,
+      "uncertainWordIndexes": [
+        420,
+        421,
+        445,
+        450,
+        475,
+        489,
+        495,
+        513,
+        520,
+        531,
+        550,
+        596
+      ],
+      "completion": "auto",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S02-U008",
+      "sourceTextSha256": "7d4cf4f969f14f97aaf3a855220cf6f46db606c8b4cec00eb8f4cca95cf23115",
+      "wordSpan": {
+        "first": 623,
+        "lastExclusive": 638
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 260.16,
+        "endSeconds": 267.8,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 15,
+      "scriptTokens": 15,
+      "uncertainWordIndexes": [
+        630
+      ],
+      "completion": "confirm",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S02-U009",
+      "sourceTextSha256": "7994327e489022485b55ced0ffae3cb8d4e8d73463c6238431d15a181920cf82",
+      "wordSpan": {
+        "first": 638,
+        "lastExclusive": 712
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 272.66,
+        "endSeconds": 304.32,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 73,
+      "scriptTokens": 74,
+      "uncertainWordIndexes": [
+        638,
+        644,
+        647,
+        655,
+        669,
+        679,
+        682,
+        694,
+        710
+      ],
+      "completion": "auto",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S02-U010",
+      "sourceTextSha256": "acb1792ea1d42d56298b93fd9f694e0a89a2188848543685cad7fdfa6d664388",
+      "wordSpan": {
+        "first": 712,
+        "lastExclusive": 968
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 304.86,
+        "endSeconds": 403.44,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 253,
+      "scriptTokens": 257,
+      "uncertainWordIndexes": [
+        724,
+        749,
+        774,
+        787,
+        806,
+        807,
+        821,
+        823,
+        851,
+        852,
+        868,
+        871,
+        897,
+        917,
+        921,
+        961,
+        962
+      ],
+      "completion": "auto",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S02-U011",
+      "sourceTextSha256": "4c6baa6d4173ad386b53b1d680c976984bf56679f29b37c8bb5beb2ae1c0a858",
+      "wordSpan": {
+        "first": 968,
+        "lastExclusive": 1010
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 404.6,
+        "endSeconds": 421.98,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 41,
+      "scriptTokens": 44,
+      "uncertainWordIndexes": [
+        968,
+        980,
+        993,
+        997
+      ],
+      "completion": "confirm",
+      "status": "candidate-needs-boundary-and-drift-review"
+    },
+    {
+      "activityId": "S02-U013",
+      "sourceTextSha256": "3de5a3bf58f30f1306f4a27d0e3c8e241c5daed21a27de40e674ae72b944bde9",
+      "wordSpan": {
+        "first": 1014,
+        "lastExclusive": 1176
+      },
+      "estimatedSpeechRange": {
+        "startSeconds": 429.58,
+        "endSeconds": 495.16,
+        "clockDomain": "decoded-pcm-asr"
+      },
+      "matchedScriptTokens": 159,
+      "scriptTokens": 161,
+      "uncertainWordIndexes": [
+        1017,
+        1048,
+        1058,
+        1063,
+        1074,
+        1090,
+        1094,
+        1097,
+        1098,
+        1108,
+        1121,
+        1167,
+        1172
+      ],
+      "completion": "auto",
+      "status": "candidate-needs-boundary-and-drift-review"
+    }
+  ],
+  "acceptedPlaybackRanges": [],
+  "transcriptSha256": "879f5543e09398edba01ea43fa39e9a78a372a252a1ddab82de82369e5b5f8cb",
+  "presentationSha256": "ccd72f23c23f932651b500b730b285f32fabd37e50037b5af91d8881f1403975",
+  "recordingSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+  "alignmentScriptSha256": "184f53e8864179a44e56183145eaa92270f296d754553a5c21f54579c57cd47a"
+}

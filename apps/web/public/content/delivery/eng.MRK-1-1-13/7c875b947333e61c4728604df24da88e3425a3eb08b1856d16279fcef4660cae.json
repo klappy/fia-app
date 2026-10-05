@@ -1091,726 +1091,925 @@
     {
       "path": "/audio/source/S02-U001.mp3",
       "source": {
-        "url": "https://fiaguide.app/audio/source/S02-U001.mp3",
-        "sha256": "4a315a8a787be527bd9ac4925950e677a7cd2679250fbe084693e63418ba514d",
-        "bytes": 93622,
-        "provenance": {
-          "id": "S02-U001",
-          "path": "/audio/source/S02-U001.mp3",
-          "bytes": 93622,
-          "sha256": "4a315a8a787be527bd9ac4925950e677a7cd2679250fbe084693e63418ba514d",
-          "mime": "audio/mpeg",
-          "sourceSha256": "40915459d3070b081f6298ca4a7a52a1f5a10ce875b7de37380cf051b9438494",
-          "sourceCharacters": 83,
-          "spokenCharacters": 83,
-          "receivedAt": "2026-09-11T21:53:25.868Z",
-          "httpStatus": 200,
-          "expectedSpokenProjectionSha256": "237bb7eb142d9f3e95cefcff22b0a9a1a8e15b1b64fd2ab51dc240f67efbfd15",
-          "duration": 5.851375,
-          "projectionVersion": "scripture-reference-v1",
-          "spokenInputSha256": "b7853d23562eecea83f358dafa4f17bbf829fd6a2194d8a481a20648d316756d",
-          "processedTextSha256": "b7853d23562eecea83f358dafa4f17bbf829fd6a2194d8a481a20648d316756d",
-          "manifest": "mark-1-1-13",
-          "recordingSource": "generated",
-          "ai": true
-        }
+        "url": "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+        "sha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+        "bytes": 8975276
       },
       "delivery": {
-        "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://fiaguide.app/audio/source/S02-U001.mp3",
-        "sha256": "553fe5877b084140cdc8636644b17aed6135f0ba234bcc23a2481e891e25b60a",
-        "bytes": 12219,
+        "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+        "sha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+        "bytes": 977258,
         "mime": "audio/ogg",
         "kind": "audio",
         "preset": "voice",
         "q": "medium",
         "format": "opus",
         "status": "transformed",
-        "duration": 5.857938
+        "duration": 498.76575
       },
       "timing": {
-        "status": "not-applicable"
+        "status": "verified",
+        "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+        "deliveryAudioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+        "method": "Measured decoded PCM correlation; browserpending",
+        "evidence": "/content/recording-evidence/bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307.json",
+        "mapping": {
+          "scale": 1,
+          "offsetSeconds": 0
+        },
+        "mappingEvidenceSha256": "bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307"
       },
       "defaultSize": "medium",
       "variants": {
         "medium": {
           "delivery": {
-            "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://fiaguide.app/audio/source/S02-U001.mp3",
-            "sha256": "553fe5877b084140cdc8636644b17aed6135f0ba234bcc23a2481e891e25b60a",
-            "bytes": 12219,
+            "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+            "sha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+            "bytes": 977258,
             "mime": "audio/ogg",
             "kind": "audio",
             "preset": "voice",
             "q": "medium",
             "format": "opus",
             "status": "transformed",
-            "duration": 5.857938
+            "duration": 498.76575
           },
           "timing": {
-            "status": "not-applicable"
+            "status": "verified",
+            "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+            "deliveryAudioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+            "method": "Measured decoded PCM correlation; browserpending",
+            "evidence": "/content/recording-evidence/bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307.json",
+            "mapping": {
+              "scale": 1,
+              "offsetSeconds": 0
+            },
+            "mappingEvidenceSha256": "bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307"
+          },
+          "playbackRange": {
+            "startSeconds": 6.21,
+            "endSeconds": 14.2
           }
         }
+      },
+      "audioReplacement": {
+        "ledgerEntryId": "S02-U001",
+        "recordingLedgerSha256": "5c8742a1b746c917564156bb9f970e4a468bd7075aefeb63f754c2ee94ca2ca6",
+        "logicalSource": {
+          "sha256": "4a315a8a787be527bd9ac4925950e677a7cd2679250fbe084693e63418ba514d",
+          "bytes": 93622
+        }
+      },
+      "playbackRange": {
+        "startSeconds": 6.21,
+        "endSeconds": 14.2
       }
     },
     {
       "path": "/audio/source/S02-U002.mp3",
       "source": {
-        "url": "https://fiaguide.app/audio/source/S02-U002.mp3",
-        "sha256": "cef2a2ce5a52857ea761a0b6f03c96f5ef9de37afc4ebd9713624073dd7943ef",
-        "bytes": 112849,
-        "provenance": {
-          "id": "S02-U002",
-          "path": "/audio/source/S02-U002.mp3",
-          "bytes": 112849,
-          "sha256": "cef2a2ce5a52857ea761a0b6f03c96f5ef9de37afc4ebd9713624073dd7943ef",
-          "mime": "audio/mpeg",
-          "sourceSha256": "8a8fb60f61f85a55bf45f5a52d58ff1da8fcab369bce6adb74e8e4433334a361",
-          "sourceCharacters": 151,
-          "spokenCharacters": 151,
-          "receivedAt": "2026-09-11T21:53:30.251Z",
-          "httpStatus": 200,
-          "expectedSpokenProjectionSha256": "8a8fb60f61f85a55bf45f5a52d58ff1da8fcab369bce6adb74e8e4433334a361",
-          "manifest": "mark-1-1-13",
-          "recordingSource": "generated",
-          "ai": true
-        }
+        "url": "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+        "sha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+        "bytes": 8975276
       },
       "delivery": {
-        "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://fiaguide.app/audio/source/S02-U002.mp3",
-        "sha256": "352d6a93c89d7f54b617bd1cd6c20a259b7e916be764d02071cb836e8089f57f",
-        "bytes": 14722,
+        "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+        "sha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+        "bytes": 977258,
         "mime": "audio/ogg",
         "kind": "audio",
         "preset": "voice",
         "q": "medium",
         "format": "opus",
         "status": "transformed",
-        "duration": 7.059563
+        "duration": 498.76575
       },
       "timing": {
-        "status": "not-applicable"
+        "status": "verified",
+        "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+        "deliveryAudioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+        "method": "Measured decoded PCM correlation; browserpending",
+        "evidence": "/content/recording-evidence/bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307.json",
+        "mapping": {
+          "scale": 1,
+          "offsetSeconds": 0
+        },
+        "mappingEvidenceSha256": "bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307"
       },
       "defaultSize": "medium",
       "variants": {
         "medium": {
           "delivery": {
-            "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://fiaguide.app/audio/source/S02-U002.mp3",
-            "sha256": "352d6a93c89d7f54b617bd1cd6c20a259b7e916be764d02071cb836e8089f57f",
-            "bytes": 14722,
+            "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+            "sha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+            "bytes": 977258,
             "mime": "audio/ogg",
             "kind": "audio",
             "preset": "voice",
             "q": "medium",
             "format": "opus",
             "status": "transformed",
-            "duration": 7.059563
+            "duration": 498.76575
           },
           "timing": {
-            "status": "not-applicable"
+            "status": "verified",
+            "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+            "deliveryAudioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+            "method": "Measured decoded PCM correlation; browserpending",
+            "evidence": "/content/recording-evidence/bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307.json",
+            "mapping": {
+              "scale": 1,
+              "offsetSeconds": 0
+            },
+            "mappingEvidenceSha256": "bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307"
+          },
+          "playbackRange": {
+            "startSeconds": 15.09,
+            "endSeconds": 25.5
           }
         }
+      },
+      "audioReplacement": {
+        "ledgerEntryId": "S02-U002",
+        "recordingLedgerSha256": "5c8742a1b746c917564156bb9f970e4a468bd7075aefeb63f754c2ee94ca2ca6",
+        "logicalSource": {
+          "sha256": "cef2a2ce5a52857ea761a0b6f03c96f5ef9de37afc4ebd9713624073dd7943ef",
+          "bytes": 112849
+        }
+      },
+      "playbackRange": {
+        "startSeconds": 15.09,
+        "endSeconds": 25.5
       }
     },
     {
       "path": "/audio/source/S02-U003.mp3",
       "source": {
-        "url": "https://fiaguide.app/audio/source/S02-U003.mp3",
-        "sha256": "d5d801cd0491ce2502c792d49ecbcb01776204ab4ed5b549316571eb7ebc9c52",
-        "bytes": 442618,
-        "provenance": {
-          "id": "S02-U003",
-          "path": "/audio/source/S02-U003.mp3",
-          "bytes": 442618,
-          "sha256": "d5d801cd0491ce2502c792d49ecbcb01776204ab4ed5b549316571eb7ebc9c52",
-          "mime": "audio/mpeg",
-          "sourceSha256": "a360a3105e69cf2a20bc47b04a38511cfee6e41c1eb7fb6055a846fb6e1064c5",
-          "sourceCharacters": 428,
-          "spokenCharacters": 428,
-          "receivedAt": "2026-09-11T21:53:37.550Z",
-          "httpStatus": 200,
-          "expectedSpokenProjectionSha256": "a360a3105e69cf2a20bc47b04a38511cfee6e41c1eb7fb6055a846fb6e1064c5",
-          "manifest": "mark-1-1-13",
-          "recordingSource": "generated",
-          "ai": true
-        }
+        "url": "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+        "sha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+        "bytes": 8975276
       },
       "delivery": {
-        "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://fiaguide.app/audio/source/S02-U003.mp3",
-        "sha256": "ddf763b93f6825a283de3f1bb4bf2db90b1b4875805123de1b9deccbe54e31d6",
-        "bytes": 57165,
+        "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+        "sha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+        "bytes": 977258,
         "mime": "audio/ogg",
         "kind": "audio",
         "preset": "voice",
         "q": "medium",
         "format": "opus",
         "status": "transformed",
-        "duration": 27.670188
+        "duration": 498.76575
       },
       "timing": {
-        "status": "not-applicable"
+        "status": "verified",
+        "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+        "deliveryAudioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+        "method": "Measured decoded PCM correlation; browserpending",
+        "evidence": "/content/recording-evidence/bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307.json",
+        "mapping": {
+          "scale": 1,
+          "offsetSeconds": 0
+        },
+        "mappingEvidenceSha256": "bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307"
       },
       "defaultSize": "medium",
       "variants": {
         "medium": {
           "delivery": {
-            "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://fiaguide.app/audio/source/S02-U003.mp3",
-            "sha256": "ddf763b93f6825a283de3f1bb4bf2db90b1b4875805123de1b9deccbe54e31d6",
-            "bytes": 57165,
+            "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+            "sha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+            "bytes": 977258,
             "mime": "audio/ogg",
             "kind": "audio",
             "preset": "voice",
             "q": "medium",
             "format": "opus",
             "status": "transformed",
-            "duration": 27.670188
+            "duration": 498.76575
           },
           "timing": {
-            "status": "not-applicable"
+            "status": "verified",
+            "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+            "deliveryAudioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+            "method": "Measured decoded PCM correlation; browserpending",
+            "evidence": "/content/recording-evidence/bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307.json",
+            "mapping": {
+              "scale": 1,
+              "offsetSeconds": 0
+            },
+            "mappingEvidenceSha256": "bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307"
+          },
+          "playbackRange": {
+            "startSeconds": 25.84,
+            "endSeconds": 58.1
           }
         }
+      },
+      "audioReplacement": {
+        "ledgerEntryId": "S02-U003",
+        "recordingLedgerSha256": "5c8742a1b746c917564156bb9f970e4a468bd7075aefeb63f754c2ee94ca2ca6",
+        "logicalSource": {
+          "sha256": "d5d801cd0491ce2502c792d49ecbcb01776204ab4ed5b549316571eb7ebc9c52",
+          "bytes": 442618
+        }
+      },
+      "playbackRange": {
+        "startSeconds": 25.84,
+        "endSeconds": 58.1
       }
     },
     {
       "path": "/audio/source/S02-U004.mp3",
       "source": {
-        "url": "https://fiaguide.app/audio/source/S02-U004.mp3",
-        "sha256": "214447ee5db79bb9ce218062376fb5683c4b23ab8546c5f67db671f366ba9c14",
-        "bytes": 335621,
-        "provenance": {
-          "id": "S02-U004",
-          "path": "/audio/source/S02-U004.mp3",
-          "bytes": 335621,
-          "sha256": "214447ee5db79bb9ce218062376fb5683c4b23ab8546c5f67db671f366ba9c14",
-          "mime": "audio/mpeg",
-          "sourceSha256": "e6cec1b6bfa8786fa41efb3a55d2534655426c3571121ef9a7f49ffa470f8a24",
-          "sourceCharacters": 355,
-          "spokenCharacters": 355,
-          "receivedAt": "2026-09-11T21:53:41.690Z",
-          "httpStatus": 200,
-          "expectedSpokenProjectionSha256": "e6cec1b6bfa8786fa41efb3a55d2534655426c3571121ef9a7f49ffa470f8a24",
-          "manifest": "mark-1-1-13",
-          "recordingSource": "generated",
-          "ai": true
-        }
+        "url": "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+        "sha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+        "bytes": 8975276
       },
       "delivery": {
-        "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://fiaguide.app/audio/source/S02-U004.mp3",
-        "sha256": "446cbe22890415a112449eaf694f03840a5d02354751a4eafb02af86be624e91",
-        "bytes": 43574,
+        "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+        "sha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+        "bytes": 977258,
         "mime": "audio/ogg",
         "kind": "audio",
         "preset": "voice",
         "q": "medium",
         "format": "opus",
         "status": "transformed",
-        "duration": 20.982813
+        "duration": 498.76575
       },
       "timing": {
-        "status": "not-applicable"
+        "status": "verified",
+        "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+        "deliveryAudioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+        "method": "Measured decoded PCM correlation; browserpending",
+        "evidence": "/content/recording-evidence/bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307.json",
+        "mapping": {
+          "scale": 1,
+          "offsetSeconds": 0
+        },
+        "mappingEvidenceSha256": "bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307"
       },
       "defaultSize": "medium",
       "variants": {
         "medium": {
           "delivery": {
-            "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://fiaguide.app/audio/source/S02-U004.mp3",
-            "sha256": "446cbe22890415a112449eaf694f03840a5d02354751a4eafb02af86be624e91",
-            "bytes": 43574,
+            "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+            "sha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+            "bytes": 977258,
             "mime": "audio/ogg",
             "kind": "audio",
             "preset": "voice",
             "q": "medium",
             "format": "opus",
             "status": "transformed",
-            "duration": 20.982813
+            "duration": 498.76575
           },
           "timing": {
-            "status": "not-applicable"
+            "status": "verified",
+            "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+            "deliveryAudioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+            "method": "Measured decoded PCM correlation; browserpending",
+            "evidence": "/content/recording-evidence/bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307.json",
+            "mapping": {
+              "scale": 1,
+              "offsetSeconds": 0
+            },
+            "mappingEvidenceSha256": "bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307"
+          },
+          "playbackRange": {
+            "startSeconds": 58.19,
+            "endSeconds": 83.84
           }
         }
+      },
+      "audioReplacement": {
+        "ledgerEntryId": "S02-U004",
+        "recordingLedgerSha256": "5c8742a1b746c917564156bb9f970e4a468bd7075aefeb63f754c2ee94ca2ca6",
+        "logicalSource": {
+          "sha256": "214447ee5db79bb9ce218062376fb5683c4b23ab8546c5f67db671f366ba9c14",
+          "bytes": 335621
+        }
+      },
+      "playbackRange": {
+        "startSeconds": 58.19,
+        "endSeconds": 83.84
       }
     },
     {
       "path": "/audio/source/S02-U005.mp3",
       "source": {
-        "url": "https://fiaguide.app/audio/source/S02-U005.mp3",
-        "sha256": "82535a0c99c884d979f18bc77f2048f2dca7d2ff17fea5c4dfb32a2994d1c39b",
-        "bytes": 72724,
-        "provenance": {
-          "id": "S02-U005",
-          "path": "/audio/source/S02-U005.mp3",
-          "bytes": 72724,
-          "sha256": "82535a0c99c884d979f18bc77f2048f2dca7d2ff17fea5c4dfb32a2994d1c39b",
-          "mime": "audio/mpeg",
-          "sourceSha256": "bcd0b87371b477506053d64c8d8b257bca25c314ada0742fc001b7e3f6620fd4",
-          "expectedSpokenText": "Stop here and look at a picture and map of the Jordan River as a group. I will pause the audio here.",
-          "expectedSpokenSha256": "f7fbe6ae09b69336cb5b1218ac3bd1b636ff2dd142ff5d93e2024b36788f5744",
-          "adaptation": "trailing-pause-only",
-          "resourcesAt": [
-            "a112",
-            "c197"
-          ],
-          "manifest": "next-actions",
-          "recordingSource": "generated",
-          "ai": true
-        }
+        "url": "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+        "sha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+        "bytes": 8975276
       },
       "delivery": {
-        "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://fiaguide.app/audio/source/S02-U005.mp3",
-        "sha256": "ab09176f962d438f87e6add7ea88a7d9e623a22d9a812878c19024483d180269",
-        "bytes": 9485,
+        "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+        "sha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+        "bytes": 977258,
         "mime": "audio/ogg",
         "kind": "audio",
         "preset": "voice",
         "q": "medium",
         "format": "opus",
         "status": "transformed",
-        "duration": 4.551812
+        "duration": 498.76575
       },
       "timing": {
-        "status": "not-applicable"
+        "status": "verified",
+        "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+        "deliveryAudioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+        "method": "Measured decoded PCM correlation; browserpending",
+        "evidence": "/content/recording-evidence/bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307.json",
+        "mapping": {
+          "scale": 1,
+          "offsetSeconds": 0
+        },
+        "mappingEvidenceSha256": "bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307"
       },
       "defaultSize": "medium",
       "variants": {
         "medium": {
           "delivery": {
-            "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://fiaguide.app/audio/source/S02-U005.mp3",
-            "sha256": "ab09176f962d438f87e6add7ea88a7d9e623a22d9a812878c19024483d180269",
-            "bytes": 9485,
+            "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+            "sha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+            "bytes": 977258,
             "mime": "audio/ogg",
             "kind": "audio",
             "preset": "voice",
             "q": "medium",
             "format": "opus",
             "status": "transformed",
-            "duration": 4.551812
+            "duration": 498.76575
           },
           "timing": {
-            "status": "not-applicable"
+            "status": "verified",
+            "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+            "deliveryAudioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+            "method": "Measured decoded PCM correlation; browserpending",
+            "evidence": "/content/recording-evidence/bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307.json",
+            "mapping": {
+              "scale": 1,
+              "offsetSeconds": 0
+            },
+            "mappingEvidenceSha256": "bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307"
+          },
+          "playbackRange": {
+            "startSeconds": 84.45,
+            "endSeconds": 95.18
           }
         }
+      },
+      "audioReplacement": {
+        "ledgerEntryId": "S02-U005",
+        "recordingLedgerSha256": "5c8742a1b746c917564156bb9f970e4a468bd7075aefeb63f754c2ee94ca2ca6",
+        "logicalSource": {
+          "sha256": "82535a0c99c884d979f18bc77f2048f2dca7d2ff17fea5c4dfb32a2994d1c39b",
+          "bytes": 72724
+        }
+      },
+      "playbackRange": {
+        "startSeconds": 84.45,
+        "endSeconds": 95.18
       }
     },
     {
       "path": "/audio/source/S02-U006.mp3",
       "source": {
-        "url": "https://fiaguide.app/audio/source/S02-U006.mp3",
-        "sha256": "e3d7963aec7e97e22c9346c56e025e09b02b43a34dd872f5b6ccb66c460dc53b",
-        "bytes": 808333,
-        "provenance": {
-          "id": "S02-U006",
-          "path": "/audio/source/S02-U006.mp3",
-          "bytes": 808333,
-          "sha256": "e3d7963aec7e97e22c9346c56e025e09b02b43a34dd872f5b6ccb66c460dc53b",
-          "mime": "audio/mpeg",
-          "sourceSha256": "6e97ed700aed65bc49795e0c47193e32f3520a13c4b8c2ba6f247023061dce04",
-          "sourceCharacters": 856,
-          "spokenCharacters": 856,
-          "receivedAt": "2026-09-11T21:53:54.619Z",
-          "httpStatus": 200,
-          "expectedSpokenProjectionSha256": "6e97ed700aed65bc49795e0c47193e32f3520a13c4b8c2ba6f247023061dce04",
-          "manifest": "mark-1-1-13",
-          "recordingSource": "generated",
-          "ai": true
-        }
+        "url": "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+        "sha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+        "bytes": 8975276
       },
       "delivery": {
-        "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://fiaguide.app/audio/source/S02-U006.mp3",
-        "sha256": "d1cd4a67a639113dd1bca2da65203e979dcf7e86eb78e657045ea0fcbcb459ad",
-        "bytes": 103812,
+        "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+        "sha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+        "bytes": 977258,
         "mime": "audio/ogg",
         "kind": "audio",
         "preset": "voice",
         "q": "medium",
         "format": "opus",
         "status": "transformed",
-        "duration": 50.527313
+        "duration": 498.76575
       },
       "timing": {
-        "status": "not-applicable"
+        "status": "verified",
+        "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+        "deliveryAudioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+        "method": "Measured decoded PCM correlation; browserpending",
+        "evidence": "/content/recording-evidence/bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307.json",
+        "mapping": {
+          "scale": 1,
+          "offsetSeconds": 0
+        },
+        "mappingEvidenceSha256": "bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307"
       },
       "defaultSize": "medium",
       "variants": {
         "medium": {
           "delivery": {
-            "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://fiaguide.app/audio/source/S02-U006.mp3",
-            "sha256": "d1cd4a67a639113dd1bca2da65203e979dcf7e86eb78e657045ea0fcbcb459ad",
-            "bytes": 103812,
+            "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+            "sha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+            "bytes": 977258,
             "mime": "audio/ogg",
             "kind": "audio",
             "preset": "voice",
             "q": "medium",
             "format": "opus",
             "status": "transformed",
-            "duration": 50.527313
+            "duration": 498.76575
           },
           "timing": {
-            "status": "not-applicable"
+            "status": "verified",
+            "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+            "deliveryAudioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+            "method": "Measured decoded PCM correlation; browserpending",
+            "evidence": "/content/recording-evidence/bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307.json",
+            "mapping": {
+              "scale": 1,
+              "offsetSeconds": 0
+            },
+            "mappingEvidenceSha256": "bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307"
+          },
+          "playbackRange": {
+            "startSeconds": 98.23,
+            "endSeconds": 165.05
           }
         }
+      },
+      "audioReplacement": {
+        "ledgerEntryId": "S02-U006",
+        "recordingLedgerSha256": "5c8742a1b746c917564156bb9f970e4a468bd7075aefeb63f754c2ee94ca2ca6",
+        "logicalSource": {
+          "sha256": "e3d7963aec7e97e22c9346c56e025e09b02b43a34dd872f5b6ccb66c460dc53b",
+          "bytes": 808333
+        }
+      },
+      "playbackRange": {
+        "startSeconds": 98.23,
+        "endSeconds": 165.05
       }
     },
     {
       "path": "/audio/source/S02-U007.mp3",
       "source": {
-        "url": "https://fiaguide.app/audio/source/S02-U007.mp3",
-        "sha256": "7606de2bcd47ccec8af757c2ddff16ade3300794d11bd65c7abbc2fda66be9f8",
-        "bytes": 1087529,
-        "provenance": {
-          "id": "S02-U007",
-          "path": "/audio/source/S02-U007.mp3",
-          "bytes": 1087529,
-          "sha256": "7606de2bcd47ccec8af757c2ddff16ade3300794d11bd65c7abbc2fda66be9f8",
-          "mime": "audio/mpeg",
-          "sourceSha256": "f85875ff9de414c07038a7ce68af8dfe132a3c1cc134cc7cc93ec671fe906e0e",
-          "sourceCharacters": 1264,
-          "spokenCharacters": 1264,
-          "receivedAt": "2026-09-11T21:54:07.327Z",
-          "httpStatus": 200,
-          "expectedSpokenProjectionSha256": "f85875ff9de414c07038a7ce68af8dfe132a3c1cc134cc7cc93ec671fe906e0e",
-          "manifest": "mark-1-1-13",
-          "recordingSource": "generated",
-          "ai": true
-        }
+        "url": "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+        "sha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+        "bytes": 8975276
       },
       "delivery": {
-        "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://fiaguide.app/audio/source/S02-U007.mp3",
-        "sha256": "ab3537b0add2a43b3e3333f325de45d7ce4c5041dfc0afe1d08bba19b30172c1",
-        "bytes": 140204,
+        "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+        "sha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+        "bytes": 977258,
         "mime": "audio/ogg",
         "kind": "audio",
         "preset": "voice",
         "q": "medium",
         "format": "opus",
         "status": "transformed",
-        "duration": 67.977125
+        "duration": 498.76575
       },
       "timing": {
-        "status": "not-applicable"
+        "status": "verified",
+        "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+        "deliveryAudioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+        "method": "Measured decoded PCM correlation; browserpending",
+        "evidence": "/content/recording-evidence/bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307.json",
+        "mapping": {
+          "scale": 1,
+          "offsetSeconds": 0
+        },
+        "mappingEvidenceSha256": "bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307"
       },
       "defaultSize": "medium",
       "variants": {
         "medium": {
           "delivery": {
-            "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://fiaguide.app/audio/source/S02-U007.mp3",
-            "sha256": "ab3537b0add2a43b3e3333f325de45d7ce4c5041dfc0afe1d08bba19b30172c1",
-            "bytes": 140204,
+            "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+            "sha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+            "bytes": 977258,
             "mime": "audio/ogg",
             "kind": "audio",
             "preset": "voice",
             "q": "medium",
             "format": "opus",
             "status": "transformed",
-            "duration": 67.977125
+            "duration": 498.76575
           },
           "timing": {
-            "status": "not-applicable"
+            "status": "verified",
+            "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+            "deliveryAudioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+            "method": "Measured decoded PCM correlation; browserpending",
+            "evidence": "/content/recording-evidence/bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307.json",
+            "mapping": {
+              "scale": 1,
+              "offsetSeconds": 0
+            },
+            "mappingEvidenceSha256": "bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307"
+          },
+          "playbackRange": {
+            "startSeconds": 166.23,
+            "endSeconds": 259.01
           }
         }
+      },
+      "audioReplacement": {
+        "ledgerEntryId": "S02-U007",
+        "recordingLedgerSha256": "5c8742a1b746c917564156bb9f970e4a468bd7075aefeb63f754c2ee94ca2ca6",
+        "logicalSource": {
+          "sha256": "7606de2bcd47ccec8af757c2ddff16ade3300794d11bd65c7abbc2fda66be9f8",
+          "bytes": 1087529
+        }
+      },
+      "playbackRange": {
+        "startSeconds": 166.23,
+        "endSeconds": 259.01
       }
     },
     {
       "path": "/audio/source/S02-U008.mp3",
       "source": {
-        "url": "https://fiaguide.app/audio/source/S02-U008.mp3",
-        "sha256": "b5aaea2372a5a992544c4b9337785f4e5bbc7dcabce506117e1fe8541bbeab49",
-        "bytes": 70635,
-        "provenance": {
-          "id": "S02-U008",
-          "path": "/audio/source/S02-U008.mp3",
-          "bytes": 70635,
-          "sha256": "b5aaea2372a5a992544c4b9337785f4e5bbc7dcabce506117e1fe8541bbeab49",
-          "mime": "audio/mpeg",
-          "sourceSha256": "7d4cf4f969f14f97aaf3a855220cf6f46db606c8b4cec00eb8f4cca95cf23115",
-          "expectedSpokenText": "Stop here and show the translation team a photo of sandals. I will pause the audio here.",
-          "expectedSpokenSha256": "8a16857a8fbe662a4935fc77fb47dd577f199f76027acb7c4d7b2d6f9e20b488",
-          "adaptation": "trailing-pause-only",
-          "resourcesAt": [
-            "a203",
-            "a204"
-          ],
-          "manifest": "next-actions",
-          "recordingSource": "generated",
-          "ai": true
-        }
+        "url": "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+        "sha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+        "bytes": 8975276
       },
       "delivery": {
-        "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://fiaguide.app/audio/source/S02-U008.mp3",
-        "sha256": "e1f909d2ae322cf47a4bde071aed1036e7288ce60b1c46416485c2dbdb8e3248",
-        "bytes": 9266,
+        "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+        "sha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+        "bytes": 977258,
         "mime": "audio/ogg",
         "kind": "audio",
         "preset": "voice",
         "q": "medium",
         "format": "opus",
         "status": "transformed",
-        "duration": 4.421188
+        "duration": 498.76575
       },
       "timing": {
-        "status": "not-applicable"
+        "status": "verified",
+        "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+        "deliveryAudioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+        "method": "Measured decoded PCM correlation; browserpending",
+        "evidence": "/content/recording-evidence/bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307.json",
+        "mapping": {
+          "scale": 1,
+          "offsetSeconds": 0
+        },
+        "mappingEvidenceSha256": "bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307"
       },
       "defaultSize": "medium",
       "variants": {
         "medium": {
           "delivery": {
-            "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://fiaguide.app/audio/source/S02-U008.mp3",
-            "sha256": "e1f909d2ae322cf47a4bde071aed1036e7288ce60b1c46416485c2dbdb8e3248",
-            "bytes": 9266,
+            "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+            "sha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+            "bytes": 977258,
             "mime": "audio/ogg",
             "kind": "audio",
             "preset": "voice",
             "q": "medium",
             "format": "opus",
             "status": "transformed",
-            "duration": 4.421188
+            "duration": 498.76575
           },
           "timing": {
-            "status": "not-applicable"
+            "status": "verified",
+            "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+            "deliveryAudioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+            "method": "Measured decoded PCM correlation; browserpending",
+            "evidence": "/content/recording-evidence/bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307.json",
+            "mapping": {
+              "scale": 1,
+              "offsetSeconds": 0
+            },
+            "mappingEvidenceSha256": "bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307"
+          },
+          "playbackRange": {
+            "startSeconds": 259.95,
+            "endSeconds": 267.85
           }
         }
+      },
+      "audioReplacement": {
+        "ledgerEntryId": "S02-U008",
+        "recordingLedgerSha256": "5c8742a1b746c917564156bb9f970e4a468bd7075aefeb63f754c2ee94ca2ca6",
+        "logicalSource": {
+          "sha256": "b5aaea2372a5a992544c4b9337785f4e5bbc7dcabce506117e1fe8541bbeab49",
+          "bytes": 70635
+        }
+      },
+      "playbackRange": {
+        "startSeconds": 259.95,
+        "endSeconds": 267.85
       }
     },
     {
       "path": "/audio/source/S02-U009.mp3",
       "source": {
-        "url": "https://fiaguide.app/audio/source/S02-U009.mp3",
-        "sha256": "0201d68c560fa6a539f5c217e02a4a893b4e4ccb9c3ab8596eac909b13cf894f",
-        "bytes": 360280,
-        "provenance": {
-          "id": "S02-U009",
-          "path": "/audio/source/S02-U009.mp3",
-          "bytes": 360280,
-          "sha256": "0201d68c560fa6a539f5c217e02a4a893b4e4ccb9c3ab8596eac909b13cf894f",
-          "mime": "audio/mpeg",
-          "sourceSha256": "7994327e489022485b55ced0ffae3cb8d4e8d73463c6238431d15a181920cf82",
-          "sourceCharacters": 411,
-          "spokenCharacters": 411,
-          "receivedAt": "2026-09-11T21:54:15.662Z",
-          "httpStatus": 200,
-          "expectedSpokenProjectionSha256": "7994327e489022485b55ced0ffae3cb8d4e8d73463c6238431d15a181920cf82",
-          "manifest": "mark-1-1-13",
-          "recordingSource": "generated",
-          "ai": true
-        }
+        "url": "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+        "sha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+        "bytes": 8975276
       },
       "delivery": {
-        "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://fiaguide.app/audio/source/S02-U009.mp3",
-        "sha256": "a1a3ff432176726f4f7c103a7d442c4aaa160850284223324f9e962b42a18fc5",
-        "bytes": 46658,
+        "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+        "sha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+        "bytes": 977258,
         "mime": "audio/ogg",
         "kind": "audio",
         "preset": "voice",
         "q": "medium",
         "format": "opus",
         "status": "transformed",
-        "duration": 22.524062
+        "duration": 498.76575
       },
       "timing": {
-        "status": "not-applicable"
+        "status": "verified",
+        "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+        "deliveryAudioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+        "method": "Measured decoded PCM correlation; browserpending",
+        "evidence": "/content/recording-evidence/bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307.json",
+        "mapping": {
+          "scale": 1,
+          "offsetSeconds": 0
+        },
+        "mappingEvidenceSha256": "bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307"
       },
       "defaultSize": "medium",
       "variants": {
         "medium": {
           "delivery": {
-            "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://fiaguide.app/audio/source/S02-U009.mp3",
-            "sha256": "a1a3ff432176726f4f7c103a7d442c4aaa160850284223324f9e962b42a18fc5",
-            "bytes": 46658,
+            "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+            "sha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+            "bytes": 977258,
             "mime": "audio/ogg",
             "kind": "audio",
             "preset": "voice",
             "q": "medium",
             "format": "opus",
             "status": "transformed",
-            "duration": 22.524062
+            "duration": 498.76575
           },
           "timing": {
-            "status": "not-applicable"
+            "status": "verified",
+            "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+            "deliveryAudioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+            "method": "Measured decoded PCM correlation; browserpending",
+            "evidence": "/content/recording-evidence/bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307.json",
+            "mapping": {
+              "scale": 1,
+              "offsetSeconds": 0
+            },
+            "mappingEvidenceSha256": "bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307"
+          },
+          "playbackRange": {
+            "startSeconds": 272.31,
+            "endSeconds": 304.5
           }
         }
+      },
+      "audioReplacement": {
+        "ledgerEntryId": "S02-U009",
+        "recordingLedgerSha256": "5c8742a1b746c917564156bb9f970e4a468bd7075aefeb63f754c2ee94ca2ca6",
+        "logicalSource": {
+          "sha256": "0201d68c560fa6a539f5c217e02a4a893b4e4ccb9c3ab8596eac909b13cf894f",
+          "bytes": 360280
+        }
+      },
+      "playbackRange": {
+        "startSeconds": 272.31,
+        "endSeconds": 304.5
       }
     },
     {
       "path": "/audio/source/S02-U010.mp3",
       "source": {
-        "url": "https://fiaguide.app/audio/source/S02-U010.mp3",
-        "sha256": "5e031b0288d075f0589752ef66f2c9a9ced2020dfe0981c255ac6495512ac312",
-        "bytes": 1277701,
-        "provenance": {
-          "id": "S02-U010",
-          "path": "/audio/source/S02-U010.mp3",
-          "bytes": 1277701,
-          "sha256": "5e031b0288d075f0589752ef66f2c9a9ced2020dfe0981c255ac6495512ac312",
-          "mime": "audio/mpeg",
-          "sourceSha256": "acb1792ea1d42d56298b93fd9f694e0a89a2188848543685cad7fdfa6d664388",
-          "sourceCharacters": 1331,
-          "spokenCharacters": 1331,
-          "receivedAt": "2026-09-11T21:54:29.967Z",
-          "httpStatus": 200,
-          "expectedSpokenProjectionSha256": "acb1792ea1d42d56298b93fd9f694e0a89a2188848543685cad7fdfa6d664388",
-          "manifest": "mark-1-1-13",
-          "recordingSource": "generated",
-          "ai": true
-        }
+        "url": "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+        "sha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+        "bytes": 8975276
       },
       "delivery": {
-        "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://fiaguide.app/audio/source/S02-U010.mp3",
-        "sha256": "e36ed037cead7ad4ddaac4caeb54ae4b548856fef9471a8accabc1a78551d383",
-        "bytes": 164316,
+        "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+        "sha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+        "bytes": 977258,
         "mime": "audio/ogg",
         "kind": "audio",
         "preset": "voice",
         "q": "medium",
         "format": "opus",
         "status": "transformed",
-        "duration": 79.862813
+        "duration": 498.76575
       },
       "timing": {
-        "status": "not-applicable"
+        "status": "verified",
+        "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+        "deliveryAudioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+        "method": "Measured decoded PCM correlation; browserpending",
+        "evidence": "/content/recording-evidence/bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307.json",
+        "mapping": {
+          "scale": 1,
+          "offsetSeconds": 0
+        },
+        "mappingEvidenceSha256": "bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307"
       },
       "defaultSize": "medium",
       "variants": {
         "medium": {
           "delivery": {
-            "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://fiaguide.app/audio/source/S02-U010.mp3",
-            "sha256": "e36ed037cead7ad4ddaac4caeb54ae4b548856fef9471a8accabc1a78551d383",
-            "bytes": 164316,
+            "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+            "sha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+            "bytes": 977258,
             "mime": "audio/ogg",
             "kind": "audio",
             "preset": "voice",
             "q": "medium",
             "format": "opus",
             "status": "transformed",
-            "duration": 79.862813
+            "duration": 498.76575
           },
           "timing": {
-            "status": "not-applicable"
+            "status": "verified",
+            "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+            "deliveryAudioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+            "method": "Measured decoded PCM correlation; browserpending",
+            "evidence": "/content/recording-evidence/bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307.json",
+            "mapping": {
+              "scale": 1,
+              "offsetSeconds": 0
+            },
+            "mappingEvidenceSha256": "bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307"
+          },
+          "playbackRange": {
+            "startSeconds": 304.51,
+            "endSeconds": 403.61
           }
         }
+      },
+      "audioReplacement": {
+        "ledgerEntryId": "S02-U010",
+        "recordingLedgerSha256": "5c8742a1b746c917564156bb9f970e4a468bd7075aefeb63f754c2ee94ca2ca6",
+        "logicalSource": {
+          "sha256": "5e031b0288d075f0589752ef66f2c9a9ced2020dfe0981c255ac6495512ac312",
+          "bytes": 1277701
+        }
+      },
+      "playbackRange": {
+        "startSeconds": 304.51,
+        "endSeconds": 403.61
       }
     },
     {
       "path": "/audio/source/S02-U011.mp3",
       "source": {
-        "url": "https://fiaguide.app/audio/source/S02-U011.mp3",
-        "sha256": "759928e43a74d931bb7b9e3fb52e1ecd96c1713488f36a7030d25e3f124e4a35",
-        "bytes": 273345,
-        "provenance": {
-          "id": "S02-U011",
-          "sha256": "759928e43a74d931bb7b9e3fb52e1ecd96c1713488f36a7030d25e3f124e4a35",
-          "bytes": 273345,
-          "path": "/audio/source/S02-U011.mp3",
-          "decodeExit": 0,
-          "duration": "17.084063",
-          "streams": [
-            {
-              "codec_name": "mp3",
-              "sample_rate": "44100",
-              "channels": 1
-            }
-          ],
-          "sourceSha256": "4c6baa6d4173ad386b53b1d680c976984bf56679f29b37c8bb5beb2ae1c0a858",
-          "cueId": "S02-U012",
-          "cueSourceSha256": "37f450cc20239bea715cd32fb8628b31ba1d30e63b3f96e04f47ad293301389d",
-          "expectedSpokenText": "Stop here and discuss this question as a group: What kinds of ceremonies or rituals does your culture have to show that someone is starting a new way of life or an important work? How are these ceremonies the same or different than baptism?\n\nI will pause the audio here so you can discuss these questions as a group.",
-          "expectedSpokenSha256": "bc0991741465296028c2130d29f0f57eb138dde14b48b447bce02da03d8d5350",
-          "transition": "I will pause the audio here so you can discuss these questions as a group.",
-          "mime": "audio/mpeg",
-          "manifest": "activity-transitions",
-          "recordingSource": "generated",
-          "ai": true
-        }
+        "url": "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+        "sha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+        "bytes": 8975276
       },
       "delivery": {
-        "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://fiaguide.app/audio/source/S02-U011.mp3",
-        "sha256": "1ffa2b9b8d4a8050ea2e081c4ce85fd11ffd1f582cc4251ea23b2a1a9a4021a5",
-        "bytes": 35323,
+        "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+        "sha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+        "bytes": 977258,
         "mime": "audio/ogg",
         "kind": "audio",
         "preset": "voice",
         "q": "medium",
         "format": "opus",
         "status": "transformed",
-        "duration": 17.090563
+        "duration": 498.76575
       },
       "timing": {
-        "status": "not-applicable"
+        "status": "verified",
+        "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+        "deliveryAudioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+        "method": "Measured decoded PCM correlation; browserpending",
+        "evidence": "/content/recording-evidence/bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307.json",
+        "mapping": {
+          "scale": 1,
+          "offsetSeconds": 0
+        },
+        "mappingEvidenceSha256": "bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307"
       },
       "defaultSize": "medium",
       "variants": {
         "medium": {
           "delivery": {
-            "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://fiaguide.app/audio/source/S02-U011.mp3",
-            "sha256": "1ffa2b9b8d4a8050ea2e081c4ce85fd11ffd1f582cc4251ea23b2a1a9a4021a5",
-            "bytes": 35323,
+            "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+            "sha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+            "bytes": 977258,
             "mime": "audio/ogg",
             "kind": "audio",
             "preset": "voice",
             "q": "medium",
             "format": "opus",
             "status": "transformed",
-            "duration": 17.090563
+            "duration": 498.76575
           },
           "timing": {
-            "status": "not-applicable"
+            "status": "verified",
+            "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+            "deliveryAudioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+            "method": "Measured decoded PCM correlation; browserpending",
+            "evidence": "/content/recording-evidence/bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307.json",
+            "mapping": {
+              "scale": 1,
+              "offsetSeconds": 0
+            },
+            "mappingEvidenceSha256": "bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307"
+          },
+          "playbackRange": {
+            "startSeconds": 404.37,
+            "endSeconds": 422.27
           }
         }
+      },
+      "audioReplacement": {
+        "ledgerEntryId": "S02-U011",
+        "recordingLedgerSha256": "5c8742a1b746c917564156bb9f970e4a468bd7075aefeb63f754c2ee94ca2ca6",
+        "logicalSource": {
+          "sha256": "759928e43a74d931bb7b9e3fb52e1ecd96c1713488f36a7030d25e3f124e4a35",
+          "bytes": 273345
+        }
+      },
+      "playbackRange": {
+        "startSeconds": 404.37,
+        "endSeconds": 422.27
       }
     },
     {
       "path": "/audio/source/S02-U013.mp3",
       "source": {
-        "url": "https://fiaguide.app/audio/source/S02-U013.mp3",
-        "sha256": "8a179c4fc0c16e91446b4606d2fb52ea59d1d753ad22c943270d91239cf672d1",
-        "bytes": 819617,
-        "provenance": {
-          "id": "S02-U013",
-          "path": "/audio/source/S02-U013.mp3",
-          "bytes": 819617,
-          "sha256": "8a179c4fc0c16e91446b4606d2fb52ea59d1d753ad22c943270d91239cf672d1",
-          "mime": "audio/mpeg",
-          "sourceSha256": "3de5a3bf58f30f1306f4a27d0e3c8e241c5daed21a27de40e674ae72b944bde9",
-          "sourceCharacters": 862,
-          "spokenCharacters": 862,
-          "receivedAt": "2026-09-11T21:54:47.429Z",
-          "httpStatus": 200,
-          "expectedSpokenProjectionSha256": "3de5a3bf58f30f1306f4a27d0e3c8e241c5daed21a27de40e674ae72b944bde9",
-          "manifest": "mark-1-1-13",
-          "recordingSource": "generated",
-          "ai": true
-        }
+        "url": "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+        "sha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+        "bytes": 8975276
       },
       "delivery": {
-        "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://fiaguide.app/audio/source/S02-U013.mp3",
-        "sha256": "02f5e16040c4d9215bd76b528c09b3057b65851ba2a6d00799083968b83dd0e8",
-        "bytes": 105599,
+        "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+        "sha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+        "bytes": 977258,
         "mime": "audio/ogg",
         "kind": "audio",
         "preset": "voice",
         "q": "medium",
         "format": "opus",
         "status": "transformed",
-        "duration": 51.232625
+        "duration": 498.76575
       },
       "timing": {
-        "status": "not-applicable"
+        "status": "verified",
+        "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+        "deliveryAudioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+        "method": "Measured decoded PCM correlation; browserpending",
+        "evidence": "/content/recording-evidence/bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307.json",
+        "mapping": {
+          "scale": 1,
+          "offsetSeconds": 0
+        },
+        "mappingEvidenceSha256": "bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307"
       },
       "defaultSize": "medium",
       "variants": {
         "medium": {
           "delivery": {
-            "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://fiaguide.app/audio/source/S02-U013.mp3",
-            "sha256": "02f5e16040c4d9215bd76b528c09b3057b65851ba2a6d00799083968b83dd0e8",
-            "bytes": 105599,
+            "url": "https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p1/s2/v2.1/vbr0.mp3",
+            "sha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+            "bytes": 977258,
             "mime": "audio/ogg",
             "kind": "audio",
             "preset": "voice",
             "q": "medium",
             "format": "opus",
             "status": "transformed",
-            "duration": 51.232625
+            "duration": 498.76575
           },
           "timing": {
-            "status": "not-applicable"
+            "status": "verified",
+            "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+            "deliveryAudioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+            "method": "Measured decoded PCM correlation; browserpending",
+            "evidence": "/content/recording-evidence/bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307.json",
+            "mapping": {
+              "scale": 1,
+              "offsetSeconds": 0
+            },
+            "mappingEvidenceSha256": "bfc866da355cb36d3c380c9c003f0ae583277d0d60c9bb646d315c0c06da7307"
+          },
+          "playbackRange": {
+            "startSeconds": 429.48,
+            "endSeconds": 495.5
           }
         }
+      },
+      "audioReplacement": {
+        "ledgerEntryId": "S02-U013",
+        "recordingLedgerSha256": "5c8742a1b746c917564156bb9f970e4a468bd7075aefeb63f754c2ee94ca2ca6",
+        "logicalSource": {
+          "sha256": "8a179c4fc0c16e91446b4606d2fb52ea59d1d753ad22c943270d91239cf672d1",
+          "bytes": 819617
+        }
+      },
+      "playbackRange": {
+        "startSeconds": 429.48,
+        "endSeconds": 495.5
       }
     },
     {
@@ -9437,5 +9636,12 @@
     "url": "/content/scripture-sources/06e59519f48c8dbf6ac3410ff45f2f2f5d18eaef4beb550b2efb9f59526c5ec5.json",
     "sha256": "06e59519f48c8dbf6ac3410ff45f2f2f5d18eaef4beb550b2efb9f59526c5ec5",
     "bytes": 1165
-  }
+  },
+  "recordingLedgers": [
+    {
+      "url": "/content/recording-sources/5c8742a1b746c917564156bb9f970e4a468bd7075aefeb63f754c2ee94ca2ca6.json",
+      "sha256": "5c8742a1b746c917564156bb9f970e4a468bd7075aefeb63f754c2ee94ca2ca6",
+      "bytes": 11132
+    }
+  ]
 }
