@@ -9,7 +9,7 @@
   "changedSources": [
     {
       "path": ".github/workflows/ci.yml",
-      "sha256": "ab0a86d6e9beeea0156458d3a3006911017767b507e9b1f169261e713e444975"
+      "sha256": "89c5b5c0049f47cfd67b5cc39812fb9c2e1f26c77a1a0b805683968e02c9e75d"
     },
     {
       "path": ".github/workflows/hosted-asr-integration-proof.yml",
@@ -1266,12 +1266,20 @@
       "sha256": "6e31306d8c7a76ea12fc8612ceae0e27d58f9365642708e64f5b8a0b287ec0de"
     },
     {
+      "path": "e2e/worker-authority.spec.js",
+      "sha256": "a89e74e975f3accd99b48b2170a42efad2908ae5c66960424cf1e985c7415131"
+    },
+    {
       "path": "package-lock.json",
       "sha256": "585ce080e7ef24d4c7e2fd711b3360430b5cbaee734fd33ebd021dcac320c4b9"
     },
     {
       "path": "package.json",
       "sha256": "4b73350db6e6fcd0feae6954e2a95b7042c0ce37c9fb30cc01a289f42e24002b"
+    },
+    {
+      "path": "playwright.config.js",
+      "sha256": "3e5e5bf83f3a9b9b9104071e61e3395665d9550078a4aa9484a08e54e15c4777"
     },
     {
       "path": "playwright.live-listening.config.js",
@@ -1382,6 +1390,10 @@
       "sha256": "e382500c2cb587a31d9896fa1a6dd5672638be89e6484e8a457517a92bc9f78c"
     },
     {
+      "path": "scripts/live-listening/preview-request.mjs",
+      "sha256": "466f09e6c274178c255dbe454c21e0a636e38470640a0619c2246d6b586e0311"
+    },
+    {
       "path": "scripts/live-listening/scripture-binding.mjs",
       "sha256": "8d4a622f52ac87058fd7a6f7a22bf5019db937d752f0403733869c5835e1ba33"
     },
@@ -1412,6 +1424,10 @@
     {
       "path": "scripts/video-publication.mjs",
       "sha256": "1bf8e7c00844fffcaf5e868e1313a8c554b6aef53eecc65fd050a144cb2eb2ce"
+    },
+    {
+      "path": "scripts/worker-preview.mjs",
+      "sha256": "2dd33080159f7882f8fde6e77c5dbb9313066ebee1c35ce443b01e0a67feab7a"
     },
     {
       "path": "server/core/artifacts/store.mjs",
@@ -2448,6 +2464,10 @@
     {
       "path": "tests/web-shell/version-stamp.test.js",
       "sha256": "c010163e53df456a70588623ac0a7e756cedd6fbbcb6aaf7e1ce2c571d27336e"
+    },
+    {
+      "path": "tests/web-shell/worker-preview.test.js",
+      "sha256": "bdbe6ee70cee05c9b543a71681414beea2db67b5f7dd37d479364f6479639d59"
     },
     {
       "path": "tests/worker-serving/canonical-unit-ledger.test.mjs",
