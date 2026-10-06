@@ -16,12 +16,16 @@ const invalidCatalog=()=>passageError('The server catalog is invalid.','passage-
 const validRange=value=>value===null||shape(value,['startSeconds','endSeconds'])&&Number.isFinite(value.startSeconds)&&value.startSeconds>=0&&Number.isFinite(value.endSeconds)&&value.endSeconds>value.startSeconds;
 
 export function createExecutionTransport({fetch:fetchArtifact=globalThis.fetch}={}){
- async function readArtifactBytes(expected,{signal}={}){
+ // `offline` names a missing answer (no response, a transient status, a body that stops) for a
+ // caller that tells it apart from a verdict; a stop by the caller's own signal ends with its reason.
+ async function readArtifactBytes(expected,{signal}={},offline=null){
    signal?.throwIfAborted();
-   const response=await fetchArtifact(`/v1/artifacts/${expected}`,{method:'GET',cache:'no-store',redirect:'error',signal});
+   const missing=error=>{signal?.throwIfAborted();if(offline&&error?.name!=='AbortError')throw offline();throw error;};
+   let response;try{response=await fetchArtifact(`/v1/artifacts/${expected}`,{method:'GET',cache:'no-store',redirect:'error',signal});}catch(error){missing(error);}
    signal?.throwIfAborted();
+   if(offline&&transientStatus(response.status))throw offline();
    if(response.status!==200||response.redirected)throw Error('The server artifact could not be read.');
-   const bytes=await response.arrayBuffer();
+   let bytes;try{bytes=await response.arrayBuffer();}catch(error){missing(error);}
    signal?.throwIfAborted();
    if(await hash(bytes)!==expected)throw Error('The server artifact could not be verified.');
    signal?.throwIfAborted();
@@ -112,7 +116,7 @@ export function createExecutionTransport({fetch:fetchArtifact=globalThis.fetch}=
  transport.readPresentationRecord=async(record,context={})=>{
   const artifact=record?.artifact;
   if(record?.status!=='ready'||typeof record.revision!=='string'||!hashPattern.test(record.revision)||artifact?.sha256!==record.revision||!Number.isSafeInteger(artifact.bytes)||artifact.bytes<=0||artifact.mime!=='application/json')throw Error('The server presentation record is invalid.');
-  const bytes=await readArtifactBytes(artifact.sha256,context);
+  const bytes=await readArtifactBytes(artifact.sha256,context,unreachable);
   if(bytes.byteLength!==artifact.bytes)throw Error('The server presentation could not be verified.');
   try{return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));}catch{throw Error('The server presentation is invalid.');}
  };

@@ -18,6 +18,16 @@ test('R1: a transient or missing server answer is a typed transient error, never
   await assert.rejects(transport.readPack(id),error=>error.code==='passage-transient'&&/could not be reached/.test(error.message)&&!/catalog is invalid/.test(error.message));
  }
 });
+test('R1: a presentation artifact with no answer or a transient answer is a typed transient error, so a restore keeps its key',async()=>{
+ const bytes=new TextEncoder().encode('{}'),sha=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),v=>v.toString(16).padStart(2,'0')).join('');
+ const record={status:'ready',revision:sha,artifact:{sha256:sha,bytes:bytes.length,mime:'application/json'}};
+ for(const reply of [()=>{throw new TypeError('Failed to fetch');},answer(503,'This server content is not saved for offline use.','text/plain'),answer(504,'','text/plain')]){
+  const transport=createExecutionTransport({fetch:async()=>reply()});
+  await assert.rejects(transport.readPresentationRecord(record),error=>error.code==='passage-transient'&&/could not be reached/.test(error.message));
+ }
+ // A wrong answer is still a verdict, not a missing connection.
+ await assert.rejects(createExecutionTransport({fetch:async()=>new Response('nope',{status:404})}).readPresentationRecord(record),error=>error.code===undefined&&/could not be read/.test(error.message));
+});
 test('R1: "The server catalog is invalid." stays reserved for a malformed record',async()=>{
  for(const reply of [answer(409,'Server content could not be verified.','text/plain'),answer(200,{status:'ready',packId:'other'}),answer(404,{status:'ready'})]){
   const transport=createExecutionTransport({fetch:async()=>reply()});
