@@ -37,7 +37,10 @@ export function createExecutionTransport({fetch:fetchArtifact=globalThis.fetch}=
  transport.playBoundAudio=async(reference,context={})=>{
   const value=await readBoundJSON(reference,context),delivery=value.delivery;
   if(!shape(value,['schema','id','delivery','playbackRange'])||value.schema!=='fia-bound-narration-audio@1'||!shape(delivery,['url','sha256','bytes','mime'])||!text(delivery.url)||typeof delivery.sha256!=='string'||!hashPattern.test(delivery.sha256)||!Number.isSafeInteger(delivery.bytes)||delivery.bytes<=0||!text(delivery.mime)||!validRange(value.playbackRange))throw Error('The bound narration audio is invalid.');
-  const retained=value.id.startsWith('approved-audio:')||delivery.url.startsWith('/v1/approved-audio');
+  // Detect URL-normalized aliases so they cannot fall through to legacy transport.
+  // Classification grants no authority: the profile below still requires the exact literal route.
+  let declaredPath;try{declaredPath=new URL(delivery.url,'https://transport.invalid').pathname;}catch{}
+  const retained=value.id.startsWith('approved-audio:')||declaredPath?.startsWith('/v1/approved-audio');
   if(retained){
    const binding=value.id.match(/^approved-audio:([a-f0-9]{64})$/),extension={'audio/mpeg':'mp3','audio/ogg':'ogg'}[delivery.mime];
    if(!binding||!extension||delivery.bytes>16777216||delivery.url!==`/v1/approved-audio/${binding[1]}/${delivery.sha256}.${extension}`)throw Error('The bound narration audio is invalid.');
