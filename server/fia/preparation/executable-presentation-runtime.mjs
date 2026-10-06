@@ -35,7 +35,11 @@ async function originalBindings(context){
 }
 export async function createExecutableRuntime({ctx,env,snapshot,capabilities={}}){
  const base=snapshotStorage(snapshot,{fetchAsset:path=>env.ASSETS.fetch(new Request(new URL(path,env.FIA_API_ORIGIN),{redirect:'manual'}))}),baseReads=createReadOperations(base),artifacts=artifactPort(env.FIA_ORIGINALS),policySha256=await sha256(snapshot.approvedAudioProofIndex?canonicalJSONString({policy:EXECUTION_POLICY,approvedAudio:snapshot.approvedAudioProofIndex}):EXECUTION_POLICY);
- const eligible=async args=>{const record=await base.readCatalog(args.packId,args.baseRevision);return record?.status==='ready'&&record.revision===args.baseRevision&&record.authority?.rawInventoryCommit===args.sourceRevision&&snapshot.canonicalSources?.some(s=>s.packId===args.packId&&s.sourceRevision===args.sourceRevision)&&(!capabilities.eligible||await capabilities.eligible(args)===true);};
+ // A demand binds a base artifact to the canonical source it was compiled from. The
+ // approved original presentation (eng.MRK-1-1-13) has its own lineage and is not
+ // projectable from that source, so it is neither offered nor admitted.
+ const preparable=(record,sourceRevision)=>record?.authority?.rawInventoryCommit===sourceRevision&&record.artifactSource?.sourceCommit===sourceRevision&&snapshot.canonicalSources?.some(s=>s.packId===record.packId&&s.sourceRevision===sourceRevision);
+ const eligible=async args=>{const record=await base.readCatalog(args.packId,args.baseRevision);return record?.status==='ready'&&record.revision===args.baseRevision&&record.packId===args.packId&&preparable(record,args.sourceRevision)&&(!capabilities.eligible||await capabilities.eligible(args)===true);};
  // This immutable descriptor is release authority; no caller or runtime discovery
  // can add proof entries. Only explicit preparation registers a retained binding.
  const readDependency=async d=>{const item=await bounded(()=>readStaticArtifact({staticPath:d.path,descriptor:d},path=>env.ASSETS.fetch(new Request(new URL(path,env.FIA_API_ORIGIN),{redirect:'manual'}))));need(typeof item.content==='string','approved-audio-proof-unavailable');return new TextEncoder().encode(item.content);};
@@ -73,7 +77,11 @@ export async function createExecutableRuntime({ctx,env,snapshot,capabilities={}}
   return true;
  }});
  const reads=createReadOperations(publication),readPack=reads.readPack;
- reads.readPack=async args=>{const record=await readPack(args);if(record?.status!=='ready'||record.execution)return record;const sourceRevision=record.authority?.rawInventoryCommit;if(snapshot.canonicalSources?.some(s=>s.packId===args.packId&&s.sourceRevision===sourceRevision))return {...record,preparationDemand:{packId:args.packId,baseRevision:record.revision,sourceRevision,capability:'executable-presentation'}};return record;};
+ // A publication whose job belongs to a superseded policy, provider or recipe stays
+ // refused by its exact revision, but it no longer shadows the current base record:
+ // the base is served with its demand, so an explicit Open prepares and publishes it
+ // under the current policy. Every other refusal stays fail-closed.
+ reads.readPack=async args=>{let record=await readPack(args);if(record?.status==='unavailable'&&record.reason==='execution-job-policy'&&args?.revision===undefined)record=await baseReads.readPack(args);if(record?.status!=='ready'||record.execution)return record;const sourceRevision=record.authority?.rawInventoryCommit;if(record.packId===args.packId&&preparable(record,sourceRevision))return {...record,preparationDemand:{packId:args.packId,baseRevision:record.revision,sourceRevision,capability:'executable-presentation'}};return record;};
  const ops=createExecutableOperations({reads,service,publication,storage:ctx.storage});
  return {...ops,readApprovedAudio:selected=>retained?retained.read(selected):{status:'unavailable',reason:'approved-audio-unavailable'}};
 }
