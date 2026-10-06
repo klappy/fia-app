@@ -60,27 +60,42 @@ generated fallback under separately authorized policies.
 
 ## Activation and rollback
 
-Only `env.dev` declares the `FiaPreparationJobs` SQLite migration `v1-preparation`,
-`FIA_PREPARATION_JOBS` binding and `FIA_ORIGINALS` R2 binding to
-`fia-originals-development`. The default, staging and production configurations
-contain none of these preparation bindings or migrations. Their existing read
-and static-asset behavior remains available; preparation requests fail closed
-with storage-unavailable until separately authorized configuration is reviewed.
-Exporting the class in the shared source does not authorize another environment's
-migration. No staging/production bucket provisioning or activation is part of this delta.
+The user authorized isolated staging and production R2/SQLite preparation storage
+within the existing plan. Cookbook commit
+`ffb782cc5667c62246179f4c759c60f293056a4e`,
+`product/v3-planning/persona-release-testing/LISTENING-PROMOTION-CHECKPOINT.md`,
+records that authority and the ordered promotion gates. Hosted ASR, paid
+generation and plan upgrades remain outside this setup authorization.
 
-[Cloudflare's environment documentation](https://developers.cloudflare.com/durable-objects/reference/environments/)
-states that Durable Object bindings are per-environment and migrations may be
-environment-specific. Keep this migration under `env.dev`, not at the top level,
-so unrelated environment deployments do not inherit it. DEV deployment still
-follows the sole owner's approved release train; this configuration change does
-not itself deploy or provision resources.
+`wrangler.jsonc` declares the `FiaPreparationJobs` SQLite migration
+`v1-preparation` and `FIA_PREPARATION_JOBS` in each named environment. Each
+`FIA_ORIGINALS` binding points to its own private R2 bucket:
+
+| Environment | Worker | R2 bucket |
+|---|---|---|
+| `dev` | `fia-app-dev` | `fia-originals-development` |
+| `staging` | `fia-app-staging` | `fia-originals-staging` |
+| `production` | `fia-app` | `fia-originals-production` |
+
+The default configuration has no preparation binding or migration. Keep the
+bindings and migrations inside each named environment; do not move them to the
+top level. [Cloudflare's environment documentation](https://developers.cloudflare.com/durable-objects/reference/environments/)
+describes environment-specific Durable Object bindings and migrations.
+
+Configuration does not prove deployment or provision a bucket. The sole release
+owner verifies private storage, then promotes through DEV, staging and production
+using the protected release train. Each target must pass exact deployed-identity,
+source and native-playback evidence before later promotion. Missing storage fails
+closed. Exporting the class alone does not activate another environment. Retain
+separate configuration, provisioning and observed-runtime receipts.
 
 This slice persists one 867865-byte source in R2 plus metadata. Storage, requests
 and CPU have costs; no provider credentials, paid ASR or generation call is present.
 
-Rollback disables request routing while retaining class export, migration history
-and stored data. Do not delete the class or namespace. Actual hosted acceptance
+Recovery uses a new deployment that disables request routing while retaining
+class export, environment bindings, migration history, buckets and stored data.
+Do not delete the class or namespace or perform an ordinary rollback across the
+SQLite migration. Actual hosted acceptance
 requires exact deployed identity and cold/warm/restart/range/playback receipts;
 local workerd tests do not establish hosted completion.
 
