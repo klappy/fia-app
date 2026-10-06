@@ -18,6 +18,10 @@
  import FiaMark from './components/FiaMark.svelte';
  import LibraryPanel from './components/LibraryPanel.svelte';
  import {createVideoDelivery} from './lib/video-delivery.js';
+ import {createPreparationIntent,preparationIdentity,preparationKey} from './lib/preparation-intent.js';
+ import {verifyScripturePassageFile,sameScripturePassageFile,scripturePassagePins} from './lib/scripture-passage.js';
+ import {hasGuidePreparation} from './lib/recording-availability.js';
+ import {preparationHash} from './lib/prepared-audio.js';
  import {demoVideoSource} from './lib/video-demo.js';
  import {bundledPack,libraryAdapter,hasUnresolvedInstructions} from './lib/library.js';
  import {saveProgress,restoreProgress,resetProgress} from './lib/session-store.js';
@@ -40,21 +44,63 @@
  let videoSizes=$derived(['small','medium','large'].filter(size=>{const videos=Object.values(rawPresentation.assets).filter(a=>a.kind==='video');return videos.length&&videos.every(a=>{const f=onlineMedia.get(a.src);return f?.variants?.[size]||size==='large'&&f&&!f.variants;});}));
  const videoDelivery=createVideoDelivery({fetch:(request,signal)=>libraryAdapter.playMedia(request.pack,request.path,request.revision,signal,request.size),create:result=>URL.createObjectURL(new Blob([result.bytes],{type:result.mime})),revoke:url=>tick().then(()=>URL.revokeObjectURL(url)),publish:value=>videoDeliveryState=value});
  let selectionGeneration=0,selectionIntent=0;
+ let preparationState=$state(null),preparedRecordings=$state(new globalThis.Map()),preparationDismissed=$state(null);let preparationEvent=0;
+ const preparationOwner=createPreparationIntent({request:(identity,signal)=>libraryAdapter.prepareRecording(identity,signal),status:(id,identity,signal)=>libraryAdapter.preparationStatus(id,identity,signal),verify:(result,identity,signal)=>libraryAdapter.verifyPreparedRecording(result,identity,signal),publish:value=>{preparationState=value?{...value,event:++preparationEvent}:null;if(value?.status==='ready')preparedRecordings=new globalThis.Map(preparedRecordings).set(value.key,value.descriptor);}});
+ function requestableNarration(){
+  const raw=rawPresentation.activities.find(a=>a.id===activity?.id);
+  if(session.detour||inTransition||finished||raw?.audioSrc||!['guide','discussion'].includes(raw?.kind)||!raw?.sourceText)return null;
+  try{return preparationIdentity(selectedPack,raw,'original');}catch{return null;}
+ }
+ let preparationRequest=$derived(requestableNarration());
+ let currentPreparation=$derived(preparationRequest&&preparationState?.key===preparationKey(preparationRequest)?preparationState:null);
+ let preparationBusy=$derived(currentPreparation?.status==='preparing');
+ let preparationNotice=$derived(currentPreparation?.event!==preparationDismissed?currentPreparation?.message:'');
+ async function playRequestedNarration({automatic=false}={}){
+  if(automatic&&(!playbackConsent||automaticOff))return;
+  if(!preparationRequest||!online){notice='Connect to prepare or play this recording. You can continue without it.';return;}
+  if(preparationBusy){preparationOwner.cancel();return;}
+  if(deferVideo(()=>playRequestedNarration({automatic})))return;
+  const identity=preparationRequest,key=preparationKey(identity),pack=selectedPack,id=activity.id,generation=selectionGeneration;
+  cancel();notice='';const playbackOwner=mediaGeneration;started=true;
+  const raw=rawPresentation.activities.find(a=>a.id===id);
+  if(await preparationHash(raw.sourceText)!==identity.sourceTextSha256){notice='This instruction text could not be verified.';return;}
+  if(generation!==selectionGeneration||pack!==selectedPack||id!==activity.id||playbackOwner!==mediaGeneration)return;
+  let descriptor=preparedRecordings.get(key);
+  if(!descriptor){
+   const result=await preparationOwner.start(identity,{explicit:true});
+   if(generation!==selectionGeneration||pack!==selectedPack||id!==activity.id||playbackOwner!==mediaGeneration)return;
+   // Only the still-owned explicit Begin/Next action may carry playback through preparation.
+   // Passive/manual readiness continues to require another Play.
+   if(!result||(!result.immediate&&!automatic))return;
+   descriptor=result.descriptor;
+  }
+  if(automatic&&(!playbackConsent||automaticOff))return;
+  const owner=++mediaGeneration;mediaAbort=new AbortController();const signal=mediaAbort.signal;mediaLoading=true;
+  try{
+   const result=await libraryAdapter.playPreparedRecording(descriptor,signal);
+   if(owner!==mediaGeneration||signal.aborted||generation!==selectionGeneration||pack!==selectedPack||id!==activity.id||automatic&&(!playbackConsent||automaticOff))return;
+   mediaBlob=URL.createObjectURL(new Blob([result.bytes],{type:result.mime}));mediaTiming=null;mediaAlignment=null;mediaLogicalPath=null;
+   audioContext={type:'narration',id};playbackConsent=true;dispatch({type:'PLAY'});audio.play(raw.narration||raw.sourceText,mediaBlob,rate,result.playbackRange);persist();
+  }catch(error){if(owner===mediaGeneration){preparedRecordings=new globalThis.Map(preparedRecordings);preparedRecordings.delete(key);revokePlayback();notice=error.message;dispatch({type:'PAUSE'});}}
+  finally{if(owner===mediaGeneration)mediaLoading=false;}
+ }
+
  let onlineMedia=$state(new globalThis.Map()),deliveryRevision=$state(null),downloadedDeliveryRevision=$state(null),mediaLoading=$state(false),playbackPending=$state(false);
  let playbackConsent=false,mediaGeneration=0,mediaAbort=null,mediaBlob=null,mediaTiming=null;
  let mediaAlignment=$state(null),mediaLogicalPath=$state(null);
- async function updateMedia(){const generation=selectionGeneration,pack=selectedPack;try{const status=await libraryAdapter.mediaStatus(pack);if(generation!==selectionGeneration)return;if(deliveryRevision&&deliveryRevision!==status.deliveryRevision){if(deferVideo(()=>updateMedia()))return;videoDelivery.clear();stopVisual();visualOwner.clear();}deliveryRevision=status.deliveryRevision;onlineMedia=new globalThis.Map(status.files.map(f=>[f.path,f]));savedMedia=new globalThis.Map((status.savedFiles||[]).map(f=>[f.path,f]));}catch{if(generation===selectionGeneration){onlineMedia=new globalThis.Map();savedMedia=new globalThis.Map();deliveryRevision=null;}}}
- function revokePlayback(){videoDelivery.cancel();stopVisual();playbackConsent=false;playbackPending=false;clearTimeout(timer);timer=null;mediaGeneration++;mediaAbort?.abort();mediaAbort=null;mediaLoading=false;}
+ async function updateMedia(){const generation=selectionGeneration,pack=selectedPack;try{const status=await libraryAdapter.mediaStatus(pack);for(const file of [...status.files,...(status.savedFiles||[])])if(file.scripturePlaybackMode==='passage-only')await verifyScripturePassageFile(file,pack.id,rawPresentation.assets);if(generation!==selectionGeneration)return;if(deliveryRevision&&deliveryRevision!==status.deliveryRevision){if(deferVideo(()=>updateMedia()))return;videoDelivery.clear();stopVisual();visualOwner.clear();}deliveryRevision=status.deliveryRevision;onlineMedia=new globalThis.Map(status.files.map(f=>[f.path,f]));savedMedia=new globalThis.Map((status.savedFiles||[]).map(f=>[f.path,f]));}catch{if(generation===selectionGeneration){onlineMedia=new globalThis.Map();savedMedia=new globalThis.Map();deliveryRevision=null;}}}
+ function revokePlayback(){preparationOwner.cancel();videoDelivery.cancel();stopVisual();playbackConsent=false;playbackPending=false;clearTimeout(timer);timer=null;mediaGeneration++;mediaAbort?.abort();mediaAbort=null;mediaLoading=false;}
  async function startRecording(text,path,explicit=false){
   if(explicit){playbackConsent=true;authorizeVisual();}if(!playbackConsent)return;
   const owner=++mediaGeneration,pack=selectedPack,activityId=activity.id;mediaAbort?.abort();mediaAbort=new AbortController();const signal=mediaAbort.signal;
   if(mediaBlob){URL.revokeObjectURL(mediaBlob);mediaBlob=null;}mediaTiming=null;mediaAlignment=null;
-  try{if(onlineMedia.has(path)){mediaLoading=true;const result=await libraryAdapter.playMedia(pack,path,deliveryRevision,signal);if(owner!==mediaGeneration||signal.aborted||pack!==selectedPack||activityId!==activity.id)return;mediaBlob=URL.createObjectURL(new Blob([result.bytes],{type:result.mime}));mediaTiming=result.timing;mediaLogicalPath=path;mediaAlignment=result.scriptureAlignment||null;audio.play(text,mediaBlob,rate,result.playbackRange);}else if(downloadedPaths.has(path)){const descriptor=downloadedAudioDescriptors.get(path);if(!descriptor)throw Error('This recording descriptor is unavailable.');mediaTiming=descriptor.timing;mediaLogicalPath=path;mediaAlignment=descriptor.scriptureAlignment||null;audio.play(text,path,rate,descriptor.playbackRange);}else throw Error('This recording is unavailable.');}
+  try{if(onlineMedia.has(path)){mediaLoading=true;const result=await libraryAdapter.playMedia(pack,path,deliveryRevision,signal);if(owner!==mediaGeneration||signal.aborted||pack!==selectedPack||activityId!==activity.id)return;const expected=savedMedia.get(path)||onlineMedia.get(path);if(expected.scripturePlaybackMode==='passage-only'){await verifyScripturePassageFile(result.file,pack.id,rawPresentation.assets);if(!sameScripturePassageFile(expected,result.file)||result.scriptureAlignment!==null||JSON.stringify(result.playbackRange)!==JSON.stringify(expected.playbackRange)||JSON.stringify(result.timing)!==JSON.stringify(expected.timing))throw Error('Scripture playback binding changed.');if(owner!==mediaGeneration||signal.aborted||pack!==selectedPack||activityId!==activity.id)return;}mediaBlob=URL.createObjectURL(new Blob([result.bytes],{type:result.mime}));mediaTiming=result.timing;mediaLogicalPath=path;mediaAlignment=result.scriptureAlignment||null;audio.play(text,mediaBlob,rate,result.playbackRange);}else if(downloadedPaths.has(path)){const descriptor=downloadedAudioDescriptors.get(path);if(!descriptor)throw Error('This recording descriptor is unavailable.');mediaTiming=descriptor.timing;mediaLogicalPath=path;mediaAlignment=descriptor.scriptureAlignment||null;audio.play(text,path,rate,descriptor.playbackRange);}else throw Error('This recording is unavailable.');}
   catch(error){if(owner===mediaGeneration){revokePlayback();notice=error.message;dispatch({type:'PAUSE'});}}finally{if(owner===mediaGeneration)mediaLoading=false;}
  }
- function mediaForDevice(pack,paths){if(deliveryRevision&&downloadedDeliveryRevision!==deliveryRevision)paths=new Set([...paths].filter(path=>!onlineMedia.has(path)));return {...pack,activities:pack.activities.map(a=>({...a,audioSrc:paths.has(a.audioSrc)||onlineMedia.has(a.audioSrc)?a.audioSrc:null})),assets:Object.fromEntries(Object.entries(pack.assets).map(([id,a])=>[id,{...a,alignment:a.kind==='scripture'&&a.descriptionAudio===mediaLogicalPath&&mediaAlignment?mediaAlignment:a.alignment,src:(nativeDemoVideo&&nativeDemoVideo.path===a.src?nativeDemoVideo.url:null)||(videoDeliveryState.entry&&videoDeliveryState.entry.path===a.src?videoDeliveryState.entry.url:null)||visualState.entries.get(a.src)?.url||(paths.has(a.src)?a.src:undefined),videoPrepared:a.kind==='video'&&(onlineMedia.has(a.src)||!!demoVideoSource(selectedPack,a)),videoLoading:a.kind==='video'&&videoDeliveryState.loading,videoError:a.kind==='video'?videoDeliveryState.error:null,visualPrepared:['image','map'].includes(a.kind)&&onlineMedia.has(a.src),visualOffline:!online,visualCanceled:visualCanceled===visualIdentity(),visualLoading:visualState.loading===a.src,visualError:visualState.error&&visualState.error.path===a.src?visualState.error.message:null,poster:paths.has(a.poster)?a.poster:undefined,descriptionAudio:paths.has(a.descriptionAudio)||onlineMedia.has(a.descriptionAudio)?a.descriptionAudio:undefined,downloadRequired:['image','map','video'].includes(a.kind)&&(!nativeDemoVideo||nativeDemoVideo.path!==a.src)&&!paths.has(a.src)&&!visualState.entries.has(a.src)&&!(videoDeliveryState.entry&&videoDeliveryState.entry.path===a.src),downloadPrepared:typeof a.src==='string'&&a.src.startsWith('/')&&!a.src.startsWith('//')}]))};}
+ function passageFile(assetId){return [...onlineMedia.values(),...downloadedAudioDescriptors.values()].find(f=>f.scripturePlaybackMode==='passage-only'&&f.scriptureAssetId===assetId&&(!deliveryRevision||f.deliveryRevision===deliveryRevision));}
+ function mediaForDevice(pack,paths){if(deliveryRevision&&downloadedDeliveryRevision!==deliveryRevision)paths=new Set([...paths].filter(path=>!onlineMedia.has(path)));return {...pack,activities:pack.activities.map(a=>({...a,audioSrc:a.kind==='scripture'&&passageFile(a.assetId)?passageFile(a.assetId).path:paths.has(a.audioSrc)||onlineMedia.has(a.audioSrc)?a.audioSrc:null})),assets:Object.fromEntries(Object.entries(pack.assets).map(([id,a])=>[id,{...a,alignment:a.kind==='scripture'&&passageFile(id)?null:a.kind==='scripture'&&a.descriptionAudio===mediaLogicalPath&&mediaAlignment?mediaAlignment:a.alignment,src:(nativeDemoVideo&&nativeDemoVideo.path===a.src?nativeDemoVideo.url:null)||(videoDeliveryState.entry&&videoDeliveryState.entry.path===a.src?videoDeliveryState.entry.url:null)||visualState.entries.get(a.src)?.url||(paths.has(a.src)?a.src:undefined),videoPrepared:a.kind==='video'&&(onlineMedia.has(a.src)||!!demoVideoSource(selectedPack,a)),videoLoading:a.kind==='video'&&videoDeliveryState.loading,videoError:a.kind==='video'?videoDeliveryState.error:null,visualPrepared:['image','map'].includes(a.kind)&&onlineMedia.has(a.src),visualOffline:!online,visualCanceled:visualCanceled===visualIdentity(),visualLoading:visualState.loading===a.src,visualError:visualState.error&&visualState.error.path===a.src?visualState.error.message:null,poster:paths.has(a.poster)?a.poster:undefined,descriptionAudio:a.kind==='scripture'&&passageFile(id)?passageFile(id).path:paths.has(a.descriptionAudio)||onlineMedia.has(a.descriptionAudio)?a.descriptionAudio:undefined,downloadRequired:['image','map','video'].includes(a.kind)&&(!nativeDemoVideo||nativeDemoVideo.path!==a.src)&&!paths.has(a.src)&&!visualState.entries.has(a.src)&&!(videoDeliveryState.entry&&videoDeliveryState.entry.path===a.src),downloadPrepared:typeof a.src==='string'&&a.src.startsWith('/')&&!a.src.startsWith('//')}]))};}
  function verifiedDownloadedDescriptors(active){
-  const keys=['path','sha256','bytes','mime','deliveryURL','deliveryRevision','sourceSha256','sourceBytes','logicalSourceSha256','logicalSourceBytes','scriptureAlignmentSha256'];
+  const keys=['path','sha256','bytes','mime','deliveryURL','deliveryRevision','sourceSha256','sourceBytes','logicalSourceSha256','logicalSourceBytes','scriptureAlignmentSha256','duration',...scripturePassagePins];
   const result=new globalThis.Map();
   for(const file of active.files){
    const declared=active.manifest.files.find(f=>f.path===file.path);
@@ -69,7 +115,7 @@
   try{
    const status=await libraryAdapter.downloadStatus(pack);if(generation!==selectionGeneration)return;
    const verified=!!status.saved&&status.active.manifest?.presentationRevision===pack.revision;
-   const descriptors=verified?verifiedDownloadedDescriptors(status.active):new globalThis.Map();
+   const descriptors=verified?verifiedDownloadedDescriptors(status.active):new globalThis.Map();for(const file of descriptors.values())if(file.scripturePlaybackMode==='passage-only')await verifyScripturePassageFile(file,pack.id,rawPresentation.assets);if(generation!==selectionGeneration)return;
    if(verified){await libraryAdapter.activate(pack);if(generation!==selectionGeneration)return;}
    downloadedAudioDescriptors=descriptors;saved=verified;downloadedDeliveryRevision=verified?status.active.manifest?.deliveryRevision||null:null;downloadedPaths=new Set(verified?status.active.files.map(f=>f.path):[]);
   }catch{if(generation===selectionGeneration){saved=false;downloadedPaths=new Set();downloadedAudioDescriptors=new globalThis.Map();downloadedDeliveryRevision=null;}}
@@ -117,16 +163,20 @@
  let visual=$derived(['image','map'].includes(focal?.kind));
  let videoPending=$derived(visual&&!!matchingVideo&&visualHeard!==focal.id);
  let visualPending=$derived(visual&&!matchingVideo&&session.preferences.describeImages&&!muted&&!!focal.descriptionAudio&&visualHeard!==focal.id);
- let primaryLabel=$derived(mediaLoading||videoDeliveryState.loading?'Cancel loading':playbackPending?'Pause':finished?'Begin again':inTransition?'Continue':automaticOff&&!session.detour?'Continue':isPlaying?'Pause':inlineVideo?'Resume':audio?.active&&audioContext?'Resume':videoPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)?'Play video':visualPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)?'Play':session.detour?(visual?'Return':focal?.kind==='video'?'Play video':focal?.descriptionAudio?'Listen':'Return'):session.status==='waiting'||automaticOff||!activity?.audioSrc?'Continue':session.status==='paused'?'Resume':!started?'Begin':'Play');
+ // Preparation is primary only when no higher-priority playback or visual action owns the control.
+ // requestableNarration already excludes transitions, detours and completed sessions.
+ let primaryStartsPreparation=$derived(!isPlaying&&!playbackPending&&!inlineVideo&&!videoDeliveryState.loading&&!videoPending&&!visualPending&&!!preparationRequest&&hasGuidePreparation(selectedPack,preparationRequest)&&!automaticOff&&!audioContext&&!preparationBusy&&!mediaLoading&&['ready','paused'].includes(session.status));
+ let primaryLabel=$derived(mediaLoading||videoDeliveryState.loading?'Cancel loading':playbackPending?'Pause':finished?'Begin again':inTransition?'Continue':automaticOff&&!session.detour?'Continue':isPlaying?'Pause':inlineVideo?'Resume':audio?.active&&audioContext?'Resume':videoPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)?'Play video':visualPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)?'Play':session.detour?(visual?'Return':focal?.kind==='video'?'Play video':focal?.descriptionAudio?'Listen':'Return'):primaryStartsPreparation?(!started?'Begin':'Play'):session.status==='waiting'||automaticOff||!activity?.audioSrc?'Continue':session.status==='paused'?'Resume':!started?'Begin':'Play');
  let manualStarts=new Set();let listeningHint=$state(false),hintShown=false;
- let manualAvailable=$derived(!!(matchingVideo||focal?.kind==='video'&&(focal.src||focal.videoPrepared)||focal?.descriptionAudio||activity?.audioSrc));
- let manualLabel=$derived(isPlaying?'Pause':inlineVideo||audioContext&&audio?.active?'Resume':'Play');
+ let manualAvailable=$derived(!!(preparationRequest||matchingVideo||focal?.kind==='video'&&(focal.src||focal.videoPrepared)||focal?.descriptionAudio||activity?.audioSrc));
+ let manualLabel=$derived(preparationBusy?'Cancel preparation':currentPreparation?.status==='failed'?'Retry recording':isPlaying?'Pause':inlineVideo||audioContext&&audio?.active?'Resume':preparationRequest?'Play original recording':'Play');
  function manualPlay(restart=false){
   if(!isPlaying)authorizeVisual();
   if(!restart&&isPlaying){revokePlayback();audio?.pause();videoOwner.node?.pause();dispatch({type:'PAUSE'});return;}
   if(!restart&&inlineVideo){playVideo();return;}
   if(!restart&&audioContext&&audio?.active){playbackConsent=true;audio.resume();return;}
   if(deferVideo(()=>manualPlay(restart)))return;
+  if(preparationRequest){void playRequestedNarration();return;}
   manualStarts.add(activity.id);
   if(manualStarts.size>=3&&!hintShown){listeningHint=true;hintShown=true;}
   if(visual&&matchingVideo){openMatchingVideo();return;}
@@ -158,7 +208,7 @@
  }
  function resolveAsset(id){if(assets[id])return id;return (activity.relatedAssetIds||[]).find(key=>assets[key]?.kind===id)||(focal?.kind===id?focal.id:null)||(id==='scripture'?defaultScriptureId:Object.values(assets).find(a=>a.kind===id)?.id)||id;}
  function settleSilent(){if(!inTransition&&!session.detour&&!finished&&!activity.audioSrc){session={...session,status:'waiting'};persist();}}
- function cancel(){if(deferVideo(cancel))return;nativeDemoVideo=null;videoDelivery.clear();playbackPending=false;mediaGeneration++;mediaAbort?.abort();mediaAbort=null;mediaLoading=false;if(mediaBlob){URL.revokeObjectURL(mediaBlob);mediaBlob=null;}mediaTiming=null;mediaAlignment=null;mediaLogicalPath=null;videoState={elapsed:0,duration:0};inlineVideo=null;videoPlaying=false;clearTimeout(timer);timer=null;audio?.stop();videoOwner.node?.pause();audioContext=null;}
+ function cancel(){if(deferVideo(cancel))return;preparationOwner.cancel();nativeDemoVideo=null;videoDelivery.clear();playbackPending=false;mediaGeneration++;mediaAbort?.abort();mediaAbort=null;mediaLoading=false;if(mediaBlob){URL.revokeObjectURL(mediaBlob);mediaBlob=null;}mediaTiming=null;mediaAlignment=null;mediaLogicalPath=null;videoState={elapsed:0,duration:0};inlineVideo=null;videoPlaying=false;clearTimeout(timer);timer=null;audio?.stop();videoOwner.node?.pause();audioContext=null;}
  function message(text){messages=[...messages.slice(-11),{role:'assistant',text}];tick().then(()=>chatLog?.scrollTo({top:chatLog.scrollHeight,behavior:'smooth'}));}
  function finishAudio(){
   const context=audioContext;audioContext=null;if(!context)return;
@@ -175,7 +225,7 @@
   if(!playbackConsent)return;
   if(session.status==='complete'||session.detour||inTransition)return;
   authorizeVisual(false);
-  if(!activity.audioSrc){settleSilent();if(visual&&(session.preferences.autoplayVideo&&matchingVideo||session.preferences.describeImages&&focal?.descriptionAudio)||focal?.kind==='term'&&!muted&&focal.descriptionAudio)describe(focal.id);return;}
+  if(!activity.audioSrc){if(preparationRequest&&hasGuidePreparation(selectedPack,preparationRequest)&&!automaticOff){void playRequestedNarration({automatic:true});return;}settleSilent();if(activity.kind==='scripture'&&session.preferences.readScripture)notice='No recording is available for this Scripture passage. You can read it and continue.';if(visual&&(session.preferences.autoplayVideo&&matchingVideo||session.preferences.describeImages&&focal?.descriptionAudio)||focal?.kind==='term'&&!muted&&focal.descriptionAudio)describe(focal.id);return;}
   if(automaticOff&&visual&&(session.preferences.autoplayVideo&&matchingVideo||session.preferences.describeImages&&focal?.descriptionAudio)){describe(focal.id);return;}
   const id=activity.id,generation=selectionGeneration;
   if(activity.kind==='scripture'&&!session.preferences.readScripture){notice='The passage is ready for you to read. Continue when you’re ready.';return;}
@@ -195,7 +245,7 @@
   }
   if(focal?.kind==='term')termDefinition=null;
   if(activity.kind==='scripture'&&!session.preferences.readScripture&&!forceReading){dispatch({type:'CONTINUE'});scheduleNext();return;}
-  if(!activity.audioSrc){settleSilent();return;}
+  if(!activity.audioSrc){if(!automatic&&preparationRequest){void playRequestedNarration();return;}settleSilent();return;}
   if(automaticOff&&activity.readingGroupId){navigate({type:'CONTINUE'});return;}
   if(automaticOff&&!forceReading){dispatch({type:'PLAY'});introduced=new Set([...introduced,activity.id]);dispatch({type:'NARRATION_END',activityId:activity.id});return;}
   cancel();dispatch({type:'PLAY'});
@@ -205,7 +255,8 @@
  function primary(){
   if(!isPlaying&&!playbackPending&&!mediaLoading&&!['Continue','Return','Begin again'].includes(primaryLabel))authorizeVisual();
   if(videoDeliveryState.loading){videoDelivery.cancel();return;}if(mediaLoading){revokePlayback();notice='Playback canceled.';return;}
-  if(!activity.audioSrc&&!session.detour&&!inTransition&&!finished&&!videoPending&&!visualPending){navigate({type:'CONTINUE'},true);return;}
+  if(primaryStartsPreparation){playbackConsent=true;void playRequestedNarration({automatic:true});return;}
+  if(!activity.audioSrc&&!audioContext&&!session.detour&&!inTransition&&!finished&&!videoPending&&!visualPending){navigate({type:'CONTINUE'},true);return;}
   if(inTransition){navigate({type:'CONTINUE'},true);return;}
   if(finished){reset();return;}
   if(automaticOff&&!session.detour){navigate({type:'CONTINUE'},true);return;}
@@ -297,7 +348,7 @@
   rotate();landscape?.addEventListener('change',rotate);
   try{applyStored();}catch{}
   updateDownloaded();updateMedia();
-  audio=createAudioController(s=>{const m=mediaAlignment?.clockDomain==='delivery-media-seconds'?null:mediaTiming?.mapping;const logical={...s,src:s.src&&s.src===mediaBlob?mediaLogicalPath:s.src};audioState=m?{...logical,elapsed:Math.max(0,(s.elapsed-m.offsetSeconds)/m.scale),duration:Math.max(0,(s.duration-m.offsetSeconds)/m.scale)}:logical;},finishAudio,text=>{revokePlayback();notice=text;dispatch({type:'PAUSE'});},{allowSpeechFallback:false});
+  audio=createAudioController(s=>{const m=mediaAlignment?.clockDomain==='delivery-media-seconds'?null:mediaTiming?.mapping;const logical={...s,src:s.src&&s.src===mediaBlob?mediaLogicalPath:s.src};audioState=m?{...logical,elapsed:Math.max(0,(s.elapsed-m.offsetSeconds)/m.scale),duration:Math.max(0,(s.duration-m.offsetSeconds)/m.scale)}:logical;if(s.playing&&s.src===mediaBlob&&audioContext?.type==='narration'&&audioContext.id===currentPreparation?.identity.activityId&&currentPreparation?.status==='ready')preparationDismissed=currentPreparation.event;},finishAudio,text=>{revokePlayback();notice=text;dispatch({type:'PAUSE'});},{allowSpeechFallback:false});
   const net=()=>{const wasOnline=online;online=navigator.onLine;if(!online)visualOwner.cancel();else if(!wasOnline&&visualCanceled!==visualIdentity()){visualOwner.retry();syncVisual();}};net();window.addEventListener('online',net);window.addEventListener('offline',net);
   if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js').then(()=>{updateDownloaded();updateMedia();}).catch(()=>{serviceWorkerError='Offline storage is unavailable here. Try the published HTTPS version.';});
   try{const id=localStorage.getItem('fia-v3-selected-pack');if(id&&id!==selectedPack.id)selectPack(id).catch(e=>notice=e.message);}catch{}
@@ -337,14 +388,14 @@
  <SessionProgress groups={progress} onopen={()=>sheet='progress'}/>
  {#if stage.supporting}<button class="kept-content" aria-label={`Open kept ${assets[stage.supporting].title}`} onclick={()=>navigate({type:'DETOUR',assetId:stage.supporting})}>{#if assets[stage.supporting].src&&assets[stage.supporting].kind!=='video'}<img src={assets[stage.supporting].src} alt={assets[stage.supporting].title}/>{:else}<BookOpen size={22}/>{/if}</button>{/if}
 
- {#if notice||!online}<div class="scene-notice" role="status"><span>{notice||(!online?(saved?'Offline · session saved':'You’re offline'):'')}</span><button aria-label="Dismiss notice" onclick={()=>notice=''}><X size={15}/></button></div>{/if}
+ {#if notice||!online||preparationNotice}<div class="scene-notice" role="status"><span>{notice||(!online?(saved?'Offline · session saved':'You’re offline'):preparationNotice||'')}</span><button aria-label="Dismiss notice" onclick={()=>{notice='';preparationDismissed=currentPreparation?.event??null;}}><X size={15}/></button></div>{/if}
  {#if listeningHint&&muted}<div class="scene-notice" role="status"><span>Prefer automatic narration?</span><button onclick={()=>{listeningHint=false;sheet='settings';}}>Settings</button><button aria-label="Dismiss narration suggestion" onclick={()=>listeningHint=false}><X size={15}/></button></div>{/if}
  <nav class="scene-controls" aria-label="Session controls">
   <button class="menu-control" aria-label="More options" onclick={()=>sheet='menu'}><FiaMark/></button>
   <button class="step-control" aria-label={session.detour?'Return to guide':'Previous activity'} disabled={!session.detour&&session.index===0&&!finished} onclick={()=>navigate({type:'BACK'})}><ChevronLeft size={26}/></button>
-  <GuidePrimary playback={inlineVideo||focal?.kind==='video'?videoState:audioState} label={primaryLabel} playing={isPlaying&&!automaticOff} continuing={primaryLabel==='Continue'||primaryLabel==='Return'} onclick={primary}/>
-  {#if automaticOff&&!session.detour&&!inTransition&&!finished}
-  <button class="step-control" aria-label={manualLabel} title={manualLabel} disabled={!manualAvailable} onclick={()=>manualPlay()}>{#if isPlaying}<Pause size={26}/>{:else}<Play size={26}/>{/if}</button>
+  <GuidePrimary playback={inlineVideo||focal?.kind==='video'?videoState:audioState} label={primaryLabel} canceling={mediaLoading||videoDeliveryState.loading} playing={isPlaying&&!automaticOff} continuing={primaryLabel==='Continue'||primaryLabel==='Return'} onclick={primary}/>
+  {#if (automaticOff||preparationRequest)&&!primaryStartsPreparation&&manualLabel!==primaryLabel&&!session.detour&&!inTransition&&!finished}
+  <button class="step-control" aria-label={manualLabel} title={manualLabel} disabled={!manualAvailable} onclick={()=>manualPlay()}>{#if preparationBusy}<X size={26}/>{:else if isPlaying}<Pause size={26}/>{:else}<Play size={26}/>{/if}</button>
   {:else}<button class="step-control" aria-label="Skip to next activity" disabled={finished||!!session.detour} onclick={()=>navigate({type:'CONTINUE'},true)}><ChevronRight size={26}/></button>{/if}
   <button class="replay-control" aria-label="Replay" disabled={finished||!!session.detour} onclick={()=>{if(automaticOff){manualPlay(true);}else if(inlineVideo){const v=videoOwner.node;if(v)v.currentTime=0;videoState={...videoState,elapsed:0};playVideo();}else if(visual&&matchingVideo){openMatchingVideo();}else{cancel();playActivity(true);}}}><RotateCcw size={22}/></button>
  </nav>

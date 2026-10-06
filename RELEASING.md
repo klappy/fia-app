@@ -22,13 +22,17 @@ Branches only move forward by merge commits, so `main ⊇ staging ⊇ production
 
 ## The routine
 
-1. **Feature PR → `main`.** CI green (`ci.yml`) plus a review by a fresh agent (never the author). Merge with a **merge commit**. Each PR carries its note in `release/changes/`.
+1. **Feature PR → `main`.** CI green (`ci.yml`) plus a review by a fresh agent (never the author). Merge with a **merge commit**. Each PR carries its note in `release/changes/`. Before merging, inspect existing Bugbot reviews, inline threads, and checks for the current head. Bugbot is optional: wait for an existing run to finish; assess and address actionable findings and record dispositions. If it has not run, record that absence and use independent review plus targeted tests. Do not enable, reconfigure, or rerun it just to satisfy this gate; a neutral check is not proof that findings are resolved.
 2. **dev.** Workers Builds deploys `main`; wait for **post-deploy green on dev**.
 3. **Release prep (when promoting a new version).** Small PR to `main`: bump `package.json` `version`, add the `CHANGELOG.md` entry gathered from `release/changes/` since the last promotion. Merge, post-deploy green on dev.
 4. **Promote to staging.** PR `main → staging`, titled `Promote <version> to staging`; body is the release note (the `CHANGELOG.md` entry plus links to the `release/changes/` notes) and the dev post-deploy run link. Merge with a **merge commit — never squash or rebase** (that would fork history and break the ancestor rule). Wait for **post-deploy green on staging**.
 5. **Promote to production.** PR `staging → production`, titled `Promote <version> to production`, same body plus the staging post-deploy run link. Merge commit. Wait for **post-deploy green on production**.
 
 Promote only what has gone green on the env below it; never push directly to `staging` or `production`.
+
+After each feature/release lands, run lightweight facilitator journeys against the exact deployed version. Where safe, use separate sessions in parallel: a first-time facilitator finding and explicitly playing the intended passage, a returning/offline facilitator resuming supported downloaded content, and a bilingual facilitator selecting an available language and passage. Adapt the checks to the change rather than repeat an exhaustive matrix. Record environment/head, starting state, actual steps/outcome, success/failure, and comparison with prior evidence. Label qualitative confusion/friction/satisfaction signals as agent assessment, not human research; use unknown when unobserved, without invented numeric scores.
+
+Wrong media, lost progress, unusable controls, or misleading ready state block further promotion. Record and prioritize minor friction. A baseline journey does not qualify a newer candidate; text-only offline success does not establish offline audio. Keep explicit Play and existing spending/infrastructure limits. Do not prewarm a preparation before a reserved UI-first upgrade test.
 
 ## Rollback
 

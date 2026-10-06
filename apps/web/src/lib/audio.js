@@ -1,5 +1,8 @@
 // One audio owner for prepared narration, browser speech and video.
 export function createAudioController(onState, onEnd, onError, { allowSpeechFallback = true } = {}) {
+  // Native media clocks can round a completed seek just below the requested start.
+  const seekToleranceSeconds = 0.001;
+  const beforeRangeStart = owner => !Number.isFinite(owner.currentTime) || range.startSeconds - owner.currentTime > seekToleranceSeconds;
   let source = null, range = null, deadline = null, frame = null, prepareRange = null, boundaryEpoch = 0;
   function clearBoundary() { boundaryEpoch++; clearTimeout(deadline); deadline = null; if (frame !== null && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(frame); frame = null; }
   let audio = null, utterance = null, generation = 0, speaking = false, paused = false;
@@ -42,7 +45,7 @@ export function createAudioController(onState, onEnd, onError, { allowSpeechFall
   }
   function startAudio(owner, gen, message) {
     if (range?.ready) {
-      if (!Number.isFinite(owner.duration) || range.endSeconds > owner.duration || owner.currentTime < range.startSeconds) { fail('The recording range is unavailable.'); return; }
+      if (!Number.isFinite(owner.duration) || range.endSeconds > owner.duration || beforeRangeStart(owner)) { fail('The recording range is unavailable.'); return; }
       if (owner.currentTime >= range.endSeconds) { finish(); return; }
     }
     try {
@@ -65,7 +68,7 @@ export function createAudioController(onState, onEnd, onError, { allowSpeechFall
     if (!current()) return;
     const check = () => {
       if (!current()) return;
-      if (!Number.isFinite(owner.currentTime) || owner.currentTime < range.startSeconds || !Number.isFinite(owner.duration) || range.endSeconds > owner.duration) {
+      if (beforeRangeStart(owner) || !Number.isFinite(owner.duration) || range.endSeconds > owner.duration) {
         fail('The recording range is unavailable.'); return;
       }
       if (owner.currentTime >= range.endSeconds) { finish(); return; }
@@ -152,7 +155,7 @@ export function createAudioController(onState, onEnd, onError, { allowSpeechFall
     let seekingStart = false;
     const ready = () => {
       if (!current() || !range || !seekingStart || owner.seeking) return;
-      if (Math.abs(owner.currentTime - range.startSeconds) > 0.001) { fail('The recording range could not be reached.'); return; }
+      if (!Number.isFinite(owner.currentTime) || Math.abs(owner.currentTime - range.startSeconds) > seekToleranceSeconds) { fail('The recording range could not be reached.'); return; }
       range.ready = true; seekingStart = false; state();
       if (!paused) startAudio(owner, gen, message);
     };

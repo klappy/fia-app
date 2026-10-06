@@ -6,7 +6,7 @@
   //   npx wrangler deploy --env production  (branch production) -> fiaguide.app
   // Custom domains are attached account-side (Otto); no routes live in this file.
   // Build command: `npm run build` = Vite, offline finalization and the pinned read bundle — tests gate the PR in CI, never the build.
-  // Static assets plus reviewed read-only HTTP/MCP; no model calls or generation secrets.
+  // Static assets, read HTTP/MCP and bounded preparation metadata; no provider calls.
   // Existing Workers and domains remain unchanged.
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "fia-app",
@@ -22,9 +22,10 @@
     "html_handling": "auto-trailing-slash",
   },
   "observability": { "enabled": true },
+  // Each deployed environment owns isolated private preparation storage. No ASR bindings.
   "env": {
-    "dev": { "name": "fia-app-dev", "vars": { "FIA_API_ORIGIN": "https://dev.fiaguide.app" } },
-    "staging": { "name": "fia-app-staging", "vars": { "FIA_API_ORIGIN": "https://staging.fiaguide.app" } },
-    "production": { "name": "fia-app", "vars": { "FIA_API_ORIGIN": "https://fiaguide.app" } },
+    "dev": { "migrations": [{ "tag": "v1-preparation", "new_sqlite_classes": ["FiaPreparationJobs"] }], "r2_buckets": [{ "binding": "FIA_ORIGINALS", "bucket_name": "fia-originals-development" }], "durable_objects": { "bindings": [{ "name": "FIA_PREPARATION_JOBS", "class_name": "FiaPreparationJobs" }] }, "name": "fia-app-dev", "vars": { "FIA_API_ORIGIN": "https://dev.fiaguide.app" } },
+    "staging": { "migrations": [{ "tag": "v1-preparation", "new_sqlite_classes": ["FiaPreparationJobs"] }], "r2_buckets": [{ "binding": "FIA_ORIGINALS", "bucket_name": "fia-originals-staging" }], "durable_objects": { "bindings": [{ "name": "FIA_PREPARATION_JOBS", "class_name": "FiaPreparationJobs" }] }, "name": "fia-app-staging", "vars": { "FIA_API_ORIGIN": "https://staging.fiaguide.app" } },
+    "production": { "migrations": [{ "tag": "v1-preparation", "new_sqlite_classes": ["FiaPreparationJobs"] }], "r2_buckets": [{ "binding": "FIA_ORIGINALS", "bucket_name": "fia-originals-production" }], "durable_objects": { "bindings": [{ "name": "FIA_PREPARATION_JOBS", "class_name": "FiaPreparationJobs" }] }, "name": "fia-app", "vars": { "FIA_API_ORIGIN": "https://fiaguide.app" } },
   },
 }

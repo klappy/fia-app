@@ -97,3 +97,27 @@ run('unranged playback retains its original clock without excerpt fields',async 
  e.controller.play('source','blob:whole');await tick();const owner=e.owners.at(-1);owner._time=10;owner.ontimeupdate();
  assert.deepEqual(e.states.at(-1),{src:'blob:whole',playing:true,elapsed:10,duration:20});
 });
+
+run('fractional range seek rounding permits playback and resume at both rates',async e=>{
+ for(const rate of [1,1.5]){
+  e.controller.play('source','blob:verified',rate,{startSeconds:33.0150625,endSeconds:36.3400625});
+  const owner=e.owners.at(-1);owner.duration=51.902125;owner.metadata();owner._time=33.015062;owner.seeked();await tick();
+  assert.equal(owner.calls,1);assert.equal(e.controller.playing,true);assert.deepEqual(e.errors,[]);
+  assert.equal(e.states.at(-1).elapsed,33.015062);assert.equal(e.states.at(-1).progressElapsed,0);
+  [...e.frames.values()][0]();assert.equal(e.controller.active,true);
+  e.controller.pause();e.controller.resume();await tick();assert.equal(owner.calls,2);
+  owner._time=36.3400625;[...e.frames.values()][0]();assert.equal(e.controller.active,false);
+ }
+ assert.equal(e.ends,2);
+});
+run('seek tolerance does not admit materially early or nonfinite media clocks',async e=>{
+ for(const time of [2.998,NaN,Infinity]){
+  e.controller.play('source','blob:verified',1,{startSeconds:3,endSeconds:8});const owner=e.owners.at(-1);owner.metadata();owner._time=time;owner.seeked();await tick();
+  assert.equal(owner.calls,0);assert.equal(e.controller.active,false);
+ }
+ for(const resume of [false,true]){
+  const owner=await e.start();if(resume)e.controller.pause();owner._time=2.998;
+  if(resume)e.controller.resume();else [...e.frames.values()][0]();
+  assert.equal(e.controller.active,false);assert.equal(e.ends,0);
+ }
+});

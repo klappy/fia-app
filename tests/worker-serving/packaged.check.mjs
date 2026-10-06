@@ -2,7 +2,7 @@ import test from 'node:test';import assert from 'node:assert/strict';import {rea
 const require=createRequire(import.meta.url),{build}=require('esbuild'),{Miniflare,convertV4MiniflareOptions}=require('miniflare');
 const config=JSON.parse(readFileSync('wrangler.jsonc','utf8').replace(/^\s*\/\/.*$/gm,'').replace(/,\s*([}\]])/g,'$1'));
 const hash=b=>createHash('sha256').update(b).digest('hex');
-const bundle=await build({entryPoints:[config.main],bundle:true,format:'esm',platform:'browser',write:false});
+const bundle=await build({entryPoints:[config.main],bundle:true,format:'esm',platform:'browser',external:['node:buffer','node:crypto'],write:false});
 const snapshot=JSON.parse(readFileSync('server/faces/worker/generated/snapshot.json'));
 const headers={'content-type':'application/json',accept:'application/json, text/event-stream','mcp-protocol-version':'2025-06-18'};
 test('real app assets and Worker API coexist using actual reviewed build/configuration',async()=>{

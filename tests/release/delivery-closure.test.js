@@ -37,3 +37,27 @@ test('schema4 release closure binds original audio ledger, measured range and ev
  assert.throws(()=>verifyManifestFile(full,raw,{...sidecar,schema:3},revision));
  assert.throws(()=>verifyManifestFile({...file,playbackRange:e.playbackRange},raw,{entries:[entry]},revision));
 });
+
+test('passage-only release closure binds remote media to actual canonical P2 evidence',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const root=new URL('../../apps/web/public/',import.meta.url),read=url=>readFileSync(new URL(url.slice(1),root));
+ const sidecar=JSON.parse(read('/content/delivery/eng.MRK-1-14-20/b40f0de65327a049437b071849300b7366c2267f4746d888a737aa6132caccfe.json'));
+ const descriptor=JSON.parse(read('/content/registry.json')).packs.find(p=>p.id===sidecar.packId),pack=JSON.parse(read(descriptor.presentation.url));
+ const e=sidecar.entries[0],ledger=JSON.parse(read(sidecar.scriptureSourceLedger.url)),row=ledger.entries[0];
+ const f={path:e.path,group:'audio',sourceSha256:e.source.sha256,sourceBytes:e.source.bytes,deliveryURL:e.delivery.url,deliveryRevision:revision,sha256:e.delivery.sha256,bytes:e.delivery.bytes,mime:e.delivery.mime,timing:e.timing,duration:e.delivery.duration,playbackRange:e.playbackRange,scriptureLedgerSha256:sidecar.scriptureSourceLedger.sha256,scriptureLedgerEntryId:row.id,scriptureAssetId:row.assetId,scripturePlaybackMode:'passage-only',scriptureHighlighting:'disabled',scriptureAlignment:null,scriptureRangeReviewSha256:e.rangeReviewSha256,scriptureCanonicalTextSha256:row.canonicalTextSha256,scriptureSourceEvidenceSha256:row.sourceEvidenceSha256,scriptureSourceRangeReviewSha256:row.review.evidenceSha256};
+ const full={...f,defaultSize:'medium',variants:{medium:structuredClone(f)}},context={descriptor,pack};
+ const check=(file=full,bytes=null,delivery=sidecar,publication=context,reader=read)=>verifyManifestFile(file,bytes,delivery,revision,reader,publication);
+ check();assert.throws(()=>check(full,Buffer.from('shadowing local file')));
+ assert.throws(()=>check(full,null,{...sidecar,schema:4}));
+ const mutations={scriptureLedgerSha256:'0'.repeat(64),scriptureLedgerEntryId:'other',scriptureAssetId:'other',scriptureCanonicalTextSha256:'0'.repeat(64),scriptureSourceEvidenceSha256:'0'.repeat(64),scriptureSourceRangeReviewSha256:'0'.repeat(64),scriptureRangeReviewSha256:'0'.repeat(64),scripturePlaybackMode:'aligned',scriptureHighlighting:'enabled',scriptureAlignment:{verses:[]},scriptureAlignmentSha256:'0'.repeat(64),logicalSourceBytes:1,logicalSourceSha256:'0'.repeat(64),recordingLedgerEntryId:'other',recordingLedgerSha256:'0'.repeat(64),sourceBytes:1,duration:1,playbackRange:{startSeconds:0,endSeconds:1},sha256:'0'.repeat(64)};
+ for(const [key,value] of Object.entries(mutations)){
+  assert.throws(()=>check({...full,[key]:value}),key);
+  assert.throws(()=>check({...full,variants:{medium:{...f,[key]:value}}}),'variant '+key);
+ }
+ assert.throws(()=>check({...full,variants:{}}));assert.throws(()=>check({...full,variants:undefined}));
+ const wrongText=structuredClone(context);wrongText.pack.assets[row.assetId].text+=' changed';assert.throws(()=>check(full,null,sidecar,wrongText));
+ const wrongEvidence=structuredClone(context);wrongEvidence.pack.assets[row.assetId].sourceEvidence={};assert.throws(()=>check(full,null,sidecar,wrongEvidence));
+ assert.throws(()=>check(full,null,sidecar,context,url=>url.includes('/scripture-evidence/')?Buffer.from('{}'):read(url)));
+ assert.throws(()=>check(full,null,sidecar,context,url=>url===sidecar.scriptureSourceLedger.url?Buffer.from('{}'):read(url)));
+ const changedRange=structuredClone(sidecar);changedRange.entries[0].variants.medium.playbackRange.endSeconds-=1;assert.throws(()=>check(full,null,changedRange));
+});
