@@ -10,6 +10,7 @@ const server=createServer(async(req,res)=>{try{
  let target;try{target=previewRequest(req.url,req.headers,localOrigin,workerOrigin);}catch{return void res.writeHead(403).end('Untrusted preview request');}
  const path=new URL(target.url).pathname;
  if(path==='/v1'||path.startsWith('/v1/')||path==='/mcp'||path.startsWith('/mcp/')){const chunks=[];for await(const c of req)chunks.push(c);const body=Buffer.concat(chunks),response=await authority.fetch(target.url,{method:req.method,headers:target.headers,...(body.length?{body}:{})});res.writeHead(response.status,Object.fromEntries(response.headers));return void res.end(Buffer.from(await response.arrayBuffer()));}
+ if(!['GET','HEAD'].includes(req.method))return void res.writeHead(405,{'Allow':'GET, HEAD'}).end();
  let file=resolve(root,'.'+path);if(file!==root&&!file.startsWith(root+'/'))return void res.writeHead(403).end();
  try{if((await stat(file)).isDirectory())file=join(file,'index.html');await stat(file);}catch{file=join(root,'index.html');}
  const types={'.html':'text/html','.js':'application/javascript','.css':'text/css','.json':'application/json','.webmanifest':'application/manifest+json','.svg':'image/svg+xml','.woff2':'font/woff2','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.mp3':'audio/mpeg','.mp4':'video/mp4'};
