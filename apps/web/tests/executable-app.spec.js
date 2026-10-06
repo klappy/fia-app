@@ -91,3 +91,18 @@ it('Cancel preparation revokes a pending executable demand and late ready cannot
  let retryReady;libraryAdapter.prepareRecording.mockReturnValue(new Promise(r=>retryReady=r));await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await waitFor(()=>expect(libraryAdapter.prepareRecording).toHaveBeenCalledTimes(2));await fireEvent.click(screen.getByRole('button',{name:'Cancel preparation',exact:true}));retryReady({status:'ready',value:{}});await new Promise(r=>setTimeout(r,0));expect(libraryAdapter.prepareRecording.mock.calls[1][1].aborted).toBe(true);expect(audio.play).not.toHaveBeenCalled();
  libraryAdapter.prepareRecording.mockResolvedValue({status:'ready',value:{}});await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(1));expect(libraryAdapter.prepareRecording).toHaveBeenCalledTimes(3);expect(libraryAdapter.prepareRecording.mock.calls[2][1].aborted).toBe(false);
 });
+it('matching executable playback dismisses ready notice using declared identity association',async()=>{
+ firstNarration('prepare-original');const identity={packId:descriptor.id,presentationRevision:'b'.repeat(64),language:'eng',edition:'fia-guide',quality:'original',activityId:'server-step',sourceUnitId:'server-unit',sourceTextSha256:'c'.repeat(64)};
+ libraryAdapter.prepareOriginal.mockImplementation((reference,context)=>context.prepareNarration(identity,context));
+ audio.play.mockImplementation((text,src)=>{audio.active=true;audio.src=src;});
+ await mount();await fireEvent.click(screen.getByRole('button',{name:'Begin',exact:true}));await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(1));
+ expect(screen.getByRole('status').textContent).toContain('Recording ready');
+ audio.state({playing:true,src:'blob:unrelated',elapsed:0,duration:2});await new Promise(r=>setTimeout(r,0));expect(screen.getByRole('status').textContent).toContain('Recording ready');
+ audio.state({playing:true,src:audio.src,elapsed:0.1,duration:2});await waitFor(()=>expect(screen.queryByText('Recording ready. Press Play to listen.')).toBeNull());
+});
+it('failed executable prepared playback re-requests and re-verifies on explicit retry',async()=>{
+ firstNarration('prepare-original');const identity={packId:descriptor.id,presentationRevision:'b'.repeat(64),language:'eng',edition:'fia-guide',quality:'original',activityId:'server-step',sourceUnitId:'server-unit',sourceTextSha256:'c'.repeat(64)};
+ libraryAdapter.prepareOriginal.mockImplementation((reference,context)=>context.prepareNarration(identity,context));libraryAdapter.playPreparedRecording.mockRejectedValueOnce(Error('Recording integrity failed.'));
+ await mount();await fireEvent.click(screen.getByRole('button',{name:'Begin',exact:true}));await waitFor(()=>expect(screen.getByRole('status').textContent).toContain('Recording integrity failed.'));expect(audio.play).not.toHaveBeenCalled();
+ await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(1));expect(libraryAdapter.prepareRecording).toHaveBeenCalledTimes(2);expect(libraryAdapter.verifyPreparedRecording).toHaveBeenCalledTimes(2);expect(libraryAdapter.prepareRecording.mock.calls[1][0]).toEqual(identity);
+});

@@ -70,7 +70,8 @@
   boundPreparation={activityId:context.activityId,identity};
   const key=preparationKey(identity);let descriptor=preparedRecordings.get(key);
   if(!descriptor){const result=await preparationOwner.start(identity,{explicit:true});if(context.signal.aborted||!result)return null;if(!result.immediate&&!context.automatic)return {status:'ready'};descriptor=result.descriptor;}
-  return libraryAdapter.playPreparedRecording(descriptor,context.signal);
+  try{return await libraryAdapter.playPreparedRecording(descriptor,context.signal);}
+  catch(error){if(!context.signal.aborted&&preparedRecordings.get(key)===descriptor){const next=new globalThis.Map(preparedRecordings);next.delete(key);preparedRecordings=next;}throw error;}
  }
  async function playExecutableNarration({automatic=false}={}){
   if(!executablePlayable||session.detour||inTransition||finished||automatic&&(!playbackConsent||automaticOff))return;
@@ -400,7 +401,7 @@
   rotate();landscape?.addEventListener('change',rotate);
   try{applyStored();}catch{}
   updateDownloaded();updateMedia();
-  audio=createAudioController(s=>{const m=mediaAlignment?.clockDomain==='delivery-media-seconds'?null:mediaTiming?.mapping;const logical={...s,src:s.src&&s.src===mediaBlob?mediaLogicalPath:s.src};audioState=m?{...logical,elapsed:Math.max(0,(s.elapsed-m.offsetSeconds)/m.scale),duration:Math.max(0,(s.duration-m.offsetSeconds)/m.scale)}:logical;if(s.playing&&s.src===mediaBlob&&audioContext?.type==='narration'&&audioContext.id===currentPreparation?.identity.activityId&&currentPreparation?.status==='ready')preparationDismissed=currentPreparation.event;},finishAudio,text=>{revokePlayback();notice=text;dispatch({type:'PAUSE'});},{allowSpeechFallback:false});
+  audio=createAudioController(s=>{const m=mediaAlignment?.clockDomain==='delivery-media-seconds'?null:mediaTiming?.mapping;const logical={...s,src:s.src&&s.src===mediaBlob?mediaLogicalPath:s.src};audioState=m?{...logical,elapsed:Math.max(0,(s.elapsed-m.offsetSeconds)/m.scale),duration:Math.max(0,(s.duration-m.offsetSeconds)/m.scale)}:logical;if(s.playing&&s.src===mediaBlob&&audioContext?.type==='narration'&&audioContext.id===(executableMode?boundPreparation?.activityId:currentPreparation?.identity.activityId)&&currentPreparation?.status==='ready')preparationDismissed=currentPreparation.event;},finishAudio,text=>{revokePlayback();notice=text;dispatch({type:'PAUSE'});},{allowSpeechFallback:false});
   const net=()=>{const wasOnline=online;online=navigator.onLine;if(!online)visualOwner.cancel();else if(!wasOnline&&visualCanceled!==visualIdentity()){visualOwner.retry();syncVisual();}};net();window.addEventListener('online',net);window.addEventListener('offline',net);
   if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js').then(()=>{updateDownloaded();updateMedia();}).catch(()=>{serviceWorkerError='Offline storage is unavailable here. Try the published HTTPS version.';});
   try{const id=localStorage.getItem('fia-v3-selected-pack');if(id&&id!==selectedPack.id)selectPack(id,{explicit:false}).catch(e=>notice=e.message);}catch{}
