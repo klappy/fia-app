@@ -951,7 +951,7 @@
     },
     {
       "path": "apps/web/src/components/AlignedReading.svelte",
-      "sha256": "b4688dc428c2a01b859aa1ffe16d0b8a3b82cb6f185ce950a2c0ad637258b15a",
+      "sha256": "812276702208c3b8bc024e9ed64c453e9d6adf12351842365a3314b9c4a57af8",
       "originalSha256": "9e3170fbdd24b83c9552392e942a0c3ed1fbb0a775f75c03f36ec9b0da67d478"
     },
     {
@@ -986,7 +986,7 @@
     },
     {
       "path": "apps/web/src/lib/alignment.js",
-      "sha256": "17be8f811e6c7ecb485b3cd1540f4f9347c1701f0cabc823977af466749666b0",
+      "sha256": "085712f9500bd6ca2c7fb7445d8185ff22088acaaab6932947e51323e69e26b6",
       "originalSha256": "5e4eb8dc33244e688606e2bfe42f9583778428952d78109aaf9bf95fb72ce652"
     },
     {
@@ -1067,7 +1067,7 @@
     },
     {
       "path": "apps/web/tests/alignment.test.js",
-      "sha256": "452c47a238718980bac5e0062be55a3e568ae93790d9f65adf86d3b368221308"
+      "sha256": "b9313f8764e85e3dbc458a9d4edb4441920c982d90da9ffed5c2637cb1c62659"
     },
     {
       "path": "apps/web/tests/app.spec.js",
@@ -1266,6 +1266,10 @@
       "sha256": "1ad4f5e4c054d5dae2ddde6b0cb430bae9bcd335b3063f6e5e4b00256d32f817"
     },
     {
+      "path": "e2e/scroll-follow.spec.js",
+      "sha256": "b0b01424c647081f3acd3fc82b5e64a58e6aa601256ebd23fa89e870f203a78b"
+    },
+    {
       "path": "e2e/upgrade.spec.js",
       "sha256": "70b240936c0d50f79e090e860687064c43a18c04c90931d513285e8f95d63ee0"
     },
@@ -1348,6 +1352,10 @@
     {
       "path": "release/changes/rounded-range-seek.md",
       "sha256": "03c13a806c76017a1eb400fe9b4e3dbfb2c3130718af12e240e8150a6316cb7d"
+    },
+    {
+      "path": "release/changes/scroll-follows-clip.md",
+      "sha256": "fcc13402ceabe71da2a80bddc118d4e83b9a9d6eb77e5b759f747f5491fc2ef2"
     },
     {
       "path": "release/changes/stable-original-coordinator.md",
