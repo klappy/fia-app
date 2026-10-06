@@ -142,3 +142,15 @@ test('verified original sidecar persists across restart, reuses exact dependenci
   const refused=await(await fetched(mf,origin+'/test-internal?index=0')).json();assert.equal(refused.state,'unavailable');assert.equal(refused.reason,'stable-evidence-unavailable');assert.equal(refused.result,null);assert.deepEqual(n,before);
  }finally{if(mf)await dispose(mf);await rm(dir,{recursive:true,force:true});}
 });
+
+test('original sidecar bounds stalled R2 reads and writes without awaiting stalled stream cancellation',async()=>{
+ const {projectStableOriginalSidecar}=await import('../../server/fia/preparation/stable-original-sidecar.mjs');
+ const digest='a'.repeat(64),snapshot={admissionSha256:digest,original:{sha256:digest,reference:`originals/sha256/${digest}.mp3`},scriptSha256:digest,unitsSha256:digest,policySha256:digest,artifacts:{preparedResult:{sha256:digest,reference:`reviewed-original/evidence/${digest}.json`}}};
+ const outcome={state:'ready',snapshot,servedSelection:{resource:'guide'},desiredSelection:{resource:'guide'},result:{schema:'fixture'}};
+ for(const stalled of ['get','read','put']){
+  const values=new Map(),storage={transaction:fn=>fn({get:key=>values.get(key),put:(key,value)=>values.set(key,value)})};
+  const never=()=>new Promise(()=>{}),bucket={put:stalled==='put'?never:async()=>{},get:stalled==='get'?never:async()=>({body:new ReadableStream({pull:never,cancel:never})})};
+  await assert.rejects(within(projectStableOriginalSidecar({storage,bucket,outcome,readVerified:async()=>outcome,eligible:()=>true,totalMs:30}),`stalled sidecar ${stalled}`,1000),/stable-sidecar-timeout/);
+  assert.equal([...values.keys()].filter(key=>key.startsWith('request-sidecar:')).length,0,'timeout cannot publish a pointer');
+ }
+});
