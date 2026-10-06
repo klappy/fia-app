@@ -64,6 +64,7 @@ export function createExecutionTransport({fetch:fetchArtifact=globalThis.fetch}=
   options.signal?.throwIfAborted();
   const statuses={ready:200,preparing:202,unavailable:404,blocked:409};
   if(!shape(value,['schema','status','jobId','reason','record'])||value.schema!=='fia-presentation-preparation@1'||!Object.hasOwn(statuses,value.status)||response.status!==statuses[value.status]||value.jobId!==null&&!(typeof value.jobId==='string'&&hashPattern.test(value.jobId))||expectedJobId&&value.jobId!==expectedJobId||value.reason!==null&&!text(value.reason))throw Error('The server presentation status is invalid.');
+  if(['ready','preparing'].includes(value.status)&&value.jobId===null)throw Error('The server presentation status is invalid.');
   if(value.status==='ready'){
    const record=value.record;
    if(!record||record.status!=='ready'||typeof record.revision!=='string'||!hashPattern.test(record.revision)||record.artifact?.sha256!==record.revision||!Number.isSafeInteger(record.artifact?.bytes)||record.artifact.bytes<=0||record.execution?.schema!=='fia-executable-catalog@1')throw Error('The server presentation status is invalid.');

@@ -104,6 +104,8 @@ test('presentation status preserves typed refusal and rejects inconsistent wire 
  assert.equal((await make('unavailable',404).readPresentationPreparation(jobId)).status,'unavailable');
  await assert.rejects(make('preparing',200).readPresentationPreparation(jobId),/status is invalid/);
  await assert.rejects(make('ready',200).readPresentationPreparation(jobId),/status is invalid/);
+ const noJob=createExecutionTransport({fetch:async()=>Response.json({schema:'fia-presentation-preparation@1',status:'preparing',jobId:null,reason:null,record:null},{status:202})});
+ await assert.rejects(noJob.preparePresentation({packId:'eng.MRK-1-14-20',baseRevision:'a'.repeat(64),sourceRevision:'b'.repeat(40),capability:'executable-presentation'}),/status is invalid/);
  let calls=0;const transport=createExecutionTransport({fetch:async()=>{calls++;throw Error('unexpected');}});
  await assert.rejects(transport.readPresentationPreparation('../job'),/identity is invalid/);
  await assert.rejects(transport.preparePresentation({url:'https://untrusted.invalid'}),/demand is invalid/);
