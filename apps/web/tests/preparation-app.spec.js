@@ -31,7 +31,7 @@ it('Continue during pending preparation advances without enqueueing next activit
  const signal=libraryAdapter.prepareRecording.mock.calls[0][1];await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));expect(signal.aborted).toBe(true);pending.resolve({status:'ready',value:{}});await new Promise(r=>setTimeout(r,10));expect(audio.play).not.toHaveBeenCalled();expect(libraryAdapter.verifyPreparedRecording).not.toHaveBeenCalled();expect(libraryAdapter.prepareRecording).toHaveBeenCalledTimes(1);
 });
 it('background status completion becomes ready without autoplay; next Play consumes descriptor',async()=>{
- libraryAdapter.prepareRecording.mockResolvedValue({status:'preparing',id:'a'.repeat(64)});await mount();await fireEvent.click(screen.getByRole('button',{name:'Play original recording'}));await waitFor(()=>expect(libraryAdapter.preparationStatus).toHaveBeenCalledTimes(1),{timeout:2500});await waitFor(()=>expect(screen.getByText('Recording ready. Press Play to listen.')).toBeTruthy());expect(audio.play).not.toHaveBeenCalled();await fireEvent.click(screen.getByRole('button',{name:'Play original recording'}));await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(1));expect(libraryAdapter.prepareRecording).toHaveBeenCalledTimes(1);
+ libraryAdapter.prepareRecording.mockResolvedValue({status:'preparing',id:'a'.repeat(64)});await mount();await fireEvent.click(screen.getByRole('button',{name:'Play original recording'}));await waitFor(()=>expect(libraryAdapter.preparationStatus).toHaveBeenCalledTimes(1),{timeout:2500});await waitFor(()=>expect(screen.getByText('Recording ready. Press Play to listen.')).toBeTruthy());expect(audio.play).not.toHaveBeenCalled();await fireEvent.click(screen.getByRole('button',{name:'Play original recording'}));await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(1));expect(libraryAdapter.prepareRecording).toHaveBeenCalledTimes(1);expect(screen.queryByText('Recording ready. Press Play to listen.')).toBeNull();
 });
 it('unavailable state leaves Continue usable and never fabricates narration',async()=>{
  libraryAdapter.prepareRecording.mockResolvedValue({status:'unavailable',message:'This recording is awaiting review.'});await mount();await fireEvent.click(screen.getByRole('button',{name:'Play original recording'}));await waitFor(()=>expect(screen.getByText('This recording is awaiting review.')).toBeTruthy());expect(audio.play).not.toHaveBeenCalled();await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));expect(libraryAdapter.prepareRecording).toHaveBeenCalledTimes(1);
@@ -47,7 +47,7 @@ it('preparation notice can be dismissed without canceling work and later state i
 });
 it('primary pauses prepared playback and manual hold remains on the same instruction until Continue',async()=>{
  await mount();await fireEvent.click(screen.getByRole('button',{name:'Play original recording'}));await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(1));
- const primary=document.querySelector('.guide-primary')||screen.getAllByRole('button',{name:'Pause',exact:true})[0];await fireEvent.click(primary);expect(audio.pause).toHaveBeenCalled();expect(JSON.parse(localStorage.getItem('fia-v3-progress@1:'+descriptor.id)).session.index).toBe(0);
+ const primary=document.querySelector('.guide-primary')||screen.getAllByRole('button',{name:'Pause',exact:true})[0];expect(screen.queryByText('Recording ready. Press Play to listen.')).toBeNull();await fireEvent.click(primary);expect(audio.pause).toHaveBeenCalled();expect(screen.queryByText('Recording ready. Press Play to listen.')).toBeNull();expect(JSON.parse(localStorage.getItem('fia-v3-progress@1:'+descriptor.id)).session.index).toBe(0);
  const resume=screen.getAllByRole('button',{name:'Resume',exact:true})[0];await fireEvent.click(resume);expect(audio.resume).toHaveBeenCalled();audio.active=false;audio.state({playing:false,src:null,elapsed:0,duration:0});audio.end();
  await waitFor(()=>expect(screen.getByRole('button',{name:'Continue',exact:true})).toBeTruthy());expect(JSON.parse(localStorage.getItem('fia-v3-progress@1:'+descriptor.id)).session.index).toBe(0);
  await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));await waitFor(()=>expect(JSON.parse(localStorage.getItem('fia-v3-progress@1:'+descriptor.id)).session.index).toBe(1));expect(libraryAdapter.prepareRecording).toHaveBeenCalledTimes(1);
@@ -57,4 +57,19 @@ it('Replay reuses prepared descriptor with explicit range playback and no extra 
  await mount();await fireEvent.click(screen.getByRole('button',{name:'Play original recording'}));await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(1));
  audio.active=false;audio.state({playing:false,src:null,elapsed:0,duration:0});audio.end();await waitFor(()=>expect(screen.getByRole('button',{name:'Continue',exact:true})).toBeTruthy());
  await fireEvent.click(screen.getByRole('button',{name:'Replay',exact:true}));await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(2));expect(audio.play.mock.calls[1][3]).toEqual(ready.playbackRange);expect(libraryAdapter.prepareRecording).toHaveBeenCalledTimes(1);expect(libraryAdapter.playPreparedRecording).toHaveBeenCalledTimes(2);
+});
+
+it('ready guidance remains until actual playback starts, then stays cleared on pause',async()=>{
+ audio.play.mockImplementation((text,src)=>{audio.active=true;audio.src=src;audio.state({playing:false,src,elapsed:0,duration:60});});
+ await mount();await fireEvent.click(screen.getByRole('button',{name:'Play original recording'}));await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(1));
+ expect(screen.getByText('Recording ready. Press Play to listen.')).toBeTruthy();
+ audio.state({playing:true,src:'blob:stale',elapsed:4,duration:60});await new Promise(r=>setTimeout(r,0));expect(screen.getByText('Recording ready. Press Play to listen.')).toBeTruthy();
+ audio.state({playing:true,src:'blob:prepared',elapsed:4,duration:60});await waitFor(()=>expect(screen.queryByText('Recording ready. Press Play to listen.')).toBeNull());
+ await fireEvent.click(screen.getAllByRole('button',{name:'Pause',exact:true})[0]);expect(screen.queryByText('Recording ready. Press Play to listen.')).toBeNull();expect(libraryAdapter.prepareRecording).toHaveBeenCalledTimes(1);
+});
+
+it('failed playback keeps its actionable error instead of clearing preparation guidance early',async()=>{
+ libraryAdapter.playPreparedRecording.mockRejectedValue(new Error('The prepared recording changed. Press Play to check again.'));
+ await mount();await fireEvent.click(screen.getByRole('button',{name:'Play original recording'}));
+ await waitFor(()=>expect(screen.getByText('The prepared recording changed. Press Play to check again.')).toBeTruthy());expect(audio.play).not.toHaveBeenCalled();
 });
