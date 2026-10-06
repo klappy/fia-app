@@ -5,6 +5,7 @@ import {createPipeline} from './pipeline.mjs';
 
 // Trusted composition boundary. No public route or recognition capability is installed.
 export async function createRequestAcquisition({metadataBytes,metadataSha256,knownSources,bucket,storage,modelRecipe,policyRevision,fetchSource,makeStream,artifactReadMs=30000}){
+ if(!(metadataBytes instanceof Uint8Array)||metadataBytes.byteLength>2*1024*1024)throw Error('guide-metadata-identity');
  const pins=structuredClone(knownSources),recipe=structuredClone(modelRecipe);
  if(!Number.isSafeInteger(artifactReadMs)||artifactReadMs<1||artifactReadMs>30000)throw Error('invalid-artifact-deadline');
  metadataBytes=new Uint8Array(metadataBytes);

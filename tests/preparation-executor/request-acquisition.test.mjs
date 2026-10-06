@@ -6,6 +6,9 @@ import {canonicalJSONString,sha256} from '../../server/fia/preparation/contract.
 import {KNOWN_SOURCE_POLICY} from '../../server/fia/preparation/executor/known-source-stream.mjs';
 import {createKnownSourceAcquisition} from '../../server/fia/preparation/executor/known-source-stream.mjs';
 const encode=v=>new TextEncoder().encode(canonicalJSONString(v));
+test('metadata type and allocation bounds are checked before copying',async()=>{
+ for(const metadataBytes of [2147483647,[1,2,3],null,new Uint8Array(2*1024*1024+1)])await assert.rejects(createRequestAcquisition({metadataBytes}),/guide-metadata-identity/);
+});
 function storage(){const rows=new Map();let pending=Promise.resolve();return {rows,get:async k=>structuredClone(rows.get(k)),put:async(k,v)=>rows.set(k,structuredClone(v)),transaction(fn){const result=pending.then(()=>fn(this));pending=result.catch(()=>{});return result;}};}
 function bucket(){const objects=new Map();return {objects,async get(k){const bytes=objects.get(k);return bytes?{size:bytes.length,body:new Blob([bytes]).stream()}:null;},async put(k,body,options){const bytes=body instanceof Uint8Array?body.slice():new Uint8Array(await new Response(body).arrayBuffer());if(options?.onlyIf?.etagDoesNotMatch==='*'&&objects.has(k))return null;objects.set(k,bytes);return {};}};}
 test('non-Error source failures settle acquisition as uncertain',async()=>{
