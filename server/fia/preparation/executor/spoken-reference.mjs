@@ -131,3 +131,41 @@ export async function compareSpokenReference(input){
  return {...classify('formatting-equivalent','unique-context-bound-reference',pins),reference:{book:found.book,chapter:found.chapter,firstVerse:found.firstVerse,lastVerse:found.lastVerse},
   trace:{fields:Object.fromEntries(Object.entries(found.fields).map(([key,indexes])=>[key,{scriptSpan:expected.fields[key],scriptText:script.slice(...expected.fields[key]),words:indexes.map(wordTrace)}])),markers:found.markers.map(wordTrace),separators:expected.separators.map(s=>({...s,scriptText:script.slice(...s.scriptSpan)}))}};
 }
+
+/** Evidence only for a trusted parser's numbered label at the start of a prompt. */
+export async function compareSpokenPromptLabel(input){
+ const {script,scriptSha256,recognitionBytes,recognitionSha256,context}=input??{};
+ if(typeof script!=='string'||script.length>100000||!(recognitionBytes instanceof Uint8Array)||recognitionBytes.length>1048576||!hash(scriptSha256)||!hash(recognitionSha256))throw Error('label-evidence-input');
+ if(await sha256(new TextEncoder().encode(script))!==scriptSha256||await sha256(recognitionBytes)!==recognitionSha256)throw Error('label-evidence-hash');
+ if(!context||context.kind!=='numbered-prompt-label'||context.language!=='eng')throw Error('label-trusted-context');
+ const {promptSpan,labelSpan,wordSpan}=context;
+ const bounds=(span,max,empty=false)=>Array.isArray(span)&&span.length===2&&span.every(Number.isSafeInteger)&&span[0]>=0&&(empty?span[1]>=span[0]:span[1]>span[0])&&span[1]<=max;
+ if(!bounds(promptSpan,script.length)||!bounds(labelSpan,script.length)||labelSpan[0]<promptSpan[0]||labelSpan[1]>promptSpan[1]||!/^[ \t\r\n]*$/.test(script.slice(promptSpan[0],labelSpan[0])))throw Error('label-prompt-start');
+ // The complete label must end before whitespace and a nonempty prompt body.
+ const after=script.slice(labelSpan[1],promptSpan[1]);
+ if(!/^[ \t\r\n]+\S/.test(after))throw Error('label-prompt-boundary');
+ let raw;
+ try{raw=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(recognitionBytes));}catch{throw Error('label-raw-json');}
+ if(!Array.isArray(raw.words)||raw.words.length>10000||!bounds(wordSpan,raw.words.length,true)||wordSpan[1]-wordSpan[0]>2)throw Error('label-word-span');
+ for(let i=0;i<raw.words.length;i++){
+  const w=raw.words[i];
+  if(typeof w?.word!=='string'||!w.word.trim()||w.word.length>200||!Number.isFinite(w.start)||!Number.isFinite(w.end)||w.start<0||w.end<w.start||(i&&(w.start<raw.words[i-1].start||w.end<raw.words[i-1].end)))throw Error('label-word-evidence');
+ }
+ const labelNumbers=[...numbers].filter(([,n])=>n<=20);
+ const pins={policyId:SPOKEN_REFERENCE_POLICY.id,policySha256:SPOKEN_REFERENCE_POLICY.sourceSha256,grammar:'fia-spoken-prompt-label-en@1',scriptSha256,recognitionSha256,numberTableSha256:await sha256(canonicalJSONString(labelNumbers)),context:JSON.parse(canonicalJSONString(context))};
+ pins.normalizationSha256=await sha256(canonicalJSONString(pins));
+ const text=script.slice(...labelSpan),m=/^(?:([1-9]|1[0-9]|20)\.|\(([1-9]|1[0-9]|20)\))$/.exec(text);
+ if(!m)return classify('unsupported','written-label-grammar',pins);
+ if(wordSpan[0]===wordSpan[1])return classify('unsupported','unmatched-structural-label',pins);
+ const tokens=raw.words.slice(...wordSpan).map(w=>fold(w.word));
+ const hasMarker=tokens.length===2&&tokens[0]==='number';
+ const value=tokens.length===1?numbers.get(tokens[0]):hasMarker?numbers.get(tokens[1]):undefined;
+ if(!value||value>20)return classify('unsupported','spoken-label-grammar',pins);
+ const expected=Number(m[1]??m[2]);
+ if(value!==expected)return classify('semantic-wording-difference','label-values-differ',pins);
+ const wordTrace=i=>({wordIndex:i,word:raw.words[i].word,start:raw.words[i].start,end:raw.words[i].end});
+ const digitStart=labelSpan[0]+(m[2]?1:0),digitEnd=digitStart+String(expected).length;
+ const punctuation=m[2]?[[labelSpan[0],digitStart],[digitEnd,labelSpan[1]]]:[[digitEnd,labelSpan[1]]];
+ return {...classify('formatting-equivalent','exact-structural-label-value',pins),label:expected,
+  trace:{value:{scriptSpan:[digitStart,digitEnd],scriptText:script.slice(digitStart,digitEnd),words:[wordTrace(wordSpan[0]+(hasMarker?1:0))]},markers:hasMarker?[wordTrace(wordSpan[0])]:[],separators:punctuation.map(scriptSpan=>({kind:'label-punctuation',scriptSpan,scriptText:script.slice(...scriptSpan)}))}};
+}
