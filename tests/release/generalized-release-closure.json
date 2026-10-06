@@ -1254,6 +1254,14 @@
       "sha256": "f2e877b8eb36eb9f9aeb94c27d02f537965df734e01305163f932d12dbf523c3"
     },
     {
+      "path": "server/fia/preparation/executor/FRESH-REQUEST-ACQUISITION.md",
+      "sha256": "7e4bb7240ea0c4bd5ee23faf5709a18bd45b43c65327bb4ffafd3a24d9eae9dc"
+    },
+    {
+      "path": "server/fia/preparation/executor/FRESH-SOURCE-OBSERVATION.md",
+      "sha256": "2af6f418e8f3abc2247db749ee6fcc3762ede50310f1cf94f80f2f19aa3add80"
+    },
+    {
       "path": "server/fia/preparation/executor/KNOWN-LONG-ORIGINALS.md",
       "sha256": "be36124bb5c1f1358189230f6d08a5f34c64e4d7d6a3d1a64b1b47502c3f57e7"
     },
@@ -1291,7 +1299,7 @@
     },
     {
       "path": "server/fia/preparation/executor/coherent-snapshot.mjs",
-      "sha256": "e47e9191159fcd2a42c751e7c4f42793f732679904c36a1fdb62962f7028c3c0"
+      "sha256": "bf7d701cdfa6ee8fc0a4f44ff0748616603b21f058fe364c86c0d999fe001935"
     },
     {
       "path": "server/fia/preparation/executor/comparison-evidence.mjs",
@@ -1300,6 +1308,14 @@
     {
       "path": "server/fia/preparation/executor/discovery.mjs",
       "sha256": "1302738766d3b1e72933e822bb906b104009ea44fc923352ed657a55730c1586"
+    },
+    {
+      "path": "server/fia/preparation/executor/fresh-request-acquisition.mjs",
+      "sha256": "c7066605417284a5dff550c2f0605af48a1b66d1618f9c175d82ab5f31c1f4c7"
+    },
+    {
+      "path": "server/fia/preparation/executor/fresh-source-observation.mjs",
+      "sha256": "7a538c8782858204fca942d1f1971208cb52204efae483cb1cb3f6bdb4d811a5"
     },
     {
       "path": "server/fia/preparation/executor/known-source-stream.mjs",
@@ -1335,7 +1351,7 @@
     },
     {
       "path": "server/fia/preparation/executor/request-snapshot.mjs",
-      "sha256": "fa1be5e1c2148b9cc6a2e398bcd5493362126eecca1e449cbed04736867a5894"
+      "sha256": "ccd9e70382ff4df1f23d056430a9ff363ba3d2da3e994c7047b1392eb6fbf4a0"
     },
     {
       "path": "server/fia/preparation/executor/signal-measure.py",
@@ -1447,7 +1463,7 @@
     },
     {
       "path": "tests/preparation-executor/coherent-snapshot.test.mjs",
-      "sha256": "1ddb0d404448042cacb96123b0562b077ea7ef40e3a5effe6f848fd6ece47e52"
+      "sha256": "e655bebabfe57a821d81827cc5611282fdc8a1f6212cc1fd58db727e3a15f969"
     },
     {
       "path": "tests/preparation-executor/discovery-r2.test.mjs",
@@ -1460,6 +1476,22 @@
     {
       "path": "tests/preparation-executor/fixtures/request-snapshot-fixture.mjs",
       "sha256": "fd2aed76e4318a53558d59bdfa0fba96634d5ee1d7effaef5979bce06e42e623"
+    },
+    {
+      "path": "tests/preparation-executor/fresh-request-acquisition-storage.test.mjs",
+      "sha256": "9a1f1ae4f394a9c841d88934096ad37077864fcac8d7af634b55b19c696ea98d"
+    },
+    {
+      "path": "tests/preparation-executor/fresh-request-acquisition.test.mjs",
+      "sha256": "44a10ff05adb78621a8ac67b5e9741d526c80e5e4f9b4c925b824f07dddb9b67"
+    },
+    {
+      "path": "tests/preparation-executor/fresh-source-observation-unit.test.mjs",
+      "sha256": "4be12b4ea3d0daa2b2c33fcd303a61dc09cceaa163eb86462044827bd1efa738"
+    },
+    {
+      "path": "tests/preparation-executor/fresh-source-observation.test.mjs",
+      "sha256": "761ac9c49df9d36d0627c16bfd7a9379d2cd62968bc93aa61ece39ea102ed6cb"
     },
     {
       "path": "tests/preparation-executor/known-source-stream.test.mjs",

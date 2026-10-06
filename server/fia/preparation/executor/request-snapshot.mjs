@@ -3,9 +3,9 @@ import {createRequestAcquisition} from './request-acquisition.mjs';
 import {createCoherentSnapshots} from './coherent-snapshot.mjs';
 
 // Private trusted observation port. This increment has no accepted-output builder.
-export async function createRequestSnapshots({acquisition:options,policy,eligibility}){
+export async function createRequestSnapshots({acquisition:options,policy,eligibility,observationGuard}){
  const snapshotOptions={storage:options.storage,bucket:options.bucket,
-  policy:{sha256:policy?.sha256,validateSnapshot:policy?.validateSnapshot},eligibility};
+  policy:{sha256:policy?.sha256,validateSnapshot:policy?.validateSnapshot},eligibility,observationGuard};
  // Validate policy capabilities now, before any request can acquire bytes.
  createCoherentSnapshots({...snapshotOptions,builder:{paid:false,run:async()=>({state:'blocked'})}});
  const acquisition=await createRequestAcquisition(options);
