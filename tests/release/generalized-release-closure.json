@@ -1026,6 +1026,18 @@
       "sha256": "52aff6b8fc04e548748c520891b835a45f882f80a0c29633503e49493f575b38"
     },
     {
+      "path": "deploy/hosted-asr/Dockerfile",
+      "sha256": "f6704d0fd861b657216a0ba428b7a907457afe88acf649acc916a561fcbfb5cd"
+    },
+    {
+      "path": "deploy/hosted-asr/Dockerfile.integration",
+      "sha256": "42fd9891e09d98ab6a155ce614106909ccbe04698fecaffe9d9ad971bfac6b45"
+    },
+    {
+      "path": "deploy/hosted-asr/README.md",
+      "sha256": "2271c8b04a35023963478df135b63a06cc4146998e511cc6e006e74c72ee15c0"
+    },
+    {
       "path": "deploy/hosted-asr/activation-config.mjs",
       "sha256": "11dca99d39ed559a2c2afad14991078c12544a14d6d34d614c1cf135118c6a18"
     },
@@ -1050,14 +1062,6 @@
       "sha256": "0e0147a16a9f8be9b3f64940f1eb0c99bbda3c9cecfbebd18c9bd9a6c38ba9ab"
     },
     {
-      "path": "deploy/hosted-asr/Dockerfile",
-      "sha256": "f6704d0fd861b657216a0ba428b7a907457afe88acf649acc916a561fcbfb5cd"
-    },
-    {
-      "path": "deploy/hosted-asr/Dockerfile.integration",
-      "sha256": "42fd9891e09d98ab6a155ce614106909ccbe04698fecaffe9d9ad971bfac6b45"
-    },
-    {
       "path": "deploy/hosted-asr/inputs.lock.json",
       "sha256": "c3053b1acc7efefabb1ac8167d1d7156791c007a343f6e6b24e19cbf3efd3ec8"
     },
@@ -1080,10 +1084,6 @@
     {
       "path": "deploy/hosted-asr/proposal.json",
       "sha256": "470f9b8f8790978e7f55eed46ac05c9c5d478c5e059dfa829ed1826ac46f94a8"
-    },
-    {
-      "path": "deploy/hosted-asr/README.md",
-      "sha256": "2271c8b04a35023963478df135b63a06cc4146998e511cc6e006e74c72ee15c0"
     },
     {
       "path": "deploy/hosted-asr/recognize.py",
@@ -1182,16 +1182,16 @@
       "sha256": "0941301ce865ac00fd237bb9751143c4f10ae0884a540bef7499a1b8ccb992f8"
     },
     {
+      "path": "server/faces/worker/BACKEND-CLOSURE.json",
+      "sha256": "58e52ae85dc9a60093bca5299005e04c5f0a1407289b996b41385fedc10ea560"
+    },
+    {
       "path": "server/faces/worker/adapter.mjs",
       "sha256": "96959e69d2648e9ad80f87e1d0a73a3ad6c60507b8b2c432ef6b3b3b8aa926bb"
     },
     {
       "path": "server/faces/worker/authority.json",
       "sha256": "9ab0fc61db161eeb64ffd4bd470987d0a153e90938d18035a825088a5a514cba"
-    },
-    {
-      "path": "server/faces/worker/BACKEND-CLOSURE.json",
-      "sha256": "58e52ae85dc9a60093bca5299005e04c5f0a1407289b996b41385fedc10ea560"
     },
     {
       "path": "server/faces/worker/entry.mjs",
@@ -1230,6 +1230,10 @@
       "sha256": "48f8c768b108f2b9977048db26fa54c82af4eea7f54c66fa650ef84f7d61ecd7"
     },
     {
+      "path": "server/fia/preparation/README.md",
+      "sha256": "3568f157258b51041783dcb73bce164f4426cd466b427e2543586f32bd9066a6"
+    },
+    {
       "path": "server/fia/preparation/catalog.json",
       "sha256": "bd7d92300f0e8e2a4758a78f48fe7061067c3d7755fb522b235a3e937c60a090"
     },
@@ -1238,24 +1242,68 @@
       "sha256": "ebfe171a3219c0b90a4afa5a1adb1865f938c56db731c7af3d14024d38c3189f"
     },
     {
-      "path": "server/fia/preparation/executor/acceptance.mjs",
-      "sha256": "001fcc101d79ec693bf0aae9a532e3add52d7acf01c7b61f14ae24d8f48cd06a"
-    },
-    {
       "path": "server/fia/preparation/executor/ALIGNMENT.md",
       "sha256": "11263350302361ca8dcd593a9c589e3a0b55f4a5b50ee7a9e3a9d303a88270c9"
     },
     {
-      "path": "server/fia/preparation/executor/alignment.mjs",
-      "sha256": "62f1a6d38aa85ff85031a76ec59fdeb6ef66d552f705ad0369a2fcc99b23e718"
+      "path": "server/fia/preparation/executor/COHERENT-SNAPSHOT.md",
+      "sha256": "2eda757d76b8ffb2f199fe4e2ea3c110fd3bae4575c0068469ab50fe9bd434ec"
     },
     {
       "path": "server/fia/preparation/executor/DISCOVERY.md",
       "sha256": "f2e877b8eb36eb9f9aeb94c27d02f537965df734e01305163f932d12dbf523c3"
     },
     {
+      "path": "server/fia/preparation/executor/KNOWN-LONG-ORIGINALS.md",
+      "sha256": "be36124bb5c1f1358189230f6d08a5f34c64e4d7d6a3d1a64b1b47502c3f57e7"
+    },
+    {
+      "path": "server/fia/preparation/executor/QUALITY-EVIDENCE.md",
+      "sha256": "3799e9d376f0ead1a9a79377606a45d0c7a6299481ec7aa8da9c11a9c3051a40"
+    },
+    {
+      "path": "server/fia/preparation/executor/README.md",
+      "sha256": "393ceb9d3f711a4d3d1e6e4cee77c3a9ce5ff048923bf14628a702fedaf0ea2c"
+    },
+    {
+      "path": "server/fia/preparation/executor/REQUEST-ACQUISITION.md",
+      "sha256": "2df7401cc557050666e6190cdc125b75b931b9468f0f1c07efdfaecf51486f3e"
+    },
+    {
+      "path": "server/fia/preparation/executor/REQUEST-SNAPSHOT.md",
+      "sha256": "6aca8906fee4c29ad02c5fb359e31c4c663cc348d87a5ba152f1cd9946d97062"
+    },
+    {
+      "path": "server/fia/preparation/executor/SIGNAL.md",
+      "sha256": "f21719f93b52d4b26fb497289ba8c58410238f39d47a0d7b068da850d133ac2a"
+    },
+    {
+      "path": "server/fia/preparation/executor/SPOKEN-REFERENCE.md",
+      "sha256": "c9a85ad0637a930eece3d36b68ae91c33fdca4bcead63a40837e1274e2ae43ec"
+    },
+    {
+      "path": "server/fia/preparation/executor/acceptance.mjs",
+      "sha256": "d58da96832b3e86677dfa3c4374c878d94ff378e69a696be49a2171113de4183"
+    },
+    {
+      "path": "server/fia/preparation/executor/alignment.mjs",
+      "sha256": "62f1a6d38aa85ff85031a76ec59fdeb6ef66d552f705ad0369a2fcc99b23e718"
+    },
+    {
+      "path": "server/fia/preparation/executor/coherent-snapshot.mjs",
+      "sha256": "e47e9191159fcd2a42c751e7c4f42793f732679904c36a1fdb62962f7028c3c0"
+    },
+    {
+      "path": "server/fia/preparation/executor/comparison-evidence.mjs",
+      "sha256": "2fbbe1489c4062e769299fe49a94eb9fcd9911ac78a3a3ebfc513c1bd2d34a61"
+    },
+    {
       "path": "server/fia/preparation/executor/discovery.mjs",
       "sha256": "1302738766d3b1e72933e822bb906b104009ea44fc923352ed657a55730c1586"
+    },
+    {
+      "path": "server/fia/preparation/executor/known-source-stream.mjs",
+      "sha256": "66a3a626e55987ddb58e23534b13ce4c63a33ffc8b3e275d401715dd47e394da"
     },
     {
       "path": "server/fia/preparation/executor/local-adapter.mjs",
@@ -1271,31 +1319,35 @@
     },
     {
       "path": "server/fia/preparation/executor/pipeline.mjs",
-      "sha256": "72c27d85bd3c95f032cfc0b0d77769dd4ddbd8b337c7122fd71b693eeb28cf38"
-    },
-    {
-      "path": "server/fia/preparation/executor/QUALITY-EVIDENCE.md",
-      "sha256": "3799e9d376f0ead1a9a79377606a45d0c7a6299481ec7aa8da9c11a9c3051a40"
+      "sha256": "e19bbdbe66772be2661abae271fd51f8a767788c84d00db2a843c1493a78a07d"
     },
     {
       "path": "server/fia/preparation/executor/quality-evidence.mjs",
       "sha256": "86ea4482b983741cfc84d838e111c7a06871bf45f8ea5eb946b731b529ffdc62"
     },
     {
-      "path": "server/fia/preparation/executor/README.md",
-      "sha256": "393ceb9d3f711a4d3d1e6e4cee77c3a9ce5ff048923bf14628a702fedaf0ea2c"
-    },
-    {
       "path": "server/fia/preparation/executor/recognition-identity.mjs",
       "sha256": "600c0e5390d8836cd9450a821a5a1985f53a49a648d9dba21953e8f431711c10"
+    },
+    {
+      "path": "server/fia/preparation/executor/request-acquisition.mjs",
+      "sha256": "05ff4964cf19a062db0a8e1707e62e1295fcd24ededa08599c68f24317f10498"
+    },
+    {
+      "path": "server/fia/preparation/executor/request-snapshot.mjs",
+      "sha256": "fa1be5e1c2148b9cc6a2e398bcd5493362126eecca1e449cbed04736867a5894"
     },
     {
       "path": "server/fia/preparation/executor/signal-measure.py",
       "sha256": "2253b77eb8af94713716f7215e67d00e22035010ec59981cc6e9d67deea1141e"
     },
     {
-      "path": "server/fia/preparation/executor/SIGNAL.md",
-      "sha256": "f21719f93b52d4b26fb497289ba8c58410238f39d47a0d7b068da850d133ac2a"
+      "path": "server/fia/preparation/executor/spoken-reference.mjs",
+      "sha256": "b09a3b24f7741bba4ca048e12b67958fc645765dbc63d110ccc898dac485facf"
+    },
+    {
+      "path": "server/fia/preparation/hosted-asr/README.md",
+      "sha256": "78161a82df5f17a818a0b042de7015f99cd3ae0247a486d545ce2e7490becad1"
     },
     {
       "path": "server/fia/preparation/hosted-asr/activation.mjs",
@@ -1307,23 +1359,19 @@
     },
     {
       "path": "server/fia/preparation/hosted-asr/cloudflare-worker.mjs",
-      "sha256": "6226f564ebbf38eb1ab6a146b859b68eb8eaa6c0c4149b30576abeed451b081f"
+      "sha256": "d145650b5d9bd671db7392a51499b6485715950ec53d8fca52d64a84929ef511"
     },
     {
       "path": "server/fia/preparation/hosted-asr/cloudflare.mjs",
-      "sha256": "a74baf5101d0bb64c29f66e068c5711aa20655e1da5e8fd5430255da6d06c703"
+      "sha256": "693672e4d4322132404188400f7f2d592b2dc9067217b1aeb39fc8ca70c0c8c1"
     },
     {
       "path": "server/fia/preparation/hosted-asr/dispatch.mjs",
-      "sha256": "8815ce1dad7619597d1a04ae79a37a3114ca3090b8f1dfc23907540992cdb467"
+      "sha256": "2f01e778e059f01ac9217e53cef605dc64dae13fc3fcabedf50fd159222516ef"
     },
     {
       "path": "server/fia/preparation/hosted-asr/pipeline-adapter.mjs",
       "sha256": "669a7e3f4a59a24ad2f69815a44dd37c7f7ba967e3c5e37c3a2c754e12cfaf13"
-    },
-    {
-      "path": "server/fia/preparation/hosted-asr/README.md",
-      "sha256": "12639152b3537d3e7036580f63e25c261520eaa142f13c3d59765333429acb78"
     },
     {
       "path": "server/fia/preparation/hosted-asr/watchdog.mjs",
@@ -1332,10 +1380,6 @@
     {
       "path": "server/fia/preparation/original.mjs",
       "sha256": "5e905b0a78036ba7545daffdaa868c0387e06367c1d60f90db7df541cb9d66e5"
-    },
-    {
-      "path": "server/fia/preparation/README.md",
-      "sha256": "3568f157258b51041783dcb73bce164f4426cd466b427e2543586f32bd9066a6"
     },
     {
       "path": "server/fia/preparation/service.mjs",
@@ -1395,7 +1439,15 @@
     },
     {
       "path": "tests/preparation-executor/alignment.test.mjs",
-      "sha256": "5f96cd995a144f0925c74401c87ffc13d5d41aaa57db53a9c640513554b5d82c"
+      "sha256": "360b7b4963ce52e44bb540ac19b26a79c15239ca070baa703fddd7bbc3bed768"
+    },
+    {
+      "path": "tests/preparation-executor/coherent-snapshot-storage.test.mjs",
+      "sha256": "c6d2f5039ee532fae0e815d54913354fe68d7d97cf61f9c1c4e73fe5b62d7056"
+    },
+    {
+      "path": "tests/preparation-executor/coherent-snapshot.test.mjs",
+      "sha256": "1ddb0d404448042cacb96123b0562b077ea7ef40e3a5effe6f848fd6ece47e52"
     },
     {
       "path": "tests/preparation-executor/discovery-r2.test.mjs",
@@ -1404,6 +1456,14 @@
     {
       "path": "tests/preparation-executor/discovery.test.mjs",
       "sha256": "602102389ec740cb68569a1ec63086d821ec52b036b3ce5e85105a9939927626"
+    },
+    {
+      "path": "tests/preparation-executor/fixtures/request-snapshot-fixture.mjs",
+      "sha256": "fd2aed76e4318a53558d59bdfa0fba96634d5ee1d7effaef5979bce06e42e623"
+    },
+    {
+      "path": "tests/preparation-executor/known-source-stream.test.mjs",
+      "sha256": "5261b3c75f81b6c9e280a741551424e4e622e1ac8865318ff231e9de3150eb57"
     },
     {
       "path": "tests/preparation-executor/local-adapter.test.mjs",
@@ -1419,11 +1479,31 @@
     },
     {
       "path": "tests/preparation-executor/pipeline.test.mjs",
-      "sha256": "8b4a4f68f646f1a7473d28d430f18610de363e7cda194d2c6ec9b893a3b44d5b"
+      "sha256": "e23dd688da08b324111d834773ad9f12a92bee3c425851811e25254f0492b17f"
     },
     {
       "path": "tests/preparation-executor/quality-evidence.test.mjs",
       "sha256": "81469f998caae89b7cc2fe18457943d071e465568b52b41f8b1d1a202df6d921"
+    },
+    {
+      "path": "tests/preparation-executor/request-acquisition-storage.test.mjs",
+      "sha256": "cd84084cb0289159da60a80e79735ef3e7748a04252ca7ca1869a825a1c71447"
+    },
+    {
+      "path": "tests/preparation-executor/request-acquisition.test.mjs",
+      "sha256": "b7d4c5211b01b5f2d473e3356cc26839a1d4ea15b1e13f816ea0fe2eb38ecdd3"
+    },
+    {
+      "path": "tests/preparation-executor/request-snapshot-storage.test.mjs",
+      "sha256": "c1d5f3e7e3ef4f6b7b50ef8eaedbd31eaba018c7b28d35c0a33d341ba64c2d7e"
+    },
+    {
+      "path": "tests/preparation-executor/request-snapshot.test.mjs",
+      "sha256": "250f8e7ad1c78f8258181a96d34129ef15f955dc9df91b06d65fb00b391ab1fc"
+    },
+    {
+      "path": "tests/preparation-executor/spoken-reference.test.mjs",
+      "sha256": "9049fcb3ce95c3f861022a0d9d3da90e09128406e3e3866b9b8ca778d53d2f02"
     },
     {
       "path": "tests/preparation-executor/test_signal_measure.py",
@@ -1447,7 +1527,7 @@
     },
     {
       "path": "tests/preparation-hosted-asr/cloudflare.test.mjs",
-      "sha256": "6bb0b0bbeffb6da56fa22283cbbb4c845814896ad938485c17c86f7b3211b675"
+      "sha256": "ba76fde0ce1cfbe50db857b86097420ebe78683fb97e98b605d01455340de4be"
     },
     {
       "path": "tests/preparation-hosted-asr/dispatch-artifact.test.mjs",
@@ -1463,15 +1543,35 @@
     },
     {
       "path": "tests/preparation-hosted-asr/dispatch.test.mjs",
-      "sha256": "c75f1dcbedf5b5309b93e5a3e9de6d2e83343200655f59a791b1f9c9ac7b8142"
+      "sha256": "c0e4c6a4a01644ca56ca27a011d394d238a6559488faf9b678abc44d8bda8078"
+    },
+    {
+      "path": "tests/preparation-hosted-asr/emergency-quarantine-storage.test.mjs",
+      "sha256": "0919f6dabef3e140d2a66a61c7aee38c423a46839f6a45f915516443d9f01989"
+    },
+    {
+      "path": "tests/preparation-hosted-asr/emergency-quarantine.test.mjs",
+      "sha256": "f2ed22564d5819a3fad487ff66d071d11bdd906f9777c776edd4370c43ad8696"
     },
     {
       "path": "tests/preparation-hosted-asr/locks.test.mjs",
       "sha256": "8d93245956849657f17dec75d8e16a61044cb89c4c89ef1a28d5260aa2706654"
     },
     {
+      "path": "tests/preparation-hosted-asr/operator-stop.test.mjs",
+      "sha256": "3a0c7bc33e9eee4a6148fb1120fd1fe9f6259ebac5b7a49a6095a45760b4e826"
+    },
+    {
+      "path": "tests/preparation-hosted-asr/operator-storage.test.mjs",
+      "sha256": "bf6d24e6d0ed76615fbc0253cb9d08daaf06cbadb940233265201e9ebc271de5"
+    },
+    {
       "path": "tests/preparation-hosted-asr/pipeline-adapter.test.mjs",
       "sha256": "27f508f1e0385040a499f784eac5ecc3386a412a7f82ac63dc627263f99e64c1"
+    },
+    {
+      "path": "tests/preparation-hosted-asr/readiness-storage.test.mjs",
+      "sha256": "efd011e6ddbf6881835052e0897934a05405cd0809f3b1a106631a88616c4172"
     },
     {
       "path": "tests/preparation-hosted-asr/reconcile.test.mjs",
@@ -1480,6 +1580,14 @@
     {
       "path": "tests/preparation-hosted-asr/service_test.py",
       "sha256": "41df4e352e2a6831d8db2a83b8183be6f2227ae1065dee7230089c8b806f2238"
+    },
+    {
+      "path": "tests/preparation-hosted-asr/stop-lease-storage.test.mjs",
+      "sha256": "b60f00f196696efe6b8a31abf6ce28e43c22ecb1d4c17ac0309896084350a057"
+    },
+    {
+      "path": "tests/preparation-hosted-asr/stop-lease.test.mjs",
+      "sha256": "d7e0885e4e176ba1185744b4b2797bd219e1f2bc8af5a01ea02f7e5e13f576ff"
     },
     {
       "path": "tests/preparation-hosted-asr/watchdog.test.mjs",
