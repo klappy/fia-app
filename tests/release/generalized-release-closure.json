@@ -1311,7 +1311,11 @@
     },
     {
       "path": "scripts/live-listening/controlled-pending.mjs",
-      "sha256": "a389f1a349445db0801c92ce364a0cc21eb2bd83d951334c8edc8fd69ca5f71f"
+      "sha256": "7c99190a49a1b40d4a19e8a0cdd14bfd065ca736164228bec12947f9e39ecf59"
+    },
+    {
+      "path": "scripts/live-listening/native-progress.mjs",
+      "sha256": "66769e5a05891a37ad3128b7ce1ec154fa74bbb4e77726abfb81927402c1a206"
     },
     {
       "path": "scripts/live-listening/persona-summary.mjs",
@@ -1704,6 +1708,10 @@
     {
       "path": "tests/live-listening/baseline-persona.test.mjs",
       "sha256": "455406b7f0146b8e2e151323a7ebd0526c014e6aa084fb16d191b8932cb849c2"
+    },
+    {
+      "path": "tests/live-listening/native-progress.test.mjs",
+      "sha256": "1d1fdb52cae114f0c56cd53ee886dbd810d771c057171e4cae34030260db8392"
     },
     {
       "path": "tests/live-listening/observation.test.mjs",
