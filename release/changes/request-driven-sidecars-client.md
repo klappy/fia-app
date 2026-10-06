@@ -1,0 +1,7 @@
+# Request-driven sidecars and client lifecycle
+
+Existing accepted original recordings now retain immutable capability sidecars through the shared SQLite/R2 preparation path. Source bytes and accepted mappings remain the authority; corrupt evidence, revocation, uncertain execution and unsupported inferred mappings cannot become ready. The bounded cue-role adapter and local source inventory retain uncertainty and provenance without enabling paid calls or automatic bulk preparation.
+
+Explicit original playback can request the unit path when verified source bytes lack an accepted mapping. Ready existing originals remain preferred. Client request and refresh ownership prevents stale responses from replacing the current media revision or restoring an old saved status. Scripture resource choices use the existing source edition names, preserving the approved first-passage labels.
+
+Current-main playback, BSB, settings and cancellation fixes are retained. Independent merged-source review passed focused client, App and durable-backend tests. The generic inferred-unit route still has no production semantic validator; test-only retained derivatives and native playback do not establish new semantic acceptance, all-Mark coverage or Spanish recording availability. Transient refresh retention remains a separate typed-error follow-on. Actual candidate and deployment evidence must qualify each release environment.
