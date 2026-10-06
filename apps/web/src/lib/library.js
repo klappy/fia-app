@@ -1,3 +1,4 @@
+import {createPreparationTransport} from './prepared-audio.js';
 import {bundledPresentation} from './content.js';
 const empty={status:'unavailable',count:0};
 export const bundledPack=Object.freeze({id:'eng.MRK-1-1-13',revision:'ccd72f23c23f932651b500b730b285f32fabd37e50037b5af91d8881f1403975',language:'eng',pericopeId:'MRK-1-1-13',title:'Mark 1:1–13',defaultScriptureId:'scripture-BereanStandardBible',source:'bundled',capabilities:{text:{available:true},guideNarration:{status:'packaged',count:111},scriptureAudio:{status:'packaged',count:3},resourceAudio:{status:'packaged',count:29},generatedAudio:{status:'packaged',count:143},images:{status:'packaged',count:8},video:{status:'packaged',count:3}}});
@@ -30,7 +31,12 @@ export async function loadPresentation(descriptor){
  if(bytes.byteLength!==descriptor.presentation.bytes||hash!==descriptor.presentation.sha256)throw new Error('This passage could not be verified. Your current passage stays open.');
  return validatePresentation(JSON.parse(new TextDecoder().decode(bytes)),descriptor);
 }
+const preparationTransport=createPreparationTransport();
 export const libraryAdapter={
+ prepareRecording:preparationTransport.request,
+ preparationStatus:preparationTransport.status,
+ verifyPreparedRecording:preparationTransport.verify,
+ playPreparedRecording:preparationTransport.play,
  async languages(){const c=await fetchCatalog();return [{id:'eng',name:'English',nativeName:'English'},{id:'spa',name:'Spanish',nativeName:'Español'}].map(l=>({...l,ready:c.packs.filter(p=>p.language===l.id).length}));},
  async passages(language){return (await fetchCatalog()).packs.filter(p=>p.language===language);},
  async select(id){const descriptor=(await fetchCatalog()).packs.find(p=>p.id===id);if(!descriptor)throw new Error('This passage is not available.');return {descriptor,presentation:await loadPresentation(descriptor)};},

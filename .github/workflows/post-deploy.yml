@@ -15,8 +15,8 @@ on:
         type: choice
         options: [dev, staging, production]
       commit:
-        description: Expected commit (blank = skip the commit match, smoke only)
-        required: false
+        description: Full 40-character deployed source commit
+        required: true
         type: string
 
 concurrency:
@@ -28,8 +28,12 @@ permissions:
 
 jobs:
   verify:
+    name: deployed-listening
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    outputs:
+      environment: ${{ steps.target.outputs.env }}
+      commit: ${{ steps.target.outputs.commit }}
     steps:
       - name: Resolve env URL and expected commit
         id: target
@@ -51,10 +55,14 @@ jobs:
             esac
             commit="$SHA"
           fi
+          if ! [[ "$commit" =~ ^[a-f0-9]{40}$ ]]; then
+            echo "::error::A full lowercase source commit is required"; exit 1
+          fi
           case "$env" in
             dev) url=https://dev.fiaguide.app ;;
             staging) url=https://staging.fiaguide.app ;;
             production) url=https://fiaguide.app ;;
+            *) echo "::error::Unknown environment"; exit 1 ;;
           esac
           echo "env=$env" >> "$GITHUB_OUTPUT"
           echo "url=$url" >> "$GITHUB_OUTPUT"
@@ -62,7 +70,7 @@ jobs:
           echo "### post-deploy: $env ($url) expecting \`${commit:-any}\`" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Wait for version.json to report the commit (10 min)
-        if: steps.target.outputs.commit != ''
+        id: landed
         env:
           URL: ${{ steps.target.outputs.url }}
           EXPECT: ${{ steps.target.outputs.commit }}
@@ -85,20 +93,111 @@ jobs:
           done
 
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.target.outputs.commit }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      - name: Install browser
+        id: browser
+        run: npx playwright install --with-deps chromium
       - name: Deployed smoke
         env:
           BASE_URL: ${{ steps.target.outputs.url }}
           EXPECT_COMMIT: ${{ steps.target.outputs.commit }}
         run: npm run smoke:deployed
+      # Same-commit local protocol fixture is distinct from the hosted journey.
+      - name: Controlled local listening
+        id: controlled
+        if: ${{ !cancelled() && steps.browser.outcome == 'success' && steps.landed.outcome == 'success' }}
+        env:
+          WORKERS_CI_COMMIT_SHA: ${{ steps.target.outputs.commit }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$WORKERS_CI_COMMIT_SHA"
+          npm run build
+          mkdir -p "$RUNNER_TEMP/listening-fixture" test-results/controlled-pending
+          curl --fail --silent --show-error --proto '=https' --max-time 30 --max-filesize 867865 \
+            'https://dev.fiaguide.app/v1/preparation-audio/0f3fa9e77215f5050f9e22b7abee329c47e0e9ff71a5f0c4d248926a8f42268d.mp3' \
+            -o "$RUNNER_TEMP/listening-fixture/source.mp3"
+          test "$(wc -c < "$RUNNER_TEMP/listening-fixture/source.mp3")" -eq 867865
+          echo "0f3fa9e77215f5050f9e22b7abee329c47e0e9ff71a5f0c4d248926a8f42268d  $RUNNER_TEMP/listening-fixture/source.mp3" | sha256sum --check --strict
+          openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj '/CN=localhost' \
+            -addext 'subjectAltName=DNS:localhost,IP:127.0.0.1' \
+            -keyout "$RUNNER_TEMP/listening-fixture/local.key" -out "$RUNNER_TEMP/listening-fixture/local.crt"
+          openssl x509 -in "$RUNNER_TEMP/listening-fixture/local.crt" -pubkey -noout | \
+            openssl pkey -pubin -outform DER | openssl dgst -sha256 -binary | \
+            openssl base64 -A > "$RUNNER_TEMP/listening-fixture/cert-spki.txt"
+          node scripts/live-listening/controlled-pending.mjs "$PWD" \
+            "$RUNNER_TEMP/listening-fixture/source.mp3" "$RUNNER_TEMP/listening-fixture" test-results/controlled-pending
+      - name: Hosted listening journey
+        id: listening
+        if: ${{ !cancelled() && steps.browser.outcome == 'success' && steps.landed.outcome == 'success' }}
+        env:
+          BASE_URL: ${{ steps.target.outputs.url }}
+          FIA_ENVIRONMENT: ${{ steps.target.outputs.env }}
+          EXPECT_COMMIT: ${{ steps.target.outputs.commit }}
+        run: npx playwright test --config playwright.live-listening.config.js --output test-results/hosted-listening
+      - name: Verify separate hosted and controlled listening receipts
+        if: ${{ !cancelled() && steps.browser.outcome == 'success' }}
+        env:
+          FIA_ENVIRONMENT: ${{ steps.target.outputs.env }}
+          EXPECT_COMMIT: ${{ steps.target.outputs.commit }}
+        run: node scripts/live-listening/verify.mjs test-results/live-listening.json test-results/controlled-pending/controlled-pending.json
+      - name: Read prior immutable persona observations
+        if: ${{ !cancelled() && steps.target.outputs.commit != '' }}
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FIA_ENVIRONMENT: ${{ steps.target.outputs.env }}
+        run: node scripts/live-listening/baseline-persona.mjs test-results/persona-baseline.json
+      - name: Record release persona observations even when a journey fails
+        if: ${{ !cancelled() && steps.target.outputs.commit != '' }}
+        env:
+          FIA_ENVIRONMENT: ${{ steps.target.outputs.env }}
+          EXPECT_COMMIT: ${{ steps.target.outputs.commit }}
+        run: node scripts/live-listening/persona-summary.mjs test-results/live-listening.json test-results/persona-summary test-results/persona-baseline.json test-results/controlled-pending/controlled-pending.json
       - uses: actions/upload-artifact@v4
-        if: failure()
+        if: always()
         with:
           name: post-deploy-${{ steps.target.outputs.env }}-test-results
           path: test-results
           retention-days: 7
+
+  archive-persona:
+    name: archive-persona-evidence
+    needs: verify
+    if: ${{ always() && github.repository == 'klappy/fia-app' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && contains(fromJSON('["refs/heads/main","refs/heads/staging","refs/heads/production"]'), github.ref) }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    concurrency:
+      group: fia-persona-evidence-append
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        id: evidence
+        continue-on-error: true
+        with:
+          name: post-deploy-${{ needs.verify.outputs.environment }}-test-results
+          path: archived-input
+      - name: Archive immutable summaries or report incomplete archive
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECT_COMMIT: ${{ needs.verify.outputs.commit }}
+          FIA_ENVIRONMENT: ${{ needs.verify.outputs.environment }}
+        run: |
+          summary="archived-input/persona-summary/$EXPECT_COMMIT-$FIA_ENVIRONMENT.json"
+          if [ ! -f "$summary" ]; then
+            echo "::error::Persona evidence incomplete: summary missing; archiving not-covered disposition"
+            node scripts/live-listening/persona-summary.mjs absent-report.json archived-input/persona-summary
+            node scripts/live-listening/archive-persona.mjs "$summary"
+            exit 1
+          fi
+          node scripts/live-listening/archive-persona.mjs "$summary"
