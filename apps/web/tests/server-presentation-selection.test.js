@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {selectServerPresentation} from '../src/lib/library.js';
+import {selectServerPresentation,mediaSelection} from '../src/lib/library.js';
 const h='a'.repeat(64),id='eng.MRK-1-14-20',demand={packId:id,baseRevision:h,sourceRevision:'b'.repeat(40),capability:'executable-presentation'};
 function fixture(){
  const presentation={id,assets:{scripture:{id:'scripture',kind:'scripture'}},activities:[{id:'one',sectionId:'s',completion:'confirm'}],sections:[{id:'s'}],listContracts:[]};
@@ -11,3 +11,6 @@ test('readonly selection/restore reads server artifact without hidden demand or 
 test('explicit selection forwards exact server demand then adopts exact ready record',async()=>{const f=fixture();await selectServerPresentation(id,{explicit:true,transport:f.transport});assert.deepEqual(f.calls,['readPack','prepare','readArtifact']);});
 test('invalid executable output never falls back to legacy presentation',async()=>{const f=fixture();f.presentation.execution={schema:'wrong'};await assert.rejects(selectServerPresentation(id,{transport:f.transport}),/invalid/);assert.deepEqual(f.calls,['readPack','readArtifact']);});
 test('canceled explicit selection detaches pending observation and never reads/adopts artifact',async()=>{const f=fixture(),controller=new AbortController();let release,owned;f.transport.preparePresentation=async(_,context)=>{owned=context.signal;return new Promise(r=>release=r);};const pending=selectServerPresentation(id,{explicit:true,signal:controller.signal,transport:f.transport});await new Promise(r=>setTimeout(r,0));controller.abort();assert.equal(owned.aborted,true);release({status:'ready',record:f.record});await assert.rejects(pending,/abort/i);assert.deepEqual(f.calls,['readPack']);});
+
+test('explicit server media binding remains distinct from projected identity on all media commands',async()=>{const f=fixture();f.record.execution={mediaIdentity:{packId:id,revision:'c'.repeat(64)},mediaAssetsSha256:'d'.repeat(64)};const {descriptor}=await selectServerPresentation(id,{transport:f.transport});assert.equal(descriptor.mediaIdentity,f.record.execution.mediaIdentity);assert.deepEqual(mediaSelection(descriptor),{packId:id,revision:h,...f.record.execution});assert.deepEqual(mediaSelection({id,revision:h}),{packId:id,revision:h});});
+test('malformed explicit media authority is refused rather than mapped to base revision',async()=>{for(const mediaIdentity of [{packId:'other',revision:h},{packId:id,revision:'bad'},null]){const f=fixture();f.record.execution={mediaIdentity,mediaAssetsSha256:'d'.repeat(64)};await assert.rejects(selectServerPresentation(id,{transport:f.transport}),/media identity/);}});

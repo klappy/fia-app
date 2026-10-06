@@ -62,3 +62,11 @@ it('restore is read-only while an explicit library choice carries separate deman
  await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passages',exact:true}));await fireEvent.click(await screen.findByRole('button',{name:'Open passage',exact:true}));
  await waitFor(()=>expect(libraryAdapter.select).toHaveBeenCalledTimes(2));expect(libraryAdapter.select.mock.calls[1][1].explicit).toBe(true);expect(libraryAdapter.select.mock.calls[0][1].signal.aborted).toBe(true);expect(audio.play).not.toHaveBeenCalled();
 });
+it.each(['current','older-projection','wrong-media','wrong-assets','invalid-snapshot'])('saved executable readiness requires coherent server snapshot and media authority: %s',async condition=>{
+ const mediaIdentity={packId:descriptor.id,revision:'b'.repeat(64)},mediaAssetsSha256='c'.repeat(64),pack={...descriptor,mediaIdentity,mediaAssetsSha256};
+ const record={revision:descriptor.revision,execution:{mediaIdentity:{...mediaIdentity},mediaAssetsSha256}},serverSnapshot={record},manifest={packId:descriptor.id,presentationRevision:mediaIdentity.revision,deliveryRevision:'delivery',files:[]};
+ if(condition==='older-projection')record.revision='d'.repeat(64);if(condition==='wrong-media')manifest.presentationRevision='d'.repeat(64);if(condition==='wrong-assets')record.execution.mediaAssetsSha256='d'.repeat(64);if(condition==='invalid-snapshot')serverSnapshot.invalid=true;
+ libraryAdapter.select.mockResolvedValue({descriptor:pack,presentation});libraryAdapter.downloadStatus.mockImplementation(async p=>p.id===pack.id?{saved:true,active:{manifest,serverSnapshot,files:[]}}:{saved:false});
+ const network={onLine:true};vi.stubGlobal('navigator',network);await mount();await waitFor(()=>expect(libraryAdapter.mediaStatus).toHaveBeenCalledWith(pack));network.onLine=false;await fireEvent(window,new Event('offline'));
+ expect(!!screen.queryByText('Offline · session saved')).toBe(condition==='current');expect(audio.play).not.toHaveBeenCalled();
+});
