@@ -58,7 +58,7 @@ it('manual-mode center Continue advances while bound narration plays instead of 
  await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await waitFor(()=>expect(audio.play).toHaveBeenCalled());await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toBe(presentation.activities[1].prompt));expect(libraryAdapter.playBoundAudio).toHaveBeenCalledTimes(1);
 });
 it('restore is read-only while an explicit library choice carries separate demand consent',async()=>{
- vi.spyOn(libraryAdapter,'passages').mockResolvedValue([descriptor]);await mount();expect(libraryAdapter.select.mock.calls[0][1].explicit).toBe(false);
+ vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',name:'English',nativeName:'English',ready:1}]);vi.spyOn(libraryAdapter,'passages').mockResolvedValue([descriptor]);await mount();expect(libraryAdapter.select.mock.calls[0][1].explicit).toBe(false);
  await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passages',exact:true}));await fireEvent.click(await screen.findByRole('button',{name:'Open passage',exact:true}));
  await waitFor(()=>expect(libraryAdapter.select).toHaveBeenCalledTimes(2));expect(libraryAdapter.select.mock.calls[1][1].explicit).toBe(true);expect(libraryAdapter.select.mock.calls[0][1].signal.aborted).toBe(true);expect(audio.play).not.toHaveBeenCalled();
 });
