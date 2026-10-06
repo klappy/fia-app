@@ -18,5 +18,5 @@ it('media and save messages retain projected revision and exact server media bin
  const pack={id:'eng.MRK-1-14-20',revision:'a'.repeat(64),mediaIdentity:{packId:'eng.MRK-1-14-20',revision:'b'.repeat(64)},mediaAssetsSha256:'c'.repeat(64)};
  await libraryAdapter.mediaStatus(pack);await libraryAdapter.playMedia(pack,'/image.jpg','delivery',new AbortController().signal);await libraryAdapter.download(['images'],()=>{},pack);await libraryAdapter.activate(pack);
  expect(sent.map(m=>m.type)).toEqual(['MEDIA_STATUS','MEDIA_PLAY','DOWNLOAD_START','PACK_SELECT']);
- for(const message of sent){expect(message.revision).toBe(pack.revision);expect(message.mediaIdentity).toBe(pack.mediaIdentity);expect(message.mediaAssetsSha256).toBe(pack.mediaAssetsSha256);}
+ for(const message of sent){expect(message.revision).toBe(pack.revision);expect(message.mediaIdentity).toEqual(pack.mediaIdentity);expect(message.mediaAssetsSha256).toBe(pack.mediaAssetsSha256);}
 });
