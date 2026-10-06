@@ -25,7 +25,7 @@ export async function serveRead(req,res,url,operations) {
       else result=await operations.readPack({packId:decoded,...(url.searchParams.has('revision')?{revision:url.searchParams.get('revision')}:{})});
     }else if(artifact){
       result=url.search?{status:'refused',code:'invalid-request'}:await operations.readArtifact({sha256:decoded});
-      if(result.status==='ready'){res.writeHead(200,{'Content-Type':result.artifact.mime,'Content-Length':result.artifact.bytes,'Cache-Control':'public, max-age=31536000, immutable','ETag':`"${result.artifact.sha256}"`,'X-Content-Type-Options':'nosniff'});res.end(result.content);return;}
+      if(result.status==='ready'){res.writeHead(200,{'Content-Type':result.artifact.mime,'Content-Length':result.artifact.bytes,'Cache-Control':result.cacheControl==='private, no-store'?'private, no-store':'public, max-age=31536000, immutable','ETag':`"${result.artifact.sha256}"`,'X-Content-Type-Options':'nosniff'});res.end(result.content);return;}
     }else {json(res,404,{status:'refused',code:'unsupported-operation'});return;}
   json(res,domainStatus(result),result,result.status==='preparing'?{'Retry-After':String(result.retryAfterSeconds)}:{});
 }
