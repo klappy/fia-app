@@ -43,7 +43,9 @@ jobs:
             openssl base64 -A > "$RUNNER_TEMP/listening-fixture/cert-spki.txt"
           node scripts/live-listening/controlled-pending.mjs "$PWD" \
             "$RUNNER_TEMP/listening-fixture/source.mp3" "$RUNNER_TEMP/listening-fixture" test-results/controlled-pending
-      - run: npx playwright test e2e/deployed.spec.js e2e/full-journey.spec.js e2e/upgrade.spec.js --output test-results/baseline-journeys
+      - run: npx playwright test e2e/deployed.spec.js e2e/full-journey.spec.js e2e/upgrade.spec.js e2e/worker-authority.spec.js --output test-results/baseline-journeys
+        env:
+          FIA_WORKER_PREVIEW: "1"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
