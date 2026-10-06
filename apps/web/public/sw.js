@@ -82,7 +82,7 @@ async function serverJSON(response,file,record){
  else if(value?.id!==file.id||!['fia-bound-narration-demand@1','fia-bound-narration-audio@1'].includes(value.schema))throw Error('Invalid bound artifact schema.');
  return response;
 }
-async function invalidateServerSnapshot(packId){const key=packKey(packId,'active'),active=await read(key);if(active?.serverSnapshot&&!active.serverSnapshot.invalid){active.serverSnapshot.invalid=true;await write(key,active);}}
+async function invalidateServerSnapshot(packId){jobs.get(packId)?.abort();const key=packKey(packId,'active'),active=await read(key);if(active?.serverSnapshot&&!active.serverSnapshot.invalid){active.serverSnapshot.invalid=true;await write(key,active);}}
 async function snapshotComplete(active){
  const snapshot=active?.serverSnapshot;if(!snapshot||snapshot.invalid)return false;
  try{serverRecord(snapshot.record,active.packId);const expected=serverFiles(snapshot.record);if(JSON.stringify(expected)!==JSON.stringify(snapshot.files))return false;const cache=await caches.open(active.cache);for(const f of expected)await serverJSON(await cache.match(f.path),f,snapshot.record);return true;}catch{return false;}
@@ -132,6 +132,11 @@ async function cachedResponse(request,clientId){
  if(active?.shell==='network'&&/\.(?:js|css)$/.test(url.pathname))return fetch(request);
  const target=/^\/content\/packs\/([^/]+)\//.exec(url.pathname)?.[1];
  if(target&&validPack(target)&&active?.packId!==target)active=await read(packKey(target,'active'));
+ // Client selection copies are not revocation authority; consult current pack metadata.
+ if(active?.serverSnapshot&&active.manifest?.files.some(file=>file.path===url.pathname)){
+  const current=await read(packKey(active.packId,'active'));
+  if(active.serverSnapshot.invalid||!current||current.serverSnapshot?.invalid)return new Response('This saved presentation is no longer valid.',{status:409});
+ }
  if(url.pathname==='/content/registry.json'){try{const live=await fetch(request);if(live.ok)return live;}catch{} }
  const cached=active?.cache&&await (await caches.open(active.cache)).match(url.pathname);
  if(cached){
@@ -198,18 +203,19 @@ async function start(selection,port,packId=legacy,sizes={},revision){
   const cacheId=active?.cache===cacheName?cacheName+'-repair':cacheName;
   const cache=await caches.open(cacheId);
   const serverSnapshot=await retainServerSnapshot(packId,revision,cache,controller.signal);
-  if(serverSnapshot){const binding=serverSnapshot.record.execution?.mediaIdentity||{packId:serverSnapshot.record.packId,revision:serverSnapshot.record.revision};if(binding.packId!==manifest.packId||binding.revision!==manifest.presentationRevision)throw Error('The saved media belongs to a different server presentation.');files.push(...serverSnapshot.files);}
-  pending={packId,cache:cacheId,revision:manifest.revision,selection,manifest,files,...(serverSnapshot?{serverSnapshot}:{}),bytes:files.some(f=>f.bytes===null)?null:files.reduce((n,f)=>n+f.bytes,0),received:0,count:0,status:'downloading'};
+  if(serverSnapshot){const binding=serverSnapshot.record.execution?.mediaIdentity||{packId:serverSnapshot.record.packId,revision:serverSnapshot.record.revision};if(binding.packId!==manifest.packId||binding.revision!==manifest.presentationRevision)throw Error('The saved media belongs to a different server presentation.');}
+  const downloadFiles=[...files,...(serverSnapshot?.files||[])];
+  pending={packId,cache:cacheId,revision:manifest.revision,selection,manifest,files,...(serverSnapshot?{serverSnapshot}:{}),bytes:downloadFiles.some(f=>f.bytes===null)?null:downloadFiles.reduce((n,f)=>n+f.bytes,0),received:0,count:0,status:'downloading'};
   await write(packKey(packId,'pending'),pending);
-  const report=()=>port?.postMessage({progress:{received:pending.received,bytes:pending.bytes,count:pending.count,total:files.length}});
-  for(const file of files){
+  const report=()=>port?.postMessage({progress:{received:pending.received,bytes:pending.bytes,count:pending.count,total:downloadFiles.length}});
+  for(const file of downloadFiles){
    if(controller.signal.aborted)throw new Error('Download paused. Verified files are kept for Resume.');
    let response=await cache.match(file.path);
    if(file.proxyRequest){
     const prior=priorPending?.files.find(f=>f.path===file.path&&observedProxyMatchesRequest(file.proxyRequest,f));
     if(prior&&await verified(response?.clone(),prior)){Object.assign(file,{bytes:prior.bytes,sha256:prior.sha256,proxyReceipt:prior.proxyReceipt,timing:{status:file.timingDependent?'pending-qualification':'not-applicable'}});}
     else {const result=await fetchProxyRequest(file.proxyRequest,{signal:controller.signal});Object.assign(file,{bytes:result.receipt.output.bytes,sha256:result.receipt.output.sha256,proxyReceipt:result.receipt,timing:{status:file.timingDependent?'pending-qualification':'not-applicable'}});await cache.put(file.path,new Response(result.bytes,{headers:{'Content-Type':file.mime,'Content-Length':String(file.bytes)}}));response=await cache.match(file.path);}
-    pending.bytes=files.some(f=>f.bytes===null)?null:files.reduce((n,f)=>n+f.bytes,0);
+    pending.bytes=downloadFiles.some(f=>f.bytes===null)?null:downloadFiles.reduce((n,f)=>n+f.bytes,0);
    }
    if(!await verified(response?.clone(),file)){
     const timeout=setTimeout(()=>controller.abort(),30000);
@@ -222,8 +228,9 @@ async function start(selection,port,packId=legacy,sizes={},revision){
   if(controller.signal.aborted)throw new Error('Download paused. Verified files are kept for Resume.');
   if(files.some(f=>f.timing?.status==='pending-qualification')){pending.status='timing-pending';pending.error='Files received. Recording timing must be qualified before this selection can play offline.';await write(packKey(packId,'pending'),pending);return {saved:false,received:true,timingPending:true};}
   if(!await complete(pending))throw new Error('Storage changed before verification finished. Retry the download.');
+  if(controller.signal.aborted)throw new Error('Download authority changed before activation.');
   // Single metadata write is the commit point. An interrupted update keeps active intact.
-  await write(packKey(packId,'active'),pending);await(await caches.open(META)).delete('/'+packKey(packId,'pending'));
+  await write(packKey(packId,'active'),pending);if(controller.signal.aborted){await invalidateServerSnapshot(packId);throw new Error('Download authority changed during activation.');}await(await caches.open(META)).delete('/'+packKey(packId,'pending'));
   // Keep the prior revision for already-open clients. Removal clears every revision.
   // Do not switch an open page's media beneath its loaded text and alignment.
   return {saved:true,selection};
