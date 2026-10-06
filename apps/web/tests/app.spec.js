@@ -654,3 +654,43 @@ it('C3: a Downloads status report refreshes the page media snapshot',async()=>{
  await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Downloads',exact:true}));await settle();await settle();await settle();
  await waitFor(()=>expect(status.mock.calls.length).toBeGreaterThan(before));
 });
+// S3 phase 1 review: a failed refresh must not wipe the last good media snapshot, and reconnecting refreshes it.
+it('B1: an offline Downloads refresh that cannot read the media revision keeps the snapshot, so video plays after reconnecting',async()=>{
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});const path=assets.a184.src,pin={path,bytes:3,sha256:'pin',group:'video'};
+ const status=vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[pin],savedFiles:[]});
+ const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(3).buffer,mime:'video/mp4',timing:{status:'not-applicable'},file:{path,sha256:'pin',bytes:3}});
+ vi.stubGlobal('URL',class extends URL{static createObjectURL(){return 'blob:v';}static revokeObjectURL(){}});
+ const connected=vi.spyOn(navigator,'onLine','get').mockReturnValue(true);
+ await startAt('S02-U005','waiting');
+ // Offline with nothing saved: the SW's MEDIA_STATUS fails ("The media revision is unavailable."), DOWNLOAD_STATUS still answers.
+ connected.mockReturnValue(false);window.dispatchEvent(new Event('offline'));await settle();
+ status.mockRejectedValueOnce(Error('The media revision is unavailable.'));const before=status.mock.calls.length;
+ await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Downloads',exact:true}));
+ await waitFor(()=>expect(status.mock.calls.length).toBe(before+1));await settle();await settle();
+ await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));await settle();
+ connected.mockReturnValue(true);window.dispatchEvent(new Event('online'));await settle();await settle();await settle();
+ await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passage resources'}));
+ await fireEvent.click(within(screen.getByText('Videos',{selector:'summary'}).parentElement).getByRole('button',{name:assets.a184.subtitle||assets.a184.title,exact:true}));await settle();
+ await fireEvent.click(screen.getByRole('button',{name:'Play video',exact:true}));await settle();await settle();await settle();
+ expect(request).toHaveBeenCalledTimes(1);expect(request.mock.calls[0][2]).toBe('d'.repeat(64));expect(document.querySelector('video').getAttribute('src')).toBe('blob:v');
+ expect(document.body.textContent).not.toMatch(/Download this resource before playback|has not been downloaded/);
+});
+it('B1: reconnecting refreshes a snapshot adopted offline from an older saved revision, so video plays the current revision',async()=>{
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});const path=assets.a184.src,current='d'.repeat(64),older='e'.repeat(64);
+ const status=vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:current,files:[{path,bytes:3,sha256:'pin',group:'video'}],savedFiles:[]});
+ const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(3).buffer,mime:'video/mp4',timing:{status:'not-applicable'},file:{path,sha256:'pin',bytes:3}});
+ vi.stubGlobal('URL',class extends URL{static createObjectURL(){return 'blob:v';}static revokeObjectURL(){}});
+ const connected=vi.spyOn(navigator,'onLine','get').mockReturnValue(true);
+ await startAt('S02-U005','waiting');
+ // Offline with an older saved download: the SW answers MEDIA_STATUS from the saved (older) manifest.
+ connected.mockReturnValue(false);window.dispatchEvent(new Event('offline'));await settle();
+ status.mockResolvedValueOnce({deliveryRevision:older,files:[{path,bytes:4,sha256:'old',group:'video'}],savedFiles:[{path,bytes:4,sha256:'old',group:'video'}]});const before=status.mock.calls.length;
+ await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Downloads',exact:true}));
+ await waitFor(()=>expect(status.mock.calls.length).toBe(before+1));await settle();await settle();
+ await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));await settle();
+ connected.mockReturnValue(true);window.dispatchEvent(new Event('online'));await settle();await settle();await settle();
+ await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passage resources'}));
+ await fireEvent.click(within(screen.getByText('Videos',{selector:'summary'}).parentElement).getByRole('button',{name:assets.a184.subtitle||assets.a184.title,exact:true}));await settle();
+ await fireEvent.click(screen.getByRole('button',{name:'Play video',exact:true}));await settle();await settle();await settle();
+ expect(request).toHaveBeenCalledTimes(1);expect(request.mock.calls[0][2]).toBe(current);expect(document.querySelector('video').getAttribute('src')).toBe('blob:v');
+});
