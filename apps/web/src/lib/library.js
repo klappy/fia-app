@@ -39,7 +39,7 @@ const preparationTransport=createPreparationTransport();
 const executionTransport=createExecutionTransport({fetch:(...args)=>fetch(...args)});
 export async function selectServerPresentation(id,{explicit=false,signal,transport=executionTransport}={}){
  signal?.throwIfAborted();let record=await transport.readPack(id,{signal});signal?.throwIfAborted();
- if(explicit&&record.preparationDemand){
+ if(explicit&&record.offlineSnapshot!=='historical-verified'&&record.preparationDemand){
   const demand=record.preparationDemand;
   const normalize=value=>value.status==='ready'?{status:'ready',record:value.record}:value.status==='preparing'?{status:'preparing',id:value.jobId}:{status:'unavailable'};
   // One observer per selection: no audio-key reconstruction or cross-pack join.
@@ -51,7 +51,7 @@ export async function selectServerPresentation(id,{explicit=false,signal,transpo
  const identity=record.identity;
  const media=record.execution?.mediaIdentity;
  if(media!==undefined&&(Object.keys(media||{}).sort().join(',')!=='packId,revision'||media.packId!==id||!/^([a-f0-9]{64})$/.test(media.revision)||!/^([a-f0-9]{64})$/.test(record.execution.mediaAssetsSha256)))throw Error('The media identity is invalid.');
- const descriptor={id:record.packId,revision:record.revision,language:identity.language,pericopeId:identity.pericopeId,title:identity.title,defaultScriptureId:identity.defaultScriptureId,capabilities:record.capabilities,diagnostics:record.diagnostics||[],...(media?{mediaIdentity:media,mediaAssetsSha256:record.execution.mediaAssetsSha256}:{}),presentation:{sha256:record.artifact.sha256,bytes:record.artifact.bytes}};
+ const descriptor={id:record.packId,revision:record.revision,language:identity.language,pericopeId:identity.pericopeId,title:identity.title,defaultScriptureId:identity.defaultScriptureId,capabilities:record.capabilities,diagnostics:record.diagnostics||[],...(record.offlineSnapshot==='historical-verified'?{offlineSnapshot:record.offlineSnapshot}:{}),...(media?{mediaIdentity:media,mediaAssetsSha256:record.execution.mediaAssetsSha256}:{}),presentation:{sha256:record.artifact.sha256,bytes:record.artifact.bytes}};
  if(!descriptor.title||!descriptor.language||!descriptor.capabilities?.text?.available)throw Error('The passage catalog is not compatible.');
  const presentation=await transport.readPresentationRecord(record,{signal});signal?.throwIfAborted();
  return {descriptor,presentation:validatePresentation(presentation,descriptor)};

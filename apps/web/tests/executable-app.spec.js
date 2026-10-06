@@ -2,6 +2,7 @@ import {it,expect,beforeEach,afterEach,vi} from 'vitest';
 import {render,screen,fireEvent,cleanup,waitFor} from '@testing-library/svelte';
 import {readFileSync} from 'node:fs';
 import {webcrypto} from 'node:crypto';
+import {fixture as savedFixture,worker as savedWorker} from './helpers/offline-execution.js';
 const audio=vi.hoisted(()=>({play:vi.fn(),pause:vi.fn(),resume:vi.fn(),stop:vi.fn(),active:false}));
 vi.mock('../src/lib/audio.js',()=>({createAudioController:(state,end)=>{audio.state=state;audio.end=end;return audio;}}));
 import App from '../src/App.svelte';import {libraryAdapter} from '../src/lib/library.js';
@@ -69,4 +70,15 @@ it.each(['current','older-projection','wrong-media','wrong-assets','invalid-snap
  libraryAdapter.select.mockResolvedValue({descriptor:pack,presentation});libraryAdapter.downloadStatus.mockImplementation(async p=>p.id===pack.id?{saved:true,active:{manifest,serverSnapshot,files:[]}}:{saved:false});
  const network={onLine:true};vi.stubGlobal('navigator',network);await mount();await waitFor(()=>expect(libraryAdapter.mediaStatus).toHaveBeenCalledWith(pack));network.onLine=false;await fireEvent(window,new Event('offline'));
  expect(!!screen.queryByText('Offline · session saved')).toBe(condition==='current');expect(audio.play).not.toHaveBeenCalled();
+});
+
+it('actual worker saved status keeps declared JSON inventory separate and is accepted by App',async()=>{
+ const f=savedFixture(),w=savedWorker(f);const saved=await w.message({type:'DOWNLOAD_START',selection:'audio',revision:f.record.revision,mediaIdentity:f.record.execution.mediaIdentity,mediaAssetsSha256:f.record.execution.mediaAssetsSha256});expect(saved.ok).toBe(true);
+ const status=await w.message({type:'DOWNLOAD_STATUS'});expect(status.active.serverSnapshot.files.length).toBeGreaterThan(0);expect(status.active.files.some(file=>file.path.startsWith('/v1/artifacts/'))).toBe(false);
+ const pack={id:f.record.packId,revision:f.record.revision,...f.record.identity,...f.record.execution,capabilities:f.record.capabilities};presentation=JSON.parse(f.bytes);libraryAdapter.select.mockResolvedValue({descriptor:pack,presentation});libraryAdapter.downloadStatus.mockImplementation(async p=>p.id===pack.id?status:{saved:false});
+ const network={onLine:true};vi.stubGlobal('navigator',network);render(App);await waitFor(()=>expect(libraryAdapter.mediaStatus).toHaveBeenCalledWith(pack));network.onLine=false;await fireEvent(window,new Event('offline'));expect(screen.getByText('Offline · session saved')).toBeTruthy();expect(audio.play).not.toHaveBeenCalled();
+});
+it('historical saved passage displays its status and a fresh selection clears it',async()=>{
+ const historical={...descriptor,offlineSnapshot:'historical-verified'};libraryAdapter.select.mockResolvedValue({descriptor:historical,presentation});await mount();expect(screen.getByRole('status').textContent).toContain('Using the last verified saved passage while offline.');
+ libraryAdapter.select.mockResolvedValue({descriptor,presentation});vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',name:'English',nativeName:'English',ready:1}]);vi.spyOn(libraryAdapter,'passages').mockResolvedValue([descriptor]);await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passages',exact:true}));await fireEvent.click(await screen.findByRole('button',{name:'Open passage',exact:true}));await waitFor(()=>expect(screen.queryByText('Using the last verified saved passage while offline.')).toBeNull());
 });
