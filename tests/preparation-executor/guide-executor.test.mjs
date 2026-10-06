@@ -53,8 +53,20 @@ test('factory executes three P1 disposition sections without dropping provenance
   const warm=await executor.request(request);assert.deepEqual(warm.artifact,result.artifact);
  }
 });
-test('complete resolver factory preserves retained P2 raw words and actual correspondence outcomes',async()=>{
+test('canonical factory preserves P2 raw words under explicit synthetic source identity',async()=>{
  const f=await setup(),executor=await f.create({canonicalP1:await canonicalInputs()}),result=await executor.request(request),accepted=await report(f,result);
  assert.equal(result.reason,'review-required');assert.equal(accepted.canonicalDisposition.canonicalUnits.length,8);assert.deepEqual(accepted.canonicalDisposition.excluded,[]);
  assert.deepEqual(accepted.units.map(u=>u.correspondenceStatus),['unmatched','unmatched',...Array(6).fill('exact-candidate')]);
+});
+
+test('default composition retains pre-canonical dependency identity and warm nodes',async()=>{
+ const f=await setup(),legacyDependency={schema:'fia-guide-executor-composition@1',metadataSha256,registrySha256,presentationAliases:[],modelRecipe,policyRevision:'guide-executor-composition-test@1',recognitionPolicy:'fia-local-raw-recognition@1/validateRecognitionIdentity@1',acceptancePolicy:'review-required-only@1',ports:{admission:'d'.repeat(64),acquisition:'b'.repeat(64),recognition:'c'.repeat(64),artifacts:{read:'a'.repeat(64),write:'a'.repeat(64)}}};
+ const expected=await sha256(encode(legacyDependency)),first=await f.create();assert.equal(first.dependencySha256,expected);
+ const old=await first.request(request),warm=await(await f.create()).request(request);assert.deepEqual(warm.artifact,old.artifact);assert.deepEqual(f.counts,{fetch:1,recognize:1});
+});
+test('canonical factory joins actual retained P2 source and untouched raw recognition',{skip:!process.env.FIA_RETAINED_P2},async()=>{
+ const source=new Uint8Array(await readFile(process.env.FIA_RETAINED_P2));assert.equal(await sha256(source),raw.source.sha256);assert.equal(source.length,raw.source.bytes);
+ const f=await setup({source,retainedRaw:true}),executor=await f.create({canonicalP1:await canonicalInputs()}),result=await executor.request(request),accepted=await report(f,result);
+ assert.equal(result.reason,'review-required');assert.equal(accepted.rawRecognitionSha256,rawPin);assert.equal(accepted.sourceSha256,raw.source.sha256);assert.equal(accepted.canonicalDisposition.canonicalUnits.length,8);assert.deepEqual(accepted.canonicalDisposition.excluded,[]);assert.equal(accepted.diagnostics.unassignedRecognizedTokens,64);assert.deepEqual(accepted.units.map(u=>u.correspondenceStatus),['unmatched','unmatched',...Array(6).fill('exact-candidate')]);assert.deepEqual(accepted.acceptedPlaybackRanges,[]);
+ const warm=await executor.request(request);assert.deepEqual(warm.artifact,result.artifact);assert.deepEqual(f.counts,{fetch:1,recognize:1});
 });
