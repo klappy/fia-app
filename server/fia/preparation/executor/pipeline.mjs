@@ -12,14 +12,14 @@ function inputIdentity(input){
 function artifact(value){
  if(!value||!hash(value.sha256)||typeof value.reference!=='string'||!value.reference.trim())throw Error('invalid-pipeline-artifact');canonicalJSONString(value);return clone(value);
 }
-export function createPipeline({storage,policyId,adapters,verifyArtifact,allowPaid=false}){
+export function createPipeline({storage,policyId,adapters,verifyArtifact,verifySource=null,allowPaid=false}){
  if(typeof policyId!=='string'||!policyId.trim()||typeof verifyArtifact!=='function'||typeof storage?.transaction!=='function')throw Error('invalid-pipeline-policy');
  const captured=Object.fromEntries(nodes.map(node=>[node,adapters?.[node]?Object.freeze({...adapters[node],retry:adapters[node].retry?Object.freeze({...adapters[node].retry}):undefined}):null]));
  for(const adapter of Object.values(captured))if(adapter?.dependencySha256!==undefined&&!hash(adapter.dependencySha256))throw Error('invalid-adapter-dependency');
  function dependencies(node){return Object.fromEntries(nodes.slice(0,nodes.indexOf(node)+1).filter(name=>captured[name]?.dependencySha256!==undefined).map(name=>[name,captured[name].dependencySha256]));}
- const verify=verifyArtifact;
+ const verify=verifyArtifact,verifyStream=verifySource;if(verifyStream!==null&&typeof verifyStream!=='function')throw Error('invalid-source-verifier');
  async function checked(output,input,node){
-  const copy=artifact(output),retained=await verify(clone(copy),{input:clone(input),node});
+  const copy=artifact(output);if(node==='acquire'&&verifyStream){const result=await verifyStream(clone(copy),{input:clone(input),node});shape(result,['sha256','reference','bytes']);if(result.sha256!==copy.sha256||result.reference!==copy.reference||result.reference!==`originals/sha256/${result.sha256}.mp3`||!Number.isSafeInteger(result.bytes)||result.bytes<1||result.bytes>16777216)throw Error('source-artifact-unavailable');return {sha256:copy.sha256,reference:copy.reference};}const retained=await verify(clone(copy),{input:clone(input),node});
   if(!(retained instanceof Uint8Array))throw Error('artifact-unavailable');
   const bytes=retained.slice();if(await sha256(bytes)!==copy.sha256)throw Error('artifact-unavailable');
   const verified={sha256:copy.sha256,reference:copy.reference};

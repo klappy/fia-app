@@ -1,5 +1,5 @@
 import {it,expect,vi,afterEach} from 'vitest';
-import {render,screen,fireEvent,cleanup,waitFor} from '@testing-library/svelte';
+import {render,screen,fireEvent,cleanup,waitFor,within} from '@testing-library/svelte';
 import {readFileSync} from 'node:fs';
 import {webcrypto} from 'node:crypto';
 import App from '../src/App.svelte';
@@ -10,7 +10,7 @@ const registry=JSON.parse(readFileSync('public/content/registry.json','utf8'));
 afterEach(()=>{cleanup();vi.restoreAllMocks();vi.unstubAllGlobals();localStorage.clear();});
 for(const id of ['eng.MRK-1-1-13','spa.MRK-1-1-13','eng.MRK-1-14-20','spa.MRK-1-14-20'])it(`loads ${id} silently in manual mode with explicit text continuation and no resource URL`,async()=>{
  localStorage.setItem('fia-v3-selected-pack',id);const requests=[];
- vi.stubGlobal('crypto',webcrypto);vi.stubGlobal('fetch',async url=>{requests.push(url);return new Response(readFileSync('public'+url));});
+ vi.stubGlobal('crypto',webcrypto);vi.stubGlobal('fetch',async url=>{requests.push(url);if(url.startsWith('/v1/packs/')){const d=registry.packs.find(p=>p.id===decodeURIComponent(url.slice('/v1/packs/'.length)));return Response.json({status:'ready',packId:d.id,revision:d.revision,identity:{packId:d.id,language:d.language,pericopeId:d.pericopeId,title:d.title,defaultScriptureId:d.defaultScriptureId},capabilities:d.capabilities,artifact:{sha256:d.presentation.sha256,bytes:d.presentation.bytes,mime:'application/json'}});}if(url.startsWith('/v1/artifacts/')){const d=registry.packs.find(p=>p.revision===url.slice('/v1/artifacts/'.length));return new Response(readFileSync('public'+d.presentation.url));}return new Response(readFileSync('public'+url));});
  vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});vi.spyOn(libraryAdapter,'activate').mockResolvedValue({selected:true});
  const audio=vi.fn();vi.stubGlobal('Audio',audio);HTMLMediaElement.prototype.pause=vi.fn();Element.prototype.scrollTo=vi.fn();
  const descriptor=registry.packs.find(p=>p.id===id),pack=JSON.parse(readFileSync('public'+descriptor.presentation.url,'utf8'));
@@ -19,7 +19,7 @@ for(const id of ['eng.MRK-1-1-13','spa.MRK-1-1-13','eng.MRK-1-14-20','spa.MRK-1-
  expect(audio).not.toHaveBeenCalled();expect(document.querySelectorAll('img[src],video[src],audio[src]')).toHaveLength(0);
  await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));
  await waitFor(()=>expect(JSON.parse(localStorage.getItem('fia-v3-progress@1:'+id)).session.index).toBe(1));
- expect(audio).not.toHaveBeenCalled();expect(requests.every(url=>url==='/content/registry.json'||url===descriptor.presentation.url)).toBe(true);
+ expect(audio).not.toHaveBeenCalled();expect(requests.every(url=>url===`/v1/packs/${id}`||url===`/v1/artifacts/${descriptor.revision}`)).toBe(true);
 });
 it('late previous-pack download activation cannot expose media in the newly selected pack',async()=>{
  const descriptor=registry.packs.find(p=>p.id==='spa.MRK-1-1-13'),presentation=JSON.parse(readFileSync('public'+descriptor.presentation.url,'utf8'));
@@ -40,4 +40,21 @@ it('remote-only resource says not prepared without offering a download action',a
  localStorage.setItem('fia-v3-selected-pack',descriptor.id);vi.spyOn(libraryAdapter,'select').mockResolvedValue({descriptor,presentation});vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});vi.spyOn(libraryAdapter,'activate').mockResolvedValue({selected:true});
  vi.stubGlobal('Audio',vi.fn());HTMLMediaElement.prototype.pause=vi.fn();Element.prototype.scrollTo=vi.fn();render(App);
  await waitFor(()=>expect(screen.getByText(/not available online yet/)).toBeTruthy());expect(screen.queryByRole('button',{name:'Open Downloads'})).toBeNull();expect(document.querySelector('img[src]')).toBeNull();
+});
+
+for(const [id,labels] of [
+ ['eng.MRK-1-14-20',['BSB','ULT','UST','WEB','WEBU']],
+ ['spa.MRK-1-14-20',['RV1909','ASBRT']],
+ ['eng.MRK-1-1-13',['Berean Standard Bible','unfoldingWord Literal Text','unfoldingWord Simplified Text']],
+])it(`resource selector identifies source editions in ${id} without changing other labels`,async()=>{
+ HTMLDialogElement.prototype.showModal=function(){this.open=true;};HTMLDialogElement.prototype.close=function(){this.open=false;};
+ const descriptor=registry.packs.find(p=>p.id===id),presentation=JSON.parse(readFileSync('public'+descriptor.presentation.url,'utf8'));
+ localStorage.setItem('fia-v3-selected-pack',id);vi.spyOn(libraryAdapter,'select').mockResolvedValue({descriptor,presentation});
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({files:[],savedFiles:[],deliveryRevision:null});vi.spyOn(libraryAdapter,'activate').mockResolvedValue({selected:true});
+ vi.stubGlobal('Audio',vi.fn());HTMLMediaElement.prototype.pause=vi.fn();Element.prototype.scrollTo=vi.fn();render(App);
+ await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toBe(presentation.activities[0].prompt));
+ await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passage resources',exact:true}));
+ const scripture=screen.getByText('Scripture translations',{selector:'summary'});await fireEvent.click(scripture);
+ expect(within(scripture.parentElement).getAllByRole('button').map(button=>button.textContent.trim())).toEqual(labels);
+ const image=Object.values(presentation.assets).find(a=>a.kind==='image');if(image){const images=screen.getByText('Images',{selector:'summary'});await fireEvent.click(images);expect(within(images.parentElement).getByRole('button',{name:image.subtitle||image.title,exact:true})).toBeTruthy();}
 });

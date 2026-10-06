@@ -1,0 +1,96 @@
+import {validateCanonicalSourceActionCandidate} from './source-action-candidates.mjs';
+import {canonicalJSONString,sha256} from '../../preparation/contract.mjs';
+import inputSchema from './source-action-input.schema.json' with {type:'json'};
+import resultSchema from './source-action-result.schema.json' with {type:'json'};
+import projectionSchema from './source-action-projection.schema.json' with {type:'json'};
+import executionSchema from './executable-presentation.schema.json' with {type:'json'};
+const copy=v=>structuredClone(v),same=(a,b)=>canonicalJSONString(a)===canonicalJSONString(b),need=(ok,reason)=>{if(!ok)throw Error(reason);},digest=v=>typeof v==='string'&&/^[a-f0-9]{64}$/.test(v),encode=v=>new TextEncoder().encode(canonicalJSONString(v));
+export const SOURCE_ACTION_RECIPE='fia-server-source-action-projector@1';
+const exact=(v,keys)=>v&&Object.getPrototypeOf(v)===Object.prototype&&Object.keys(v).sort().join()===keys.toSorted().join();
+// Small portable validator for the checked-in closed draft schemas. Unsupported
+// schema keywords are not accepted as runtime policy; semantic joins follow below.
+export function matchesSchema(v,s,root=s){
+ if(s.$ref)return matchesSchema(v,s.$ref.split('/').slice(1).reduce((a,k)=>a?.[k],root),root);
+ if(s.const!==undefined&&!same(v,s.const)||s.enum&&!s.enum.some(x=>same(x,v)))return false;
+ if(s.allOf&&!s.allOf.every(x=>matchesSchema(v,x,root)))return false;
+ if(s.oneOf&&s.oneOf.filter(x=>matchesSchema(v,x,root)).length!==1)return false;
+ if(s.type){const types=Array.isArray(s.type)?s.type:[s.type];if(!types.some(t=>t==='null'?v===null:t==='array'?Array.isArray(v):t==='object'?v!==null&&Object.getPrototypeOf(v)===Object.prototype:t==='integer'?Number.isSafeInteger(v):typeof v===t))return false;}
+ if(typeof v==='string'&&(s.minLength!==undefined&&v.length<s.minLength||s.maxLength!==undefined&&v.length>s.maxLength||s.pattern&&!new RegExp(s.pattern).test(v)))return false;
+ if(typeof v==='number'&&(s.minimum!==undefined&&v<s.minimum||s.maximum!==undefined&&v>s.maximum))return false;
+ if(Array.isArray(v)){if(s.minItems!==undefined&&v.length<s.minItems||s.maxItems!==undefined&&v.length>s.maxItems||s.uniqueItems&&new Set(v.map(canonicalJSONString)).size!==v.length)return false;for(let i=0;i<v.length;i++){const rule=s.prefixItems?.[i]??s.items;if(rule&&!matchesSchema(v[i],rule,root))return false;}}
+ if(v!==null&&Object.getPrototypeOf(v)===Object.prototype){if(s.required?.some(k=>!Object.hasOwn(v,k)))return false;for(const [k,x]of Object.entries(v)){if(s.properties?.[k]){if(!matchesSchema(x,s.properties[k],root))return false;}else if(s.additionalProperties===false)return false;}}
+ return true;
+}
+export async function canonicalSourceOrder(units){
+ need(Array.isArray(units)&&units.length>0&&units.length<=4096,'execution-canonical-units');const ids=new Set();let lastSection=-1,lastUnit=-1;
+ for(const u of units){need(exact(u,['sectionId','sectionOrdinal','sourceUnitId','unitOrdinal','sourceTextSha256','text'])&&typeof u.sectionId==='string'&&u.sectionId&&typeof u.sourceUnitId==='string'&&u.sourceUnitId&&!ids.has(u.sourceUnitId)&&Number.isSafeInteger(u.sectionOrdinal)&&u.sectionOrdinal>=lastSection&&Number.isSafeInteger(u.unitOrdinal)&&u.unitOrdinal>=0&&digest(u.sourceTextSha256)&&typeof u.text==='string'&&await sha256(u.text)===u.sourceTextSha256,'execution-canonical-unit');if(u.sectionOrdinal===lastSection)need(u.unitOrdinal>lastUnit,'execution-canonical-order');ids.add(u.sourceUnitId);lastSection=u.sectionOrdinal;lastUnit=u.unitOrdinal;}
+ return sha256(encode(units.map(({text,...anchor})=>anchor)));
+}
+export async function validateSourceActionDecision(input,result,{basePresentation,baseRevision,sourceRevision,language,canonicalUnits,canonicalOrderSha256}){
+ need(matchesSchema(input,inputSchema)&&matchesSchema(result,resultSchema),'execution-decision-schema');
+ need(input.packId===basePresentation.id&&input.presentationRevision===baseRevision&&input.sourceRevision===sourceRevision&&input.language===language&&input.canonicalOrderSha256===canonicalOrderSha256&&result.inputSha256===await sha256(encode(input)),'execution-decision-binding');
+ const source=canonicalUnits.find(u=>u.sourceUnitId===input.source.unitId);need(source&&same(input.sourceAnchor,(({text,...a})=>a)(source))&&source.text===input.source.text&&source.sourceTextSha256===input.source.sha256,'execution-source-anchor');
+ const contextIndices=[canonicalUnits.indexOf(source),...input.context.map(c=>canonicalUnits.findIndex(u=>u.sourceUnitId===c.unitId))].sort((a,b)=>a-b);need(contextIndices[0]>=0&&contextIndices.at(-1)-contextIndices[0]===contextIndices.length-1,'execution-context-adjacency');
+ const evidenceIds=new Set([source.sourceUnitId,...input.context.map(c=>c.unitId)]);need(evidenceIds.size===1+input.context.length,'execution-context-duplicate');
+ for(const context of input.context){const found=canonicalUnits.find(u=>u.sourceUnitId===context.unitId);need(found&&found.text===context.text&&found.sourceTextSha256===context.sha256,'execution-context-binding');}
+ need(input.existingActivityBindings.length>0,'execution-activity-binding');for(const b of input.existingActivityBindings){const activity=basePresentation.activities.find(a=>a.id===b.activityId);need(activity&&activity.sourceUnitId===b.sourceUnitId&&(activity.sourceSha256??activity.sourceTextSha256)===b.sourceTextSha256&&activity.sectionId===b.sectionId&&b.sourceUnitId===source.sourceUnitId,'execution-activity-binding');}
+ const candidates=new Map();for(const c of input.candidates){need(!candidates.has(c.resourceId)&&await sha256(c.sourceText)===c.sourceTextSha256,'execution-candidate');const matches=Object.values(basePresentation.assets).filter(a=>(a.sourceEvidence?.id??a.id)===c.resourceId);need(matches.length===1,'execution-candidate-asset');const asset=matches[0];await validateCanonicalSourceActionCandidate(c,asset,language);candidates.set(c.resourceId,{candidate:c,asset});}
+ const slots=new Map();for(const slot of input.intentSlots){need(!slots.has(slot.slotId)&&slot.candidateResourceIds.every(id=>candidates.get(id)?.candidate.kind===slot.resourceKind),'execution-intent-slot');slots.set(slot.slotId,slot);}
+ for(const e of input.explicitAssociations)need(candidates.get(e.resourceId)?.candidate.sourceEvidenceSha256===e.sourceEvidenceSha256,'execution-explicit-evidence');
+ const cue=result.cueRoles;if(input.requestedDecisions.includes('cue-roles')){need(cue!==null&&(cue.outcome==='resolved')===(cue.roles!==null)&&cue.evidenceUnitIds.every(id=>evidenceIds.has(id)),'execution-cue-roles');if(cue.roles)need(!cue.roles.pauseOnly||!cue.roles.readingRequested&&!cue.roles.discussionRequested&&!cue.roles.resourceLookupRequested,'execution-compound-roles');}else need(cue===null,'execution-unrequested-roles');
+ const seen=new Set();for(const relation of result.resourceAssociations){const slot=slots.get(relation.slotId);need(input.requestedDecisions.includes('resource-association')&&slot&&!seen.has(slot.slotId)&&relation.resourceKind===slot.resourceKind&&relation.relation===slot.relation&&relation.candidateResourceIds.every(id=>slot.candidateResourceIds.includes(id))&&relation.evidenceUnitIds.every(id=>evidenceIds.has(id)),'execution-relation-membership');need(relation.outcome==='matched'?relation.candidateResourceIds.length>0&&relation.evidenceUnitIds.length>0:relation.outcome==='none'?relation.candidateResourceIds.length===0:true,'execution-relation-outcome');seen.add(slot.slotId);}
+ need(!input.requestedDecisions.includes('resource-association')?seen.size===0:seen.size===slots.size,'execution-missing-slot');
+ return {source,candidates};
+}
+export async function validateBoundArtifacts(boundArtifacts){
+ need(Array.isArray(boundArtifacts)&&boundArtifacts.length<=8192,'execution-bound-artifacts');const bound=new Map();
+ for(const a of boundArtifacts){need(exact(a,['id','bytes','sha256'])&&typeof a.id==='string'&&a.id&&a.bytes instanceof Uint8Array&&a.bytes.length>0&&a.bytes.length<=65536&&digest(a.sha256)&&await sha256(a.bytes)===a.sha256&&!bound.has(a.id),'execution-bound-artifact');const v=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(a.bytes));need(v.id===a.id,'execution-bound-id');
+  if(v.schema==='fia-bound-narration-demand@1'){need(exact(v,['schema','id','identity'])&&exact(v.identity,['packId','presentationRevision','language','edition','quality','activityId','sourceUnitId','sourceTextSha256'])&&Object.values(v.identity).every(x=>typeof x==='string'&&x.length>0)&&v.identity.quality==='original'&&digest(v.identity.presentationRevision)&&digest(v.identity.sourceTextSha256),'execution-bound-demand');}
+  else{need(v.schema==='fia-bound-narration-audio@1'&&exact(v,['schema','id','delivery','playbackRange'])&&exact(v.delivery,['url','sha256','bytes','mime'])&&typeof v.delivery.url==='string'&&(v.delivery.url.startsWith('/')&&!v.delivery.url.startsWith('//')||v.delivery.url.startsWith('https://'))&&digest(v.delivery.sha256)&&Number.isSafeInteger(v.delivery.bytes)&&v.delivery.bytes>0&&['audio/mpeg','audio/wav','audio/ogg'].includes(v.delivery.mime),'execution-bound-audio');need(v.playbackRange===null||exact(v.playbackRange,['startSeconds','endSeconds'])&&Number.isFinite(v.playbackRange.startSeconds)&&v.playbackRange.startSeconds>=0&&Number.isFinite(v.playbackRange.endSeconds)&&v.playbackRange.endSeconds>v.playbackRange.startSeconds,'execution-bound-range');}
+  bound.set(a.id,{...a,value:v});
+ }return bound;
+}
+export async function validateExecutablePresentation(presentation,{boundArtifacts=[],baseRevision=null,language=null}={}){
+ need(matchesSchema(presentation,executionSchema),'execution-presentation-schema');const bound=await validateBoundArtifacts(boundArtifacts),ids=new Set(),sections=new Set(presentation.sections.map(s=>s.id));
+ for(const a of presentation.activities){need(!ids.has(a.id)&&sections.has(a.sectionId)&&a.execution.focalAssetId===(a.assetId??null)&&(!a.assetId||Object.hasOwn(presentation.assets,a.assetId))&&a.completion===(a.execution.completion.action==='manual-continue'?'confirm':'auto'),'execution-compatibility');ids.add(a.id);const n=a.execution.narration;if(['play-bound-audio','prepare-original'].includes(n.action)){const ref=n.artifact??n.demand,item=bound.get(ref.id);need(item&&item.sha256===ref.sha256&&item.value.schema===(n.action==='play-bound-audio'?'fia-bound-narration-audio@1':'fia-bound-narration-demand@1'),'execution-narration-reference');if(n.action==='prepare-original')need(item.value.identity.packId===presentation.id&&item.value.identity.presentationRevision===baseRevision&&item.value.identity.language===language&&item.value.identity.activityId===a.id&&item.value.identity.sourceUnitId===a.sourceUnitId&&item.value.identity.sourceTextSha256===(a.sourceSha256??a.sourceTextSha256),'execution-narration-binding');}}
+ for(const [index,a] of presentation.activities.entries()){if(a.fulfills&&['guide','discussion'].includes(a.kind)){const owner=presentation.activities.find(x=>x.id===a.fulfills);if(a.id===`${a.fulfills}-resource-${a.assetId}`){need(owner&&owner.sourceUnitId===a.sourceUnitId&&owner.sectionId===a.sectionId&&(owner.sourceSha256??owner.sourceTextSha256)===(a.sourceSha256??a.sourceTextSha256)&&a.narration===''&&a.audioSrc===null&&a.audioId===null&&a.execution.narration.action==='none'&&a.completion==='confirm','execution-narration-owner');const before=presentation.activities[index-1];need(before&&(before.id===owner.id||before.fulfills===owner.id),'execution-resource-position');}}}
+ return true;
+}
+export async function projectExecutablePresentation({basePresentation,baseRevision,sourceRevision,language,canonicalUnits,canonicalOrderSha256,decisions=[],transitionEvidence=[],narrationBindings={},boundArtifacts=[],recipeRevision=SOURCE_ACTION_RECIPE}){
+ const base=copy(basePresentation);need(base&&!base.execution&&Array.isArray(base.activities)&&base.activities.length>0&&base.activities.length<=8192&&base.assets&&Array.isArray(base.sections),'execution-base');
+ need(digest(baseRevision)&&typeof sourceRevision==='string'&&sourceRevision&&typeof recipeRevision==='string'&&recipeRevision&&await canonicalSourceOrder(canonicalUnits)===canonicalOrderSha256,'execution-identity');
+ let lastSourceIndex=-1;for(const activity of base.activities){if(activity.sourceUnitId){const index=canonicalUnits.findIndex(u=>u.sourceUnitId===activity.sourceUnitId),unit=canonicalUnits[index];need(unit&&index>lastSourceIndex&&activity.sectionId===unit.sectionId&&(activity.sourceSha256??activity.sourceTextSha256)===unit.sourceTextSha256&&(activity.sourceText===undefined||activity.sourceText===unit.text),'execution-base-source-order');lastSourceIndex=index;}}
+ need(Array.isArray(decisions)&&decisions.length<=canonicalUnits.length,'execution-decisions');const context={basePresentation:base,baseRevision,sourceRevision,language,canonicalUnits,canonicalOrderSha256},events=[],perActivity=new Map(),seenUnits=new Set();
+ for(const record of decisions){need(exact(record,['input','result']),'execution-decision-record');const {input,result}=record,checked=await validateSourceActionDecision(input,result,context);need(!seenUnits.has(input.source.unitId),'execution-duplicate-decision');seenUnits.add(input.source.unitId);const anchors=input.existingActivityBindings.filter(b=>b.sourceUnitId===input.source.unitId);need(anchors.length===1,'execution-ambiguous-anchor');const id=anchors[0].activityId;const selected=new Set(),unresolved=[];
+  for(const relation of result.resourceAssociations){if(relation.outcome==='matched'&&relation.relation==='requested-medium')for(const resourceId of relation.candidateResourceIds)selected.add(checked.candidates.get(resourceId).asset.id);if(['ambiguous','unsupported'].includes(relation.outcome))unresolved.push({slotId:relation.slotId,resourceKind:relation.resourceKind,outcome:relation.outcome,reason:relation.reason,candidateResourceIds:relation.candidateResourceIds});}
+  // Verified base resource order is display order for simultaneous views, never
+  // provider/candidate order or inferred temporal sequence.
+  const assets=Object.keys(base.assets).filter(id=>selected.has(id));perActivity.set(id,{record,assets,unresolved,anchor:input.sourceAnchor});
+ }
+ const decisionEvidenceSha256=await sha256(encode({decisions,transitionEvidence})),recipeSha256=await sha256(recipeRevision),transitions=new Map();
+ for(const t of transitionEvidence){need(exact(t,['activityId','sourceUnitId','sourceTextSha256','status','action','reason','evidenceSha256','policySha256'])&&!transitions.has(t.activityId)&&['resolved','unknown'].includes(t.status)&&['manual-continue','advance-after-narration'].includes(t.action)&&digest(t.evidenceSha256)&&digest(t.policySha256)&&typeof t.reason==='string'&&t.reason,'execution-transition-evidence');const a=base.activities.find(a=>a.id===t.activityId);need(a&&a.sourceUnitId===t.sourceUnitId&&(a.sourceSha256??a.sourceTextSha256)===t.sourceTextSha256&&(t.status!=='unknown'||t.action==='manual-continue'),'execution-transition-binding');transitions.set(t.activityId,t);}
+ const provenance={schema:'fia-executable-presentation-provenance@1',baseRevision,sourceRevision,canonicalOrderSha256,decisionEvidenceSha256,recipeRevision,transitions:[],narrationOwners:[],unresolved:[]};
+ const activities=[],existingIds=new Set(base.activities.map(a=>a.id));need(existingIds.size===base.activities.length,'execution-base-ids');
+ for(const original of base.activities){const a=copy(original),cue=perActivity.get(a.id),roles=cue?.record.result.cueRoles?.roles??null,t=transitions.get(a.id);let action='manual-continue',status='transition-unknown',reason='transition-evidence-unavailable';
+  if(t){action=t.action;status=t.status==='resolved'?'resolved':'transition-unknown';reason=t.reason;}
+  else if(a.completion==='auto'&&a.semanticStatus==='descriptive-list'){action='advance-after-narration';status='resolved';reason='preserved-reviewed-list';}
+  else if(a.kind==='discussion'||a.kind==='scripture'){status='resolved';reason='preserved-manual-handoff';}
+  if(roles&&(roles.discussionRequested||roles.resourceLookupRequested||roles.readingRequested||roles.pauseOnly)||cue?.assets.length){action='manual-continue';status='resolved';reason='resolved-manual-source-action';}
+  const narration=copy(narrationBindings[a.id]??{action:'blocked',status:'unavailable',reason:'bound-narration-unavailable'});
+  a.execution={narration,focalAssetId:a.assetId??null,completion:{action}};a.completion=action==='manual-continue'?'confirm':'auto';
+  if(roles?.discussionRequested)a.kind='discussion';
+  provenance.transitions.push({activityId:a.id,status,action,reason,evidenceSha256:t?.evidenceSha256??null,policySha256:t?.policySha256??null});provenance.narrationOwners.push({activityId:a.id,ownerActivityId:a.id,sourceUnitId:a.sourceUnitId??a.fulfills??null});
+  const additions=[];
+  if(cue?.assets.length){a.assetId=cue.assets[0];a.execution.focalAssetId=a.assetId;a.kind='discussion';a.completion='confirm';a.execution.completion={action:'manual-continue'};
+   for(const assetId of cue.assets.slice(1)){const id=`${a.id}-resource-${assetId}`;need(!existingIds.has(id),'execution-step-id-conflict');existingIds.add(id);const derived={...copy(a),id,assetId,narration:'',audioSrc:null,audioId:null,fulfills:a.id,execution:{narration:{action:'none'},focalAssetId:assetId,completion:{action:'manual-continue'}}};additions.push(derived);provenance.narrationOwners.push({activityId:id,ownerActivityId:a.id,sourceUnitId:a.sourceUnitId});}
+  }
+  if(cue){provenance.unresolved.push(...cue.unresolved.map(x=>({activityId:a.id,...x})));const step=x=>({id:x.id,sourceUnitId:x.sourceUnitId,sourceTextSha256:x.sourceSha256??x.sourceTextSha256,sectionId:x.sectionId,kind:x.kind,assetId:x.assetId,completion:x.completion,narration:x.narration??'',audioSrc:x.audioSrc??null,audioId:x.audioId??null,prompt:x.prompt??'',fulfills:x.fulfills??null,relatedAssetIds:x.relatedAssetIds??[],title:x.title??'',sectionTitle:x.sectionTitle??'',eyebrow:x.eyebrow??'',duration:x.duration??'',sourceText:x.sourceText??'',execution:x.execution});
+   if(cue.assets.length)events.push({schema:'fia-source-action-projection@2',packId:base.id,presentationRevision:baseRevision,language,canonicalOrderSha256,sourceDecisionSha256:await sha256(encode(cue.record.result)),basePresentationSha256:baseRevision,execution:{schema:'fia-executable-presentation@1',sourceRevision,decisionEvidenceSha256,recipeRevision},events:[{eventId:await sha256(encode({anchor:cue.anchor,recipeRevision,decision:cue.record.result})),anchor:cue.anchor,phase:'at-source-cue',roles,unresolved:cue.unresolved,completion:'manual',automaticReplay:false,sourceActivityId:a.id,projectionRecipeSha256:recipeSha256,orderedSteps:[a,...additions].map(step)}]});
+  }
+  activities.push(a,...additions);
+ }
+ const presentation={...base,activities,execution:{schema:'fia-executable-presentation@1',sourceRevision,decisionEvidenceSha256,recipeRevision}};
+ for(const event of events)need(matchesSchema(event,projectionSchema),'execution-projection-schema');
+ await validateExecutablePresentation(presentation,{boundArtifacts,baseRevision,language});
+ return {presentation,boundArtifacts:copy(boundArtifacts),provenance:{...provenance,events}};
+}

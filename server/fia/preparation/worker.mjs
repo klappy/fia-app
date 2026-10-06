@@ -1,5 +1,6 @@
 import catalog from './catalog.json';
-import {serveGuidePreparation,serveGuidePreparationObject,captureGuideCapabilities,initializeGuideLifecycle,runGuideAlarm} from './guide-dispatch.mjs';
+import {createExecutableRuntime,serveExecutableObject} from './executable-presentation-runtime.mjs';
+import {serveGuideUnitPreparation,serveGuideUnitObject,serveGuidePreparation,serveGuidePreparationObject,captureGuideCapabilities,initializeGuideLifecycle,runGuideAlarm} from './guide-dispatch.mjs';
 import {serveStableOriginal,stableOriginalRequest,currentPreparationRow} from './stable-original-coordinator.mjs';
 import {json,resolveSelection,operationId,indexedCatalog,readBounded,prepareAccepted,eligibleRows} from './service.mjs';
 import {createReviewedOriginalStore} from './reviewed-original-store.mjs';
@@ -36,8 +37,9 @@ async function reviewedStore(ctx,env){
 const prefix='/v1/preparations';
 const statusBody=(record,reused)=>({schema:'fia-preparation-status@1',jobId:record.jobId,state:record.state,reason:record.reason,sourceState:record.sourceState??'queued',selection:record.selection,result:record.result??null,resultSha256:record.resultSha256??null,statusUrl:`${prefix}/${record.jobId}`,reused});
 
-export async function servePreparation(request,env,{guideExecutionProfile=null}={}){
-  const guide=await serveGuidePreparation(request,env,catalog,guideExecutionProfile);if(guide)return guide;
+export async function servePreparation(request,env,{guideExecutionProfile=null,guideExecutionEligibility=null,guideUnitDependencySha256=null}={}){
+  const unit=await serveGuideUnitPreparation(request,env,catalog,guideExecutionProfile,guideExecutionEligibility,guideUnitDependencySha256);if(unit)return unit;
+  const guide=await serveGuidePreparation(request,env,catalog,guideExecutionProfile,guideExecutionEligibility);if(guide)return guide;
   const url=new URL(request.url);
   const audioMatch=/^\/v1\/preparation-audio\/([0-9a-f]{64})\.mp3$/.exec(url.pathname);
   if(!audioMatch&&url.pathname!==prefix&&!url.pathname.startsWith(prefix+'/'))return null;
@@ -80,8 +82,11 @@ export async function servePreparation(request,env,{guideExecutionProfile=null}=
 export class FiaPreparationJobs{
   constructor(ctx,env){this.ctx=ctx;this.env=env;this.guideCapabilities=captureGuideCapabilities(this.guideExecutionCapabilities());this.guideBoot=ctx.blockConcurrencyWhile(()=>initializeGuideLifecycle(ctx,env,catalog,this.guideCapabilities));}
   guideExecutionCapabilities(){return null;}
+  presentationExecutionCapabilities(){return null;}
   async fetch(request){
     await this.guideBoot;
+    const execution=await serveExecutableObject(request,this.ctx,this.env,this.presentationExecutionCapabilities(),()=>this.executionRuntime??=createExecutableRuntime({ctx:this.ctx,env:this.env,...this.presentationExecutionCapabilities()}));if(execution)return execution;
+    const unit=await serveGuideUnitObject(request,this.ctx,this.env,catalog,this.guideCapabilities);if(unit)return unit;
     const guide=await serveGuidePreparationObject(request,this.ctx,this.env,catalog,this.guideCapabilities);if(guide)return guide;
     if(await this.ctx.storage.get('guide-job'))return json(404,{status:'unavailable'});
     const stable=await serveStableOriginal(request,this.ctx,this.env,catalog);if(stable)return stable;
