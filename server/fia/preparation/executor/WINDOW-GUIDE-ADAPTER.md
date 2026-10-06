@@ -11,3 +11,9 @@ Consumer-specific output uses distinct `fia-window-guide-correspondence@1` and `
 The factory propagates an AbortSignal to this typed adapter and aborts it at its bounded step deadline. Trusted ports must honor cancellation; a timeout does not prove a process stopped. Durable window claims and the outer pipeline retain uncertainty without automatic retry. A late orphan artifact cannot complete a failed outer pipeline attempt. No public activation or hosted model is added here.
 
 Tests use synthetic raw window controls with genuine retained guide metadata/presentation. Actual local model/Worker integration evidence is recorded separately; synthetic fixture results are not model quality evidence.
+
+## Optional typed source preparation
+
+If either `artifacts.verifySource` or `artifacts.openSource` is supplied, both are required and there is no fallback to `artifacts.read(source)`. The verifier receives the exact acquired descriptor with `{maxBytes:sourceMaxBytes,signal}` and must return exactly `{sha256,reference,bytes}`. The adapter checks all returned pins and any known acquired byte count. The trusted preparation callback receives `{input,source,openSource,maxBytes,signal}` without `sourceBytes`; connect it to `decodeStream` so producer verification completes before decoding. `sourceMaxBytes` defaults to 2 MiB and permits an explicit trusted value up to 16 MiB. The outer dependency pin must bind this source policy and typed port authority.
+
+Without typed ports, the existing byte preparation path remains unchanged. This consumer branch does not install the producer, change dispatcher policy, or fetch missing source bytes; production composition is separately reviewed. JSON artifact limits and unresolved/review-required semantics are unchanged.

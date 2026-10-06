@@ -1,5 +1,6 @@
 """Bounded, offline-only PCM decode and single-window recognition process."""
 import argparse
+from contextlib import ExitStack
 import dataclasses
 import hashlib
 import importlib.metadata
@@ -38,15 +39,33 @@ def decode(job):
     import av
     import numpy as np
     source = Path(job['sourcePath'])
-    need(type(job['sourceBytes']) is int and 0 < job['sourceBytes'] <= 8 * 1024 * 1024, 'source-budget')
+    spooled = job['mode'] == 'decode-spooled'
+    source_limit = job.get('maxSourceBytes', 2 * 1024 * 1024) if spooled else 8 * 1024 * 1024
+    need(type(source_limit) is int and 0 < source_limit <= 16 * 1024 * 1024, 'source-budget')
+    need(type(job['sourceBytes']) is int and 0 < job['sourceBytes'] <= source_limit, 'source-budget')
     need(source.stat().st_size == job['sourceBytes'], 'source-length')
-    with source.open('rb') as f:
-        raw = f.read(8 * 1024 * 1024 + 1)
-    need(len(raw) == job['sourceBytes'] and digest(raw) == job['sourceSha256'], 'source-hash')
     limit = job['maxSamples']
     need(type(limit) is int and 0 < limit <= 16000 * 86400, 'pcm-budget')
     total, h = 0, hashlib.sha256()
-    with av.open(io.BytesIO(raw)) as container, open(job['pcmPath'], 'xb') as out:
+    with ExitStack() as stack:
+        if spooled:
+            # The caller owns this private completed spool. Verify incrementally
+            # on the same descriptor passed to PyAV; never materialize the source.
+            input_stream = stack.enter_context(source.open('rb'))
+            source_hash, source_count = hashlib.sha256(), 0
+            for chunk in iter(lambda: input_stream.read(65536), b''):
+                source_count += len(chunk)
+                need(source_count <= job['sourceBytes'] and source_count <= source_limit, 'source-budget')
+                source_hash.update(chunk)
+            need(source_count == job['sourceBytes'] and source_hash.hexdigest() == job['sourceSha256'], 'source-hash')
+            input_stream.seek(0)
+        else:
+            with source.open('rb') as f:
+                raw = f.read(8 * 1024 * 1024 + 1)
+            need(len(raw) == job['sourceBytes'] and digest(raw) == job['sourceSha256'], 'source-hash')
+            input_stream = io.BytesIO(raw)
+        container = stack.enter_context(av.open(input_stream))
+        out = stack.enter_context(open(job['pcmPath'], 'xb'))
         need(len(container.streams.audio) == 1, 'audio-stream-count')
         resampler = av.AudioResampler(format='fltp', layout='mono', rate=16000)
         def emit(frame):
@@ -64,7 +83,7 @@ def decode(job):
         for output in resampler.resample(None):
             emit(output)
     need(total > 0, 'empty-pcm')
-    return {'schema': 'fia-local-window-pcm@1', 'sourceSha256': job['sourceSha256'], 'sourceBytes': len(raw), 'pcmSha256': h.hexdigest(), 'totalSamples': total, 'sampleRate': 16000, 'format': 'mono-f32le', 'decoderSha256': job['decoderSha256']}
+    return {'schema': 'fia-local-window-pcm@1', 'sourceSha256': job['sourceSha256'], 'sourceBytes': job['sourceBytes'], 'pcmSha256': h.hexdigest(), 'totalSamples': total, 'sampleRate': 16000, 'format': 'mono-f32le', 'decoderSha256': job['decoderSha256']}
 
 def recognize(job):
     import numpy as np
@@ -123,7 +142,7 @@ def main():
     job = json.loads(raw)
     need(job['runtimeManifest'] == runtime(), 'runtime-manifest')
     need(job['scriptSha256'] == digest(Path(__file__).read_bytes()), 'script-hash')
-    result = decode(job) if job['mode'] == 'decode' else recognize(job) if job['mode'] == 'recognize' else None
+    result = decode(job) if job['mode'] in ['decode', 'decode-spooled'] else recognize(job) if job['mode'] == 'recognize' else None
     need(result is not None, 'mode')
     body = canonical(result)
     need(0 < len(body) <= 4 * 1024 * 1024, 'raw-budget')

@@ -6,6 +6,7 @@ import {createHash} from 'node:crypto';
 import {resolve,join} from 'node:path';
 import {canonicalJSONString,sha256} from '../contract.mjs';
 import {planRecognitionWindows} from './recognition-window-plan.mjs';
+import {spoolVerifiedSource} from './source-stream-spool.mjs';
 const hash=x=>typeof x==='string'&&/^[a-f0-9]{64}$/.test(x),same=(a,b)=>canonicalJSONString(a)===canonicalJSONString(b);
 const need=(ok,why)=>{if(!ok)throw Error('local-window-'+why);};
 async function fileHash(path,limit,{signal,deadline}={}){const h=createHash('sha256');let n=0;need(!signal?.aborted,'cancelled');for await(const b of createReadStream(path,{signal})){need(!deadline||Date.now()<deadline,'verification-timeout');n+=b.length;need(n<=limit,'file-budget');h.update(b);}return {sha256:h.digest('hex'),bytes:n};}
@@ -29,10 +30,10 @@ export async function createLocalWindowAdapter({pythonPath,scriptPath,scriptSha2
    });need(!signal?.aborted,'cancelled');const size=(await stat(output)).size;need(size>0&&size<=4*1024*1024,'output-budget');return new Uint8Array(await readFile(output));
   }finally{if(processClosed)await rm(directory,{recursive:true,force:true});}
  }
- async function decode({sourcePath,sourceSha256,sourceBytes,signal}){
-  need(hash(sourceSha256)&&Number.isSafeInteger(sourceBytes)&&sourceBytes>0&&sourceBytes<=8*1024*1024,'source-budget');
+ async function decodeFile({sourcePath,sourceSha256,sourceBytes,signal,mode='decode',maxSourceBytes=8*1024*1024}){
+  need(hash(sourceSha256)&&Number.isSafeInteger(sourceBytes)&&sourceBytes>0&&sourceBytes<=maxSourceBytes,'source-budget');
   const deadline=Date.now()+processMs,directory=await mkdtemp(join(paths.work,'window-pcm-')),pcmPath=join(directory,'source.f32');
-  try{const bytes=await processJob({mode:'decode',sourcePath:resolve(sourcePath),sourceSha256,sourceBytes,pcmPath,maxSamples,decoderSha256},{signal}),receipt=JSON.parse(new TextDecoder().decode(bytes));
+  try{const bytes=await processJob({mode,sourcePath:resolve(sourcePath),sourceSha256,sourceBytes,pcmPath,maxSamples,decoderSha256,...(mode==='decode-spooled'?{maxSourceBytes}:{})},{signal}),receipt=JSON.parse(new TextDecoder().decode(bytes));
    need(receipt.schema==='fia-local-window-pcm@1'&&receipt.sourceSha256===sourceSha256&&receipt.sourceBytes===sourceBytes&&receipt.decoderSha256===decoderSha256&&receipt.sampleRate===16000&&receipt.format==='mono-f32le'&&Number.isSafeInteger(receipt.totalSamples)&&receipt.totalSamples>0&&receipt.totalSamples<=maxSamples,'decode-binding');
    const verified=await fileHash(pcmPath,maxSamples*4,{signal,deadline});need(verified.sha256===receipt.pcmSha256&&verified.bytes===receipt.totalSamples*4,'pcm-binding');
    const captured=structuredClone(receipt);
@@ -44,5 +45,12 @@ export async function createLocalWindowAdapter({pythonPath,scriptPath,scriptSha2
    }}};
   }catch(e){if(e.message!=='local-window-termination-uncertain')await rm(directory,{recursive:true,force:true});throw e;}
  }
- return Object.freeze({paid:false,decoderSha256,configSha256,modelSha256:modelManifestSha256,dependencySha256,decode});
+ async function decode({sourcePath,sourceSha256,sourceBytes,signal}){return decodeFile({sourcePath,sourceSha256,sourceBytes,signal});}
+ async function decodeStream({source,openSource,maxBytes=2*1024*1024,totalMs=120000,signal}){
+  const retained=await spoolVerifiedSource({source,openSource,maxBytes,totalMs,signal,workDirectory:paths.work});let terminationUncertain=false;
+  try{return await decodeFile({sourcePath:retained.path,sourceSha256:retained.sha256,sourceBytes:retained.bytes,signal,mode:'decode-spooled',maxSourceBytes:maxBytes});}
+  catch(e){terminationUncertain=e.message==='local-window-termination-uncertain';throw e;}
+  finally{if(!terminationUncertain)await retained.dispose();}
+ }
+ return Object.freeze({paid:false,decoderSha256,configSha256,modelSha256:modelManifestSha256,dependencySha256,decode,decodeStream});
 }
