@@ -48,6 +48,12 @@ it.each(['unsupported','unavailable','invalid'])('blocked executable narration u
 it('manual Play while automatic narration is off executes only the declared action and pause/resume reuses it',async()=>{
  firstNarration();await mount();await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Settings',exact:true}));await fireEvent.click(screen.getByRole('checkbox',{name:/Automatic guide narration/}));await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));expect(libraryAdapter.playBoundAudio).not.toHaveBeenCalled();
  await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await waitFor(()=>expect(audio.play).toHaveBeenCalled());await fireEvent.click(screen.getByRole('button',{name:'Pause',exact:true}));expect(audio.pause).toHaveBeenCalled();await fireEvent.click(screen.getByRole('button',{name:'Resume',exact:true}));expect(audio.resume).toHaveBeenCalled();expect(libraryAdapter.playBoundAudio).toHaveBeenCalledTimes(1);
+ const progress=()=>JSON.parse(localStorage.getItem('fia-v3-progress@1:'+descriptor.id));
+ expect(progress().session.status).toBe('playing');ended();
+ await waitFor(()=>expect(progress().session.status).toBe('waiting'));
+ expect(progress().activityId).toBe(presentation.activities[0].id);expect(progress().session.index).toBe(0);
+ await new Promise(resolve=>setTimeout(resolve,30));expect(progress().session.status).toBe('waiting');expect(libraryAdapter.playBoundAudio).toHaveBeenCalledTimes(1);
+ await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toBe(presentation.activities[1].prompt));
 });
 it('server focal display does not infer narration or automatically substitute its related video',async()=>{
  const image=Object.values(presentation.assets).find(a=>a.kind==='image');presentation.activities[0].execution.focalAssetId=image.id;presentation.activities[0].assetId=image.id;
