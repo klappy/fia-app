@@ -480,12 +480,15 @@ test('PLAN step 6 reconciliation: a missing blind label is refused, real disagre
   const missingWord = reconcileGold(cases, agree.map((l, i) => (i ? l : label(p0, {reason: 'missing any explicit discussion cue', roles: {...p0.gold.roles, discussionRequested: !p0.gold.roles.discussionRequested}}))));
   assert.match(missingWord.cases.find(c => c.caseId === p0.caseId).gold.reason, /\| D: missing any explicit discussion cue \{/);
   assert.doesNotThrow(() => assertGold(missingWord.cases));
-  // Committed gold + a blind label that agrees: needsReview stays only where a labeler put it (S03-U020, S01-U003).
+  // Committed gold + a blind label that agrees: needsReview stays only where a labeler put it — the committed
+  // needsReview rows (dev S01-U003; held-out S03-U020 by both labelers, S04-U015 and S06-U004 by the blind labeler)
+  // and their spa mirrors, nothing more.
   const r = reconcileGold(cases, agree);
   assertGold(r.cases);
   assert.deepEqual([...goldStatus(r.cases).values()].filter(s => s !== 'reconciled'), []);
   const nr = r.cases.filter(c => c.gold.needsReview).map(c => c.caseId).sort();
-  assert.deepEqual(nr, ['eng.MRK-1-1-13:S01-U003', 'eng.MRK-1-14-20:S03-U020', 'spa.MRK-1-1-13:S01-U003', 'spa.MRK-1-14-20:S03-U020']);
+  assert.deepEqual(nr, casesDoc.cases.filter(c => c.gold.needsReview).map(c => c.caseId).sort());
+  assert.deepEqual(nr, ['eng.MRK-1-1-13:S01-U003', 'eng.MRK-1-14-20:S03-U020', 'eng.MRK-1-14-20:S04-U015', 'eng.MRK-1-14-20:S06-U004', 'spa.MRK-1-1-13:S01-U003', 'spa.MRK-1-14-20:S03-U020', 'spa.MRK-1-14-20:S04-U015', 'spa.MRK-1-14-20:S06-U004']);
   for (const c of cases.filter(c => goldStatus(cases).get(c.caseId) === 'reconciled')) assert.deepEqual(r.cases.find(x => x.caseId === c.caseId).gold, c.gold, `${c.caseId} unchanged`);
   // A real disagreement on one held-out row → needsReview with both reasons and D's label; its spa mirror follows.
   const target = 'eng.MRK-1-14-20:S02-U001';

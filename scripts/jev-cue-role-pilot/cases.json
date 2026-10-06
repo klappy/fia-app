@@ -438,7 +438,7 @@
         },
         "needsReview": false,
         "reason": "eng.MRK-1-14-20: 'Listen to an audio version of Mark 1:14-20 in the easiest-to-understand translation.' is an unconditional listening request with no discussion or resource instruction.",
-        "reviewer": "cook-gold-eng-a+fix-laneA-r2",
+        "reviewer": "cook-gold-eng-a+cook-gold-eng-d2",
         "agreement": true
       },
       "meta": {
@@ -485,7 +485,7 @@
         },
         "needsReview": false,
         "reason": "eng.MRK-1-14-20: 'Stop here and look at a map of the Galilee area and a picture of the Sea of Galilee as a group' explicitly asks the group to view resources. 'as a group' sets who looks; it does not ask for discussion. The trailing pause cue does not make the unit pause-only.",
-        "reviewer": "cook-gold-eng-a+fix-laneA-r2",
+        "reviewer": "cook-gold-eng-a+cook-gold-eng-d2",
         "agreement": true
       },
       "meta": {
@@ -535,7 +535,7 @@
         },
         "needsReview": false,
         "reason": "eng.MRK-1-14-20: 'Stop here and discuss this question as a group:' followed by two cultural questions is an explicit discussion request, with no reading or resource instruction.",
-        "reviewer": "cook-gold-eng-a+fix-laneA-r2",
+        "reviewer": "cook-gold-eng-a+cook-gold-eng-d2",
         "agreement": true
       },
       "meta": {
@@ -582,7 +582,7 @@
         },
         "needsReview": false,
         "reason": "eng.MRK-1-14-20: 'John (who is arrested)' is a noun phrase in a list of characters (previous unit: 'The characters in this passage are:'). It gives no instruction and no pause cue, so all roles are false.",
-        "reviewer": "cook-gold-eng-a+fix-laneA-r2",
+        "reviewer": "cook-gold-eng-a+cook-gold-eng-d2",
         "agreement": true
       },
       "meta": {
@@ -633,9 +633,9 @@
           "pauseOnly": false
         },
         "needsReview": true,
-        "reason": "DISAGREE — A: eng.MRK-1-14-20: 'Stop here if it would be helpful to look again at the pictures of the Sea of Galilee, the boat with oars and the net' makes the lookup conditional on the group's judgment. Following the brief's rule for conditional instructions, needsReview is true; lookup is set true as the best-effort role because the instruction must not be dropped. | D: Explicit, if conditional, instruction to look again at pictures as a group; the pause serves that lookup, so not pause-only. {\"readingRequested\":false,\"discussionRequested\":false,\"resourceLookupRequested\":true,\"pauseOnly\":false,\"needsReview\":false}",
-        "reviewer": "cook-gold-eng-a+fix-laneA-r2",
-        "agreement": false
+        "reason": "eng.MRK-1-14-20: 'Stop here if it would be helpful to look again at the pictures of the Sea of Galilee, the boat with oars and the net' makes the lookup conditional on the group's judgment. Following the brief's rule for conditional instructions, needsReview is true; lookup is set true as the best-effort role because the instruction must not be dropped.",
+        "reviewer": "cook-gold-eng-a+cook-gold-eng-d2",
+        "agreement": true
       },
       "meta": {
         "split": "heldout",
@@ -683,10 +683,10 @@
           "resourceLookupRequested": false,
           "pauseOnly": false
         },
-        "needsReview": false,
-        "reason": "eng.MRK-1-14-20: 'Pause this audio here and act out the passage.' carries a substantive instruction (act out the drama), so pauseOnly is false. Acting out is not a reading, a discussion or a lookup, so all four roles are false.",
-        "reviewer": "cook-gold-eng-a+fix-laneA-r2",
-        "agreement": true
+        "needsReview": true,
+        "reason": "DISAGREE — A: eng.MRK-1-14-20: 'Pause this audio here and act out the passage.' carries a substantive instruction (act out the drama), so pauseOnly is false. Acting out is not a reading, a discussion or a lookup, so all four roles are false. | D: 'Pause this audio here and act out the passage' carries a substantive group activity (drama), so not pause-only (cue-role-v1.md:18); acting out is neither reading/listening, discussion nor lookup unless 'group response' (cue-role-v1.md:16) is read broadly — ambiguous fit, review. {\"readingRequested\":false,\"discussionRequested\":false,\"resourceLookupRequested\":false,\"pauseOnly\":false,\"needsReview\":true}",
+        "reviewer": "cook-gold-eng-a+cook-gold-eng-d2",
+        "agreement": false
       },
       "meta": {
         "split": "heldout",
@@ -732,7 +732,7 @@
         },
         "needsReview": false,
         "reason": "eng.MRK-1-14-20: these are plain statements about the Sea of Galilee (size, depth, fishing) with no instruction. Naming the Sea of Galilee or Galilee, and the resource bindings, is not a lookup request (cue-role-v1.md:17). The lookup instruction sits in the next unit, S05-U005.",
-        "reviewer": "cook-gold-eng-a+fix-laneA-r2",
+        "reviewer": "cook-gold-eng-a+cook-gold-eng-d2",
         "agreement": true
       },
       "meta": {
@@ -780,10 +780,10 @@
           "resourceLookupRequested": false,
           "pauseOnly": false
         },
-        "needsReview": false,
-        "reason": "eng.MRK-1-14-20: an oral-retelling drill ('One group member should tell a few sentences of the passage and pause... until the group has retold the whole passage'). Retelling is not a request to read or listen to Scripture, and 'can correct each other' is permissive, not a discussion request. The pause words are part of the drill, so pauseOnly is false.",
-        "reviewer": "cook-gold-eng-a+fix-laneA-r2",
-        "agreement": true
+        "needsReview": true,
+        "reason": "DISAGREE — A: eng.MRK-1-14-20: an oral-retelling drill ('One group member should tell a few sentences of the passage and pause... until the group has retold the whole passage'). Retelling is not a request to read or listen to Scripture, and 'can correct each other' is permissive, not a discussion request. The pause words are part of the drill, so pauseOnly is false. | D: Instructs group members to retell the passage in turns and 'correct each other' before 'Pause this audio here' — substantive, so not pause-only (cue-role-v1.md:18); oral retelling is not a Scripture reading/listening request and correcting each other only arguably counts as 'group response' (cue-role-v1.md:16) — ambiguous fit, review. {\"readingRequested\":false,\"discussionRequested\":false,\"resourceLookupRequested\":false,\"pauseOnly\":false,\"needsReview\":true}",
+        "reviewer": "cook-gold-eng-a+cook-gold-eng-d2",
+        "agreement": false
       },
       "meta": {
         "split": "heldout",
@@ -1027,7 +1027,7 @@
           "pauseOnly": false
         },
         "needsReview": true,
-        "reason": "mirror of English: DISAGREE — A: eng.MRK-1-14-20: 'Stop here if it would be helpful to look again at the pictures of the Sea of Galilee, the boat with oars and the net' makes the lookup conditional on the group's judgment. Following the brief's rule for conditional instructions, needsReview is true; lookup is set true as the best-effort role because the instruction must not be dropped. | D: Explicit, if conditional, instruction to look again at pictures as a group; the pause serves that lookup, so not pause-only. {\"readingRequested\":false,\"discussionRequested\":false,\"resourceLookupRequested\":true,\"pauseOnly\":false,\"needsReview\":false}",
+        "reason": "mirror of English: eng.MRK-1-14-20: 'Stop here if it would be helpful to look again at the pictures of the Sea of Galilee, the boat with oars and the net' makes the lookup conditional on the group's judgment. Following the brief's rule for conditional instructions, needsReview is true; lookup is set true as the best-effort role because the instruction must not be dropped.",
         "reviewer": "mirror-eng+backtranslation:cook-gold-spa-bt",
         "backTranslation": "Stop here if it would be useful to you to look again at the images of the Sea of Galilee, the boat with oars and the net as a group. Pause this audio here.",
         "divergent": false
@@ -1077,8 +1077,8 @@
           "resourceLookupRequested": false,
           "pauseOnly": false
         },
-        "needsReview": false,
-        "reason": "mirror of English: eng.MRK-1-14-20: 'Pause this audio here and act out the passage.' carries a substantive instruction (act out the drama), so pauseOnly is false. Acting out is not a reading, a discussion or a lookup, so all four roles are false.",
+        "needsReview": true,
+        "reason": "mirror of English: DISAGREE — A: eng.MRK-1-14-20: 'Pause this audio here and act out the passage.' carries a substantive instruction (act out the drama), so pauseOnly is false. Acting out is not a reading, a discussion or a lookup, so all four roles are false. | D: 'Pause this audio here and act out the passage' carries a substantive group activity (drama), so not pause-only (cue-role-v1.md:18); acting out is neither reading/listening, discussion nor lookup unless 'group response' (cue-role-v1.md:16) is read broadly — ambiguous fit, review. {\"readingRequested\":false,\"discussionRequested\":false,\"resourceLookupRequested\":false,\"pauseOnly\":false,\"needsReview\":true}",
         "reviewer": "mirror-eng+backtranslation:cook-gold-spa-bt",
         "backTranslation": "Stop this audio here and act out (dramatize) the passage.",
         "divergent": false
@@ -1175,8 +1175,8 @@
           "resourceLookupRequested": false,
           "pauseOnly": false
         },
-        "needsReview": false,
-        "reason": "mirror of English: eng.MRK-1-14-20: an oral-retelling drill ('One group member should tell a few sentences of the passage and pause... until the group has retold the whole passage'). Retelling is not a request to read or listen to Scripture, and 'can correct each other' is permissive, not a discussion request. The pause words are part of the drill, so pauseOnly is false.",
+        "needsReview": true,
+        "reason": "mirror of English: DISAGREE — A: eng.MRK-1-14-20: an oral-retelling drill ('One group member should tell a few sentences of the passage and pause... until the group has retold the whole passage'). Retelling is not a request to read or listen to Scripture, and 'can correct each other' is permissive, not a discussion request. The pause words are part of the drill, so pauseOnly is false. | D: Instructs group members to retell the passage in turns and 'correct each other' before 'Pause this audio here' — substantive, so not pause-only (cue-role-v1.md:18); oral retelling is not a Scripture reading/listening request and correcting each other only arguably counts as 'group response' (cue-role-v1.md:16) — ambiguous fit, review. {\"readingRequested\":false,\"discussionRequested\":false,\"resourceLookupRequested\":false,\"pauseOnly\":false,\"needsReview\":true}",
         "reviewer": "mirror-eng+backtranslation:cook-gold-spa-bt",
         "backTranslation": "One member of the group should say some sentences of the passage and make pauses. Another member of the group must say the next part of the passage and make a pause. Do this until the group has recited the whole passage. In this step the group members can correct one another. Pause this audio here.",
         "divergent": false
