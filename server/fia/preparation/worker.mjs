@@ -1,4 +1,5 @@
 import catalog from './catalog.json';
+import {serveGuidePreparation,serveGuidePreparationObject} from './guide-dispatch.mjs';
 import {serveStableOriginal,stableOriginalRequest,currentPreparationRow} from './stable-original-coordinator.mjs';
 import {json,resolveSelection,operationId,indexedCatalog,readBounded,prepareAccepted,eligibleRows} from './service.mjs';
 import {createReviewedOriginalStore} from './reviewed-original-store.mjs';
@@ -36,6 +37,7 @@ const prefix='/v1/preparations';
 const statusBody=(record,reused)=>({schema:'fia-preparation-status@1',jobId:record.jobId,state:record.state,reason:record.reason,sourceState:record.sourceState??'queued',selection:record.selection,result:record.result??null,resultSha256:record.resultSha256??null,statusUrl:`${prefix}/${record.jobId}`,reused});
 
 export async function servePreparation(request,env){
+  const guide=await serveGuidePreparation(request,env,catalog);if(guide)return guide;
   const url=new URL(request.url);
   const audioMatch=/^\/v1\/preparation-audio\/([0-9a-f]{64})\.mp3$/.exec(url.pathname);
   if(!audioMatch&&url.pathname!==prefix&&!url.pathname.startsWith(prefix+'/'))return null;
@@ -78,6 +80,8 @@ export async function servePreparation(request,env){
 export class FiaPreparationJobs{
   constructor(ctx,env){this.ctx=ctx;this.env=env;}
   async fetch(request){
+    const guide=await serveGuidePreparationObject(request,this.ctx,this.env,catalog);if(guide)return guide;
+    if(await this.ctx.storage.get('guide-job'))return json(404,{status:'unavailable'});
     const stable=await serveStableOriginal(request,this.ctx,this.env,catalog);if(stable)return stable;
     if(await this.ctx.storage.get('stable-original:identity'))return json(404,{status:'unavailable'});
     const parts=new URL(request.url).pathname.slice(1).split('/'),id=parts[0],audio=parts.length===2&&parts[1]==='audio';
@@ -127,6 +131,7 @@ export class FiaPreparationJobs{
   async alarm(){
     // Persist the attempt before I/O; never hold a 30s concurrency gate over
     // network work. An interrupted attempt is uncertain, not blindly replayed.
+    if(await this.ctx.storage.get('guide-job'))return;
     if(this.running)return;
     this.running=true;
     try{
