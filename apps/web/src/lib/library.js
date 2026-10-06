@@ -58,7 +58,7 @@ async function workerRequest(type,data={},onprogress){
   const channel=new MessageChannel();let timer;
   const close=()=>{clearTimeout(timer);channel.port1.close();};
   const arm=()=>{clearTimeout(timer);timer=setTimeout(()=>{close();reject(new Error('Download stopped responding. Reopen Downloads to check and resume.'));},45000);};
-  channel.port1.onmessage=({data:result})=>{arm();if(result.progress){onprogress?.(result.progress);return;}close();result.ok?resolve(result):reject(new Error(result.error||'Download could not finish. Retry to keep verified files.'));};
+  channel.port1.onmessage=({data:result})=>{arm();if(result.progress){onprogress?.(result.progress);return;}close();if(result.ok)resolve(result);else{const error=new Error(result.error||'Download could not finish. Retry to keep verified files.');if(type==='MEDIA_STATUS')error.code=['media-status-transient','media-status-invalid'].includes(result.code)?result.code:'media-status-invalid';reject(error);}};
   arm();registration.active.postMessage({type,...data},[channel.port2]);
  });
 }

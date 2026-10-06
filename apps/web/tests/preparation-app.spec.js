@@ -194,3 +194,21 @@ it('late download status cannot resurrect saved capability after the newest stat
  await new Promise(r=>setTimeout(r,0));network.onLine=false;await fireEvent(window,new Event('offline'));
  expect(screen.getByText('You’re offline')).toBeTruthy();expect(screen.queryByText('Offline · session saved')).toBeNull();
 });
+
+it.each(['media-status-transient','media-status-invalid','unrecognized'])('latest %s refresh preserves only an eligible transient snapshot without autoplay',async code=>{
+ const registration=deferred(),body=structuredClone(presentation),path='/refresh-test.mp3';body.activities[0].audioSrc=path;
+ libraryAdapter.select.mockResolvedValue({descriptor,presentation:body});vi.stubGlobal('navigator',{onLine:true,serviceWorker:{register:()=>registration.promise}});
+ let selectedReads=0;libraryAdapter.mediaStatus.mockImplementation(pack=>pack.id!==descriptor.id?Promise.resolve({files:[],deliveryRevision:null}):++selectedReads===1?Promise.resolve({files:[{path}],savedFiles:[],deliveryRevision:'retained-revision'}):Promise.reject(Object.assign(Error('status failed'),{code})));
+ const play=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(2),mime:'audio/mpeg',playbackRange:ready.playbackRange});
+ await mount();await waitFor(()=>expect(screen.getByRole('button',{name:'Play',exact:true})).toBeTruthy());registration.resolve();await waitFor(()=>expect(selectedReads).toBe(2));await new Promise(r=>setTimeout(r,0));
+ expect(play).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();
+ if(code==='media-status-transient'){await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await waitFor(()=>expect(play).toHaveBeenCalled());expect(play.mock.calls[0][2]).toBe('retained-revision');}
+ else expect(screen.getByRole('button',{name:'Play',exact:true}).disabled).toBe(true);
+});
+
+it('transient status in a newly selected pack never borrows the previous pack snapshot',async()=>{
+ const body=structuredClone(presentation),path='/refresh-test.mp3';body.activities[0].audioSrc=path;libraryAdapter.select.mockResolvedValue({descriptor,presentation:body});
+ libraryAdapter.mediaStatus.mockImplementation(pack=>pack.id===descriptor.id?Promise.reject(Object.assign(Error('offline'),{code:'media-status-transient'})):Promise.resolve({files:[{path}],savedFiles:[],deliveryRevision:'previous-pack'}));
+ await mount();await waitFor(()=>expect(libraryAdapter.mediaStatus.mock.calls.some(([pack])=>pack.id===descriptor.id)).toBe(true));await new Promise(r=>setTimeout(r,0));
+ expect(screen.getByRole('button',{name:'Play',exact:true}).disabled).toBe(true);expect(audio.play).not.toHaveBeenCalled();expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();
+});

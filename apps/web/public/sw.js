@@ -37,12 +37,24 @@ function matchingSavedFile(file,active,manifest){
  const approved=[file,...Object.values(file.variants||{})];
  return approved.some(f=>['path','sha256','bytes','mime','deliveryURL','sourceSha256','sourceBytes','logicalSourceSha256','logicalSourceBytes'].every(k=>f[k]===saved[k])&&JSON.stringify(f.timing)===JSON.stringify(saved.timing)&&JSON.stringify(f.playbackRange)===JSON.stringify(saved.playbackRange)&&f.recordingLedgerSha256===saved.recordingLedgerSha256&&f.recordingLedgerEntryId===saved.recordingLedgerEntryId&&[...scripturePassagePins,'scriptureAlignmentSha256'].every(k=>f[k]===saved[k])&&JSON.stringify(f.scriptureAlignment)===JSON.stringify(saved.scriptureAlignment)&&f.duration===saved.duration)?saved:null;
 }
-async function latest(packId=legacy){
- const response=await fetch(packId===legacy?'/offline-manifest.json':`/offline/${packId}.json`,{cache:'no-store'});
+// Only failures at the fetch boundary are eligible for retaining an old snapshot.
+// Parsing, hashes, identity, authorization and unknown exceptions fail closed.
+async function fetchLatest(path,options){
+ let response;
+ try{response=await fetch(path,options);}catch(error){
+  if(error?.name==='TypeError'||error?.name==='AbortError')throw Object.assign(Error('Media status is temporarily unavailable.'),{mediaStatusCode:'media-status-transient'});
+  throw error;
+ }
+ if([408,429,500,502,503,504].includes(response.status))throw Object.assign(Error('Media status is temporarily unavailable.'),{mediaStatusCode:'media-status-transient'});
+ return response;
+}
+async function latest(packId=legacy,media=false){
+ const request=media?fetchLatest:fetch;
+ const response=await request(packId===legacy?'/offline-manifest.json':`/offline/${packId}.json`,{cache:'no-store'});
  if(!response.ok)throw new Error('Could not check the latest download. Connect and try again.');
  const manifest=validate(await response.json());if(manifest.packId!==packId)throw new Error('The download belongs to a different passage.');
  const delivery=manifest.files.find(f=>f.group==='core'&&f.path===`/content/delivery/${packId}/${manifest.deliveryRevision}.json`);
- if(delivery){const r=await fetch(delivery.path,{cache:'no-store'});if(!await verified(r.clone(),delivery))throw Error('Delivery source metadata changed.');const sidecar=validateDelivery(await r.json(),{packId,presentationRevision:manifest.presentationRevision});for(const f of manifest.files){const e=sidecar.entries.find(e=>e.path===f.path);if(e){if(e.source.sha256!==f.sourceSha256)throw Error('Source identity changed.');f.sourceBytes=e.source.bytes;for(const v of Object.values(f.variants||{}))v.sourceBytes=e.source.bytes;}}}
+ if(delivery){const r=await request(delivery.path,{cache:'no-store'});if(!await verified(r.clone(),delivery))throw Error('Delivery source metadata changed.');const sidecar=validateDelivery(await r.json(),{packId,presentationRevision:manifest.presentationRevision});for(const f of manifest.files){const e=sidecar.entries.find(e=>e.path===f.path);if(e){if(e.source.sha256!==f.sourceSha256)throw Error('Source identity changed.');f.sourceBytes=e.source.bytes;for(const v of Object.values(f.variants||{}))v.sourceBytes=e.source.bytes;}}}
  return manifest;
 }
 async function verified(response,file){
@@ -177,7 +189,7 @@ self.addEventListener('message',event=>{
    let result={};
    if(type==='MEDIA_CANCEL'){const key=(event.source?.id||'')+':'+event.data.requestId;canceledPlayback.add(key);if(canceledPlayback.size>256)canceledPlayback.delete(canceledPlayback.values().next().value);playbackJobs.get(key)?.abort();result={canceled:true};
    }else if(type==='MEDIA_STATUS'||type==='MEDIA_PLAY'){
-    const active=await read(packKey(packId,'active'));let manifest;try{manifest=await latest(packId);}catch{manifest=active?.manifest?validate(active.manifest):null;}
+    const active=await read(packKey(packId,'active'));let manifest;try{manifest=await latest(packId,true);}catch(error){if(type==='MEDIA_STATUS'||error?.mediaStatusCode!=='media-status-transient')throw error;manifest=active?.manifest?validate(active.manifest):null;}
     if(!manifest||manifest.presentationRevision!==event.data.revision)throw Error('The media revision is unavailable.');
     if(type==='MEDIA_STATUS')result={deliveryRevision:manifest.deliveryRevision||null,files:manifest.files.filter(f=>f.deliveryURL),savedFiles:manifest.files.filter(f=>f.deliveryURL).map(f=>matchingSavedFile(f,active,manifest)).filter(Boolean)};
     else{
@@ -211,6 +223,6 @@ self.addEventListener('message',event=>{
     await meta.delete('/'+packKey(packId,'active'));await meta.delete('/'+packKey(packId,'pending'));result={saved:false};
    }else return;
    port?.postMessage({ok:true,...result},result.bytes instanceof ArrayBuffer?[result.bytes]:[]);
-  }catch(error){port?.postMessage({ok:false,error:error.message});}
+  }catch(error){port?.postMessage(type==='MEDIA_STATUS'?{ok:false,error:'Media availability could not be verified.',code:error?.mediaStatusCode==='media-status-transient'?'media-status-transient':'media-status-invalid'}:{ok:false,error:error.message});}
  })());
 });
