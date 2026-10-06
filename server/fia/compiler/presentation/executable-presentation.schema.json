@@ -60,6 +60,64 @@
               "auto"
             ]
           },
+          "flow": {
+            "description": "Optional, additive (fia-flow-role@1): per-activity flow facts emitted by fia-server-source-action-projector@2 for fia-easy-button-policy@1. Derived from kind, execution.completion.action and resolved cue roles only; never from text.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "schema",
+              "role",
+              "hold",
+              "cue",
+              "media"
+            ],
+            "properties": {
+              "schema": {
+                "const": "fia-flow-role@1"
+              },
+              "role": {
+                "enum": [
+                  "guide",
+                  "discussion",
+                  "scripture",
+                  "video"
+                ]
+              },
+              "hold": {
+                "enum": [
+                  "manual",
+                  "auto"
+                ]
+              },
+              "cue": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "pauseOnly"
+                ],
+                "properties": {
+                  "pauseOnly": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "media": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "video"
+                ],
+                "properties": {
+                  "video": {
+                    "enum": [
+                      "bound",
+                      "none"
+                    ]
+                  }
+                }
+              }
+            }
+          },
           "execution": {
             "type": "object",
             "additionalProperties": false,
