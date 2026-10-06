@@ -64,8 +64,56 @@ async function verified(response,file){
  const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),x=>x.toString(16).padStart(2,'0')).join('');
  return hash===file.sha256;
 }
+// Explicit downloads may retain a coherent server-read snapshot in the existing
+// pack cache. It is historical offline evidence, never fresh server authority.
+const offlineServerHeader='X-FIA-Offline-Snapshot';
+const artifactPath=sha=>`/v1/artifacts/${sha}`;
+const stableJSON=v=>JSON.stringify(v===null||typeof v!=='object'?v:Array.isArray(v)?v.map(x=>JSON.parse(stableJSON(x))):Object.fromEntries(Object.keys(v).sort().map(k=>[k,JSON.parse(stableJSON(v[k]))])));
+async function contentHash(bytes){return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),v=>v.toString(16).padStart(2,'0')).join('');}
+function serverRecord(value,packId){
+ if(value?.status!=='ready'||value.packId!==packId||value.identity?.packId!==packId||!isPassageHash(value.revision)||value.artifact?.sha256!==value.revision||!Number.isSafeInteger(value.artifact.bytes)||value.artifact.bytes<1||value.artifact.bytes>1048576||value.artifact.mime!=='application/json')throw Error('Invalid server record.');
+ if(Object.hasOwn(value,'execution')){const e=value.execution;if(!e||e.mediaIdentity?.packId!==packId||!isPassageHash(e.mediaIdentity?.revision)||Object.keys(e.mediaIdentity).sort().join(',')!=='packId,revision'||!isPassageHash(e.mediaAssetsSha256)||e.schema!=='fia-executable-catalog@1'||!isPassageHash(e.baseRevision)||typeof e.sourceRevision!=='string'||!/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(e.sourceRevision)||!Array.isArray(e.artifacts)||e.artifacts.length>1024)throw Error('Invalid executable catalog.');const ids=new Set(),hashes=new Set([value.revision]);for(const d of e.artifacts){if(typeof d.id!=='string'||!d.id||ids.has(d.id)||!isPassageHash(d.sha256)||hashes.has(d.sha256)||!Number.isSafeInteger(d.bytes)||d.bytes<1||d.bytes>1048576||d.mime!=='application/json')throw Error('Invalid executable dependency.');ids.add(d.id);hashes.add(d.sha256);}}
+ return value;
+}
+function serverFiles(record){return [{...record.artifact,path:artifactPath(record.revision),group:'core'},...(record.execution?.artifacts||[]).map(d=>({...d,path:artifactPath(d.sha256),group:'core'}))];}
+async function serverJSON(response,file,record){
+ if(response.status!==200||response.redirected||!await verified(response.clone(),file))throw Error('Server artifact could not be verified.');const value=await response.clone().json();
+ if(file.sha256===record.revision){if(!value||!value.assets||!Array.isArray(value.activities)||!value.activities.length||!Array.isArray(value.sections)||!Array.isArray(value.listContracts)||(value.id!==record.packId&&!(record.packId==='eng.MRK-1-1-13'&&value.id==='fia-mark-authentic@1')))throw Error('Invalid server presentation.');if(record.execution&&(value.execution?.schema!=='fia-executable-presentation@1'||value.execution.sourceRevision!==record.execution.sourceRevision))throw Error('Invalid executable presentation.');if(record.execution&&await contentHash(new TextEncoder().encode(stableJSON(value.assets)))!==record.execution.mediaAssetsSha256)throw Error('Executable media assets changed.');}
+ else if(value?.id!==file.id||!['fia-bound-narration-demand@1','fia-bound-narration-audio@1'].includes(value.schema))throw Error('Invalid bound artifact schema.');
+ return response;
+}
+async function invalidateServerSnapshot(packId){const key=packKey(packId,'active'),active=await read(key);if(active?.serverSnapshot&&!active.serverSnapshot.invalid){active.serverSnapshot.invalid=true;await write(key,active);}}
+async function snapshotComplete(active){
+ const snapshot=active?.serverSnapshot;if(!snapshot||snapshot.invalid)return false;
+ try{serverRecord(snapshot.record,active.packId);const expected=serverFiles(snapshot.record);if(JSON.stringify(expected)!==JSON.stringify(snapshot.files))return false;const cache=await caches.open(active.cache);for(const f of expected)await serverJSON(await cache.match(f.path),f,snapshot.record);return true;}catch{return false;}
+}
+async function savedServerSnapshot(packId,revision){const active=await read(packKey(packId,'active'));if(revision&&active?.serverSnapshot?.record.revision!==revision)return null;return await snapshotComplete(active)?active:null;}
+async function retainServerSnapshot(packId,revision,cache,signal){
+ if(packId===legacy||revision===undefined)return null;
+ if(!isPassageHash(revision))throw Error('Invalid server revision.');
+ let record;try{const r=await fetchLatest(`/v1/packs/${packId}${revision?'?revision='+revision:''}`,{cache:'no-store',redirect:'error',signal});if(r.status!==200||r.redirected)throw Error('Server record unavailable.');record=serverRecord(await r.json(),packId);if(revision&&record.revision!==revision)throw Error('Server revision changed.');const files=serverFiles(record);for(const f of files){let r=await cache.match(f.path);try{await serverJSON(r,f,record);}catch{r=await fetchLatest(f.path,{cache:'no-store',redirect:'error',signal});await serverJSON(r,f,record);await cache.put(f.path,r);}}return {record,files,invalid:false};}
+ catch(error){if(error.mediaStatusCode!=='media-status-transient')await invalidateServerSnapshot(packId);throw error;}
+}
+async function serverRead(request,clientId){
+ const url=new URL(request.url),match=/^\/v1\/packs\/([^/]+)$/.exec(url.pathname),digest=/^\/v1\/artifacts\/([a-f0-9]{64})$/.exec(url.pathname)?.[1];let packId,revision,active,file;
+ if(match){packId=match[1];if(!validPack(packId)||packId===legacy||[...url.searchParams.keys()].some(k=>k!=='revision')||url.searchParams.getAll('revision').length>1)return fetch(request);revision=url.searchParams.get('revision')||undefined;if(revision&&!isPassageHash(revision))return fetch(request);active=await read(packKey(packId,'active'));}
+ else if(digest&&!url.search){const selected=clientId&&await read('client-'+clientId)||await read('selected');packId=selected?.packId;if(packId)active=await read(packKey(packId,'active'));file=active?.serverSnapshot?.files.find(f=>f.sha256===digest);}
+ else return fetch(request);
+ try{const response=await fetchLatest(request,{cache:'no-store',redirect:'error'});
+  if(match){if(response.status!==200||response.redirected)throw Error('Server record unavailable.');const record=serverRecord(await response.clone().json(),packId);if(revision&&record.revision!==revision)throw Error('Server revision changed.');if(clientId){const prior=await read('client-'+clientId);await write('client-'+clientId,{...prior,packId});}return response;}
+  if(file)await serverJSON(response.clone(),file,active.serverSnapshot.record);return response;
+ }catch(error){
+  if(error.mediaStatusCode!=='media-status-transient'){if(packId)await invalidateServerSnapshot(packId);return new Response('Server content could not be verified.',{status:409});}
+  active=packId&&await savedServerSnapshot(packId,revision);if(!active)return new Response('This server content is not saved for offline use.',{status:503});
+  let response;if(match){response=json(active.serverSnapshot.record);if(clientId){const prior=await read('client-'+clientId);await write('client-'+clientId,{...prior,packId});}}
+  else{file=active.serverSnapshot.files.find(f=>f.sha256===digest);if(!file)return new Response('This server artifact is not saved.',{status:503});response=await(await caches.open(active.cache)).match(file.path);}
+  const headers=new Headers(response.headers);headers.set(offlineServerHeader,'historical-verified');headers.set('Cache-Control','private, no-store');return new Response(await response.arrayBuffer(),{status:200,headers});
+ }
+}
+
 async function complete(record){
  if(!record)return false;
+ if(record.serverSnapshot&&!await snapshotComplete(record))return false;
  const cache=await caches.open(record.cache);
  for(const file of record.files){const response=await cache.match(file.path);if(!await verified(response,file))return false;}
  return true;
@@ -73,7 +121,7 @@ async function complete(record){
 async function status(packId=legacy){
  if(!isBuild)return {available:false,saved:false,reason:'Downloads work on the published Site. This local development preview does not store offline content.'};
  const active=await read(packKey(packId,'active')),pending=await read(packKey(packId,'pending'));
- let manifest,error='';try{manifest=await latest(packId);}catch(e){error=e.message;manifest=active?.manifest||pending?.manifest;}
+ let manifest,error='';try{manifest=await latest(packId,true);}catch(e){error=e.message;if(e.mediaStatusCode!=='media-status-transient'&&active?.serverSnapshot){await invalidateServerSnapshot(packId);active.serverSnapshot.invalid=true;}manifest=active?.manifest||pending?.manifest;}
  const saved=await complete(active);
  return {available:true,saved,active:active?{...active,valid:saved}:null,pending:pending?{...pending,running:jobs.has(packId)}:null,manifest,error,updateAvailable:!!(active&&manifest&&(active.manifest.catalogRevision||active.revision)!==manifest.revision),choices:manifest?['core',...(manifest.files.some(f=>f.group==='audio')?['audio']:[]),...(manifest.files.some(f=>f.group==='video'||f.group==='image')?['all']:[])].map(id=>({id,bytes:selectedFiles(manifest,id).reduce((n,f)=>n+f.bytes,0)})):[]};
 }
@@ -112,6 +160,7 @@ self.addEventListener('fetch',event=>{
  const inFamily=root=>path===root||path.startsWith(root+'/');
  // Online destinations retain their own responses/errors, never an installed app shell.
  if(path==='/version.json'||path==='/build-status.html'||inFamily('/build-status')){event.respondWith(fetch(event.request,{cache:'no-store'}));return;}
+ if(/^\/v1\/(?:packs|artifacts)\//.test(path)){event.respondWith(serverRead(event.request,event.clientId));return;}
  if(['/v1','/mcp','/docs','/content/source'].some(inFamily)){event.respondWith(fetch(event.request));return;}
  if(event.request.mode==='navigate')event.respondWith((async()=>{
   let live;
@@ -132,7 +181,7 @@ self.addEventListener('fetch',event=>{
  })());
  else event.respondWith(cachedResponse(event.request,event.clientId));
 });
-async function start(selection,port,packId=legacy,sizes={}){
+async function start(selection,port,packId=legacy,sizes={},revision){
  if(!isBuild)throw new Error('Downloads work on the published Site.');
  if(!['core','audio','all'].includes(selection))throw new Error('Choose a download option.');
  if(jobs.has(packId))throw new Error('A download is already running for this passage.');
@@ -140,7 +189,7 @@ async function start(selection,port,packId=legacy,sizes={}){
  let pending;
  try{
   let manifest;
-  try{manifest=await latest(packId);}catch(error){const previous=await read(packKey(packId,'pending'));if(!previous)throw error;manifest=validate(previous.manifest);}
+  try{manifest=await latest(packId,true);}catch(error){if(error.mediaStatusCode!=='media-status-transient'){await invalidateServerSnapshot(packId);throw error;}const previous=await read(packKey(packId,'pending'));if(!previous)throw error;manifest=validate(previous.manifest);}
   const priorPending=await read(packKey(packId,'pending'));if(!Object.keys(sizes).length&&priorPending?.selection===selection)sizes=priorPending.manifest.mediaSizes||{};
   manifest=planProxyDownload(manifest,selection,sizes);
   const files=selectedFiles(manifest,selection),cacheName=`${PREFIX}${packId===legacy?'':packId+'-'}${manifest.revision}-${selection}`;
@@ -148,7 +197,9 @@ async function start(selection,port,packId=legacy,sizes={}){
   // A repair stages separately from the last working copy, even at the same revision.
   const cacheId=active?.cache===cacheName?cacheName+'-repair':cacheName;
   const cache=await caches.open(cacheId);
-  pending={packId,cache:cacheId,revision:manifest.revision,selection,manifest,files,bytes:files.some(f=>f.bytes===null)?null:files.reduce((n,f)=>n+f.bytes,0),received:0,count:0,status:'downloading'};
+  const serverSnapshot=await retainServerSnapshot(packId,revision,cache,controller.signal);
+  if(serverSnapshot){const binding=serverSnapshot.record.execution?.mediaIdentity||{packId:serverSnapshot.record.packId,revision:serverSnapshot.record.revision};if(binding.packId!==manifest.packId||binding.revision!==manifest.presentationRevision)throw Error('The saved media belongs to a different server presentation.');files.push(...serverSnapshot.files);}
+  pending={packId,cache:cacheId,revision:manifest.revision,selection,manifest,files,...(serverSnapshot?{serverSnapshot}:{}),bytes:files.some(f=>f.bytes===null)?null:files.reduce((n,f)=>n+f.bytes,0),received:0,count:0,status:'downloading'};
   await write(packKey(packId,'pending'),pending);
   const report=()=>port?.postMessage({progress:{received:pending.received,bytes:pending.bytes,count:pending.count,total:files.length}});
   for(const file of files){
@@ -181,6 +232,14 @@ async function start(selection,port,packId=legacy,sizes={}){
   throw error;
  }finally{jobs.delete(packId);}
 }
+async function declaredMediaRevision(data,packId){
+ if(data.mediaIdentity===undefined&&data.mediaAssetsSha256===undefined)return data.revision;
+ if(data.mediaIdentity?.packId!==packId||!isPassageHash(data.mediaIdentity?.revision)||!isPassageHash(data.mediaAssetsSha256)||!isPassageHash(data.revision))throw Error('Invalid declared media identity.');
+ let record;try{const response=await fetchLatest(`/v1/packs/${packId}?revision=${data.revision}`,{cache:'no-store',redirect:'error'});if(response.status!==200||response.redirected)throw Error('Media authority is unavailable.');record=serverRecord(await response.json(),packId);}
+ catch(error){if(error.mediaStatusCode!=='media-status-transient'){await invalidateServerSnapshot(packId);throw error;}const active=await savedServerSnapshot(packId,data.revision);if(!active)throw error;record=active.serverSnapshot.record;}
+ if(record.revision!==data.revision||record.execution?.mediaIdentity?.packId!==data.mediaIdentity.packId||record.execution?.mediaIdentity?.revision!==data.mediaIdentity.revision||record.execution?.mediaAssetsSha256!==data.mediaAssetsSha256)throw Error('Media identity is not authorized by the server record.');
+ return data.mediaIdentity.revision;
+}
 self.addEventListener('message',event=>{
  const port=event.ports?.[0],type=event.data?.type,packId=event.data?.packId||legacy;
  event.waitUntil((async()=>{
@@ -189,8 +248,8 @@ self.addEventListener('message',event=>{
    let result={};
    if(type==='MEDIA_CANCEL'){const key=(event.source?.id||'')+':'+event.data.requestId;canceledPlayback.add(key);if(canceledPlayback.size>256)canceledPlayback.delete(canceledPlayback.values().next().value);playbackJobs.get(key)?.abort();result={canceled:true};
    }else if(type==='MEDIA_STATUS'||type==='MEDIA_PLAY'){
-    const active=await read(packKey(packId,'active'));let manifest;try{manifest=await latest(packId,true);}catch(error){if(type==='MEDIA_STATUS'||error?.mediaStatusCode!=='media-status-transient')throw error;manifest=active?.manifest?validate(active.manifest):null;}
-    if(!manifest||manifest.presentationRevision!==event.data.revision)throw Error('The media revision is unavailable.');
+    const mediaRevision=await declaredMediaRevision(event.data,packId);const active=await read(packKey(packId,'active'));let manifest;try{manifest=await latest(packId,true);}catch(error){if(type==='MEDIA_STATUS'||error?.mediaStatusCode!=='media-status-transient')throw error;manifest=active?.manifest?validate(active.manifest):null;}
+    if(!manifest||manifest.packId!==packId||manifest.presentationRevision!==mediaRevision)throw Error('The media revision is unavailable.');
     if(type==='MEDIA_STATUS')result={deliveryRevision:manifest.deliveryRevision||null,files:manifest.files.filter(f=>f.deliveryURL),savedFiles:manifest.files.filter(f=>f.deliveryURL).map(f=>matchingSavedFile(f,active,manifest)).filter(Boolean)};
     else{
      let file=manifest.files.find(f=>f.path===event.data.path&&f.deliveryURL);
@@ -207,11 +266,11 @@ self.addEventListener('message',event=>{
     }
    }else if(type==='PACK_SELECT'){
     const active=await read(packKey(packId,'active'));
-    const matches=active&&active.manifest?.presentationRevision===event.data.revision;
+    const matches=active&&(active.manifest?.presentationRevision===event.data.revision||!active.serverSnapshot?.invalid&&active.serverSnapshot?.record.revision===event.data.revision);
     if(event.source?.id){const prior=await read('client-'+event.source.id);await write('client-'+event.source.id,{...(matches?active:{packId,revision:event.data.revision}),...(prior?.shell==='network'?{shell:'network'}:{})});}
     await write('selected',{packId});result={selected:true};
    }else if(type==='DOWNLOAD_STATUS'||type==='CACHE_STATUS')result=await status(packId);
-   else if(type==='DOWNLOAD_START'){const active=await read(packKey(packId,'active'));if(active&&event.source?.id&&!await read('client-'+event.source.id))await write('client-'+event.source.id,active);result=await start(event.data.selection,port,packId,event.data.sizes||{});}
+   else if(type==='DOWNLOAD_START'){const active=await read(packKey(packId,'active'));if(active&&event.source?.id&&!await read('client-'+event.source.id))await write('client-'+event.source.id,active);result=await start(event.data.selection,port,packId,event.data.sizes||{},event.data.revision);}
    else if(type==='DOWNLOAD_PAUSE'){jobs.get(packId)?.abort();result={paused:true};}
    else if(type==='DOWNLOAD_REMOVE'){
     if(jobs.has(packId))throw new Error('Pause the download before removing it.');
