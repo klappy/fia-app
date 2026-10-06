@@ -12,6 +12,6 @@ Optional candidate spans explicitly identify raw word indices for diagnostics. T
 
 Observed word envelopes are ASR extents, explicitly not playback cuts. Every unit and report remains unqualified with empty accepted playback ranges. Quiet-boundary measurement, delivery/native clock qualification, calibrated quality and reviewed per-unit eligibility are separate requirements.
 
-Bounds: 32 raw windows,4MiB each/16MiB combined,1MiB canonical manifest,1000 units,20000 tokens per canonical/raw side,50000 emitted evidence tokens,128 matches per unit,1000 diagnostic spans and256 tokens per side for each edit diagnostic. Inputs exceeding these limits refuse rather than truncate.
+Bounds: 32 raw windows,4MiB each/16MiB combined,1MiB canonical manifest,1000 units,20000 tokens per canonical/raw side,50000 emitted evidence tokens and50000 emitted words (including repeated punctuation-only diagnostic spans),128 matches per unit,1000 diagnostic spans and256 tokens per side for each edit diagnostic. Inputs exceeding these limits refuse rather than truncate.
 
 The retained P3 fixtures reproduce independent assessment SHA `edc9fe0e60bda42c3da31353c2d07fc441b84f3c7527d77b52a2dbfa19378e2f`. Unit texts are also checked against published presentation `c947cc85704f9b26216ef48c56065682b4cbed0b8384554b460afec1d1fb4348`. U001–U004 remain unmatched with explicit diagnostic differences/overlap; U005–U008 are exact unique lexical candidates only. No new model or source request is made.
