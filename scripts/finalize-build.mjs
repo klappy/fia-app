@@ -1,8 +1,8 @@
-import {readdirSync,readFileSync,writeFileSync,mkdirSync,copyFileSync,statSync} from 'node:fs';
+import {readdirSync,readFileSync,writeFileSync,mkdirSync,copyFileSync,statSync,existsSync} from 'node:fs';
 import {join} from 'node:path';
 import {marked} from 'marked';
 import {createHash} from 'node:crypto';
-import {verifyScriptureAudioReplacement} from './scripture-audio-publication.mjs';
+import {verifyScriptureAudioReplacement,verifyScriptureRangeOnly} from './scripture-audio-publication.mjs';
 import {verifyRecordedGuideReplacement} from './recorded-guide-publication.mjs';
 import {verifyVideoReplacement} from './video-publication.mjs';
 import {validateDelivery,deliveryVariant} from '../apps/web/src/lib/media-delivery.js';
@@ -53,10 +53,11 @@ if(registry){
   for(const a of pack.activities)include(a.audioSrc);
   const delivery=deliveries.get(descriptor.id),media=Array.from(selected).sort().map(digest);
   if(delivery){
+   for(const e of delivery.sidecar.entries.filter(e=>e.scriptureRangeOnly)){if(existsSync('dist'+e.path)||media.some(f=>f.path===e.path))throw Error('Scripture virtual path collides with local media.');media.push({path:e.path,group:'audio'});}
    const byPath=new Map(delivery.sidecar.entries.map(e=>[e.path,e]));
    const apply=(f,e)=>{
-if(e.delivery.kind!==f.group)throw Error('Delivery media kind mismatch: '+f.path);if(f.group==='video'){Object.assign(f,verifyVideoReplacement({entry:e,ledger:delivery.ledger,pack,descriptor,file:f,readEvidence:hash=>readFileSync('dist/content/video-evidence/'+hash+'.json')}));}else if(e.scriptureReplacement){Object.assign(f,verifyScriptureAudioReplacement({entry:e,ledger:delivery.scriptureLedger,pack,descriptor,file:f,readEvidence:hash=>readFileSync('dist/content/scripture-evidence/'+hash+'.json'),readAlignment:url=>readFileSync('dist'+url)}),{scriptureLedgerSha256:delivery.sidecar.scriptureSourceLedger.sha256});}else if(e.audioReplacement){Object.assign(f,verifyRecordedGuideReplacement({entry:e,ledger:delivery.recordingLedgers.get(e.audioReplacement.recordingLedgerSha256||delivery.sidecar.recordingLedger.sha256),pack,descriptor,file:f,readEvidence:hash=>readFileSync('dist/content/recording-evidence/'+hash+'.json')}),{recordingLedgerSha256:e.audioReplacement.recordingLedgerSha256||delivery.sidecar.recordingLedger.sha256});}else {if(new URL(e.source.url).pathname!==f.path)throw Error('Delivery source URL mismatch: '+f.path);if(e.source.sha256!==f.sha256||e.source.bytes!==f.bytes)throw Error('Delivery source mismatch: '+f.path);}
-    const aligned=Object.values(pack.assets).find(a=>a.alignment?.audioSha256===f.sha256);if(aligned&&!e.scriptureReplacement&&(e.timing.status!=='verified'||e.timing.alignmentSha256!==createHash('sha256').update(JSON.stringify(aligned.alignment)).digest('hex')))throw Error('Unverified Scripture alignment: '+f.path);
+if(e.delivery.kind!==f.group)throw Error('Delivery media kind mismatch: '+f.path);if(f.group==='video'){Object.assign(f,verifyVideoReplacement({entry:e,ledger:delivery.ledger,pack,descriptor,file:f,readEvidence:hash=>readFileSync('dist/content/video-evidence/'+hash+'.json')}));}else if(e.scriptureRangeOnly){Object.assign(f,verifyScriptureRangeOnly({entry:e,ledger:delivery.scriptureLedger,pack,descriptor,readEvidence:hash=>readFileSync('dist/content/scripture-evidence/'+hash+'.json')}),{scriptureLedgerSha256:delivery.sidecar.scriptureSourceLedger.sha256});}else if(e.scriptureReplacement){Object.assign(f,verifyScriptureAudioReplacement({entry:e,ledger:delivery.scriptureLedger,pack,descriptor,file:f,readEvidence:hash=>readFileSync('dist/content/scripture-evidence/'+hash+'.json'),readAlignment:url=>readFileSync('dist'+url)}),{scriptureLedgerSha256:delivery.sidecar.scriptureSourceLedger.sha256});}else if(e.audioReplacement){Object.assign(f,verifyRecordedGuideReplacement({entry:e,ledger:delivery.recordingLedgers.get(e.audioReplacement.recordingLedgerSha256||delivery.sidecar.recordingLedger.sha256),pack,descriptor,file:f,readEvidence:hash=>readFileSync('dist/content/recording-evidence/'+hash+'.json')}),{recordingLedgerSha256:e.audioReplacement.recordingLedgerSha256||delivery.sidecar.recordingLedger.sha256});}else {if(new URL(e.source.url).pathname!==f.path)throw Error('Delivery source URL mismatch: '+f.path);if(e.source.sha256!==f.sha256||e.source.bytes!==f.bytes)throw Error('Delivery source mismatch: '+f.path);}
+    const aligned=Object.values(pack.assets).find(a=>a.alignment?.audioSha256===f.sha256);if(aligned&&!e.scriptureReplacement&&!e.scriptureRangeOnly&&(e.timing.status!=='verified'||e.timing.alignmentSha256!==createHash('sha256').update(JSON.stringify(aligned.alignment)).digest('hex')))throw Error('Unverified Scripture alignment: '+f.path);
     Object.assign(f,{sha256:e.delivery.sha256,bytes:e.delivery.bytes,mime:e.delivery.mime,deliveryURL:e.delivery.url,sourceSha256:e.source.sha256,deliveryRevision:delivery.sha256,timing:e.timing});
     return f;
    };
