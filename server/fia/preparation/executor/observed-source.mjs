@@ -5,8 +5,8 @@ const hash=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
 const fields=(value,keys)=>{if(!value||Object.getPrototypeOf(value)!==Object.prototype||Object.keys(value).length!==keys.length||keys.some(key=>!Object.hasOwn(value,key)))throw Error('invalid-acquisition-record');};
 const equal=(a,b)=>{if(canonicalJSONString(a)!==canonicalJSONString(b))throw Error('acquisition-binding-mismatch');};
 async function jsonObject(object){const bytes=await readBounded(new Response(object.body),32768),text=new TextDecoder('utf-8',{fatal:true}).decode(bytes),value=JSON.parse(text);if(canonicalJSONString(value)!==text)throw Error('noncanonical-acquisition-record');return {bytes,value};}
-export function createObservedSourceAdapter({bucket,fetchSource=fetch,validatePublisherURL}){
- if(typeof validatePublisherURL!=='function')throw Error('publisher-policy-required');
+export function createObservedSourceAdapter({bucket,fetchSource=fetch,validatePublisherURL,beforeFetch=null}){
+ if(typeof validatePublisherURL!=='function')throw Error('publisher-policy-required');if(beforeFetch!==null&&typeof beforeFetch!=='function')throw Error('source-dispatch-guard-invalid');const dispatchGuard=beforeFetch;
  return {paid:false,async run({input,nodeOutputs}){
   input=structuredClone(input);const descriptor=structuredClone(nodeOutputs?.discover);
   if(!hash(descriptor?.sha256)||descriptor.reference!==`preparation/discovery/${descriptor.sha256}.json`)throw Error('invalid-discovery-reference');
@@ -28,6 +28,7 @@ export function createObservedSourceAdapter({bucket,fetchSource=fetch,validatePu
    return {sha256:source.sha256,reference:receipt.sourceKey};
   }
   const warm=await retained();if(warm)return warm;
+  if(dispatchGuard){const permitted=dispatchGuard({input:structuredClone(input),discovery:structuredClone(discovery)});if(permitted&&typeof permitted.then==='function'){Promise.resolve(permitted).catch(()=>{});throw Error('source-dispatch-refused');}if(permitted!==true)throw Error('source-dispatch-refused');}
   const response=await fetchSource(discovery.source.url,{redirect:'manual',signal:AbortSignal.timeout(30000)});
   if(response.status!==200||response.headers.get('Content-Type')?.split(';')[0].trim()!=='audio/mpeg')throw Error('publisher-response-refused');
   const body=await readBounded(response,2*1024*1024);if(!body.byteLength)throw Error('empty-source');

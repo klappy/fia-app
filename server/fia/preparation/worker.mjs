@@ -36,8 +36,8 @@ async function reviewedStore(ctx,env){
 const prefix='/v1/preparations';
 const statusBody=(record,reused)=>({schema:'fia-preparation-status@1',jobId:record.jobId,state:record.state,reason:record.reason,sourceState:record.sourceState??'queued',selection:record.selection,result:record.result??null,resultSha256:record.resultSha256??null,statusUrl:`${prefix}/${record.jobId}`,reused});
 
-export async function servePreparation(request,env,{guideExecutionProfile=null}={}){
-  const guide=await serveGuidePreparation(request,env,catalog,guideExecutionProfile);if(guide)return guide;
+export async function servePreparation(request,env,{guideExecutionProfile=null,guideExecutionEligibility=null}={}){
+  const guide=await serveGuidePreparation(request,env,catalog,guideExecutionProfile,guideExecutionEligibility);if(guide)return guide;
   const url=new URL(request.url);
   const audioMatch=/^\/v1\/preparation-audio\/([0-9a-f]{64})\.mp3$/.exec(url.pathname);
   if(!audioMatch&&url.pathname!==prefix&&!url.pathname.startsWith(prefix+'/'))return null;
