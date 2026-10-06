@@ -63,18 +63,22 @@ export async function withPreparationTimeout(signal,run){
 }
 export function createPreparationTransport({fetch:fetcher=(...args)=>fetch(...args),origin=()=>location.origin,browserProfile=()=>({userAgent:navigator.userAgent,platform:navigator.platform})}={}){
  const qualified=createQualifiedUnitTransport({fetch:fetcher,origin,browserProfile});
- const request=(path,identity,signal,post=false)=>withPreparationTimeout(signal,async signal=>{
+ const request=(path,identity,signal,post=false,unitDemand=false)=>withPreparationTimeout(signal,async signal=>{
   if(new URL(origin()).protocol!=='https:')throw Error('Recording preparation requires the published HTTPS app.');
   const response=await fetcher(path,{method:post?'POST':'GET',headers:post?{'Content-Type':'application/json'}:undefined,body:post?JSON.stringify(identity):undefined,credentials:'same-origin',redirect:'error',cache:'no-store',signal});
   if((response.status===422||response.status===404)&&post&&identity.quality==='original'){void response.body?.cancel().catch(()=>{});return qualified.request(identity,signal);}
   if(response.status===422||response.status===404)return {status:'unavailable',message:'This recording is not prepared yet. You can continue without it.'};
   const value=validatePreparationStatus(await boundedJSON(response,signal),identity,post?undefined:path.split('/').at(-1));
+  // A verified original without a legacy unit map may use the unit validator.
+  // Only an explicit demand or its owned polling may enqueue work; revocation, corrupt
+  // evidence and uncertain side effects never trigger an alternate pipeline.
+  if((post||unitDemand)&&identity.quality==='original'&&value.state==='blocked'&&value.sourceState==='verified'&&value.reason==='accepted-recording-required')return qualified.request(identity,signal);
   if(value.state==='blocked')return {status:'unavailable',message:'This recording is awaiting preparation or review. You can continue without it.'};
   return {status:value.state==='ready'?'ready':'preparing',id:value.jobId,value};
  });
  return {
   request:(identity,signal)=>request('/v1/preparations',identity,signal,true),
-  status:(id,identity,signal)=>{if(typeof id==='string'&&id.startsWith('unit:'))return qualified.status(id,identity,signal);if(!hash(id))throw Error('Invalid preparation identity.');return request(`/v1/preparations/${id}`,identity,signal);},
+  status:(id,identity,signal)=>{if(typeof id==='string'&&id.startsWith('unit:'))return qualified.status(id,identity,signal);if(!hash(id))throw Error('Invalid preparation identity.');return request(`/v1/preparations/${id}`,identity,signal,false,true);},
   verify:(result,identity)=>result.kind==='qualified-unit'?qualified.verify(result,identity):verifyPreparedRecording(result.value,identity),
   async play(descriptor,signal){
    if(descriptor.kind==='qualified-unit')return qualified.play(descriptor,signal);

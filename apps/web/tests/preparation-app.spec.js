@@ -171,3 +171,26 @@ it('qualified original whole-file playback uses native EOF at 1x with no range a
  await waitFor(()=>expect(audio.play).toHaveBeenCalledWith(body.activities[0].narration,'blob:prepared',1));
  expect(audio.play.mock.calls[0]).toHaveLength(3);expect(libraryAdapter.prepareRecording.mock.calls[0][0].packId).toBe(p3.id);
 });
+
+it.each(['ready','failed'])('older media refresh %s cannot replace the newest installed revision',async outcome=>{
+ const earlier=deferred(),registration=deferred(),body=structuredClone(presentation),path='/refresh-test.mp3';
+ body.activities[0].audioSrc=path;libraryAdapter.select.mockResolvedValue({descriptor,presentation:body});
+ vi.stubGlobal('navigator',{onLine:true,serviceWorker:{register:()=>registration.promise}});
+ let selectedReads=0;
+ libraryAdapter.mediaStatus.mockImplementation(pack=>pack.id===descriptor.id?(++selectedReads===1?earlier.promise:Promise.resolve({files:[{path}],savedFiles:[],deliveryRevision:'new-revision'})):Promise.resolve({files:[],savedFiles:[],deliveryRevision:null}));
+ vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(2),mime:'audio/mpeg',playbackRange:ready.playbackRange});
+ await mount();await waitFor(()=>expect(selectedReads).toBe(1));registration.resolve();await waitFor(()=>expect(selectedReads).toBe(2));
+ if(outcome==='ready')earlier.resolve({files:[{path}],savedFiles:[],deliveryRevision:'old-revision'});else earlier.resolve(Promise.reject(Error('old status failed')));
+ await new Promise(r=>setTimeout(r,0));await fireEvent.click(screen.getByRole('button',{name:'Begin',exact:true}));
+ await waitFor(()=>expect(libraryAdapter.playMedia).toHaveBeenCalled());expect(libraryAdapter.playMedia.mock.calls[0][2]).toBe('new-revision');
+});
+
+it('late download status cannot resurrect saved capability after the newest status removes it',async()=>{
+ const earlier=deferred(),registration=deferred(),network={onLine:true,serviceWorker:{register:()=>registration.promise}};
+ vi.stubGlobal('navigator',network);let selectedReads=0;
+ libraryAdapter.downloadStatus.mockImplementation(pack=>pack.id===descriptor.id?(++selectedReads===1?earlier.promise:Promise.resolve({saved:false})):Promise.resolve({saved:false}));
+ await mount();await waitFor(()=>expect(selectedReads).toBe(1));registration.resolve();await waitFor(()=>expect(selectedReads).toBe(2));
+ earlier.resolve({saved:true,active:{manifest:{presentationRevision:descriptor.revision,deliveryRevision:'old-revision',files:[]},files:[]}});
+ await new Promise(r=>setTimeout(r,0));network.onLine=false;await fireEvent(window,new Event('offline'));
+ expect(screen.getByText('You’re offline')).toBeTruthy();expect(screen.queryByText('Offline · session saved')).toBeNull();
+});
