@@ -8,8 +8,9 @@ export function entries(summary,{runId,attempt}){
  const seen=new Set();return summary.scenarios.map(s=>{if(typeof s.scenario!=='string'||!['passed','failed','not-covered'].includes(s.outcome)||s.key!==`${summary.commit}/${summary.environment}/${s.scenario}`||s.outcome==='passed'&&s.validation?.ok!==true)throw Error('Invalid scenario');const id=createHash('sha256').update(s.scenario).digest('hex');if(seen.has(id))throw Error('Duplicate scenario');seen.add(id);return {path:`${summary.commit}/${summary.environment}/${runId}-${attempt}/${id}.json`,content:JSON.stringify({schema:summary.schema,commit:summary.commit,environment:summary.environment,runId,attempt,workflowUrl:`https://github.com/${repository}/actions/runs/${runId}`,scope:summary.scope,scenario:s},null,2)+'\n'};});
 }
 export async function append(items,api){
+ if(!Array.isArray(items)||!items.length)throw Error('Cannot archive empty evidence');
  let ref=await api('GET',`git/ref/heads/${branch}`,undefined,true);
- if(!ref){const tree=await api('POST','git/trees',{tree:[]});const initial=await api('POST','git/commits',{message:'Initialize append-only persona evidence',tree:tree.sha,parents:[]});await api('POST','git/refs',{ref:`refs/heads/${branch}`,sha:initial.sha});ref={object:{sha:initial.sha}};}
+ if(!ref){const tree=await api('POST','git/trees',{tree:items.map(item=>({...item,mode:'100644',type:'blob'}))});const initial=await api('POST','git/commits',{message:'Initialize append-only persona evidence',tree:tree.sha,parents:[]});await api('POST','git/refs',{ref:`refs/heads/${branch}`,sha:initial.sha});return {outcome:'archived',commit:initial.sha};}
  const head=ref.object.sha,commit=await api('GET',`git/commits/${head}`);const additions=[];
  for(const item of items){const old=await api('GET',`contents/${item.path}?ref=${branch}`,undefined,true);if(old){if(old.encoding!=='base64'||Buffer.from(old.content,'base64').toString()!==item.content)throw Error('Refusing conflicting immutable evidence: '+item.path);continue;}additions.push({...item,mode:'100644',type:'blob'});}
  if(!additions.length)return {outcome:'already-archived',commit:head};
