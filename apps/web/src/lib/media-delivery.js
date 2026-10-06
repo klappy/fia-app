@@ -51,8 +51,10 @@ export function validateScriptureAudioEntry(entry){
  check(entry);for(const v of Object.values(entry.variants||{}))check(v);
 }
 export function validateDelivery(sidecar,identity){
- if(sidecar?.schema===5){
-  videoKeys(sidecar,'schema,packId,presentationRevision,recipeRevision,sourceLedger,recordingLedger,scriptureSourceLedger,entries'+(Object.hasOwn(sidecar,'recordingLedgers')?',recordingLedgers':''));
+ if(sidecar?.schema===5||sidecar?.schema===6){
+  const standalone=sidecar.schema===6;
+  if(standalone){videoKeys(sidecar,'schema,packId,presentationRevision,recipeRevision,scriptureSourceLedger,entries');if(!pack.test(sidecar.packId)||!sha.test(sidecar.presentationRevision)||sidecar.packId!==identity.packId||sidecar.presentationRevision!==identity.presentationRevision||typeof sidecar.recipeRevision!=='string'||!sidecar.recipeRevision||!Array.isArray(sidecar.entries)||!sidecar.entries.length||sidecar.entries.some(e=>!e.scriptureRangeOnly))throw Error('Invalid standalone Scripture sidecar.');}
+  else videoKeys(sidecar,'schema,packId,presentationRevision,recipeRevision,sourceLedger,recordingLedger,scriptureSourceLedger,entries'+(Object.hasOwn(sidecar,'recordingLedgers')?',recordingLedgers':''));
   const ref=sidecar.scriptureSourceLedger;videoKeys(ref,'url,sha256,bytes');if(!sha.test(ref.sha256)||!positive(ref.bytes)||ref.url!==`/content/scripture-sources/${ref.sha256}.json`||!Array.isArray(sidecar.entries))throw Error('Invalid Scripture source ledger.');
   const entries=sidecar.entries.map(entry=>{if(entry.scriptureRangeOnly){
    videoKeys(entry,'path,source,delivery,timing,defaultSize,variants,scriptureRangeOnly,scripturePlaybackMode,scriptureHighlighting,playbackRange,rangeReviewSha256');validateScriptureRangeOnlyEntry(entry);
@@ -65,7 +67,8 @@ export function validateDelivery(sidecar,identity){
    const {scriptureReplacement,playbackRange,scriptureAlignment,...base}=entry;
    base.variants=Object.fromEntries(Object.entries(entry.variants).map(([size,v])=>{videoKeys(v,'delivery,timing,playbackRange,scriptureAlignment');const {playbackRange,scriptureAlignment,...rest}=v;return [size,rest];}));
    if(JSON.stringify(entry.variants[entry.defaultSize]?.playbackRange)!==JSON.stringify(playbackRange)||JSON.stringify(entry.variants[entry.defaultSize]?.scriptureAlignment)!==JSON.stringify(scriptureAlignment))throw Error('Default Scripture selection changed.');return base;
-  });const {scriptureSourceLedger,...base}=sidecar;validateDelivery({...base,schema:4,entries},identity);return sidecar;
+  });if(standalone){const seen=new Set();for(const entry of entries){const {defaultSize,variants,...base}=entry;if(seen.has(entry.path)||!['small','medium','large'].includes(defaultSize)||!variants||!Object.keys(variants).length||Object.keys(variants).some(k=>!['small','medium','large'].includes(k)))throw Error('Invalid standalone Scripture variants.');seen.add(entry.path);if(JSON.stringify(variants[defaultSize])!==JSON.stringify({delivery:base.delivery,timing:base.timing}))throw Error('Default Scripture delivery changed.');for(const size of Object.keys(variants)){const selected=deliveryVariant(entry,size);if(selected.delivery.kind!=='audio'||selected.delivery.q!==({small:'low',medium:'medium',large:'high'}[size]))throw Error('Invalid Scripture variant quality.');validateDelivery({schema:1,packId:sidecar.packId,presentationRevision:sidecar.presentationRevision,recipeRevision:sidecar.recipeRevision,entries:[selected]},identity);}}return sidecar;}
+  const {scriptureSourceLedger,...base}=sidecar;validateDelivery({...base,schema:4,entries},identity);return sidecar;
  }
  if(sidecar?.schema===4){
   videoKeys(sidecar,'schema,packId,presentationRevision,recipeRevision,sourceLedger,recordingLedger,entries'+(Object.hasOwn(sidecar,'recordingLedgers')?',recordingLedgers':''));
