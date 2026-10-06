@@ -93,15 +93,18 @@ export function scoreSet({cases, envelopes, rerun = null, calls = {}}) {
 }
 
 /**
- * §8 cost per correctly resolved case. Rates are supplied at report time (never stored in the repo);
- * absent rates leave the cost term null and the verdict cannot reach EXPAND-TESTING.
+ * §8 cost per correctly resolved case, as a unitless ratio to the review-only alternative per case. Rates are supplied
+ * at report time and never stored; no currency amount is returned, so metrics.json (which lands in the cookbook unit,
+ * PLAN §15) carries none (DoD 7 keeps amounts in the private evidence index). Absent rates leave the ratio null and the
+ * verdict cannot reach EXPAND-TESTING. costPerCorrectRatio > 1 means rules+Jev costs more per correct case than review.
  */
 export function costTerms(score, {ratePerMTokIn = null, ratePerMTokOut = null, minuteRate = null, reviewMinutesPerCase = REVIEW_MINUTES_PER_CASE} = {}) {
   const reviewMinutes = score.abstained * reviewMinutesPerCase;
   const priced = [ratePerMTokIn, ratePerMTokOut, minuteRate].every(Number.isFinite);
-  if (!priced) return {priced: false, reviewMinutes, aiCost: null, costPerCorrect: null, reviewOnlyPerCase: null};
+  if (!priced) return {priced: false, reviewMinutes, costPerCorrectRatio: null};
   const aiCost = (score.tokens.input * ratePerMTokIn + score.tokens.output * ratePerMTokOut) / 1e6;
-  return {priced: true, reviewMinutes, aiCost: round(aiCost), costPerCorrect: score.correctResolved ? round((aiCost + reviewMinutes * minuteRate) / score.correctResolved) : null, reviewOnlyPerCase: round(reviewMinutesPerCase * minuteRate)};
+  const perCorrect = score.correctResolved ? (aiCost + reviewMinutes * minuteRate) / score.correctResolved : null;
+  return {priced: true, reviewMinutes, costPerCorrectRatio: perCorrect === null ? null : ratio(perCorrect, reviewMinutesPerCase * minuteRate)};
 }
 
 /** Per-class verdict (§8), held-out. armA/armB are scoreSet outputs on the same cases; role is one of ROLES. */
@@ -116,6 +119,6 @@ export function verdict({role, armA, armB, costB, uncalibratable = false}) {
   if (armB.flips.length) reasons.push('flips');
   if (abstentionRate > 0.5) reasons.push('abstention-over-50pct');
   if (!costB?.priced) reasons.push('cost-unpriced');
-  else if (costB.costPerCorrect === null || costB.costPerCorrect > costB.reviewOnlyPerCase) reasons.push('cost-over-review-only');
+  else if (costB.costPerCorrectRatio === null || costB.costPerCorrectRatio > 1) reasons.push('cost-over-review-only');
   return reasons.length ? {verdict: 'REVIEW', reasons, gain} : {verdict: 'EXPAND-TESTING', reasons: [], gain};
 }

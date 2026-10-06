@@ -1,13 +1,13 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {readFile, writeFile, mkdtemp, rm, readdir, chmod} from 'node:fs/promises';
+import {readFile, writeFile, mkdtemp, mkdir, rm, readdir, chmod} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {ROLES, sha256, canonical} from '../../server/fia/preparation/jev/adapter.mjs';
 import {assertCaseSet} from './cases.mjs';
-import {main, loadFixed, captureRequests, checkRequestCeilings, composeAdapter, bootstrapCalibration, calibrationRecord, importRows, assertLanguageAllowed, CEILINGS, BOOTSTRAP_MODEL_REVISION, requestsFile, snippetFor, snippetRequests, batchCount, goldStatus, assertGold, reconcileGold, scoreArm, MISSING_LABEL, DUPLICATES_DIR} from './run.mjs';
+import {main, loadFixed, captureRequests, checkRequestCeilings, composeAdapter, bootstrapCalibration, calibrationRecord, importRows, assertLanguageAllowed, CEILINGS, BOOTSTRAP_MODEL_REVISION, requestsFile, snippetFor, snippetPhase, snippetRequests, batchCount, goldStatus, assertGold, reconcileGold, scoreArm, MISSING_LABEL, DUPLICATES_DIR, REFUSED_DIR, BREACH_FILE, LATENCY_MEASUREMENT} from './run.mjs';
 import {createReplayAI, normalizeJevResponse, rawKeyFor} from './providers/replay.mjs';
 import {fireRequests} from './providers/rest.mjs';
 import {scoreSet, seriousErrors, needsReviewCorrect, verdict, costTerms} from './metrics.mjs';
@@ -41,20 +41,20 @@ function fakeRows(requests, goldById, {model} = {}) {
 
 async function tmp() { return mkdtemp(join(tmpdir(), 'jev-cue-pilot-test-')); }
 
-test('cases.json: exactly 24 real cases that rebuild byte-for-byte from source-packs, gold reconciled or honestly pending, template overlap refused', async () => {
+test('cases.json: exactly 24 real cases that rebuild byte-for-byte from source-packs, every gold row reconciled, template overlap refused', async () => {
   await assertCaseSet(casesDoc.cases);
   assert.equal(casesDoc.cases.length, 24);
-  // PLAN steps 5-6 / D10-D11: an eng row is dual-labelled (reviewer a+d, agreement boolean) or still pending its blind
-  // relabel (one labeler, agreement null); a missing label is never recorded as a disagreement. spa mirrors eng.
+  // PLAN steps 5-6 / D10-D11: every eng row is dual-labelled (reviewer a+d, agreement boolean) after the blind relabel;
+  // a missing label is never recorded as a disagreement. spa mirrors eng. Scoring refuses anything else (assertGold).
   const key = c => `${c.meta.split}|${c.input.source.unitId}`;
   const eng = new Map(casesDoc.cases.filter(c => c.input.language === 'eng').map(c => [key(c), c.gold]));
   const status = goldStatus(casesDoc.cases);
   for (const c of casesDoc.cases) {
     assert.ok(c.gold && ROLES.every(k => typeof c.gold.roles[k] === 'boolean') && typeof c.gold.needsReview === 'boolean' && c.gold.reason, c.caseId);
     assert.doesNotMatch(c.gold.reason, MISSING_LABEL, `${c.caseId}: a missing label is not a disagreement`);
-    assert.ok(['reconciled', 'pending'].includes(status.get(c.caseId)), `${c.caseId}: ${status.get(c.caseId)}`);
+    assert.equal(status.get(c.caseId), 'reconciled', c.caseId);
     if (c.input.language === 'eng') {
-      if (status.get(c.caseId) === 'pending') { assert.equal(c.gold.agreement, null, c.caseId); assert.doesNotMatch(c.gold.reviewer, /\+/, c.caseId); continue; }
+      assert.equal(typeof c.gold.agreement, 'boolean', c.caseId);
       assert.match(c.gold.reviewer, /^[^\s+]+\+[^\s+]+$/, c.caseId);
       if (c.gold.agreement === false) { assert.equal(c.gold.needsReview, true, c.caseId); assert.match(c.gold.reason, /^DISAGREE — A: \S.* \| D: \S/, c.caseId); }
       continue;
@@ -63,6 +63,7 @@ test('cases.json: exactly 24 real cases that rebuild byte-for-byte from source-p
     assert.ok(c.gold.backTranslation.trim() && typeof c.gold.divergent === 'boolean', c.caseId);
     if (!c.gold.divergent) { assert.deepEqual(c.gold.roles, eng.get(key(c)).roles, c.caseId); assert.equal(c.gold.needsReview, eng.get(key(c)).needsReview, c.caseId); }
   }
+  assert.doesNotThrow(() => assertGold(casesDoc.cases), 'held-out scoring is not refused at head');
   execFileSync(process.execPath, [fileURLToPath(new URL('cases.mjs', here)), '--check'], {stdio: 'pipe'});
   const tampered = structuredClone(casesDoc.cases);
   const dev = tampered.find(c => c.meta.split === 'dev'), held = tampered.find(c => c.meta.split === 'heldout');
@@ -122,14 +123,16 @@ test('import: probe aborts on a response without `model`; usage ceilings are rep
     const requests = await captureRequests(casesDoc.cases.slice(0, 3), {fixed, pass: 1});
     await writeFile(requestsFile(dir, 1), JSON.stringify(requests));
     const bad = {rawKey: requests[0].rawKey, ms: 1, response: {state: 'Completed', result: {answers: wire([0, 0, 0, 0]).result.answers}}};
-    await assert.rejects(importRows([bad], {evidenceDir: dir}), /probe-failed/);
+    await assert.rejects(importRows([bad], {evidenceDir: dir}), /probe-failed.*1 new row/);
     await assert.rejects(readdir(join(dir, 'raw')), /ENOENT/);
+    assert.equal((await readdir(join(dir, REFUSED_DIR))).length, 1, 'the refused probe is kept as a paid call');
     const rows = requests.map((r, i) => ({rawKey: r.rawKey, ms: 10, response: wire([0.1, 0.1, 0.1, 0.1])}));
     rows[1].response.result.usage.input_tokens = 2500;
     rows[2] = {rawKey: requests[2].rawKey, ms: 5, response: null, error: 'fixture failure'};
     const r = await importRows(rows, {evidenceDir: dir});
     assert.equal(r.written.length, 3);
     assert.ok(r.breaches.some(b => b.startsWith('input-per-call')));
+    assert.equal(r.usage.calls, 4, 'refused probe + 3'); assert.ok(r.breaches.includes('duplicate-calls:1'), 'request 0 was paid for twice');
     assert.equal(r.spend, null); assert.match(r.warnings.join(), /^spend-unchecked/, 'no rates: the spend check is loudly skipped');
     const priced = await importRows(rows, {evidenceDir: dir, rates: {ratePerMTokIn: 1e6, ratePerMTokOut: 0, spendCeiling: 1}});
     assert.ok(priced.breaches.includes('computed-spend-over-abort-fraction'));
@@ -137,8 +140,9 @@ test('import: probe aborts on a response without `model`; usage ceilings are rep
     assert.deepEqual(priced.reimported, requests.map(q => q.rawKey), 're-importing the same rows is not a call');
     const cheap = await importRows(rows, {evidenceDir: dir, rates: {ratePerMTokIn: 1, ratePerMTokOut: 1, spendCeiling: 1e6}});
     assert.ok(cheap.spend.percentOfCeiling < 5 && !cheap.breaches.includes('computed-spend-over-abort-fraction'));
-    assert.equal(cheap.usage.calls, 3);
-    await assert.rejects(main(['--phase', 'snippet', '--probe', '--evidence-dir', dir], {log() {}}), /already-fired/);
+    assert.equal(cheap.usage.calls, 4);
+    assert.ok(JSON.parse(await readFile(join(dir, BREACH_FILE), 'utf8')).breaches.includes('computed-spend-over-abort-fraction'), 'the spend breach outlives the run that saw the rates');
+    await assert.rejects(main(['--phase', 'snippet', '--probe', '--evidence-dir', dir], {log() {}}), /ceiling-breached/);
     await assert.rejects(importRows([{rawKey: 'f'.repeat(64), ms: 1, response: wire([0, 0, 0, 0])}], {evidenceDir: dir}), /unknown-rawKey/);
   } finally { await rm(dir, {recursive: true, force: true}); }
 });
@@ -209,6 +213,13 @@ test('end to end offline: requests → fake connector rows → import → derive
     assert.match(lines.join('\n'), /identical, 0 network calls/);
     assert.equal(await main(['--phase', 'report', ...common], quiet), 0);
     assert.equal(await readFile(join(dir, 'ev', 'metrics.json'), 'utf8'), metricsText);
+    assert.deepEqual(m.measurement, LATENCY_MEASUREMENT); assert.match(m.measurement.latency, /concurrency <= 6/);
+    // Priced report: metrics.json lands in the cookbook, so it carries the ratio and review minutes, never an amount.
+    assert.equal(await main(['--phase', 'report', '--rate-in', '0.5', '--rate-out', '2', '--minute-rate', '0.75', ...common], quiet), 0);
+    const priced = await readFile(join(dir, 'ev', 'metrics.json'), 'utf8');
+    assert.doesNotMatch(priced, /aiCost|reviewOnlyPerCase|"costPerCorrect"/);
+    const pm = JSON.parse(priced);
+    for (const L of Object.values(pm.languages)) for (const S of Object.values(L.sets)) for (const arm of Object.values(S)) assert.deepEqual(Object.keys(arm.cost).sort(), ['costPerCorrectRatio', 'priced', 'reviewMinutes']);
   } finally { globalThis.fetch = realFetch; await rm(dir, {recursive: true, force: true}); }
 });
 
@@ -243,6 +254,13 @@ test('§8 verdicts: gain without errors and under the review-only cost expands; 
   assert.equal(verdict({role: 'discussionRequested', armA: base, armB: base, costB: cheap}).verdict, 'RETAIN-RULES');
   assert.equal(verdict({role: 'discussionRequested', armA, armB: base, costB: cheap, uncalibratable: true}).verdict, 'REVIEW');
   assert.equal(verdict({role: 'discussionRequested', armA, armB: base, costB: costTerms(base)}).reasons[0], 'cost-unpriced');
+  // No currency amount leaves costTerms: only review minutes and the unitless ratio to the review-only alternative.
+  assert.deepEqual(Object.keys(cheap).sort(), ['costPerCorrectRatio', 'priced', 'reviewMinutes']);
+  assert.ok(cheap.costPerCorrectRatio > 0 && cheap.costPerCorrectRatio <= 1);
+  const dear = costTerms(base, {ratePerMTokIn: 1e6, ratePerMTokOut: 1e6, minuteRate: 1});
+  assert.ok(dear.costPerCorrectRatio > 1);
+  assert.deepEqual(verdict({role: 'discussionRequested', armA, armB: base, costB: dear}).reasons, ['cost-over-review-only']);
+  assert.equal(costTerms({...base, correctResolved: 0}, {ratePerMTokIn: 1, ratePerMTokOut: 1, minuteRate: 1}).costPerCorrectRatio, null);
 });
 
 test('connector snippet: ≤ 8 per batch, concurrency ≤ 6, verified wire path and body, no retries', async () => {
@@ -283,6 +301,65 @@ test('D6: probe + batches partition each pass, so no request is fired twice; an 
   }
   await assert.rejects(snippetFor(fake(24), 0, {fired: new Set([fake(24)[3].rawKey])}), /already-fired:c3/);
   assert.throws(() => snippetRequests(fake(24), -1), /batch-invalid/);
+});
+
+test('gate 4: a refused batch is still paid for: its rows are kept, counted and never re-fired; no batch before a valid probe', async () => {
+  const dir = await tmp();
+  try {
+    const requests = await captureRequests(casesDoc.cases.slice(0, 3), {fixed, pass: 1});
+    await writeFile(requestsFile(dir, 1), JSON.stringify(requests));
+    const timeout = i => ({rawKey: requests[i].rawKey, ms: 10000, response: null, error: 'timeout'});
+    // A batch cannot be printed before the pass has a valid probe in evidence/raw.
+    await assert.rejects(snippetPhase({evidenceDir: dir, batch: 0}), /probe-not-imported/);
+    // Path 1: the probe times out; import refuses, but the call is on record, so the probe cannot be fired again.
+    await assert.rejects(importRows([timeout(0)], {evidenceDir: dir}), /probe-failed.*1 new row/);
+    await assert.rejects(importRows([timeout(0)], {evidenceDir: dir}), /probe-failed.*0 new row/, 're-importing a refused row is not a call');
+    await assert.rejects(snippetPhase({evidenceDir: dir, probe: true}), /already-fired/);
+    await assert.rejects(main(['--phase', 'snippet', '--probe', '--evidence-dir', dir], {log() {}}), /already-fired/);
+    await assert.rejects(snippetPhase({evidenceDir: dir, batch: 0}), /probe-not-imported/);
+    // Path 2: a batch fired without an imported probe, row 0 errored: every row is kept and counted.
+    await assert.rejects(importRows([timeout(1), {rawKey: requests[2].rawKey, ms: 20, response: wire([0.1, 0.1, 0.1, 0.1])}], {evidenceDir: dir}), /probe-failed.*2 new row/);
+    assert.equal((await readdir(join(dir, REFUSED_DIR))).length, 3);
+    await assert.rejects(readdir(join(dir, 'raw')), /ENOENT/);
+    // A later answer for a request already paid for is a duplicate call and a D7 breach, wherever the first sits.
+    const r = await importRows([{rawKey: requests[1].rawKey, ms: 30, response: wire([0.1, 0.1, 0.1, 0.1])}], {evidenceDir: dir});
+    assert.equal(r.usage.calls, 4); assert.equal(r.usage.refused, 3); assert.equal(r.usage.input, 2 * 600);
+    assert.ok(r.breaches.includes('duplicate-calls:1'));
+  } finally { await rm(dir, {recursive: true, force: true}); }
+});
+
+test('D7: snippet re-checks the observed ceilings and refuses the next paid batch after a breach', async () => {
+  const dir = await tmp();
+  try {
+    const requests = await captureRequests(casesDoc.cases.slice(0, 3), {fixed, pass: 1});
+    await writeFile(requestsFile(dir, 1), JSON.stringify(requests));
+    const row = (i, ms = 300) => ({rawKey: requests[i].rawKey, ms, response: wire([0.1, 0.1, 0.1, 0.1])});
+    assert.deepEqual((await importRows([row(0)], {evidenceDir: dir})).breaches, []);
+    assert.match(await snippetPhase({evidenceDir: dir, batch: 0}), new RegExp(requests[1].rawKey), 'clean evidence: the next batch prints');
+    // Total calls: a batch that would take the run past 40 calls is refused before it is printed.
+    await mkdir(join(dir, REFUSED_DIR), {recursive: true});
+    for (let i = 0; i < 38; i++) await writeFile(join(dir, REFUSED_DIR, `filler-${i}.json`), JSON.stringify({rawKey: `filler-${i}`, ms: 1, response: null, error: 'filler'}));
+    await assert.rejects(snippetPhase({evidenceDir: dir, batch: 0}), /ceiling:total-calls:41/);
+    await rm(join(dir, REFUSED_DIR), {recursive: true});
+    // A wall breach recorded by import: the marker stops the next batch, and the evidence alone stops it too.
+    const slow = await importRows([row(1, CEILINGS.wallMinutes * 60000)], {evidenceDir: dir});
+    assert.ok(slow.breaches.some(b => b.startsWith('wall-minutes:')));
+    assert.ok(JSON.parse(await readFile(join(dir, BREACH_FILE), 'utf8')).breaches.some(b => b.startsWith('wall-minutes:')));
+    await assert.rejects(snippetPhase({evidenceDir: dir, batch: 0}), /ceiling-breached:wall-minutes/);
+    await assert.rejects(main(['--phase', 'snippet', '--batch', '0', '--evidence-dir', dir], {log() {}}), /ceiling-breached/);
+    await rm(join(dir, BREACH_FILE));
+    await assert.rejects(snippetPhase({evidenceDir: dir, batch: 0}), /ceiling-breached:wall-minutes/, 'recomputed from evidence');
+  } finally { await rm(dir, {recursive: true, force: true}); }
+});
+
+test('snippet data with `$&`, `$\'` or `$`+backtick in unit text is inserted literally', async () => {
+  const state = "a $& b $' c $` d $$ e";
+  const reqs = [0, 1].map(i => ({caseId: `c${i}`, rawKey: String(i).padStart(64, '0'), state, questions: {q: {type: 'noul'}}}));
+  const code = await snippetFor(reqs, 0);
+  const seen = [];
+  const cloudflare = {async request(opts) { seen.push(opts.body.input.state); return {result: wire([0.1, 0.1, 0.1, 0.1])}; }};
+  const out = await new Function('cloudflare', 'accountId', `return (${code});`)(cloudflare, 'acct')();
+  assert.deepEqual(seen, [state]); assert.equal(out[0].rawKey, reqs[1].rawKey);
 });
 
 test('import: a second paid call for one request keeps the first response, is counted, and the rest of the batch still lands', async () => {

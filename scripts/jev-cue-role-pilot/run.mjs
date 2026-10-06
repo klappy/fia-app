@@ -29,6 +29,8 @@ export const BAND_MARGIN = 0.05;
 export const SPA_REVIEWER = /^mirror-eng\+backtranslation:\S+$/;
 const ARMS = ['A', 'B', 'C', 'D'], SETS = ['dev', 'heldout'];
 export const DUPLICATES_DIR = 'raw-duplicates';
+export const REFUSED_DIR = 'raw-refused'; // rows of a batch the probe gate refused: paid calls, never scored
+export const BREACH_FILE = 'breaches.json'; // written by import on any D7 breach; snippet refuses while it exists
 
 const json = x => JSON.stringify(x, null, 2) + '\n';
 const exists = p => access(p).then(() => true, () => false);
@@ -111,10 +113,49 @@ export async function snippetFor(requests, batch, {probe = false, fired = new Se
   const slice = snippetRequests(requests, batch, {probe});
   if (!slice.length) throw Error(`batch-empty:${batch}`);
   const again = slice.filter(r => fired.has(r.rawKey));
-  if (again.length) throw Error(`already-fired:${again.map(r => r.caseId).join(',')} (evidence/raw holds its response; D6 one call per case)`);
+  if (again.length) throw Error(`already-fired:${again.map(r => r.caseId).join(',')} (a paid call for it is on record in evidence/raw, raw-duplicates or raw-refused; D6 one call per case)`);
   const source = await readFile(new URL('providers/connector-snippet.js', PILOT), 'utf8');
   const body = source.slice(source.indexOf('async () =>'));
-  return body.replace('__DATA__', JSON.stringify(slice.map(r => ({rawKey: r.rawKey, state: r.state, questions: r.questions}))));
+  const data = JSON.stringify(slice.map(r => ({rawKey: r.rawKey, state: r.state, questions: r.questions})));
+  return body.replace('__DATA__', () => data); // a function replacer: `$&`, `$'` or `$\`` in unit text stays literal
+}
+
+async function passProbed(evidenceDir, pass) {
+  return [...(await loadRawCache(join(evidenceDir, 'raw'))).values()].some(r => r.pass === pass && validProbe(r.response));
+}
+
+/** Non-spend D7 breaches recomputable from the evidence alone (spend needs the operator's rates). */
+export function usageBreaches(usage) {
+  const out = [];
+  for (const [key, u] of Object.entries(usage.perCall)) if (u.input > CEILINGS.inputTokensPerCall) out.push(`input-per-call:${key}:${u.input}`);
+  if (usage.input > CEILINGS.cumulativeInputTokens) out.push(`cumulative-input:${usage.input}`);
+  if (usage.calls > CEILINGS.totalCalls) out.push(`total-calls:${usage.calls}`);
+  if (usage.duplicates) out.push(`duplicate-calls:${usage.duplicates}`);
+  if (usage.callMs > CEILINGS.wallMinutes * 60000) out.push(`wall-minutes:${round6(usage.callMs / 60000)}`);
+  return out;
+}
+
+async function readBreach(evidenceDir) {
+  try { return JSON.parse(await readFile(join(evidenceDir, BREACH_FILE), 'utf8')); } catch (e) { if (e.code === 'ENOENT') return null; throw e; }
+}
+
+/**
+ * snippet phase (D6, D7, gate 4): prints the next paid batch only when (1) no import has recorded a breach and the
+ * evidence shows none now, (2) a batch is asked for only after this pass has a valid probe in evidence/raw/, (3) the
+ * batch keeps total calls within the ceiling, and (4) none of its requests has a paid call on record (raw/,
+ * raw-duplicates/ or raw-refused/).
+ */
+export async function snippetPhase({evidenceDir, pass = 1, batch = 0, probe = false}) {
+  const requests = await readRequests(evidenceDir, pass);
+  const marker = await readBreach(evidenceDir);
+  if (marker) throw Error(`ceiling-breached:${(marker.breaches ?? []).join(',')} (${BREACH_FILE} written by import; no further paid batch, PLAN D7)`);
+  const usage = await observedUsage(evidenceDir);
+  const now = usageBreaches(usage);
+  if (now.length) throw Error(`ceiling-breached:${now.join(',')} (no further paid batch, PLAN D7)`);
+  if (!probe && !(await passProbed(evidenceDir, pass))) throw Error(`probe-not-imported: pass ${pass} has no valid probe in evidence/raw; fire --probe and import it before any batch (gate 4)`);
+  const size = snippetRequests(requests, batch, {probe}).length;
+  if (usage.calls + size > CEILINGS.totalCalls) throw Error(`ceiling:total-calls:${usage.calls + size}`);
+  return snippetFor(requests, batch, {probe, fired: usage.fired});
 }
 
 function validProbe(response) {
@@ -134,15 +175,29 @@ export async function importRows(rows, {evidenceDir, pass = 1, rates = {}, obser
   if (!Array.isArray(rows)) rows = rows?.result ?? rows?.rows;
   if (!Array.isArray(rows) || !rows.length) throw Error('import-empty');
   const requests = new Map((await readRequests(evidenceDir, pass)).map(r => [r.rawKey, r]));
+  const unknown = rows.filter(row => !requests.has(row?.rawKey));
+  if (unknown.length) throw Error(`import-unknown-rawKey:${unknown.map(row => row?.rawKey).join(',')}`);
   const rawDir = join(evidenceDir, 'raw'), dupDir = join(evidenceDir, DUPLICATES_DIR);
-  const probed = [...(await loadRawCache(rawDir)).values()].some(r => r.pass === pass && validProbe(r.response));
-  if (!probed && !validProbe(rows[0].response)) throw Error('probe-failed: first response lacks answers for the four roles or a model string');
+  const recordOf = row => { const req = requests.get(row.rawKey); return {rawKey: row.rawKey, caseId: req.caseId, pass, model: req.model, ms: Number.isFinite(row.ms) ? row.ms : null, response: row.response ?? null, error: row.error ?? null, ...(observedAt ? {observedAt} : {})}; };
+  if (!(await passProbed(evidenceDir, pass)) && !validProbe(rows[0].response)) {
+    // Gate 4 refuses the batch, but every row is still a paid call: keep it so the ceilings and the snippet see it.
+    const refusedDir = join(evidenceDir, REFUSED_DIR);
+    await mkdir(refusedDir, {recursive: true});
+    let kept = 0;
+    for (const row of rows) {
+      const record = {...recordOf(row), refused: 'probe-failed'};
+      const path = join(refusedDir, `${row.rawKey}.${(await sha256(callIdentity(record))).slice(0, 16)}.json`);
+      if (await exists(path)) continue;
+      await writeFile(path, json(record));
+      kept++;
+    }
+    const {breaches} = await accountUsage(evidenceDir, rates);
+    throw Error(`probe-failed: first response lacks answers for the four roles or a model string; ${kept} new row(s) kept in ${REFUSED_DIR}/ as paid calls that are never re-fired or scored${breaches.length ? `; breaches: ${breaches.join(',')}` : ''}`);
+  }
   await mkdir(rawDir, {recursive: true});
   const written = [], reimported = [], duplicates = [];
   for (const row of rows) {
-    const req = requests.get(row.rawKey);
-    if (!req) throw Error(`import-unknown-rawKey:${row.rawKey}`);
-    const record = {rawKey: row.rawKey, caseId: req.caseId, pass, model: req.model, ms: Number.isFinite(row.ms) ? row.ms : null, response: row.response ?? null, error: row.error ?? null, ...(observedAt ? {observedAt} : {})};
+    const record = recordOf(row);
     const path = join(rawDir, `${row.rawKey}.json`);
     if (await exists(path)) {
       const old = JSON.parse(await readFile(path, 'utf8'));
@@ -157,13 +212,14 @@ export async function importRows(rows, {evidenceDir, pass = 1, rates = {}, obser
     await writeFile(path, json(record));
     written.push(row.rawKey);
   }
+  const {usage, spend, breaches, warnings} = await accountUsage(evidenceDir, rates);
+  return {written, reimported, duplicates, usage, spend, breaches, warnings};
+}
+
+/** Observed D7 ceilings over all evidence, after writing; any breach is also recorded in BREACH_FILE. */
+async function accountUsage(evidenceDir, rates = {}) {
   const usage = await observedUsage(evidenceDir);
-  const breaches = [], warnings = [];
-  for (const [key, u] of Object.entries(usage.perCall)) if (u.input > CEILINGS.inputTokensPerCall) breaches.push(`input-per-call:${key}:${u.input}`);
-  if (usage.input > CEILINGS.cumulativeInputTokens) breaches.push(`cumulative-input:${usage.input}`);
-  if (usage.calls > CEILINGS.totalCalls) breaches.push(`total-calls:${usage.calls}`);
-  if (usage.duplicates) breaches.push(`duplicate-calls:${usage.duplicates}`);
-  if (usage.callMs > CEILINGS.wallMinutes * 60000) breaches.push(`wall-minutes:${round6(usage.callMs / 60000)}`);
+  const breaches = usageBreaches(usage), warnings = [];
   const {ratePerMTokIn, ratePerMTokOut, spendCeiling} = rates;
   let spend = null;
   if ([ratePerMTokIn, ratePerMTokOut, spendCeiling].every(Number.isFinite) && spendCeiling > 0) {
@@ -172,7 +228,12 @@ export async function importRows(rows, {evidenceDir, pass = 1, rates = {}, obser
     spend = {percentOfCeiling: round6(percentOfCeiling), abortAtPercent: CEILINGS.spendAbortFraction * 100};
     if (percentOfCeiling > CEILINGS.spendAbortFraction * 100) breaches.push('computed-spend-over-abort-fraction');
   } else warnings.push('spend-unchecked: pass --rate-in, --rate-out and --spend-ceiling to print computed spend as a percentage of the operator ceiling and enforce the 5% abort (PLAN D7, DoD 11)');
-  return {written, reimported, duplicates, usage: {calls: usage.calls, duplicates: usage.duplicates, input: usage.input, output: usage.output, callMinutes: round6(usage.callMs / 60000)}, spend, breaches, warnings};
+  if (breaches.length) {
+    // The abort outlives this process: snippet refuses every further batch while the marker exists (a human clears it).
+    const prior = await readBreach(evidenceDir);
+    await writeFile(join(evidenceDir, BREACH_FILE), json({breaches: [...new Set([...(prior?.breaches ?? []), ...breaches])].sort()}));
+  }
+  return {usage: {calls: usage.calls, duplicates: usage.duplicates, refused: usage.refused, input: usage.input, output: usage.output, callMinutes: round6(usage.callMs / 60000)}, spend, breaches, warnings};
 }
 
 // What makes two rows the same call: response, error and timing. A second fire differs at least in `ms`.
@@ -187,21 +248,27 @@ async function loadDuplicates(dir) {
 }
 
 /**
- * Observed usage over every paid call: one per raw file plus every recorded duplicate. callMs sums per-call `ms`; it
- * equals the paid wall when calls are sequential and over-counts it under concurrency, so the wall check is conservative.
+ * Observed usage over every paid call: one per raw file, every recorded duplicate and every row a probe-gate refusal
+ * kept. `duplicates` counts every paid call beyond the first for one rawKey, wherever it is stored; `fired` is the set
+ * of rawKeys with any paid call. callMs sums per-call `ms`; it equals the paid wall when calls are sequential and
+ * over-counts it under concurrency, so the wall check is conservative.
  */
 export async function observedUsage(evidenceDir) {
   const cache = await loadRawCache(join(evidenceDir, 'raw'));
   const dups = await loadDuplicates(join(evidenceDir, DUPLICATES_DIR));
+  const refused = await loadDuplicates(join(evidenceDir, REFUSED_DIR));
   let input = 0, output = 0, callMs = 0;
-  const perCall = {};
-  for (const [key, rec] of [...cache, ...dups]) {
+  const perCall = {}, perKey = new Map();
+  const records = [...cache, ...dups, ...[...refused].map(([k, r]) => [`${REFUSED_DIR}/${k}`, r])];
+  for (const [key, rec] of records) {
     const u = normalizeJevResponse(rec.response)?.usage ?? {};
     perCall[key] = {input: u.input_tokens ?? 0, output: u.output_tokens ?? 0};
     input += perCall[key].input; output += perCall[key].output;
     if (Number.isFinite(rec.ms)) callMs += rec.ms;
+    perKey.set(rec.rawKey, (perKey.get(rec.rawKey) ?? 0) + 1);
   }
-  return {calls: cache.size + dups.size, duplicates: dups.size, input, output, callMs, perCall};
+  const duplicates = [...perKey.values()].reduce((n, k) => n + k - 1, 0);
+  return {calls: records.length, duplicates, refused: refused.size, input, output, callMs, perCall, fired: new Set(perKey.keys())};
 }
 
 /** Gate 6 (D10): spa is refused unless every spa row is mirror-eng gold with a recorded back-translation. */
@@ -388,11 +455,14 @@ export function decisionsFile(evidenceDir, {language, arm, set, pass}) { return 
 
 async function readDecisions(evidenceDir, key) { try { return JSON.parse(await readFile(decisionsFile(evidenceDir, key), 'utf8')); } catch { return null; } }
 
-/** report phase: deterministic metrics.json (no clock, no rates unless supplied). */
+// latencyMs p50/max come from connector-snippet.js, which runs up to CEILINGS.concurrency calls at once.
+export const LATENCY_MEASUREMENT = Object.freeze({latency: `per-call ms under concurrency <= ${CEILINGS.concurrency} (connector-snippet.js), not sequential as PLAN step 4 says`});
+
+/** report phase: deterministic metrics.json (no clock; rates, when supplied, leave only a unitless cost ratio). */
 export async function buildReport({cases, evidenceDir, calibration, rates = {}}) {
   const cache = await loadRawCache(join(evidenceDir, 'raw'));
   const keys = {1: await rawKeysFor(evidenceDir, 1), 2: await rawKeysFor(evidenceDir, 2)};
-  const out = {schema: 'fia-cue-role-pilot-metrics@1', armLabels: {A: ARM_A_LABEL, B: `rules+jev (${ARM_A_LABEL})`, C: ARM_C.label, D: 'jev-only-probe'}, ceilings: CEILINGS, languages: {}, keys: []};
+  const out = {schema: 'fia-cue-role-pilot-metrics@1', armLabels: {A: ARM_A_LABEL, B: `rules+jev (${ARM_A_LABEL})`, C: ARM_C.label, D: 'jev-only-probe'}, ceilings: CEILINGS, measurement: LATENCY_MEASUREMENT, languages: {}, keys: []};
   for (const language of ['eng', 'spa']) {
     const cal = calibration.languages?.[language] ?? null;
     const lang = {calibration: cal ? {status: cal.status, derived: cal.derived, modelRevision: cal.record.modelRevision, falseMax: cal.record.falseMax, trueMin: cal.record.trueMin} : null, sets: {}, verdicts: {}};
@@ -508,8 +578,7 @@ export async function main(argv = process.argv.slice(2), {log = console.log, war
     return 0;
   }
   if (phase === 'snippet') {
-    const fired = new Set((await loadRawCache(join(evidenceDir, 'raw'))).keys());
-    log(await snippetFor(await readRequests(evidenceDir, pass), Number(args.batch ?? 0), {probe: args.flags.has('probe'), fired}));
+    log(await snippetPhase({evidenceDir, pass, batch: Number(args.batch ?? 0), probe: args.flags.has('probe')}));
     return 0;
   }
   if (phase === 'import') {
