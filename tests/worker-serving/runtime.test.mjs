@@ -10,7 +10,7 @@ const source=publication.createService();
 const packId='fia-mark-approved-presentation',sha256='ccd72f23c23f932651b500b730b285f32fabd37e50037b5af91d8881f1403975';
 const snapshot=exportSnapshot(source,{publicationSourceCommit:'b7bad3a4e91981ca6aa4976fec2831a1cbd16a7a',publicationRecipeCommit:'98e0fc84211da4c1c5829299e1196aed6a4bfff7',hostingRecipeCommit:'78fb93695b59d3417070e1e9a5d038f8f5d7f203',artifacts:[{packId,sha256,bytes:454295,envelopeSha256:'3169695f561467b02212a514f70d7b02bb7b1bec49951386da290430f3e546a6',current:true}]});
 const local=p=>fileURLToPath(new URL('../../server/faces/worker/'+p,import.meta.url));
-const bundled=await build({entryPoints:[local('entry.mjs')],bundle:true,format:'esm',platform:'browser',external:['node:buffer'],write:false,plugins:[{name:'accepted-dependencies',setup(b){
+const bundled=await build({entryPoints:[local('entry.mjs')],bundle:true,format:'esm',platform:'browser',external:['node:buffer','node:crypto'],write:false,plugins:[{name:'accepted-dependencies',setup(b){
  b.onResolve({filter:/^\.\.\/(http|mcp)\.mjs$/},args=>({path:join(root,'server/faces',args.path.split('/').at(-1))}));
  b.onResolve({filter:/read-operations\.mjs$/},()=>({path:join(root,'server/fia/publication/read-operations.mjs')}));
  b.onResolve({filter:/generated\/snapshot\.json$/},()=>({path:'snapshot',namespace:'accepted-snapshot'}));

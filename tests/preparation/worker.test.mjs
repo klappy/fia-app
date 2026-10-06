@@ -177,7 +177,7 @@ test('real retained P2 passes public cold alarm and offline warm status with all
   await rejectWrong();assert.deepEqual(n,{source:1,assets:4,unexpected:0});
   const audio=await mf.dispatchFetch(origin+ready.result.delivery.url);assert.equal(audio.status,200);assert.equal(hash(Buffer.from(await audio.arrayBuffer())),r.source.sha256);
   const reopened=await mf.getR2Bucket('FIA_ORIGINALS');await reopened.put(`reviewed-original/evidence/${e.evidence.timingSha256}.json`,'corrupt');
-  const rejected=await mf.dispatchFetch(origin+ready.statusUrl);assert.equal(rejected.status,503);assert.equal((await rejected.json()).code,'stored-result-invalid');
+  const rejected=await mf.dispatchFetch(origin+ready.statusUrl);assert.equal(rejected.status,200);const blocked=await rejected.json();assert.equal(blocked.state,'blocked');assert.equal(blocked.reason,'stable-evidence-unavailable');assert.equal(blocked.result,null);assert.equal(blocked.resultSha256,null);
   assert.deepEqual(n,{source:1,assets:4,unexpected:0});
  }finally{if(mf)await mf.dispose();await rm(dir,{recursive:true,force:true});}
 });
