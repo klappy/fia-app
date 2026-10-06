@@ -11,15 +11,16 @@ export async function createStreamedGuideExecutor({acquisitionPolicy,sourceEligi
 
 // Install only through the existing trusted capability injection. Creating this
 // object does not activate any deployed Worker or grant recognition authority.
-export async function createStreamedGuideCapabilities({acquisitionPolicy,eligibility,recognitionFactory,recognitionSha256,artifactPolicySha256,modelRecipe,sourceExecutionPolicy,fetchSource,makeStream}){
- const {canonicalJSONString,sha256}=await import('../contract.mjs');
+export function bindStreamedGuideCapabilities({acquisitionSha256,acquisitionPolicy,eligibility,recognitionFactory,recognitionSha256,artifactPolicySha256,modelRecipe,sourceExecutionPolicy,fetchSource,makeStream}){
  const policy=structuredClone(acquisitionPolicy),recognize=recognitionFactory,eligible=eligibility;
- if(typeof eligible!=='function'||typeof recognize!=='function'||![recognitionSha256,artifactPolicySha256].every(x=>/^[a-f0-9]{64}$/.test(x)))throw Error('streamed-guide-capability');
- const profile={schema:'fia-guide-execution-profile@1',acquisitionSha256:await sha256(canonicalJSONString({schema:'fia-observed-stream-acquisition@1',policy})),recognitionSha256,artifactPolicySha256,...(modelRecipe?{modelRecipe:structuredClone(modelRecipe)}:{}),...(sourceExecutionPolicy?{sourceExecutionPolicy:structuredClone(sourceExecutionPolicy)}:{})};
+ if(typeof eligible!=='function'||typeof recognize!=='function'||![acquisitionSha256,recognitionSha256,artifactPolicySha256].every(x=>/^[a-f0-9]{64}$/.test(x)))throw Error('streamed-guide-capability');
+ const profile={schema:'fia-guide-execution-profile@1',acquisitionSha256,recognitionSha256,artifactPolicySha256,...(modelRecipe?{modelRecipe:structuredClone(modelRecipe)}:{}),...(sourceExecutionPolicy?{sourceExecutionPolicy:structuredClone(sourceExecutionPolicy)}:{})};
  return {profile,eligibility:eligible,create(ports){
   const acquired=createObservedStreamAcquisition({storage:ports.storage,bucket:ports.bucket,validatePublisherURL:ports.validatePublisherURL,eligibility:evidence=>{if(ports.beforeSourceFetch()!==true)return false;const value=eligible({metadataSha256:evidence.discovery.metadataSha256,packId:evidence.input.packId,resource:evidence.input.resource,presentationRevision:evidence.input.source.version,url:evidence.discovery.source.url,observedSourceSha256:evidence.observedContent?.sha256??null});if(value&&typeof value.then==='function'){Promise.resolve(value).catch(()=>{});return false;}return value===true;},policy,...(fetchSource?{fetchSource}:{}),...(makeStream?{makeStream}:{})});
   // Initialization errors are consumed even if admission ends before run.
   acquired.catch(()=>{});
-  return {acquisition:{paid:false,dependencySha256:profile.acquisitionSha256,async run(args){const adapter=await acquired;if(adapter.dependencySha256!==profile.acquisitionSha256)throw Error('streamed-guide-profile');return adapter.run(args);}},recognition:recognize(ports)};
+  return {acquisition:{paid:false,dependencySha256:profile.acquisitionSha256,sourceVerification:'fia-observed-stream@1',async verifySource(args){const adapter=await acquired;if(adapter.dependencySha256!==profile.acquisitionSha256)throw Error('streamed-guide-profile');return adapter.verifySource(args);},async run(args){const adapter=await acquired;if(adapter.dependencySha256!==profile.acquisitionSha256)throw Error('streamed-guide-profile');return adapter.run(args);}},recognition:recognize(ports)};
  }};
 }
+
+export async function createStreamedGuideCapabilities(options){const {canonicalJSONString,sha256}=await import('../contract.mjs');const acquisitionPolicy=structuredClone(options.acquisitionPolicy);return bindStreamedGuideCapabilities({...options,acquisitionPolicy,acquisitionSha256:await sha256(canonicalJSONString({schema:'fia-observed-stream-acquisition@1',policy:acquisitionPolicy}))});}

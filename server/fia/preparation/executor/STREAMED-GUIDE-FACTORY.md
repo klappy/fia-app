@@ -10,3 +10,9 @@ Limits remain real: streamed adapter max8MiB/120s transfer, factory acquisition8
 
 Run focused actual storage proof with FIA_WORKER_DEPENDENCIES pointing to an installed package.json and FIA_RETAINED_P2 pointing to the retained P2 MP3:
 `node --test tests/preparation-executor/streamed-guide-factory-storage.test.mjs tests/preparation/guide-active.test.mjs`
+
+## Dispatcher provenance integration correction
+
+The reviewed stream store uses immutable observation receipts and observed-reference objects, not the legacy acquisition receipt. The bridge now declares `fia-observed-stream@1` and exposes a read-only verification operation that reuses the full observation validator; it cannot initiate acquisition on a missing head. Dispatcher artifact reads select this explicit typed verifier, bind its returned SHA/reference to the already-rehashed bytes and current discovery, and preserve the legacy receipt path for legacy adapters. A typed verifier failure never falls back to the legacy path.
+
+`bindStreamedGuideCapabilities` accepts an already-pinned acquisition dependency for synchronous Worker capability construction; first execution checks it against the actual adapter policy hash. The async convenience creator computes that pin. Actual Worker/DO integration proof covers first request, cold restart, forced warm factory replay (no extra source/recognition work), and deletion of an observed reference (uncertain with no new fetch). This closes the earlier standalone-only evidence limitation; default activation and existing bounds remain unchanged.

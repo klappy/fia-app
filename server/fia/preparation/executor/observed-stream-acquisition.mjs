@@ -12,7 +12,7 @@ export async function createObservedStreamAcquisition({storage,bucket,validatePu
  if(!limits||Object.keys(limits).sort().join()!=='maxBytes,progressMs,revision,totalMs'||typeof limits.revision!=='string'||!limits.revision||!Number.isSafeInteger(limits.maxBytes)||limits.maxBytes<1||limits.maxBytes>8388608||!Number.isSafeInteger(limits.totalMs)||limits.totalMs<1||limits.totalMs>120000||!Number.isSafeInteger(limits.progressMs)||limits.progressMs<1||limits.progressMs>15000)throw Error('observed-stream-policy');
  storage={get:storage.get.bind(storage),transaction:storage.transaction.bind(storage)};bucket={get:bucket.get.bind(bucket),put:bucket.put.bind(bucket)};
  const dependencySha256=await sha256(canonicalJSONString({schema:'fia-observed-stream-acquisition@1',policy:limits}));
- return {paid:false,dependencySha256,async run({input,nodeOutputs}){
+ async function execute({input,nodeOutputs},readOnly=false){
   input=structuredClone(input);const descriptor=structuredClone(nodeOutputs?.discover);
   if(descriptor?.reference!==`preparation/discovery/${descriptor?.sha256}.json`)throw Error('observed-stream-discovery');
   const discovery=await retainedJSON(descriptor,async d=>{const deadline=Date.now()+limits.totalMs,object=await wait(()=>bucket.get(d.reference),limits.progressMs);if(!object||object.size>32768)throw Error('observed-stream-discovery');const reader=object.body.getReader(),chunks=[];let size=0;try{for(;;){const left=deadline-Date.now();if(left<=0)throw Error('observed-stream-discovery-timeout');const part=await wait(()=>reader.read(),Math.min(left,limits.progressMs));if(part.done)break;size+=part.value.length;if(size>32768)throw Error('observed-stream-discovery');chunks.push(new Uint8Array(part.value));}}finally{reader.cancel().catch(()=>{});}const bytes=new Uint8Array(size);let offset=0;for(const c of chunks){bytes.set(c,offset);offset+=c.length;}return bytes;});
@@ -24,12 +24,13 @@ export async function createObservedStreamAcquisition({storage,bucket,validatePu
   if(!allowed({phase:'request',observedContent:null}))throw Error('observed-stream-ineligible');
   const checkId=descriptor.sha256,observations=createFreshSourceObservations({storage,bucket,source:{logicalId:`discovery:${descriptor.sha256}`,url:url.href,sourceVersionKind:'discovery-snapshot',sourceVersion:discovery.source.version,publisherVersion:null},policy:limits,admissions:[{checkId,sequence:1,expectedPreviousObservationSha256:null,previousSourceSha256:null}],eligibility:allowed,fetchSource,...(makeStream?{makeStream}:{}),...(now?{now}:{})});
   let current=await observations.read();
-  if(current.state==='unobserved'){
+  if(current.state==='unobserved'){if(readOnly)throw Error('observed-stream-unobserved');
    const operation=await observations.observe(checkId);
    if(operation.state!=='completed'||operation.promoted!==true)throw Error(`observed-stream-${operation.state==='preparing'?'preparing':operation.state==='uncertain'?'uncertain':'not-promoted'}`);
    current=await observations.read();
   }
   if(current.state!=='observed'||current.contentVerified!==true||!same(current.observation.binding.policy,limits)||current.observation.binding.source.url!==url.href||current.observation.binding.source.sourceVersion!==discovery.source.version)throw Error('observed-stream-receipt');
   return {sha256:current.observation.sha256,reference:current.observation.sourceKey};
- }};
+ }
+ return {paid:false,dependencySha256,run:args=>execute(args),verifySource:args=>execute(args,true)};
 }
