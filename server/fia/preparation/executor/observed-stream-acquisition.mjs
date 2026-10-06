@@ -1,3 +1,4 @@
+import {createHash} from 'node:crypto';
 import {canonicalJSONString,sha256} from '../contract.mjs';
 import {retainedJSON} from './alignment.mjs';
 import {createFreshSourceObservations} from './fresh-source-observation.mjs';
@@ -9,7 +10,7 @@ export async function createObservedStreamAcquisition({storage,bucket,validatePu
  const limits=structuredClone(policy),validator=validatePublisherURL,eligible=eligibility;
  if(typeof validator!=='function'||typeof eligible!=='function'||!storage?.transaction||!storage?.get||!bucket?.get||!bucket?.put)throw Error('observed-stream-capability');
  // Validate limits before any operation is admitted, even before a warm read.
- if(!limits||Object.keys(limits).sort().join()!=='maxBytes,progressMs,revision,totalMs'||typeof limits.revision!=='string'||!limits.revision||!Number.isSafeInteger(limits.maxBytes)||limits.maxBytes<1||limits.maxBytes>8388608||!Number.isSafeInteger(limits.totalMs)||limits.totalMs<1||limits.totalMs>120000||!Number.isSafeInteger(limits.progressMs)||limits.progressMs<1||limits.progressMs>15000)throw Error('observed-stream-policy');
+ if(!limits||Object.keys(limits).sort().join()!=='maxBytes,progressMs,revision,totalMs'||typeof limits.revision!=='string'||!limits.revision||!Number.isSafeInteger(limits.maxBytes)||limits.maxBytes<1||limits.maxBytes>16777216||!Number.isSafeInteger(limits.totalMs)||limits.totalMs<1||limits.totalMs>120000||!Number.isSafeInteger(limits.progressMs)||limits.progressMs<1||limits.progressMs>15000)throw Error('observed-stream-policy');
  storage={get:storage.get.bind(storage),transaction:storage.transaction.bind(storage)};bucket={get:bucket.get.bind(bucket),put:bucket.put.bind(bucket)};
  const dependencySha256=await sha256(canonicalJSONString({schema:'fia-observed-stream-acquisition@1',policy:limits}));
  async function execute({input,nodeOutputs},readOnly=false){
@@ -30,7 +31,25 @@ export async function createObservedStreamAcquisition({storage,bucket,validatePu
    current=await observations.read();
   }
   if(current.state!=='observed'||current.contentVerified!==true||!same(current.observation.binding.policy,limits)||current.observation.binding.source.url!==url.href||current.observation.binding.source.sourceVersion!==discovery.source.version)throw Error('observed-stream-receipt');
-  return {sha256:current.observation.sha256,reference:current.observation.sourceKey};
+  return {sha256:current.observation.sha256,reference:current.observation.sourceKey,...(readOnly?{bytes:current.observation.bytes}:{})};
  }
  return {paid:false,dependencySha256,run:args=>execute(args),verifySource:args=>execute(args,true)};
+}
+
+/** Bounded immutable source stream; no JSON or upstream acquisition. */
+export function createBoundedSourceReader({bucket,guard=async()=>{}}){
+ async function openSource(descriptor,{maxBytes=2097152,signal,totalMs=30000}={}){
+  const d=structuredClone(descriptor);if(!d||Object.keys(d).sort().join()!=='bytes,reference,sha256'||!/^[a-f0-9]{64}$/.test(d.sha256)||d.reference!==`originals/sha256/${d.sha256}.mp3`||!Number.isSafeInteger(d.bytes)||d.bytes<1||!Number.isSafeInteger(maxBytes)||maxBytes<1||maxBytes>16777216||d.bytes>maxBytes||!Number.isSafeInteger(totalMs)||totalMs<1||totalMs>120000)throw Error('source-stream-descriptor');
+  const deadline=Date.now()+totalMs;const check=()=>{if(signal?.aborted)throw Error('source-stream-aborted');if(Date.now()>=deadline)throw Error('source-stream-deadline');};
+  check();await wait(()=>guard(d),Math.min(15000,deadline-Date.now()));check();const object=await wait(()=>bucket.get(d.reference),Math.min(15000,deadline-Date.now()));if(!object||object.size!==d.bytes)throw Error('source-stream-size');
+  const reader=object.body.getReader(),hash=createHash('sha256');let count=0,chunk=null,offset=0,settled=false,resolveVerified,rejectVerified,controller,timer;
+  const verified=new Promise((resolve,reject)=>{resolveVerified=resolve;rejectVerified=reject;});verified.catch(()=>{});
+  const cleanup=()=>{clearTimeout(timer);signal?.removeEventListener('abort',abort);};
+  async function fail(error){if(settled)return;settled=true;cleanup();rejectVerified(error);await reader.cancel(error).catch(()=>{});try{reader.releaseLock();}catch{};}
+  const abort=()=>{const error=Error('source-stream-aborted');void fail(error);try{controller?.error(error);}catch{}};
+  const stream=new ReadableStream({start(c){controller=c;timer=setTimeout(()=>{const error=Error('source-stream-deadline');void fail(error);try{c.error(error);}catch{}},Math.max(1,deadline-Date.now()));signal?.addEventListener('abort',abort,{once:true});if(signal?.aborted)abort();},async pull(c){try{check();await wait(()=>guard(d),Math.min(15000,deadline-Date.now()));check();if(!chunk||offset===chunk.length){const part=await wait(()=>reader.read(),Math.min(15000,deadline-Date.now()));check();if(part.done){if(count!==d.bytes||hash.digest('hex')!==d.sha256)throw Error('source-stream-integrity');await wait(()=>guard(d),Math.min(15000,deadline-Date.now()));check();settled=true;cleanup();reader.releaseLock();resolveVerified();c.close();return;}chunk=part.value;offset=0;if(!(chunk instanceof Uint8Array)||chunk.length>1048576)throw Error('source-stream-chunk');count+=chunk.length;if(count>d.bytes)throw Error('source-stream-size');hash.update(chunk);}const end=Math.min(offset+65536,chunk.length);c.enqueue(chunk.slice(offset,end));offset=end;}catch(error){await fail(error);c.error(error);}},cancel(reason){return fail(reason instanceof Error?reason:Error('source-stream-cancelled'));}},{highWaterMark:0});
+  return {...d,stream,verified};
+ }
+ async function verifySource(descriptor,options){const opened=await openSource(descriptor,options),reader=opened.stream.getReader();try{while(!(await reader.read()).done){}await opened.verified;return {sha256:opened.sha256,reference:opened.reference,bytes:opened.bytes};}finally{reader.releaseLock();}}
+ return {verifySource,openSource};
 }
