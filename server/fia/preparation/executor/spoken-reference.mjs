@@ -45,6 +45,10 @@ const fold=s=>s.toLowerCase().trim().replace(/[ \t\r\n]+/g,' ');
 const hash=s=>typeof s==='string'&&/^[a-f0-9]{64}$/.test(s);
 const range=(a,b)=>Array.from({length:b-a},(_,i)=>a+i);
 const classify=(classification,reason,pins)=>({classification,reason,pins,grantsAcceptance:false,timingValidated:false});
+export async function spokenComparisonPolicyIdentity(){
+ return {policy:SPOKEN_REFERENCE_POLICY,bookTableSha256:await sha256(canonicalJSONString(aliases)),
+  numberTableSha256:await sha256(canonicalJSONString([...numbers])),labelGrammar:'fia-spoken-prompt-label-en@1'};
+}
 
 function writtenReference(text,offset){
  // ASCII digits only; punctuation is permitted only in these exact positions.

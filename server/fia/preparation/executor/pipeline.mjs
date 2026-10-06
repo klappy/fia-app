@@ -15,6 +15,8 @@ function artifact(value){
 export function createPipeline({storage,policyId,adapters,verifyArtifact,allowPaid=false}){
  if(typeof policyId!=='string'||!policyId.trim()||typeof verifyArtifact!=='function'||typeof storage?.transaction!=='function')throw Error('invalid-pipeline-policy');
  const captured=Object.fromEntries(nodes.map(node=>[node,adapters?.[node]?Object.freeze({...adapters[node],retry:adapters[node].retry?Object.freeze({...adapters[node].retry}):undefined}):null]));
+ for(const adapter of Object.values(captured))if(adapter?.dependencySha256!==undefined&&!hash(adapter.dependencySha256))throw Error('invalid-adapter-dependency');
+ function dependencies(node){return Object.fromEntries(nodes.slice(0,nodes.indexOf(node)+1).filter(name=>captured[name]?.dependencySha256!==undefined).map(name=>[name,captured[name].dependencySha256]));}
  const verify=verifyArtifact;
  async function checked(output,input,node){
   const copy=artifact(output),retained=await verify(clone(copy),{input:clone(input),node});
@@ -24,9 +26,10 @@ export function createPipeline({storage,policyId,adapters,verifyArtifact,allowPa
   if(node==='accept'){const content=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));if(!['machine-accepted','review-accepted','review-required'].includes(content?.status))throw Error('invalid-acceptance-artifact');verified.status=content.status;}
   return verified;
  }
- async function keyFor(input){return sha256(canonicalJSONString({schema:'fia-preparation-operation@1',policyId,input}));}
+ async function keyFor(input){const adapterDependencies=dependencies('publish');return sha256(canonicalJSONString({schema:'fia-preparation-operation@1',policyId,input,...(Object.keys(adapterDependencies).length?{adapterDependencies}:{})}));}
  async function nodeIdentity(input,node,outputs){
   const base={schema:'fia-preparation-node@1',policyId,policyRevision:input.policyRevision,node};
+  const adapterDependencies=dependencies(node);if(Object.keys(adapterDependencies).length)base.adapterDependencies=adapterDependencies;
   if(node==='discover')return {...base,source:input.source,selection:{book:input.book,language:input.language,edition:input.edition,passage:input.passage,resource:input.resource}};
   if(node==='acquire')return {...base,discoverySha256:outputs.discover.sha256};
   if(node==='transcribe')return {...base,audioSha256:outputs.acquire.sha256,language:input.language,modelRecipe:input.modelRecipe};
@@ -89,6 +92,7 @@ export function createPipeline({storage,policyId,adapters,verifyArtifact,allowPa
   const pinned=clone(report);const output=pinned.outcome==='completed'?await checked(pinned.artifact,input,node):null;
   return storage.transaction(async tx=>{const current=await tx.get(pinned.nodeKey);if(!current||canonicalJSONString(current.context)!==canonicalJSONString(input)||current.identity.node!==node||current.identity.policyId!==policyId||current.identity.policyRevision!==input.policyRevision||!['preparing','uncertain'].includes(current.state)||current.attemptId!==pinned.attemptId||current.revision!==pinned.revision)throw Error('stale-pipeline-reconciliation');
    // Internal trusted reconciliation is bound to the exact persisted node and attempt.
+   if(canonicalJSONString(current.identity.adapterDependencies??{})!==canonicalJSONString(dependencies(node)))throw Error('stale-pipeline-reconciliation');
    if(await sha256(canonicalJSONString(current.identity))!==pinned.nodeKey)throw Error('corrupt-pipeline-state');
    Object.assign(current,{state:pinned.outcome,evidence:pinned.evidence,...(output?{artifact:output}:{})});current.revision++;await tx.put(pinned.nodeKey,current);return clone(current);});
  }

@@ -63,7 +63,10 @@ export async function createRequestAcquisition({metadataBytes,metadataSha256,kno
  }});
  return pipeline;
  }
- return {async request(request){
+ return {async resolve(request){
+  const resolved=await guide.resolveRequest(request),item=admission(resolved.input);
+  return structuredClone({...resolved,sourcePolicy:item.policy,modelRecipe:recipe,policyRevision});
+ },async request(request){
   const resolved=await guide.resolveRequest(request);admission(resolved.input);
   const pipeline=await selectedPipeline(resolved.input);
   const result=await pipeline.run({...resolved.input,modelRecipe:recipe,policyRevision});

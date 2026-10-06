@@ -58,3 +58,15 @@ test('old attempt reconciliation cannot overwrite a retried attempt',async()=>{
 });
 
 test('all semantic scalar fields reject object null array and numeric values before claiming',async()=>{const f=await fixture();for(const key of ['packId','book','language','edition','passage','resource','scriptSha256','policyRevision'])for(const value of [null,{},[],42])await assert.rejects(f.pipeline.run({...input(),[key]:value}),/invalid-pipeline-input/);assert.equal(f.storage.values.size,0);assert.equal(f.counts.discover,undefined);});
+
+test('adapter dependency changes invalidate the affected node and descendants while reusing predecessors',async()=>{
+ const f=await fixture();f.adapters.accept.dependencySha256='c'.repeat(64);
+ const first=await createPipeline(f.options).run(input());
+ const warm=await createPipeline(f.options).run(input());assert.equal(warm.key,first.key);assert.deepEqual(Object.values(f.counts),[1,1,1,1,1,1]);
+ f.adapters.accept.dependencySha256='d'.repeat(64);
+ const changed=await createPipeline(f.options).run(input());assert.notEqual(changed.key,first.key);
+ assert.deepEqual(f.counts,{discover:1,acquire:1,transcribe:1,align:1,accept:2,publish:2});
+ // The fixture emits identical output bytes; dependencies still fence descendants.
+ assert.deepEqual(changed.outputs,first.outputs);
+ f.adapters.accept.dependencySha256='invalid';assert.throws(()=>createPipeline(f.options),/invalid-adapter-dependency/);
+});

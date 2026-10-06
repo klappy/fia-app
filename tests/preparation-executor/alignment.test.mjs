@@ -23,3 +23,56 @@ test('acceptance cannot consume another consumer alignment or substituted store 
 test('hash-valid same-source recognition from another model runtime language or settings refuses',async()=>{
  for(const change of [r=>r.model.id='other-model',r=>r.model.manifestSha256='e'.repeat(64),r=>r.model.files['model.bin'].bytes++,r=>r.runtime.numpy='changed',r=>r.runtime.extra='unexpected',r=>r.recognitionConfig.language='es',r=>r.recognitionConfig.beam_size=1,r=>r.recognitionConfig.initial_prompt='forced text',r=>r.model.cpuThreads=8,r=>r.scriptSha256='e'.repeat(64)]){const f=await fixture();change(f.raw);await f.updateRaw();await assert.rejects(createAlignmentAdapter(f.options).run(f.context),/recognition/);}
 });
+
+test('spoken prompt comparison is retained as review evidence with original raw words and no approved ranges',async()=>{
+ const {createComparisonEvidenceAdapter}=await import('../../server/fia/preparation/executor/comparison-evidence.mjs');
+ const f=await fixture(['1. Listen now'],['one','Listen','now']);
+ const before=f.data.get(f.context.nodeOutputs.transcribe.reference).slice();
+ const align=await createAlignmentAdapter(f.options).run(f.context),context={...f.context,nodeOutputs:{...f.context.nodeOutputs,align}};
+ const contexts=[{activityId:'a0',script:'1. Listen now',context:{kind:'numbered-prompt-label',language:'eng',promptSpan:[0,13],labelSpan:[0,2],wordSpan:[0,1]}}];
+ const comparisonAdapter=await createComparisonEvidenceAdapter({...f.options,contexts});
+ const accepted=await createAcceptanceAdapter({...f.options,comparisonAdapter}).run(context),decision=await f.read(accepted);
+ const evidence=await f.read(decision.diagnostics.comparisonEvidence),view=await f.read(evidence.wordView);
+ assert.equal(evidence.comparisons[0].result.classification,'formatting-equivalent');
+ assert.equal(evidence.rawRecognitionSha256,f.context.nodeOutputs.transcribe.sha256);assert.equal(evidence.alignmentSha256,align.sha256);
+ assert.equal(decision.status,'review-required');assert.deepEqual(decision.acceptedPlaybackRanges,[]);
+ assert(decision.reasons.includes('unresolved-unit-correspondence'));
+ assert.equal(evidence.grantsAcceptance,false);assert.equal(evidence.timingValidated,false);
+ assert.deepEqual(view.words,f.raw.segments[0].words);assert.deepEqual(view.wordOrigins,[{segmentIndex:0,wordIndex:0},{segmentIndex:0,wordIndex:1},{segmentIndex:0,wordIndex:2}]);
+ assert.deepEqual(f.data.get(f.context.nodeOutputs.transcribe.reference),before);
+ contexts[0].context.wordSpan=[1,2];
+ const changedAdapter=await createComparisonEvidenceAdapter({...f.options,contexts});
+ const changed=await f.read(await changedAdapter.run(context));assert.notEqual(changedAdapter.dependencySha256,comparisonAdapter.dependencySha256);assert.notEqual(changed.normalizationSha256,evidence.normalizationSha256);
+ contexts[0].script='2. Listen now';const wrong=await createComparisonEvidenceAdapter({...f.options,contexts});await assert.rejects(wrong.run(context),/comparison-unit-binding/);
+ assert.equal((await f.read(await comparisonAdapter.run(context))).normalizationSha256,evidence.normalizationSha256);
+});
+
+test('cached pipeline binds actual comparison context and reuses raw recognition and alignment',async()=>{
+ const {createComparisonEvidenceAdapter}=await import('../../server/fia/preparation/executor/comparison-evidence.mjs');
+ const {createPipeline}=await import('../../server/fia/preparation/executor/pipeline.mjs');
+ const f=await fixture(['1. Listen now'],['one','Listen','now']);f.context.input.source={publisherId:'fixture',resourceId:'section',version:'v1'};
+ const rows=new Map(),storage={async transaction(fn){return fn({get:async k=>structuredClone(rows.get(k)),put:async(k,v)=>rows.set(k,structuredClone(v))});}},counts={};
+ const retained=await f.options.storeArtifact(new TextEncoder().encode('fixture source'));f.context.nodeOutputs.acquire=retained;f.raw.source.sha256=retained.sha256;await f.updateRaw();
+ const base={discover:{paid:false,run:async()=>retained},acquire:{paid:false,run:async()=>retained},transcribe:{paid:false,run:async()=>f.context.nodeOutputs.transcribe},align:createAlignmentAdapter(f.options)};
+ const contexts=[{activityId:'a0',script:'1. Listen now',context:{kind:'numbered-prompt-label',language:'eng',promptSpan:[0,13],labelSpan:[0,2],wordSpan:[0,1]}}];
+ async function pipeline(){const comparisonAdapter=await createComparisonEvidenceAdapter({...f.options,contexts}),adapters={...base,accept:createAcceptanceAdapter({...f.options,comparisonAdapter})};
+  for(const [name,adapter] of Object.entries(adapters)){const run=adapter.run;adapters[name]={...adapter,run:async args=>{counts[name]=(counts[name]||0)+1;return run(args);}};}
+  return createPipeline({storage,policyId:'comparison-integration-v1',adapters,verifyArtifact:f.options.resolveArtifact});
+ }
+ const first=await(await pipeline()).run(f.context.input);assert.equal(first.reason,'review-required');
+ const warm=await(await pipeline()).run(f.context.input);assert.equal(warm.key,first.key);assert.equal(counts.accept,1);
+ contexts[0].context.wordSpan=[1,2];
+ const changed=await(await pipeline()).run(f.context.input);assert.notEqual(changed.key,first.key);assert.equal(changed.reason,'review-required');
+ assert.deepEqual(counts,{discover:1,acquire:1,transcribe:1,align:1,accept:2});
+});
+
+test('comparison refuses missing or corrupt retained word views before publishing evidence',async()=>{
+ const {createComparisonEvidenceAdapter}=await import('../../server/fia/preparation/executor/comparison-evidence.mjs');
+ for(const corrupt of [false,true]){
+  const f=await fixture(['1. Listen now'],['one','Listen','now']),align=await createAlignmentAdapter(f.options).run(f.context);
+  const adapter=await createComparisonEvidenceAdapter({...f.options,contexts:[{activityId:'a0',script:'1. Listen now',context:{kind:'numbered-prompt-label',language:'eng',promptSpan:[0,13],labelSpan:[0,2],wordSpan:[0,1]}}],storeArtifact:async bytes=>{
+   const artifact=await f.options.storeArtifact(bytes);if(JSON.parse(new TextDecoder().decode(bytes)).schema==='fia-comparison-word-view@1'){if(corrupt)f.data.set(artifact.reference,new TextEncoder().encode('{}'));else f.data.delete(artifact.reference);}return artifact;
+  }});
+  await assert.rejects(adapter.run({...f.context,nodeOutputs:{...f.context.nodeOutputs,align}}),/alignment-(bytes|artifact-hash)/);
+ }
+});
