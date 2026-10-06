@@ -161,3 +161,13 @@ it('an admitted guide with a requested image description honors its visual Play 
  render(App);await waitFor(()=>expect(document.querySelector('.resource-visual')).toBeTruthy());await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Settings',exact:true}));await fireEvent.click(screen.getByRole('checkbox',{name:/Describe images and maps/}));await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));
  await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await waitFor(()=>expect(request).toHaveBeenCalled());expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();expect(audio.play.mock.calls[0][0]).toBe('Describe this image');
 });
+
+it('qualified original whole-file playback uses native EOF at 1x with no range argument',async()=>{
+ const p3=registry.packs.find(p=>p.id==='eng.MRK-1-21-28'),body=JSON.parse(readFileSync('public'+p3.presentation.url,'utf8'));
+ localStorage.setItem('fia-v3-selected-pack',p3.id);libraryAdapter.select.mockResolvedValue({descriptor:p3,presentation:body});
+ libraryAdapter.playPreparedRecording.mockResolvedValue({bytes:new Uint8Array(4),mime:'audio/wav',playback:'whole-file-native-ended'});
+ render(App);await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toBe(body.activities[0].prompt));
+ await fireEvent.click(screen.getByRole('button',{name:'Play original recording',exact:true}));
+ await waitFor(()=>expect(audio.play).toHaveBeenCalledWith(body.activities[0].narration,'blob:prepared',1));
+ expect(audio.play.mock.calls[0]).toHaveLength(3);expect(libraryAdapter.prepareRecording.mock.calls[0][0].packId).toBe(p3.id);
+});

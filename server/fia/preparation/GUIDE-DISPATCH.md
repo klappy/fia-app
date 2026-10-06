@@ -60,3 +60,61 @@ Consequently revocation prevents dispatch without wedging the object's boot:
 queued work stays queued, and interrupted preparing work becomes uncertain with
 a new revision. Only restored current authority plus an explicit POST may rearm
 a queued attempt. Restoration never retries an uncertain attempt.
+
+## Execution-only audited source policy
+
+An optional captured `sourceExecutionPolicy` in the trusted profile admits the
+exact 408-section metadata snapshot for bounded private execution, independently
+of the reviewed playback catalog. Its authorization receipt is
+`120cb40a862855626888afde7b8a34273f0464908a57b287b1634f397f20caec`.
+This records the user's original-recording reuse/retention authorization.
+`recordingLicenseStatus` remains `unverified`: collection/script CC BY-SA rights
+are not a recording-license grant. The policy grants neither playback acceptance
+nor publication. No HTTP body can install the policy or eligibility callback.
+Default deployed capabilities remain absent.
+
+The public compiled caller supplies `guideExecutionEligibility`; the corresponding
+DO capability supplies the same trusted synchronous `eligibility` policy. Only
+boolean true permits work. Promise/exception/truthy values refuse. The callback
+receives the exact metadata selection, literal publisher URL and the observed
+source hash when known, so revocation and known-bad checks apply before adoption
+and on subsequent receipt-only status reads. The callback implementation is a
+trusted policy port, not evidence inferred from a URL's public availability.
+
+Discovery snapshot revisions retain that meaning; they are not publisher audio
+versions. The existing observed-source adapter permits only literal HTTPS S3
+publisher URLs, manual redirects, 200 audio/mpeg and at most2MiB, with its30s
+request signal and the executor's30s bounded wait. A timed-out capability is not
+proved cancelled and is never automatically replayed. New source hashes are
+observed, not required in advance. Warm original verification joins exact URL,
+version, immutable source reference and discovery acquisition receipt, not merely
+matching bytes. The verified observed tuple is stored separately from immutable
+operation identity. Execution-only review-required records lacking that tuple
+are invalid. Retained evidence/status is still not playable output.
+
+Optional `modelRecipe` in the captured profile binds the exact model/manifest/config
+for retained recognition. Omitting it preserves the original P2 identity. P3 tests
+use unchanged raw candidate433fa7… and recipeb59c2b…, not rewritten P2 raw data.
+The retained P3 original proof is enabled with `FIA_RETAINED_P3`; no publisher GET
+or ASR process runs in the test. Actual acquisition uses a local Response transport.
+
+The warm-stage corruption test uses a test-only outer queue reset while retaining
+completed pipeline nodes; no production retry/reset API is exposed. Deleting
+acquisition or source-reference evidence then refuses the cached source without
+another source/raw invocation. Acquisition capabilities remain trusted code:
+entry, publisher validator and bucket accesses are authority-fenced, and already
+issued transport cannot be retroactively cancelled by revocation.
+
+The policy covers a408-row metadata snapshot, not408 proven executable sections.
+This Worker supplies no legacy P1 presentation-ID alias, so those P1 sections
+remain refused before execution; separate canonical disposition work is also
+needed for intentionally omitted standalone units. This increment proves P3,
+retains P2 regression coverage, and does not claim405-section runtime coverage.
+
+The concrete observed-source adapter additionally accepts optional `beforeFetch`:
+it captures that callback and requires synchronous boolean true immediately before
+calling its source transport, after the warm-receipt lookup. The active capability
+context provides `beforeSourceFetch`, a live current-policy guard; a composition
+using this adapter must wire it to `beforeFetch`. The actual Worker harness does
+so and gates a missing receipt, revokes authority, then proves zero transport calls.
+This is current dispatch authorization, not cancellation of an already sent request.

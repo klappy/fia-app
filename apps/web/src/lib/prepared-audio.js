@@ -1,3 +1,4 @@
+import {createQualifiedUnitTransport} from './qualified-unit-audio.js';
 import {readVerifiedMedia,validatePlaybackRange} from './media-delivery.js';
 const hash=x=>typeof x==='string'&&/^[a-f0-9]{64}$/.test(x);
 const keys=(value,expected)=>{if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).sort().join()!==expected.split(',').sort().join())throw Error('The prepared recording descriptor is invalid.');};
@@ -49,21 +50,23 @@ export async function verifyPreparedRecording(status,identity){
  if(await preparationHash(canonicalPreparationJSON(r))!==status.resultSha256)throw Error('The prepared recording descriptor hash changed.');
  return Object.freeze({jobId:status.jobId,resultSha256:status.resultSha256,identity:structuredClone(identity),source:structuredClone(r.source),delivery:structuredClone(r.delivery),evidence:structuredClone(r.evidence),playbackRange:structuredClone(selected.playbackRange)});
 }
-async function boundedJSON(response,signal){
+export async function boundedJSON(response,signal){
  if(!response.ok)throw Error(response.status===503?'Recording preparation is temporarily unavailable. Try again.':'Recording preparation could not be checked. Try again.');
  if(response.redirected||response.type==='opaque'||!(response.headers.get('content-type')||'').startsWith('application/json'))throw Error('Preparation returned an invalid response.');
  const reader=response.body?.getReader();if(!reader)throw Error('Preparation returned an empty response.');let length=0;const chunks=[];
  try{for(;;){if(signal?.aborted)throw Error('Preparation observation canceled.');const {value,done}=await reader.read();if(done)break;length+=value.length;if(length>262144)throw Error('Preparation response is too large.');chunks.push(value);}}finally{await reader.cancel().catch(()=>{});reader.releaseLock();}
  const bytes=new Uint8Array(length);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.length;}return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
 }
-async function withPreparationTimeout(signal,run){
+export async function withPreparationTimeout(signal,run){
  const controller=new AbortController(),abort=()=>controller.abort();if(signal?.aborted)throw Error('Preparation observation canceled.');signal?.addEventListener('abort',abort,{once:true});const timer=setTimeout(abort,30000);
  try{return await run(controller.signal);}finally{clearTimeout(timer);signal?.removeEventListener('abort',abort);}
 }
-export function createPreparationTransport({fetch:fetcher=(...args)=>fetch(...args),origin=()=>location.origin}={}){
+export function createPreparationTransport({fetch:fetcher=(...args)=>fetch(...args),origin=()=>location.origin,browserProfile=()=>({userAgent:navigator.userAgent,platform:navigator.platform})}={}){
+ const qualified=createQualifiedUnitTransport({fetch:fetcher,origin,browserProfile});
  const request=(path,identity,signal,post=false)=>withPreparationTimeout(signal,async signal=>{
   if(new URL(origin()).protocol!=='https:')throw Error('Recording preparation requires the published HTTPS app.');
   const response=await fetcher(path,{method:post?'POST':'GET',headers:post?{'Content-Type':'application/json'}:undefined,body:post?JSON.stringify(identity):undefined,credentials:'same-origin',redirect:'error',cache:'no-store',signal});
+  if((response.status===422||response.status===404)&&post&&identity.quality==='original'){void response.body?.cancel().catch(()=>{});return qualified.request(identity,signal);}
   if(response.status===422||response.status===404)return {status:'unavailable',message:'This recording is not prepared yet. You can continue without it.'};
   const value=validatePreparationStatus(await boundedJSON(response,signal),identity,post?undefined:path.split('/').at(-1));
   if(value.state==='blocked')return {status:'unavailable',message:'This recording is awaiting preparation or review. You can continue without it.'};
@@ -71,9 +74,10 @@ export function createPreparationTransport({fetch:fetcher=(...args)=>fetch(...ar
  });
  return {
   request:(identity,signal)=>request('/v1/preparations',identity,signal,true),
-  status:(id,identity,signal)=>{if(!hash(id))throw Error('Invalid preparation identity.');return request(`/v1/preparations/${id}`,identity,signal);},
-  verify:(result,identity)=>verifyPreparedRecording(result.value,identity),
+  status:(id,identity,signal)=>{if(typeof id==='string'&&id.startsWith('unit:'))return qualified.status(id,identity,signal);if(!hash(id))throw Error('Invalid preparation identity.');return request(`/v1/preparations/${id}`,identity,signal);},
+  verify:(result,identity)=>result.kind==='qualified-unit'?qualified.verify(result,identity):verifyPreparedRecording(result.value,identity),
   async play(descriptor,signal){
+   if(descriptor.kind==='qualified-unit')return qualified.play(descriptor,signal);
    // Re-observe server authority before reading media, including warm reuse.
    const current=await request(`/v1/preparations/${descriptor.jobId}`,descriptor.identity,signal);
    if(current.status!=='ready')throw Error('This recording is no longer ready. Press Play to check again.');

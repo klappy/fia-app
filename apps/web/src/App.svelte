@@ -80,7 +80,7 @@
    const result=await libraryAdapter.playPreparedRecording(descriptor,signal);
    if(owner!==mediaGeneration||signal.aborted||generation!==selectionGeneration||pack!==selectedPack||id!==activity.id||automatic&&(!playbackConsent||automaticOff))return;
    mediaBlob=URL.createObjectURL(new Blob([result.bytes],{type:result.mime}));mediaTiming=null;mediaAlignment=null;mediaLogicalPath=null;
-   audioContext={type:'narration',id};playbackConsent=true;dispatch({type:'PLAY'});audio.play(raw.narration||raw.sourceText,mediaBlob,rate,result.playbackRange);persist();
+   audioContext={type:'narration',id};playbackConsent=true;dispatch({type:'PLAY'});if(result.playback==='whole-file-native-ended')audio.play(raw.narration||raw.sourceText,mediaBlob,1);else audio.play(raw.narration||raw.sourceText,mediaBlob,rate,result.playbackRange);persist();
   }catch(error){if(owner===mediaGeneration){preparedRecordings=new globalThis.Map(preparedRecordings);preparedRecordings.delete(key);revokePlayback();notice=error.message;dispatch({type:'PAUSE'});}}
   finally{if(owner===mediaGeneration)mediaLoading=false;}
  }
