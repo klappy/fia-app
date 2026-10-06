@@ -1,0 +1,57 @@
+# cue-role-v1 Jev pilot harness
+
+Offline harness for the `fia-cue-role@1` pilot. It compares rules alone against rules plus bounded Jev on 24 real FIA guide units: 8 dev units from Mark 1:1-13 and 16 held-out units from Mark 1:14-20, half English and half Spanish. The plan lives in the private cookbook unit `work/active/2026-10-06-fia-cue-role-jev-pilot/PLAN.md`. The contract lives at `server/fia/preparation/jev/cue-role-v1.md`.
+
+Nothing here is a runtime path. No app, Worker or test under `server/**` or `tests/**` imports this directory. It adds no dependency, binding or `wrangler.jsonc` change. Node never holds a provider credential. Instead, the CF connector (or the REST fallback) fires requests that the adapter captured itself, and every later phase replays the stored responses at zero calls.
+
+## Files
+
+| File | What |
+|---|---|
+| `cases.mjs` / `cases.json` | Builds the 24 cases from `server/fia/compiler/presentation/source-packs.json.gz` (revision `f8776d92…`). Each case carries `input` in the adapter shape, with context set to the previous and next unit. It also carries `gold` (null until the labelers fill it) and `meta` {split, kind, v2Pause, v2Resources, listGroup, templateSha256, estTokens}. Every sha256 re-hashes. A held-out case that shares a template with a dev case is refused. `node cases.mjs --check` verifies the file against a fresh rebuild. |
+| `rules.mjs` | Arm A, policy `explicit-cue-rules@1`, with four rules: R-PAUSE (exact cue-text hash in `pause-only-registry.json`), R-LIST-INTRO, R-LIST-ITEM-DISCUSSION and R-LIST-ITEM-DESCRIPTIVE (list membership in `lists.json`, matched on pack + unit id + text hash + guide content hash). Anything else abstains (`null`). The arm is labelled *list-evidence (proposed, independent review pending)*. Arm C `naiveSourceFlags` lives here too. It is a comparator only and never a candidate. |
+| `pause-only-registry.json` | The two exact pause-only cue texts and their hashes. Status: proposed, review pending. |
+| `run.mjs` | Phases: `requests`, `snippet`, `import`, `derive`, `score`, `report` and `replay`, plus `--gold-check`. |
+| `metrics.mjs` | P/R per role, coverage, abstentions by reason, serious errors (DoD 7), the needsReview rule (DoD 8), flips, latency, tokens, cost per correctly resolved case and the §8 verdict. |
+| `calibration.json` | Starts with only the bootstrap bands. `derive` adds one record per language. |
+| `providers/replay.mjs` | AI shim backed by the raw cache. Normalizes the wire under D4: `model_version = res.model_version ?? res.version ?? res.model`. |
+| `providers/connector-snippet.js` | Code for CF-Extras `execute`. Takes ≤ 8 requests per batch, runs at concurrency ≤ 6 with no retries, and returns `[{rawKey, ms, response: r.result}]`. |
+| `providers/rest.mjs` | Fallback through `POST /client/v4/accounts/$CF_ACCOUNT_ID/ai/run` (same body as the connector). The token is read from the 0600 file named by `$CF_AI_TOKEN_FILE`. |
+
+## Run order (every step except firing is offline)
+
+```sh
+node scripts/jev-cue-role-pilot/run.mjs --phase requests --set all --dry-run   # one exact request + totals
+node scripts/jev-cue-role-pilot/run.mjs --phase requests --set all             # evidence/requests.json (24)
+node scripts/jev-cue-role-pilot/run.mjs --phase snippet --probe                # gate 4: one call first
+node scripts/jev-cue-role-pilot/run.mjs --phase snippet --batch 0              # then batches 0..2 (8 each)
+#   paste each into CF-Extras execute; save each result array as out-N.json
+node scripts/jev-cue-role-pilot/run.mjs --phase import --from out-probe.json,out-0.json,…
+node scripts/jev-cue-role-pilot/run.mjs --phase requests --pass 2              # held-out rerun (16), unless --no-rerun
+node scripts/jev-cue-role-pilot/run.mjs --phase import --pass 2 --from …
+node scripts/jev-cue-role-pilot/run.mjs --phase derive --language eng
+node scripts/jev-cue-role-pilot/run.mjs --phase score  --language eng           # arms A B C D, dev + held-out, passes 1-2
+node scripts/jev-cue-role-pilot/run.mjs --phase report [--rate-in X --rate-out Y --minute-rate Z]
+node scripts/jev-cue-role-pilot/run.mjs --phase replay                          # byte-for-byte metrics.json, 0 calls
+```
+
+`--evidence-dir`, `--cases` and `--calibration` override the defaults (`./evidence/`, `./cases.json`, `./calibration.json`). Raw responses, decisions and `metrics.json` are private evidence (PLAN D12). Copy `evidence/` into the cookbook unit and do not commit it here.
+
+## Gates and ceilings in code
+
+- **Bootstrap calibration (D5).** The collect pass uses `{falseMax: 0, trueMin: 1}` with `modelRevision` `jev-1.13.0`. Every case reaches the provider and nothing resolves, but `provenance.probabilities` is filled.
+- **Probe (gate 4).** `import` refuses the whole batch unless the first response has `answers` for the four roles and a `model` string.
+- **Ceilings (D7).** The limits are ≤ 24 cases and 96 questions per pass, 40 calls in total, ≤ 500 estimated tokens per case, ≤ 2,000 observed input tokens per call and ≤ 48,000 cumulative. `requests` checks them before any call. `import` checks the observed `usage` and exits 3 on a breach. If rates and the operator ceiling are supplied as flags, `import` also aborts at 5% of the ceiling. Rates are never stored in this repo.
+- **Spanish (gate 6, D10).** `derive` and `score` require `--language`. `spa` is refused unless every spa row has `gold.reviewer` set to `mirror-eng+backtranslation:<cook>` and a non-empty `gold.backTranslation`.
+- **Calibration (DoD 6).** Bands come from dev cases only: `falseMax = max(gold-false noul) + 0.05` and `trueMin = min(gold-true noul) − 0.05`. If `falseMax ≥ trueMin`, the language is *uncalibratable* and is scored only under the exploratory bands {0.4999, 0.5}. Its verdict is REVIEW.
+- **Cache keys (§9).** The raw key is `sha256(canonical({model, state, questions, pass}))`. The decision key is the adapter's `cacheKey`. `metrics.json.keys` lists both for each case.
+
+Recall counts an abstention as a miss. Precision counts resolved decisions only. Gold-needsReview cases are left out of role P/R. They count as correct only when the envelope is `unknown` (or `invalid` / `input-invalid`), and as a serious error when resolved.
+
+## Tests
+
+```sh
+node --test scripts/jev-cue-role-pilot/*.test.mjs
+```
+
+The tests are offline. They use a fake provider in the verified wire shape, which carries `model` and no `model_version`. `rules.test.mjs` includes the lint that keeps natural-language literals and pattern matching out of `rules.mjs`.
