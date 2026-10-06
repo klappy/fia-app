@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "vite build && node scripts/finalize-build.mjs && node scripts/package-worker.mjs",
-    "test": "node --test tests/web-shell/*.test.js tests/compiler/presentation.test.mjs && npm run test:reference && npm run test:worker",
+    "test": "node --test tests/web-shell/*.test.js tests/compiler/presentation.test.mjs tests/compiler/flow-emission.test.mjs && npm run test:reference && npm run test:worker",
     "preview": "vite preview",
     "test:release": "node --test tests/release/*.test.js && node --test tests/worker-serving/packaged.check.mjs",
     "test:e2e": "playwright test",
