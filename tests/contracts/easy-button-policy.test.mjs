@@ -190,7 +190,8 @@ function legacyBindings(input) {
   const inlineVideo = facts.inlineVideo ? { id: 'v1' } : null;
   const videoDeliveryState = { loading: facts.videoLoading };
   const visualHeard = facts.visualHeard ? 'focal' : null;
-  const preparationRequest = facts.preparation === 'available' ? { id: 'req' } : null;
+  // a request exists while it is available or its preparation runs (busy implies the request, R6 requestableNarration)
+  const preparationRequest = facts.preparation === 'available' || facts.preparation === 'preparing' ? { id: 'req' } : null;
   const preparationBusy = facts.preparation === 'preparing';
   const hasGuidePreparation = () => true;
   const selectedPack = {};
@@ -202,7 +203,7 @@ function legacyBindings(input) {
   const videoPending = visual && !!matchingVideo && visualHeard !== focal.id;
   const visualPending = visual && !matchingVideo && session.preferences.describeImages && !muted && !!focal.descriptionAudio && visualHeard !== focal.id;
   const primaryStartsPreparation = !executableMode&&!isPlaying&&!playbackPending&&!inlineVideo&&!videoDeliveryState.loading&&!videoPending&&!visualPending&&!!preparationRequest&&hasGuidePreparation(selectedPack,preparationRequest)&&!automaticOff&&!audioContext&&!preparationBusy&&!mediaLoading&&!requestStarting&&['ready','paused'].includes(session.status); // verbatim
-  return { executableMode, executablePlayable, focal, session, activity, automaticOff, finished, inTransition, isPlaying, audio, audioContext, started, mediaLoading, playbackPending, inlineVideo, videoDeliveryState, visual, videoPending, visualPending, primaryStartsPreparation, verifying, startPending, startBurst };
+  return { muted, preparationRequest, hasGuidePreparation, selectedPack, visualHeard, playbackConsent: facts.playbackConsent, automatic: facts.automaticStart, matchingVideo, executableMode, executablePlayable, focal, session, activity, automaticOff, finished, inTransition, isPlaying, audio, audioContext, started, mediaLoading, playbackPending, inlineVideo, videoDeliveryState, visual, videoPending, visualPending, primaryStartsPreparation, verifying, startPending, startBurst };
 }
 function legacyExecutableLabel(b) {
   const { finished, inTransition, session, automaticOff, executablePlayable, isPlaying, playbackPending, audio, audioContext, started } = b;
@@ -239,6 +240,91 @@ test(`parity: decide() equals the verbatim post-R6 label chains and easyFace on 
   const primaryRules = [...Array(8).keys()].map((i) => `E${i}`).concat([...Array(17).keys()].filter((i) => i !== 2).map((i) => `B${i}`));
   assert.deepEqual(primaryRules.filter((r) => !hit.has(r)), [], 'every primary rule is reached by the parity draws');
   assert.deepEqual([...found.keys()].sort(), declaredDivergences.map((d) => d.key).sort(), `unnamed divergences: ${JSON.stringify([...found])}`);
+});
+
+// ---- Parity of the other decide()-driven paths: finishAudio, scheduleNext, the playActivity viewing cue and
+// the navigate DETOUR video, copied verbatim from App.svelte at integration/2026-10-06-train @21ad2dc and run
+// against recording stubs. Outcome = the first effect they reach.
+function legacyEffects(b) {
+  let { playbackConsent, session, inTransition, executableMode, executablePlayable, automaticOff, activity, preparationRequest, hasGuidePreparation, selectedPack, visual, matchingVideo, focal, muted, visualHeard } = b;
+  const calls = [];
+  let notice = '', playbackPending = false, timer = null, introduced = new Set(), selectionGeneration = 0;
+  let audioContext = { type: 'narration', id: 'x' };
+  const assets = focal ? { focal } : {};
+  const tapGate = { end() {} };
+  const authorizeVisual = () => {}, persist = () => {}, dispatch = () => {}, playActivity = () => {}, playVideo = () => {};
+  const settleSilent = () => calls.push('silent'), describe = () => calls.push('describe');
+  const playExecutableNarration = () => calls.push('narration'), playRequestedNarration = () => calls.push('prepare');
+  const setTimeout = () => { calls.push(playbackPending ? 'narration' : 'video'); return 1; };
+  activity = { ...activity, id: 'x' };
+  // verbatim (train @21ad2dc)
+ function finishAudio(){
+  const context=audioContext;audioContext=null;tapGate.end();if(!context)return;
+  if(context.type==='description'){if(['image','map'].includes(assets[context.id]?.kind)){visualHeard=context.id;if(!session.detour)session={...session,status:'waiting'};}return;}
+  if(context.type==='manual'){session={...session,status:'waiting'};persist();return;}
+  if(context.type==='response')return;
+  introduced=new Set([...introduced,context.id]);
+  const before=session.index;dispatch({type:'NARRATION_END',activityId:context.id});
+  if(session.index!==before){scheduleNext();}
+  else if(!executableMode&&!session.detour&&visual&&(session.preferences.describeImages&&focal?.descriptionAudio||session.preferences.autoplayVideo&&matchingVideo)){describe(focal.id);}
+  else if(!executableMode&&!session.detour&&activity?.kind==='video'&&session.preferences.autoplayVideo){timer=setTimeout(()=>{if(session.preferences.autoplayVideo)playVideo();},350);}
+ }
+ function scheduleNext(){
+  if(!playbackConsent)return;
+  if(session.status==='complete'||session.detour||inTransition)return;
+  authorizeVisual(false);
+  if(executableMode){if(executablePlayable&&!automaticOff)void playExecutableNarration({automatic:true});else settleSilent();return;}
+  if(!activity.audioSrc){if(preparationRequest&&hasGuidePreparation(selectedPack,preparationRequest)&&!automaticOff){void playRequestedNarration({automatic:true});return;}settleSilent();if(activity.kind==='scripture'&&session.preferences.readScripture)notice='No recording is available for this Scripture passage. You can read it and continue.';if(visual&&(session.preferences.autoplayVideo&&matchingVideo||session.preferences.describeImages&&focal?.descriptionAudio)||focal?.kind==='term'&&!muted&&focal.descriptionAudio)describe(focal.id);return;}
+  if(automaticOff&&visual&&(session.preferences.autoplayVideo&&matchingVideo||session.preferences.describeImages&&focal?.descriptionAudio)){describe(focal.id);return;}
+  const id=activity.id,generation=selectionGeneration;
+  if(activity.kind==='scripture'&&!session.preferences.readScripture){notice='The passage is ready for you to read. Continue when you’re ready.';return;}
+  if(!automaticOff){playbackPending=true;timer=setTimeout(()=>{playbackPending=false;if(playbackConsent&&generation===selectionGeneration&&activity.id===id&&!session.detour)playActivity(false,true);},650);}
+ }
+  const run = (f) => { calls.length = 0; f(); return calls.includes('narration') ? 'narration' : calls.includes('prepare') ? 'prepare' : calls.includes('describe') ? 'describe' : calls.includes('video') ? 'video' : calls.includes('silent') ? 'silent' : 'none'; };
+  const arrival = run(scheduleNext);
+  audioContext = { type: 'narration', id: 'x' }; session = { ...b.session }; playbackPending = false; timer = null;
+  const afterNarration = run(finishAudio);
+  return { arrival, afterNarration };
+}
+function legacyCue(b) {
+  const { visual, muted, matchingVideo, automatic, session, focal } = b;
+  const activity = { ...b.activity, narration: b.pauseOnly ? 'I will pause the audio here.' : '' };
+  if (session.detour || b.finished || b.executableMode) return false; // playActivity returns before the cue
+  return !!(visual&&!muted&&/I will pause the audio here/i.test(activity.narration||'')&&((matchingVideo&&(!automatic||session.preferences.autoplayVideo))||(session.preferences.describeImages&&focal.descriptionAudio))); // verbatim
+}
+function legacyDetourVideo(b) {
+  const { session, playbackConsent: hadPlaybackConsent } = b;
+  const event = session.detour ? { type: 'DETOUR', assetId: 'focal' } : { type: 'CONTINUE' };
+  const assets = b.focal ? { focal: b.focal } : {};
+  return !!(event.type==='DETOUR'&&assets[event.assetId]?.kind==='video'&&session.preferences.autoplayVideo&&hadPlaybackConsent); // verbatim
+}
+
+test(`parity: arrival, after-narration, viewing cue and detour video equal the verbatim post-R6 paths on ${3 * DRAWS} draws`, () => {
+  const found = new Map();
+  const note = (key) => found.set(key, (found.get(key) || 0) + 1);
+  let compared = 0;
+  for (const input of parityDraws) {
+    const out = decide(input);
+    const b = { ...legacyBindings(input), pauseOnly: input.flow.cue.pauseOnly };
+    const fx = legacyEffects(b);
+    const arrival = out.autoplay.arrival;
+    if (fx.arrival !== arrival) note(`arrival:${out.reasons.arrival}:${fx.arrival}->${arrival}`);
+    if (fx.afterNarration !== out.autoplay.afterNarration) note(`afterNarration:${out.reasons.afterNarration}:${fx.afterNarration}->${out.autoplay.afterNarration}`);
+    if (!(input.facts.automaticStart && !input.facts.playbackConsent)) { // playActivity returns first when automatic without consent
+      const cue = legacyCue(b);
+      if (cue !== out.viewingCue.skipNarration) note(`cue:${out.reasons.viewingCue}:${cue}->${out.viewingCue.skipNarration}`);
+    }
+    if (legacyDetourVideo(b) !== out.autoplay.detourVideo) note(`detour:${out.reasons.detourVideo}`);
+    compared++;
+  }
+  assert.ok(compared > DRAWS);
+  assert.deepEqual([...found.keys()].sort(), declaredDivergences.map((d) => d.key).sort(), `unnamed divergences: ${JSON.stringify([...found])}`);
+});
+
+test('finding 2: arriving at a recording-less screen while its preparation runs takes the prepare path (R6 parity)', () => {
+  const input = structuredClone(IDLE); input.flow.narration = 'none'; input.facts.playbackConsent = true; input.facts.preparation = 'preparing';
+  assert.equal(decide(input).autoplay.arrival, 'prepare');
+  assert.equal(legacyEffects(legacyBindings(input)).arrival, 'prepare');
 });
 
 test('labels: every emitted action has today\'s en label; verifying has the R5 accessible name', () => {

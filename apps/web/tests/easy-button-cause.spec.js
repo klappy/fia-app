@@ -93,3 +93,13 @@ it('(4) a preparation status publish (preparation-intent.js:11 emit) classifies 
  expect(causeOf(baseInput(),ready)).toMatchObject({class:'status',paths:['facts.preparation']});
  expect(decide(available).primary.action).toBe('begin');
 });
+
+it('(5) a corrupted saved status cannot crash the primary: decide() rejects it, the client logs and falls back to Continue',async()=>{
+ const error=vi.spyOn(console,'error').mockImplementation(()=>{});
+ const session=createSession(activities);session.index=activities.findIndex(a=>a.id==='S01-U001');session.status='bogus-status';
+ localStorage.setItem('fia-v3-session@2',JSON.stringify({session}));
+ render(App);await settle();await settle();await settle();
+ expect(primaryLabel()).toBe('Continue');
+ expect(error.mock.calls.some(call=>String(call[0]).includes('fia-easy-button-policy@1')&&/facts\.status/.test(String(call[1])))).toBe(true);
+ const bad=baseInput();bad.facts.status='bogus-status';expect(()=>decide(bad)).toThrow(/invalid input/); // decide() stays strict
+});

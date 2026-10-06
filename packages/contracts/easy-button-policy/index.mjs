@@ -160,7 +160,8 @@ function arrivalOf({ flow, settings, facts }, d) { // scheduleNext :273-282
   if (d.executable) return [d.executablePlayable && !d.automaticOff ? 'narration' : 'silent', 'A3'];
   const describable = d.visual && (settings.autoplayVideo && d.video || settings.describeImages && d.descriptionAudio);
   if (!d.recording) { // :278 — settles silent; prepares, or describes after settling
-    if (facts.preparation === 'available' && !d.automaticOff) return ['prepare', 'A4'];
+    // R6 scheduleNext: a request exists while its preparation runs (preparing), and playRequestedNarration then cancels it (App.svelte playRequestedNarration)
+    if ((facts.preparation === 'available' || facts.preparation === 'preparing') && !d.automaticOff) return ['prepare', 'A4'];
     if (describable || flow.focal.kind === 'term' && settings.guideNarration && d.descriptionAudio) return ['describe', 'A4'];
     return ['silent', 'A4'];
   }

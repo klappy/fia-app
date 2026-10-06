@@ -1,6 +1,6 @@
 {
   "schema": "fia-easy-button-policy@1",
-  "against": "post-R6 apps/web/src/App.svelte (executablePrimaryLabel, primaryStartsPreparation, primaryLabel, primaryStarting, primaryFace via easyFace) at fia-app integration/2026-10-06-train @21ad2dc, copied verbatim into tests/contracts/easy-button-policy.test.mjs",
+  "against": "post-R6 apps/web/src/App.svelte at fia-app integration/2026-10-06-train @21ad2dc, copied verbatim into tests/contracts/easy-button-policy.test.mjs: label chains (executablePrimaryLabel, primaryStartsPreparation, primaryLabel, primaryStarting, primaryFace via easyFace), finishAudio and scheduleNext (run against recording stubs), the playActivity viewing-cue condition and the navigate DETOUR video condition",
   "draws": 60000,
   "sweeps": "20 000 uniform (seed 0x0fa12026) + 20 000 at 15% true (0x0fa12027) + 20 000 at 5% true (0x0fa12028); every phase compared (verifying and starting faces included)",
   "divergences": []

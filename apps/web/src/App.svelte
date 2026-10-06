@@ -28,7 +28,7 @@
  import {bundledPack,libraryAdapter,hasUnresolvedInstructions,registerWorker,RESTORE_TIMEOUT_MS,restoreUnreachable} from './lib/library.js';
  import {saveProgress,restoreProgress,resetProgress} from './lib/session-store.js';
  import {decide} from '../../../packages/contracts/easy-button-policy/index.mjs';
- import {policyInputFrom} from './lib/easy-button-input.js';
+ import {policyInputFrom,decideSafely} from './lib/easy-button-input.js';
  import {labelFor} from './lib/primary-labels.js';
  import {noticeScope,noticeEnded} from './lib/notice-scope.js';
  let selectedPack=$state(bundledPack),rawPresentation=$state.raw(bundledPresentation),downloadedPaths=$state(new Set()),downloadedAudioDescriptors=$state(new globalThis.Map());
@@ -96,7 +96,7 @@
  }
  // fia-easy-button-policy@1: the primary action, autoplay and the viewing cue come from decide(); the client only builds the input.
  function policyInput(overrides={}){return policyInputFrom({executableMode,executableAction,presentationId:rawPresentation.id,activity,focal,matchingVideo,session,muted,inTransition,isPlaying,inlineVideo,mediaLoading,videoLoading:videoDeliveryState.loading,playbackPending,audioActive:audio?.active,audioContext,started,introduced,visualHeard,playbackConsent,preparationAvailable:!!preparationRequest&&hasGuidePreparation(selectedPack,preparationRequest),preparationBusy,preparationStatus:currentPreparation?.status,requestStarting,verifying,starting:startPending||startBurst&&isPlaying,...overrides});}
- function decideNow(overrides){return decide(policyInput(overrides));}
+ function decideNow(overrides){return decideSafely(decide,()=>policyInput(overrides));}
  function executablePrimary(){
   if(inTransition){navigate({type:'CONTINUE'},true);return;}if(finished){reset();return;}
   if(automaticOff||session.status==='waiting'||!executablePlayable){navigate({type:'CONTINUE'},true);return;}
@@ -283,7 +283,7 @@
  // Preparation is primary only when no higher-priority playback or visual action owns the control.
  // requestableNarration already excludes transitions, detours and completed sessions.
  let primaryStartsPreparation=$derived(!executableMode&&!isPlaying&&!playbackPending&&!inlineVideo&&!videoDeliveryState.loading&&!videoPending&&!visualPending&&!!preparationRequest&&hasGuidePreparation(selectedPack,preparationRequest)&&!automaticOff&&!audioContext&&!preparationBusy&&!mediaLoading&&!requestStarting&&['ready','paused'].includes(session.status));
- let decision=$derived(decide(policyInput()));
+ let decision=$derived(decideNow());
  let primaryLabel=$derived(labelFor(decision.primary.verified));
  // In manual mode the centre stays Continue; elsewhere an accepted start owns the face until sound.
  let startPending=$derived(!isPlaying&&(mediaLoading||preparationBusy||requestStarting||clipPending||videoDeliveryState.loading||videoPlayPending));

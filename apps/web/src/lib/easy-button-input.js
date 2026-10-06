@@ -71,3 +71,12 @@ export function policyInputFrom(s){
   }
  };
 }
+
+/** Safe face when decide() rejects an input (e.g. a corrupted saved status): Continue, nothing starts by itself. */
+export const SAFE_DECISION=Object.freeze({primary:Object.freeze({action:'continue',verified:'continue'}),autoplay:Object.freeze({arrival:'none',afterNarration:'none',detourVideo:false}),viewingCue:Object.freeze({skipNarration:false}),hold:'manual',reason:'B13',reasons:Object.freeze({primary:'B13',arrival:'A1',afterNarration:'F0',detourVideo:'D0',viewingCue:'V0'}),fallback:true});
+/** decideSafely(decide,input|()=>input,log): decide() keeps its strict validation; the client catches, logs once per message, and falls back. */
+const logged=new Set();
+export function decideSafely(decide,input,log=(...a)=>console.error(...a)){
+ try{return decide(typeof input==='function'?input():input);}
+ catch(error){const message=String(error?.message||error);if(!logged.has(message)){logged.add(message);log('fia-easy-button-policy@1: input rejected, safe fallback (Continue, no autoplay)',message);}return SAFE_DECISION;}
+}
