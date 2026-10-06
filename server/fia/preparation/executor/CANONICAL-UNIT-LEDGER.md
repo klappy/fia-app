@@ -1,0 +1,11 @@
+# P1 canonical source ledger
+
+This separate resolver represents all 130 English Mark 1:1–13 source units, including six intentionally absent from standalone presentation activities. It changes no existing resolver, factory, UI or runtime configuration.
+
+`createCanonicalUnitLedgerResolver({ledgerBytes, sourcePackBytes, presentationBytes, bundleBytes})` verifies all four against `P1_CANONICAL_LEDGER_PINS`, checks every canonical text/hash, ordered membership, disposition and association, and returns `resolve({packId, sectionId, presentationSha256})`. Selection requires the exact pinned P1 presentation SHA; other packs/revisions fail closed. Source-pack input is the retained gzip; decompression is bounded. Returned objects are copies.
+
+The ledger is explicitly P1-only. Its 111 default and 13 optional-example units retain existing disposition; their narration eligibility is `not-assessed`. Four source-detail pauses carry `associated-pause-no-independent-range`, preserving their distinct source-unit IDs and preceding-activity associations. Two production requests carry `not-spoken-production-note`; consumers must not submit those instructions as speech. Coverage treatment is historical presentation evidence, not proof of actual recording coverage or timing. No accepted playback range is returned.
+
+Composition remains separate work: the presentation resolver currently resolves 405 of 408 English Mark sections; P1 S02/S05/S06 need this complete canonical representation. An integration must bind this ledger SHA plus source/presentation/bundle pins into its dependency identity, preserve nonspoken/associated dispositions, and explicitly adapt narration inputs. It must not flatten all ledger text into speech or assign duplicate activity IDs to the associated pauses. This implementation does not change the existing narration resolver or claim all-Mark coverage, automatic acceptance, or completed 408-section integration. Changed pinned artifacts require a newly reviewed ledger, not a runtime override.
+
+Run `node --test tests/preparation-executor/canonical-unit-ledger.test.mjs`. The actual retained full P1 corpus is checked (130 units across six sections); mutation tests exercise immutable rejection, not a general validator for arbitrary new source versions. Tests do not run media, ASR or browser playback.
