@@ -102,3 +102,11 @@ This Worker supplies no legacy P1 presentation-ID alias, so those P1 sections
 remain refused before execution; separate canonical disposition work is also
 needed for intentionally omitted standalone units. This increment proves P3,
 retains P2 regression coverage, and does not claim405-section runtime coverage.
+
+The concrete observed-source adapter additionally accepts optional `beforeFetch`:
+it captures that callback and requires synchronous boolean true immediately before
+calling its source transport, after the warm-receipt lookup. The active capability
+context provides `beforeSourceFetch`, a live current-policy guard; a composition
+using this adapter must wire it to `beforeFetch`. The actual Worker harness does
+so and gates a missing receipt, revokes authority, then proves zero transport calls.
+This is current dispatch authorization, not cancellation of an already sent request.
