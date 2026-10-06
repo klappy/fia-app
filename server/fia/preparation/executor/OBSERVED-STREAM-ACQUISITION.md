@@ -1,0 +1,11 @@
+# Observed streaming acquisition port
+
+`createObservedStreamAcquisition({storage,bucket,validatePublisherURL,eligibility,policy,fetchSource?,makeStream?,now?})` returns the executor-compatible `{paid:false,dependencySha256,run}` port. Policy is `{revision,maxBytes,totalMs,progressMs}`, bounded to 8 MiB / 120 seconds / 15 seconds. The caller supplies current synchronous execution eligibility and the exact audited publisher validator, not a playback grant. Production `makeStream` defaults to the existing Workers FixedLengthStream implementation.
+
+`run({input,nodeOutputs:{discover}})` verifies the immutable discovery record, exact source/selection and audited literal HTTPS URL. Its fixed admitted observation ticket is scoped to that discovery hash. It uses the existing corrected fresh-source engine: bounded stream to quarantine, actual SHA/length verification, immutable original/reference/receipt, and current eligibility before head promotion/read. External I/O remains outside replayable storage transactions. Missing Content-Length, >8 MiB, truncated/excess/stalled streams fail closed. Uncertain/preparing attempts do not automatically retry. Explicit freshness uses a separate admission path; this adapter does not schedule it or promote uncertain receipts.
+
+Warm lookup stream-verifies retained original and receipt without a publisher GET; corrupt retained evidence fails without refetch. Output is only `{sha256,reference}` for the immutable original. Observation receipts preserve literal URL, discovery snapshot revision and `publisherVersion:null`: no independently verified publisher version is invented. Source acquisition is not acceptance, display authority or a timing result.
+
+No factory, Worker, public dispatch, catalog or configuration is changed. Integration must supply the trusted validator/current eligibility and bind the port dependency. The factory still verifies acquired bytes up to 8 MiB (buffered downstream); recognition still caps decoded duration at 600 seconds. This is not multipart upload or unbounded long-audio support.
+
+Adapter tests use in-memory storage/TransformStream with synthetic byte bodies; the separately run fresh-source suite exercises the reused engine in actual local SQLite/R2. Neither constitutes a hosted deployment or an external source fetch.
