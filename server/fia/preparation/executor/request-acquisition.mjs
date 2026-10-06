@@ -1,14 +1,16 @@
 import {canonicalJSONString,sha256} from '../contract.mjs';
-import {readBounded} from '../service.mjs';
 import {createGuideDiscoveryAdapter} from './discovery.mjs';
 import {createKnownSourceAcquisition} from './known-source-stream.mjs';
 import {createPipeline} from './pipeline.mjs';
 
 // Trusted composition boundary. No public route or recognition capability is installed.
-export async function createRequestAcquisition({metadataBytes,metadataSha256,knownSources,bucket,storage,modelRecipe,policyRevision,fetchSource,makeStream}){
+export async function createRequestAcquisition({metadataBytes,metadataSha256,knownSources,bucket,storage,modelRecipe,policyRevision,fetchSource,makeStream,artifactReadMs=30000}){
  const pins=structuredClone(knownSources),recipe=structuredClone(modelRecipe);
+ if(!Number.isSafeInteger(artifactReadMs)||artifactReadMs<1||artifactReadMs>30000)throw Error('invalid-artifact-deadline');
+ metadataBytes=new Uint8Array(metadataBytes);
  if(!Array.isArray(pins)||!pins.length)throw Error('known-source-policy-required');
  const guide=await createGuideDiscoveryAdapter({metadataBytes,metadataSha256,bucket});
+ const rows=JSON.parse(new TextDecoder().decode(metadataBytes)).rows;
  const sourceId=input=>canonicalJSONString(input.source);
  const admitted=new Map();
  for(const item of pins){
@@ -18,22 +20,35 @@ export async function createRequestAcquisition({metadataBytes,metadataSha256,kno
   const acquisition=createKnownSourceAcquisition({bucket,storage,policy:item.policy,...(fetchSource?{fetchSource}:{}),...(makeStream?{makeStream}:{})});
   admitted.set(key,{policy:item.policy,acquisition});
  }
- // A changed trusted source pin must never reuse a completed node under its old policy.
- const policyId=await sha256(canonicalJSONString({schema:'fia-request-acquisition@1',metadataSha256,pins,recipe,policyRevision}));
+
  function admission(input){const item=admitted.get(sourceId(input));if(!item)throw Error('source-not-admitted');return item;}
  async function readArtifact(artifact,limit){
-  const object=await bucket.get(artifact.reference);if(!object)throw Error('retained-artifact-missing');
-  const bytes=await readBounded(new Response(object.body),limit);if(await sha256(bytes)!==artifact.sha256)throw Error('retained-artifact-corrupt');return bytes;
+  const deadline=Date.now()+artifactReadMs;let reader;
+  async function bounded(fn){let timer;try{return await Promise.race([Promise.resolve().then(fn),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('artifact-read-timeout')),Math.max(0,deadline-Date.now()));})]);}finally{clearTimeout(timer);}}
+  try{
+   const object=await bounded(()=>bucket.get(artifact.reference));if(!object)throw Error('retained-artifact-missing');
+   reader=object.body.getReader();const chunks=[];let size=0;
+   for(;;){const {value,done}=await bounded(()=>reader.read());if(done)break;size+=value.byteLength;if(size>limit)throw Error('artifact-size-limit');chunks.push(value);}
+   const bytes=new Uint8Array(size);let offset=0;for(const part of chunks){bytes.set(part,offset);offset+=part.length;}
+   if(await sha256(bytes)!==artifact.sha256)throw Error('retained-artifact-corrupt');return bytes;
+  }finally{reader?.cancel().catch(()=>{});}
  }
+ async function selectedPipeline(input){
+  const selected=rows.find(row=>row.packId===input.packId&&row.presentationRevision===input.source.version&&row.stepId===input.resource);
+  if(!selected)throw Error('guide-selection-unresolved');
+  const selectedBytes=new TextEncoder().encode(canonicalJSONString({schema:'fia-published-guide-sources@1',rows:[selected]}));
+  const selectedHash=await sha256(selectedBytes);
+  const selectedGuide=await createGuideDiscoveryAdapter({metadataBytes:selectedBytes,metadataSha256:selectedHash,bucket});
+  const policyId=await sha256(canonicalJSONString({schema:'fia-request-acquisition@1',selectedHash,source:input.source,pin:admission(input).policy,recipe,policyRevision}));
  const acquire={paid:false,async run({input,nodeOutputs}){
   const item=admission(input),descriptor=nodeOutputs.discover;
   if(descriptor?.reference!==`preparation/discovery/${descriptor?.sha256}.json`)throw Error('discovery-reference');
   const discovery=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(await readArtifact(descriptor,32768)));
-  if(await guide.validatePublisherURL(item.policy.url,{input,discovery})!==true)throw Error('source-discovery-mismatch');
+  if(await selectedGuide.validatePublisherURL(item.policy.url,{input,discovery})!==true)throw Error('source-discovery-mismatch');
   const result=await item.acquisition.acquire();if(result.state!=='completed')throw Error('source-acquisition-unresolved');
   return result.artifact;
  }};
- const pipeline=createPipeline({storage,policyId,allowPaid:false,adapters:{discover:guide.adapter,acquire},verifyArtifact:async(artifact,{input,node})=>{
+ const pipeline=createPipeline({storage,policyId,allowPaid:false,adapters:{discover:selectedGuide.adapter,acquire},verifyArtifact:async(artifact,{input,node})=>{
   if(node==='discover'){
    if(artifact.reference!==`preparation/discovery/${artifact.sha256}.json`)throw Error('discovery-reference');
    return readArtifact(artifact,32768);
@@ -45,8 +60,11 @@ export async function createRequestAcquisition({metadataBytes,metadataSha256,kno
   await item.acquisition.acquire(); // Completed-only integrity/receipt validation, never a new transfer.
   const bytes=await readArtifact(artifact,item.policy.bytes);if(bytes.length!==item.policy.bytes)throw Error('source-artifact-length');return bytes;
  }});
- return {policyId,async request(request){
+ return pipeline;
+ }
+ return {async request(request){
   const resolved=await guide.resolveRequest(request);admission(resolved.input);
+  const pipeline=await selectedPipeline(resolved.input);
   const result=await pipeline.run({...resolved.input,modelRecipe:recipe,policyRevision});
   return {...result,consumer:resolved.consumer};
  }};
