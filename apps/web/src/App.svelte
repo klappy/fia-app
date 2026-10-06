@@ -19,6 +19,7 @@
  import LibraryPanel from './components/LibraryPanel.svelte';
  import {createVideoDelivery} from './lib/video-delivery.js';
  import {createPreparationIntent,preparationIdentity,preparationKey} from './lib/preparation-intent.js';
+ import {hasGuidePreparation} from './lib/recording-availability.js';
  import {preparationHash} from './lib/prepared-audio.js';
  import {demoVideoSource} from './lib/video-demo.js';
  import {bundledPack,libraryAdapter,hasUnresolvedInstructions} from './lib/library.js';
@@ -53,10 +54,11 @@
  let currentPreparation=$derived(preparationRequest&&preparationState?.key===preparationKey(preparationRequest)?preparationState:null);
  let preparationBusy=$derived(currentPreparation?.status==='preparing');
  let preparationNotice=$derived(currentPreparation?.event!==preparationDismissed?currentPreparation?.message:'');
- async function playRequestedNarration(){
+ async function playRequestedNarration({automatic=false}={}){
+  if(automatic&&(!playbackConsent||automaticOff))return;
   if(!preparationRequest||!online){notice='Connect to prepare or play this recording. You can continue without it.';return;}
   if(preparationBusy){preparationOwner.cancel();return;}
-  if(deferVideo(playRequestedNarration))return;
+  if(deferVideo(()=>playRequestedNarration({automatic})))return;
   const identity=preparationRequest,key=preparationKey(identity),pack=selectedPack,id=activity.id,generation=selectionGeneration;
   cancel();notice='';const playbackOwner=mediaGeneration;started=true;
   const raw=rawPresentation.activities.find(a=>a.id===id);
@@ -66,14 +68,16 @@
   if(!descriptor){
    const result=await preparationOwner.start(identity,{explicit:true});
    if(generation!==selectionGeneration||pack!==selectedPack||id!==activity.id||playbackOwner!==mediaGeneration)return;
-   // A later status notification makes Play available, but never starts sound.
-   if(!result?.immediate)return;
+   // Only the still-owned explicit Begin/Next action may carry playback through preparation.
+   // Passive/manual readiness continues to require another Play.
+   if(!result||(!result.immediate&&!automatic))return;
    descriptor=result.descriptor;
   }
+  if(automatic&&(!playbackConsent||automaticOff))return;
   const owner=++mediaGeneration;mediaAbort=new AbortController();const signal=mediaAbort.signal;mediaLoading=true;
   try{
    const result=await libraryAdapter.playPreparedRecording(descriptor,signal);
-   if(owner!==mediaGeneration||signal.aborted||generation!==selectionGeneration||pack!==selectedPack||id!==activity.id)return;
+   if(owner!==mediaGeneration||signal.aborted||generation!==selectionGeneration||pack!==selectedPack||id!==activity.id||automatic&&(!playbackConsent||automaticOff))return;
    mediaBlob=URL.createObjectURL(new Blob([result.bytes],{type:result.mime}));mediaTiming=null;mediaAlignment=null;mediaLogicalPath=null;
    audioContext={type:'narration',id};playbackConsent=true;dispatch({type:'PLAY'});audio.play(raw.narration||raw.sourceText,mediaBlob,rate,result.playbackRange);persist();
   }catch(error){if(owner===mediaGeneration){preparedRecordings=new globalThis.Map(preparedRecordings);preparedRecordings.delete(key);revokePlayback();notice=error.message;dispatch({type:'PAUSE'});}}
@@ -157,7 +161,8 @@
  let visual=$derived(['image','map'].includes(focal?.kind));
  let videoPending=$derived(visual&&!!matchingVideo&&visualHeard!==focal.id);
  let visualPending=$derived(visual&&!matchingVideo&&session.preferences.describeImages&&!muted&&!!focal.descriptionAudio&&visualHeard!==focal.id);
- let primaryLabel=$derived(mediaLoading||videoDeliveryState.loading?'Cancel loading':playbackPending?'Pause':finished?'Begin again':inTransition?'Continue':automaticOff&&!session.detour?'Continue':isPlaying?'Pause':inlineVideo?'Resume':audio?.active&&audioContext?'Resume':videoPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)?'Play video':visualPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)?'Play':session.detour?(visual?'Return':focal?.kind==='video'?'Play video':focal?.descriptionAudio?'Listen':'Return'):session.status==='waiting'||automaticOff||!activity?.audioSrc?'Continue':session.status==='paused'?'Resume':!started?'Begin':'Play');
+ let primaryStartsPreparation=$derived(!!preparationRequest&&hasGuidePreparation(selectedPack,preparationRequest)&&!automaticOff&&!audioContext&&!preparationBusy&&!mediaLoading&&['ready','paused'].includes(session.status));
+ let primaryLabel=$derived(mediaLoading||videoDeliveryState.loading?'Cancel loading':playbackPending?'Pause':finished?'Begin again':inTransition?'Continue':automaticOff&&!session.detour?'Continue':isPlaying?'Pause':inlineVideo?'Resume':audio?.active&&audioContext?'Resume':videoPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)?'Play video':visualPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)?'Play':session.detour?(visual?'Return':focal?.kind==='video'?'Play video':focal?.descriptionAudio?'Listen':'Return'):primaryStartsPreparation?(!started?'Begin':'Play'):session.status==='waiting'||automaticOff||!activity?.audioSrc?'Continue':session.status==='paused'?'Resume':!started?'Begin':'Play');
  let manualStarts=new Set();let listeningHint=$state(false),hintShown=false;
  let manualAvailable=$derived(!!(preparationRequest||matchingVideo||focal?.kind==='video'&&(focal.src||focal.videoPrepared)||focal?.descriptionAudio||activity?.audioSrc));
  let manualLabel=$derived(preparationBusy?'Cancel preparation':currentPreparation?.status==='failed'?'Retry recording':isPlaying?'Pause':inlineVideo||audioContext&&audio?.active?'Resume':preparationRequest?'Play original recording':'Play');
@@ -216,7 +221,7 @@
   if(!playbackConsent)return;
   if(session.status==='complete'||session.detour||inTransition)return;
   authorizeVisual(false);
-  if(!activity.audioSrc){settleSilent();if(visual&&(session.preferences.autoplayVideo&&matchingVideo||session.preferences.describeImages&&focal?.descriptionAudio)||focal?.kind==='term'&&!muted&&focal.descriptionAudio)describe(focal.id);return;}
+  if(!activity.audioSrc){if(preparationRequest&&hasGuidePreparation(selectedPack,preparationRequest)&&!automaticOff){void playRequestedNarration({automatic:true});return;}settleSilent();if(activity.kind==='scripture'&&session.preferences.readScripture)notice='No recording is available for this Scripture passage. You can read it and continue.';if(visual&&(session.preferences.autoplayVideo&&matchingVideo||session.preferences.describeImages&&focal?.descriptionAudio)||focal?.kind==='term'&&!muted&&focal.descriptionAudio)describe(focal.id);return;}
   if(automaticOff&&visual&&(session.preferences.autoplayVideo&&matchingVideo||session.preferences.describeImages&&focal?.descriptionAudio)){describe(focal.id);return;}
   const id=activity.id,generation=selectionGeneration;
   if(activity.kind==='scripture'&&!session.preferences.readScripture){notice='The passage is ready for you to read. Continue when you’re ready.';return;}
@@ -246,6 +251,7 @@
  function primary(){
   if(!isPlaying&&!playbackPending&&!mediaLoading&&!['Continue','Return','Begin again'].includes(primaryLabel))authorizeVisual();
   if(videoDeliveryState.loading){videoDelivery.cancel();return;}if(mediaLoading){revokePlayback();notice='Playback canceled.';return;}
+  if(primaryStartsPreparation){playbackConsent=true;void playRequestedNarration({automatic:true});return;}
   if(!activity.audioSrc&&!audioContext&&!session.detour&&!inTransition&&!finished&&!videoPending&&!visualPending){navigate({type:'CONTINUE'},true);return;}
   if(inTransition){navigate({type:'CONTINUE'},true);return;}
   if(finished){reset();return;}
@@ -384,7 +390,7 @@
   <button class="menu-control" aria-label="More options" onclick={()=>sheet='menu'}><FiaMark/></button>
   <button class="step-control" aria-label={session.detour?'Return to guide':'Previous activity'} disabled={!session.detour&&session.index===0&&!finished} onclick={()=>navigate({type:'BACK'})}><ChevronLeft size={26}/></button>
   <GuidePrimary playback={inlineVideo||focal?.kind==='video'?videoState:audioState} label={primaryLabel} playing={isPlaying&&!automaticOff} continuing={primaryLabel==='Continue'||primaryLabel==='Return'} onclick={primary}/>
-  {#if (automaticOff||preparationRequest)&&!session.detour&&!inTransition&&!finished}
+  {#if (automaticOff||preparationRequest)&&!primaryStartsPreparation&&manualLabel!==primaryLabel&&!session.detour&&!inTransition&&!finished}
   <button class="step-control" aria-label={manualLabel} title={manualLabel} disabled={!manualAvailable} onclick={()=>manualPlay()}>{#if isPlaying}<Pause size={26}/>{:else}<Play size={26}/>{/if}</button>
   {:else}<button class="step-control" aria-label="Skip to next activity" disabled={finished||!!session.detour} onclick={()=>navigate({type:'CONTINUE'},true)}><ChevronRight size={26}/></button>{/if}
   <button class="replay-control" aria-label="Replay" disabled={finished||!!session.detour} onclick={()=>{if(automaticOff){manualPlay(true);}else if(inlineVideo){const v=videoOwner.node;if(v)v.currentTime=0;videoState={...videoState,elapsed:0};playVideo();}else if(visual&&matchingVideo){openMatchingVideo();}else{cancel();playActivity(true);}}}><RotateCcw size={22}/></button>

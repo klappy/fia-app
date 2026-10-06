@@ -12,6 +12,7 @@ const presentation=JSON.parse(readFileSync('public'+descriptor.presentation.url,
 const deferred=()=>{let resolve;return {promise:new Promise(r=>resolve=r),resolve};};
 const ready={jobId:'a'.repeat(64),resultSha256:'b'.repeat(64),playbackRange:{startSeconds:4,endSeconds:9}};
 beforeEach(()=>{
+ HTMLDialogElement.prototype.showModal=function(){this.open=true;};HTMLDialogElement.prototype.close=function(){this.open=false;};
  audio.active=false;audio.play.mockImplementation((text,src)=>{audio.active=true;audio.src=src;audio.state({playing:true,src,elapsed:4,duration:60});});audio.pause.mockImplementation(()=>audio.state({playing:false,src:audio.src,elapsed:4,duration:60}));audio.stop.mockImplementation(()=>{audio.active=false;audio.state?.({playing:false,src:null,elapsed:0,duration:0});});audio.resume.mockImplementation(()=>{audio.state({playing:true,src:audio.src,elapsed:4,duration:60});return true;});
  vi.stubGlobal('crypto',webcrypto);localStorage.setItem('fia-v3-selected-pack',descriptor.id);
  vi.spyOn(libraryAdapter,'select').mockResolvedValue({descriptor,presentation});
@@ -20,7 +21,8 @@ beforeEach(()=>{
  URL.createObjectURL=vi.fn(()=> 'blob:prepared');URL.revokeObjectURL=vi.fn();HTMLMediaElement.prototype.pause=vi.fn();Element.prototype.scrollTo=vi.fn();
 });
 afterEach(()=>{cleanup();vi.restoreAllMocks();vi.unstubAllGlobals();vi.clearAllMocks();localStorage.clear();});
-async function mount(){render(App);await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toBe(presentation.activities[0].prompt));}
+async function mount({automatic=false}={}){render(App);await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toBe(presentation.activities[0].prompt));if(!automatic)await toggleNarration();}
+async function toggleNarration(){await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Settings',exact:true}));await fireEvent.click(screen.getByRole('checkbox',{name:/Automatic guide narration/}));await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));}
 it('browse and Continue remain silent; explicit original Play requests exact activity and plays warm verified bytes',async()=>{
  await mount();expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();expect(screen.getByRole('button',{name:'Continue',exact:true})).toBeTruthy();
  await fireEvent.click(screen.getByRole('button',{name:'Play original recording',exact:true}));await waitFor(()=>expect(audio.play).toHaveBeenCalledWith(presentation.activities[0].narration,'blob:prepared',1,ready.playbackRange));
@@ -46,9 +48,10 @@ it('preparation notice can be dismissed without canceling work and later state i
  pending.resolve({status:'unavailable',message:'This recording is awaiting review.'});await waitFor(()=>expect(screen.getByText('This recording is awaiting review.')).toBeTruthy());expect(audio.play).not.toHaveBeenCalled();
 });
 it('primary pauses prepared playback and manual hold remains on the same instruction until Continue',async()=>{
- await mount();await fireEvent.click(screen.getByRole('button',{name:'Play original recording'}));await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(1));
- const primary=document.querySelector('.guide-primary')||screen.getAllByRole('button',{name:'Pause',exact:true})[0];expect(screen.queryByText('Recording ready. Press Play to listen.')).toBeNull();await fireEvent.click(primary);expect(audio.pause).toHaveBeenCalled();expect(screen.queryByText('Recording ready. Press Play to listen.')).toBeNull();expect(JSON.parse(localStorage.getItem('fia-v3-progress@1:'+descriptor.id)).session.index).toBe(0);
- const resume=screen.getAllByRole('button',{name:'Resume',exact:true})[0];await fireEvent.click(resume);expect(audio.resume).toHaveBeenCalled();audio.active=false;audio.state({playing:false,src:null,elapsed:0,duration:0});audio.end();
+ await mount({automatic:true});await fireEvent.click(screen.getByRole('button',{name:'Begin'}));await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(1));
+ expect(screen.getAllByRole('button',{name:'Pause',exact:true})).toHaveLength(1);expect(screen.getByRole('button',{name:'Skip to next activity'})).toBeTruthy();
+ const primary=screen.getByRole('button',{name:'Pause',exact:true});expect(screen.queryByText('Recording ready. Press Play to listen.')).toBeNull();await fireEvent.click(primary);expect(audio.pause).toHaveBeenCalled();expect(screen.queryByText('Recording ready. Press Play to listen.')).toBeNull();expect(JSON.parse(localStorage.getItem('fia-v3-progress@1:'+descriptor.id)).session.index).toBe(0);
+ expect(screen.getAllByRole('button',{name:'Resume',exact:true})).toHaveLength(1);const resume=screen.getByRole('button',{name:'Resume',exact:true});await fireEvent.click(resume);expect(audio.resume).toHaveBeenCalled();audio.active=false;audio.state({playing:false,src:null,elapsed:0,duration:0});audio.end();
  await waitFor(()=>expect(screen.getByRole('button',{name:'Continue',exact:true})).toBeTruthy());expect(JSON.parse(localStorage.getItem('fia-v3-progress@1:'+descriptor.id)).session.index).toBe(0);
  await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));await waitFor(()=>expect(JSON.parse(localStorage.getItem('fia-v3-progress@1:'+descriptor.id)).session.index).toBe(1));expect(libraryAdapter.prepareRecording).toHaveBeenCalledTimes(1);
 });
@@ -72,4 +75,60 @@ it('failed playback keeps its actionable error instead of clearing preparation g
  libraryAdapter.playPreparedRecording.mockRejectedValue(new Error('The prepared recording changed. Press Play to check again.'));
  await mount();await fireEvent.click(screen.getByRole('button',{name:'Play original recording'}));
  await waitFor(()=>expect(screen.getByText('The prepared recording changed. Press Play to check again.')).toBeTruthy());expect(audio.play).not.toHaveBeenCalled();
+});
+
+it('manual narration keeps Continue in the center and one side Pause/Resume',async()=>{
+ await mount();
+ await fireEvent.click(screen.getByRole('button',{name:'Play original recording'}));await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(1));
+ expect(screen.getByRole('button',{name:'Continue',exact:true}).classList.contains('guide-primary')).toBe(true);
+ expect(screen.getAllByRole('button',{name:'Pause',exact:true})).toHaveLength(1);await fireEvent.click(screen.getByRole('button',{name:'Pause',exact:true}));
+ expect(screen.getByRole('button',{name:'Continue',exact:true})).toBeTruthy();expect(screen.getAllByRole('button',{name:'Resume',exact:true})).toHaveLength(1);
+});
+
+
+it('explicit Next with automatic narration prepares only its destination and continues owned delayed readiness',async()=>{
+ libraryAdapter.prepareRecording.mockResolvedValue({status:'preparing',id:'a'.repeat(64)});
+ await mount({automatic:true});expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();
+ await fireEvent.click(screen.getByRole('button',{name:'Skip to next activity',exact:true}));
+ await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(1),{timeout:2500});
+ expect(libraryAdapter.prepareRecording).toHaveBeenCalledTimes(1);expect(libraryAdapter.prepareRecording.mock.calls[0][0].activityId).toBe('S01-U002');
+ expect(audio.play).toHaveBeenCalledWith(presentation.activities[1].narration,'blob:prepared',1,ready.playbackRange);
+ expect(screen.getAllByRole('button',{name:'Pause',exact:true})).toHaveLength(1);
+});
+for(const phase of ['preparation','bytes'])it(`toggling automatic narration off/on revokes pending ${phase} playback`,async()=>{
+ const pending=deferred();if(phase==='preparation')libraryAdapter.prepareRecording.mockReturnValue(pending.promise);else libraryAdapter.playPreparedRecording.mockReturnValue(pending.promise);
+ await mount({automatic:true});await fireEvent.click(screen.getByRole('button',{name:'Skip to next activity',exact:true}));
+ await waitFor(()=>expect(phase==='preparation'?libraryAdapter.prepareRecording:libraryAdapter.playPreparedRecording).toHaveBeenCalledTimes(1));
+ await toggleNarration();await toggleNarration();
+ pending.resolve(phase==='preparation'?{status:'ready',value:{}}:{bytes:new Uint8Array(2),mime:'audio/mpeg',playbackRange:ready.playbackRange});
+ await new Promise(r=>setTimeout(r,20));expect(audio.play).not.toHaveBeenCalled();expect(libraryAdapter.prepareRecording).toHaveBeenCalledTimes(1);
+});
+it('leaving an automatic preparation destination discards its late ready result',async()=>{
+ const pending=deferred();libraryAdapter.prepareRecording.mockReturnValue(pending.promise);await mount({automatic:true});await fireEvent.click(screen.getByRole('button',{name:'Skip to next activity',exact:true}));await waitFor(()=>expect(libraryAdapter.prepareRecording).toHaveBeenCalledTimes(1));
+ await fireEvent.click(screen.getByRole('button',{name:'Previous activity'}));pending.resolve({status:'ready',value:{}});await new Promise(r=>setTimeout(r,20));expect(audio.play).not.toHaveBeenCalled();expect(libraryAdapter.verifyPreparedRecording).not.toHaveBeenCalled();
+});
+
+
+it('first Begin prepares the current guide without skipping and owns delayed playback',async()=>{
+ libraryAdapter.prepareRecording.mockResolvedValue({status:'preparing',id:'a'.repeat(64)});await mount({automatic:true});
+ expect(audio.play).not.toHaveBeenCalled();await fireEvent.click(screen.getByRole('button',{name:'Begin',exact:true}));
+ await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(1),{timeout:2500});expect(libraryAdapter.prepareRecording.mock.calls[0][0].activityId).toBe('S01-U001');
+ expect(JSON.parse(localStorage.getItem('fia-v3-progress@1:'+descriptor.id)).session.index).toBe(0);
+});
+it('automatic Scripture with no published recording explains the absence and keeps text available',async()=>{
+ await mount({automatic:true});await fireEvent.click(screen.getByRole('button',{name:'Skip to next activity'}));await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(1));
+ await fireEvent.click(screen.getByRole('button',{name:'Skip to next activity'}));
+ await waitFor(()=>expect(screen.getByText('No recording is available for this Scripture passage. You can read it and continue.')).toBeTruthy());
+ expect(screen.getByRole('region',{name:'Scripture passage'})).toBeTruthy();expect(screen.getByRole('button',{name:'Continue',exact:true})).toBeTruthy();expect(libraryAdapter.prepareRecording).toHaveBeenCalledTimes(1);
+});
+
+it('restored paused requestable instruction offers Play instead of skipping unheard text',async()=>{
+ await mount({automatic:true});await fireEvent.click(screen.getByRole('button',{name:'Begin'}));await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(1));await fireEvent.click(screen.getByRole('button',{name:'Pause',exact:true}));
+ cleanup();audio.active=false;await mount({automatic:true});expect(screen.getByRole('button',{name:'Play',exact:true}).classList.contains('guide-primary')).toBe(true);expect(audio.play).toHaveBeenCalledTimes(1);
+ await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(2));expect(libraryAdapter.prepareRecording.mock.calls.at(-1)[0].activityId).toBe('S01-U001');
+});
+it('automatic-mode Replay reuses the same current range without preparing a later activity',async()=>{
+ await mount({automatic:true});await fireEvent.click(screen.getByRole('button',{name:'Begin'}));await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(1));
+ audio.active=false;audio.state({playing:false,src:null,elapsed:0,duration:0});audio.end();await waitFor(()=>expect(screen.getByRole('button',{name:'Continue',exact:true})).toBeTruthy());
+ await fireEvent.click(screen.getByRole('button',{name:'Replay'}));await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(2));expect(audio.play.mock.calls[1][3]).toEqual(ready.playbackRange);expect(libraryAdapter.prepareRecording).toHaveBeenCalledTimes(1);
 });
