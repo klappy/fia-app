@@ -22,15 +22,21 @@ export function observedModel(res) {
   return typeof inner?.model_version === 'string' ? inner.model_version : null;
 }
 
-export async function loadRawCache(rawDir) {
+// required: derive, score (arms B/D), report and replay read paid evidence, so a missing or empty raw dir is a
+// refusal, never an empty cache. Optional only for the pre-import gates (snippet probe check, observed usage).
+export async function loadRawCache(rawDir, {required = false} = {}) {
   const cache = new Map();
   let names = [];
-  try { names = await readdir(rawDir); } catch (e) { if (e.code !== 'ENOENT') throw e; }
+  try { names = await readdir(rawDir); } catch (e) {
+    if (e.code !== 'ENOENT') throw e;
+    if (required) throw Error(`raw-cache-missing:${rawDir} (no imported responses: run --phase import first)`);
+  }
   for (const name of names.filter(n => n.endsWith('.json')).sort()) {
     const record = JSON.parse(await readFile(join(rawDir, name), 'utf8'));
     if (`${record.rawKey}.json` !== name) throw Error(`raw-file-name:${name}`);
     cache.set(record.rawKey, record);
   }
+  if (required && cache.size === 0) throw Error(`raw-cache-empty:${rawDir} (no imported responses: run --phase import first)`);
   return cache;
 }
 

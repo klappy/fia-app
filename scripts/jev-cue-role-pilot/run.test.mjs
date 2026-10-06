@@ -8,7 +8,7 @@ import {fileURLToPath} from 'node:url';
 import {ROLES, sha256, canonical} from '../../server/fia/preparation/jev/adapter.mjs';
 import {assertCaseSet} from './cases.mjs';
 import {main, loadFixed, captureRequests, checkRequestCeilings, composeAdapter, bootstrapCalibration, calibrationRecord, importRows, assertLanguageAllowed, CEILINGS, BOOTSTRAP_MODEL_REVISION, requestsFile, snippetFor, snippetPhase, snippetRequests, batchCount, goldStatus, assertGold, reconcileGold, scoreArm, MISSING_LABEL, DUPLICATES_DIR, REFUSED_DIR, BREACH_FILE, LATENCY_MEASUREMENT} from './run.mjs';
-import {createReplayAI, normalizeJevResponse, rawKeyFor} from './providers/replay.mjs';
+import {createReplayAI, normalizeJevResponse, rawKeyFor, loadRawCache} from './providers/replay.mjs';
 import {fireRequests} from './providers/rest.mjs';
 import {scoreSet, seriousErrors, needsReviewCorrect, verdict, costTerms} from './metrics.mjs';
 
@@ -220,6 +220,66 @@ test('end to end offline: requests → fake connector rows → import → derive
     assert.doesNotMatch(priced, /aiCost|reviewOnlyPerCase|"costPerCorrect"/);
     const pm = JSON.parse(priced);
     for (const L of Object.values(pm.languages)) for (const S of Object.values(L.sets)) for (const arm of Object.values(S)) assert.deepEqual(Object.keys(arm.cost).sort(), ['costPerCorrectRatio', 'priced', 'reviewMinutes']);
+  } finally { globalThis.fetch = realFetch; await rm(dir, {recursive: true, force: true}); }
+});
+
+test('fail closed: derive, score (B/D) and report refuse a missing or empty raw cache; nothing is written', async () => {
+  const dir = await tmp();
+  try {
+    await writeFile(join(dir, 'cases.json'), JSON.stringify(withGold(casesDoc)));
+    const ev = join(dir, 'ev');
+    const common = ['--cases', join(dir, 'cases.json'), '--evidence-dir', ev, '--calibration', join(dir, 'calibration.json')];
+    const quiet = {log() {}, warn() {}};
+    assert.equal(await main(['--phase', 'requests', '--set', 'all', ...common], quiet), 0);
+    await assert.rejects(loadRawCache(join(ev, 'raw'), {required: true}), /raw-cache-missing/);
+    assert.equal((await loadRawCache(join(ev, 'raw'))).size, 0, 'pre-import gates still read a missing dir as empty');
+    for (const phase of [['derive', '--language', 'eng'], ['score', '--language', 'eng'], ['score', '--language', 'eng', '--arm', 'B'], ['score', '--language', 'eng', '--arm', 'D', '--set', 'heldout', '--pass', '2'], ['report']]) {
+      await assert.rejects(main(['--phase', ...phase, ...common], quiet), /raw-cache-missing/, phase.join(' '));
+    }
+    await mkdir(join(ev, 'raw'));
+    await writeFile(join(ev, 'raw', 'notes.txt'), 'not a record');
+    await assert.rejects(main(['--phase', 'score', '--language', 'eng', ...common], quiet), /raw-cache-empty/);
+    await assert.rejects(main(['--phase', 'report', ...common], quiet), /raw-cache-empty/);
+    assert.deepEqual((await readdir(ev)).sort(), ['raw', 'requests.json'], 'no decisions or metrics.json written');
+    // Arms A and C make no provider call, so they still score without a raw cache.
+    assert.equal(await main(['--phase', 'score', '--language', 'eng', '--arm', 'C', '--set', 'dev', ...common], quiet), 0);
+  } finally { await rm(dir, {recursive: true, force: true}); }
+});
+
+test('fail closed: pass-2 raw records without evidence/requests-pass2.json refuse score and report instead of flips=0', async () => {
+  const dir = await tmp();
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = () => { throw Error('network-forbidden-in-tests'); };
+  try {
+    const doc = withGold(casesDoc);
+    const goldById = Object.fromEntries(doc.cases.map(c => [c.caseId, c.gold]));
+    await writeFile(join(dir, 'cases.json'), JSON.stringify(doc));
+    const ev = join(dir, 'ev');
+    const common = ['--cases', join(dir, 'cases.json'), '--evidence-dir', ev, '--calibration', join(dir, 'calibration.json')];
+    const quiet = {log() {}, warn() {}};
+    assert.equal(await main(['--phase', 'requests', '--set', 'all', ...common], quiet), 0);
+    assert.equal(await main(['--phase', 'requests', '--pass', '2', ...common], quiet), 0);
+    const p1 = JSON.parse(await readFile(requestsFile(ev, 1), 'utf8')), p2 = JSON.parse(await readFile(requestsFile(ev, 2), 'utf8'));
+    await writeFile(join(dir, 'out1.json'), JSON.stringify(fakeRows(p1, goldById)));
+    await writeFile(join(dir, 'out2.json'), JSON.stringify(fakeRows(p2, goldById)));
+    assert.equal(await main(['--phase', 'import', '--from', join(dir, 'out1.json'), ...common], quiet), 0);
+    assert.equal(await main(['--phase', 'import', '--pass', '2', '--from', join(dir, 'out2.json'), ...common], quiet), 0);
+    assert.equal(await main(['--phase', 'derive', '--language', 'eng', ...common], quiet), 0);
+    const p2Text = await readFile(requestsFile(ev, 2), 'utf8');
+    await rm(requestsFile(ev, 2));
+    await assert.rejects(main(['--phase', 'score', '--language', 'eng', ...common], quiet), /requests-pass2-missing/);
+    await assert.rejects(main(['--phase', 'score', '--language', 'eng', '--arm', 'B', '--set', 'heldout', ...common], quiet), /requests-pass2-missing/);
+    await assert.rejects(readdir(join(ev, 'decisions')), /ENOENT/, 'refused before any decisions file is written');
+    // An explicit pass-1 score does not read pass 2; the report still refuses, so flips never read as 0.
+    assert.equal(await main(['--phase', 'score', '--language', 'eng', '--pass', '1', ...common], quiet), 0);
+    await assert.rejects(main(['--phase', 'report', ...common], quiet), /requests-pass2-missing/);
+    await assert.rejects(readFile(join(ev, 'metrics.json')), /ENOENT/);
+    // Regenerating pass 2 is deterministic: the same bytes, and score + report then run with the rerun.
+    assert.equal(await main(['--phase', 'requests', '--pass', '2', ...common], quiet), 0);
+    assert.equal(await readFile(requestsFile(ev, 2), 'utf8'), p2Text);
+    assert.equal(await main(['--phase', 'score', '--language', 'eng', ...common], quiet), 0);
+    assert.equal(await main(['--phase', 'report', ...common], quiet), 0);
+    assert.equal(JSON.parse(await readFile(join(ev, 'metrics.json'), 'utf8')).languages.eng.sets.heldout.B.rerun, true);
   } finally { globalThis.fetch = realFetch; await rm(dir, {recursive: true, force: true}); }
 });
 

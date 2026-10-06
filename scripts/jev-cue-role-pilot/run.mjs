@@ -387,6 +387,19 @@ function compact(e) {
   return {status: e.status, reason: e.reason, cacheKey: e.cacheKey, decision: e.decision, provenance};
 }
 
+/** Refuses a scored or reported pass 2 that would read as flips=0: raw holds pass-2 records but requests-pass2.json is gone. */
+export async function assertPass2Requests(evidenceDir, cache) {
+  const n = [...cache.values()].filter(r => r.pass === 2).length;
+  if (n && !(await exists(requestsFile(evidenceDir, 2)))) throw Error(`requests-pass2-missing:${requestsFile(evidenceDir, 2)} (raw holds ${n} pass-2 records; regenerate it with --phase requests --pass 2, which is deterministic)`);
+}
+
+/** The raw cache for phases that replay paid evidence: refuses a missing/empty raw dir and an orphaned pass 2. */
+export async function loadEvidenceCache(evidenceDir) {
+  const cache = await loadRawCache(join(evidenceDir, 'raw'), {required: true});
+  await assertPass2Requests(evidenceDir, cache);
+  return cache;
+}
+
 async function rawKeysFor(evidenceDir, pass) {
   try { return new Map((await readRequests(evidenceDir, pass)).map(r => [r.caseId, r.rawKey])); } catch { return new Map(); }
 }
@@ -396,7 +409,7 @@ export async function deriveCalibration({cases, language, evidenceDir, fixed}) {
   assertLanguageAllowed(cases, language);
   const dev = selectCases(cases, {set: 'dev', language});
   assertGold(dev, cases);
-  const cache = await loadRawCache(join(evidenceDir, 'raw'));
+  const cache = await loadRawCache(join(evidenceDir, 'raw'), {required: true});
   const keys = await rawKeysFor(evidenceDir, 1);
   const models = new Set();
   for (const c of dev) { const rec = cache.get(keys.get(c.caseId)); if (!rec) throw Error(`raw-missing:${c.caseId}`); models.add(observedModel(rec.response)); }
@@ -446,7 +459,8 @@ export async function scoreArm({cases, language, set, arm, pass = 1, evidenceDir
     const entry = calibration.languages?.[language];
     if (!entry) throw Error(`calibration-missing:${language} (run --phase derive --language ${language})`);
     exploratory = entry.status !== 'calibrated';
-    const cache = await loadRawCache(join(evidenceDir, 'raw'));
+    const cache = await loadRawCache(join(evidenceDir, 'raw'), {required: true});
+    if (pass === 2 && !(await exists(requestsFile(evidenceDir, 2)))) throw Error(`requests-pass2-missing:${requestsFile(evidenceDir, 2)}`);
     adapter = await composeAdapter({fixed, AI: createReplayAI({cache, pass}), calibration: entry.record, resolveExplicit: arm === 'B' ? rules.resolveExplicit : null, modelRevision: entry.record.modelRevision});
   }
   for (const c of rows) envelopes[c.caseId] = compact(await adapter.decide(c.input));
@@ -462,7 +476,7 @@ export const LATENCY_MEASUREMENT = Object.freeze({latency: `per-call ms under co
 
 /** report phase: deterministic metrics.json (no clock; rates, when supplied, leave only a unitless cost ratio). */
 export async function buildReport({cases, evidenceDir, calibration, rates = {}}) {
-  const cache = await loadRawCache(join(evidenceDir, 'raw'));
+  const cache = await loadEvidenceCache(evidenceDir);
   const keys = {1: await rawKeysFor(evidenceDir, 1), 2: await rawKeysFor(evidenceDir, 2)};
   const out = {schema: 'fia-cue-role-pilot-metrics@1', armLabels: {A: ARM_A_LABEL, B: `rules+jev (${ARM_A_LABEL})`, C: ARM_C.label, D: 'jev-only-probe'}, ceilings: CEILINGS, measurement: LATENCY_MEASUREMENT, languages: {}, keys: []};
   for (const language of ['eng', 'spa']) {
@@ -530,6 +544,9 @@ const num = x => (x === undefined ? null : Number(x));
 
 async function runAllScores({cases, language, evidenceDir, calibration, fixed, rules, arms = ARMS, sets = SETS, passes = [1, 2]}) {
   const written = [];
+  // Refuse before writing any decisions file: B/D replay the raw cache, and a pass-2 rerun with its requests
+  // file missing would be skipped below and later read as flips=0.
+  if (arms.some(a => a === 'B' || a === 'D')) { const cache = await loadRawCache(join(evidenceDir, 'raw'), {required: true}); if (passes.includes(2)) await assertPass2Requests(evidenceDir, cache); }
   for (const set of sets) for (const arm of arms) for (const pass of passes) {
     if (pass === 2 && (set !== 'heldout' || !['B', 'D'].includes(arm))) continue;
     if (pass === 2 && !(await exists(requestsFile(evidenceDir, 2)))) continue;
