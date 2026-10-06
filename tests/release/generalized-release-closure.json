@@ -946,8 +946,13 @@
     },
     {
       "path": "apps/web/src/App.svelte",
-      "sha256": "a2a0f1b13e8b13d63c1d8ef39b184c9f66279f951b44799fa99f006ff7305849",
+      "sha256": "c2e488529a6c5783a4c566476b7722bbc02ffe847200e1c1cb4bce0a21e3c0d7",
       "originalSha256": "1c79777ea001eafc53bd00e9e5ef2e0972bde20178e80195c2018871a03260af"
+    },
+    {
+      "path": "apps/web/src/app.css",
+      "sha256": "ffccbde46a223735135e7f3a1f359b5167c717f0e6471fc373b5fe302e7369ee",
+      "originalSha256": "66ca571fd281f121dcda5cd7594f65a0c4e98e631e4d2f25548f70f3b2edfb0f"
     },
     {
       "path": "apps/web/src/components/AlignedReading.svelte",
@@ -971,7 +976,7 @@
     },
     {
       "path": "apps/web/src/components/Sheet.svelte",
-      "sha256": "2f99d3c5f95946bc6951c1701331533ed37a45dd65f1c66bb563579c7d9897de",
+      "sha256": "5275eac2d9257f3e16c5ed57983c903954ef7ba43d559ef9973cee2ed8b6f182",
       "originalSha256": "5e20d1f218b47ba204a33f79c225f43f2ae1db52453a0a7041575fb2ecc5b5a2"
     },
     {
@@ -1019,6 +1024,10 @@
     {
       "path": "apps/web/src/lib/media-options.js",
       "sha256": "4723ee27c344d92a67c04168e3ac5f8db2b9d96f1d7a1610c576578b3f6a7ebe"
+    },
+    {
+      "path": "apps/web/src/lib/notice-scope.js",
+      "sha256": "55c87e07d4ea548a240cd84703f3cf83b1c15fe80c7a312405c7252999610b27"
     },
     {
       "path": "apps/web/src/lib/preparation-intent.js",
@@ -1116,6 +1125,14 @@
     {
       "path": "apps/web/tests/multipack-app.spec.js",
       "sha256": "4d0e41b7f273583e9b422c08b16798929a66d7b0ae5e9908cc8c6fdd823b90db"
+    },
+    {
+      "path": "apps/web/tests/notice-scope.spec.js",
+      "sha256": "19e45d8e0fdcdb39d5e6bea5d5128c67f2f37d60284f137f773288c9dae1aafd"
+    },
+    {
+      "path": "apps/web/tests/notice-scope.test.js",
+      "sha256": "ce3fd5e0c8397c7cb11007c9e077095c26a1fb67e3ac1a3aadb85321f13bd065"
     },
     {
       "path": "apps/web/tests/offline-execution.test.js",
@@ -1266,6 +1283,10 @@
       "sha256": "1ad4f5e4c054d5dae2ddde6b0cb430bae9bcd335b3063f6e5e4b00256d32f817"
     },
     {
+      "path": "e2e/notice-scope.spec.js",
+      "sha256": "a6740658814d0f5bf36f0e23ebaadd238d8ca35ca5efb5496b13f7968b1e8dbe"
+    },
+    {
       "path": "e2e/scroll-follow.spec.js",
       "sha256": "b0b01424c647081f3acd3fc82b5e64a58e6aa601256ebd23fa89e870f203a78b"
     },
@@ -1324,6 +1345,10 @@
     {
       "path": "release/changes/known-source-transaction-replay.md",
       "sha256": "8147cecd91b5d5aa93a93c48ef9f836bb99e9f03015d48ef1ae1cd8b58eb365c"
+    },
+    {
+      "path": "release/changes/notices-belong-to-their-passage.md",
+      "sha256": "89f8715f9ce7ea2560f9b0da2c24425985c249242ea207d7c90c2373d43deb10"
     },
     {
       "path": "release/changes/on-demand-playback-recovery.md",
