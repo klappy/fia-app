@@ -67,7 +67,7 @@ export async function projectExecutablePresentation({basePresentation,baseRevisi
   // provider/candidate order or inferred temporal sequence.
   const assets=Object.keys(base.assets).filter(id=>selected.has(id));perActivity.set(id,{record,assets,unresolved,anchor:input.sourceAnchor});
  }
- const decisionEvidenceSha256=await sha256(encode(decisions)),recipeSha256=await sha256(recipeRevision),transitions=new Map();
+ const decisionEvidenceSha256=await sha256(encode({decisions,transitionEvidence})),recipeSha256=await sha256(recipeRevision),transitions=new Map();
  for(const t of transitionEvidence){need(exact(t,['activityId','sourceUnitId','sourceTextSha256','status','action','reason','evidenceSha256','policySha256'])&&!transitions.has(t.activityId)&&['resolved','unknown'].includes(t.status)&&['manual-continue','advance-after-narration'].includes(t.action)&&digest(t.evidenceSha256)&&digest(t.policySha256)&&typeof t.reason==='string'&&t.reason,'execution-transition-evidence');const a=base.activities.find(a=>a.id===t.activityId);need(a&&a.sourceUnitId===t.sourceUnitId&&(a.sourceSha256??a.sourceTextSha256)===t.sourceTextSha256&&(t.status!=='unknown'||t.action==='manual-continue'),'execution-transition-binding');transitions.set(t.activityId,t);}
  const provenance={schema:'fia-executable-presentation-provenance@1',baseRevision,sourceRevision,canonicalOrderSha256,decisionEvidenceSha256,recipeRevision,transitions:[],narrationOwners:[],unresolved:[]};
  const activities=[],existingIds=new Set(base.activities.map(a=>a.id));need(existingIds.size===base.activities.length,'execution-base-ids');
