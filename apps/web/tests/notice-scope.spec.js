@@ -39,7 +39,8 @@ async function start(id,index=0,{descriptor}={}){
  await waitFor(()=>expect(heading()).toBe(pack.presentation.activities[index].prompt));return pack;
 }
 // Continue from the guide screen before the first reading: automatic Scripture finds no recording.
-async function raiseScriptureNotice(){await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));await waitFor(()=>expect(notices()).toContain(scriptureNotice));}
+// R5: the primary checks availability first; act once it shows the checked action.
+async function raiseScriptureNotice(){await fireEvent.click(await screen.findByRole('button',{name:'Continue',exact:true}));await waitFor(()=>expect(notices()).toContain(scriptureNotice));}
 async function menu(item){await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',item==='Language'?{name:/^Language/}:{name:item,exact:true}));}
 const card=title=>screen.getAllByRole('article').find(a=>within(a).queryByRole('heading',{name:title,exact:true}));
 async function openPassage(title){await waitFor(()=>expect(card(title)).toBeTruthy());await fireEvent.click(within(card(title)).getByRole('button',{name:/Open passage|Resume passage/}));}
@@ -55,7 +56,7 @@ function executable(id,first='advance-after-narration'){
  presentation.activities[0].execution={narration:{action:'play-bound-audio',artifact:{id:'server-authoritative-reference',sha256:h}},focalAssetId:presentation.activities[0].assetId??null,completion:{action:first}};
  packs.set(id,{descriptor:pack.descriptor,presentation});localStorage.setItem('fia-v3-selected-pack',id);return presentation;
 }
-async function beginNarration(id){const presentation=executable(id);render(App);await waitFor(()=>expect(heading()).toBe(presentation.activities[0].prompt));await fireEvent.click(screen.getByRole('button',{name:'Begin',exact:true}));await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(1));return presentation;}
+async function beginNarration(id){const presentation=executable(id);render(App);await waitFor(()=>expect(heading()).toBe(presentation.activities[0].prompt));await fireEvent.click(await screen.findByRole('button',{name:'Begin',exact:true}));await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(1));return presentation;}
 
 it('C1: a Scripture notice on Mark 1:21–28 is gone when Mark 1:29–34 renders its heading',async()=>{
  await start('eng.MRK-1-21-28',1);await raiseScriptureNotice();
