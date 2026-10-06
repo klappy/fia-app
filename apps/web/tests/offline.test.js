@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 import {createHash,webcrypto} from 'node:crypto';
+import {createVideoDelivery} from '../src/lib/video-delivery.js';
 const bytes={'/index.html':'app','/audio.m4a':'recording','/video.mp4':'012345'};
 const manifest=(revision='r1')=>({schema:1,packId:'fia-mark-authentic',revision,files:Object.entries(bytes).map(([path,body])=>({path,bytes:Buffer.byteLength(body),sha256:createHash('sha256').update(body).digest('hex'),group:path.endsWith('.m4a')?'audio':path.endsWith('.mp4')?'video':'core'}))});
 function worker(){
@@ -189,4 +190,35 @@ test('passage-only Scripture without legacy audio validates pins, reuses saved b
  const store=w.stores.get('fia-v3-download-metadata@1');for(const [k,r]of store){if(k.includes('active')){const a=await r.clone().json();a.files.find(x=>x.path===f.path).scriptureRangeReviewSha256='9'.repeat(64);store.set(k,Response.json(a));}}
  assert.equal((await w.message({type:'MEDIA_STATUS',packId:id,revision})).savedFiles.length,0);
  for(const change of [{scriptureCanonicalTextSha256:null},{scriptureAlignment:{}},{logicalSourceSha256:'4'.repeat(64)},{scriptureHighlighting:'word'},{path:'/audio/scripture/eng.MRK-2-1-12/BSB.opus'}]){const bad=structuredClone(m);Object.assign(bad.files.find(x=>x.group==='audio'),change);const isolated=worker();isolated.reply(`/offline/${id}.json`,Response.json(bad));assert.equal((await isolated.message(args)).ok,false);}
+});
+
+// H1 (S3): the page builds its video request from its last MEDIA_STATUS snapshot, while the SW re-chooses the
+// file on every play. A sized download committed (or removed) after the snapshot used to block every play
+// with "Verified video identity mismatch." until reload. Playback must follow the SW and report the change.
+test('H1: a sized video download committed or removed after the page snapshot still plays what the service worker serves',async()=>{
+ const w=worker(),id='eng.MRK-1-1-13',revision='a'.repeat(64),deliveryRevision='b'.repeat(64),source='https://publisher.test/video.mp4',url=`https://transcode.klappy.dev/video/preset=fia,q=medium,f=mp4/${source}`,sized=`https://transcode.klappy.dev/video/preset=fia,q=medium,f=mp4,size=xlarge/${source}`;
+ const m={...manifest(),packId:id,presentationRevision:revision,deliveryRevision},file=m.files.find(f=>f.group==='video');
+ Object.assign(file,{mime:'video/mp4',deliveryURL:url,sourceSha256:'c'.repeat(64),sourceBytes:100,logicalSourceSha256:'d'.repeat(64),logicalSourceBytes:6,deliveryRevision,timing:{status:'not-applicable'}});
+ Object.assign(file,{defaultSize:'large',variants:{large:{...file}}});
+ const sha=body=>createHash('sha256').update(body).digest('hex'),pin={sha256:sha('012345'),bytes:6},receipt={sha256:sha('SIZED-LARGE'),bytes:11};
+ w.reply('/offline/'+id+'.json',Response.json(m));w.reply(new URL(url).pathname,new Response('012345',{headers:{'Content-Type':'video/mp4'}}));w.reply(new URL(sized).pathname,new Response('SIZED-LARGE',{headers:{'Content-Type':'video/mp4'}}));
+ const pack={id,revision},changes=[],played=[];let requests=0;
+ // Same wiring as App.svelte: the SW's MEDIA_PLAY reply feeds the page's video owner.
+ const owner=createVideoDelivery({fetch:async request=>{const r=await w.message({type:'MEDIA_PLAY',packId:id,revision,deliveryRevision:request.revision,path:request.path,size:request.size,requestId:`play-${++requests}`},null,'page');if(!r.ok)throw Error(r.error);return r;},create:result=>{played.push(new TextDecoder().decode(result.bytes));return `blob:${played.length}`;},revoke:()=>{},publish:()=>{},onchange:change=>changes.push(change)});
+ const snapshot=async()=>{const s=await w.message({type:'MEDIA_STATUS',packId:id,revision},null,'page');return {deliveryRevision:s.deliveryRevision,online:new Map(s.files.map(f=>[f.path,f])),saved:new Map(s.savedFiles.map(f=>[f.path,f]))};};
+ // App.svelte playVideo: file = savedMedia.get(path) || catalog.variants[streamingSize], from the snapshot.
+ const play=(page,identity)=>{const catalog=page.online.get(file.path);return owner.load({pack,path:file.path,revision:page.deliveryRevision,identity,file:page.saved.get(file.path)||catalog.variants.large,size:'large'});};
+ // Trigger (a): snapshot first, then a Large download commits a receipt in the same page, then play.
+ const stale=await snapshot();assert.equal(stale.saved.size,0);
+ assert.equal((await w.message({type:'DOWNLOAD_START',packId:id,selection:'all',sizes:{video:'large'}},null,'page')).ok,true);
+ assert.equal((await w.message({type:'DOWNLOAD_STATUS',packId:id})).active.files.find(f=>f.path===file.path).sha256,receipt.sha256);
+ assert.equal(await play(stale,'after-commit'),'blob:1');assert.deepEqual(played,['SIZED-LARGE']);
+ assert.equal(changes.length,1);assert.deepEqual(changes[0].requested,pin);assert.deepEqual(changes[0].served,receipt);
+ // A fresh snapshot (what a reload gives) agrees with the SW: no change is reported.
+ owner.clear();const fresh=await snapshot();assert.equal(fresh.saved.get(file.path).sha256,receipt.sha256);
+ assert.equal(await play(fresh,'fresh'),'blob:2');assert.equal(changes.length,1);
+ // Trigger (d): Remove from device after that snapshot, then play: the SW serves the pin again.
+ owner.clear();assert.equal((await w.message({type:'DOWNLOAD_REMOVE',packId:id},null,'page')).ok,true);
+ assert.equal(await play(fresh,'after-remove'),'blob:3');assert.deepEqual(played,['SIZED-LARGE','SIZED-LARGE','012345']);
+ assert.equal(changes.length,2);assert.deepEqual(changes[1].requested,receipt);assert.deepEqual(changes[1].served,pin);
 });

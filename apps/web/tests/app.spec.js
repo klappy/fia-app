@@ -631,3 +631,26 @@ it('offline saved focal image remains available without requesting media',async(
 it('online unprepared visual does not falsely promise a download can prepare it',async()=>{
  vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:null,files:[]});await startAt('S02-U005');expect(screen.getByText(/not available online yet/)).toBeTruthy();expect(screen.queryByRole('button',{name:'Open Downloads',exact:true})).toBeNull();
 });
+// S3 phase 1 (H1): the page's request comes from its last media snapshot; the service worker re-chooses on every play.
+it('C1: video plays the service worker choice when a sized download committed after the snapshot, and refreshes the snapshot',async()=>{
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});const path=assets.a184.src;
+ const status=vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[{path,bytes:3,sha256:'pin',group:'video'}],savedFiles:[]});
+ const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(5).buffer,mime:'video/mp4',timing:{status:'not-applicable'},file:{path,sha256:'receipt',bytes:5}});
+ vi.stubGlobal('URL',class extends URL{static createObjectURL(){return 'blob:served-video';}static revokeObjectURL(){}});
+ const info=vi.spyOn(console,'info').mockImplementation(()=>{});
+ await startAt('S02-U005','waiting');
+ await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passage resources'}));
+ await fireEvent.click(within(screen.getByText('Videos',{selector:'summary'}).parentElement).getByRole('button',{name:assets.a184.subtitle||assets.a184.title,exact:true}));await settle();
+ const before=status.mock.calls.length;
+ await fireEvent.click(screen.getByRole('button',{name:'Play video',exact:true}));await settle();await settle();await settle();
+ expect(request).toHaveBeenCalledTimes(1);expect(document.querySelector('video').getAttribute('src')).toBe('blob:served-video');expect(HTMLMediaElement.prototype.play).toHaveBeenCalled();
+ expect(document.body.textContent).not.toMatch(/mismatch|can’t play right now/);
+ expect(status.mock.calls.length).toBe(before+1);
+ expect(info).toHaveBeenCalledWith('[fia.media]',expect.objectContaining({event:'video-served',path,requested:{sha256:'pin',bytes:3},served:{sha256:'receipt',bytes:5}}));
+});
+it('C3: a Downloads status report refreshes the page media snapshot',async()=>{
+ const status=vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[],savedFiles:[]});
+ await startAt('S02-U005');const before=status.mock.calls.length;
+ await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Downloads',exact:true}));await settle();await settle();await settle();
+ await waitFor(()=>expect(status.mock.calls.length).toBeGreaterThan(before));
+});

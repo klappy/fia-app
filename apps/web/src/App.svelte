@@ -42,7 +42,11 @@
  function storedStreamingSize(){try{const size=localStorage.getItem('fia-streaming-video-size');return ['small','medium','large'].includes(size)?size:'large';}catch{return 'large';}}
  let streamingSize=$state(storedStreamingSize());
  let videoSizes=$derived(['small','medium','large'].filter(size=>{const videos=Object.values(rawPresentation.assets).filter(a=>a.kind==='video');return videos.length&&videos.every(a=>{const f=onlineMedia.get(a.src);return f?.variants?.[size]||size==='large'&&f&&!f.variants;});}));
- const videoDelivery=createVideoDelivery({fetch:(request,signal)=>libraryAdapter.playMedia(request.pack,request.path,request.revision,signal,request.size),create:result=>URL.createObjectURL(new Blob([result.bytes],{type:result.mime})),revoke:url=>tick().then(()=>URL.revokeObjectURL(url)),publish:value=>videoDeliveryState=value});
+ const videoDelivery=createVideoDelivery({fetch:(request,signal)=>libraryAdapter.playMedia(request.pack,request.path,request.revision,signal,request.size),create:result=>URL.createObjectURL(new Blob([result.bytes],{type:result.mime})),revoke:url=>tick().then(()=>URL.revokeObjectURL(url)),publish:value=>videoDeliveryState=value,onchange:videoChanged});
+ // The SW re-chooses the video on every play (saved download, removal, other tab). The page plays what it
+ // served and refreshes its snapshot; a revision change is left to updateMedia's own path, which would
+ // otherwise clear the playing video.
+ function videoChanged(change){const kinds=change.notes.map(n=>n.kind);console.info('[fia.media]',{event:'video-served',path:change.path,requested:change.requested,served:change.served,kinds});if(!kinds.includes('revision-changed'))void updateMedia();}
  let selectionGeneration=0,selectionIntent=0;
  let preparationState=$state(null),preparedRecordings=$state(new globalThis.Map()),preparationDismissed=$state(null);let preparationEvent=0;
  const preparationOwner=createPreparationIntent({request:(identity,signal)=>libraryAdapter.prepareRecording(identity,signal),status:(id,identity,signal)=>libraryAdapter.preparationStatus(id,identity,signal),verify:(result,identity,signal)=>libraryAdapter.verifyPreparedRecording(result,identity,signal),publish:value=>{preparationState=value?{...value,event:++preparationEvent}:null;if(value?.status==='ready')preparedRecordings=new globalThis.Map(preparedRecordings).set(value.key,value.descriptor);}});
@@ -416,7 +420,7 @@
    </div>
   {:else if ['languages','passages','downloads'].includes(sheet)}
    <button class="sheet-back" onclick={()=>sheet='menu'}><ChevronLeft size={18}/>FIA menu</button>
-   {#key sheet}<LibraryPanel view={sheet} {selectedPack} {language} onlanguage={selectLanguage} onview={view=>sheet=view} completed={session.completed.length} total={activities.length} onstatus={value=>{saved=value;updateDownloaded();}} onselect={selectPack} onreset={restartPack}/>{/key}
+   {#key sheet}<LibraryPanel view={sheet} {selectedPack} {language} onlanguage={selectLanguage} onview={view=>sheet=view} completed={session.completed.length} total={activities.length} onstatus={value=>{saved=value;updateDownloaded();updateMedia();}} onselect={selectPack} onreset={restartPack}/>{/key}
   {:else if sheet==='conversation'}
    <p class="sheet-intro">Ask to show a resource, pause, or change how we continue. This prototype supports commands; open-ended AI is not connected.</p>
    <form class="command-form" onsubmit={e=>{e.preventDefault();runCommand();}}><label class="sr-only" for="command">Tell the guide what you need</label><input bind:this={chatInput} id="command" bind:value={command} placeholder="Show me the map…" autocomplete="off"/><button class="icon-button" type="submit" aria-label="Send command" disabled={!command.trim()}><Send size={18}/></button></form>
