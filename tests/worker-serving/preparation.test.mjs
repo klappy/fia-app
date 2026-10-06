@@ -9,3 +9,4 @@ import '../preparation-executor/reviewed-original.test.mjs';
 import '../preparation-executor/reviewed-original-store.test.mjs';
 
 import '../preparation/stable-coordinator.test.mjs';
+import '../preparation-executor/known-source-stream.test.mjs';
