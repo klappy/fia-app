@@ -10,9 +10,9 @@ export function createExecutionTransport({fetch:fetchArtifact=globalThis.fetch}=
    if(!validReference(reference))throw Error('The server artifact reference is invalid.');
    const expected=reference.sha256;
    signal?.throwIfAborted();
-   const response=await fetchArtifact(`/v1/artifacts/${expected}`,{method:'GET',cache:'no-store',signal});
+   const response=await fetchArtifact(`/v1/artifacts/${expected}`,{method:'GET',cache:'no-store',redirect:'error',signal});
    signal?.throwIfAborted();
-   if(response.status!==200)throw Error('The server artifact could not be read.');
+   if(response.status!==200||response.redirected)throw Error('The server artifact could not be read.');
    const bytes=await response.arrayBuffer();
    signal?.throwIfAborted();
    if(await hash(bytes)!==expected)throw Error('The server artifact could not be verified.');

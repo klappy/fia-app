@@ -16,7 +16,14 @@ test('bound artifact reads use the immutable authority and return verified opaqu
  assert.equal(calls[0][0],`/v1/artifacts/${sha256}`);
  assert.equal(calls[0][1].method,'GET');
  assert.equal(calls[0][1].cache,'no-store');
+ assert.equal(calls[0][1].redirect,'error');
  assert.equal(calls[0][1].body,undefined);
+});
+
+test('redirected matching bytes do not substitute for the current artifact authority',async()=>{
+ const response=new Response(bytes);Object.defineProperty(response,'redirected',{value:true});
+ const transport=createExecutionTransport({fetch:async()=>response});
+ await assert.rejects(transport.readBoundArtifactBytes(reference),/could not be read/);
 });
 
 test('a known digest does not bypass current server refusal or accept changed bytes',async()=>{
