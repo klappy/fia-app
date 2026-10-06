@@ -1,4 +1,4 @@
-// Input builder for fia-easy-button-policy@1 (packages/contracts/easy-button-policy).
+// Input builder for fia-easy-button-policy@2 (packages/contracts/easy-button-policy).
 // Maps App.svelte's own derived values onto the policy's closed input. No decisions here:
 // every branch the primary button, autoplay and the viewing cue take is decide()'s.
 // Line cites are against fia-app main @3d3b1d2 (apps/web/src/App.svelte).
@@ -16,7 +16,7 @@ export function pauseOnlyCue(presentationId,activity){
 }
 
 /**
- * policyInputFrom(state) → fia-easy-button-policy@1 input.
+ * policyInputFrom(state) → fia-easy-button-policy@2 input.
  * `state` carries App.svelte's values as they are at the call site:
  * executableMode, executableAction (:33), presentationId, activity, focal (:190), matchingVideo (:208),
  * session (status, detour, preferences), muted, inTransition (:183), isPlaying (:186), inlineVideo (:200),
@@ -78,5 +78,5 @@ export const SAFE_DECISION=Object.freeze({primary:Object.freeze({action:'continu
 const logged=new Set();
 export function decideSafely(decide,input,log=(...a)=>console.error(...a)){
  try{return decide(typeof input==='function'?input():input);}
- catch(error){const message=String(error?.message||error);if(!logged.has(message)){logged.add(message);log('fia-easy-button-policy@1: input rejected, safe fallback (Continue, no autoplay)',message);}return SAFE_DECISION;}
+ catch(error){const message=String(error?.message||error);if(!logged.has(message)){logged.add(message);log('fia-easy-button-policy@2: input rejected, safe fallback (Continue, no autoplay)',message);}return SAFE_DECISION;}
 }

@@ -1,4 +1,4 @@
-// Client label map for fia-easy-button-policy@1 actions (packages/contracts/easy-button-policy).
+// Client label map for fia-easy-button-policy@2 actions (packages/contracts/easy-button-policy).
 // The contract carries no labels. Copy authority: fia-app-cookbook design/alpha-system/components/primary-button.md.
 // These are the en strings of the post-R6 App.svelte label chains (integration/2026-10-06-train @21ad2dc), kept byte-identical so the swap renders nothing new.
 // Divergence from the design book: Begin again, Return and Listen are not in primary-button.md.
@@ -13,7 +13,7 @@ export const PRIMARY_LABELS = Object.freeze({
  listen:'Listen',
  return:'Return',
  begin:'Begin',
- // R5 (adopted k0011): no label, accessible name "Checking availability". Used only once R5 lands; @1 clients pin phase verified.
+ // R5 (adopted k0011): no label, accessible name "Checking availability". Emitted on phase loading since the post-R6 re-port (@2).
  verifying:'',
  // R4 starting face: the design-book loading row, the label it will have (apps/web/src/lib/easy-button.js easyFace).
  starting:'Pause'

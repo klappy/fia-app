@@ -1,4 +1,4 @@
-// fia-easy-button-policy@1 cause invariant (captain k0006), as far as this lane proves it:
+// fia-easy-button-policy@2 cause invariant (captain k0006), as far as this lane proves it:
 // on load the primary is verifying, then its first verified action (post-R6: decide() emits verifying and starting),
 // an identical state never flips it, and the changes this lane can drive have a classified cause.
 // Observables only: the primary's aria-label (GuidePrimary.svelte:10). The runtime EB guard and its window stay with #216.
@@ -100,6 +100,6 @@ it('(5) a corrupted saved status cannot crash the primary: decide() rejects it, 
  localStorage.setItem('fia-v3-session@2',JSON.stringify({session}));
  render(App);await settle();await settle();await settle();
  expect(primaryLabel()).toBe('Continue');
- expect(error.mock.calls.some(call=>String(call[0]).includes('fia-easy-button-policy@1')&&/facts\.status/.test(String(call[1])))).toBe(true);
+ expect(error.mock.calls.some(call=>String(call[0]).includes('fia-easy-button-policy@2')&&/facts\.status/.test(String(call[1])))).toBe(true);
  const bad=baseInput();bad.facts.status='bogus-status';expect(()=>decide(bad)).toThrow(/invalid input/); // decide() stays strict
 });

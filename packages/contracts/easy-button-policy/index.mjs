@@ -1,4 +1,4 @@
-// fia-easy-button-policy@1 — one pure settings→action contract for the easy button and autoplay.
+// fia-easy-button-policy@2 — one pure settings→action contract for the easy button and autoplay.
 // Pure: no imports, no DOM, no Svelte, no clock, no randomness. Same input, same frozen output.
 // Rule ids are against the post-R6 App.svelte (integration/2026-10-06-train @21ad2dc, #193 R4-R6 merged):
 // executable chain, bundled primaryLabel chain, and easyFace() over them (apps/web/src/lib/easy-button.js).
@@ -17,8 +17,8 @@ export const RESERVED_PHASES = Object.freeze([]);
 
 export const SCHEMA = Object.freeze({
   $schema: 'https://json-schema.org/draft/2020-12/schema',
-  $id: 'fia-easy-button-policy@1',
-  title: 'fia-easy-button-policy@1',
+  $id: 'fia-easy-button-policy@2',
+  title: 'fia-easy-button-policy@2',
   description: 'Input and output of decide(): compiled flow x device settings x runtime facts -> primary action, autoplay, viewing cue, hold, reason. No field can hold narration, prompt or title text.',
   $defs: {
     input: obj({
@@ -84,15 +84,15 @@ function check(schema, value, path, errors) {
 
 /** Errors for a candidate input (empty array = valid). */
 export function errorsFor(input, def = 'input') { const errors = []; check(SCHEMA.$defs[def], input, def, errors); return errors; }
-/** Throws on any input outside fia-easy-button-policy@1 (closed shape, every key required). Returns true. */
+/** Throws on any input outside fia-easy-button-policy@2 (closed shape, every key required). Returns true. */
 export function validate(input) {
   const errors = errorsFor(input, 'input');
-  if (errors.length) throw new TypeError(`fia-easy-button-policy@1 invalid input: ${errors.join('; ')}`);
+  if (errors.length) throw new TypeError(`fia-easy-button-policy@2 invalid input: ${errors.join('; ')}`);
   return true;
 }
 export function validateOutput(output) {
   const errors = errorsFor(output, 'output');
-  if (errors.length) throw new TypeError(`fia-easy-button-policy@1 invalid output: ${errors.join('; ')}`);
+  if (errors.length) throw new TypeError(`fia-easy-button-policy@2 invalid output: ${errors.join('; ')}`);
   return true;
 }
 
@@ -211,7 +211,7 @@ export function decide(input) {
 // Settled classes per the captain (gesture, network, status); provisional ones are #216's readings, for review.
 export const CAUSE_CLASSES = Object.freeze({
   gesture: Object.freeze({ provisional: false }),
-  network: Object.freeze({ provisional: false }), // no @1 input path: nothing in the label chains reads online
+  network: Object.freeze({ provisional: false }), // no @2 input path: nothing in the label chains reads online
   status: Object.freeze({ provisional: false }),
   'media-event': Object.freeze({ provisional: true }),
   'scheduled-start': Object.freeze({ provisional: true })

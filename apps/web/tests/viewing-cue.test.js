@@ -1,4 +1,4 @@
-// fia-easy-button-policy@1 viewing cue: the pause-only flag is data, never a phrase test in the client.
+// fia-easy-button-policy@2 viewing cue: the pause-only flag is data, never a phrase test in the client.
 // The phrase below survives only here, as a one-time migration proof over data (deletable after review).
 import test from 'node:test';
 import assert from 'node:assert/strict';

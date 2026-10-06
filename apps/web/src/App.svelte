@@ -94,7 +94,7 @@
   }catch(error){if(owner===mediaGeneration){revokePlayback();notice=error.message;dispatch({type:'PAUSE'});}}
   finally{if(owner===mediaGeneration)mediaLoading=false;}
  }
- // fia-easy-button-policy@1: the primary action, autoplay and the viewing cue come from decide(); the client only builds the input.
+ // fia-easy-button-policy@2: the primary action, autoplay and the viewing cue come from decide(); the client only builds the input.
  function policyInput(overrides={}){return policyInputFrom({executableMode,executableAction,presentationId:rawPresentation.id,activity,focal,matchingVideo,session,muted,inTransition,isPlaying,inlineVideo,mediaLoading,videoLoading:videoDeliveryState.loading,playbackPending,audioActive:audio?.active,audioContext,started,introduced,visualHeard,playbackConsent,preparationAvailable:!!preparationRequest&&hasGuidePreparation(selectedPack,preparationRequest),preparationBusy,preparationStatus:currentPreparation?.status,requestStarting,verifying,starting:startPending||startBurst&&isPlaying,...overrides});}
  function decideNow(overrides){return decideSafely(decide,()=>policyInput(overrides));}
  function executablePrimary(){

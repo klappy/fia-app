@@ -1,6 +1,6 @@
 {
   "schema": "fia-viewing-cues@1",
-  "why": "Pause-only viewing cues as data (fia-easy-button-policy@1 flow.cue.pauseOnly). Named fallback for the pack.json flag: pack.json bytes are the hash-pinned approved presentation (library.js:7 revision, server/fia/publication/trusted-approved-presentation.json sha256), so the flag lives beside it, keyed by presentation id. Debt: retires when packs carry activity.flow.cue from the server projector.",
+  "why": "Pause-only viewing cues as data (fia-easy-button-policy@2 flow.cue.pauseOnly). Named fallback for the pack.json flag: pack.json bytes are the hash-pinned approved presentation (library.js:7 revision, server/fia/publication/trusted-approved-presentation.json sha256), so the flag lives beside it, keyed by presentation id. Debt: retires when packs carry activity.flow.cue from the server projector.",
   "presentations": {
     "fia-mark-authentic@1": {
       "revision": "ccd72f23c23f932651b500b730b285f32fabd37e50037b5af91d8881f1403975",

@@ -1,4 +1,4 @@
-// fia-easy-button-policy@1: named rows, table drift, seeded property run (I1–I7), causeOf totality,
+// fia-easy-button-policy@2: named rows, table drift, seeded property run (I1–I7), causeOf totality,
 // and parity against the verbatim post-R6 App.svelte label chains and easyFace (integration/2026-10-06-train @21ad2dc).
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -37,8 +37,8 @@ function partialMatch(actual, expected, path = '') {
 }
 
 test('schema file equals the SCHEMA export', () => {
-  assert.deepEqual(JSON.parse(read('fia-easy-button-policy@1.schema.json')), JSON.parse(JSON.stringify(SCHEMA)));
-  assert.equal(SCHEMA.$id, 'fia-easy-button-policy@1');
+  assert.deepEqual(JSON.parse(read('fia-easy-button-policy@2.schema.json')), JSON.parse(JSON.stringify(SCHEMA)));
+  assert.equal(SCHEMA.$id, 'fia-easy-button-policy@2');
 });
 
 test('the input schema has no field that can hold narration, prompt or title text', () => {
@@ -143,7 +143,7 @@ test('causeOf: every input path has exactly one known class; null on identical i
   assert.deepEqual([...INPUT_PATHS].sort(), Object.keys(CAUSE_OF_PATH).sort());
   for (const p of INPUT_PATHS) assert.ok(CAUSE_CLASSES[CAUSE_OF_PATH[p]], p);
   assert.equal(CAUSE_CLASSES.network.provisional, false);
-  assert.ok(!Object.values(CAUSE_OF_PATH).includes('network')); // no @1 input reads online
+  assert.ok(!Object.values(CAUSE_OF_PATH).includes('network')); // no @2 input reads online
   for (const input of draws.slice(0, 500)) {
     assert.equal(causeOf(input, structuredClone(input)), null);
     for (const p of INPUT_PATHS) {

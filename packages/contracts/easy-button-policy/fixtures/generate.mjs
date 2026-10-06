@@ -1,4 +1,4 @@
-// Writes fixtures/table.json: the declared projection of fia-easy-button-policy@1 —
+// Writes fixtures/table.json: the declared projection of fia-easy-button-policy@2 —
 // role(4) x media.video(2) x settings(16) x playbackConsent(2) x phase(3) = 768 rows at the idle facts below.
 // The full input product is ~10^9 rows (CHALLENGE CL1/CF6/SL5); the rest of the schema is covered by the
 // seeded property run and the verbatim-legacy parity in tests/contracts/easy-button-policy.test.mjs.
@@ -45,7 +45,7 @@ export function buildTable() {
     for (const v of AXES[names[i]]) walk(i + 1, [...picked, v]);
   };
   walk(0, []);
-  return { schema: 'fia-easy-button-policy@1', projection: 'declared', idle: IDLE, columns: [...names, 'primary.action', 'primary.verified', 'autoplay.arrival', 'autoplay.afterNarration', 'autoplay.detourVideo', 'viewingCue.skipNarration', 'hold', 'reasons'], rows };
+  return { schema: 'fia-easy-button-policy@2', projection: 'declared', idle: IDLE, columns: [...names, 'primary.action', 'primary.verified', 'autoplay.arrival', 'autoplay.afterNarration', 'autoplay.detourVideo', 'viewingCue.skipNarration', 'hold', 'reasons'], rows };
 }
 
 export function serialize(table) {
