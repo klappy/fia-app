@@ -1,0 +1,54 @@
+import {it,expect,beforeEach,afterEach,vi} from 'vitest';
+import {render,screen,fireEvent,cleanup,waitFor} from '@testing-library/svelte';
+import {readFileSync} from 'node:fs';
+import {webcrypto} from 'node:crypto';
+const audio=vi.hoisted(()=>({play:vi.fn(),pause:vi.fn(),resume:vi.fn(),stop:vi.fn(),active:false}));
+vi.mock('../src/lib/audio.js',()=>({createAudioController:(state,end)=>{audio.state=state;audio.end=end;return audio;}}));
+import App from '../src/App.svelte';import {libraryAdapter} from '../src/lib/library.js';
+const registry=JSON.parse(readFileSync('public/content/registry.json','utf8')),descriptor=registry.packs.find(p=>p.id==='eng.MRK-1-14-20'),base=JSON.parse(readFileSync('public'+descriptor.presentation.url,'utf8'));
+const h='a'.repeat(64),ref={id:'server-authoritative-reference',sha256:h};
+let presentation,tools;
+const readyAudio={bytes:new Uint8Array([1,2]),mime:'audio/wav',playback:'whole-file-native-ended'};
+beforeEach(()=>{
+ presentation=structuredClone(base);presentation.execution={schema:'fia-executable-presentation@1',sourceRevision:'source-1',decisionEvidenceSha256:h,recipeRevision:'recipe-1'};
+ for(const a of presentation.activities)a.execution={narration:{action:'none'},focalAssetId:a.assetId??null,completion:{action:'manual-continue'}};
+ HTMLDialogElement.prototype.showModal=function(){this.open=true;};HTMLDialogElement.prototype.close=function(){this.open=false;};HTMLMediaElement.prototype.pause=vi.fn();Element.prototype.scrollTo=vi.fn();
+ vi.stubGlobal('crypto',webcrypto);localStorage.setItem('fia-v3-selected-pack',descriptor.id);tools=new Map();Object.defineProperty(document,'modelContext',{configurable:true,value:{registerTool:t=>tools.set(t.name,t)}});
+ audio.active=false;audio.play.mockImplementation((text,src)=>{audio.active=true;audio.src=src;audio.state({playing:true,src,elapsed:0,duration:2});});audio.stop.mockImplementation(()=>{audio.active=false;audio.state?.({playing:false,src:null,elapsed:0,duration:0});});audio.pause.mockImplementation(()=>audio.state({playing:false,src:audio.src,elapsed:0,duration:2}));audio.resume.mockImplementation(()=>{audio.state({playing:true,src:audio.src,elapsed:0,duration:2});return true;});
+ vi.spyOn(libraryAdapter,'select').mockImplementation(async()=>({descriptor,presentation}));vi.spyOn(libraryAdapter,'activate').mockResolvedValue({selected:true});vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({files:[],savedFiles:[],deliveryRevision:null});
+ vi.spyOn(libraryAdapter,'playBoundAudio').mockResolvedValue(readyAudio);vi.spyOn(libraryAdapter,'prepareOriginal').mockResolvedValue(null);vi.spyOn(libraryAdapter,'prepareRecording').mockResolvedValue({status:'ready',value:{}});vi.spyOn(libraryAdapter,'preparationStatus').mockResolvedValue({status:'ready',value:{}});vi.spyOn(libraryAdapter,'verifyPreparedRecording').mockResolvedValue({id:'verified'});vi.spyOn(libraryAdapter,'playPreparedRecording').mockResolvedValue(readyAudio);
+ URL.createObjectURL=vi.fn(()=> 'blob:execution');URL.revokeObjectURL=vi.fn();
+});
+afterEach(()=>{cleanup();vi.restoreAllMocks();vi.unstubAllGlobals();vi.clearAllMocks();localStorage.clear();delete document.modelContext;});
+async function mount(){render(App);await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toBe(presentation.activities[0].prompt));}
+function firstNarration(action='play-bound-audio',completion='manual-continue'){presentation.activities[0].execution.narration={action,[action==='prepare-original'?'demand':'artifact']:ref};presentation.activities[0].execution.completion.action=completion;}
+function ended(){audio.active=false;audio.state({playing:false,src:null,elapsed:0,duration:0});audio.end();}
+it('explicit server narration completes into a silent child; replay/back never infer narration from retained source',async()=>{
+ firstNarration('play-bound-audio','advance-after-narration');presentation.activities[1].narration='';
+ await mount();expect(libraryAdapter.playBoundAudio).not.toHaveBeenCalled();await fireEvent.click(screen.getByRole('button',{name:'Begin',exact:true}));await waitFor(()=>expect(audio.play).toHaveBeenCalledWith('','blob:execution',1));ended();
+ await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toBe(presentation.activities[1].prompt));await fireEvent.click(screen.getByRole('button',{name:'Replay',exact:true}));expect(libraryAdapter.playBoundAudio).toHaveBeenCalledTimes(1);expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();expect(libraryAdapter.preparationStatus).not.toHaveBeenCalled();expect(libraryAdapter.playPreparedRecording).not.toHaveBeenCalled();
+ await fireEvent.click(screen.getByRole('button',{name:'Previous activity'}));expect(libraryAdapter.playBoundAudio).toHaveBeenCalledTimes(1);await fireEvent.click(screen.getByRole('button',{name:'Replay',exact:true}));await waitFor(()=>expect(libraryAdapter.playBoundAudio).toHaveBeenCalledTimes(2));
+});
+it('none with source text never prepares on manual Play, Replay, or browser completion tool',async()=>{
+ await mount();await fireEvent.click(screen.getByRole('button',{name:'Replay',exact:true}));const play=screen.queryByRole('button',{name:'Play',exact:true});if(play)expect(play.disabled).toBe(true);
+ await tools.get('fia_complete_activity').execute({activityId:presentation.activities[0].id});expect(libraryAdapter.playBoundAudio).not.toHaveBeenCalled();expect(libraryAdapter.prepareOriginal).not.toHaveBeenCalled();expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();expect(libraryAdapter.preparationStatus).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();
+});
+it('prepared action uses bound server identity unchanged even when it differs from visible projection revision',async()=>{
+ firstNarration('prepare-original');const identity={packId:descriptor.id,presentationRevision:'b'.repeat(64),language:'eng',edition:'fia-guide',quality:'original',activityId:'server-step',sourceUnitId:'server-unit',sourceTextSha256:'c'.repeat(64)};
+ libraryAdapter.prepareOriginal.mockImplementation((reference,context)=>context.prepareNarration(identity,context));await mount();await fireEvent.click(screen.getByRole('button',{name:'Begin',exact:true}));await waitFor(()=>expect(audio.play).toHaveBeenCalled());expect(libraryAdapter.prepareRecording.mock.calls[0][0]).toEqual(identity);expect(libraryAdapter.prepareOriginal.mock.calls[0][0]).toEqual(ref);ended();expect(JSON.parse(localStorage.getItem('fia-v3-progress@1:'+descriptor.id)).session.index).toBe(0);
+});
+it('navigation cancels bound action and prevents late port result playback',async()=>{
+ firstNarration();let resolve;libraryAdapter.playBoundAudio.mockImplementation(()=>new Promise(r=>resolve=r));await mount();await fireEvent.click(screen.getByRole('button',{name:'Begin',exact:true}));await waitFor(()=>expect(libraryAdapter.playBoundAudio).toHaveBeenCalled());const signal=libraryAdapter.playBoundAudio.mock.calls[0][1].signal;
+ await tools.get('fia_complete_activity').execute({activityId:presentation.activities[0].id});expect(signal.aborted).toBe(true);resolve(readyAudio);await new Promise(r=>setTimeout(r,0));expect(audio.play).not.toHaveBeenCalled();
+});
+it('blocked executable narration never falls back to legacy preparation',async()=>{
+ presentation.activities[0].execution.narration={action:'blocked',status:'unavailable',reason:'server-unavailable'};await mount();await fireEvent.click(screen.getByRole('button',{name:'Replay',exact:true}));expect(libraryAdapter.prepareOriginal).not.toHaveBeenCalled();expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();
+});
+it('manual Play while automatic narration is off executes only the declared action and pause/resume reuses it',async()=>{
+ firstNarration();await mount();await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Settings',exact:true}));await fireEvent.click(screen.getByRole('checkbox',{name:/Automatic guide narration/}));await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));expect(libraryAdapter.playBoundAudio).not.toHaveBeenCalled();
+ await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await waitFor(()=>expect(audio.play).toHaveBeenCalled());await fireEvent.click(screen.getByRole('button',{name:'Pause',exact:true}));expect(audio.pause).toHaveBeenCalled();await fireEvent.click(screen.getByRole('button',{name:'Resume',exact:true}));expect(audio.resume).toHaveBeenCalled();expect(libraryAdapter.playBoundAudio).toHaveBeenCalledTimes(1);
+});
+it('server focal display does not infer narration or automatically substitute its related video',async()=>{
+ const image=Object.values(presentation.assets).find(a=>a.kind==='image');presentation.activities[0].execution.focalAssetId=image.id;presentation.activities[0].assetId=image.id;
+ render(App);await waitFor(()=>expect(document.querySelector('.resource-visual')).toBeTruthy());await fireEvent.click(screen.getByRole('button',{name:'Replay',exact:true}));expect(libraryAdapter.playBoundAudio).not.toHaveBeenCalled();expect(libraryAdapter.prepareOriginal).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();expect(document.querySelector('video[src]')).toBeNull();
+});

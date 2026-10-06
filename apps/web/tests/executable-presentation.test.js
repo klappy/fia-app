@@ -28,3 +28,7 @@ test('focal and completion are explicit and independent of source strings and le
  const p=fixture();p.activities[0].assetId='legacy-wrong';p.activities[0].completion='auto';
  assert.deepEqual(executionFor(p,'step-1'),p.activities[0].execution);assert.throws(()=>executionFor(p,'missing'));
 });
+test('invalid replacement revokes an older outstanding owner before validation refuses',async()=>{
+ let resolve,signal;const owner=createExecutableNarration({prepareOriginal:(ref,context)=>{signal=context.signal;return new Promise(r=>resolve=r);}}),p=fixture({action:'prepare-original',demand:ref});const pending=owner.run(p,'step-1',{explicit:true});
+ await assert.rejects(owner.run({...p,execution:null},'step-1',{explicit:true}));assert.equal(signal.aborted,true);resolve({bytes:'obsolete'});assert.equal(await pending,null);
+});

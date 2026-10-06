@@ -37,10 +37,10 @@ export function executionFor(presentation,activityId){
 export function createExecutableNarration({playBoundAudio,prepareOriginal}={}){
  let generation=0,controller=null;
  function cancel(){generation++;controller?.abort();controller=null;}
- async function run(presentation,activityId,{explicit=false,signal}={}){
+ async function run(presentation,activityId,{explicit=false,signal,automatic=false}={}){
   if(!explicit)throw Error('Narration requires explicit playback consent.');
-  const execution=executionFor(presentation,activityId);need(execution);
-  cancel();const owner=generation;const local=new AbortController();controller=local;
+  cancel();const execution=executionFor(presentation,activityId);need(execution);
+  const owner=generation;const local=new AbortController();controller=local;
   const abort=()=>local.abort();if(signal?.aborted)local.abort();else signal?.addEventListener('abort',abort,{once:true});
   try{
    if(local.signal.aborted)return null;
@@ -50,10 +50,21 @@ export function createExecutableNarration({playBoundAudio,prepareOriginal}={}){
    const port=narration.action==='play-bound-audio'?playBoundAudio:prepareOriginal;
    if(typeof port!=='function')throw Error('This narration capability is unavailable.');
    const reference=Object.freeze(narration.artifact||narration.demand);
-   const context=Object.freeze({presentationExecution:Object.freeze(structuredClone(presentation.execution)),activityId,signal:local.signal});
+   const context=Object.freeze({presentationExecution:Object.freeze(structuredClone(presentation.execution)),activityId,automatic,signal:local.signal});
    const result=await port(reference,context);
    return owner===generation&&!local.signal.aborted?result:null;
   }finally{signal?.removeEventListener('abort',abort);if(owner===generation)controller=null;}
  }
  return {run,cancel};
+}
+
+// Lower explicit actions to the existing generic session engine representation.
+// Legacy display/provenance stays on the original object; no source inference.
+export function executablePresentationView(presentation){
+ if(!validateExecutablePresentation(presentation))return presentation;
+ return {...presentation,activities:presentation.activities.map(activity=>({...activity,
+  assetId:activity.execution.focalAssetId,
+  completion:activity.execution.completion.action==='advance-after-narration'?'auto':'confirm',
+  audioSrc:null,readingGroupId:undefined,
+ }))};
 }

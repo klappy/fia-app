@@ -1,3 +1,5 @@
+import {createExecutionTransport} from './execution-transport.js';
+import {validateExecutablePresentation} from './executable-presentation.js';
 import {createPreparationTransport} from './prepared-audio.js';
 import {bundledPresentation} from './content.js';
 const empty={status:'unavailable',count:0};
@@ -12,6 +14,7 @@ export function validateRegistry(value){
  }return value;
 }
 export function validatePresentation(pack,descriptor){
+ validateExecutablePresentation(pack);
  const approved=descriptor.id===bundledPack.id&&pack.id==='fia-mark-authentic@1';
  if(!pack||!approved&&pack.id!==descriptor.id||!pack.assets||!Array.isArray(pack.activities)||!pack.activities.length||!Array.isArray(pack.sections)||!Array.isArray(pack.listContracts)||!pack.assets[descriptor.defaultScriptureId]||pack.assets[descriptor.defaultScriptureId].kind!=='scripture')throw new Error('The passage presentation is not compatible.');
  const ids=new Set(),sections=new Set(pack.sections.map(s=>s.id));
@@ -32,7 +35,10 @@ export async function loadPresentation(descriptor){
  return validatePresentation(JSON.parse(new TextDecoder().decode(bytes)),descriptor);
 }
 const preparationTransport=createPreparationTransport();
+const executionTransport=createExecutionTransport();
 export const libraryAdapter={
+ playBoundAudio:(...args)=>executionTransport.playBoundAudio(...args),
+ prepareOriginal:(...args)=>executionTransport.prepareOriginal(...args),
  prepareRecording:preparationTransport.request,
  preparationStatus:preparationTransport.status,
  verifyPreparedRecording:preparationTransport.verify,
