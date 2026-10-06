@@ -181,7 +181,7 @@ it.each(['ready','failed'])('older media refresh %s cannot replace the newest in
  vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(2),mime:'audio/mpeg',playbackRange:ready.playbackRange});
  await mount();await waitFor(()=>expect(selectedReads).toBe(1));registration.resolve();await waitFor(()=>expect(selectedReads).toBe(2));
  if(outcome==='ready')earlier.resolve({files:[{path}],savedFiles:[],deliveryRevision:'old-revision'});else earlier.resolve(Promise.reject(Error('old status failed')));
- await new Promise(r=>setTimeout(r,0));await fireEvent.click(screen.getByRole('button',{name:'Begin',exact:true}));
+ await new Promise(r=>setTimeout(r,0));await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));
  await waitFor(()=>expect(libraryAdapter.playMedia).toHaveBeenCalled());expect(libraryAdapter.playMedia.mock.calls[0][2]).toBe('new-revision');
 });
 
