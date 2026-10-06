@@ -1215,7 +1215,7 @@
     },
     {
       "path": "e2e/live-listening/journey.spec.js",
-      "sha256": "3d321ad27cfd534e48d036fff51c04dadc1d6b6fd0fd08e6dcdca541a778e347"
+      "sha256": "45d0a3b3e819b3560401353fabb828c24a098c1c72c8293a9aa523e2bd7f68d0"
     },
     {
       "path": "e2e/visual.spec.js",
@@ -1295,15 +1295,15 @@
     },
     {
       "path": "scripts/live-listening/README.md",
-      "sha256": "0771f990404ee90c3dfd4a428952c197ed19b863ef4740c2ea9f704d582ab28d"
+      "sha256": "055c531d330e84eed8d0365c08d2c9b2a17b1317a392699ef986b73fbafd3615"
     },
     {
       "path": "scripts/live-listening/archive-persona.mjs",
-      "sha256": "7462ffb3d551647c3e4c3d1f54b17226c196d4adf62dcaa32275e780fbe66394"
+      "sha256": "c5397760a169e7f51503a2cd93531a41b79c15e1d8ff85a0f41878c54ea39608"
     },
     {
       "path": "scripts/live-listening/assert-observation.mjs",
-      "sha256": "497161dac17a2a94e554ea8fbd023b6499bfcfe94e56173635b3db2fae506b27"
+      "sha256": "4401a4174cb59553f00fe88b7e31a36f9a42cd959e5e9c232d441d5479cd9b76"
     },
     {
       "path": "scripts/live-listening/baseline-persona.mjs",
@@ -1311,7 +1311,11 @@
     },
     {
       "path": "scripts/live-listening/controlled-pending.mjs",
-      "sha256": "a389f1a349445db0801c92ce364a0cc21eb2bd83d951334c8edc8fd69ca5f71f"
+      "sha256": "7c99190a49a1b40d4a19e8a0cdd14bfd065ca736164228bec12947f9e39ecf59"
+    },
+    {
+      "path": "scripts/live-listening/native-progress.mjs",
+      "sha256": "66769e5a05891a37ad3128b7ce1ec154fa74bbb4e77726abfb81927402c1a206"
     },
     {
       "path": "scripts/live-listening/persona-summary.mjs",
@@ -1323,7 +1327,7 @@
     },
     {
       "path": "scripts/live-listening/verify.mjs",
-      "sha256": "d09600258a9f8939c7123c92646f57162a71225a398c9f06e79c0b17975a1324"
+      "sha256": "481ea1588dd68604ba0bd3545e3cce6d8243a1005a741cb72c1193328e57074f"
     },
     {
       "path": "scripts/package-worker.mjs",
@@ -1699,11 +1703,15 @@
     },
     {
       "path": "tests/live-listening/archive-persona.test.mjs",
-      "sha256": "df99bb1b373a77ea3fb25e524a8475880385d158f2daf41252bdd006822149a6"
+      "sha256": "2e1dd38771e0e72a4f9a8259e4edb078328b0dad9543f97afbde1379e73963f7"
     },
     {
       "path": "tests/live-listening/baseline-persona.test.mjs",
       "sha256": "455406b7f0146b8e2e151323a7ebd0526c014e6aa084fb16d191b8932cb849c2"
+    },
+    {
+      "path": "tests/live-listening/native-progress.test.mjs",
+      "sha256": "1d1fdb52cae114f0c56cd53ee886dbd810d771c057171e4cae34030260db8392"
     },
     {
       "path": "tests/live-listening/observation.test.mjs",
@@ -1715,7 +1723,11 @@
     },
     {
       "path": "tests/live-listening/receipt-fixture.mjs",
-      "sha256": "2ea30c73eb1e6eea6495962fca13bd6b5a7fc387a659c08002ee0118172c48b9"
+      "sha256": "78b443cc5fa9cb46789bdd440a7a448a4b6e37052a4c67dcdf95cc52f1dd0fbd"
+    },
+    {
+      "path": "tests/live-listening/replay.test.mjs",
+      "sha256": "d307d36af40ba3be6589cf1047b76ee36c13e0bcb5264a456246d4962a3c14c3"
     },
     {
       "path": "tests/live-listening/scripture-binding.test.mjs",
@@ -1723,7 +1735,7 @@
     },
     {
       "path": "tests/live-listening/verify.test.mjs",
-      "sha256": "4654ed1cb13016c44c62664b9dac0a25fabe3a11d671bc9369e1038146e251cc"
+      "sha256": "cb87b1e09ac07332ec8e4bcffd1a9c5fde0f3abd3f98998bdc834b727e3a22ae"
     },
     {
       "path": "tests/preparation-executor/acceptance.test.mjs",
