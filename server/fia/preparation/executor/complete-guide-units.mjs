@@ -27,7 +27,7 @@ export async function createCompleteGuideUnitsResolver(options){
    canonicalUnits=ledger.units;canonicalLedgerSha256=ledger.ledgerSha256;
   }else canonicalUnits=regular.units.map(u=>({sourceUnitId:u.sourceUnitId,sectionId:input.resource,text:u.text,sourceTextSha256:u.sourceTextSha256,narrationRole:'not-assessed'}));
   if(!same(canonicalUnits.map(({sourceUnitId,sourceTextSha256})=>({sourceUnitId,sourceTextSha256})),row.sourceUnits))throw Error('complete-guide-unit-binding');
-  const identity={schema:'fia-complete-guide-section@1',metadataSha256,registrySha256,packId:input.packId,sectionId:input.resource,presentationSha256:input.source.version,guideContentSha256:row.guideContentSha256,canonicalLedgerSha256,unitPins:row.sourceUnits};
+  const identity={schema:'fia-complete-guide-section@1',metadataSha256,registrySha256,packId:input.packId,sectionId:input.resource,presentationSha256:input.source.version,guideContentSha256:row.guideContentSha256,canonicalLedgerSha256,unitPins:structuredClone(row.sourceUnits)};
   return {identity,manifestSha256:await sha256(canonicalJSONString(identity)),canonicalUnits,
    narration:{status:regular?'existing-alignment-input':'disposition-adapter-required',reason:regular?null:'associated-pause-and-production-note-semantics-not-supported-by-alignment'},
    alignmentInput:regular??null,acceptedPlaybackRanges:[]};
