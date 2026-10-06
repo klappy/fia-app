@@ -18,7 +18,7 @@ export FIA_ENVIRONMENT=dev
 export BASE_URL=https://dev.fiaguide.app
 export EXPECT_COMMIT=<full-40-character-deployed-commit>
 npx playwright test --config playwright.live-listening.config.js
-node scripts/live-listening/verify.mjs test-results/live-listening.json
+node scripts/live-listening/verify.mjs test-results/live-listening.json controlled-output/controlled-pending.json
 ```
 
 Run the validator as an always-run step after the browser step, preserving both exit statuses; upload JSON, attachment evidence, traces, video and screenshots even on failure. No continue-on-error, skipped test acceptance, expected-failure annotations, or retry-to-green. A rejected gate blocks promotion; production failure requires the existing rollback/repair procedure. This applies separately to each environment and candidate; a DEV receipt is not a production receipt. The production run is post-deployment verification, not a claim it ran before deployment.
@@ -41,6 +41,16 @@ The scenario checks actual Pause label/icon/action and Begin/Play icon, not exha
 
 The hosted suite now binds current canonical activity/source unit/text hash to the actual verified preparation descriptor, exact delivery-byte SHA observed at native Blob creation, and the expected playback range. Exactly one active owner and one Pause are required. The same assertion predicates have incident mutation tests for duplicate Pause, wrong/missing recording, skipped unit, wrong range and competing owners. Cancellation assertion rejects absent terminal completion and late playback after completion. These are source-level mutation tests, not before/after browser recordings.
 
-The two cold/pending tests were removed from the hosted suite because globally warm P2 is nondeterministic. The overall validator intentionally still requires those outcomes, so this candidate cannot certify a complete release. A separate controlled real-media integration harness remains required as specified in `e2e/live-listening/CONTROLLED-PENDING-REQUIRED.md`; it must produce distinctly labelled controlled evidence, never a hosted claim. No local browser was run. Scripture presently has no accepted preparation tuple compatible with the guide descriptor; that remains a failed, not silently substituted, outcome until the actual Scripture delivery contract is bound.
+The two cold/pending tests were removed from the hosted suite because globally warm P2 is nondeterministic. The overall validator requires both hosted outcomes and the exact-candidate controlled receipt. The separate controlled real-media integration harness is now implemented as `scripts/live-listening/controlled-pending.mjs`; its receipt is mandatory and distinctly labelled, never a hosted claim. No local browser was run. Scripture presently has no accepted preparation tuple compatible with the guide descriptor; that remains a failed, not silently substituted, outcome until the actual Scripture delivery contract is bound.
 
 Narrow owner proposal: add a second meta `fia-source-commit` containing the existing full `stamp.commit` in `scripts/version-stamp.js`, retain the existing release meta, then require the full loaded value in this suite. This proposal is not yet a runtime change. For stronger asset attestation, include hashes of loaded executable assets in the build's reviewed manifest and match browser response bytes. Current short release meta is insufficient to claim that stronger attestation.
+
+## Runnable controlled native-audio harness
+
+```sh
+node scripts/live-listening/controlled-pending.mjs EXACT_BUILT_REPO RETAINED_P2_MP3 TLS_DIRECTORY controlled-output
+```
+
+The TLS directory contains an ephemeral localhost `local.key`, `local.crt` and SHA256 SPKI base64 in `cert-spki.txt`. The harness binds only 127.0.0.1:5199, trusts only that SPKI in its own Chromium, rejects every external browser request, and stops its browser/server on completion. Retained MP3 must hash to `0f3fa9e77215f5050f9e22b7abee329c47e0e9ff71a5f0c4d248926a8f42268d`; source descriptor bytes must hash to `186956fb526a0671025180f637c0f6e6b336129085e21951da6e59e89b33fcee`. No SQLite state is copied. CI must receive the reviewed retained file as an artifact, not silently acquire new upstream media.
+
+Actual run on fixed candidate `5fa39c844d26827cf1a917a1d97a2bf287932418` passed both controlled scenarios using retained native media. Its receipt is not reusable for a different commit. Each context begins with pending at the test-owned protocol boundary. The test explicitly releases terminal readiness only after OFF→ON or after manual preparation began. Observations after terminal completion prove silence; manual case then proves actual native clock advancement and Pause. This is frontend integration with an orchestration fixture, **not** proof that the hosted Worker/ASR pipeline completes. No before-fix browser comparison was run; mutation checks are separately labelled source evidence.
