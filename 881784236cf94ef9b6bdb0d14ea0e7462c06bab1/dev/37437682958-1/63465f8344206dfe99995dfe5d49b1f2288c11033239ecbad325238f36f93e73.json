@@ -1,0 +1,54 @@
+{
+  "schema": "fia-listening-persona-summary@1",
+  "commit": "881784236cf94ef9b6bdb0d14ea0e7462c06bab1",
+  "environment": "dev",
+  "runId": "37437682958",
+  "attempt": "1",
+  "workflowUrl": "https://github.com/klappy/fia-app/actions/runs/37437682958",
+  "scope": "Agent-operated observations; not human research or acoustic/device proof. Hosted and controlled protocol scopes are separate.",
+  "scenario": {
+    "key": "881784236cf94ef9b6bdb0d14ea0e7462c06bab1/dev/P2 saved Scripture plays after isolated offline reload",
+    "scenario": "P2 saved Scripture plays after isolated offline reload",
+    "scope": "hosted-rendered-native",
+    "outcome": "failed",
+    "validation": {
+      "validator": "verify",
+      "ok": false,
+      "environment": "dev",
+      "commit": "881784236cf94ef9b6bdb0d14ea0e7462c06bab1",
+      "errors": [
+        "Scenario did not pass once: P2 Scripture ON must deliver actual BSB playback",
+        "Scenario did not pass once: P2 saved Scripture plays after isolated offline reload"
+      ],
+      "scope": "Live Chromium P2 listening only; no physical-device or audible-output claim"
+    },
+    "failedStep": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText(/Saved · Text and audio/)\nExpected: visible\nTimeout: 60000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 60000ms\u001b[22m\n\u001b[2m  - waiting for getByText(/Saved · Text and audio/)\u001b[22m\n",
+    "observedFriction": {
+      "classification": "observation-only",
+      "notices": [
+        {
+          "kind": "visible-notices",
+          "text": [
+            "Not saved on this device"
+          ]
+        }
+      ],
+      "assessment": "Not inferred from pass/fail; review attached observations"
+    },
+    "userFeedback": {
+      "status": "not-collected"
+    },
+    "evidence": {
+      "name": "live-listening-evidence",
+      "sha256": "a818bf888a4b8106037b33244fddee6251c7764f12f7f7445a691ce7c16d582a",
+      "workflowArtifacts": "test-results (trace/video retention is finite)"
+    },
+    "baselineComparison": {
+      "baselineCommit": "9c6d270e60dd90c28a30c32a3988ecdc06cd2daf",
+      "priorOutcome": "passed",
+      "currentOutcome": "failed",
+      "archivePath": "9c6d270e60dd90c28a30c32a3988ecdc06cd2daf/dev/37419833975-1/63465f8344206dfe99995dfe5d49b1f2288c11033239ecbad325238f36f93e73.json",
+      "scope": "Outcome comparison only; no sentiment inference"
+    }
+  }
+}
