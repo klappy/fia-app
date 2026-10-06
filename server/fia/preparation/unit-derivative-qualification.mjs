@@ -10,7 +10,9 @@ const same=(a,b)=>canonicalJSONString(a)===canonicalJSONString(b);
 const pins=['sourceSha256','pcmSha256','canonicalSha256','correspondenceSha256','measurementSha256','planSha256','windowSha256','rawSha256'];
 /** Candidate custody, raw/canonical recomputation and current source eligibility
  * must already be verified by the caller. A deployment-selected bundle hash is
- * authority; a hash supplied by the requesting client is not. No I/O or activation. */
+ * authority; a hash supplied by the requesting client is not. Unit membership is
+ * bundle data. This profile policy grants no generic ASR semantic acceptance.
+ * No I/O or activation. */
 export async function qualifyUnitDerivative({candidate,consumer,qualificationBytes,qualificationSha256}){
  need(qualificationBytes instanceof Uint8Array&&qualificationBytes.length>0&&qualificationBytes.length<=1048576&&hash(qualificationSha256));
  const bytes=new Uint8Array(qualificationBytes),c=structuredClone(candidate),who=structuredClone(consumer);
@@ -21,7 +23,7 @@ export async function qualifyUnitDerivative({candidate,consumer,qualificationByt
  need(typeof b.manifestText==='string'&&typeof b.browserReceiptText==='string');
  const m=JSON.parse(b.manifestText),r=JSON.parse(b.browserReceiptText),manifestSha256=await sha256(b.manifestText),browserReceiptSha256=await sha256(b.browserReceiptText);
  need(r.schema==='fia-unit-file-native-eof-proof@1'&&r.status==='all-four-exact-pcm-native-eof-passed'&&same(r.profile,PROFILE)&&r.inputs.controllerSha256===QUALIFIED_CONTROLLER_SHA256&&r.inputs.manifestSha256===manifestSha256&&same(r.acceptedPlaybackRanges,[])&&r.nativeDacTailMeasured===false);
- need(Array.isArray(m.units)&&m.units.length===4&&Array.isArray(r.trials)&&r.trials.length===4&&same(m.units.map(x=>x.sourceUnitId).sort(),['S01-U005','S01-U006','S01-U007','S01-U008'])&&same(r.trials.map(x=>x.sourceUnitId).sort(),m.units.map(x=>x.sourceUnitId).sort()));
+ need(Array.isArray(m.units)&&m.units.length>0&&m.units.length<=1000&&m.units.every(x=>typeof x?.sourceUnitId==='string'&&x.sourceUnitId.length>0)&&new Set(m.units.map(x=>x.sourceUnitId)).size===m.units.length&&Array.isArray(r.trials)&&r.trials.length===m.units.length&&same(r.trials.map(x=>x.sourceUnitId).sort(),m.units.map(x=>x.sourceUnitId).sort()));
  const h=m.units.find(x=>x.sourceUnitId===who.sourceUnitId),t=r.trials.find(x=>x.sourceUnitId===who.sourceUnitId);need(h&&t);
  const p=c?.provenance,old=h.provenance;
  need(c.state==='candidate'&&c.qualifiedForPlayback===false&&same(c.acceptedPlaybackRanges,[])&&p?.schema==='fia-quiet-unit-pcm-derivative@1'&&p.status==='candidate-not-accepted'&&p.qualifiedForPlayback===false&&same(p.acceptedPlaybackRanges,[])&&pins.every(k=>hash(p[k])));
