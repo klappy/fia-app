@@ -1,11 +1,12 @@
 // fia-easy-button-policy@1: named rows, table drift, seeded property run (I1–I7), causeOf totality,
-// and parity against the verbatim App.svelte :91 and :216 label expressions (main @3d3b1d2).
+// and parity against the verbatim post-R6 App.svelte label chains and easyFace (integration/2026-10-06-train @21ad2dc).
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { SCHEMA, ACTIONS, RESERVED_ACTIONS, CAUSE_CLASSES, CAUSE_OF_PATH, INPUT_PATHS, decide, validate, validateOutput, causeOf, flowFrom } from '../../packages/contracts/easy-button-policy/index.mjs';
 import { buildTable, serialize, IDLE } from '../../packages/contracts/easy-button-policy/fixtures/generate.mjs';
 import { labelFor, accessibleNameFor } from '../../apps/web/src/lib/primary-labels.js';
+import { easyFace } from '../../apps/web/src/lib/easy-button.js';
 
 const dir = new URL('../../packages/contracts/easy-button-policy/', import.meta.url);
 const read = (p) => readFileSync(new URL(p, dir), 'utf8');
@@ -58,14 +59,14 @@ test('named rows: each expectation holds and every rule id is exercised', () => 
     assert.ok(reasons.includes(row.rule), `${row.name}: rule ${row.rule} not in ${reasons}`);
     reasons.forEach((r) => seen.add(r));
   }
-  const all = [...Array(8).keys()].map((i) => `E${i}`).concat([...Array(17).keys()].map((i) => `B${i}`), [...Array(7).keys()].map((i) => `A${i + 1}`), ['F0', 'F1', 'F2', 'D0', 'D1', 'V0', 'V1']);
+  const all = [...Array(8).keys()].map((i) => `E${i}`).concat([...Array(17).keys()].filter((i) => i !== 2).map((i) => `B${i}`), [...Array(7).keys()].map((i) => `A${i + 1}`), ['F0', 'F1', 'F2', 'D0', 'D1', 'V0', 'V1']);
   assert.deepEqual(all.filter((id) => !seen.has(id)), []);
   for (const id of ['S02-U005', 'S02-U008', 'S03-U007', 'S03-U019', 'S03-U021', 'S05-U015']) assert.ok(named.some((r) => r.name === `pause-only ${id}`), id);
 });
 
-test('table.json is the declared 512-row projection and regenerates byte-identical', () => {
+test('table.json is the declared 768-row projection and regenerates byte-identical', () => {
   const table = buildTable();
-  assert.equal(table.rows.length, 4 * 2 * 16 * 2 * 2);
+  assert.equal(table.rows.length, 4 * 2 * 16 * 2 * 3);
   assert.equal(read('fixtures/table.json'), serialize(table));
 });
 
@@ -77,9 +78,13 @@ test(`I1 total, pure, frozen over ${DRAWS} seeded draws; I3–I7 hold`, () => {
     assert.ok(Object.isFrozen(out) && Object.isFrozen(out.autoplay));
     const { flow, settings, facts } = input;
     const automaticOff = flow.role === 'scripture' ? !settings.readScripture : !settings.guideNarration;
-    // I3 verifying iff phase loading; reserved action never emitted
+    // I3 verifying iff phase loading; starting only from phase starting; verified is never a face; nothing reserved
     assert.equal(out.primary.action === 'verifying', facts.phase === 'loading');
-    assert.ok(!RESERVED_ACTIONS.includes(out.primary.action));
+    if (out.primary.action === 'starting') assert.equal(facts.phase, 'starting');
+    assert.ok(!['verifying', 'starting'].includes(out.primary.verified));
+    if (!['verifying', 'starting'].includes(out.primary.action)) assert.equal(out.primary.action, out.primary.verified);
+    assert.deepEqual(RESERVED_ACTIONS, []);
+    assert.ok(!ACTIONS.includes('cancel-loading')); // R4.2: cancel never in the primary's slot
     // I4 nothing the app starts by itself (arrival, detour video) without playback consent
     if (!facts.playbackConsent) { assert.equal(out.autoplay.arrival, 'none'); assert.equal(out.autoplay.detourVideo, false); }
     // I5 video only with autoplayVideo; visual description only with describeImages (or a related video under autoplayVideo); no narration when automaticOff
@@ -102,12 +107,18 @@ test(`I1 total, pure, frozen over ${DRAWS} seeded draws; I3–I7 hold`, () => {
   }
 });
 
-test('reserved phase starting is inert in @1 (decides as verified)', () => {
-  for (const input of draws.slice(0, 2000)) {
+test('phase starting shows the starting face unless narration is off, finished or in transition (R4 primaryStarting)', () => {
+  for (const input of draws.slice(0, 4000)) {
     if (input.facts.phase === 'loading') continue;
     const a = structuredClone(input); a.facts.phase = 'starting';
     const b = structuredClone(input); b.facts.phase = 'verified';
-    assert.deepEqual(decide(a), decide(b));
+    const oa = decide(a), ob = decide(b);
+    assert.equal(oa.primary.verified, ob.primary.verified);
+    assert.deepEqual(oa.autoplay, ob.autoplay);
+    const { flow, settings, facts } = a;
+    const automaticOff = flow.role === 'scripture' ? !settings.readScripture : !settings.guideNarration;
+    const gated = automaticOff && !facts.detour || facts.status === 'complete' && !facts.detour || facts.inTransition;
+    assert.equal(oa.primary.action, gated ? ob.primary.action : 'starting');
   }
 });
 
@@ -154,27 +165,28 @@ test('causeOf: every input path has exactly one known class; null on identical i
   for (const input of draws.slice(0, 500)) assert.deepEqual(decide(input), decide(structuredClone(input)));
 });
 
-// ---- Parity: the :91 and :216 expressions, copied verbatim from apps/web/src/App.svelte @3d3b1d2,
+// ---- Parity: the post-R6 executablePrimaryLabel, primaryStartsPreparation, primaryLabel, primaryStarting and
+// primaryFace expressions, copied verbatim from apps/web/src/App.svelte at integration/2026-10-06-train @21ad2dc,
 // evaluated over bindings built from the same tuple decide() reads.
 function legacyBindings(input) {
   const { flow, settings, facts } = input;
   const executableMode = facts.mode === 'executable';
   const ACTION = { none: 'none', bound: 'play-bound-audio', preparable: 'prepare-original', blocked: 'blocked' };
   const executableAction = executableMode ? { narration: { action: ACTION[flow.narration] } } : null;
-  const executablePlayable = ['play-bound-audio', 'prepare-original'].includes(executableAction?.narration.action); // :33
+  const executablePlayable = ['play-bound-audio', 'prepare-original'].includes(executableAction?.narration.action);
   const detourId = facts.detour ? 'focal' : null;
   const focal = flow.focal.kind === null ? undefined : { id: 'focal', kind: flow.focal.kind, descriptionAudio: flow.focal.descriptionAudio ? '/d.mp3' : undefined, relatedIds: flow.media.video === 'bound' ? ['v1'] : [] };
   const assets = { v1: { id: 'v1', kind: 'video', src: '/v.mp4' } };
   const session = { detour: detourId, status: facts.status, preferences: { readScripture: settings.readScripture, describeImages: settings.describeImages, autoplayVideo: settings.autoplayVideo } };
   const activity = { kind: flow.role, audioSrc: executableMode ? null : (flow.narration === 'bound' ? '/a.mp3' : undefined) };
   const muted = !settings.guideNarration;
-  const automaticOff = activity?.kind === 'scripture' ? !session.preferences.readScripture : muted; // :179
-  const finished = session.status === 'complete' && !session.detour; // :195
-  const inTransition = facts.inTransition; // :183 (transitionSection===activity.sectionId&&…) is a fact
+  const automaticOff = activity?.kind === 'scripture' ? !session.preferences.readScripture : muted;
+  const finished = session.status === 'complete' && !session.detour;
+  const inTransition = facts.inTransition; // transitionSection===activity.sectionId&&… is a fact
   const isPlaying = facts.playing;
   const audio = { active: facts.audioActive };
   const audioContext = facts.audioContext ? { type: 'narration', id: 'x' } : null;
-  const started = facts.started, mediaLoading = facts.mediaLoading, playbackPending = facts.playbackPending;
+  const started = facts.started, mediaLoading = facts.mediaLoading, playbackPending = facts.playbackPending, requestStarting = facts.requestStarting;
   const inlineVideo = facts.inlineVideo ? { id: 'v1' } : null;
   const videoDeliveryState = { loading: facts.videoLoading };
   const visualHeard = facts.visualHeard ? 'focal' : null;
@@ -182,49 +194,60 @@ function legacyBindings(input) {
   const preparationBusy = facts.preparation === 'preparing';
   const hasGuidePreparation = () => true;
   const selectedPack = {};
-  const matchingVideo = (executableMode && !session.detour ? [] : focal?.relatedIds || []).map(id => assets[id]).find(a => a?.kind === 'video' && (a.src || a.videoPrepared)); // :208
-  const visual = ['image', 'map'].includes(focal?.kind); // :210
-  const videoPending = visual && !!matchingVideo && visualHeard !== focal.id; // :211
-  const visualPending = visual && !matchingVideo && session.preferences.describeImages && !muted && !!focal.descriptionAudio && visualHeard !== focal.id; // :212
-  const primaryStartsPreparation = !executableMode && !isPlaying && !playbackPending && !inlineVideo && !videoDeliveryState.loading && !videoPending && !visualPending && !!preparationRequest && hasGuidePreparation(selectedPack, preparationRequest) && !automaticOff && !audioContext && !preparationBusy && !mediaLoading && ['ready', 'paused'].includes(session.status); // :215
-  return { executableMode, executablePlayable, focal, session, activity, automaticOff, finished, inTransition, isPlaying, audio, audioContext, started, mediaLoading, playbackPending, inlineVideo, videoDeliveryState, visual, videoPending, visualPending, primaryStartsPreparation };
+  // verifying = restorePending||!mediaChecked||!downloadsChecked; a start pending = startPending||startBurst&&isPlaying (facts.phase)
+  const verifying = facts.phase === 'loading';
+  const startPending = facts.phase === 'starting' && !isPlaying, startBurst = facts.phase === 'starting' && isPlaying;
+  const matchingVideo = (executableMode && !session.detour ? [] : focal?.relatedIds || []).map(id => assets[id]).find(a => a?.kind === 'video' && (a.src || a.videoPrepared));
+  const visual = ['image', 'map'].includes(focal?.kind);
+  const videoPending = visual && !!matchingVideo && visualHeard !== focal.id;
+  const visualPending = visual && !matchingVideo && session.preferences.describeImages && !muted && !!focal.descriptionAudio && visualHeard !== focal.id;
+  const primaryStartsPreparation = !executableMode&&!isPlaying&&!playbackPending&&!inlineVideo&&!videoDeliveryState.loading&&!videoPending&&!visualPending&&!!preparationRequest&&hasGuidePreparation(selectedPack,preparationRequest)&&!automaticOff&&!audioContext&&!preparationBusy&&!mediaLoading&&!requestStarting&&['ready','paused'].includes(session.status); // verbatim
+  return { executableMode, executablePlayable, focal, session, activity, automaticOff, finished, inTransition, isPlaying, audio, audioContext, started, mediaLoading, playbackPending, inlineVideo, videoDeliveryState, visual, videoPending, visualPending, primaryStartsPreparation, verifying, startPending, startBurst };
 }
 function legacyExecutableLabel(b) {
-  const { mediaLoading, finished, inTransition, session, automaticOff, executablePlayable, isPlaying, audio, audioContext, started } = b;
-  return mediaLoading?'Cancel loading':finished?'Begin again':inTransition||session.detour||automaticOff||session.status==='waiting'||!executablePlayable?'Continue':isPlaying?'Pause':audio?.active&&audioContext?'Resume':!started?'Begin':'Play'; // :91 verbatim
+  const { finished, inTransition, session, automaticOff, executablePlayable, isPlaying, playbackPending, audio, audioContext, started } = b;
+  return finished?'Begin again':inTransition||session.detour||automaticOff||session.status==='waiting'||!executablePlayable?'Continue':isPlaying||playbackPending?'Pause':audio?.active&&audioContext?'Resume':!started?'Begin':'Play'; // executablePrimaryLabel verbatim
 }
 function legacyLabel(b) {
-  const { executableMode, session, mediaLoading, videoDeliveryState, playbackPending, finished, inTransition, automaticOff, isPlaying, inlineVideo, audio, audioContext, videoPending, activity, visualPending, visual, focal, primaryStartsPreparation, started } = b;
+  const { executableMode, session, finished, inTransition, automaticOff, isPlaying, playbackPending, inlineVideo, audio, audioContext, videoPending, activity, visualPending, visual, focal, primaryStartsPreparation, started } = b;
   const executablePrimaryLabel = () => legacyExecutableLabel(b);
-  return executableMode&&!session.detour?executablePrimaryLabel():mediaLoading||videoDeliveryState.loading?'Cancel loading':playbackPending?'Pause':finished?'Begin again':inTransition?'Continue':automaticOff&&!session.detour?'Continue':isPlaying?'Pause':inlineVideo?'Resume':audio?.active&&audioContext?'Resume':videoPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)?'Play video':visualPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)?'Play':session.detour?(visual?'Return':focal?.kind==='video'?'Play video':focal?.descriptionAudio?'Listen':'Return'):primaryStartsPreparation?(!started?'Begin':'Play'):session.status==='waiting'||automaticOff||!activity?.audioSrc?'Continue':session.status==='paused'?'Resume':!started?'Begin':'Play'; // :216 verbatim
+  return executableMode&&!session.detour?executablePrimaryLabel():finished?'Begin again':inTransition?'Continue':automaticOff&&!session.detour?'Continue':isPlaying||playbackPending?'Pause':inlineVideo?'Resume':audio?.active&&audioContext?'Resume':videoPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)?'Play video':visualPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)?'Play':session.detour?(visual?'Return':focal?.kind==='video'?'Play video':focal?.descriptionAudio?'Listen':'Return'):primaryStartsPreparation?(!started?'Begin':'Play'):session.status==='waiting'||automaticOff||!activity?.audioSrc?'Continue':session.status==='paused'?'Resume':!started?'Begin':'Play'; // primaryLabel verbatim
+}
+function legacyFace(b) {
+  const { automaticOff, session, finished, inTransition, startPending, startBurst, isPlaying, verifying } = b;
+  const primaryStarting = !(automaticOff&&!session.detour)&&!finished&&!inTransition&&(startPending||startBurst&&isPlaying); // verbatim
+  const primaryLabel = legacyLabel(b);
+  return { label: primaryLabel, face: easyFace({verifying,starting:primaryStarting,label:primaryLabel}) }; // primaryFace verbatim
 }
 
-test(`parity: labelFor(decide()) equals the verbatim :91/:216 label on ${3 * DRAWS} draws, divergences named`, () => {
+test(`parity: decide() equals the verbatim post-R6 label chains and easyFace on ${3 * DRAWS} draws, divergences named`, () => {
   const found = new Map();
   const hit = new Set();
   let compared = 0;
   for (const input of parityDraws) {
-    if (input.facts.phase === 'loading') continue; // verifying has no legacy label (R5)
     compared++;
     const out = decide(input);
-    const legacy = legacyLabel(legacyBindings(input));
-    const label = labelFor(out.primary.action);
+    const legacy = legacyFace(legacyBindings(input));
+    const kind = out.primary.action === 'verifying' || out.primary.action === 'starting' ? out.primary.action : 'action';
+    const mine = `${labelFor(out.primary.verified)}|${kind}|${accessibleNameFor(out.primary.action)}`;
+    const theirs = `${legacy.label}|${legacy.face.kind}|${legacy.face.label}`;
     hit.add(out.reason);
-    assert.equal(accessibleNameFor(out.primary.action), label); // aria-label equals label off verifying (GuidePrimary.svelte:10)
-    if (legacy !== label) { const key = `${out.reason}:${legacy}->${label}`; found.set(key, (found.get(key) || 0) + 1); }
+    if (kind !== 'verifying') assert.equal(accessibleNameFor(out.primary.action), labelFor(out.primary.action)); // aria-label equals label off verifying (GuidePrimary.svelte)
+    if (mine !== theirs) { const key = `${out.reason}:${theirs}->${mine}`; found.set(key, (found.get(key) || 0) + 1); }
   }
   assert.ok(compared > DRAWS);
-  const primaryRules = [...Array(7).keys()].map((i) => `E${i + 1}`).concat([...Array(16).keys()].map((i) => `B${i + 1}`));
-  assert.deepEqual(primaryRules.filter((r) => !hit.has(r)), [], 'every verified primary rule is reached by the parity draws');
+  const primaryRules = [...Array(8).keys()].map((i) => `E${i}`).concat([...Array(17).keys()].filter((i) => i !== 2).map((i) => `B${i}`));
+  assert.deepEqual(primaryRules.filter((r) => !hit.has(r)), [], 'every primary rule is reached by the parity draws');
   assert.deepEqual([...found.keys()].sort(), declaredDivergences.map((d) => d.key).sort(), `unnamed divergences: ${JSON.stringify([...found])}`);
 });
 
 test('labels: every emitted action has today\'s en label; verifying has the R5 accessible name', () => {
-  const today = new Set(['Begin', 'Play', 'Pause', 'Resume', 'Continue', 'Return', 'Play video', 'Listen', 'Begin again', 'Cancel loading']);
+  const today = new Set(['Begin', 'Play', 'Pause', 'Resume', 'Continue', 'Return', 'Play video', 'Listen', 'Begin again']);
   for (const a of ACTIONS.filter((x) => !['verifying', 'starting'].includes(x))) assert.ok(today.has(labelFor(a)), a);
   assert.equal(labelFor('verifying'), '');
   assert.equal(accessibleNameFor('verifying'), 'Checking availability');
-  assert.throws(() => labelFor('starting'), /reserved/);
+  assert.equal(labelFor('starting'), 'Pause'); // easyFace starting: the loading row, the label it will have
+  assert.throws(() => labelFor('cancel-loading'), /No primary label/);
 });
 
 test('flowFrom derives bundled and executable flows; cue only from data; server flow preferred', () => {

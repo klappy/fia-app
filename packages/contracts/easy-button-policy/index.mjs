@@ -1,18 +1,19 @@
 // fia-easy-button-policy@1 — one pure settings→action contract for the easy button and autoplay.
 // Pure: no imports, no DOM, no Svelte, no clock, no randomness. Same input, same frozen output.
-// Rule ids and line cites are against fia-app main @3d3b1d2 (apps/web/src/App.svelte).
+// Rule ids are against the post-R6 App.svelte (integration/2026-10-06-train @21ad2dc, #193 R4-R6 merged):
+// executable chain, bundled primaryLabel chain, and easyFace() over them (apps/web/src/lib/easy-button.js).
 // Cookbook contract: product/v3-planning/easy-button-policy/CONTRACT.md (fia-app-cookbook).
 
 const bool = { type: 'boolean' };
 const obj = (properties) => ({ type: 'object', additionalProperties: false, required: Object.keys(properties), properties });
 const oneOf = (...values) => ({ enum: values });
 
-export const ACTIONS = Object.freeze(['verifying', 'cancel-loading', 'pause', 'begin-again', 'continue', 'resume', 'play-video', 'play', 'listen', 'return', 'begin', 'starting']);
-// `starting` is reserved for #216 R4 (fia-app-cookbook work/active/2026-10-06-ux-audit-repairs/RECIPE.md R4); no @1 rule emits it.
-export const RESERVED_ACTIONS = Object.freeze(['starting']);
+export const ACTIONS = Object.freeze(['verifying', 'starting', 'pause', 'begin-again', 'continue', 'resume', 'play-video', 'play', 'listen', 'return', 'begin']);
+// Since the post-R6 re-port nothing is reserved: `verifying` (R5) and `starting` (R4) are emitted; `cancel-loading` is gone (R4.2).
+export const RESERVED_ACTIONS = Object.freeze([]);
 export const PHASES = Object.freeze(['loading', 'starting', 'verified']);
-// `starting` phase is reserved for R4: accepted by the schema, inert in @1 (evaluated as verified).
-export const RESERVED_PHASES = Object.freeze(['starting']);
+// loading = R5 verifying; starting = a start is pending (startPending || startBurst && playing), gated by decide() as primaryStarting.
+export const RESERVED_PHASES = Object.freeze([]);
 
 export const SCHEMA = Object.freeze({
   $schema: 'https://json-schema.org/draft/2020-12/schema',
@@ -35,13 +36,13 @@ export const SCHEMA = Object.freeze({
         mode: oneOf('bundled', 'executable'),
         detour: bool, inTransition: bool, mediaLoading: bool, videoLoading: bool, playbackPending: bool,
         playing: bool, inlineVideo: bool, audioActive: bool, audioContext: bool, started: bool,
-        introduced: bool, visualHeard: bool, playbackConsent: bool, automaticStart: bool,
+        introduced: bool, visualHeard: bool, playbackConsent: bool, automaticStart: bool, requestStarting: bool,
         status: oneOf('ready', 'playing', 'paused', 'waiting', 'complete'),
         preparation: oneOf('none', 'available', 'preparing', 'ready', 'failed')
       })
     }),
     output: obj({
-      primary: obj({ action: oneOf(...ACTIONS) }),
+      primary: obj({ action: oneOf(...ACTIONS), verified: oneOf(...ACTIONS.filter((a) => a !== 'verifying' && a !== 'starting')) }),
       autoplay: obj({
         arrival: oneOf('none', 'narration', 'prepare', 'describe', 'silent'),
         afterNarration: oneOf('none', 'describe', 'video'),
@@ -109,31 +110,37 @@ export function derive({ flow, settings, facts }) {
   const resumable = facts.audioActive && facts.audioContext; // audio?.active&&audioContext
   const executablePlayable = executable && (flow.narration === 'bound' || flow.narration === 'preparable'); // :33
   const primaryStartsPreparation = !executable && !facts.playing && !facts.playbackPending && !facts.inlineVideo && !facts.videoLoading &&
-    !videoPending && !visualPending && facts.preparation === 'available' && !automaticOff && !facts.audioContext && !facts.mediaLoading &&
-    (facts.status === 'ready' || facts.status === 'paused'); // :215 (available = request, guide preparation, not busy)
+    !videoPending && !visualPending && facts.preparation === 'available' && !automaticOff && !facts.audioContext && !facts.mediaLoading && !facts.requestStarting &&
+    (facts.status === 'ready' || facts.status === 'paused'); // primaryStartsPreparation (available = request, guide preparation, not busy)
   return { executable, finished, automaticOff, visual, descriptionAudio, video, videoPending, visualPending, recording, resumable, executablePlayable, primaryStartsPreparation };
 }
 
+// The face: easyFace({verifying, starting: primaryStarting, label}) over the verified chain (#193 R4/R5).
 function primaryOf(input, d) {
+  const { facts } = input;
+  const [verified, verifiedRule] = verifiedOf(input, d);
+  const executableRule = d.executable && !facts.detour;
+  if (facts.phase === 'loading') return [verified, 'verifying', executableRule ? 'E0' : 'B0'];
+  // primaryStarting: !(automaticOff && !detour) && !finished && !inTransition && (startPending || startBurst && playing)
+  if (facts.phase === 'starting' && !(d.automaticOff && !facts.detour) && !d.finished && !facts.inTransition) return [verified, 'starting', executableRule ? 'E1' : 'B1'];
+  return [verified, verified, verifiedRule];
+}
+
+function verifiedOf(input, d) {
   const { flow, facts } = input;
-  if (d.executable && !facts.detour) { // :216 → executablePrimaryLabel() :91
-    if (facts.phase === 'loading') return ['verifying', 'E0'];
-    if (facts.mediaLoading) return ['cancel-loading', 'E1'];
+  if (d.executable && !facts.detour) { // executablePrimaryLabel()
     if (d.finished) return ['begin-again', 'E2'];
     if (facts.inTransition || facts.detour || d.automaticOff || facts.status === 'waiting' || !d.executablePlayable) return ['continue', 'E3'];
-    if (facts.playing) return ['pause', 'E4'];
+    if (facts.playing || facts.playbackPending) return ['pause', 'E4'];
     if (d.resumable) return ['resume', 'E5'];
     if (!facts.started) return ['begin', 'E6'];
     return ['play', 'E7'];
   }
-  // :216 bundled chain (also executable mode inside a detour)
-  if (facts.phase === 'loading') return ['verifying', 'B0'];
-  if (facts.mediaLoading || facts.videoLoading) return ['cancel-loading', 'B1'];
-  if (facts.playbackPending) return ['pause', 'B2'];
+  // bundled primaryLabel chain (also executable mode inside a detour); B2 (playbackPending first) retired: it joins B6
   if (d.finished) return ['begin-again', 'B3'];
   if (facts.inTransition) return ['continue', 'B4'];
   if (d.automaticOff && !facts.detour) return ['continue', 'B5'];
-  if (facts.playing) return ['pause', 'B6'];
+  if (facts.playing || facts.playbackPending) return ['pause', 'B6'];
   if (facts.inlineVideo) return ['resume', 'B7'];
   if (d.resumable) return ['resume', 'B8'];
   const silentOrHeld = !d.recording || facts.status === 'waiting' || facts.detour;
@@ -184,13 +191,13 @@ const freeze = (value) => { if (value && typeof value === 'object') { for (const
 export function decide(input) {
   validate(input);
   const d = derive(input);
-  const [action, primaryRule] = primaryOf(input, d);
+  const [verified, action, primaryRule] = primaryOf(input, d);
   const [arrival, arrivalRule] = arrivalOf(input, d);
   const [afterNarration, afterRule] = afterNarrationOf(input, d);
   const [detourVideo, detourRule] = detourVideoOf(input);
   const [skipNarration, cueRule] = viewingCueOf(input, d);
   return freeze({
-    primary: { action },
+    primary: { action, verified },
     autoplay: { arrival, afterNarration, detourVideo },
     viewingCue: { skipNarration },
     hold: input.flow.hold,
@@ -216,7 +223,7 @@ export const CAUSE_OF_PATH = Object.freeze({
   'flow.role': 'status', 'flow.hold': 'status', 'flow.narration': 'status', 'flow.focal.kind': 'status', 'flow.focal.descriptionAudio': 'status', 'flow.media.video': 'status', 'flow.cue.pauseOnly': 'status',
   'facts.playing': 'media-event', 'facts.audioActive': 'media-event', 'facts.audioContext': 'media-event', 'facts.inlineVideo': 'media-event',
   'facts.status': 'media-event', 'facts.inTransition': 'media-event', 'facts.introduced': 'media-event', 'facts.visualHeard': 'media-event',
-  'facts.playbackPending': 'scheduled-start', 'facts.automaticStart': 'scheduled-start'
+  'facts.playbackPending': 'scheduled-start', 'facts.automaticStart': 'scheduled-start', 'facts.requestStarting': 'status'
 });
 
 function leaves(schema, prefix, out) {

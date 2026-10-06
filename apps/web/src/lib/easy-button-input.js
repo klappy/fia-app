@@ -23,7 +23,8 @@ export function pauseOnlyCue(presentationId,activity){
  * mediaLoading, videoLoading (videoDeliveryState.loading), playbackPending, audioActive (audio?.active),
  * audioContext, started, introduced (Set), visualHeard, playbackConsent, automatic (playActivity's flag),
  * preparationAvailable (preparationRequest && hasGuidePreparation, :215), preparationBusy (:66), preparationStatus.
- * `facts.phase` is pinned to verified: this lane renders no verifying state (#216 R5 owns it).
+ * verifying (R5), starting (R4: startPending||startBurst&&isPlaying, before the gate decide() applies) and requestStarting
+ * come from App.svelte after #193; phase is loading while verifying, starting while a start is pending, else verified.
  */
 export function policyInputFrom(s){
  const activity=s.activity,focal=s.focal,session=s.session;
@@ -48,7 +49,7 @@ export function policyInputFrom(s){
    autoplayVideo:!!session.preferences.autoplayVideo
   },
   facts:{
-   phase:'verified',
+   phase:s.verifying?'loading':s.starting?'starting':'verified',
    mode:executable?'executable':'bundled',
    detour:!!session.detour,
    inTransition:!!s.inTransition,
@@ -64,6 +65,7 @@ export function policyInputFrom(s){
    visualHeard:!!focal&&s.visualHeard===focal.id,
    playbackConsent:!!s.playbackConsent,
    automaticStart:!!s.automatic,
+   requestStarting:!!s.requestStarting,
    status:session.status,
    preparation
   }

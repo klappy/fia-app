@@ -21,7 +21,9 @@ beforeEach(()=>{
  URL.createObjectURL=vi.fn(()=> 'blob:prepared');URL.revokeObjectURL=vi.fn();HTMLMediaElement.prototype.pause=vi.fn();Element.prototype.scrollTo=vi.fn();
 });
 afterEach(()=>{cleanup();vi.restoreAllMocks();vi.unstubAllGlobals();vi.clearAllMocks();localStorage.clear();});
-async function mount({automatic=false}={}){render(App);await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toBe(presentation.activities[0].prompt));if(!automatic)await toggleNarration();}
+// R5/R4: the easy button is busy while it checks availability and while a start settles (aria-busy).
+const easyIdle=()=>waitFor(()=>expect(document.querySelector('.guide-primary').hasAttribute('aria-busy')).toBe(false),{timeout:2000});
+async function mount({automatic=false,checked=true}={}){render(App);await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toBe(presentation.activities[0].prompt));if(checked)await easyIdle();if(!automatic)await toggleNarration();}
 async function toggleNarration(){await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Settings',exact:true}));await fireEvent.click(screen.getByRole('checkbox',{name:/Automatic guide narration/}));await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));}
 it('browse and Continue remain silent; explicit original Play requests exact activity and plays warm verified bytes',async()=>{
  await mount();expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();expect(screen.getByRole('button',{name:'Continue',exact:true})).toBeTruthy();
@@ -50,7 +52,7 @@ it('preparation notice can be dismissed without canceling work and later state i
 it('primary pauses prepared playback and manual hold remains on the same instruction until Continue',async()=>{
  await mount({automatic:true});await fireEvent.click(screen.getByRole('button',{name:'Begin'}));await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(1));
  expect(screen.getAllByRole('button',{name:'Pause',exact:true})).toHaveLength(1);expect(screen.getByRole('button',{name:'Skip to next activity'})).toBeTruthy();
- const primary=screen.getByRole('button',{name:'Pause',exact:true});expect(screen.queryByText('Recording ready. Press Play to listen.')).toBeNull();await fireEvent.click(primary);expect(audio.pause).toHaveBeenCalled();expect(screen.queryByText('Recording ready. Press Play to listen.')).toBeNull();expect(JSON.parse(localStorage.getItem('fia-v3-progress@1:'+descriptor.id)).session.index).toBe(0);
+ await easyIdle();const primary=screen.getByRole('button',{name:'Pause',exact:true});expect(screen.queryByText('Recording ready. Press Play to listen.')).toBeNull();await fireEvent.click(primary);expect(audio.pause).toHaveBeenCalled();expect(screen.queryByText('Recording ready. Press Play to listen.')).toBeNull();expect(JSON.parse(localStorage.getItem('fia-v3-progress@1:'+descriptor.id)).session.index).toBe(0);
  expect(screen.getAllByRole('button',{name:'Resume',exact:true})).toHaveLength(1);const resume=screen.getByRole('button',{name:'Resume',exact:true});await fireEvent.click(resume);expect(audio.resume).toHaveBeenCalled();audio.active=false;audio.state({playing:false,src:null,elapsed:0,duration:0});audio.end();
  await waitFor(()=>expect(screen.getByRole('button',{name:'Continue',exact:true})).toBeTruthy());expect(JSON.parse(localStorage.getItem('fia-v3-progress@1:'+descriptor.id)).session.index).toBe(0);
  await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));await waitFor(()=>expect(JSON.parse(localStorage.getItem('fia-v3-progress@1:'+descriptor.id)).session.index).toBe(1));expect(libraryAdapter.prepareRecording).toHaveBeenCalledTimes(1);
@@ -62,11 +64,11 @@ it('Replay reuses prepared descriptor with explicit range playback and no extra 
  await fireEvent.click(screen.getByRole('button',{name:'Replay',exact:true}));await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(2));expect(audio.play.mock.calls[1][3]).toEqual(ready.playbackRange);expect(libraryAdapter.prepareRecording).toHaveBeenCalledTimes(1);expect(libraryAdapter.playPreparedRecording).toHaveBeenCalledTimes(2);
 });
 
-it('ready guidance remains until actual playback starts, then stays cleared on pause',async()=>{
+it('carried playback never shows the Press Play notice, before or after it sounds, and it stays cleared on pause (R4.5, R6)',async()=>{
  audio.play.mockImplementation((text,src)=>{audio.active=true;audio.src=src;audio.state({playing:false,src,elapsed:0,duration:60});});
  await mount();await fireEvent.click(screen.getByRole('button',{name:'Play original recording'}));await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(1));
- expect(screen.getByText('Recording ready. Press Play to listen.')).toBeTruthy();
- audio.state({playing:true,src:'blob:stale',elapsed:4,duration:60});await new Promise(r=>setTimeout(r,0));expect(screen.getByText('Recording ready. Press Play to listen.')).toBeTruthy();
+ expect(screen.queryByText('Recording ready. Press Play to listen.')).toBeNull();
+ audio.state({playing:true,src:'blob:stale',elapsed:4,duration:60});await new Promise(r=>setTimeout(r,0));expect(screen.queryByText('Recording ready. Press Play to listen.')).toBeNull();
  audio.state({playing:true,src:'blob:prepared',elapsed:4,duration:60});await waitFor(()=>expect(screen.queryByText('Recording ready. Press Play to listen.')).toBeNull());
  await fireEvent.click(screen.getAllByRole('button',{name:'Pause',exact:true})[0]);expect(screen.queryByText('Recording ready. Press Play to listen.')).toBeNull();expect(libraryAdapter.prepareRecording).toHaveBeenCalledTimes(1);
 });
@@ -163,13 +165,12 @@ it('an admitted guide with a requested image description honors its visual Play 
 });
 
 it('qualified original whole-file playback uses native EOF at 1x with no range argument',async()=>{
- const p3=registry.packs.find(p=>p.id==='eng.MRK-1-21-28'),body=JSON.parse(readFileSync('public'+p3.presentation.url,'utf8'));
- localStorage.setItem('fia-v3-selected-pack',p3.id);libraryAdapter.select.mockResolvedValue({descriptor:p3,presentation:body});
+ // R6: only a catalog-admitted unit offers an original recording, so this uses the admitted passage.
  libraryAdapter.playPreparedRecording.mockResolvedValue({bytes:new Uint8Array(4),mime:'audio/wav',playback:'whole-file-native-ended'});
- render(App);await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toBe(body.activities[0].prompt));
+ await mount();
  await fireEvent.click(screen.getByRole('button',{name:'Play original recording',exact:true}));
- await waitFor(()=>expect(audio.play).toHaveBeenCalledWith(body.activities[0].narration,'blob:prepared',1));
- expect(audio.play.mock.calls[0]).toHaveLength(3);expect(libraryAdapter.prepareRecording.mock.calls[0][0].packId).toBe(p3.id);
+ await waitFor(()=>expect(audio.play).toHaveBeenCalledWith(presentation.activities[0].narration,'blob:prepared',1));
+ expect(audio.play.mock.calls[0]).toHaveLength(3);expect(libraryAdapter.prepareRecording.mock.calls[0][0].packId).toBe(descriptor.id);
 });
 
 it.each(['ready','failed'])('older media refresh %s cannot replace the newest installed revision',async outcome=>{
@@ -179,7 +180,7 @@ it.each(['ready','failed'])('older media refresh %s cannot replace the newest in
  let selectedReads=0;
  libraryAdapter.mediaStatus.mockImplementation(pack=>pack.id===descriptor.id?(++selectedReads===1?earlier.promise:Promise.resolve({files:[{path}],savedFiles:[],deliveryRevision:'new-revision'})):Promise.resolve({files:[],savedFiles:[],deliveryRevision:null}));
  vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(2),mime:'audio/mpeg',playbackRange:ready.playbackRange});
- await mount();await waitFor(()=>expect(selectedReads).toBe(1));registration.resolve();await waitFor(()=>expect(selectedReads).toBe(2));
+ await mount({checked:false});await waitFor(()=>expect(selectedReads).toBe(1));registration.resolve();await waitFor(()=>expect(selectedReads).toBe(2));
  if(outcome==='ready')earlier.resolve({files:[{path}],savedFiles:[],deliveryRevision:'old-revision'});else earlier.resolve(Promise.reject(Error('old status failed')));
  await new Promise(r=>setTimeout(r,0));await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));
  await waitFor(()=>expect(libraryAdapter.playMedia).toHaveBeenCalled());expect(libraryAdapter.playMedia.mock.calls[0][2]).toBe('new-revision');
@@ -189,7 +190,7 @@ it('late download status cannot resurrect saved capability after the newest stat
  const earlier=deferred(),registration=deferred(),network={onLine:true,serviceWorker:{register:()=>registration.promise}};
  vi.stubGlobal('navigator',network);let selectedReads=0;
  libraryAdapter.downloadStatus.mockImplementation(pack=>pack.id===descriptor.id?(++selectedReads===1?earlier.promise:Promise.resolve({saved:false})):Promise.resolve({saved:false}));
- await mount();await waitFor(()=>expect(selectedReads).toBe(1));registration.resolve();await waitFor(()=>expect(selectedReads).toBe(2));
+ await mount({checked:false});await waitFor(()=>expect(selectedReads).toBe(1));registration.resolve();await waitFor(()=>expect(selectedReads).toBe(2));
  earlier.resolve({saved:true,active:{manifest:{presentationRevision:descriptor.revision,deliveryRevision:'old-revision',files:[]},files:[]}});
  await new Promise(r=>setTimeout(r,0));network.onLine=false;await fireEvent(window,new Event('offline'));
  expect(screen.getByText('You’re offline')).toBeTruthy();expect(screen.queryByText('Offline · session saved')).toBeNull();

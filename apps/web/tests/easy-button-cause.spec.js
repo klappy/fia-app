@@ -1,5 +1,5 @@
 // fia-easy-button-policy@1 cause invariant (captain k0006), as far as this lane proves it:
-// on load the primary shows a verified action only (this lane pins phase verified; #216 R5 renders verifying),
+// on load the primary is verifying, then its first verified action (post-R6: decide() emits verifying and starting),
 // an identical state never flips it, and the changes this lane can drive have a classified cause.
 // Observables only: the primary's aria-label (GuidePrimary.svelte:10). The runtime EB guard and its window stay with #216.
 import {libraryAdapter,bundledPack} from '../src/lib/library.js';
@@ -50,22 +50,17 @@ beforeEach(()=>{
 afterEach(()=>{observer?.disconnect();observer=null;cleanup();vi.restoreAllMocks();vi.unstubAllGlobals();});
 
 const LOADS=[['S01-U001','ready','Begin'],['S02-U005','waiting','Play video'],['S01-U002-reading-1','ready','Play']];
-it('(1) on load the primary shows only verified labels, never Checking availability, and settles on the verified action',async()=>{
+// Post-R6 (#193 R5 E1): on load the primary is verifying (decide() emits verifying while phase is loading), then
+// changes once, to its first verified action. No interim verified-looking label.
+it('(1) R5 E1: on load the primary goes from Checking availability to its first verified action only',async()=>{
  for(const [id,status,settled] of LOADS){
   await startAt(id,status);
-  expect(loadSeen.every(label=>VERIFIED.has(label))).toBe(true);
-  expect(loadSeen).not.toContain('Checking availability');
+  expect(loadSeen.every(label=>label==='Checking availability'||VERIFIED.has(label))).toBe(true);
   expect(loadSeen).not.toContain('');
+  expect(loadSeen.filter(label=>label!=='Checking availability')).toEqual([settled]);
   expect(loadSeen.at(-1)).toBe(settled);
   observer.disconnect();cleanup();
  }
-});
-// Failing-first for #216 R5 E1 (fia-app-cookbook work/active/2026-10-06-ux-audit-repairs/RECIPE.md R5): today the primary
-// shows an interim Continue before the media status resolves (same sequence before and after this lane's swap:
-// [Continue, Begin], [Continue, Play video], [Continue, Play]). R5 replaces the interim label with verifying;
-// when it lands this test starts passing and `it.fails` must become `it`.
-it.fails('(1b) R5 E1: on load the primary goes to its first verified state only (owned by #216 R5)',async()=>{
- for(const [id,status] of LOADS){await startAt(id,status);expect(loadSeen.length).toBe(1);observer.disconnect();cleanup();}
 });
 
 it('(2) an identical state never changes the label: a sheet round trip and a remount with the same stored state',async()=>{
@@ -74,7 +69,7 @@ it('(2) an identical state never changes the label: a sheet round trip and a rem
  expect(primaryLabel()).toBe(first);expect(seen).toEqual([first]);
  observer.disconnect();const stored=localStorage.getItem('fia-v3-session@2');cleanup();localStorage.setItem('fia-v3-session@2',stored);
  const record=watchPrimary();render(App);record();await settle();await settle();await settle();record();
- expect(seen.at(-1)).toBe(first); // the remount settles on the same verified action (its interim load label is R5's, see 1b)
+ expect(seen.at(-1)).toBe(first); // the remount settles on the same verified action (after verifying, see 1)
  const input=baseInput();expect(causeOf(input,structuredClone(input))).toBeNull();expect(decide(input)).toEqual(decide(structuredClone(input)));
 });
 
@@ -83,7 +78,7 @@ it('(3) the settings toggles are gesture causes: guide narration changes the lab
  await setting('Automatic guide narration');expect(primaryLabel()).toBe('Continue');
  await setting('Automatic guide narration');expect(primaryLabel()).toBe('Begin');
  expect(seen).toEqual(['Begin','Continue','Begin']);
- await setting('Automatic video playback');expect(primaryLabel()).toBe('Begin'); // no :91/:216 branch reads autoplayVideo
+ await setting('Automatic video playback');expect(primaryLabel()).toBe('Begin'); // no label-chain branch reads autoplayVideo
  expect(seen).toEqual(['Begin','Continue','Begin']);
  const on=baseInput(),muted=baseInput({muted:true});
  expect(causeOf(on,muted)).toMatchObject({class:'gesture',provisional:false,paths:['settings.guideNarration']});

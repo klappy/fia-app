@@ -43,6 +43,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "ready",
      "preparation": "none"
     }
@@ -55,7 +56,7 @@
    "why": "k0006: loading → first verified state only; R5 verifying (k0011). SE3."
   },
   {
-   "name": "executable media loading",
+   "name": "executable start pending shows starting",
    "rule": "E1",
    "input": {
     "flow": {
@@ -80,7 +81,7 @@
      "autoplayVideo": false
     },
     "facts": {
-     "phase": "verified",
+     "phase": "starting",
      "mode": "executable",
      "detour": false,
      "inTransition": false,
@@ -96,13 +97,15 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "ready",
      "preparation": "none"
     }
    },
    "expect": {
     "primary": {
-     "action": "cancel-loading"
+     "action": "starting",
+     "verified": "begin"
     }
    },
    "why": "App.svelte:91 mediaLoading?Cancel loading (kept until #216 R4 moves cancel out of the slot)"
@@ -149,6 +152,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "complete",
      "preparation": "none"
     }
@@ -205,6 +209,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "ready",
      "preparation": "none"
     }
@@ -261,6 +266,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "playing",
      "preparation": "none"
     }
@@ -314,6 +320,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "paused",
      "preparation": "none"
     }
@@ -367,6 +374,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "ready",
      "preparation": "none"
     }
@@ -424,6 +432,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "ready",
      "preparation": "none"
     }
@@ -481,6 +490,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "ready",
      "preparation": "none"
     }
@@ -493,7 +503,7 @@
    "why": "k0006 and k0011; SE3: verifying only on phase loading"
   },
   {
-   "name": "bundled video delivery loading",
+   "name": "bundled video delivery loading shows starting",
    "rule": "B1",
    "input": {
     "flow": {
@@ -518,7 +528,7 @@
      "autoplayVideo": false
     },
     "facts": {
-     "phase": "verified",
+     "phase": "starting",
      "mode": "bundled",
      "detour": false,
      "inTransition": false,
@@ -534,20 +544,21 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "ready",
      "preparation": "none"
     }
    },
    "expect": {
     "primary": {
-     "action": "cancel-loading"
+     "action": "starting"
     }
    },
    "why": "App.svelte:216 mediaLoading||videoDeliveryState.loading?Cancel loading"
   },
   {
-   "name": "bundled playback pending",
-   "rule": "B2",
+   "name": "bundled playback pending pauses (B6)",
+   "rule": "B6",
    "input": {
     "flow": {
      "role": "guide",
@@ -587,13 +598,15 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "ready",
      "preparation": "none"
     }
    },
    "expect": {
     "primary": {
-     "action": "pause"
+     "action": "pause",
+     "verified": "pause"
     }
    },
    "why": "App.svelte:216 playbackPending?Pause (the 650 ms scheduled start, :282)"
@@ -640,6 +653,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "complete",
      "preparation": "none"
     }
@@ -699,6 +713,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "ready",
      "preparation": "none"
     }
@@ -755,6 +770,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "ready",
      "preparation": "none"
     }
@@ -814,6 +830,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "playing",
      "preparation": "none"
     }
@@ -867,6 +884,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "ready",
      "preparation": "none"
     }
@@ -920,6 +938,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "paused",
      "preparation": "none"
     }
@@ -973,6 +992,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "waiting",
      "preparation": "none"
     }
@@ -1026,6 +1046,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "ready",
      "preparation": "none"
     }
@@ -1085,6 +1106,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "ready",
      "preparation": "none"
     }
@@ -1141,6 +1163,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "ready",
      "preparation": "none"
     }
@@ -1200,6 +1223,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "ready",
      "preparation": "none"
     }
@@ -1253,6 +1277,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "ready",
      "preparation": "available"
     }
@@ -1312,6 +1337,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "waiting",
      "preparation": "none"
     }
@@ -1365,6 +1391,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "paused",
      "preparation": "none"
     }
@@ -1418,6 +1445,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "ready",
      "preparation": "none"
     }
@@ -1478,6 +1506,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "ready",
      "preparation": "none"
     }
@@ -1534,6 +1563,7 @@
      "visualHeard": false,
      "playbackConsent": false,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "ready",
      "preparation": "none"
     }
@@ -1591,6 +1621,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "ready",
      "preparation": "none"
     }
@@ -1651,6 +1682,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "ready",
      "preparation": "none"
     }
@@ -1707,6 +1739,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "ready",
      "preparation": "none"
     }
@@ -1763,6 +1796,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "ready",
      "preparation": "none"
     }
@@ -1816,6 +1850,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "ready",
      "preparation": "none"
     }
@@ -1869,6 +1904,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "ready",
      "preparation": "none"
     }
@@ -1922,6 +1958,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "ready",
      "preparation": "none"
     }
@@ -1975,6 +2012,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "ready",
      "preparation": "none"
     }
@@ -2028,6 +2066,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "ready",
      "preparation": "none"
     }
@@ -2081,6 +2120,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "ready",
      "preparation": "none"
     }
@@ -2134,6 +2174,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "ready",
      "preparation": "none"
     }
@@ -2187,6 +2228,7 @@
      "visualHeard": false,
      "playbackConsent": true,
      "automaticStart": false,
+     "requestStarting": false,
      "status": "ready",
      "preparation": "none"
     }

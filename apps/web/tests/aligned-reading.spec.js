@@ -70,3 +70,43 @@ it('follows the current list item and preserves manual scrolling across recordin
  expect(document.querySelector('li[aria-current=true]').textContent).toBe('Jesus');expect(scroll).not.toHaveBeenCalled();
  await fireEvent.click(screen.getByRole('button',{name:'Follow reading'}));expect(scroll).toHaveBeenCalled();
 });
+
+it('untimed guide text follows the clip being spoken, not the shared recording file',async()=>{
+ // Mark 1:1-13 S02-U010: 304.51-403.61 s of one 498.77 s recording.
+ const guide={id:'guide-clip',kind:'guide',text:'A long original guide paragraph.',descriptionAudio:'/guide.mp3'};
+ const clip=seconds=>({src:'/guide.mp3',playing:true,elapsed:304.51+seconds,duration:498.77,progressElapsed:seconds,progressDuration:99.1});
+ const view=render(AlignedReading,{asset:guide,playback:clip(0)});await tick();
+ expect(scroll).not.toHaveBeenCalled();
+ await view.rerender({asset:guide,playback:clip(49.55)});await tick();expect(scroll).toHaveBeenLastCalledWith({top:1300,behavior:'smooth'});
+ await view.rerender({asset:guide,playback:clip(89.19)});await tick();expect(scroll).toHaveBeenLastCalledWith({top:2600,behavior:'smooth'});
+});
+it('passage-only Scripture without word timing follows its excerpt',async()=>{
+ const passage={...asset,alignment:undefined};
+ const excerpt=seconds=>({src:asset.descriptionAudio,playing:true,elapsed:96.8+seconds,duration:160,progressElapsed:seconds,progressDuration:47.575});
+ const view=render(AlignedReading,{asset:passage,playback:excerpt(.3)});await tick();
+ expect(scroll).not.toHaveBeenCalled();
+ await view.rerender({asset:passage,playback:excerpt(47.575*.5)});await tick();expect(scroll).toHaveBeenLastCalledWith({top:1300,behavior:'smooth'});
+});
+it('word gaps hold the last spoken line and the verse stays marked between verses',async()=>{
+ // Two-line verses: words 0-1 on the first line, word 2 on the second. The verse
+ // paragraph centre sits between them, above the second line.
+ const verses=[{number:1,text:'one two three'},{number:2,text:'four five six'}];
+ const words=(start,text)=>{let at=0;return text.split(' ').map((w,i)=>{const from=text.indexOf(w,at);at=from+w.length;return {from,to:at,start:start+i,end:start+i+.6};});};
+ const alignment={schemaVersion:2,duration:20,verses:[{start:1,end:3.6,highlightMode:'word',words:words(1,verses[0].text)},{start:5,end:7.6,highlightMode:'word',words:words(5,verses[1].text)}]};
+ const timed={id:'gap-test',kind:'scripture',verses,alignment,descriptionAudio:'/gap.opus'};
+ vi.spyOn(Element.prototype,'getBoundingClientRect').mockImplementation(function(){
+  if(this.classList?.contains('scripture-scroll'))return {top:0,height:400,bottom:400};
+  const top=this.closest('.scripture-scroll')?.scrollTop||0,word=this.dataset?.alignWord;
+  if(word){const [v,w]=word.split('-').map(Number);const y=600+v*80+(w>=2?40:0)-top;return {top:y,bottom:y+30,height:30};}
+  const v=[...(this.parentElement?.children||[])].filter(e=>e.tagName==='P').indexOf(this);const y=600+Math.max(0,v)*80-top;return {top:y,bottom:y+70,height:70};
+ });
+ const at=elapsed=>({src:'/gap.opus',playing:true,elapsed});
+ const view=render(AlignedReading,{asset:timed,playback:at(3.1)});await tick();
+ const tops=()=>scroll.mock.calls.map(([o])=>o.top);
+ for(const t of [3.3,3.7,4.2,4.9,5.1,5.4,5.7,6.2,7.1])await view.rerender({asset:timed,playback:at(t)});
+ await tick();
+ const seen=tops();expect(seen.length).toBeGreaterThan(1);
+ seen.forEach((top,i)=>{if(i)expect(top).toBeGreaterThanOrEqual(seen[i-1]);});
+ await view.rerender({asset:timed,playback:at(4.2)});await tick();
+ expect(document.querySelector('p[aria-current=true]')?.textContent).toContain('one two three');
+});

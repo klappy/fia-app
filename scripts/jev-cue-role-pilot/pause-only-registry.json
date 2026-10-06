@@ -1,0 +1,18 @@
+{
+  "schema": "fia-pause-only-registry@1",
+  "status": "proposed-review-pending",
+  "note": "Exact cue-text registry for rule R-PAUSE (PLAN.md §6). A unit matches only when its whole text hashes to an entry; the text is kept for human review and is never matched by code.",
+  "census": "source-packs.json.gz revision f8776d92b090b5af5b17b17dc1137f25fb059ed0: the only pause-only unit texts in eng/spa MRK-1-1-13 and MRK-1-14-20",
+  "entries": [
+    {
+      "language": "eng",
+      "text": "Pause this audio here.",
+      "sha256": "37f450cc20239bea715cd32fb8628b31ba1d30e63b3f96e04f47ad293301389d"
+    },
+    {
+      "language": "spa",
+      "text": "Pausen este audio aquí.",
+      "sha256": "704759ee546eb266965992db3b18cdf0e6043de87de334b95a1e986c6ae95795"
+    }
+  ]
+}

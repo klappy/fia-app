@@ -143,6 +143,7 @@
             "visualHeard",
             "playbackConsent",
             "automaticStart",
+            "requestStarting",
             "status",
             "preparation"
           ],
@@ -202,6 +203,9 @@
             "automaticStart": {
               "type": "boolean"
             },
+            "requestStarting": {
+              "type": "boolean"
+            },
             "status": {
               "enum": [
                 "ready",
@@ -240,13 +244,14 @@
           "type": "object",
           "additionalProperties": false,
           "required": [
-            "action"
+            "action",
+            "verified"
           ],
           "properties": {
             "action": {
               "enum": [
                 "verifying",
-                "cancel-loading",
+                "starting",
                 "pause",
                 "begin-again",
                 "continue",
@@ -255,8 +260,20 @@
                 "play",
                 "listen",
                 "return",
-                "begin",
-                "starting"
+                "begin"
+              ]
+            },
+            "verified": {
+              "enum": [
+                "pause",
+                "begin-again",
+                "continue",
+                "resume",
+                "play-video",
+                "play",
+                "listen",
+                "return",
+                "begin"
               ]
             }
           }
