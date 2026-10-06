@@ -1,6 +1,8 @@
 import catalog from './catalog.json';
 import {json,resolveSelection,operationId,indexedCatalog,readBounded,prepareAccepted,eligibleRows} from './service.mjs';
-import {readPreparedAudio} from './contract.mjs';
+import {createReviewedOriginalStore} from './reviewed-original-store.mjs';
+import {reviewedOriginalStatus} from './reviewed-original-status.mjs';
+import {canonicalJSONString,readPreparedAudio} from './contract.mjs';
 import {acquireOriginal,originalResponse} from './original.mjs';
 import {readSource,storeSource,sourceKey,verifySourceReference} from './source-store.mjs';
 
@@ -9,6 +11,24 @@ async function requireSource(ctx,env,row){
   if(receipt?.state!=='verified'||receipt.sha256!==source.sha256||receipt.bytes!==source.bytes||receipt.key!==sourceKey(source))throw Error('source-not-verified');
   await verifySourceReference(env.FIA_ORIGINALS,source,row.identity.sourceVersion);
   const bytes=await readSource(env.FIA_ORIGINALS,source);if(!bytes)throw Error('source-not-verified');return bytes;
+}
+
+const reviewedOriginal=row=>row.accepted&&row.selection.quality==='original';
+async function reviewedStore(ctx,env){
+  const admissions=eligibleRows(catalog);
+  return createReviewedOriginalStore({storage:ctx.storage,bucket:env.FIA_ORIGINALS,admissions,
+    fetchAsset:path=>env.ASSETS.fetch(new Request(new URL(path,env.FIA_API_ORIGIN),{redirect:'manual'})),
+    readOriginal:row=>requireSource(ctx,env,row),
+    eligibility:row=>admissions.some(admitted=>canonicalJSONString(admitted)===canonicalJSONString(row)),
+    // Authority is the deployed catalog plus this DO's source/job receipt. This
+    // is not a fresh-source observation ticket or a publisher freshness claim.
+    guard:async(tx,row)=>{
+      const job=await tx.get('job'),source=await tx.get('source');
+      return job?.admissionSha256===row.accepted.expected.resultSha256&&
+        canonicalJSONString(job.selection)===canonicalJSONString(row.selection)&&
+        source?.state==='verified'&&source.sha256===row.source.sha256&&source.bytes===row.source.bytes&&source.key===sourceKey(row.source);
+    }
+  });
 }
 
 const prefix='/v1/preparations';
@@ -67,7 +87,7 @@ export class FiaPreparationJobs{
         // Evidence revision is an output admission, not a canonical input key.
         // A newly reviewed result can unblock the SAME input operation. Never
         // retry a failed admission unchanged and never serve a revoked revision.
-        if(request.method==='POST'&&row.accepted&&prior.admissionSha256!==row.accepted.expected.resultSha256){
+        if(request.method==='POST'&&row.accepted&&(prior.admissionSha256!==row.accepted.expected.resultSha256||reviewedOriginal(row)&&prior.state==='ready'&&prior.reviewedSnapshotSchema!=='fia-reviewed-original-snapshot@1')){
           const next={...prior,state:'preparing',reason:null,result:null,resultSha256:null,resultSerialized:null,admissionSha256:row.accepted.expected.resultSha256};
           await tx.put('job',next);await tx.setAlarm(Date.now()+1);return {record:next,created:false};
         }
@@ -86,7 +106,10 @@ export class FiaPreparationJobs{
     }
     if(record.state==='ready'&&record.resultSha256!==row.accepted?.expected.resultSha256)return json(200,statusBody({...record,state:'blocked',reason:'accepted-result-changed',result:null,resultSha256:null},true));
     if(record.state==='ready'){
-      try{record.result=await readPreparedAudio(new TextEncoder().encode(record.resultSerialized),row.accepted.expected);}
+      try{
+        if(reviewedOriginal(row))Object.assign(record,reviewedOriginalStatus(row,await(await reviewedStore(this.ctx,this.env)).read(row.accepted.expected.resultSha256)));
+        else record.result=await readPreparedAudio(new TextEncoder().encode(record.resultSerialized),row.accepted.expected);
+      }
       catch{return json(503,{status:'unavailable',code:'stored-result-invalid'});}
     }
     return json(created?201:200,statusBody(record,!created));
@@ -116,7 +139,9 @@ export class FiaPreparationJobs{
         }else await storeSource(this.env.FIA_ORIGINALS,row.source,retained,row.identity.sourceVersion);
         await this.ctx.storage.put('source',{state:'verified',sha256:row.source.sha256,bytes:row.source.bytes,key:sourceKey(row.source)});
         record.sourceState='verified';
-        outcome=await prepareAccepted(row,path=>this.env.ASSETS.fetch(new Request(new URL(path,this.env.FIA_API_ORIGIN),{redirect:'manual'})));
+        outcome=reviewedOriginal(row)
+          ?reviewedOriginalStatus(row,await(await reviewedStore(this.ctx,this.env)).demand(row.accepted.expected.resultSha256))
+          :await prepareAccepted(row,path=>this.env.ASSETS.fetch(new Request(new URL(path,this.env.FIA_API_ORIGIN),{redirect:'manual'})));
       }
       catch(error){outcome=error.message==='source-attempt-interrupted'?{state:'blocked',sourceState:'uncertain',reason:'source-attempt-interrupted',result:null,resultSha256:null}:{state:'blocked',sourceState:record.sourceState==='verified'?'verified':'failed',reason:record.sourceState==='verified'?'accepted-artifact-verification-failed':'source-verification-failed',result:null,resultSha256:null};}
       await this.ctx.storage.transaction(async tx=>{
