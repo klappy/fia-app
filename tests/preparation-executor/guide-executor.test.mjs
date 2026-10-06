@@ -80,3 +80,18 @@ test('canonical factory joins actual retained P2 source and untouched raw recogn
  assert.equal(result.reason,'review-required');assert.equal(accepted.rawRecognitionSha256,rawPin);assert.equal(accepted.sourceSha256,raw.source.sha256);assert.equal(accepted.canonicalDisposition.canonicalUnits.length,8);assert.deepEqual(accepted.canonicalDisposition.excluded,[]);assert.equal(accepted.diagnostics.unassignedRecognizedTokens,64);assert.deepEqual(accepted.units.map(u=>u.correspondenceStatus),['unmatched','unmatched',...Array(6).fill('exact-candidate')]);assert.deepEqual(accepted.acceptedPlaybackRanges,[]);
  const warm=await executor.request(request);assert.deepEqual(warm.artifact,result.artifact);assert.deepEqual(f.counts,{fetch:1,recognize:1});
 });
+
+test('typed window recognition retains independent raw traces and unresolved review through factory; warm reuse verifies every window',async()=>{
+ const {createWindowGuideRecognition}=await import('../../server/fia/preparation/executor/window-guide-adapter.mjs');
+ const f=await setup();let windows=0;
+ const recognition=createWindowGuideRecognition({storage:f.state,artifacts:f.artifacts,dependencySha256:'9'.repeat(64),windowSamples:32000,overlapSamples:8000,
+  prepare:async()=>({pcmSha256:'1'.repeat(64),decoderSha256:'2'.repeat(64),totalSamples:56000,sampleRate:16000}),
+  recognition:{paid:false,dependencySha256:'8'.repeat(64),async run({planIdentity,window}){windows++;return encode({schema:'fia-window-raw-words@1',windowSha256:window.windowSha256,planIdentity,window,runtimeEvidence:{scriptSha256:'3'.repeat(64),modelManifestSha256:modelRecipe.modelRevision,runtimeManifest:{fixture:'synthetic'}},roundingPolicy:'seconds-floor-start-ceil-end@1',originalSegments:[],words:[{word:'overlap',startSample:window.index?1:25000,endSampleExclusive:window.index?1000:26000}]});}}});
+ const executor=await f.create({recognition}),result=await executor.request(request);assert.equal(result.reason,'review-required');const review=await report(f,result);assert.equal(review.schema,'fia-window-guide-review@1');assert.equal(review.units.length,8);assert(review.units.every(u=>u.correspondenceStatus==='unmatched'));assert.equal(review.overlapConflicts.length,1);assert.deepEqual(review.acceptedPlaybackRanges,[]);assert.equal(windows,2);
+ const warm=await(await f.create({recognition})).request(request);assert.deepEqual(warm.artifact,result.artifact);assert.equal(windows,2);assert.equal(f.counts.fetch,1);
+ const aggregate=[...f.objects.data.entries()].map(([reference,b])=>{try{return {reference,body:JSON.parse(new TextDecoder().decode(b))};}catch{return {};}}).find(x=>x.body?.schema==='fia-window-guide-recognition@1');
+ assert(aggregate);const {verifyWindowGuideRecognition}=await import('../../server/fia/preparation/executor/window-guide-adapter.mjs');const context={input:{language:'eng',modelRecipe},source:aggregate.body.source,resolveArtifact:f.artifacts.read};
+ for(const mutate of [x=>x.source.sha256='0'.repeat(64),x=>x.recognitionInput.modelRecipe.configSha256='0'.repeat(64),x=>x.plan.windows[0].startSample++,x=>x.projection.words[0].word='substitution',x=>x.artifacts.reverse()]){const bad=structuredClone(aggregate.body);mutate(bad);await assert.rejects(verifyWindowGuideRecognition(bad,context));}
+ f.objects.data.set(aggregate.body.artifacts[0].reference,encode({tampered:true}));assert.equal((await executor.request(request)).state,'unavailable');assert.equal(windows,2);
+});
+test('unknown typed recognition marker refuses before any acquisition',async()=>{const f=await setup();await assert.rejects(f.create({recognition:{...f.options.recognition,resultSchema:'pretend-local'}}),/recognition-schema/);assert.deepEqual(f.counts,{fetch:0,recognize:0});});
