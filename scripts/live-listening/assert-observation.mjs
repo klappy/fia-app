@@ -23,6 +23,6 @@ export function assertReplayRestart(sample){
  const {restart,binding,before,after}=sample||{};const owner=after?.findIndex(a=>!a.paused),a=after?.[owner],b=before?.[owner];const seek=restart?.seeked,play=restart?.playing,start=binding?.range?.startSeconds,end=binding?.range?.endSeconds;
  if(!a||!b||!seek||!play||![restart.actionAt,seek.at,play.at,seek.time,play.time,start,end].every(Number.isFinite))throw Error('Missing native Replay restart');
  if(seek.kind!=='seeked'||play.kind!=='playing'||seek.owner!==owner||play.owner!==owner||seek.src!==a.src||play.src!==a.src||seek.at<restart.actionAt||play.at<seek.at)throw Error('Unbound or stale Replay events');
- if(Math.abs(seek.time-start)>0.05||play.time<start||play.time>end||a.time<play.time||a.time-b.time<0.25)throw Error('Replay did not seek to canonical start and advance');
+ if(seek.time+0.001<start||seek.time-start>0.05||play.time+0.001<start||play.time>end||a.time<play.time||a.time-b.time<0.25)throw Error('Replay did not seek to canonical start and advance');
  return true;
 }
