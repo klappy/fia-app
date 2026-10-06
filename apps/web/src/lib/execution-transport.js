@@ -90,6 +90,7 @@ export function createExecutionTransport({fetch:fetchArtifact=globalThis.fetch}=
   signal?.throwIfAborted();
   const codes={ready:200,preparing:202,unavailable:404,refused:400};
   if(response.redirected||!record||!Object.hasOwn(codes,record.status)||response.status!==codes[record.status]||record.status==='ready'&&(record.packId!==packId||revision&&record.revision!==revision))throw Error('The server catalog is invalid.');
+  if(record.status==='ready'&&response.headers.get('X-FIA-Offline-Snapshot')==='historical-verified')record.offlineSnapshot='historical-verified';
   return record;
  };
  transport.readPresentationRecord=async(record,context={})=>{

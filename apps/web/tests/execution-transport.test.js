@@ -123,3 +123,10 @@ test('catalog and presentation reads share immutable server bytes without starti
  const wrong=createExecutionTransport({fetch:async()=>Response.json({...record,packId:'spa.MRK-1-14-20'})});
  await assert.rejects(wrong.readPack(record.packId),/catalog is invalid/);
 });
+
+test('historical private snapshots are distinguished from a fresh authority read',async()=>{
+ const record={status:'ready',packId:'eng.MRK-1-14-20',revision:sha256,artifact:{sha256,bytes:bytes.length,mime:'application/json'}};let historical=true;
+ const transport=createExecutionTransport({fetch:async()=>Response.json(record,{headers:historical?{'X-FIA-Offline-Snapshot':'historical-verified'}:{}})});
+ assert.equal((await transport.readPack(record.packId)).offlineSnapshot,'historical-verified');
+ historical=false;assert.equal((await transport.readPack(record.packId)).offlineSnapshot,undefined);
+});
