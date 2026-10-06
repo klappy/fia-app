@@ -121,8 +121,8 @@
     },
     {
       "path": "server/fia/preparation/worker.mjs",
-      "sha256": "204e8e0d17cf627c8e2e22c93a1e2bb6260b14c19452138ea8d38374a6eb8d1f",
-      "bytes": 13380,
+      "sha256": "eebe659bc9f5f0f725534546b7412023db4ce81b099653845af8385c9aa58baa",
+      "bytes": 13805,
       "role": "preparation-worker-runtime"
     },
     {
@@ -160,6 +160,60 @@
       "role": "preparation-worker-runtime",
       "sha256": "7a538c8782858204fca942d1f1971208cb52204efae483cb1cb3f6bdb4d811a5",
       "bytes": 19828
+    },
+    {
+      "path": "server/fia/preparation/executor/acceptance.mjs",
+      "role": "preparation-worker-runtime",
+      "sha256": "d58da96832b3e86677dfa3c4374c878d94ff378e69a696be49a2171113de4183",
+      "bytes": 3739
+    },
+    {
+      "path": "server/fia/preparation/executor/alignment.mjs",
+      "role": "preparation-worker-runtime",
+      "sha256": "62f1a6d38aa85ff85031a76ec59fdeb6ef66d552f705ad0369a2fcc99b23e718",
+      "bytes": 6282
+    },
+    {
+      "path": "server/fia/preparation/executor/discovery.mjs",
+      "role": "preparation-worker-runtime",
+      "sha256": "1302738766d3b1e72933e822bb906b104009ea44fc923352ed657a55730c1586",
+      "bytes": 5871
+    },
+    {
+      "path": "server/fia/preparation/executor/guide-executor.mjs",
+      "role": "preparation-worker-runtime",
+      "sha256": "4292b8ba3acb7c208bc24c88fa1e1d573ace8ec85b3c16192e804b3529d1eeac",
+      "bytes": 9393
+    },
+    {
+      "path": "server/fia/preparation/executor/pipeline.mjs",
+      "role": "preparation-worker-runtime",
+      "sha256": "e19bbdbe66772be2661abae271fd51f8a767788c84d00db2a843c1493a78a07d",
+      "bytes": 9842
+    },
+    {
+      "path": "server/fia/preparation/executor/presentation-guide-units.mjs",
+      "role": "preparation-worker-runtime",
+      "sha256": "0adeb2995bd1f4c84a39c7b4b9bb6fb7c15ae3bf27be1b978a450e475c153b1e",
+      "bytes": 8317
+    },
+    {
+      "path": "server/fia/preparation/executor/recognition-identity.mjs",
+      "role": "preparation-worker-runtime",
+      "sha256": "600c0e5390d8836cd9450a821a5a1985f53a49a648d9dba21953e8f431711c10",
+      "bytes": 2144
+    },
+    {
+      "path": "server/fia/preparation/guide-dispatch.mjs",
+      "role": "preparation-worker-runtime",
+      "sha256": "688ae4a915ff52fef7cd5f3075c2e4bf9e821947a93fdf1a874437d76aa104dd",
+      "bytes": 11123
+    },
+    {
+      "path": "server/fia/preparation/guide-sources.json",
+      "role": "preparation-worker-runtime",
+      "sha256": "554e26f3d7cef0e4bb515923e4fcc081a29d407ef7291f122c6daf28205687a8",
+      "bytes": 901808
     }
   ],
   "generalizedRecipeCommit": "60cc73ef68845d7750d34281503ab4543078e1ac",
