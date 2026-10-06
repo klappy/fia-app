@@ -96,10 +96,12 @@ export async function registerWorker(url){
  const absentUnlessActive=()=>Promise.resolve().then(()=>container.getRegistration()).then(r=>{if(!r?.active)noWorker();},noWorker);
  let registration;try{registration=await container.register(url);}catch(error){absentUnlessActive();throw error;}
  // A failed worker's 'redundant' statechange can run before registration.installing is cleared, so the
- // failed worker itself still counts as gone; a newer worker that replaces it is watched in turn.
- const watch=worker=>worker.addEventListener('statechange',()=>{if(worker.state!=='redundant'||registration.active)return;const next=registration.installing||registration.waiting;if(!next||next===worker)noWorker();});
- const pending=registration?.installing||registration?.waiting;
- if(!registration?.active){if(!pending)noWorker();else{watch(pending);registration.addEventListener('updatefound',()=>{if(registration.installing)watch(registration.installing);});}}
+ // failed worker itself counts as gone. No worker is coming only when no other pending worker remains;
+ // every pending worker, and a newer one that replaces it, is watched.
+ const pendingOthers=worker=>[registration.installing,registration.waiting].filter(next=>next&&next!==worker&&next.state!=='redundant');
+ const watch=worker=>worker.addEventListener('statechange',()=>{if(worker.state==='redundant'&&!registration.active&&!pendingOthers(worker).length)noWorker();});
+ const pending=[registration?.installing,registration?.waiting].filter(Boolean);
+ if(!registration?.active){if(!pending.length)noWorker();else{pending.forEach(watch);registration.addEventListener('updatefound',()=>{if(registration.installing)watch(registration.installing);});}}
  return registration;
 }
 async function workerRequest(type,data={},onprogress){

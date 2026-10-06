@@ -80,3 +80,14 @@ it('a newer worker that replaces the pending one is waited for; when it fails to
  second.state='redundant';second.dispatchEvent(new Event('statechange'));registration.installing=null;
  expect(await within(check)).toEqual({error:NOT_READY});
 });
+
+it('a failed install beside another pending worker keeps waiting for that worker; when it fails too, the check ends at once',async()=>{
+ const first=new EventTarget();first.state='installing';const second=new EventTarget();second.state='installed';
+ const registration=Object.assign(new EventTarget(),{installing:first,waiting:second,active:null});
+ worker({register:async()=>registration});
+ const check=library.libraryAdapter.mediaStatus(pack);await library.registerWorker('/sw.js');
+ first.state='redundant';first.dispatchEvent(new Event('statechange'));registration.installing=null;
+ expect(await within(check,100)).toBe('still waiting');
+ second.state='redundant';second.dispatchEvent(new Event('statechange'));registration.waiting=null;
+ expect(await within(check)).toEqual({error:NOT_READY});
+});
