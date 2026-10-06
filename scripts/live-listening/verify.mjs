@@ -21,7 +21,7 @@ export function verify(report,{commit,environment,controlled,readAttachment=path
  if(results.length!==1||results[0].status!=='passed'||tests[0].expectedStatus==='failed'){errors.push(`Scenario did not pass once: ${title}`);continue;}
  const attached=results[0].attachments?.filter(a=>a.name==='live-listening-evidence')||[];if(attached.length!==1){errors.push(`Missing evidence: ${title}`);continue;}
  try{const a=attached[0];const e=JSON.parse(a.body?Buffer.from(a.body,'base64').toString():readAttachment(a.path));
- if(e.schemaVersion!==1||e.outcome!=='passed'||e.expectedCommit!==commit||e.networkVersion?.commit!==commit||e.environment!==environment||e.origin!==origins[environment]||e.loadedRelease!==`${e.networkVersion?.version}+${commit.slice(0,7)}`||e.packId!=='eng.MRK-1-14-20')throw Error('Wrong candidate, loaded shell, origin or pack');
+ if(e.schemaVersion!==1||e.outcome!=='passed'||e.expectedCommit!==commit||e.networkVersion?.commit!==commit||e.loadedCommit!==commit||e.environment!==environment||e.origin!==origins[environment]||e.loadedRelease!==`${e.networkVersion?.version}+${commit.slice(0,7)}`||e.packId!=='eng.MRK-1-14-20')throw Error('Wrong candidate, loaded shell, origin or pack');
  if(!e.claims?.firstUnitVisible||claims.some(c=>e.claims[c]!==true))throw Error('Missing asserted outcome');
  if(e.observations?.some(o=>o.kind==='pageerror'))throw Error('Application error');
  const minimum=claims.includes('nextPlayed')?2:claims.includes('scripturePlayed')||claims.includes('explicitPlay')?1:0;
