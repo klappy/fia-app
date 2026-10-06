@@ -1,0 +1,24 @@
+{
+  "schema": "fia-hosted-asr-proposal@1",
+  "recipeCommit": "7f863cca354514bf365f7422d992e16f23f08b19",
+  "application": "fia-asr-development",
+  "className": "FiaAsrContainerDevelopment",
+  "binding": "FIA_ASR_EXECUTOR",
+  "instanceName": "asr-pilot-v1",
+  "instanceType": "standard-3",
+  "maxInstances": 1,
+  "enableInternet": false,
+  "workersDev": false,
+  "previewUrls": false,
+  "limits": {"totalStarts": 2, "readinessSeconds": 60, "recognitionSeconds": 300, "idleSeconds": 30, "activationSeconds": 1200, "processMemoryBytes": 4294967296, "scratchBytes": 268435456, "metadataBytes": 16384, "resultBytes": 1048576, "words": 2000, "decodedSeconds": 90},
+  "testLedgers": ["A", "B"],
+  "sharedBudget": "asr-pilot-v1-two-starts",
+  "source": {"sha256": "0f3fa9e77215f5050f9e22b7abee329c47e0e9ff71a5f0c4d248926a8f42268d", "bytes": 867865},
+  "model": {"name": "Systran/faster-whisper-small", "revision": "536b0662742c02347bc0e980a01041f333bce120", "files": [
+    {"path": "model.bin", "bytes": 483546902, "sha256": "3e305921506d8872816023e4c273e75d2419fb89b24da97b4fe7bce14170d671"},
+    {"path": "config.json", "bytes": 2370, "sha256": "b55496ac7940a7ae47d2c01eab40edfd8701feec1229d9cce3b40014383fb828"},
+    {"path": "tokenizer.json", "bytes": 2203239, "sha256": "fb7b63191e9bb045082c79fd742a3106a12c99513ab30df4a0d47fa6cb6fd0ab"},
+    {"path": "vocabulary.txt", "bytes": 459861, "sha256": "34ce3fe1c5041027b3f8d42912270993f986dbc4bb34cf27f951e34a1e453913"}
+  ]},
+  "recognition": {"device": "cpu", "computeType": "int8", "cpuThreads": 2, "workers": 1, "language": "en", "task": "transcribe", "beamSize": 5, "wordTimestamps": true, "initialPrompt": null, "prefix": null, "hotwords": null, "conditionOnPreviousText": false, "vadFilter": false}
+}

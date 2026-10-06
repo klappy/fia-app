@@ -1,0 +1,48 @@
+name: hosted-asr-integration-proof
+on:
+  push:
+    branches: [parallel/hosted-asr-integration]
+    paths:
+      - 'deploy/hosted-asr/**'
+      - 'server/fia/preparation/hosted-asr/**'
+      - 'tests/preparation-hosted-asr/**'
+      - '.github/workflows/hosted-asr-integration-proof.yml'
+permissions:
+  contents: read
+concurrency:
+  group: hosted-asr-integration-proof-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  linux-image-proof:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify private contracts and real process-group stop
+        run: node --test tests/preparation-hosted-asr/dispatch.test.mjs tests/preparation-hosted-asr/watchdog.test.mjs tests/preparation-hosted-asr/locks.test.mjs tests/preparation-hosted-asr/dispatch-artifact.test.mjs
+      - name: Acquire only hash-pinned model and binary wheels
+        run: |
+          python deploy/hosted-asr/ci-acquire.py work/asr-inputs
+          python -m pip download --only-binary=:all: --platform manylinux2014_x86_64 --platform manylinux_2_28_x86_64 --python-version 312 --implementation cp --abi cp312 --require-hashes -r deploy/hosted-asr/requirements.lock -d work/asr-inputs/wheels
+          node deploy/hosted-asr/prepare-build.mjs work/asr-inputs work/asr-context
+      - name: Build offline image from verified inputs
+        run: docker build --network=none --platform=linux/amd64 -f work/asr-context/Dockerfile.integration -t fia-asr-integration-proof work/asr-context
+      - name: Verify guarded readiness and unambiguous container removal
+        run: |
+          mkdir -p work/asr-proof
+          docker image inspect fia-asr-integration-proof --format '{{.Id}}' > work/asr-proof/image-id.txt
+          trap 'docker rm -f fia-asr-integration-proof >/dev/null 2>&1 || true' EXIT
+          timeout --signal=TERM --kill-after=5s 450s python deploy/hosted-asr/ci-service-proof.py --cleanup-only
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hosted-asr-guarded-http-proof
+          path: work/asr-proof
+          retention-days: 1
+          if-no-files-found: ignore
