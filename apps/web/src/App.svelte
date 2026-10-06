@@ -22,10 +22,10 @@
  import {createPreparationIntent,preparationIdentity,preparationKey} from './lib/preparation-intent.js';
  import {verifyScripturePassageFile,sameScripturePassageFile,scripturePassagePins} from './lib/scripture-passage.js';
  import {hasGuidePreparation} from './lib/recording-availability.js';
- import {easyFace,queueable,createTapGate,CHECK_DEADLINE_MS} from './lib/easy-button.js';
+ import {easyFace,queueable,createTapGate} from './lib/easy-button.js';
  import {preparationHash} from './lib/prepared-audio.js';
  import {demoVideoSource} from './lib/video-demo.js';
- import {bundledPack,libraryAdapter,hasUnresolvedInstructions} from './lib/library.js';
+ import {bundledPack,libraryAdapter,hasUnresolvedInstructions,registerWorker} from './lib/library.js';
  import {saveProgress,restoreProgress,resetProgress} from './lib/session-store.js';
  import {noticeScope,noticeEnded} from './lib/notice-scope.js';
  let selectedPack=$state(bundledPack),rawPresentation=$state.raw(bundledPresentation),downloadedPaths=$state(new Set()),downloadedAudioDescriptors=$state(new globalThis.Map());
@@ -67,7 +67,7 @@
  let observedPreparationRequest=$derived(executableMode?(boundPreparation?.activityId===activity.id?boundPreparation.identity:null):preparationRequest);
  let currentPreparation=$derived(observedPreparationRequest&&preparationState?.key===preparationKey(observedPreparationRequest)?preparationState:null);
  let preparationBusy=$derived(currentPreparation?.status==='preparing');
- let preparationNotice=$derived(executableAction?.narration.action==='blocked'&&dismissedExecutionNotice!==executionNoticeKey?'This recording is unavailable. You can continue.':currentPreparation?.event!==preparationDismissed&&!(currentPreparation?.status==='ready'&&carrying)?currentPreparation?.message:'');
+ let preparationNotice=$derived(!verifying&&executableAction?.narration.action==='blocked'&&dismissedExecutionNotice!==executionNoticeKey?'This recording is unavailable. You can continue.':currentPreparation?.event!==preparationDismissed&&!(currentPreparation?.status==='ready'&&carrying)?currentPreparation?.message:'');
  async function prepareBoundNarration(identity,context){
   if(context.signal.aborted)return null;
   boundPreparation={activityId:context.activityId,identity};
@@ -148,13 +148,17 @@
  function holdHere(){if(session.status==='waiting')heldVisit=visit;}
  let clipSrc=null;
  function playClip(...args){clipSrc=args[1];audio.play(...args);clipPending=!!audio.active;}
+ // Verifying lasts until the answers arrive; nothing is guessed meanwhile (k0006). Every check is
+ // bounded where it is made: the service-worker requests time out, and a restore ends by opening
+ // the saved passage or in R1's fallback.
  function checked(){if(!verifying&&tapGate.take())runQueuedTap();}
- let checkTimer=null,checkEpisode=0;
- function armCheckDeadline(){clearTimeout(checkTimer);const episode=++checkEpisode;checkTimer=setTimeout(()=>{if(episode!==checkEpisode)return;restorePending=false;mediaChecked=true;downloadsChecked=true;checked();},CHECK_DEADLINE_MS);}
+ // A selection that does not open moves the generation without replacing the passage, so the
+ // current passage's unanswered checks are asked again at the new generation.
+ function recheckCurrent(){if(!downloadsChecked)void updateDownloaded();if(!mediaChecked)void updateMedia();}
  let playbackConsent=false,mediaGeneration=0,mediaAbort=null,mediaBlob=null,mediaTiming=null;
  let mediaAlignment=$state(null),mediaLogicalPath=$state(null);
  let mediaRefreshGeneration=0;
- async function updateMedia(){const refresh=++mediaRefreshGeneration,generation=selectionGeneration,pack=selectedPack;try{const status=await libraryAdapter.mediaStatus(pack);for(const file of [...status.files,...(status.savedFiles||[])])if(file.scripturePlaybackMode==='passage-only')await verifyScripturePassageFile(file,pack.id,rawPresentation.assets);if(generation!==selectionGeneration||refresh!==mediaRefreshGeneration)return;if(deliveryRevision&&deliveryRevision!==status.deliveryRevision){if(deferVideo(()=>updateMedia()))return;videoDelivery.clear();stopVisual();visualOwner.clear();}deliveryRevision=status.deliveryRevision;onlineMedia=new globalThis.Map(status.files.map(f=>[f.path,f]));savedMedia=new globalThis.Map((status.savedFiles||[]).map(f=>[f.path,f]));mediaChecked=true;checked();}catch(error){if(generation===selectionGeneration&&refresh===mediaRefreshGeneration){if(error?.code!=='media-status-transient'){onlineMedia=new globalThis.Map();savedMedia=new globalThis.Map();deliveryRevision=null;}mediaChecked=true;checked();}}}
+ async function updateMedia(){const refresh=++mediaRefreshGeneration,generation=selectionGeneration,pack=selectedPack;try{const status=await libraryAdapter.mediaStatus(pack);for(const file of [...status.files,...(status.savedFiles||[])])if(file.scripturePlaybackMode==='passage-only')await verifyScripturePassageFile(file,pack.id,rawPresentation.assets);if(generation!==selectionGeneration||refresh!==mediaRefreshGeneration||pack!==selectedPack)return;if(deliveryRevision&&deliveryRevision!==status.deliveryRevision){if(deferVideo(()=>updateMedia()))return;videoDelivery.clear();stopVisual();visualOwner.clear();}deliveryRevision=status.deliveryRevision;onlineMedia=new globalThis.Map(status.files.map(f=>[f.path,f]));savedMedia=new globalThis.Map((status.savedFiles||[]).map(f=>[f.path,f]));mediaChecked=true;checked();}catch(error){if(generation===selectionGeneration&&refresh===mediaRefreshGeneration&&pack===selectedPack){if(error?.code!=='media-status-transient'){onlineMedia=new globalThis.Map();savedMedia=new globalThis.Map();deliveryRevision=null;}mediaChecked=true;checked();}}}
  function revokePlayback(){executableOwner.cancel();preparationOwner.cancel();videoDelivery.cancel();stopVisual();playbackConsent=false;playbackPending=false;clearTimeout(timer);timer=null;mediaGeneration++;mediaAbort?.abort();mediaAbort=null;mediaLoading=false;clipPending=false;videoPlayPending=false;}
  async function startRecording(text,path,explicit=false){
   if(explicit){playbackConsent=true;authorizeVisual();}if(!playbackConsent)return;
@@ -180,14 +184,14 @@
  async function updateDownloaded(){
   const refresh=++downloadRefreshGeneration,generation=selectionGeneration,pack=selectedPack;
   try{
-   const status=await libraryAdapter.downloadStatus(pack);if(generation!==selectionGeneration||refresh!==downloadRefreshGeneration)return;
+   const status=await libraryAdapter.downloadStatus(pack);if(generation!==selectionGeneration||refresh!==downloadRefreshGeneration||pack!==selectedPack)return;
    const snapshot=status.active?.serverSnapshot,media=pack.mediaIdentity;
    const mediaMatches=media?status.active?.manifest?.packId===media.packId&&status.active.manifest.presentationRevision===media.revision&&snapshot?.record.execution?.mediaIdentity?.packId===media.packId&&snapshot.record.execution.mediaIdentity.revision===media.revision&&snapshot.record.execution.mediaAssetsSha256===pack.mediaAssetsSha256:status.active?.manifest?.presentationRevision===pack.revision;
    const verified=!!status.saved&&mediaMatches&&(!media||!snapshot?.invalid&&snapshot?.record.revision===pack.revision);
-   const descriptors=verified?verifiedDownloadedDescriptors(status.active):new globalThis.Map();for(const file of descriptors.values())if(file.scripturePlaybackMode==='passage-only')await verifyScripturePassageFile(file,pack.id,rawPresentation.assets);if(generation!==selectionGeneration||refresh!==downloadRefreshGeneration)return;
-   if(verified){await libraryAdapter.activate(pack);if(generation!==selectionGeneration||refresh!==downloadRefreshGeneration)return;}
+   const descriptors=verified?verifiedDownloadedDescriptors(status.active):new globalThis.Map();for(const file of descriptors.values())if(file.scripturePlaybackMode==='passage-only')await verifyScripturePassageFile(file,pack.id,rawPresentation.assets);if(generation!==selectionGeneration||refresh!==downloadRefreshGeneration||pack!==selectedPack)return;
+   if(verified){await libraryAdapter.activate(pack);if(generation!==selectionGeneration||refresh!==downloadRefreshGeneration||pack!==selectedPack)return;}
    downloadedAudioDescriptors=descriptors;saved=verified;downloadedDeliveryRevision=verified?status.active.manifest?.deliveryRevision||null:null;downloadedPaths=new Set(verified?status.active.files.map(f=>f.path):[]);downloadsChecked=true;checked();
-  }catch{if(generation===selectionGeneration&&refresh===downloadRefreshGeneration){saved=false;downloadedPaths=new Set();downloadedAudioDescriptors=new globalThis.Map();downloadedDeliveryRevision=null;downloadsChecked=true;checked();}}
+  }catch{if(generation===selectionGeneration&&refresh===downloadRefreshGeneration&&pack===selectedPack){saved=false;downloadedPaths=new Set();downloadedAudioDescriptors=new globalThis.Map();downloadedDeliveryRevision=null;downloadsChecked=true;checked();}}
  }
 
  function applyStored(){const stored=restoreProgress(localStorage,selectedPack,activities,assets);if(stored?.resetRequired)notice='This passage changed. Your previous place could not be matched; starting at the beginning.';session=stored?.session||createSession(activities);if(stored){scale=[1,1.25,1.5].includes(stored.scale)?stored.scale:1;rate=[.85,1,1.15].includes(stored.rate)?stored.rate:1;muted=!!stored.muted;dark=!!stored.dark;termDefinition=stored.termDefinition===activities[session.index]?.id?stored.termDefinition:null;transitionSection=stored.transitionSection===activities[session.index]?.sectionId?stored.transitionSection:null;}started=session.index>0||session.status!=='ready';}
@@ -214,15 +218,17 @@
  async function restoreSavedPack(id){
   try{await selectPack(id,{explicit:false});}
   catch(error){
+   // A tap queued while checking was for the saved passage; it never starts the fallback.
+   tapGate.drop();
    const transient=error?.code==='passage-transient';
    if(!transient)try{if(localStorage.getItem('fia-v3-selected-pack')===id)localStorage.removeItem('fia-v3-selected-pack');}catch{}
    const message=`Your last passage ${error?.code==='passage-unavailable'?'is not available yet':transient?'could not be reached':'could not be opened'}, so ${selectedPack.title} is open.`;
    notice=message;clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>{if(notice===message)notice='';},6000);
   }
  }
- async function loadSelectedPack(id,intent,options){videoDelivery.cancel();stopVisual();visualOwner.clear();const generation=++selectionGeneration;const loaded=await libraryAdapter.select(id,options);if(intent!==selectionIntent||generation!==selectionGeneration)return;if(deferVideo(()=>applySelectedPack(loaded,generation,intent)))return;await applySelectedPack(loaded,generation,intent);}
+ async function loadSelectedPack(id,intent,options){videoDelivery.cancel();stopVisual();visualOwner.clear();const generation=++selectionGeneration;try{const loaded=await libraryAdapter.select(id,options);if(intent!==selectionIntent||generation!==selectionGeneration)return;if(deferVideo(()=>applySelectedPack(loaded,generation,intent)))return;await applySelectedPack(loaded,generation,intent);}catch(error){if(intent===selectionIntent&&generation===selectionGeneration)recheckCurrent();throw error;}}
  // Opening a passage ends the previous passage's notices (R3); the new passage raises its own after this point.
- async function applySelectedPack(loaded,generation,intent){if(intent!==selectionIntent||generation!==selectionGeneration)return;validateExecutablePresentation(loaded.presentation);persist();cancel();notice='';selectedPack=loaded.descriptor;if(selectedPack.offlineSnapshot==='historical-verified')notice=historicalSnapshotNotice;rawPresentation=loaded.presentation;saved=false;downloadedDeliveryRevision=null;downloadedPaths=new Set();downloadedAudioDescriptors=new globalThis.Map();onlineMedia=new globalThis.Map();savedMedia=new globalThis.Map();deliveryRevision=null;revokePlayback();mediaChecked=false;downloadsChecked=false;armCheckDeadline();visit++;introduced=new Set();manualStarts=new Set();visualHeard=null;termDefinition=null;transitionSection=null;messages=[];language=selectedPack.language;session=createSession(loaded.presentation.activities);try{applyStored();localStorage.setItem('fia-v3-selected-pack',loaded.descriptor.id);}catch{notice='Your saved place could not be read.';}sheet=null;await libraryAdapter.activate(selectedPack).catch(()=>{});if(intent!==selectionIntent||generation!==selectionGeneration)return;await updateDownloaded();await updateMedia();}
+ async function applySelectedPack(loaded,generation,intent){if(intent!==selectionIntent||generation!==selectionGeneration)return;validateExecutablePresentation(loaded.presentation);persist();cancel();notice='';selectedPack=loaded.descriptor;if(selectedPack.offlineSnapshot==='historical-verified')notice=historicalSnapshotNotice;rawPresentation=loaded.presentation;saved=false;downloadedDeliveryRevision=null;downloadedPaths=new Set();downloadedAudioDescriptors=new globalThis.Map();onlineMedia=new globalThis.Map();savedMedia=new globalThis.Map();deliveryRevision=null;revokePlayback();mediaChecked=false;downloadsChecked=false;visit++;introduced=new Set();manualStarts=new Set();visualHeard=null;termDefinition=null;transitionSection=null;messages=[];language=selectedPack.language;session=createSession(loaded.presentation.activities);try{applyStored();localStorage.setItem('fia-v3-selected-pack',loaded.descriptor.id);}catch{notice='Your saved place could not be read.';}sheet=null;await libraryAdapter.activate(selectedPack).catch(()=>{});if(intent!==selectionIntent||generation!==selectionGeneration)return;await updateDownloaded();await updateMedia();}
  function restartPack(id){resetProgress(localStorage,{id});if(id===selectedPack.id)reset();}
  let language=$state('eng');
  function selectLanguage(id){language=id;try{localStorage.setItem('fia-v3-library-language',id);}catch{notice='Language choice could not be saved on this device.';}}
@@ -270,7 +276,7 @@
  // Preparation is primary only when no higher-priority playback or visual action owns the control.
  // requestableNarration already excludes transitions, detours and completed sessions.
  let primaryStartsPreparation=$derived(!executableMode&&!isPlaying&&!playbackPending&&!inlineVideo&&!videoDeliveryState.loading&&!videoPending&&!visualPending&&!!preparationRequest&&hasGuidePreparation(selectedPack,preparationRequest)&&!automaticOff&&!audioContext&&!preparationBusy&&!mediaLoading&&!requestStarting&&!heldHere&&session.status!=='complete');
- let primaryLabel=$derived(executableMode&&!session.detour?executablePrimaryLabel():finished?'Begin again':inTransition?'Continue':automaticOff&&!session.detour?'Continue':isPlaying||playbackPending?'Pause':inlineVideo?'Resume':audio?.active&&audioContext?'Resume':videoPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)?'Play video':visualPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)?'Play':session.detour?(visual?'Return':focal?.kind==='video'?'Play video':focal?.descriptionAudio?'Listen':'Return'):primaryStartsPreparation?(!started?'Begin':'Play'):heldHere||automaticOff||!activity?.audioSrc?'Continue':session.status==='paused'?'Resume':!started?'Begin':'Play');
+ let primaryLabel=$derived(executableMode&&!session.detour?executablePrimaryLabel():finished?'Begin again':inTransition?'Continue':automaticOff&&!session.detour?'Continue':isPlaying||playbackPending?'Pause':inlineVideo?'Resume':audio?.active&&audioContext?'Resume':videoPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)?'Play video':visualPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)?'Play':session.detour?(visual?'Return':focal?.kind==='video'?'Play video':focal?.descriptionAudio?'Listen':'Return'):primaryStartsPreparation?(!started?'Begin':'Play'):heldHere||session.status==='waiting'&&termPrompt||automaticOff||!activity?.audioSrc?'Continue':session.status==='paused'?'Resume':!started?'Begin':'Play');
  // In manual mode the centre stays Continue; elsewhere an accepted start owns the face until sound.
  let startPending=$derived(!isPlaying&&(mediaLoading||preparationBusy||requestStarting||clipPending||videoDeliveryState.loading||videoPlayPending));
  let carrying=$derived(requestStarting||mediaLoading||clipPending);
@@ -483,10 +489,10 @@
   const rotate=()=>{phoneLandscape=!!landscape?.matches;if(!phoneLandscape)landscapeDismissed=false;};
   rotate();landscape?.addEventListener('change',rotate);
   try{applyStored();}catch{}
-  armCheckDeadline();updateDownloaded();updateMedia();
+  updateDownloaded();updateMedia();
   audio=createAudioController(s=>{const m=mediaAlignment?.clockDomain==='delivery-media-seconds'?null:mediaTiming?.mapping;const logical={...s,src:s.src&&s.src===mediaBlob?mediaLogicalPath:s.src};audioState=m?{...logical,elapsed:Math.max(0,(s.elapsed-m.offsetSeconds)/m.scale),duration:Math.max(0,(s.duration-m.offsetSeconds)/m.scale)}:logical;if(s.playing&&s.src===mediaBlob&&audioContext?.type==='narration'&&audioContext.id===(executableMode?boundPreparation?.activityId:currentPreparation?.identity.activityId)&&currentPreparation?.status==='ready')preparationDismissed=currentPreparation.event;if(s.playing&&s.src===clipSrc||!s.src&&!audio?.active)clipPending=false;},finishAudio,text=>{revokePlayback();notice=text;dispatch({type:'PAUSE'});},{allowSpeechFallback:false});
   const net=()=>{const wasOnline=online;online=navigator.onLine;if(!online)visualOwner.cancel();else if(!wasOnline&&visualCanceled!==visualIdentity()){visualOwner.retry();syncVisual();}};net();window.addEventListener('online',net);window.addEventListener('offline',net);
-  if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js').then(()=>{updateDownloaded();updateMedia();}).catch(()=>{serviceWorkerError='Offline storage is unavailable here. Try the published HTTPS version.';});
+  if('serviceWorker'in navigator)registerWorker('/sw.js').then(()=>{updateDownloaded();updateMedia();}).catch(()=>{serviceWorkerError='Offline storage is unavailable here. Try the published HTTPS version.';});
   // A returning visit stays verifying until the saved passage itself is checked (R5).
   try{const id=localStorage.getItem('fia-v3-selected-pack');if(id&&id!==selectedPack.id){restorePending=true;restoreSavedPack(id).finally(()=>{restorePending=false;checked();});}}catch{}
   const context=document.modelContext;const lifecycle=new AbortController();
@@ -495,7 +501,7 @@
   register({name:'fia_present_resource',annotations:{readOnlyHint:false},description:'Open an approved resource as a detour, preserving the current guide position.',inputSchema:{type:'object',properties:{assetId:{type:'string'}},required:['assetId'],additionalProperties:false},execute:async input=>{if(!input||!Object.hasOwn(assets,input.assetId)||Object.keys(input).some(k=>k!=='assetId'))throw new Error('Unknown resource');navigate({type:'DETOUR',assetId:input.assetId});await tick();return {assetId:stage.focal,activityId:activity.id};}});
   register({name:'fia_return_to_guide',description:'Close resource exploration and restore the held guide activity without advancing.',annotations:{readOnlyHint:false},inputSchema:{type:'object',properties:{},additionalProperties:false},execute:async input=>{if(input&&Object.keys(input).length)throw new Error('No arguments expected');navigate({type:'RETURN'});await tick();return {activityId:activity.id,status:session.status,stage:presentStage(session,activities)};}});
   register({name:'fia_complete_activity',annotations:{readOnlyHint:false},description:'Explicitly finish or skip the current activity and advance; this is a user decision, never a read.',inputSchema:{type:'object',properties:{activityId:{type:'string'}},required:['activityId'],additionalProperties:false},execute:async input=>{if(!input||input.activityId!==activity.id||session.detour||Object.keys(input).some(k=>k!=='activityId'))throw new Error('Activity changed or exploration is open');navigate({type:'CONTINUE'},true);await tick();return {activityId:activity.id,status:session.status};}});
-  return()=>{clearTimeout(checkTimer);tapGate.dispose();selectionAbort?.abort();videoOwner.dispose();videoDelivery.clear();stopVisual();visualOwner.clear();landscape?.removeEventListener('change',rotate);clearTimeout(noticeTimer);cancel();lifecycle.abort();window.removeEventListener('online',net);window.removeEventListener('offline',net);};
+  return()=>{tapGate.dispose();selectionAbort?.abort();videoOwner.dispose();videoDelivery.clear();stopVisual();visualOwner.clear();landscape?.removeEventListener('change',rotate);clearTimeout(noticeTimer);cancel();lifecycle.abort();window.removeEventListener('online',net);window.removeEventListener('offline',net);};
  });
 </script>
 

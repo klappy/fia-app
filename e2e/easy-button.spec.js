@@ -78,6 +78,39 @@ test('returning visit to a passage without recordings: checking, then one honest
  expect(posts.filter(url=>new URL(url).pathname.startsWith('/v1/preparations'))).toEqual([]);
 });
 
+test('first visit with a check slower than any deadline: checking until it answers, then one Begin',async({page,context})=>{
+ test.skip(process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS!=='1','Needs PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1 to hold the service worker check');
+ let held=0;
+ await context.route('**/offline/eng.MRK-1-1-13.json',async route=>{held++;await new Promise(r=>setTimeout(r,6000));await route.continue();});
+ await page.goto('/');
+ await settled(page,{quietMs:1500});
+ expect(held,'the check was held').toBeGreaterThan(0);
+ const seen=await faces(page);
+ // No guessed Continue while the answer is outstanding (k0006), so no Continue-then-Begin pair.
+ expect(seen.map(f=>f.label),JSON.stringify(seen)).toEqual([CHECKING,'Begin']);
+ expect(seen[1].t).toBeGreaterThan(5500);
+});
+
+for(const tap of [false,true])test(`returning visit with a restore slower than any check: checking, then one Continue${tap?'; a tap while checking starts nothing':''}`,async({page,context})=>{
+ test.skip(process.env.FIA_WORKER_PREVIEW!=='1','Opt-in actual packaged Worker preview only');
+ // The first request of the restore is held 5.5 s, longer than any check the launch used to wait for.
+ let held=0;
+ await context.route('**/v1/packs/eng.MRK-1-21-28',async route=>{held++;await new Promise(r=>setTimeout(r,5500));await route.continue();});
+ await page.addInitScript(()=>{if(!localStorage.getItem('fia-v3-selected-pack'))localStorage.setItem('fia-v3-selected-pack','eng.MRK-1-21-28');});
+ await page.goto('/');
+ const centre=page.locator('nav[aria-label="Session controls"] .guide-primary');
+ await expect(centre).toHaveAttribute('aria-label',CHECKING);
+ if(tap){await page.waitForTimeout(300);await tapCentre(page,1,0);}
+ await expect(page.getByRole('heading',{level:1})).toHaveText(/Mark 1:21.28/,{timeout:20000});
+ await settled(page);
+ expect(held,'the restore request was held').toBeGreaterThan(0);
+ const log=await page.evaluate(()=>window.__easy);
+ expect(log.faces.map(f=>f.label),JSON.stringify(log.faces)).toEqual([CHECKING,'Continue']);
+ // Nothing played on the default passage while the saved one was on its way.
+ expect(log.causes.filter(c=>c.kind==='media:playing')).toEqual([]);
+ expect(await page.evaluate(()=>window.__easy.players.filter(p=>!p.paused).length)).toBe(0);
+});
+
 test('J3 hammer: six taps 150 ms apart start one recording and never cancel it',async({page})=>{
  await page.goto('/');
  await settled(page,{quietMs:300});

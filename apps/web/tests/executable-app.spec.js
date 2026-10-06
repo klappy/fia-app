@@ -46,6 +46,16 @@ it('navigation cancels bound action and prevents late port result playback',asyn
 it.each(['unsupported','unavailable','invalid'])('blocked executable narration uses approved readable copy without changing raw %s reason or authority',async status=>{
  const reason=`server-${status}-machine-code`;presentation.activities[0].execution.narration={action:'blocked',status,reason};await mount();expect(screen.getByRole('status').textContent).toContain('This recording is unavailable. You can continue.');expect(screen.getByRole('status').textContent).not.toContain(reason);expect(presentation.activities[0].execution.narration).toEqual({action:'blocked',status,reason});expect(screen.getByRole('button',{name:'Continue',exact:true}).disabled).toBe(false);await fireEvent.click(screen.getByRole('button',{name:'Replay',exact:true}));expect(libraryAdapter.playBoundAudio).not.toHaveBeenCalled();expect(libraryAdapter.prepareOriginal).not.toHaveBeenCalled();expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();expect(libraryAdapter.preparationStatus).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();
 });
+it('R5: a blocked recording notice is raised only once the passage is checked, never beside the checking pulse',async()=>{
+ presentation.activities[0].execution.narration={action:'blocked',status:'unavailable',reason:'server-unavailable-machine-code'};
+ let release;libraryAdapter.mediaStatus.mockReturnValue(new Promise(r=>release=r));
+ render(App);await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toBe(presentation.activities[0].prompt));await new Promise(r=>setTimeout(r,30));
+ expect(document.querySelector('.guide-primary').getAttribute('aria-busy')).toBe('true');
+ expect(screen.queryAllByRole('status').map(n=>n.textContent).join(' ')).not.toContain('This recording is unavailable.');
+ release({files:[],savedFiles:[],deliveryRevision:null});
+ await waitFor(()=>expect(document.querySelector('.guide-primary').hasAttribute('aria-busy')).toBe(false));
+ expect(screen.getByRole('status').textContent).toContain('This recording is unavailable. You can continue.');
+});
 it('manual Play while automatic narration is off executes only the declared action and pause/resume reuses it',async()=>{
  firstNarration();await mount();await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Settings',exact:true}));await fireEvent.click(screen.getByRole('checkbox',{name:/Automatic guide narration/}));await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));expect(libraryAdapter.playBoundAudio).not.toHaveBeenCalled();
  await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await waitFor(()=>expect(audio.play).toHaveBeenCalled());await fireEvent.click(screen.getByRole('button',{name:'Pause',exact:true}));expect(audio.pause).toHaveBeenCalled();await fireEvent.click(screen.getByRole('button',{name:'Resume',exact:true}));expect(audio.resume).toHaveBeenCalled();expect(libraryAdapter.playBoundAudio).toHaveBeenCalledTimes(1);

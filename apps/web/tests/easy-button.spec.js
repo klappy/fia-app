@@ -9,7 +9,7 @@ const audio=vi.hoisted(()=>({play:vi.fn(),pause:vi.fn(),resume:vi.fn(),stop:vi.f
 vi.mock('../src/lib/audio.js',()=>({createAudioController:(state,end)=>{audio.state=state;audio.end=end;return audio;}}));
 import App from '../src/App.svelte';
 import {libraryAdapter} from '../src/lib/library.js';
-import {activities} from '../src/lib/content.js';
+import {activities,bundledPresentation} from '../src/lib/content.js';
 const registry=JSON.parse(readFileSync('public/content/registry.json','utf8'));
 const pack=id=>{const descriptor=registry.packs.find(p=>p.id===id);return {descriptor,presentation:JSON.parse(readFileSync('public'+descriptor.presentation.url,'utf8'))};};
 const admitted=pack('eng.MRK-1-14-20'),unadmitted=pack('eng.MRK-1-21-28');
@@ -60,17 +60,72 @@ it('R5 E1/E3: on load the primary checks quietly, then changes once to its verif
  expect(readFace()).toEqual({label:'Begin',busy:false,disabled:false,icon:'lucide-play'});
 });
 
-it('R5: a check that never answers stops verifying at its deadline; a late answer then applies as a status change',async()=>{
- vi.useFakeTimers({toFake:['setTimeout','clearTimeout']});
+// A slow answer is still the answer: nothing is guessed while a check is outstanding (k0006).
+// Fake time jumps past every former deadline and otherwise follows the real clock.
+const slowly=()=>vi.useFakeTimers({toFake:['setTimeout','clearTimeout'],shouldAdvanceTime:true});
+const SLOW_MS=5000;
+const notices=()=>screen.queryAllByRole('status').map(n=>n.textContent).join(' | ');
+it('R5 E1: a slow check keeps verifying until it answers, then changes once; nothing is guessed meanwhile',async()=>{
+ slowly();
  try{
   const media=deferred();libraryAdapter.mediaStatus.mockReturnValue(media.promise);
-  render(App);await vi.advanceTimersByTimeAsync(3900);
+  render(App);await vi.advanceTimersByTimeAsync(10000);
   expect(faces.labels()).toEqual([CHECKING]);
-  await vi.advanceTimersByTimeAsync(200);
-  // Nothing playable is known yet, so the honest action is Continue (no guess at audio).
+  media.resolve(bundledMedia);await waitFor(()=>expect(readFace().busy).toBe(false));await wait(50);
+  expect(faces.labels()).toEqual([CHECKING,'Begin']);
+ }finally{vi.useRealTimers();}
+});
+
+for(const tap of [false,true])it(`R5 E1${tap?'/E4':''}: a restore slower than any check stays checking until the saved passage is verified${tap?'; a tap while checking never starts the default passage':''}`,async()=>{
+ slowly();
+ try{
+  const selected=deferred();savePack(unadmitted);vi.spyOn(libraryAdapter,'select').mockReturnValue(selected.promise);
+  render(App);await vi.advanceTimersByTimeAsync(30);
+  if(tap)await fireEvent.click(primary());
+  await vi.advanceTimersByTimeAsync(SLOW_MS);
+  // The default passage was checked long ago, but it is not the passage the person will see.
+  expect(faces.labels()).toEqual([CHECKING]);expect(libraryAdapter.playMedia).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();
+  selected.resolve(unadmitted);await heading(unadmitted.presentation.activities[0].prompt);
+  await waitFor(()=>expect(readFace().busy).toBe(false));await wait(50);
   expect(faces.labels()).toEqual([CHECKING,'Continue']);
-  media.resolve(bundledMedia);await vi.advanceTimersByTimeAsync(10);
-  expect(faces.labels()).toEqual([CHECKING,'Continue','Begin']);
+  expect(libraryAdapter.playMedia).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();
+  expect(progress(unadmitted.descriptor.id)?.session.index??0).toBe(0);
+ }finally{vi.useRealTimers();}
+});
+
+it('R5 E4: a tap queued during a slow restore performs the restored passage’s checked Begin once',async()=>{
+ slowly();
+ try{
+  const selected=deferred();savePack(admitted);vi.spyOn(libraryAdapter,'select').mockReturnValue(selected.promise);
+  render(App);await vi.advanceTimersByTimeAsync(30);await fireEvent.click(primary());
+  await vi.advanceTimersByTimeAsync(SLOW_MS);
+  expect(faces.labels()).toEqual([CHECKING]);expect(libraryAdapter.playMedia).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();
+  selected.resolve(admitted);await heading(admitted.presentation.activities[0].prompt);
+  await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(1));
+  await waitFor(()=>expect(readFace().icon).toBe('lucide-pause'),{timeout:3000});await wait(50);
+  expect(libraryAdapter.prepareRecording).toHaveBeenCalledTimes(1);expect(libraryAdapter.prepareRecording.mock.calls[0][0].packId).toBe(admitted.descriptor.id);
+  expect(libraryAdapter.playMedia).not.toHaveBeenCalled();expect(audio.play).toHaveBeenCalledTimes(1);
+  // [verifying, the state the checked action leads to]: starting, then Pause.
+  expect(faces.labels()).toEqual([CHECKING,'Pause','Pause']);expect(isStarting(faces.seen[1])).toBe(true);
+ }finally{vi.useRealTimers();}
+});
+
+for(const delay of [0,SLOW_MS])it(`R1/R5: a failed restore${delay?' slower than any check':''} re-checks the default passage, then changes once; a tap queued for the saved passage is dropped`,async()=>{
+ slowly();
+ try{
+  const selected=deferred();savePack(unadmitted);vi.spyOn(libraryAdapter,'select').mockReturnValue(selected.promise);
+  render(App);await vi.advanceTimersByTimeAsync(30);await fireEvent.click(primary());
+  await vi.advanceTimersByTimeAsync(delay);
+  expect(faces.labels()).toEqual([CHECKING]);
+  const checks=libraryAdapter.mediaStatus.mock.calls.length;
+  selected.reject(Object.assign(Error('This passage is not available yet. Your current passage stays open.'),{code:'passage-unavailable'}));
+  await waitFor(()=>expect(readFace().busy).toBe(false));await wait(50);
+  // The default passage's own check ran after the restore failed; its action is verified, not guessed.
+  expect(libraryAdapter.mediaStatus.mock.calls.length).toBeGreaterThan(checks);
+  expect(faces.labels()).toEqual([CHECKING,'Begin']);
+  expect(notices()).toContain('Your last passage is not available yet, so Mark 1:1–13 is open.');
+  expect(localStorage.getItem('fia-v3-selected-pack')).toBeNull();
+  expect(audio.play).not.toHaveBeenCalled();expect(libraryAdapter.playMedia).not.toHaveBeenCalled();
  }finally{vi.useRealTimers();}
 });
 
@@ -167,6 +222,22 @@ it('R6: after the recording ends the discussion hold is Continue with no Play be
  await waitFor(()=>expect(readFace().label).toBe('Continue'));
  expect(screen.queryByRole('button',{name:'Play original recording'})).toBeNull();expect(screen.queryByRole('button',{name:'Play',exact:true})).toBeNull();
  expect(progress(admitted.descriptor.id).session.index).toBe(0);
+});
+
+it('R6.3/K4: a restored waiting term screen keeps Continue, which opens the definition, with Skip beside it',async()=>{
+ const i=75,a=activities[i],term=bundledPresentation.assets[a.assetId];
+ expect(term.kind).toBe('term');
+ libraryAdapter.mediaStatus.mockResolvedValue({...bundledMedia,files:[{path:a.audioSrc,bytes:3,mime:'audio/mpeg'},{path:term.descriptionAudio,bytes:3,mime:'audio/mpeg'}]});
+ savePack(pack('eng.MRK-1-1-13'),{index:i,status:'waiting'});
+ render(App);await waitFor(()=>expect(readFace().busy).toBe(false));await wait(50);
+ expect(faces.labels()).toEqual([CHECKING,'Continue']);
+ const dock=screen.getByRole('navigation',{name:'Session controls'});
+ expect([...dock.querySelectorAll('button')].map(b=>b.getAttribute('aria-label')).filter(l=>/^Play/.test(l))).toEqual([]);
+ expect(screen.getByRole('button',{name:'Skip to next activity'}).disabled).toBe(false);
+ await fireEvent.click(primary());await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(1));
+ // The definition plays; the instruction is not replayed and the screen does not advance.
+ expect(libraryAdapter.playMedia.mock.calls.map(c=>c[1])).toEqual([term.descriptionAudio]);
+ expect(progress('eng.MRK-1-1-13').session.index).toBe(i);
 });
 
 it('R6: a screen with no possible recording shows no enabled Play and sends no preparation request',async()=>{

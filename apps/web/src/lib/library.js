@@ -82,10 +82,23 @@ export const libraryAdapter={
  activate(pack){const selection=mediaSelection(pack);activationQueue=activationQueue.catch(()=>{}).then(()=>workerRequest('PACK_SELECT',selection));return activationQueue;},
 };
 export function formatBytes(bytes){return Number.isFinite(bytes)?`${(bytes/1024/1024).toFixed(1)} MB`:'Size unavailable';}
+// When the page's own registration shows that no worker is on its way (blocked, rejected, or its
+// install failed with none active), waiting requests end now with the not-ready answer instead of
+// at the ready timeout, so the easy button's check ends with the truth rather than a long pulse.
+const notReady=()=>new Error('Download storage is not ready. Reload the published Site and try again.');
+let noWorker;const workerAbsent=new Promise((_,reject)=>noWorker=()=>reject(notReady()));workerAbsent.catch(()=>{});
+export async function registerWorker(url){
+ const container=navigator.serviceWorker;
+ const absentUnlessActive=()=>Promise.resolve().then(()=>container.getRegistration()).then(r=>{if(!r?.active)noWorker();},noWorker);
+ let registration;try{registration=await container.register(url);}catch(error){absentUnlessActive();throw error;}
+ const pending=registration?.installing||registration?.waiting;
+ if(!registration?.active){if(!pending)noWorker();else pending.addEventListener('statechange',()=>{if(pending.state==='redundant'&&!registration.active&&!registration.installing&&!registration.waiting)noWorker();});}
+ return registration;
+}
 async function workerRequest(type,data={},onprogress){
  if(!('serviceWorker' in navigator))throw new Error('Downloads are unavailable in this browser.');
  let readyTimer;
- const registration=await Promise.race([navigator.serviceWorker.ready,new Promise((_,reject)=>{readyTimer=setTimeout(()=>reject(new Error('Download storage is not ready. Reload the published Site and try again.')),10000);})]).finally(()=>clearTimeout(readyTimer));
+ const registration=await Promise.race([navigator.serviceWorker.ready,workerAbsent,new Promise((_,reject)=>{readyTimer=setTimeout(()=>reject(notReady()),10000);})]).finally(()=>clearTimeout(readyTimer));
  if(!registration.active)throw new Error('Download storage is not ready. Reload and try again.');
  return new Promise((resolve,reject)=>{
   const channel=new MessageChannel();let timer;

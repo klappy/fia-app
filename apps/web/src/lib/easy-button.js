@@ -4,9 +4,6 @@
 export const CHECKING_LABEL='Checking availability';
 // A tap this soon after the last accepted start is part of the same burst.
 export const START_BURST_MS=800;
-// A check that cannot finish (no service worker answer, a hung request) stops
-// verifying after this long and shows what is known; later answers still apply.
-export const CHECK_DEADLINE_MS=4000;
 const PRESS_FRESH_MS=1000;
 const QUEUEABLE=new Set(['Begin','Play','Resume','Play video','Listen']);
 
