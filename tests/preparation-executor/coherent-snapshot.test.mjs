@@ -31,3 +31,27 @@ test('timed out builder cannot later promote; retained-stream cancellation canno
 
 test('non-Error builder rejection preserves old snapshot and records a bounded uncertain reason',async()=>{for(const failure of [null,undefined,'private source payload']){const f=await fixture(),one=await f.obs(),initial=await f.coordinator.demand(one),root=await f.put(encode({role:'source',revision:2}));const broken=createCoherentSnapshots({...f.options,builder:{paid:false,run:async()=>{throw failure;}}});const result=await broken.demand(await f.obs(2,await hash(one),{...f.identity,sourceSha256:root.sha256}));assert.equal(result.state,'ready');assert.deepEqual(result.served,initial.served);assert.equal(result.refresh.state,'uncertain');assert.equal(result.refresh.reason,'snapshot-operation-failed');assert.equal(result.refreshError,'snapshot-operation-failed');}});
 test('read failures and hostile Error.message getters expose no payload or secondary exception',async()=>{const f=await fixture(),one=await f.obs();await f.coordinator.demand(one);const error=new Error();Object.defineProperty(error,'message',{get(){throw Error('private-message-getter');}});f.options.bucket.get=async()=>{throw error;};assert.equal((await f.coordinator.read(one.logicalId)).reason,'snapshot-operation-failed');f.options.bucket.get=async()=>{throw undefined;};assert.equal((await f.coordinator.read(one.logicalId)).reason,'snapshot-operation-failed');});
+
+test('storage observation guard atomically refuses stale admission without changing snapshot head',async()=>{
+ const f=await fixture(),one=await f.obs();await f.store.put('external-head','first');
+ const guarded=createCoherentSnapshots({...f.options,observationGuard:async(tx,obs,phase)=>{
+  assert.equal(phase,'admission');assert.equal(obs.logicalId,one.logicalId);return await tx.get('external-head')==='first';
+ }});
+ await f.store.put('external-head','newer');
+ await assert.rejects(guarded.demand(one),/stale-observation/);
+ assert.equal(f.builds(),0);assert.equal((await f.coordinator.read(one.logicalId)).reason,'no-observation');
+});
+test('storage observation guard rechecks upstream revision at final promotion',async()=>{
+ const f=await fixture(),one=await f.obs();await f.store.put('external-head','first');
+ const build=f.options.builder.run;
+ const guarded=createCoherentSnapshots({...f.options,observationGuard:async tx=>await tx.get('external-head')==='first',builder:{paid:false,run:async input=>{const candidate=await build(input);await f.store.put('external-head','newer');return candidate;}}});
+ const result=await guarded.demand(one);assert.equal(result.served,null);assert.equal(result.refreshError,'stale-observation');
+});
+
+test('promotion guard completing after deadline cannot install served snapshot',async()=>{
+ const f=await fixture(),one=await f.obs();let entered,release;
+ const arrived=new Promise(r=>entered=r),gate=new Promise(r=>release=r);
+ const guarded=createCoherentSnapshots({...f.options,totalMs:30,observationGuard:async(tx,obs,phase)=>{if(phase==='promotion'){entered();await gate;}return true;}});
+ const pending=guarded.demand(one);await arrived;await new Promise(r=>setTimeout(r,50));release();
+ const result=await pending;assert.equal(result.served,null);assert.equal(result.refreshError,'snapshot-total-timeout');
+});
