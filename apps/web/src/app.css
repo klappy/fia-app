@@ -36,6 +36,8 @@
 .sheet-body,.sheet-intro,.fine-print,.preference small,.select-row select,.outline small,.outline svg,.outline-number{color:var(--ink-500)}.sheet-body{color:var(--ink-700)}.sheet-header h2{font-family:var(--font-core);font-size:24px}.secondary,.scope-note{background:var(--paper-100);color:var(--ink-700);border-color:var(--paper-100)}
 button{min-height:48px}.scene-notice button{min-width:48px;min-height:48px}.kept-content{bottom:180px}
 @media(max-width:700px){.words-stage{padding:100px 26px 190px}.words-stage h1{font-size:26px}.reading-heading{padding-top:100px}.scene-controls{gap:8px}.scripture-scroll{padding-bottom:205px}.image-well:not(.map) img{object-fit:contain}.asset-caption{bottom:180px}.scene-notice{top:82px}.term-stage{padding-inline:26px}}
+/* R3: a notice raised while a sheet is open sits in the sheet's sticky header, under its title row, never behind the modal. */
+.sheet-header:has(.sheet-notice){flex-wrap:wrap}.sheet-header .scene-notice.sheet-notice{position:static;transform:none;z-index:auto;order:1;flex:1 0 100%;width:auto;max-width:none;justify-content:space-between}
 
 /* All narrated text shares one uncluttered, bounded reading surface. */
 .media-stage.reading-stage{height:100dvh;min-height:0;display:flex;flex-direction:column;--reading-clearance:max(144px,calc(env(safe-area-inset-bottom) + 136px),calc(env(safe-area-inset-top) + 78px));padding:var(--reading-clearance) 0;overflow:hidden}
