@@ -6,6 +6,7 @@ import {readSource,storeSource,verifySourceReference} from './source-store.mjs';
 import {originalResponse} from './original.mjs';
 const same=(a,b)=>canonicalJSONString(a??null)===canonicalJSONString(b??null);
 const normalized=row=>{const {coordinatorCurrent,...admission}=structuredClone(row);return admission;};
+export function currentPreparationRow(rows){const eligible=rows.filter(row=>row.eligibility==='eligible');if(eligible.length===1)return eligible[0];const current=eligible.filter(row=>row.coordinatorCurrent===true);return current.length===1?current[0]:null;}
 export const isReviewedOriginal=row=>Boolean(row.accepted&&row.selection.quality==='original');
 export async function stableOriginalIdentity(row){
  const selection=structuredClone(row.selection);delete selection.presentationRevision;
@@ -22,7 +23,7 @@ export async function serveStableOriginal(request,ctx,env,catalog){
  const parts=new URL(request.url).pathname.split('/');if(parts[1]!=='_stable-original')return null;
  const id=parts[2],action=parts[3];if(parts.length!==4||!['demand','read','audio'].includes(action)||request.method!==(action==='demand'?'POST':request.method==='HEAD'&&action==='audio'?'HEAD':'GET'))return json(404,{state:'unavailable'});
  const rows=catalog.entries.filter(isReviewedOriginal),indexed=await Promise.all(rows.map(async raw=>({raw,row:normalized(raw),id:await operationId(raw),identity:await stableOriginalIdentity(raw),hash:await sha256(canonicalJSONString(normalized(raw)))})));
- const target=indexed.find(e=>e.id===id);if(!target||target.raw.eligibility!=='eligible')return json(404,{state:'unavailable'});
+ const selected=currentPreparationRow(indexed.filter(e=>e.id===id).map(e=>e.raw)),target=indexed.find(e=>e.raw===selected);if(!target||target.raw.eligibility!=='eligible')return json(404,{state:'unavailable'});
  if(ctx.id.toString()!==env.FIA_PREPARATION_JOBS.idFromName(target.identity.name).toString())return json(403,{state:'unavailable',reason:'stable-object-identity'});
  const group=indexed.filter(e=>e.identity.name===target.identity.name),current=()=>{const live=group.filter(e=>catalog.entries.includes(e.raw)&&e.raw.eligibility==='eligible'&&same(normalized(e.raw),e.row));const marked=live.filter(e=>e.raw.coordinatorCurrent===true);return live.length===1?live[0]:marked.length===1?marked[0]:null;};
  const eligible=row=>group.some(e=>same(e.row,row)&&catalog.entries.includes(e.raw)&&e.raw.eligibility==='eligible'&&same(normalized(e.raw),e.row));

@@ -95,3 +95,8 @@ test('changed observed bytes block unmatched reviewed pin while prior whole snap
  try{const first=await settle(mf,await(await post(mf,a)).json());assert.equal(first.state,'ready');await change(mf,1);const next=await settle(mf,await(await post(mf,b)).json());assert.equal(next.state,'blocked');assert.equal(next.result,null);const retained=await(await mf.dispatchFetch(origin+'/test-internal?index=1')).json();assert.deepEqual(retained.result,first.result);assert.equal((await(await mf.dispatchFetch(origin+first.statusUrl)).json()).state,'ready');assert.equal(n.source,2);await post(mf,b);assert.equal(n.source,2);}
  finally{await mf.dispose();}
 });
+test('retained old evidence plus current replacement with identical public operation ID chooses current admission',async()=>{
+ const c=fixture(),a=c.entries[0];admit(a);a.coordinatorCurrent=true;const b=structuredClone(a);b.coordinatorCurrent=false;admit(b,'f');c.entries.push(b);const n=counts(),mf=await runtime(c,undefined,n);
+ try{const first=await settle(mf,await(await post(mf,a)).json());assert.equal(first.state,'ready');await change(mf,1);const replacement=await settle(mf,await(await post(mf,b)).json());assert.equal(replacement.jobId,first.jobId);assert.equal(replacement.state,'ready');assert.equal(replacement.resultSha256,b.accepted.expected.resultSha256);assert.notEqual(replacement.resultSha256,first.resultSha256);assert.equal(n.source,2);assert.equal((await(await mf.dispatchFetch(origin+replacement.statusUrl)).json()).resultSha256,b.accepted.expected.resultSha256);await post(mf,a);assert.equal(n.source,2);}
+ finally{await mf.dispose();}
+});

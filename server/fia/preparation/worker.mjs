@@ -1,5 +1,5 @@
 import catalog from './catalog.json';
-import {serveStableOriginal,stableOriginalRequest} from './stable-original-coordinator.mjs';
+import {serveStableOriginal,stableOriginalRequest,currentPreparationRow} from './stable-original-coordinator.mjs';
 import {json,resolveSelection,operationId,indexedCatalog,readBounded,prepareAccepted,eligibleRows} from './service.mjs';
 import {createReviewedOriginalStore} from './reviewed-original-store.mjs';
 import {reviewedOriginalStatus} from './reviewed-original-status.mjs';
@@ -56,7 +56,7 @@ export async function servePreparation(request,env){
   if(url.pathname===prefix){
     if(request.method!=='POST')return json(405,{status:'refused',code:'method-not-allowed'});
     if(request.headers.get('Content-Type')?.split(';')[0].trim()!=='application/json')return json(415,{status:'refused',code:'json-required'});
-    try{row=resolveSelection(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(await readBounded(request,4096))),catalog);}
+    try{const input=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(await readBounded(request,4096)));const matches=eligibleRows(catalog).filter(candidate=>resolveSelection(input,{entries:[candidate]}));row=currentPreparationRow(matches);}
     catch(error){return json(error.message==='body-too-large'?413:400,{status:'refused',code:'invalid-request'});}
     if(!row)return json(422,{status:'refused',code:'unsupported-preparation'});
     id=await operationId(row);
@@ -65,7 +65,7 @@ export async function servePreparation(request,env){
     id=url.pathname.slice(prefix.length+1);
     // Enumerate only admitted IDs before touching the namespace: arbitrary IDs
     // cannot create durable objects or persist caller-controlled data.
-    row=(await indexedCatalog(catalog)).find(entry=>entry.id===id)?.row;
+    row=currentPreparationRow((await indexedCatalog(catalog)).filter(entry=>entry.id===id).map(entry=>entry.row));
     if(!row)return json(404,{status:'unavailable',code:'unknown-preparation'});
   }
   if(!env.FIA_PREPARATION_JOBS||!env.FIA_ORIGINALS)return json(503,{status:'unavailable',code:'preparation-storage-unavailable'});
@@ -81,7 +81,7 @@ export class FiaPreparationJobs{
     const stable=await serveStableOriginal(request,this.ctx,this.env,catalog);if(stable)return stable;
     if(await this.ctx.storage.get('stable-original:identity'))return json(404,{status:'unavailable'});
     const parts=new URL(request.url).pathname.slice(1).split('/'),id=parts[0],audio=parts.length===2&&parts[1]==='audio';
-    const row=(await indexedCatalog(catalog)).find(entry=>entry.id===id)?.row;
+    const row=currentPreparationRow((await indexedCatalog(catalog)).filter(entry=>entry.id===id).map(entry=>entry.row));
     if(!row)return json(404,{status:'unavailable',code:'unknown-preparation'});
     if(audio&&reviewedOriginal(row)&&(await this.ctx.storage.get('job'))?.stableCoordinator)return stableOriginalRequest(this.env,row,'audio',request);
     if(audio){try{return originalResponse(request,row.source,await requireSource(this.ctx,this.env,row));}catch{return json(409,{status:'unavailable',code:'source-not-verified'});}}
@@ -133,7 +133,7 @@ export class FiaPreparationJobs{
       if(await this.ctx.storage.get('stable-original:identity'))return;
       const record=await this.ctx.storage.get('job');
       if(!record||record.state!=='preparing')return;
-      const row=(await indexedCatalog(catalog)).find(entry=>entry.id===record.jobId)?.row;
+      const row=currentPreparationRow((await indexedCatalog(catalog)).filter(entry=>entry.id===record.jobId).map(entry=>entry.row));
       if(!row)return;
       if(record.stableCoordinator){
         let outcome;try{const response=await stableOriginalRequest(this.env,row,'demand');const checked=await response.json();outcome=reviewedOriginalStatus(row,checked);if(outcome.state==='ready'){await verifySourceReference(this.env.FIA_ORIGINALS,row.source,row.identity.sourceVersion);if(!await readSource(this.env.FIA_ORIGINALS,row.source))throw Error('source-not-verified');await this.ctx.storage.put('source',{state:'verified',sha256:row.source.sha256,bytes:row.source.bytes,key:sourceKey(row.source)});outcome.sourceState='verified';const compatible=await(await reviewedStore(this.ctx,this.env)).demand(row.accepted.expected.resultSha256);if(compatible.state!=='ready'||compatible.resultSha256!==outcome.resultSha256)throw Error('legacy-cache-verification');}}catch{outcome={state:'blocked',reason:'stable-evidence-unavailable',result:null,resultSha256:null};}
