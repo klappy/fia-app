@@ -946,7 +946,7 @@
     },
     {
       "path": "apps/web/src/App.svelte",
-      "sha256": "c2e488529a6c5783a4c566476b7722bbc02ffe847200e1c1cb4bce0a21e3c0d7",
+      "sha256": "d3a3aa57f09e1e673a9182e08424329fcf0b692274df82c8acf61e3ebf252f31",
       "originalSha256": "1c79777ea001eafc53bd00e9e5ef2e0972bde20178e80195c2018871a03260af"
     },
     {
@@ -961,7 +961,7 @@
     },
     {
       "path": "apps/web/src/components/GuidePrimary.svelte",
-      "sha256": "ebc80a1c8aed9bec9aedc73affb9e5c371e7134d465425a5063074db1d3da0fc",
+      "sha256": "9dd4b31ed15c08988d5e5167a86f923d6fd715cf97ec30e29332a93a53e67349",
       "originalSha256": "f2b692b700c04087eea08fa578bf9d79681f8387095832c8e602618c5408507b"
     },
     {
@@ -986,7 +986,7 @@
     },
     {
       "path": "apps/web/src/cookbook-materials.css",
-      "sha256": "e2d1ff4f39dcef7e6362194dc850ed1789534ef9f0a12219d78eb41dba69e8e8",
+      "sha256": "4c62162c5a41ff2baa9ee24bb298c55a34e01b876a06a1c3680dc0b4bc1a765b",
       "originalSha256": "253f7ea7907513f13f83665d2e8e76be65116284c7925de71d0c73845354c56f"
     },
     {
@@ -1003,6 +1003,10 @@
       "path": "apps/web/src/lib/content.js",
       "sha256": "190c672a6fe38153429078aa972c751fe04fb358a40f98fc9ee20986a67a9206",
       "originalSha256": "381a80b03998af06d9b96493eb79eaee9ddcea9c666bee23bdf44c155aaed2ae"
+    },
+    {
+      "path": "apps/web/src/lib/easy-button.js",
+      "sha256": "c59a2b953802f46547e3b12954670a72df3d4ae2e434297aed04ecc6ac976296"
     },
     {
       "path": "apps/web/src/lib/executable-presentation.js",
@@ -1080,7 +1084,7 @@
     },
     {
       "path": "apps/web/tests/app.spec.js",
-      "sha256": "76a83fd94a8dc783e83aed69f4a4e05fafdc9d087d839f893152755a22093dc5"
+      "sha256": "c3d5448ca8d8784e5da08f5c499c84868f4db96a4680b72b5fff092bedd95726"
     },
     {
       "path": "apps/web/tests/audio-range.spec.js",
@@ -1095,8 +1099,16 @@
       "sha256": "c8faeb5299c2c03f19f1b1b1ada27a7350471ec7084bebbff16872eddade2499"
     },
     {
+      "path": "apps/web/tests/easy-button.spec.js",
+      "sha256": "e90c83e0f802db0296e6041d874daf3bb1b110eccafa7912031ade109c6ed0a1"
+    },
+    {
+      "path": "apps/web/tests/easy-button.test.js",
+      "sha256": "cc90e89a43ab7f674d6804335ea222eec03dca75b1a6225a9bf6cd90bae1e288"
+    },
+    {
       "path": "apps/web/tests/executable-app.spec.js",
-      "sha256": "9797650660a6f01e24e0fc763d7e502cf43b7e5375cbd210f6fa3de568e23ac0"
+      "sha256": "e70f79f93c3f2dbb970d9969930979ebeaaec8b8bb7262106302e3d53dec8952"
     },
     {
       "path": "apps/web/tests/executable-presentation.test.js",
@@ -1124,7 +1136,7 @@
     },
     {
       "path": "apps/web/tests/multipack-app.spec.js",
-      "sha256": "4d0e41b7f273583e9b422c08b16798929a66d7b0ae5e9908cc8c6fdd823b90db"
+      "sha256": "71ef9fb5001655d2f9eb6458a269c927b7503a896eed9dcc7194d305aa7def0d"
     },
     {
       "path": "apps/web/tests/notice-scope.spec.js",
@@ -1144,7 +1156,7 @@
     },
     {
       "path": "apps/web/tests/preparation-app.spec.js",
-      "sha256": "10f510b1a5cdc5f73f6fa1fc0a3e0fda2cf542216fd4b97d5fe5f282439aca0f"
+      "sha256": "78c1e496f39cebd84dc57ccb9b04a46ff896605593199dcb7c8e0028b94db29b"
     },
     {
       "path": "apps/web/tests/preparation-intent.test.js",
@@ -1168,7 +1180,7 @@
     },
     {
       "path": "apps/web/tests/scripture-passage-app.spec.js",
-      "sha256": "3a1d09b9d2c69554b8379681f03bdda474fa3eec5b0c142b51c2f70530c23dcd"
+      "sha256": "a17a023a2f9dc40cc165be56499a5536a44c23c216a6356cd0170ea652006ba0"
     },
     {
       "path": "apps/web/tests/scripture-passage.test.js",
@@ -1271,6 +1283,10 @@
       "sha256": "1c41db792938c7c79891dc69cb7946cf7a4f6b1a7b99eeef24dfa9d6a590b762"
     },
     {
+      "path": "e2e/easy-button.spec.js",
+      "sha256": "d117bb1d9a0b98ac1f8b90e8390df2b0ba396780e89444431d534a31f466075a"
+    },
+    {
       "path": "e2e/full-journey.spec.js",
       "sha256": "c3e5f42fd5363e4f6d51dcf1dbd6ba0e4339883ba46092eb4f67f157b996b66c"
     },
@@ -1333,6 +1349,10 @@
     {
       "path": "release/changes/dev-original-preparation.md",
       "sha256": "cad93d4e93936f55a5f1b89446b557c848cfbdf8a48e64f123434ea4f67c4124"
+    },
+    {
+      "path": "release/changes/easy-button-verify-and-start.md",
+      "sha256": "71d4863b4a1177313ad312f677d41aabfe81e6adf3c63b7c48a8d975b994b066"
     },
     {
       "path": "release/changes/guide-active-canonical-ledger.md",
