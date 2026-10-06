@@ -39,7 +39,7 @@ it('unavailable state leaves Continue usable and never fabricates narration',asy
  libraryAdapter.prepareRecording.mockResolvedValue({status:'unavailable',message:'This recording is awaiting review.'});await mount();await fireEvent.click(screen.getByRole('button',{name:'Play original recording'}));await waitFor(()=>expect(screen.getByText('This recording is awaiting review.')).toBeTruthy());expect(audio.play).not.toHaveBeenCalled();await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));expect(libraryAdapter.prepareRecording).toHaveBeenCalledTimes(1);
 });
 it('cancel while ready audio loads prevents late audio playback',async()=>{
- const pending=deferred();libraryAdapter.playPreparedRecording.mockReturnValue(pending.promise);await mount();await fireEvent.click(screen.getByRole('button',{name:'Play original recording'}));await waitFor(()=>expect(libraryAdapter.playPreparedRecording).toHaveBeenCalledTimes(1));await fireEvent.click(screen.getByRole('button',{name:'Cancel loading'}));pending.resolve({bytes:new Uint8Array(2),mime:'audio/mpeg',playbackRange:ready.playbackRange});await new Promise(r=>setTimeout(r,10));expect(audio.play).not.toHaveBeenCalled();
+ const pending=deferred();libraryAdapter.playPreparedRecording.mockReturnValue(pending.promise);await mount();await fireEvent.click(screen.getByRole('button',{name:'Play original recording'}));await waitFor(()=>expect(libraryAdapter.playPreparedRecording).toHaveBeenCalledTimes(1));const cancel=screen.getByRole('button',{name:'Cancel loading'});expect(cancel.querySelector('svg.lucide-x')).toBeTruthy();expect(cancel.querySelector('svg.lucide-play')).toBeNull();await fireEvent.click(cancel);pending.resolve({bytes:new Uint8Array(2),mime:'audio/mpeg',playbackRange:ready.playbackRange});await new Promise(r=>setTimeout(r,10));expect(audio.play).not.toHaveBeenCalled();
 });
 
 it('preparation notice can be dismissed without canceling work and later state is visible',async()=>{
@@ -131,4 +131,18 @@ it('automatic-mode Replay reuses the same current range without preparing a late
  await mount({automatic:true});await fireEvent.click(screen.getByRole('button',{name:'Begin'}));await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(1));
  audio.active=false;audio.state({playing:false,src:null,elapsed:0,duration:0});audio.end();await waitFor(()=>expect(screen.getByRole('button',{name:'Continue',exact:true})).toBeTruthy());
  await fireEvent.click(screen.getByRole('button',{name:'Replay'}));await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(2));expect(audio.play.mock.calls[1][3]).toEqual(ready.playbackRange);expect(libraryAdapter.prepareRecording).toHaveBeenCalledTimes(1);
+});
+
+
+it('preparation cancellation shows an X and aborts without starting late ready audio',async()=>{
+ const pending=deferred();libraryAdapter.prepareRecording.mockReturnValue(pending.promise);await mount();await fireEvent.click(screen.getByRole('button',{name:'Play original recording'}));
+ await waitFor(()=>expect(libraryAdapter.prepareRecording).toHaveBeenCalledTimes(1));const signal=libraryAdapter.prepareRecording.mock.calls[0][1];
+ const cancel=screen.getByRole('button',{name:'Cancel preparation',exact:true});expect(cancel.querySelector('svg.lucide-x')).toBeTruthy();expect(cancel.querySelector('svg.lucide-play')).toBeNull();
+ await fireEvent.click(cancel);expect(signal.aborted).toBe(true);pending.resolve({status:'ready',value:{}});await new Promise(r=>setTimeout(r,20));expect(audio.play).not.toHaveBeenCalled();
+});
+
+it('pre-request hash completion cannot resurrect playback after narration is turned off',async()=>{
+ await mount({automatic:true});const gate=deferred(),digest=crypto.subtle.digest.bind(crypto.subtle);vi.spyOn(crypto.subtle,'digest').mockImplementationOnce(async(...args)=>{await gate.promise;return digest(...args);});
+ await fireEvent.click(screen.getByRole('button',{name:'Begin',exact:true}));expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();
+ await toggleNarration();gate.resolve();await new Promise(r=>setTimeout(r,20));expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();
 });
