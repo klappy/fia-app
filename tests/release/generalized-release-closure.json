@@ -942,11 +942,11 @@
     },
     {
       "path": "apps/web/public/sw.js",
-      "sha256": "6edd652ecb4b4d3c8317fc1176d4b4cc96fcf90a8591d569a664bd7ea1ba7eff"
+      "sha256": "16eb856a34a69f0c6e70fb84d34610b2b4785f2c71f57c61e134b06439b7748c"
     },
     {
       "path": "apps/web/src/App.svelte",
-      "sha256": "be30db79b080dbe064a045f12c8ad12cd321417e8c485a1e3450cf7f772c1efe",
+      "sha256": "a5cec60aa83115553f48c0945f08a01b5e7c174cf7896447e6732f94582a8a97",
       "originalSha256": "1c79777ea001eafc53bd00e9e5ef2e0972bde20178e80195c2018871a03260af"
     },
     {
@@ -1082,8 +1082,12 @@
       "sha256": "b4c57f0ba07b3a1fd5b60cbf7211210bc1bc0761dc4d9ed83d1a2b9d34b3e31f"
     },
     {
+      "path": "apps/web/tests/catalog-client-race.test.js",
+      "sha256": "d0c3577ba4d97ef6c399b9338f74d59c6fd3db8c3b33f07e904156a5cdb5dc78"
+    },
+    {
       "path": "apps/web/tests/executable-app.spec.js",
-      "sha256": "a6731441140fd3a796e54c06692bfced5b0bf8adc0994d9ef61a95612b41a12a"
+      "sha256": "ac1402ea22fc45d44085cc47df4ddc5cc320a29435fbf5851c6f01ccf91ebf6a"
     },
     {
       "path": "apps/web/tests/executable-presentation.test.js",
@@ -1095,7 +1099,7 @@
     },
     {
       "path": "apps/web/tests/helpers/offline-execution.js",
-      "sha256": "28e8fa73ac2a6adbcf8aaf6738f1d573701e0ba76ed9113b16a3137f8c406a63"
+      "sha256": "0541ebabf6d6e30dea047ee8668616d7d7aa272d80c2f230fec416f5b01e1476"
     },
     {
       "path": "apps/web/tests/library-panel.spec.js",
@@ -1262,6 +1266,10 @@
       "sha256": "1ad4f5e4c054d5dae2ddde6b0cb430bae9bcd335b3063f6e5e4b00256d32f817"
     },
     {
+      "path": "e2e/upgrade.spec.js",
+      "sha256": "70b240936c0d50f79e090e860687064c43a18c04c90931d513285e8f95d63ee0"
+    },
+    {
       "path": "e2e/visual.spec.js",
       "sha256": "6e31306d8c7a76ea12fc8612ceae0e27d58f9365642708e64f5b8a0b287ec0de"
     },
@@ -1416,6 +1424,10 @@
     {
       "path": "scripts/scripture-audio-publication.mjs",
       "sha256": "138e88addea24e0d10330548e1ca2f8d9a1480ed88f3e4cf73dcfb86d714d66e"
+    },
+    {
+      "path": "scripts/upgrade-readiness.mjs",
+      "sha256": "76c3f275b17bf77c087c3cc265f5bacc3ee495c9db1d46692371b4321895e3a5"
     },
     {
       "path": "scripts/version-stamp.js",
@@ -2460,6 +2472,10 @@
     {
       "path": "tests/web-shell/scripture-range-only.test.js",
       "sha256": "a86241f2ba3df8543c1bb557babc96bb83e623f116c0349f2004541955c681ac"
+    },
+    {
+      "path": "tests/web-shell/upgrade-readiness.test.js",
+      "sha256": "f773951233906d5747b5e7c58e0646ed9296f2719c2b963adbeedbbaa1c68ad7"
     },
     {
       "path": "tests/web-shell/version-stamp.test.js",
