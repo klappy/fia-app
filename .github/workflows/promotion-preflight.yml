@@ -1,0 +1,24 @@
+name: promotion-preflight
+on:
+  pull_request:
+    branches: [staging, production]
+    types: [opened, synchronize, reopened, ready_for_review]
+permissions:
+  contents: read
+  actions: read
+  pull-requests: read
+jobs:
+  source-evidence:
+    name: promotion-source-evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify exact upstream source evidence
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: node scripts/promotion-source-evidence.mjs

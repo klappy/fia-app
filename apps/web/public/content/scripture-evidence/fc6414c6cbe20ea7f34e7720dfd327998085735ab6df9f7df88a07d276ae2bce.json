@@ -1,0 +1,142 @@
+{
+  "schema": "fia-p2-bsb-boundary-candidate@1",
+  "status": "measured-candidate-not-browser-qualified",
+  "sourceSha256": "ad82d1a49f696a421f87a0ba54e7079c35fb403462c1e2e335a1fabe515363ec",
+  "sourceBytes": 5135362,
+  "rawTranscriptSha256": "6c20aa554af84aab5ec07ed129d31c30191d1ebc5d05d60a05c92031af58dd32",
+  "programSha256": "de6c9196a0bdeca9dfb83e6dd218dd52d1409153e02217b6bf3181d49b175a86",
+  "decode": {
+    "sampleRate": 16000,
+    "samples": 5132887,
+    "duration": 320.8054375,
+    "pcmSha256": "feebbde90c3298a27fc5760b59ed35a3cf1146b0532056aac4fdfca53f173b61",
+    "av": "19.0.1"
+  },
+  "passage": "Mark 1:14\u201320",
+  "rawSpeechEnvelope": [
+    97.18,
+    143.9
+  ],
+  "nextVerseStarts": 144.9,
+  "left": {
+    "searchSeconds": [
+      96.42,
+      97.18
+    ],
+    "quietRuns": [
+      {
+        "start": 96.42,
+        "end": 97.18,
+        "maximum10msDbfs": -56.025162386748065
+      }
+    ],
+    "candidateCutSeconds": 96.8,
+    "centered60msDbfs": -57.99042836928265
+  },
+  "right": {
+    "searchSeconds": [
+      143.9,
+      144.9
+    ],
+    "quietRuns": [
+      {
+        "start": 143.9,
+        "end": 144.85,
+        "maximum10msDbfs": -45.85015790217183
+      }
+    ],
+    "candidateCutSeconds": 144.375,
+    "centered60msDbfs": -47.89236882322455
+  },
+  "candidateDecodedPcmRange": [
+    96.8,
+    144.375
+  ],
+  "acceptsPlayback": false,
+  "limits": [
+    "Boundary energy and retained ASR evidence only; no human listening or native browser-clock proof.",
+    "Retained ASR v20 Ebony versus canonical Zebedee remains recognition uncertainty; text unchanged.",
+    "No new ASR, no proxy generation, no accepted range inherited from P1."
+  ],
+  "canonicalText": {
+    "packId": "eng.MRK-1-14-20",
+    "sourcePackSha256": "48f8c768b108f2b9977048db26fa54c82af4eea7f54c66fa650ef84f7d61ecd7",
+    "edition": "BereanStandardBible",
+    "provenance": {
+      "status": "source",
+      "collection": "BereanStandardBible",
+      "revision": "87858d1e28ab728249d9fb50667170c194c6b013"
+    },
+    "sourceFileSha256": "ab3a5d85d62c85bc7ec479078645c93904bacc0fd9443b5e2bcacf2936ad5a2b",
+    "verses": [
+      {
+        "contentId": "10041001014",
+        "version": "1.0.2",
+        "ref": "41001014",
+        "exactSourceTextSha256": "f9d19f3d7491124c981f27bffda76ebe970ff011ea25028cdf3e46b0a992b8f8"
+      },
+      {
+        "contentId": "10041001015",
+        "version": "1.0.2",
+        "ref": "41001015",
+        "exactSourceTextSha256": "716ba9002e1ae37c625dde4fcfc9d70202fa142bcb5988da65b85e345fc13537"
+      },
+      {
+        "contentId": "10041001016",
+        "version": "1.0.2",
+        "ref": "41001016",
+        "exactSourceTextSha256": "91a177ce3a42ec57876978aabdfb1c99badcd591238e9c299df8543efbf444dd"
+      },
+      {
+        "contentId": "10041001017",
+        "version": "1.0.2",
+        "ref": "41001017",
+        "exactSourceTextSha256": "074b938748d132a71782474312afac7a0f9d49400c5f7b3957b98b308067a095"
+      },
+      {
+        "contentId": "10041001018",
+        "version": "1.0.2",
+        "ref": "41001018",
+        "exactSourceTextSha256": "90dea00fe1a5af34f4ecc64097e457121def30905c176156d71a315034760fe4"
+      },
+      {
+        "contentId": "10041001019",
+        "version": "1.0.2",
+        "ref": "41001019",
+        "exactSourceTextSha256": "6b3c23cf4169406e5af578e679fb209b44edcdeca84e6f5b0b6d06a93fe6d93d"
+      },
+      {
+        "contentId": "10041001020",
+        "version": "1.0.2",
+        "ref": "41001020",
+        "exactSourceTextSha256": "088e6a78dfa75b7adf37628d189eea70a48471a7e6ca941a09f6ceedb93cd906"
+      }
+    ]
+  },
+  "rawSegmentIndexes": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26
+  ],
+  "sourceReuse": {
+    "url": "https://openbible.com/audio/souer/BSB_41_Mrk_001.mp3",
+    "sameChapterAsP1": true,
+    "requestOnly": true,
+    "newRecognitionRequired": false,
+    "candidateDurationSeconds": 47.575
+  },
+  "publicationRequirements": [
+    "Separate P2 passage/range qualification receipt; P1 acceptance is not transferred.",
+    "Bind current P2 presentation, exact BSB versioned text, chapter source SHA and selected delivery SHA.",
+    "Actual selected-media start, end before v21, pause/replay/speed/cancel checks at the new range.",
+    "Whole-passage playback does not require accepting uncertain word highlights."
+  ]
+}
