@@ -1,3 +1,4 @@
+import {Buffer} from 'node:buffer';
 import {verifyScriptureRangeOnly} from '../../../scripts/scripture-audio-publication.mjs';
 import {validateDelivery} from '../../../apps/web/src/lib/media-delivery.js';
 import {canonicalJSONString,sha256} from './contract.mjs';
@@ -22,7 +23,7 @@ export function createApprovedAudioBindings({index,readDependency,readRetained,e
  need(index?.schema==='fia-approved-audio-proof-index@1'&&Array.isArray(index.bindings)&&typeof readDependency==='function'&&typeof readRetained==='function'&&typeof eligible==='function','approved-audio-ports');
  need(enc(index).length<=1048576,'approved-audio-index-size');const trusted=structuredClone(index);
  async function validateBinding(binding){try{need(trusted.bindings.some(b=>same(b,binding))&&await eligible(binding)===true,'approved-audio-authority');validateApprovedDependencies(binding.dependencies);const raw=new Map();for(const d of binding.dependencies){const b=await readDependency(d);need(b instanceof Uint8Array&&b.length===d.bytes&&await sha256(b)===d.sha256,'approved-audio-integrity');raw.set(d.id,b);}need(binding.dependencies.find(d=>d.id==='base')?.sha256===binding.baseRevision,'approved-audio-base');
- const derived=deriveApprovedBinding({...binding,baseBytes:raw.get('base'),deliveryBytes:raw.get('delivery'),ledgerBytes:raw.get('ledger'),readEvidence:h=>{const b=raw.get(`evidence:${h}`);need(b,'approved-audio-evidence');return b;}});return same(binding,derived)&&await eligible(binding)===true;
+ const derived=deriveApprovedBinding({...binding,baseBytes:raw.get('base'),deliveryBytes:raw.get('delivery'),ledgerBytes:raw.get('ledger'),readEvidence:h=>{const b=raw.get(`evidence:${h}`);need(b,'approved-audio-evidence');return Buffer.from(b);}});return same(binding,derived)&&await eligible(binding)===true;
  }catch{return false;}}
  async function resolve(context){const packId=context.packId??context.basePresentation?.id,result={narrationBindings:{},boundArtifacts:[],bindings:[]};for(const binding of trusted.bindings.filter(b=>b.packId===packId&&b.baseRevision===context.baseRevision&&b.sourceRevision===context.sourceRevision)){
  const activities=context.basePresentation.activities.filter(a=>a.kind===binding.assetKind&&a.assetId===binding.assetId);if(!activities.length)continue;
