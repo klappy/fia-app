@@ -402,17 +402,24 @@ test('pass 1 requests are written for all 24 cases only: --set dev|heldout is dr
 });
 
 test('PLAN step 6 reconciliation: a missing blind label is refused, real disagreements become needsReview, spa re-mirrors (D10)', async () => {
-  const cases = casesDoc.cases;
   const isEng = c => c.input.language === 'eng';
+  // At head every row is reconciled. Rebuild the pre-step-6 state (each held-out eng row carries one labeler's gold)
+  // so the refusal and disagreement paths run on the real rows.
+  const cases = structuredClone(casesDoc.cases).map(c => (isEng(c) && c.meta.split === 'heldout' ? {...c, gold: {roles: c.gold.roles, needsReview: c.gold.needsReview, reason: 'fixture A label', reviewer: c.gold.reviewer.split('+')[0], agreement: null}} : c));
   const pending = cases.filter(c => isEng(c) && goldStatus(cases).get(c.caseId) === 'pending');
+  assert.equal(pending.length, 8);
   const label = (c, over = {}) => ({caseId: c.caseId, gold: {roles: {...c.gold.roles}, needsReview: c.gold.needsReview, reason: 'fixture blind label', reviewer: 'fixture-cook-d', ...over}});
   const agree = pending.map(c => label(c));
-  if (pending.length) {
-    // Refusals: a missing label, a label that says it is missing, the same labeler twice.
-    assert.throws(() => reconcileGold(cases, agree.slice(1)), new RegExp(`gold-label-missing:D:${pending[0].caseId}:missing`));
-    assert.throws(() => reconcileGold(cases, agree.map((l, i) => (i ? l : label(pending[0], {reason: 'D: missing'})))), /gold-label-missing:D:/);
-    assert.throws(() => reconcileGold(cases, agree.map((l, i) => (i ? l : label(pending[0], {reviewer: pending[0].gold.reviewer})))), /same-labeler/);
-  }
+  // Refusals: a missing label, a label that says it is missing, the same labeler twice.
+  assert.throws(() => reconcileGold(cases, agree.slice(1)), new RegExp(`gold-label-missing:D:${pending[0].caseId}:missing`));
+  assert.throws(() => reconcileGold(cases, agree.map((l, i) => (i ? l : label(pending[0], {reason: 'D: missing'})))), /gold-label-missing:D:/);
+  assert.throws(() => reconcileGold(cases, agree.map((l, i) => (i ? l : label(pending[0], {reason: 'missing'})))), /gold-label-missing:D:/);
+  assert.throws(() => reconcileGold(cases, agree.map((l, i) => (i ? l : label(pending[0], {reviewer: pending[0].gold.reviewer})))), /same-labeler/);
+  // A real second reason that starts with "missing" is a disagreement, not a missing label, and it scores.
+  const p0 = pending[0];
+  const missingWord = reconcileGold(cases, agree.map((l, i) => (i ? l : label(p0, {reason: 'missing any explicit discussion cue', roles: {...p0.gold.roles, discussionRequested: !p0.gold.roles.discussionRequested}}))));
+  assert.match(missingWord.cases.find(c => c.caseId === p0.caseId).gold.reason, /\| D: missing any explicit discussion cue \{/);
+  assert.doesNotThrow(() => assertGold(missingWord.cases));
   // Committed gold + a blind label that agrees: needsReview stays only where a labeler put it (S03-U020, S01-U003).
   const r = reconcileGold(cases, agree);
   assertGold(r.cases);
@@ -425,12 +432,11 @@ test('PLAN step 6 reconciliation: a missing blind label is refused, real disagre
   const t = cases.find(c => c.caseId === target);
   const split = reconcileGold(cases, cases.filter(isEng).map(c => (c.caseId === target ? label(c, {roles: {...c.gold.roles, discussionRequested: true}}) : label(c))).filter(l => pending.some(p => p.caseId === l.caseId) || l.caseId === target));
   const g = split.cases.find(c => c.caseId === target).gold;
-  if (goldStatus(cases).get(target) === 'pending') {
-    assert.equal(g.agreement, false); assert.equal(g.needsReview, true); assert.deepEqual(g.roles, t.gold.roles);
-    assert.match(g.reason, /^DISAGREE — A: .+ \| D: fixture blind label \{.*"discussionRequested":true/);
-    assert.deepEqual(split.diffs, [{caseId: target, field: 'discussionRequested', a: t.gold.roles.discussionRequested, d: true}]);
-    assert.equal(split.cases.find(c => c.caseId === 'spa.MRK-1-14-20:S02-U001').gold.needsReview, true);
-  }
+  assert.equal(goldStatus(cases).get(target), 'pending');
+  assert.equal(g.agreement, false); assert.equal(g.needsReview, true); assert.deepEqual(g.roles, t.gold.roles);
+  assert.match(g.reason, /^DISAGREE — A: .+ \| D: fixture blind label \{.*"discussionRequested":true/);
+  assert.deepEqual(split.diffs, [{caseId: target, field: 'discussionRequested', a: t.gold.roles.discussionRequested, d: true}]);
+  assert.equal(split.cases.find(c => c.caseId === 'spa.MRK-1-14-20:S02-U001').gold.needsReview, true);
   // A divergent spa row keeps its Spanish-meaning label and is marked mirrors:false.
   const div = structuredClone(cases);
   const spaRow = div.find(c => c.caseId === 'spa.MRK-1-14-20:S05-U004');

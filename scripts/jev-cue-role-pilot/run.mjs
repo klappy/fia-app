@@ -282,8 +282,10 @@ export function assertLanguageAllowed(cases, language) {
 // PLAN step 6, D10-D11. An eng row is reconciled once two distinct labelers are merged (reviewer `<a>+<d>`,
 // `agreement` boolean); until then it carries one labeler's gold with `agreement: null` and is pending. A spa row is
 // reconciled when it mirrors its reconciled eng row (or is divergent and labelled from the Spanish meaning).
-// A gold reason naming a missing labeler ("D: missing") is refused: a missing label is never a disagreement.
-export const MISSING_LABEL = /\b[A-Z]: missing\b/;
+// A gold reason naming a missing labeler ("| D: missing", or a bare "missing") is refused: a missing label is never a
+// disagreement. Only a reason or labeler slot that holds nothing but `missing` matches, so a real reason that starts
+// with "missing …" still reconciles.
+export const MISSING_LABEL = /(?:^\s*|\b[A-Z]: )missing\s*(?:\||\{|$)/;
 const DUAL_REVIEWER = /^[^\s+]+\+[^\s+]+$/;
 const goldKey = c => `${c.meta.split}|${c.input.source.unitId}`;
 
