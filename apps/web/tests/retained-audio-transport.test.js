@@ -18,3 +18,9 @@ test('normalized approved-route aliases cannot escape strict profile through a l
   let nativeRequests=0;await assert.rejects(run(value,{headers:{},onNative:()=>nativeRequests++}),'Route alias must not enter legacy transport: '+url);assert.equal(nativeRequests,0);
  }
 });
+test('prototype property names cannot become supported audio MIME extensions',async()=>{
+ for(const mime of ['toString','constructor','__proto__']){
+  const value=fixture();value.delivery.mime=mime;value.delivery.url=`/v1/approved-audio/${binding}/${mediaSHA}.${({'audio/mpeg':'mp3','audio/ogg':'ogg'})[mime]}`;
+  let nativeRequests=0;await assert.rejects(run(value,{onNative:()=>nativeRequests++}));assert.equal(nativeRequests,0);
+ }
+});
