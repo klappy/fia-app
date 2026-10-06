@@ -97,18 +97,28 @@ async function retainServerSnapshot(packId,revision,cache,signal){
 }
 // Catalog retrieval may precede UI cancellation/activation. Keep its artifact
 // lookup context separate from PACK_SELECT's native-media custody.
+const serverReadPrefix=clientId=>'server-read-context:'+encodeURIComponent(clientId)+':';
+async function rememberServerRead(clientId,record){
+ if(clientId)await write(serverReadPrefix(clientId)+record.packId+':'+record.revision,{packId:record.packId,revision:record.revision});
+}
+async function serverReadContexts(clientId){
+ if(!clientId)return [];
+ const cache=await caches.open(META),prefix='/'+serverReadPrefix(clientId),contexts=[];
+ for(const key of await cache.keys()){const path=new URL(typeof key==='string'?key:key.url,self.location.origin).pathname;if(path.startsWith(prefix)){const context=await(await cache.match(key))?.json();if(context)contexts.push(context);}}
+ return contexts;
+}
 async function serverRead(request,clientId){
  const url=new URL(request.url),match=/^\/v1\/packs\/([^/]+)$/.exec(url.pathname),digest=/^\/v1\/artifacts\/([a-f0-9]{64})$/.exec(url.pathname)?.[1];let packId,revision,active,file;
  if(match){packId=match[1];if(!validPack(packId)||packId===legacy||[...url.searchParams.keys()].some(k=>k!=='revision')||url.searchParams.getAll('revision').length>1)return fetch(request);revision=url.searchParams.get('revision')||undefined;if(revision&&!isPassageHash(revision))return fetch(request);active=await read(packKey(packId,'active'));}
- else if(digest&&!url.search){const pending=clientId&&await read('server-read-client-'+clientId),selected=clientId&&await read('client-'+clientId)||await read('selected');for(const candidate of [pending,selected]){if(!candidate?.packId)continue;const saved=await read(packKey(candidate.packId,'active')),match=saved?.serverSnapshot?.files.find(f=>f.sha256===digest);if(match){packId=candidate.packId;active=saved;file=match;break;}}}
+ else if(digest&&!url.search){const selected=clientId&&await read('client-'+clientId)||await read('selected');for(const candidate of [...await serverReadContexts(clientId),selected]){if(!candidate?.packId)continue;const saved=candidate.serverSnapshot?candidate:await read(packKey(candidate.packId,'active'));if(!candidate.serverSnapshot&&candidate.revision&&saved?.serverSnapshot?.record.revision!==candidate.revision)continue;const match=saved?.serverSnapshot?.files.find(f=>f.sha256===digest);if(match){packId=candidate.packId;revision=saved.serverSnapshot.record.revision;active=saved;file=match;break;}}}
  else return fetch(request);
  try{const response=await fetchLatest(request,{cache:'no-store',redirect:'error'});
-  if(match){if(response.status!==200||response.redirected)throw Error('Server record unavailable.');const record=serverRecord(await response.clone().json(),packId);if(revision&&record.revision!==revision)throw Error('Server revision changed.');if(clientId)await write('server-read-client-'+clientId,{packId});return response;}
+  if(match){if(response.status!==200||response.redirected)throw Error('Server record unavailable.');const record=serverRecord(await response.clone().json(),packId);if(revision&&record.revision!==revision)throw Error('Server revision changed.');await rememberServerRead(clientId,record);return response;}
   if(file)await serverJSON(response.clone(),file,active.serverSnapshot.record);return response;
  }catch(error){
   if(error.mediaStatusCode!=='media-status-transient'){if(packId)await invalidateServerSnapshot(packId);return new Response('Server content could not be verified.',{status:409});}
   active=packId&&await savedServerSnapshot(packId,revision);if(!active)return new Response('This server content is not saved for offline use.',{status:503});
-  let response;if(match){response=json(active.serverSnapshot.record);if(clientId)await write('server-read-client-'+clientId,{packId});}
+  let response;if(match){response=json(active.serverSnapshot.record);await rememberServerRead(clientId,active.serverSnapshot.record);}
   else{file=active.serverSnapshot.files.find(f=>f.sha256===digest);if(!file)return new Response('This server artifact is not saved.',{status:503});response=await(await caches.open(active.cache)).match(file.path);}
   const headers=new Headers(response.headers);headers.set(offlineServerHeader,'historical-verified');headers.set('Cache-Control','private, no-store');return new Response(await response.arrayBuffer(),{status:200,headers});
  }
@@ -278,7 +288,6 @@ self.addEventListener('message',event=>{
     const active=await read(packKey(packId,'active'));
     const matches=active&&(active.manifest?.presentationRevision===event.data.revision||!active.serverSnapshot?.invalid&&active.serverSnapshot?.record.revision===event.data.revision);
     if(event.source?.id){const prior=await read('client-'+event.source.id);await write('client-'+event.source.id,{...(matches?active:{packId,revision:event.data.revision}),...(prior?.shell==='network'?{shell:'network'}:{})});}
-    if(event.source?.id)await(await caches.open(META)).delete('/server-read-client-'+event.source.id);
     await write('selected',{packId});result={selected:true};
    }else if(type==='DOWNLOAD_STATUS'||type==='CACHE_STATUS')result=await status(packId);
    else if(type==='DOWNLOAD_START'){const active=await read(packKey(packId,'active'));if(active&&event.source?.id&&!await read('client-'+event.source.id))await write('client-'+event.source.id,active);result=await start(event.data.selection,port,packId,event.data.sizes||{},event.data.revision);}
