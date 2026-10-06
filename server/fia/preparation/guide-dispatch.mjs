@@ -163,7 +163,7 @@ async function unitStatus(ctx,env,catalog,entry,demand,row,playback=null){
   const verified=await jobs.read(innerDemand),{preparation,...expected}=projection;if(!same(verified,expected))throw Error('guide-unit-retained-custody');
 
  }
- let result=null,resultSha256=null;
+ let result=null,resultSha256=null,capabilityState=null,capabilityReason=null;
  if(projection&&playback){
   const consumer=demand.identity.consumer,policy=playback.contractSha256;
   const binding={consumer,sharedRequest:{sourceJobId:entry.id,unitJobId:row.id},dependencies:{candidate:row.artifact.sha256,source:projection.provenance.sourceSha256,derivative:demand.identity.derivativeSha256,policy},capability:'original-unit-audio',contractSha256:policy};
@@ -176,11 +176,12 @@ async function unitStatus(ctx,env,catalog,entry,demand,row,playback=null){
    return await playback.validate(value,{candidate:structuredClone(projection),consumer:structuredClone(consumer)})===true;
   }});
   let prepared=await sidecars.read(consumer);if(prepared.state==='missing')prepared=await sidecars.request(consumer,{subscriberId:'guide-unit-route'});
+  capabilityState=prepared.state;capabilityReason=prepared.reason??null;
   if(prepared.state==='ready'){result=prepared.sidecar.decision.result;result.delivery.url=`${UNIT_PREFIX}/${entry.id}/${row.id}/audio/${policy}.wav`;resultSha256=await sha256(encode(result));}
  }
 
  const latest=await ctx.storage.get('guide-job'),latestUnit=await ctx.storage.get('guide-unit:'+demand.id);if(!validActive(latest,entry)||row.state==='candidate'&&!same(latest,source)||!validUnit(latestUnit,demand)||row.state==='candidate'&&!same(latestUnit,row)||!current(entry,catalog))throw Error('guide-unit-revoked');
- return{schema:'fia-guide-unit-preparation-status@1',jobId:row.id,sourceJobId:entry.id,consumer:demand.identity.consumer,state:result?'ready':row.state,reason:row.reason,statusUrl:`${UNIT_PREFIX}/${entry.id}/${row.id}`,candidateProjection:projection,result,resultSha256,acceptedPlaybackRanges:[]};
+ return{schema:'fia-guide-unit-preparation-status@1',jobId:row.id,sourceJobId:entry.id,consumer:demand.identity.consumer,state:result?'ready':capabilityState??row.state,reason:result?null:capabilityReason??row.reason,statusUrl:`${UNIT_PREFIX}/${entry.id}/${row.id}`,candidateProjection:projection,result,resultSha256,acceptedPlaybackRanges:[]};
 }
 export async function serveGuideUnitPreparation(request,env,catalog,rawProfile=null,executionEligibility=null,unitPin=null){
  const url=new URL(request.url);if(url.pathname!==UNIT_PREFIX&&!url.pathname.startsWith(UNIT_PREFIX+'/'))return null;

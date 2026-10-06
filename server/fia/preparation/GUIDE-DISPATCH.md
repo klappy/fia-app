@@ -118,3 +118,14 @@ context provides `beforeSourceFetch`, a live current-policy guard; a composition
 using this adapter must wire it to `beforeFetch`. The actual Worker harness does
 so and gates a missing receipt, revokes authority, then proves zero transport calls.
 This is current dispatch authorization, not cancellation of an already sent request.
+
+## Capability sidecar status
+
+A completed unit derivative is still a candidate until its applicable capability
+validator accepts it. The public unit status preserves a sidecar's blocked state
+and exact reason for both abstention and rejection; it never turns these durable
+decisions back into an unexplained candidate. No result or result hash is exposed
+for a refusal. A changed capability-policy hash creates a separate sidecar while
+retaining source and derivative work. The route test exercises both refusals
+across actual SQLite/R2 restarts with zero new source, recognition or decode work.
+Its injected byte-equivalence acceptor remains development evidence only.
