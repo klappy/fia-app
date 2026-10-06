@@ -10,7 +10,7 @@ const registry=JSON.parse(readFileSync('public/content/registry.json','utf8'));
 afterEach(()=>{cleanup();vi.restoreAllMocks();vi.unstubAllGlobals();localStorage.clear();});
 for(const id of ['eng.MRK-1-1-13','spa.MRK-1-1-13','eng.MRK-1-14-20','spa.MRK-1-14-20'])it(`loads ${id} silently in manual mode with explicit text continuation and no resource URL`,async()=>{
  localStorage.setItem('fia-v3-selected-pack',id);const requests=[];
- vi.stubGlobal('crypto',webcrypto);vi.stubGlobal('fetch',async url=>{requests.push(url);return new Response(readFileSync('public'+url));});
+ vi.stubGlobal('crypto',webcrypto);vi.stubGlobal('fetch',async url=>{requests.push(url);if(url.startsWith('/v1/packs/')){const d=registry.packs.find(p=>p.id===decodeURIComponent(url.slice('/v1/packs/'.length)));return Response.json({status:'ready',packId:d.id,revision:d.revision,identity:{packId:d.id,language:d.language,pericopeId:d.pericopeId,title:d.title,defaultScriptureId:d.defaultScriptureId},capabilities:d.capabilities,artifact:{sha256:d.presentation.sha256,bytes:d.presentation.bytes,mime:'application/json'}});}if(url.startsWith('/v1/artifacts/')){const d=registry.packs.find(p=>p.revision===url.slice('/v1/artifacts/'.length));return new Response(readFileSync('public'+d.presentation.url));}return new Response(readFileSync('public'+url));});
  vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});vi.spyOn(libraryAdapter,'activate').mockResolvedValue({selected:true});
  const audio=vi.fn();vi.stubGlobal('Audio',audio);HTMLMediaElement.prototype.pause=vi.fn();Element.prototype.scrollTo=vi.fn();
  const descriptor=registry.packs.find(p=>p.id===id),pack=JSON.parse(readFileSync('public'+descriptor.presentation.url,'utf8'));
@@ -19,7 +19,7 @@ for(const id of ['eng.MRK-1-1-13','spa.MRK-1-1-13','eng.MRK-1-14-20','spa.MRK-1-
  expect(audio).not.toHaveBeenCalled();expect(document.querySelectorAll('img[src],video[src],audio[src]')).toHaveLength(0);
  await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));
  await waitFor(()=>expect(JSON.parse(localStorage.getItem('fia-v3-progress@1:'+id)).session.index).toBe(1));
- expect(audio).not.toHaveBeenCalled();expect(requests.every(url=>url==='/content/registry.json'||url===descriptor.presentation.url)).toBe(true);
+ expect(audio).not.toHaveBeenCalled();expect(requests.every(url=>url===`/v1/packs/${id}`||url===`/v1/artifacts/${descriptor.revision}`)).toBe(true);
 });
 it('late previous-pack download activation cannot expose media in the newly selected pack',async()=>{
  const descriptor=registry.packs.find(p=>p.id==='spa.MRK-1-1-13'),presentation=JSON.parse(readFileSync('public'+descriptor.presentation.url,'utf8'));

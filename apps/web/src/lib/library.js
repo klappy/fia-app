@@ -1,3 +1,4 @@
+import {createPreparationIntent} from './preparation-intent.js';
 import {createExecutionTransport} from './execution-transport.js';
 import {validateExecutablePresentation} from './executable-presentation.js';
 import {createPreparationTransport} from './prepared-audio.js';
@@ -35,7 +36,24 @@ export async function loadPresentation(descriptor){
  return validatePresentation(JSON.parse(new TextDecoder().decode(bytes)),descriptor);
 }
 const preparationTransport=createPreparationTransport();
-const executionTransport=createExecutionTransport();
+const executionTransport=createExecutionTransport({fetch:(...args)=>fetch(...args)});
+export async function selectServerPresentation(id,{explicit=false,signal,transport=executionTransport}={}){
+ signal?.throwIfAborted();let record=await transport.readPack(id,{signal});signal?.throwIfAborted();
+ if(explicit&&record.preparationDemand){
+  const demand=record.preparationDemand;
+  const normalize=value=>value.status==='ready'?{status:'ready',record:value.record}:value.status==='preparing'?{status:'preparing',id:value.jobId}:{status:'unavailable'};
+  // One observer per selection: no audio-key reconstruction or cross-pack join.
+  const observer=createPreparationIntent({request:async(_,owned)=>normalize(await transport.preparePresentation(demand,{signal:owned})),status:async(jobId,_,owned)=>normalize(await transport.readPresentationPreparation(jobId,{signal:owned})),verify:result=>result.record,publish:()=>{}});
+  const abort=()=>observer.cancel();signal?.addEventListener('abort',abort,{once:true});
+  try{signal?.throwIfAborted();const result=await observer.start(demand,{explicit:true});signal?.throwIfAborted();if(!result)throw Error('This passage could not be loaded. Your current passage stays open.');record=result.descriptor;}finally{signal?.removeEventListener('abort',abort);observer.cancel();}
+ }
+ if(record.status!=='ready'||record.packId!==id||record.identity?.packId!==id)throw Error('This passage could not be loaded. Your current passage stays open.');
+ const identity=record.identity;
+ const descriptor={id:record.packId,revision:record.revision,language:identity.language,pericopeId:identity.pericopeId,title:identity.title,defaultScriptureId:identity.defaultScriptureId,capabilities:record.capabilities,diagnostics:record.diagnostics||[],presentation:{sha256:record.artifact.sha256,bytes:record.artifact.bytes}};
+ if(!descriptor.title||!descriptor.language||!descriptor.capabilities?.text?.available)throw Error('The passage catalog is not compatible.');
+ const presentation=await transport.readPresentationRecord(record,{signal});signal?.throwIfAborted();
+ return {descriptor,presentation:validatePresentation(presentation,descriptor)};
+}
 export const libraryAdapter={
  playBoundAudio:(...args)=>executionTransport.playBoundAudio(...args),
  prepareOriginal:(...args)=>executionTransport.prepareOriginal(...args),
@@ -45,7 +63,7 @@ export const libraryAdapter={
  playPreparedRecording:preparationTransport.play,
  async languages(){const c=await fetchCatalog();return [{id:'eng',name:'English',nativeName:'English'},{id:'spa',name:'Spanish',nativeName:'Español'}].map(l=>({...l,ready:c.packs.filter(p=>p.language===l.id).length}));},
  async passages(language){return (await fetchCatalog()).packs.filter(p=>p.language===language);},
- async select(id){const descriptor=(await fetchCatalog()).packs.find(p=>p.id===id);if(!descriptor)throw new Error('This passage is not available.');return {descriptor,presentation:await loadPresentation(descriptor)};},
+ select:selectServerPresentation,
  async mediaStatus(pack=bundledPack){return workerRequest('MEDIA_STATUS',{packId:pack.id,revision:pack.revision});},
  async playMedia(pack,path,deliveryRevision,signal,size){const requestId=crypto.randomUUID();const cancel=()=>{workerRequest('MEDIA_CANCEL',{packId:pack.id,requestId}).catch(()=>{});};if(signal.aborted)throw Error('Playback canceled.');signal.addEventListener('abort',cancel,{once:true});try{const result=await workerRequest('MEDIA_PLAY',{packId:pack.id,revision:pack.revision,path,deliveryRevision,requestId,size});if(signal.aborted)throw Error('Playback canceled.');return result;}catch(error){cancel();throw error;}finally{signal.removeEventListener('abort',cancel);}},
  async downloadStatus(pack=bundledPack){return workerRequest('DOWNLOAD_STATUS',{packId:pack.id});},

@@ -42,7 +42,7 @@ it('navigation cancels bound action and prevents late port result playback',asyn
  await tools.get('fia_complete_activity').execute({activityId:presentation.activities[0].id});expect(signal.aborted).toBe(true);resolve(readyAudio);await new Promise(r=>setTimeout(r,0));expect(audio.play).not.toHaveBeenCalled();
 });
 it('blocked executable narration never falls back to legacy preparation',async()=>{
- presentation.activities[0].execution.narration={action:'blocked',status:'unavailable',reason:'server-unavailable'};await mount();await fireEvent.click(screen.getByRole('button',{name:'Replay',exact:true}));expect(libraryAdapter.prepareOriginal).not.toHaveBeenCalled();expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();
+ presentation.activities[0].execution.narration={action:'blocked',status:'unavailable',reason:'This recording is unavailable.'};await mount();expect(screen.getByRole('status').textContent).toContain('This recording is unavailable.');expect(screen.getByRole('button',{name:'Continue',exact:true})).toBeTruthy();await fireEvent.click(screen.getByRole('button',{name:'Replay',exact:true}));expect(libraryAdapter.prepareOriginal).not.toHaveBeenCalled();expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();
 });
 it('manual Play while automatic narration is off executes only the declared action and pause/resume reuses it',async()=>{
  firstNarration();await mount();await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Settings',exact:true}));await fireEvent.click(screen.getByRole('checkbox',{name:/Automatic guide narration/}));await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));expect(libraryAdapter.playBoundAudio).not.toHaveBeenCalled();
@@ -51,4 +51,14 @@ it('manual Play while automatic narration is off executes only the declared acti
 it('server focal display does not infer narration or automatically substitute its related video',async()=>{
  const image=Object.values(presentation.assets).find(a=>a.kind==='image');presentation.activities[0].execution.focalAssetId=image.id;presentation.activities[0].assetId=image.id;
  render(App);await waitFor(()=>expect(document.querySelector('.resource-visual')).toBeTruthy());await fireEvent.click(screen.getByRole('button',{name:'Replay',exact:true}));expect(libraryAdapter.playBoundAudio).not.toHaveBeenCalled();expect(libraryAdapter.prepareOriginal).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();expect(document.querySelector('video[src]')).toBeNull();
+});
+
+it('manual-mode center Continue advances while bound narration plays instead of pausing',async()=>{
+ firstNarration();await mount();await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Settings',exact:true}));await fireEvent.click(screen.getByRole('checkbox',{name:/Automatic guide narration/}));await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));
+ await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await waitFor(()=>expect(audio.play).toHaveBeenCalled());await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toBe(presentation.activities[1].prompt));expect(libraryAdapter.playBoundAudio).toHaveBeenCalledTimes(1);
+});
+it('restore is read-only while an explicit library choice carries separate demand consent',async()=>{
+ vi.spyOn(libraryAdapter,'passages').mockResolvedValue([descriptor]);await mount();expect(libraryAdapter.select.mock.calls[0][1].explicit).toBe(false);
+ await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passages',exact:true}));await fireEvent.click(await screen.findByRole('button',{name:'Open passage',exact:true}));
+ await waitFor(()=>expect(libraryAdapter.select).toHaveBeenCalledTimes(2));expect(libraryAdapter.select.mock.calls[1][1].explicit).toBe(true);expect(libraryAdapter.select.mock.calls[0][1].signal.aborted).toBe(true);expect(audio.play).not.toHaveBeenCalled();
 });
