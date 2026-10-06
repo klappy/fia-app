@@ -127,8 +127,8 @@
     },
     {
       "path": "server/faces/worker/entry.mjs",
-      "sha256": "364336e227906f35e242550d4872039a98e12becabc61583cdf8c93f8cd2c15e",
-      "bytes": 1131,
+      "sha256": "d3a8b8199e958d94fb5e120c1615856e4418180cb2c1f8c36177f26ed9d8144e",
+      "bytes": 1243,
       "role": "preparation-worker-runtime"
     },
     {
@@ -295,8 +295,8 @@
     },
     {
       "path": "scripts/package-worker.mjs",
-      "sha256": "69032833ca60e9c0d807c1e8f1ff8e6091fc533858bdc8c97935e1ce9799ed66",
-      "bytes": 1801,
+      "sha256": "d6e416a866f1d7ddc37afeb253ce43b024c58a8a1b2bf261f0313a3222f2b112",
+      "bytes": 2256,
       "role": "build-only-publication"
     },
     {
@@ -367,8 +367,8 @@
     },
     {
       "path": "server/fia/preparation/executable-presentation-runtime.mjs",
-      "sha256": "753d9e1850b2af3d4af9edc58d6a808787f94b1e3f4cca80bf35c97fe493dc3d",
-      "bytes": 8420,
+      "sha256": "ad938309e0ec9b652adfd718fd93f4c30eb695e8b151a8b9f7cd804cfe637930",
+      "bytes": 13798,
       "role": "worker-runtime"
     },
     {
@@ -394,6 +394,36 @@
       "sha256": "05f39d4372d686755a41607e4a05ae400e2905a7a2b42f23defde12c3888e905",
       "bytes": 8364,
       "role": "worker-runtime"
+    },
+    {
+      "path": "apps/web/src/lib/media-delivery.js",
+      "sha256": "df505dce0b01c80902e6347c2da6bc0c8dc960bbb379a45f08a1cbac2a9a3b2d",
+      "bytes": 22673,
+      "role": "worker-runtime"
+    },
+    {
+      "path": "scripts/scripture-audio-publication.mjs",
+      "sha256": "138e88addea24e0d10330548e1ca2f8d9a1480ed88f3e4cf73dcfb86d714d66e",
+      "bytes": 11075,
+      "role": "worker-runtime"
+    },
+    {
+      "path": "server/fia/preparation/approved-audio-bindings.mjs",
+      "sha256": "9d55e88b4ea08ba029ff90a272804dab0aa32d801a8808deee5a5352c26792b2",
+      "bytes": 7469,
+      "role": "worker-runtime"
+    },
+    {
+      "path": "server/fia/preparation/approved-audio-runtime.mjs",
+      "sha256": "a3f0bbb1dc8273be95dfaafef5b257cfd29f8d280500c4498a8a7f496e9d001e",
+      "bytes": 7567,
+      "role": "worker-runtime"
+    },
+    {
+      "path": "scripts/approved-audio-proof-index.mjs",
+      "sha256": "d4a1c2abe4fc505660d2479a040819e43e064e9f3349d9bb2d408921b957e10b",
+      "bytes": 3455,
+      "role": "worker-build-input"
     }
   ],
   "generalizedRecipeCommit": "60cc73ef68845d7750d34281503ab4543078e1ac",

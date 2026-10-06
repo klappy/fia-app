@@ -222,7 +222,7 @@
   if(!isPlaying)authorizeVisual();
   if(!restart&&isPlaying){revokePlayback();audio?.pause();videoOwner.node?.pause();dispatch({type:'PAUSE'});return;}
   if(!restart&&inlineVideo){playVideo();return;}
-  if(!restart&&audioContext&&audio?.active){playbackConsent=true;audio.resume();return;}
+  if(!restart&&audioContext&&audio?.active){playbackConsent=true;if(audioContext.type==='narration')dispatch({type:'PLAY'});audio.resume();return;}
   if(deferVideo(()=>manualPlay(restart)))return;
   if(executableMode&&!session.detour){void playExecutableNarration();return;}
   if(preparationRequest){void playRequestedNarration();return;}
