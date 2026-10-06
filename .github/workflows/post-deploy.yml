@@ -31,6 +31,9 @@ jobs:
     name: deployed-listening
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    outputs:
+      environment: ${{ steps.target.outputs.env }}
+      commit: ${{ steps.target.outputs.commit }}
     steps:
       - name: Resolve env URL and expected commit
         id: target
@@ -142,9 +145,59 @@ jobs:
           FIA_ENVIRONMENT: ${{ steps.target.outputs.env }}
           EXPECT_COMMIT: ${{ steps.target.outputs.commit }}
         run: node scripts/live-listening/verify.mjs test-results/live-listening.json test-results/controlled-pending/controlled-pending.json
+      - name: Read prior immutable persona observations
+        if: ${{ !cancelled() && steps.target.outputs.commit != '' }}
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FIA_ENVIRONMENT: ${{ steps.target.outputs.env }}
+        run: node scripts/live-listening/baseline-persona.mjs test-results/persona-baseline.json
+      - name: Record release persona observations even when a journey fails
+        if: ${{ !cancelled() && steps.target.outputs.commit != '' }}
+        env:
+          FIA_ENVIRONMENT: ${{ steps.target.outputs.env }}
+          EXPECT_COMMIT: ${{ steps.target.outputs.commit }}
+        run: node scripts/live-listening/persona-summary.mjs test-results/live-listening.json test-results/persona-summary test-results/persona-baseline.json test-results/controlled-pending/controlled-pending.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: post-deploy-${{ steps.target.outputs.env }}-test-results
           path: test-results
           retention-days: 7
+
+  archive-persona:
+    name: archive-persona-evidence
+    needs: verify
+    if: ${{ always() && github.repository == 'klappy/fia-app' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && contains(fromJSON('["refs/heads/main","refs/heads/staging","refs/heads/production"]'), github.ref) }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    concurrency:
+      group: fia-persona-evidence-append
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        id: evidence
+        continue-on-error: true
+        with:
+          name: post-deploy-${{ needs.verify.outputs.environment }}-test-results
+          path: archived-input
+      - name: Archive immutable summaries or report incomplete archive
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECT_COMMIT: ${{ needs.verify.outputs.commit }}
+          FIA_ENVIRONMENT: ${{ needs.verify.outputs.environment }}
+        run: |
+          summary="archived-input/persona-summary/$EXPECT_COMMIT-$FIA_ENVIRONMENT.json"
+          if [ ! -f "$summary" ]; then
+            echo "::error::Persona evidence incomplete: summary missing; archiving not-covered disposition"
+            node scripts/live-listening/persona-summary.mjs absent-report.json archived-input/persona-summary
+            node scripts/live-listening/archive-persona.mjs "$summary"
+            exit 1
+          fi
+          node scripts/live-listening/archive-persona.mjs "$summary"
