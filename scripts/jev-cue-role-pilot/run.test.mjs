@@ -41,10 +41,19 @@ function fakeRows(requests, goldById, {model} = {}) {
 
 async function tmp() { return mkdtemp(join(tmpdir(), 'jev-cue-pilot-test-')); }
 
-test('cases.json: exactly 24 real cases that rebuild byte-for-byte from source-packs, gold still null, template overlap refused', async () => {
+test('cases.json: exactly 24 real cases that rebuild byte-for-byte from source-packs, reconciled gold present, template overlap refused', async () => {
   await assertCaseSet(casesDoc.cases);
   assert.equal(casesDoc.cases.length, 24);
-  assert.ok(casesDoc.cases.every(c => c.gold === null));
+  // PLAN steps 5-6 / D10-D11: eng gold is dual-labelled; spa gold mirrors the eng gold of the same unit, with a back-translation.
+  const key = c => `${c.meta.split}|${c.input.source.unitId}`;
+  const eng = new Map(casesDoc.cases.filter(c => c.input.language === 'eng').map(c => [key(c), c.gold]));
+  for (const c of casesDoc.cases) {
+    assert.ok(c.gold && ROLES.every(k => typeof c.gold.roles[k] === 'boolean') && typeof c.gold.needsReview === 'boolean' && c.gold.reason, c.caseId);
+    if (c.input.language === 'eng') { assert.match(c.gold.reviewer, /\S\+\S/); continue; }
+    assert.match(c.gold.reviewer, /^mirror-eng\+backtranslation:\S+$/);
+    assert.ok(c.gold.backTranslation.trim() && typeof c.gold.divergent === 'boolean', c.caseId);
+    if (!c.gold.divergent) { assert.deepEqual(c.gold.roles, eng.get(key(c)).roles, c.caseId); assert.equal(c.gold.needsReview, eng.get(key(c)).needsReview, c.caseId); }
+  }
   execFileSync(process.execPath, [fileURLToPath(new URL('cases.mjs', here)), '--check'], {stdio: 'pipe'});
   const tampered = structuredClone(casesDoc.cases);
   const dev = tampered.find(c => c.meta.split === 'dev'), held = tampered.find(c => c.meta.split === 'heldout');
@@ -120,7 +129,9 @@ test('import: probe aborts on a response without `model`; usage ceilings are rep
 });
 
 test('gate 6: derive/score need --language, and spa is refused until every spa row is mirror-eng + back-translation gold', async () => {
-  assert.throws(() => assertLanguageAllowed(casesDoc.cases, 'spa'), /spa-gold-refused/);
+  const ungolded = {...casesDoc, cases: casesDoc.cases.map(c => ({...c, gold: null}))};
+  assert.throws(() => assertLanguageAllowed(ungolded.cases, 'spa'), /spa-gold-refused/);
+  assertLanguageAllowed(casesDoc.cases, 'spa'); // the committed reconciled gold passes gate 6
   assert.throws(() => assertLanguageAllowed(casesDoc.cases, 'fra'), /eng or spa/);
   assertLanguageAllowed(casesDoc.cases, 'eng');
   const ok = withGold(casesDoc).cases;
@@ -131,7 +142,7 @@ test('gate 6: derive/score need --language, and spa is refused until every spa r
   assert.throws(() => assertLanguageAllowed(cookOnly, 'spa'), /spa-gold-refused/);
   const dir = await tmp();
   try {
-    await writeFile(join(dir, 'cases.json'), JSON.stringify(casesDoc));
+    await writeFile(join(dir, 'cases.json'), JSON.stringify(ungolded));
     const common = ['--cases', join(dir, 'cases.json'), '--evidence-dir', dir, '--calibration', join(dir, 'cal.json')];
     await assert.rejects(main(['--phase', 'derive', ...common], {log() {}}), /requires --language/);
     await assert.rejects(main(['--phase', 'score', '--language', 'spa', ...common], {log() {}}), /spa-gold-refused/);

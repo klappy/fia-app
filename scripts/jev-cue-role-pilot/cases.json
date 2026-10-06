@@ -27,7 +27,18 @@
           }
         ]
       },
-      "gold": null,
+      "gold": {
+        "roles": {
+          "readingRequested": true,
+          "discussionRequested": true,
+          "resourceLookupRequested": false,
+          "pauseOnly": false
+        },
+        "needsReview": false,
+        "reason": "eng.MRK-1-1-13: 'Listen to an audio version of Mark 1:1-13 three times...' is an explicit listening request; 'Then, as a group, discuss the following questions:' is an explicit group discussion request. 'if possible' qualifies only the three-translations detail, not the listening itself, so needsReview stays false (cue-role-v1.md:15-16).",
+        "reviewer": "cook-gold-eng-a+cook-gold-eng-d",
+        "agreement": true
+      },
       "meta": {
         "split": "dev",
         "kind": "paragraph",
@@ -68,7 +79,18 @@
           }
         ]
       },
-      "gold": null,
+      "gold": {
+        "roles": {
+          "readingRequested": false,
+          "discussionRequested": true,
+          "resourceLookupRequested": true,
+          "pauseOnly": false
+        },
+        "needsReview": false,
+        "reason": "eng.MRK-1-1-13: 'discuss as a group what word or phrase you will use for gospel' asks for discussion; 'Look up gospel in the Master Glossary' asks the group to consult a resource. The closing 'Pause this audio here.' does not make the unit pause-only (cue-role-v1.md:18, 28).",
+        "reviewer": "cook-gold-eng-a+cook-gold-eng-d",
+        "agreement": true
+      },
       "meta": {
         "split": "dev",
         "kind": "paragraph",
@@ -106,7 +128,18 @@
           }
         ]
       },
-      "gold": null,
+      "gold": {
+        "roles": {
+          "readingRequested": false,
+          "discussionRequested": false,
+          "resourceLookupRequested": false,
+          "pauseOnly": true
+        },
+        "needsReview": false,
+        "reason": "eng.MRK-1-1-13: the whole text is 'Pause this audio here.', a transport cue with no substantive instruction. The discussion request sits in the previous unit S02-U011, not in this one.",
+        "reviewer": "cook-gold-eng-a+cook-gold-eng-d",
+        "agreement": true
+      },
       "meta": {
         "split": "dev",
         "kind": "paragraph",
@@ -142,7 +175,18 @@
           }
         ]
       },
-      "gold": null,
+      "gold": {
+        "roles": {
+          "readingRequested": false,
+          "discussionRequested": true,
+          "resourceLookupRequested": false,
+          "pauseOnly": false
+        },
+        "needsReview": true,
+        "reason": "DISAGREE — A: eng.MRK-1-1-13: 'What do you like in this passage?' is a question put to the group for a response. The previous unit S01-U002 introduces it with 'discuss the following questions:'. 'this passage' only mentions Scripture and does not ask for a reading. | D: A list-item question ('What do you like in this passage?') posed to the group asks for a response. It is labeled as discussion, but the discussion instruction itself is in the parent S01-U002, so whether the role belongs on this item or on the parent is ambiguous. 'passage' is only a mention, not a reading request. {\"readingRequested\":false,\"discussionRequested\":true,\"resourceLookupRequested\":false,\"pauseOnly\":false,\"needsReview\":true}",
+        "reviewer": "cook-gold-eng-a+cook-gold-eng-d",
+        "agreement": false
+      },
       "meta": {
         "split": "dev",
         "kind": "list-item",
@@ -183,7 +227,19 @@
           }
         ]
       },
-      "gold": null,
+      "gold": {
+        "roles": {
+          "readingRequested": true,
+          "discussionRequested": true,
+          "resourceLookupRequested": false,
+          "pauseOnly": false
+        },
+        "needsReview": false,
+        "reason": "mirror of English: eng.MRK-1-1-13: 'Listen to an audio version of Mark 1:1-13 three times...' is an explicit listening request; 'Then, as a group, discuss the following questions:' is an explicit group discussion request. 'if possible' qualifies only the three-translations detail, not the listening itself, so needsReview stays false (cue-role-v1.md:15-16).",
+        "reviewer": "mirror-eng+backtranslation:cook-gold-spa-bt",
+        "backTranslation": "Listen (pl.) to an audio version of Mark 1:1–13 three times, if possible, in three different translations. Then, as a group, talk about the following questions:",
+        "divergent": false
+      },
       "meta": {
         "split": "dev",
         "kind": "paragraph",
@@ -224,7 +280,19 @@
           }
         ]
       },
-      "gold": null,
+      "gold": {
+        "roles": {
+          "readingRequested": false,
+          "discussionRequested": true,
+          "resourceLookupRequested": true,
+          "pauseOnly": false
+        },
+        "needsReview": false,
+        "reason": "mirror of English: eng.MRK-1-1-13: 'discuss as a group what word or phrase you will use for gospel' asks for discussion; 'Look up gospel in the Master Glossary' asks the group to consult a resource. The closing 'Pause this audio here.' does not make the unit pause-only (cue-role-v1.md:18, 28).",
+        "reviewer": "mirror-eng+backtranslation:cook-gold-spa-bt",
+        "backTranslation": "Stop here and converse as a group about what word or phrase you will use for gospel. Look up gospel in the Main Glossary to obtain more information. Pause this audio here.",
+        "divergent": false
+      },
       "meta": {
         "split": "dev",
         "kind": "paragraph",
@@ -260,7 +328,19 @@
           }
         ]
       },
-      "gold": null,
+      "gold": {
+        "roles": {
+          "readingRequested": false,
+          "discussionRequested": false,
+          "resourceLookupRequested": false,
+          "pauseOnly": true
+        },
+        "needsReview": false,
+        "reason": "mirror of English: eng.MRK-1-1-13: the whole text is 'Pause this audio here.', a transport cue with no substantive instruction. The discussion request sits in the previous unit S02-U011, not in this one.",
+        "reviewer": "mirror-eng+backtranslation:cook-gold-spa-bt",
+        "backTranslation": "Pause (pl.) this audio here.",
+        "divergent": false
+      },
       "meta": {
         "split": "dev",
         "kind": "paragraph",
@@ -296,7 +376,19 @@
           }
         ]
       },
-      "gold": null,
+      "gold": {
+        "roles": {
+          "readingRequested": false,
+          "discussionRequested": true,
+          "resourceLookupRequested": false,
+          "pauseOnly": false
+        },
+        "needsReview": true,
+        "reason": "mirror of English: DISAGREE — A: eng.MRK-1-1-13: 'What do you like in this passage?' is a question put to the group for a response. The previous unit S01-U002 introduces it with 'discuss the following questions:'. 'this passage' only mentions Scripture and does not ask for a reading. | D: A list-item question ('What do you like in this passage?') posed to the group asks for a response. It is labeled as discussion, but the discussion instruction itself is in the parent S01-U002, so whether the role belongs on this item or on the parent is ambiguous. 'passage' is only a mention, not a reading request. {\"readingRequested\":false,\"discussionRequested\":true,\"resourceLookupRequested\":false,\"pauseOnly\":false,\"needsReview\":true}",
+        "reviewer": "mirror-eng+backtranslation:cook-gold-spa-bt",
+        "backTranslation": "What do you (pl.) like about this story?",
+        "divergent": false
+      },
       "meta": {
         "split": "dev",
         "kind": "list-item",
@@ -337,7 +429,18 @@
           }
         ]
       },
-      "gold": null,
+      "gold": {
+        "roles": {
+          "readingRequested": true,
+          "discussionRequested": false,
+          "resourceLookupRequested": false,
+          "pauseOnly": false
+        },
+        "needsReview": true,
+        "reason": "DISAGREE — A: eng.MRK-1-14-20: 'Listen to an audio version of Mark 1:14-20 in the easiest-to-understand translation.' is an unconditional listening request with no discussion or resource instruction. | D: missing",
+        "reviewer": "cook-gold-eng-a+cook-gold-eng-d",
+        "agreement": false
+      },
       "meta": {
         "split": "heldout",
         "kind": "paragraph",
@@ -373,7 +476,18 @@
           }
         ]
       },
-      "gold": null,
+      "gold": {
+        "roles": {
+          "readingRequested": false,
+          "discussionRequested": false,
+          "resourceLookupRequested": true,
+          "pauseOnly": false
+        },
+        "needsReview": true,
+        "reason": "DISAGREE — A: eng.MRK-1-14-20: 'Stop here and look at a map of the Galilee area and a picture of the Sea of Galilee as a group' explicitly asks the group to view resources. 'as a group' sets who looks; it does not ask for discussion. The trailing pause cue does not make the unit pause-only. | D: missing",
+        "reviewer": "cook-gold-eng-a+cook-gold-eng-d",
+        "agreement": false
+      },
       "meta": {
         "split": "heldout",
         "kind": "paragraph",
@@ -412,7 +526,18 @@
           }
         ]
       },
-      "gold": null,
+      "gold": {
+        "roles": {
+          "readingRequested": false,
+          "discussionRequested": true,
+          "resourceLookupRequested": false,
+          "pauseOnly": false
+        },
+        "needsReview": true,
+        "reason": "DISAGREE — A: eng.MRK-1-14-20: 'Stop here and discuss this question as a group:' followed by two cultural questions is an explicit discussion request, with no reading or resource instruction. | D: missing",
+        "reviewer": "cook-gold-eng-a+cook-gold-eng-d",
+        "agreement": false
+      },
       "meta": {
         "split": "heldout",
         "kind": "paragraph",
@@ -448,7 +573,18 @@
           }
         ]
       },
-      "gold": null,
+      "gold": {
+        "roles": {
+          "readingRequested": false,
+          "discussionRequested": false,
+          "resourceLookupRequested": false,
+          "pauseOnly": false
+        },
+        "needsReview": true,
+        "reason": "DISAGREE — A: eng.MRK-1-14-20: 'John (who is arrested)' is a noun phrase in a list of characters (previous unit: 'The characters in this passage are:'). It gives no instruction and no pause cue, so all roles are false. | D: missing",
+        "reviewer": "cook-gold-eng-a+cook-gold-eng-d",
+        "agreement": false
+      },
       "meta": {
         "split": "heldout",
         "kind": "list-item",
@@ -489,7 +625,18 @@
           }
         ]
       },
-      "gold": null,
+      "gold": {
+        "roles": {
+          "readingRequested": false,
+          "discussionRequested": false,
+          "resourceLookupRequested": true,
+          "pauseOnly": false
+        },
+        "needsReview": true,
+        "reason": "DISAGREE — A: eng.MRK-1-14-20: 'Stop here if it would be helpful to look again at the pictures of the Sea of Galilee, the boat with oars and the net' makes the lookup conditional on the group's judgment. Following the brief's rule for conditional instructions, needsReview is true; lookup is set true as the best-effort role because the instruction must not be dropped. | D: missing",
+        "reviewer": "cook-gold-eng-a+cook-gold-eng-d",
+        "agreement": false
+      },
       "meta": {
         "split": "heldout",
         "kind": "paragraph",
@@ -529,7 +676,18 @@
           }
         ]
       },
-      "gold": null,
+      "gold": {
+        "roles": {
+          "readingRequested": false,
+          "discussionRequested": false,
+          "resourceLookupRequested": false,
+          "pauseOnly": false
+        },
+        "needsReview": true,
+        "reason": "DISAGREE — A: eng.MRK-1-14-20: 'Pause this audio here and act out the passage.' carries a substantive instruction (act out the drama), so pauseOnly is false. Acting out is not a reading, a discussion or a lookup, so all four roles are false. | D: missing",
+        "reviewer": "cook-gold-eng-a+cook-gold-eng-d",
+        "agreement": false
+      },
       "meta": {
         "split": "heldout",
         "kind": "paragraph",
@@ -565,7 +723,18 @@
           }
         ]
       },
-      "gold": null,
+      "gold": {
+        "roles": {
+          "readingRequested": false,
+          "discussionRequested": false,
+          "resourceLookupRequested": false,
+          "pauseOnly": false
+        },
+        "needsReview": true,
+        "reason": "DISAGREE — A: eng.MRK-1-14-20: these are plain statements about the Sea of Galilee (size, depth, fishing) with no instruction. Naming the Sea of Galilee or Galilee, and the resource bindings, is not a lookup request (cue-role-v1.md:17). The lookup instruction sits in the next unit, S05-U005. | D: missing",
+        "reviewer": "cook-gold-eng-a+cook-gold-eng-d",
+        "agreement": false
+      },
       "meta": {
         "split": "heldout",
         "kind": "paragraph",
@@ -604,7 +773,18 @@
           }
         ]
       },
-      "gold": null,
+      "gold": {
+        "roles": {
+          "readingRequested": false,
+          "discussionRequested": false,
+          "resourceLookupRequested": false,
+          "pauseOnly": false
+        },
+        "needsReview": true,
+        "reason": "DISAGREE — A: eng.MRK-1-14-20: an oral-retelling drill ('One group member should tell a few sentences of the passage and pause... until the group has retold the whole passage'). Retelling is not a request to read or listen to Scripture, and 'can correct each other' is permissive, not a discussion request. The pause words are part of the drill, so pauseOnly is false. | D: missing",
+        "reviewer": "cook-gold-eng-a+cook-gold-eng-d",
+        "agreement": false
+      },
       "meta": {
         "split": "heldout",
         "kind": "paragraph",
@@ -640,7 +820,19 @@
           }
         ]
       },
-      "gold": null,
+      "gold": {
+        "roles": {
+          "readingRequested": true,
+          "discussionRequested": false,
+          "resourceLookupRequested": false,
+          "pauseOnly": false
+        },
+        "needsReview": true,
+        "reason": "mirror of English: DISAGREE — A: eng.MRK-1-14-20: 'Listen to an audio version of Mark 1:14-20 in the easiest-to-understand translation.' is an unconditional listening request with no discussion or resource instruction. | D: missing",
+        "reviewer": "mirror-eng+backtranslation:cook-gold-spa-bt",
+        "backTranslation": "Listen (pl.) to an audio version of Mark 1:14–20 in the translation that is easiest to understand.",
+        "divergent": false
+      },
       "meta": {
         "split": "heldout",
         "kind": "paragraph",
@@ -676,7 +868,19 @@
           }
         ]
       },
-      "gold": null,
+      "gold": {
+        "roles": {
+          "readingRequested": false,
+          "discussionRequested": false,
+          "resourceLookupRequested": true,
+          "pauseOnly": false
+        },
+        "needsReview": true,
+        "reason": "mirror of English: DISAGREE — A: eng.MRK-1-14-20: 'Stop here and look at a map of the Galilee area and a picture of the Sea of Galilee as a group' explicitly asks the group to view resources. 'as a group' sets who looks; it does not ask for discussion. The trailing pause cue does not make the unit pause-only. | D: missing",
+        "reviewer": "mirror-eng+backtranslation:cook-gold-spa-bt",
+        "backTranslation": "Stop here and as a group look at a map of the area of Galilee and an image of the Sea of Galilee. Pause this audio here.",
+        "divergent": false
+      },
       "meta": {
         "split": "heldout",
         "kind": "paragraph",
@@ -714,7 +918,19 @@
           }
         ]
       },
-      "gold": null,
+      "gold": {
+        "roles": {
+          "readingRequested": false,
+          "discussionRequested": true,
+          "resourceLookupRequested": false,
+          "pauseOnly": false
+        },
+        "needsReview": true,
+        "reason": "mirror of English: DISAGREE — A: eng.MRK-1-14-20: 'Stop here and discuss this question as a group:' followed by two cultural questions is an explicit discussion request, with no reading or resource instruction. | D: missing",
+        "reviewer": "mirror-eng+backtranslation:cook-gold-spa-bt",
+        "backTranslation": "Stop here and converse about this question as a group: What do people in your culture do when they decide to follow a respected teacher or leader? How do their lives change?",
+        "divergent": false
+      },
       "meta": {
         "split": "heldout",
         "kind": "paragraph",
@@ -750,7 +966,19 @@
           }
         ]
       },
-      "gold": null,
+      "gold": {
+        "roles": {
+          "readingRequested": false,
+          "discussionRequested": false,
+          "resourceLookupRequested": false,
+          "pauseOnly": false
+        },
+        "needsReview": true,
+        "reason": "mirror of English: DISAGREE — A: eng.MRK-1-14-20: 'John (who is arrested)' is a noun phrase in a list of characters (previous unit: 'The characters in this passage are:'). It gives no instruction and no pause cue, so all roles are false. | D: missing",
+        "reviewer": "mirror-eng+backtranslation:cook-gold-spa-bt",
+        "backTranslation": "John (who is arrested)",
+        "divergent": false
+      },
       "meta": {
         "split": "heldout",
         "kind": "list-item",
@@ -791,7 +1019,19 @@
           }
         ]
       },
-      "gold": null,
+      "gold": {
+        "roles": {
+          "readingRequested": false,
+          "discussionRequested": false,
+          "resourceLookupRequested": true,
+          "pauseOnly": false
+        },
+        "needsReview": true,
+        "reason": "mirror of English: DISAGREE — A: eng.MRK-1-14-20: 'Stop here if it would be helpful to look again at the pictures of the Sea of Galilee, the boat with oars and the net' makes the lookup conditional on the group's judgment. Following the brief's rule for conditional instructions, needsReview is true; lookup is set true as the best-effort role because the instruction must not be dropped. | D: missing",
+        "reviewer": "mirror-eng+backtranslation:cook-gold-spa-bt",
+        "backTranslation": "Stop here if it would be useful to you to look again at the images of the Sea of Galilee, the boat with oars and the net as a group. Pause this audio here.",
+        "divergent": false
+      },
       "meta": {
         "split": "heldout",
         "kind": "paragraph",
@@ -830,7 +1070,19 @@
           }
         ]
       },
-      "gold": null,
+      "gold": {
+        "roles": {
+          "readingRequested": false,
+          "discussionRequested": false,
+          "resourceLookupRequested": false,
+          "pauseOnly": false
+        },
+        "needsReview": true,
+        "reason": "mirror of English: DISAGREE — A: eng.MRK-1-14-20: 'Pause this audio here and act out the passage.' carries a substantive instruction (act out the drama), so pauseOnly is false. Acting out is not a reading, a discussion or a lookup, so all four roles are false. | D: missing",
+        "reviewer": "mirror-eng+backtranslation:cook-gold-spa-bt",
+        "backTranslation": "Stop this audio here and act out (dramatize) the passage.",
+        "divergent": false
+      },
       "meta": {
         "split": "heldout",
         "kind": "paragraph",
@@ -866,7 +1118,19 @@
           }
         ]
       },
-      "gold": null,
+      "gold": {
+        "roles": {
+          "readingRequested": false,
+          "discussionRequested": false,
+          "resourceLookupRequested": false,
+          "pauseOnly": false
+        },
+        "needsReview": true,
+        "reason": "mirror of English: DISAGREE — A: eng.MRK-1-14-20: these are plain statements about the Sea of Galilee (size, depth, fishing) with no instruction. Naming the Sea of Galilee or Galilee, and the resource bindings, is not a lookup request (cue-role-v1.md:17). The lookup instruction sits in the next unit, S05-U005. | D: missing",
+        "reviewer": "mirror-eng+backtranslation:cook-gold-spa-bt",
+        "backTranslation": "Jesus was walking along the shore of the Sea of Galilee in this story. The lake is about 21 km long and 10 km wide. Its deepest point is 67 meters. Many people used it (fem. pronoun 'la') to fish and earn a living. Galilee is the area around the Sea, or Lake, of Galilee",
+        "divergent": false
+      },
       "meta": {
         "split": "heldout",
         "kind": "paragraph",
@@ -904,7 +1168,19 @@
           }
         ]
       },
-      "gold": null,
+      "gold": {
+        "roles": {
+          "readingRequested": false,
+          "discussionRequested": false,
+          "resourceLookupRequested": false,
+          "pauseOnly": false
+        },
+        "needsReview": true,
+        "reason": "mirror of English: DISAGREE — A: eng.MRK-1-14-20: an oral-retelling drill ('One group member should tell a few sentences of the passage and pause... until the group has retold the whole passage'). Retelling is not a request to read or listen to Scripture, and 'can correct each other' is permissive, not a discussion request. The pause words are part of the drill, so pauseOnly is false. | D: missing",
+        "reviewer": "mirror-eng+backtranslation:cook-gold-spa-bt",
+        "backTranslation": "One member of the group should say some sentences of the passage and make pauses. Another member of the group must say the next part of the passage and make a pause. Do this until the group has recited the whole passage. In this step the group members can correct one another. Pause this audio here.",
+        "divergent": false
+      },
       "meta": {
         "split": "heldout",
         "kind": "paragraph",
