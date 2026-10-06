@@ -4,6 +4,7 @@ import {createRequestSidecars} from './executor/request-sidecars.mjs';
 import {projectExecutablePresentation,validateSourceActionDecision,canonicalSourceOrder,SOURCE_ACTION_RECIPE} from '../compiler/presentation/source-action-projector.mjs';
 const encode=v=>new TextEncoder().encode(canonicalJSONString(v)),same=(a,b)=>canonicalJSONString(a)===canonicalJSONString(b),hash=v=>typeof v==='string'&&/^[a-f0-9]{64}$/.test(v),need=(v,r)=>{if(!v)throw Error(r);};
 const exact=(v,keys)=>v&&Object.getPrototypeOf(v)===Object.prototype&&Object.keys(v).sort().join()===keys.toSorted().join();
+const refusalCode=error=>{const code=error?.code??error?.message;return typeof code==='string'&&/^[a-z0-9-]{1,80}$/.test(code)?code:'presentation-resolution-refused';};
 export function validExecutablePresentationRequest(v){return exact(v,['packId','baseRevision','sourceRevision','capability'])&&typeof v.packId==='string'&&v.packId.length>0&&v.packId.length<=256&&hash(v.baseRevision)&&typeof v.sourceRevision==='string'&&v.sourceRevision.length>0&&v.sourceRevision.length<=256&&v.capability==='executable-presentation';}
 const unavailablePolicy=await sha256('fia-source-action-provider-unavailable@1'),contractSha256=await sha256('fia-source-to-app/7fa17af806c139cfc353cace39fa6d50ed9e061b');
 // Resolver/authority/narration ports are trusted server composition. A provider is
@@ -47,10 +48,14 @@ export function createExecutablePresentationService({storage,artifacts,resolve,e
  }
  async function request(args,{subscriberId}={}){
   need(validExecutablePresentationRequest(args),'execution-request');if(!await allowed(args,'request'))return {status:'blocked',reason:'execution-ineligible'};
-  const context=await resolve(structuredClone(args));await contextValid(context,args);
-  context.narrationBindings={...(context.narrationBindings??{})};if(narrationFor)for(const activity of context.basePresentation.activities)context.narrationBindings[activity.id]=await narrationFor(structuredClone(activity),structuredClone(context));
-  // Validate structure, source ordering and bound narration before admitting jobs.
-  await projectExecutablePresentation({...context,decisions:[],recipeRevision});
+  // A demand the resolver or projector cannot satisfy is a typed refusal with its
+  // code, never an exception for the transport catch-all to turn into a 500.
+  let context;try{
+   context=await resolve(structuredClone(args));await contextValid(context,args);
+   context.narrationBindings={...(context.narrationBindings??{})};if(narrationFor)for(const activity of context.basePresentation.activities)context.narrationBindings[activity.id]=await narrationFor(structuredClone(activity),structuredClone(context));
+   // Validate structure, source ordering and bound narration before admitting jobs.
+   await projectExecutablePresentation({...context,decisions:[],recipeRevision});
+  }catch(error){return {status:'blocked',reason:refusalCode(error)};}
   const retained=await retain(wire(context)),jobId=await sha256(encode({schema:'fia-executable-presentation-job@1',args,context:retained.sha256,policySha256,providerSha256,recipeRevision})),row={schema:'fia-executable-presentation-request@1',jobId,args:structuredClone(args),context:retained,policySha256,providerSha256,recipeRevision};
   await storage.transaction(async tx=>{const key='executable-presentation:job:'+jobId,old=await tx.get(key);need(!old||same(old,row),'execution-request-conflict');await tx.put(key,row);});
   return output(row,true,subscriberId);

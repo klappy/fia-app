@@ -7,6 +7,12 @@ const shape=(value,fields)=>value&&typeof value==='object'&&!Array.isArray(value
 const text=value=>typeof value==='string'&&value.length>0;
 const identityFields=['packId','presentationRevision','language','edition','quality','activityId','sourceUnitId','sourceTextSha256'];
 const validIdentity=value=>shape(value,identityFields)&&identityFields.every(key=>text(value[key]))&&hashPattern.test(value.presentationRevision)&&hashPattern.test(value.sourceTextSha256);
+// A missing or transient server answer is not a verdict about the passage: it is
+// typed so selection and restore can tell it apart from a refusal or a malformed record.
+const transientStatus=status=>[408,429].includes(status)||status>=500;
+const passageError=(message,code)=>Object.assign(Error(message),{code});
+const unreachable=()=>passageError('This passage could not be reached. Check your connection and try again. Your current passage stays open.','passage-transient');
+const invalidCatalog=()=>passageError('The server catalog is invalid.','passage-invalid');
 const validRange=value=>value===null||shape(value,['startSeconds','endSeconds'])&&Number.isFinite(value.startSeconds)&&value.startSeconds>=0&&Number.isFinite(value.endSeconds)&&value.endSeconds>value.startSeconds;
 
 export function createExecutionTransport({fetch:fetchArtifact=globalThis.fetch}={}){
@@ -93,12 +99,13 @@ export function createExecutionTransport({fetch:fetchArtifact=globalThis.fetch}=
  transport.readPack=async(packId,{revision,signal}={})=>{
   if(!text(packId)||revision!==undefined&&(typeof revision!=='string'||!hashPattern.test(revision)))throw Error('The server catalog identity is invalid.');
   signal?.throwIfAborted();
-  const response=await fetchArtifact(`/v1/packs/${encodeURIComponent(packId)}${revision?`?revision=${revision}`:''}`,{method:'GET',cache:'no-store',redirect:'error',signal});
+  let response;try{response=await fetchArtifact(`/v1/packs/${encodeURIComponent(packId)}${revision?`?revision=${revision}`:''}`,{method:'GET',cache:'no-store',redirect:'error',signal});}catch(error){signal?.throwIfAborted();if(error?.name==='AbortError')throw error;throw unreachable();}
   signal?.throwIfAborted();
-  let record;try{record=await response.json();}catch{throw Error('The server catalog is invalid.');}
+  if(transientStatus(response.status))throw unreachable();
+  let record;try{record=await response.json();}catch{throw invalidCatalog();}
   signal?.throwIfAborted();
   const codes={ready:200,preparing:202,unavailable:404,refused:400};
-  if(response.redirected||!record||!Object.hasOwn(codes,record.status)||response.status!==codes[record.status]||record.status==='ready'&&(record.packId!==packId||revision&&record.revision!==revision))throw Error('The server catalog is invalid.');
+  if(response.redirected||!record||!Object.hasOwn(codes,record.status)||response.status!==codes[record.status]||record.status==='ready'&&(record.packId!==packId||revision&&record.revision!==revision))throw invalidCatalog();
   if(record.status==='ready'&&response.headers.get('X-FIA-Offline-Snapshot')==='historical-verified')record.offlineSnapshot='historical-verified';
   return record;
  };

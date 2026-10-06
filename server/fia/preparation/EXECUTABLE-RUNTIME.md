@@ -25,6 +25,20 @@ publication; concurrent observers can poll it. A read cannot repair a pointer,
 invoke a provider, or create a missing sidecar. Startup fences interrupted
 decision attempts; uncertain work is not automatically retried.
 
+A demand is offered, and admitted, only when the base artifact was compiled from
+the source revision it names. The approved original presentation
+(`eng.MRK-1-1-13`, base id `fia-mark-authentic@1`) has its own lineage and is
+not projectable from that source, so it is neither offered nor admitted. A demand
+the resolver or projector cannot satisfy answers a typed `blocked` envelope with
+its code as `reason` (HTTP 409), never a 500.
+
+The execution policy hash includes the approved-audio proof index, so a release
+can supersede the policy that validated a publication. That publication stays
+refused by its exact revision, but it no longer shadows the base record: the
+current read serves the base with its demand, and an explicit Open republishes
+under the current policy. Republishing identical bytes replaces only a row that
+no longer verifies; a row that still verifies is never overwritten.
+
 Publication stores verified bytes before atomically advancing its pointer.
 New publication checks the latest base, while an eligible previously published
 pinned version remains readable. Both catalog and artifact reads recheck
