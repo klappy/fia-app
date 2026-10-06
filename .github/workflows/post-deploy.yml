@@ -145,12 +145,19 @@ jobs:
           FIA_ENVIRONMENT: ${{ steps.target.outputs.env }}
           EXPECT_COMMIT: ${{ steps.target.outputs.commit }}
         run: node scripts/live-listening/verify.mjs test-results/live-listening.json test-results/controlled-pending/controlled-pending.json
+      - name: Read prior immutable persona observations
+        if: ${{ !cancelled() && steps.target.outputs.commit != '' }}
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FIA_ENVIRONMENT: ${{ steps.target.outputs.env }}
+        run: node scripts/live-listening/baseline-persona.mjs test-results/persona-baseline.json
       - name: Record release persona observations even when a journey fails
         if: ${{ !cancelled() && steps.target.outputs.commit != '' }}
         env:
           FIA_ENVIRONMENT: ${{ steps.target.outputs.env }}
           EXPECT_COMMIT: ${{ steps.target.outputs.commit }}
-        run: node scripts/live-listening/persona-summary.mjs test-results/live-listening.json test-results/persona-summary
+        run: node scripts/live-listening/persona-summary.mjs test-results/live-listening.json test-results/persona-summary test-results/persona-baseline.json test-results/controlled-pending/controlled-pending.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
