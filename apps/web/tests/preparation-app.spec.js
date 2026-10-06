@@ -146,3 +146,18 @@ it('pre-request hash completion cannot resurrect playback after narration is tur
  await fireEvent.click(screen.getByRole('button',{name:'Begin',exact:true}));expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();
  await toggleNarration();gate.resolve();await new Promise(r=>setTimeout(r,20));expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();
 });
+
+it('an admitted guide with a companion video honors the advertised Play video action',async()=>{
+ const visual=structuredClone(presentation);visual.activities[0].assetId='test-image';visual.assets['test-image']={id:'test-image',kind:'image',title:'Companion image',relatedIds:['test-video']};visual.assets['test-video']={id:'test-video',kind:'video',title:'Companion video',src:'/test-video.mp4'};
+ libraryAdapter.select.mockResolvedValue({descriptor,presentation:visual});libraryAdapter.mediaStatus.mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[{path:'/test-video.mp4',bytes:3,group:'video'}]});
+ const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(3),mime:'video/mp4'});HTMLMediaElement.prototype.play=vi.fn(()=>Promise.resolve());
+ render(App);await fireEvent.click(await screen.findByRole('button',{name:'Play video',exact:true}));
+ await waitFor(()=>expect(request).toHaveBeenCalled());expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();await waitFor(()=>expect(document.querySelector('video')).toBeTruthy());
+});
+it('an admitted guide with a requested image description honors its visual Play action',async()=>{
+ const visual=structuredClone(presentation);visual.activities[0].assetId='test-image';visual.assets['test-image']={id:'test-image',kind:'image',title:'Companion image',description:'Describe this image',descriptionAudio:'/test-description.mp3',relatedIds:[]};
+ libraryAdapter.select.mockResolvedValue({descriptor,presentation:visual});libraryAdapter.mediaStatus.mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[{path:'/test-description.mp3',bytes:3,group:'audio'}]});
+ const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(3),mime:'audio/mpeg'});
+ render(App);await waitFor(()=>expect(document.querySelector('.resource-visual')).toBeTruthy());await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Settings',exact:true}));await fireEvent.click(screen.getByRole('checkbox',{name:/Describe images and maps/}));await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));
+ await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await waitFor(()=>expect(request).toHaveBeenCalled());expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();expect(audio.play.mock.calls[0][0]).toBe('Describe this image');
+});
