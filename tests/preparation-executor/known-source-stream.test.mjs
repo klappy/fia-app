@@ -21,3 +21,56 @@ test('stalled retained stream with unresolved cancellation still returns within 
  const task=createKnownSourceAcquisition({storage,bucket:{get:async()=>({size:3,body:new ReadableStream({pull(){return new Promise(()=>{});},cancel(){cancelled++;return new Promise(()=>{});}})})},policy:{policy:KNOWN_SOURCE_POLICY,url:'https://publisher.invalid/original.mp3',sourceVersion:'v1',sha256:'a'.repeat(64),bytes:3},progressMs:10,totalMs:100,fetchSource:()=>{throw Error('must-not-fetch');}});
  let timer;try{await assert.rejects(Promise.race([task.acquire(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('cleanup-hung')),250);})]),/acquisition-progress-timeout/);}finally{clearTimeout(timer);}assert.equal(cancelled,1);assert.equal((await task.status()).state,'uncertain');
 });
+
+// Deliberately replay every callback with the first storage writes rolled back.
+// External effects are not rolled back by a transaction, so this catches the
+// real duplicate-fetch / consumed-stream failure without relying on contention.
+async function replayAcquisition({beforeReplay=()=>{},afterPut=()=>{},abortAfterFence=false}={}){
+ const {createKnownSourceAcquisition,KNOWN_SOURCE_POLICY}=await import('../../server/fia/preparation/executor/known-source-stream.mjs');
+ const rows=new Map(),objects=new Map(),puts=new Map(),controller=new AbortController();let inside=false,transactions=0,gets=0,publisherChunks=0;
+ const storage={get:async key=>structuredClone(rows.get(key)),async transaction(callback){
+  const number=++transactions;let result;
+  for(let replay=0;replay<2;replay++){
+   const draft=new Map(structuredClone([...rows]));inside=true;
+   try{result=await callback({get:async key=>structuredClone(draft.get(key)),put:async(key,value)=>draft.set(key,structuredClone(value))});}finally{inside=false;}
+   if(!replay)beforeReplay({number,rows});else{rows.clear();for(const [k,v] of draft)rows.set(k,v);}
+  }
+  if(abortAfterFence&&number===2)controller.abort(Error('fence-completion-aborted'));
+  return result;
+ }};
+ const bytes=new Uint8Array([97,98,99]),digest=createHash('sha256').update(bytes).digest('hex');
+ const bucket={async get(key){const value=objects.get(key);return value?{size:value.length,body:new Response(value.slice()).body}:null;},async put(key,body){
+  assert.equal(inside,false,'bucket I/O must not run in a replayable callback');puts.set(key,(puts.get(key)||0)+1);
+  const value=body instanceof Uint8Array?body.slice():new Uint8Array(await new Response(body).arrayBuffer());
+  if(!objects.has(key))objects.set(key,value);afterPut({key,rows});return {};
+ }};
+ const task=createKnownSourceAcquisition({storage,bucket,policy:{policy:KNOWN_SOURCE_POLICY,url:'https://publisher.invalid/replayed.mp3',sourceVersion:'replay-fixture-v1',sha256:digest,bytes:bytes.length},makeStream:()=>new TransformStream(),totalMs:1000,progressMs:100,fetchSource:async()=>{
+  assert.equal(inside,false,'publisher I/O must not run in a replayable callback');gets++;
+  return new Response(new ReadableStream({start(c){publisherChunks++;c.enqueue(bytes.slice());c.close();}}),{headers:{'content-type':'audio/mpeg','content-length':'3'}});
+ }});
+ let result,error;try{result=await task.acquire(controller.signal);}catch(e){error=e;}
+ return {task,result,error,rows,objects,puts,get gets(){return gets;},publisherChunks,transactions};
+}
+function replaceAttempt(rows){for(const [key,row] of rows){const attemptId=crypto.randomUUID();rows.set(key,{...row,attemptId,quarantineKey:row.quarantineKey.replace(row.attemptId,attemptId)});}}
+test('replayed storage callbacks cause exactly one publisher GET and one consumption per upload',async()=>{
+ const run=await replayAcquisition();assert.ifError(run.error);assert.equal(run.result.state,'completed');assert.equal(run.gets,1);assert.equal(run.publisherChunks,1);
+ assert.equal(run.puts.size,4);assert.ok([...run.puts.values()].every(n=>n===1));assert.ok(run.transactions>4);
+ assert.equal((await run.task.acquire()).state,'completed');assert.equal(run.gets,1);
+});
+test('a replay observing a replaced attempt prevents publisher access and never marks successor uncertain',async()=>{
+ const run=await replayAcquisition({beforeReplay:({number,rows})=>{if(number===2)replaceAttempt(rows);}});
+ assert.match(run.error?.message,/acquisition-fence/);assert.equal(run.gets,0);assert.equal(run.puts.size,0);assert.equal([...run.rows.values()][0].state,'preparing');
+});
+test('late external receipt write cannot complete a replaced attempt or trigger automatic retry',async()=>{
+ const run=await replayAcquisition({afterPut:({key,rows})=>{if(key.startsWith('originals/known-acquisitions/'))replaceAttempt(rows);}});
+ assert.match(run.error?.message,/acquisition-fence/);assert.equal(run.gets,1);assert.equal([...run.rows.values()][0].state,'preparing');
+ assert.equal((await run.task.acquire()).state,'preparing');assert.equal(run.gets,1);assert.ok([...run.puts.values()].every(n=>n===1));
+});
+test('abort immediately after a successful fence prevents external fetch',async()=>{
+ const run=await replayAcquisition({abortAfterFence:true});assert.match(run.error?.message,/fence-completion-aborted/);assert.equal(run.gets,0);assert.equal(run.puts.size,0);assert.equal([...run.rows.values()][0].state,'uncertain');
+});
+
+test('revision replacement during quarantine write prevents measurement and publication',async()=>{
+ const run=await replayAcquisition({afterPut:({key,rows})=>{if(key.startsWith('originals/quarantine/'))for(const [id,row] of rows)rows.set(id,{...row,revision:row.revision+1});}});
+ assert.match(run.error?.message,/acquisition-fence/);assert.equal(run.gets,1);const successor=[...run.rows.values()][0];assert.equal(successor.revision,2);assert.equal(successor.state,'preparing');assert.equal(successor.measurement,undefined);assert.ok(![...run.objects.keys()].some(key=>key.startsWith('originals/sha256/')||key.startsWith('originals/known-acquisitions/')));
+});

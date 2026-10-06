@@ -2,6 +2,7 @@
  import {onMount} from 'svelte';
  import {Check,ChevronRight,Download,RotateCcw,Trash2,Pause} from 'lucide-svelte';
  import {libraryAdapter,bundledPack,formatBytes} from '../lib/library.js';
+ import {guideRecordingAvailability} from '../lib/recording-availability.js';
  import {progressSummary} from '../lib/session-store.js';
  import {planProxyDownload} from '../lib/proxy-request.js';
  import {preparedDownloadSizes} from '../lib/media-options.js';
@@ -49,7 +50,7 @@
   <button class="quiet" onclick={()=>onview('languages')}>Language: {languages.find(l=>l.id===language)?.nativeName||language}</button>
   {#each passages as pack}
    {@const progress=pack.id===selectedPack.id?{completed,total}:progressSummary(localStorage,pack)}
-   <article class="pack-card"><span class="library-eyebrow">{pack.language==='spa'?'Español':'English'} · Text available</span><h3>{pack.title}</h3><p>{pack.capabilities.guideNarration.count?'Guide recordings available':'Guide recordings unavailable'} · Resources download manually</p><p>{progress.completed}{progress.total?` of ${progress.total}`:''} activities completed · saved on this device</p>
+   <article class="pack-card"><span class="library-eyebrow">{pack.language==='spa'?'Español':'English'} · Text available</span><h3>{pack.title}</h3><p>{guideRecordingAvailability(pack)} · Resources download manually</p><p>{progress.completed}{progress.total?` of ${progress.total}`:''} activities completed · saved on this device</p>
     {#if progress.total}<progress aria-label="Saved passage progress" value={progress.completed} max={progress.total}></progress>{/if}
     <button class="secondary full" onclick={()=>selectPack(pack.id)}>{progress.completed?'Resume passage':'Open passage'}<ChevronRight size={18}/></button>
     {#if confirmRestart===pack.id}<p>Start this passage again? Its saved progress will be cleared.</p><div class="library-actions"><button class="secondary" onclick={()=>{onreset(pack.id);confirmRestart=null;passages=[...passages];}}>Start again</button><button class="quiet" onclick={()=>confirmRestart=null}>Keep my place</button></div>{:else}<button class="quiet full" onclick={()=>confirmRestart=pack.id}><RotateCcw size={16}/>Restart passage</button>{/if}
