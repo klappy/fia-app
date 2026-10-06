@@ -47,3 +47,8 @@ the existing 867865-byte P2 original; it is never downloaded by tests. It proves
 one source-response invocation and one retained-raw port invocation, not a model
 process. Runtime deployments remain inactive pending separate trusted capabilities
 and deployment authorization.
+
+If an alarm is delivered while its queued admission is revoked, no work starts.
+After authority is restored, an explicit POST re-arms only that still-queued
+attempt transactionally, retaining its attempt ID and revision. GET never re-arms;
+preparing, uncertain and terminal records are never retried by this mechanism.
