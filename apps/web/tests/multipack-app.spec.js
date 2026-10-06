@@ -1,5 +1,5 @@
 import {it,expect,vi,afterEach} from 'vitest';
-import {render,screen,fireEvent,cleanup,waitFor} from '@testing-library/svelte';
+import {render,screen,fireEvent,cleanup,waitFor,within} from '@testing-library/svelte';
 import {readFileSync} from 'node:fs';
 import {webcrypto} from 'node:crypto';
 import App from '../src/App.svelte';
@@ -40,4 +40,21 @@ it('remote-only resource says not prepared without offering a download action',a
  localStorage.setItem('fia-v3-selected-pack',descriptor.id);vi.spyOn(libraryAdapter,'select').mockResolvedValue({descriptor,presentation});vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});vi.spyOn(libraryAdapter,'activate').mockResolvedValue({selected:true});
  vi.stubGlobal('Audio',vi.fn());HTMLMediaElement.prototype.pause=vi.fn();Element.prototype.scrollTo=vi.fn();render(App);
  await waitFor(()=>expect(screen.getByText(/not available online yet/)).toBeTruthy());expect(screen.queryByRole('button',{name:'Open Downloads'})).toBeNull();expect(document.querySelector('img[src]')).toBeNull();
+});
+
+for(const [id,labels] of [
+ ['eng.MRK-1-14-20',['BSB','ULT','UST','WEB','WEBU']],
+ ['spa.MRK-1-14-20',['RV1909','ASBRT']],
+ ['eng.MRK-1-1-13',['Berean Standard Bible','unfoldingWord Literal Text','unfoldingWord Simplified Text']],
+])it(`resource selector identifies source editions in ${id} without changing other labels`,async()=>{
+ HTMLDialogElement.prototype.showModal=function(){this.open=true;};HTMLDialogElement.prototype.close=function(){this.open=false;};
+ const descriptor=registry.packs.find(p=>p.id===id),presentation=JSON.parse(readFileSync('public'+descriptor.presentation.url,'utf8'));
+ localStorage.setItem('fia-v3-selected-pack',id);vi.spyOn(libraryAdapter,'select').mockResolvedValue({descriptor,presentation});
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({files:[],savedFiles:[],deliveryRevision:null});vi.spyOn(libraryAdapter,'activate').mockResolvedValue({selected:true});
+ vi.stubGlobal('Audio',vi.fn());HTMLMediaElement.prototype.pause=vi.fn();Element.prototype.scrollTo=vi.fn();render(App);
+ await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toBe(presentation.activities[0].prompt));
+ await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passage resources',exact:true}));
+ const scripture=screen.getByText('Scripture translations',{selector:'summary'});await fireEvent.click(scripture);
+ expect(within(scripture.parentElement).getAllByRole('button').map(button=>button.textContent.trim())).toEqual(labels);
+ const image=Object.values(presentation.assets).find(a=>a.kind==='image');if(image){const images=screen.getByText('Images',{selector:'summary'});await fireEvent.click(images);expect(within(images.parentElement).getByRole('button',{name:image.subtitle||image.title,exact:true})).toBeTruthy();}
 });
