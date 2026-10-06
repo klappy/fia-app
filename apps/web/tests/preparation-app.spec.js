@@ -73,3 +73,12 @@ it('failed playback keeps its actionable error instead of clearing preparation g
  await mount();await fireEvent.click(screen.getByRole('button',{name:'Play original recording'}));
  await waitFor(()=>expect(screen.getByText('The prepared recording changed. Press Play to check again.')).toBeTruthy());expect(audio.play).not.toHaveBeenCalled();
 });
+it('qualified original whole-file playback uses native EOF at 1x with no range argument',async()=>{
+ const p3=registry.packs.find(p=>p.id==='eng.MRK-1-21-28'),body=JSON.parse(readFileSync('public'+p3.presentation.url,'utf8'));
+ localStorage.setItem('fia-v3-selected-pack',p3.id);libraryAdapter.select.mockResolvedValue({descriptor:p3,presentation:body});
+ libraryAdapter.playPreparedRecording.mockResolvedValue({bytes:new Uint8Array(4),mime:'audio/wav',playback:'whole-file-native-ended'});
+ render(App);await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toBe(body.activities[0].prompt));
+ await fireEvent.click(screen.getByRole('button',{name:'Play original recording',exact:true}));
+ await waitFor(()=>expect(audio.play).toHaveBeenCalledWith(body.activities[0].narration,'blob:prepared',1));
+ expect(audio.play.mock.calls[0]).toHaveLength(3);expect(libraryAdapter.prepareRecording.mock.calls[0][0].packId).toBe(p3.id);
+});
