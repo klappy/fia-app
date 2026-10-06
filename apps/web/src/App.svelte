@@ -64,7 +64,7 @@
  let observedPreparationRequest=$derived(executableMode?(boundPreparation?.activityId===activity.id?boundPreparation.identity:null):preparationRequest);
  let currentPreparation=$derived(observedPreparationRequest&&preparationState?.key===preparationKey(observedPreparationRequest)?preparationState:null);
  let preparationBusy=$derived(currentPreparation?.status==='preparing');
- let preparationNotice=$derived(executableAction?.narration.action==='blocked'&&dismissedExecutionNotice!==executionNoticeKey?executableAction.narration.reason:currentPreparation?.event!==preparationDismissed?currentPreparation?.message:'');
+ let preparationNotice=$derived(executableAction?.narration.action==='blocked'&&dismissedExecutionNotice!==executionNoticeKey?'This recording is unavailable. You can continue.':currentPreparation?.event!==preparationDismissed?currentPreparation?.message:'');
  async function prepareBoundNarration(identity,context){
   if(context.signal.aborted)return null;
   boundPreparation={activityId:context.activityId,identity};
