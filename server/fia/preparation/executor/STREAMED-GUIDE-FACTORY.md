@@ -1,0 +1,12 @@
+# Composed request-driven streaming factory
+
+Composition base: reviewed backend9b0cde6, source execution admission73a4aa9, complete canonical factory685dbf8, observed streaming adapterc0355f1. Cold recovery validates the exact immutable presentation/source revision and the optional configured model, independently of current revoked admission. Both cold revoked queued restoration and interrupted preparing fencing remain covered by actual storage tests.
+
+`createStreamedGuideExecutor` installs the admitted observed streaming port into the existing executor. Pass the already-reviewed canonicalP1 four immutable input byte arrays to retain complete canonical dispositions. It returns the same request API and review-required evidence, never playback acceptance. Source bytes and discovery snapshot remain separate identities. The real P2 storage test requests once, checks SHA0f3fa9…867865-byte immutable R2 bytes and eight canonical units, restarts SQLite/R2 runtime, and proves zero additional source GET.
+
+`createStreamedGuideCapabilities` bridges the existing trusted capability declaration. It computes the exact adapter policy dependency hash, uses the existing caller-provided recognition/artifact pins, and receives a lease-guarded storage port from dispatch. Eligibility is mapped back to the established metadata/pack/section/presentation/URL/observed-hash callback. Default capabilities remain absent; no Worker activation or recognition permission is introduced. The bridge alone does not install canonicalP1 assets into the deployed Worker. Standalone complete factory composition is demonstrated, while deployed canonical input wiring remains an explicit integration step.
+
+Limits remain real: streamed adapter max8MiB/120s transfer, factory acquisition8MiB and recognition600s; currently activated dispatcher still admits at most2MiB and reads4MiB artifacts. Raising configured bounds requires a separately reviewed source policy/profile and matching dispatcher artifact reader/verification bound; merely raising this adapter cannot bypass the dispatcher. Spanish requires a multilingual model. No bulk acquisition, new ASR, payment or deployment occurred.
+
+Run focused actual storage proof with FIA_WORKER_DEPENDENCIES pointing to an installed package.json and FIA_RETAINED_P2 pointing to the retained P2 MP3:
+`node --test tests/preparation-executor/streamed-guide-factory-storage.test.mjs tests/preparation/guide-active.test.mjs`
