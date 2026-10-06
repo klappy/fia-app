@@ -58,3 +58,9 @@ Actual run on fixed candidate `5fa39c844d26827cf1a917a1d97a2bf287932418` passed 
 ## Full document identity integration
 
 The hosted suite now requires `meta[name="fia-source-commit"]` to equal the entire expected commit before the journey and after reload; the receipt validator rejects absent or differing `loadedCommit`. Release owner supplied this field in runtime candidate `fa36e8fdb48c5d47a9fef6f9f77c444165643d7b`. Earlier short-meta-only notes above describe the superseded candidate. The historical controlled 5fa39c receipt remains accurately scoped to its older runtime; future controlled runs must target the candidate being released.
+
+## Passage-only Scripture binding
+
+The BSB scenario reads the deployed pack's `/offline/eng.MRK-1-14-20.json` and requires its exact bytes to match the built candidate's manifest. It binds the canonical BSB asset text/source evidence hashes and selected delivery SHA to the actual native Blob, then asserts native time inside the reviewed passage range. This consumes the range-only manifest contract from `60ad56b`; it does not require a guide preparation tuple, legacy audio or invented word/verse alignment. Missing qualified manifest entries still fail. Pure contract tests use actual P2 text with explicitly synthetic delivery descriptors; no live BSB result is claimed by those tests.
+
+Fresh controlled pending evidence also passed against PR176 candidate `9a5d8cde6033417a6cfdf14e6390e6e9aebd56e5`; it was rebuilt and rerun, not inherited from 5fa39c. Its historical receipt remains separate from subsequent candidates.
