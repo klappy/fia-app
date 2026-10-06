@@ -23,7 +23,7 @@ export async function inventory(inputs){
    const sourceId=await hash({publisher:'fia-guide',sourceURL:row.sourceURL});
    if(!sources.has(sourceId))sources.set(sourceId,{sourceId,identityKind:'publisher-url-sha256',observedBytesSha256:null,relationships:new Set(),books:new Set(),languages:new Set()});
    const binding=Object.fromEntries(['packId','presentationRevision','book','language','edition','publisherSourceId','publisherPassage','stepId','sourceMetadataSha256','guideContentSha256'].map(k=>[k,row[k]]));
-   const units=[...row.sourceUnits].sort((a,b)=>order(a.sourceUnitId,b.sourceUnitId));
+   const units=row.sourceUnits.map(({sourceUnitId,sourceTextSha256})=>({sourceUnitId,sourceTextSha256})).sort((a,b)=>order(a.sourceUnitId,b.sourceUnitId));
    const relationshipId=await hash({...binding,sourceId,sourceUnits:units});
    const selectionId=canonicalJSONString([row.packId,row.presentationRevision,row.stepId]);
    const previous=relationships.get(selectionId);
