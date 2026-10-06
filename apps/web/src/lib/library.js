@@ -70,7 +70,7 @@ export const libraryAdapter={
  async mediaStatus(pack=bundledPack){return workerRequest('MEDIA_STATUS',mediaSelection(pack));},
  async playMedia(pack,path,deliveryRevision,signal,size){const requestId=crypto.randomUUID();const cancel=()=>{workerRequest('MEDIA_CANCEL',{packId:pack.id,requestId}).catch(()=>{});};if(signal.aborted)throw Error('Playback canceled.');signal.addEventListener('abort',cancel,{once:true});try{const result=await workerRequest('MEDIA_PLAY',{...mediaSelection(pack),path,deliveryRevision,requestId,size});if(signal.aborted)throw Error('Playback canceled.');return result;}catch(error){cancel();throw error;}finally{signal.removeEventListener('abort',cancel);}},
  async downloadStatus(pack=bundledPack){return workerRequest('DOWNLOAD_STATUS',{packId:pack.id});},
- async download(selection,onprogress,pack=bundledPack,sizes={}){return workerRequest('DOWNLOAD_START',{selection,...mediaSelection(pack),sizes:{...sizes}},onprogress);},
+ async download(selection,onprogress,pack=bundledPack,sizes={}){return workerRequest('DOWNLOAD_START',{selection,...mediaSelection(pack),sizes:sizes&&typeof sizes==='object'&&!Array.isArray(sizes)?{...sizes}:sizes},onprogress);},
  async pauseDownload(pack=bundledPack){return workerRequest('DOWNLOAD_PAUSE',{packId:pack.id});},
  async removeDownload(pack=bundledPack){return workerRequest('DOWNLOAD_REMOVE',{packId:pack.id});},
  activate(pack){const selection=mediaSelection(pack);activationQueue=activationQueue.catch(()=>{}).then(()=>workerRequest('PACK_SELECT',selection));return activationQueue;},

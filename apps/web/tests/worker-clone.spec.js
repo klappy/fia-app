@@ -1,4 +1,5 @@
 import {it,expect,vi,afterEach} from 'vitest';
+import {normalizeMediaSizes} from '../src/lib/media-delivery.js';
 import {libraryAdapter} from '../src/lib/library.js';
 import {reactiveWorkerInput} from './helpers/reactive-worker-input.svelte.js';
 afterEach(()=>{vi.unstubAllGlobals();vi.useRealTimers();});
@@ -23,4 +24,15 @@ it('closes both channel ends and clears the timeout when postMessage rejects, pr
  vi.stubGlobal('navigator',{serviceWorker:{ready:Promise.resolve({active:{postMessage(){throw failure;}}})}});
  await expect(libraryAdapter.mediaStatus(reactiveWorkerInput().pack)).rejects.toBe(failure);
  expect(close1).toHaveBeenCalledOnce();expect(close2).toHaveBeenCalledOnce();expect(vi.getTimerCount()).toBe(0);
+});
+
+it.each([null,0,42,[],['small']])('preserves invalid size input %j for existing worker validation',async sizes=>{
+ let channel;
+ vi.stubGlobal('MessageChannel',class{constructor(){channel=this;this.port1={close:vi.fn()};this.port2={close:vi.fn()};}});
+ vi.stubGlobal('navigator',{serviceWorker:{ready:Promise.resolve({active:{postMessage(message){
+  const received=structuredClone(message);let result;
+  try{normalizeMediaSizes(received.sizes);result={ok:true};}catch(error){result={ok:false,error:error.message};}
+  Promise.resolve().then(()=>channel.port1.onmessage({data:result}));
+ }}})}});
+ await expect(libraryAdapter.download('audio',()=>{},reactiveWorkerInput().pack,sizes)).rejects.toThrow('Invalid media size selection.');
 });
