@@ -20,7 +20,7 @@ async function recoveryEntry(record,capabilities){
  // Recovery validates immutable custody, not current execution admission. Revocation
  // must suppress dispatch without preventing a valid interrupted owner being fenced.
  const identity=record.identity;if(!capabilities||!identity||Object.keys(identity).sort().join()!=='authoritySha256,executionProfile,input,metadataSha256,registrySha256,schema'||identity.schema!=='fia-guide-dispatch-operation@1'||identity.metadataSha256!==METADATA_SHA||identity.registrySha256!==REGISTRY_SHA||!/^[a-f0-9]{64}$/.test(identity.authoritySha256)||!same(identity.executionProfile,capabilities.profile)||await sha256(encode(identity))!==record.id)return null;
- const source=AUDIT.rows.find(row=>row.packId===identity.input?.packId&&row.stepId===identity.input?.resource);if(!source)return null;const request={packId:source.packId,presentationRevision:source.presentationRevision,language:source.language,edition:source.edition,...source.sourceUnits[0]},resolved=await(await guide()).resolveRequest(request);
+ const source=AUDIT.rows.find(row=>row.packId===identity.input?.packId&&row.presentationRevision===identity.input?.source?.version&&row.stepId===identity.input?.resource);if(!source)return null;const request={packId:source.packId,presentationRevision:source.presentationRevision,language:source.language,edition:source.edition,...source.sourceUnits[0]},resolved=await(await guide()).resolveRequest(request);
  if(!same(identity.input,{...resolved.input,modelRecipe:MODEL,policyRevision:'fia-dev-guide-dispatch-active@1'}))return null;
  return {id:record.id,name:`guide-preparation-v1:${record.id}`,identity};
 }
