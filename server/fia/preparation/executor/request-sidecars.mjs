@@ -44,7 +44,7 @@ export function createRequestSidecars({storage,artifacts,resolve,shared,project,
   return {key,row};
  }
  async function active(c,s){const row=await tx(t=>t.get(s.key));return !!row&&row.attached===true&&row.identitySha256===c.identitySha256&&row.token===s.row?.token;}
- async function result(c,value,s){if(s&&!await active(c,s))return response(c,'detached');if(!await allowed(c))return response(c,'blocked',{reason:'authority-refused'});return response(c,value.decision.outcome==='accept'?'ready':'blocked',{sidecar:copy(value),reason:value.decision.reason});}
+ async function result(c,value,s){if(!await allowed(c))return response(c,'blocked',{reason:'authority-refused'});if(s&&!await active(c,s))return response(c,'detached');return response(c,value.decision.outcome==='accept'?'ready':'blocked',{sidecar:copy(value),reason:value.decision.reason});}
  async function read(request,{subscriberId}={}){
   const c=await context(request);if(!await allowed(c))return response(c,'blocked',{reason:'authority-refused'});
   const s=subscriberId===undefined?null:await subscription(c,subscriberId);
