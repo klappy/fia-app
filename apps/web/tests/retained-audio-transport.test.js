@@ -2,9 +2,9 @@ import test from 'node:test';import assert from 'node:assert/strict';import {cre
 import {createExecutionTransport} from '../src/lib/execution-transport.js';
 const hash=b=>createHash('sha256').update(b).digest('hex'),audio=new Uint8Array([1,2,3,4]),mediaSHA=hash(audio),binding='a'.repeat(64);
 function fixture(mime='audio/ogg') {return {schema:'fia-bound-narration-audio@1',id:'approved-audio:'+binding,delivery:{url:`/v1/approved-audio/${binding}/${mediaSHA}.${mime==='audio/ogg'?'ogg':'mp3'}`,sha256:mediaSHA,bytes:audio.length,mime},playbackRange:{startSeconds:3,endSeconds:4}};}
-async function run(value,{headers,status=200,redirected=false,body=audio,abort}={}){
+async function run(value,{headers,status=200,redirected=false,body=audio,abort,onNative}={}){
  const json=JSON.stringify(value),reference={id:value.id,sha256:hash(json)},calls=[];
- const transport=createExecutionTransport({fetch:async(url,options)=>{calls.push({url,options});if(url.startsWith('/v1/artifacts/'))return new Response(json);const r=new Response(body,{status,headers:headers||{'Content-Type':value.delivery.mime,'Content-Length':String(value.delivery.bytes),ETag:`"${value.delivery.sha256}"`}});if(redirected)Object.defineProperty(r,'redirected',{value:true});abort?.();return r;}});
+ const transport=createExecutionTransport({fetch:async(url,options)=>{calls.push({url,options});if(url.startsWith('/v1/artifacts/'))return new Response(json);onNative?.();const r=new Response(body,{status,headers:headers||{'Content-Type':value.delivery.mime,'Content-Length':String(value.delivery.bytes),ETag:`"${value.delivery.sha256}"`}});if(redirected)Object.defineProperty(r,'redirected',{value:true});abort?.();return r;}});
  return {result:await transport.playBoundAudio(reference),calls};
 }
 test('retained approved MP3 and Ogg enforce declared native route and exact response profile',async()=>{for(const mime of ['audio/mpeg','audio/ogg']){const value=fixture(mime),{result,calls}=await run(value);assert.deepEqual(new Uint8Array(result.bytes),audio);assert.deepEqual(result.playbackRange,value.playbackRange);assert.equal(result.mime,mime);assert.equal(calls[1].options.redirect,'error');assert.equal(calls[1].options.cache,'no-store');}});
@@ -15,6 +15,6 @@ test('normalized approved-route aliases cannot escape strict profile through a l
  const canonical=fixture().delivery.url;
  for(const url of ['https://dev.fiaguide.app'+canonical,'//dev.fiaguide.app'+canonical,'/v1/other/../approved-audio'+canonical.slice('/v1/approved-audio'.length),'/v1/other/%2e%2e/approved-audio'+canonical.slice('/v1/approved-audio'.length),'https:\\\\dev.fiaguide.app'+canonical.replaceAll('/','\\')]){
   const value=fixture();value.id='legacy-looking-id';value.delivery.url=url;
-  await assert.rejects(run(value,{headers:{}}),'Route alias must not enter legacy transport: '+url);
+  let nativeRequests=0;await assert.rejects(run(value,{headers:{},onNative:()=>nativeRequests++}),'Route alias must not enter legacy transport: '+url);assert.equal(nativeRequests,0);
  }
 });
