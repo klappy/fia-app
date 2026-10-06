@@ -85,3 +85,27 @@ test('wrong bound artifact identity/schema cannot dispatch audio or preparation'
   assert.equal(calls,1);
  }
 });
+
+test('presentation demand is explicit and status observation never resubmits it',async()=>{
+ const demand={packId:'eng.MRK-1-14-20',baseRevision:'a'.repeat(64),sourceRevision:'b'.repeat(40),capability:'executable-presentation'},jobId='c'.repeat(64),calls=[];
+ const transport=createExecutionTransport({fetch:async(url,options)=>{calls.push({url,options});return Response.json({schema:'fia-presentation-preparation@1',status:'preparing',jobId,reason:null,record:null},{status:202});}});
+ assert.equal((await transport.preparePresentation(demand)).jobId,jobId);
+ await transport.readPresentationPreparation(jobId);await transport.readPresentationPreparation(jobId);
+ assert.deepEqual(calls.map(x=>x.options.method),['POST','GET','GET']);
+ assert.deepEqual(JSON.parse(calls[0].options.body),demand);
+ assert.equal(calls[1].url,`/v1/presentation-preparations/${jobId}`);
+ assert.equal(calls[1].options.body,undefined);
+});
+
+test('presentation status preserves typed refusal and rejects inconsistent wire outcomes',async()=>{
+ const jobId='c'.repeat(64);
+ const make=(status,http)=>createExecutionTransport({fetch:async()=>Response.json({schema:'fia-presentation-preparation@1',status,jobId,reason:'not-available',record:null},{status:http})});
+ assert.equal((await make('blocked',409).readPresentationPreparation(jobId)).status,'blocked');
+ assert.equal((await make('unavailable',404).readPresentationPreparation(jobId)).status,'unavailable');
+ await assert.rejects(make('preparing',200).readPresentationPreparation(jobId),/status is invalid/);
+ await assert.rejects(make('ready',200).readPresentationPreparation(jobId),/status is invalid/);
+ let calls=0;const transport=createExecutionTransport({fetch:async()=>{calls++;throw Error('unexpected');}});
+ await assert.rejects(transport.readPresentationPreparation('../job'),/identity is invalid/);
+ await assert.rejects(transport.preparePresentation({url:'https://untrusted.invalid'}),/demand is invalid/);
+ assert.equal(calls,0);
+});

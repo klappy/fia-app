@@ -54,5 +54,29 @@ export function createExecutionTransport({fetch:fetchArtifact=globalThis.fetch}=
   context.signal?.throwIfAborted();
   return result;
  };
+ async function presentationStatus(url,options,expectedJobId){
+  const response=await fetchArtifact(url,{cache:'no-store',redirect:'error',...options});
+  options.signal?.throwIfAborted();
+  if(response.redirected)throw Error('The server presentation status is invalid.');
+  let value;try{value=await response.json();}catch{throw Error('The server presentation status is invalid.');}
+  options.signal?.throwIfAborted();
+  const statuses={ready:200,preparing:202,unavailable:404,blocked:409};
+  if(!shape(value,['schema','status','jobId','reason','record'])||value.schema!=='fia-presentation-preparation@1'||!Object.hasOwn(statuses,value.status)||response.status!==statuses[value.status]||value.jobId!==null&&!(typeof value.jobId==='string'&&hashPattern.test(value.jobId))||expectedJobId&&value.jobId!==expectedJobId||value.reason!==null&&!text(value.reason))throw Error('The server presentation status is invalid.');
+  if(value.status==='ready'){
+   const record=value.record;
+   if(!record||record.status!=='ready'||typeof record.revision!=='string'||!hashPattern.test(record.revision)||record.artifact?.sha256!==record.revision||!Number.isSafeInteger(record.artifact?.bytes)||record.artifact.bytes<=0||record.execution?.schema!=='fia-executable-catalog@1')throw Error('The server presentation status is invalid.');
+  }else if(value.record!==null)throw Error('The server presentation status is invalid.');
+  return value;
+ }
+ transport.preparePresentation=async(demand,{signal}={})=>{
+  if(!shape(demand,['packId','baseRevision','sourceRevision','capability'])||!text(demand.packId)||typeof demand.baseRevision!=='string'||!hashPattern.test(demand.baseRevision)||typeof demand.sourceRevision!=='string'||!/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(demand.sourceRevision)||demand.capability!=='executable-presentation')throw Error('The server presentation demand is invalid.');
+  signal?.throwIfAborted();
+  return presentationStatus('/v1/presentation-preparations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(demand),signal});
+ };
+ transport.readPresentationPreparation=async(jobId,{signal}={})=>{
+  if(typeof jobId!=='string'||!hashPattern.test(jobId))throw Error('The server presentation job identity is invalid.');
+  signal?.throwIfAborted();
+  return presentationStatus(`/v1/presentation-preparations/${jobId}`,{method:'GET',signal},jobId);
+ };
  return transport;
 }
