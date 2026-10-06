@@ -1,0 +1,11 @@
+# Complete English Mark representation
+
+`createCompleteGuideUnitsResolver({...presentationResolverOptions, canonicalP1})` combines the existing pinned presentation resolver with the separately pinned P1 canonical ledger. `canonicalP1` contains the four retained byte inputs required by `createCanonicalUnitLedgerResolver`. No files are fetched except through the caller's existing retained-presentation read port.
+
+The returned callable accepts the same source selection as the presentation resolver. It returns `canonicalUnits`, a hash-addressed manifest identity, `narration` disposition, and a separate `alignmentInput`. It intentionally exposes no top-level `units` array: passing the whole canonical ledger directly to alignment must not silently narrate production notes or assign independent ranges to associated pauses.
+
+The actual retained corpus test checks all 408 English Mark sections / 5,977 source units against metadata membership and exact text hashes. Existing alignment input remains available for 405 sections. P1 S02/S05/S06 return a complete canonical ledger with `alignmentInput:null` and `disposition-adapter-required`. The narrow missing-unit path is allowed only after existing presentation identity/byte/coverage validation reaches its final completeness check, for those three exact pinned P1 selections; other errors propagate.
+
+Factory wiring is deliberately blocked at the semantics boundary. Current `createAlignmentAdapter` takes a flat list of independent activity IDs and does not represent associated pauses or nonspoken production notes. Integration needs an explicit versioned disposition adapter and dependency identity binding this manifest, preserving all canonical units while choosing which correspondence inputs to evaluate. It must not infer new audio ranges or treat production notes as narration. This increment changes neither factory nor alignment policy, UI, acceptance, acquisition, Worker or release configuration. No accepted playback ranges are produced.
+
+Run `node --test tests/preparation-executor/complete-guide-units.test.mjs tests/preparation-executor/canonical-unit-ledger.test.mjs`. Corpus coverage is retained-source representation, not transcription, measured timing, playback or rights approval for every recording.
