@@ -7,7 +7,7 @@ import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {ROLES, sha256, canonical} from '../../server/fia/preparation/jev/adapter.mjs';
 import {assertCaseSet} from './cases.mjs';
-import {main, loadFixed, captureRequests, checkRequestCeilings, composeAdapter, bootstrapCalibration, calibrationRecord, importRows, assertLanguageAllowed, CEILINGS, BOOTSTRAP_MODEL_REVISION, requestsFile, snippetFor} from './run.mjs';
+import {main, loadFixed, captureRequests, checkRequestCeilings, composeAdapter, bootstrapCalibration, calibrationRecord, importRows, assertLanguageAllowed, CEILINGS, BOOTSTRAP_MODEL_REVISION, requestsFile, snippetFor, snippetRequests, batchCount, goldStatus, assertGold, reconcileGold, scoreArm, MISSING_LABEL, DUPLICATES_DIR} from './run.mjs';
 import {createReplayAI, normalizeJevResponse, rawKeyFor} from './providers/replay.mjs';
 import {fireRequests} from './providers/rest.mjs';
 import {scoreSet, seriousErrors, needsReviewCorrect, verdict, costTerms} from './metrics.mjs';
@@ -23,8 +23,8 @@ function fixtureGold(c) {
   const table = dev ? {'S01-U002': R(true, true, false, false), 'S05-U004': R(false, true, true, false), 'S02-U012': R(false, false, false, true), 'S01-U003': R(false, true, false, false)}
     : {'S02-U001': R(true, false, false, false), 'S02-U008': R(false, false, true, false), 'S02-U016': R(false, true, false, false), 'S03-U007': R(false, false, false, false), 'S03-U020': R(false, false, false, false), 'S04-U015': R(false, false, false, false), 'S05-U004': R(false, false, false, false), 'S06-U004': R(false, false, false, false)};
   const needsReview = !dev && id === 'S03-U020';
-  const gold = {roles: table[id], needsReview, reason: 'fixture', reviewer: 'fixture'};
-  if (c.input.language === 'spa') Object.assign(gold, {reviewer: 'mirror-eng+backtranslation:fixture-cook', backTranslation: 'fixture back-translation'});
+  const gold = {roles: table[id], needsReview, reason: 'fixture', reviewer: 'fixture-a+fixture-d', agreement: true};
+  if (c.input.language === 'spa') { delete gold.agreement; Object.assign(gold, {reviewer: 'mirror-eng+backtranslation:fixture-cook', backTranslation: 'fixture back-translation', divergent: false}); }
   return gold;
 }
 function withGold(doc, f = fixtureGold) { return {...doc, cases: doc.cases.map(c => ({...c, gold: f(c)}))}; }
@@ -41,15 +41,24 @@ function fakeRows(requests, goldById, {model} = {}) {
 
 async function tmp() { return mkdtemp(join(tmpdir(), 'jev-cue-pilot-test-')); }
 
-test('cases.json: exactly 24 real cases that rebuild byte-for-byte from source-packs, reconciled gold present, template overlap refused', async () => {
+test('cases.json: exactly 24 real cases that rebuild byte-for-byte from source-packs, gold reconciled or honestly pending, template overlap refused', async () => {
   await assertCaseSet(casesDoc.cases);
   assert.equal(casesDoc.cases.length, 24);
-  // PLAN steps 5-6 / D10-D11: eng gold is dual-labelled; spa gold mirrors the eng gold of the same unit, with a back-translation.
+  // PLAN steps 5-6 / D10-D11: an eng row is dual-labelled (reviewer a+d, agreement boolean) or still pending its blind
+  // relabel (one labeler, agreement null); a missing label is never recorded as a disagreement. spa mirrors eng.
   const key = c => `${c.meta.split}|${c.input.source.unitId}`;
   const eng = new Map(casesDoc.cases.filter(c => c.input.language === 'eng').map(c => [key(c), c.gold]));
+  const status = goldStatus(casesDoc.cases);
   for (const c of casesDoc.cases) {
     assert.ok(c.gold && ROLES.every(k => typeof c.gold.roles[k] === 'boolean') && typeof c.gold.needsReview === 'boolean' && c.gold.reason, c.caseId);
-    if (c.input.language === 'eng') { assert.match(c.gold.reviewer, /\S\+\S/); continue; }
+    assert.doesNotMatch(c.gold.reason, MISSING_LABEL, `${c.caseId}: a missing label is not a disagreement`);
+    assert.ok(['reconciled', 'pending'].includes(status.get(c.caseId)), `${c.caseId}: ${status.get(c.caseId)}`);
+    if (c.input.language === 'eng') {
+      if (status.get(c.caseId) === 'pending') { assert.equal(c.gold.agreement, null, c.caseId); assert.doesNotMatch(c.gold.reviewer, /\+/, c.caseId); continue; }
+      assert.match(c.gold.reviewer, /^[^\s+]+\+[^\s+]+$/, c.caseId);
+      if (c.gold.agreement === false) { assert.equal(c.gold.needsReview, true, c.caseId); assert.match(c.gold.reason, /^DISAGREE — A: \S.* \| D: \S/, c.caseId); }
+      continue;
+    }
     assert.match(c.gold.reviewer, /^mirror-eng\+backtranslation:\S+$/);
     assert.ok(c.gold.backTranslation.trim() && typeof c.gold.divergent === 'boolean', c.caseId);
     if (!c.gold.divergent) { assert.deepEqual(c.gold.roles, eng.get(key(c)).roles, c.caseId); assert.equal(c.gold.needsReview, eng.get(key(c)).needsReview, c.caseId); }
@@ -121,9 +130,15 @@ test('import: probe aborts on a response without `model`; usage ceilings are rep
     const r = await importRows(rows, {evidenceDir: dir});
     assert.equal(r.written.length, 3);
     assert.ok(r.breaches.some(b => b.startsWith('input-per-call')));
+    assert.equal(r.spend, null); assert.match(r.warnings.join(), /^spend-unchecked/, 'no rates: the spend check is loudly skipped');
     const priced = await importRows(rows, {evidenceDir: dir, rates: {ratePerMTokIn: 1e6, ratePerMTokOut: 0, spendCeiling: 1}});
     assert.ok(priced.breaches.includes('computed-spend-over-abort-fraction'));
-    await assert.rejects(importRows([{...rows[0], response: wire([0.9, 0.1, 0.1, 0.1])}], {evidenceDir: dir}), /raw-immutable/);
+    assert.ok(priced.spend.percentOfCeiling > 5); assert.equal(priced.warnings.length, 0);
+    assert.deepEqual(priced.reimported, requests.map(q => q.rawKey), 're-importing the same rows is not a call');
+    const cheap = await importRows(rows, {evidenceDir: dir, rates: {ratePerMTokIn: 1, ratePerMTokOut: 1, spendCeiling: 1e6}});
+    assert.ok(cheap.spend.percentOfCeiling < 5 && !cheap.breaches.includes('computed-spend-over-abort-fraction'));
+    assert.equal(cheap.usage.calls, 3);
+    await assert.rejects(main(['--phase', 'snippet', '--probe', '--evidence-dir', dir], {log() {}}), /already-fired/);
     await assert.rejects(importRows([{rawKey: 'f'.repeat(64), ms: 1, response: wire([0, 0, 0, 0])}], {evidenceDir: dir}), /unknown-rawKey/);
   } finally { await rm(dir, {recursive: true, force: true}); }
 });
@@ -158,7 +173,7 @@ test('end to end offline: requests → fake connector rows → import → derive
     const goldById = Object.fromEntries(doc.cases.map(c => [c.caseId, c.gold]));
     await writeFile(join(dir, 'cases.json'), JSON.stringify(doc));
     const common = ['--cases', join(dir, 'cases.json'), '--evidence-dir', join(dir, 'ev'), '--calibration', join(dir, 'calibration.json')];
-    const quiet = {log() {}};
+    const quiet = {log() {}, warn() {}};
     assert.equal(await main(['--phase', 'requests', '--set', 'all', ...common], quiet), 0);
     const p1 = JSON.parse(await readFile(requestsFile(join(dir, 'ev'), 1), 'utf8'));
     assert.equal(p1.length, 24);
@@ -231,8 +246,9 @@ test('§8 verdicts: gain without errors and under the review-only cost expands; 
 });
 
 test('connector snippet: ≤ 8 per batch, concurrency ≤ 6, verified wire path and body, no retries', async () => {
-  const requests = await captureRequests(casesDoc.cases.slice(0, 8), {fixed, pass: 1});
-  const code = await snippetFor(requests, 0);
+  const all = await captureRequests(casesDoc.cases.slice(0, 9), {fixed, pass: 1});
+  const requests = all.slice(1); // batch 0 starts after the probe (request 0)
+  const code = await snippetFor(all, 0);
   let active = 0, peak = 0, calls = 0;
   const cloudflare = {async request(opts) {
     const n = ++calls; active++; peak = Math.max(peak, active);
@@ -248,9 +264,125 @@ test('connector snippet: ≤ 8 per batch, concurrency ≤ 6, verified wire path 
   assert.deepEqual(out.map(r => r.rawKey), requests.map(r => r.rawKey));
   assert.equal(out.filter(r => r.response === null && r.error).length, 1);
   assert.equal(out.find(r => r.response).response.state, 'Completed');
-  const nine = (await snippetFor([...requests, requests[0]], 0)).replace(/^async \(\) => \{\n  const D = (.*);$/m, (_, d) => `async () => {\n  const D = ${JSON.stringify([...JSON.parse(d), JSON.parse(d)[0]])};`);
+  const nine = (await snippetFor(all, 0)).replace(/^async \(\) => \{\n  const D = (.*);$/m, (_, d) => `async () => {\n  const D = ${JSON.stringify([...JSON.parse(d), JSON.parse(d)[0]])};`);
   await assert.rejects(new Function('cloudflare', 'accountId', `return (${nine});`)(cloudflare, 'acct')(), /1\.\.8/);
-  assert.equal((await snippetFor(requests, 0, {probe: true})).includes(requests[1].rawKey), false);
+  const probe = await snippetFor(all, 0, {probe: true});
+  assert.ok(probe.includes(all[0].rawKey)); assert.equal(probe.includes(all[1].rawKey), false);
+  assert.equal(code.includes(all[0].rawKey), false, 'batch 0 never re-fires the probe');
+});
+
+test('D6: probe + batches partition each pass, so no request is fired twice; an already-fired request is refused', async () => {
+  const fake = n => Array.from({length: n}, (_, i) => ({caseId: `c${i}`, rawKey: String(i).padStart(64, '0'), state: 's', questions: {}}));
+  for (const [n, sizes] of [[24, [8, 8, 7]], [16, [8, 7]]]) {
+    const reqs = fake(n);
+    assert.equal(batchCount(n), sizes.length);
+    const batches = sizes.map((_, b) => snippetRequests(reqs, b));
+    assert.deepEqual(batches.map(b => b.length), sizes);
+    assert.deepEqual([snippetRequests(reqs, 0, {probe: true}), ...batches].flat().map(r => r.caseId), reqs.map(r => r.caseId), 'every request exactly once');
+    await assert.rejects(snippetFor(reqs, sizes.length), /batch-empty/);
+  }
+  await assert.rejects(snippetFor(fake(24), 0, {fired: new Set([fake(24)[3].rawKey])}), /already-fired:c3/);
+  assert.throws(() => snippetRequests(fake(24), -1), /batch-invalid/);
+});
+
+test('import: a second paid call for one request keeps the first response, is counted, and the rest of the batch still lands', async () => {
+  const dir = await tmp();
+  try {
+    const requests = await captureRequests(casesDoc.cases.slice(0, 3), {fixed, pass: 1});
+    await writeFile(requestsFile(dir, 1), JSON.stringify(requests));
+    const row = (i, noul, ms = 300) => ({rawKey: requests[i].rawKey, ms, response: wire([noul, 0.1, 0.1, 0.1])});
+    assert.deepEqual((await importRows([row(0, 0.91)], {evidenceDir: dir})).written, [requests[0].rawKey]);
+    const firstRaw = await readFile(join(dir, 'raw', `${requests[0].rawKey}.json`), 'utf8');
+    // The old probe-then-batch-0 overlap: request 0 answered again with jitter, plus two new requests.
+    const r = await importRows([row(0, 0.88, 280), row(1, 0.2), row(2, 0.3)], {evidenceDir: dir});
+    assert.deepEqual(r.written, [requests[1].rawKey, requests[2].rawKey]);
+    assert.deepEqual(r.duplicates, [requests[0].rawKey]);
+    assert.equal(r.usage.calls, 4, 'the duplicate is a paid call'); assert.equal(r.usage.duplicates, 1);
+    assert.equal(r.usage.input, 4 * 600);
+    assert.ok(r.breaches.includes('duplicate-calls:1'));
+    assert.equal(await readFile(join(dir, 'raw', `${requests[0].rawKey}.json`), 'utf8'), firstRaw, 'first response kept');
+    assert.equal((await readdir(join(dir, DUPLICATES_DIR))).length, 1);
+    const again = await importRows([row(0, 0.88, 280)], {evidenceDir: dir});
+    assert.deepEqual(again.duplicates, []); assert.equal(again.usage.calls, 4, 're-importing the duplicate is not another call');
+    const slow = await importRows([row(1, 0.25, CEILINGS.wallMinutes * 60000)], {evidenceDir: dir});
+    assert.ok(slow.breaches.some(b => b.startsWith('wall-minutes:')), 'summed call time over the wall ceiling is a breach');
+    await writeFile(join(dir, 'out.json'), JSON.stringify([row(2, 0.3)]));
+    const warns = [];
+    assert.equal(await main(['--phase', 'import', '--from', join(dir, 'out.json'), '--evidence-dir', dir], {log() {}, warn: w => warns.push(w)}), 3);
+    assert.match(warns.join(), /spend-unchecked/);
+  } finally { await rm(dir, {recursive: true, force: true}); }
+});
+
+test('pass 1 requests are written for all 24 cases only: --set dev|heldout is dry-run only (one requests.json)', async () => {
+  const dir = await tmp();
+  try {
+    await assert.rejects(main(['--phase', 'requests', '--set', 'heldout', '--evidence-dir', dir], {log() {}}), /dry-run only/);
+    await assert.rejects(readFile(requestsFile(dir, 1)), /ENOENT/);
+    const lines = [];
+    assert.equal(await main(['--phase', 'requests', '--set', 'dev', '--dry-run', '--evidence-dir', dir], {log: x => lines.push(x)}), 0);
+    assert.equal(JSON.parse(lines[1]).calls, 8);
+  } finally { await rm(dir, {recursive: true, force: true}); }
+});
+
+test('PLAN step 6 reconciliation: a missing blind label is refused, real disagreements become needsReview, spa re-mirrors (D10)', async () => {
+  const cases = casesDoc.cases;
+  const isEng = c => c.input.language === 'eng';
+  const pending = cases.filter(c => isEng(c) && goldStatus(cases).get(c.caseId) === 'pending');
+  const label = (c, over = {}) => ({caseId: c.caseId, gold: {roles: {...c.gold.roles}, needsReview: c.gold.needsReview, reason: 'fixture blind label', reviewer: 'fixture-cook-d', ...over}});
+  const agree = pending.map(c => label(c));
+  if (pending.length) {
+    // Refusals: a missing label, a label that says it is missing, the same labeler twice.
+    assert.throws(() => reconcileGold(cases, agree.slice(1)), new RegExp(`gold-label-missing:D:${pending[0].caseId}:missing`));
+    assert.throws(() => reconcileGold(cases, agree.map((l, i) => (i ? l : label(pending[0], {reason: 'D: missing'})))), /gold-label-missing:D:/);
+    assert.throws(() => reconcileGold(cases, agree.map((l, i) => (i ? l : label(pending[0], {reviewer: pending[0].gold.reviewer})))), /same-labeler/);
+  }
+  // Committed gold + a blind label that agrees: needsReview stays only where a labeler put it (S03-U020, S01-U003).
+  const r = reconcileGold(cases, agree);
+  assertGold(r.cases);
+  assert.deepEqual([...goldStatus(r.cases).values()].filter(s => s !== 'reconciled'), []);
+  const nr = r.cases.filter(c => c.gold.needsReview).map(c => c.caseId).sort();
+  assert.deepEqual(nr, ['eng.MRK-1-1-13:S01-U003', 'eng.MRK-1-14-20:S03-U020', 'spa.MRK-1-1-13:S01-U003', 'spa.MRK-1-14-20:S03-U020']);
+  for (const c of cases.filter(c => goldStatus(cases).get(c.caseId) === 'reconciled')) assert.deepEqual(r.cases.find(x => x.caseId === c.caseId).gold, c.gold, `${c.caseId} unchanged`);
+  // A real disagreement on one held-out row → needsReview with both reasons and D's label; its spa mirror follows.
+  const target = 'eng.MRK-1-14-20:S02-U001';
+  const t = cases.find(c => c.caseId === target);
+  const split = reconcileGold(cases, cases.filter(isEng).map(c => (c.caseId === target ? label(c, {roles: {...c.gold.roles, discussionRequested: true}}) : label(c))).filter(l => pending.some(p => p.caseId === l.caseId) || l.caseId === target));
+  const g = split.cases.find(c => c.caseId === target).gold;
+  if (goldStatus(cases).get(target) === 'pending') {
+    assert.equal(g.agreement, false); assert.equal(g.needsReview, true); assert.deepEqual(g.roles, t.gold.roles);
+    assert.match(g.reason, /^DISAGREE — A: .+ \| D: fixture blind label \{.*"discussionRequested":true/);
+    assert.deepEqual(split.diffs, [{caseId: target, field: 'discussionRequested', a: t.gold.roles.discussionRequested, d: true}]);
+    assert.equal(split.cases.find(c => c.caseId === 'spa.MRK-1-14-20:S02-U001').gold.needsReview, true);
+  }
+  // A divergent spa row keeps its Spanish-meaning label and is marked mirrors:false.
+  const div = structuredClone(cases);
+  const spaRow = div.find(c => c.caseId === 'spa.MRK-1-14-20:S05-U004');
+  spaRow.gold = {...spaRow.gold, roles: R(false, false, true, false), needsReview: false, reason: 'fixture Spanish meaning', divergent: true};
+  const dv = reconcileGold(div, agree);
+  assert.deepEqual(dv.divergent, ['spa.MRK-1-14-20:S05-U004']);
+  assert.deepEqual(dv.cases.find(c => c.caseId === spaRow.caseId).gold.roles, R(false, false, true, false));
+  assert.equal(dv.cases.find(c => c.caseId === spaRow.caseId).gold.mirrors, false);
+  // Scoring refuses unreconciled rows; --gold-check --write reconciles on disk and refuses a missing label without writing.
+  const fx = withGold(casesDoc).cases;
+  const pend = structuredClone(fx);
+  Object.assign(pend.find(c => c.caseId === target).gold, {reviewer: 'fixture-a', agreement: null});
+  await assert.rejects(scoreArm({cases: pend, language: 'eng', set: 'heldout', arm: 'C', fixed}), /gold-unreconciled:.*S02-U001=pending/);
+  await assert.rejects(scoreArm({cases: pend, language: 'spa', set: 'heldout', arm: 'C', fixed}), /gold-unreconciled:spa\.MRK-1-14-20:S02-U001=pending/);
+  assert.equal(Object.keys((await scoreArm({cases: pend, language: 'eng', set: 'dev', arm: 'C', fixed})).envelopes).length, 4);
+  const dir = await tmp();
+  try {
+    const casesPath = join(dir, 'cases.json'), labelsPath = join(dir, 'labels.json');
+    await writeFile(casesPath, JSON.stringify({...casesDoc, cases: pend}));
+    const before = await readFile(casesPath, 'utf8');
+    await writeFile(labelsPath, JSON.stringify({cases: []}));
+    await assert.rejects(main(['--gold-check', '--against', labelsPath, '--write', '--cases', casesPath], {log() {}}), /gold-label-missing:D:eng\.MRK-1-14-20:S02-U001:missing/);
+    assert.equal(await readFile(casesPath, 'utf8'), before, 'nothing written on refusal');
+    await writeFile(labelsPath, JSON.stringify({cases: [label(pend.find(c => c.caseId === target), {reviewer: 'fixture-d'})]}));
+    assert.equal(await main(['--gold-check', '--against', labelsPath, '--write', '--cases', casesPath], {log() {}}), 0);
+    const written = JSON.parse(await readFile(casesPath, 'utf8')).cases;
+    assert.deepEqual(written.find(c => c.caseId === target).gold, {...pend.find(c => c.caseId === target).gold, reviewer: 'fixture-a+fixture-d', agreement: true});
+    assertGold(written);
+  } finally { await rm(dir, {recursive: true, force: true}); }
 });
 
 test('REST fallback: token from a 0600 file, verified path/body, connector-shaped rows, no retries', async () => {

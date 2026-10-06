@@ -87,17 +87,51 @@ test('pause-only registry holds exactly the two reviewed cue texts and each hash
   assert.deepEqual(registry.entries.map(e => e.language), ['eng', 'spa']);
 });
 
-// Gap analysis :53 — the falsified phrase test must not come back as a rule.
-test('lint: rules.mjs reads no unit text, holds no word literals and runs no pattern matching', async () => {
-  const src = await readFile(new URL('rules.mjs', here), 'utf8');
+// Gap analysis :53 — the falsified phrase test must not come back as a rule. The lint is a tripwire, not a sandbox:
+// every string literal must be on the reviewed list, `input`/`source` are read only through the identity fields
+// below (dotted, never computed, never aliased or passed on), and strings cannot be built from char codes.
+const REVIEWED_LITERALS = new Set(['explicit-cue-rules@1', 'R-PAUSE', 'R-LIST-INTRO', 'R-LIST-ITEM-DISCUSSION', 'R-LIST-ITEM-DESCRIPTIVE', 'list-evidence-proposed-independent-review-pending', 'discussion', 'descriptive-list', '\\u0000', 'lists-shape', 'pause-registry-shape', 'string', 'hex', 'pause-registry-digest', 'intro', 'item', 'C', 'comparator-only', 'naive-v2-source-flags']);
+const IDENTITY = '(?:sha256|unitId|packId|caseId)';
+function lintRulesSource(src) {
+  const v = [];
   const code = src.replace(/\/\*[\s\S]*?\*\//g, '').split('\n').map(l => l.replace(/(^|[^:])\/\/.*$/, '$1')).join('\n').replace(/^import\s[^;]*?from\s*'[^']*';$/gm, '');
   const literals = [...code.matchAll(/'((?:[^'\\\n]|\\.)*)'|"((?:[^"\\\n]|\\.)*)"|`((?:[^`\\]|\\.)*)`/g)].map(m => m[1] ?? m[2] ?? m[3]);
-  assert.ok(literals.length > 0);
-  for (const s of literals) assert.match(s, /^[A-Za-z0-9@._:\\-]*$/, `string literal with words or non-identifier characters: ${JSON.stringify(s)}`);
+  if (!literals.length) v.push('no-literals-found');
+  for (const lit of literals) {
+    if (!/^[A-Za-z0-9@._:\\-]*$/.test(lit)) v.push(`literal-with-words:${JSON.stringify(lit)}`);
+    else if (!REVIEWED_LITERALS.has(lit)) v.push(`literal-not-reviewed:${JSON.stringify(lit)}`);
+  }
   const stripped = code.replace(/'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`(?:[^`\\]|\\.)*`/g, '""');
-  assert.doesNotMatch(stripped, /\.text\b/, 'unit text access');
-  assert.doesNotMatch(stripped, /\bRegExp\b|\.(exec|match|matchAll|test|search|includes|startsWith|endsWith|indexOf|lastIndexOf|toLowerCase|toUpperCase|normalize|localeCompare|replace|replaceAll|split)\s*\(/, 'pattern or string matching');
-  assert.doesNotMatch(stripped, /(^|[=>(,:!&|?{};]\s*|\breturn\s+)\/(?![/*])(?:[^/\\\n]|\\.)+\/[dgimsuyv]*/m, 'regex literal');
+  if (/\.text\b/.test(stripped)) v.push('unit-text-access');
+  if (/\bRegExp\b|\.(exec|match|matchAll|test|search|includes|startsWith|endsWith|indexOf|lastIndexOf|toLowerCase|toUpperCase|normalize|localeCompare|replace|replaceAll|split)\s*\(/.test(stripped)) v.push('pattern-or-string-matching');
+  if (/(^|[=>(,:!&|?{};]\s*|\breturn\s+)\/(?![/*])(?:[^/\\\n]|\\.)+\/[dgimsuyv]*/m.test(stripped)) v.push('regex-literal');
+  if (/\b(fromCharCode|fromCodePoint|TextDecoder|atob|btoa|decodeURI|decodeURIComponent|unescape|escape)\b|\bString\s*\.\s*raw\b|\.toString\s*\(\s*(?!""\s*\)|\))/.test(stripped)) v.push('string-construction');
+  const rest = stripped.replace(/\s+/g, ' ')
+    .replace(/\b(?:function )?(?:explain|resolveExplicit) ?\( ?input ?\)/g, '·')
+    .replace(/\bconst source = input\?\.source;/g, '·')
+    .replace(/\bif ?\( ?!source ?\)/g, '·')
+    .replace(/([{,] ?)source ?:/g, '$1·:')
+    .replace(new RegExp(`\\b(?:input ?\\??\\. ?source|input|source) ?\\??\\. ?${IDENTITY}\\b`, 'g'), '·');
+  if (/\b(input|source)\b/.test(rest)) v.push('input-read-outside-identity-fields');
+  return v;
+}
+
+test('lint: rules.mjs reads no unit text, holds only reviewed literals and runs no pattern matching', async () => {
+  const src = await readFile(new URL('rules.mjs', here), 'utf8');
+  assert.deepEqual(lintRulesSource(src), []);
+  // Each mutation must trip the lint (the first is the bracket-access bypass the validator found).
+  const tripped = (snippet, kind) => assert.ok(lintRulesSource(`${src}\n${snippet}\n`).some(x => x.startsWith(kind)), `${kind} not caught: ${snippet}`);
+  const bypass = "const F='text', W='Pause'; export const probe2 = input => input.source[F] === W + String.fromCharCode(32) + 'this';";
+  tripped(bypass, 'literal-not-reviewed'); tripped(bypass, 'string-construction'); tripped(bypass, 'input-read-outside-identity-fields');
+  tripped("export const p = input => input.source.text.includes('Pause');", 'unit-text-access');
+  tripped("export const p = input => input.source.text.includes('Pause');", 'pattern-or-string-matching');
+  tripped('export const p = input => input?.source?.[RULES[0]];', 'input-read-outside-identity-fields');
+  tripped('export const p = x => Object.values(x.source)[1] === RULES[0];', 'input-read-outside-identity-fields');
+  tripped('export const p = input => { const {sha256: h, ...rest} = input.source; return rest; };', 'input-read-outside-identity-fields');
+  tripped('export const p = input => { const s = input.source; return s; };', 'input-read-outside-identity-fields');
+  tripped('export const p = n => (n).toString(36);', 'string-construction');
+  tripped("export const p = 'Pause this audio';", 'literal-with-words');
+  tripped('export const p = x => /pause/i;', 'regex-literal');
 });
 
 test('arm C naive flags: comparator-only label, pause = v2 pause without bindings, lookup = any binding', () => {

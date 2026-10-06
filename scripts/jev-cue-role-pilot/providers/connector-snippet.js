@@ -3,6 +3,8 @@
 // Verified wire (door probe 2026-10-06 18:08Z): POST /accounts/{id}/ai/run, body {model, input:{state, questions}};
 // r.result = {state:'Completed', result:{model, answers, usage}}. /ai/run/typesafe/jev is not routed.
 // No retries: a failed call is returned as an error row and never re-fired.
+// Concurrency ≤ 6 (CEILINGS.concurrency) deviates from PLAN step 4 (sequential): the 2026-10-06 paid passes ran this way,
+// so latency p50/max are measured under concurrency ≤ 6 and RESULTS must say so.
 async () => {
   const D = __DATA__;
   if (!Array.isArray(D) || D.length < 1 || D.length > 8) throw new Error('batch must hold 1..8 requests');

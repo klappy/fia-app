@@ -3,11 +3,11 @@
 // Phases: requests | snippet | import | derive | score | report | replay (and --gold-check). Node never holds a
 // provider credential: `requests` captures the adapter's own wire through a recording shim, the CF connector (or the
 // REST fallback) fires it, `import` stores raw responses, every later phase replays them at zero calls.
-import {mkdir, readFile, writeFile, access} from 'node:fs/promises';
+import {mkdir, readFile, readdir, writeFile, access} from 'node:fs/promises';
 import {join, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createJevCueRoleAdapter, canonical, sha256, MODEL, ROLES} from '../../server/fia/preparation/jev/adapter.mjs';
-import {readCases, loadSourcePacks, assertCaseSet, LISTS} from './cases.mjs';
+import {readCases, loadSourcePacks, assertCaseSet, serializeCases, LISTS} from './cases.mjs';
 import {createExplicitCueRules, naiveSourceFlags, ARM_A_LABEL, ARM_C} from './rules.mjs';
 import {rawKeyFor, loadRawCache, createReplayAI, normalizeJevResponse, observedModel} from './providers/replay.mjs';
 import {scoreSet, costTerms, verdict} from './metrics.mjs';
@@ -28,6 +28,7 @@ export const LIMITS = Object.freeze({maxInputBytes: 8192, maxOutputBytes: 16384,
 export const BAND_MARGIN = 0.05;
 export const SPA_REVIEWER = /^mirror-eng\+backtranslation:\S+$/;
 const ARMS = ['A', 'B', 'C', 'D'], SETS = ['dev', 'heldout'];
+export const DUPLICATES_DIR = 'raw-duplicates';
 
 const json = x => JSON.stringify(x, null, 2) + '\n';
 const exists = p => access(p).then(() => true, () => false);
@@ -95,9 +96,22 @@ export function requestsFile(evidenceDir, pass) { return join(evidenceDir, pass 
 export async function readRequests(evidenceDir, pass) { return JSON.parse(await readFile(requestsFile(evidenceDir, pass), 'utf8')); }
 export function connectorRequest(r) { return {method: 'POST', path: '/accounts/${accountId}/ai/run', body: {model: r.model, input: {state: r.state, questions: r.questions}}}; }
 
-export async function snippetFor(requests, batch, {probe = false} = {}) {
-  const slice = probe ? requests.slice(0, 1) : requests.slice(batch * CEILINGS.batchSize, (batch + 1) * CEILINGS.batchSize);
+/**
+ * Gate 4 then batches (PLAN D6: one call per case, ever). The probe is request 0 alone; batches of ≤ 8 partition
+ * requests 1..n-1, so no request is ever in two snippets (pass 1: probe + 8 + 8 + 7; pass 2: probe + 8 + 7).
+ */
+export function snippetRequests(requests, batch, {probe = false} = {}) {
+  if (probe) return requests.slice(0, 1);
+  if (!Number.isSafeInteger(batch) || batch < 0) throw Error(`batch-invalid:${batch}`);
+  return requests.slice(1 + batch * CEILINGS.batchSize, 1 + (batch + 1) * CEILINGS.batchSize);
+}
+export function batchCount(requestCount) { return Math.ceil(Math.max(0, requestCount - 1) / CEILINGS.batchSize); }
+
+export async function snippetFor(requests, batch, {probe = false, fired = new Set()} = {}) {
+  const slice = snippetRequests(requests, batch, {probe});
   if (!slice.length) throw Error(`batch-empty:${batch}`);
+  const again = slice.filter(r => fired.has(r.rawKey));
+  if (again.length) throw Error(`already-fired:${again.map(r => r.caseId).join(',')} (evidence/raw holds its response; D6 one call per case)`);
   const source = await readFile(new URL('providers/connector-snippet.js', PILOT), 'utf8');
   const body = source.slice(source.indexOf('async () =>'));
   return body.replace('__DATA__', JSON.stringify(slice.map(r => ({rawKey: r.rawKey, state: r.state, questions: r.questions}))));
@@ -110,17 +124,21 @@ function validProbe(response) {
 
 /**
  * import phase: connector/REST rows [{rawKey, ms, response, error?}] → evidence/raw/<rawKey>.json (immutable).
- * Probe gate (gate 4): the first row must carry answers with the four role keys and a `model` string, else nothing is written.
- * Observed usage ceilings (D7) are checked after writing, so evidence of every paid call is kept; a breach fails the phase.
+ * Probe gate (gate 4): until the raw cache holds a valid response for this pass, the first row must carry answers with
+ * the four role keys and a `model` string, else nothing is written.
+ * A second paid call for a request already in the cache keeps the first response, is stored under
+ * evidence/raw-duplicates/ and counts toward every ceiling (D6, D7); re-importing the same row is not a call.
+ * Observed ceilings (D7) are checked after writing, so evidence of every paid call is kept; a breach fails the phase.
  */
 export async function importRows(rows, {evidenceDir, pass = 1, rates = {}, observedAt = null}) {
   if (!Array.isArray(rows)) rows = rows?.result ?? rows?.rows;
   if (!Array.isArray(rows) || !rows.length) throw Error('import-empty');
   const requests = new Map((await readRequests(evidenceDir, pass)).map(r => [r.rawKey, r]));
-  if (!validProbe(rows[0].response)) throw Error('probe-failed: first response lacks answers for the four roles or a model string');
-  const rawDir = join(evidenceDir, 'raw');
+  const rawDir = join(evidenceDir, 'raw'), dupDir = join(evidenceDir, DUPLICATES_DIR);
+  const probed = [...(await loadRawCache(rawDir)).values()].some(r => r.pass === pass && validProbe(r.response));
+  if (!probed && !validProbe(rows[0].response)) throw Error('probe-failed: first response lacks answers for the four roles or a model string');
   await mkdir(rawDir, {recursive: true});
-  const written = [];
+  const written = [], reimported = [], duplicates = [];
   for (const row of rows) {
     const req = requests.get(row.rawKey);
     if (!req) throw Error(`import-unknown-rawKey:${row.rawKey}`);
@@ -128,35 +146,62 @@ export async function importRows(rows, {evidenceDir, pass = 1, rates = {}, obser
     const path = join(rawDir, `${row.rawKey}.json`);
     if (await exists(path)) {
       const old = JSON.parse(await readFile(path, 'utf8'));
-      if (canonical({r: old.response, e: old.error}, 262144) !== canonical({r: record.response, e: record.error}, 262144)) throw Error(`raw-immutable:${row.rawKey}`);
+      if (callIdentity(old) === callIdentity(record)) { reimported.push(row.rawKey); continue; }
+      const dupPath = join(dupDir, `${row.rawKey}.${(await sha256(callIdentity(record))).slice(0, 16)}.json`);
+      if (await exists(dupPath)) { reimported.push(row.rawKey); continue; }
+      await mkdir(dupDir, {recursive: true});
+      await writeFile(dupPath, json({...record, duplicateOf: row.rawKey}));
+      duplicates.push(row.rawKey);
       continue;
     }
     await writeFile(path, json(record));
     written.push(row.rawKey);
   }
   const usage = await observedUsage(evidenceDir);
-  const breaches = [];
+  const breaches = [], warnings = [];
   for (const [key, u] of Object.entries(usage.perCall)) if (u.input > CEILINGS.inputTokensPerCall) breaches.push(`input-per-call:${key}:${u.input}`);
   if (usage.input > CEILINGS.cumulativeInputTokens) breaches.push(`cumulative-input:${usage.input}`);
   if (usage.calls > CEILINGS.totalCalls) breaches.push(`total-calls:${usage.calls}`);
+  if (usage.duplicates) breaches.push(`duplicate-calls:${usage.duplicates}`);
+  if (usage.callMs > CEILINGS.wallMinutes * 60000) breaches.push(`wall-minutes:${round6(usage.callMs / 60000)}`);
   const {ratePerMTokIn, ratePerMTokOut, spendCeiling} = rates;
-  if ([ratePerMTokIn, ratePerMTokOut, spendCeiling].every(Number.isFinite)) {
-    const spend = (usage.input * ratePerMTokIn + usage.output * ratePerMTokOut) / 1e6;
-    if (spend > CEILINGS.spendAbortFraction * spendCeiling) breaches.push('computed-spend-over-abort-fraction');
-  }
-  return {written, usage: {calls: usage.calls, input: usage.input, output: usage.output}, breaches};
+  let spend = null;
+  if ([ratePerMTokIn, ratePerMTokOut, spendCeiling].every(Number.isFinite) && spendCeiling > 0) {
+    // DoD 11: printed as a percentage of the operator ceiling only; the computed amount is never logged or stored.
+    const percentOfCeiling = ((usage.input * ratePerMTokIn + usage.output * ratePerMTokOut) / 1e6) / spendCeiling * 100;
+    spend = {percentOfCeiling: round6(percentOfCeiling), abortAtPercent: CEILINGS.spendAbortFraction * 100};
+    if (percentOfCeiling > CEILINGS.spendAbortFraction * 100) breaches.push('computed-spend-over-abort-fraction');
+  } else warnings.push('spend-unchecked: pass --rate-in, --rate-out and --spend-ceiling to print computed spend as a percentage of the operator ceiling and enforce the 5% abort (PLAN D7, DoD 11)');
+  return {written, reimported, duplicates, usage: {calls: usage.calls, duplicates: usage.duplicates, input: usage.input, output: usage.output, callMinutes: round6(usage.callMs / 60000)}, spend, breaches, warnings};
 }
 
+// What makes two rows the same call: response, error and timing. A second fire differs at least in `ms`.
+function callIdentity(r) { return canonical({ms: r.ms ?? null, r: r.response ?? null, e: r.error ?? null}, 262144); }
+
+async function loadDuplicates(dir) {
+  const out = new Map();
+  let names = [];
+  try { names = await readdir(dir); } catch (e) { if (e.code !== 'ENOENT') throw e; }
+  for (const name of names.filter(n => n.endsWith('.json')).sort()) out.set(name.slice(0, -5), JSON.parse(await readFile(join(dir, name), 'utf8')));
+  return out;
+}
+
+/**
+ * Observed usage over every paid call: one per raw file plus every recorded duplicate. callMs sums per-call `ms`; it
+ * equals the paid wall when calls are sequential and over-counts it under concurrency, so the wall check is conservative.
+ */
 export async function observedUsage(evidenceDir) {
   const cache = await loadRawCache(join(evidenceDir, 'raw'));
-  let input = 0, output = 0;
+  const dups = await loadDuplicates(join(evidenceDir, DUPLICATES_DIR));
+  let input = 0, output = 0, callMs = 0;
   const perCall = {};
-  for (const [key, rec] of cache) {
+  for (const [key, rec] of [...cache, ...dups]) {
     const u = normalizeJevResponse(rec.response)?.usage ?? {};
     perCall[key] = {input: u.input_tokens ?? 0, output: u.output_tokens ?? 0};
     input += perCall[key].input; output += perCall[key].output;
+    if (Number.isFinite(rec.ms)) callMs += rec.ms;
   }
-  return {calls: cache.size, input, output, perCall};
+  return {calls: cache.size + dups.size, duplicates: dups.size, input, output, callMs, perCall};
 }
 
 /** Gate 6 (D10): spa is refused unless every spa row is mirror-eng gold with a recorded back-translation. */
@@ -167,9 +212,103 @@ export function assertLanguageAllowed(cases, language) {
   if (bad.length) throw Error(`spa-gold-refused: ${bad.length} spa rows lack reviewer 'mirror-eng+backtranslation:<cook>' with a recorded backTranslation (PLAN gate 6)`);
 }
 
-function assertGold(cases) {
-  const missing = cases.filter(c => !c.gold || !c.gold.roles || typeof c.gold.needsReview !== 'boolean').map(c => c.caseId);
+// PLAN step 6, D10-D11. An eng row is reconciled once two distinct labelers are merged (reviewer `<a>+<d>`,
+// `agreement` boolean); until then it carries one labeler's gold with `agreement: null` and is pending. A spa row is
+// reconciled when it mirrors its reconciled eng row (or is divergent and labelled from the Spanish meaning).
+// A gold reason naming a missing labeler ("D: missing") is refused: a missing label is never a disagreement.
+export const MISSING_LABEL = /\b[A-Z]: missing\b/;
+const DUAL_REVIEWER = /^[^\s+]+\+[^\s+]+$/;
+const goldKey = c => `${c.meta.split}|${c.input.source.unitId}`;
+
+function validLabel(g) {
+  return Boolean(g && g.roles && ROLES.every(k => typeof g.roles[k] === 'boolean') && typeof g.needsReview === 'boolean' && typeof g.reason === 'string' && g.reason.trim() && !MISSING_LABEL.test(g.reason));
+}
+const sameLabel = (a, b) => a.needsReview === b.needsReview && ROLES.every(k => a.roles[k] === b.roles[k]);
+
+function engGoldState(g) {
+  if (!g || !g.roles || !ROLES.every(k => typeof g.roles[k] === 'boolean') || typeof g.needsReview !== 'boolean') return 'missing';
+  if (!validLabel(g)) return 'missing-label';
+  if (typeof g.agreement !== 'boolean' || !DUAL_REVIEWER.test(g.reviewer ?? '')) return 'pending';
+  if (g.agreement === false && !g.needsReview) return 'disagreement-not-needs-review';
+  return 'reconciled';
+}
+
+/** caseId → reconciled | pending | missing | missing-label | … for every case (spa rows need their eng row). */
+export function goldStatus(cases) {
+  const status = new Map(), eng = new Map();
+  for (const c of cases) if (c.input.language === 'eng') { const s = engGoldState(c.gold); status.set(c.caseId, s); eng.set(goldKey(c), {gold: c.gold, s}); }
+  for (const c of cases) {
+    if (c.input.language === 'eng') continue;
+    const g = c.gold;
+    let s;
+    if (!g || !g.roles || !ROLES.every(k => typeof g.roles[k] === 'boolean') || typeof g.needsReview !== 'boolean') s = 'missing';
+    else if (!validLabel(g)) s = 'missing-label';
+    else if (!SPA_REVIEWER.test(g.reviewer ?? '') || typeof g.divergent !== 'boolean' || typeof g.backTranslation !== 'string' || !g.backTranslation.trim()) s = 'pending';
+    else if (g.divergent) s = 'reconciled';
+    else { const e = eng.get(goldKey(c)); s = e?.s === 'reconciled' && sameLabel(e.gold, g) ? 'reconciled' : 'pending'; }
+    status.set(c.caseId, s);
+  }
+  return status;
+}
+
+/** Scoring and band derivation run on reconciled gold only (D11): a pending blind relabel blocks, never scores. */
+export function assertGold(rows, all = rows) {
+  const status = goldStatus(all);
+  const bad = rows.map(c => [c.caseId, status.get(c.caseId) ?? 'missing']).filter(([, s]) => s !== 'reconciled');
+  const missing = bad.filter(([, s]) => s === 'missing').map(([id]) => id);
   if (missing.length) throw Error(`gold-missing:${missing.join(',')}`);
+  if (bad.length) throw Error(`gold-unreconciled:${bad.map(([id, s]) => `${id}=${s}`).join(',')} (PLAN step 6: blind second label, then --gold-check --against <labels.json> --write)`);
+}
+
+/**
+ * PLAN step 6: merge a blind second labeler into every pending eng row, then mirror the reconciled eng gold onto every
+ * non-divergent spa row (D10). Agreement keeps the shared label; a disagreement becomes needsReview with both reasons.
+ * A pending row without a valid second label from a distinct labeler is refused, and nothing is reconciled.
+ * @param {Array} cases the 24 cases; reconciled eng rows pass through unchanged
+ * @param {Array<{caseId: string, gold: object}>} labels the second labeler's eng gold (roles, needsReview, reason, reviewer)
+ */
+export function reconcileGold(cases, labels) {
+  const second = new Map(labels.map(r => [r.caseId, r.gold]));
+  const out = structuredClone(cases);
+  const refused = [], agreements = [], disagreements = [], diffs = [], mirrored = [], divergent = [];
+  for (const c of out) {
+    if (c.input.language !== 'eng') continue;
+    const a = c.gold, state = engGoldState(a);
+    if (state === 'reconciled') continue;
+    if (state !== 'pending' || !validLabel(a) || !a.reviewer || a.reviewer.includes('+')) { refused.push(`A:${c.caseId}:${state}`); continue; }
+    const d = second.get(c.caseId);
+    if (!validLabel(d) || !d.reviewer || d.reviewer.includes('+')) { refused.push(`D:${c.caseId}:missing`); continue; }
+    if (d.reviewer === a.reviewer) { refused.push(`D:${c.caseId}:same-labeler`); continue; }
+    const reviewer = `${a.reviewer}+${d.reviewer}`;
+    if (sameLabel(a, d)) {
+      c.gold = {roles: {...a.roles}, needsReview: a.needsReview, reason: a.reason, reviewer, agreement: true};
+      agreements.push(c.caseId);
+    } else {
+      for (const k of ROLES) if (a.roles[k] !== d.roles[k]) diffs.push({caseId: c.caseId, field: k, a: a.roles[k], d: d.roles[k]});
+      if (a.needsReview !== d.needsReview) diffs.push({caseId: c.caseId, field: 'needsReview', a: a.needsReview, d: d.needsReview});
+      c.gold = {roles: {...a.roles}, needsReview: true, reason: `DISAGREE — A: ${a.reason} | D: ${d.reason} ${JSON.stringify({...d.roles, needsReview: d.needsReview})}`, reviewer, agreement: false};
+      disagreements.push(c.caseId);
+    }
+  }
+  if (refused.length) throw Error(`gold-label-missing:${refused.join(',')} (a missing label is refused, never a disagreement)`);
+  const eng = new Map(out.filter(c => c.input.language === 'eng').map(c => [goldKey(c), c.gold]));
+  const noBack = [];
+  for (const c of out) {
+    if (c.input.language === 'eng') continue;
+    const g = c.gold ?? {};
+    if (!SPA_REVIEWER.test(g.reviewer ?? '') || typeof g.backTranslation !== 'string' || !g.backTranslation.trim() || typeof g.divergent !== 'boolean') { noBack.push(c.caseId); continue; }
+    if (g.divergent) {
+      if (!validLabel(g)) { noBack.push(c.caseId); continue; }
+      c.gold = {...g, mirrors: false};
+      divergent.push(c.caseId);
+      continue;
+    }
+    const e = eng.get(goldKey(c));
+    c.gold = {roles: {...e.roles}, needsReview: e.needsReview, reason: `mirror of English: ${e.reason}`, reviewer: g.reviewer, backTranslation: g.backTranslation, divergent: false};
+    mirrored.push(c.caseId);
+  }
+  if (noBack.length) throw Error(`spa-gold-refused:${noBack.join(',')} (D10: reviewer mirror-eng+backtranslation:<cook>, backTranslation and divergent first)`);
+  return {cases: out, agreements, disagreements, diffs, mirrored, divergent};
 }
 
 function compact(e) {
@@ -187,7 +326,7 @@ async function rawKeysFor(evidenceDir, pass) {
 export async function deriveCalibration({cases, language, evidenceDir, fixed}) {
   assertLanguageAllowed(cases, language);
   const dev = selectCases(cases, {set: 'dev', language});
-  assertGold(dev);
+  assertGold(dev, cases);
   const cache = await loadRawCache(join(evidenceDir, 'raw'));
   const keys = await rawKeysFor(evidenceDir, 1);
   const models = new Set();
@@ -225,7 +364,7 @@ export async function buildRules() {
 export async function scoreArm({cases, language, set, arm, pass = 1, evidenceDir, calibration, rules, fixed}) {
   assertLanguageAllowed(cases, language);
   const rows = selectCases(cases, {set, language});
-  assertGold(rows);
+  assertGold(rows, cases);
   if (pass !== 1 && (set !== 'heldout' || !['B', 'D'].includes(arm))) throw Error('pass 2 scores held-out arms B and D only');
   const envelopes = {};
   if (arm === 'C') {
@@ -264,6 +403,7 @@ export async function buildReport({cases, evidenceDir, calibration, rates = {}})
       for (const arm of ARMS) {
         const d1 = await readDecisions(evidenceDir, {language, arm, set, pass: 1});
         if (!d1) continue;
+        assertGold(rows, cases);
         any = true;
         const d2 = set === 'heldout' && ['B', 'D'].includes(arm) ? await readDecisions(evidenceDir, {language, arm, set, pass: 2}) : null;
         const calls = {};
@@ -301,18 +441,6 @@ export async function buildReport({cases, evidenceDir, calibration, rates = {}})
   return out;
 }
 
-export function goldCheck(a, b) {
-  const other = new Map(b.map(c => [c.caseId, c.gold]));
-  const diffs = [];
-  for (const c of a) {
-    const g1 = c.gold, g2 = other.get(c.caseId);
-    if (!g1 || !g2) { diffs.push({caseId: c.caseId, field: 'gold', a: g1 ? 'present' : null, b: g2 ? 'present' : null}); continue; }
-    for (const k of ROLES) if (g1.roles[k] !== g2.roles[k]) diffs.push({caseId: c.caseId, field: k, a: g1.roles[k], b: g2.roles[k], reasons: [g1.reason, g2.reason]});
-    if (g1.needsReview !== g2.needsReview) diffs.push({caseId: c.caseId, field: 'needsReview', a: g1.needsReview, b: g2.needsReview, reasons: [g1.reason, g2.reason]});
-  }
-  return diffs;
-}
-
 export function parseArgs(argv) {
   const args = {flags: new Set()};
   for (let i = 0; i < argv.length; i++) {
@@ -342,7 +470,7 @@ async function runAllScores({cases, language, evidenceDir, calibration, fixed, r
   return written;
 }
 
-export async function main(argv = process.argv.slice(2), {log = console.log} = {}) {
+export async function main(argv = process.argv.slice(2), {log = console.log, warn = console.error} = {}) {
   const args = parseArgs(argv);
   const evidenceDir = resolve(args['evidence-dir'] ?? DEFAULT_EVIDENCE);
   const casesPath = resolve(args.cases ?? DEFAULT_CASES);
@@ -355,9 +483,12 @@ export async function main(argv = process.argv.slice(2), {log = console.log} = {
   const rates = {ratePerMTokIn: num(args['rate-in']), ratePerMTokOut: num(args['rate-out']), minuteRate: num(args['minute-rate']), spendCeiling: num(args['spend-ceiling'])};
 
   if (args.flags.has('gold-check')) {
-    const other = (await readCases(resolve(args.against))).cases;
-    const diffs = goldCheck(cases, other);
-    log(json({disagreements: diffs.length, diffs}));
+    // PLAN step 6: --against is the blind second labeler's file ({cases: [{caseId, gold}]}); --write rewrites --cases.
+    if (!args.against) throw Error('--gold-check needs --against <labels.json> (the blind second labeler)');
+    const doc = JSON.parse(await readFile(resolve(args.against), 'utf8'));
+    const r = reconcileGold(cases, Array.isArray(doc) ? doc : doc.cases ?? []);
+    log(json({agreements: r.agreements.length, disagreements: r.disagreements.length, diffs: r.diffs, mirrored: r.mirrored.length, divergent: r.divergent}));
+    if (args.flags.has('write')) { await writeFile(casesPath, serializeCases(r.cases)); log(`wrote ${casesPath}`); }
     return 0;
   }
   const phase = args.phase;
@@ -365,6 +496,7 @@ export async function main(argv = process.argv.slice(2), {log = console.log} = {
     if (pass === 2 && args.flags.has('no-rerun')) throw Error('--no-rerun: pass 2 is skipped');
     const set = pass === 2 ? 'heldout' : (args.set ?? 'all');
     if (!['all', 'dev', 'heldout'].includes(set)) throw Error('--set must be dev, heldout or all');
+    if (pass === 1 && set !== 'all' && !args.flags.has('dry-run')) throw Error('--set dev|heldout is for --dry-run only: pass 1 writes one evidence/requests.json for all 24 cases, and derive, score and report read every rawKey from it');
     const requests = await captureRequests(selectCases(cases, {set}), {fixed, pass});
     const prior = pass === 2 ? (await readRequests(evidenceDir, 1)).length : 0;
     const totals = checkRequestCeilings(requests, {priorCalls: prior});
@@ -372,11 +504,12 @@ export async function main(argv = process.argv.slice(2), {log = console.log} = {
     await mkdir(evidenceDir, {recursive: true});
     await writeFile(requestsFile(evidenceDir, pass), json(requests));
     log(`wrote ${requestsFile(evidenceDir, pass)}: ${totals.calls} requests, ${totals.questions} questions, ~${totals.estInputTokens} estimated input tokens (ceilings: ${CEILINGS.casesPerPass}/${CEILINGS.questionsPerPass} per pass, ${CEILINGS.inputTokensPerCall} per call, ${CEILINGS.cumulativeInputTokens} cumulative)`);
-    log(`batches of ${CEILINGS.batchSize}: ${Math.ceil(requests.length / CEILINGS.batchSize)} (probe first: --phase snippet --probe)`);
+    log(`probe first (--phase snippet${pass === 2 ? ' --pass 2' : ''} --probe), then batches 0..${batchCount(requests.length) - 1} of ≤ ${CEILINGS.batchSize} over the other ${requests.length - 1}`);
     return 0;
   }
   if (phase === 'snippet') {
-    log(await snippetFor(await readRequests(evidenceDir, pass), Number(args.batch ?? 0), {probe: args.flags.has('probe')}));
+    const fired = new Set((await loadRawCache(join(evidenceDir, 'raw'))).keys());
+    log(await snippetFor(await readRequests(evidenceDir, pass), Number(args.batch ?? 0), {probe: args.flags.has('probe'), fired}));
     return 0;
   }
   if (phase === 'import') {
@@ -385,6 +518,7 @@ export async function main(argv = process.argv.slice(2), {log = console.log} = {
     for (const f of args.from.split(',')) { const x = JSON.parse(await readFile(resolve(f), 'utf8')); rows = rows.concat(Array.isArray(x) ? x : x.result ?? x.rows); }
     const r = await importRows(rows, {evidenceDir, pass, rates, observedAt: args['observed-at'] ?? null});
     log(json(r));
+    for (const w of r.warnings) warn(`WARNING ${w}`);
     return r.breaches.length ? 3 : 0;
   }
   if (phase === 'derive' || phase === 'score') {
@@ -446,7 +580,7 @@ export async function main(argv = process.argv.slice(2), {log = console.log} = {
       } finally { await rm(dir, {recursive: true, force: true}); }
     } finally { globalThis.fetch = realFetch; }
   }
-  throw Error('--phase must be requests | snippet | import | derive | score | report | replay (or --gold-check --against <cases.json>)');
+  throw Error('--phase must be requests | snippet | import | derive | score | report | replay (or --gold-check --against <labels.json> [--write])');
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
