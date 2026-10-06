@@ -54,7 +54,7 @@ test('passage-only release closure binds remote media to actual canonical P2 evi
   assert.throws(()=>check({...full,[key]:value}),key);
   assert.throws(()=>check({...full,variants:{medium:{...f,[key]:value}}}),'variant '+key);
  }
- assert.throws(()=>check({...full,variants:{}}));
+ assert.throws(()=>check({...full,variants:{}}));assert.throws(()=>check({...full,variants:undefined}));
  const wrongText=structuredClone(context);wrongText.pack.assets[row.assetId].text+=' changed';assert.throws(()=>check(full,null,sidecar,wrongText));
  const wrongEvidence=structuredClone(context);wrongEvidence.pack.assets[row.assetId].sourceEvidence={};assert.throws(()=>check(full,null,sidecar,wrongEvidence));
  assert.throws(()=>check(full,null,sidecar,context,url=>url.includes('/scripture-evidence/')?Buffer.from('{}'):read(url)));

@@ -8,6 +8,7 @@ export function verifyManifestFile(file,raw,sidecar,revision,readAlignment,publi
  if(!file.deliveryURL){assert.equal(raw.length,file.bytes);assert.equal(hash(raw),file.sha256);return;}
  assert.ok(sidecar,'Missing reviewed delivery sidecar');
  const entry=sidecar.entries.find(e=>e.path===file.path);assert.ok(entry,'Unreviewed derivative path');
+ if(entry.scriptureRangeOnly&&entry.variants)assert.ok(file.variants,'Missing Scripture variants');
  if(file.variants){
   assert.ok([3,4,5,6].includes(sidecar.schema));assert.equal(file.defaultSize,entry.defaultSize);assert.deepEqual(Object.keys(file.variants).sort(),Object.keys(entry.variants).sort());
   const {variants,defaultSize,...base}=entry;
