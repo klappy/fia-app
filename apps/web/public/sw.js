@@ -82,7 +82,8 @@ async function serverJSON(response,file,record){
  else if(value?.id!==file.id||!['fia-bound-narration-demand@1','fia-bound-narration-audio@1'].includes(value.schema))throw Error('Invalid bound artifact schema.');
  return response;
 }
-async function invalidateServerSnapshot(packId){jobs.get(packId)?.abort();const key=packKey(packId,'active'),active=await read(key);if(active?.serverSnapshot&&!active.serverSnapshot.invalid){active.serverSnapshot.invalid=true;await write(key,active);}}
+const revokedSnapshotKey=(packId,revision)=>packKey(packId,'revoked-server:'+revision);
+async function invalidateServerSnapshot(packId){jobs.get(packId)?.abort();const key=packKey(packId,'active'),active=await read(key);if(active?.serverSnapshot){await write(revokedSnapshotKey(packId,active.serverSnapshot.record.revision),{revoked:true});active.serverSnapshot.invalid=true;await write(key,active);}}
 async function snapshotComplete(active){
  const snapshot=active?.serverSnapshot;if(!snapshot||snapshot.invalid)return false;
  try{serverRecord(snapshot.record,active.packId);const expected=serverFiles(snapshot.record);if(JSON.stringify(expected)!==JSON.stringify(snapshot.files))return false;const cache=await caches.open(active.cache);for(const f of expected)await serverJSON(await cache.match(f.path),f,snapshot.record);return true;}catch{return false;}
@@ -135,7 +136,7 @@ async function cachedResponse(request,clientId){
  // Client selection copies are not revocation authority; consult current pack metadata.
  if(active?.serverSnapshot&&active.manifest?.files.some(file=>file.path===url.pathname)){
   const current=await read(packKey(active.packId,'active'));
-  if(active.serverSnapshot.invalid||!current||current.serverSnapshot?.invalid)return new Response('This saved presentation is no longer valid.',{status:409});
+  if(active.serverSnapshot.invalid||await read(revokedSnapshotKey(active.packId,active.serverSnapshot.record.revision))||!current||current.serverSnapshot?.invalid)return new Response('This saved presentation is no longer valid.',{status:409});
  }
  if(url.pathname==='/content/registry.json'){try{const live=await fetch(request);if(live.ok)return live;}catch{} }
  const cached=active?.cache&&await (await caches.open(active.cache)).match(url.pathname);
@@ -230,7 +231,7 @@ async function start(selection,port,packId=legacy,sizes={},revision){
   if(!await complete(pending))throw new Error('Storage changed before verification finished. Retry the download.');
   if(controller.signal.aborted)throw new Error('Download authority changed before activation.');
   // Single metadata write is the commit point. An interrupted update keeps active intact.
-  await write(packKey(packId,'active'),pending);if(controller.signal.aborted){await invalidateServerSnapshot(packId);throw new Error('Download authority changed during activation.');}await(await caches.open(META)).delete('/'+packKey(packId,'pending'));
+  await write(packKey(packId,'active'),pending);if(serverSnapshot&&!controller.signal.aborted)await(await caches.open(META)).delete('/'+revokedSnapshotKey(packId,serverSnapshot.record.revision));if(controller.signal.aborted){await invalidateServerSnapshot(packId);throw new Error('Download authority changed during activation.');}await(await caches.open(META)).delete('/'+packKey(packId,'pending'));
   // Keep the prior revision for already-open clients. Removal clears every revision.
   // Do not switch an open page's media beneath its loaded text and alignment.
   return {saved:true,selection};
