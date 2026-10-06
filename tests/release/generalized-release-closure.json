@@ -946,7 +946,7 @@
     },
     {
       "path": "apps/web/src/App.svelte",
-      "sha256": "a5cec60aa83115553f48c0945f08a01b5e7c174cf7896447e6732f94582a8a97",
+      "sha256": "fad1b8dd1533082c436985a71b78d2810c1ca2bd4b8f5a2caf5af37c22e78cd4",
       "originalSha256": "1c79777ea001eafc53bd00e9e5ef2e0972bde20178e80195c2018871a03260af"
     },
     {
@@ -1005,7 +1005,7 @@
     },
     {
       "path": "apps/web/src/lib/execution-transport.js",
-      "sha256": "2b2344ce12884eec3ab86b7b430fab39fa30321787f883d327e12e44bfd4624d"
+      "sha256": "e9102fc23de59fe3176df1bc04753914e5ea242c7f039fa4e5b66510cc484698"
     },
     {
       "path": "apps/web/src/lib/library.js",
@@ -1087,7 +1087,7 @@
     },
     {
       "path": "apps/web/tests/executable-app.spec.js",
-      "sha256": "ac1402ea22fc45d44085cc47df4ddc5cc320a29435fbf5851c6f01ccf91ebf6a"
+      "sha256": "9797650660a6f01e24e0fc763d7e502cf43b7e5375cbd210f6fa3de568e23ac0"
     },
     {
       "path": "apps/web/tests/executable-presentation.test.js",
@@ -1411,7 +1411,7 @@
     },
     {
       "path": "scripts/package-worker.mjs",
-      "sha256": "69032833ca60e9c0d807c1e8f1ff8e6091fc533858bdc8c97935e1ce9799ed66"
+      "sha256": "d6e416a866f1d7ddc37afeb253ce43b024c58a8a1b2bf261f0313a3222f2b112"
     },
     {
       "path": "scripts/promotion-source-evidence.mjs",
@@ -1459,7 +1459,7 @@
     },
     {
       "path": "server/faces/worker/BACKEND-CLOSURE.json",
-      "sha256": "8de5077588f3281b2d451fbafb6e5396d3bbd944d47fa9706ebed8f59fc44207"
+      "sha256": "dbdbfc770a50808c8c2debbc6a07dfdd660a785a6730f4453f066605fb5d4f68"
     },
     {
       "path": "server/faces/worker/adapter.mjs",
@@ -1471,7 +1471,7 @@
     },
     {
       "path": "server/faces/worker/entry.mjs",
-      "sha256": "364336e227906f35e242550d4872039a98e12becabc61583cdf8c93f8cd2c15e"
+      "sha256": "d3a8b8199e958d94fb5e120c1615856e4418180cb2c1f8c36177f26ed9d8144e"
     },
     {
       "path": "server/faces/worker/export-snapshot.mjs",
@@ -1567,7 +1567,7 @@
     },
     {
       "path": "server/fia/preparation/executable-presentation-runtime.mjs",
-      "sha256": "753d9e1850b2af3d4af9edc58d6a808787f94b1e3f4cca80bf35c97fe493dc3d"
+      "sha256": "ad938309e0ec9b652adfd718fd93f4c30eb695e8b151a8b9f7cd804cfe637930"
     },
     {
       "path": "server/fia/preparation/executable-presentation-service.mjs",
@@ -2560,6 +2560,34 @@
     {
       "path": "apps/web/tests/worker-clone.spec.js",
       "sha256": "91794d26a0eec9746893b2ecc4b543e64ce0f6871946571625ddf2135a26d415"
+    },
+    {
+      "path": "apps/web/tests/retained-audio-transport.test.js",
+      "sha256": "2c22185e54961307ada15c23778ef7693d710236b6372a2d118d1320cce22172"
+    },
+    {
+      "path": "scripts/approved-audio-proof-index.mjs",
+      "sha256": "d4a1c2abe4fc505660d2479a040819e43e064e9f3349d9bb2d408921b957e10b"
+    },
+    {
+      "path": "server/fia/preparation/approved-audio-bindings.mjs",
+      "sha256": "9d55e88b4ea08ba029ff90a272804dab0aa32d801a8808deee5a5352c26792b2"
+    },
+    {
+      "path": "server/fia/preparation/approved-audio-runtime.mjs",
+      "sha256": "a3f0bbb1dc8273be95dfaafef5b257cfd29f8d280500c4498a8a7f496e9d001e"
+    },
+    {
+      "path": "tests/publication/approved-audio-bindings.test.mjs",
+      "sha256": "28139b4621c82f0d85cd628af9739008fc616f3085a2962f055e5903bd09364e"
+    },
+    {
+      "path": "tests/publication/approved-audio-integration.test.mjs",
+      "sha256": "f7ff4978bd67aa2de05c3f6b0b122eaff7ea51dd2a78048a5442dad90a57019a"
+    },
+    {
+      "path": "tests/publication/approved-audio-runtime.test.mjs",
+      "sha256": "588c3bc7a30fa484daf47086703bf44bf8bf93f31f048c6d4c6f41f880866b73"
     }
   ],
   "generatedFiles": [
