@@ -52,3 +52,11 @@ If an alarm is delivered while its queued admission is revoked, no work starts.
 After authority is restored, an explicit POST re-arms only that still-queued
 attempt transactionally, retaining its attempt ID and revision. GET never re-arms;
 preparing, uncertain and terminal records are never retried by this mechanism.
+
+Cold recovery validates the retained operation's immutable identity hash, captured
+profile, pinned metadata input, actual Durable Object identity, state and lane.
+It does not require the admission to remain in the current eligible catalog.
+Consequently revocation prevents dispatch without wedging the object's boot:
+queued work stays queued, and interrupted preparing work becomes uncertain with
+a new revision. Only restored current authority plus an explicit POST may rearm
+a queued attempt. Restoration never retries an uncertain attempt.
