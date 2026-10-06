@@ -37,10 +37,19 @@ export function createExecutionTransport({fetch:fetchArtifact=globalThis.fetch}=
  transport.playBoundAudio=async(reference,context={})=>{
   const value=await readBoundJSON(reference,context),delivery=value.delivery;
   if(!shape(value,['schema','id','delivery','playbackRange'])||value.schema!=='fia-bound-narration-audio@1'||!shape(delivery,['url','sha256','bytes','mime'])||!text(delivery.url)||typeof delivery.sha256!=='string'||!hashPattern.test(delivery.sha256)||!Number.isSafeInteger(delivery.bytes)||delivery.bytes<=0||!text(delivery.mime)||!validRange(value.playbackRange))throw Error('The bound narration audio is invalid.');
+  // Detect URL-normalized aliases so they cannot fall through to legacy transport.
+  // Classification grants no authority: the profile below still requires the exact literal route.
+  let declaredPath;try{declaredPath=new URL(delivery.url,'https://transport.invalid').pathname;}catch{}
+  const retained=value.id.startsWith('approved-audio:')||declaredPath?.startsWith('/v1/approved-audio');
+  if(retained){
+   const binding=value.id.match(/^approved-audio:([a-f0-9]{64})$/),extension=delivery.mime==='audio/mpeg'?'mp3':delivery.mime==='audio/ogg'?'ogg':null;
+   if(!binding||!extension||delivery.bytes>16777216||delivery.url!==`/v1/approved-audio/${binding[1]}/${delivery.sha256}.${extension}`)throw Error('The bound narration audio is invalid.');
+  }
   context.signal?.throwIfAborted();
-  const response=await fetchArtifact(delivery.url,{method:'GET',cache:'no-store',signal:context.signal});
+  const response=await fetchArtifact(delivery.url,{method:'GET',cache:'no-store',...(retained?{redirect:'error'}:{}),signal:context.signal});
   context.signal?.throwIfAborted();
-  if(response.status!==200)throw Error('The bound narration audio could not be read.');
+  if(response.status!==200||retained&&response.redirected)throw Error('The bound narration audio could not be read.');
+  if(retained&&(response.headers.get('Content-Type')!==delivery.mime||response.headers.get('Content-Length')!==String(delivery.bytes)||response.headers.get('ETag')!==`"${delivery.sha256}"`))throw Error('The bound narration audio could not be verified.');
   const bytes=await response.arrayBuffer();
   context.signal?.throwIfAborted();
   if(bytes.byteLength!==delivery.bytes||await hash(bytes)!==delivery.sha256)throw Error('The bound narration audio could not be verified.');
