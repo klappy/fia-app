@@ -6,6 +6,7 @@ import {createExecutionTransport} from '../src/lib/execution-transport.js';
 const bytes=new TextEncoder().encode('{"fixture":"opaque server artifact"}');
 const sha256=createHash('sha256').update(bytes).digest('hex');
 const reference={id:'bound-server-reference',sha256};
+const bind=value=>{const body=JSON.stringify(value);return{body,reference:{id:value.id,sha256:createHash('sha256').update(body).digest('hex')}};};
 
 test('bound artifact reads use the immutable authority and return verified opaque bytes',async()=>{
  const calls=[];
@@ -56,4 +57,31 @@ test('an already canceled read never accesses the server',async()=>{
  const transport=createExecutionTransport({fetch:async()=>{calls++;return new Response(bytes);}});
  await assert.rejects(transport.readBoundArtifactBytes(reference,{signal:controller.signal}),{name:'AbortError'});
  assert.equal(calls,0);
+});
+
+test('approved bound audio verifies its descriptor and delivered bytes before playback',async()=>{
+ const audio=new Uint8Array([1,2,3,4]);const audioHash=createHash('sha256').update(audio).digest('hex');
+ const fixture=bind({schema:'fia-bound-narration-audio@1',id:'approved-audio',delivery:{url:'/verified/audio',sha256:audioHash,bytes:4,mime:'audio/mpeg'},playbackRange:{startSeconds:1,endSeconds:2}});
+ const calls=[];const transport=createExecutionTransport({fetch:async(url,options)=>{calls.push({url,options});return new Response(url.startsWith('/v1/artifacts/')?fixture.body:audio);}});
+ const result=await transport.playBoundAudio(fixture.reference);
+ assert.deepEqual(new Uint8Array(result.bytes),audio);assert.equal(result.mime,'audio/mpeg');assert.deepEqual(result.playbackRange,{startSeconds:1,endSeconds:2});
+ assert.deepEqual(calls.map(x=>x.url),[`/v1/artifacts/${fixture.reference.sha256}`,'/verified/audio']);
+ const corrupt=createExecutionTransport({fetch:async url=>new Response(url.startsWith('/v1/artifacts/')?fixture.body:'corrupt')});
+ await assert.rejects(corrupt.playBoundAudio(fixture.reference),/could not be verified/);
+});
+
+test('bound original preparation forwards the supplied identity unchanged without its own polling loop',async()=>{
+ const identity={packId:'eng.MRK-1-14-20',presentationRevision:'a'.repeat(64),language:'eng',edition:'fia-guide',quality:'original',activityId:'source-anchor',sourceUnitId:'S01-U001',sourceTextSha256:'b'.repeat(64)};
+ const fixture=bind({schema:'fia-bound-narration-demand@1',id:'requested-original',identity});let requests=0,delegated;
+ const transport=createExecutionTransport({fetch:async()=>{requests++;return new Response(fixture.body);}});
+ const result=await transport.prepareOriginal(fixture.reference,{prepareNarration:async supplied=>{delegated=supplied;return{status:'preparing'};}});
+ assert.deepEqual(delegated,identity);assert.deepEqual(result,{status:'preparing'});assert.equal(requests,1);
+});
+
+test('wrong bound artifact identity/schema cannot dispatch audio or preparation',async()=>{
+ for(const value of [{schema:'fia-bound-narration-demand@1',id:'wrong',identity:{}},{schema:'unrecognized',id:'requested-original'}]){
+  const fixture=bind(value);let calls=0;const transport=createExecutionTransport({fetch:async()=>{calls++;return new Response(fixture.body);}});
+  await assert.rejects(transport.prepareOriginal({...fixture.reference,id:'requested-original'},{prepareNarration:()=>{throw Error('must not dispatch');}}),/bound narration.*invalid/);
+  assert.equal(calls,1);
+ }
 });
