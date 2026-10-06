@@ -66,6 +66,21 @@ it('manual Play while automatic narration is off executes only the declared acti
  await new Promise(resolve=>setTimeout(resolve,30));expect(progress().session.status).toBe('waiting');expect(libraryAdapter.playBoundAudio).toHaveBeenCalledTimes(1);
  await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toBe(presentation.activities[1].prompt));
 });
+// R6.2/K4: a stored 'waiting' means this screen was heard, so a reload shows what its narration end showed.
+it('R6.2/K4: a heard executable screen is Continue with Skip when its narration ends and again after a reload',async()=>{
+ firstNarration();await mount();
+ const centre=()=>document.querySelector('nav[aria-label="Session controls"] .guide-primary').getAttribute('aria-label');
+ const sidePlays=()=>[...document.querySelectorAll('nav[aria-label="Session controls"] button')].map(b=>b.getAttribute('aria-label')).filter(label=>/^Play/.test(label));
+ await fireEvent.click(screen.getByRole('button',{name:'Begin',exact:true}));await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(1));ended();
+ const progress=()=>JSON.parse(localStorage.getItem('fia-v3-progress@1:'+descriptor.id));
+ await waitFor(()=>expect(progress().session.status).toBe('waiting'));await waitFor(()=>expect(centre()).toBe('Continue'));
+ expect(sidePlays()).toEqual([]);expect(screen.getByRole('button',{name:'Skip to next activity'}).disabled).toBe(false);
+ cleanup();await mount();
+ expect(centre()).toBe('Continue');expect(sidePlays()).toEqual([]);expect(screen.getByRole('button',{name:'Skip to next activity'}).disabled).toBe(false);
+ // Continue moves on; it does not replay the heard narration.
+ await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toBe(presentation.activities[1].prompt));
+ expect(libraryAdapter.playBoundAudio).toHaveBeenCalledTimes(1);
+});
 it('server focal display does not infer narration or automatically substitute its related video',async()=>{
  const image=Object.values(presentation.assets).find(a=>a.kind==='image');presentation.activities[0].execution.focalAssetId=image.id;presentation.activities[0].assetId=image.id;
  render(App);await waitFor(()=>expect(document.querySelector('.resource-visual')).toBeTruthy());await fireEvent.click(screen.getByRole('button',{name:'Replay',exact:true}));expect(libraryAdapter.playBoundAudio).not.toHaveBeenCalled();expect(libraryAdapter.prepareOriginal).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();expect(document.querySelector('video[src]')).toBeNull();

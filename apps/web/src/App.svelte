@@ -25,7 +25,7 @@
  import {easyFace,queueable,createTapGate} from './lib/easy-button.js';
  import {preparationHash} from './lib/prepared-audio.js';
  import {demoVideoSource} from './lib/video-demo.js';
- import {bundledPack,libraryAdapter,hasUnresolvedInstructions,registerWorker} from './lib/library.js';
+ import {bundledPack,libraryAdapter,hasUnresolvedInstructions,registerWorker,RESTORE_TIMEOUT_MS,restoreUnreachable} from './lib/library.js';
  import {saveProgress,restoreProgress,resetProgress} from './lib/session-store.js';
  import {noticeScope,noticeEnded} from './lib/notice-scope.js';
  let selectedPack=$state(bundledPack),rawPresentation=$state.raw(bundledPresentation),downloadedPaths=$state(new Set()),downloadedAudioDescriptors=$state(new globalThis.Map());
@@ -91,10 +91,10 @@
   }catch(error){if(owner===mediaGeneration){revokePlayback();notice=error.message;dispatch({type:'PAUSE'});}}
   finally{if(owner===mediaGeneration)mediaLoading=false;}
  }
- function executablePrimaryLabel(){return finished?'Begin again':inTransition||session.detour||automaticOff||heldHere||!executablePlayable?'Continue':isPlaying||playbackPending?'Pause':audio?.active&&audioContext?'Resume':!started?'Begin':'Play';}
+ function executablePrimaryLabel(){return finished?'Begin again':inTransition||session.detour||automaticOff||session.status==='waiting'||!executablePlayable?'Continue':isPlaying||playbackPending?'Pause':audio?.active&&audioContext?'Resume':!started?'Begin':'Play';}
  function executablePrimary(){
   if(inTransition){navigate({type:'CONTINUE'},true);return;}if(finished){reset();return;}
-  if(automaticOff||heldHere||!executablePlayable){navigate({type:'CONTINUE'},true);return;}
+  if(automaticOff||session.status==='waiting'||!executablePlayable){navigate({type:'CONTINUE'},true);return;}
   if(isPlaying){revokePlayback();audio?.pause();dispatch({type:'PAUSE'});return;}
   if(audio?.active&&audioContext){playbackConsent=true;dispatch({type:'PLAY'});audio.resume();}
   else{playbackConsent=true;void playExecutableNarration({automatic:true});}
@@ -140,17 +140,14 @@
  // a start is one span from the accepted tap until sound, whatever owns it at the moment.
  let restorePending=$state(false),mediaChecked=$state(false),downloadsChecked=$state(false);
  let requestStarting=$state(false),clipPending=$state(false),videoPlayPending=$state(false),startBurst=$state(false);let requestCarry=0;
- let visit=$state(0),heldVisit=$state(-1);
  const tapGate=createTapGate({onburst:value=>startBurst=value});
  let verifying=$derived(restorePending||!mediaChecked||!downloadsChecked);
- // The discussion hold: this screen's media finished during this visit (not a restored or settled 'waiting').
- let heldHere=$derived(heldVisit===visit&&session.status==='waiting');
- function holdHere(){if(session.status==='waiting')heldVisit=visit;}
  let clipSrc=null;
  function playClip(...args){clipSrc=args[1];audio.play(...args);clipPending=!!audio.active;}
- // Verifying lasts until the answers arrive; nothing is guessed meanwhile (k0006). Every check is
- // bounded where it is made: the service-worker requests time out, and a restore ends by opening
- // the saved passage or in R1's fallback.
+ // Verifying lasts until the answers arrive; nothing is guessed meanwhile (k0006). Each check is
+ // bounded where it is made: a service-worker request ends by the 10 s ready and 45 s answer timeouts
+ // (lib/library.js), and the launch restore by RESTORE_TIMEOUT_MS, after which R1's fallback says the
+ // saved passage could not be reached. An explicit switch keeps the current passage until it answers.
  function checked(){if(!verifying&&tapGate.take())runQueuedTap();}
  // A selection that does not open moves the generation without replacing the passage, so the
  // current passage's unanswered checks are asked again at the new generation.
@@ -196,7 +193,12 @@
 
  function applyStored(){const stored=restoreProgress(localStorage,selectedPack,activities,assets);if(stored?.resetRequired)notice='This passage changed. Your previous place could not be matched; starting at the beginning.';session=stored?.session||createSession(activities);if(stored){scale=[1,1.25,1.5].includes(stored.scale)?stored.scale:1;rate=[.85,1,1.15].includes(stored.rate)?stored.rate:1;muted=!!stored.muted;dark=!!stored.dark;termDefinition=stored.termDefinition===activities[session.index]?.id?stored.termDefinition:null;transitionSection=stored.transitionSection===activities[session.index]?.sectionId?stored.transitionSection:null;}started=session.index>0||session.status!=='ready';}
  let selectionPending=$state(false);const trackSelection=createSelectionTracker(value=>selectionPending=value);let swipeGeneration=0;
- async function selectPack(id,{explicit=true}={}){if(explicit)tapGate.drop();selectionAbort?.abort();selectionAbort=new AbortController();const intent=++selectionIntent;await executeSelection(id,intent,{explicit,signal:selectionAbort.signal});}
+ async function selectPack(id,{explicit=true,timeout=0}={}){
+  if(explicit)tapGate.drop();selectionAbort?.abort();const abort=selectionAbort=new AbortController();const intent=++selectionIntent;
+  // A bounded selection (the launch restore) that has not answered in time stops with a missing-connection answer.
+  const bound=timeout?setTimeout(()=>abort.abort(restoreUnreachable()),timeout):null;
+  try{await executeSelection(id,intent,{explicit,signal:abort.signal});}finally{clearTimeout(bound);}
+ }
  // A selection's promise carries its outcome to whoever asked (the Passages sheet or
  // the launch restore), also across a native-video deferral. A superseded selection
  // settles quietly; the current passage is untouched until a switch succeeds.
@@ -216,7 +218,7 @@
  // the saved key is cleared, so later launches are quiet. A missing connection is not a
  // verdict about the passage, so that key is kept for the next launch.
  async function restoreSavedPack(id){
-  try{await selectPack(id,{explicit:false});}
+  try{await selectPack(id,{explicit:false,timeout:RESTORE_TIMEOUT_MS});}
   catch(error){
    // A tap queued while checking was for the saved passage; it never starts the fallback.
    tapGate.drop();
@@ -228,7 +230,7 @@
  }
  async function loadSelectedPack(id,intent,options){videoDelivery.cancel();stopVisual();visualOwner.clear();const generation=++selectionGeneration;try{const loaded=await libraryAdapter.select(id,options);if(intent!==selectionIntent||generation!==selectionGeneration)return;if(deferVideo(()=>applySelectedPack(loaded,generation,intent)))return;await applySelectedPack(loaded,generation,intent);}catch(error){if(intent===selectionIntent&&generation===selectionGeneration)recheckCurrent();throw error;}}
  // Opening a passage ends the previous passage's notices (R3); the new passage raises its own after this point.
- async function applySelectedPack(loaded,generation,intent){if(intent!==selectionIntent||generation!==selectionGeneration)return;validateExecutablePresentation(loaded.presentation);persist();cancel();notice='';selectedPack=loaded.descriptor;if(selectedPack.offlineSnapshot==='historical-verified')notice=historicalSnapshotNotice;rawPresentation=loaded.presentation;saved=false;downloadedDeliveryRevision=null;downloadedPaths=new Set();downloadedAudioDescriptors=new globalThis.Map();onlineMedia=new globalThis.Map();savedMedia=new globalThis.Map();deliveryRevision=null;revokePlayback();mediaChecked=false;downloadsChecked=false;visit++;introduced=new Set();manualStarts=new Set();visualHeard=null;termDefinition=null;transitionSection=null;messages=[];language=selectedPack.language;session=createSession(loaded.presentation.activities);try{applyStored();localStorage.setItem('fia-v3-selected-pack',loaded.descriptor.id);}catch{notice='Your saved place could not be read.';}sheet=null;await libraryAdapter.activate(selectedPack).catch(()=>{});if(intent!==selectionIntent||generation!==selectionGeneration)return;await updateDownloaded();await updateMedia();}
+ async function applySelectedPack(loaded,generation,intent){if(intent!==selectionIntent||generation!==selectionGeneration)return;validateExecutablePresentation(loaded.presentation);persist();cancel();notice='';selectedPack=loaded.descriptor;if(selectedPack.offlineSnapshot==='historical-verified')notice=historicalSnapshotNotice;rawPresentation=loaded.presentation;saved=false;downloadedDeliveryRevision=null;downloadedPaths=new Set();downloadedAudioDescriptors=new globalThis.Map();onlineMedia=new globalThis.Map();savedMedia=new globalThis.Map();deliveryRevision=null;revokePlayback();mediaChecked=false;downloadsChecked=false;introduced=new Set();manualStarts=new Set();visualHeard=null;termDefinition=null;transitionSection=null;messages=[];language=selectedPack.language;session=createSession(loaded.presentation.activities);try{applyStored();localStorage.setItem('fia-v3-selected-pack',loaded.descriptor.id);}catch{notice='Your saved place could not be read.';}sheet=null;await libraryAdapter.activate(selectedPack).catch(()=>{});if(intent!==selectionIntent||generation!==selectionGeneration)return;await updateDownloaded();await updateMedia();}
  function restartPack(id){resetProgress(localStorage,{id});if(id===selectedPack.id)reset();}
  let language=$state('eng');
  function selectLanguage(id){language=id;try{localStorage.setItem('fia-v3-library-language',id);}catch{notice='Language choice could not be saved on this device.';}}
@@ -275,8 +277,8 @@
  let visualPending=$derived(visual&&!matchingVideo&&session.preferences.describeImages&&!muted&&!!focal.descriptionAudio&&visualHeard!==focal.id);
  // Preparation is primary only when no higher-priority playback or visual action owns the control.
  // requestableNarration already excludes transitions, detours and completed sessions.
- let primaryStartsPreparation=$derived(!executableMode&&!isPlaying&&!playbackPending&&!inlineVideo&&!videoDeliveryState.loading&&!videoPending&&!visualPending&&!!preparationRequest&&hasGuidePreparation(selectedPack,preparationRequest)&&!automaticOff&&!audioContext&&!preparationBusy&&!mediaLoading&&!requestStarting&&!heldHere&&session.status!=='complete');
- let primaryLabel=$derived(executableMode&&!session.detour?executablePrimaryLabel():finished?'Begin again':inTransition?'Continue':automaticOff&&!session.detour?'Continue':isPlaying||playbackPending?'Pause':inlineVideo?'Resume':audio?.active&&audioContext?'Resume':videoPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)?'Play video':visualPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)?'Play':session.detour?(visual?'Return':focal?.kind==='video'?'Play video':focal?.descriptionAudio?'Listen':'Return'):primaryStartsPreparation?(!started?'Begin':'Play'):heldHere||session.status==='waiting'&&termPrompt||automaticOff||!activity?.audioSrc?'Continue':session.status==='paused'?'Resume':!started?'Begin':'Play');
+ let primaryStartsPreparation=$derived(!executableMode&&!isPlaying&&!playbackPending&&!inlineVideo&&!videoDeliveryState.loading&&!videoPending&&!visualPending&&!!preparationRequest&&hasGuidePreparation(selectedPack,preparationRequest)&&!automaticOff&&!audioContext&&!preparationBusy&&!mediaLoading&&!requestStarting&&['ready','paused'].includes(session.status));
+ let primaryLabel=$derived(executableMode&&!session.detour?executablePrimaryLabel():finished?'Begin again':inTransition?'Continue':automaticOff&&!session.detour?'Continue':isPlaying||playbackPending?'Pause':inlineVideo?'Resume':audio?.active&&audioContext?'Resume':videoPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)?'Play video':visualPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)?'Play':session.detour?(visual?'Return':focal?.kind==='video'?'Play video':focal?.descriptionAudio?'Listen':'Return'):primaryStartsPreparation?(!started?'Begin':'Play'):session.status==='waiting'||automaticOff||!activity?.audioSrc?'Continue':session.status==='paused'?'Resume':!started?'Begin':'Play');
  // In manual mode the centre stays Continue; elsewhere an accepted start owns the face until sound.
  let startPending=$derived(!isPlaying&&(mediaLoading||preparationBusy||requestStarting||clipPending||videoDeliveryState.loading||videoPlayPending));
  let carrying=$derived(requestStarting||mediaLoading||clipPending);
@@ -313,7 +315,7 @@
   const queued=session.queued;const descriptionsBefore=session.preferences.describeImages;
   session=reduceSession(session,event,activities);
   const nextSection=activities[session.index]?.sectionId;
-  if(activities[session.index]?.id!==priorActivity||event.type==='RESET'){swipeGeneration++;visit++;termDefinition=null;}
+  if(activities[session.index]?.id!==priorActivity||event.type==='RESET'){swipeGeneration++;termDefinition=null;}
   if(nextSection!==priorSection&&event.type!=='RESET')transitionSection=nextSection;
   if(event.type==='RESET'||event.type==='SEEK_ACTIVITY'&&nextSection===priorSection)transitionSection=null;
   persist();
@@ -324,17 +326,19 @@
   if(queued&&!session.queued&&session.detour===queued){timer=setTimeout(()=>{if(session.detour===queued&&!muted)describe(queued);},350);}
  }
  function resolveAsset(id){if(assets[id])return id;return (activity.relatedAssetIds||[]).find(key=>assets[key]?.kind===id)||(focal?.kind===id?focal.id:null)||(id==='scripture'?defaultScriptureId:Object.values(assets).find(a=>a.kind===id)?.id)||id;}
- function settleSilent(){if(!inTransition&&!session.detour&&!finished&&!activity.audioSrc&&!(executableMode?executablePlayable:preparationRequest)){session={...session,status:'waiting'};persist();}}
+ // 'waiting' means this screen was heard, on every way of arriving (RECIPE R6.2, K4): a silent settle
+ // marks only a screen known to have no possible recording, so an admitted screen enters it only when its
+ // own media ends. While availability is still being checked nothing is known, so nothing is settled (k0006).
+ function settleSilent(){if(!verifying&&!inTransition&&!session.detour&&!finished&&!activity.audioSrc&&!(executableMode?executablePlayable:preparationRequest)){session={...session,status:'waiting'};persist();}}
  function cancel(){if(deferVideo(cancel))return;executableOwner.cancel();preparationOwner.cancel();nativeDemoVideo=null;videoDelivery.clear();playbackPending=false;mediaGeneration++;mediaAbort?.abort();mediaAbort=null;mediaLoading=false;if(mediaBlob){URL.revokeObjectURL(mediaBlob);mediaBlob=null;}mediaTiming=null;mediaAlignment=null;mediaLogicalPath=null;videoState={elapsed:0,duration:0};inlineVideo=null;videoPlaying=false;clearTimeout(timer);timer=null;audio?.stop();videoOwner.node?.pause();audioContext=null;clipPending=false;videoPlayPending=false;tapGate.end();}
  function message(text){messages=[...messages.slice(-11),{role:'assistant',text}];tick().then(()=>chatLog?.scrollTo({top:chatLog.scrollHeight,behavior:'smooth'}));}
  function finishAudio(){
   const context=audioContext;audioContext=null;tapGate.end();if(!context)return;
-  if(context.type==='description'){if(['image','map'].includes(assets[context.id]?.kind)){visualHeard=context.id;if(!session.detour){session={...session,status:'waiting'};holdHere();}}return;}
-  if(context.type==='manual'){session={...session,status:'waiting'};holdHere();persist();return;}
+  if(context.type==='description'){if(['image','map'].includes(assets[context.id]?.kind)){visualHeard=context.id;if(!session.detour)session={...session,status:'waiting'};}return;}
+  if(context.type==='manual'){session={...session,status:'waiting'};persist();return;}
   if(context.type==='response')return;
   introduced=new Set([...introduced,context.id]);
   const before=session.index;dispatch({type:'NARRATION_END',activityId:context.id});
-  if(session.index===before)holdHere();
   if(session.index!==before){scheduleNext();}
   else if(!executableMode&&!session.detour&&visual&&(session.preferences.describeImages&&focal?.descriptionAudio||session.preferences.autoplayVideo&&matchingVideo)){describe(focal.id);}
   else if(!executableMode&&!session.detour&&activity?.kind==='video'&&session.preferences.autoplayVideo){timer=setTimeout(()=>{if(session.preferences.autoplayVideo)playVideo();},350);}
@@ -361,13 +365,13 @@
   // A viewing-pause cue is only appropriate when there is nothing to play.
   if(visual&&!muted&&/I will pause the audio here/i.test(activity.narration||'')&&((matchingVideo&&(!automatic||session.preferences.autoplayVideo))||(session.preferences.describeImages&&focal.descriptionAudio))){
    cancel();introduced=new Set([...introduced,activity.id]);
-   session={...session,status:'waiting'};holdHere();persist();describe(focal.id,!automatic);return;
+   session={...session,status:'waiting'};persist();describe(focal.id,!automatic);return;
   }
   if(focal?.kind==='term')termDefinition=null;
   if(activity.kind==='scripture'&&!session.preferences.readScripture&&!forceReading){dispatch({type:'CONTINUE'});scheduleNext();return;}
   if(!activity.audioSrc){if(!automatic&&preparationRequest){void playRequestedNarration();return;}settleSilent();return;}
   if(automaticOff&&activity.readingGroupId){navigate({type:'CONTINUE'});return;}
-  if(automaticOff&&!forceReading){dispatch({type:'PLAY'});introduced=new Set([...introduced,activity.id]);dispatch({type:'NARRATION_END',activityId:activity.id});holdHere();return;}
+  if(automaticOff&&!forceReading){dispatch({type:'PLAY'});introduced=new Set([...introduced,activity.id]);dispatch({type:'NARRATION_END',activityId:activity.id});return;}
   cancel();dispatch({type:'PLAY'});
   audioContext={type:'narration',id:activity.id};startRecording(activity.narration,activity.audioSrc,!automatic);
  }
@@ -453,7 +457,7 @@
  }
  function videoTime(event){const v=event.currentTarget;if(!ownsVideo(v))return;videoState={elapsed:Number.isFinite(v.currentTime)?v.currentTime:0,duration:Number.isFinite(v.duration)?v.duration:0};}
  function videoStarted(event){if(event&&!ownsVideo(event.currentTarget))return;audio?.stop();audioContext=null;videoPlaying=true;videoPlayPending=false;dispatch({type:'PAUSE'});}
- function videoEnded(event){if(event&&!ownsVideo(event.currentTarget))return;if(videoOwner.pending)return;if(deferVideo(()=>videoEnded()))return;videoState={elapsed:0,duration:0};videoPlaying=false;if(inlineVideo){inlineVideo=null;visualHeard=focal.id;if(!session.detour){session={...session,status:'waiting'};holdHere();}persist();return;}if(session.detour){navigate({type:'RETURN'});return;}dispatch({type:'MEDIA_END',activityId:activity.id});scheduleNext();}
+ function videoEnded(event){if(event&&!ownsVideo(event.currentTarget))return;if(videoOwner.pending)return;if(deferVideo(()=>videoEnded()))return;videoState={elapsed:0,duration:0};videoPlaying=false;if(inlineVideo){inlineVideo=null;visualHeard=focal.id;if(!session.detour)session={...session,status:'waiting'};persist();return;}if(session.detour){navigate({type:'RETURN'});return;}dispatch({type:'MEDIA_END',activityId:activity.id});scheduleNext();}
  function setMode(mode){if(session.mode===mode)return;dispatch({type:'SET_MODE',mode});}
  function runCommand(text=command){
   if(!text.trim())return;const input=text.trim();command='';messages=[...messages.slice(-11),{role:'user',text:input}];

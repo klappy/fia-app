@@ -1,4 +1,7 @@
 import {test,expect} from '@playwright/test';
+import {createSession} from '../apps/web/src/lib/engine.js';
+import {activities} from '../apps/web/src/lib/content.js';
+import {RESTORE_TIMEOUT_MS} from '../apps/web/src/lib/library.js';
 
 // Easy-button guard (cookbook RECIPE R4-R6, SCRIPTED-JOURNEYS EB and J3).
 // Faces are sampled from the first paint; causes are logged beside them, so the
@@ -109,6 +112,73 @@ for(const tap of [false,true])test(`returning visit with a restore slower than a
  // Nothing played on the default passage while the saved one was on its way.
  expect(log.causes.filter(c=>c.kind==='media:playing')).toEqual([]);
  expect(await page.evaluate(()=>window.__easy.players.filter(p=>!p.paused).length)).toBe(0);
+});
+
+// A restore read that is accepted and never answered ("lie-fi"): the record, or the presentation
+// artifact after it. The artifact read goes through the service worker once it controls the page,
+// so holding it needs the Chromium flag below.
+for(const read of [{name:'record',pattern:'**/v1/packs/eng.MRK-1-21-28'},{name:'presentation artifact',pattern:'**/v1/artifacts/**',serviceWorker:true}])test(`returning visit whose restore ${read.name} never answers: checking until the restore's bound, then one Begin that says it could not be reached; the key is kept`,async({page,context})=>{
+ test.skip(process.env.FIA_WORKER_PREVIEW!=='1','Opt-in actual packaged Worker preview only');
+ test.skip(read.serviceWorker&&process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS!=='1','Needs PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1 to hold a service-worker read');
+ test.setTimeout(90000);
+ let held=0,release;const hold=new Promise(r=>release=r);
+ await context.route(read.pattern,async route=>{held++;await hold;await route.abort().catch(()=>{});});
+ await page.addInitScript(()=>{if(!localStorage.getItem('fia-v3-selected-pack'))localStorage.setItem('fia-v3-selected-pack','eng.MRK-1-21-28');});
+ try{
+  await page.goto('/');
+  await expect(page.locator('nav[aria-label="Session controls"] .guide-primary')).toHaveAttribute('aria-label',CHECKING);
+  await page.waitForTimeout(300);await tapCentre(page,1,0);
+  await expect.poll(async()=>(await faces(page)).some(f=>!isChecking(f)),{timeout:RESTORE_TIMEOUT_MS+10000}).toBe(true);
+  await expect(page.locator('.scene-notice')).toHaveText(['Your last passage could not be reached, so Mark 1:1–13 is open.']);
+  await page.waitForTimeout(1500);
+  expect(held,'the restore read was held').toBeGreaterThan(0);
+  const log=await page.evaluate(()=>window.__easy);
+  expect(log.faces.map(f=>f.label),JSON.stringify(log.faces)).toEqual([CHECKING,'Begin']);
+  // Checking ends at the restore's bound, not at the browser's network timeout (minutes).
+  expect(log.faces[1].t).toBeGreaterThan(RESTORE_TIMEOUT_MS-1000);expect(log.faces[1].t).toBeLessThan(RESTORE_TIMEOUT_MS+5000);
+  expect(await page.evaluate(()=>localStorage.getItem('fia-v3-selected-pack'))).toBe('eng.MRK-1-21-28');
+  // The tap was for the saved passage; it never starts the fallback.
+  expect(log.causes.filter(c=>c.kind==='media:playing')).toEqual([]);
+ }finally{release();}
+});
+
+test('R6.2/K4: a heard discussion screen shows the same dock when its recording ends, after a reload and after reopening it',async({page})=>{
+ test.skip(process.env.FIA_WORKER_PREVIEW!=='1','Opt-in actual packaged Worker preview only (reopening reads /v1/packs)');
+ test.setTimeout(120000);
+ const id='S01-U003',index=activities.findIndex(a=>a.id===id);
+ const session={...createSession(activities),index,status:'ready'};
+ await page.addInitScript(value=>{
+  const key='fia-v3-progress@1:eng.MRK-1-1-13';if(!localStorage.getItem(key))localStorage.setItem(key,JSON.stringify(value));
+  // Recordings play at 16x so this screen's own recording ends in seconds.
+  const rate=Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype,'playbackRate');
+  const Audio=window.Audio;window.Audio=class extends Audio{constructor(...args){super(...args);this.addEventListener('play',()=>rate.set.call(this,16));}};
+ },{total:activities.length,activityId:id,session});
+ const dock=()=>page.evaluate(()=>{const nav=document.querySelector('nav[aria-label="Session controls"]');return {primary:nav.querySelector('.guide-primary').getAttribute('aria-label'),others:[...nav.querySelectorAll('button:not(.guide-primary)')].map(b=>b.getAttribute('aria-label')+(b.disabled?' (disabled)':''))};});
+ const passages=async()=>{await page.getByRole('button',{name:'More options'}).click();await page.getByRole('button',{name:'Passages',exact:true}).click();};
+ const card=title=>page.getByRole('dialog').locator('article.pack-card').filter({has:page.getByRole('heading',{name:title,exact:true})});
+ // 1. The recording ends on this screen.
+ await page.goto('/');await settled(page,{quietMs:500});
+ expect((await faces(page)).map(f=>f.label)).toEqual([CHECKING,'Play']);
+ const heading=await page.locator('h1').first().textContent();
+ await tapCentre(page,1,0);
+ await expect.poll(async()=>(await page.evaluate(()=>window.__easy.causes.map(c=>c.kind))).includes('media:playing'),{timeout:20000}).toBe(true);
+ await expect.poll(async()=>(await dock()).primary,{timeout:60000}).toBe('Continue');await page.waitForTimeout(1000);
+ expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('fia-v3-progress@1:eng.MRK-1-1-13')).session.status)).toBe('waiting');
+ const live=await dock();
+ expect(live.others).toContain('Skip to next activity');expect(live.others.filter(label=>/^Play/.test(label))).toEqual([]);
+ // 2. A reload.
+ await page.reload();await settled(page,{quietMs:1000});
+ await expect(page.locator('h1').first()).toHaveText(heading);
+ expect((await faces(page)).map(f=>f.label)).toEqual([CHECKING,'Continue']);expect(await dock()).toEqual(live);
+ // 3. Another passage, then this one again from Passages.
+ await passages();await card('Mark 1:21–28').getByRole('button',{name:/Open passage|Resume passage/}).click();
+ await expect(page.getByRole('heading',{level:1})).toHaveText(/Mark 1:21.28/,{timeout:30000});
+ await expect.poll(async()=>(await faces(page)).at(-1).label,{timeout:30000}).toBe('Continue');await page.waitForTimeout(500);
+ const from=(await faces(page)).length;
+ await passages();await card('Mark 1:1–13').getByRole('button',{name:/Open passage|Resume passage/}).click();
+ await expect(page.locator('h1').first()).toHaveText(heading,{timeout:30000});
+ await expect.poll(async()=>(await faces(page)).slice(from).some(f=>!isChecking(f)),{timeout:30000}).toBe(true);await page.waitForTimeout(1500);
+ expect((await faces(page)).slice(from).map(f=>f.label)).toEqual([CHECKING,'Continue']);expect(await dock()).toEqual(live);
 });
 
 test('J3 hammer: six taps 150 ms apart start one recording and never cancel it',async({page})=>{

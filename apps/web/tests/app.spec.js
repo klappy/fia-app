@@ -120,7 +120,7 @@ it('explicit return from native video preserves owner while waiting and ignores 
  Object.defineProperty(video,'webkitDisplayingFullscreen',{value:true,writable:true});video.webkitExitFullscreen=vi.fn();await fireEvent(video,new Event('webkitbeginfullscreen'));
  await fireEvent.click(screen.getByRole('button',{name:'Return to guide',exact:true}));await settle();expect(document.querySelector('video')).toBe(video);expect(state().detour).toBe('a13');
  video.webkitDisplayingFullscreen=false;video.dispatchEvent(new Event('webkitendfullscreen'));video.dispatchEvent(new Event('ended'));await settle();expect(state().detour).toBeNull();
- await fireEvent.play(video);await fireEvent.ended(video);await settle();expect(activities[state().index].id).toBe('S02-U005');expect(screen.getByRole('button',{name:'Play',exact:true}).classList.contains('guide-primary')).toBe(true);
+ await fireEvent.play(video);await fireEvent.ended(video);await settle();expect(activities[state().index].id).toBe('S02-U005');expect(screen.getByRole('button',{name:'Continue',exact:true}).classList.contains('guide-primary')).toBe(true);
 });
 class FakeAudio {
  constructor(src){this.src=src;this.paused=true;this.currentTime=0;this.duration=12;players.push(this);}

@@ -1,14 +1,14 @@
 // Easy-button state machine at the App boundary (cookbook RECIPE R4, R5, R6).
 // Faces are read from the rendered primary, never from internal state.
 import {it,expect,beforeEach,afterEach,vi} from 'vitest';
-import {render,screen,fireEvent,cleanup,waitFor} from '@testing-library/svelte';
+import {render,screen,fireEvent,cleanup,waitFor,within} from '@testing-library/svelte';
 import {readFileSync} from 'node:fs';
 import {webcrypto} from 'node:crypto';
 import {createSession} from '../src/lib/engine.js';
 const audio=vi.hoisted(()=>({play:vi.fn(),pause:vi.fn(),resume:vi.fn(),stop:vi.fn(),active:false}));
 vi.mock('../src/lib/audio.js',()=>({createAudioController:(state,end)=>{audio.state=state;audio.end=end;return audio;}}));
 import App from '../src/App.svelte';
-import {libraryAdapter} from '../src/lib/library.js';
+import {libraryAdapter,RESTORE_TIMEOUT_MS} from '../src/lib/library.js';
 import {activities,bundledPresentation} from '../src/lib/content.js';
 const registry=JSON.parse(readFileSync('public/content/registry.json','utf8'));
 const pack=id=>{const descriptor=registry.packs.find(p=>p.id===id);return {descriptor,presentation:JSON.parse(readFileSync('public'+descriptor.presentation.url,'utf8'))};};
@@ -129,6 +129,42 @@ for(const delay of [0,SLOW_MS])it(`R1/R5: a failed restore${delay?' slower than 
  }finally{vi.useRealTimers();}
 });
 
+// A stalled restore (accepted, never answered) is bounded where it is made: past its bound it is a
+// missing connection, so R1's fallback says so, keeps the saved key and the default passage is checked.
+const bound=RESTORE_TIMEOUT_MS??15000;
+it('R1/R5: a launch restore that never answers ends at its bound in R1\'s transient fallback: checking, then one Begin; the key is kept',async()=>{
+ slowly();
+ try{
+  let signal;savePack(unadmitted);
+  vi.spyOn(libraryAdapter,'select').mockImplementation((id,options)=>{signal=options.signal;return new Promise((_,reject)=>signal.addEventListener('abort',()=>reject(signal.reason),{once:true}));});
+  render(App);await vi.advanceTimersByTimeAsync(30);await fireEvent.click(primary());
+  await vi.advanceTimersByTimeAsync(bound-1000);
+  expect(faces.labels()).toEqual([CHECKING]);expect(signal.aborted).toBe(false);
+  await vi.advanceTimersByTimeAsync(1000);
+  await waitFor(()=>expect(readFace().busy).toBe(false));await wait(50);
+  expect(signal.aborted).toBe(true);expect(signal.reason.code).toBe('passage-transient');
+  expect(faces.labels()).toEqual([CHECKING,'Begin']);
+  expect(notices()).toContain('Your last passage could not be reached, so Mark 1:1–13 is open.');
+  expect(localStorage.getItem('fia-v3-selected-pack')).toBe(unadmitted.descriptor.id);
+  // The tap was for the saved passage; it never starts the fallback.
+  expect(audio.play).not.toHaveBeenCalled();expect(libraryAdapter.playMedia).not.toHaveBeenCalled();
+  expect(RESTORE_TIMEOUT_MS).toBeGreaterThanOrEqual(10000);expect(RESTORE_TIMEOUT_MS).toBeLessThanOrEqual(15000);
+ }finally{vi.useRealTimers();}
+});
+
+it('R5: a restore that answers inside its bound is not cut off by it',async()=>{
+ slowly();
+ try{
+  let signal;const selected=deferred();savePack(unadmitted);
+  vi.spyOn(libraryAdapter,'select').mockImplementation((id,options)=>{signal=options.signal;return selected.promise;});
+  render(App);await vi.advanceTimersByTimeAsync(bound-500);
+  selected.resolve(unadmitted);await heading(unadmitted.presentation.activities[0].prompt);
+  await waitFor(()=>expect(readFace().busy).toBe(false));await vi.advanceTimersByTimeAsync(bound);await wait(50);
+  expect(faces.labels()).toEqual([CHECKING,'Continue']);expect(signal.aborted).toBe(false);expect(notices()).not.toContain('Your last passage');
+  expect(localStorage.getItem('fia-v3-selected-pack')).toBe(unadmitted.descriptor.id);
+ }finally{vi.useRealTimers();}
+});
+
 it('R5 E1: a returning visit stays checking until the saved passage itself is verified',async()=>{
  const selected=deferred();savePack(unadmitted);vi.spyOn(libraryAdapter,'select').mockReturnValue(selected.promise);
  render(App);await wait(30);
@@ -203,15 +239,53 @@ it('R4 D3/D4: a centre tap during a carried preparation keeps the activity and s
  expect(start).toEqual(['Begin','Pause','Pause']);expect(progress(admitted.descriptor.id).session.index).toBe(0);
 });
 
-it('R6: a restored or revisited admitted screen offers Begin/Play in the centre, never Continue beside a Play',async()=>{
- savePack(admitted,{status:'waiting'});vi.spyOn(libraryAdapter,'select').mockResolvedValue(admitted);
+it('R6.2: an admitted screen that has not been heard offers Begin/Play on every arrival; Back never settles it into a hold',async()=>{
+ savePack(admitted);vi.spyOn(libraryAdapter,'select').mockResolvedValue(admitted);
  render(App);await heading(admitted.presentation.activities[0].prompt);await waitFor(()=>expect(readFace().busy).toBe(false));await wait(30);
- expect(faces.labels()).toEqual([CHECKING,'Play']);expect(readFace().icon).toBe('lucide-play');
+ expect(faces.labels()).toEqual([CHECKING,'Begin']);expect(readFace().icon).toBe('lucide-play');
  expect(screen.queryByRole('button',{name:'Play original recording'})).toBeNull();expect(screen.getByRole('button',{name:'Skip to next activity'})).toBeTruthy();
  // Forward then Back: navigation does not settle an admitted screen into a silent hold.
  await fireEvent.click(screen.getByRole('button',{name:'Skip to next activity'}));await heading(admitted.presentation.activities[1].prompt);await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(1));
  await fireEvent.click(screen.getByRole('button',{name:'Previous activity'}));await heading(admitted.presentation.activities[0].prompt);
  await waitFor(()=>expect(readFace().label).toBe('Play'));expect(screen.queryByRole('button',{name:'Play original recording'})).toBeNull();
+ expect(progress(admitted.descriptor.id).session.status).toBe('ready');
+});
+
+// R6.2/K4: 'waiting' means this screen was heard. An admitted screen enters it only the ways a
+// Mark 1:1–13 screen does (its own recording ended), and a heard screen shows the same dock
+// however the person arrives: when the recording ends, after a reload, and after reopening it.
+function dockState(){const nav=screen.getByRole('navigation',{name:'Session controls'});return {primary:readFace().label,others:[...nav.querySelectorAll('button:not(.guide-primary)')].map(b=>`${b.getAttribute('aria-label')}${b.disabled?' (disabled)':''}`)};}
+async function verified(){await waitFor(()=>expect(readFace().busy).toBe(false));await wait(50);}
+async function openFromPassages(title){
+ await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passages',exact:true}));
+ const card=(await screen.findByRole('heading',{name:title})).closest('article');
+ await fireEvent.click(within(card).getByRole('button',{name:/Open passage|Resume passage/}));
+}
+const bundledServer=pack('eng.MRK-1-1-13');
+for(const c of [{name:'Mark 1:1–13 S01-U003 (discussion)',pack:bundledServer,index:5,other:admitted},{name:'Mark 1:14–20 S01-U001 (admitted guide)',pack:admitted,index:0,other:bundledServer}])it(`R6.2/K4: ${c.name}, once heard, shows the same dock on every arrival: recording end, reload, reopen`,async()=>{
+ const a=c.pack.presentation.activities[c.index],id=c.pack.descriptor.id;
+ libraryAdapter.mediaStatus.mockImplementation(async p=>p.id==='eng.MRK-1-1-13'?{...bundledMedia,files:[{path:bundledServer.presentation.activities[5].audioSrc,bytes:3,mime:'audio/mpeg'}]}:{files:[],savedFiles:[],deliveryRevision:null});
+ vi.spyOn(libraryAdapter,'select').mockImplementation(async selected=>pack(selected));
+ vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',name:'English',nativeName:'English',ready:68}]);
+ vi.spyOn(libraryAdapter,'passages').mockResolvedValue([c.pack.descriptor,c.other.descriptor]);
+ savePack(c.pack,{index:c.index});
+ // 1. The recording ends on this screen.
+ render(App);await heading(a.prompt);await verified();
+ await fireEvent.click(primary());await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(1));
+ audio.active=false;audio.state({playing:false,src:null,elapsed:0,duration:0});audio.end();
+ await waitFor(()=>expect(progress(id).session.status).toBe('waiting'));await waitFor(()=>expect(readFace().label).toBe('Continue'));await wait(50);
+ const live=dockState();
+ expect(live.others).toContain('Skip to next activity');expect(live.others.filter(label=>/^Play/.test(label))).toEqual([]);
+ // 2. A reload.
+ faces.stop();cleanup();faces=recordFaces();
+ render(App);await heading(a.prompt);await verified();
+ expect(faces.labels()).toEqual([CHECKING,'Continue']);expect(dockState()).toEqual(live);
+ // 3. Another passage, then this one again from Passages.
+ await openFromPassages(c.other.descriptor.title);await heading(c.other.presentation.activities[0].prompt);await verified();
+ const from=faces.seen.length;
+ await openFromPassages(c.pack.descriptor.title);await heading(a.prompt);await verified();
+ expect(faces.labels().slice(from)).toEqual([CHECKING,'Continue']);expect(dockState()).toEqual(live);
+ expect(progress(id).session.index).toBe(c.index);
 });
 
 it('R6: after the recording ends the discussion hold is Continue with no Play beside it',async()=>{

@@ -32,7 +32,7 @@ it('a rejected registration with no active worker ends a waiting check at once',
 });
 
 it('an install that fails with none active ends a waiting check once the worker is redundant',async()=>{
- const installing=new EventTarget();installing.state='installing';const registration={installing,waiting:null,active:null};
+ const installing=new EventTarget();installing.state='installing';const registration=Object.assign(new EventTarget(),{installing,waiting:null,active:null});
  worker({register:async()=>registration});
  const check=library.libraryAdapter.mediaStatus(pack);await library.registerWorker('/sw.js');
  expect(await within(check,100)).toBe('still waiting');
@@ -51,10 +51,32 @@ it('a failed update beside an active worker keeps waiting for that worker, which
 });
 
 it('an install that activates is waited for and answers',async()=>{
- let ready;const installing=new EventTarget();installing.state='installing';const registration={installing,waiting:null,active:null};
+ let ready;const installing=new EventTarget();installing.state='installing';const registration=Object.assign(new EventTarget(),{installing,waiting:null,active:null});
  worker({ready:new Promise(r=>ready=r),register:async()=>registration});
  const check=library.libraryAdapter.mediaStatus(pack);await library.registerWorker('/sw.js');
  const active=answering().active;installing.state='activated';registration.installing=null;registration.active=active;installing.dispatchEvent(new Event('statechange'));
  ready(registration);
  expect((await within(check)).value).toMatchObject({ok:true});
+});
+
+// The Service Worker spec queues the failed worker's 'redundant' statechange before the task that
+// clears registration.installing, so the handler can still see the failed worker there.
+it('an install that fails, seen in the spec\'s order (statechange before installing clears), ends a waiting check at once',async()=>{
+ const installing=new EventTarget();installing.state='installing';const registration=Object.assign(new EventTarget(),{installing,waiting:null,active:null});
+ worker({register:async()=>registration});
+ const check=library.libraryAdapter.mediaStatus(pack);await library.registerWorker('/sw.js');
+ expect(await within(check,100)).toBe('still waiting');
+ installing.state='redundant';installing.dispatchEvent(new Event('statechange'));registration.installing=null;
+ expect(await within(check)).toEqual({error:NOT_READY});
+});
+
+it('a newer worker that replaces the pending one is waited for; when it fails too, the check ends at once',async()=>{
+ const first=new EventTarget();first.state='installing';const registration=Object.assign(new EventTarget(),{installing:first,waiting:null,active:null});
+ worker({register:async()=>registration});
+ const check=library.libraryAdapter.mediaStatus(pack);await library.registerWorker('/sw.js');
+ const second=new EventTarget();second.state='installing';registration.installing=second;registration.dispatchEvent(new Event('updatefound'));
+ first.state='redundant';first.dispatchEvent(new Event('statechange'));
+ expect(await within(check,100)).toBe('still waiting');
+ second.state='redundant';second.dispatchEvent(new Event('statechange'));registration.installing=null;
+ expect(await within(check)).toEqual({error:NOT_READY});
 });
