@@ -37,6 +37,12 @@ export async function loadPresentation(descriptor){
 }
 const preparationTransport=createPreparationTransport();
 const executionTransport=createExecutionTransport({fetch:(...args)=>fetch(...args)});
+// The server's own answer, in the facilitator's words. The code lets the sheet and
+// a launch-time restore tell a refusal from a missing connection.
+function notOpened(record){
+ const [message,code]=record?.status==='unavailable'?['This passage is not available yet.','passage-unavailable']:record?.status==='refused'?['This passage cannot be opened.','passage-refused']:record?.status==='preparing'?['This passage is still being prepared. Try again shortly.','passage-transient']:['This passage could not be loaded.','passage-invalid'];
+ return Object.assign(Error(message+' Your current passage stays open.'),{code});
+}
 export async function selectServerPresentation(id,{explicit=false,signal,transport=executionTransport}={}){
  signal?.throwIfAborted();let record=await transport.readPack(id,{signal});signal?.throwIfAborted();
  if(explicit&&record.offlineSnapshot!=='historical-verified'&&record.preparationDemand){
@@ -45,9 +51,9 @@ export async function selectServerPresentation(id,{explicit=false,signal,transpo
   // One observer per selection: no audio-key reconstruction or cross-pack join.
   const observer=createPreparationIntent({request:async(_,owned)=>normalize(await transport.preparePresentation(demand,{signal:owned})),status:async(jobId,_,owned)=>normalize(await transport.readPresentationPreparation(jobId,{signal:owned})),verify:result=>result.record,publish:()=>{}});
   const abort=()=>observer.cancel();signal?.addEventListener('abort',abort,{once:true});
-  try{signal?.throwIfAborted();const result=await observer.start(demand,{explicit:true});signal?.throwIfAborted();if(!result)throw Error('This passage could not be loaded. Your current passage stays open.');record=result.descriptor;}finally{signal?.removeEventListener('abort',abort);observer.cancel();}
+  try{signal?.throwIfAborted();const result=await observer.start(demand,{explicit:true});signal?.throwIfAborted();if(!result)throw Object.assign(Error('This passage could not be loaded. Your current passage stays open.'),{code:'passage-preparation-failed'});record=result.descriptor;}finally{signal?.removeEventListener('abort',abort);observer.cancel();}
  }
- if(record.status!=='ready'||record.packId!==id||record.identity?.packId!==id)throw Error('This passage could not be loaded. Your current passage stays open.');
+ if(record.status!=='ready'||record.packId!==id||record.identity?.packId!==id)throw notOpened(record);
  const identity=record.identity;
  const media=record.execution?.mediaIdentity;
  if(media!==undefined&&(Object.keys(media||{}).sort().join(',')!=='packId,revision'||media.packId!==id||!/^([a-f0-9]{64})$/.test(media.revision)||!/^([a-f0-9]{64})$/.test(record.execution.mediaAssetsSha256)))throw Error('The media identity is invalid.');

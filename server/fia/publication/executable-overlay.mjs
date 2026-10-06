@@ -58,13 +58,17 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
   for(const b of boundArtifacts){need(typeof b.id==='string'&&b.id.length>0&&!seen.has(b.id)&&hash(b.sha256)&&b.bytes instanceof Uint8Array&&await sha256(b.bytes)===b.sha256);seen.add(b.id);bound.push({id:b.id,...await retain(b.bytes)});}
   const artifact=await retain(encode(presentation)),row={schema:'fia-executable-publication@1',binding:copy(binding),revision:artifact.sha256,artifact,bound,mediaIdentity,mediaAssetsSha256,provenance:copy(provenance),baseRecord:copy(baseRecord)};
   await verified(row);
+  // The same bytes republished under a newer job may replace only a row that no
+  // longer verifies (for example, one validated under a superseded policy).
+  const key='executable-record:'+binding.packId+'@'+row.revision,prior=await tx(t=>t.get(key));let superseded=false;
+  if(prior&&!same(prior,row)){try{await verified(prior);}catch{superseded=true;}}
   await tx(async t=>{
-   const key='executable-record:'+binding.packId+'@'+row.revision,old=await t.get(key);
+   const old=await t.get(key);
    const current=await t.get('executable-current:'+binding.packId);
    need(current===priorPointer||current===key,'executable-pointer-conflict');
    need(await eligible(copy(binding))===true,'executable-publication-revoked');
    const currentBase=await base.readCatalog(binding.packId);need(currentBase?.status==='ready'&&currentBase.revision===binding.baseRevision,'executable-base-stale');
-   need(!old||same(old,row),'executable-publication-conflict');
+   need(!old||same(old,row)||superseded&&same(old,prior),'executable-publication-conflict');
    await t.put(key,row);
    for(const d of [artifact,...bound]){
     const k='executable-artifact:'+d.sha256,owners=await t.get(k)||[];
