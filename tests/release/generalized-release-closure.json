@@ -21,7 +21,7 @@
     },
     {
       "path": ".github/workflows/post-deploy.yml",
-      "sha256": "1e8dd3e3fba3ba9c3ed8f4633b818fbbec2fd8977e92cf0a071eb8b2c34a0157"
+      "sha256": "1deb7344f7290f614876f590ace8ae0ea9f8b947ee1fe0becf42ba6533049e04"
     },
     {
       "path": ".github/workflows/promotion-preflight.yml",
@@ -1215,7 +1215,7 @@
     },
     {
       "path": "e2e/live-listening/journey.spec.js",
-      "sha256": "03c16640fc45632f8b2c1d2e56d0e2b04e4e153d07675948acf8a47548ac4985"
+      "sha256": "3d321ad27cfd534e48d036fff51c04dadc1d6b6fd0fd08e6dcdca541a778e347"
     },
     {
       "path": "e2e/visual.spec.js",
@@ -1294,12 +1294,28 @@
       "sha256": "58d471f5cb219462a5221382f1e0ad7a7674520bc67ef9b862fdb52d8904ddfe"
     },
     {
+      "path": "scripts/live-listening/README.md",
+      "sha256": "0771f990404ee90c3dfd4a428952c197ed19b863ef4740c2ea9f704d582ab28d"
+    },
+    {
+      "path": "scripts/live-listening/archive-persona.mjs",
+      "sha256": "7462ffb3d551647c3e4c3d1f54b17226c196d4adf62dcaa32275e780fbe66394"
+    },
+    {
       "path": "scripts/live-listening/assert-observation.mjs",
       "sha256": "497161dac17a2a94e554ea8fbd023b6499bfcfe94e56173635b3db2fae506b27"
     },
     {
+      "path": "scripts/live-listening/baseline-persona.mjs",
+      "sha256": "11d20ce693b110a5e59781513214209355bba44f64434131551f2f62af2d4251"
+    },
+    {
       "path": "scripts/live-listening/controlled-pending.mjs",
-      "sha256": "7b14f04888e67d7e1932ea2062b0b7be68236f198831ccae9c8722192d782c61"
+      "sha256": "a389f1a349445db0801c92ce364a0cc21eb2bd83d951334c8edc8fd69ca5f71f"
+    },
+    {
+      "path": "scripts/live-listening/persona-summary.mjs",
+      "sha256": "e382500c2cb587a31d9896fa1a6dd5672638be89e6484e8a457517a92bc9f78c"
     },
     {
       "path": "scripts/live-listening/scripture-binding.mjs",
@@ -1307,7 +1323,7 @@
     },
     {
       "path": "scripts/live-listening/verify.mjs",
-      "sha256": "58dd86684469956bd5a08271722d98e720af1a5d0c0e62f1b73e080ece26469c"
+      "sha256": "d09600258a9f8939c7123c92646f57162a71225a398c9f06e79c0b17975a1324"
     },
     {
       "path": "scripts/package-worker.mjs",
@@ -1682,8 +1698,24 @@
       "sha256": "88d75538068e69add69669165ad459455994a83199f7f55d97c3e0fc62783047"
     },
     {
+      "path": "tests/live-listening/archive-persona.test.mjs",
+      "sha256": "df99bb1b373a77ea3fb25e524a8475880385d158f2daf41252bdd006822149a6"
+    },
+    {
+      "path": "tests/live-listening/baseline-persona.test.mjs",
+      "sha256": "455406b7f0146b8e2e151323a7ebd0526c014e6aa084fb16d191b8932cb849c2"
+    },
+    {
       "path": "tests/live-listening/observation.test.mjs",
       "sha256": "280bb4cca2c017eb9ca4dac631f8e6ddc6b69892f31a7252126d43f9cc99a193"
+    },
+    {
+      "path": "tests/live-listening/persona-summary.test.mjs",
+      "sha256": "f2c3c180e7df89c0eff0f98ccccea126078dcc3a3d05d8e44f63cc17ed957b99"
+    },
+    {
+      "path": "tests/live-listening/receipt-fixture.mjs",
+      "sha256": "2ea30c73eb1e6eea6495962fca13bd6b5a7fc387a659c08002ee0118172c48b9"
     },
     {
       "path": "tests/live-listening/scripture-binding.test.mjs",
@@ -1691,7 +1723,7 @@
     },
     {
       "path": "tests/live-listening/verify.test.mjs",
-      "sha256": "2f63abf392f72c10e2542bee380b19e2639a747dc98800337de92385a4bb7651"
+      "sha256": "4654ed1cb13016c44c62664b9dac0a25fabe3a11d671bc9369e1038146e251cc"
     },
     {
       "path": "tests/preparation-executor/acceptance.test.mjs",
