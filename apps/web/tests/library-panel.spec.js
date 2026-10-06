@@ -1,3 +1,4 @@
+import {readFileSync} from 'node:fs';
 import {it,expect,vi,afterEach,beforeEach} from 'vitest';
 import {render,screen,fireEvent,cleanup} from '@testing-library/svelte';
 import {tick} from 'svelte';
@@ -56,4 +57,17 @@ it('prepared default selection can resume without silently restoring an explicit
  localStorage.removeItem('fia-download-media-sizes');const file={path:'/v.mp4',group:'video',bytes:3,sha256:'a'.repeat(64),sourceSha256:'b'.repeat(64),sourceBytes:5,mime:'video/mp4',deliveryURL:'https://transcode.klappy.dev/video/preset=fia,q=medium,f=mp4/https://source.test/720p.mp4'};
  const manifest={revision:'qualified',files:[file]};libraryAdapter.downloadStatus.mockResolvedValue({...available,manifest,pending:{selection:'all',received:1,bytes:3,running:false,manifest:{mediaSizes:{video:'prepared'}}}});
  const download=vi.spyOn(libraryAdapter,'download').mockResolvedValue({saved:true});render(LibraryPanel,{view:'downloads'});await settle();await fireEvent.click(screen.getByRole('radio',{name:/Text and all available resources/}));await fireEvent.click(screen.getByRole('button',{name:'Resume download'}));expect(download.mock.calls[0][3]).toEqual({video:'prepared'});
+});
+
+it('catalog shows exact admitted on-request recordings without requesting preparation or fetching every pack',async()=>{
+ const registry=JSON.parse(readFileSync('public/content/registry.json','utf8'));
+ const admitted=registry.packs.find(p=>p.id==='eng.MRK-1-14-20');
+ const unsupported=registry.packs.find(p=>p.id!=='eng.MRK-1-14-20'&&p.capabilities.guideNarration.count===0);
+ vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',nativeName:'English'}]);
+ vi.spyOn(libraryAdapter,'passages').mockResolvedValue([admitted,unsupported]);
+ const prepare=vi.spyOn(libraryAdapter,'prepareRecording');const select=vi.spyOn(libraryAdapter,'select');
+ render(LibraryPanel,{view:'passages'});await settle();await settle();
+ expect(screen.getByText('Some guide recordings available on request · Resources download manually')).toBeTruthy();
+ expect(screen.getByText('Guide recordings unavailable · Resources download manually')).toBeTruthy();
+ expect(prepare).not.toHaveBeenCalled();expect(select).not.toHaveBeenCalled();
 });

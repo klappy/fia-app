@@ -21,11 +21,29 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: node --test tests/promotion/source-evidence.test.mjs
       - run: npm test
+      - run: node --test tests/live-listening/*.test.mjs
       - run: npm run build
       - run: npm run test:release
       - run: npx playwright install --with-deps chromium
-      - run: npx playwright test e2e/deployed.spec.js e2e/full-journey.spec.js e2e/upgrade.spec.js
+      - name: Controlled local listening and cancellation
+        run: |
+          mkdir -p "$RUNNER_TEMP/listening-fixture" test-results/controlled-pending
+          curl --fail --silent --show-error --proto '=https' --max-time 30 --max-filesize 867865 \
+            'https://dev.fiaguide.app/v1/preparation-audio/0f3fa9e77215f5050f9e22b7abee329c47e0e9ff71a5f0c4d248926a8f42268d.mp3' \
+            -o "$RUNNER_TEMP/listening-fixture/source.mp3"
+          test "$(wc -c < "$RUNNER_TEMP/listening-fixture/source.mp3")" -eq 867865
+          echo "0f3fa9e77215f5050f9e22b7abee329c47e0e9ff71a5f0c4d248926a8f42268d  $RUNNER_TEMP/listening-fixture/source.mp3" | sha256sum --check --strict
+          openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj '/CN=localhost' \
+            -addext 'subjectAltName=DNS:localhost,IP:127.0.0.1' \
+            -keyout "$RUNNER_TEMP/listening-fixture/local.key" -out "$RUNNER_TEMP/listening-fixture/local.crt"
+          openssl x509 -in "$RUNNER_TEMP/listening-fixture/local.crt" -pubkey -noout | \
+            openssl pkey -pubin -outform DER | openssl dgst -sha256 -binary | \
+            openssl base64 -A > "$RUNNER_TEMP/listening-fixture/cert-spki.txt"
+          node scripts/live-listening/controlled-pending.mjs "$PWD" \
+            "$RUNNER_TEMP/listening-fixture/source.mp3" "$RUNNER_TEMP/listening-fixture" test-results/controlled-pending
+      - run: npx playwright test e2e/deployed.spec.js e2e/full-journey.spec.js e2e/upgrade.spec.js --output test-results/baseline-journeys
       - uses: actions/upload-artifact@v4
         if: always()
         with:

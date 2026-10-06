@@ -1,0 +1,57 @@
+{
+  "verdict": "PASS scoped selected-medium native controller proof; publication acceptance remains separate",
+  "mediaSha256": "0599996af6b15cf55853cfee33d2b4405e5ee95bd9068f297c5b4b4c24284235",
+  "mediaBytes": 641001,
+  "controllerSha256": "7d5fd19603a72f1d3d481652b20212656e23806e4a9e71bf535f3fd56d34da32",
+  "boundaryCandidateSha256": "fc6414c6cbe20ea7f34e7720dfd327998085735ab6df9f7df88a07d276ae2bce",
+  "clockEvidenceSha256": "ddf2312f7defeb307fc2f0ce0c61e7fd114832ba9d1a1cc1f0397708c6d65456",
+  "decodedSourceRange": [
+    96.8,
+    144.375
+  ],
+  "mapping": {
+    "scale": 1,
+    "offsetSeconds": 0
+  },
+  "selectedDeliveryRange": [
+    96.8,
+    144.375
+  ],
+  "results": [
+    {
+      "rate": 1,
+      "nativeSeekSeconds": 96.8,
+      "nativeDurationSeconds": 320.811938,
+      "actualStopSeconds": 144.378852,
+      "overshootMilliseconds": 3.852,
+      "pauseStable": true,
+      "completionCount": 1,
+      "errors": []
+    },
+    {
+      "rate": 1.5,
+      "nativeSeekSeconds": 96.8,
+      "nativeDurationSeconds": 320.811938,
+      "actualStopSeconds": 144.389436,
+      "overshootMilliseconds": 14.436,
+      "pauseStable": true,
+      "completionCount": 1,
+      "errors": []
+    }
+  ],
+  "replayThenCancel": {
+    "active": false,
+    "playing": false,
+    "ends": 1,
+    "errors": []
+  },
+  "proofSha256": "252631b97a0f78f185d5f0935898c1ea30ea89abc9cb95806c0130ae62c68e61",
+  "inputsSha256": "23364cd80b96cdbafdf4fd4526c5d7cb424039b8dea40369cfc82ad54314dd71",
+  "limits": [
+    "Actual retained medium Opus bytes in isolated local TLS Chromium native Audio/controller probe, not hosted selected-app delivery.",
+    "Browser native duration320.811938 differs from decoded PCM duration320.8055; range derived from accepted decoded-source/output mapping, not duration subtraction.",
+    "No new ASR/acoustic or phonetic acceptance; original Ebony/Zebedee uncertainty unchanged.",
+    "Stops lie within candidate quiet interval before next verse; no human listening claim.",
+    "No source/publication or shared harness edits; standalone browser and server closed."
+  ]
+}
