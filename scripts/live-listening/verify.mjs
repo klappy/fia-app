@@ -1,4 +1,4 @@
-import {assertPlayback} from './assert-observation.mjs';
+import {assertPlayback,assertCancellation} from './assert-observation.mjs';
 import {readFileSync} from 'node:fs';
 import {pathToFileURL} from 'node:url';
 export const required=new Map([
@@ -23,7 +23,10 @@ export function verify(report,{commit,environment,readAttachment=path=>readFileS
  if(e.observations?.some(o=>o.kind==='pageerror'))throw Error('Application error');
  const minimum=claims.includes('nextPlayed')?2:claims.includes('scripturePlayed')||claims.includes('explicitPlay')?1:0;
  if(!Array.isArray(e.nativePlayback)||e.nativePlayback.length<minimum)throw Error('Missing real media clock evidence');
- for(const sample of e.nativePlayback){assertPlayback({expected:sample.binding,currentActivityId:sample.currentActivityId,media:sample.media,controls:sample.controls});if(!sample.after?.some((a,i)=>!a.paused&&a.readyState>=2&&a.src&&a.src===sample.before?.[i]?.src&&a.time-sample.before[i].time>=0.25))throw Error('Media clock did not advance');}
+ const sequence=claims.includes('nextPlayed')?['S01-U001','S01-U002']:claims.includes('scripturePlayed')?['S01-U002-reading-1']:claims.includes('explicitPlay')?['S01-U001']:[];
+ if(e.nativePlayback.length!==sequence.length)throw Error('Wrong native sample count');
+ if(claims.includes('noResurrection'))assertCancellation(e.cancellation||{});
+ for(const [index,sample] of e.nativePlayback.entries()){if(sample.currentActivityId!==sequence[index])throw Error('Wrong canonical activity sequence');const activeIndex=sample.media?.findIndex(a=>!a.paused);const m=sample.media?.[activeIndex],before=sample.before?.[activeIndex],after=sample.after?.[activeIndex];if(!m||!before||!after||m.src!==before.src||m.src!==after.src||m.before!==before.time||m.after!==after.time)throw Error('Unbound native clock owner');assertPlayback({expected:sample.binding,currentActivityId:sample.currentActivityId,media:sample.media,controls:sample.controls});if(!sample.after?.some((a,i)=>!a.paused&&a.readyState>=2&&a.src&&a.src===sample.before?.[i]?.src&&a.time-sample.before[i].time>=0.25))throw Error('Media clock did not advance');}
  }catch(error){errors.push(`${title}: ${error.message}`);}
  }
  return {ok:errors.length===0,environment,commit,errors,scope:'Live Chromium P2 listening only; no physical-device or audible-output claim'};
