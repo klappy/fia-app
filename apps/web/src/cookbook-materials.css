@@ -194,6 +194,18 @@
   .guide-primary.playing .ring-dots { animation:none; }
 }
 
+/* Easy button while availability is checked (captain-adopted option 1, k0011):
+   no icon, no label, a soft gg-breathe; static at .7 under reduced motion. */
+.guide-primary.verifying .primary-disc { opacity:.7; animation:gg-breathe 2s var(--ease-flow) infinite; }
+/* Starting: the design-book loading row (dimmed, spinner, the label it will have). */
+.guide-primary.starting .primary-disc { opacity:.6; }
+.guide-primary.starting .primary-disc svg { animation:primary-spin 1.2s linear infinite; }
+.guide-primary[aria-disabled="true"] { cursor:default; }
+@keyframes primary-spin { to { transform:rotate(360deg); } }
+@media (prefers-reduced-motion:reduce) {
+  .guide-primary.verifying .primary-disc, .guide-primary.starting .primary-disc svg { animation:none; }
+}
+
 /* Playback replaces decorative dots. Ring and disc share one exact center. */
 .primary-orbit { width:72px; height:72px; position:relative; display:grid; place-items:center; }
 .playback-ring { position:absolute; width:96px; height:96px; left:-12px; top:-12px; transform:rotate(-90deg); pointer-events:none; }

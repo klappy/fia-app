@@ -21,7 +21,8 @@ beforeEach(()=>{
  URL.createObjectURL=vi.fn(()=> 'blob:execution');URL.revokeObjectURL=vi.fn();
 });
 afterEach(()=>{cleanup();vi.restoreAllMocks();vi.unstubAllGlobals();vi.clearAllMocks();localStorage.clear();delete document.modelContext;});
-async function mount(){render(App);await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toBe(presentation.activities[0].prompt));}
+// R5: the easy button checks availability before it shows an action.
+async function mount(){render(App);await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toBe(presentation.activities[0].prompt));await waitFor(()=>expect(document.querySelector('.guide-primary').hasAttribute('aria-busy')).toBe(false));}
 function firstNarration(action='play-bound-audio',completion='manual-continue'){presentation.activities[0].execution.narration={action,[action==='prepare-original'?'demand':'artifact']:ref};presentation.activities[0].execution.completion.action=completion;}
 function ended(){audio.active=false;audio.state({playing:false,src:null,elapsed:0,duration:0});audio.end();}
 it('explicit server narration completes into a silent child; replay/back never infer narration from retained source',async()=>{
@@ -97,13 +98,13 @@ it('Cancel preparation revokes a pending executable demand and late ready cannot
  let retryReady;libraryAdapter.prepareRecording.mockReturnValue(new Promise(r=>retryReady=r));await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await waitFor(()=>expect(libraryAdapter.prepareRecording).toHaveBeenCalledTimes(2));await fireEvent.click(screen.getByRole('button',{name:'Cancel preparation',exact:true}));retryReady({status:'ready',value:{}});await new Promise(r=>setTimeout(r,0));expect(libraryAdapter.prepareRecording.mock.calls[1][1].aborted).toBe(true);expect(audio.play).not.toHaveBeenCalled();
  libraryAdapter.prepareRecording.mockResolvedValue({status:'ready',value:{}});await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(1));expect(libraryAdapter.prepareRecording).toHaveBeenCalledTimes(3);expect(libraryAdapter.prepareRecording.mock.calls[2][1].aborted).toBe(false);
 });
-it('matching executable playback dismisses ready notice using declared identity association',async()=>{
+it('carried executable playback suppresses the ready notice and keeps it dismissed by declared identity association (R4.5)',async()=>{
  firstNarration('prepare-original');const identity={packId:descriptor.id,presentationRevision:'b'.repeat(64),language:'eng',edition:'fia-guide',quality:'original',activityId:'server-step',sourceUnitId:'server-unit',sourceTextSha256:'c'.repeat(64)};
  libraryAdapter.prepareOriginal.mockImplementation((reference,context)=>context.prepareNarration(identity,context));
  audio.play.mockImplementation((text,src)=>{audio.active=true;audio.src=src;});
  await mount();await fireEvent.click(screen.getByRole('button',{name:'Begin',exact:true}));await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(1));
- expect(screen.getByRole('status').textContent).toContain('Recording ready');
- audio.state({playing:true,src:'blob:unrelated',elapsed:0,duration:2});await new Promise(r=>setTimeout(r,0));expect(screen.getByRole('status').textContent).toContain('Recording ready');
+ expect(screen.queryByText('Recording ready. Press Play to listen.')).toBeNull();
+ audio.state({playing:true,src:'blob:unrelated',elapsed:0,duration:2});await new Promise(r=>setTimeout(r,0));expect(screen.queryByText('Recording ready. Press Play to listen.')).toBeNull();
  audio.state({playing:true,src:audio.src,elapsed:0.1,duration:2});await waitFor(()=>expect(screen.queryByText('Recording ready. Press Play to listen.')).toBeNull());
 });
 it('failed executable prepared playback re-requests and re-verifies on explicit retry',async()=>{
