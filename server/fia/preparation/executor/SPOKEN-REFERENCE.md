@@ -1,6 +1,6 @@
 # English spoken-reference comparison evidence
 
-Unconnected local module; not an acceptance adapter, trusted script parser, alignment finder, or hosted feature. This slice implements Bible references only. Numbered prompt labels, non-English grammars, chapter-only references, lists and cross-chapter ranges remain unsupported. The finite alias table deliberately omits unlisted abbreviations. No fuzzy spelling, ordinal book prefixes or speech repair is performed.
+Unconnected local module; not an acceptance adapter, trusted script parser, alignment finder, or hosted feature. This slice implements Bible references and a separate trusted numbered-prompt-label comparator. Non-English grammars, chapter-only references, lists and cross-chapter ranges remain unsupported. The finite alias table deliberately omits unlisted abbreviations. No fuzzy spelling, ordinal book prefixes or speech repair is performed.
 
 Policy source: cookbook PR176, source revision `f916415`, policy SHA256 `4e866a8051e1c6a5a99745bd63b9961c5a058a1e736b058a7696e01e85b2d5b3`. This code does not admit real outputs merely because the policy text was reviewed.
 
@@ -15,3 +15,11 @@ Returned `formatting-equivalent` means only a unique context-bound field match. 
 Normalization identity binds the actual script/raw hashes, policy and grammar revisions, alias/number table hashes, supplied versification hash/revision, and selected context/spans. Consumers must not reuse old matching receipts across different normalization identities. Integration, confidence calibration, safe boundaries, playback eligibility and real representative source acceptance remain separate reviewed work.
 
 Validation: `node --test tests/preparation-executor/spoken-reference.test.mjs`. Tests cover alternate field syntax, reversible offsets, numeric-prefix identity, many-word numbers, pre-comparison ambiguity, invalid versification, unsupported punctuation, lexical extras, trusted-span boundaries, evidence pins and invalid/nonmonotonic times. This is a bounded grammar implementation, not completion of spoken-format policy or the delivery pipeline.
+
+## Numbered prompt labels
+
+`compareSpokenPromptLabel` is a separate evidence API under the same pinned policy. It receives the same script/raw bytes and hashes, but context is `{kind: 'numbered-prompt-label', language: 'eng', promptSpan, labelSpan, wordSpan}`. The trusted structural parser must authenticate the prompt and its label; callers cannot turn an ordinary prose number or verse into a label by changing a flag. No versification manifest is needed for labels.
+
+The complete label must be at the prompt start, with only presentational whitespace before it. Written forms are exactly `1.` through `20.` or `(1)` through `(20)`, followed by whitespace and a nonempty prompt body. The recognized span may contain the exact digit/cardinal or `number` followed by that value. Ordinals, changed quantities, punctuation-bearing numeric tokens and lexical extras are unsupported/different, never erased. An empty recognized span yields `unmatched-structural-label`; there is no silent deletion rule.
+
+The label grammar has its own `fia-spoken-prompt-label-en@1` identity. Pins include actual script/raw hashes, policy hash, finite number-table hash and the complete trusted prompt/label/word spans. Its reversible trace separates original numeric words, an optional `number` marker and silent label punctuation. The original raw evidence is untouched; every result still has `grantsAcceptance:false` and `timingValidated:false`. This does not discover prompts, resolve repeated recording alignment or approve playback.

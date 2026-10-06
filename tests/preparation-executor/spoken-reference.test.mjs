@@ -65,3 +65,45 @@ test('invalid or nonmonotonic raw times fail before evidence',async()=>{
  const f=await fixture();const raw=JSON.parse(new TextDecoder().decode(f.recognitionBytes));raw.words[2].end=5;
  f.recognitionBytes=utf8(JSON.stringify(raw));f.recognitionSha256=await sha256(f.recognitionBytes);await assert.rejects(compareSpokenReference(f),/word-evidence/);
 });
+
+// Prompt labels are a separate API and never activate the reference/prose parser.
+const {compareSpokenPromptLabel}=await import('../../server/fia/preparation/executor/spoken-reference.mjs');
+async function labelFixture(script='1. Discuss the story.',speech='number one'){
+ const f=await fixture(script,speech);
+ f.context={kind:'numbered-prompt-label',language:'eng',promptSpan:[0,script.length],labelSpan:[0,script.indexOf(' ')],wordSpan:[0,speech.split(' ').length]};
+ return f;
+}
+test('prompt labels support only finite exact digit/cardinal values and number marker',async()=>{
+ for(const [label,speech] of [['1.','one'],['(2)','number two'],['20.','twenty'],['(20)','number 20']]){
+  const f=await labelFixture(`${label} Discuss.`,speech),r=await compareSpokenPromptLabel(f);
+  assert.equal(r.classification,'formatting-equivalent');assert.equal(r.grantsAcceptance,false);assert.equal(r.timingValidated,false);
+  assert.equal(r.trace.value.scriptText,String(r.label));
+  assert.deepEqual([...r.trace.value.words,...r.trace.markers].map(w=>w.wordIndex).sort(),Array.from({length:speech.split(' ').length},(_,i)=>i));
+  for(const s of r.trace.separators){assert.equal('start' in s,false);assert.equal('end' in s,false);}
+ }
+});
+test('labels refuse quantity changes, unsupported punctuation, ordinals and lexical extras',async()=>{
+ for(const speech of ['two','number two'])assert.equal((await compareSpokenPromptLabel(await labelFixture(undefined,speech))).classification,'semantic-wording-difference');
+ for(const speech of ['first','number first','-1','−1','1.0','1/2','１','no one','not one','never one','without one','one one','one.','21'])assert.notEqual((await compareSpokenPromptLabel(await labelFixture(undefined,speech))).classification,'formatting-equivalent',speech);
+ for(const text of ['0. Discuss.','21. Discuss.','01. Discuss.','1: Discuss.','1) Discuss.','-1. Discuss.','(1.0) Discuss.'])assert.equal((await compareSpokenPromptLabel(await labelFixture(text,'one'))).classification,'unsupported');
+ const empty=await labelFixture();empty.context.wordSpan=[0,0];assert.equal((await compareSpokenPromptLabel(empty)).reason,'unmatched-structural-label');
+});
+test('only structurally identified prompt-start labels qualify; internal prose cannot vanish',async()=>{
+ const f=await labelFixture('Discuss 1. thing.','one');f.context.labelSpan=[8,10];await assert.rejects(compareSpokenPromptLabel(f),/prompt-start/);
+ const g=await labelFixture();g.context.kind='verse';await assert.rejects(compareSpokenPromptLabel(g),/trusted-context/);
+ for(const text of ['1.Discuss.','1.','1.   ']){
+  const h=await labelFixture(text,'one');h.context.labelSpan=[0,2];await assert.rejects(compareSpokenPromptLabel(h),/prompt-boundary/);
+ }
+ const h=await labelFixture();h.context.promptSpan=[0,1];await assert.rejects(compareSpokenPromptLabel(h),/prompt-start/);
+});
+test('labels preserve raw offsets/hashes and bind complete prompt context',async()=>{
+ const f=await labelFixture('Intro\n  (2) Discuss.\nAfter','Intro number two Discuss');
+ f.context.promptSpan=[6,20];f.context.labelSpan=[8,11];f.context.wordSpan=[1,3];
+ const before=Buffer.from(f.recognitionBytes);const r=await compareSpokenPromptLabel(f);
+ assert.equal(r.label,2);assert.deepEqual(r.trace.value.scriptSpan,[9,10]);assert.equal(r.trace.value.words[0].wordIndex,2);assert.equal(r.trace.markers[0].wordIndex,1);assert.deepEqual(Buffer.from(f.recognitionBytes),before);
+ for(const name of ['scriptSha256','recognitionSha256'])await assert.rejects(compareSpokenPromptLabel({...f,[name]:'a'.repeat(64)}),/evidence-hash/);
+ const changed=await compareSpokenPromptLabel({...f,context:{...f.context,promptSpan:[8,20]}});assert.notEqual(r.pins.normalizationSha256,changed.pins.normalizationSha256);
+ for(const span of [[0,1.5],[-1,0],[0,10]])await assert.rejects(compareSpokenPromptLabel({...f,context:{...f.context,wordSpan:span}}),/word-span/);
+ const raw=JSON.parse(new TextDecoder().decode(f.recognitionBytes));raw.words[2].end=-1;
+ f.recognitionBytes=utf8(JSON.stringify(raw));f.recognitionSha256=await sha256(f.recognitionBytes);await assert.rejects(compareSpokenPromptLabel(f),/word-evidence/);
+});
