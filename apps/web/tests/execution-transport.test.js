@@ -109,3 +109,15 @@ test('presentation status preserves typed refusal and rejects inconsistent wire 
  await assert.rejects(transport.preparePresentation({url:'https://untrusted.invalid'}),/demand is invalid/);
  assert.equal(calls,0);
 });
+
+test('catalog and presentation reads share immutable server bytes without starting preparation',async()=>{
+ const record={status:'ready',packId:'eng.MRK-1-14-20',revision:sha256,artifact:{sha256,bytes:bytes.length,mime:'application/json'},preparationDemand:{packId:'eng.MRK-1-14-20',baseRevision:sha256,sourceRevision:'a'.repeat(40),capability:'executable-presentation'}};
+ const calls=[];const transport=createExecutionTransport({fetch:async(url,options)=>{calls.push({url,options});return url.startsWith('/v1/packs/')?Response.json(record):new Response(bytes);}});
+ const observed=await transport.readPack(record.packId,{revision:sha256});
+ assert.deepEqual(observed,record);assert.deepEqual(await transport.readPresentationRecord(observed),{fixture:'opaque server artifact'});
+ assert.equal(calls[0].url,`/v1/packs/${record.packId}?revision=${sha256}`);
+ assert.ok(calls.every(x=>x.options.method==='GET'));
+ await assert.rejects(transport.readPresentationRecord({...record,artifact:{...record.artifact,bytes:bytes.length+1}}),/could not be verified/);
+ const wrong=createExecutionTransport({fetch:async()=>Response.json({...record,packId:'spa.MRK-1-14-20'})});
+ await assert.rejects(wrong.readPack(record.packId),/catalog is invalid/);
+});

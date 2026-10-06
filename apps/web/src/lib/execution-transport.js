@@ -10,10 +10,7 @@ const validIdentity=value=>shape(value,identityFields)&&identityFields.every(key
 const validRange=value=>value===null||shape(value,['startSeconds','endSeconds'])&&Number.isFinite(value.startSeconds)&&value.startSeconds>=0&&Number.isFinite(value.endSeconds)&&value.endSeconds>value.startSeconds;
 
 export function createExecutionTransport({fetch:fetchArtifact=globalThis.fetch}={}){
- const transport={
-  async readBoundArtifactBytes(reference,{signal}={}){
-   if(!validReference(reference))throw Error('The server artifact reference is invalid.');
-   const expected=reference.sha256;
+ async function readArtifactBytes(expected,{signal}={}){
    signal?.throwIfAborted();
    const response=await fetchArtifact(`/v1/artifacts/${expected}`,{method:'GET',cache:'no-store',redirect:'error',signal});
    signal?.throwIfAborted();
@@ -23,6 +20,11 @@ export function createExecutionTransport({fetch:fetchArtifact=globalThis.fetch}=
    if(await hash(bytes)!==expected)throw Error('The server artifact could not be verified.');
    signal?.throwIfAborted();
    return bytes;
+ }
+ const transport={
+  async readBoundArtifactBytes(reference,context={}){
+   if(!validReference(reference))throw Error('The server artifact reference is invalid.');
+   return readArtifactBytes(reference.sha256,context);
   },
  };
  async function readBoundJSON(reference,context){
@@ -77,6 +79,24 @@ export function createExecutionTransport({fetch:fetchArtifact=globalThis.fetch}=
   if(typeof jobId!=='string'||!hashPattern.test(jobId))throw Error('The server presentation job identity is invalid.');
   signal?.throwIfAborted();
   return presentationStatus(`/v1/presentation-preparations/${jobId}`,{method:'GET',signal},jobId);
+ };
+ transport.readPack=async(packId,{revision,signal}={})=>{
+  if(!text(packId)||revision!==undefined&&(typeof revision!=='string'||!hashPattern.test(revision)))throw Error('The server catalog identity is invalid.');
+  signal?.throwIfAborted();
+  const response=await fetchArtifact(`/v1/packs/${encodeURIComponent(packId)}${revision?`?revision=${revision}`:''}`,{method:'GET',cache:'no-store',redirect:'error',signal});
+  signal?.throwIfAborted();
+  let record;try{record=await response.json();}catch{throw Error('The server catalog is invalid.');}
+  signal?.throwIfAborted();
+  const codes={ready:200,preparing:202,unavailable:404,refused:400};
+  if(response.redirected||!record||!Object.hasOwn(codes,record.status)||response.status!==codes[record.status]||record.status==='ready'&&(record.packId!==packId||revision&&record.revision!==revision))throw Error('The server catalog is invalid.');
+  return record;
+ };
+ transport.readPresentationRecord=async(record,context={})=>{
+  const artifact=record?.artifact;
+  if(record?.status!=='ready'||typeof record.revision!=='string'||!hashPattern.test(record.revision)||artifact?.sha256!==record.revision||!Number.isSafeInteger(artifact.bytes)||artifact.bytes<=0||artifact.mime!=='application/json')throw Error('The server presentation record is invalid.');
+  const bytes=await readArtifactBytes(artifact.sha256,context);
+  if(bytes.byteLength!==artifact.bytes)throw Error('The server presentation could not be verified.');
+  try{return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));}catch{throw Error('The server presentation is invalid.');}
  };
  return transport;
 }
