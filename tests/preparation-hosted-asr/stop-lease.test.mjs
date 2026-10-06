@@ -1,0 +1,18 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createHostedDispatch} from '../../server/fia/preparation/hosted-asr/dispatch.mjs';
+import {sha256} from '../../server/fia/preparation/contract.mjs';
+function storage(){const rows=new Map();let queue=Promise.resolve();return {get:async k=>structuredClone(rows.get(k)),put:async(k,v)=>rows.set(k,structuredClone(v)),setAlarm:async()=>{},transaction(fn){const p=queue.then(()=>fn(this));queue=p.catch(()=>{});return p;}};}
+const identity={sourceSha256:'0f3fa9e77215f5050f9e22b7abee329c47e0e9ff71a5f0c4d248926a8f42268d',sourceBytes:867865,modelId:'Systran/faster-whisper-small',modelRevision:'536b0662742c02347bc0e980a01041f333bce120',language:'eng',runtimeSha256:'e'.repeat(64),configSha256:'b'.repeat(64),modelSha256:'c'.repeat(64),scriptSha256:'d'.repeat(64)};
+const bytes=new TextEncoder().encode('{}'),digest=await sha256(bytes),artifact={sha256:digest,reference:`recognition/sha256/${digest}.json`};
+function setup(extra={}){return {storage:storage(),ledger:'A',identity,activation:{startedAt:0,expiresAt:1200000},now:()=>100,verifyArtifact:async()=>bytes,validateResult:async()=>true,executor:{limitsEnforced:true,start:async()=>artifact,stop:async()=>true},...extra};}
+
+test('gated old A alarm cannot let reconciliation complete or start B before its sole stop',async()=>{
+ let alarms=0,releaseOldStop,running=null;const stops=[];const options=setup({executor:{limitsEnforced:true,start:async row=>{running=row.ledger;return artifact;},stop:async row=>{stops.push({lane:row.ledger,running});running=null;return true;}}});options.storage.setAlarm=async()=>{if(++alarms===2)await new Promise(r=>releaseOldStop=r);};
+ const a=createHostedDispatch(options),pending=a.dispatch();while(!releaseOldStop)await new Promise(r=>setImmediate(r));const row=await a.status();assert.equal(row.stopLease.state,'pending');await assert.rejects(a.reconcile({attemptId:row.attemptId,revision:row.revision,artifact}),/stop-unverified/);
+ assert.equal((await createHostedDispatch({...options,ledger:'B'}).dispatch()).reason,'singleton-unresolved');assert.equal(stops.length,0);releaseOldStop();assert.equal((await pending).state,'completed');assert.deepEqual(stops,[{lane:'A',running:'A'}]);assert.equal((await createHostedDispatch({...options,ledger:'B'}).dispatch()).state,'completed');assert.deepEqual(stops,[{lane:'A',running:'A'},{lane:'B',running:'B'}]);
+});
+test('timed-out destroy remains unresolved across reopen and late native completion never unlocks B',async t=>{
+ t.mock.timers.enable({apis:['setTimeout']});let release,stops=0,running=null;const options=setup({executor:{limitsEnforced:true,start:async row=>{running=row.ledger;return artifact;},stop:async()=>{stops++;await new Promise(r=>release=r);running=null;return true;}}});const a=createHostedDispatch(options),pending=a.dispatch();while(!release)await new Promise(r=>setImmediate(r));t.mock.timers.tick(30000);const row=await pending;assert.equal(row.state,'uncertain');assert.equal(row.stopLease.state,'pending');
+ const reopened=createHostedDispatch(options);await assert.rejects(reopened.reconcile({attemptId:row.attemptId,revision:row.revision,artifact}),/stop-unverified/);assert.equal((await createHostedDispatch({...options,ledger:'B'}).dispatch()).reason,'singleton-unresolved');release();await new Promise(r=>setImmediate(r));assert.equal(running,null);assert.equal((await reopened.status()).stopLease.state,'pending');await reopened.operatorStop({attemptId:row.attemptId,revision:row.revision});assert.equal(stops,1);assert.equal((await options.storage.get('hosted:budget')).starts,1);
+});
