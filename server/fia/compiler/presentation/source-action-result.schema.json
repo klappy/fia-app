@@ -1,0 +1,225 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "inputSha256",
+    "cueRoles",
+    "provenance",
+    "resourceAssociations"
+  ],
+  "properties": {
+    "contract": {
+      "const": "fia-source-action-result@1"
+    },
+    "inputSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "cueRoles": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "outcome",
+            "roles",
+            "evidenceUnitIds"
+          ],
+          "properties": {
+            "outcome": {
+              "enum": [
+                "resolved",
+                "unknown"
+              ]
+            },
+            "roles": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "readingRequested",
+                    "discussionRequested",
+                    "resourceLookupRequested",
+                    "pauseOnly"
+                  ],
+                  "properties": {
+                    "readingRequested": {
+                      "type": "boolean"
+                    },
+                    "discussionRequested": {
+                      "type": "boolean"
+                    },
+                    "resourceLookupRequested": {
+                      "type": "boolean"
+                    },
+                    "pauseOnly": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              ]
+            },
+            "evidenceUnitIds": {
+              "type": "array",
+              "maxItems": 5,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              }
+            }
+          }
+        }
+      ]
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "contractSha256",
+        "schemaSha256",
+        "questionSha256",
+        "policySha256",
+        "modelRevision",
+        "configSha256",
+        "rawEvidenceSha256"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "deterministic",
+            "jev",
+            "mixed",
+            "none"
+          ]
+        },
+        "contractSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "schemaSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "questionSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "policySha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "modelRevision": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "configSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "rawEvidenceSha256": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "resourceAssociations": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "outcome",
+          "candidateResourceIds",
+          "evidenceUnitIds",
+          "reason",
+          "slotId",
+          "resourceKind",
+          "relation"
+        ],
+        "properties": {
+          "outcome": {
+            "enum": [
+              "matched",
+              "none",
+              "ambiguous",
+              "unsupported"
+            ]
+          },
+          "candidateResourceIds": {
+            "type": "array",
+            "maxItems": 8,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            }
+          },
+          "evidenceUnitIds": {
+            "type": "array",
+            "maxItems": 5,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            }
+          },
+          "reason": {
+            "enum": [
+              "explicit-binding",
+              "requested-candidate-match",
+              "no-requested-candidate-match",
+              "competing-candidates",
+              "insufficient-context",
+              "candidate-envelope-too-large",
+              "provider-unavailable",
+              "provider-outcome-uncertain",
+              "decision-policy-unavailable"
+            ]
+          },
+          "slotId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "resourceKind": {
+            "enum": [
+              "term",
+              "image",
+              "map",
+              "video"
+            ]
+          },
+          "relation": {
+            "enum": [
+              "requested-medium",
+              "existing-supplement"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

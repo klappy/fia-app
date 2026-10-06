@@ -3,7 +3,9 @@ export const VERSION='2025-06-18';
 const schema=properties=>({type:'object',properties,required:Object.keys(properties).filter(k=>k!=='revision'),additionalProperties:false});
 const tools=[
  {name:'read_pack',description:'Read a pinned package outcome; no preparation or paid work.',inputSchema:schema({packId:{type:'string'},revision:{type:'string'}}),annotations:{readOnlyHint:true,destructiveHint:false,idempotentHint:true,openWorldHint:false}},
- {name:'read_artifact',description:'Read exact immutable JSON bytes as UTF-8 content by SHA-256.',inputSchema:schema({sha256:{type:'string'}}),annotations:{readOnlyHint:true,destructiveHint:false,idempotentHint:true,openWorldHint:false}}
+ {name:'read_artifact',description:'Read exact immutable JSON bytes as UTF-8 content by SHA-256.',inputSchema:schema({sha256:{type:'string'}}),annotations:{readOnlyHint:true,destructiveHint:false,idempotentHint:true,openWorldHint:false}},
+ {name:'prepare_presentation',description:'Explicitly prepare one source-bound executable presentation. Starts or joins durable work.',inputSchema:schema({packId:{type:'string'},baseRevision:{type:'string'},sourceRevision:{type:'string'},capability:{const:'executable-presentation'}}),annotations:{readOnlyHint:false,destructiveHint:false,idempotentHint:true,openWorldHint:false}},
+ {name:'read_presentation_preparation',description:'Read a previously requested presentation job; never starts interpretation or publication.',inputSchema:schema({jobId:{type:'string'}}),annotations:{readOnlyHint:true,destructiveHint:false,idempotentHint:true,openWorldHint:false}}
 ];
 const object=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
 export async function serveMcp(req,res,operations) {
@@ -28,11 +30,13 @@ export async function serveMcp(req,res,operations) {
     error(400,null,-32600,'Unsupported notification');return;
   }
   if(rpc.method==='ping'){reply({});return;}
-  if(rpc.method==='tools/list'){reply({tools});return;}
+  if(rpc.method==='tools/list'){reply({tools:tools.filter(t=>t.name==='prepare_presentation'?typeof operations.preparePresentation==='function':t.name==='read_presentation_preparation'?typeof operations.readPresentationPreparation==='function':true)});return;}
   if(rpc.method!=='tools/call'){error(404,rpc.id,-32601,'Method not found');return;}
   let result;
   if(params.name==='read_pack')result=await operations.readPack(params.arguments);
   else if(params.name==='read_artifact')result=await operations.readArtifact(params.arguments);
+  else if(params.name==='prepare_presentation')result=operations.preparePresentation?await operations.preparePresentation(params.arguments):{status:'unavailable',reason:'presentation-preparation-unavailable'};
+  else if(params.name==='read_presentation_preparation')result=operations.readPresentationPreparation?await operations.readPresentationPreparation(params.arguments):{status:'unavailable',reason:'presentation-preparation-unavailable'};
   else result={status:'refused',code:'unsupported-operation'};
   reply({content:[{type:'text',text:JSON.stringify(result)}],structuredContent:result,isError:result.status==='refused'});
 }

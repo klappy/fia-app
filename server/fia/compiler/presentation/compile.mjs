@@ -1,3 +1,4 @@
+import {projectExecutablePresentation} from './source-action-projector.mjs';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 const SOURCE_BINDINGS=JSON.parse(readFileSync(new URL('./source-bindings.json',import.meta.url)));
@@ -63,4 +64,12 @@ export function compilePresentation(input,{listEvidence,exampleEvidence,sourceFi
 }
 export function describe(manifest,bytes,{capabilities,defaultScriptureId,diagnostics=[]}){
  const sha256=digest(bytes);return {id:manifest.packId,language:manifest.language,pericopeId:manifest.pericope,title:JSON.parse(bytes).title,defaultScriptureId,revision:sha256,presentation:{url:`/content/packs/${manifest.packId}/${sha256}.json`,sha256,bytes:Buffer.byteLength(bytes)},capabilities,diagnostics};
+}
+
+// Optional execution hook shares the portable domain projector with the Worker.
+// Existing synchronous compilation remains unchanged when execution is not requested.
+export async function compileExecutablePresentation(input,{sourceActions,...options}){
+ const compiled=compilePresentation(input,options);
+ const projected=await projectExecutablePresentation({...sourceActions,basePresentation:compiled.pack});
+ return {...compiled,...projected,pack:projected.presentation};
 }
