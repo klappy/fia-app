@@ -9,7 +9,7 @@ export const P1_CANONICAL_LEDGER_PINS=Object.freeze({
 const equal=(a,b)=>canonicalJSONString(a)===canonicalJSONString(b);
 function need(value,reason){if(!value)throw Error(`canonical-ledger-${reason}`);}
 function unique(rows,key){need(Array.isArray(rows),'rows');const m=new Map();for(const r of rows){need(typeof r?.[key]==='string'&&!m.has(r[key]),'duplicate-or-invalid-id');m.set(r[key],r);}return m;}
-async function pinned(bytes,key){need(bytes instanceof Uint8Array&&bytes.length>0&&bytes.length<=32*1024*1024,'bytes');const copy=bytes.slice();need(await sha256(copy)===P1_CANONICAL_LEDGER_PINS[key],`${key}-hash`);return copy;}
+async function pinned(bytes,key){need(bytes instanceof Uint8Array&&bytes.length>0&&bytes.length<=32*1024*1024,'bytes');const copy=new Uint8Array(bytes);need(await sha256(copy)===P1_CANONICAL_LEDGER_PINS[key],`${key}-hash`);return copy;}
 const parse=bytes=>JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
 /** Separate P1 source representation, not a narration adapter or acceptance API.
  * All four retained artifacts are required; no network or runtime wiring.

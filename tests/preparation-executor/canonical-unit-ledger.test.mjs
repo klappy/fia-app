@@ -17,3 +17,16 @@ test('entire actual P1 corpus joins exact source, approved presentation and bund
 for(const [name,change] of Object.entries({missing:l=>l.units.pop(),duplicate:l=>l.units.push(l.units[0]),text:l=>l.units[0].text+='x',association:l=>l.units.find(u=>u.disposition==='production-request').associatedActivityId='S01-U001',disposition:l=>l.units.find(u=>u.disposition==='production-request').disposition='default'}))test('reject '+name+' ledger mutation',async()=>{const args=await load(),l=JSON.parse(args.ledgerBytes);change(l);args.ledgerBytes=new TextEncoder().encode(JSON.stringify(l));await assert.rejects(createCanonicalUnitLedgerResolver(args),/ledger-hash/);});
 for(const key of ['sourcePackBytes','presentationBytes','bundleBytes'])test('reject changed '+key,async()=>{const args=await load();args[key][0]^=1;await assert.rejects(createCanonicalUnitLedgerResolver(args),/hash/);});
 test('P1-only and exact presentation revision authority',async()=>{const r=await createCanonicalUnitLedgerResolver(await load());assert.throws(()=>r({...selection('S01'),packId:'eng.MRK-1-14-20'}),/selection/);assert.throws(()=>r({...selection('S01'),presentationSha256:'f'.repeat(64)}),/revision/);assert.throws(()=>r(selection('S99')),/selection/);});
+
+test('Buffer inputs are captured synchronously before asynchronous hashing',async()=>{
+ const args=await load();assert(Buffer.isBuffer(args.ledgerBytes));
+ const pending=createCanonicalUnitLedgerResolver(args);
+ const injected=JSON.parse(args.ledgerBytes);injected.units[0].acceptedPlaybackRanges=[{start:1,end:2}];
+ const compact=JSON.stringify(injected);assert(Buffer.byteLength(compact)<args.ledgerBytes.length);
+ args.ledgerBytes.fill(32);args.ledgerBytes.write(compact);
+ // All other input buffers must also be isolated before the first await.
+ args.sourcePackBytes.fill(0);args.presentationBytes.fill(0);args.bundleBytes.fill(0);
+ const resolve=await pending,result=resolve(selection('S01'));
+ assert.equal(result.units.length,8);assert(!('acceptedPlaybackRanges' in result.units[0]));
+ assert.equal(result.ledgerSha256,pins.ledger);
+});
