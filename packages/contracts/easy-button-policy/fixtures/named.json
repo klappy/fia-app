@@ -1,0 +1,2209 @@
+{
+ "schema": "fia-easy-button-policy@1",
+ "rows": [
+  {
+   "name": "executable loading shows verifying",
+   "rule": "E0",
+   "input": {
+    "flow": {
+     "role": "guide",
+     "hold": "auto",
+     "narration": "bound",
+     "focal": {
+      "kind": null,
+      "descriptionAudio": false
+     },
+     "media": {
+      "video": "none"
+     },
+     "cue": {
+      "pauseOnly": false
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": false,
+     "autoplayVideo": false
+    },
+    "facts": {
+     "phase": "loading",
+     "mode": "executable",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": false,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "ready",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "primary": {
+     "action": "verifying"
+    }
+   },
+   "why": "k0006: loading → first verified state only; R5 verifying (k0011). SE3."
+  },
+  {
+   "name": "executable media loading",
+   "rule": "E1",
+   "input": {
+    "flow": {
+     "role": "guide",
+     "hold": "auto",
+     "narration": "bound",
+     "focal": {
+      "kind": null,
+      "descriptionAudio": false
+     },
+     "media": {
+      "video": "none"
+     },
+     "cue": {
+      "pauseOnly": false
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": false,
+     "autoplayVideo": false
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "executable",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": true,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": false,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "ready",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "primary": {
+     "action": "cancel-loading"
+    }
+   },
+   "why": "App.svelte:91 mediaLoading?Cancel loading (kept until #216 R4 moves cancel out of the slot)"
+  },
+  {
+   "name": "executable finished",
+   "rule": "E2",
+   "input": {
+    "flow": {
+     "role": "guide",
+     "hold": "auto",
+     "narration": "bound",
+     "focal": {
+      "kind": null,
+      "descriptionAudio": false
+     },
+     "media": {
+      "video": "none"
+     },
+     "cue": {
+      "pauseOnly": false
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": false,
+     "autoplayVideo": false
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "executable",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": false,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "complete",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "primary": {
+     "action": "begin-again"
+    },
+    "autoplay": {
+     "arrival": "none"
+    }
+   },
+   "why": "App.svelte:91 finished?Begin again; :275 no autoplay on complete"
+  },
+  {
+   "name": "executable blocked narration (discussion)",
+   "rule": "E3",
+   "input": {
+    "flow": {
+     "role": "discussion",
+     "hold": "auto",
+     "narration": "blocked",
+     "focal": {
+      "kind": null,
+      "descriptionAudio": false
+     },
+     "media": {
+      "video": "none"
+     },
+     "cue": {
+      "pauseOnly": false
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": false,
+     "autoplayVideo": false
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "executable",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": false,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "ready",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "primary": {
+     "action": "continue"
+    },
+    "autoplay": {
+     "arrival": "silent"
+    }
+   },
+   "why": "App.svelte:91 !executablePlayable?Continue; :33; :277 settleSilent"
+  },
+  {
+   "name": "executable playing (scripture)",
+   "rule": "E4",
+   "input": {
+    "flow": {
+     "role": "scripture",
+     "hold": "auto",
+     "narration": "bound",
+     "focal": {
+      "kind": null,
+      "descriptionAudio": false
+     },
+     "media": {
+      "video": "none"
+     },
+     "cue": {
+      "pauseOnly": false
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": false,
+     "autoplayVideo": false
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "executable",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": true,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": true,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "playing",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "primary": {
+     "action": "pause"
+    }
+   },
+   "why": "App.svelte:91 isPlaying?Pause"
+  },
+  {
+   "name": "executable resumable",
+   "rule": "E5",
+   "input": {
+    "flow": {
+     "role": "guide",
+     "hold": "auto",
+     "narration": "bound",
+     "focal": {
+      "kind": null,
+      "descriptionAudio": false
+     },
+     "media": {
+      "video": "none"
+     },
+     "cue": {
+      "pauseOnly": false
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": false,
+     "autoplayVideo": false
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "executable",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": true,
+     "audioContext": true,
+     "started": true,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "paused",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "primary": {
+     "action": "resume"
+    }
+   },
+   "why": "App.svelte:91 audio?.active&&audioContext?Resume"
+  },
+  {
+   "name": "executable fresh guide",
+   "rule": "E6",
+   "input": {
+    "flow": {
+     "role": "guide",
+     "hold": "auto",
+     "narration": "bound",
+     "focal": {
+      "kind": null,
+      "descriptionAudio": false
+     },
+     "media": {
+      "video": "none"
+     },
+     "cue": {
+      "pauseOnly": false
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": false,
+     "autoplayVideo": false
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "executable",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": false,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "ready",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "primary": {
+     "action": "begin"
+    },
+    "autoplay": {
+     "arrival": "narration",
+     "afterNarration": "none"
+    }
+   },
+   "why": "App.svelte:91 !started?Begin; :277 playExecutableNarration"
+  },
+  {
+   "name": "executable started video role",
+   "rule": "E7",
+   "input": {
+    "flow": {
+     "role": "video",
+     "hold": "auto",
+     "narration": "preparable",
+     "focal": {
+      "kind": null,
+      "descriptionAudio": false
+     },
+     "media": {
+      "video": "none"
+     },
+     "cue": {
+      "pauseOnly": false
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": false,
+     "autoplayVideo": true
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "executable",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": true,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "ready",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "primary": {
+     "action": "play"
+    },
+    "autoplay": {
+     "arrival": "narration",
+     "afterNarration": "none"
+    }
+   },
+   "why": "App.svelte:91 else Play; :271 video autoplay is bundled-only (!executableMode)"
+  },
+  {
+   "name": "bundled loading shows verifying",
+   "rule": "B0",
+   "input": {
+    "flow": {
+     "role": "guide",
+     "hold": "auto",
+     "narration": "bound",
+     "focal": {
+      "kind": "image",
+      "descriptionAudio": true
+     },
+     "media": {
+      "video": "none"
+     },
+     "cue": {
+      "pauseOnly": false
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": false,
+     "autoplayVideo": false
+    },
+    "facts": {
+     "phase": "loading",
+     "mode": "bundled",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": false,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "ready",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "primary": {
+     "action": "verifying"
+    }
+   },
+   "why": "k0006 and k0011; SE3: verifying only on phase loading"
+  },
+  {
+   "name": "bundled video delivery loading",
+   "rule": "B1",
+   "input": {
+    "flow": {
+     "role": "guide",
+     "hold": "auto",
+     "narration": "bound",
+     "focal": {
+      "kind": "image",
+      "descriptionAudio": true
+     },
+     "media": {
+      "video": "none"
+     },
+     "cue": {
+      "pauseOnly": false
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": false,
+     "autoplayVideo": false
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "bundled",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": true,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": false,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "ready",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "primary": {
+     "action": "cancel-loading"
+    }
+   },
+   "why": "App.svelte:216 mediaLoading||videoDeliveryState.loading?Cancel loading"
+  },
+  {
+   "name": "bundled playback pending",
+   "rule": "B2",
+   "input": {
+    "flow": {
+     "role": "guide",
+     "hold": "auto",
+     "narration": "bound",
+     "focal": {
+      "kind": "image",
+      "descriptionAudio": true
+     },
+     "media": {
+      "video": "none"
+     },
+     "cue": {
+      "pauseOnly": false
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": false,
+     "autoplayVideo": false
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "bundled",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": true,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": true,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "ready",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "primary": {
+     "action": "pause"
+    }
+   },
+   "why": "App.svelte:216 playbackPending?Pause (the 650 ms scheduled start, :282)"
+  },
+  {
+   "name": "bundled finished",
+   "rule": "B3",
+   "input": {
+    "flow": {
+     "role": "guide",
+     "hold": "auto",
+     "narration": "bound",
+     "focal": {
+      "kind": "image",
+      "descriptionAudio": true
+     },
+     "media": {
+      "video": "none"
+     },
+     "cue": {
+      "pauseOnly": false
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": false,
+     "autoplayVideo": false
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "bundled",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": true,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "complete",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "primary": {
+     "action": "begin-again"
+    },
+    "autoplay": {
+     "arrival": "none"
+    },
+    "reasons": {
+     "arrival": "A2"
+    }
+   },
+   "why": "App.svelte:216 finished?Begin again; :275"
+  },
+  {
+   "name": "bundled section transition",
+   "rule": "B4",
+   "input": {
+    "flow": {
+     "role": "guide",
+     "hold": "auto",
+     "narration": "bound",
+     "focal": {
+      "kind": "image",
+      "descriptionAudio": true
+     },
+     "media": {
+      "video": "none"
+     },
+     "cue": {
+      "pauseOnly": false
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": false,
+     "autoplayVideo": false
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "bundled",
+     "detour": false,
+     "inTransition": true,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": false,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "ready",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "primary": {
+     "action": "continue"
+    },
+    "autoplay": {
+     "arrival": "none"
+    }
+   },
+   "why": "App.svelte:216 inTransition?Continue; :275"
+  },
+  {
+   "name": "bundled guide narration off",
+   "rule": "B5",
+   "input": {
+    "flow": {
+     "role": "guide",
+     "hold": "auto",
+     "narration": "bound",
+     "focal": {
+      "kind": "image",
+      "descriptionAudio": true
+     },
+     "media": {
+      "video": "none"
+     },
+     "cue": {
+      "pauseOnly": false
+     }
+    },
+    "settings": {
+     "guideNarration": false,
+     "readScripture": true,
+     "describeImages": false,
+     "autoplayVideo": false
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "bundled",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": false,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "ready",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "primary": {
+     "action": "continue"
+    },
+    "autoplay": {
+     "arrival": "none"
+    },
+    "reasons": {
+     "arrival": "A6"
+    }
+   },
+   "why": "App.svelte:179,:216 automaticOff&&!detour?Continue; :282 no automatic start when muted"
+  },
+  {
+   "name": "bundled playing",
+   "rule": "B6",
+   "input": {
+    "flow": {
+     "role": "guide",
+     "hold": "auto",
+     "narration": "bound",
+     "focal": {
+      "kind": "image",
+      "descriptionAudio": true
+     },
+     "media": {
+      "video": "none"
+     },
+     "cue": {
+      "pauseOnly": false
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": false,
+     "autoplayVideo": false
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "bundled",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": true,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": true,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "playing",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "primary": {
+     "action": "pause"
+    }
+   },
+   "why": "App.svelte:216 isPlaying?Pause"
+  },
+  {
+   "name": "bundled inline video held",
+   "rule": "B7",
+   "input": {
+    "flow": {
+     "role": "guide",
+     "hold": "auto",
+     "narration": "bound",
+     "focal": {
+      "kind": "image",
+      "descriptionAudio": true
+     },
+     "media": {
+      "video": "none"
+     },
+     "cue": {
+      "pauseOnly": false
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": false,
+     "autoplayVideo": false
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "bundled",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": true,
+     "audioActive": false,
+     "audioContext": false,
+     "started": true,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "ready",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "primary": {
+     "action": "resume"
+    }
+   },
+   "why": "App.svelte:216 inlineVideo?Resume"
+  },
+  {
+   "name": "bundled resumable narration",
+   "rule": "B8",
+   "input": {
+    "flow": {
+     "role": "guide",
+     "hold": "auto",
+     "narration": "bound",
+     "focal": {
+      "kind": "image",
+      "descriptionAudio": true
+     },
+     "media": {
+      "video": "none"
+     },
+     "cue": {
+      "pauseOnly": false
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": false,
+     "autoplayVideo": false
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "bundled",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": true,
+     "audioContext": true,
+     "started": true,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "paused",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "primary": {
+     "action": "resume"
+    }
+   },
+   "why": "App.svelte:216 audio?.active&&audioContext?Resume"
+  },
+  {
+   "name": "bundled video pending after narration",
+   "rule": "B9",
+   "input": {
+    "flow": {
+     "role": "guide",
+     "hold": "auto",
+     "narration": "bound",
+     "focal": {
+      "kind": "image",
+      "descriptionAudio": true
+     },
+     "media": {
+      "video": "bound"
+     },
+     "cue": {
+      "pauseOnly": false
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": false,
+     "autoplayVideo": false
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "bundled",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": true,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "waiting",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "primary": {
+     "action": "play-video"
+    }
+   },
+   "why": "App.svelte:208,:211,:216 videoPending&&waiting?Play video"
+  },
+  {
+   "name": "bundled image description pending, no recording",
+   "rule": "B10",
+   "input": {
+    "flow": {
+     "role": "guide",
+     "hold": "auto",
+     "narration": "none",
+     "focal": {
+      "kind": "image",
+      "descriptionAudio": true
+     },
+     "media": {
+      "video": "none"
+     },
+     "cue": {
+      "pauseOnly": false
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": true,
+     "autoplayVideo": false
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "bundled",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": false,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "ready",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "primary": {
+     "action": "play"
+    },
+    "autoplay": {
+     "arrival": "describe"
+    },
+    "reasons": {
+     "arrival": "A4"
+    }
+   },
+   "why": "App.svelte:212,:216 visualPending&&!audioSrc?Play; :278 describe after settleSilent"
+  },
+  {
+   "name": "detour to an image",
+   "rule": "B11",
+   "input": {
+    "flow": {
+     "role": "guide",
+     "hold": "auto",
+     "narration": "bound",
+     "focal": {
+      "kind": "image",
+      "descriptionAudio": true
+     },
+     "media": {
+      "video": "none"
+     },
+     "cue": {
+      "pauseOnly": false
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": false,
+     "autoplayVideo": false
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "bundled",
+     "detour": true,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": false,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "ready",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "primary": {
+     "action": "return"
+    },
+    "autoplay": {
+     "detourVideo": false
+    }
+   },
+   "why": "App.svelte:216 session.detour?(visual?Return…)"
+  },
+  {
+   "name": "detour to a video with automatic video on",
+   "rule": "D1",
+   "input": {
+    "flow": {
+     "role": "guide",
+     "hold": "auto",
+     "narration": "bound",
+     "focal": {
+      "kind": "video",
+      "descriptionAudio": false
+     },
+     "media": {
+      "video": "none"
+     },
+     "cue": {
+      "pauseOnly": false
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": false,
+     "autoplayVideo": true
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "bundled",
+     "detour": true,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": false,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "ready",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "primary": {
+     "action": "play-video"
+    },
+    "autoplay": {
+     "detourVideo": true
+    },
+    "reasons": {
+     "primary": "B11"
+    }
+   },
+   "why": "App.svelte:216 focal video?Play video; :344 DETOUR video autoplay with prior consent"
+  },
+  {
+   "name": "detour to a term with description audio",
+   "rule": "B11",
+   "input": {
+    "flow": {
+     "role": "guide",
+     "hold": "auto",
+     "narration": "bound",
+     "focal": {
+      "kind": "term",
+      "descriptionAudio": true
+     },
+     "media": {
+      "video": "none"
+     },
+     "cue": {
+      "pauseOnly": false
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": false,
+     "autoplayVideo": false
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "bundled",
+     "detour": true,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": false,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "ready",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "primary": {
+     "action": "listen"
+    }
+   },
+   "why": "App.svelte:216 focal?.descriptionAudio?Listen"
+  },
+  {
+   "name": "bundled preparation available",
+   "rule": "B12",
+   "input": {
+    "flow": {
+     "role": "guide",
+     "hold": "auto",
+     "narration": "none",
+     "focal": {
+      "kind": null,
+      "descriptionAudio": false
+     },
+     "media": {
+      "video": "none"
+     },
+     "cue": {
+      "pauseOnly": false
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": false,
+     "autoplayVideo": false
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "bundled",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": false,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "ready",
+     "preparation": "available"
+    }
+   },
+   "expect": {
+    "primary": {
+     "action": "begin"
+    },
+    "autoplay": {
+     "arrival": "prepare"
+    },
+    "reasons": {
+     "arrival": "A4"
+    }
+   },
+   "why": "App.svelte:215-216 primaryStartsPreparation?(!started?Begin:Play); :278 playRequestedNarration"
+  },
+  {
+   "name": "bundled waiting",
+   "rule": "B13",
+   "input": {
+    "flow": {
+     "role": "guide",
+     "hold": "auto",
+     "narration": "bound",
+     "focal": {
+      "kind": "image",
+      "descriptionAudio": true
+     },
+     "media": {
+      "video": "none"
+     },
+     "cue": {
+      "pauseOnly": false
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": false,
+     "autoplayVideo": false
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "bundled",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": true,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "waiting",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "primary": {
+     "action": "continue"
+    }
+   },
+   "why": "App.svelte:216 session.status===waiting?Continue"
+  },
+  {
+   "name": "bundled paused",
+   "rule": "B14",
+   "input": {
+    "flow": {
+     "role": "guide",
+     "hold": "auto",
+     "narration": "bound",
+     "focal": {
+      "kind": "image",
+      "descriptionAudio": true
+     },
+     "media": {
+      "video": "none"
+     },
+     "cue": {
+      "pauseOnly": false
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": false,
+     "autoplayVideo": false
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "bundled",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": true,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "paused",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "primary": {
+     "action": "resume"
+    }
+   },
+   "why": "App.svelte:216 status paused?Resume"
+  },
+  {
+   "name": "bundled fresh discussion",
+   "rule": "B15",
+   "input": {
+    "flow": {
+     "role": "discussion",
+     "hold": "manual",
+     "narration": "bound",
+     "focal": {
+      "kind": "image",
+      "descriptionAudio": true
+     },
+     "media": {
+      "video": "none"
+     },
+     "cue": {
+      "pauseOnly": false
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": false,
+     "autoplayVideo": false
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "bundled",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": false,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "ready",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "primary": {
+     "action": "begin"
+    },
+    "autoplay": {
+     "arrival": "narration"
+    },
+    "hold": "manual",
+    "reasons": {
+     "arrival": "A7"
+    }
+   },
+   "why": "App.svelte:216 !started?Begin; :282 scheduled start; completion confirm → hold manual"
+  },
+  {
+   "name": "bundled started scripture",
+   "rule": "B16",
+   "input": {
+    "flow": {
+     "role": "scripture",
+     "hold": "auto",
+     "narration": "bound",
+     "focal": {
+      "kind": "image",
+      "descriptionAudio": true
+     },
+     "media": {
+      "video": "none"
+     },
+     "cue": {
+      "pauseOnly": false
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": false,
+     "autoplayVideo": false
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "bundled",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": true,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "ready",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "primary": {
+     "action": "play"
+    },
+    "autoplay": {
+     "arrival": "narration"
+    }
+   },
+   "why": "App.svelte:216 else Play; readScripture on"
+  },
+  {
+   "name": "no consent, detour video: nothing starts by itself",
+   "rule": "A1",
+   "input": {
+    "flow": {
+     "role": "guide",
+     "hold": "auto",
+     "narration": "bound",
+     "focal": {
+      "kind": "video",
+      "descriptionAudio": false
+     },
+     "media": {
+      "video": "none"
+     },
+     "cue": {
+      "pauseOnly": false
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": false,
+     "autoplayVideo": true
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "bundled",
+     "detour": true,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": false,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": false,
+     "automaticStart": false,
+     "status": "ready",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "autoplay": {
+     "arrival": "none",
+     "detourVideo": false
+    },
+    "reasons": {
+     "detourVideo": "D0"
+    }
+   },
+   "why": "SE4: App.svelte:274 and :344 (hadPlaybackConsent); explicit-next-playback consent rule"
+  },
+  {
+   "name": "narration off, image describable",
+   "rule": "A5",
+   "input": {
+    "flow": {
+     "role": "guide",
+     "hold": "auto",
+     "narration": "bound",
+     "focal": {
+      "kind": "image",
+      "descriptionAudio": true
+     },
+     "media": {
+      "video": "none"
+     },
+     "cue": {
+      "pauseOnly": false
+     }
+    },
+    "settings": {
+     "guideNarration": false,
+     "readScripture": true,
+     "describeImages": true,
+     "autoplayVideo": false
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "bundled",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": false,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "ready",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "primary": {
+     "action": "continue"
+    },
+    "autoplay": {
+     "arrival": "describe",
+     "afterNarration": "describe"
+    },
+    "reasons": {
+     "afterNarration": "F1"
+    }
+   },
+   "why": "App.svelte:279 automaticOff&&visual&&describeImages → describe; :270"
+  },
+  {
+   "name": "Scripture reading off",
+   "rule": "A6",
+   "input": {
+    "flow": {
+     "role": "scripture",
+     "hold": "auto",
+     "narration": "bound",
+     "focal": {
+      "kind": "scripture",
+      "descriptionAudio": false
+     },
+     "media": {
+      "video": "none"
+     },
+     "cue": {
+      "pauseOnly": false
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": false,
+     "describeImages": false,
+     "autoplayVideo": false
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "bundled",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": false,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "ready",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "primary": {
+     "action": "continue"
+    },
+    "autoplay": {
+     "arrival": "none"
+    }
+   },
+   "why": "App.svelte:179 (Scripture governed by readScripture), :281"
+  },
+  {
+   "name": "no recording, nothing to describe",
+   "rule": "A4",
+   "input": {
+    "flow": {
+     "role": "guide",
+     "hold": "auto",
+     "narration": "none",
+     "focal": {
+      "kind": null,
+      "descriptionAudio": false
+     },
+     "media": {
+      "video": "none"
+     },
+     "cue": {
+      "pauseOnly": false
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": false,
+     "autoplayVideo": false
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "bundled",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": false,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "ready",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "primary": {
+     "action": "continue"
+    },
+    "autoplay": {
+     "arrival": "silent"
+    }
+   },
+   "why": "App.svelte:216 !audioSrc?Continue; :278 settleSilent"
+  },
+  {
+   "name": "video activity with automatic video",
+   "rule": "F2",
+   "input": {
+    "flow": {
+     "role": "video",
+     "hold": "auto",
+     "narration": "bound",
+     "focal": {
+      "kind": null,
+      "descriptionAudio": false
+     },
+     "media": {
+      "video": "none"
+     },
+     "cue": {
+      "pauseOnly": false
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": false,
+     "autoplayVideo": true
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "bundled",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": false,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "ready",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "autoplay": {
+     "afterNarration": "video"
+    }
+   },
+   "why": "App.svelte:271"
+  },
+  {
+   "name": "pause-only S02-U005",
+   "rule": "V1",
+   "input": {
+    "flow": {
+     "role": "guide",
+     "hold": "auto",
+     "narration": "bound",
+     "focal": {
+      "kind": "image",
+      "descriptionAudio": true
+     },
+     "media": {
+      "video": "bound"
+     },
+     "cue": {
+      "pauseOnly": true
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": false,
+     "autoplayVideo": false
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "bundled",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": false,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "ready",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "viewingCue": {
+     "skipNarration": true
+    }
+   },
+   "why": "pack.json S02-U005 focal a112 (image, related video); App.svelte:293 matchingVideo&&!automatic"
+  },
+  {
+   "name": "pause-only S02-U008",
+   "rule": "V1",
+   "input": {
+    "flow": {
+     "role": "guide",
+     "hold": "auto",
+     "narration": "bound",
+     "focal": {
+      "kind": "image",
+      "descriptionAudio": true
+     },
+     "media": {
+      "video": "bound"
+     },
+     "cue": {
+      "pauseOnly": true
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": false,
+     "autoplayVideo": false
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "bundled",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": false,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "ready",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "viewingCue": {
+     "skipNarration": true
+    }
+   },
+   "why": "pack.json S02-U008 focal a203 (image, related video); App.svelte:293"
+  },
+  {
+   "name": "pause-only S03-U007",
+   "rule": "V1",
+   "input": {
+    "flow": {
+     "role": "guide",
+     "hold": "auto",
+     "narration": "bound",
+     "focal": {
+      "kind": "map",
+      "descriptionAudio": true
+     },
+     "media": {
+      "video": "none"
+     },
+     "cue": {
+      "pauseOnly": true
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": true,
+     "autoplayVideo": false
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "bundled",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": false,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "ready",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "viewingCue": {
+     "skipNarration": true
+    }
+   },
+   "why": "pack.json S03-U007 focal c168 (map, description audio); App.svelte:293 describeImages&&descriptionAudio"
+  },
+  {
+   "name": "pause-only S03-U019",
+   "rule": "V1",
+   "input": {
+    "flow": {
+     "role": "guide",
+     "hold": "auto",
+     "narration": "bound",
+     "focal": {
+      "kind": "image",
+      "descriptionAudio": true
+     },
+     "media": {
+      "video": "bound"
+     },
+     "cue": {
+      "pauseOnly": true
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": false,
+     "autoplayVideo": true
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "bundled",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": false,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "ready",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "viewingCue": {
+     "skipNarration": true
+    }
+   },
+   "why": "pack.json S03-U019 focal a112; App.svelte:293 automatic start with autoplayVideo"
+  },
+  {
+   "name": "pause-only S03-U021",
+   "rule": "V1",
+   "input": {
+    "flow": {
+     "role": "guide",
+     "hold": "auto",
+     "narration": "bound",
+     "focal": {
+      "kind": "map",
+      "descriptionAudio": true
+     },
+     "media": {
+      "video": "none"
+     },
+     "cue": {
+      "pauseOnly": true
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": true,
+     "autoplayVideo": false
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "bundled",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": false,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "ready",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "viewingCue": {
+     "skipNarration": true
+    }
+   },
+   "why": "pack.json S03-U021 focal c201 (map, description audio); App.svelte:293"
+  },
+  {
+   "name": "pause-only S05-U015",
+   "rule": "V1",
+   "input": {
+    "flow": {
+     "role": "guide",
+     "hold": "auto",
+     "narration": "bound",
+     "focal": {
+      "kind": "image",
+      "descriptionAudio": true
+     },
+     "media": {
+      "video": "bound"
+     },
+     "cue": {
+      "pauseOnly": true
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": false,
+     "autoplayVideo": false
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "bundled",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": false,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "ready",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "viewingCue": {
+     "skipNarration": true
+    }
+   },
+   "why": "pack.json S05-U015 focal a111 (image, related video); App.svelte:293"
+  },
+  {
+   "name": "pause-only never from text",
+   "rule": "V0",
+   "input": {
+    "flow": {
+     "role": "guide",
+     "hold": "auto",
+     "narration": "bound",
+     "focal": {
+      "kind": "image",
+      "descriptionAudio": true
+     },
+     "media": {
+      "video": "bound"
+     },
+     "cue": {
+      "pauseOnly": false
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": false,
+     "autoplayVideo": false
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "bundled",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": false,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "ready",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "viewingCue": {
+     "skipNarration": false
+    }
+   },
+   "why": "SE1: the input has no text field (additionalProperties false); without cue.pauseOnly the skip never fires (replaces the :293 phrase test)"
+  },
+  {
+   "name": "executable never plays a related video",
+   "rule": "E3",
+   "input": {
+    "flow": {
+     "role": "guide",
+     "hold": "auto",
+     "narration": "none",
+     "focal": {
+      "kind": "image",
+      "descriptionAudio": true
+     },
+     "media": {
+      "video": "bound"
+     },
+     "cue": {
+      "pauseOnly": true
+     }
+    },
+    "settings": {
+     "guideNarration": true,
+     "readScripture": true,
+     "describeImages": true,
+     "autoplayVideo": true
+    },
+    "facts": {
+     "phase": "verified",
+     "mode": "executable",
+     "detour": false,
+     "inTransition": false,
+     "mediaLoading": false,
+     "videoLoading": false,
+     "playbackPending": false,
+     "playing": false,
+     "inlineVideo": false,
+     "audioActive": false,
+     "audioContext": false,
+     "started": false,
+     "introduced": false,
+     "visualHeard": false,
+     "playbackConsent": true,
+     "automaticStart": false,
+     "status": "ready",
+     "preparation": "none"
+    }
+   },
+   "expect": {
+    "primary": {
+     "action": "continue"
+    },
+    "autoplay": {
+     "arrival": "silent",
+     "afterNarration": "none"
+    },
+    "viewingCue": {
+     "skipNarration": false
+    }
+   },
+   "why": "SE2: App.svelte:208 matchingVideo empty in executable mode; :270-271 and :290 bundled-only"
+  }
+ ]
+}

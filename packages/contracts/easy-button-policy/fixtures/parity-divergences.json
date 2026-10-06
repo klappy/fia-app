@@ -1,0 +1,7 @@
+{
+  "schema": "fia-easy-button-policy@1",
+  "against": "apps/web/src/App.svelte:91 and :216 at fia-app main @3d3b1d2, copied verbatim into tests/contracts/easy-button-policy.test.mjs",
+  "draws": 60000,
+  "sweeps": "20 000 uniform (seed 0x0fa12026) + 20 000 at 15% true (0x0fa12027) + 20 000 at 5% true (0x0fa12028); phase loading excluded (verifying has no legacy label)",
+  "divergences": []
+}
