@@ -694,3 +694,66 @@ it('B1: reconnecting refreshes a snapshot adopted offline from an older saved re
  await fireEvent.click(screen.getByRole('button',{name:'Play video',exact:true}));await settle();await settle();await settle();
  expect(request).toHaveBeenCalledTimes(1);expect(request.mock.calls[0][2]).toBe(current);expect(document.querySelector('video').getAttribute('src')).toBe('blob:v');
 });
+// S3 phase 1 review (Bugbot, second half): a delivery revision change found while a video plays must not stop, blank or
+// revoke it. The snapshot moves on at once; the old video is released only when it ends or is closed.
+async function openVideo(id){await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passage resources'}));await fireEvent.click(within(screen.getByText('Videos',{selector:'summary'}).parentElement).getByRole('button',{name:assets[id].subtitle||assets[id].title,exact:true}));await settle();await fireEvent.click(screen.getByRole('button',{name:'Play video',exact:true}));await settle();await settle();await settle();}
+async function openDownloads(status,before){await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Downloads',exact:true}));await waitFor(()=>expect(status.mock.calls.length).toBe(before+1));await settle();await settle();await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));await settle();}
+function blobs(){let n=0;const revoke=vi.fn();vi.stubGlobal('URL',class extends URL{static createObjectURL(){return `blob:v${++n}`;}static revokeObjectURL=revoke;});return revoke;}
+function keepsPlaying(video,src,revoke,pauses){expect(document.querySelector('video')).toBe(video);expect(video.getAttribute('src')).toBe(src);expect(HTMLMediaElement.prototype.pause.mock.calls.length).toBe(pauses);expect(revoke).not.toHaveBeenCalledWith(src);expect(document.body.textContent).not.toMatch(/Download this resource before playback|available to play online|can’t play right now/);}
+it('S3 revision skew: reconnecting to a newer delivery revision keeps the saved video playing, and the next play after it ends uses the new revision',async()=>{
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});const path=assets.a184.src,current='d'.repeat(64),older='e'.repeat(64),saved={path,bytes:4,sha256:'old',group:'video'};
+ const status=vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:current,files:[{path,bytes:3,sha256:'pin',group:'video'}],savedFiles:[]});
+ const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValueOnce({bytes:new Uint8Array(4).buffer,mime:'video/mp4',timing:{status:'not-applicable'},file:saved}).mockResolvedValue({bytes:new Uint8Array(3).buffer,mime:'video/mp4',timing:{status:'not-applicable'},file:{path,sha256:'pin',bytes:3}});
+ const revoke=blobs(),connected=vi.spyOn(navigator,'onLine','get').mockReturnValue(true);
+ await startAt('S02-U005','waiting');
+ // Offline, the SW answers MEDIA_STATUS from the older saved download, and the user plays that saved video.
+ connected.mockReturnValue(false);window.dispatchEvent(new Event('offline'));await settle();
+ status.mockResolvedValueOnce({deliveryRevision:older,files:[saved],savedFiles:[saved]});await openDownloads(status,status.mock.calls.length);
+ await openVideo('a184');expect(request).toHaveBeenCalledTimes(1);expect(request.mock.calls[0][2]).toBe(older);
+ const video=document.querySelector('video'),pauses=HTMLMediaElement.prototype.pause.mock.calls.length;expect(video.getAttribute('src')).toBe('blob:v1');
+ // The connection returns while it plays: the refresh finds the current revision.
+ const before=status.mock.calls.length;connected.mockReturnValue(true);window.dispatchEvent(new Event('online'));
+ await waitFor(()=>expect(status.mock.calls.length).toBe(before+1));await settle();await settle();await settle();
+ keepsPlaying(video,'blob:v1',revoke,pauses);
+ await fireEvent(video,new Event('ended'));await settle();await settle();
+ await openVideo('a184');expect(request).toHaveBeenCalledTimes(2);expect(request.mock.calls[1][2]).toBe(current);expect(document.querySelector('video').getAttribute('src')).toBe('blob:v2');
+});
+it('S3 revision skew: a Downloads status report with a newer delivery revision keeps the playing video, and the next play after it ends uses the new revision',async()=>{
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});const path=assets.a184.src,first='d'.repeat(64),next='f'.repeat(64);
+ const status=vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:first,files:[{path,bytes:3,sha256:'pin',group:'video'}],savedFiles:[]});
+ const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(3).buffer,mime:'video/mp4',timing:{status:'not-applicable'},file:{path,sha256:'pin',bytes:3}});
+ const revoke=blobs();await startAt('S02-U005','waiting');
+ await openVideo('a184');expect(request).toHaveBeenCalledTimes(1);expect(request.mock.calls[0][2]).toBe(first);
+ const video=document.querySelector('video'),pauses=HTMLMediaElement.prototype.pause.mock.calls.length;expect(video.getAttribute('src')).toBe('blob:v1');expect(HTMLMediaElement.prototype.play).toHaveBeenCalled();
+ // A new deploy is live; opening Downloads (status report) refreshes the snapshot while the video plays.
+ status.mockResolvedValue({deliveryRevision:next,files:[{path,bytes:3,sha256:'pin',group:'video'}],savedFiles:[]});await openDownloads(status,status.mock.calls.length);await settle();
+ keepsPlaying(video,'blob:v1',revoke,pauses);
+ await fireEvent(video,new Event('ended'));await settle();await settle();
+ await openVideo('a184');expect(request).toHaveBeenCalledTimes(2);expect(request.mock.calls[1][2]).toBe(next);expect(document.querySelector('video').getAttribute('src')).toBe('blob:v2');
+});
+it('S3 revision skew: a served-identity refresh that finds a newer delivery revision keeps the just-started video',async()=>{
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});const path=assets.a184.src,first='d'.repeat(64),next='f'.repeat(64);
+ const status=vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:first,files:[{path,bytes:3,sha256:'pin',group:'video'}],savedFiles:[]});
+ const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(5).buffer,mime:'video/mp4',timing:{status:'not-applicable'},file:{path,sha256:'receipt',bytes:5}});
+ vi.spyOn(console,'info').mockImplementation(()=>{});const revoke=blobs();await startAt('S02-U005','waiting');
+ // The SW serves another identity (videoChanged refreshes the snapshot), and the refresh finds a newer revision.
+ status.mockResolvedValue({deliveryRevision:next,files:[{path,bytes:5,sha256:'receipt',group:'video'}],savedFiles:[]});const before=status.mock.calls.length;
+ await openVideo('a184');await waitFor(()=>expect(status.mock.calls.length).toBe(before+1));await settle();await settle();
+ const video=document.querySelector('video');expect(request).toHaveBeenCalledTimes(1);expect(video?.getAttribute('src')).toBe('blob:v1');expect(HTMLMediaElement.prototype.play).toHaveBeenCalled();
+ keepsPlaying(video,'blob:v1',revoke,HTMLMediaElement.prototype.pause.mock.calls.length);
+ await fireEvent(video,new Event('ended'));await settle();await settle();
+ await openVideo('a184');expect(request).toHaveBeenCalledTimes(2);expect(request.mock.calls[1][2]).toBe(next);
+});
+it('S3 revision skew: a companion video keeps playing across a revision change and is released when it ends, so Replay fetches the new revision',async()=>{
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});const path=assets.a13.src,first='d'.repeat(64),next='f'.repeat(64);
+ const status=vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:first,files:[{path,bytes:3,sha256:'pin',group:'video'}],savedFiles:[]});
+ const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(3).buffer,mime:'video/mp4',timing:{status:'not-applicable'},file:{path,sha256:'pin',bytes:3}});
+ const revoke=blobs();await startAt('S02-U005','waiting');
+ await fireEvent.click(screen.getByRole('button',{name:'Play video',exact:true}));await settle();await settle();await settle();await settle();
+ const video=document.querySelector('video'),pauses=HTMLMediaElement.prototype.pause.mock.calls.length;expect(request).toHaveBeenCalledTimes(1);expect(request.mock.calls[0][1]).toBe(path);expect(video.getAttribute('src')).toBe('blob:v1');
+ status.mockResolvedValue({deliveryRevision:next,files:[{path,bytes:3,sha256:'pin',group:'video'}],savedFiles:[]});await openDownloads(status,status.mock.calls.length);await settle();
+ keepsPlaying(video,'blob:v1',revoke,pauses);
+ await fireEvent(video,new Event('ended'));await settle();await settle();expect(revoke).toHaveBeenCalledWith('blob:v1');
+ await fireEvent.click(screen.getByRole('button',{name:'Replay',exact:true}));await settle();await settle();await settle();await settle();
+ expect(request).toHaveBeenCalledTimes(2);expect(request.mock.calls[1][2]).toBe(next);expect(document.querySelector('video').getAttribute('src')).toBe('blob:v2');
+});
