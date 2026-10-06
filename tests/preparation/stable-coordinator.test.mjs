@@ -100,3 +100,8 @@ test('retained old evidence plus current replacement with identical public opera
  try{const first=await settle(mf,await(await post(mf,a)).json());assert.equal(first.state,'ready');await change(mf,1);const replacement=await settle(mf,await(await post(mf,b)).json());assert.equal(replacement.jobId,first.jobId);assert.equal(replacement.state,'ready');assert.equal(replacement.resultSha256,b.accepted.expected.resultSha256);assert.notEqual(replacement.resultSha256,first.resultSha256);assert.equal(n.source,2);assert.equal((await(await mf.dispatchFetch(origin+replacement.statusUrl)).json()).resultSha256,b.accepted.expected.resultSha256);await post(mf,a);assert.equal(n.source,2);}
  finally{await mf.dispose();}
 });
+test('ambiguous duplicate operation admissions refuse before creating a job or fetching',async()=>{
+ const c=fixture(),a=c.entries[0];admit(a);const b=structuredClone(a);admit(b,'f');c.entries.push(b);const n=counts(),mf=await runtime(c,undefined,n);
+ try{assert.equal((await post(mf,a)).status,422);assert.equal((await mf.dispatchFetch(origin+'/test-internal?index=0')).status,404);assert.deepEqual(n,counts());}
+ finally{await mf.dispose();}
+});
