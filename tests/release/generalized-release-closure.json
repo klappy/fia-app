@@ -1288,7 +1288,7 @@
     },
     {
       "path": "docs/release-gates/live-listening.md",
-      "sha256": "328a71a482e76b5ec9c0064a2955207f9ff4a348288a9d6e92e593918057f1f8"
+      "sha256": "a465d330a81e575738baf85f580075122679faf473b052a111c5ce54333217a0"
     },
     {
       "path": "e2e/easy-button.spec.js",
@@ -1304,7 +1304,7 @@
     },
     {
       "path": "e2e/live-listening/journey.spec.js",
-      "sha256": "c19a9691713a8f8e774dc4a0ef7bd78dd940ee19977d6a18489fe9beffebb0bc"
+      "sha256": "1eea13464683aca1a7b96caa40829a3d4cfc7257998e437faec64398c86b01d3"
     },
     {
       "path": "e2e/notice-scope.spec.js",
@@ -2061,6 +2061,10 @@
     {
       "path": "tests/live-listening/baseline-persona.test.mjs",
       "sha256": "455406b7f0146b8e2e151323a7ebd0526c014e6aa084fb16d191b8932cb849c2"
+    },
+    {
+      "path": "tests/live-listening/journey-taps.test.mjs",
+      "sha256": "73a370a82d12254fc72665e322b92274656d15ac127505c8bc29fb13f28da35a"
     },
     {
       "path": "tests/live-listening/native-progress.test.mjs",
