@@ -15,6 +15,8 @@ export function createAudioController(onState, onEnd, onError, { allowSpeechFall
   // The clip has reached sound: its own 'playing' or a resolved play(). A timeupdate alone is not sound, since the
   // element keeps the previous clip and the next source swap queues one before any sound.
   let sounding = false;
+  // The source the element holds: release keeps it, so a replay sets the same value again.
+  let heldSource = null;
   const mediaElement = () => element || (element = new Audio());
   function clearStartBound() { clearTimeout(startBound); startBound = null; }
   function boundStart(owner, gen, message) {
@@ -151,7 +153,8 @@ export function createAudioController(onState, onEnd, onError, { allowSpeechFall
     }
     if (!src) { speak(text, gen, rate); return; }
     const owner = mediaElement();
-    owner.src = src;
+    const replay = heldSource === src;
+    owner.src = src; heldSource = src;
     audio = owner; source = src; owner.playbackRate = rate;
     const current = () => gen === generation && audio === owner;
     const update = () => {
@@ -178,6 +181,8 @@ export function createAudioController(onState, onEnd, onError, { allowSpeechFall
     boundStart(owner, gen, message);
     if (!range) {
       owner.onloadedmetadata = update; owner.onseeked = null;
+      // The spec reloads on a same-value source set (Chromium does); a browser that does not would resume mid-file.
+      if (replay) { try { owner.currentTime = 0; } catch {} }
       startAudio(owner, gen, message);
       return;
     }
