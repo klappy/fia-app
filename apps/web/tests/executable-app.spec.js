@@ -5,7 +5,7 @@ import {webcrypto} from 'node:crypto';
 import {fixture as savedFixture,worker as savedWorker} from './helpers/offline-execution.js';
 const audio=vi.hoisted(()=>({play:vi.fn(),pause:vi.fn(),resume:vi.fn(),stop:vi.fn(),active:false}));
 vi.mock('../src/lib/audio.js',()=>({createAudioController:(state,end)=>{audio.state=state;audio.end=end;return audio;}}));
-import App from '../src/App.svelte';import {libraryAdapter} from '../src/lib/library.js';
+import App from '../src/App.svelte';import {libraryAdapter} from '../src/lib/library.js';import {createSession} from '../src/lib/engine.js';
 const registry=JSON.parse(readFileSync('public/content/registry.json','utf8')),descriptor=registry.packs.find(p=>p.id==='eng.MRK-1-14-20'),base=JSON.parse(readFileSync('public'+descriptor.presentation.url,'utf8'));
 const h='a'.repeat(64),ref={id:'server-authoritative-reference',sha256:h};
 let presentation,tools;
@@ -80,6 +80,49 @@ it('R6.2/K4: a heard executable screen is Continue with Skip when its narration 
  // Continue moves on; it does not replay the heard narration.
  await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toBe(presentation.activities[1].prompt));
  expect(libraryAdapter.playBoundAudio).toHaveBeenCalledTimes(1);
+});
+// GAP-R2 (DEV proof of e78c1f7): Mark 1:14–20 BSB is served as play-bound-audio and plays from a blob: URL.
+// The reading must follow that excerpt; B2's budgets are J4's (e2e/scroll-follow.spec.js).
+it('R2: a served passage-only Scripture screen follows its bound excerpt while it plays from a blob URL',async()=>{
+ const index=presentation.activities.findIndex(a=>a.kind==='scripture'&&a.assetId===descriptor.defaultScriptureId),range={startSeconds:96.8,endSeconds:144.375};
+ presentation.activities[index].execution.narration={action:'play-bound-audio',artifact:ref};
+ libraryAdapter.playBoundAudio.mockResolvedValue({bytes:new Uint8Array([1,2]),mime:'audio/ogg',playbackRange:range});
+ const session={...createSession(presentation.activities),index};
+ localStorage.setItem('fia-v3-progress@1:'+descriptor.id,JSON.stringify({total:presentation.activities.length,revision:descriptor.revision,activityId:presentation.activities[index].id,session}));
+ // A 2600 px scroll range; reduced motion makes each follow target one synchronous scrollTo.
+ vi.spyOn(Element.prototype,'scrollHeight','get').mockReturnValue(3000);vi.spyOn(Element.prototype,'clientHeight','get').mockReturnValue(400);
+ vi.stubGlobal('matchMedia',query=>({matches:/prefers-reduced-motion/.test(query),addEventListener(){},removeEventListener(){}}));
+ render(App);await waitFor(()=>expect(document.querySelector('main .scripture-scroll')).toBeTruthy());
+ await waitFor(()=>expect(document.querySelector('.guide-primary').hasAttribute('aria-busy')).toBe(false));
+ await fireEvent.click(document.querySelector('.guide-primary'));
+ await waitFor(()=>expect(audio.play).toHaveBeenCalledWith('','blob:execution',1,range));
+ Element.prototype.scrollTo.mockClear();
+ audio.state({playing:true,src:'blob:execution',elapsed:96.8+47.575*.5,duration:321,progressElapsed:47.575*.5,progressDuration:47.575});
+ await waitFor(()=>expect(Element.prototype.scrollTo).toHaveBeenCalledWith({top:1300,behavior:'instant'}));
+});
+// S1 (review of #201): served guide narration follows by identity too. An admitted Mark 1:14–20 guide
+// screen (S01-U002, no focal asset) voiced by prepare-original or play-bound-audio plays from a blob: URL,
+// and its guide text follows the clip; the same blob never moves the reading of another screen.
+for(const action of ['prepare-original','play-bound-audio'])it(`R2: a served guide screen (${action}) follows its recording while it plays from a blob URL`,async()=>{
+ const index=presentation.activities.findIndex(a=>a.id==='S01-U002'),guide=presentation.activities[index];
+ expect(guide.kind).toBe('guide');expect(guide.execution.focalAssetId).toBeNull();
+ guide.execution.narration={action,[action==='prepare-original'?'demand':'artifact']:ref};
+ (action==='prepare-original'?libraryAdapter.prepareOriginal:libraryAdapter.playBoundAudio).mockResolvedValue(readyAudio);
+ const session={...createSession(presentation.activities),index};
+ localStorage.setItem('fia-v3-progress@1:'+descriptor.id,JSON.stringify({total:presentation.activities.length,revision:descriptor.revision,activityId:guide.id,session}));
+ vi.spyOn(Element.prototype,'scrollHeight','get').mockReturnValue(3000);vi.spyOn(Element.prototype,'clientHeight','get').mockReturnValue(400);
+ vi.stubGlobal('matchMedia',query=>({matches:/prefers-reduced-motion/.test(query),addEventListener(){},removeEventListener(){}}));
+ render(App);await waitFor(()=>expect(document.querySelector('main [data-kind="guide"] .scripture-scroll')).toBeTruthy());
+ await waitFor(()=>expect(document.querySelector('.guide-primary').hasAttribute('aria-busy')).toBe(false));
+ await fireEvent.click(document.querySelector('.guide-primary'));
+ await waitFor(()=>expect(audio.play).toHaveBeenCalledWith('','blob:execution',1));
+ Element.prototype.scrollTo.mockClear();
+ audio.state({playing:true,src:'blob:execution',elapsed:1,duration:2});
+ await waitFor(()=>expect(Element.prototype.scrollTo).toHaveBeenCalledWith({top:1300,behavior:'instant'}));
+ // The next screen's reading does not follow the clip still playing for this one.
+ await fireEvent.click(screen.getByRole('button',{name:'Skip to next activity'}));await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).not.toBe(guide.prompt));
+ Element.prototype.scrollTo.mockClear();audio.state({playing:true,src:'blob:execution',elapsed:1.5,duration:2});await new Promise(r=>setTimeout(r,30));
+ expect(Element.prototype.scrollTo).not.toHaveBeenCalledWith({top:1950,behavior:'instant'});
 });
 it('server focal display does not infer narration or automatically substitute its related video',async()=>{
  const image=Object.values(presentation.assets).find(a=>a.kind==='image');presentation.activities[0].execution.focalAssetId=image.id;presentation.activities[0].assetId=image.id;

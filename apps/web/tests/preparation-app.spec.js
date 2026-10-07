@@ -6,6 +6,7 @@ const audio=vi.hoisted(()=>({play:vi.fn(),pause:vi.fn(),resume:vi.fn(),stop:vi.f
 vi.mock('../src/lib/audio.js',()=>({createAudioController:(state,end)=>{audio.state=state;audio.end=end;return audio;}}));
 import App from '../src/App.svelte';
 import {libraryAdapter} from '../src/lib/library.js';
+import {createSession} from '../src/lib/engine.js';
 const registry=JSON.parse(readFileSync('public/content/registry.json','utf8'));
 const descriptor=registry.packs.find(p=>p.id==='eng.MRK-1-14-20');
 const presentation=JSON.parse(readFileSync('public'+descriptor.presentation.url,'utf8'));
@@ -25,6 +26,27 @@ afterEach(()=>{cleanup();vi.restoreAllMocks();vi.unstubAllGlobals();vi.clearAllM
 const easyIdle=()=>waitFor(()=>expect(document.querySelector('.guide-primary').hasAttribute('aria-busy')).toBe(false),{timeout:2000});
 async function mount({automatic=false,checked=true}={}){render(App);await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toBe(presentation.activities[0].prompt));if(checked)await easyIdle();if(!automatic)await toggleNarration();}
 async function toggleNarration(){await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Settings',exact:true}));await fireEvent.click(screen.getByRole('checkbox',{name:/Automatic guide narration/}));await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));}
+// S1 (review of #201): R2 follows by identity for prepared guide narration too. An admitted guide screen in
+// a reading group plays its prepared recording from a blob: URL; the group's reading follows its item.
+it('R2: an admitted guide screen in a reading group follows its prepared recording while it plays from a blob URL',async()=>{
+ const grouped=structuredClone(presentation),[intro,item]=grouped.activities;
+ expect([intro.id,item.id,intro.kind,item.kind,!!intro.audioSrc,!!item.audioSrc]).toEqual(['S01-U001','S01-U002','guide','guide',false,false]);
+ grouped.listContracts=[...(grouped.listContracts||[]),{id:intro.id,purpose:'guide',layout:'together',progression:'confirm',introId:intro.id,itemIds:[item.id],narration:[]}];
+ intro.readingGroupId=item.readingGroupId=intro.id;
+ libraryAdapter.select.mockResolvedValue({descriptor,presentation:grouped});
+ localStorage.setItem('fia-v3-progress@1:'+descriptor.id,JSON.stringify({total:grouped.activities.length,revision:descriptor.revision,activityId:item.id,session:{...createSession(grouped.activities),index:1}}));
+ // The reading area is 400 px tall over 3000 px of text; the spoken item sits 820 px below its centre.
+ vi.spyOn(Element.prototype,'scrollHeight','get').mockReturnValue(3000);vi.spyOn(Element.prototype,'clientHeight','get').mockReturnValue(400);
+ vi.spyOn(Element.prototype,'getBoundingClientRect').mockImplementation(function(){const box=(top,bottom)=>({top,bottom,height:bottom-top,left:0,right:390,width:390,x:0,y:top});
+  if(this.matches?.('.scene-glass-top'))return box(0,0);if(this.matches?.('.scene-glass-bottom'))return box(400,400);
+  if(this.matches?.('[data-reading-item][aria-current="true"]'))return box(1000,1040);return box(0,400);});
+ vi.stubGlobal('matchMedia',query=>({matches:/prefers-reduced-motion/.test(query),addEventListener(){},removeEventListener(){}}));
+ render(App);await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toBe(item.prompt));await easyIdle();
+ expect(document.querySelector('[data-reading-item][aria-current="true"]')?.textContent).toBe(item.sourceText);
+ await fireEvent.click(document.querySelector('.guide-primary'));
+ await waitFor(()=>expect(audio.play).toHaveBeenCalledWith(item.narration||item.sourceText,'blob:prepared',1,ready.playbackRange));
+ await waitFor(()=>expect(Element.prototype.scrollTo).toHaveBeenCalledWith({top:820,behavior:'instant'}));
+});
 it('browse and Continue remain silent; explicit original Play requests exact activity and plays warm verified bytes',async()=>{
  await mount();expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();expect(screen.getByRole('button',{name:'Continue',exact:true})).toBeTruthy();
  await fireEvent.click(screen.getByRole('button',{name:'Play original recording',exact:true}));await waitFor(()=>expect(audio.play).toHaveBeenCalledWith(presentation.activities[0].narration,'blob:prepared',1,ready.playbackRange));
@@ -204,12 +226,13 @@ it.each(['media-status-transient','media-status-invalid','unrecognized'])('lates
  await mount();await waitFor(()=>expect(screen.getByRole('button',{name:'Play',exact:true})).toBeTruthy());registration.resolve();await waitFor(()=>expect(selectedReads).toBe(2));await new Promise(r=>setTimeout(r,0));
  expect(play).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();
  if(code==='media-status-transient'){await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await waitFor(()=>expect(play).toHaveBeenCalled());expect(play.mock.calls[0][2]).toBe('retained-revision');}
- else expect(screen.getByRole('button',{name:'Play',exact:true}).disabled).toBe(true);
+ // R6: without an eligible snapshot nothing can play here, so the Next slot holds Skip.
+ else{expect(screen.queryByRole('button',{name:'Play',exact:true})).toBeNull();expect(screen.getByRole('button',{name:'Skip to next activity'}).disabled).toBe(false);}
 });
 
 it('transient status in a newly selected pack never borrows the previous pack snapshot',async()=>{
  const body=structuredClone(presentation),path='/refresh-test.mp3';body.activities[0].audioSrc=path;libraryAdapter.select.mockResolvedValue({descriptor,presentation:body});
  libraryAdapter.mediaStatus.mockImplementation(pack=>pack.id===descriptor.id?Promise.reject(Object.assign(Error('offline'),{code:'media-status-transient'})):Promise.resolve({files:[{path}],savedFiles:[],deliveryRevision:'previous-pack'}));
  await mount();await waitFor(()=>expect(libraryAdapter.mediaStatus.mock.calls.some(([pack])=>pack.id===descriptor.id)).toBe(true));await new Promise(r=>setTimeout(r,0));
- expect(screen.getByRole('button',{name:'Play',exact:true}).disabled).toBe(true);expect(audio.play).not.toHaveBeenCalled();expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();
+ expect(screen.queryByRole('button',{name:'Play',exact:true})).toBeNull();expect(screen.getByRole('button',{name:'Skip to next activity'}).disabled).toBe(false);expect(audio.play).not.toHaveBeenCalled();expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();
 });

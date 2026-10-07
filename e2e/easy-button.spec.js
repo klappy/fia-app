@@ -2,6 +2,8 @@ import {test,expect} from '@playwright/test';
 import {createSession} from '../apps/web/src/lib/engine.js';
 import {activities} from '../apps/web/src/lib/content.js';
 import {RESTORE_TIMEOUT_MS} from '../apps/web/src/lib/library.js';
+import {readFileSync} from 'node:fs';
+const BASE_MRK_1_14_20=JSON.parse(readFileSync(new URL('../apps/web/public/content/registry.json',import.meta.url))).packs.find(p=>p.id==='eng.MRK-1-14-20').revision;
 
 // Easy-button guard (cookbook RECIPE R4-R6, SCRIPTED-JOURNEYS EB and J3).
 // Faces are sampled from the first paint; causes are logged beside them, so the
@@ -179,6 +181,129 @@ test('R6.2/K4: a heard discussion screen shows the same dock when its recording 
  await expect(page.locator('h1').first()).toHaveText(heading,{timeout:30000});
  await expect.poll(async()=>(await faces(page)).slice(from).some(f=>!isChecking(f)),{timeout:30000}).toBe(true);await page.waitForTimeout(1500);
  expect((await faces(page)).slice(from).map(f=>f.label)).toEqual([CHECKING,'Continue']);expect(await dock()).toEqual(live);
+});
+
+// R6/K1 on the packaged Worker (GAP-R6: the DEV proof found a disabled Play beside Continue on 6 of 9
+// Mark 1:21–28 guide and discussion screens with automatic guide narration off). Mark 1:21–28 as the
+// server serves it, opened from Passages and walked forward, with every setting on and again with only
+// automatic guide narration off: no screen without a recording shows a Play in the Next slot.
+async function settings(page,values){
+ await page.getByRole('button',{name:'More options'}).click();await page.getByRole('button',{name:'Settings',exact:true}).click();
+ for(const [name,on] of Object.entries(values))await page.getByRole('checkbox',{name:new RegExp(name)}).setChecked(on);
+ await page.getByRole('button',{name:'Close',exact:true}).click();
+}
+for(const guide of [true,false])test(`R6/K1: Mark 1:21–28 as served, ${guide?'every setting on':'automatic guide narration off'}: no screen without a recording shows a Play in the Next slot`,async({page})=>{
+ test.skip(process.env.FIA_WORKER_PREVIEW!=='1','Opt-in actual packaged Worker preview only (opening reads /v1/packs)');
+ test.setTimeout(120000);
+ const posts=[];page.on('request',r=>{if(r.method()==='POST'&&new URL(r.url()).pathname.startsWith('/v1/preparations'))posts.push(r.url());});
+ await page.goto('/');await settled(page,{quietMs:300});
+ await settings(page,{'Automatic guide narration':guide,'Automatic Scripture reading':true,'Describe images and maps':true,'Automatic video playback':true,'Dark theme':true});
+ await page.getByRole('button',{name:'More options'}).click();await page.getByRole('button',{name:'Passages',exact:true}).click();
+ await page.getByRole('dialog').locator('article.pack-card').filter({has:page.getByRole('heading',{name:'Mark 1:21–28',exact:true})}).getByRole('button',{name:/Open passage|Resume passage/}).click();
+ await expect(page.getByRole('dialog')).toHaveCount(0,{timeout:30000});
+ const nav=page.getByRole('navigation',{name:'Session controls'}),centre=nav.locator('.guide-primary');
+ const dock=()=>page.evaluate(()=>{const nav=document.querySelector('nav[aria-label="Session controls"]'),slot=[...nav.querySelectorAll('.step-control')].at(-1);return {screen:(document.querySelector('main h1')?.textContent||'').trim().slice(0,48),centre:nav.querySelector('.guide-primary').getAttribute('aria-label'),slot:slot.getAttribute('aria-label')+(slot.disabled?' (disabled)':'')};});
+ const seen=[];
+ for(let step=0;step<13;step++){
+  await expect(centre).not.toHaveAttribute('aria-busy','true',{timeout:20000});await page.waitForTimeout(400);
+  const now=await dock();seen.push(now);
+  if(now.centre==='Continue')await centre.click();else await nav.getByRole('button',{name:'Skip to next activity'}).click();
+ }
+ test.info().annotations.push({type:'K1',description:JSON.stringify(seen)});
+ expect(seen.filter(s=>/^Play/.test(s.slot)),JSON.stringify(seen)).toEqual([]);
+ expect(posts).toEqual([]);
+});
+
+// B1 (review of #201): the Next slot is sampled from first paint. While checking, the slot follows what
+// the screen declares, never the unanswered device check. With automatic guide narration off, Mark 1:1–13
+// shows one Play, disabled while checking, on every reload and after a passage switch (K4; J2 runs with
+// guide narration off), and Mark 1:21–28 shows Skip from its first paint.
+function slotProbe(){
+ const log=window.__slots=[];let last='';
+ const sample=()=>{const nav=document.querySelector('nav[aria-label="Session controls"]'),slot=nav&&[...nav.querySelectorAll('.step-control')].at(-1),h=document.querySelector('main h1');if(!slot||!h)return;const entry={screen:h.textContent.trim(),centre:nav.querySelector('.guide-primary')?.getAttribute('aria-label'),slot:slot.getAttribute('aria-label')+(slot.disabled?' (disabled)':'')},key=JSON.stringify(entry);if(key!==last){last=key;log.push({t:Math.round(performance.now()),...entry});}};
+ new MutationObserver(sample).observe(document,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['aria-label','disabled']});
+}
+const slots=page=>page.evaluate(()=>window.__slots);
+const slotsOn=(log,screen)=>log.filter(e=>e.screen===screen).map(e=>e.slot).filter((slot,i,all)=>slot!==all[i-1]);
+// A disabled Play is shown only while checking; the checks that make it playable end its disabled span.
+const disabledOnlyWhileChecking=log=>log.every(e=>e.slot!=='Play (disabled)'||e.centre===CHECKING);
+test('B1/K4: with automatic guide narration off, Mark 1:1–13 shows one Play in the Next slot from first paint on every reload, disabled while checking',async({page})=>{
+ await page.addInitScript(slotProbe);
+ await page.goto('/');await settled(page,{quietMs:300});await settings(page,{'Automatic guide narration':false});
+ const home=(await page.locator('main h1').textContent()).trim();
+ for(let reload=0;reload<3;reload++){
+  await page.reload();await settled(page,{quietMs:500});
+  const log=await slots(page);test.info().annotations.push({type:`B1 reload ${reload+1}`,description:JSON.stringify(log)});
+  expect(log[0].centre,JSON.stringify(log)).toBe(CHECKING);
+  expect(slotsOn(log,home),JSON.stringify(log)).toEqual(['Play (disabled)','Play']);
+  expect(disabledOnlyWhileChecking(log),JSON.stringify(log)).toBe(true);
+ }
+});
+test('B1/K4: with automatic guide narration off, a passage switch keeps each screen\'s Next slot from its first paint: Skip on Mark 1:21–28, one Play on Mark 1:1–13',async({page})=>{
+ test.skip(process.env.FIA_WORKER_PREVIEW!=='1'&&!process.env.BASE_URL,'Opening a passage reads /v1/packs: the packaged Worker preview or a deployed target');
+ test.setTimeout(120000);
+ await page.addInitScript(slotProbe);
+ await page.goto('/');await settled(page,{quietMs:300});await settings(page,{'Automatic guide narration':false});
+ const centre=page.locator('nav[aria-label="Session controls"] .guide-primary'),heading=page.locator('main h1');
+ const home=(await heading.textContent()).trim();
+ const open=async title=>{
+  await page.getByRole('button',{name:'More options'}).click();await page.getByRole('button',{name:'Passages',exact:true}).click();
+  await page.getByRole('dialog').locator('article.pack-card').filter({has:page.getByRole('heading',{name:title,exact:true})}).getByRole('button',{name:/Open passage|Resume passage/}).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0,{timeout:30000});
+  await expect(centre).not.toHaveAttribute('aria-busy','true',{timeout:30000});await page.waitForTimeout(500);
+ };
+ await open('Mark 1:21–28');const other=(await heading.textContent()).trim();expect(other).not.toBe(home);
+ const opened=await slots(page);test.info().annotations.push({type:'B1 open',description:JSON.stringify(opened)});
+ expect(slotsOn(opened,other),JSON.stringify(opened)).toEqual(['Skip to next activity']);
+ expect(disabledOnlyWhileChecking(opened),JSON.stringify(opened)).toBe(true);
+ // A reload that restores Mark 1:21–28: once its screen paints, Skip throughout.
+ await page.reload();await settled(page,{quietMs:500});await expect(heading).toHaveText(other);
+ await open('Mark 1:1–13');await expect(heading).toHaveText(home);
+ const log=await slots(page);test.info().annotations.push({type:'B1 restore and switch back',description:JSON.stringify(log)});
+ expect(slotsOn(log,other),JSON.stringify(log)).toEqual(['Skip to next activity']);
+ const back=log.slice(log.findLastIndex(e=>e.screen===other)+1);
+ expect(back[0]?.centre,JSON.stringify(back)).toBe(CHECKING);
+ expect(slotsOn(back,home),JSON.stringify(back)).toEqual(['Play (disabled)','Play']);
+ expect(disabledOnlyWhileChecking(log),JSON.stringify(log)).toBe(true);
+});
+
+// B1-bis (review of #201): Mark 1:14–20 served as its base record (what a server serves before the passage
+// is first opened) declares its BSB recording only through the packaged build: the passage's offline
+// manifest names it by scriptureAssetId. Relaunched on the BSB reading with Automatic Scripture reading off,
+// the Next slot keeps one Play from first paint, disabled while checking, on every relaunch. The readings
+// without a recording (Mark 1:14–20 ULT and UST, every Mark 1:21–28 reading as served) show Skip throughout.
+// A target that already serves Mark 1:14–20's prepared presentation records the BSB rows as not-served.
+async function servedReadings(page,id){
+ const answer=await page.request.get(`/v1/packs/${id}`);expect(answer.ok(),`${id} is served`).toBe(true);
+ const record=await answer.json(),presentation=await (await page.request.get(`/v1/artifacts/${record.artifact.sha256}`)).json();
+ return {record,presentation,readings:presentation.activities.map((a,index)=>({...a,index})).filter(a=>a.kind==='scripture')};
+}
+async function relaunchOn(page,id,served,index){
+ const activities=served.presentation.activities,session={...createSession(activities),index};
+ await page.evaluate(([id,progress,device])=>{localStorage.setItem('fia-v3-selected-pack',id);localStorage.setItem(`fia-v3-progress@1:${id}`,JSON.stringify(progress));localStorage.setItem('fia-v3-preferences@1',JSON.stringify(device));},[id,{total:activities.length,revision:served.record.revision,activityId:activities[index].id,session},{preferences:{...session.preferences,readScripture:false}}]);
+ await page.reload();await settled(page,{quietMs:500});
+ const heading=activities[index].title;await expect(page.locator('main h1')).toHaveText(heading);
+ const log=await slots(page);test.info().annotations.push({type:`B1-bis ${id} ${activities[index].id}`,description:JSON.stringify(log)});
+ return {heading,log};
+}
+test('B1-bis/K4: Mark 1:14–20 BSB served as its base record, Automatic Scripture reading off: one Play from first paint on every relaunch, disabled while checking; readings without a recording show Skip throughout',async({page})=>{
+ test.skip(process.env.FIA_WORKER_PREVIEW!=='1'&&!process.env.BASE_URL,'Relaunching a passage reads /v1/packs: the packaged Worker preview or a deployed target');
+ test.setTimeout(120000);
+ await page.addInitScript(slotProbe);
+ await page.goto('/');await settled(page,{quietMs:300});
+ const passage=await servedReadings(page,'eng.MRK-1-14-20'),bsb=passage.readings.find(a=>a.assetId==='scripture-BereanStandardBible');
+ const base=!passage.presentation.execution&&passage.record.revision===BASE_MRK_1_14_20;
+ if(base){
+  for(let relaunch=0;relaunch<3;relaunch++){
+   const {heading,log}=await relaunchOn(page,'eng.MRK-1-14-20',passage,bsb.index);
+   expect(log[0].centre,JSON.stringify(log)).toBe(CHECKING);
+   expect(slotsOn(log,heading),JSON.stringify(log)).toEqual(['Play (disabled)','Play']);
+   expect(disabledOnlyWhileChecking(log),JSON.stringify(log)).toBe(true);
+  }
+  for(const reading of passage.readings.filter(a=>a!==bsb)){const {heading,log}=await relaunchOn(page,'eng.MRK-1-14-20',passage,reading.index);expect(slotsOn(log,heading),JSON.stringify(log)).toEqual(['Skip to next activity']);}
+ }else test.info().annotations.push({type:'B1-bis',description:`not-served: Mark 1:14–20 base record (the target serves ${passage.record.revision}${passage.presentation.execution?', executable':''})`});
+ const other=await servedReadings(page,'eng.MRK-1-21-28');expect(other.readings.length).toBeGreaterThan(0);
+ for(const reading of other.readings){const {heading,log}=await relaunchOn(page,'eng.MRK-1-21-28',other,reading.index);expect(slotsOn(log,heading),JSON.stringify(log)).toEqual(['Skip to next activity']);}
 });
 
 test('J3 hammer: six taps 150 ms apart start one recording and never cancel it',async({page})=>{

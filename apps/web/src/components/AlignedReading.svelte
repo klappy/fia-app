@@ -7,7 +7,8 @@
  let viewport=$state(), following=$state(true), reducedMotion=$state(false), revision=$state(0), ready=$state(false), edgeSpace=$state({leading:0,trailing:0});
  let lastScrollTarget=null,scroller;
  let resourceId=$derived(asset.id);
- let active=$derived(!!asset.descriptionAudio && playback.src===asset.descriptionAudio);
+ // R2: the clip names the reading it voices; a URL comparison misses server passages that play from a blob.
+ let active=$derived(!!playback.assetId&&playback.assetId===asset.id);
  let blocks=$derived(asset.verses||[{text:asset.text||asset.description||''}]);
  let position=$derived(active?alignmentPosition(asset.alignment,playback.elapsed):null);
  const scrollKeys=new Set(['ArrowUp','ArrowDown','PageUp','PageDown','Home','End',' ']);

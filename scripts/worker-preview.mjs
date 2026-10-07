@@ -4,7 +4,8 @@ import {preview} from 'vite';
 import {createControlledAuthority} from './live-listening/controlled-authority.mjs';
 import {previewRequest} from './live-listening/preview-request.mjs';
 const repo=process.cwd(),port=Number(process.env.FIA_PREVIEW_PORT||4173),localOrigin=`http://127.0.0.1:${port}`,workerOrigin='https://dev.fiaguide.app';
-const authority=await createControlledAuthority(repo,workerOrigin);
+// FIA_PREVIEW_APPROVED_AUDIO names a local copy of a reviewed recording to serve (J4's passage-only row).
+const authority=await createControlledAuthority(repo,workerOrigin,{approvedAudio:process.env.FIA_PREVIEW_APPROVED_AUDIO||null});
 let server;
 try{server=await preview({preview:{host:'127.0.0.1',port,strictPort:true},plugins:[{name:'packaged-worker-authority-preview',configurePreviewServer(server){server.middlewares.use(async(req,res,next)=>{try{
  let target;try{target=previewRequest(req.url,req.headers,localOrigin,workerOrigin);}catch{return void res.writeHead(403).end('Untrusted preview request');}
@@ -13,6 +14,6 @@ try{server=await preview({preview:{host:'127.0.0.1',port,strictPort:true},plugin
  if(!['GET','HEAD'].includes(req.method))return void res.writeHead(405,{'Allow':'GET, HEAD'}).end();
  next();
  }catch(error){res.writeHead(500,{'Content-Type':'application/json'});res.end(JSON.stringify({error:error.message}));}});}}]});}catch(error){await authority.dispose();throw error;}
-console.log(`Packaged Worker preview ${localOrigin}; snapshot ${authority.snapshotSha256}`);
+console.log(`Packaged Worker preview ${localOrigin}; snapshot ${authority.snapshotSha256}${authority.retained.length?`; retained ${authority.retained.map(r=>`${r.packId} ${r.assetId}`).join(', ')}`:''}`);
 async function close(){await new Promise(resolve=>server.httpServer.close(resolve));await authority.dispose();}
 process.once('SIGTERM',()=>void close());process.once('SIGINT',()=>void close());
