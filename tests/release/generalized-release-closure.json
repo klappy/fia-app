@@ -1520,7 +1520,7 @@
     },
     {
       "path": "server/faces/worker/BACKEND-CLOSURE.json",
-      "sha256": "e740c8b67e02a68e518f4bd2aa60df39f62a7318a38529c4c37c7360ff6b1620"
+      "sha256": "d0a6842eddf77573fba9d29eb4009b5a5dfb6c9f65f810692d6e8d8ea0fe8d93"
     },
     {
       "path": "server/faces/worker/adapter.mjs",
@@ -1600,7 +1600,7 @@
     },
     {
       "path": "server/fia/preparation/EXECUTABLE-RUNTIME.md",
-      "sha256": "745f5ff2fbadab9cd066c5537c45763663db44d880974248e889ac0b5cd25ece"
+      "sha256": "64a967c41a19b10a16b9578705534e352d7444c2da9d2e20b69c8689193d5564"
     },
     {
       "path": "server/fia/preparation/GUIDE-DISPATCH.md",
@@ -1628,7 +1628,7 @@
     },
     {
       "path": "server/fia/preparation/executable-presentation-runtime.mjs",
-      "sha256": "54c1f5ec082b10f348c67b5c6ea48c5fc02c7607dcd1412289892d362ca5475a"
+      "sha256": "bde9fdd820b2828374e48c3ac25a8da3d633e200d9b431baf1420a37de8cefc2"
     },
     {
       "path": "server/fia/preparation/executable-presentation-service.mjs",
@@ -2664,11 +2664,23 @@
     },
     {
       "path": "release/changes/truthful-passage-switch.md",
-      "sha256": "70c4c61e4a8db4b042427af9df3745c7692cd33511a377faf13420f5492d9768"
+      "sha256": "23be340130579fd3cfcea51ee8cf9a96310eec5ac0d894c1bf6db67fb0cd6dfb"
     },
     {
       "path": "tests/worker-serving/executable-transition.test.mjs",
-      "sha256": "215965810e89b6d7c50f3a9e0a7b70300c0bf1a4d4f623275d221d79f1dcb3a4"
+      "sha256": "f53200280eabb07da4faa4efd23d58007efc2458db160750e4b67cbc42d3a740"
+    },
+    {
+      "path": "tests/worker-serving/execution-registry.test.mjs",
+      "sha256": "91bcdea5dc9a76f59e9311f3904ffa03d688426cba9920248a4a1bb581770e57"
+    },
+    {
+      "path": "tests/worker-serving/fixtures/approved-audio/d3be588481b0be844fab52b285684702887dc863ba47b8abdbbeb23ec2b9f6b8.json",
+      "sha256": "d3be588481b0be844fab52b285684702887dc863ba47b8abdbbeb23ec2b9f6b8"
+    },
+    {
+      "path": "tests/worker-serving/fixtures/approved-audio/0599996af6b15cf55853cfee33d2b4405e5ee95bd9068f297c5b4b4c24284235.ogg",
+      "sha256": "0599996af6b15cf55853cfee33d2b4405e5ee95bd9068f297c5b4b4c24284235"
     }
   ],
   "generatedFiles": [

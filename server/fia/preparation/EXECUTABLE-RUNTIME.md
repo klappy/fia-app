@@ -34,18 +34,39 @@ its code as `reason` (HTTP 409), never a 500.
 
 The execution policy hash includes the approved-audio proof index, and a job is
 also keyed by its projector recipe, so a release can supersede the policy or the
-recipe that validated a publication. The registry of released builds is finite,
-each named by its literal policy and recipe, with today's provider, and never by
-today's policy, which the next content or proof-index release moves: the build
-without a proof index (`aad92a4`) under `fia-server-source-action-projector@1`;
-the builds through `e7eb0f0`, with proof index `d3be5884` (policy `9a7733f5`), under
-`@1`, before #190 added flow roles (`@2`); and this build, the same policy under
-`@2`. The entry equal to today's build is the current build, not a historical one,
-so this build's own rows still authenticate after a release moves the policy. The
-transition test checks the literal against a replay of the `e7eb0f0` build and
-fails once a release moves the policy, so that release names its own build here
-too. A job under `@1` is projected without flow roles, so its publication
-reproduces exactly. Only the unqualified current read (`read_pack({packId})` and
+recipe that validated a publication. The registry of released builds
+(`SUPERSEDED_BUILDS`) is finite and frozen. Every entry is a literal policy and
+recipe, with today's provider. None is computed from today's code or content
+(`sha256(EXECUTION_POLICY)`, today's policy or a recipe constant), because a later
+release moves those values and would rename the build. The entries are:
+
+- `35e074a6…5a47` under `fia-server-source-action-projector@1`: the build without a
+  proof index (`aad92a4`);
+- `9a7733f5…295c` (the policy bound to proof index `d3be5884`) under `@1`: the
+  builds through `e7eb0f0`, before #190 added flow roles;
+- `9a7733f5…295c` under `@2`: the builds from `45a3248`.
+
+The entry equal to today's build is the current build, not a historical one. Once a
+release moves the policy, it authenticates that build's rows.
+`tests/worker-serving/execution-registry.test.mjs` fails when an entry is not
+written as a literal, when one of these names changes, or when today's build is not
+registered. So a release that moves the policy or the recipe appends its own build
+and never edits one. The transition test replays each released build with the proof
+index it served, stored byte for byte in `tests/worker-serving/fixtures/approved-audio/`
+(DEV serves the same 4311 bytes), so a replay keeps its literal policy after a content
+release. A job under `@1` is projected without flow roles, so its publication
+reproduces exactly.
+
+A policy move strands no registered row only while that pack's base revision and its
+approved-audio binding rows are unchanged. The verifier checks a bound recording
+against today's proof index and the retained bytes. If a release changes
+`eng.MRK-1-14-20`'s binding (its delivery, ledger, evidence or base bytes) or its base
+revision, that pack's historical row stays refused (404 `execution-job-policy`, never
+a 500) until it is re-prepared. A row whose bytes the moved policy reproduces exactly
+(the same recipe and bindings, as for DEV's `{9a7733f5, @2}` rows) is never replaced.
+Its read serves the base with its demand, but an explicit Open answers `blocked`
+`executable-publication-conflict`, so the passage cannot open as executable until its
+bytes change. That is an open follow-up, due before the next content release. Only the unqualified current read (`read_pack({packId})` and
 `GET /v1/packs/<packId>`) may then serve the base with its existing demand, and
 only after it authenticates that historical publication exactly: the current
 pointer and artifact-owner indexes, the closed publication row, the closed job row
@@ -109,6 +130,7 @@ artifact verification has no production latency measurement yet.
 Validation:
 
 ```
+node --test tests/worker-serving/execution-registry.test.mjs tests/worker-serving/executable-transition.test.mjs
 node --test tests/publication/executable-overlay.test.mjs
 source /tmp/fia-window-stream-test-env.sh
 FIA_MEDIA_PROOF_ROOT=/tmp/fia-client-01a10fba/integration/dist \
