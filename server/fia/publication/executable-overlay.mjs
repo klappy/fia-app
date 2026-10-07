@@ -5,6 +5,8 @@ const need=(x,reason='executable-publication-invalid')=>{if(!x)throw Error(reaso
 const same=(a,b)=>canonicalJSONString(a)===canonicalJSONString(b);
 const absent=reason=>({status:'unavailable',reason});
 const MAX=1048576;
+const exact=(x,keys)=>x!==null&&typeof x==='object'&&Object.getPrototypeOf(x)===Object.prototype&&Object.keys(x).sort().join()===[...keys].sort().join();
+const ROW=['schema','binding','revision','artifact','bound','mediaIdentity','mediaAssetsSha256','provenance','baseRecord'],BINDING=['packId','baseRevision','sourceRevision','capability'],DESCRIPTOR=['reference','sha256','bytes','mime'];
 
 /** Domain validation is supplied by the existing presentation compiler. This is
  * only immutable publication and a transactional catalog overlay, shared by both
@@ -25,7 +27,7 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
   const out={reference:d.reference,sha256:digest,bytes:bytes.length,mime:'application/json'};
   await bytesFor(out);return out;
  }
- async function verified(row){
+ async function verified(row,check=validate){
   need(row?.schema==='fia-executable-publication@1'&&hash(row.revision)&&row.artifact.sha256===row.revision&&Array.isArray(row.bound)&&row.bound.length<=1024);
   need(await eligible(copy(row.binding))===true,'executable-publication-revoked');
   const pinnedBase=await base.readCatalog(row.binding.packId,row.binding.baseRevision);need(pinnedBase?.status==='ready'&&pinnedBase.revision===row.binding.baseRevision,'executable-base-unavailable');
@@ -36,7 +38,7 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
   }else need(row.mediaIdentity===null&&row.mediaAssetsSha256===null,'executable-media-binding');
   const boundArtifacts=[];
   for(const d of row.bound)boundArtifacts.push({id:d.id,sha256:d.sha256,bytes:await bytesFor(d)});
-  need(await validate({presentation,boundArtifacts,provenance:copy(row.provenance),binding:copy(row.binding)})===true,'executable-publication-refused');
+  need(await check({presentation,boundArtifacts,provenance:copy(row.provenance),binding:copy(row.binding)})===true,'executable-publication-refused');
   need(await eligible(copy(row.binding))===true,'executable-publication-revoked');
   return {bytes,boundArtifacts};
  }
@@ -80,6 +82,23 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
   if(!row)return base.readCatalog(packId,revision);
   try{need(row.binding.packId===packId&&(!revision||row.revision===revision)&&found.key===`executable-record:${packId}@${row.revision}`,'executable-pointer-binding');await verified(row);return record(row);}catch(error){return absent(error.message);}
  }
+ /** Read-only. Authenticates the current pointer's publication exactly: closed row and
+  * descriptors, pointer and artifact-owner index bindings, and every retained byte,
+  * under a caller-supplied verifier instead of current validation. It grants nothing:
+  * the caller decides what an authenticated row may justify, and the row stays refused. */
+ async function authenticateCurrent(packId,check){
+  need(typeof check==='function');
+  const {key,row,owners}=await tx(async t=>{
+   const key=await t.get('executable-current:'+packId),row=typeof key==='string'?await t.get(key):null,owners=[];
+   if(row&&exact(row,ROW)&&Array.isArray(row.bound))for(const d of [row.artifact,...row.bound])owners.push(await t.get('executable-artifact:'+d?.sha256));
+   return {key,row,owners};
+  });
+  need(exact(row,ROW)&&exact(row.binding,BINDING)&&row.binding.packId===packId&&key===`executable-record:${packId}@${row.revision}`,'executable-pointer-binding');
+  need(exact(row.artifact,DESCRIPTOR)&&row.artifact.mime==='application/json'&&row.bound.every(d=>exact(d,['id',...DESCRIPTOR])&&d.mime==='application/json'),'executable-publication-invalid');
+  need(owners.length===row.bound.length+1&&owners.every(o=>Array.isArray(o)&&o.includes(key)),'executable-owner-binding');
+  await verified(row,check);
+  return copy(row);
+ }
  async function findArtifact(digest){
   const owners=await tx(t=>t.get('executable-artifact:'+digest));
   if(!owners)return base.findArtifact(digest);
@@ -88,5 +107,5 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
   }
   return absent('executable-artifact-unavailable');
  }
- return Object.freeze({publish,readCatalog,findArtifact});
+ return Object.freeze({publish,readCatalog,findArtifact,authenticateCurrent});
 }

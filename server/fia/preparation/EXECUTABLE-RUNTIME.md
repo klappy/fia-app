@@ -25,6 +25,37 @@ publication; concurrent observers can poll it. A read cannot repair a pointer,
 invoke a provider, or create a missing sidecar. Startup fences interrupted
 decision attempts; uncertain work is not automatically retried.
 
+A demand is offered, and admitted, only when the base artifact was compiled from
+the source revision it names. The approved original presentation
+(`eng.MRK-1-1-13`, base id `fia-mark-authentic@1`) has its own lineage and is
+not projectable from that source, so it is neither offered nor admitted. A demand
+the resolver or projector cannot satisfy answers a typed `blocked` envelope with
+its code as `reason` (HTTP 409), never a 500.
+
+The execution policy hash includes the approved-audio proof index, so a release
+can supersede the policy that validated a publication. The registered historical
+policy is finite: only the build without a proof index (`aad92a4`), with today's
+provider and recipe. Only the unqualified current read (`read_pack({packId})` and
+`GET /v1/packs/<packId>`) may then serve the base with its existing demand, and
+only after it authenticates that historical publication exactly: the current
+pointer and artifact-owner indexes, the closed publication row, the closed job row
+with its recomputed id and retained context bytes, the request row bound to that
+revision, and the publication reproduced under the historical policy. A reason
+string alone never qualifies; a forged, unregistered or corrupt row, a wrong
+pointer or index, or missing bytes stays refused. The read writes nothing. The
+historical revision and its old job-status read stay denied. This tree has no
+publication generations, so the demand is the existing four-field one (cookbook
+backport linked from the release note).
+
+Publication rows and their provenance are immutable. Republishing identical bytes
+under a newer job is a typed `blocked` `executable-publication-conflict`, never a
+replacement. Expected publication conflicts (pointer race, stale base, revocation,
+refused validation), named post-admission refusals and a stale-policy job-status
+read answer the typed `blocked` envelope with their code (HTTP 409). An unnamed
+fault is not disguised as a refusal. A transient storage or fetch fault during
+resolution answers `blocked` with its code and writes no job row, so it can be
+retried.
+
 Publication stores verified bytes before atomically advancing its pointer.
 New publication checks the latest base, while an eligible previously published
 pinned version remains readable. Both catalog and artifact reads recheck

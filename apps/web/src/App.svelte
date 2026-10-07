@@ -170,7 +170,35 @@
  function applyStored(){const stored=restoreProgress(localStorage,selectedPack,activities,assets);if(stored?.resetRequired)notice='This passage changed. Your previous place could not be matched; starting at the beginning.';session=stored?.session||createSession(activities);if(stored){scale=[1,1.25,1.5].includes(stored.scale)?stored.scale:1;rate=[.85,1,1.15].includes(stored.rate)?stored.rate:1;muted=!!stored.muted;dark=!!stored.dark;termDefinition=stored.termDefinition===activities[session.index]?.id?stored.termDefinition:null;transitionSection=stored.transitionSection===activities[session.index]?.sectionId?stored.transitionSection:null;}started=session.index>0||session.status!=='ready';}
  let selectionPending=$state(false);const trackSelection=createSelectionTracker(value=>selectionPending=value);let swipeGeneration=0;
  async function selectPack(id,{explicit=true}={}){selectionAbort?.abort();selectionAbort=new AbortController();const intent=++selectionIntent;await executeSelection(id,intent,{explicit,signal:selectionAbort.signal});}
- async function executeSelection(id,intent,options){if(intent!==selectionIntent)return;if(deferVideo(()=>executeSelection(id,intent,options)))return;const finish=trackSelection();try{await loadSelectedPack(id,intent,options);}catch(error){if(intent===selectionIntent)notice=error.message||'The passage could not be opened. Try again.';}finally{finish();}}
+ // A selection's promise carries its outcome to whoever asked (the Passages sheet or
+ // the launch restore), also across a native-video deferral. A superseded selection
+ // settles quietly; the current passage is untouched until a switch succeeds.
+ let deferredSelection=null;
+ function executeSelection(id,intent,options){
+  if(intent!==selectionIntent)return Promise.resolve();
+  deferredSelection?.resolve();deferredSelection=null;
+  let settle;const waiting=new Promise((resolve,reject)=>settle={resolve,reject});
+  if(deferVideo(()=>{if(deferredSelection===settle)deferredSelection=null;executeSelection(id,intent,options).then(settle.resolve,settle.reject);})){deferredSelection=settle;return waiting;}
+  return runSelection(id,intent,options);
+ }
+ async function runSelection(id,intent,options){const finish=trackSelection();try{await loadSelectedPack(id,intent,options);}catch(error){if(intent===selectionIntent)throw error;}finally{finish();}}
+ // Opened from the Passages sheet: a refusal is shown in the sheet, next to its card.
+ // Only when the sheet was closed before the answer arrived does the reading screen say it.
+ async function openFromSheet(id){try{await selectPack(id);}catch(error){if(!['languages','passages','downloads'].includes(sheet))notice=error?.message||'The passage could not be opened. Try again.';throw error;}}
+ // A saved passage that cannot be restored falls back once: the default stays open and
+ // the saved key is cleared, so later launches are quiet. A missing connection is not a
+ // verdict about the passage, so that key is kept for the next launch.
+ async function restoreSavedPack(id){
+  try{await selectPack(id,{explicit:false});}
+  catch(error){
+   // A restore aborted by teardown is no verdict about the passage: keep its key.
+   if(error?.name==='AbortError')return;
+   const transient=error?.code==='passage-transient';
+   if(!transient)try{if(localStorage.getItem('fia-v3-selected-pack')===id)localStorage.removeItem('fia-v3-selected-pack');}catch{}
+   const message=`Your last passage ${error?.code==='passage-unavailable'?'is not available yet':transient?'could not be reached':'could not be opened'}, so ${selectedPack.title} is open.`;
+   notice=message;clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>{if(notice===message)notice='';},6000);
+  }
+ }
  async function loadSelectedPack(id,intent,options){videoDelivery.cancel();stopVisual();visualOwner.clear();const generation=++selectionGeneration;const loaded=await libraryAdapter.select(id,options);if(intent!==selectionIntent||generation!==selectionGeneration)return;if(deferVideo(()=>applySelectedPack(loaded,generation,intent)))return;await applySelectedPack(loaded,generation,intent);}
  async function applySelectedPack(loaded,generation,intent){if(intent!==selectionIntent||generation!==selectionGeneration)return;validateExecutablePresentation(loaded.presentation);persist();cancel();selectedPack=loaded.descriptor;if(selectedPack.offlineSnapshot==='historical-verified')notice=historicalSnapshotNotice;else if(notice===historicalSnapshotNotice)notice='';rawPresentation=loaded.presentation;saved=false;downloadedDeliveryRevision=null;downloadedPaths=new Set();downloadedAudioDescriptors=new globalThis.Map();onlineMedia=new globalThis.Map();savedMedia=new globalThis.Map();deliveryRevision=null;revokePlayback();introduced=new Set();manualStarts=new Set();visualHeard=null;termDefinition=null;transitionSection=null;messages=[];language=selectedPack.language;session=createSession(loaded.presentation.activities);try{applyStored();localStorage.setItem('fia-v3-selected-pack',loaded.descriptor.id);}catch{notice='Your saved place could not be read.';}sheet=null;await libraryAdapter.activate(selectedPack).catch(()=>{});if(intent!==selectionIntent||generation!==selectionGeneration)return;await updateDownloaded();await updateMedia();}
  function restartPack(id){resetProgress(localStorage,{id});if(id===selectedPack.id)reset();}
@@ -404,7 +432,7 @@
   audio=createAudioController(s=>{const m=mediaAlignment?.clockDomain==='delivery-media-seconds'?null:mediaTiming?.mapping;const logical={...s,src:s.src&&s.src===mediaBlob?mediaLogicalPath:s.src};audioState=m?{...logical,elapsed:Math.max(0,(s.elapsed-m.offsetSeconds)/m.scale),duration:Math.max(0,(s.duration-m.offsetSeconds)/m.scale)}:logical;if(s.playing&&s.src===mediaBlob&&audioContext?.type==='narration'&&audioContext.id===(executableMode?boundPreparation?.activityId:currentPreparation?.identity.activityId)&&currentPreparation?.status==='ready')preparationDismissed=currentPreparation.event;},finishAudio,text=>{revokePlayback();notice=text;dispatch({type:'PAUSE'});},{allowSpeechFallback:false});
   const net=()=>{const wasOnline=online;online=navigator.onLine;if(!online)visualOwner.cancel();else if(!wasOnline&&visualCanceled!==visualIdentity()){visualOwner.retry();syncVisual();}};net();window.addEventListener('online',net);window.addEventListener('offline',net);
   if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js').then(()=>{updateDownloaded();updateMedia();}).catch(()=>{serviceWorkerError='Offline storage is unavailable here. Try the published HTTPS version.';});
-  try{const id=localStorage.getItem('fia-v3-selected-pack');if(id&&id!==selectedPack.id)selectPack(id,{explicit:false}).catch(e=>notice=e.message);}catch{}
+  try{const id=localStorage.getItem('fia-v3-selected-pack');if(id&&id!==selectedPack.id)void restoreSavedPack(id);}catch{}
   const context=document.modelContext;const lifecycle=new AbortController();
   const register=tool=>{try{Promise.resolve(context?.registerTool(tool,{signal:lifecycle.signal})).catch(()=>{});}catch{}};
   register({name:'fia_read_session',description:'Read the current FIA activity and stage without changing it.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true},execute:()=>({activityId:activity.id,status:session.status,mode:session.mode,stage:presentStage(session,activities)})});
@@ -469,7 +497,7 @@
    </div>
   {:else if ['languages','passages','downloads'].includes(sheet)}
    <button class="sheet-back" onclick={()=>sheet='menu'}><ChevronLeft size={18}/>FIA menu</button>
-   {#key sheet}<LibraryPanel view={sheet} {selectedPack} {language} onlanguage={selectLanguage} onview={view=>sheet=view} completed={session.completed.length} total={activities.length} onstatus={value=>{saved=value;updateDownloaded();}} onselect={selectPack} onreset={restartPack}/>{/key}
+   {#key sheet}<LibraryPanel view={sheet} {selectedPack} {language} onlanguage={selectLanguage} onview={view=>sheet=view} completed={session.completed.length} total={activities.length} onstatus={value=>{saved=value;updateDownloaded();}} onselect={openFromSheet} onreset={restartPack}/>{/key}
   {:else if sheet==='conversation'}
    <p class="sheet-intro">Ask to show a resource, pause, or change how we continue. This prototype supports commands; open-ended AI is not connected.</p>
    <form class="command-form" onsubmit={e=>{e.preventDefault();runCommand();}}><label class="sr-only" for="command">Tell the guide what you need</label><input bind:this={chatInput} id="command" bind:value={command} placeholder="Show me the map…" autocomplete="off"/><button class="icon-button" type="submit" aria-label="Send command" disabled={!command.trim()}><Send size={18}/></button></form>

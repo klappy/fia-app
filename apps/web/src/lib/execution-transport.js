@@ -7,15 +7,25 @@ const shape=(value,fields)=>value&&typeof value==='object'&&!Array.isArray(value
 const text=value=>typeof value==='string'&&value.length>0;
 const identityFields=['packId','presentationRevision','language','edition','quality','activityId','sourceUnitId','sourceTextSha256'];
 const validIdentity=value=>shape(value,identityFields)&&identityFields.every(key=>text(value[key]))&&hashPattern.test(value.presentationRevision)&&hashPattern.test(value.sourceTextSha256);
+// A missing or transient server answer is not a verdict about the passage: it is
+// typed so selection and restore can tell it apart from a refusal or a malformed record.
+const transientStatus=status=>[408,429].includes(status)||status>=500;
+const passageError=(message,code)=>Object.assign(Error(message),{code});
+const unreachable=()=>passageError('This passage could not be reached. Check your connection and try again. Your current passage stays open.','passage-transient');
+const invalidCatalog=()=>passageError('The server catalog is invalid.','passage-invalid');
 const validRange=value=>value===null||shape(value,['startSeconds','endSeconds'])&&Number.isFinite(value.startSeconds)&&value.startSeconds>=0&&Number.isFinite(value.endSeconds)&&value.endSeconds>value.startSeconds;
 
 export function createExecutionTransport({fetch:fetchArtifact=globalThis.fetch}={}){
- async function readArtifactBytes(expected,{signal}={}){
+ // `offline` names a missing answer (no response, a transient status, a body that stops) for a
+ // caller that tells it apart from a verdict; a stop by the caller's own signal ends with its reason.
+ async function readArtifactBytes(expected,{signal}={},offline=null){
    signal?.throwIfAborted();
-   const response=await fetchArtifact(`/v1/artifacts/${expected}`,{method:'GET',cache:'no-store',redirect:'error',signal});
+   const missing=error=>{signal?.throwIfAborted();if(offline&&error?.name!=='AbortError')throw offline();throw error;};
+   let response;try{response=await fetchArtifact(`/v1/artifacts/${expected}`,{method:'GET',cache:'no-store',redirect:'error',signal});}catch(error){missing(error);}
    signal?.throwIfAborted();
+   if(offline&&transientStatus(response.status))throw offline();
    if(response.status!==200||response.redirected)throw Error('The server artifact could not be read.');
-   const bytes=await response.arrayBuffer();
+   let bytes;try{bytes=await response.arrayBuffer();}catch(error){missing(error);}
    signal?.throwIfAborted();
    if(await hash(bytes)!==expected)throw Error('The server artifact could not be verified.');
    signal?.throwIfAborted();
@@ -93,19 +103,20 @@ export function createExecutionTransport({fetch:fetchArtifact=globalThis.fetch}=
  transport.readPack=async(packId,{revision,signal}={})=>{
   if(!text(packId)||revision!==undefined&&(typeof revision!=='string'||!hashPattern.test(revision)))throw Error('The server catalog identity is invalid.');
   signal?.throwIfAborted();
-  const response=await fetchArtifact(`/v1/packs/${encodeURIComponent(packId)}${revision?`?revision=${revision}`:''}`,{method:'GET',cache:'no-store',redirect:'error',signal});
+  let response;try{response=await fetchArtifact(`/v1/packs/${encodeURIComponent(packId)}${revision?`?revision=${revision}`:''}`,{method:'GET',cache:'no-store',redirect:'error',signal});}catch(error){signal?.throwIfAborted();if(error?.name==='AbortError')throw error;throw unreachable();}
   signal?.throwIfAborted();
-  let record;try{record=await response.json();}catch{throw Error('The server catalog is invalid.');}
+  if(transientStatus(response.status))throw unreachable();
+  let record;try{record=await response.json();}catch{throw invalidCatalog();}
   signal?.throwIfAborted();
   const codes={ready:200,preparing:202,unavailable:404,refused:400};
-  if(response.redirected||!record||!Object.hasOwn(codes,record.status)||response.status!==codes[record.status]||record.status==='ready'&&(record.packId!==packId||revision&&record.revision!==revision))throw Error('The server catalog is invalid.');
+  if(response.redirected||!record||!Object.hasOwn(codes,record.status)||response.status!==codes[record.status]||record.status==='ready'&&(record.packId!==packId||revision&&record.revision!==revision))throw invalidCatalog();
   if(record.status==='ready'&&response.headers.get('X-FIA-Offline-Snapshot')==='historical-verified')record.offlineSnapshot='historical-verified';
   return record;
  };
  transport.readPresentationRecord=async(record,context={})=>{
   const artifact=record?.artifact;
   if(record?.status!=='ready'||typeof record.revision!=='string'||!hashPattern.test(record.revision)||artifact?.sha256!==record.revision||!Number.isSafeInteger(artifact.bytes)||artifact.bytes<=0||artifact.mime!=='application/json')throw Error('The server presentation record is invalid.');
-  const bytes=await readArtifactBytes(artifact.sha256,context);
+  const bytes=await readArtifactBytes(artifact.sha256,context,unreachable);
   if(bytes.byteLength!==artifact.bytes)throw Error('The server presentation could not be verified.');
   try{return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));}catch{throw Error('The server presentation is invalid.');}
  };
