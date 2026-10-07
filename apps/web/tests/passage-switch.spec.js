@@ -62,3 +62,11 @@ it('R1/A3: a restore that only lacked a connection keeps the saved passage for t
  render(App);await waitFor(()=>expect(sceneNotices()).toEqual(['Your last passage could not be reached, so Mark 1:1–13 is open.']));
  expect(localStorage.getItem('fia-v3-selected-pack')).toBe('eng.MRK-1-14-20');
 });
+
+it('R1/A3: a restore aborted by teardown is not a verdict about the passage, so its saved key is kept',async()=>{
+ localStorage.setItem('fia-v3-selected-pack','eng.MRK-1-14-20');
+ const select=vi.spyOn(libraryAdapter,'select').mockImplementation((_,{signal})=>new Promise((_,reject)=>signal.addEventListener('abort',()=>reject(new DOMException('The operation was aborted.','AbortError')),{once:true})));
+ render(App);await waitFor(()=>expect(select).toHaveBeenCalledTimes(1));
+ cleanup();await settle();await settle();
+ expect(localStorage.getItem('fia-v3-selected-pack')).toBe('eng.MRK-1-14-20');
+});
