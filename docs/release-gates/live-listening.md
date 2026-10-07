@@ -70,3 +70,11 @@ Fresh controlled pending evidence also passed against PR176 candidate `9a5d8cde6
 Every hosted scenario first opens Mark 1:14–20 from the Passages sheet. That one setup assertion waits up to 15 s (`toContainText(first,{timeout:15000})`) as a harness wait. It is not a switch budget: J1's 5 s switch budget in the cookbook's scripted journeys stays the only switch budget, and the app speedup is its own ticket. There is no global `expect.timeout`, no retry and no skip.
 
 Every receipt records `setupSwitch.elapsedMs`: the page's own clock from the Open passage tap to the first unit's text being present. The receipt verifier requires it on every scenario and does not judge it against 5 s. Ground: Terry's k0020 ruling and DEV post-deploy run 37553559732.
+
+## Settled face before every primary tap
+
+A newly opened passage shows its text while the easy button is still checking availability (R5's checking face, `aria-label="Checking availability"`). Under E4, a tap made while checking is carried out only when the checked action is a play action, so a Continue tapped while checking is dropped. That is the design: design book open item 2 (no queued Continue) was settled as proposed at kitchen journal k0032.
+
+Every hosted tap of the primary's checked action therefore goes through `tapPrimary`, in all five scenarios. It waits up to 30 s for the face its intent needs (`Continue`, or `Begin`/`Play`/`Resume`), runs the scenario's own checks on that face (the automatic Begin scenario keeps its play-icon check), then taps. The primary's Pause face is tapped by its accessible name, which the checking face never carries. The wait is a harness wait for the check, not a budget. There is no global `expect.timeout`, no retry and no skip. No assertion was loosened. The settings scenario adds one: its Continue must move the place to the second screen before the reload.
+
+Each receipt lists `primaryTaps`: the intended face, the face first seen, and how many ms the harness waited, so a lengthening check stays visible. The check's speed belongs to the passage-open speed ticket (`2026-10-07-passage-open-speed`). `tests/live-listening/journey-taps.test.mjs` fails on any `.guide-primary` click outside `tapPrimary`. Ground: DEV post-deploy runs 37586548196 (fia-app#199) and 37631536968.
