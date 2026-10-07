@@ -1,0 +1,52 @@
+{
+  "schema": "fia-listening-persona-summary@1",
+  "commit": "5339cc77f88eed00e6875121ead92d0efd77ce9b",
+  "environment": "dev",
+  "runId": "37553559732",
+  "attempt": "1",
+  "workflowUrl": "https://github.com/klappy/fia-app/actions/runs/37553559732",
+  "scope": "Agent-operated observations; not human research or acoustic/device proof. Hosted and controlled protocol scopes are separate.",
+  "scenario": {
+    "key": "5339cc77f88eed00e6875121ead92d0efd77ce9b/dev/P2 settings and place persist without hidden writes or surprise sound",
+    "scenario": "P2 settings and place persist without hidden writes or surprise sound",
+    "scope": "hosted-rendered-native",
+    "outcome": "failed",
+    "validation": {
+      "validator": "verify",
+      "ok": false,
+      "environment": "dev",
+      "commit": "5339cc77f88eed00e6875121ead92d0efd77ce9b",
+      "errors": [
+        "Scenario did not pass once: P2 automatic Begin and Next preserve first unit and advance native audio",
+        "Scenario did not pass once: P2 Scripture ON must deliver actual BSB playback"
+      ],
+      "scope": "Live Chromium P2 listening only; no physical-device or audible-output claim"
+    },
+    "failedStep": "Scenario did not pass once: P2 automatic Begin and Next preserve first unit and advance native audio; Scenario did not pass once: P2 Scripture ON must deliver actual BSB playback",
+    "observedFriction": {
+      "classification": "observation-only",
+      "notices": [
+        {
+          "kind": "visible-notices",
+          "text": []
+        }
+      ],
+      "assessment": "Not inferred from pass/fail; review attached observations"
+    },
+    "userFeedback": {
+      "status": "not-collected"
+    },
+    "evidence": {
+      "name": "live-listening-evidence",
+      "sha256": "062afbdc7852c570aaf013b789087ee1ff284d92987e5469c31968f23711b4d5",
+      "workflowArtifacts": "test-results (trace/video retention is finite)"
+    },
+    "baselineComparison": {
+      "baselineCommit": "3d3b1d253c299e32837915dcd0771235dcf7b92a",
+      "priorOutcome": "failed",
+      "currentOutcome": "failed",
+      "archivePath": "3d3b1d253c299e32837915dcd0771235dcf7b92a/dev/37447650847-1/ef2c36f130e296b10d4a09cabb69a118133d8b57554d4bcdbb035bae49cba1e6.json",
+      "scope": "Outcome comparison only; no sentiment inference"
+    }
+  }
+}
