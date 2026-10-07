@@ -1,0 +1,51 @@
+{
+  "schema": "fia-listening-persona-summary@1",
+  "commit": "6af5709cad85933d6b5249a32a2a2255794a42f2",
+  "environment": "dev",
+  "runId": "37631536968",
+  "attempt": "1",
+  "workflowUrl": "https://github.com/klappy/fia-app/actions/runs/37631536968",
+  "scope": "Agent-operated observations; not human research or acoustic/device proof. Hosted and controlled protocol scopes are separate.",
+  "scenario": {
+    "key": "6af5709cad85933d6b5249a32a2a2255794a42f2/dev/P2 Scripture ON must deliver actual BSB playback",
+    "scenario": "P2 Scripture ON must deliver actual BSB playback",
+    "scope": "hosted-rendered-native",
+    "outcome": "failed",
+    "validation": {
+      "validator": "verify",
+      "ok": false,
+      "environment": "dev",
+      "commit": "6af5709cad85933d6b5249a32a2a2255794a42f2",
+      "errors": [
+        "Scenario did not pass once: P2 Scripture ON must deliver actual BSB playback"
+      ],
+      "scope": "Live Chromium P2 listening only; no physical-device or audible-output claim"
+    },
+    "failedStep": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.reading-verses')\nExpected substring: \u001b[32m\"After the arrest of John\"\u001b[39m\nReceived string:    \u001b[31m\" Listen to an audio version of Mark 1:14–20 three times, in three different translations, if possible. Then, as a group, discuss the following questions:\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('.reading-verses')\u001b[22m\n\u001b[2m    9 × locator resolved to <div class=\"reading-verses\">…</div>\u001b[22m\n\u001b[2m      - unexpected value \" Listen to an audio version of Mark 1:14–20 three times, in three different translations, if possible. Then, as a group, discuss the following questions:\"\u001b[22m\n",
+    "observedFriction": {
+      "classification": "observation-only",
+      "notices": [
+        {
+          "kind": "visible-notices",
+          "text": []
+        }
+      ],
+      "assessment": "Not inferred from pass/fail; review attached observations"
+    },
+    "userFeedback": {
+      "status": "not-collected"
+    },
+    "evidence": {
+      "name": "live-listening-evidence",
+      "sha256": "8fe7a0def1283388e73743c783e044c633dd12d98dee083e029607365966d64c",
+      "workflowArtifacts": "test-results (trace/video retention is finite)"
+    },
+    "baselineComparison": {
+      "baselineCommit": "a19be8a5e6091ff26d6e67ae6a9078c4ce747bfe",
+      "priorOutcome": "passed",
+      "currentOutcome": "failed",
+      "archivePath": "a19be8a5e6091ff26d6e67ae6a9078c4ce747bfe/dev/37619534037-2/f38f43cc9a6831d457ae34d374d268d3cc02c288d10c13d7a7b445f28613c979.json",
+      "scope": "Outcome comparison only; no sentiment inference"
+    }
+  }
+}
