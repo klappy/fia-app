@@ -36,9 +36,10 @@ async function silent(page){const before=await audioSnapshot(page);await page.wa
 async function onePause(page){const pause=controls(page).getByRole('button',{name:'Pause',exact:true});await expect(pause).toHaveCount(1);await expect(pause.locator('svg.lucide-pause')).toHaveCount(1);await pause.click();await silent(page);return true;}
 async function next(page){const before=await progress(page);await controls(page).getByRole('button',{name:'Skip to next activity',exact:true}).click();await expect.poll(async()=>(await progress(page))?.session.index).toBe(before.session.index+1);}
 // R5: an opened passage keeps the primary on its checking face until availability answers, and E4 drops a
-// non-play tap made while checking. Every primary tap waits for the settled face its intent needs; the wait
-// is a harness wait for the check, not a budget. The receipt records the face first seen and the ms waited.
-async function tapPrimary(page,face){const b=controls(page).locator('.guide-primary'),from=Date.now(),seen=await b.getAttribute('aria-label');await expect(b).toHaveAttribute('aria-label',face,{timeout:30000});evidence.primaryTaps.push({intent:String(face),seen,waitedMs:Date.now()-from});await b.click();}
+// non-play tap made while checking. Every tap of the primary's checked action waits for the settled face its
+// intent needs; the wait is a harness wait for the check, not a budget. The receipt records the face first seen
+// and the ms waited. `settled` runs the scenario's own checks on the settled face before the tap.
+async function tapPrimary(page,face,settled){const b=controls(page).locator('.guide-primary'),from=Date.now(),seen=await b.getAttribute('aria-label');await expect(b).toHaveAttribute('aria-label',face,{timeout:30000});const waitedMs=Date.now()-from;if(settled)await settled(b);evidence.primaryTaps.push({intent:String(face),seen,waitedMs});await b.click();}
 let evidence;
 test.beforeEach(async({page,request})=>{
  evidence={schemaVersion:1,environment:process.env.FIA_ENVIRONMENT,origin:process.env.BASE_URL,expectedCommit:process.env.EXPECT_COMMIT,packId,observations:[],ready:[],nativePlayback:[],primaryTaps:[],claims:{}};
@@ -52,7 +53,7 @@ test.beforeEach(async({page,request})=>{
 });
 test.afterEach(async({page},info)=>{evidence.outcome=info.status;evidence.observations.push({kind:'visible-controls',labels:await controls(page).getByRole('button').evaluateAll(nodes=>nodes.map(n=>({label:n.getAttribute('aria-label'),disabled:n.disabled}))).catch(()=>[])});evidence.observations.push({kind:'visible-notices',text:await page.getByRole('status').allTextContents().catch(()=>[])});evidence.lastProgress=await progress(page).catch(()=>null);evidence.nativeFinal=await audioSnapshot(page).catch(()=>[]);await info.attach('live-listening-evidence',{body:JSON.stringify(evidence,null,2),contentType:'application/json'});});
 test('P2 automatic Begin and Next preserve first unit and advance native audio',async({page})=>{
- await setting(page,'Automatic guide narration',true);await expect(controls(page).locator('.guide-primary')).toHaveAttribute('aria-label',/^(Begin|Play|Resume)$/);await expect(controls(page).locator('.guide-primary svg.lucide-play')).toHaveCount(1);await controls(page).locator('.guide-primary').click();evidence.nativePlayback.push(await playing(page));expect((await progress(page)).activityId).toBe('S01-U001');evidence.claims.firstUnitPlayed=true;await onePause(page);evidence.claims.singlePauseActs=true;
+ await setting(page,'Automatic guide narration',true);await tapPrimary(page,/^(Begin|Play|Resume)$/,b=>expect(b.locator('svg.lucide-play')).toHaveCount(1));evidence.nativePlayback.push(await playing(page));expect((await progress(page)).activityId).toBe('S01-U001');evidence.claims.firstUnitPlayed=true;await onePause(page);evidence.claims.singlePauseActs=true;
  await next(page);expect((await progress(page)).activityId).toBe('S01-U002');evidence.nativePlayback.push(await playing(page));evidence.claims.nextPlayed=true;
 });
 test('P2 Scripture ON must deliver actual BSB playback',async({page})=>{
