@@ -7,6 +7,7 @@ import {createExecutableOverlay} from '../publication/executable-overlay.mjs';
 import {createExecutableOperations} from '../publication/executable-operations.mjs';
 import {createExecutablePresentationService} from './executable-presentation-service.mjs';
 import {createExecutablePresentationResolver,createCanonicalGuideReader} from './executable-presentation-resolver.mjs';
+import {SOURCE_ACTION_RECIPE,PRIOR_SOURCE_ACTION_RECIPE} from '../compiler/presentation/source-action-projector.mjs';
 import guideSources from './guide-sources.json' with {type:'json'};
 import preparationCatalog from './catalog.json' with {type:'json'};
 import {eligibleRows,resolveSelection} from './service.mjs';
@@ -14,6 +15,9 @@ import {canonicalJSONString,sha256} from './contract.mjs';
 const encode=x=>new TextEncoder().encode(canonicalJSONString(x)),same=(a,b)=>canonicalJSONString(a)===canonicalJSONString(b);
 const ROOT='fia-executable-presentation-authority@1',PATH='/_executable-presentation/';
 export const EXECUTION_POLICY='fia-source-to-app/7fa17af806c139cfc353cace39fa6d50ed9e061b';
+// EXECUTION_POLICY bound to approved-audio proof index d3be5884, as the real e7eb0f0
+// build computes it. A literal: a later proof index cannot move it.
+const PROOF_INDEX_D3BE5884_POLICY='9a7733f5139e9cf7352bfe4018f3164715e69abc9eba3776052bdc324f33295c';
 const need=(x,r)=>{if(!x)throw Error(r);};
 async function bounded(run,ms=15000){let timer;try{return await Promise.race([Promise.resolve().then(run),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('execution-storage-timeout')),ms);})]);}finally{clearTimeout(timer);}}
 function artifactPort(bucket){return {
@@ -61,16 +65,22 @@ export async function createExecutableRuntime({ctx,env,snapshot,capabilities={}}
  const resolve=capabilities.resolve??createExecutablePresentationResolver({reads:baseReads,resolveCanonicalSource:createCanonicalGuideReader({canonicalSources:snapshot.canonicalSources??[],fetchAsset:path=>env.ASSETS.fetch(new Request(new URL(path,env.FIA_API_ORIGIN),{redirect:'manual'}))}),composeDecisionInputs:capabilities.composeDecisionInputs??null,resolveBindings});
  const currentPolicy=capabilities.policySha256??policySha256;
  const service=createExecutablePresentationService({storage:ctx.storage,artifacts,resolve,eligible,interpret:capabilities.interpret??null,policySha256:currentPolicy});
- // The finite registry of superseded execution policies: only the #187/#188 build
- // (aad92a4), which had no approved-audio proof index. Provider and recipe are not
- // superseded, so a historical job must carry today's. No other value is recognized.
- const historical=[await sha256(EXECUTION_POLICY)].filter(p=>p!==currentPolicy).map(p=>[p,createExecutablePresentationService({storage:ctx.storage,artifacts,resolve,eligible,interpret:capabilities.interpret??null,policySha256:p})]);
+ // The finite registry of released execution builds, each named by its literal policy
+ // and recipe, never by today's policy, which a content release moves (it hashes the
+ // approved-audio proof index): the #187/#188 build (aad92a4), with no proof index,
+ // under fia-server-source-action-projector@1; the builds through e7eb0f0, with proof
+ // index d3be5884 (policy 9a7733f5), under @1, before #190 added flow roles; and this
+ // build, the same policy under @2. An entry equal to today's build is the current build,
+ // not a historical one. Provider is not superseded, so a historical job must carry
+ // today's. No other value is recognized.
+ const superseded=[{policy:await sha256(EXECUTION_POLICY),recipe:PRIOR_SOURCE_ACTION_RECIPE,approvedAudio:false},{policy:PROOF_INDEX_D3BE5884_POLICY,recipe:PRIOR_SOURCE_ACTION_RECIPE,approvedAudio:true},{policy:PROOF_INDEX_D3BE5884_POLICY,recipe:'fia-server-source-action-projector@2',approvedAudio:true}];
+ const historical=superseded.filter((h,i)=>!(h.policy===currentPolicy&&h.recipe===SOURCE_ACTION_RECIPE)&&superseded.findIndex(x=>x.policy===h.policy&&x.recipe===h.recipe)===i).map(h=>({...h,jobs:createExecutablePresentationService({storage:ctx.storage,artifacts,resolve,eligible,interpret:capabilities.interpret??null,policySha256:h.policy,recipeRevision:h.recipe})}));
  if(typeof ctx.storage.list==='function'){
   const retained=await ctx.storage.list({prefix:'executable-presentation:job:'});
   await service.recoverInterrupted({jobIds:[...retained.values()].map(row=>row.jobId)});
  }
- // One verifier per policy: the job's outcome must reproduce the publication exactly.
- // Approved-audio artifacts exist only under the current policy; the historical build
+ // One verifier per build: the job's outcome must reproduce the publication exactly.
+ // Approved-audio artifacts exist only under a proof-index policy; the #187/#188 build
  // admitted bound narration demands alone.
  const verifier=(jobs,approvedAudio)=>async candidate=>{
   const outcome=await jobs.read({jobId:candidate.provenance.jobId});
@@ -85,17 +95,17 @@ export async function createExecutableRuntime({ctx,env,snapshot,capabilities={}}
   return true;
  };
  const publication=createExecutableOverlay({storage:ctx.storage,artifacts,base,eligible,validate:verifier(service,true)});
- // The one recognized transition. Read-only: the current pointer's publication, its
- // owner indexes and retained bytes authenticate exactly; its job row is closed, its id
- // recomputes, and it reproduces the publication under a registered historical policy
- // with today's provider and recipe; its request row binds that exact publication.
- // Any other failure, including a reason string alone, stays refused.
+ // The recognized transitions. Read-only: the current pointer's publication, its owner
+ // indexes and retained bytes authenticate exactly; its job row is closed, its id
+ // recomputes, and it reproduces the publication under one registered historical build
+ // (policy and recipe) with today's provider; its request row binds that exact
+ // publication. Any other failure, including a reason string alone, stays refused.
  async function historicalTransition(packId){
-  for(const [policy,jobs] of historical){
+  for(const {policy,recipe,approvedAudio,jobs} of historical){
    try{
-    const row=await publication.authenticateCurrent(packId,verifier(jobs,false)),jobId=row.provenance?.jobId;
+    const row=await publication.authenticateCurrent(packId,verifier(jobs,approvedAudio)),jobId=row.provenance?.jobId;
     const [job,request]=await ctx.storage.transaction(async t=>[await t.get('executable-presentation:job:'+jobId),await t.get('executable-demand:'+jobId)]);
-    if(job?.policySha256===policy&&same(job.args,row.binding)&&request&&Object.keys(request).sort().join()==='args,revision'&&same(request.args,row.binding)&&request.revision===row.revision)return true;
+    if(job?.policySha256===policy&&job.recipeRevision===recipe&&same(job.args,row.binding)&&request&&Object.keys(request).sort().join()==='args,revision'&&same(request.args,row.binding)&&request.revision===row.revision)return true;
    }catch{}
   }
   return false;

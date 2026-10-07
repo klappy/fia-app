@@ -11,3 +11,5 @@ blob-report/
 *.log
 .DS_Store
 server/faces/worker/generated/
+# Private pilot evidence (raw provider responses, decisions, metrics): it belongs in the cookbook unit (PLAN D12).
+scripts/jev-cue-role-pilot/evidence/

@@ -29,7 +29,7 @@
    return;
   }
   if(!asset.alignment){
-   const top=durationScrollTop(playback.elapsed,playback.duration,viewport.clientHeight,viewport.scrollHeight);
+   const top=durationScrollTop(playback,viewport.clientHeight,viewport.scrollHeight);
    if(top!==null&&Math.abs(top-viewport.scrollTop)>=1)scroller?.to(top,reducedMotion);
    return;
   }
@@ -43,7 +43,7 @@
  $effect(()=>{
   // Recheck on clock ticks, layout/text-size changes and pause/resume. Reading progress
   // must not take the screen back after a person's scroll or while a sheet is open.
-  position;asset.activeItemId;revision;reducedMotion;playback.elapsed;playback.duration;
+  position;asset.activeItemId;revision;reducedMotion;playback.elapsed;playback.duration;playback.progressElapsed;playback.progressDuration;
   if(ready&&active&&playback.playing&&following&&!suspended)untrack(scrollToReading);
   else {scroller?.stop();lastScrollTarget=null;}
  });
