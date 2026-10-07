@@ -36,7 +36,9 @@ export function createAudioController(onState, onEnd, onError, { allowSpeechFall
     clearBoundary(); clearStartBound(); range = null; prepareRange = null;
     const old = audio;
     audio = null; source = null;
-    if (old) { old.pause(); old.removeAttribute('src'); old.load(); }
+    // Pause only: emptying the shared element's source and calling load() can return it to locked on
+    // iOS, and the next clip's source swap reloads it anyway.
+    if (old) old.pause();
   }
   function stop() {
     generation++;

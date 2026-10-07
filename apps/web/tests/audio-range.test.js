@@ -38,7 +38,7 @@ run('deadline ends once without timeupdate and late natural ended cannot duplica
  owner.onended();owner.ontimeupdate();await tick();assert.equal(e.ends,1);
 });
 run('frame callback independently enforces boundary',async e=>{
- const owner=await e.start();const frame=[...e.frames.values()][0];owner._time=8.01;frame();assert.equal(e.ends,1);assert.equal(owner.src,'');
+ const owner=await e.start();const frame=[...e.frames.values()][0];owner._time=8.01;frame();assert.equal(e.ends,1);assert.equal(owner.paused,true);assert.equal(e.controller.active,false);assert.equal(e.states.at(-1).src,null);
 });
 run('pause before metadata and seek cannot autoplay, resume retains range',async e=>{
  e.controller.play('source','blob:x',1,{startSeconds:3,endSeconds:8});const owner=e.owners[0];e.controller.pause();owner.metadata();owner.seeked();await tick();assert.equal(owner.calls,0);
