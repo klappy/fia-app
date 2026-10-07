@@ -222,6 +222,8 @@
   catch(error){
    // A tap queued while checking was for the saved passage; it never starts the fallback.
    tapGate.drop();
+   // A restore aborted by teardown is no verdict about the passage: keep its key.
+   if(error?.name==='AbortError')return;
    const transient=error?.code==='passage-transient';
    if(!transient)try{if(localStorage.getItem('fia-v3-selected-pack')===id)localStorage.removeItem('fia-v3-selected-pack');}catch{}
    const message=`Your last passage ${error?.code==='passage-unavailable'?'is not available yet':transient?'could not be reached':'could not be opened'}, so ${selectedPack.title} is open.`;

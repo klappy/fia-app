@@ -6,6 +6,9 @@ import projectionSchema from './source-action-projection.schema.json' with {type
 import executionSchema from './executable-presentation.schema.json' with {type:'json'};
 const copy=v=>structuredClone(v),same=(a,b)=>canonicalJSONString(a)===canonicalJSONString(b),need=(ok,reason)=>{if(!ok)throw Error(reason);},digest=v=>typeof v==='string'&&/^[a-f0-9]{64}$/.test(v),encode=v=>new TextEncoder().encode(canonicalJSONString(v));
 export const SOURCE_ACTION_RECIPE='fia-server-source-action-projector@2';
+// The recipe before #190, which emitted no flow roles. A job under it is projected
+// without them, so a superseded publication reproduces exactly when it is authenticated.
+export const PRIOR_SOURCE_ACTION_RECIPE='fia-server-source-action-projector@1';
 // fia-flow-role@1: per-activity flow facts for fia-easy-button-policy@1, read only from
 // facts the projector already holds (final kind, completion action, resolved cue roles).
 // No text inspection, no model. Video stays none: companion pairs never enter relatedAssetIds.
@@ -89,7 +92,7 @@ export async function projectExecutablePresentation({basePresentation,baseRevisi
   if(cue?.assets.length){a.assetId=cue.assets[0];a.execution.focalAssetId=a.assetId;a.kind='discussion';a.completion='confirm';a.execution.completion={action:'manual-continue'};
    for(const assetId of cue.assets.slice(1)){const id=`${a.id}-resource-${assetId}`;need(!existingIds.has(id),'execution-step-id-conflict');existingIds.add(id);const derived={...copy(a),id,assetId,narration:'',audioSrc:null,audioId:null,fulfills:a.id,execution:{narration:{action:'none'},focalAssetId:assetId,completion:{action:'manual-continue'}}};additions.push(derived);provenance.narrationOwners.push({activityId:id,ownerActivityId:a.id,sourceUnitId:a.sourceUnitId});}
   }
-  a.flow=flowFor(a.kind,a.execution.completion.action,roles?.pauseOnly===true);for(const derived of additions)derived.flow=flowFor(derived.kind,derived.execution.completion.action,false);
+  if(recipeRevision!==PRIOR_SOURCE_ACTION_RECIPE){a.flow=flowFor(a.kind,a.execution.completion.action,roles?.pauseOnly===true);for(const derived of additions)derived.flow=flowFor(derived.kind,derived.execution.completion.action,false);}
   if(cue){provenance.unresolved.push(...cue.unresolved.map(x=>({activityId:a.id,...x})));const step=x=>({id:x.id,sourceUnitId:x.sourceUnitId,sourceTextSha256:x.sourceSha256??x.sourceTextSha256,sectionId:x.sectionId,kind:x.kind,assetId:x.assetId,completion:x.completion,narration:x.narration??'',audioSrc:x.audioSrc??null,audioId:x.audioId??null,prompt:x.prompt??'',fulfills:x.fulfills??null,relatedAssetIds:x.relatedAssetIds??[],title:x.title??'',sectionTitle:x.sectionTitle??'',eyebrow:x.eyebrow??'',duration:x.duration??'',sourceText:x.sourceText??'',execution:x.execution});
    if(cue.assets.length)events.push({schema:'fia-source-action-projection@2',packId:base.id,presentationRevision:baseRevision,language,canonicalOrderSha256,sourceDecisionSha256:await sha256(encode(cue.record.result)),basePresentationSha256:baseRevision,execution:{schema:'fia-executable-presentation@1',sourceRevision,decisionEvidenceSha256,recipeRevision},events:[{eventId:await sha256(encode({anchor:cue.anchor,recipeRevision,decision:cue.record.result})),anchor:cue.anchor,phase:'at-source-cue',roles,unresolved:cue.unresolved,completion:'manual',automaticReplay:false,sourceActivityId:a.id,projectionRecipeSha256:recipeSha256,orderedSteps:[a,...additions].map(step)}]});
   }

@@ -7,6 +7,7 @@ import {createExecutableOverlay} from '../publication/executable-overlay.mjs';
 import {createExecutableOperations} from '../publication/executable-operations.mjs';
 import {createExecutablePresentationService} from './executable-presentation-service.mjs';
 import {createExecutablePresentationResolver,createCanonicalGuideReader} from './executable-presentation-resolver.mjs';
+import {SOURCE_ACTION_RECIPE,PRIOR_SOURCE_ACTION_RECIPE} from '../compiler/presentation/source-action-projector.mjs';
 import guideSources from './guide-sources.json' with {type:'json'};
 import preparationCatalog from './catalog.json' with {type:'json'};
 import {eligibleRows,resolveSelection} from './service.mjs';
@@ -59,15 +60,26 @@ export async function createExecutableRuntime({ctx,env,snapshot,capabilities={}}
   return {narrationBindings:{...original.narrationBindings,...next.narrationBindings},boundArtifacts:[...original.boundArtifacts,...next.boundArtifacts]};
  });
  const resolve=capabilities.resolve??createExecutablePresentationResolver({reads:baseReads,resolveCanonicalSource:createCanonicalGuideReader({canonicalSources:snapshot.canonicalSources??[],fetchAsset:path=>env.ASSETS.fetch(new Request(new URL(path,env.FIA_API_ORIGIN),{redirect:'manual'}))}),composeDecisionInputs:capabilities.composeDecisionInputs??null,resolveBindings});
- const service=createExecutablePresentationService({storage:ctx.storage,artifacts,resolve,eligible,interpret:capabilities.interpret??null,policySha256:capabilities.policySha256??policySha256});
+ const currentPolicy=capabilities.policySha256??policySha256;
+ const service=createExecutablePresentationService({storage:ctx.storage,artifacts,resolve,eligible,interpret:capabilities.interpret??null,policySha256:currentPolicy});
+ // The finite registry of superseded execution builds, each named by its policy and
+ // recipe: the #187/#188 build (aad92a4), which had no approved-audio proof index, and
+ // the builds through e7eb0f0, which carried today's policy. Both projected under
+ // fia-server-source-action-projector@1, before #190 added flow roles (@2). Provider is
+ // not superseded, so a historical job must carry today's. No other value is recognized.
+ const superseded=[{policy:await sha256(EXECUTION_POLICY),recipe:PRIOR_SOURCE_ACTION_RECIPE,approvedAudio:false},{policy:currentPolicy,recipe:PRIOR_SOURCE_ACTION_RECIPE,approvedAudio:true}];
+ const historical=superseded.filter((h,i)=>!(h.policy===currentPolicy&&h.recipe===SOURCE_ACTION_RECIPE)&&superseded.findIndex(x=>x.policy===h.policy&&x.recipe===h.recipe)===i).map(h=>({...h,jobs:createExecutablePresentationService({storage:ctx.storage,artifacts,resolve,eligible,interpret:capabilities.interpret??null,policySha256:h.policy,recipeRevision:h.recipe})}));
  if(typeof ctx.storage.list==='function'){
   const retained=await ctx.storage.list({prefix:'executable-presentation:job:'});
   await service.recoverInterrupted({jobIds:[...retained.values()].map(row=>row.jobId)});
  }
- const publication=createExecutableOverlay({storage:ctx.storage,artifacts,base,eligible,validate:async candidate=>{
-  const outcome=await service.read({jobId:candidate.provenance.jobId});
+ // One verifier per build: the job's outcome must reproduce the publication exactly.
+ // Approved-audio artifacts exist only under today's policy; the #187/#188 build
+ // admitted bound narration demands alone.
+ const verifier=(jobs,approvedAudio)=>async candidate=>{
+  const outcome=await jobs.read({jobId:candidate.provenance.jobId});
   if(outcome.status!=='ready'||!same(outcome.presentation,candidate.presentation)||!same(outcome.provenance,(({jobId,...rest})=>rest)(candidate.provenance))||!same(outcome.boundArtifacts.map(a=>({id:a.id,sha256:a.sha256})),candidate.boundArtifacts.map(a=>({id:a.id,sha256:a.sha256}))))return false;
-  for(const artifact of outcome.boundArtifacts){const bound=JSON.parse(new TextDecoder().decode(artifact.bytes));if(capabilities.validateNarration){if(await capabilities.validateNarration(bound)!==true)return false;}else if(bound.schema==='fia-bound-narration-audio@1'&&approved){
+  for(const artifact of outcome.boundArtifacts){const bound=JSON.parse(new TextDecoder().decode(artifact.bytes));if(capabilities.validateNarration){if(await capabilities.validateNarration(bound)!==true)return false;}else if(bound.schema==='fia-bound-narration-audio@1'&&approvedAudio&&approved){
     let admitted=null;for(const row of index.bindings){if(same(bound,await approved.expectedArtifact(row))){admitted=row;break;}}
     if(!admitted||admitted.packId!==candidate.presentation.id||admitted.baseRevision!==candidate.provenance.baseRevision||!await approved.validateBinding(admitted))return false;
     const consumers=candidate.presentation.activities.filter(a=>a.execution?.narration?.artifact?.id===bound.id);
@@ -75,13 +87,29 @@ export async function createExecutableRuntime({ctx,env,snapshot,capabilities={}}
     if(!(await retained.read({bindingSHA:bound.id.slice('approved-audio:'.length),mediaSHA:admitted.media.sha256,extension:admitted.media.extension})).bytes)return false;
    }else if(bound.schema!=='fia-bound-narration-demand@1'||!eligibleRows(preparationCatalog).some(row=>resolveSelection(bound.identity,{entries:[row]})))return false;}
   return true;
- }});
+ };
+ const publication=createExecutableOverlay({storage:ctx.storage,artifacts,base,eligible,validate:verifier(service,true)});
+ // The recognized transitions. Read-only: the current pointer's publication, its owner
+ // indexes and retained bytes authenticate exactly; its job row is closed, its id
+ // recomputes, and it reproduces the publication under one registered historical build
+ // (policy and recipe) with today's provider; its request row binds that exact
+ // publication. Any other failure, including a reason string alone, stays refused.
+ async function historicalTransition(packId){
+  for(const {policy,recipe,approvedAudio,jobs} of historical){
+   try{
+    const row=await publication.authenticateCurrent(packId,verifier(jobs,approvedAudio)),jobId=row.provenance?.jobId;
+    const [job,request]=await ctx.storage.transaction(async t=>[await t.get('executable-presentation:job:'+jobId),await t.get('executable-demand:'+jobId)]);
+    if(job?.policySha256===policy&&job.recipeRevision===recipe&&same(job.args,row.binding)&&request&&Object.keys(request).sort().join()==='args,revision'&&same(request.args,row.binding)&&request.revision===row.revision)return true;
+   }catch{}
+  }
+  return false;
+ }
  const reads=createReadOperations(publication),readPack=reads.readPack;
- // A publication whose job belongs to a superseded policy, provider or recipe stays
- // refused by its exact revision, but it no longer shadows the current base record:
- // the base is served with its demand, so an explicit Open prepares and publishes it
- // under the current policy. Every other refusal stays fail-closed.
- reads.readPack=async args=>{let record=await readPack(args);if(record?.status==='unavailable'&&record.reason==='execution-job-policy'&&args?.revision===undefined)record=await baseReads.readPack(args);if(record?.status!=='ready'||record.execution)return record;const sourceRevision=record.authority?.rawInventoryCommit;if(record.packId===args.packId&&preparable(record,sourceRevision))return {...record,preparationDemand:{packId:args.packId,baseRevision:record.revision,sourceRevision,capability:'executable-presentation'}};return record;};
+ // An authenticated historical publication stays refused by its exact revision and
+ // its old job status, but it no longer shadows the current base record on the
+ // unqualified read: the base is served with its existing demand, so an explicit Open
+ // prepares under the current policy. Every other refusal stays fail-closed.
+ reads.readPack=async args=>{let record=await readPack(args);if(record?.status==='unavailable'&&record.reason==='execution-job-policy'&&args&&Object.keys(args).join()==='packId'&&await historicalTransition(args.packId))record=await baseReads.readPack(args);if(record?.status!=='ready'||record.execution)return record;const sourceRevision=record.authority?.rawInventoryCommit;if(record.packId===args.packId&&preparable(record,sourceRevision))return {...record,preparationDemand:{packId:args.packId,baseRevision:record.revision,sourceRevision,capability:'executable-presentation'}};return record;};
  const ops=createExecutableOperations({reads,service,publication,storage:ctx.storage});
  return {...ops,readApprovedAudio:selected=>retained?retained.read(selected):{status:'unavailable',reason:'approved-audio-unavailable'}};
 }

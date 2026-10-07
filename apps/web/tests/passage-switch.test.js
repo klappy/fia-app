@@ -18,7 +18,7 @@ test('R1: a transient or missing server answer is a typed transient error, never
   await assert.rejects(transport.readPack(id),error=>error.code==='passage-transient'&&/could not be reached/.test(error.message)&&!/catalog is invalid/.test(error.message));
  }
 });
-test('R1/R5: a presentation artifact with no answer or a transient answer is a typed transient error, so a restore keeps its key',async()=>{
+test('R1: a presentation artifact with no answer or a transient answer is a typed transient error, so a restore keeps its key',async()=>{
  const bytes=new TextEncoder().encode('{}'),sha=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),v=>v.toString(16).padStart(2,'0')).join('');
  const record={status:'ready',revision:sha,artifact:{sha256:sha,bytes:bytes.length,mime:'application/json'}};
  for(const reply of [()=>{throw new TypeError('Failed to fetch');},answer(503,'This server content is not saved for offline use.','text/plain'),answer(504,'','text/plain')]){
