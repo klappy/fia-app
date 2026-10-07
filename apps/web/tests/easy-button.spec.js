@@ -3,7 +3,7 @@
 import {it,expect,beforeEach,afterEach,vi} from 'vitest';
 import {render,screen,fireEvent,cleanup,waitFor,within} from '@testing-library/svelte';
 import {readFileSync} from 'node:fs';
-import {webcrypto} from 'node:crypto';
+import {webcrypto,createHash} from 'node:crypto';
 import {createSession} from '../src/lib/engine.js';
 const audio=vi.hoisted(()=>({play:vi.fn(),pause:vi.fn(),resume:vi.fn(),stop:vi.fn(),active:false}));
 vi.mock('../src/lib/audio.js',()=>({createAudioController:(state,end)=>{audio.state=state;audio.end=end;return audio;}}));
@@ -320,11 +320,122 @@ it('R6: a screen with no possible recording shows no enabled Play and sends no p
  const dock=screen.getByRole('navigation',{name:'Session controls'});
  expect([...dock.querySelectorAll('button')].filter(b=>/^Play/.test(b.getAttribute('aria-label'))&&!b.disabled)).toHaveLength(0);
  await fireEvent.click(screen.getByRole('button',{name:'Replay'}));await wait(20);
- // Manual mode keeps the side Play in its slot, but it is disabled here.
+ // GAP-R6: with automatic guide narration off the Next slot still holds Skip; no Play, enabled or disabled.
  await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Settings',exact:true}));await fireEvent.click(screen.getByRole('checkbox',{name:/Automatic guide narration/}));await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));
- const side=screen.getByRole('button',{name:'Play',exact:true});expect(side.disabled).toBe(true);await fireEvent.click(side);
+ expect([...dock.querySelectorAll('button')].map(b=>b.getAttribute('aria-label')).filter(l=>/^Play/.test(l))).toEqual([]);
+ expect(screen.getByRole('button',{name:'Skip to next activity'}).disabled).toBe(false);await fireEvent.click(screen.getByRole('button',{name:'Replay'}));await wait(20);
  expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();
 });
+
+// R6/K1 census at the App boundary (GAP-R6: the DEV proof's census ran only with every setting on).
+// Every screen of a passage with no recording, walked forward, with every setting on and again with
+// automatic guide narration off, as the registry presentation and as the server's executable one.
+const h64='e'.repeat(64);
+function servedExecutable({descriptor,presentation}){
+ const served=structuredClone(presentation);
+ served.execution={schema:'fia-executable-presentation@1',sourceRevision:'source-1',decisionEvidenceSha256:h64,recipeRevision:'recipe-1'};
+ for(const a of served.activities)a.execution={narration:{action:'blocked',status:'unavailable',reason:'bound-narration-unavailable'},focalAssetId:a.assetId??null,completion:{action:'manual-continue'}};
+ return {descriptor,presentation:served};
+}
+const everySetting={readScripture:true,describeImages:true,autoplayVideo:true};
+for(const id of ['eng.MRK-1-21-28','eng.MRK-2-1-12'])for(const served of ['registry','executable'])for(const guide of ['on','off'])it(`R6/K1 census: ${id} (${served}), automatic guide narration ${guide}, every other setting on: no screen shows a Play in the Next slot`,async()=>{
+ const target=served==='executable'?servedExecutable(pack(id)):pack(id),activities=target.presentation.activities;
+ vi.spyOn(libraryAdapter,'select').mockResolvedValue(target);savePack(target);
+ localStorage.setItem('fia-v3-preferences@1',JSON.stringify({muted:guide==='off',dark:true,preferences:{...createSession(activities).preferences,...everySetting}}));
+ render(App);await heading(activities[0].prompt);await verified();
+ const dock=screen.getByRole('navigation',{name:'Session controls'}),plays=[];let screens=0;
+ for(let step=0;step<activities.length*2&&progress(id)?.session.status!=='complete';step++){
+  const slot=[...dock.querySelectorAll('.step-control')].at(-1),label=slot.getAttribute('aria-label');
+  if(/^Play/.test(label))plays.push(`${progress(id)?.activityId??activities[0].id}: ${label}${slot.disabled?' (disabled)':''}`);
+  // A section opening is its own screen: Continue ends it before the section's first step.
+  screens++;const place=()=>JSON.stringify([progress(id)?.session.index,progress(id)?.transitionSection??null,progress(id)?.session.status]),before=place();
+  await fireEvent.click(readFace().label==='Continue'?primary():screen.getByRole('button',{name:'Skip to next activity'}));
+  await waitFor(()=>expect(place()).not.toBe(before));
+ }
+ // The walk reached the end of the passage, so every screen was seen.
+ expect(progress(id).session.status).toBe('complete');expect(screens).toBeGreaterThan(activities.length/2);
+ expect(plays).toEqual([]);
+ expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();
+},60000);
+
+// B1 (review of #201): while the app is still checking, the Next slot follows what the screen declares,
+// never the unanswered device check. Mark 1:1–13 keeps one Play from first paint, disabled until the
+// check answers (K4; J2 runs with automatic guide narration off), after a reload and after a passage
+// switch; Mark 1:21–28 declares no recording and shows Skip from its first paint.
+function recordSlots(){
+ const seen=[];let last='';
+ const read=()=>{const h=document.querySelector('h1')?.textContent,slot=[...document.querySelectorAll('nav[aria-label="Session controls"] .step-control')].at(-1);if(!h||!slot)return;const entry={heading:h,slot:`${slot.getAttribute('aria-label')}${slot.disabled?' (disabled)':''}`,checking:readFace()?.label===CHECKING},key=JSON.stringify(entry);if(key!==last){last=key;seen.push(entry);}};
+ const observer=new MutationObserver(read);observer.observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['aria-label','disabled']});
+ return {seen,on:heading=>seen.filter(e=>e.heading===heading).map(e=>e.slot).filter((slot,i,all)=>slot!==all[i-1]),stop:()=>observer.disconnect()};
+}
+it('B1/K4: while checking, the Next slot follows what the screen declares; Mark 1:1–13 keeps its Play from first paint (reload, passage switch) and Mark 1:21–28 shows Skip throughout',async()=>{
+ const empty={files:[],savedFiles:[],deliveryRevision:null},pending=[];
+ libraryAdapter.mediaStatus.mockImplementation(p=>{const d=deferred();pending.push({id:p.id,d});return d.promise;});
+ const answer=async id=>{await waitFor(()=>expect(pending.some(a=>a.id===id)).toBe(true));for(const a of pending.splice(0))a.d.resolve(a.id==='eng.MRK-1-1-13'?bundledMedia:empty);};
+ vi.spyOn(libraryAdapter,'select').mockImplementation(async id=>pack(id));
+ vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',name:'English',nativeName:'English',ready:68}]);
+ vi.spyOn(libraryAdapter,'passages').mockResolvedValue([bundledServer.descriptor,unadmitted.descriptor]);
+ localStorage.setItem('fia-v3-preferences@1',JSON.stringify({muted:true,preferences:createSession(activities).preferences}));
+ const first=activities[0].prompt,other=unadmitted.presentation.activities[0].prompt;
+ // 1. Two reloads of Mark 1:1–13, recorded from first paint.
+ for(let reload=0;reload<2;reload++){
+  if(reload){faces.stop();cleanup();faces=recordFaces();}
+  const slots=recordSlots();render(App);await heading(first);await wait(30);
+  expect(slots.seen.every(e=>e.checking)).toBe(true);expect(slots.on(first)).toEqual(['Play (disabled)']);
+  await answer('eng.MRK-1-1-13');await verified();slots.stop();
+  expect(slots.on(first)).toEqual(['Play (disabled)','Play']);expect(readFace().label).toBe('Continue');
+ }
+ // 2. A switch to Mark 1:21–28: Skip from its first paint, while checking and after.
+ let slots=recordSlots();await openFromPassages(unadmitted.descriptor.title);await heading(other);await wait(30);
+ expect(slots.on(other)).toEqual(['Skip to next activity']);
+ await answer('eng.MRK-1-21-28');await verified();slots.stop();expect(slots.on(other)).toEqual(['Skip to next activity']);
+ // 3. Back to Mark 1:1–13 from Passages: the same Play, disabled while checking.
+ slots=recordSlots();await openFromPassages(bundledServer.descriptor.title);await heading(first);await wait(30);
+ expect(slots.on(first)).toEqual(['Play (disabled)']);
+ await answer('eng.MRK-1-1-13');await verified();slots.stop();expect(slots.on(first)).toEqual(['Play (disabled)','Play']);
+ // 4. A reload that restores Mark 1:21–28. The bundled screen paints first and keeps its declared Play;
+ // its check answers after the restore began, so it is not applied and the Play stays disabled. Once
+ // Mark 1:21–28 paints, Skip throughout.
+ faces.stop();cleanup();faces=recordFaces();savePack(unadmitted);
+ const restored=deferred();libraryAdapter.select.mockReturnValueOnce(restored.promise);
+ slots=recordSlots();render(App);await heading(first);await answer('eng.MRK-1-1-13');await wait(30);
+ expect(readFace().label).toBe(CHECKING);expect(slots.on(first)).toEqual(['Play (disabled)']);
+ restored.resolve(unadmitted);await heading(other);await answer('eng.MRK-1-21-28');await verified();slots.stop();
+ expect(slots.on(other)).toEqual(['Skip to next activity']);
+ expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();
+});
+
+// B1-bis (review of #201): a passage-only Scripture recording is declared by the packaged build (the passage's
+// offline manifest names it by scriptureAssetId), not by the presentation. Mark 1:14–20 served as its base
+// record (what any server serves before the passage is first opened), relaunched on its BSB reading with
+// Automatic Scripture reading off, keeps one Play from first paint, disabled until the check answers. The
+// readings with no such binding (Mark 1:14–20 ULT and UST, every Mark 1:21–28 reading) show Skip throughout.
+function passageOnlyFile({descriptor,presentation}){
+ const id=descriptor.defaultScriptureId,a=presentation.assets[id],sha=v=>createHash('sha256').update(JSON.stringify(v)).digest('hex');
+ return {path:`/audio/scripture/${descriptor.id}/${id}.opus`,group:'audio',mime:'audio/ogg',bytes:3,sourceBytes:99,sha256:'a'.repeat(64),sourceSha256:'b'.repeat(64),deliveryURL:'https://transcode.klappy.dev/audio/test-only',deliveryRevision:'9'.repeat(64),duration:321,playbackRange:{startSeconds:96.8,endSeconds:144.375},scriptureLedgerEntryId:'test-only',scriptureAssetId:id,scripturePlaybackMode:'passage-only',scriptureHighlighting:'disabled',scriptureAlignment:null,scriptureLedgerSha256:'c'.repeat(64),scriptureRangeReviewSha256:'d'.repeat(64),scriptureSourceRangeReviewSha256:'e'.repeat(64),scriptureCanonicalTextSha256:sha({text:a.text,verses:a.verses}),scriptureSourceEvidenceSha256:sha(a.sourceEvidence),timing:{status:'verified',sourceAudioSha256:'b'.repeat(64),deliveryAudioSha256:'a'.repeat(64),mappingEvidenceSha256:'f'.repeat(64),mapping:{scale:1,offsetSeconds:0}}};
+}
+it('B1-bis/K4: a passage-only Scripture recording counts as declared while checking; Mark 1:14–20 BSB (base record) keeps its Play from first paint and readings without one show Skip throughout',async()=>{
+ const bsb=passageOnlyFile(admitted),pending=[];
+ const answers={'eng.MRK-1-1-13':bundledMedia,'eng.MRK-1-14-20':{files:[bsb],savedFiles:[],deliveryRevision:bsb.deliveryRevision}};
+ libraryAdapter.mediaStatus.mockImplementation(p=>{const d=deferred();pending.push({id:p.id,d});return d.promise;});
+ const answer=async id=>{await waitFor(()=>expect(pending.some(a=>a.id===id)).toBe(true));for(const a of pending.splice(0))a.d.resolve(answers[a.id]||{files:[],savedFiles:[],deliveryRevision:null});};
+ vi.spyOn(libraryAdapter,'select').mockImplementation(async id=>pack(id));
+ const relaunch=async(target,index)=>{
+  faces.stop();cleanup();faces=recordFaces();savePack(target,{index});
+  localStorage.setItem('fia-v3-preferences@1',JSON.stringify({preferences:{...createSession(target.presentation.activities).preferences,readScripture:false}}));
+  const reading=target.presentation.activities[index];expect(reading.kind).toBe('scripture');
+  const slots=recordSlots();render(App);await heading(reading.title);await wait(30);
+  expect(readFace().label).toBe(CHECKING);const checking=slots.on(reading.title);
+  await answer(target.descriptor.id);await verified();slots.stop();
+  return {checking,all:slots.on(reading.title),face:readFace().label};
+ };
+ // The base record declares no Scripture audio of its own: the binding is the packaged build's.
+ expect(admitted.presentation.execution).toBeUndefined();expect(admitted.descriptor.capabilities.scriptureAudio.status).toBe('unavailable');
+ expect(admitted.presentation.activities[2].audioSrc).toBeFalsy();expect(admitted.presentation.assets[bsb.scriptureAssetId].descriptionAudio).toBeFalsy();
+ for(let n=0;n<3;n++)expect(await relaunch(admitted,2)).toEqual({checking:['Play (disabled)'],all:['Play (disabled)','Play'],face:'Continue'});
+ for(const [target,index] of [[admitted,3],[admitted,4],[unadmitted,2],[unadmitted,3],[unadmitted,4]])expect(await relaunch(target,index)).toEqual({checking:['Skip to next activity'],all:['Skip to next activity'],face:'Continue'});
+ expect(libraryAdapter.playMedia).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();
+},30000);
 
 it('R4: with narration off, a side Play keeps the centre on Continue and offers its own labelled cancel',async()=>{
  const bytes=deferred();libraryAdapter.playPreparedRecording.mockReturnValue(bytes.promise);savePack(admitted);vi.spyOn(libraryAdapter,'select').mockResolvedValue(admitted);
