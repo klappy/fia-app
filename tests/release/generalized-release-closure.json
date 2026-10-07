@@ -9,7 +9,7 @@
   "changedSources": [
     {
       "path": ".github/workflows/ci.yml",
-      "sha256": "a066c59a97f78f9e72a4446c4d9837cab519ec487614f3378673638205a712b4"
+      "sha256": "908bfaece3b66664bdee791f45279ad940390b65a48b6aa613b006acd00c2784"
     },
     {
       "path": ".github/workflows/hosted-asr-integration-proof.yml",
@@ -1415,6 +1415,22 @@
       "sha256": "583ff4b0ff06275e74d4642d9cc4b97f83f5861466dd56a3330a2400842eda09"
     },
     {
+      "path": "scripts/clip-text/blocks.mjs",
+      "sha256": "8309cdb37183ca186895b8aa994cc85e9ebd5b8c2bcb22fc93401283ef1621d9"
+    },
+    {
+      "path": "scripts/clip-text/check.mjs",
+      "sha256": "2edff6c954ea845e3574f2daa8a941d3454254c2a1da335f7e49f3225385ca9c"
+    },
+    {
+      "path": "scripts/clip-text/compare.mjs",
+      "sha256": "d6035b842e48e3d04f47ef2fdb17b2c840da6ca2029680f0ac3c3f3b59335bc2"
+    },
+    {
+      "path": "scripts/clip-text/transcribe.py",
+      "sha256": "d4153f823e69c51e1b5591f5840b7d83c38f569f4e496dc92531f4a7b84648dd"
+    },
+    {
       "path": "scripts/fia-source-inventory.mjs",
       "sha256": "6feb121c83800a50808b9e49c88eab7f778a76f3d2b0ba1fbbad77ada549af4e"
     },
@@ -2501,6 +2517,18 @@
     {
       "path": "tests/publication/executable-runtime.test.mjs",
       "sha256": "82182654383d492ef102ded9cd12742ba71c9dbe90761f6a76db756e99cfd18c"
+    },
+    {
+      "path": "tests/release/clip-text-check.test.js",
+      "sha256": "0fd8d8bc54820e405e15fd0025b94cff181e85e73493679068eb942853b64200"
+    },
+    {
+      "path": "tests/release/clip-text-heard.json",
+      "sha256": "f0c0b6022c6d07e24f4614836762b90c6826baf62d46342ab3a1382d88ba0ddb"
+    },
+    {
+      "path": "tests/release/clip-text-reviewed.json",
+      "sha256": "a870aecd9e71b5c8fc5d2c34a84cde069d9f2b4b12c4f4f3732c462b846738da"
     },
     {
       "path": "tests/release/delivery-closure.js",
