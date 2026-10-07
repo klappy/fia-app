@@ -204,12 +204,13 @@ it.each(['media-status-transient','media-status-invalid','unrecognized'])('lates
  await mount();await waitFor(()=>expect(screen.getByRole('button',{name:'Play',exact:true})).toBeTruthy());registration.resolve();await waitFor(()=>expect(selectedReads).toBe(2));await new Promise(r=>setTimeout(r,0));
  expect(play).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();
  if(code==='media-status-transient'){await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await waitFor(()=>expect(play).toHaveBeenCalled());expect(play.mock.calls[0][2]).toBe('retained-revision');}
- else expect(screen.getByRole('button',{name:'Play',exact:true}).disabled).toBe(true);
+ // R6: without an eligible snapshot nothing can play here, so the Next slot holds Skip.
+ else{expect(screen.queryByRole('button',{name:'Play',exact:true})).toBeNull();expect(screen.getByRole('button',{name:'Skip to next activity'}).disabled).toBe(false);}
 });
 
 it('transient status in a newly selected pack never borrows the previous pack snapshot',async()=>{
  const body=structuredClone(presentation),path='/refresh-test.mp3';body.activities[0].audioSrc=path;libraryAdapter.select.mockResolvedValue({descriptor,presentation:body});
  libraryAdapter.mediaStatus.mockImplementation(pack=>pack.id===descriptor.id?Promise.reject(Object.assign(Error('offline'),{code:'media-status-transient'})):Promise.resolve({files:[{path}],savedFiles:[],deliveryRevision:'previous-pack'}));
  await mount();await waitFor(()=>expect(libraryAdapter.mediaStatus.mock.calls.some(([pack])=>pack.id===descriptor.id)).toBe(true));await new Promise(r=>setTimeout(r,0));
- expect(screen.getByRole('button',{name:'Play',exact:true}).disabled).toBe(true);expect(audio.play).not.toHaveBeenCalled();expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();
+ expect(screen.queryByRole('button',{name:'Play',exact:true})).toBeNull();expect(screen.getByRole('button',{name:'Skip to next activity'}).disabled).toBe(false);expect(audio.play).not.toHaveBeenCalled();expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();
 });

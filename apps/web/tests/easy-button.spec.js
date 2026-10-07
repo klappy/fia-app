@@ -320,11 +320,43 @@ it('R6: a screen with no possible recording shows no enabled Play and sends no p
  const dock=screen.getByRole('navigation',{name:'Session controls'});
  expect([...dock.querySelectorAll('button')].filter(b=>/^Play/.test(b.getAttribute('aria-label'))&&!b.disabled)).toHaveLength(0);
  await fireEvent.click(screen.getByRole('button',{name:'Replay'}));await wait(20);
- // Manual mode keeps the side Play in its slot, but it is disabled here.
+ // GAP-R6: with automatic guide narration off the Next slot still holds Skip; no Play, enabled or disabled.
  await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Settings',exact:true}));await fireEvent.click(screen.getByRole('checkbox',{name:/Automatic guide narration/}));await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));
- const side=screen.getByRole('button',{name:'Play',exact:true});expect(side.disabled).toBe(true);await fireEvent.click(side);
+ expect([...dock.querySelectorAll('button')].map(b=>b.getAttribute('aria-label')).filter(l=>/^Play/.test(l))).toEqual([]);
+ expect(screen.getByRole('button',{name:'Skip to next activity'}).disabled).toBe(false);await fireEvent.click(screen.getByRole('button',{name:'Replay'}));await wait(20);
  expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();
 });
+
+// R6/K1 census at the App boundary (GAP-R6: the DEV proof's census ran only with every setting on).
+// Every screen of a passage with no recording, walked forward, with every setting on and again with
+// automatic guide narration off, as the registry presentation and as the server's executable one.
+const h64='e'.repeat(64);
+function servedExecutable({descriptor,presentation}){
+ const served=structuredClone(presentation);
+ served.execution={schema:'fia-executable-presentation@1',sourceRevision:'source-1',decisionEvidenceSha256:h64,recipeRevision:'recipe-1'};
+ for(const a of served.activities)a.execution={narration:{action:'blocked',status:'unavailable',reason:'bound-narration-unavailable'},focalAssetId:a.assetId??null,completion:{action:'manual-continue'}};
+ return {descriptor,presentation:served};
+}
+const everySetting={readScripture:true,describeImages:true,autoplayVideo:true};
+for(const id of ['eng.MRK-1-21-28','eng.MRK-2-1-12'])for(const served of ['registry','executable'])for(const guide of ['on','off'])it(`R6/K1 census: ${id} (${served}), automatic guide narration ${guide}, every other setting on: no screen shows a Play in the Next slot`,async()=>{
+ const target=served==='executable'?servedExecutable(pack(id)):pack(id),activities=target.presentation.activities;
+ vi.spyOn(libraryAdapter,'select').mockResolvedValue(target);savePack(target);
+ localStorage.setItem('fia-v3-preferences@1',JSON.stringify({muted:guide==='off',dark:true,preferences:{...createSession(activities).preferences,...everySetting}}));
+ render(App);await heading(activities[0].prompt);await verified();
+ const dock=screen.getByRole('navigation',{name:'Session controls'}),plays=[];let screens=0;
+ for(let step=0;step<activities.length*2&&progress(id)?.session.status!=='complete';step++){
+  const slot=[...dock.querySelectorAll('.step-control')].at(-1),label=slot.getAttribute('aria-label');
+  if(/^Play/.test(label))plays.push(`${progress(id)?.activityId??activities[0].id}: ${label}${slot.disabled?' (disabled)':''}`);
+  // A section opening is its own screen: Continue ends it before the section's first step.
+  screens++;const place=()=>JSON.stringify([progress(id)?.session.index,progress(id)?.transitionSection??null,progress(id)?.session.status]),before=place();
+  await fireEvent.click(readFace().label==='Continue'?primary():screen.getByRole('button',{name:'Skip to next activity'}));
+  await waitFor(()=>expect(place()).not.toBe(before));
+ }
+ // The walk reached the end of the passage, so every screen was seen.
+ expect(progress(id).session.status).toBe('complete');expect(screens).toBeGreaterThan(activities.length/2);
+ expect(plays).toEqual([]);
+ expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();
+},60000);
 
 it('R4: with narration off, a side Play keeps the centre on Continue and offers its own labelled cancel',async()=>{
  const bytes=deferred();libraryAdapter.playPreparedRecording.mockReturnValue(bytes.promise);savePack(admitted);vi.spyOn(libraryAdapter,'select').mockResolvedValue(admitted);

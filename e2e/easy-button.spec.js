@@ -181,6 +181,37 @@ test('R6.2/K4: a heard discussion screen shows the same dock when its recording 
  expect((await faces(page)).slice(from).map(f=>f.label)).toEqual([CHECKING,'Continue']);expect(await dock()).toEqual(live);
 });
 
+// R6/K1 on the packaged Worker (GAP-R6: the DEV proof found a disabled Play beside Continue on 6 of 9
+// Mark 1:21–28 guide and discussion screens with automatic guide narration off). Mark 1:21–28 as the
+// server serves it, opened from Passages and walked forward, with every setting on and again with only
+// automatic guide narration off: no screen without a recording shows a Play in the Next slot.
+async function settings(page,values){
+ await page.getByRole('button',{name:'More options'}).click();await page.getByRole('button',{name:'Settings',exact:true}).click();
+ for(const [name,on] of Object.entries(values))await page.getByRole('checkbox',{name:new RegExp(name)}).setChecked(on);
+ await page.getByRole('button',{name:'Close',exact:true}).click();
+}
+for(const guide of [true,false])test(`R6/K1: Mark 1:21–28 as served, ${guide?'every setting on':'automatic guide narration off'}: no screen without a recording shows a Play in the Next slot`,async({page})=>{
+ test.skip(process.env.FIA_WORKER_PREVIEW!=='1','Opt-in actual packaged Worker preview only (opening reads /v1/packs)');
+ test.setTimeout(120000);
+ const posts=[];page.on('request',r=>{if(r.method()==='POST'&&new URL(r.url()).pathname.startsWith('/v1/preparations'))posts.push(r.url());});
+ await page.goto('/');await settled(page,{quietMs:300});
+ await settings(page,{'Automatic guide narration':guide,'Automatic Scripture reading':true,'Describe images and maps':true,'Automatic video playback':true,'Dark theme':true});
+ await page.getByRole('button',{name:'More options'}).click();await page.getByRole('button',{name:'Passages',exact:true}).click();
+ await page.getByRole('dialog').locator('article.pack-card').filter({has:page.getByRole('heading',{name:'Mark 1:21–28',exact:true})}).getByRole('button',{name:/Open passage|Resume passage/}).click();
+ await expect(page.getByRole('dialog')).toHaveCount(0,{timeout:30000});
+ const nav=page.getByRole('navigation',{name:'Session controls'}),centre=nav.locator('.guide-primary');
+ const dock=()=>page.evaluate(()=>{const nav=document.querySelector('nav[aria-label="Session controls"]'),slot=[...nav.querySelectorAll('.step-control')].at(-1);return {screen:(document.querySelector('main h1')?.textContent||'').trim().slice(0,48),centre:nav.querySelector('.guide-primary').getAttribute('aria-label'),slot:slot.getAttribute('aria-label')+(slot.disabled?' (disabled)':'')};});
+ const seen=[];
+ for(let step=0;step<13;step++){
+  await expect(centre).not.toHaveAttribute('aria-busy','true',{timeout:20000});await page.waitForTimeout(400);
+  const now=await dock();seen.push(now);
+  if(now.centre==='Continue')await centre.click();else await nav.getByRole('button',{name:'Skip to next activity'}).click();
+ }
+ test.info().annotations.push({type:'K1',description:JSON.stringify(seen)});
+ expect(seen.filter(s=>/^Play/.test(s.slot)),JSON.stringify(seen)).toEqual([]);
+ expect(posts).toEqual([]);
+});
+
 test('J3 hammer: six taps 150 ms apart start one recording and never cancel it',async({page})=>{
  await page.goto('/');
  await settled(page,{quietMs:300});
