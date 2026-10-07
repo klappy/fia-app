@@ -339,7 +339,8 @@ test('E4: taps while checking wait, then start the checked Begin exactly once',a
  const taps=await tapCentre(page,3,150);
  const during=await faces(page);
  expect(during.map(f=>f.label),'a tap while checking changes no label').toEqual([CHECKING]);
- expect(await page.evaluate(()=>window.__easy.players.length)).toBe(0);
+ // A tap may unlock the one narration element (iOS), but nothing loads or plays while checking.
+ expect(await page.evaluate(()=>window.__easy.players.filter(p=>p.currentSrc||p.getAttribute('src')||!p.paused).length)).toBe(0);
  release();
  await expect.poll(async()=>(await faces(page)).at(-1).icon,{timeout:15000}).toBe('lucide-pause');
  await page.waitForFunction(t=>performance.now()-t>=3000,taps[0]);

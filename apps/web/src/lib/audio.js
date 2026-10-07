@@ -1,4 +1,7 @@
 // One audio owner for prepared narration, browser speech and video.
+// A start that has not reached sound by this bound is handed back to a tap: iOS can leave a start
+// it does not allow pending forever, with neither sound nor a rejection.
+export const START_BOUND_MS = 1500;
 export function createAudioController(onState, onEnd, onError, { allowSpeechFallback = true } = {}) {
   // Native media clocks can round a completed seek just below the requested start.
   const seekToleranceSeconds = 0.001;
