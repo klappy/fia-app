@@ -17,8 +17,7 @@ for(const id of ['eng.MRK-1-1-13','spa.MRK-1-1-13','eng.MRK-1-14-20','spa.MRK-1-
  saveProgress(localStorage,descriptor,pack.activities,{session:createSession(pack.activities),muted:true});render(App);
  await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toBe(pack.activities[0].prompt));
  expect(audio).not.toHaveBeenCalled();expect(document.querySelectorAll('img[src],video[src],audio[src]')).toHaveLength(0);
- // R5: Continue shows once this passage's availability is checked.
- await fireEvent.click(await screen.findByRole('button',{name:'Continue',exact:true}));
+ await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));
  await waitFor(()=>expect(JSON.parse(localStorage.getItem('fia-v3-progress@1:'+id)).session.index).toBe(1));
  expect(audio).not.toHaveBeenCalled();expect(requests.every(url=>url===`/v1/packs/${id}`||url===`/v1/artifacts/${descriptor.revision}`)).toBe(true);
 });

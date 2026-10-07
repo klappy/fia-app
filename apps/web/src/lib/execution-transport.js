@@ -11,8 +11,7 @@ const validIdentity=value=>shape(value,identityFields)&&identityFields.every(key
 // typed so selection and restore can tell it apart from a refusal or a malformed record.
 const transientStatus=status=>[408,429].includes(status)||status>=500;
 const passageError=(message,code)=>Object.assign(Error(message),{code});
-export const passageUnreachable=()=>passageError('This passage could not be reached. Check your connection and try again. Your current passage stays open.','passage-transient');
-const unreachable=passageUnreachable;
+const unreachable=()=>passageError('This passage could not be reached. Check your connection and try again. Your current passage stays open.','passage-transient');
 const invalidCatalog=()=>passageError('The server catalog is invalid.','passage-invalid');
 const validRange=value=>value===null||shape(value,['startSeconds','endSeconds'])&&Number.isFinite(value.startSeconds)&&value.startSeconds>=0&&Number.isFinite(value.endSeconds)&&value.endSeconds>value.startSeconds;
 

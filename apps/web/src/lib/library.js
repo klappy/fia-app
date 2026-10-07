@@ -1,5 +1,5 @@
 import {createPreparationIntent} from './preparation-intent.js';
-import {createExecutionTransport,passageUnreachable} from './execution-transport.js';
+import {createExecutionTransport} from './execution-transport.js';
 import {validateExecutablePresentation} from './executable-presentation.js';
 import {createPreparationTransport} from './prepared-audio.js';
 import {bundledPresentation} from './content.js';
@@ -62,10 +62,6 @@ export async function selectServerPresentation(id,{explicit=false,signal,transpo
  const presentation=await transport.readPresentationRecord(record,{signal});signal?.throwIfAborted();
  return {descriptor,presentation:validatePresentation(presentation,descriptor)};
 }
-// A launch-time restore is bounded where it is made (R1, R5). Past this bound a saved passage that has
-// not answered is a missing connection: the restore stops with that answer and R1's fallback says so.
-export const RESTORE_TIMEOUT_MS=15000;
-export const restoreUnreachable=passageUnreachable;
 export function mediaSelection(pack){return {packId:pack.id,revision:pack.revision,...(pack.mediaIdentity?{mediaIdentity:{...pack.mediaIdentity},mediaAssetsSha256:pack.mediaAssetsSha256}:{})};}
 export const libraryAdapter={
  playBoundAudio:(...args)=>executionTransport.playBoundAudio(...args),
@@ -86,28 +82,10 @@ export const libraryAdapter={
  activate(pack){const selection=mediaSelection(pack);activationQueue=activationQueue.catch(()=>{}).then(()=>workerRequest('PACK_SELECT',selection));return activationQueue;},
 };
 export function formatBytes(bytes){return Number.isFinite(bytes)?`${(bytes/1024/1024).toFixed(1)} MB`:'Size unavailable';}
-// When the page's own registration shows that no worker is on its way (blocked, rejected, or its
-// install failed with none active), waiting requests end now with the not-ready answer instead of
-// at the ready timeout, so the easy button's check ends with the truth rather than a long pulse.
-const notReady=()=>new Error('Download storage is not ready. Reload the published Site and try again.');
-let noWorker;const workerAbsent=new Promise((_,reject)=>noWorker=()=>reject(notReady()));workerAbsent.catch(()=>{});
-export async function registerWorker(url){
- const container=navigator.serviceWorker;
- const absentUnlessActive=()=>Promise.resolve().then(()=>container.getRegistration()).then(r=>{if(!r?.active)noWorker();},noWorker);
- let registration;try{registration=await container.register(url);}catch(error){absentUnlessActive();throw error;}
- // A failed worker's 'redundant' statechange can run before registration.installing is cleared, so the
- // failed worker itself counts as gone. No worker is coming only when no other pending worker remains;
- // every pending worker, and a newer one that replaces it, is watched.
- const pendingOthers=worker=>[registration.installing,registration.waiting].filter(next=>next&&next!==worker&&next.state!=='redundant');
- const watch=worker=>worker.addEventListener('statechange',()=>{if(worker.state==='redundant'&&!registration.active&&!pendingOthers(worker).length)noWorker();});
- const pending=[registration?.installing,registration?.waiting].filter(Boolean);
- if(!registration?.active){if(!pending.length)noWorker();else{pending.forEach(watch);registration.addEventListener('updatefound',()=>{if(registration.installing)watch(registration.installing);});}}
- return registration;
-}
 async function workerRequest(type,data={},onprogress){
  if(!('serviceWorker' in navigator))throw new Error('Downloads are unavailable in this browser.');
  let readyTimer;
- const registration=await Promise.race([navigator.serviceWorker.ready,workerAbsent,new Promise((_,reject)=>{readyTimer=setTimeout(()=>reject(notReady()),10000);})]).finally(()=>clearTimeout(readyTimer));
+ const registration=await Promise.race([navigator.serviceWorker.ready,new Promise((_,reject)=>{readyTimer=setTimeout(()=>reject(new Error('Download storage is not ready. Reload the published Site and try again.')),10000);})]).finally(()=>clearTimeout(readyTimer));
  if(!registration.active)throw new Error('Download storage is not ready. Reload and try again.');
  return new Promise((resolve,reject)=>{
   const channel=new MessageChannel();let timer;

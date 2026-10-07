@@ -2,15 +2,10 @@
 export function alignmentPosition(alignment, elapsed) {
   if (!alignment?.verses?.length || !Number.isFinite(elapsed) || elapsed < 0 || elapsed > alignment.duration) return null;
   if(alignment.schemaVersion===2){
-    // Half-open verse spans; the last started verse stays current through the gap after it.
-    let verseIndex=-1;
-    for(let i=0;i<alignment.verses.length&&alignment.verses[i].start<=elapsed;i++)verseIndex=i;
-    if(verseIndex<0||verseIndex===alignment.verses.length-1&&elapsed>=alignment.verses[verseIndex].end)return null;
+    const verseIndex=alignment.verses.findIndex(v=>elapsed>=v.start&&elapsed<v.end);
+    if(verseIndex<0)return null;
     const verse=alignment.verses[verseIndex];
-    if(verse.highlightMode==='verse'||!verse.words?.length)return {verseIndex,wordIndex:-1};
-    // Inside a word gap the last spoken word keeps its line; the verse centre would pull back.
-    let wordIndex=0;
-    for(let i=1;i<verse.words.length&&verse.words[i].start<=elapsed;i++)wordIndex=i;
+    const wordIndex=verse.highlightMode==='verse'?-1:verse.words.findIndex(w=>elapsed>=w.start&&elapsed<w.end);
     return {verseIndex,wordIndex};
   }
   let verseIndex = 0;
@@ -49,12 +44,8 @@ export function followScrollTop(viewport, target, scrollTop, scrollHeight) {
 }
 
 /** Untimed guide text uses an explicitly approximate scroll, not fabricated word alignment.
- * Reach the last line before the clip ends; even a few pixels of overflow count.
- * A clip cut from a shared recording uses its own clock (progressElapsed over
- * progressDuration), never the file's; whole-file playback uses elapsed over duration. */
-export function durationScrollTop(playback, height, scrollHeight) {
-  const ranged=playback?.progressDuration!==undefined;
-  const elapsed=ranged?playback.progressElapsed:playback?.elapsed, duration=ranged?playback.progressDuration:playback?.duration;
+ * Reach the last line before the clip ends; even a few pixels of overflow count. */
+export function durationScrollTop(elapsed, duration, height, scrollHeight) {
   if (![elapsed,duration,height,scrollHeight].every(Number.isFinite) || duration<=0 || height<=0 || scrollHeight<=height) return null;
   const progress=Math.max(0,Math.min(1,(elapsed/duration-.1)/.8));
   return (scrollHeight-height)*progress;

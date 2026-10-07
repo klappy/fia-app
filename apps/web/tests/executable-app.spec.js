@@ -21,8 +21,7 @@ beforeEach(()=>{
  URL.createObjectURL=vi.fn(()=> 'blob:execution');URL.revokeObjectURL=vi.fn();
 });
 afterEach(()=>{cleanup();vi.restoreAllMocks();vi.unstubAllGlobals();vi.clearAllMocks();localStorage.clear();delete document.modelContext;});
-// R5: the easy button checks availability before it shows an action.
-async function mount(){render(App);await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toBe(presentation.activities[0].prompt));await waitFor(()=>expect(document.querySelector('.guide-primary').hasAttribute('aria-busy')).toBe(false));}
+async function mount(){render(App);await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toBe(presentation.activities[0].prompt));}
 function firstNarration(action='play-bound-audio',completion='manual-continue'){presentation.activities[0].execution.narration={action,[action==='prepare-original'?'demand':'artifact']:ref};presentation.activities[0].execution.completion.action=completion;}
 function ended(){audio.active=false;audio.state({playing:false,src:null,elapsed:0,duration:0});audio.end();}
 it('explicit server narration completes into a silent child; replay/back never infer narration from retained source',async()=>{
@@ -46,16 +45,6 @@ it('navigation cancels bound action and prevents late port result playback',asyn
 it.each(['unsupported','unavailable','invalid'])('blocked executable narration uses approved readable copy without changing raw %s reason or authority',async status=>{
  const reason=`server-${status}-machine-code`;presentation.activities[0].execution.narration={action:'blocked',status,reason};await mount();expect(screen.getByRole('status').textContent).toContain('This recording is unavailable. You can continue.');expect(screen.getByRole('status').textContent).not.toContain(reason);expect(presentation.activities[0].execution.narration).toEqual({action:'blocked',status,reason});expect(screen.getByRole('button',{name:'Continue',exact:true}).disabled).toBe(false);await fireEvent.click(screen.getByRole('button',{name:'Replay',exact:true}));expect(libraryAdapter.playBoundAudio).not.toHaveBeenCalled();expect(libraryAdapter.prepareOriginal).not.toHaveBeenCalled();expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();expect(libraryAdapter.preparationStatus).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();
 });
-it('R5: a blocked recording notice is raised only once the passage is checked, never beside the checking pulse',async()=>{
- presentation.activities[0].execution.narration={action:'blocked',status:'unavailable',reason:'server-unavailable-machine-code'};
- let release;libraryAdapter.mediaStatus.mockReturnValue(new Promise(r=>release=r));
- render(App);await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toBe(presentation.activities[0].prompt));await new Promise(r=>setTimeout(r,30));
- expect(document.querySelector('.guide-primary').getAttribute('aria-busy')).toBe('true');
- expect(screen.queryAllByRole('status').map(n=>n.textContent).join(' ')).not.toContain('This recording is unavailable.');
- release({files:[],savedFiles:[],deliveryRevision:null});
- await waitFor(()=>expect(document.querySelector('.guide-primary').hasAttribute('aria-busy')).toBe(false));
- expect(screen.getByRole('status').textContent).toContain('This recording is unavailable. You can continue.');
-});
 it('manual Play while automatic narration is off executes only the declared action and pause/resume reuses it',async()=>{
  firstNarration();await mount();await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Settings',exact:true}));await fireEvent.click(screen.getByRole('checkbox',{name:/Automatic guide narration/}));await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));expect(libraryAdapter.playBoundAudio).not.toHaveBeenCalled();
  await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await waitFor(()=>expect(audio.play).toHaveBeenCalled());await fireEvent.click(screen.getByRole('button',{name:'Pause',exact:true}));expect(audio.pause).toHaveBeenCalled();await fireEvent.click(screen.getByRole('button',{name:'Resume',exact:true}));expect(audio.resume).toHaveBeenCalled();expect(libraryAdapter.playBoundAudio).toHaveBeenCalledTimes(1);
@@ -65,21 +54,6 @@ it('manual Play while automatic narration is off executes only the declared acti
  expect(progress().activityId).toBe(presentation.activities[0].id);expect(progress().session.index).toBe(0);
  await new Promise(resolve=>setTimeout(resolve,30));expect(progress().session.status).toBe('waiting');expect(libraryAdapter.playBoundAudio).toHaveBeenCalledTimes(1);
  await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toBe(presentation.activities[1].prompt));
-});
-// R6.2/K4: a stored 'waiting' means this screen was heard, so a reload shows what its narration end showed.
-it('R6.2/K4: a heard executable screen is Continue with Skip when its narration ends and again after a reload',async()=>{
- firstNarration();await mount();
- const centre=()=>document.querySelector('nav[aria-label="Session controls"] .guide-primary').getAttribute('aria-label');
- const sidePlays=()=>[...document.querySelectorAll('nav[aria-label="Session controls"] button')].map(b=>b.getAttribute('aria-label')).filter(label=>/^Play/.test(label));
- await fireEvent.click(screen.getByRole('button',{name:'Begin',exact:true}));await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(1));ended();
- const progress=()=>JSON.parse(localStorage.getItem('fia-v3-progress@1:'+descriptor.id));
- await waitFor(()=>expect(progress().session.status).toBe('waiting'));await waitFor(()=>expect(centre()).toBe('Continue'));
- expect(sidePlays()).toEqual([]);expect(screen.getByRole('button',{name:'Skip to next activity'}).disabled).toBe(false);
- cleanup();await mount();
- expect(centre()).toBe('Continue');expect(sidePlays()).toEqual([]);expect(screen.getByRole('button',{name:'Skip to next activity'}).disabled).toBe(false);
- // Continue moves on; it does not replay the heard narration.
- await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toBe(presentation.activities[1].prompt));
- expect(libraryAdapter.playBoundAudio).toHaveBeenCalledTimes(1);
 });
 it('server focal display does not infer narration or automatically substitute its related video',async()=>{
  const image=Object.values(presentation.assets).find(a=>a.kind==='image');presentation.activities[0].execution.focalAssetId=image.id;presentation.activities[0].assetId=image.id;
@@ -123,13 +97,13 @@ it('Cancel preparation revokes a pending executable demand and late ready cannot
  let retryReady;libraryAdapter.prepareRecording.mockReturnValue(new Promise(r=>retryReady=r));await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await waitFor(()=>expect(libraryAdapter.prepareRecording).toHaveBeenCalledTimes(2));await fireEvent.click(screen.getByRole('button',{name:'Cancel preparation',exact:true}));retryReady({status:'ready',value:{}});await new Promise(r=>setTimeout(r,0));expect(libraryAdapter.prepareRecording.mock.calls[1][1].aborted).toBe(true);expect(audio.play).not.toHaveBeenCalled();
  libraryAdapter.prepareRecording.mockResolvedValue({status:'ready',value:{}});await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(1));expect(libraryAdapter.prepareRecording).toHaveBeenCalledTimes(3);expect(libraryAdapter.prepareRecording.mock.calls[2][1].aborted).toBe(false);
 });
-it('carried executable playback suppresses the ready notice and keeps it dismissed by declared identity association (R4.5)',async()=>{
+it('matching executable playback dismisses ready notice using declared identity association',async()=>{
  firstNarration('prepare-original');const identity={packId:descriptor.id,presentationRevision:'b'.repeat(64),language:'eng',edition:'fia-guide',quality:'original',activityId:'server-step',sourceUnitId:'server-unit',sourceTextSha256:'c'.repeat(64)};
  libraryAdapter.prepareOriginal.mockImplementation((reference,context)=>context.prepareNarration(identity,context));
  audio.play.mockImplementation((text,src)=>{audio.active=true;audio.src=src;});
  await mount();await fireEvent.click(screen.getByRole('button',{name:'Begin',exact:true}));await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(1));
- expect(screen.queryByText('Recording ready. Press Play to listen.')).toBeNull();
- audio.state({playing:true,src:'blob:unrelated',elapsed:0,duration:2});await new Promise(r=>setTimeout(r,0));expect(screen.queryByText('Recording ready. Press Play to listen.')).toBeNull();
+ expect(screen.getByRole('status').textContent).toContain('Recording ready');
+ audio.state({playing:true,src:'blob:unrelated',elapsed:0,duration:2});await new Promise(r=>setTimeout(r,0));expect(screen.getByRole('status').textContent).toContain('Recording ready');
  audio.state({playing:true,src:audio.src,elapsed:0.1,duration:2});await waitFor(()=>expect(screen.queryByText('Recording ready. Press Play to listen.')).toBeNull());
 });
 it('failed executable prepared playback re-requests and re-verifies on explicit retry',async()=>{

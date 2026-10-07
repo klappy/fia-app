@@ -120,7 +120,7 @@ it('explicit return from native video preserves owner while waiting and ignores 
  Object.defineProperty(video,'webkitDisplayingFullscreen',{value:true,writable:true});video.webkitExitFullscreen=vi.fn();await fireEvent(video,new Event('webkitbeginfullscreen'));
  await fireEvent.click(screen.getByRole('button',{name:'Return to guide',exact:true}));await settle();expect(document.querySelector('video')).toBe(video);expect(state().detour).toBe('a13');
  video.webkitDisplayingFullscreen=false;video.dispatchEvent(new Event('webkitendfullscreen'));video.dispatchEvent(new Event('ended'));await settle();expect(state().detour).toBeNull();
- await fireEvent.play(video);await fireEvent.ended(video);await settle();expect(activities[state().index].id).toBe('S02-U005');expect(screen.getByRole('button',{name:'Continue',exact:true}).classList.contains('guide-primary')).toBe(true);
+ await fireEvent.play(video);await fireEvent.ended(video);await settle();expect(activities[state().index].id).toBe('S02-U005');expect(screen.getByRole('button',{name:'Continue',exact:true})).toBeTruthy();
 });
 class FakeAudio {
  constructor(src){this.src=src;this.paused=true;this.currentTime=0;this.duration=12;players.push(this);}
@@ -173,8 +173,6 @@ it('verified proxy Scripture keeps logical recording identity and maps codec del
  player.currentTime=boundary+.020;player.ontimeupdate();await settle();expect(document.querySelectorAll('.scripture-scroll p')[1].getAttribute('aria-current')).toBe('true');
 });
 const settle=async()=>{await Promise.resolve();await tick();};
-// R4: a tap within the start burst never pauses; wait until the easy button is no longer busy.
-const easyIdle=()=>waitFor(()=>expect(document.querySelector('.guide-primary').hasAttribute('aria-busy')).toBe(false),{timeout:2000});
 async function startAt(id,status='ready',prefs={}){const session=createSession(activities);session.index=activities.findIndex(a=>a.id===id);session.status=status;Object.assign(session.preferences,prefs);localStorage.setItem('fia-v3-session@2',JSON.stringify({session}));render(App);await settle();await settle();await settle();}
 const originalRelated=assets.a112.relatedIds;
 const state=()=>JSON.parse(localStorage.getItem('fia-v3-session@2')).session;
@@ -188,10 +186,10 @@ describe('authentic FIA flow',()=>{
  it('keeps navigation discoverable without exposing the resource menus',async()=>{assets.a112.relatedIds=[];await startAt('S02-U005');expect(screen.getByRole('button',{name:'Previous activity'})).toBeTruthy();expect(screen.getByRole('button',{name:'Skip to next activity'})).toBeTruthy();expect(screen.queryByRole('progressbar')).toBeNull();expect(screen.getByRole('button',{name:/^Open .* full screen$/})).toBeTruthy();await fireEvent.click(screen.getByRole('button',{name:'More options'}));expect(screen.queryByRole('button',{name:'Show content tools'})).toBeNull();await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));expect(screen.getByRole('button',{name:/^Open .* full screen$/})).toBeTruthy();});
  it('reads three actual translations and returns to the authored question',async()=>{vi.useFakeTimers();await startAt('S01-U002');await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();expect(players.at(-1).src).toBe('/audio/source/S01-U002.mp3');players.at(-1).end();await settle();for(const id of ['scripture-BereanStandardBible','scripture-unfoldingWordLiteral','scripture-unfoldingWordSimplified']){expect(screen.getByText(assets[id].subtitle)).toBeTruthy();await vi.advanceTimersByTimeAsync(700);expect(players.at(-1).src).toBe(assets[id].descriptionAudio);players.at(-1).end();await settle();}expect(screen.getByRole('heading',{name:'What do you like in this passage?'})).toBeTruthy();});
  it('holds the image, then presents the required map before the next guide unit',async()=>{vi.useFakeTimers();assets.a112.relatedIds=[];await startAt('S02-U005');await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();players.at(-1).end();await settle();expect(screen.getByRole('button',{name:'Continue',exact:true})).toBeTruthy();await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));await settle();expect(document.querySelector('.media-stage').dataset.kind).toBe('map');expect(state().status).toBe('waiting');await vi.advanceTimersByTimeAsync(2000);expect(activities[state().index].id).toBe('S02-U005-resource-c197');await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));expect(activities[state().index].id).toBe('S02-U006');});
- it('pause/resume keeps the same source recording and position',async()=>{assets.a112.relatedIds=[];await startAt('S02-U005');await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();const player=players.at(-1);player.currentTime=6;await easyIdle();await fireEvent.click(screen.getByRole('button',{name:'Pause',exact:true}));await fireEvent.click(screen.getByRole('button',{name:'Resume',exact:true}));await settle();expect(players).toHaveLength(1);expect(player.currentTime).toBe(6);expect(activities[state().index].id).toBe('S02-U005');});
+ it('pause/resume keeps the same source recording and position',async()=>{assets.a112.relatedIds=[];await startAt('S02-U005');await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();const player=players.at(-1);player.currentTime=6;await fireEvent.click(screen.getByRole('button',{name:'Pause',exact:true}));await fireEvent.click(screen.getByRole('button',{name:'Resume',exact:true}));await settle();expect(players).toHaveLength(1);expect(player.currentTime).toBe(6);expect(activities[state().index].id).toBe('S02-U005');});
  it('a map detour returns to the held discussion',async()=>{await startAt('S01-U003','waiting');await command('show the map');expect(document.querySelector('.media-stage').dataset.kind).toBe('map');await fireEvent.click(screen.getByRole('button',{name:'Return to guide',exact:true}));expect(screen.getByRole('heading',{name:'What do you like in this passage?'})).toBeTruthy();expect(state().status).toBe('waiting');});
  it('explicit replay reads even when automatic Scripture reading is disabled',async()=>{await startAt('S01-U002-reading-1','ready',{readScripture:false});await fireEvent.click(screen.getByRole('button',{name:'Replay',exact:true}));await settle();expect(players.at(-1).src).toBe(assets['scripture-BereanStandardBible'].descriptionAudio);});
- it('optional video plays, pauses, and returns to its held guide point',async()=>{assets.a112.relatedIds=[];await startAt('S02-U005','waiting');await command('watch the video');await settle();expect(screen.getByRole('button',{name:'Pause',exact:true})).toBeTruthy();await easyIdle();await fireEvent.click(screen.getByRole('button',{name:'Pause',exact:true}));await settle();expect(screen.getByRole('button',{name:'Play video',exact:true})).toBeTruthy();await fireEvent.ended(document.querySelector('video'));await settle();expect(state().detour).toBeNull();expect(state().status).toBe('waiting');expect(activities[state().index].id).toBe('S02-U005');});
+ it('optional video plays, pauses, and returns to its held guide point',async()=>{assets.a112.relatedIds=[];await startAt('S02-U005','waiting');await command('watch the video');await settle();expect(screen.getByRole('button',{name:'Pause',exact:true})).toBeTruthy();await fireEvent.click(screen.getByRole('button',{name:'Pause',exact:true}));await settle();expect(screen.getByRole('button',{name:'Play video',exact:true})).toBeTruthy();await fireEvent.ended(document.querySelector('video'));await settle();expect(state().detour).toBeNull();expect(state().status).toBe('waiting');expect(activities[state().index].id).toBe('S02-U005');});
  it('restores progress without autoplay and opening preferences retains the source unit',async()=>{await startAt('S03-U007','playing');expect(players).toHaveLength(0);await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Settings'}));expect(activities[state().index].id).toBe('S03-U007');expect(players).toHaveLength(0);});
  it('in-page tools accept approved optional resources and reject unknown or stale completions',async()=>{const tools=new Map();document.modelContext={registerTool:tool=>tools.set(tool.name,tool)};assets.a112.relatedIds=[];await startAt('S02-U005','waiting');await expect(tools.get('fia_present_resource').execute({assetId:'unknown'})).rejects.toThrow();await tools.get('fia_present_resource').execute({assetId:'a184'});expect(state().detour).toBe('a184');await expect(tools.get('fia_complete_activity').execute({activityId:'S02-U005'})).rejects.toThrow();await tools.get('fia_return_to_guide').execute({});await tools.get('fia_complete_activity').execute({activityId:'S02-U005'});expect(activities[state().index].id).toBe('S02-U005-resource-c197');});
 });
@@ -236,7 +234,7 @@ it('full-screen image overlay leaves the current description uninterrupted',asyn
  await fireEvent.click(screen.getByRole('button',{name:'Close full screen'}));await settle();expect(screen.queryByRole('dialog')).toBeNull();expect(description.paused).toBe(false);expect(document.querySelector('.visual-viewport img').style.transform).toContain('scale(1)');expect(activities[state().index].id).toBe('S02-U005');
 });
 it('full-screen map preserves paused audio and the guide place',async()=>{
- await startAt('S03-U007');await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();const player=players.at(-1);await easyIdle();await fireEvent.click(screen.getByRole('button',{name:'Pause',exact:true}));await settle();await fireEvent.click(screen.getByRole('button',{name:/^Open .* full screen$/}));await settle();
+ await startAt('S03-U007');await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();const player=players.at(-1);await fireEvent.click(screen.getByRole('button',{name:'Pause',exact:true}));await settle();await fireEvent.click(screen.getByRole('button',{name:/^Open .* full screen$/}));await settle();
  expect(player.paused).toBe(true);expect(players).toHaveLength(1);
  await fireEvent(screen.getByRole('dialog'),new Event('cancel',{cancelable:true}));await settle();expect(screen.queryByRole('dialog')).toBeNull();expect(player.paused).toBe(true);expect(activities[state().index].id).toBe('S03-U007');
 
@@ -294,7 +292,7 @@ it('discussion list questions each wait for confirmation and show separately',as
 
 it('section boundaries hold a title transition and Continue reads the first instruction without skipping',async()=>{
  vi.useFakeTimers();const last=activities.filter(a=>a.sectionId==='S01').at(-1);await startAt(last.id,'waiting');
- await fireEvent.click(screen.getByRole('button',{name:'Skip to next activity',exact:true}));await settle();await vi.advanceTimersByTimeAsync(1000);
+ await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));await settle();await vi.advanceTimersByTimeAsync(1000);
  expect(screen.getByRole('heading',{name:'Setting the Stage'})).toBeTruthy();
  expect(activities[state().index].id).toBe('S02-U001');expect(players).toHaveLength(0);
  await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));await settle();
@@ -352,7 +350,7 @@ it.each(activities.filter(a=>assets[a.assetId]?.kind==='term'&&a.audioSrc).map(a
  await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));await settle();expect(activities[state().index].id).not.toBe(id);
 });
 it('restores a term definition without replaying its instruction and returns to the instruction on revisit',async()=>{
- await startAt('S05-U004');await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();players.at(-1).end();await settle();
+ await startAt('S05-U004','waiting');
  await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));await settle();cleanup();render(App);await settle();
  expect(screen.getByRole('region',{name:'Guide text'}).textContent).toContain(assets['eng-t60-v1'].description);
  await fireEvent.click(screen.getByRole('button',{name:'Skip to next activity'}));await fireEvent.click(screen.getByRole('button',{name:'Previous activity'}));await settle();
@@ -452,7 +450,7 @@ it('phone rotation makes visuals immersive without remounting the playing video'
  const prior=window.matchMedia;window.matchMedia=vi.fn(()=>query);
  try{
  await startAt('S02-U005');await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();
- const video=document.querySelector('video');video.currentTime=15;await easyIdle();
+ const video=document.querySelector('video');video.currentTime=15;
  query.matches=true;rotate();await settle();expect(document.querySelector('main').classList.contains('immersive')).toBe(true);
  expect(document.querySelector('video')).toBe(video);expect(video.currentTime).toBe(15);
  await fireEvent.click(screen.getByRole('button',{name:'Pause video',exact:true}));await settle();
