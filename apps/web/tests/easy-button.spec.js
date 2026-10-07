@@ -3,7 +3,7 @@
 import {it,expect,beforeEach,afterEach,vi} from 'vitest';
 import {render,screen,fireEvent,cleanup,waitFor,within} from '@testing-library/svelte';
 import {readFileSync} from 'node:fs';
-import {webcrypto} from 'node:crypto';
+import {webcrypto,createHash} from 'node:crypto';
 import {createSession} from '../src/lib/engine.js';
 const audio=vi.hoisted(()=>({play:vi.fn(),pause:vi.fn(),resume:vi.fn(),stop:vi.fn(),active:false}));
 vi.mock('../src/lib/audio.js',()=>({createAudioController:(state,end)=>{audio.state=state;audio.end=end;return audio;}}));
@@ -404,6 +404,38 @@ it('B1/K4: while checking, the Next slot follows what the screen declares; Mark 
  expect(slots.on(other)).toEqual(['Skip to next activity']);
  expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();
 });
+
+// B1-bis (review of #201): a passage-only Scripture recording is declared by the packaged build (the passage's
+// offline manifest names it by scriptureAssetId), not by the presentation. Mark 1:14–20 served as its base
+// record (what any server serves before the passage is first opened), relaunched on its BSB reading with
+// Automatic Scripture reading off, keeps one Play from first paint, disabled until the check answers. The
+// readings with no such binding (Mark 1:14–20 ULT and UST, every Mark 1:21–28 reading) show Skip throughout.
+function passageOnlyFile({descriptor,presentation}){
+ const id=descriptor.defaultScriptureId,a=presentation.assets[id],sha=v=>createHash('sha256').update(JSON.stringify(v)).digest('hex');
+ return {path:`/audio/scripture/${descriptor.id}/${id}.opus`,group:'audio',mime:'audio/ogg',bytes:3,sourceBytes:99,sha256:'a'.repeat(64),sourceSha256:'b'.repeat(64),deliveryURL:'https://transcode.klappy.dev/audio/test-only',deliveryRevision:'9'.repeat(64),duration:321,playbackRange:{startSeconds:96.8,endSeconds:144.375},scriptureLedgerEntryId:'test-only',scriptureAssetId:id,scripturePlaybackMode:'passage-only',scriptureHighlighting:'disabled',scriptureAlignment:null,scriptureLedgerSha256:'c'.repeat(64),scriptureRangeReviewSha256:'d'.repeat(64),scriptureSourceRangeReviewSha256:'e'.repeat(64),scriptureCanonicalTextSha256:sha({text:a.text,verses:a.verses}),scriptureSourceEvidenceSha256:sha(a.sourceEvidence),timing:{status:'verified',sourceAudioSha256:'b'.repeat(64),deliveryAudioSha256:'a'.repeat(64),mappingEvidenceSha256:'f'.repeat(64),mapping:{scale:1,offsetSeconds:0}}};
+}
+it('B1-bis/K4: a passage-only Scripture recording counts as declared while checking; Mark 1:14–20 BSB (base record) keeps its Play from first paint and readings without one show Skip throughout',async()=>{
+ const bsb=passageOnlyFile(admitted),pending=[];
+ const answers={'eng.MRK-1-1-13':bundledMedia,'eng.MRK-1-14-20':{files:[bsb],savedFiles:[],deliveryRevision:bsb.deliveryRevision}};
+ libraryAdapter.mediaStatus.mockImplementation(p=>{const d=deferred();pending.push({id:p.id,d});return d.promise;});
+ const answer=async id=>{await waitFor(()=>expect(pending.some(a=>a.id===id)).toBe(true));for(const a of pending.splice(0))a.d.resolve(answers[a.id]||{files:[],savedFiles:[],deliveryRevision:null});};
+ vi.spyOn(libraryAdapter,'select').mockImplementation(async id=>pack(id));
+ const relaunch=async(target,index)=>{
+  faces.stop();cleanup();faces=recordFaces();savePack(target,{index});
+  localStorage.setItem('fia-v3-preferences@1',JSON.stringify({preferences:{...createSession(target.presentation.activities).preferences,readScripture:false}}));
+  const reading=target.presentation.activities[index];expect(reading.kind).toBe('scripture');
+  const slots=recordSlots();render(App);await heading(reading.title);await wait(30);
+  expect(readFace().label).toBe(CHECKING);const checking=slots.on(reading.title);
+  await answer(target.descriptor.id);await verified();slots.stop();
+  return {checking,all:slots.on(reading.title),face:readFace().label};
+ };
+ // The base record declares no Scripture audio of its own: the binding is the packaged build's.
+ expect(admitted.presentation.execution).toBeUndefined();expect(admitted.descriptor.capabilities.scriptureAudio.status).toBe('unavailable');
+ expect(admitted.presentation.activities[2].audioSrc).toBeFalsy();expect(admitted.presentation.assets[bsb.scriptureAssetId].descriptionAudio).toBeFalsy();
+ for(let n=0;n<3;n++)expect(await relaunch(admitted,2)).toEqual({checking:['Play (disabled)'],all:['Play (disabled)','Play'],face:'Continue'});
+ for(const [target,index] of [[admitted,3],[admitted,4],[unadmitted,2],[unadmitted,3],[unadmitted,4]])expect(await relaunch(target,index)).toEqual({checking:['Skip to next activity'],all:['Skip to next activity'],face:'Continue'});
+ expect(libraryAdapter.playMedia).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();
+},30000);
 
 it('R4: with narration off, a side Play keeps the centre on Continue and offers its own labelled cancel',async()=>{
  const bytes=deferred();libraryAdapter.playPreparedRecording.mockReturnValue(bytes.promise);savePack(admitted);vi.spyOn(libraryAdapter,'select').mockResolvedValue(admitted);

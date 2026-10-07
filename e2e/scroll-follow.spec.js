@@ -149,17 +149,22 @@ async function follows(page,id,clip,offered,{playTimeout=30000,unplayable=null}=
   if(i){const d=after[i].top-after[i-1].top,s=Math.sign(d);if(s&&s===dir)run+=Math.abs(d);else if(s){if(dir&&run>=2)reversals++;dir=s;run=Math.abs(d);}}
   if(after[i].verse){marked=true;gapFrom=null;}else if(marked){gapFrom??=after[i].t;verseGap=Math.max(verseGap,after[i].t-gapFrom);}
  }
- // Drift is measured while the clip sounds: at 3, 6 and 9 s, and at half the clip.
- const drift=[3000,6000,9000].map(at).filter(r=>r&&progress(r)<1).map(r=>Math.abs(r.top/r.max-progress(r)));
+ // Drift is measured while the clip sounds: at every one of 3, 6 and 9 s that falls before the clip ends,
+ // and at half the clip. The clip has ended at the first frame with no player sounding or with full progress;
+ // each checkpoint before that needs its own sample.
+ const ended=rows.find(r=>r.t>=playing&&(r.time===null||progress(r)!==null&&progress(r)>=1)),endMs=ended?Math.round(ended.t-playing):null;
+ const checkpoints=[3000,6000,9000].filter(ms=>endMs===null||ms<endMs),samples=checkpoints.map(ms=>({ms,row:at(ms)})).map(s=>({...s,row:s.row&&progress(s.row)<1?s.row:null}));
+ const unsampled=samples.filter(s=>!s.row).map(s=>s.ms),drift=samples.filter(s=>s.row).map(s=>Math.abs(s.row.top/s.row.max-progress(s.row)));
  const half=sounding.find(r=>progress(r)>=.5);
  const moved=half?half.top-first.top:null,drift50=half?Math.abs(half.top/half.max-progress(half)):null;
  const framesMoving=sounding.filter((r,i)=>i&&r.top!==sounding[i-1].top).length;
- const facts={startJump:+startJump.toFixed(1),window250:+window250.toFixed(1),drift:drift.map(d=>+d.toFixed(3)),back:+back.toFixed(1),max:first.max,reversals,verseGapMs:Math.round(verseGap),movedAtHalf:moved===null?null:+moved.toFixed(1),driftAtHalf:drift50===null?null:+drift50.toFixed(3),framesMoving,halfAtSeconds:half?+((half.t-playing)/1000).toFixed(1):null};
+ const facts={startJump:+startJump.toFixed(1),window250:+window250.toFixed(1),checkpoints,clipEndedMs:endMs,drift:drift.map(d=>+d.toFixed(3)),back:+back.toFixed(1),max:first.max,reversals,verseGapMs:Math.round(verseGap),movedAtHalf:moved===null?null:+moved.toFixed(1),driftAtHalf:drift50===null?null:+drift50.toFixed(3),framesMoving,halfAtSeconds:half?+((half.t-playing)/1000).toFixed(1):null};
  // Machine facts for the receipt; reversals and the verse-marker gap are advisory in J4.
  test.info().annotations.push({type:'J4',description:JSON.stringify(facts)});console.log(`J4 ${id} ${JSON.stringify(facts)}`);
  expect(startJump,`first 500 ms after playing ${JSON.stringify(facts)}`).toBeLessThanOrEqual(40);
  expect(window250,`any 250 ms window ${JSON.stringify(facts)}`).toBeLessThanOrEqual(80);
- expect(drift.length,`drift measured while the clip sounds ${JSON.stringify(facts)}`).toBeGreaterThan(0);
+ expect(checkpoints.length,`the clip sounds past the first checkpoint ${JSON.stringify(facts)}`).toBeGreaterThan(0);
+ expect(unsampled,`a drift sample at every checkpoint before the clip ends ${JSON.stringify(facts)}`).toEqual([]);
  for(const d of drift)expect(d,`scroll fraction vs clip progress ${JSON.stringify(facts)}`).toBeLessThanOrEqual(.15);
  expect(back,`back-scroll ${JSON.stringify(facts)}`).toBeLessThanOrEqual(16);
  // N1: the text moved. By half the clip the reading has left its start and is where the clip is.

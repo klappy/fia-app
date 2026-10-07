@@ -2,6 +2,8 @@ import {test,expect} from '@playwright/test';
 import {createSession} from '../apps/web/src/lib/engine.js';
 import {activities} from '../apps/web/src/lib/content.js';
 import {RESTORE_TIMEOUT_MS} from '../apps/web/src/lib/library.js';
+import {readFileSync} from 'node:fs';
+const BASE_MRK_1_14_20=JSON.parse(readFileSync(new URL('../apps/web/public/content/registry.json',import.meta.url))).packs.find(p=>p.id==='eng.MRK-1-14-20').revision;
 
 // Easy-button guard (cookbook RECIPE R4-R6, SCRIPTED-JOURNEYS EB and J3).
 // Faces are sampled from the first paint; causes are logged beside them, so the
@@ -263,6 +265,45 @@ test('B1/K4: with automatic guide narration off, a passage switch keeps each scr
  expect(back[0]?.centre,JSON.stringify(back)).toBe(CHECKING);
  expect(slotsOn(back,home),JSON.stringify(back)).toEqual(['Play (disabled)','Play']);
  expect(disabledOnlyWhileChecking(log),JSON.stringify(log)).toBe(true);
+});
+
+// B1-bis (review of #201): Mark 1:14–20 served as its base record (what a server serves before the passage
+// is first opened) declares its BSB recording only through the packaged build: the passage's offline
+// manifest names it by scriptureAssetId. Relaunched on the BSB reading with Automatic Scripture reading off,
+// the Next slot keeps one Play from first paint, disabled while checking, on every relaunch. The readings
+// without a recording (Mark 1:14–20 ULT and UST, every Mark 1:21–28 reading as served) show Skip throughout.
+// A target that already serves Mark 1:14–20's prepared presentation records the BSB rows as not-served.
+async function servedReadings(page,id){
+ const answer=await page.request.get(`/v1/packs/${id}`);expect(answer.ok(),`${id} is served`).toBe(true);
+ const record=await answer.json(),presentation=await (await page.request.get(`/v1/artifacts/${record.artifact.sha256}`)).json();
+ return {record,presentation,readings:presentation.activities.map((a,index)=>({...a,index})).filter(a=>a.kind==='scripture')};
+}
+async function relaunchOn(page,id,served,index){
+ const activities=served.presentation.activities,session={...createSession(activities),index};
+ await page.evaluate(([id,progress,device])=>{localStorage.setItem('fia-v3-selected-pack',id);localStorage.setItem(`fia-v3-progress@1:${id}`,JSON.stringify(progress));localStorage.setItem('fia-v3-preferences@1',JSON.stringify(device));},[id,{total:activities.length,revision:served.record.revision,activityId:activities[index].id,session},{preferences:{...session.preferences,readScripture:false}}]);
+ await page.reload();await settled(page,{quietMs:500});
+ const heading=activities[index].title;await expect(page.locator('main h1')).toHaveText(heading);
+ const log=await slots(page);test.info().annotations.push({type:`B1-bis ${id} ${activities[index].id}`,description:JSON.stringify(log)});
+ return {heading,log};
+}
+test('B1-bis/K4: Mark 1:14–20 BSB served as its base record, Automatic Scripture reading off: one Play from first paint on every relaunch, disabled while checking; readings without a recording show Skip throughout',async({page})=>{
+ test.skip(process.env.FIA_WORKER_PREVIEW!=='1'&&!process.env.BASE_URL,'Relaunching a passage reads /v1/packs: the packaged Worker preview or a deployed target');
+ test.setTimeout(120000);
+ await page.addInitScript(slotProbe);
+ await page.goto('/');await settled(page,{quietMs:300});
+ const passage=await servedReadings(page,'eng.MRK-1-14-20'),bsb=passage.readings.find(a=>a.assetId==='scripture-BereanStandardBible');
+ const base=!passage.presentation.execution&&passage.record.revision===BASE_MRK_1_14_20;
+ if(base){
+  for(let relaunch=0;relaunch<3;relaunch++){
+   const {heading,log}=await relaunchOn(page,'eng.MRK-1-14-20',passage,bsb.index);
+   expect(log[0].centre,JSON.stringify(log)).toBe(CHECKING);
+   expect(slotsOn(log,heading),JSON.stringify(log)).toEqual(['Play (disabled)','Play']);
+   expect(disabledOnlyWhileChecking(log),JSON.stringify(log)).toBe(true);
+  }
+  for(const reading of passage.readings.filter(a=>a!==bsb)){const {heading,log}=await relaunchOn(page,'eng.MRK-1-14-20',passage,reading.index);expect(slotsOn(log,heading),JSON.stringify(log)).toEqual(['Skip to next activity']);}
+ }else test.info().annotations.push({type:'B1-bis',description:`not-served: Mark 1:14–20 base record (the target serves ${passage.record.revision}${passage.presentation.execution?', executable':''})`});
+ const other=await servedReadings(page,'eng.MRK-1-21-28');expect(other.readings.length).toBeGreaterThan(0);
+ for(const reading of other.readings){const {heading,log}=await relaunchOn(page,'eng.MRK-1-21-28',other,reading.index);expect(slotsOn(log,heading),JSON.stringify(log)).toEqual(['Skip to next activity']);}
 });
 
 test('J3 hammer: six taps 150 ms apart start one recording and never cancel it',async({page})=>{

@@ -21,7 +21,7 @@
  import {createVideoDelivery} from './lib/video-delivery.js';
  import {createPreparationIntent,preparationIdentity,preparationKey} from './lib/preparation-intent.js';
  import {verifyScripturePassageFile,sameScripturePassageFile,scripturePassagePins} from './lib/scripture-passage.js';
- import {hasGuidePreparation} from './lib/recording-availability.js';
+ import {hasGuidePreparation,declaresScripturePassage} from './lib/recording-availability.js';
  import {easyFace,queueable,createTapGate} from './lib/easy-button.js';
  import {preparationHash} from './lib/prepared-audio.js';
  import {demoVideoSource} from './lib/video-demo.js';
@@ -293,12 +293,14 @@
  let manualStarts=new Set();let listeningHint=$state(false),hintShown=false;
  let manualAvailable=$derived(executableMode&&!session.detour?executablePlayable:!!(preparationRequest||matchingVideo||focal?.kind==='video'&&(focal.src||focal.videoPrepared)||focal?.descriptionAudio||activity?.audioSrc));
  // R6/K4: while verifying, the device check has not answered, so the Next slot follows what this screen
- // declares (manualAvailable's terms over the presentation as served): a declared recording keeps its Play,
- // disabled until a check makes it playable; a screen that declares none shows Skip. Nothing is guessed (k0006).
+ // declares (manualAvailable's terms over the presentation as served, plus a passage-only Scripture recording
+ // the packaged build names for this reading, which the check binds through passageFile): a declared recording
+ // keeps its Play, disabled until a check makes it playable; a screen that declares none shows Skip. Nothing
+ // is guessed (k0006).
  function declaresRecording(){
   if(executableMode&&!session.detour)return executablePlayable;
   const all=executionPresentation.assets,f=all[stage.focal],raw=executionPresentation.activities.find(a=>a.id===activity?.id);
-  return !!(preparationRequest||(f?.relatedIds||[]).some(id=>all[id]?.kind==='video'&&all[id].src)||f?.kind==='video'&&f.src||f?.descriptionAudio||raw?.audioSrc);
+  return !!(preparationRequest||(f?.relatedIds||[]).some(id=>all[id]?.kind==='video'&&all[id].src)||f?.kind==='video'&&f.src||f?.descriptionAudio||raw?.audioSrc||f?.kind==='scripture'&&declaresScripturePassage(selectedPack,stage.focal));
  }
  let slotPlays=$derived(verifying?declaresRecording():manualAvailable);
  let manualLabel=$derived(preparationBusy?'Cancel preparation':startPending?'Cancel loading':currentPreparation?.status==='failed'?'Retry recording':isPlaying?'Pause':inlineVideo||audioContext&&audio?.active?'Resume':preparationRequest?'Play original recording':'Play');
