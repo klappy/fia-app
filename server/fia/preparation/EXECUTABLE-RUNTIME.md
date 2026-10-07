@@ -32,12 +32,39 @@ not projectable from that source, so it is neither offered nor admitted. A deman
 the resolver or projector cannot satisfy answers a typed `blocked` envelope with
 its code as `reason` (HTTP 409), never a 500.
 
-The execution policy hash includes the approved-audio proof index, so a release
-can supersede the policy that validated a publication. That publication stays
-refused by its exact revision, but it no longer shadows the base record: the
-current read serves the base with its demand, and an explicit Open republishes
-under the current policy. Republishing identical bytes replaces only a row that
-no longer verifies; a row that still verifies is never overwritten.
+The execution policy hash includes the approved-audio proof index, and a job is
+also keyed by its projector recipe, so a release can supersede the policy or the
+recipe that validated a publication. The registry of released builds is finite,
+each named by its literal policy and recipe, with today's provider, and never by
+today's policy, which the next content or proof-index release moves: the build
+without a proof index (`aad92a4`) under `fia-server-source-action-projector@1`;
+the builds through `e7eb0f0`, with proof index `d3be5884` (policy `9a7733f5`), under
+`@1`, before #190 added flow roles (`@2`); and this build, the same policy under
+`@2`. The entry equal to today's build is the current build, not a historical one,
+so this build's own rows still authenticate after a release moves the policy. The
+transition test checks the literal against a replay of the `e7eb0f0` build and
+fails once a release moves the policy, so that release names its own build here
+too. A job under `@1` is projected without flow roles, so its publication
+reproduces exactly. Only the unqualified current read (`read_pack({packId})` and
+`GET /v1/packs/<packId>`) may then serve the base with its existing demand, and
+only after it authenticates that historical publication exactly: the current
+pointer and artifact-owner indexes, the closed publication row, the closed job row
+with its recomputed id and retained context bytes, the request row bound to that
+revision, and the publication reproduced under that historical build. A reason
+string alone never qualifies; a forged, unregistered or corrupt row, a wrong
+pointer or index, or missing bytes stays refused. The read writes nothing. The
+historical revision and its old job-status read stay denied. This tree has no
+publication generations, so the demand is the existing four-field one (cookbook
+backport linked from the release note).
+
+Publication rows and their provenance are immutable. Republishing identical bytes
+under a newer job is a typed `blocked` `executable-publication-conflict`, never a
+replacement. Expected publication conflicts (pointer race, stale base, revocation,
+refused validation), named post-admission refusals and a stale-policy job-status
+read answer the typed `blocked` envelope with their code (HTTP 409). An unnamed
+fault is not disguised as a refusal. A transient storage or fetch fault during
+resolution answers `blocked` with its code and writes no job row, so it can be
+retried.
 
 Publication stores verified bytes before atomically advancing its pointer.
 New publication checks the latest base, while an eligible previously published

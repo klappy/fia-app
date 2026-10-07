@@ -7,71 +7,173 @@ import {join,resolve,dirname} from 'node:path';
 import {buildGeneralizedSnapshot} from '../../server/fia/publication/generalized.mjs';
 import {exportGuideSources} from '../../server/fia/compiler/presentation/export-guide-sources.mjs';
 import {buildApprovedAudioProofIndex} from '../../scripts/approved-audio-proof-index.mjs';
+import {canonicalJSONString,sha256} from '../../server/fia/preparation/contract.mjs';
+import {createExecutableOperations} from '../../server/fia/publication/executable-operations.mjs';
 import {SOURCE_ACTION_RECIPE} from '../../server/fia/compiler/presentation/source-action-projector.mjs';
 import {createExecutionTransport} from '../../apps/web/src/lib/execution-transport.js';
 import {selectServerPresentation} from '../../apps/web/src/lib/library.js';
 const require=createRequire(resolve(process.env.FIA_WORKER_DEPENDENCIES||'package.json')),{build}=require('esbuild'),{Miniflare,convertV4MiniflareOptions}=require('miniflare');
-const origin='https://dev.fiaguide.app',publicRoot='apps/web/public';
+const origin='https://dev.fiaguide.app',publicRoot='apps/web/public',ROOT='fia-executable-presentation-authority@1';
+const encode=v=>new TextEncoder().encode(canonicalJSONString(v));
+// The policy the builds through e7eb0f0 wrote (DEV's {9a7733f5, @1} rows) and this build
+// writes too, as a replay of the real e7eb0f0 build computes it (proof index d3be5884).
+const PINNED_POLICY='9a7733f5139e9cf7352bfe4018f3164715e69abc9eba3776052bdc324f33295c';
+// Test-only entry: the release Worker plus a storage door on its own origin, so a test
+// can read and tamper with one persisted state. It is never part of a release bundle.
+const entry=`import worker,{FiaPreparationJobs as Jobs} from ${JSON.stringify(resolve('server/faces/worker/entry.mjs'))};
+export class FiaPreparationJobs extends Jobs{async fetch(request){const url=new URL(request.url);if(url.origin!=='https://transition.test')return super.fetch(request);
+ if(url.pathname==='/dump')return Response.json(Object.fromEntries(await this.ctx.storage.list()));
+ const {key,value}=await request.json();if(value===null)await this.ctx.storage.delete(key);else await this.ctx.storage.put(key,value);return Response.json(true);}}
+export default worker;`;
 
 const projectorPath=resolve('server/fia/compiler/presentation/source-action-projector.mjs');
-// The release before #190 projected under fia-server-source-action-projector@1 and
-// emitted no fia-flow-role@1. It is replayed from the current module with only those
-// two facts changed, so the rows it leaves are the rows DEV holds today.
+// The releases before #190 projected under fia-server-source-action-projector@1 and
+// emitted no fia-flow-role@1. They are replayed from the current module with only those
+// two facts changed, so the rows they leave are the rows DEV holds today.
 async function priorProjector(){
- const source=await readFile(projectorPath,'utf8'),declared=/export const SOURCE_ACTION_RECIPE='fia-server-source-action-projector@\d+';/;
- assert.match(source,declared);assert.notEqual(SOURCE_ACTION_RECIPE,'fia-server-source-action-projector@1','the current recipe supersedes @1');
- return source.replace(declared,"export const SOURCE_ACTION_RECIPE='fia-server-source-action-projector@1';").replace(/a\.flow=flowFor\([^;]*\);for\(const derived of additions\)derived\.flow=flowFor\([^;]*\);/,'');
+ const source=await readFile(projectorPath,'utf8'),declared=/export const SOURCE_ACTION_RECIPE='fia-server-source-action-projector@\d+';/,flow=/a\.flow=flowFor\([^;]*\);for\(const derived of additions\)derived\.flow=flowFor\([^;]*\);/;
+ assert.match(source,declared);assert.match(source,flow);assert.notEqual(SOURCE_ACTION_RECIPE,'fia-server-source-action-projector@1','the current recipe supersedes @1');
+ return source.replace(declared,"export const SOURCE_ACTION_RECIPE='fia-server-source-action-projector@1';").replace(flow,'');
 }
 
-// One persisted Durable Object/R2 state across two releases: the first without an
-// approved-audio proof index (the PR #188 policy), the second with it (PR #189).
-// This is the DEV transition that left eng.MRK-1-14-20 refused with
-// execution-job-policy, and the default passage answering 500 on Open.
+// One persisted Durable Object/R2 state across releases. before: the #187/#188 build,
+// without an approved-audio proof index and projecting under @1. priorRecipe: the builds
+// through e7eb0f0, with it (PR #189) and still under @1. after: this tree, under @2.
+// before → priorRecipe is the DEV transition that left eng.MRK-1-14-20 refused with
+// execution-job-policy, and the default passage answering 500 on Open. drifted: a later
+// content release, the same bindings in new proof-index bytes, so only today's policy moves.
 async function releases(){
  const dir=await mkdtemp(join(tmpdir(),'fia-executable-transition-')),authority=JSON.parse(await readFile('server/fia/publication/trusted-generalized.json')),extension=buildGeneralizedSnapshot(publicRoot,authority),canonicalSources=exportGuideSources({outputRoot:dir,sourceRevision:authority.sourceCommit});
  const proof=await buildApprovedAudioProofIndex({publicRoot,authority:{registrySha256:authority.catalog.sha256,sourceRevision:authority.sourceCommit}});
+ const driftBytes=new TextEncoder().encode(JSON.stringify(JSON.parse(new TextDecoder().decode(proof.bytes)),null,1)),driftSha256=await sha256(driftBytes);
+ const drift={...proof.descriptor,path:`/content/approved-audio/${driftSha256}.json`,sha256:driftSha256,bytes:driftBytes.length},indexes=new Map([[proof.descriptor.path,proof.bytes],[drift.path,driftBytes]]);
  const base={schema:'fia.worker-read-snapshot.v1',records:extension.records,current:extension.current,staticArtifacts:extension.staticArtifacts,artifacts:[],canonicalSources,generalizedAuthority:extension.authority};
  const counts={external:0};
  async function runtime(snapshot,{projector=null}={}){
   // projector: the source-action projector source of an earlier release, bundled in
   // place of the current module so the persisted state carries that release's rows.
-  const bundled=await build({entryPoints:[resolve('server/faces/worker/entry.mjs')],bundle:true,platform:'browser',format:'esm',external:['node:*'],write:false,plugins:[{name:'transition-snapshot',setup(b){b.onResolve({filter:/generated\/snapshot\.json$/},()=>({path:'snapshot',namespace:'transition'}));b.onLoad({filter:/.*/,namespace:'transition'},()=>({contents:JSON.stringify(snapshot),loader:'json'}));if(projector)b.onLoad({filter:/source-action-projector\.mjs$/},()=>({contents:projector,loader:'js',resolveDir:dirname(projectorPath)}));}}]});
-  return new Miniflare({...convertV4MiniflareOptions({modules:true,script:bundled.outputFiles[0].text,compatibilityDate:'2026-09-01',compatibilityFlags:['nodejs_compat'],bindings:{FIA_API_ORIGIN:origin},durableObjects:{FIA_PREPARATION_JOBS:{className:'FiaPreparationJobs',useSQLite:true}},r2Buckets:['FIA_ORIGINALS'],serviceBindings:{ASSETS:async request=>{const path=new URL(request.url).pathname;assert.ok(/^\/content\/[a-zA-Z0-9._/-]+$/.test(path)&&!path.includes('..'),path);let bytes;try{bytes=path===proof.descriptor.path?proof.bytes:await readFile((path.startsWith('/content/source-guides/')?dir:publicRoot)+path);}catch(error){if(error.code!=='ENOENT')throw error;return new Response('Not found',{status:404});}return new Response(bytes,{headers:{'Content-Type':'application/json','Content-Length':String(bytes.length)}});}},outboundService:()=>{counts.external++;throw Error('External work forbidden');}}),resourcePersistencePath:join(dir,'storage')});
+  const bundled=await build({stdin:{contents:entry,resolveDir:process.cwd(),sourcefile:'transition-entry.mjs',loader:'js'},bundle:true,platform:'browser',format:'esm',external:['node:*'],write:false,plugins:[{name:'transition-snapshot',setup(b){b.onResolve({filter:/generated\/snapshot\.json$/},()=>({path:'snapshot',namespace:'transition'}));b.onLoad({filter:/.*/,namespace:'transition'},()=>({contents:JSON.stringify(snapshot),loader:'json'}));if(projector)b.onLoad({filter:/source-action-projector\.mjs$/},()=>({contents:projector,loader:'js',resolveDir:dirname(projectorPath)}));}}]});
+  return new Miniflare({...convertV4MiniflareOptions({modules:true,script:bundled.outputFiles[0].text,compatibilityDate:'2026-09-01',compatibilityFlags:['nodejs_compat'],bindings:{FIA_API_ORIGIN:origin},durableObjects:{FIA_PREPARATION_JOBS:{className:'FiaPreparationJobs',useSQLite:true}},r2Buckets:['FIA_ORIGINALS'],serviceBindings:{ASSETS:async request=>{const path=new URL(request.url).pathname;assert.ok(/^\/content\/[a-zA-Z0-9._/-]+$/.test(path)&&!path.includes('..'),path);let bytes;try{bytes=indexes.has(path)?indexes.get(path):await readFile((path.startsWith('/content/source-guides/')?dir:publicRoot)+path);}catch(error){if(error.code!=='ENOENT')throw error;return new Response('Not found',{status:404});}return new Response(bytes,{headers:{'Content-Type':'application/json','Content-Length':String(bytes.length)}});}},outboundService:()=>{counts.external++;throw Error('External work forbidden');}}),resourcePersistencePath:join(dir,'storage')});
  }
  const current={...base,approvedAudioProofIndex:proof.descriptor};
- return {dir,counts,before:()=>runtime(base),after:()=>runtime(current),priorRecipe:async()=>runtime(current,{projector:await priorProjector()})};
+ const driftPolicy=await sha256(canonicalJSONString({policy:'fia-source-to-app/7fa17af806c139cfc353cace39fa6d50ed9e061b',approvedAudio:drift}));
+ return {dir,counts,driftPolicy,before:async()=>runtime(base,{projector:await priorProjector()}),priorRecipe:async()=>runtime(current,{projector:await priorProjector()}),after:()=>runtime(current),drifted:()=>runtime({...base,approvedAudioProofIndex:drift})};
 }
 const http=mf=>async(path,init)=>{const r=await mf.dispatchFetch(origin+path,init);return {status:r.status,type:r.headers.get('content-type'),body:await r.json()};};
+const mcp=mf=>async(name,args)=>{const r=await mf.dispatchFetch(origin+'/mcp',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json, text/event-stream','MCP-Protocol-Version':'2025-06-18'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',params:{name,arguments:args}})});const body=await r.json();assert.equal(r.status,200,JSON.stringify(body));return body.result.structuredContent;};
 const prepare=(read,demand)=>read('/v1/presentation-preparations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(demand)});
-
-test('a policy release never strands a published passage: the stale publication yields to its base and an explicit Open republishes',async()=>{
- const r=await releases();let mf=await r.before();
+// Every durable row in the Durable Object and every R2 object, for zero-write checks.
+async function store(mf){
+ const ns=await mf.getDurableObjectNamespace('FIA_PREPARATION_JOBS'),stub=ns.get(ns.idFromName(ROOT)),bucket=await mf.getR2Bucket('FIA_ORIGINALS');
+ const door=async(path,body)=>(await stub.fetch('https://transition.test'+path,body===undefined?{}:{method:'POST',body:JSON.stringify(body)})).json();
+ const objects=async()=>{const out=[];let cursor;do{const page=await bucket.list(cursor?{cursor}:{});out.push(...page.objects.map(o=>[o.key,o.etag,o.size]));cursor=page.truncated?page.cursor:undefined;}while(cursor);return out;};
+ return {rows:()=>door('/dump'),put:(key,value)=>door('/put',{key,value}),bucket,durable:async()=>canonicalJSONString({rows:await door('/dump'),objects:await objects()})};
+}
+// Before: publish both passages under the superseded policy. Then: the next release.
+async function stalePublications(r,next='after'){
+ let mf=await r.before();const read=http(mf),published={};
  try{
-  let read=http(mf);const published={};
   for(const packId of ['eng.MRK-1-14-20','eng.MRK-1-21-28']){
    const base=await read('/v1/packs/'+packId);assert.equal(base.status,200);assert.ok(base.body.preparationDemand,packId);
    const ready=await prepare(read,base.body.preparationDemand);assert.equal(ready.status,200,JSON.stringify(ready.body));assert.equal(ready.body.status,'ready');
-   published[packId]={demand:base.body.preparationDemand,revision:ready.body.record.revision};
+   published[packId]={demand:base.body.preparationDemand,revision:ready.body.record.revision,jobId:ready.body.jobId};
    assert.equal((await read('/v1/packs/'+packId)).body.revision,ready.body.record.revision);
   }
-  await mf.dispose();mf=await r.after();read=http(mf);
-  for(const [packId,prior] of Object.entries(published)){
-   const reopened=await read('/v1/packs/'+packId);
-   assert.equal(reopened.status,200,`${packId}: ${JSON.stringify(reopened.body)}`);
-   assert.equal(reopened.body.status,'ready');assert.equal(reopened.body.execution,undefined,'the superseded publication is not served as current');
-   assert.deepEqual(reopened.body.preparationDemand,prior.demand,'an explicit Open can prepare it again under the current policy');
-   const again=await prepare(read,reopened.body.preparationDemand);assert.equal(again.status,200,`${packId}: ${JSON.stringify(again.body)}`);assert.equal(again.body.status,'ready');
-   const current=await read('/v1/packs/'+packId);assert.equal(current.status,200);assert.equal(current.body.revision,again.body.record.revision);assert.equal(current.body.execution.schema,'fia-executable-catalog@1');
-   if(again.body.record.revision!==prior.revision)assert.equal((await read(`/v1/packs/${packId}?revision=${prior.revision}`)).status,404,'the exact superseded revision stays unavailable');
+ }finally{await mf.dispose();}
+ mf=await r[next]();return {mf,published};
+}
+
+test('only an authenticated historical publication yields its current read to the base; forged, unregistered or corrupt rows and wrong pointers stay refused, and no read writes',async()=>{
+ const r=await releases(),{mf,published}=await stalePublications(r);
+ try{
+  const read=http(mf),call=mcp(mf),s=await store(mf),packId='eng.MRK-1-14-20',prior=published[packId];
+  const rows=await s.rows(),pointer=rows['executable-current:'+packId],record=rows[pointer],jobId=record.provenance.jobId,job=rows['executable-presentation:job:'+jobId],demand=rows['executable-demand:'+jobId],ownersKey='executable-artifact:'+record.artifact.sha256,owners=rows[ownersKey];
+  assert.equal(pointer,`executable-record:${packId}@${prior.revision}`);assert.equal(jobId,prior.jobId);assert.equal(job.policySha256,await sha256('fia-source-to-app/7fa17af806c139cfc353cace39fa6d50ed9e061b'),'the registered historical policy: no approved-audio proof index');assert.equal(job.recipeRevision,'fia-server-source-action-projector@1','the #187/#188 build projected under @1');
+  const authentic=async label=>{
+   const before=await s.durable(),viaHttp=await read('/v1/packs/'+packId),viaMcp=await call('read_pack',{packId});
+   assert.equal(viaHttp.status,200,`${label}: ${JSON.stringify(viaHttp.body)}`);assert.equal(viaHttp.body.status,'ready');assert.equal(viaHttp.body.execution,undefined,'the historical publication is not served as current');
+   assert.deepEqual(viaHttp.body.preparationDemand,prior.demand,'the current base carries its existing demand');assert.notEqual(viaHttp.body.revision,prior.revision);
+   assert.deepEqual(viaMcp,viaHttp.body,label+': HTTP/MCP parity');assert.equal(await s.durable(),before,label+': the read writes nothing');
+  };
+  const refused=async label=>{
+   const before=await s.durable(),viaHttp=await read('/v1/packs/'+packId),viaMcp=await call('read_pack',{packId});
+   assert.equal(viaHttp.status,404,`${label}: answered ${viaHttp.status} ${viaHttp.body.status}${viaHttp.body.preparationDemand?' with the base and its demand':' '+viaHttp.body.reason}`);assert.equal(viaHttp.body.status,'unavailable',label);assert.equal(viaHttp.body.preparationDemand,undefined,label+': no demand');assert.equal(viaHttp.body.revision,undefined,label+': no base');
+   assert.deepEqual(viaMcp,viaHttp.body,label+': HTTP/MCP parity');assert.equal(await s.durable(),before,label+': the read writes nothing');
+  };
+  await authentic('authentic historical publication');
+  assert.equal((await read(`/v1/packs/${packId}?revision=${prior.revision}`)).status,404,'the exact historical revision stays denied');
+  const status=await read('/v1/presentation-preparations/'+jobId);assert.equal(status.status,409,JSON.stringify(status.body));assert.equal(status.body.status,'blocked','the old job-status read stays denied');
+  const unregistered=await sha256('fia-source-to-app/unregistered'),recomputed=await sha256(encode({schema:'fia-executable-presentation-job@1',args:job.args,context:job.context.sha256,policySha256:unregistered,providerSha256:job.providerSha256,recipeRevision:job.recipeRevision}));
+  // A registered policy under a recipe it never shipped with is an unregistered build.
+  const unshipped=await sha256(encode({schema:'fia-executable-presentation-job@1',args:job.args,context:job.context.sha256,policySha256:job.policySha256,providerSha256:job.providerSha256,recipeRevision:SOURCE_ACTION_RECIPE}));
+  const cases=[
+   ['forged policy string',[['executable-presentation:job:'+jobId,{...job,policySha256:'fia-source-to-app/7fa17af806c139cfc353cace39fa6d50ed9e061b'}]]],
+   ['recomputed but unregistered policy',[['executable-presentation:job:'+recomputed,{...job,jobId:recomputed,policySha256:unregistered}],['executable-demand:'+recomputed,demand],[pointer,{...record,provenance:{...record.provenance,jobId:recomputed}}]]],
+   ['recomputed registered policy under an unshipped recipe',[['executable-presentation:job:'+unshipped,{...job,jobId:unshipped,recipeRevision:SOURCE_ACTION_RECIPE}],['executable-demand:'+unshipped,demand],[pointer,{...record,provenance:{...record.provenance,jobId:unshipped}}]]],
+   ['corrupt job row: an unexpected field',[['executable-presentation:job:'+jobId,{...job,note:'x'}]]],
+   ['corrupt job row: its id does not recompute',[['executable-presentation:job:'+jobId,{...job,args:{...job.args,sourceRevision:'0'.repeat(40)}}]]],
+   ['request row binds another revision',[['executable-demand:'+jobId,{...demand,revision:'0'.repeat(64)}]]],
+   ['artifact owner index omits the publication',[[ownersKey,owners.filter(k=>k!==pointer)]]],
+   ['wrong pointer: another passage',[['executable-current:'+packId,rows['executable-current:eng.MRK-1-21-28']]]],
+   ['wrong pointer: dangling revision',[['executable-current:'+packId,`executable-record:${packId}@${'0'.repeat(64)}`]]],
+  ];
+  const outcomes=[],outcome=async(label,run)=>{try{await run();outcomes.push([label,'refused']);}catch(error){outcomes.push([label,error.message.split('\n')[0]]);}};
+  for(const [label,writes] of cases){
+   for(const [key,value] of writes)await s.put(key,value);
+   try{await outcome(label,()=>refused(label));}finally{for(const [key] of writes)await s.put(key,rows[key]??null);}
   }
+  // Corrupt retained context bytes: the job row names bytes that no longer hash.
+  const context=await s.bucket.get(job.context.reference),original=new Uint8Array(await context.arrayBuffer());
+  await s.bucket.put(job.context.reference,new TextEncoder().encode('{"corrupt":true}'));
+  try{await outcome('corrupt retained context bytes',()=>refused('corrupt retained context bytes'));}finally{await s.bucket.put(job.context.reference,original);}
+  assert.deepEqual(outcomes.filter(([,result])=>result!=='refused'),[],'every unauthenticated case stays refused');assert.equal(outcomes.length,cases.length+1);
+  await authentic('restored authentic historical publication');
   assert.equal(r.counts.external,0);
  }finally{await mf.dispose();await rm(r.dir,{recursive:true,force:true});}
 });
 
+test('an explicit Open under the new policy adopts new bytes; identical bytes refuse typed and never overwrite the historical row, whose reads stay denied',async()=>{
+ // Two successors of the #187/#188 build: the builds through e7eb0f0 (the same @1 recipe),
+ // where eng.MRK-1-21-28 republishes identical bytes, and this tree, whose @2 recipe adds
+ // flow roles, so both passages adopt new bytes.
+ for(const [next,identical] of [['priorRecipe',['eng.MRK-1-21-28']],['after',[]]]){
+ const r=await releases(),{mf,published}=await stalePublications(r,next);
+ try{
+  const read=http(mf),call=mcp(mf),s=await store(mf),rows=await s.rows();
+  // A job whose publication never committed: its status read is a typed denial, not a 500.
+  const stale=published['eng.MRK-1-14-20'];await s.put('executable-demand:'+stale.jobId,{...rows['executable-demand:'+stale.jobId],revision:null});
+  try{const pending=await read('/v1/presentation-preparations/'+stale.jobId);assert.equal(pending.status,409,JSON.stringify(pending.body));assert.deepEqual(pending.body,{schema:'fia-presentation-preparation@1',status:'blocked',jobId:stale.jobId,reason:'execution-job-policy',record:null});assert.deepEqual(await call('read_presentation_preparation',{jobId:stale.jobId}),pending.body);}
+  finally{await s.put('executable-demand:'+stale.jobId,rows['executable-demand:'+stale.jobId]);}
+  for(const [packId,prior] of Object.entries(published)){
+   const key=`executable-record:${packId}@${prior.revision}`,historical=rows[key];assert.ok(historical,key);
+   const reopened=await read('/v1/packs/'+packId);assert.equal(reopened.status,200,`${packId}: ${JSON.stringify(reopened.body)}`);assert.deepEqual(reopened.body.preparationDemand,prior.demand);
+   const again=await prepare(read,reopened.body.preparationDemand);
+   if(!identical.includes(packId)){
+    assert.equal(again.status,200,`${next} ${packId}: ${JSON.stringify(again.body)}`);assert.equal(again.body.status,'ready');assert.notEqual(again.body.record.revision,prior.revision,'the approved-audio policy or the @2 recipe changes these bytes');
+    const current=await read('/v1/packs/'+packId);assert.equal(current.status,200);assert.equal(current.body.revision,again.body.record.revision);assert.equal(current.body.execution.schema,'fia-executable-catalog@1');
+   }else{
+    // The same presentation bytes under a newer job: the historical row and its
+    // provenance are immutable, so the republish is a typed conflict.
+    assert.equal(again.status,409,`${next} ${packId}: ${JSON.stringify(again.body)}`);assert.equal(again.body.schema,'fia-presentation-preparation@1');assert.equal(again.body.status,'blocked');assert.equal(again.body.reason,'executable-publication-conflict');assert.equal(again.body.record,null);
+    assert.deepEqual(await call('prepare_presentation',reopened.body.preparationDemand),again.body,'HTTP/MCP parity');
+    const current=await read('/v1/packs/'+packId);assert.equal(current.status,200);assert.equal(current.body.execution,undefined);assert.deepEqual(current.body.preparationDemand,prior.demand);
+   }
+   const after=await s.rows();
+   assert.equal(canonicalJSONString(after[key]),canonicalJSONString(historical),`${packId}: the historical row and its provenance are preserved`);
+   assert.deepEqual(after['executable-demand:'+prior.jobId],rows['executable-demand:'+prior.jobId],`${packId}: the historical request row is preserved`);
+   assert.equal((await read(`/v1/packs/${packId}?revision=${prior.revision}`)).status,404,'the exact historical revision stays denied');
+   const status=await read('/v1/presentation-preparations/'+prior.jobId);assert.equal(status.status,409,JSON.stringify(status.body));assert.equal(status.body.status,'blocked','the old job-status read stays denied, never ready');
+  }
+  assert.equal(r.counts.external,0);
+ }finally{await mf.dispose();await rm(r.dir,{recursive:true,force:true});}
+ }
+});
+
 // #190 moved the projector to fia-server-source-action-projector@2. Job and publication
-// rows written under @1 now read as execution-job-policy mismatches. The merged train
-// must still open the passage: the base is served, an explicit Open re-prepares under
-// the current recipe, and the facilitator's own selection path raises no error.
+// rows written under @1 (policy 9a7733f5, the builds through e7eb0f0) now read as
+// execution-job-policy mismatches. The merged train must still open the passage: the base
+// is served, an explicit Open re-prepares under the current recipe, and the facilitator's
+// own selection path raises no error.
 test('a recipe release (@1 to @2) never strands eng.MRK-1-14-20: the base is served, an explicit Open re-prepares under @2, and the client opens it without an error',async()=>{
  const r=await releases(),packId='eng.MRK-1-14-20';let mf=await r.priorRecipe();
  try{
@@ -80,6 +182,8 @@ test('a recipe release (@1 to @2) never strands eng.MRK-1-14-20: the base is ser
   const ready=await prepare(read,base.body.preparationDemand);assert.equal(ready.status,200,JSON.stringify(ready.body));assert.equal(ready.body.status,'ready');
   const stored=ready.body.record.revision,storedPresentation=(await read('/v1/artifacts/'+stored)).body;
   assert.equal(storedPresentation.execution.recipeRevision,'fia-server-source-action-projector@1');
+  const job=(await (await store(mf)).rows())['executable-presentation:job:'+ready.body.jobId];
+  assert.equal(job.policySha256,PINNED_POLICY,'the replayed e7eb0f0-era build writes the policy registry entry 2 names');assert.equal(job.recipeRevision,'fia-server-source-action-projector@1');
   assert.ok(storedPresentation.activities.every(a=>a.flow===undefined),'the @1 release emitted no flow roles');
   assert.equal((await read('/v1/packs/'+packId)).body.revision,stored);
   await mf.dispose();mf=await r.after();read=http(mf);
@@ -103,6 +207,55 @@ test('a recipe release (@1 to @2) never strands eng.MRK-1-14-20: the base is ser
  }finally{await mf.dispose();await rm(r.dir,{recursive:true,force:true});}
 });
 
+// A content release moves today's policy, which hashes the approved-audio proof index.
+// The registry names each released build by its literal policy, so neither the rows the
+// builds through e7eb0f0 left on DEV ({9a7733f5, @1}) nor the rows this build writes
+// ({9a7733f5, @2}) are stranded: each still authenticates and yields its current read
+// to the base, and an explicit Open prepares under the moved policy.
+test('a content release that moves today\'s policy strands no released build: {9a7733f5, @1} and {9a7733f5, @2} publications still authenticate and yield to the base',async()=>{
+ const r=await releases(),published={};let mf=await r.priorRecipe();
+ const open=async(read,packId)=>{const base=await read('/v1/packs/'+packId);assert.equal(base.status,200);assert.ok(base.body.preparationDemand,packId);const ready=await prepare(read,base.body.preparationDemand);assert.equal(ready.status,200,JSON.stringify(ready.body));assert.equal(ready.body.status,'ready');return {demand:base.body.preparationDemand,base:base.body.revision,revision:ready.body.record.revision,jobId:ready.body.jobId};};
+ try{
+  published['eng.MRK-1-14-20']=await open(http(mf),'eng.MRK-1-14-20');
+  await mf.dispose();mf=await r.after();
+  published['eng.MRK-1-21-28']=await open(http(mf),'eng.MRK-1-21-28');
+  const written=await (await store(mf)).rows();
+  for(const [packId,recipe] of [['eng.MRK-1-14-20','fia-server-source-action-projector@1'],['eng.MRK-1-21-28','fia-server-source-action-projector@2']]){const job=written['executable-presentation:job:'+published[packId].jobId];assert.equal(job.policySha256,PINNED_POLICY,packId);assert.equal(job.recipeRevision,recipe,packId);}
+  assert.equal(SOURCE_ACTION_RECIPE,'fia-server-source-action-projector@2','this build writes @2');assert.notEqual(r.driftPolicy,PINNED_POLICY,'the content release moves today\'s policy');
+  await mf.dispose();mf=await r.drifted();
+  const read=http(mf),call=mcp(mf),s=await store(mf),outcomes=[];
+  for(const [packId,prior] of Object.entries(published)){
+   try{
+    const before=await s.durable(),viaHttp=await read('/v1/packs/'+packId),viaMcp=await call('read_pack',{packId});
+    assert.equal(viaHttp.status,200,`answered ${viaHttp.status} ${viaHttp.body.reason}`);assert.equal(viaHttp.body.status,'ready');assert.equal(viaHttp.body.execution,undefined,'the historical publication is not served as current');
+    assert.equal(viaHttp.body.revision,prior.base,'the base record is served');assert.deepEqual(viaHttp.body.preparationDemand,prior.demand,'with its existing demand');
+    assert.deepEqual(viaMcp,viaHttp.body,'HTTP/MCP parity');assert.equal(await s.durable(),before,'the read writes nothing');
+    outcomes.push([packId,'authenticated']);
+   }catch(error){outcomes.push([packId,error.message.split('\n')[0]]);}
+   assert.equal((await read(`/v1/packs/${packId}?revision=${prior.revision}`)).status,404,'the exact historical revision stays denied');
+  }
+  assert.deepEqual(outcomes,[['eng.MRK-1-14-20','authenticated'],['eng.MRK-1-21-28','authenticated']],'no released build is stranded by the policy move');
+  // The move is real: an explicit Open now prepares under the moved policy.
+  const again=await prepare(read,published['eng.MRK-1-14-20'].demand);assert.equal(again.status,200,JSON.stringify(again.body));assert.equal(again.body.status,'ready');
+  assert.equal((await s.rows())['executable-presentation:job:'+again.body.jobId].policySha256,r.driftPolicy);
+  assert.equal(r.counts.external,0);
+ }finally{await mf.dispose();await rm(r.dir,{recursive:true,force:true});}
+});
+
+test('expected publication conflicts and stale-job status reads answer the typed blocked envelope with their code, never a thrown 500',async()=>{
+ const rows=new Map(),storage={transaction:async run=>run({get:async k=>structuredClone(rows.get(k)),put:async(k,v)=>{rows.set(k,structuredClone(v));}})};
+ const demand={packId:'eng.MRK-1-14-20',baseRevision:'a'.repeat(64),sourceRevision:'b'.repeat(40),capability:'executable-presentation'},jobId='c'.repeat(64),ready={status:'ready',jobId,presentation:{},boundArtifacts:[],provenance:{}};
+ const ops=(service,publish)=>createExecutableOperations({reads:{readPack:async()=>({status:'unavailable',reason:'not-found'})},service,publication:{publish},storage});
+ const blocked=(reason,id=jobId)=>({schema:'fia-presentation-preparation@1',status:'blocked',jobId:id,reason,record:null});
+ for(const code of ['executable-publication-conflict','executable-pointer-conflict','executable-base-stale','executable-publication-revoked','executable-publication-refused']){
+  rows.clear();assert.deepEqual(await ops({request:async()=>ready},async()=>{throw Error(code);}).preparePresentation(demand),blocked(code),code);
+ }
+ rows.clear();await assert.rejects(ops({request:async()=>ready},async()=>{throw TypeError('x is not a function');}).preparePresentation(demand),TypeError,'an unnamed fault is not disguised as a domain refusal');
+ for(const code of ['execution-request-conflict','execution-artifact-readback','execution-request-integrity','execution-resolved-context']){rows.clear();assert.deepEqual(await ops({request:async()=>{throw Error(code);}}).preparePresentation(demand),blocked(code,null),code+': a post-admission refusal answers typed');}
+ rows.clear();rows.set('executable-demand:'+jobId,{args:{...demand,sourceRevision:'d'.repeat(40)},revision:null});assert.deepEqual(await ops({request:async()=>ready}).preparePresentation(demand),blocked('presentation-job-conflict'),'a request-row conflict answers typed');
+ rows.clear();rows.set('executable-demand:'+jobId,{args:demand,revision:null});assert.deepEqual(await ops({read:async()=>{throw Error('execution-job-policy');}}).readPresentationPreparation({jobId}),blocked('execution-job-policy'),'a stale-policy status read is denied typed');
+});
+
 test('the default passage is not offered a preparation it cannot fulfil, and a forced demand is a typed refusal, never a 500',async()=>{
  const r=await releases(),mf=await r.after();
  try{
@@ -116,7 +269,7 @@ test('the default passage is not offered a preparation it cannot fulfil, and a f
 });
 
 test('resolver: base id fia-mark-authentic@1 for eng.MRK-1-1-13 is a typed refusal from the service, never a thrown 500',async()=>{
- const {gunzipSync}=await import('node:zlib'),{createExecutablePresentationResolver}=await import('../../server/fia/preparation/executable-presentation-resolver.mjs'),{createExecutablePresentationService}=await import('../../server/fia/preparation/executable-presentation-service.mjs'),{sha256,canonicalJSONString}=await import('../../server/fia/preparation/contract.mjs');
+ const {gunzipSync}=await import('node:zlib'),{createExecutablePresentationResolver}=await import('../../server/fia/preparation/executable-presentation-resolver.mjs'),{createExecutablePresentationService}=await import('../../server/fia/preparation/executable-presentation-service.mjs');
  const registry=JSON.parse(await readFile(publicRoot+'/content/registry.json')),source=JSON.parse(gunzipSync(await readFile('server/fia/compiler/presentation/source-packs.json.gz'))),packId='eng.MRK-1-1-13',descriptor=registry.packs.find(d=>d.id===packId),content=await readFile(publicRoot+descriptor.presentation.url,'utf8');
  assert.equal(JSON.parse(content).id,'fia-mark-authentic@1');
  const artifact={sha256:descriptor.revision,bytes:Buffer.byteLength(content),mime:'application/json'},guide=new TextEncoder().encode(canonicalJSONString(source.packs[packId].guide));
