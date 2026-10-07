@@ -52,6 +52,24 @@ jobs:
           name: fresh-journey-results
           path: test-results
           retention-days: 7
+  clip-text:
+    # Captain's method: every block's exact start/stop cut, transcribed, must say
+    # the words its screen shows. Mismatch = fail. Judged on the stored
+    # per-cut transcripts (scripts/clip-text/transcribe.py); no ASR in CI.
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/clip-text/check.mjs --md clip-text.md
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: clip-text
+          path: clip-text.md
+          retention-days: 7
   visual:
     runs-on: ubuntu-latest
     timeout-minutes: 15
