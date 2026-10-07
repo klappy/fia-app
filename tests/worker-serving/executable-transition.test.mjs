@@ -15,6 +15,9 @@ import {selectServerPresentation} from '../../apps/web/src/lib/library.js';
 const require=createRequire(resolve(process.env.FIA_WORKER_DEPENDENCIES||'package.json')),{build}=require('esbuild'),{Miniflare,convertV4MiniflareOptions}=require('miniflare');
 const origin='https://dev.fiaguide.app',publicRoot='apps/web/public',ROOT='fia-executable-presentation-authority@1';
 const encode=v=>new TextEncoder().encode(canonicalJSONString(v));
+// The policy the builds through e7eb0f0 wrote (DEV's {9a7733f5, @1} rows) and this build
+// writes too, as a replay of the real e7eb0f0 build computes it (proof index d3be5884).
+const PINNED_POLICY='9a7733f5139e9cf7352bfe4018f3164715e69abc9eba3776052bdc324f33295c';
 // Test-only entry: the release Worker plus a storage door on its own origin, so a test
 // can read and tamper with one persisted state. It is never part of a release bundle.
 const entry=`import worker,{FiaPreparationJobs as Jobs} from ${JSON.stringify(resolve('server/faces/worker/entry.mjs'))};
@@ -37,20 +40,24 @@ async function priorProjector(){
 // without an approved-audio proof index and projecting under @1. priorRecipe: the builds
 // through e7eb0f0, with it (PR #189) and still under @1. after: this tree, under @2.
 // before → priorRecipe is the DEV transition that left eng.MRK-1-14-20 refused with
-// execution-job-policy, and the default passage answering 500 on Open.
+// execution-job-policy, and the default passage answering 500 on Open. drifted: a later
+// content release, the same bindings in new proof-index bytes, so only today's policy moves.
 async function releases(){
  const dir=await mkdtemp(join(tmpdir(),'fia-executable-transition-')),authority=JSON.parse(await readFile('server/fia/publication/trusted-generalized.json')),extension=buildGeneralizedSnapshot(publicRoot,authority),canonicalSources=exportGuideSources({outputRoot:dir,sourceRevision:authority.sourceCommit});
  const proof=await buildApprovedAudioProofIndex({publicRoot,authority:{registrySha256:authority.catalog.sha256,sourceRevision:authority.sourceCommit}});
+ const driftBytes=new TextEncoder().encode(JSON.stringify(JSON.parse(new TextDecoder().decode(proof.bytes)),null,1)),driftSha256=await sha256(driftBytes);
+ const drift={...proof.descriptor,path:`/content/approved-audio/${driftSha256}.json`,sha256:driftSha256,bytes:driftBytes.length},indexes=new Map([[proof.descriptor.path,proof.bytes],[drift.path,driftBytes]]);
  const base={schema:'fia.worker-read-snapshot.v1',records:extension.records,current:extension.current,staticArtifacts:extension.staticArtifacts,artifacts:[],canonicalSources,generalizedAuthority:extension.authority};
  const counts={external:0};
  async function runtime(snapshot,{projector=null}={}){
   // projector: the source-action projector source of an earlier release, bundled in
   // place of the current module so the persisted state carries that release's rows.
   const bundled=await build({stdin:{contents:entry,resolveDir:process.cwd(),sourcefile:'transition-entry.mjs',loader:'js'},bundle:true,platform:'browser',format:'esm',external:['node:*'],write:false,plugins:[{name:'transition-snapshot',setup(b){b.onResolve({filter:/generated\/snapshot\.json$/},()=>({path:'snapshot',namespace:'transition'}));b.onLoad({filter:/.*/,namespace:'transition'},()=>({contents:JSON.stringify(snapshot),loader:'json'}));if(projector)b.onLoad({filter:/source-action-projector\.mjs$/},()=>({contents:projector,loader:'js',resolveDir:dirname(projectorPath)}));}}]});
-  return new Miniflare({...convertV4MiniflareOptions({modules:true,script:bundled.outputFiles[0].text,compatibilityDate:'2026-09-01',compatibilityFlags:['nodejs_compat'],bindings:{FIA_API_ORIGIN:origin},durableObjects:{FIA_PREPARATION_JOBS:{className:'FiaPreparationJobs',useSQLite:true}},r2Buckets:['FIA_ORIGINALS'],serviceBindings:{ASSETS:async request=>{const path=new URL(request.url).pathname;assert.ok(/^\/content\/[a-zA-Z0-9._/-]+$/.test(path)&&!path.includes('..'),path);let bytes;try{bytes=path===proof.descriptor.path?proof.bytes:await readFile((path.startsWith('/content/source-guides/')?dir:publicRoot)+path);}catch(error){if(error.code!=='ENOENT')throw error;return new Response('Not found',{status:404});}return new Response(bytes,{headers:{'Content-Type':'application/json','Content-Length':String(bytes.length)}});}},outboundService:()=>{counts.external++;throw Error('External work forbidden');}}),resourcePersistencePath:join(dir,'storage')});
+  return new Miniflare({...convertV4MiniflareOptions({modules:true,script:bundled.outputFiles[0].text,compatibilityDate:'2026-09-01',compatibilityFlags:['nodejs_compat'],bindings:{FIA_API_ORIGIN:origin},durableObjects:{FIA_PREPARATION_JOBS:{className:'FiaPreparationJobs',useSQLite:true}},r2Buckets:['FIA_ORIGINALS'],serviceBindings:{ASSETS:async request=>{const path=new URL(request.url).pathname;assert.ok(/^\/content\/[a-zA-Z0-9._/-]+$/.test(path)&&!path.includes('..'),path);let bytes;try{bytes=indexes.has(path)?indexes.get(path):await readFile((path.startsWith('/content/source-guides/')?dir:publicRoot)+path);}catch(error){if(error.code!=='ENOENT')throw error;return new Response('Not found',{status:404});}return new Response(bytes,{headers:{'Content-Type':'application/json','Content-Length':String(bytes.length)}});}},outboundService:()=>{counts.external++;throw Error('External work forbidden');}}),resourcePersistencePath:join(dir,'storage')});
  }
  const current={...base,approvedAudioProofIndex:proof.descriptor};
- return {dir,counts,before:async()=>runtime(base,{projector:await priorProjector()}),priorRecipe:async()=>runtime(current,{projector:await priorProjector()}),after:()=>runtime(current)};
+ const driftPolicy=await sha256(canonicalJSONString({policy:'fia-source-to-app/7fa17af806c139cfc353cace39fa6d50ed9e061b',approvedAudio:drift}));
+ return {dir,counts,driftPolicy,before:async()=>runtime(base,{projector:await priorProjector()}),priorRecipe:async()=>runtime(current,{projector:await priorProjector()}),after:()=>runtime(current),drifted:()=>runtime({...base,approvedAudioProofIndex:drift})};
 }
 const http=mf=>async(path,init)=>{const r=await mf.dispatchFetch(origin+path,init);return {status:r.status,type:r.headers.get('content-type'),body:await r.json()};};
 const mcp=mf=>async(name,args)=>{const r=await mf.dispatchFetch(origin+'/mcp',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json, text/event-stream','MCP-Protocol-Version':'2025-06-18'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',params:{name,arguments:args}})});const body=await r.json();assert.equal(r.status,200,JSON.stringify(body));return body.result.structuredContent;};
@@ -163,7 +170,7 @@ test('an explicit Open under the new policy adopts new bytes; identical bytes re
 });
 
 // #190 moved the projector to fia-server-source-action-projector@2. Job and publication
-// rows written under @1 (today's policy, the builds through e7eb0f0) now read as
+// rows written under @1 (policy 9a7733f5, the builds through e7eb0f0) now read as
 // execution-job-policy mismatches. The merged train must still open the passage: the base
 // is served, an explicit Open re-prepares under the current recipe, and the facilitator's
 // own selection path raises no error.
@@ -175,6 +182,8 @@ test('a recipe release (@1 to @2) never strands eng.MRK-1-14-20: the base is ser
   const ready=await prepare(read,base.body.preparationDemand);assert.equal(ready.status,200,JSON.stringify(ready.body));assert.equal(ready.body.status,'ready');
   const stored=ready.body.record.revision,storedPresentation=(await read('/v1/artifacts/'+stored)).body;
   assert.equal(storedPresentation.execution.recipeRevision,'fia-server-source-action-projector@1');
+  const job=(await (await store(mf)).rows())['executable-presentation:job:'+ready.body.jobId];
+  assert.equal(job.policySha256,PINNED_POLICY,'the replayed e7eb0f0-era build writes the policy registry entry 2 names');assert.equal(job.recipeRevision,'fia-server-source-action-projector@1');
   assert.ok(storedPresentation.activities.every(a=>a.flow===undefined),'the @1 release emitted no flow roles');
   assert.equal((await read('/v1/packs/'+packId)).body.revision,stored);
   await mf.dispose();mf=await r.after();read=http(mf);
@@ -194,6 +203,41 @@ test('a recipe release (@1 to @2) never strands eng.MRK-1-14-20: the base is ser
   assert.equal(opened.presentation.execution.recipeRevision,SOURCE_ACTION_RECIPE);
   assert.ok(opened.presentation.activities.every(a=>a.flow?.schema==='fia-flow-role@1'&&a.flow.role===a.kind),'re-prepared under the current recipe');
   const current=await read('/v1/packs/'+packId);assert.equal(current.status,200);assert.equal(current.body.revision,opened.descriptor.revision);assert.equal(current.body.execution.schema,'fia-executable-catalog@1');
+  assert.equal(r.counts.external,0);
+ }finally{await mf.dispose();await rm(r.dir,{recursive:true,force:true});}
+});
+
+// A content release moves today's policy, which hashes the approved-audio proof index.
+// The registry names each released build by its literal policy, so neither the rows the
+// builds through e7eb0f0 left on DEV ({9a7733f5, @1}) nor the rows this build writes
+// ({9a7733f5, @2}) are stranded: each still authenticates and yields its current read
+// to the base, and an explicit Open prepares under the moved policy.
+test('a content release that moves today\'s policy strands no released build: {9a7733f5, @1} and {9a7733f5, @2} publications still authenticate and yield to the base',async()=>{
+ const r=await releases(),published={};let mf=await r.priorRecipe();
+ const open=async(read,packId)=>{const base=await read('/v1/packs/'+packId);assert.equal(base.status,200);assert.ok(base.body.preparationDemand,packId);const ready=await prepare(read,base.body.preparationDemand);assert.equal(ready.status,200,JSON.stringify(ready.body));assert.equal(ready.body.status,'ready');return {demand:base.body.preparationDemand,base:base.body.revision,revision:ready.body.record.revision,jobId:ready.body.jobId};};
+ try{
+  published['eng.MRK-1-14-20']=await open(http(mf),'eng.MRK-1-14-20');
+  await mf.dispose();mf=await r.after();
+  published['eng.MRK-1-21-28']=await open(http(mf),'eng.MRK-1-21-28');
+  const written=await (await store(mf)).rows();
+  for(const [packId,recipe] of [['eng.MRK-1-14-20','fia-server-source-action-projector@1'],['eng.MRK-1-21-28','fia-server-source-action-projector@2']]){const job=written['executable-presentation:job:'+published[packId].jobId];assert.equal(job.policySha256,PINNED_POLICY,packId);assert.equal(job.recipeRevision,recipe,packId);}
+  assert.equal(SOURCE_ACTION_RECIPE,'fia-server-source-action-projector@2','this build writes @2');assert.notEqual(r.driftPolicy,PINNED_POLICY,'the content release moves today\'s policy');
+  await mf.dispose();mf=await r.drifted();
+  const read=http(mf),call=mcp(mf),s=await store(mf),outcomes=[];
+  for(const [packId,prior] of Object.entries(published)){
+   try{
+    const before=await s.durable(),viaHttp=await read('/v1/packs/'+packId),viaMcp=await call('read_pack',{packId});
+    assert.equal(viaHttp.status,200,`answered ${viaHttp.status} ${viaHttp.body.reason}`);assert.equal(viaHttp.body.status,'ready');assert.equal(viaHttp.body.execution,undefined,'the historical publication is not served as current');
+    assert.equal(viaHttp.body.revision,prior.base,'the base record is served');assert.deepEqual(viaHttp.body.preparationDemand,prior.demand,'with its existing demand');
+    assert.deepEqual(viaMcp,viaHttp.body,'HTTP/MCP parity');assert.equal(await s.durable(),before,'the read writes nothing');
+    outcomes.push([packId,'authenticated']);
+   }catch(error){outcomes.push([packId,error.message.split('\n')[0]]);}
+   assert.equal((await read(`/v1/packs/${packId}?revision=${prior.revision}`)).status,404,'the exact historical revision stays denied');
+  }
+  assert.deepEqual(outcomes,[['eng.MRK-1-14-20','authenticated'],['eng.MRK-1-21-28','authenticated']],'no released build is stranded by the policy move');
+  // The move is real: an explicit Open now prepares under the moved policy.
+  const again=await prepare(read,published['eng.MRK-1-14-20'].demand);assert.equal(again.status,200,JSON.stringify(again.body));assert.equal(again.body.status,'ready');
+  assert.equal((await s.rows())['executable-presentation:job:'+again.body.jobId].policySha256,r.driftPolicy);
   assert.equal(r.counts.external,0);
  }finally{await mf.dispose();await rm(r.dir,{recursive:true,force:true});}
 });

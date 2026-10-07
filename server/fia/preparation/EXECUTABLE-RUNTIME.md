@@ -34,11 +34,17 @@ its code as `reason` (HTTP 409), never a 500.
 
 The execution policy hash includes the approved-audio proof index, and a job is
 also keyed by its projector recipe, so a release can supersede the policy or the
-recipe that validated a publication. The registry of superseded builds is finite,
-each named by its policy and recipe, with today's provider: the build without a
-proof index (`aad92a4`) and the builds through `e7eb0f0` with today's policy, both
-projecting under `fia-server-source-action-projector@1`, before #190 added flow
-roles (`@2`). A job under `@1` is projected without flow roles, so its publication
+recipe that validated a publication. The registry of released builds is finite,
+each named by its literal policy and recipe, with today's provider, and never by
+today's policy, which the next content or proof-index release moves: the build
+without a proof index (`aad92a4`) under `fia-server-source-action-projector@1`;
+the builds through `e7eb0f0`, with proof index `d3be5884` (policy `9a7733f5`), under
+`@1`, before #190 added flow roles (`@2`); and this build, the same policy under
+`@2`. The entry equal to today's build is the current build, not a historical one,
+so this build's own rows still authenticate after a release moves the policy. The
+transition test checks the literal against a replay of the `e7eb0f0` build and
+fails once a release moves the policy, so that release names its own build here
+too. A job under `@1` is projected without flow roles, so its publication
 reproduces exactly. Only the unqualified current read (`read_pack({packId})` and
 `GET /v1/packs/<packId>`) may then serve the base with its existing demand, and
 only after it authenticates that historical publication exactly: the current
