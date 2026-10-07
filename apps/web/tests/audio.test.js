@@ -116,7 +116,7 @@ run('stale gesture rejection cannot resurrect an owner after navigation or repla
  e.controller.play('old','blob:old');const staleReject=reject;e.controller.stop();
  Audio.prototype.play=function(){this.paused=false;return Promise.resolve();};
  e.controller.play('new','blob:new');await tick();staleReject(Object.assign(Error('gesture'),{name:'NotAllowedError'}));await tick();
- assert.equal(e.errors.length,0);assert.equal(e.controller.playing,true);assert.equal(e.states.at(-1).src,'blob:new');assert.equal(e.audio[0].src,'');
+ assert.equal(e.errors.length,0);assert.equal(e.controller.playing,true);assert.equal(e.states.at(-1).src,'blob:new');assert.equal(e.audio.length,1);assert.equal(e.audio[0].src,'blob:new');
 });
 run('synchronous gesture denial is retryable but a subsequent codec rejection releases the owner', async e => {
  Audio.prototype.play=function(){throw Object.assign(Error('gesture'),{name:'NotAllowedError'});};

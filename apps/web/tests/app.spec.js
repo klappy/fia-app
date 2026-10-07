@@ -122,8 +122,10 @@ it('explicit return from native video preserves owner while waiting and ignores 
  video.webkitDisplayingFullscreen=false;video.dispatchEvent(new Event('webkitendfullscreen'));video.dispatchEvent(new Event('ended'));await settle();expect(state().detour).toBeNull();
  await fireEvent.play(video);await fireEvent.ended(video);await settle();expect(activities[state().index].id).toBe('S02-U005');expect(screen.getByRole('button',{name:'Continue',exact:true}).classList.contains('guide-primary')).toBe(true);
 });
+// The one narration element: each clip loaded into it (each src set) is one entry in players.
 class FakeAudio {
- constructor(src){this.src=src;this.paused=true;this.currentTime=0;this.duration=12;players.push(this);}
+ constructor(src){this.paused=true;this.currentTime=0;this.duration=12;if(src)this.src=src;}
+ get src(){return this.source;} set src(value){this.source=value;if(value)players.push(this);}
  play(){this.paused=false;return Promise.resolve();} pause(){this.paused=true;} load(){} removeAttribute(){} end(){this.paused=true;this.onended?.();}
 }
 it('Pause between recording completion and queued next start revokes the pending session',async()=>{
@@ -468,9 +470,9 @@ it('manual listening keeps Continue central and supports play pause resume and r
  expect(screen.getByRole('button',{name:'Continue',exact:true}).classList.contains('guide-primary')).toBe(true);
  await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();const audio=players.at(-1);audio.currentTime=5;
  await fireEvent.click(screen.getByRole('button',{name:'Pause',exact:true}));await settle();
- await fireEvent.click(screen.getByRole('button',{name:'Resume',exact:true}));await settle();expect(players.at(-1)).toBe(audio);expect(audio.currentTime).toBe(5);
+ await fireEvent.click(screen.getByRole('button',{name:'Resume',exact:true}));await settle();expect(players).toHaveLength(1);expect(players.at(-1)).toBe(audio);expect(audio.currentTime).toBe(5);
  audio.end();await settle();expect(activities[state().index].id).toBe('S02-U004');
- await fireEvent.click(screen.getByRole('button',{name:'Replay',exact:true}));await settle();expect(players.at(-1)).not.toBe(audio);
+ await fireEvent.click(screen.getByRole('button',{name:'Replay',exact:true}));await settle();expect(players).toHaveLength(2);
  await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));await settle();expect(activities[state().index].id).not.toBe('S02-U004');expect(players.at(-1).paused).toBe(true);
 });
 

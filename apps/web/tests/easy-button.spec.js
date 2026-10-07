@@ -6,7 +6,7 @@ import {readFileSync} from 'node:fs';
 import {webcrypto,createHash} from 'node:crypto';
 import {createSession} from '../src/lib/engine.js';
 const audio=vi.hoisted(()=>({play:vi.fn(),pause:vi.fn(),resume:vi.fn(),stop:vi.fn(),active:false}));
-vi.mock('../src/lib/audio.js',()=>({createAudioController:(state,end)=>{audio.state=state;audio.end=end;return audio;}}));
+vi.mock('../src/lib/audio.js',()=>({createAudioController:(state,end,error)=>{audio.state=state;audio.end=end;audio.error=error;return audio;}}));
 import App from '../src/App.svelte';
 import {libraryAdapter,RESTORE_TIMEOUT_MS} from '../src/lib/library.js';
 import {activities,bundledPresentation} from '../src/lib/content.js';
@@ -220,6 +220,21 @@ it('R4 D1/D2/D5: repeated taps while starting never cancel, pause or skip; Begin
  expect(audio.play).toHaveBeenCalledTimes(1);expect(audio.pause).not.toHaveBeenCalled();expect(progress('eng.MRK-1-1-13')?.session.index??0).toBe(0);
  // Once settled, the primary is an honest Pause again.
  await fireEvent.click(primary());expect(audio.pause).toHaveBeenCalledTimes(1);expect(readFace().label).toBe('Resume');
+});
+
+// iOS (DEV, 2026-10-07): a start that never reached sound kept the starting face on every later screen.
+it('R4: a start with no sound ends at the player\'s bound as an honest Resume with its notice; one tap resumes inside the tap',async()=>{
+ audio.play.mockImplementation((text,src)=>{audio.active=true;audio.src=src;});
+ render(App);await waitFor(()=>expect(readFace().label).toBe('Begin'));
+ await fireEvent.click(primary());await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(1));
+ await wait(900);expect(isStarting(readFace())).toBe(true);
+ // lib/audio.js hands a silent start back through its error callback (START_BOUND_MS), keeping the paused owner.
+ audio.error('Tap Play to hear the narration. Your browser paused automatic audio.');
+ await waitFor(()=>expect(readFace()).toEqual({label:'Resume',busy:false,disabled:false,icon:'lucide-play'}));
+ expect(notices()).toMatch(/Tap Play to hear the narration/);
+ await fireEvent.click(primary());expect(audio.resume).toHaveBeenCalledTimes(1);
+ await waitFor(()=>expect(readFace().icon).toBe('lucide-pause'),{timeout:2000});
+ expect(libraryAdapter.playMedia).toHaveBeenCalledTimes(1);expect(audio.play).toHaveBeenCalledTimes(1);expect(progress('eng.MRK-1-1-13')?.session.index??0).toBe(0);
 });
 
 it('R4 D3/D4: a centre tap during a carried preparation keeps the activity and shows no Press Play notice',async()=>{
