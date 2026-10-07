@@ -64,3 +64,9 @@ The hosted suite now requires `meta[name="fia-source-commit"]` to equal the enti
 The BSB scenario reads the deployed pack's `/offline/eng.MRK-1-14-20.json` and requires its exact bytes to match the built candidate's manifest. It binds the canonical BSB asset text/source evidence hashes and selected delivery SHA to the actual native Blob, then asserts native time inside the reviewed passage range. This consumes the range-only manifest contract from `60ad56b`; it does not require a guide preparation tuple, legacy audio or invented word/verse alignment. Missing qualified manifest entries still fail. Pure contract tests use actual P2 text with explicitly synthetic delivery descriptors; no live BSB result is claimed by those tests.
 
 Fresh controlled pending evidence also passed against PR176 candidate `9a5d8cde6033417a6cfdf14e6390e6e9aebd56e5`; it was rebuilt and rerun, not inherited from 5fa39c. Its historical receipt remains separate from subsequent candidates.
+
+## Setup open harness wait
+
+Every hosted scenario first opens Mark 1:14–20 from the Passages sheet. That one setup assertion waits up to 15 s (`toContainText(first,{timeout:15000})`) as a harness wait. It is not a switch budget: J1's 5 s switch budget in the cookbook's scripted journeys stays the only switch budget, and the app speedup is its own ticket. There is no global `expect.timeout`, no retry and no skip.
+
+Every receipt records `setupSwitch.elapsedMs`: the page's own clock from the Open passage tap to the first unit's text being present. The receipt verifier requires it on every scenario and does not judge it against 5 s. Ground: Terry's k0020 ruling and DEV post-deploy run 37553559732.
