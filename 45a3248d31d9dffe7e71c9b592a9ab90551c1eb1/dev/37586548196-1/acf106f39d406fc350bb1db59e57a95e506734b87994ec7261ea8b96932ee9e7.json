@@ -1,0 +1,51 @@
+{
+  "schema": "fia-listening-persona-summary@1",
+  "commit": "45a3248d31d9dffe7e71c9b592a9ab90551c1eb1",
+  "environment": "dev",
+  "runId": "37586548196",
+  "attempt": "1",
+  "workflowUrl": "https://github.com/klappy/fia-app/actions/runs/37586548196",
+  "scope": "Agent-operated observations; not human research or acoustic/device proof. Hosted and controlled protocol scopes are separate.",
+  "scenario": {
+    "key": "45a3248d31d9dffe7e71c9b592a9ab90551c1eb1/dev/P2 automatic Begin and Next preserve first unit and advance native audio",
+    "scenario": "P2 automatic Begin and Next preserve first unit and advance native audio",
+    "scope": "hosted-rendered-native",
+    "outcome": "failed",
+    "validation": {
+      "validator": "verify",
+      "ok": false,
+      "environment": "dev",
+      "commit": "45a3248d31d9dffe7e71c9b592a9ab90551c1eb1",
+      "errors": [
+        "Scenario did not pass once: P2 saved Scripture plays after isolated offline reload"
+      ],
+      "scope": "Live Chromium P2 listening only; no physical-device or audible-output claim"
+    },
+    "failedStep": "Scenario did not pass once: P2 saved Scripture plays after isolated offline reload",
+    "observedFriction": {
+      "classification": "observation-only",
+      "notices": [
+        {
+          "kind": "visible-notices",
+          "text": []
+        }
+      ],
+      "assessment": "Not inferred from pass/fail; review attached observations"
+    },
+    "userFeedback": {
+      "status": "not-collected"
+    },
+    "evidence": {
+      "name": "live-listening-evidence",
+      "sha256": "0122920f23cc04aa25091b53fe95355132a4f11ba05282616fc5ed659fb175c4",
+      "workflowArtifacts": "test-results (trace/video retention is finite)"
+    },
+    "baselineComparison": {
+      "baselineCommit": "e7eb0f05740aec2619fa59c6572ab56b66f00ba6",
+      "priorOutcome": "passed",
+      "currentOutcome": "failed",
+      "archivePath": "e7eb0f05740aec2619fa59c6572ab56b66f00ba6/dev/37568206729-1/acf106f39d406fc350bb1db59e57a95e506734b87994ec7261ea8b96932ee9e7.json",
+      "scope": "Outcome comparison only; no sentiment inference"
+    }
+  }
+}
