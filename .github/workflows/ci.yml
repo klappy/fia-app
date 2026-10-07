@@ -56,6 +56,8 @@ jobs:
     # Captain's method: every block's exact start/stop cut, transcribed, must say
     # the words its screen shows. Mismatch = fail. Judged on the stored
     # per-cut transcripts (scripts/clip-text/transcribe.py); no ASR in CI.
+    # Mismatches reviewed in tests/release/clip-text-reviewed.json (exact cut,
+    # screen text and heard text) are reported, not failed; anything new fails.
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -63,12 +65,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node scripts/clip-text/check.mjs --md clip-text.md
+      - run: node scripts/clip-text/check.mjs --md clip-text.md --json clip-text.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: clip-text
-          path: clip-text.md
+          path: |
+            clip-text.md
+            clip-text.json
           retention-days: 7
   visual:
     runs-on: ubuntu-latest

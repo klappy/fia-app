@@ -63,9 +63,13 @@ export function buildBlocks(reader){
     }
    }else if(e.path.startsWith('/audio/source/scripture-')){
     const aid=e.path.split('/').at(-1).replace(/\.[^.]+$/,''),asset=pk.assets[aid];
-    blocks.push({id:`${pid}/${aid}`,passage:pid,unit:aid,cls:'scripture-whole',displayed:asset.verses.map(v=>stripVerseNumbers(v.text)).join('\n'),media,range:null,where});
-    const off=e.timing?.mapping?.offsetSeconds||0;
-    for(const v of asset.alignment?.verses||[])blocks.push({id:`${pid}/${aid}#v${v.verse}`,passage:pid,unit:`${aid} v${v.verse}`,cls:'scripture-verse',displayed:stripVerseNumbers(v.text),media,range:[round3(v.start+off),round3(v.end+off)],where:`${CONTENT}${packs.get(pid).slice('/content'.length)} assets.${aid}.alignment verse ${v.verse} (+${off}s mapping)`});
+    blocks.push({id:`${pid}/${aid}@whole`,passage:pid,unit:aid,cls:'scripture-whole',displayed:asset.verses.map(v=>stripVerseNumbers(v.text)).join('\n'),media,range:null,where});
+    // Pack-alignment verses are on the logical clock; the app maps them to the
+    // delivered file as media = logical*scale + offset (App.svelte inverts it).
+    const off=e.timing?.mapping?.offsetSeconds||0,scale=e.timing?.mapping?.scale??1;
+    if(!(Number.isFinite(scale)&&scale>0))throw Error(`invalid mapping scale ${pid}/${aid}`);
+    const media_=t=>round3(t*scale+off);
+    for(const v of asset.alignment?.verses||[])blocks.push({id:`${pid}/${aid}#v${v.verse}`,passage:pid,unit:`${aid} v${v.verse}`,cls:'scripture-verse',displayed:stripVerseNumbers(v.text),media,range:[media_(v.start),media_(v.end)],where:`${CONTENT}${packs.get(pid).slice('/content'.length)} assets.${aid}.alignment verse ${v.verse} (x${scale} +${off}s mapping)`});
    }else if(e.path.startsWith('/audio/source/term-')){
     const tid=e.path.split('/').at(-1).slice('term-'.length).replace(/\.[^.]+$/,''),asset=pk.assets[tid];
     blocks.push({id:`${pid}/term-${tid}`,passage:pid,unit:`term-${tid}`,cls:'term-whole',displayed:asset.description||asset.text||'',media,range:null,where});

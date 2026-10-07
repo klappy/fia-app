@@ -116,7 +116,15 @@ export function opcodes(a,b){
 }
 
 export const EDGE=['TRUNCATED_END','TRUNCATED_START','LEADING_EXTRA','TRAILING_EXTRA'];
-const ORDER=[...EDGE,'WRONG'];
+// SOURCE_ID: a catalog/source id (t226) on screen or in the audio. A defect the
+// screen and the audio share passes a words-only comparison, so it has its own rule.
+// CUT_IN_SOUND: an audible window (guide, prepared, Scripture range) whose first
+// or last 50 ms is louder than LOUD_DB starts or stops inside a sound; the
+// recognizer can still complete a clipped word, so words alone would pass it.
+const ORDER=['SOURCE_ID',...EDGE,'CUT_IN_SOUND','WRONG'];
+export const LOUD_DB=-35;
+export const AUDIBLE_CUT=new Set(['guide-range','prepared-range','scripture-range']);
+const SOURCE_ID=/(?<![a-z0-9])t-?\d+(?![a-z0-9])/i;
 const verdictOf=r=>ORDER.find(f=>r.flags.includes(f))||'MATCH';
 
 export function classify(displayed,heard){
@@ -169,11 +177,15 @@ export function dropSilenceHallucination(r,edge,quiet=-50){
 
 const contains=(hay,needle)=>needle.length>0&&hay.some((_,i)=>i+needle.length<=hay.length&&needle.every((x,k)=>hay[i+k]===x));
 // A missing edge word is a timing cut only if the same window widened by the
-// context pad says it next to its displayed neighbours AND that word sits
-// outside the cut. If the speaker never says it there, it is wording (screen
-// text vs recording); if it sits inside the cut, the short crop misheard it.
-// Either way the block still fails; this only names why.
-export function confirmTruncation(r,displayed,context,range,tol=0.1){
+// context pad says it next to its displayed neighbours AND that word is not
+// wholly inside the cut. If the speaker never says it there, it is wording
+// (screen text vs recording). It is a short-crop recognizer miss only when its
+// timed start (end) is at or after (before) the cut AND the cut's edge is
+// quiet; a word timed up to `tol` outside the edge, or a cut whose first/last
+// 50 ms is louder than LOUD_DB, lands inside the word and stays a timing cut
+// (ambiguous within the word-timing tolerance). Either way the block still
+// fails; this only names why.
+export function confirmTruncation(r,displayed,context,range,tol=0.1,edge=null){
  if(!context)return;
  const D=normalize(displayed),C=normalize(context.text),timed=[];
  for(const [w,s,e] of context.words||[])for(const t of normalize(w))timed.push([t,s,e]);
@@ -186,8 +198,11 @@ export function confirmTruncation(r,displayed,context,range,tol=0.1){
   else if(timed.length&&range){
    const toks=timed.map(x=>x[0]),n=probe.length,hit=toks.findIndex((_,i)=>i+n<=toks.length&&probe.every((x,k)=>toks[i+k]===x));
    if(hit>=0){
-    if(flag==='TRUNCATED_START'){const ms=timed[hit][1];if(ms>=range[0]-tol)why=`"${r[key].join(' ')}" starts at ${ms.toFixed(2)}s, inside the cut (short-crop ASR miss, not timing)`;}
-    else{const me=timed[hit+n-1][2];if(me<=range[1]+tol)why=`"${r[key].join(' ')}" ends at ${me.toFixed(2)}s, inside the cut (short-crop ASR miss, not timing)`;}
+    const start=flag==='TRUNCATED_START',t=start?timed[hit][1]:timed[hit+n-1][2],cutAt=start?range[0]:range[1];
+    const inside=start?t>=cutAt:t<=cutAt,near=Math.abs(t-cutAt)<=tol,db=edge?.[start?'start':'end'],loud=Number.isFinite(db)&&db>LOUD_DB;
+    const word=`"${r[key].join(' ')}" ${start?'starts':'ends'} at ${t.toFixed(2)}s`;
+    if(inside&&!loud)why=`${word}, inside the cut at ${cutAt}s and the edge is quiet (short-crop ASR miss, not timing)`;
+    else if(inside||near){r.notes.push(`${flag} ambiguous, counted as timing: ${word}, ${inside?'inside':'outside'} the cut at ${cutAt}s by ${Math.round(Math.abs(t-cutAt)*1000)} ms${loud?`, and the cut ${start?'opens':'closes'} inside sound (${db} dBFS)`:' (within the word-timing tolerance)'}`);continue;}
    }
   }
   if(why===null){r.notes.push(`${flag} confirmed: the widened window says "${r[key].join(' ')}" outside the cut`);continue;}
@@ -209,12 +224,15 @@ export function diffText(r){
 }
 
 // One block: the stored transcript of exactly its cut, judged against the
-// words its screen shows.
+// words its screen shows, plus the two rules words cannot carry.
 export function judge(block,heard){
  if(!heard)return {verdict:'NOT_TRANSCRIBED',flags:['NOT_TRANSCRIBED'],lead:[],trail:[],missingStart:[],missingEnd:[],interior:[],notes:['no transcript of this exact cut (media sha256 + window); run scripts/clip-text/transcribe.py']};
  const r=classify(block.displayed,heard.text);
  dropSilenceHallucination(r,heard.edge);
- if(block.range)confirmTruncation(r,block.displayed,heard.context,block.range);
+ if(block.range)confirmTruncation(r,block.displayed,heard.context,block.range,0.1,heard.edge);
+ for(const [side,text] of [['displayed',block.displayed],['heard',heard.text]]){const m=SOURCE_ID.exec(text||'');if(m){if(!r.flags.includes('SOURCE_ID'))r.flags.push('SOURCE_ID');r.notes.push(`source id "${m[0]}" ${side==='displayed'?'on screen':'in the audio'}`);}}
+ if(block.range&&AUDIBLE_CUT.has(block.cls))for(const side of ['start','end']){const db=heard.edge?.[side];if(Number.isFinite(db)&&db>LOUD_DB){if(!r.flags.includes('CUT_IN_SOUND'))r.flags.push('CUT_IN_SOUND');r.notes.push(`cut ${side==='start'?'opens':'closes'} inside sound: ${side} 50 ms at ${db} dBFS (> ${LOUD_DB})`);}}
+ r.verdict=verdictOf(r);
  r.heard=heard.text;
  return r;
 }
