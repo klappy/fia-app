@@ -358,6 +358,53 @@ for(const id of ['eng.MRK-1-21-28','eng.MRK-2-1-12'])for(const served of ['regis
  expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();
 },60000);
 
+// B1 (review of #201): while the app is still checking, the Next slot follows what the screen declares,
+// never the unanswered device check. Mark 1:1–13 keeps one Play from first paint, disabled until the
+// check answers (K4; J2 runs with automatic guide narration off), after a reload and after a passage
+// switch; Mark 1:21–28 declares no recording and shows Skip from its first paint.
+function recordSlots(){
+ const seen=[];let last='';
+ const read=()=>{const h=document.querySelector('h1')?.textContent,slot=[...document.querySelectorAll('nav[aria-label="Session controls"] .step-control')].at(-1);if(!h||!slot)return;const entry={heading:h,slot:`${slot.getAttribute('aria-label')}${slot.disabled?' (disabled)':''}`,checking:readFace()?.label===CHECKING},key=JSON.stringify(entry);if(key!==last){last=key;seen.push(entry);}};
+ const observer=new MutationObserver(read);observer.observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['aria-label','disabled']});
+ return {seen,on:heading=>seen.filter(e=>e.heading===heading).map(e=>e.slot).filter((slot,i,all)=>slot!==all[i-1]),stop:()=>observer.disconnect()};
+}
+it('B1/K4: while checking, the Next slot follows what the screen declares; Mark 1:1–13 keeps its Play from first paint (reload, passage switch) and Mark 1:21–28 shows Skip throughout',async()=>{
+ const empty={files:[],savedFiles:[],deliveryRevision:null},pending=[];
+ libraryAdapter.mediaStatus.mockImplementation(p=>{const d=deferred();pending.push({id:p.id,d});return d.promise;});
+ const answer=async id=>{await waitFor(()=>expect(pending.some(a=>a.id===id)).toBe(true));for(const a of pending.splice(0))a.d.resolve(a.id==='eng.MRK-1-1-13'?bundledMedia:empty);};
+ vi.spyOn(libraryAdapter,'select').mockImplementation(async id=>pack(id));
+ vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',name:'English',nativeName:'English',ready:68}]);
+ vi.spyOn(libraryAdapter,'passages').mockResolvedValue([bundledServer.descriptor,unadmitted.descriptor]);
+ localStorage.setItem('fia-v3-preferences@1',JSON.stringify({muted:true,preferences:createSession(activities).preferences}));
+ const first=activities[0].prompt,other=unadmitted.presentation.activities[0].prompt;
+ // 1. Two reloads of Mark 1:1–13, recorded from first paint.
+ for(let reload=0;reload<2;reload++){
+  if(reload){faces.stop();cleanup();faces=recordFaces();}
+  const slots=recordSlots();render(App);await heading(first);await wait(30);
+  expect(slots.seen.every(e=>e.checking)).toBe(true);expect(slots.on(first)).toEqual(['Play (disabled)']);
+  await answer('eng.MRK-1-1-13');await verified();slots.stop();
+  expect(slots.on(first)).toEqual(['Play (disabled)','Play']);expect(readFace().label).toBe('Continue');
+ }
+ // 2. A switch to Mark 1:21–28: Skip from its first paint, while checking and after.
+ let slots=recordSlots();await openFromPassages(unadmitted.descriptor.title);await heading(other);await wait(30);
+ expect(slots.on(other)).toEqual(['Skip to next activity']);
+ await answer('eng.MRK-1-21-28');await verified();slots.stop();expect(slots.on(other)).toEqual(['Skip to next activity']);
+ // 3. Back to Mark 1:1–13 from Passages: the same Play, disabled while checking.
+ slots=recordSlots();await openFromPassages(bundledServer.descriptor.title);await heading(first);await wait(30);
+ expect(slots.on(first)).toEqual(['Play (disabled)']);
+ await answer('eng.MRK-1-1-13');await verified();slots.stop();expect(slots.on(first)).toEqual(['Play (disabled)','Play']);
+ // 4. A reload that restores Mark 1:21–28. The bundled screen paints first and keeps its declared Play;
+ // its check answers after the restore began, so it is not applied and the Play stays disabled. Once
+ // Mark 1:21–28 paints, Skip throughout.
+ faces.stop();cleanup();faces=recordFaces();savePack(unadmitted);
+ const restored=deferred();libraryAdapter.select.mockReturnValueOnce(restored.promise);
+ slots=recordSlots();render(App);await heading(first);await answer('eng.MRK-1-1-13');await wait(30);
+ expect(readFace().label).toBe(CHECKING);expect(slots.on(first)).toEqual(['Play (disabled)']);
+ restored.resolve(unadmitted);await heading(other);await answer('eng.MRK-1-21-28');await verified();slots.stop();
+ expect(slots.on(other)).toEqual(['Skip to next activity']);
+ expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();
+});
+
 it('R4: with narration off, a side Play keeps the centre on Continue and offers its own labelled cancel',async()=>{
  const bytes=deferred();libraryAdapter.playPreparedRecording.mockReturnValue(bytes.promise);savePack(admitted);vi.spyOn(libraryAdapter,'select').mockResolvedValue(admitted);
  render(App);await heading(admitted.presentation.activities[0].prompt);await waitFor(()=>expect(readFace().busy).toBe(false));

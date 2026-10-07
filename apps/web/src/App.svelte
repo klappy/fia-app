@@ -292,6 +292,15 @@
  let primaryFace=$derived(easyFace({verifying,starting:primaryStarting,label:primaryLabel}));
  let manualStarts=new Set();let listeningHint=$state(false),hintShown=false;
  let manualAvailable=$derived(executableMode&&!session.detour?executablePlayable:!!(preparationRequest||matchingVideo||focal?.kind==='video'&&(focal.src||focal.videoPrepared)||focal?.descriptionAudio||activity?.audioSrc));
+ // R6/K4: while verifying, the device check has not answered, so the Next slot follows what this screen
+ // declares (manualAvailable's terms over the presentation as served): a declared recording keeps its Play,
+ // disabled until a check makes it playable; a screen that declares none shows Skip. Nothing is guessed (k0006).
+ function declaresRecording(){
+  if(executableMode&&!session.detour)return executablePlayable;
+  const all=executionPresentation.assets,f=all[stage.focal],raw=executionPresentation.activities.find(a=>a.id===activity?.id);
+  return !!(preparationRequest||(f?.relatedIds||[]).some(id=>all[id]?.kind==='video'&&all[id].src)||f?.kind==='video'&&f.src||f?.descriptionAudio||raw?.audioSrc);
+ }
+ let slotPlays=$derived(verifying?declaresRecording():manualAvailable);
  let manualLabel=$derived(preparationBusy?'Cancel preparation':startPending?'Cancel loading':currentPreparation?.status==='failed'?'Retry recording':isPlaying?'Pause':inlineVideo||audioContext&&audio?.active?'Resume':preparationRequest?'Play original recording':'Play');
  function manualPlay(restart=false){
   if(!restart&&startPending){cancelStart();return;}
@@ -550,9 +559,10 @@
   <button class="step-control" aria-label={session.detour?'Return to guide':'Previous activity'} disabled={!session.detour&&session.index===0&&!finished} onclick={()=>navigate({type:'BACK'})}><ChevronLeft size={26}/></button>
   <GuidePrimary playback={inlineVideo||focal?.kind==='video'?videoState:audioState} label={primaryFace.label} face={primaryFace.kind} playing={(isPlaying||playbackPending)&&!automaticOff} continuing={primaryLabel==='Continue'||primaryLabel==='Return'} onclick={primary} onpointerdown={()=>tapGate.press(primaryFace.kind)}/>
   <!-- The fourth slot: manual Play in manual mode; with narration on, only a labelled Cancel while preparing (R4.2), else Next.
-       R6: it holds a Play only where a recording exists or can be prepared, whatever the settings; elsewhere Next. -->
-  {#if (automaticOff||preparationBusy)&&manualAvailable&&!session.detour&&!inTransition&&!finished}
-  <button class="step-control" aria-label={manualLabel} title={manualLabel} onclick={()=>manualPlay()}>{#if manualLabel.startsWith('Cancel')}<X size={26}/>{:else if isPlaying}<Pause size={26}/>{:else}<Play size={26}/>{/if}</button>
+       R6: it holds a Play only where a recording exists or can be prepared, whatever the settings; elsewhere Next.
+       While verifying it follows what the screen declares, so the slot keeps one control from first paint (K4). -->
+  {#if (automaticOff||preparationBusy)&&slotPlays&&!session.detour&&!inTransition&&!finished}
+  <button class="step-control" aria-label={manualLabel} title={manualLabel} disabled={!manualAvailable} onclick={()=>manualPlay()}>{#if manualLabel.startsWith('Cancel')}<X size={26}/>{:else if isPlaying}<Pause size={26}/>{:else}<Play size={26}/>{/if}</button>
   {:else}<button class="step-control" aria-label="Skip to next activity" disabled={finished||!!session.detour} onclick={()=>navigate({type:'CONTINUE'},true)}><ChevronRight size={26}/></button>{/if}
   <button class="replay-control" aria-label="Replay" disabled={finished||!!session.detour} onclick={()=>{if(executableMode){cancel();void playExecutableNarration();}else if(automaticOff){manualPlay(true);}else if(inlineVideo){const v=videoOwner.node;if(v)v.currentTime=0;videoState={...videoState,elapsed:0};playVideo();}else if(visual&&matchingVideo){openMatchingVideo();}else{cancel();playActivity(true);}}}><RotateCcw size={22}/></button>
  </nav>
@@ -594,7 +604,7 @@
     <button class="sheet-back" onclick={()=>sheet='menu'}><ChevronLeft size={18}/>FIA menu</button>
     <p class="sheet-intro">Saved on this device.</p>
     <h3>Listening</h3>
-    <label class="preference"><span><strong>Automatic guide narration</strong><small>Listen as you move through the guide. When off, Continue stays in the center and Play is beside it.</small></span><input type="checkbox" checked={!muted} onchange={e=>{muted=!e.currentTarget.checked;revokePlayback();cancel();dispatch({type:'PAUSE'});persist();}}/></label>
+    <label class="preference"><span><strong>Automatic guide narration</strong><small>Listen as you move through the guide. When off, Continue stays in the center, with Play beside it where a recording exists.</small></span><input type="checkbox" checked={!muted} onchange={e=>{muted=!e.currentTarget.checked;revokePlayback();cancel();dispatch({type:'PAUSE'});persist();}}/></label>
     {#each [{key:'readScripture',title:'Automatic Scripture reading',detail:'Read Scripture aloud when a passage opens, independently of guide narration.'},{key:'describeImages',title:'Describe images and maps',detail:'Automatically play available descriptions after the guide instruction. Source recordings may be generated.'}] as pref}<label class="preference"><span><strong>{pref.title}</strong><small>{pref.detail}</small></span><input type="checkbox" checked={session.preferences[pref.key]} onchange={e=>{if(!e.currentTarget.checked&&pref.key==='readScripture'&&activity.kind==='scripture'){cancel();}if(!e.currentTarget.checked&&pref.key==='autoplayVideo'&&videoPlaying){videoOwner.node?.pause();}dispatch({type:'SET_PREFERENCE',key:pref.key,value:e.currentTarget.checked});}}/></label>{/each}
     <label class="select-row">Playback speed<select bind:value={rate} onchange={()=>persist()}><option value={.85}>Unhurried · 0.85×</option><option value={1}>Natural · 1×</option><option value={1.15}>Quicker · 1.15×</option></select></label>
     <h3>Media</h3><h4>Video</h4>

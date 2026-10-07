@@ -212,6 +212,59 @@ for(const guide of [true,false])test(`R6/K1: Mark 1:21–28 as served, ${guide?'
  expect(posts).toEqual([]);
 });
 
+// B1 (review of #201): the Next slot is sampled from first paint. While checking, the slot follows what
+// the screen declares, never the unanswered device check. With automatic guide narration off, Mark 1:1–13
+// shows one Play, disabled while checking, on every reload and after a passage switch (K4; J2 runs with
+// guide narration off), and Mark 1:21–28 shows Skip from its first paint.
+function slotProbe(){
+ const log=window.__slots=[];let last='';
+ const sample=()=>{const nav=document.querySelector('nav[aria-label="Session controls"]'),slot=nav&&[...nav.querySelectorAll('.step-control')].at(-1),h=document.querySelector('main h1');if(!slot||!h)return;const entry={screen:h.textContent.trim(),centre:nav.querySelector('.guide-primary')?.getAttribute('aria-label'),slot:slot.getAttribute('aria-label')+(slot.disabled?' (disabled)':'')},key=JSON.stringify(entry);if(key!==last){last=key;log.push({t:Math.round(performance.now()),...entry});}};
+ new MutationObserver(sample).observe(document,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['aria-label','disabled']});
+}
+const slots=page=>page.evaluate(()=>window.__slots);
+const slotsOn=(log,screen)=>log.filter(e=>e.screen===screen).map(e=>e.slot).filter((slot,i,all)=>slot!==all[i-1]);
+// A disabled Play is shown only while checking; the checks that make it playable end its disabled span.
+const disabledOnlyWhileChecking=log=>log.every(e=>e.slot!=='Play (disabled)'||e.centre===CHECKING);
+test('B1/K4: with automatic guide narration off, Mark 1:1–13 shows one Play in the Next slot from first paint on every reload, disabled while checking',async({page})=>{
+ await page.addInitScript(slotProbe);
+ await page.goto('/');await settled(page,{quietMs:300});await settings(page,{'Automatic guide narration':false});
+ const home=(await page.locator('main h1').textContent()).trim();
+ for(let reload=0;reload<3;reload++){
+  await page.reload();await settled(page,{quietMs:500});
+  const log=await slots(page);test.info().annotations.push({type:`B1 reload ${reload+1}`,description:JSON.stringify(log)});
+  expect(log[0].centre,JSON.stringify(log)).toBe(CHECKING);
+  expect(slotsOn(log,home),JSON.stringify(log)).toEqual(['Play (disabled)','Play']);
+  expect(disabledOnlyWhileChecking(log),JSON.stringify(log)).toBe(true);
+ }
+});
+test('B1/K4: with automatic guide narration off, a passage switch keeps each screen\'s Next slot from its first paint: Skip on Mark 1:21–28, one Play on Mark 1:1–13',async({page})=>{
+ test.skip(process.env.FIA_WORKER_PREVIEW!=='1'&&!process.env.BASE_URL,'Opening a passage reads /v1/packs: the packaged Worker preview or a deployed target');
+ test.setTimeout(120000);
+ await page.addInitScript(slotProbe);
+ await page.goto('/');await settled(page,{quietMs:300});await settings(page,{'Automatic guide narration':false});
+ const centre=page.locator('nav[aria-label="Session controls"] .guide-primary'),heading=page.locator('main h1');
+ const home=(await heading.textContent()).trim();
+ const open=async title=>{
+  await page.getByRole('button',{name:'More options'}).click();await page.getByRole('button',{name:'Passages',exact:true}).click();
+  await page.getByRole('dialog').locator('article.pack-card').filter({has:page.getByRole('heading',{name:title,exact:true})}).getByRole('button',{name:/Open passage|Resume passage/}).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0,{timeout:30000});
+  await expect(centre).not.toHaveAttribute('aria-busy','true',{timeout:30000});await page.waitForTimeout(500);
+ };
+ await open('Mark 1:21–28');const other=(await heading.textContent()).trim();expect(other).not.toBe(home);
+ const opened=await slots(page);test.info().annotations.push({type:'B1 open',description:JSON.stringify(opened)});
+ expect(slotsOn(opened,other),JSON.stringify(opened)).toEqual(['Skip to next activity']);
+ expect(disabledOnlyWhileChecking(opened),JSON.stringify(opened)).toBe(true);
+ // A reload that restores Mark 1:21–28: once its screen paints, Skip throughout.
+ await page.reload();await settled(page,{quietMs:500});await expect(heading).toHaveText(other);
+ await open('Mark 1:1–13');await expect(heading).toHaveText(home);
+ const log=await slots(page);test.info().annotations.push({type:'B1 restore and switch back',description:JSON.stringify(log)});
+ expect(slotsOn(log,other),JSON.stringify(log)).toEqual(['Skip to next activity']);
+ const back=log.slice(log.findLastIndex(e=>e.screen===other)+1);
+ expect(back[0]?.centre,JSON.stringify(back)).toBe(CHECKING);
+ expect(slotsOn(back,home),JSON.stringify(back)).toEqual(['Play (disabled)','Play']);
+ expect(disabledOnlyWhileChecking(log),JSON.stringify(log)).toBe(true);
+});
+
 test('J3 hammer: six taps 150 ms apart start one recording and never cancel it',async({page})=>{
  await page.goto('/');
  await settled(page,{quietMs:300});
