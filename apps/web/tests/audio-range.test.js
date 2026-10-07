@@ -173,6 +173,17 @@ run('every clip plays on one element, which a tap unlocks once while it is idle'
  const second=await e.start({startSeconds:10,endSeconds:12});
  assert.equal(first,element);assert.equal(second,element);assert.equal(e.owners.length,1);assert.equal(element.src,'blob:verified');assert.equal(e.controller.playing,true);
 });
+// Review of #208: the element keeps a finished clip, so the next clip's source swap resets the playhead and the
+// browser queues a timeupdate that reaches the new clip's handlers after play() has cleared paused, before any sound.
+run('a reset timeupdate from the previous clip is not sound: the next clip left pending is still handed back at the bound',async e=>{
+ e.controller.play('first','blob:first',1);const element=e.owners.at(-1);await tick();assert.equal(e.controller.playing,true);
+ element.onended();assert.equal(e.ends,1);
+ element.promise=new Promise(()=>{});e.controller.play('second','blob:second',1);await tick();
+ assert.equal(element.paused,false);element.ontimeupdate();
+ assert.equal(e.controller.playing,false);assert.equal(e.states.at(-1).playing,false);assert.ok(bound(e),'the start bound stays armed');
+ bound(e).callback();assert.deepEqual(e.errors,[PAUSED_AUTOMATIC]);assert.equal(e.controller.active,true);
+ element.promise=null;assert.equal(e.controller.resume(),true);await tick();assert.equal(e.controller.playing,true);
+});
 run('a tap never unlocks over a clip the element holds',async e=>{
  const owner=await e.start();const calls=owner.calls;e.controller.unlock();
  assert.equal(owner.calls,calls);assert.equal(owner.paused,false);assert.equal(e.controller.playing,true);
