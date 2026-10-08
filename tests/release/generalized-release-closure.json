@@ -9,7 +9,7 @@
   "changedSources": [
     {
       "path": ".github/workflows/ci.yml",
-      "sha256": "89c5b5c0049f47cfd67b5cc39812fb9c2e1f26c77a1a0b805683968e02c9e75d"
+      "sha256": "908bfaece3b66664bdee791f45279ad940390b65a48b6aa613b006acd00c2784"
     },
     {
       "path": ".github/workflows/hosted-asr-integration-proof.yml",
@@ -21,7 +21,7 @@
     },
     {
       "path": ".github/workflows/post-deploy.yml",
-      "sha256": "1deb7344f7290f614876f590ace8ae0ea9f8b947ee1fe0becf42ba6533049e04"
+      "sha256": "c56828911f2f6c36e6b2717f75b8d28b3772d0cc556e5ccecb37c25668d29f94"
     },
     {
       "path": ".github/workflows/promotion-preflight.yml",
@@ -1340,7 +1340,7 @@
     },
     {
       "path": "package.json",
-      "sha256": "72ee0c8e24774652647b3752445728e06c0ae6d5bd8ed6852186321a27e116b3"
+      "sha256": "c0cc2809193b8db0d6f7d1ced7e50937ff1fa2324f5d8a5cd7a3e0e1de0b1108"
     },
     {
       "path": "playwright.config.js",
@@ -1429,6 +1429,22 @@
     {
       "path": "release/changes/stable-original-coordinator.md",
       "sha256": "583ff4b0ff06275e74d4642d9cc4b97f83f5861466dd56a3330a2400842eda09"
+    },
+    {
+      "path": "scripts/clip-text/blocks.mjs",
+      "sha256": "8309cdb37183ca186895b8aa994cc85e9ebd5b8c2bcb22fc93401283ef1621d9"
+    },
+    {
+      "path": "scripts/clip-text/check.mjs",
+      "sha256": "2edff6c954ea845e3574f2daa8a941d3454254c2a1da335f7e49f3225385ca9c"
+    },
+    {
+      "path": "scripts/clip-text/compare.mjs",
+      "sha256": "d6035b842e48e3d04f47ef2fdb17b2c840da6ca2029680f0ac3c3f3b59335bc2"
+    },
+    {
+      "path": "scripts/clip-text/transcribe.py",
+      "sha256": "d4153f823e69c51e1b5591f5840b7d83c38f569f4e496dc92531f4a7b84648dd"
     },
     {
       "path": "scripts/fia-source-inventory.mjs",
@@ -2517,6 +2533,18 @@
     {
       "path": "tests/publication/executable-runtime.test.mjs",
       "sha256": "82182654383d492ef102ded9cd12742ba71c9dbe90761f6a76db756e99cfd18c"
+    },
+    {
+      "path": "tests/release/clip-text-check.test.js",
+      "sha256": "0fd8d8bc54820e405e15fd0025b94cff181e85e73493679068eb942853b64200"
+    },
+    {
+      "path": "tests/release/clip-text-heard.json",
+      "sha256": "f0c0b6022c6d07e24f4614836762b90c6826baf62d46342ab3a1382d88ba0ddb"
+    },
+    {
+      "path": "tests/release/clip-text-reviewed.json",
+      "sha256": "a870aecd9e71b5c8fc5d2c34a84cde069d9f2b4b12c4f4f3732c462b846738da"
     },
     {
       "path": "tests/release/delivery-closure.js",
