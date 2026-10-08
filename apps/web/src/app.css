@@ -75,16 +75,6 @@ button{min-height:48px}.scene-notice button{min-width:48px;min-height:48px}.kept
 
 /* Two quiet progress levels; existing navigation and primary control stay intact. */
 .session-progress{position:fixed;z-index:13;top:max(0px,env(safe-area-inset-top));left:26px;right:26px;max-width:688px;margin:auto;background:var(--paper-050)}
-.section-progress-line,.content-progress-line{display:flex;width:100%;min-height:44px;padding:0;gap:7px;align-items:center}
-.section-progress-segment{position:relative;height:2px;flex:1;background:var(--paper-300);border-radius:2px}
-.section-progress-segment>span{display:block;height:100%;background:var(--text-body);border-radius:2px}
-.section-progress-segment.active:after{content:'';position:absolute;top:-2px;left:calc(var(--position) - 3px);width:6px;height:6px;border-radius:50%;background:var(--text-body)}
-.content-progress-line{justify-content:space-between;min-height:44px;color:var(--text-faint);position:relative}
-.content-progress-line:before{content:'';position:absolute;left:12px;right:12px;top:50%;height:1px;background:var(--paper-200);z-index:-1}
-.content-progress-bead{display:grid;place-items:center;position:relative;min-width:24px;height:28px;background:var(--paper-050)}
-.content-progress-bead.complete{color:var(--text-body)}
-.content-progress-bead.current{color:var(--text-title)}
-.content-progress-bead.current:after{content:'';position:absolute;bottom:-3px;width:4px;height:4px;border-radius:50%;background:currentColor}
 .progress-section-choice{display:flex;gap:28px;width:100%;min-height:64px;color:var(--text-muted)}
 .progress-section-choice[aria-current=step]{color:var(--text-title)}
 .section-transition{min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:170px 32px;gap:26px;text-align:center}
@@ -102,7 +92,6 @@ button{min-height:48px}.scene-notice button{min-width:48px;min-height:48px}.kept
 
 .scene-utilities{top:calc(var(--chrome-top) + 6px);left:max(20px,env(safe-area-inset-left));right:max(20px,env(safe-area-inset-right));justify-content:space-between;pointer-events:none}
 .scene-utilities button{pointer-events:auto}
-.current-section-icon{color:var(--text-body);display:grid;place-items:center;min-width:28px;background:var(--paper-050);margin-right:7px}
 .progress-map-section{display:grid;grid-template-columns:52px 1fr;gap:12px;align-items:start;padding:14px 0}
 .progress-map-section .progress-section-choice{width:52px;min-height:52px;position:sticky;top:0}
 .progress-map-items{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:5px}
@@ -117,8 +106,7 @@ button{min-height:48px}.scene-notice button{min-width:48px;min-height:48px}.kept
 .scene-glass{position:fixed;left:0;right:0;z-index:11;pointer-events:none;background:var(--glass-fill-2);-webkit-backdrop-filter:blur(var(--blur-medium)) var(--sat-glass);backdrop-filter:blur(var(--blur-medium)) var(--sat-glass)}
 .scene-glass-top{top:0;height:var(--chrome-top)}
 .scene-glass-bottom{bottom:0;height:var(--chrome-bottom)}
-.session-progress,.content-progress-bead,.current-section-icon{background:transparent}
-.content-progress-line:before{display:none}
+.session-progress{background:transparent}
 .media-stage.reading-stage{padding:0}
 .reading-stage .scripture-scroll{scroll-padding-top:var(--chrome-top);scroll-padding-bottom:var(--chrome-bottom)}
 .visual-explorer,.video-well{height:calc(100dvh - var(--chrome-bottom));padding-top:var(--chrome-top)}
@@ -156,14 +144,18 @@ button{min-height:48px}.scene-notice button{min-width:48px;min-height:48px}.kept
 @media(prefers-reduced-transparency:reduce){.sheet.glass-sheet,.glass-sheet .sheet-header{background:var(--surface);-webkit-backdrop-filter:none;backdrop-filter:none}}
 
 /* One generous hit area lets visual spacing stay compact and even. */
-.session-progress{display:flex;flex-direction:column;gap:12px;padding:30px 0 20px;min-height:92px}
-.session-progress .section-progress-line{min-height:2px;height:2px}
-.session-progress .content-progress-line{min-height:28px;height:28px}
-.section-progress-segment.active:after,.content-progress-bead.current:after{display:none}
-.current-section-icon{height:28px;width:28px}
-.content-progress-bead.current{border-radius:50%;box-shadow:inset 0 0 0 1px var(--text-body)}
+.session-progress{display:flex;flex-direction:column;gap:6px;padding:26px 0 14px;min-height:92px}
+/* One bar, six stage icons (cookbook progress-rail § One bar, adopted 2026-10-08): one >=48px control, six cells on one track,
+   visited filled, current ringed; the per-screen beads moved to the overview. */
+.stage-bar{position:relative;display:flex;justify-content:space-between;align-items:center;min-height:48px}
+.stage-bar:before{content:'';position:absolute;left:16px;right:16px;top:50%;height:2px;margin-top:-1px;background:var(--paper-300);z-index:0}
+.stage-bar-fill{position:absolute;left:16px;top:50%;height:2px;margin-top:-1px;background:var(--text-body);z-index:0}
+.stage-cell{position:relative;z-index:1;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:var(--text-faint);background:var(--paper-050);box-shadow:inset 0 0 0 1.5px var(--paper-300)}
+.stage-cell.complete{background:var(--text-body);color:var(--paper-050);box-shadow:none}
+.stage-cell.current{background:var(--text-title);color:var(--paper-050);box-shadow:0 0 0 3px var(--paper-050),0 0 0 5px var(--text-title)}
+.stage-words{font:var(--type-label);color:var(--text-muted);text-align:center}
+.stage-words b{color:var(--text-title);font-weight:600}
 
-.content-progress-bead{width:28px;min-width:28px}
 
 /* One interaction language across navigation, media, primary and sheet buttons.
    Individual translate/scale preserve any positioning transforms. */
