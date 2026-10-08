@@ -1,11 +1,10 @@
 <script>
- import {MoreHorizontal} from 'lucide-svelte';
  import {contentIcons as icons,sectionIcons,guideIcon} from '../lib/progress-icons.js';
- import {visibleProgress} from '../lib/progress.js';
  let {groups,onopen=()=>{},onselect=()=>{},overview=false}=$props();
  let active=$derived(groups.find(g=>g.active)||groups[0]);
- let ActiveIcon=$derived(sectionIcons[groups.findIndex(g=>g.active)]||guideIcon);
- let windowed=$derived(visibleProgress(active.screens,active.current,5));
+ let activeIndex=$derived(Math.max(0,groups.findIndex(g=>g.active)));
+ // Design-book words (progress-rail § Copy rules): `<name> · Step n`, then `unit n of m` with `more ahead` or `last unit`; `complete` once the session is done.
+ let stageWords=$derived(active.current<0?`${active.title} · Step ${activeIndex+1} · complete`:`${active.title} · Step ${activeIndex+1} · unit ${active.current+1} of ${active.screens.length} · ${active.current<active.screens.length-1?'more ahead':'last unit'}`);
 </script>
 {#if overview}
  <div class="progress-overview" aria-label="Session sections">
@@ -23,23 +22,17 @@
   {/each}
  </div>
 {:else}
- <button class="session-progress" aria-label="Session progress: open section overview" onclick={onopen}>
-  <span class="section-progress-line">
-   {#each groups as group}
-    <span class="section-progress-segment" class:active={group.active} style:--position={group.positionRatio*100+'%'} aria-hidden="true"><span style:width={group.positionRatio*100+'%'}></span></span>
+ <!-- One bar, six stage icons (cookbook design/alpha-system/components/progress-rail.md § One bar, adopted 2026-10-08).
+      The per-screen bead row is gone from the bar; within-stage position lives in the overview and in the spoken words. -->
+ <!-- The words live outside the button so assistive tech hears them: a button's aria-label overrides its children. -->
+ <span id="session-progress-words" class="sr-only session-progress-words" role="progressbar" aria-label="Session progress" aria-valuemin="1" aria-valuemax={groups.length} aria-valuenow={activeIndex+1} aria-valuetext={stageWords}>{stageWords}</span>
+ <button class="session-progress" aria-label="Session progress: open section overview" aria-describedby="session-progress-words" onclick={onopen}>
+  <span class="stage-bar" aria-hidden="true">
+   <span class="stage-bar-fill" style:width={`calc(${groups.length>1?activeIndex/(groups.length-1):0} * (100% - 32px))`}></span>
+   {#each groups as group,i}{@const StageIcon=sectionIcons[i]||sectionIcons[0]}
+    <span class="stage-cell" class:complete={i<activeIndex||group.ratio===1} class:current={group.active}><StageIcon size={20}/></span>
    {/each}
-   <span class="sr-only">{active.title}</span>
   </span>
-  <span class="content-progress-line">
-   <span class="current-section-icon" aria-hidden="true"><ActiveIcon size={23}/></span>
-   {#if windowed.before}<MoreHorizontal size={14} aria-hidden="true"/>{/if}
-   {#each windowed.screens as screen}{@const Icon=icons[screen.kind]||guideIcon}
-    <span class="content-progress-bead" class:complete={screen.complete} class:current={screen.current} aria-hidden="true">
-     <Icon size={18}/>
-    </span>
-   {/each}
-   {#if windowed.after}<MoreHorizontal size={14} aria-hidden="true"/>{/if}
-   <span class="sr-only">{Math.max(0,active.current)+1} of {active.screens.length} screens</span>
-  </span>
+  <span class="stage-words" aria-hidden="true"><b>{active.title}</b> · Step {activeIndex+1}</span>
  </button>
 {/if}
