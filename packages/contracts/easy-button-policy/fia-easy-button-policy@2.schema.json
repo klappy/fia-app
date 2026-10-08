@@ -1,0 +1,369 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "fia-easy-button-policy@2",
+  "title": "fia-easy-button-policy@2",
+  "description": "Input and output of decide(): compiled flow x device settings x runtime facts -> primary action, autoplay, viewing cue, hold, reason. No field can hold narration, prompt or title text.",
+  "$defs": {
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "flow",
+        "settings",
+        "facts"
+      ],
+      "properties": {
+        "flow": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "role",
+            "hold",
+            "narration",
+            "focal",
+            "media",
+            "cue"
+          ],
+          "properties": {
+            "role": {
+              "enum": [
+                "guide",
+                "discussion",
+                "scripture",
+                "video"
+              ]
+            },
+            "hold": {
+              "enum": [
+                "manual",
+                "auto"
+              ]
+            },
+            "narration": {
+              "enum": [
+                "none",
+                "bound",
+                "preparable",
+                "blocked"
+              ]
+            },
+            "focal": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "kind",
+                "descriptionAudio"
+              ],
+              "properties": {
+                "kind": {
+                  "enum": [
+                    "image",
+                    "map",
+                    "video",
+                    "term",
+                    "scripture",
+                    null
+                  ]
+                },
+                "descriptionAudio": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "media": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "video"
+              ],
+              "properties": {
+                "video": {
+                  "enum": [
+                    "bound",
+                    "none"
+                  ]
+                }
+              }
+            },
+            "cue": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "pauseOnly"
+              ],
+              "properties": {
+                "pauseOnly": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        },
+        "settings": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "guideNarration",
+            "readScripture",
+            "describeImages",
+            "autoplayVideo"
+          ],
+          "properties": {
+            "guideNarration": {
+              "type": "boolean"
+            },
+            "readScripture": {
+              "type": "boolean"
+            },
+            "describeImages": {
+              "type": "boolean"
+            },
+            "autoplayVideo": {
+              "type": "boolean"
+            }
+          }
+        },
+        "facts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "phase",
+            "mode",
+            "detour",
+            "inTransition",
+            "mediaLoading",
+            "videoLoading",
+            "playbackPending",
+            "playing",
+            "inlineVideo",
+            "audioActive",
+            "audioContext",
+            "started",
+            "introduced",
+            "visualHeard",
+            "playbackConsent",
+            "automaticStart",
+            "requestStarting",
+            "status",
+            "preparation"
+          ],
+          "properties": {
+            "phase": {
+              "enum": [
+                "loading",
+                "starting",
+                "verified"
+              ]
+            },
+            "mode": {
+              "enum": [
+                "bundled",
+                "executable"
+              ]
+            },
+            "detour": {
+              "type": "boolean"
+            },
+            "inTransition": {
+              "type": "boolean"
+            },
+            "mediaLoading": {
+              "type": "boolean"
+            },
+            "videoLoading": {
+              "type": "boolean"
+            },
+            "playbackPending": {
+              "type": "boolean"
+            },
+            "playing": {
+              "type": "boolean"
+            },
+            "inlineVideo": {
+              "type": "boolean"
+            },
+            "audioActive": {
+              "type": "boolean"
+            },
+            "audioContext": {
+              "type": "boolean"
+            },
+            "started": {
+              "type": "boolean"
+            },
+            "introduced": {
+              "type": "boolean"
+            },
+            "visualHeard": {
+              "type": "boolean"
+            },
+            "playbackConsent": {
+              "type": "boolean"
+            },
+            "automaticStart": {
+              "type": "boolean"
+            },
+            "requestStarting": {
+              "type": "boolean"
+            },
+            "status": {
+              "enum": [
+                "ready",
+                "playing",
+                "paused",
+                "waiting",
+                "complete"
+              ]
+            },
+            "preparation": {
+              "enum": [
+                "none",
+                "available",
+                "preparing",
+                "ready",
+                "failed"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "primary",
+        "autoplay",
+        "viewingCue",
+        "hold",
+        "reason",
+        "reasons"
+      ],
+      "properties": {
+        "primary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "action",
+            "verified"
+          ],
+          "properties": {
+            "action": {
+              "enum": [
+                "verifying",
+                "starting",
+                "pause",
+                "begin-again",
+                "continue",
+                "resume",
+                "play-video",
+                "play",
+                "listen",
+                "return",
+                "begin"
+              ]
+            },
+            "verified": {
+              "enum": [
+                "pause",
+                "begin-again",
+                "continue",
+                "resume",
+                "play-video",
+                "play",
+                "listen",
+                "return",
+                "begin"
+              ]
+            }
+          }
+        },
+        "autoplay": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "arrival",
+            "afterNarration",
+            "detourVideo"
+          ],
+          "properties": {
+            "arrival": {
+              "enum": [
+                "none",
+                "narration",
+                "prepare",
+                "describe",
+                "silent"
+              ]
+            },
+            "afterNarration": {
+              "enum": [
+                "none",
+                "describe",
+                "video"
+              ]
+            },
+            "detourVideo": {
+              "type": "boolean"
+            }
+          }
+        },
+        "viewingCue": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "skipNarration"
+          ],
+          "properties": {
+            "skipNarration": {
+              "type": "boolean"
+            }
+          }
+        },
+        "hold": {
+          "enum": [
+            "manual",
+            "auto"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "pattern": "^[EB][0-9]{1,2}$"
+        },
+        "reasons": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "primary",
+            "arrival",
+            "afterNarration",
+            "detourVideo",
+            "viewingCue"
+          ],
+          "properties": {
+            "primary": {
+              "type": "string",
+              "pattern": "^[EB][0-9]{1,2}$"
+            },
+            "arrival": {
+              "type": "string",
+              "pattern": "^A[0-9]$"
+            },
+            "afterNarration": {
+              "type": "string",
+              "pattern": "^F[0-9]$"
+            },
+            "detourVideo": {
+              "type": "string",
+              "pattern": "^D[0-9]$"
+            },
+            "viewingCue": {
+              "type": "string",
+              "pattern": "^V[0-9]$"
+            }
+          }
+        }
+      }
+    }
+  }
+}

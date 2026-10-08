@@ -27,6 +27,9 @@
  import {demoVideoSource} from './lib/video-demo.js';
  import {bundledPack,libraryAdapter,hasUnresolvedInstructions,registerWorker,RESTORE_TIMEOUT_MS,restoreUnreachable} from './lib/library.js';
  import {saveProgress,restoreProgress,resetProgress} from './lib/session-store.js';
+ import {decide} from '../../../packages/contracts/easy-button-policy/index.mjs';
+ import {policyInputFrom,decideSafely} from './lib/easy-button-input.js';
+ import {labelFor} from './lib/primary-labels.js';
  import {noticeScope,noticeEnded} from './lib/notice-scope.js';
  let selectedPack=$state(bundledPack),rawPresentation=$state.raw(bundledPresentation),downloadedPaths=$state(new Set()),downloadedAudioDescriptors=$state(new globalThis.Map());
  let executionPresentation=$derived(executablePresentationView(rawPresentation));
@@ -91,7 +94,9 @@
   }catch(error){if(owner===mediaGeneration){revokePlayback();notice=error.message;dispatch({type:'PAUSE'});}}
   finally{if(owner===mediaGeneration)mediaLoading=false;}
  }
- function executablePrimaryLabel(){return finished?'Begin again':inTransition||session.detour||automaticOff||session.status==='waiting'||!executablePlayable?'Continue':isPlaying||playbackPending?'Pause':audio?.active&&audioContext?'Resume':!started?'Begin':'Play';}
+ // fia-easy-button-policy@2: the primary action, autoplay and the viewing cue come from decide(); the client only builds the input.
+ function policyInput(overrides={}){return policyInputFrom({executableMode,executableAction,presentationId:rawPresentation.id,activity,focal,matchingVideo,session,muted,inTransition,isPlaying,inlineVideo,mediaLoading,videoLoading:videoDeliveryState.loading,playbackPending,audioActive:audio?.active,audioContext,started,introduced,visualHeard,playbackConsent,preparationAvailable:!!preparationRequest&&hasGuidePreparation(selectedPack,preparationRequest),preparationBusy,preparationStatus:currentPreparation?.status,requestStarting,verifying,starting:startPending||startBurst&&isPlaying,...overrides});}
+ function decideNow(overrides){return decideSafely(decide,()=>policyInput(overrides));}
  function executablePrimary(){
   if(inTransition){navigate({type:'CONTINUE'},true);return;}if(finished){reset();return;}
   if(automaticOff||session.status==='waiting'||!executablePlayable){navigate({type:'CONTINUE'},true);return;}
@@ -284,12 +289,12 @@
  // Preparation is primary only when no higher-priority playback or visual action owns the control.
  // requestableNarration already excludes transitions, detours and completed sessions.
  let primaryStartsPreparation=$derived(!executableMode&&!isPlaying&&!playbackPending&&!inlineVideo&&!videoDeliveryState.loading&&!videoPending&&!visualPending&&!!preparationRequest&&hasGuidePreparation(selectedPack,preparationRequest)&&!automaticOff&&!audioContext&&!preparationBusy&&!mediaLoading&&!requestStarting&&['ready','paused'].includes(session.status));
- let primaryLabel=$derived(executableMode&&!session.detour?executablePrimaryLabel():finished?'Begin again':inTransition?'Continue':automaticOff&&!session.detour?'Continue':isPlaying||playbackPending?'Pause':inlineVideo?'Resume':audio?.active&&audioContext?'Resume':videoPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)?'Play video':visualPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)?'Play':session.detour?(visual?'Return':focal?.kind==='video'?'Play video':focal?.descriptionAudio?'Listen':'Return'):primaryStartsPreparation?(!started?'Begin':'Play'):session.status==='waiting'||automaticOff||!activity?.audioSrc?'Continue':session.status==='paused'?'Resume':!started?'Begin':'Play');
+ let decision=$derived(decideNow());
+ let primaryLabel=$derived(labelFor(decision.primary.verified));
  // In manual mode the centre stays Continue; elsewhere an accepted start owns the face until sound.
  let startPending=$derived(!isPlaying&&(mediaLoading||preparationBusy||requestStarting||clipPending||videoDeliveryState.loading||videoPlayPending));
  let carrying=$derived(requestStarting||mediaLoading||clipPending);
- let primaryStarting=$derived(!(automaticOff&&!session.detour)&&!finished&&!inTransition&&(startPending||startBurst&&isPlaying));
- let primaryFace=$derived(easyFace({verifying,starting:primaryStarting,label:primaryLabel}));
+ let primaryFace=$derived(easyFace({verifying:decision.primary.action==='verifying',starting:decision.primary.action==='starting',label:primaryLabel}));
  let manualStarts=new Set();let listeningHint=$state(false),hintShown=false;
  let manualAvailable=$derived(executableMode&&!session.detour?executablePlayable:!!(preparationRequest||matchingVideo||focal?.kind==='video'&&(focal.src||focal.videoPrepared)||focal?.descriptionAudio||activity?.audioSrc));
  // R6/K4: while verifying, the device check has not answered, so the Next slot follows what this screen
@@ -356,20 +361,22 @@
   if(context.type==='response')return;
   introduced=new Set([...introduced,context.id]);
   const before=session.index;dispatch({type:'NARRATION_END',activityId:context.id});
-  if(session.index!==before){scheduleNext();}
-  else if(!executableMode&&!session.detour&&visual&&(session.preferences.describeImages&&focal?.descriptionAudio||session.preferences.autoplayVideo&&matchingVideo)){describe(focal.id);}
-  else if(!executableMode&&!session.detour&&activity?.kind==='video'&&session.preferences.autoplayVideo){timer=setTimeout(()=>{if(session.preferences.autoplayVideo)playVideo();},350);}
+  if(session.index!==before){scheduleNext();return;}
+  const afterNarration=decideNow().autoplay.afterNarration;
+  if(afterNarration==='describe'){describe(focal.id);}
+  else if(afterNarration==='video'){timer=setTimeout(()=>{if(session.preferences.autoplayVideo)playVideo();},350);}
  }
  function scheduleNext(){
-  if(!playbackConsent)return;
-  if(session.status==='complete'||session.detour||inTransition)return;
+  // A1 no consent, A2 complete/detour/transition: nothing, not even the visual authorization.
+  if(['A1','A2'].includes(decideNow().reasons.arrival))return;
   authorizeVisual(false);
-  if(executableMode){if(executablePlayable&&!automaticOff)void playExecutableNarration({automatic:true});else settleSilent();return;}
-  if(!activity.audioSrc){if(preparationRequest&&hasGuidePreparation(selectedPack,preparationRequest)&&!automaticOff){void playRequestedNarration({automatic:true});return;}settleSilent();if(activity.kind==='scripture'&&session.preferences.readScripture)notice='No recording is available for this Scripture passage. You can read it and continue.';if(visual&&(session.preferences.autoplayVideo&&matchingVideo||session.preferences.describeImages&&focal?.descriptionAudio)||focal?.kind==='term'&&!muted&&focal.descriptionAudio)describe(focal.id);return;}
-  if(automaticOff&&visual&&(session.preferences.autoplayVideo&&matchingVideo||session.preferences.describeImages&&focal?.descriptionAudio)){describe(focal.id);return;}
+  const arrival=decideNow().autoplay.arrival;
+  if(executableMode){if(arrival==='narration')void playExecutableNarration({automatic:true});else settleSilent();return;}
+  if(!activity.audioSrc){if(arrival==='prepare'){void playRequestedNarration({automatic:true});return;}settleSilent();if(activity.kind==='scripture'&&session.preferences.readScripture)notice='No recording is available for this Scripture passage. You can read it and continue.';if(arrival==='describe')describe(focal.id);return;}
+  if(arrival==='describe'){describe(focal.id);return;}
   const id=activity.id,generation=selectionGeneration;
   if(activity.kind==='scripture'&&!session.preferences.readScripture){notice='The passage is ready for you to read. Continue when you’re ready.';return;}
-  if(!automaticOff){playbackPending=true;timer=setTimeout(()=>{playbackPending=false;if(playbackConsent&&generation===selectionGeneration&&activity.id===id&&!session.detour)playActivity(false,true);},650);}
+  if(arrival==='narration'){playbackPending=true;timer=setTimeout(()=>{playbackPending=false;if(playbackConsent&&generation===selectionGeneration&&activity.id===id&&!session.detour)playActivity(false,true);},650);}
  }
  function playActivity(forceReading=false,automatic=false){
   if(automatic&&!playbackConsent)return;
@@ -380,7 +387,7 @@
   if(executableMode){if(executablePlayable&&(!automatic||!automaticOff))void playExecutableNarration({automatic});else settleSilent();return;}
   started=true;notice='';
   // A viewing-pause cue is only appropriate when there is nothing to play.
-  if(visual&&!muted&&/I will pause the audio here/i.test(activity.narration||'')&&((matchingVideo&&(!automatic||session.preferences.autoplayVideo))||(session.preferences.describeImages&&focal.descriptionAudio))){
+  if(decideNow({automatic}).viewingCue.skipNarration){
    cancel();introduced=new Set([...introduced,activity.id]);
    session={...session,status:'waiting'};persist();describe(focal.id,!automatic);return;
   }
@@ -445,7 +452,7 @@
   const hadPlaybackConsent=playbackConsent,priorIndex=session.index,forward=auto&&event.type==='CONTINUE';revokePlayback();
   if(inTransition&&event.type==='CONTINUE'){cancel();transitionSection=null;persist();authorizeVisual();if(forward)beginForwardPlayback();return;}
   cancel();visualHeard=null;dispatch(event);notice='';settleSilent();authorizeVisual();
-  if(event.type==='DETOUR'&&assets[event.assetId]?.kind==='video'&&session.preferences.autoplayVideo&&hadPlaybackConsent){playbackConsent=true;queueVideoPlay();}
+  if(event.type==='DETOUR'&&decideNow({session:{...session,detour:event.assetId||true},focal:assets[event.assetId],playbackConsent:hadPlaybackConsent}).autoplay.detourVideo){playbackConsent=true;queueVideoPlay();}
   if(forward&&session.index!==priorIndex)beginForwardPlayback();
  }
  function reset(){if(deferVideo(reset))return;stopVisual();visualOwner.clear();cancel();const preferences={...session.preferences};const mode=session.mode;dispatch({type:'RESET'});session={...session,preferences,mode};introduced=new Set();started=false;messages=[];persist();}
