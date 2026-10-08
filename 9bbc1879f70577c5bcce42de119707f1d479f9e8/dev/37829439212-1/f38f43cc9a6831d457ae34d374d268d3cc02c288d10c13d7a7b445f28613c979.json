@@ -1,0 +1,51 @@
+{
+  "schema": "fia-listening-persona-summary@1",
+  "commit": "9bbc1879f70577c5bcce42de119707f1d479f9e8",
+  "environment": "dev",
+  "runId": "37829439212",
+  "attempt": "1",
+  "workflowUrl": "https://github.com/klappy/fia-app/actions/runs/37829439212",
+  "scope": "Agent-operated observations; not human research or acoustic/device proof. Hosted and controlled protocol scopes are separate.",
+  "scenario": {
+    "key": "9bbc1879f70577c5bcce42de119707f1d479f9e8/dev/P2 Scripture ON must deliver actual BSB playback",
+    "scenario": "P2 Scripture ON must deliver actual BSB playback",
+    "scope": "hosted-rendered-native",
+    "outcome": "failed",
+    "validation": {
+      "validator": "verify",
+      "ok": false,
+      "environment": "dev",
+      "commit": "9bbc1879f70577c5bcce42de119707f1d479f9e8",
+      "errors": [
+        "Scenario did not pass once: P2 settings and place persist without hidden writes or surprise sound"
+      ],
+      "scope": "Live Chromium P2 listening only; no physical-device or audible-output claim"
+    },
+    "failedStep": "Scenario did not pass once: P2 settings and place persist without hidden writes or surprise sound",
+    "observedFriction": {
+      "classification": "observation-only",
+      "notices": [
+        {
+          "kind": "visible-notices",
+          "text": []
+        }
+      ],
+      "assessment": "Not inferred from pass/fail; review attached observations"
+    },
+    "userFeedback": {
+      "status": "not-collected"
+    },
+    "evidence": {
+      "name": "live-listening-evidence",
+      "sha256": "0b4168806cc97c8fa91db156eee51f6e09c7cb0c58efc039589ad1168ed64ef5",
+      "workflowArtifacts": "test-results (trace/video retention is finite)"
+    },
+    "baselineComparison": {
+      "baselineCommit": "ea42d4297ed9d78eb7c0aa23a9e46ae14bf75f6c",
+      "priorOutcome": "not-covered",
+      "currentOutcome": "failed",
+      "archivePath": "ea42d4297ed9d78eb7c0aa23a9e46ae14bf75f6c/dev/37829359383-1/f38f43cc9a6831d457ae34d374d268d3cc02c288d10c13d7a7b445f28613c979.json",
+      "scope": "Outcome comparison only; no sentiment inference"
+    }
+  }
+}
