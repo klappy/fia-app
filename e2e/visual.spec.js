@@ -27,7 +27,9 @@ const find=predicate=>{const index=pack.activities.findIndex(predicate);if(index
 // one-bar / stage-icon design book as mocked on 2026-10-08 (cookbook design/alpha-system/components/progress-rail.md
 // § One bar; tokens.md § Icon vocabulary; cookbook #234, #235; app #210, #211; release/changes/one-bar-stage-icons.md).
 // These are recorded as new-state evidence with independent visual review required, never as a renamed parity PASS.
-// The pinned reference is unchanged. Sheet-only states (settings, languages, passages, about) keep parity as before.
+// The pinned reference is unchanged. Plainly: with all eleven reference states authorized, THIS CANDIDATE HAS NO PARITY
+// COMPARISON — the four width/theme shells pass with zero compared states — and parity resumes only when the reference
+// is re-pinned to the adopted design. The four sheet states were already outside parity before this change.
 const authorizedChangedStates=new Set(['initial-guide','grouped-reading','scripture','discussion','image','map','term-instruction','term-definition','section-transition','progress-overview','menu']);
 const states=[
  {name:'initial-guide',index:0,initial:true},
