@@ -16,10 +16,12 @@
  * Install before navigation: await page.addInitScript(iosPlayback, {start: 'hang'}).
  * Options: start 'hang' | 'reject'; windowMs; primeSourceless (whether a play() on an element with
  * no source counts as the gesture's start, as WebKit does); rate (playback speed for every clip, to
- * keep walks short). playbackLog(page) reads each clip handed to an element (sources: when, and
+ * keep walks short); loadResets (default true: a load() on an element left with no source, the old
+ * teardown, returns it to locked; not measured on a device, so the stricter reading is the default).
+ * playbackLog(page) reads each clip handed to an element (sources: when, and
  * whether its loading was held), each play() and its outcome, and each 'playing'.
  */
-export function iosPlayback({start = 'hang', windowMs = 5000, primeSourceless = true, rate = 1} = {}) {
+export function iosPlayback({start = 'hang', windowMs = 5000, primeSourceless = true, rate = 1, loadResets = true} = {}) {
  if (window.__iosPlayback) return;
  const log = window.__iosPlayback = {sources: [], plays: [], playing: [], elements: 0};
  const now = () => Math.round(performance.now());
@@ -32,7 +34,7 @@ export function iosPlayback({start = 'hang', windowMs = 5000, primeSourceless = 
  const unlocked = new WeakSet(), held = new WeakMap(), ids = new WeakMap();
  const media = HTMLMediaElement.prototype;
  const srcProperty = Object.getOwnPropertyDescriptor(media, 'src'), rateProperty = Object.getOwnPropertyDescriptor(media, 'playbackRate');
- const nativePlay = media.play, nativeRemoveAttribute = Element.prototype.removeAttribute;
+ const nativePlay = media.play, nativeLoad = media.load, nativeRemoveAttribute = Element.prototype.removeAttribute;
  const gated = el => el.localName === 'audio' && !el.muted && !unlocked.has(el);
  const id = el => {
   if (!ids.has(el)) {
@@ -52,6 +54,10 @@ export function iosPlayback({start = 'hang', windowMs = 5000, primeSourceless = 
    held.delete(this); srcProperty.set.call(this, value);
   }});
  Element.prototype.removeAttribute = function (name) { if (this instanceof HTMLMediaElement && name === 'src') held.delete(this); return nativeRemoveAttribute.call(this, name); };
+ media.load = function () {
+  if (loadResets && this.localName === 'audio' && !held.has(this) && !this.getAttribute('src')) { unlocked.delete(this); log.resets = (log.resets || 0) + 1; }
+  return nativeLoad.call(this);
+ };
  // new Audio(src) sets its source natively, so route it through the setter above.
  const NativeAudio = window.Audio;
  window.Audio = class Audio extends NativeAudio { constructor(...args) { super(); id(this); if (args.length && args[0] !== undefined) this.src = args[0]; } };

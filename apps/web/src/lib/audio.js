@@ -12,6 +12,11 @@ export function createAudioController(onState, onEnd, onError, { allowSpeechFall
   // iOS lets an element start without a tap only once a tap has started that same element, so every
   // clip plays on one element (its source swapped), which the first tap unlocks (unlock()).
   let element = null, unlocked = false, startBound = null, attempt = 0;
+  // The clip has reached sound: its own 'playing' or a resolved play(). A timeupdate alone is not sound, since the
+  // element keeps the previous clip and the next source swap queues one before any sound.
+  let sounding = false;
+  // The source the element holds: release keeps it, so a replay sets the same value again.
+  let heldSource = null;
   const mediaElement = () => element || (element = new Audio());
   function clearStartBound() { clearTimeout(startBound); startBound = null; }
   function boundStart(owner, gen, message) {
@@ -33,10 +38,12 @@ export function createAudioController(onState, onEnd, onError, { allowSpeechFall
     onState({ src: source, playing: speaking, elapsed, duration, ...progress });
   };
   function releaseAudio() {
-    clearBoundary(); clearStartBound(); range = null; prepareRange = null;
+    clearBoundary(); clearStartBound(); range = null; prepareRange = null; sounding = false;
     const old = audio;
     audio = null; source = null;
-    if (old) { old.pause(); old.removeAttribute('src'); old.load(); }
+    // Pause only: emptying the shared element's source and calling load() can return it to locked on
+    // iOS, and the next clip's source swap reloads it anyway (see sounding for the timeupdate it queues).
+    if (old) old.pause();
   }
   function stop() {
     generation++;
@@ -75,7 +82,7 @@ export function createAudioController(onState, onEnd, onError, { allowSpeechFall
       boundStart(owner, gen, message);
       Promise.resolve(started).then(() => {
         if (current !== attempt || gen !== generation || audio !== owner) return;
-        speaking = !paused && !owner.paused;
+        sounding = true; speaking = !paused && !owner.paused;
         state();
         if (range) armBoundary(owner, gen);
       }).catch(error => { if (current === attempt) playbackRejected(error, owner, gen, message); });
@@ -146,16 +153,17 @@ export function createAudioController(onState, onEnd, onError, { allowSpeechFall
     }
     if (!src) { speak(text, gen, rate); return; }
     const owner = mediaElement();
-    owner.src = src;
+    const replay = heldSource === src;
+    owner.src = src; heldSource = src;
     audio = owner; source = src; owner.playbackRate = rate;
     const current = () => gen === generation && audio === owner;
     const update = () => {
       if (!current()) return;
-      speaking = !paused && !owner.paused; state();
+      speaking = sounding && !paused && !owner.paused; state();
       if (range?.ready) armBoundary(owner, gen);
     };
     owner.ontimeupdate = update;
-    owner.onplaying = update;
+    owner.onplaying = () => { if (current()) sounding = true; update(); };
     owner.onratechange = update;
     owner.ondurationchange = () => { if (current() && range?.ready) armBoundary(owner, gen); };
     owner.onended = () => {
@@ -173,6 +181,8 @@ export function createAudioController(onState, onEnd, onError, { allowSpeechFall
     boundStart(owner, gen, message);
     if (!range) {
       owner.onloadedmetadata = update; owner.onseeked = null;
+      // The spec reloads on a same-value source set (Chromium does); a browser that does not would resume mid-file.
+      if (replay) { try { owner.currentTime = 0; } catch {} }
       startAudio(owner, gen, message);
       return;
     }

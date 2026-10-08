@@ -38,7 +38,7 @@ run('deadline ends once without timeupdate and late natural ended cannot duplica
  owner.onended();owner.ontimeupdate();await tick();assert.equal(e.ends,1);
 });
 run('frame callback independently enforces boundary',async e=>{
- const owner=await e.start();const frame=[...e.frames.values()][0];owner._time=8.01;frame();assert.equal(e.ends,1);assert.equal(owner.src,'');
+ const owner=await e.start();const frame=[...e.frames.values()][0];owner._time=8.01;frame();assert.equal(e.ends,1);assert.equal(owner.paused,true);assert.equal(e.controller.active,false);assert.equal(e.states.at(-1).src,null);
 });
 run('pause before metadata and seek cannot autoplay, resume retains range',async e=>{
  e.controller.play('source','blob:x',1,{startSeconds:3,endSeconds:8});const owner=e.owners[0];e.controller.pause();owner.metadata();owner.seeked();await tick();assert.equal(owner.calls,0);
@@ -172,6 +172,17 @@ run('every clip plays on one element, which a tap unlocks once while it is idle'
  const first=await e.start();first._time=8;[...e.frames.values()][0]();assert.equal(e.ends,1);
  const second=await e.start({startSeconds:10,endSeconds:12});
  assert.equal(first,element);assert.equal(second,element);assert.equal(e.owners.length,1);assert.equal(element.src,'blob:verified');assert.equal(e.controller.playing,true);
+});
+// Review of #208: the element keeps a finished clip, so the next clip's source swap resets the playhead and the
+// browser queues a timeupdate that reaches the new clip's handlers after play() has cleared paused, before any sound.
+run('a reset timeupdate from the previous clip is not sound: the next clip left pending is still handed back at the bound',async e=>{
+ e.controller.play('first','blob:first',1);const element=e.owners.at(-1);await tick();assert.equal(e.controller.playing,true);
+ element.onended();assert.equal(e.ends,1);
+ element.promise=new Promise(()=>{});e.controller.play('second','blob:second',1);await tick();
+ assert.equal(element.paused,false);element.ontimeupdate();
+ assert.equal(e.controller.playing,false);assert.equal(e.states.at(-1).playing,false);assert.ok(bound(e),'the start bound stays armed');
+ bound(e).callback();assert.deepEqual(e.errors,[PAUSED_AUTOMATIC]);assert.equal(e.controller.active,true);
+ element.promise=null;assert.equal(e.controller.resume(),true);await tick();assert.equal(e.controller.playing,true);
 });
 run('a tap never unlocks over a clip the element holds',async e=>{
  const owner=await e.start();const calls=owner.calls;e.controller.unlock();
