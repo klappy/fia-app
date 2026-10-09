@@ -357,6 +357,21 @@ it('the FIA menu drops Language and Passages, which the overview carries (fb-03 
  await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));
  expect(screen.getByRole('button',{name:/^Language/})).toBeTruthy();expect(screen.getByRole('button',{name:/^Passages/})).toBeTruthy();
 });
+it('the FIA menu dialog is named and returns focus to More when it closes (fb-03 S4)',async()=>{
+ await startAt('S01-U001');const more=screen.getByRole('button',{name:'More options'});
+ await fireEvent.click(more);await settle();
+ // The menu's header is empty and collapsed, so the dialog carries its own name.
+ expect(screen.getByRole('dialog',{name:'More options'}).querySelector('.scene-menu')).toBeTruthy();
+ await fireEvent.click(document.querySelector('.menu-footer .menu-close'));await settle();
+ expect(document.querySelector('.scene-menu')).toBeNull();expect(document.activeElement).toBe(more);
+ // Escape closes it too, with the same return.
+ await fireEvent.click(more);await settle();more.blur();
+ await fireEvent.keyDown(screen.getByRole('dialog',{name:'More options'}),{key:'Escape'});await settle();
+ expect(document.querySelector('.scene-menu')).toBeNull();expect(document.activeElement).toBe(more);
+ // Language and Passages are no longer sheets of their own; only Downloads opens from the menu into the library panel.
+ await fireEvent.click(more);await fireEvent.click(screen.getByRole('button',{name:'Downloads',exact:true}));await settle();
+ expect(screen.getByRole('dialog',{name:''}).querySelector('.sheet-back')).toBeTruthy();
+});
 it('the mini map exposes every visible screen and jumps directly to a chosen image without a section detour',async()=>{
  await startAt('S01-U003');await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));
  expect(document.querySelectorAll('.progress-map-item')).toHaveLength(111);
