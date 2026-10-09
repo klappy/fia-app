@@ -1,0 +1,42 @@
+{
+  "schema": "fia-listening-persona-summary@1",
+  "commit": "222b853ce318d8ccd07f33e4bf697b26a314a5df",
+  "environment": "dev",
+  "runId": "37909557961",
+  "attempt": "1",
+  "workflowUrl": "https://github.com/klappy/fia-app/actions/runs/37909557961",
+  "scope": "Agent-operated observations; not human research or acoustic/device proof. Hosted and controlled protocol scopes are separate.",
+  "scenario": {
+    "key": "222b853ce318d8ccd07f33e4bf697b26a314a5df/dev/Controlled Ready stays silent until explicit Play",
+    "scenario": "Controlled Ready stays silent until explicit Play",
+    "scope": "controlled-local-protocol-fixture; real native media, not hosted Worker",
+    "outcome": "passed",
+    "validation": {
+      "validator": "verifyControlled",
+      "ok": true,
+      "errors": []
+    },
+    "failedStep": null,
+    "observedFriction": {
+      "classification": "observation-only",
+      "notices": [],
+      "assessment": "Not inferred from pass/fail; review attached observations"
+    },
+    "userFeedback": {
+      "status": "not-collected"
+    },
+    "evidence": {
+      "name": "controlled-pending.json",
+      "sha256": "d4eb5edcacd1b684ca253dea637ab5d7b03c0909a1c3c2bab331dad881d657f5",
+      "claimMode": "manual",
+      "loadedCommit": "222b853ce318d8ccd07f33e4bf697b26a314a5df"
+    },
+    "baselineComparison": {
+      "baselineCommit": "c5b1d1f40124a6bf92f52efc46f53ed2301f5f49",
+      "priorOutcome": "passed",
+      "currentOutcome": "passed",
+      "archivePath": "c5b1d1f40124a6bf92f52efc46f53ed2301f5f49/dev/37903159262-1/571aab3e057c1d8e92cb3f1c7639209c408a4737a5801387ea9e3ec50b682509.json",
+      "scope": "Outcome comparison only; no sentiment inference"
+    }
+  }
+}
