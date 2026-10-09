@@ -144,8 +144,8 @@ button{min-height:48px}.scene-notice button{min-width:48px;min-height:48px}.kept
 @media(prefers-reduced-transparency:reduce){.sheet.glass-sheet,.glass-sheet .sheet-header{background:var(--surface);-webkit-backdrop-filter:none;backdrop-filter:none}}
 
 /* One generous hit area lets visual spacing stay compact and even. */
-.session-progress{display:flex;flex-direction:column;gap:16px;padding:16px 0 10px;height:92px;box-sizing:border-box;justify-content:flex-start}
-/* Top band (cookbook progress-rail § One bar, captain 2026-10-08 23:40–23:52 ET): gaps measured from the ring (the visual edge, 5 px outside the circle): top→ring 11 · ring→words 11 · words→bottom ≈11, i.e. padding 16 / gap 16 / padding 10 around the 32 px circles and the 17.5 px label line = 92.
+.session-progress{display:flex;flex-direction:column;gap:14px;padding:14px 0 14.5px;height:92px;box-sizing:border-box;justify-content:flex-start}
+/* Top band (cookbook progress-rail § One bar, captain 2026-10-08 23:40–23:52 ET): three equal gaps measured from the 32 px circle row, never from the current cell's ring (captain 2026-10-09 01:18 ET): 14 · circles 32 · 14 · words 17.5 · 14.5 = 92; the ring is a halo and lives inside the gaps.
    No track: six 32 px cells overlapping 2 px, stacked outward from the current cell (z-index set inline); the current cell's 2 px ring is the
    within-stage arc — elapsed in --text-title from 12 o'clock, remainder in --paper-300 — on the OG ring geometry (3 px gap + 2 px). */
 .stage-bar{position:relative;display:flex;justify-content:center;align-items:center;height:32px}
