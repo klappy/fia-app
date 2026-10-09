@@ -27,10 +27,11 @@
  <!-- The words live outside the button so assistive tech hears them: a button's aria-label overrides its children. -->
  <span id="session-progress-words" class="sr-only session-progress-words" role="progressbar" aria-label="Session progress" aria-valuemin="1" aria-valuemax={groups.length} aria-valuenow={activeIndex+1} aria-valuetext={stageWords}>{stageWords}</span>
  <button class="session-progress" aria-label="Session progress: open section overview" aria-describedby="session-progress-words" onclick={onopen}>
+  <!-- Top band (progress-rail § One bar, captain 2026-10-08 23:40–23:52 ET): no track; cells overlap 2 px and stack outward from the
+       current cell; the current cell's 2 px ring is the within-stage progress arc (tick at the first screen, solid at the last). -->
   <span class="stage-bar" aria-hidden="true">
-   <span class="stage-bar-fill" style:width={`calc(${groups.length>1?activeIndex/(groups.length-1):0} * (100% - 32px))`}></span>
    {#each groups as group,i}{@const StageIcon=sectionIcons[i]||sectionIcons[0]}
-    <span class="stage-cell" class:complete={i<activeIndex||group.ratio===1} class:current={group.active}><StageIcon size={20}/></span>
+    <span class="stage-cell" class:complete={i<activeIndex||group.ratio===1} class:current={group.active} style:z-index={groups.length-Math.abs(i-activeIndex)} style:--arc={group.active?`${Math.round(100*(group.current<0?1:(group.current+1)/Math.max(1,group.screens.length)))}%`:'0%'}><StageIcon size={20}/></span>
    {/each}
   </span>
   <span class="stage-words" aria-hidden="true"><b>{active.title}</b> · Step {activeIndex+1}</span>

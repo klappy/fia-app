@@ -27,7 +27,7 @@
 .primary-disc{width:72px;height:72px;border-radius:var(--r-pill);display:grid;place-items:center;background:var(--surface-inverse);color:var(--text-on-inverse);border:.5px solid rgba(255,255,255,.14);box-shadow:var(--shadow-night)}
 .primary-label{margin-top:-10px;font:var(--fw-semibold) var(--fs-subtitle)/1.15 var(--font-core);color:var(--text-title)}
 .words-stage{padding:100px 8vw 190px}.words-stage h1{font-family:var(--font-core);font-size:clamp(26px,3vw,42px);line-height:1.4;text-wrap:pretty;font-weight:400;max-width:900px}
-.reading-heading{padding-top:100px;color:var(--ink-500);font-family:var(--font-core)}.reading-heading small{display:block;font-size:13px;margin-top:8px}
+.reading-heading{padding-top:116px;color:var(--ink-500);font-family:var(--font-core)}.reading-heading small{display:block;font-size:13px;margin-top:8px}
 .scripture-scroll{padding-bottom:205px}.scripture-scroll p{font-size:calc(24px * var(--reading-scale))}
 .term-stage{max-width:780px;margin:auto;padding:110px 32px 205px}.term-stage h2{font:var(--type-hero)}.term-stage p{font:400 calc(23px * var(--reading-scale))/1.65 var(--font-core);white-space:pre-line}
 .image-well,.video-well{height:calc(100dvh - 170px);padding-top:82px}.image-well img,.image-well:not(.map) img{object-fit:contain}
@@ -35,7 +35,7 @@
 .outline summary{cursor:pointer;min-height:48px;padding:14px 0;font-weight:600}.outline strong{font-size:13px;font-weight:400;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .sheet-body,.sheet-intro,.fine-print,.preference small,.select-row select,.outline small,.outline svg,.outline-number{color:var(--ink-500)}.sheet-body{color:var(--ink-700)}.sheet-header h2{font-family:var(--font-core);font-size:24px}.secondary,.scope-note{background:var(--paper-100);color:var(--ink-700);border-color:var(--paper-100)}
 button{min-height:48px}.scene-notice button{min-width:48px;min-height:48px}.kept-content{bottom:180px}
-@media(max-width:700px){.words-stage{padding:100px 26px 190px}.words-stage h1{font-size:26px}.reading-heading{padding-top:100px}.scene-controls{gap:8px}.scripture-scroll{padding-bottom:205px}.image-well:not(.map) img{object-fit:contain}.asset-caption{bottom:180px}.scene-notice{top:82px}.term-stage{padding-inline:26px}}
+@media(max-width:700px){.words-stage{padding:116px 26px 190px}.words-stage h1{font-size:26px}.reading-heading{padding-top:116px}.scene-controls{gap:8px}.scripture-scroll{padding-bottom:205px}.image-well:not(.map) img{object-fit:contain}.asset-caption{bottom:180px}.scene-notice{top:82px}.term-stage{padding-inline:26px}}
 /* R3: a notice raised while a sheet is open sits in the sheet's sticky header, under its title row, never behind the modal. */
 .sheet-header:has(.sheet-notice){flex-wrap:wrap}.sheet-header .scene-notice.sheet-notice{position:static;transform:none;z-index:auto;order:1;flex:1 0 100%;width:auto;max-width:none;justify-content:space-between}
 
@@ -74,7 +74,7 @@ button{min-height:48px}.scene-notice button{min-width:48px;min-height:48px}.kept
 .visual-expand-hint{position:fixed;z-index:14;left:max(20px,env(safe-area-inset-left));bottom:calc(164px + env(safe-area-inset-bottom));display:grid;place-items:center;color:var(--text-muted);pointer-events:none}
 
 /* Two quiet progress levels; existing navigation and primary control stay intact. */
-.session-progress{position:fixed;z-index:13;top:max(0px,env(safe-area-inset-top));left:26px;right:26px;max-width:688px;margin:auto;background:var(--paper-050)}
+.session-progress{position:fixed;z-index:13;top:max(0px,env(safe-area-inset-top));left:16px;right:16px;max-width:688px;margin:auto;background:var(--paper-050)}
 .progress-section-choice{display:flex;gap:28px;width:100%;min-height:64px;color:var(--text-muted)}
 .progress-section-choice[aria-current=step]{color:var(--text-title)}
 .section-transition{min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:170px 32px;gap:26px;text-align:center}
@@ -144,16 +144,21 @@ button{min-height:48px}.scene-notice button{min-width:48px;min-height:48px}.kept
 @media(prefers-reduced-transparency:reduce){.sheet.glass-sheet,.glass-sheet .sheet-header{background:var(--surface);-webkit-backdrop-filter:none;backdrop-filter:none}}
 
 /* One generous hit area lets visual spacing stay compact and even. */
-.session-progress{display:flex;flex-direction:column;gap:6px;padding:26px 0 14px;min-height:92px}
-/* One bar, six stage icons (cookbook progress-rail § One bar, adopted 2026-10-08): one >=48px control, six cells on one track,
-   visited filled, current ringed; the per-screen beads moved to the overview. */
-.stage-bar{position:relative;display:flex;justify-content:space-between;align-items:center;min-height:48px}
-.stage-bar:before{content:'';position:absolute;left:16px;right:16px;top:50%;height:2px;margin-top:-1px;background:var(--paper-300);z-index:0}
-.stage-bar-fill{position:absolute;left:16px;top:50%;height:2px;margin-top:-1px;background:var(--text-body);z-index:0}
-.stage-cell{position:relative;z-index:1;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:var(--text-muted);background:var(--paper-050);box-shadow:inset 0 0 0 1.5px var(--text-muted)}
+.session-progress{display:flex;flex-direction:column;gap:6px;padding:16px 0;min-height:92px;box-sizing:border-box}
+/* Top band (cookbook progress-rail § One bar, captain 2026-10-08 23:40–23:52 ET): one 16 px margin on every side; stack 16 · 32 · 6 · 22 · 16 = 92.
+   No track: six 32 px cells overlapping 2 px, stacked outward from the current cell (z-index set inline); the current cell's 2 px ring is the
+   within-stage arc — elapsed in --text-title from 12 o'clock, remainder in --paper-300 — on the OG ring geometry (3 px gap + 2 px). */
+.stage-bar{position:relative;display:flex;justify-content:center;align-items:center;height:32px}
+.stage-cell{position:relative;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:var(--text-muted);background:var(--paper-050);box-shadow:inset 0 0 0 1.5px var(--text-muted)}
+.stage-cell+.stage-cell{margin-left:-2px}
 .stage-cell.complete{background:var(--text-body);color:var(--paper-050);box-shadow:none}
-.stage-cell.current{background:var(--text-title);color:var(--paper-050);box-shadow:0 0 0 3px var(--paper-050),0 0 0 5px var(--text-title)}
-.stage-words{font:var(--type-label);color:var(--text-muted);text-align:center}
+.stage-cell.current{background:var(--text-title);color:var(--paper-050);box-shadow:0 0 0 3px var(--paper-050)}
+.stage-cell.current::after{content:'';position:absolute;inset:-5px;border-radius:50%;background:conic-gradient(var(--text-title) var(--arc,0%),var(--paper-300) 0);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 2px));mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 2px));pointer-events:none}
+@property --arc{syntax:'<percentage>';inherits:false;initial-value:0%}
+.stage-cell.current::after{transition:--arc 600ms var(--ease-flow,ease)}
+@media(prefers-reduced-motion:reduce){.stage-cell.current::after{transition:none}}
+[dir=rtl] .stage-cell.current::after{transform:scaleX(-1)}
+.stage-words{font:var(--type-label);color:var(--text-muted);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .stage-words b{color:var(--text-title);font-weight:600}
 
 
