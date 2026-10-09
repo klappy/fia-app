@@ -13,6 +13,7 @@
  import AlignedReading from './components/AlignedReading.svelte';
  import Sheet from './components/Sheet.svelte';
  import SessionProgress from './components/SessionProgress.svelte';
+ import OverviewSheet from './components/OverviewSheet.svelte';
  import SectionTransition from './components/SectionTransition.svelte';
  import {progressSections,progressState} from './lib/progress.js';
  import GuidePrimary from './components/GuidePrimary.svelte';
@@ -602,7 +603,8 @@
    {#if inlineVideo||focal?.kind==='video'}<button class="glass-icon" aria-label={isPlaying?'Pause video':'Play video'} onclick={()=>executableMode?(videoPlaying?videoOwner.node?.pause():playVideo()):automaticOff?manualPlay():primary()}>{#if isPlaying}<Pause size={24}/>{:else}<Play size={24}/>{/if}</button>{/if}
   </div>
  {/if}
- <SessionProgress groups={progress} overview onselect={(id,section)=>{navigate({type:'SEEK_ACTIVITY',activityId:id});transitionSection=section?activity.sectionId:null;persist();sheet=null;}}/>
+ <!-- The overview sheet is the navigation home (cookbook overview-sheet.md, adopted 2026-10-08). A refused open stays on its card while the sheet is open, as in the Passages sheet. -->
+ <OverviewSheet groups={progress} {selectedPack} {language} completed={session.completed.length} total={activities.length} onlanguage={selectLanguage} onreset={restartPack} onclose={()=>sheet=null} onopenpack={async id=>{try{await selectPack(id);}catch(error){if(sheet!=='progress')notice=error?.message||'The passage could not be opened. Try again.';throw error;}}} onnavigate={(id,section)=>{navigate({type:'SEEK_ACTIVITY',activityId:id});transitionSection=section?activity.sectionId:null;persist();sheet=null;}}/>
   {:else if sheet==='settings'}
    <div class="settings-panel">
     <button class="sheet-back" onclick={()=>sheet='menu'}><ChevronLeft size={18}/>FIA menu</button>
