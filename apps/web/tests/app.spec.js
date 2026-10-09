@@ -72,7 +72,7 @@ it('switching passage waits for native release and persists the actual selected 
  vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',nativeName:'English',ready:68}]);vi.spyOn(libraryAdapter,'passages').mockResolvedValue([descriptor]);const select=vi.spyOn(libraryAdapter,'select').mockResolvedValue({descriptor,presentation});
  assets.a112.relatedIds=[];await startAt('S02-U005','waiting');await command('watch the video');const video=document.querySelector('video');
  Object.defineProperty(video,'webkitDisplayingFullscreen',{value:true,writable:true});video.webkitExitFullscreen=vi.fn();await fireEvent(video,new Event('webkitbeginfullscreen'));
- await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passages',exact:true}));await settle();await fireEvent.click(screen.getByRole('button',{name:'Open passage',exact:true}));await settle();
+ await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));await fireEvent.click(screen.getByRole('button',{name:/^Passages/}));await settle();await fireEvent.click(screen.getByRole('button',{name:'Open passage',exact:true}));await settle();
  expect(select).not.toHaveBeenCalled();expect(document.querySelector('video')).toBe(video);expect(localStorage.getItem('fia-v3-selected-pack')).not.toBe(descriptor.id);
  video.webkitDisplayingFullscreen=false;await fireEvent(video,new Event('webkitendfullscreen'));
  await waitFor(()=>expect(localStorage.getItem('fia-v3-selected-pack')).toBe(descriptor.id));expect(select).toHaveBeenCalledTimes(1);
@@ -85,7 +85,7 @@ it('newer passage intent survives an older load resolving during native presenta
  let resolveA;const select=vi.spyOn(libraryAdapter,'select').mockImplementation(id=>id===descriptors[0].id?new Promise(resolve=>resolveA=resolve):Promise.resolve(loaded[1]));
  vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',nativeName:'English',ready:68}]);vi.spyOn(libraryAdapter,'passages').mockResolvedValue(descriptors);
  assets.a112.relatedIds=[];await startAt('S02-U005','waiting');await command('watch the video');const video=document.querySelector('video');
- await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passages',exact:true}));await settle();
+ await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));await fireEvent.click(screen.getByRole('button',{name:/^Passages/}));await settle();
  await fireEvent.click(screen.getAllByRole('button',{name:'Open passage',exact:true})[0]);await settle();expect(select).toHaveBeenCalledTimes(1);
  Object.defineProperty(video,'webkitDisplayingFullscreen',{value:true,writable:true});video.webkitExitFullscreen=vi.fn();await fireEvent(video,new Event('webkitbeginfullscreen'));
  await fireEvent.click(screen.getAllByRole('button',{name:'Open passage',exact:true})[1]);await settle();expect(video.webkitExitFullscreen).toHaveBeenCalledTimes(1);
@@ -98,7 +98,7 @@ it('failed deferred passage load reports the error after native exit and preserv
  vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',nativeName:'English',ready:68}]);vi.spyOn(libraryAdapter,'passages').mockResolvedValue([descriptor]);const select=vi.spyOn(libraryAdapter,'select').mockRejectedValue(Error('Passage verification failed. Try again.'));
  assets.a112.relatedIds=[];await startAt('S02-U005','waiting');await command('watch the video');const video=document.querySelector('video');
  Object.defineProperty(video,'webkitDisplayingFullscreen',{value:true,writable:true});video.webkitExitFullscreen=vi.fn();await fireEvent(video,new Event('webkitbeginfullscreen'));
- await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passages',exact:true}));await settle();await fireEvent.click(screen.getByRole('button',{name:'Open passage',exact:true}));await settle();expect(select).not.toHaveBeenCalled();
+ await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));await fireEvent.click(screen.getByRole('button',{name:/^Passages/}));await settle();await fireEvent.click(screen.getByRole('button',{name:'Open passage',exact:true}));await settle();expect(select).not.toHaveBeenCalled();
  video.webkitDisplayingFullscreen=false;await fireEvent(video,new Event('webkitendfullscreen'));
  await waitFor(()=>expect(screen.getByText('Passage verification failed. Try again.')).toBeTruthy());expect(select).toHaveBeenCalledTimes(1);expect(localStorage.getItem('fia-v3-selected-pack')).toBeNull();expect(document.querySelector('video')).toBe(video);
 });
@@ -349,6 +349,13 @@ it('the overview sheet opens from the bar in its fixed order and reaches Languag
  const close=sheet.querySelector('.ov-close');expect(close.textContent).toBe('Close');await fireEvent.click(close);await settle();
  expect(document.querySelector('.overview-sheet')).toBeNull();
 });
+it('the FIA menu drops Language and Passages, which the overview carries (fb-03 S3)',async()=>{
+ await startAt('S01-U001');await fireEvent.click(screen.getByRole('button',{name:'More options'}));
+ const menu=document.querySelector('.scene-menu');expect([...menu.querySelectorAll('button')].map(b=>b.textContent.trim())).toEqual(['Downloads','Passage resources','Settings','About & sources']);
+ await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));await settle();
+ await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));
+ expect(screen.getByRole('button',{name:/^Language/})).toBeTruthy();expect(screen.getByRole('button',{name:/^Passages/})).toBeTruthy();
+});
 it('the mini map exposes every visible screen and jumps directly to a chosen image without a section detour',async()=>{
  await startAt('S01-U003');await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));
  expect(document.querySelectorAll('.progress-map-item')).toHaveLength(111);
@@ -506,7 +513,7 @@ it('manual listening keeps Continue central and supports play pause resume and r
 it('shows both language counts without changing the active saved place',async()=>{
  vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',nativeName:'English',ready:68},{id:'spa',nativeName:'Español',ready:68}]);
  vi.spyOn(libraryAdapter,'passages').mockResolvedValue([]);
- await startAt('S03-U007','waiting');await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:/^Language/}));await settle();
+ await startAt('S03-U007','waiting');await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));await fireEvent.click(screen.getByRole('button',{name:/^Language/}));await settle();
  expect(screen.getByRole('button',{name:/English.*68 passages with text available/})).toBeTruthy();await fireEvent.click(screen.getByRole('button',{name:/Español/}));await settle();
  expect(screen.queryByText(/No Spanish passage is ready/)).toBeNull();expect(activities[state().index].id).toBe('S03-U007');expect(players).toHaveLength(0);
 });

@@ -13,7 +13,8 @@ const packId='eng.MRK-1-14-20';
 const first='In this step, hear Mark 1:14–20 and put it in your hearts.';
 const progress=page=>page.evaluate(id=>JSON.parse(localStorage.getItem(`fia-v3-progress@1:${id}`)||'null'),packId);
 const controls=page=>page.getByRole('navigation',{name:'Session controls'});
-async function menu(page,name){await page.getByRole('button',{name:'More options',exact:true}).click();await page.getByRole('button',{name,exact:true}).click();}
+// Language and Passages live in the overview sheet, opened from the bar (fb-03 S3); the rest stay in the menu.
+async function menu(page,name){if(name==='Language'||name==='Passages'){await page.getByRole('button',{name:'Session progress: open section overview',exact:true}).click();await page.getByRole('button',{name:new RegExp('^'+name)}).click();return;}await page.getByRole('button',{name:'More options',exact:true}).click();await page.getByRole('button',{name,exact:true}).click();}
 async function setting(page,name,value){await menu(page,'Settings');await page.getByRole('checkbox',{name:new RegExp(name)}).setChecked(value);await page.getByRole('button',{name:'Close',exact:true}).click();}
 async function audioSnapshot(page){return page.evaluate(()=>window.__fiaNativeAudio.map(a=>({src:a.currentSrc,time:a.currentTime,paused:a.paused,readyState:a.readyState})));}
 async function playing(page){await expect.poll(async()=>{const a=await audioSnapshot(page);return a.some(x=>!x.paused&&x.readyState>=2);},{timeout:45000,message:'Listening outcome requires actual native playback; unavailable is a failure'}).toBe(true);const before=await audioSnapshot(page);await expect.poll(async()=>{const after=await audioSnapshot(page);return after.some((a,i)=>!a.paused&&a.src===before[i]?.src&&a.time-before[i].time>=0.25);},{timeout:10000}).toBe(true);const after=await audioSnapshot(page),current=await progress(page),unit=presentation.activities.find(a=>a.id===current.activityId);

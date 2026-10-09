@@ -1,7 +1,7 @@
 <script>
  import { onMount, tick, untrack } from 'svelte';
  import {validateExecutablePresentation,executionFor,executablePresentationView,createExecutableNarration} from './lib/executable-presentation.js';
- import { MoreHorizontal, Speech, Play, Pause, ChevronRight, ChevronLeft, Send, Settings2, List, BookOpen, Image, Map, Film, Users, RotateCcw, ArrowLeft, PinOff, Info, Download, MessageCircle, X, CircleHelp, ExternalLink } from 'lucide-svelte';
+ import { MoreHorizontal, Speech, Play, Pause, ChevronRight, ChevronLeft, Send, Settings2, List, BookOpen, Image, Map, Film, Users, RotateCcw, ArrowLeft, PinOff, Info, Download, X, CircleHelp, ExternalLink } from 'lucide-svelte';
  import {bundledPresentation,presentationContent} from './lib/content.js';
  import { createSession, reduceSession, currentActivity, presentStage } from './lib/engine.js';
  import { parseCommand } from './lib/commands.js';
@@ -578,8 +578,6 @@
  <Sheet glass={true} opaqueHeader={sheet==='settings'||sheet==='downloads'||sheet==='progress'} title={{languages:'Language',passages:'Passages',downloads:'Downloads',progress:'Overview',settings:'Settings',outline:selectedPack.title,help:'Try the experience',about:'About this prototype',menu:'',conversation:'Ask the guide',words:'Words for this moment',resources:'Explore the passage',example:'Drama example'}[sheet]} notice={noticeText&&noticeInSheet?noticeBar:null} onclose={()=>sheet=null}>
   {#if sheet==='menu'}
    <div class="scene-menu">
-    <button onclick={()=>sheet='languages'}><MessageCircle size={19}/>Language<span class="menu-value">{language==='eng'?'English':'Español'}</span></button>
-    <button onclick={()=>sheet='passages'}><BookOpen size={19}/>Passages</button>
     <button onclick={()=>sheet='downloads'}><Download size={19}/>Downloads</button>
     <button onclick={()=>sheet='resources'}><BookOpen size={19}/>Passage resources</button>
     <button onclick={()=>sheet='settings'}><Settings2 size={19}/>Settings</button>

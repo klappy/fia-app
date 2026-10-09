@@ -41,7 +41,8 @@ async function start(id,index=0,{descriptor}={}){
 // Continue from the guide screen before the first reading: automatic Scripture finds no recording.
 // R5: the primary checks availability first; act once it shows the checked action.
 async function raiseScriptureNotice(){await fireEvent.click(await screen.findByRole('button',{name:'Continue',exact:true}));await waitFor(()=>expect(notices()).toContain(scriptureNotice));}
-async function menu(item){await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',item==='Language'?{name:/^Language/}:{name:item,exact:true}));}
+// Language and Passages live in the overview sheet, opened from the bar (fb-03 S3); the rest stay in the menu.
+async function menu(item){if(item==='Language'||item==='Passages'){await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));await fireEvent.click(screen.getByRole('button',{name:new RegExp('^'+item)}));return;}await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:item,exact:true}));}
 const card=title=>screen.getAllByRole('article').find(a=>within(a).queryByRole('heading',{name:title,exact:true}));
 async function openPassage(title){await waitFor(()=>expect(card(title)).toBeTruthy());await fireEvent.click(within(card(title)).getByRole('button',{name:/Open passage|Resume passage/}));}
 // G5: records every rendered state in which the new passage's heading shows next to a stale notice.
@@ -67,7 +68,7 @@ it('C1: a Scripture notice on Mark 1:21–28 is gone when Mark 1:29–34 renders
 
 it('C2: a Spanish RV1909 notice does not carry onto English Mark 1:14–20',async()=>{
  await start('spa.MRK-1-14-20',1);await raiseScriptureNotice();
- await menu('Language');await fireEvent.click(await screen.findByRole('button',{name:/English/}));await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));
+ await menu('Language');await fireEvent.click(await screen.findByRole('button',{name:/English/}));await fireEvent.click(screen.getAllByRole('button',{name:'Close',exact:true})[0]);
  const next=load('eng.MRK-1-14-20').presentation.activities[0].prompt,watch=watchStale(scriptureNotice,next);
  await menu('Passages');await openPassage('Mark 1:14–20');await waitFor(()=>expect(heading()).toBe(next));watch.stop();
  expect(watch.overlaps).toEqual([]);expect(notices()).toEqual([]);
@@ -88,7 +89,7 @@ it('C4: a notice raised while the Language sheet is open shows inside the sheet 
  const notice=await screen.findByText('Language choice could not be saved on this device.');
  expect(openDialog()).toBeTruthy();expect(openDialog().contains(notice)).toBe(true);
  expect(within(openDialog()).getByRole('button',{name:'Dismiss notice'})).toBeTruthy();
- await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));
+ await fireEvent.click(screen.getAllByRole('button',{name:'Close',exact:true})[0]);
  expect(openDialog()).toBeNull();expect(screen.queryByText('Language choice could not be saved on this device.')).toBeNull();
 });
 

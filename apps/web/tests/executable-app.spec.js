@@ -135,7 +135,7 @@ it('manual-mode center Continue advances while bound narration plays instead of 
 });
 it('restore is read-only while an explicit library choice carries separate demand consent',async()=>{
  vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',name:'English',nativeName:'English',ready:1}]);vi.spyOn(libraryAdapter,'passages').mockResolvedValue([descriptor]);await mount();expect(libraryAdapter.select.mock.calls[0][1].explicit).toBe(false);
- await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passages',exact:true}));await fireEvent.click(await screen.findByRole('button',{name:'Open passage',exact:true}));
+ await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));await fireEvent.click(screen.getByRole('button',{name:/^Passages/}));await fireEvent.click(await screen.findByRole('button',{name:'Open passage',exact:true}));
  await waitFor(()=>expect(libraryAdapter.select).toHaveBeenCalledTimes(2));expect(libraryAdapter.select.mock.calls[1][1].explicit).toBe(true);expect(libraryAdapter.select.mock.calls[0][1].signal.aborted).toBe(true);expect(audio.play).not.toHaveBeenCalled();
 });
 it.each(['current','older-projection','wrong-media','wrong-assets','invalid-snapshot'])('saved executable readiness requires coherent server snapshot and media authority: %s',async condition=>{
@@ -155,7 +155,7 @@ it('actual worker saved status keeps declared JSON inventory separate and is acc
 });
 it('historical saved passage displays its status and a fresh selection clears it',async()=>{
  const historical={...descriptor,offlineSnapshot:'historical-verified'};libraryAdapter.select.mockResolvedValue({descriptor:historical,presentation});await mount();expect(screen.getByRole('status').textContent).toContain('Using the last verified saved passage while offline.');
- libraryAdapter.select.mockResolvedValue({descriptor,presentation});vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',name:'English',nativeName:'English',ready:1}]);vi.spyOn(libraryAdapter,'passages').mockResolvedValue([descriptor]);await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passages',exact:true}));await fireEvent.click(await screen.findByRole('button',{name:'Open passage',exact:true}));await waitFor(()=>expect(screen.queryByText('Using the last verified saved passage while offline.')).toBeNull());
+ libraryAdapter.select.mockResolvedValue({descriptor,presentation});vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',name:'English',nativeName:'English',ready:1}]);vi.spyOn(libraryAdapter,'passages').mockResolvedValue([descriptor]);await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));await fireEvent.click(screen.getByRole('button',{name:/^Passages/}));await fireEvent.click(await screen.findByRole('button',{name:'Open passage',exact:true}));await waitFor(()=>expect(screen.queryByText('Using the last verified saved passage while offline.')).toBeNull());
 });
 it('Cancel preparation revokes a pending executable demand and late ready cannot restart playback',async()=>{
  firstNarration('prepare-original');const identity={packId:descriptor.id,presentationRevision:'b'.repeat(64),language:'eng',edition:'fia-guide',quality:'original',activityId:'server-step',sourceUnitId:'server-unit',sourceTextSha256:'c'.repeat(64)};

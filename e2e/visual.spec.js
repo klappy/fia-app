@@ -47,8 +47,9 @@ const states=[
  {name:'progress-overview',index:0,progress:true},
  {name:'menu',index:0,menu:true},
  {name:'settings',index:0,menu:'Settings'},
- {name:'languages',index:0,menu:'Language'},
- {name:'passages',index:0,menu:'Passages'},
+ // Language and Passages left the menu for the overview sheet (fb-03 S3); these candidate-only sheet states open them there.
+ {name:'languages',index:0,overview:'Language'},
+ {name:'passages',index:0,overview:'Passages'},
  {name:'about',index:0,menu:'About & sources'},
 ];
 async function openState(browser,url,viewport,dark,state,{verifiedFixture=false}={}){
@@ -78,6 +79,7 @@ async function openState(browser,url,viewport,dark,state,{verifiedFixture=false}
  if(state.initial && (verifiedFixture || url===reference.url))await expect(page.getByRole('button',{name:'Begin',exact:true})).toBeVisible();
  if(state.progress)await page.getByRole('button',{name:'Session progress: open section overview',exact:true}).click();
  if(state.menu){await page.getByRole('button',{name:'More options',exact:true}).click();if(typeof state.menu==='string')await page.getByRole('button',{name:state.menu,exact:state.menu!=='Language'}).click();}
+ if(state.overview){await page.getByRole('button',{name:'Session progress: open section overview',exact:true}).click();await page.getByRole('button',{name:new RegExp('^'+state.overview)}).click();}
  await page.evaluate(async()=>{await Promise.all([...document.images].map(i=>i.decode().catch(()=>{})));});
  await page.mouse.move(0,0);
  await page.addStyleTag({content:'*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}'});
