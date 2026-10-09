@@ -39,7 +39,7 @@ it('R1/A2: Open is busy while pending; a refusal shows next to that card and the
 it('R1/A2: a refused switch keeps the sheet open with the truth in it, adds no reading-screen notice and keeps the current passage',async()=>{
  const select=vi.spyOn(libraryAdapter,'select').mockRejectedValue(unavailable());
  render(App);await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toBeTruthy());const heading=screen.getByRole('heading',{level:1}).textContent;
- await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passages',exact:true}));
+ await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));await fireEvent.click(screen.getByRole('button',{name:/^Passages/}));
  const card=(await screen.findByRole('heading',{name:'Mark 1:14–20'})).closest('article');
  await fireEvent.click(within(card).getByRole('button',{name:/Open passage|Resume passage/}));await settle();
  expect(select).toHaveBeenCalledWith('eng.MRK-1-14-20',expect.objectContaining({explicit:true}));

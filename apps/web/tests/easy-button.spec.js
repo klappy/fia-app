@@ -272,7 +272,7 @@ it('R6.2: an admitted screen that has not been heard offers Begin/Play on every 
 function dockState(){const nav=screen.getByRole('navigation',{name:'Session controls'});return {primary:readFace().label,others:[...nav.querySelectorAll('button:not(.guide-primary)')].map(b=>`${b.getAttribute('aria-label')}${b.disabled?' (disabled)':''}`)};}
 async function verified(){await waitFor(()=>expect(readFace().busy).toBe(false));await wait(50);}
 async function openFromPassages(title){
- await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passages',exact:true}));
+ await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));await fireEvent.click(screen.getByRole('button',{name:/^Passages/}));
  const card=(await screen.findByRole('heading',{name:title})).closest('article');
  await fireEvent.click(within(card).getByRole('button',{name:/Open passage|Resume passage/}));
 }

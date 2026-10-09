@@ -50,7 +50,7 @@ async function startBeforeReading(page,id,{open='restore'}={}){
 async function watchStale(page,stale,heading){
  await page.evaluate(([stale,heading])=>{const w=window.__staleNotice={headingAt:null,staleAfterHeading:null,goneAfterHeading:null};const look=()=>{const now=performance.now(),shown=[...document.querySelectorAll('[role="status"]')].some(n=>n.textContent.includes(stale));if(w.headingAt===null&&[...document.querySelectorAll('h1')].some(h=>h.textContent===heading))w.headingAt=now;if(w.headingAt===null)return;if(shown)w.staleAfterHeading=now-w.headingAt;else w.goneAfterHeading??=now-w.headingAt;};new MutationObserver(look).observe(document.body,{subtree:true,childList:true,characterData:true});const frame=()=>{look();requestAnimationFrame(frame);};requestAnimationFrame(frame);},[stale,heading]);
 }
-const passages=async page=>{await page.getByRole('button',{name:'More options'}).click();await page.getByRole('button',{name:'Passages',exact:true}).click();};
+const passages=async page=>{await page.getByRole('button',{name:'Session progress: open section overview'}).click();await page.getByRole('button',{name:/^Passages/}).click();};
 const card=(page,title)=>page.getByRole('dialog').locator('article.pack-card').filter({has:page.getByRole('heading',{name:title,exact:true})});
 async function openFromSheet(page,title,heading){await card(page,title).getByRole('button',{name:/Open passage|Resume passage/}).click();await expect(page.locator('h1').first()).toHaveText(heading,{timeout:5000});await page.waitForTimeout(400);return page.evaluate(()=>window.__staleNotice);}
 
@@ -70,7 +70,7 @@ test('R3/C1 G5: a Scripture notice on Mark 1:21–28 is gone within 300 ms of Ma
 
 test('R3/C2 G5: a Spanish RV1909 notice does not carry onto English Mark 1:14–20',async({page})=>{
  const stale=await startBeforeReading(page,'spa.MRK-1-14-20');const heading=activitiesOf('eng.MRK-1-14-20')[0].prompt;
- await page.getByRole('button',{name:'More options'}).click();await page.getByRole('button',{name:/^Language/}).click();await page.getByRole('dialog').getByRole('button',{name:/English/}).click();await page.getByRole('button',{name:'Close',exact:true}).click();
+ await page.getByRole('button',{name:'Session progress: open section overview'}).click();await page.getByRole('button',{name:/^Language/}).click();await page.getByRole('dialog').getByRole('button',{name:/English/}).click();await page.getByRole('button',{name:'Close',exact:true}).first().click();
  await watchStale(page,stale,heading);await passages(page);
  const seen=await openFromSheet(page,'Mark 1:14–20',heading);
  expect(seen.headingAt).not.toBeNull();expect(seen.staleAfterHeading).toBeNull();await expect(page.locator('.scene-notice')).toHaveCount(0);
@@ -79,11 +79,11 @@ test('R3/C2 G5: a Spanish RV1909 notice does not carry onto English Mark 1:14–
 test('R3/C4 G6: a notice raised while a sheet is open shows on top, inside the sheet, and leaves Close reachable',async({page})=>{
  await page.addInitScript(()=>{const setItem=Storage.prototype.setItem;Storage.prototype.setItem=function(key,value){if(key==='fia-v3-library-language')throw new DOMException('Fault-injected storage refusal','QuotaExceededError');return setItem.call(this,key,value);};});
  await page.goto('/');await controlled(page);
- await page.getByRole('button',{name:'More options'}).click();await page.getByRole('button',{name:/^Language/}).click();await page.getByRole('dialog').getByRole('button',{name:/Español/}).click();
+ await page.getByRole('button',{name:'Session progress: open section overview'}).click();await page.getByRole('button',{name:/^Language/}).click();await page.getByRole('dialog').getByRole('button',{name:/Español/}).click();
  const notice=page.getByRole('dialog').getByRole('status').filter({hasText:'Language choice could not be saved on this device.'});await expect(notice).toBeVisible();
  const centre=async locator=>{const box=await locator.boundingBox();return {x:box.x+box.width/2,y:box.y+box.height/2};};
  expect(await page.evaluate(({x,y})=>document.elementFromPoint(x,y)?.closest('[role="status"]')?.textContent||null,await centre(notice))).toBe('Language choice could not be saved on this device.');
- const close=page.getByRole('dialog').getByRole('button',{name:'Close',exact:true});
+ const close=page.getByRole('dialog').getByRole('button',{name:'Close',exact:true}).first();
  expect(await page.evaluate(({x,y})=>document.elementFromPoint(x,y)?.closest('button')?.getAttribute('aria-label')||null,await centre(close))).toBe('Close');
  await expect(page.locator('main .scene-notice')).toHaveCount(0);
  await close.click();await expect(page.getByRole('dialog')).toHaveCount(0);await expect(page.getByText('Language choice could not be saved on this device.')).toHaveCount(0);

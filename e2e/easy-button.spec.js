@@ -156,7 +156,7 @@ test('R6.2/K4: a heard discussion screen shows the same dock when its recording 
   const Audio=window.Audio;window.Audio=class extends Audio{constructor(...args){super(...args);this.addEventListener('play',()=>rate.set.call(this,16));}};
  },{total:activities.length,activityId:id,session});
  const dock=()=>page.evaluate(()=>{const nav=document.querySelector('nav[aria-label="Session controls"]');return {primary:nav.querySelector('.guide-primary').getAttribute('aria-label'),others:[...nav.querySelectorAll('button:not(.guide-primary)')].map(b=>b.getAttribute('aria-label')+(b.disabled?' (disabled)':''))};});
- const passages=async()=>{await page.getByRole('button',{name:'More options'}).click();await page.getByRole('button',{name:'Passages',exact:true}).click();};
+ const passages=async()=>{await page.getByRole('button',{name:'Session progress: open section overview'}).click();await page.getByRole('button',{name:/^Passages/}).click();};
  const card=title=>page.getByRole('dialog').locator('article.pack-card').filter({has:page.getByRole('heading',{name:title,exact:true})});
  // 1. The recording ends on this screen.
  await page.goto('/');await settled(page,{quietMs:500});
@@ -198,7 +198,7 @@ for(const guide of [true,false])test(`R6/K1: Mark 1:21–28 as served, ${guide?'
  const posts=[];page.on('request',r=>{if(r.method()==='POST'&&new URL(r.url()).pathname.startsWith('/v1/preparations'))posts.push(r.url());});
  await page.goto('/');await settled(page,{quietMs:300});
  await settings(page,{'Automatic guide narration':guide,'Automatic Scripture reading':true,'Describe images and maps':true,'Automatic video playback':true,'Dark theme':true});
- await page.getByRole('button',{name:'More options'}).click();await page.getByRole('button',{name:'Passages',exact:true}).click();
+ await page.getByRole('button',{name:'Session progress: open section overview'}).click();await page.getByRole('button',{name:/^Passages/}).click();
  await page.getByRole('dialog').locator('article.pack-card').filter({has:page.getByRole('heading',{name:'Mark 1:21–28',exact:true})}).getByRole('button',{name:/Open passage|Resume passage/}).click();
  await expect(page.getByRole('dialog')).toHaveCount(0,{timeout:30000});
  const nav=page.getByRole('navigation',{name:'Session controls'}),centre=nav.locator('.guide-primary');
@@ -247,7 +247,7 @@ test('B1/K4: with automatic guide narration off, a passage switch keeps each scr
  const centre=page.locator('nav[aria-label="Session controls"] .guide-primary'),heading=page.locator('main h1');
  const home=(await heading.textContent()).trim();
  const open=async title=>{
-  await page.getByRole('button',{name:'More options'}).click();await page.getByRole('button',{name:'Passages',exact:true}).click();
+  await page.getByRole('button',{name:'Session progress: open section overview'}).click();await page.getByRole('button',{name:/^Passages/}).click();
   await page.getByRole('dialog').locator('article.pack-card').filter({has:page.getByRole('heading',{name:title,exact:true})}).getByRole('button',{name:/Open passage|Resume passage/}).click();
   await expect(page.getByRole('dialog')).toHaveCount(0,{timeout:30000});
   await expect(centre).not.toHaveAttribute('aria-busy','true',{timeout:30000});await page.waitForTimeout(500);

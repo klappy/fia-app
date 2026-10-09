@@ -58,7 +58,7 @@ const passageOnly=registry.packs.find(p=>p.id==='eng.MRK-1-14-20');
 const deployed=process.env.BASE_URL;
 const environment=deployed||(process.env.FIA_WORKER_PREVIEW==='1'?'local Worker preview':'local static preview');
 async function openPassage(page,title){
- await page.getByRole('button',{name:'More options'}).click();await page.getByRole('button',{name:'Passages',exact:true}).click();
+ await page.getByRole('button',{name:'Session progress: open section overview'}).click();await page.getByRole('button',{name:/^Passages/}).click();
  const card=page.getByRole('dialog').locator('article.pack-card').filter({has:page.getByRole('heading',{name:title,exact:true})});
  await card.getByRole('button',{name:/Open passage|Resume passage/}).click();
  const opened=await expect(page.getByRole('dialog')).toHaveCount(0,{timeout:30000}).then(()=>true,()=>false);
