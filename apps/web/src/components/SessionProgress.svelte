@@ -1,8 +1,7 @@
 <script>
- import {contentIcons as icons,sectionIcons,guideIcon} from '../lib/progress-icons.js';
+ import {contentIcons as icons,sectionIcons,guideIcon,kindWords} from '../lib/progress-icons.js';
  let {groups,onopen=()=>{},onselect=()=>{},overview=false}=$props();
- // Every mini-map item carries a visible word (cookbook overview-sheet.md § Blocks, Mini-map): the kind word in user words (§ Copy rules).
- const kindWords={guide:'listen',scripture:'Scripture',discussion:'discuss',term:'key term',image:'picture',map:'map',video:'video'};
+ // Every mini-map item carries a visible word (cookbook overview-sheet.md § Blocks, Mini-map): its kind word.
  let active=$derived(groups.find(g=>g.active)||groups[0]);
  let activeIndex=$derived(Math.max(0,groups.findIndex(g=>g.active)));
  // Design-book words (progress-rail § Copy rules): `<name> · Step n`, then `unit n of m` with `more ahead` or `last unit`; `complete` once the session is done.

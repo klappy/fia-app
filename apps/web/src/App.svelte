@@ -218,7 +218,7 @@
  async function runSelection(id,intent,options){const finish=trackSelection();try{await loadSelectedPack(id,intent,options);}catch(error){if(intent===selectionIntent)throw error;}finally{finish();}}
  // Opened from the Passages sheet: a refusal is shown in the sheet, next to its card.
  // Only when the sheet was closed before the answer arrived does the reading screen say it.
- async function openFromSheet(id){try{await selectPack(id);}catch(error){if(!['languages','passages','downloads'].includes(sheet))notice=error?.message||'The passage could not be opened. Try again.';throw error;}}
+ async function openFromSheet(id){try{await selectPack(id);}catch(error){if(!['languages','passages','downloads','progress'].includes(sheet))notice=error?.message||'The passage could not be opened. Try again.';throw error;}}
  // A saved passage that cannot be restored falls back once: the default stays open and
  // the saved key is cleared, so later launches are quiet. A missing connection is not a
  // verdict about the passage, so that key is kept for the next launch.
@@ -575,7 +575,7 @@
 </main>
 
 {#if sheet}
- <Sheet glass={true} opaqueHeader={sheet==='settings'||sheet==='downloads'} title={{languages:'Language',passages:'Passages',downloads:'Downloads',progress:'Overview',settings:'Settings',outline:selectedPack.title,help:'Try the experience',about:'About this prototype',menu:'',conversation:'Ask the guide',words:'Words for this moment',resources:'Explore the passage',example:'Drama example'}[sheet]} notice={noticeText&&noticeInSheet?noticeBar:null} onclose={()=>sheet=null}>
+ <Sheet glass={true} opaqueHeader={sheet==='settings'||sheet==='downloads'||sheet==='progress'} title={{languages:'Language',passages:'Passages',downloads:'Downloads',progress:'Overview',settings:'Settings',outline:selectedPack.title,help:'Try the experience',about:'About this prototype',menu:'',conversation:'Ask the guide',words:'Words for this moment',resources:'Explore the passage',example:'Drama example'}[sheet]} notice={noticeText&&noticeInSheet?noticeBar:null} onclose={()=>sheet=null}>
   {#if sheet==='menu'}
    <div class="scene-menu">
     <button onclick={()=>sheet='languages'}><MessageCircle size={19}/>Language<span class="menu-value">{language==='eng'?'English':'Español'}</span></button>
@@ -603,8 +603,8 @@
    {#if inlineVideo||focal?.kind==='video'}<button class="glass-icon" aria-label={isPlaying?'Pause video':'Play video'} onclick={()=>executableMode?(videoPlaying?videoOwner.node?.pause():playVideo()):automaticOff?manualPlay():primary()}>{#if isPlaying}<Pause size={24}/>{:else}<Play size={24}/>{/if}</button>{/if}
   </div>
  {/if}
- <!-- The overview sheet is the navigation home (cookbook overview-sheet.md, adopted 2026-10-08). A refused open stays on its card while the sheet is open, as in the Passages sheet. -->
- <OverviewSheet groups={progress} {selectedPack} {language} completed={session.completed.length} total={activities.length} onlanguage={selectLanguage} onreset={restartPack} onclose={()=>sheet=null} onopenpack={async id=>{try{await selectPack(id);}catch(error){if(sheet!=='progress')notice=error?.message||'The passage could not be opened. Try again.';throw error;}}} onnavigate={(id,section)=>{navigate({type:'SEEK_ACTIVITY',activityId:id});transitionSection=section?activity.sectionId:null;persist();sheet=null;}}/>
+ <!-- The overview sheet is the navigation home (cookbook overview-sheet.md, adopted 2026-10-08). A refused open stays on its card while the sheet is open (openFromSheet), as in the Passages sheet. -->
+ <OverviewSheet groups={progress} {selectedPack} {language} completed={session.completed.length} total={activities.length} onlanguage={selectLanguage} onreset={restartPack} onclose={()=>sheet=null} onopenpack={openFromSheet} onnavigate={(id,section)=>{navigate({type:'SEEK_ACTIVITY',activityId:id});transitionSection=section?activity.sectionId:null;persist();sheet=null;}}/>
   {:else if sheet==='settings'}
    <div class="settings-panel">
     <button class="sheet-back" onclick={()=>sheet='menu'}><ChevronLeft size={18}/>FIA menu</button>
