@@ -218,7 +218,7 @@
  async function runSelection(id,intent,options){const finish=trackSelection();try{await loadSelectedPack(id,intent,options);}catch(error){if(intent===selectionIntent)throw error;}finally{finish();}}
  // Opened from the Passages sheet: a refusal is shown in the sheet, next to its card.
  // Only when the sheet was closed before the answer arrived does the reading screen say it.
- async function openFromSheet(id){try{await selectPack(id);}catch(error){if(!['languages','passages','downloads','progress'].includes(sheet))notice=error?.message||'The passage could not be opened. Try again.';throw error;}}
+ async function openFromSheet(id){try{await selectPack(id);}catch(error){if(!['downloads','progress'].includes(sheet))notice=error?.message||'The passage could not be opened. Try again.';throw error;}}
  // A saved passage that cannot be restored falls back once: the default stays open and
  // the saved key is cleared, so later launches are quiet. A missing connection is not a
  // verdict about the passage, so that key is kept for the next launch.
@@ -247,6 +247,9 @@
  let progress=$derived(progressState(progressGroups,session,activities));
  let inTransition=$derived(transitionSection===activity?.sectionId&&!session.detour&&session.status!=='complete');
  $effect(()=>{document.documentElement.dataset.theme=dark?'dark':'light';});
+ // Closing the FIA menu returns focus to the More button that opened it (the sheet unmounts its modal dialog, which otherwise drops focus to <body>).
+ let moreButton=$state(),lastSheet=null;
+ $effect(()=>{const now=sheet;untrack(()=>{if(lastSheet==='menu'&&now===null)moreButton?.focus();lastSheet=now;});});
  let session=$state(createSession(bundledPresentation.activities));
  let audioState=$state({playing:false,elapsed:0,duration:0}); let videoPlaying=$state(false); let videoState=$state({elapsed:0,duration:0}); let serviceWorkerError=''; let isPlaying=$derived(audioState.playing||videoPlaying);
  const historicalSnapshotNotice='Using the last verified saved passage while offline.';
@@ -560,7 +563,7 @@
  {#if noticeText&&!noticeInSheet}{@render noticeBar()}{/if}
  {#if listeningHint&&muted}<div class="scene-notice" role="status"><span>Prefer automatic narration?</span><button onclick={()=>{listeningHint=false;sheet='settings';}}>Settings</button><button aria-label="Dismiss narration suggestion" onclick={()=>listeningHint=false}><X size={15}/></button></div>{/if}
  <nav class="scene-controls" aria-label="Session controls">
-  <button class="menu-control" aria-label="More options" onclick={()=>sheet='menu'}><FiaMark/></button>
+  <button class="menu-control" aria-label="More options" bind:this={moreButton} onclick={()=>sheet='menu'}><FiaMark/></button>
   <button class="step-control" aria-label={session.detour?'Return to guide':'Previous activity'} disabled={!session.detour&&session.index===0&&!finished} onclick={()=>navigate({type:'BACK'})}><ChevronLeft size={26}/></button>
   <GuidePrimary playback={inlineVideo||focal?.kind==='video'?videoState:audioState} label={primaryFace.label} face={primaryFace.kind} playing={(isPlaying||playbackPending)&&!automaticOff} continuing={primaryLabel==='Continue'||primaryLabel==='Return'} onclick={primary} onpointerdown={()=>tapGate.press(primaryFace.kind)}/>
   <!-- The fourth slot: manual Play in manual mode; with narration on, only a labelled Cancel while preparing (R4.2), else Next.
@@ -575,7 +578,7 @@
 </main>
 
 {#if sheet}
- <Sheet glass={true} opaqueHeader={sheet==='settings'||sheet==='downloads'||sheet==='progress'||sheet==='menu'} title={{languages:'Language',passages:'Passages',downloads:'Downloads',progress:'Overview',settings:'Settings',outline:selectedPack.title,help:'Try the experience',about:'About this prototype',menu:'',conversation:'Ask the guide',words:'Words for this moment',resources:'Explore the passage',example:'Drama example'}[sheet]} notice={noticeText&&noticeInSheet?noticeBar:null} onclose={()=>sheet=null}>
+ <Sheet glass={true} opaqueHeader={sheet==='settings'||sheet==='downloads'||sheet==='progress'||sheet==='menu'} label={sheet==='menu'?'More options':undefined} title={{downloads:'Downloads',progress:'Overview',settings:'Settings',outline:selectedPack.title,help:'Try the experience',about:'About this prototype',menu:'',conversation:'Ask the guide',words:'Words for this moment',resources:'Explore the passage',example:'Drama example'}[sheet]} notice={noticeText&&noticeInSheet?noticeBar:null} onclose={()=>sheet=null}>
   {#if sheet==='menu'}
    <div class="scene-menu">
     <button onclick={()=>sheet='downloads'}><Download size={19}/>Downloads</button>
@@ -586,9 +589,9 @@
    </div>
    <!-- Close is the menu's one action (more-sheet.md primary slot): the overview's sticky footer pattern (#214); the empty header collapses unless it carries a notice. -->
    <div class="menu-footer"><button class="primary full menu-close" onclick={()=>sheet=null}>Close</button></div>
-  {:else if ['languages','passages','downloads'].includes(sheet)}
+  {:else if sheet==='downloads'}
    <button class="sheet-back" onclick={()=>sheet='menu'}><ChevronLeft size={18}/>FIA menu</button>
-   {#key sheet}<LibraryPanel view={sheet} {selectedPack} {language} onlanguage={selectLanguage} onview={view=>sheet=view} completed={session.completed.length} total={activities.length} onstatus={value=>{saved=value;updateDownloaded();}} onselect={openFromSheet} onreset={restartPack}/>{/key}
+   <LibraryPanel view="downloads" {selectedPack} {language} onlanguage={selectLanguage} completed={session.completed.length} total={activities.length} onstatus={value=>{saved=value;updateDownloaded();}} onselect={openFromSheet} onreset={restartPack}/>
   {:else if sheet==='conversation'}
    <p class="sheet-intro">Ask to show a resource, pause, or change how we continue. This prototype supports commands; open-ended AI is not connected.</p>
    <form class="command-form" onsubmit={e=>{e.preventDefault();runCommand();}}><label class="sr-only" for="command">Tell the guide what you need</label><input bind:this={chatInput} id="command" bind:value={command} placeholder="Show me the map…" autocomplete="off"/><button class="icon-button" type="submit" aria-label="Send command" disabled={!command.trim()}><Send size={18}/></button></form>
@@ -603,7 +606,7 @@
    {#if inlineVideo||focal?.kind==='video'}<button class="glass-icon" aria-label={isPlaying?'Pause video':'Play video'} onclick={()=>executableMode?(videoPlaying?videoOwner.node?.pause():playVideo()):automaticOff?manualPlay():primary()}>{#if isPlaying}<Pause size={24}/>{:else}<Play size={24}/>{/if}</button>{/if}
   </div>
  {/if}
- <!-- The overview sheet is the navigation home (cookbook overview-sheet.md, adopted 2026-10-08). A refused open stays on its card while the sheet is open (openFromSheet), as in the Passages sheet. -->
+ <!-- The overview sheet is the navigation home (cookbook overview-sheet.md, adopted 2026-10-08). A refused open stays on its card while the sheet is open (openFromSheet). -->
  <OverviewSheet groups={progress} {selectedPack} {language} completed={session.completed.length} total={activities.length} onlanguage={selectLanguage} onreset={restartPack} onclose={()=>sheet=null} onopenpack={openFromSheet} onnavigate={(id,section)=>{navigate({type:'SEEK_ACTIVITY',activityId:id});transitionSection=section?activity.sectionId:null;persist();sheet=null;}}/>
   {:else if sheet==='settings'}
    <div class="settings-panel">
