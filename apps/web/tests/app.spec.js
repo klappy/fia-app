@@ -329,6 +329,26 @@ it('dark colors persist without changing the primary control or interrupting nar
  expect(player.paused).toBe(false);expect(player.currentTime).toBe(4);
  cleanup();render(App);await settle();expect(document.documentElement.dataset.theme).toBe('dark');
 });
+it('the overview sheet opens from the bar in its fixed order and reaches Language and Passages in two taps',async()=>{
+ // cookbook design/alpha-system/components/overview-sheet.md: key → intro slot (absent without content) → Language → Passages → mini-map → Close; R-404 two-tap audit.
+ vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',nativeName:'English',ready:1},{id:'spa',nativeName:'Español',ready:1}]);
+ vi.spyOn(libraryAdapter,'passages').mockResolvedValue([bundledPack]);
+ await startAt('S03-U009');await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));
+ const sheet=document.querySelector('.overview-sheet');expect(sheet).toBeTruthy();
+ expect([...sheet.children].map(e=>e.className.split(' ').find(c=>/^(ov-|progress-overview)/.test(c)))).toEqual(['ov-key','ov-row','ov-row','progress-overview','ov-footer']);
+ expect(sheet.querySelector('.ov-intro')).toBeNull();
+ expect(screen.getByRole('heading',{name:'Overview',level:2})).toBeTruthy();
+ const items=[...sheet.querySelectorAll('.progress-map-item')];expect(items.length).toBeGreaterThan(0);for(const item of items)expect(['listen','Scripture','discuss','key term','picture','map','video']).toContain(item.querySelector('.progress-map-word')?.textContent);
+ const key=screen.getByRole('group',{name:'Key'});
+ for(const word of ['Hear and Heart','Speaking the Word','listen','Scripture','discuss','key term','picture','map','video'])expect(key.textContent).toContain(word);
+ await fireEvent.click(screen.getByRole('button',{name:/^Language/}));await settle();
+ expect(await screen.findByRole('button',{name:/Español/})).toBeTruthy();
+ await fireEvent.click(screen.getByRole('button',{name:/^Passages/}));await settle();
+ expect(await screen.findByRole('heading',{name:bundledPack.title})).toBeTruthy();
+ expect(screen.getByRole('button',{name:'Session progress: open section overview'})).toBeTruthy();
+ const close=sheet.querySelector('.ov-close');expect(close.textContent).toBe('Close');await fireEvent.click(close);await settle();
+ expect(document.querySelector('.overview-sheet')).toBeNull();
+});
 it('the mini map exposes every visible screen and jumps directly to a chosen image without a section detour',async()=>{
  await startAt('S01-U003');await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));
  expect(document.querySelectorAll('.progress-map-item')).toHaveLength(111);
