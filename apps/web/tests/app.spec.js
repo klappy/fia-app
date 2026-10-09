@@ -337,6 +337,8 @@ it('the overview sheet opens from the bar in its fixed order and reaches Languag
  const sheet=document.querySelector('.overview-sheet');expect(sheet).toBeTruthy();
  expect([...sheet.children].map(e=>e.className.split(' ').find(c=>/^(ov-|progress-overview)/.test(c)))).toEqual(['ov-key','ov-row','ov-row','progress-overview','ov-close']);
  expect(sheet.querySelector('.ov-intro')).toBeNull();
+ expect(screen.getByRole('heading',{name:'Overview',level:2})).toBeTruthy();
+ const items=[...sheet.querySelectorAll('.progress-map-item')];expect(items.length).toBeGreaterThan(0);for(const item of items)expect(['listen','Scripture','discuss','key term','picture','map','video']).toContain(item.querySelector('.progress-map-word')?.textContent);
  const key=screen.getByRole('group',{name:'Key'});
  for(const word of ['Hear and Heart','Speaking the Word','listen','Scripture','discuss','key term','picture','map','video'])expect(key.textContent).toContain(word);
  await fireEvent.click(screen.getByRole('button',{name:/^Language/}));await settle();

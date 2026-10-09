@@ -575,7 +575,7 @@
 </main>
 
 {#if sheet}
- <Sheet glass={true} opaqueHeader={sheet==='settings'||sheet==='downloads'} title={{languages:'Language',passages:'Passages',downloads:'Downloads',progress:'',settings:'Settings',outline:selectedPack.title,help:'Try the experience',about:'About this prototype',menu:'',conversation:'Ask the guide',words:'Words for this moment',resources:'Explore the passage',example:'Drama example'}[sheet]} notice={noticeText&&noticeInSheet?noticeBar:null} onclose={()=>sheet=null}>
+ <Sheet glass={true} opaqueHeader={sheet==='settings'||sheet==='downloads'} title={{languages:'Language',passages:'Passages',downloads:'Downloads',progress:'Overview',settings:'Settings',outline:selectedPack.title,help:'Try the experience',about:'About this prototype',menu:'',conversation:'Ask the guide',words:'Words for this moment',resources:'Explore the passage',example:'Drama example'}[sheet]} notice={noticeText&&noticeInSheet?noticeBar:null} onclose={()=>sheet=null}>
   {#if sheet==='menu'}
    <div class="scene-menu">
     <button onclick={()=>sheet='languages'}><MessageCircle size={19}/>Language<span class="menu-value">{language==='eng'?'English':'Español'}</span></button>
