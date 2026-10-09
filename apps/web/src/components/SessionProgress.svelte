@@ -1,6 +1,7 @@
 <script>
- import {contentIcons as icons,sectionIcons,guideIcon} from '../lib/progress-icons.js';
+ import {contentIcons as icons,sectionIcons,guideIcon,kindWords} from '../lib/progress-icons.js';
  let {groups,onopen=()=>{},onselect=()=>{},overview=false}=$props();
+ // Every mini-map item carries a visible word (cookbook overview-sheet.md § Blocks, Mini-map): its kind word.
  let active=$derived(groups.find(g=>g.active)||groups[0]);
  let activeIndex=$derived(Math.max(0,groups.findIndex(g=>g.active)));
  // Design-book words (progress-rail § Copy rules): `<name> · Step n`, then `unit n of m` with `more ahead` or `last unit`; `complete` once the session is done.
@@ -14,7 +15,7 @@
     <div class="progress-map-items" aria-label={group.title}>
      {#each group.screens as screen,j}{@const Icon=icons[screen.kind]||guideIcon}
       <button class="progress-map-item" class:complete={screen.complete} aria-current={screen.current?'step':undefined} aria-label={`${group.title}, ${j+1}: ${screen.label}`} onclick={()=>onselect(screen.activityId,false)}>
-       {#if screen.thumbnail}<img src={screen.thumbnail} alt=""/>{:else}<Icon size={20}/>{/if}
+       {#if screen.thumbnail}<img src={screen.thumbnail} alt=""/>{:else}<Icon size={20}/>{/if}<small class="progress-map-word" aria-hidden="true">{kindWords[screen.kind]||kindWords.guide}</small>
       </button>
      {/each}
     </div>
@@ -36,3 +37,8 @@
   <span class="stage-words" aria-hidden="true"><b>{active.title}</b> · Step {activeIndex+1}</span>
  </button>
 {/if}
+<style>
+ .progress-map-items{grid-template-columns:repeat(auto-fill,minmax(64px,1fr))}
+ .progress-map-item{flex-direction:column;gap:2px;min-width:48px;min-height:48px;padding:4px 2px}
+ .progress-map-word{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.6875rem;line-height:1.2}
+</style>

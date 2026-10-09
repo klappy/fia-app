@@ -30,6 +30,9 @@ const find=predicate=>{const index=pack.activities.findIndex(predicate);if(index
 // The pinned reference is unchanged. Plainly: with all eleven reference states authorized, THIS CANDIDATE HAS NO PARITY
 // COMPARISON — the four width/theme shells pass with zero compared states — and parity resumes only when the reference
 // is re-pinned to the adopted design. The four sheet states were already outside parity before this change.
+// 'progress-overview' now also paints the overview sheet (cookbook design/alpha-system/components/overview-sheet.md,
+// adopted 2026-10-08 as mocked in design/alpha-v2-screens/25-one-bar-overview.mock.html; fb-03 S2;
+// release/changes/overview-sheet.md): new-state evidence, independent visual review required.
 const authorizedChangedStates=new Set(['initial-guide','grouped-reading','scripture','discussion','image','map','term-instruction','term-definition','section-transition','progress-overview','menu']);
 const states=[
  {name:'initial-guide',index:0,initial:true},
