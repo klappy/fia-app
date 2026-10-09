@@ -8,12 +8,14 @@ export async function verifyPromotion({repo,prNumber,api,waitMs=0,pollMs=20000,n
  requireValue(pr.state==='open'&&upstream&&pr.head?.repo?.full_name===repo&&pr.head.ref===upstream.branch,'Promotion must use the same-repository upstream branch');
  const sha=pr.head.sha;requireValue(/^[a-f0-9]{40}$/.test(sha),'Invalid source head');
  const receipts=[];
+ // One shared deadline across both workflows so the total wait stays within EVIDENCE_WAIT_MS.
+ const deadline=now()+waitMs;
  for(const spec of [{file:'ci.yml',job:'check',steps:['Controlled local listening and cancellation']},{file:'post-deploy.yml',job:'deployed-listening',steps:['Wait for version.json to report the commit (10 min)','Controlled local listening','Hosted listening journey','Verify separate hosted and controlled listening receipts']}]){
   const path=`.github/workflows/${spec.file}`,remote=await api(`/repos/${repo}/contents/${path}?ref=${sha}`);
   requireValue(remote.encoding==='base64'&&hash(Buffer.from(remote.content,'base64'))===hash(readWorkflow(path)),`Reviewed workflow differs at source head: ${path}`);
   // Wait for the exact-head upstream run to finish instead of racing it (ci/post-deploy start on the same push).
   let matching=[];
-  for(const deadline=now()+waitMs;;){
+  for(;;){
    const runs=await api(`/repos/${repo}/actions/workflows/${spec.file}/runs?head_sha=${sha}&event=push&branch=${upstream.branch}&per_page=100`);
    matching=(runs.workflow_runs||[]).filter(r=>r.head_sha===sha&&r.head_branch===upstream.branch&&r.event==='push'&&r.path===path).sort((a,b)=>b.id-a.id);
    if(matching.length>0&&matching[0].status==='completed'||now()>=deadline)break;
