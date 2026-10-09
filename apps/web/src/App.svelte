@@ -216,9 +216,9 @@
   return runSelection(id,intent,options);
  }
  async function runSelection(id,intent,options){const finish=trackSelection();try{await loadSelectedPack(id,intent,options);}catch(error){if(intent===selectionIntent)throw error;}finally{finish();}}
- // Opened from the Passages sheet: a refusal is shown in the sheet, next to its card.
+ // Opened from the overview's Passages picker: a refusal is shown in the sheet, next to its card.
  // Only when the sheet was closed before the answer arrived does the reading screen say it.
- async function openFromSheet(id){try{await selectPack(id);}catch(error){if(!['downloads','progress'].includes(sheet))notice=error?.message||'The passage could not be opened. Try again.';throw error;}}
+ async function openFromSheet(id){try{await selectPack(id);}catch(error){if(sheet!=='progress')notice=error?.message||'The passage could not be opened. Try again.';throw error;}}
  // A saved passage that cannot be restored falls back once: the default stays open and
  // the saved key is cleared, so later launches are quiet. A missing connection is not a
  // verdict about the passage, so that key is kept for the next launch.
@@ -248,6 +248,7 @@
  let inTransition=$derived(transitionSection===activity?.sectionId&&!session.detour&&session.status!=='complete');
  $effect(()=>{document.documentElement.dataset.theme=dark?'dark':'light';});
  // Closing the FIA menu returns focus to the More button that opened it (the sheet unmounts its modal dialog, which otherwise drops focus to <body>).
+ // Kept beside Sheet's own opener return: where a click does not focus the button (Safari), Sheet has no opener to restore.
  let moreButton=$state(),lastSheet=null;
  $effect(()=>{const now=sheet;untrack(()=>{if(lastSheet==='menu'&&now===null)moreButton?.focus();lastSheet=now;});});
  let session=$state(createSession(bundledPresentation.activities));
@@ -591,7 +592,7 @@
    <div class="menu-footer"><button class="primary full menu-close" onclick={()=>sheet=null}>Close</button></div>
   {:else if sheet==='downloads'}
    <button class="sheet-back" onclick={()=>sheet='menu'}><ChevronLeft size={18}/>FIA menu</button>
-   <LibraryPanel view="downloads" {selectedPack} {language} onlanguage={selectLanguage} completed={session.completed.length} total={activities.length} onstatus={value=>{saved=value;updateDownloaded();}} onselect={openFromSheet} onreset={restartPack}/>
+   <LibraryPanel view="downloads" {selectedPack} onstatus={value=>{saved=value;updateDownloaded();}}/>
   {:else if sheet==='conversation'}
    <p class="sheet-intro">Ask to show a resource, pause, or change how we continue. This prototype supports commands; open-ended AI is not connected.</p>
    <form class="command-form" onsubmit={e=>{e.preventDefault();runCommand();}}><label class="sr-only" for="command">Tell the guide what you need</label><input bind:this={chatInput} id="command" bind:value={command} placeholder="Show me the map…" autocomplete="off"/><button class="icon-button" type="submit" aria-label="Send command" disabled={!command.trim()}><Send size={18}/></button></form>
