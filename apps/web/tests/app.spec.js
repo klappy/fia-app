@@ -370,7 +370,30 @@ it('the FIA menu dialog is named and returns focus to More when it closes (fb-03
  expect(document.querySelector('.scene-menu')).toBeNull();expect(document.activeElement).toBe(more);
  // Language and Passages are no longer sheets of their own; only Downloads opens from the menu into the library panel.
  await fireEvent.click(more);await fireEvent.click(screen.getByRole('button',{name:'Downloads',exact:true}));await settle();
- expect(screen.getByRole('dialog',{name:''}).querySelector('.sheet-back')).toBeTruthy();
+ expect(screen.getByRole('dialog',{name:'Downloads'}).querySelector('.sheet-back')).toBeTruthy();
+});
+it('every sheet restores focus to the control that opened it (fb-03 follow-ups)',async()=>{
+ await startAt('S01-U001');const opener=screen.getByRole('button',{name:'Session progress: open section overview'});
+ opener.focus();await fireEvent.click(opener);await settle();
+ expect(document.querySelector('.overview-sheet')).toBeTruthy();
+ // showModal moves focus into the dialog; a keyboard user closes from inside it.
+ const close=document.querySelector('.ov-close');close.focus();await fireEvent.click(close);await settle();
+ expect(document.querySelector('.overview-sheet')).toBeNull();expect(document.activeElement).toBe(opener);
+ // A sheet reached through the menu returns to More, the control that opened the sheet stack.
+ const more=screen.getByRole('button',{name:'More options'});more.focus();await fireEvent.click(more);await settle();
+ const settings=screen.getByRole('button',{name:'Settings',exact:true});settings.focus();await fireEvent.click(settings);await settle();
+ expect(document.querySelector('.settings-panel')).toBeTruthy();
+ const closeSettings=screen.getByRole('button',{name:'Close',exact:true});closeSettings.focus();await fireEvent.click(closeSettings);await settle();
+ expect(document.querySelector('.settings-panel')).toBeNull();expect(document.activeElement).toBe(more);
+});
+it('every sheet dialog is named by its heading, or by its label when the header is empty (fb-03 follow-ups)',async()=>{
+ await startAt('S01-U001');const more=screen.getByRole('button',{name:'More options'});
+ for(const [item,name] of [['Downloads','Downloads'],['Passage resources','Explore the passage'],['Settings','Settings'],['About & sources','About this prototype']]){
+  await fireEvent.click(more);await settle();expect(screen.getByRole('dialog',{name:'More options'})).toBeTruthy();
+  await fireEvent.click(screen.getByRole('button',{name:item,exact:true}));await settle();
+  const dialog=screen.getByRole('dialog',{name});expect(dialog.getAttribute('aria-labelledby')).toBe(dialog.querySelector('h2').id);
+  await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));await settle();
+ }
 });
 it('the mini map exposes every visible screen and jumps directly to a chosen image without a section detour',async()=>{
  await startAt('S01-U003');await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));
