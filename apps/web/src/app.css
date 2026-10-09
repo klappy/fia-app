@@ -144,8 +144,8 @@ button{min-height:48px}.scene-notice button{min-width:48px;min-height:48px}.kept
 @media(prefers-reduced-transparency:reduce){.sheet.glass-sheet,.glass-sheet .sheet-header{background:var(--surface);-webkit-backdrop-filter:none;backdrop-filter:none}}
 
 /* One generous hit area lets visual spacing stay compact and even. */
-.session-progress{display:flex;flex-direction:column;gap:6px;padding:16px 0;min-height:92px;box-sizing:border-box}
-/* Top band (cookbook progress-rail § One bar, captain 2026-10-08 23:40–23:52 ET): one 16 px margin on every side; stack 16 · 32 · 6 · 22 · 16 = 92.
+.session-progress{display:flex;flex-direction:column;gap:16px;padding:16px 0 10px;height:92px;box-sizing:border-box;justify-content:flex-start}
+/* Top band (cookbook progress-rail § One bar, captain 2026-10-08 23:40–23:52 ET): gaps measured from the ring (the visual edge, 5 px outside the circle): top→ring 11 · ring→words 11 · words→bottom ≈11, i.e. padding 16 / gap 16 / padding 10 around the 32 px circles and the 17.5 px label line = 92.
    No track: six 32 px cells overlapping 2 px, stacked outward from the current cell (z-index set inline); the current cell's 2 px ring is the
    within-stage arc — elapsed in --text-title from 12 o'clock, remainder in --paper-300 — on the OG ring geometry (3 px gap + 2 px). */
 .stage-bar{position:relative;display:flex;justify-content:center;align-items:center;height:32px}
@@ -154,7 +154,7 @@ button{min-height:48px}.scene-notice button{min-width:48px;min-height:48px}.kept
 .stage-cell.complete{background:var(--text-body);color:var(--paper-050);box-shadow:none}
 .stage-cell.current{background:var(--text-title);color:var(--paper-050);box-shadow:0 0 0 3px var(--paper-050)}
 .stage-cell.current::after{content:'';position:absolute;inset:-5px;border-radius:50%;background:conic-gradient(var(--text-title) var(--arc,0%),var(--paper-300) 0);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 2px));mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 2px));pointer-events:none}
-@property --arc{syntax:'<percentage>';inherits:false;initial-value:0%}
+@property --arc{syntax:'<percentage>';inherits:true;initial-value:0%}
 .stage-cell.current::after{transition:--arc 600ms var(--ease-flow,ease)}
 @media(prefers-reduced-motion:reduce){.stage-cell.current::after{transition:none}}
 [dir=rtl] .stage-cell.current::after{transform:scaleX(-1)}
