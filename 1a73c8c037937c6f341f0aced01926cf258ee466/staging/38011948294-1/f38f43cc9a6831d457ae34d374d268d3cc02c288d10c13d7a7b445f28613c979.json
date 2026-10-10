@@ -1,0 +1,54 @@
+{
+  "schema": "fia-listening-persona-summary@1",
+  "commit": "1a73c8c037937c6f341f0aced01926cf258ee466",
+  "environment": "staging",
+  "runId": "38011948294",
+  "attempt": "1",
+  "workflowUrl": "https://github.com/klappy/fia-app/actions/runs/38011948294",
+  "scope": "Agent-operated observations; not human research or acoustic/device proof. Hosted and controlled protocol scopes are separate.",
+  "scenario": {
+    "key": "1a73c8c037937c6f341f0aced01926cf258ee466/staging/P2 Scripture ON must deliver actual BSB playback",
+    "scenario": "P2 Scripture ON must deliver actual BSB playback",
+    "scope": "hosted-rendered-native",
+    "outcome": "failed",
+    "validation": {
+      "validator": "verify",
+      "ok": false,
+      "environment": "staging",
+      "commit": "1a73c8c037937c6f341f0aced01926cf258ee466",
+      "errors": [
+        "Scenario did not pass once: P2 Scripture ON must deliver actual BSB playback",
+        "Scenario did not pass once: P2 saved Scripture plays after isolated offline reload"
+      ],
+      "scope": "Live Chromium P2 listening only; no physical-device or audible-output claim"
+    },
+    "failedStep": "Error: Listening outcome requires actual native playback; unavailable is a failure\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\nCall Log:\n- Timeout 45000ms exceeded while waiting on the predicate",
+    "observedFriction": {
+      "classification": "observation-only",
+      "notices": [
+        {
+          "kind": "visible-notices",
+          "text": [
+            "This recording is unavailable. You can continue."
+          ]
+        }
+      ],
+      "assessment": "Not inferred from pass/fail; review attached observations"
+    },
+    "userFeedback": {
+      "status": "not-collected"
+    },
+    "evidence": {
+      "name": "live-listening-evidence",
+      "sha256": "e912b6f5570d4ebf4a320de904871649e3cf2b6509ef3947b0de201ad1a80488",
+      "workflowArtifacts": "test-results (trace/video retention is finite)"
+    },
+    "baselineComparison": {
+      "baselineCommit": "d06f5df435079fbee3a2ac03c9705077c69e6655",
+      "priorOutcome": "passed",
+      "currentOutcome": "failed",
+      "archivePath": "d06f5df435079fbee3a2ac03c9705077c69e6655/staging/37420500491-1/f38f43cc9a6831d457ae34d374d268d3cc02c288d10c13d7a7b445f28613c979.json",
+      "scope": "Outcome comparison only; no sentiment inference"
+    }
+  }
+}
