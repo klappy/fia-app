@@ -175,6 +175,8 @@ it('verified proxy Scripture keeps logical recording identity and maps codec del
  player.currentTime=boundary+.020;player.ontimeupdate();await settle();expect(document.querySelectorAll('.scripture-scroll p')[1].getAttribute('aria-current')).toBe('true');
 });
 const settle=async()=>{await Promise.resolve();await tick();};
+// A stage's `.ov-items`: the circles shown plus the counts on `‹ n earlier` and `n more ›`, which together cover the whole stage.
+const windowSpan=el=>el.querySelectorAll('.ov-item').length+[...el.querySelectorAll('.ov-window-step')].reduce((s,b)=>s+ +b.textContent.match(/\d+/)[0],0);
 // R4: a tap within the start burst never pauses; wait until the easy button is no longer busy.
 const easyIdle=()=>waitFor(()=>expect(document.querySelector('.guide-primary').hasAttribute('aria-busy')).toBe(false),{timeout:2000});
 async function startAt(id,status='ready',prefs={}){const session=createSession(activities);session.index=activities.findIndex(a=>a.id===id);session.status=status;Object.assign(session.preferences,prefs);localStorage.setItem('fia-v3-session@2',JSON.stringify({session}));render(App);await settle();await settle();await settle();}
@@ -349,7 +351,9 @@ it('the overview sheet opens from the bar in its clarity order and reaches Langu
  const stages=[...sheet.querySelectorAll('.ov-stage-row')];expect(stages).toHaveLength(6);
  expect(stages.filter(b=>b.getAttribute('aria-expanded')==='true')).toHaveLength(1);
  expect(sheet.querySelectorAll('.ov-items')).toHaveLength(1);expect(sheet.querySelectorAll('.ov-caption')).toHaveLength(1);
- const sectionId=activities.find(a=>a.id==='S03-U009').sectionId;const screens=new Set(activities.filter(a=>a.sectionId===sectionId).map(a=>a.readingGroupId||a.id));const items=[...sheet.querySelectorAll('.ov-item')];expect(items).toHaveLength(screens.size);
+ const sectionId=activities.find(a=>a.id==='S03-U009').sectionId;const screens=new Set(activities.filter(a=>a.sectionId===sectionId).map(a=>a.readingGroupId||a.id));const items=[...sheet.querySelectorAll('.ov-item')];
+ // A long stage shows a window of at most 12 circles; the window plus its two end counts still covers the whole stage.
+ expect(items).toHaveLength(Math.min(12,screens.size));expect(windowSpan(sheet.querySelector('.ov-items'))).toBe(screens.size);
  for(const item of items)expect(item.querySelector('.sr-only').textContent).toMatch(/^(listen|Scripture|discuss|key term|picture|map|video), \d+ of \d+/);
  expect(sheet.querySelector('.ov-caption').textContent).toMatch(/^\d+ done · (listen|Scripture|discuss|key term|picture|map|video) now · \d+ to go$/);
  // The key is one tap away, collapsed by default: content words and the big button's four faces.
@@ -423,9 +427,31 @@ it('after a forward jump the spine announces nothing done that was skipped, and 
  for(const row of document.querySelectorAll('.ov-stage-row')){expect(row.getAttribute('aria-label')).not.toMatch(/done/);expect(row.getAttribute('aria-label')).toMatch(/, \d+ items$/);}
  for(const row of document.querySelectorAll('.ov-stage-row[aria-expanded=false]'))expect(row.hasAttribute('aria-controls')).toBe(false);
  const open=document.querySelector('.ov-stage-row[aria-expanded=true]');expect(document.getElementById(open.getAttribute('aria-controls'))).toBeTruthy();
- const n=document.querySelectorAll('.ov-item').length,[,done,togo]=document.querySelector('.ov-caption').textContent.match(/^(\d+) done · .+ now · (\d+) to go$/);
+ const n=windowSpan(document.querySelector('.ov-items')),[,done,togo]=document.querySelector('.ov-caption').textContent.match(/^(\d+) done · .+ now · (\d+) to go$/);
  expect(+done+1+ +togo).toBe(n);expect(+done).toBe(0);
  for(const stop of document.querySelectorAll('.ov-item.stop'))expect(stop.querySelector('.sr-only').textContent).toContain('stop to discuss');
+});
+it('a long stage shows a window of 12 circles around the current item, and the end words scroll it',async()=>{
+ // cookbook overview-sheet.md § Long stages — the circle row is a window (captain 2026-10-09 23:20 ET "build it, then show it").
+ await startAt('S05-U020');await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));
+ const stage=screen.getByRole('group',{name:'Filling the Gaps items'}).parentElement;
+ const sectionId=activities.find(a=>a.id==='S05-U020').sectionId;const n=new Set(activities.filter(a=>a.sectionId===sectionId).map(a=>a.readingGroupId||a.id)).size;expect(n).toBeGreaterThan(12);
+ const items=()=>[...stage.querySelectorAll('.ov-item')],pos=b=>+b.querySelector('.sr-only').textContent.match(/, (\d+) of/)[1];
+ // Twelve circles, numbered through the whole stage, with the current one near the middle; the caption still counts the whole stage.
+ expect(items()).toHaveLength(12);expect(windowSpan(stage)).toBe(n);
+ const current=items().findIndex(b=>b.classList.contains('current'));expect(current).toBeGreaterThanOrEqual(4);expect(current).toBeLessThanOrEqual(6);
+ const [,done,togo]=stage.querySelector('.ov-caption').textContent.match(/^(\d+) done · .+ now · (\d+) to go$/);expect(+done+1+ +togo).toBe(n);
+ const earlier=stage.querySelector('.ov-earlier'),later=stage.querySelector('.ov-later');
+ expect(earlier.textContent.trim()).toBe(`${pos(items()[0])-1} earlier`);expect(later.textContent.trim()).toBe(`${n-pos(items().at(-1))} more`);
+ // `n more ›` scrolls forward one page; `‹ n earlier` back to the start, where the earlier word is gone and the first circle is item 1.
+ const firstBefore=pos(items()[0]);await fireEvent.click(later);await settle();
+ expect(pos(items()[0])).toBe(Math.min(firstBefore+12,n-11));expect(items()).toHaveLength(12);
+ for(let page=0;page<6&&stage.querySelector('.ov-earlier');page++){await fireEvent.click(stage.querySelector('.ov-earlier'));await settle();}
+ expect(pos(items()[0])).toBe(1);expect(stage.querySelector('.ov-earlier')).toBeNull();expect(stage.querySelector('.ov-later').textContent.trim()).toBe(`${n-12} more`);
+ // The here-card and the other rows are untouched; a short stage shows every circle and no window words.
+ expect(screen.getByRole('region',{name:'You are here'}).textContent).toContain('Filling the Gaps');
+ await fireEvent.click(screen.getByRole('button',{name:/^Speaking the Word/}));await settle();
+ const short=screen.getByRole('group',{name:'Speaking the Word items'}).parentElement;expect(short.querySelectorAll('.ov-item').length).toBeLessThanOrEqual(12);expect(short.querySelector('.ov-window')).toBeNull();
 });
 it('focus follows the overview picker when Language swaps to Passages (review #9)',async()=>{
  vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',nativeName:'English',ready:1}]);vi.spyOn(libraryAdapter,'passages').mockResolvedValue([bundledPack]);
@@ -439,9 +465,11 @@ it('the spine shows each stage on tap and jumps directly to a chosen image witho
  expect(document.querySelector('dialog.glass-sheet')).toBeTruthy();
  const titles=['Hear and Heart','Setting the Stage','Defining the Scenes','Embodying the Text','Filling the Gaps','Speaking the Word'];
  for(const title of titles){const row=screen.getByRole('button',{name:new RegExp('^'+title)});if(row.getAttribute('aria-expanded')!=='true')await fireEvent.click(row);}
- await settle();expect(document.querySelectorAll('.ov-item')).toHaveLength(111);
+ // Every stage is open; long stages show a 12-circle window, so the windows plus their end counts cover all 111 items.
+ await settle();expect([...document.querySelectorAll('.ov-items')].reduce((sum,el)=>sum+windowSpan(el),0)).toBe(111);
  for(const item of document.querySelectorAll('.ov-item')){expect(item.querySelector('svg')).toBeTruthy();expect(item.querySelector('.sr-only').textContent.length).toBeGreaterThan(0);}
- const button=[...screen.getByRole('group',{name:'Setting the Stage items'}).querySelectorAll('.ov-item')].find(b=>/^picture,/.test(b.querySelector('.sr-only').textContent));
+ // The picture may sit past the window; `n more ›` scrolls the window until it shows.
+ let button;for(let page=0;page<4&&!button;page++){button=[...screen.getByRole('group',{name:'Setting the Stage items'}).querySelectorAll('.ov-item')].find(b=>/^picture,/.test(b.querySelector('.sr-only').textContent));if(!button){await fireEvent.click(screen.getByRole('group',{name:'Setting the Stage items'}).parentElement.querySelector('.ov-later'));await settle();}}
  await fireEvent.click(button);await settle();
  expect(screen.queryByRole('region',{name:'New section'})).toBeNull();
  expect(document.querySelector('.section-transition')).toBeNull();

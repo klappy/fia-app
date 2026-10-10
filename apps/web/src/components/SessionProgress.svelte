@@ -1,11 +1,25 @@
 <script>
- import {Check} from 'lucide-svelte';
+ import {Check,ChevronLeft,ChevronRight} from 'lucide-svelte';
  import {contentIcons as icons,sectionIcons,guideIcon,kindWords} from '../lib/progress-icons.js';
  let {groups,onopen=()=>{},onselect=()=>{},overview=false}=$props();
  // Overview spine: the current stage starts open; tapping another stage's row opens its items in place.
  let toggled=$state(new Set());
  const isOpen=i=>toggled.has(i)!==!!groups[i].active;
  function toggle(i){const next=new Set(toggled);next.has(i)?next.delete(i):next.add(i);toggled=next;}
+ // Long stages show a window of circles, not the whole row (cookbook overview-sheet.md § Long stages — the circle row is a
+ // window; captain 2026-10-09 23:20 ET "build it, then show it"): at most WINDOW circles with the current one near the middle,
+ // `‹ n earlier` and `n more ›` at the cut ends, and a tap on either end scrolls the window one page. The caption still counts
+ // the whole stage. A stage with WINDOW items or fewer is unchanged. A stage without a current item opens at its start.
+ const WINDOW=12;
+ let starts=$state({});
+ function windowStart(group,i){
+  const n=group.screens.length;if(n<=WINDOW)return 0;
+  const clamp=v=>Math.min(n-WINDOW,Math.max(0,v));
+  if(starts[i]!=null)return clamp(starts[i]);
+  const at=group.screens.findIndex(s=>s.current);
+  return at<0?0:clamp(at-Math.floor((WINDOW-1)/2));
+ }
+ function scroll(i,start,by){starts={...starts,[i]:start+by};}
  // One caption line carries the visible word (O1): `7 done · discuss now · 3 to go`. The three counts partition the
  // stage even after a jump: done and to go never count the current item; skipped items stay in to go (review #2).
  function caption(group){
@@ -35,14 +49,22 @@
      <span class="ov-stage-count" aria-hidden="true">{group.screens.length}</span>
     </button>
     {#if open}
+     {@const n=group.screens.length}{@const start=windowStart(group,i)}{@const end=Math.min(n,start+WINDOW)}
      <div class="ov-items" id={`ov-items-${i}`}>
       <div class="ov-circles" role="group" aria-label={`${group.title} items`}>
-       {#each group.screens as screen,j}{@const Icon=icons[screen.kind]||guideIcon}{@const word=kindWords[screen.kind]||kindWords.guide}
+       {#each group.screens.slice(start,end) as screen,k}{@const j=start+k}{@const Icon=icons[screen.kind]||guideIcon}{@const word=kindWords[screen.kind]||kindWords.guide}
         <button class="ov-item" class:complete={screen.complete} class:current={screen.current} class:stop={screen.kind==='discussion'&&!screen.complete&&!screen.current} aria-current={screen.current?'step':undefined} onclick={()=>onselect(screen.activityId,false)}>
-         <span class="ov-dot" aria-hidden="true"><Icon size={15}/></span><span class="sr-only">{word}, {j+1} of {group.screens.length}{screen.complete?', done':''}{screen.kind==='discussion'&&!screen.complete&&!screen.current?', stop to discuss':''}{screen.label?`: ${screen.label}`:''}</span>
+         <span class="ov-dot" aria-hidden="true"><Icon size={15}/></span><span class="sr-only">{word}, {j+1} of {n}{screen.complete?', done':''}{screen.kind==='discussion'&&!screen.complete&&!screen.current?', stop to discuss':''}{screen.label?`: ${screen.label}`:''}</span>
         </button>
        {/each}
       </div>
+      {#if n>WINDOW}
+       <!-- The window's ends: caption-weight words on ≥ 48 px controls (R-604); chevrons flip under [dir=rtl]. -->
+       <div class="ov-window">
+        {#if start>0}<button class="ov-window-step ov-earlier" onclick={()=>scroll(i,start,-WINDOW)}><span class="chev"><ChevronLeft size={16} aria-hidden="true"/></span>{start} earlier</button>{/if}
+        {#if end<n}<button class="ov-window-step ov-later" onclick={()=>scroll(i,start,WINDOW)}>{n-end} more<span class="chev"><ChevronRight size={16} aria-hidden="true"/></span></button>{/if}
+       </div>
+      {/if}
       <p class="ov-caption">{caption(group)}</p>
      </div>
     {/if}
@@ -79,5 +101,11 @@
  .ov-item.complete .ov-dot{background:var(--ink-700);color:var(--paper-000);box-shadow:none}
  .ov-item.current .ov-dot{color:var(--ink-900);box-shadow:0 0 0 2px var(--paper-050),0 0 0 4px var(--ink-900)}
  .ov-item.stop .ov-dot{box-shadow:inset 0 0 0 1.5px var(--fia-stop);color:var(--fia-stop)}
+ .ov-window{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:-2px 0 0}
+ .ov-window-step{min-height:var(--fia-tap-min,48px);padding:4px 8px;gap:4px;border-radius:12px;font-size:.8125rem;line-height:1.35;color:var(--ink-500);white-space:nowrap}
+ .ov-earlier{margin-inline-start:-8px}
+ .ov-later{margin-inline-start:auto}
+ .ov-window-step .chev{display:inline-flex}
+ :global([dir=rtl]) .ov-window-step .chev{transform:scaleX(-1)}
  .ov-caption{margin:2px 0 6px;padding-inline-start:4px;font-size:.8125rem;line-height:1.35;color:var(--ink-500)}
 </style>
