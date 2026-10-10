@@ -608,7 +608,7 @@
   </div>
  {/if}
  <!-- The overview sheet is the navigation home (cookbook overview-sheet.md, adopted 2026-10-08). A refused open stays on its card while the sheet is open (openFromSheet). -->
- <OverviewSheet groups={progress} {selectedPack} {language} completed={session.completed.length} total={activities.length} onlanguage={selectLanguage} onreset={restartPack} onclose={()=>sheet=null} onopenpack={openFromSheet} onnavigate={(id,section)=>{navigate({type:'SEEK_ACTIVITY',activityId:id});transitionSection=section?activity.sectionId:null;persist();sheet=null;}}/>
+ <OverviewSheet groups={progress} {selectedPack} {language} completed={session.completed.length} total={activities.length} onlanguage={selectLanguage} onreset={restartPack} onclose={()=>sheet=null} onopenpack={openFromSheet} onnavigate={id=>{navigate({type:'SEEK_ACTIVITY',activityId:id});transitionSection=null;persist();sheet=null;}}/>
   {:else if sheet==='settings'}
    <div class="settings-panel">
     <button class="sheet-back" onclick={()=>sheet='menu'}><ChevronLeft size={18}/>FIA menu</button>

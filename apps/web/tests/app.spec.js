@@ -413,6 +413,27 @@ it('every sheet dialog is named by its heading, or by its label when the header 
   await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));await settle();
  }
 });
+it('after a forward jump the spine announces nothing done that was skipped, and the caption partitions the stage (review #1, #2, #5)',async()=>{
+ await startAt('S01-U001');await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));
+ await fireEvent.click(screen.getByRole('button',{name:/^Filling the Gaps/}));await settle();
+ const items=[...screen.getByRole('group',{name:'Filling the Gaps items'}).querySelectorAll('.ov-item')];await fireEvent.click(items[2]);await settle();
+ expect(state().completed).toEqual([]);
+ await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));await settle();
+ expect(document.querySelectorAll('.ov-stage.done')).toHaveLength(0);expect(document.querySelectorAll('.ov-stage-check')).toHaveLength(0);
+ for(const row of document.querySelectorAll('.ov-stage-row')){expect(row.getAttribute('aria-label')).not.toMatch(/done/);expect(row.getAttribute('aria-label')).toMatch(/, \d+ items$/);}
+ for(const row of document.querySelectorAll('.ov-stage-row[aria-expanded=false]'))expect(row.hasAttribute('aria-controls')).toBe(false);
+ const open=document.querySelector('.ov-stage-row[aria-expanded=true]');expect(document.getElementById(open.getAttribute('aria-controls'))).toBeTruthy();
+ const n=document.querySelectorAll('.ov-item').length,[,done,togo]=document.querySelector('.ov-caption').textContent.match(/^(\d+) done · .+ now · (\d+) to go$/);
+ expect(+done+1+ +togo).toBe(n);expect(+done).toBe(0);
+ for(const stop of document.querySelectorAll('.ov-item.stop'))expect(stop.querySelector('.sr-only').textContent).toContain('stop to discuss');
+});
+it('focus follows the overview picker when Language swaps to Passages (review #9)',async()=>{
+ vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',nativeName:'English',ready:1}]);vi.spyOn(libraryAdapter,'passages').mockResolvedValue([bundledPack]);
+ await startAt('S01-U001');await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));
+ await fireEvent.click(screen.getByRole('button',{name:/^Language/}));await settle();
+ const browse=await screen.findByRole('button',{name:/Browse passages/});browse.focus();await fireEvent.click(browse);await settle();
+ const passages=screen.getByRole('button',{name:/^Passages/});expect(passages.getAttribute('aria-expanded')).toBe('true');expect(document.activeElement).toBe(passages);
+});
 it('the spine shows each stage on tap and jumps directly to a chosen image without a section detour',async()=>{
  await startAt('S01-U003');await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));
  expect(document.querySelector('dialog.glass-sheet')).toBeTruthy();

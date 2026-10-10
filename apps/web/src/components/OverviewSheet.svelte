@@ -8,6 +8,7 @@
  import {contentIcons,sectionIcons,guideIcon,kindWords} from '../lib/progress-icons.js';
  import SessionProgress from './SessionProgress.svelte';
  import LibraryPanel from './LibraryPanel.svelte';
+ import {tick} from 'svelte';
  let {groups,selectedPack,language,completed=0,total=0,intro=null,onlanguage,onopenpack,onreset,onnavigate,onclose}=$props();
  // The key, behind one disclosure: Content (kinds in user words, overview-sheet § Copy rules) and the big button's four faces (#244).
  const contentWords=Object.entries(kindWords);
@@ -15,9 +16,13 @@
  let picker=$state(null);
  const languageName=$derived(language==='eng'?'English':'Español');
  function toggle(view){picker=picker===view?null:view;}
+ // LibraryPanel can swap Language → Passages; focus follows to the newly open row, never to the body (review #9).
+ let rows=$state({});
+ async function swap(view){picker=view;await tick();rows[view]?.focus();}
  // Here-card: the current stage, the item within it, and what comes next.
- const activeIndex=$derived(Math.max(0,groups.findIndex(g=>g.active)));
- const here=$derived(groups[activeIndex]);
+ const activeIndex=$derived(groups.findIndex(g=>g.active));
+ // No active stage → no here-card, never a made-up "step 1 of 6" (review #7).
+ const here=$derived(activeIndex>=0?groups[activeIndex]:null);
  const HereIcon=$derived(sectionIcons[activeIndex]||sectionIcons[0]);
  const nowScreen=$derived(here&&here.current>=0?here.screens[here.current]:null);
  const nextScreen=$derived(nowScreen?(here.screens[here.current+1]||groups[activeIndex+1]?.screens[0]||null):null);
@@ -39,7 +44,7 @@
  {#if intro}<div class="ov-intro">{@render intro()}</div>{/if}
  <SessionProgress {groups} overview onselect={onnavigate}/>
  <div class="ov-quiet">
-  <button class="ov-row ov-key-toggle" aria-expanded={picker==='key'} aria-controls="ov-key" onclick={()=>toggle('key')}><CircleHelp size={18} aria-hidden="true"/>What the icons mean<span class="chev">{#if picker==='key'}<ChevronDown size={18} aria-hidden="true"/>{:else}<ChevronRight size={18} aria-hidden="true"/>{/if}</span></button>
+  <button class="ov-row ov-key-toggle" aria-expanded={picker==='key'} aria-controls={picker==='key'?'ov-key':undefined} onclick={()=>toggle('key')}><CircleHelp size={18} aria-hidden="true"/>What the icons mean<span class="chev">{#if picker==='key'}<ChevronDown size={18} aria-hidden="true"/>{:else}<ChevronRight size={18} aria-hidden="true"/>{/if}</span></button>
   {#if picker==='key'}
    <div class="ov-key" id="ov-key" role="group" aria-label="Key">
     <p class="kh">Content</p>
@@ -48,10 +53,10 @@
     {#each faces as [Icon,label]}<span><Icon size={18} aria-hidden="true"/>{label}</span>{/each}
    </div>
   {/if}
-  <button class="ov-row" aria-expanded={picker==='languages'} onclick={()=>toggle('languages')}><Globe size={18} aria-hidden="true"/>Language<span class="val">{languageName}</span><span class="chev">{#if picker==='languages'}<ChevronDown size={18} aria-hidden="true"/>{:else}<ChevronRight size={18} aria-hidden="true"/>{/if}</span></button>
-  {#if picker==='languages'}<div class="ov-picker"><LibraryPanel view="languages" {selectedPack} {language} {onlanguage} onview={view=>picker=view} {completed} {total} onselect={onopenpack} {onreset}/></div>{/if}
-  <button class="ov-row" aria-expanded={picker==='passages'} onclick={()=>toggle('passages')}><Bookmark size={18} aria-hidden="true"/>Passages<span class="val">{selectedPack.title}</span><span class="chev">{#if picker==='passages'}<ChevronDown size={18} aria-hidden="true"/>{:else}<ChevronRight size={18} aria-hidden="true"/>{/if}</span></button>
-  {#if picker==='passages'}<div class="ov-picker"><LibraryPanel view="passages" {selectedPack} {language} {onlanguage} onview={view=>picker=view} {completed} {total} onselect={onopenpack} {onreset}/></div>{/if}
+  <button class="ov-row" bind:this={rows.languages} aria-expanded={picker==='languages'} onclick={()=>toggle('languages')}><Globe size={18} aria-hidden="true"/>Language<span class="val">{languageName}</span><span class="chev">{#if picker==='languages'}<ChevronDown size={18} aria-hidden="true"/>{:else}<ChevronRight size={18} aria-hidden="true"/>{/if}</span></button>
+  {#if picker==='languages'}<div class="ov-picker"><LibraryPanel view="languages" {selectedPack} {language} {onlanguage} onview={swap} {completed} {total} onselect={onopenpack} {onreset}/></div>{/if}
+  <button class="ov-row" bind:this={rows.passages} aria-expanded={picker==='passages'} onclick={()=>toggle('passages')}><Bookmark size={18} aria-hidden="true"/>Passages<span class="val">{selectedPack.title}</span><span class="chev">{#if picker==='passages'}<ChevronDown size={18} aria-hidden="true"/>{:else}<ChevronRight size={18} aria-hidden="true"/>{/if}</span></button>
+  {#if picker==='passages'}<div class="ov-picker"><LibraryPanel view="passages" {selectedPack} {language} {onlanguage} onview={swap} {completed} {total} onselect={onopenpack} {onreset}/></div>{/if}
  </div>
  <!-- Close is the sheet's one action: the primary button, in a padded footer band that stays in reach (overview-sheet.md § States large-print). -->
  <div class="ov-footer"><button class="primary full ov-close" onclick={onclose}>Close</button></div>
