@@ -23,6 +23,17 @@ test.describe.configure({mode:'serial'});
 test.beforeAll(async()=>{reference=await startReference();});
 test.afterAll(async()=>{await reference?.close();});
 const find=predicate=>{const index=pack.activities.findIndex(predicate);if(index<0)throw Error('Missing reference state');return index;};
+// Authorized changed states for this candidate: every state that paints the session bar. The captain adopted the
+// one-bar / stage-icon design book as mocked on 2026-10-08 (cookbook design/alpha-system/components/progress-rail.md
+// § One bar; tokens.md § Icon vocabulary; cookbook #234, #235; app #210, #211; release/changes/one-bar-stage-icons.md).
+// These are recorded as new-state evidence with independent visual review required, never as a renamed parity PASS.
+// The pinned reference is unchanged. Plainly: with all eleven reference states authorized, THIS CANDIDATE HAS NO PARITY
+// COMPARISON — the four width/theme shells pass with zero compared states — and parity resumes only when the reference
+// is re-pinned to the adopted design. The four sheet states were already outside parity before this change.
+// 'progress-overview' now also paints the overview sheet (cookbook design/alpha-system/components/overview-sheet.md,
+// adopted 2026-10-08 as mocked in design/alpha-v2-screens/25-one-bar-overview.mock.html; fb-03 S2;
+// release/changes/overview-sheet.md): new-state evidence, independent visual review required.
+const authorizedChangedStates=new Set(['initial-guide','grouped-reading','scripture','discussion','image','map','term-instruction','term-definition','section-transition','progress-overview','menu']);
 const states=[
  {name:'initial-guide',index:0,initial:true},
  {name:'grouped-reading',index:find(a=>!!a.readingGroupId)},
@@ -36,8 +47,9 @@ const states=[
  {name:'progress-overview',index:0,progress:true},
  {name:'menu',index:0,menu:true},
  {name:'settings',index:0,menu:'Settings'},
- {name:'languages',index:0,menu:'Language'},
- {name:'passages',index:0,menu:'Passages'},
+ // Language and Passages left the menu for the overview sheet (fb-03 S3); these candidate-only sheet states open them there.
+ {name:'languages',index:0,overview:'Language'},
+ {name:'passages',index:0,overview:'Passages'},
  {name:'about',index:0,menu:'About & sources'},
 ];
 async function openState(browser,url,viewport,dark,state,{verifiedFixture=false}={}){
@@ -67,6 +79,7 @@ async function openState(browser,url,viewport,dark,state,{verifiedFixture=false}
  if(state.initial && (verifiedFixture || url===reference.url))await expect(page.getByRole('button',{name:'Begin',exact:true})).toBeVisible();
  if(state.progress)await page.getByRole('button',{name:'Session progress: open section overview',exact:true}).click();
  if(state.menu){await page.getByRole('button',{name:'More options',exact:true}).click();if(typeof state.menu==='string')await page.getByRole('button',{name:state.menu,exact:state.menu!=='Language'}).click();}
+ if(state.overview){await page.getByRole('button',{name:'Session progress: open section overview',exact:true}).click();await page.getByRole('button',{name:new RegExp('^'+state.overview)}).click();}
  await page.evaluate(async()=>{await Promise.all([...document.images].map(i=>i.decode().catch(()=>{})));});
  await page.mouse.move(0,0);
  await page.addStyleTag({content:'*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}'});
@@ -93,7 +106,7 @@ for(const width of [390,1280])for(const dark of [false,true])test('approved refe
  test.setTimeout(240000);mkdirSync(info.outputDir,{recursive:true});
  const viewport={width,height:width===390?844:800},stamp=await (await request.get('/version.json')).json();
  const evidence={imageFixtureScope:'Same eight source-bound optimized derivatives on both pages; original-to-lossy-output comparison independently reviewed',imageFixtures:[...imageFixtures].map(([path,f])=>({path,sha256:f.sha256})),referenceCommit:referenceManifest.referenceCommit,candidateCheckout:process.env.GITHUB_SHA||stamp.commit,build:stamp,viewport,dark,comparison:'retain pre-settlement captures, verify symmetric full-paint settlement preserves DOM/styles/geometry/progress, then consecutive identical captures within eight attempts and exact cross-page PNG bytes; no pixel tolerance',states:[],newStates:[],limitations:['Static downloaded-state fixture supplies exact build-verified manifest metadata; this is not installation proof. Actual worker/media transfer tested by upgrade/journey suite.','Help and conversation have no exposed entry in the pinned menu; no new access route invented.','Audible quality, physical devices and playing-video frame parity are not established by static captures.']};
- try{for(const state of states.filter(s=>!['settings','languages','passages','about'].includes(s.name))){let baseline,candidate;
+ try{for(const state of states.filter(s=>!['settings','languages','passages','about'].includes(s.name)&&!authorizedChangedStates.has(s.name))){let baseline,candidate;
   try{
    baseline=await openState(browser,reference.url,viewport,dark,state);candidate=await openState(browser,baseURL,viewport,dark,state,{verifiedFixture:true});
    const capture=async(page,path)=>{const result=await stableScreenshot(async()=>{await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));const image=await page.screenshot({animations:'disabled'});writeFileSync(path,image);return image;});return result;};
@@ -124,7 +137,7 @@ for(const width of [390,1280])for(const dark of [false,true])test('approved refe
   }finally{await baseline?.context.close();await candidate?.context.close();}
  }
  // Authorized changed states are a separate evidence set, never a renamed parity PASS.
- for(const state of [...states.filter(s=>['settings','languages','passages','about'].includes(s.name)),{name:'manual-download-required',index:find(a=>pack.assets[a.assetId]?.kind==='image')},{name:'online-available-initial',index:0,initial:true},{name:'prepared-online-visual',index:find(a=>pack.assets[a.assetId]?.kind==='image')},{name:'spanish-text-only-initial',index:0,initial:true,packId:'spa.MRK-1-1-13'}]){
+ for(const state of [...states.filter(s=>['settings','languages','passages','about'].includes(s.name)||authorizedChangedStates.has(s.name)),{name:'manual-download-required',index:find(a=>pack.assets[a.assetId]?.kind==='image')},{name:'online-available-initial',index:0,initial:true},{name:'prepared-online-visual',index:find(a=>pack.assets[a.assetId]?.kind==='image')},{name:'spanish-text-only-initial',index:0,initial:true,packId:'spa.MRK-1-1-13'}]){
   const candidate=await openState(browser,baseURL,viewport,dark,state);
   try{if(state.name==='manual-download-required'){await expect(candidate.page.getByText('This image is not available online yet. You can continue with the passage text.',{exact:true})).toBeVisible();expect(await candidate.page.locator('img[src],video[src],audio[src]').count()).toBe(0);}
    if(state.name==='prepared-online-visual'){await expect.poll(()=>candidate.page.locator('.visual-viewport img').first().evaluate(img=>img.complete&&img.naturalWidth>0)).toBe(true);expect(await candidate.page.evaluate(()=>window.__visualFixtureRequests)).toEqual([pack.assets[pack.activities[state.index].assetId].src]);expect(await candidate.page.locator('video[src],audio[src]').count()).toBe(0);}

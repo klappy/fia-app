@@ -1,0 +1,19 @@
+# Complete English Mark representation
+
+`createCompleteGuideUnitsResolver({...presentationResolverOptions, canonicalP1})` combines the existing pinned presentation resolver with the separately pinned P1 canonical ledger. `canonicalP1` contains the four retained byte inputs required by `createCanonicalUnitLedgerResolver`. No files are fetched except through the caller's existing retained-presentation read port.
+
+The returned callable accepts the same source selection as the presentation resolver. It returns `canonicalUnits`, a hash-addressed manifest identity, `narration` disposition, and a separate `alignmentInput`. It intentionally exposes no top-level `units` array: passing the whole canonical ledger directly to alignment must not silently narrate production notes or assign independent ranges to associated pauses.
+
+The actual retained corpus test checks all 408 English Mark sections / 5,977 source units against metadata membership and exact text hashes. Existing alignment input remains available for 405 sections. P1 S02/S05/S06 return a complete canonical ledger with `alignmentInput:null` and `disposition-adapter-required`. The narrow missing-unit path is allowed only after existing presentation identity/byte/coverage validation reaches its final completeness check, for those three exact pinned P1 selections; other errors propagate.
+
+Factory wiring is deliberately blocked at the semantics boundary. Current `createAlignmentAdapter` takes a flat list of independent activity IDs and does not represent associated pauses or nonspoken production notes. Integration needs an explicit versioned disposition adapter and dependency identity binding this manifest, preserving all canonical units while choosing which correspondence inputs to evaluate. It must not infer new audio ranges or treat production notes as narration. This increment changes neither factory nor alignment policy, UI, acceptance, acquisition, Worker or release configuration. No accepted playback ranges are produced.
+
+Run `node --test tests/preparation-executor/complete-guide-units.test.mjs tests/preparation-executor/canonical-unit-ledger.test.mjs`. Corpus coverage is retained-source representation, not transcription, measured timing, playback or rights approval for every recording.
+
+## Optional executor composition
+
+`createGuideExecutor` now accepts `canonicalP1` with the four pinned byte inputs. Supplying it activates the complete resolver and binds `diagnostic-disposition-projection@1` plus the canonical pins into composition identity. Existing callers without it retain the presentation-only path; no Worker caller is changed here.
+
+For the three special P1 sections, independent correspondence runs only for unchanged canonical units whose narration role is `not-assessed`. The complete ordered ledger remains in both alignment and acceptance artifacts under `canonicalDisposition`, with a projection SHA. Production notes are explicitly `nonspoken-production-note`; associated pauses are `associated-pause-correspondence-unresolved`. Neither is silently discarded, concatenated to parent text, assigned a new UI activity or granted an independent range. The parent's approved adapted narration is not presumed to match publisher original audio. Artifact verification rechecks the entire disposition payload on warm reuse. Qualification remains review-required for every evaluated unit; ledger completeness is not full spoken coverage.
+
+Tests exercise actual retained P1 metadata/text/dispositions with synthetic recognition control, and preserve P2 retained raw-word correspondence (U1/U2 unmatched, U3–U8 exact). The optional real P2 audio fixture remains separately gated; synthetic source identity is not represented as an actual media run. No model inference or publisher fetch occurs in these regressions.

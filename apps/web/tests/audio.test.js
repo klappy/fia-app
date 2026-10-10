@@ -108,7 +108,15 @@ run('gesture denial retains the same paused owner for synchronous explicit retry
  assert.equal(e.controller.active,true);assert.equal(e.controller.playing,false);assert.equal(e.states.at(-1).src,'blob:verified');assert.equal(e.errors.length,1);
  assert.equal(e.controller.resume(),true);assert.equal(calls,2);await tick();
  assert.equal(e.audio.length,1);assert.equal(e.controller.playing,true);
- e.controller.stop();assert.equal(e.controller.active,false);assert.equal(e.audio[0].src,'');assert.equal(e.controller.resume(),false);
+ e.controller.stop();assert.equal(e.controller.active,false);assert.equal(e.audio[0].paused,true);assert.equal(e.audio[0].loaded,undefined);assert.equal(e.audio[0].src,'blob:verified');assert.equal(e.states.at(-1).src,null);assert.equal(e.controller.resume(),false);
+});
+// Bugbot on #208: the element keeps its last clip, so a replay of the same source (a downloaded clip plays by its path)
+// is a same-value source set; a browser that does not reload on it would resume mid-file.
+run('a replay of the same whole-file source starts from the beginning', async e => {
+ e.controller.play('clip','/audio/clip.mp3');await tick();const element=e.audio[0];element.currentTime=30;
+ e.controller.stop();e.controller.play('clip','/audio/clip.mp3');await tick();
+ assert.equal(e.audio.length,1);assert.equal(element.currentTime,0);assert.equal(e.controller.playing,true);
+ element.currentTime=12;e.controller.stop();e.controller.play('other','/audio/other.mp3');assert.equal(element.currentTime,12,'a new source is left to its own load');
 });
 run('stale gesture rejection cannot resurrect an owner after navigation or replace a newer owner', async e => {
  let reject;
@@ -116,7 +124,7 @@ run('stale gesture rejection cannot resurrect an owner after navigation or repla
  e.controller.play('old','blob:old');const staleReject=reject;e.controller.stop();
  Audio.prototype.play=function(){this.paused=false;return Promise.resolve();};
  e.controller.play('new','blob:new');await tick();staleReject(Object.assign(Error('gesture'),{name:'NotAllowedError'}));await tick();
- assert.equal(e.errors.length,0);assert.equal(e.controller.playing,true);assert.equal(e.states.at(-1).src,'blob:new');assert.equal(e.audio[0].src,'');
+ assert.equal(e.errors.length,0);assert.equal(e.controller.playing,true);assert.equal(e.states.at(-1).src,'blob:new');assert.equal(e.audio.length,1);assert.equal(e.audio[0].src,'blob:new');
 });
 run('synchronous gesture denial is retryable but a subsequent codec rejection releases the owner', async e => {
  Audio.prototype.play=function(){throw Object.assign(Error('gesture'),{name:'NotAllowedError'});};

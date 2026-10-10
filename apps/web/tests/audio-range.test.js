@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createAudioController} from '../src/lib/audio.js';
+import {createAudioController,START_BOUND_MS} from '../src/lib/audio.js';
 const tick=async()=>{await Promise.resolve();await Promise.resolve();};
 function setup(){
  const names=['Audio','document','window','setTimeout','clearTimeout','requestAnimationFrame','cancelAnimationFrame'];
@@ -38,7 +38,7 @@ run('deadline ends once without timeupdate and late natural ended cannot duplica
  owner.onended();owner.ontimeupdate();await tick();assert.equal(e.ends,1);
 });
 run('frame callback independently enforces boundary',async e=>{
- const owner=await e.start();const frame=[...e.frames.values()][0];owner._time=8.01;frame();assert.equal(e.ends,1);assert.equal(owner.src,'');
+ const owner=await e.start();const frame=[...e.frames.values()][0];owner._time=8.01;frame();assert.equal(e.ends,1);assert.equal(owner.paused,true);assert.equal(e.controller.active,false);assert.equal(e.states.at(-1).src,null);
 });
 run('pause before metadata and seek cannot autoplay, resume retains range',async e=>{
  e.controller.play('source','blob:x',1,{startSeconds:3,endSeconds:8});const owner=e.owners[0];e.controller.pause();owner.metadata();owner.seeked();await tick();assert.equal(owner.calls,0);
@@ -53,8 +53,10 @@ run('stalled clock does not falsely complete on deadline',async e=>{
  const owner=await e.start();const timer=[...e.timers.values()][0];timer.callback();assert.equal(e.ends,0);assert.equal(e.controller.active,true);assert.equal(owner.currentTime,3);
 });
 run('navigation and replay invalidate prior frame, timer, seek and ended callbacks',async e=>{
- const old=await e.start(),oldFrame=[...e.frames.values()][0],oldTimer=[...e.timers.values()][0].callback;
- const next=await e.start({startSeconds:10,endSeconds:12});old._time=9;oldFrame();oldTimer();old.onended();old.onseeked();assert.equal(e.ends,0);assert.equal(next.currentTime,10);
+ const old=await e.start(),oldFrame=[...e.frames.values()][0],oldTimer=[...e.timers.values()][0].callback,oldEnded=old.onended,oldSeeked=old.onseeked;
+ // The next clip plays on the same element; only the prior clip's callbacks are stale.
+ const next=await e.start({startSeconds:10,endSeconds:12});assert.equal(next,old);assert.equal(next.currentTime,10);
+ next._time=9;oldFrame();oldTimer();oldEnded();oldSeeked();assert.equal(e.ends,0);assert.equal(e.controller.active,true);assert.deepEqual(e.errors,[]);
  e.controller.stop();next._time=12;next.onended();assert.equal(e.ends,0);assert.equal(e.timers.size,0);assert.equal(e.frames.size,0);
 });
 run('range errors never synthesize a fallback',async e=>{
@@ -101,11 +103,11 @@ run('unranged playback retains its original clock without excerpt fields',async 
 run('fractional range seek rounding permits playback and resume at both rates',async e=>{
  for(const rate of [1,1.5]){
   e.controller.play('source','blob:verified',rate,{startSeconds:33.0150625,endSeconds:36.3400625});
-  const owner=e.owners.at(-1);owner.duration=51.902125;owner.metadata();owner._time=33.015062;owner.seeked();await tick();
-  assert.equal(owner.calls,1);assert.equal(e.controller.playing,true);assert.deepEqual(e.errors,[]);
+  const owner=e.owners.at(-1),calls=owner.calls;owner.duration=51.902125;owner.metadata();owner._time=33.015062;owner.seeked();await tick();
+  assert.equal(owner.calls,calls+1);assert.equal(e.controller.playing,true);assert.deepEqual(e.errors,[]);
   assert.equal(e.states.at(-1).elapsed,33.015062);assert.equal(e.states.at(-1).progressElapsed,0);
   [...e.frames.values()][0]();assert.equal(e.controller.active,true);
-  e.controller.pause();e.controller.resume();await tick();assert.equal(owner.calls,2);
+  e.controller.pause();e.controller.resume();await tick();assert.equal(owner.calls,calls+2);
   owner._time=36.3400625;[...e.frames.values()][0]();assert.equal(e.controller.active,false);
  }
  assert.equal(e.ends,2);
@@ -120,4 +122,69 @@ run('seek tolerance does not admit materially early or nonfinite media clocks',a
   if(resume)e.controller.resume();else [...e.frames.values()][0]();
   assert.equal(e.controller.active,false);assert.equal(e.ends,0);
  }
+});
+// iOS (DEV, 2026-10-07): a later screen's untapped start neither played nor failed, and the starting face spun forever.
+const bound=e=>[...e.timers.values()].find(t=>t.delay===START_BOUND_MS);
+const PAUSED_AUTOMATIC='Tap Play to hear the narration. Your browser paused automatic audio.';
+run('a start the browser leaves pending is handed back at the bound as a paused owner that one tap starts',async e=>{
+ e.controller.play('source','blob:x',1,{startSeconds:3,endSeconds:8});const owner=e.owners.at(-1);
+ let reject;owner.promise=new Promise((_,fail)=>reject=fail);owner.metadata();owner.seeked();await tick();
+ assert.equal(owner.calls,1);assert.equal(e.controller.playing,false);assert.deepEqual(e.errors,[]);
+ bound(e).callback();
+ assert.deepEqual(e.errors,[PAUSED_AUTOMATIC]);assert.equal(e.controller.active,true);assert.equal(owner.paused,true);
+ assert.equal(e.states.at(-1).src,'blob:x');assert.equal(e.states.at(-1).playing,false);
+ // The pause aborts the superseded start; its late rejection cannot release the held owner.
+ reject(Object.assign(Error('interrupted by pause'),{name:'AbortError'}));await tick();assert.equal(e.controller.active,true);assert.equal(e.errors.length,1);
+ owner.promise=null;assert.equal(e.controller.resume(),true);assert.equal(owner.calls,2);await tick();
+ assert.equal(e.controller.playing,true);assert.equal(e.owners.length,1);assert.equal(bound(e),undefined);
+});
+run('a clip whose media never loads is handed back at the bound; the tap starts the element and the range plays once loaded',async e=>{
+ e.controller.play('source','blob:x',1,{startSeconds:3,endSeconds:8});const owner=e.owners.at(-1);
+ bound(e).callback();assert.deepEqual(e.errors,[PAUSED_AUTOMATIC]);assert.equal(e.controller.active,true);assert.equal(owner.calls,0);
+ assert.equal(e.controller.resume(),true);assert.equal(owner.calls,1);assert.equal(owner.paused,true);
+ owner.metadata();assert.equal(owner.currentTime,3);owner.seeked();await tick();
+ assert.equal(owner.calls,2);assert.equal(e.controller.playing,true);assert.equal(e.errors.length,1);
+});
+run('a start that reaches sound inside the bound is never handed back',async e=>{
+ const owner=await e.start();assert.equal(e.controller.playing,true);assert.equal(bound(e),undefined);
+ for(const timer of [...e.timers.values()])if(timer.delay===START_BOUND_MS)timer.callback();
+ assert.deepEqual(e.errors,[]);assert.equal(owner.paused,false);
+});
+run('a whole-file start left pending is handed back at the bound; a refusal at once is reported once, never again at the bound',async e=>{
+ globalThis.Audio.prototype.promise=new Promise(()=>{});
+ e.controller.play('source','blob:x',1);const owner=e.owners.at(-1);await tick();
+ assert.equal(owner.calls,1);assert.equal(e.controller.playing,false);assert.deepEqual(e.errors,[]);
+ bound(e).callback();assert.deepEqual(e.errors,[PAUSED_AUTOMATIC]);assert.equal(e.controller.active,true);assert.equal(owner.paused,true);
+ const refused=Promise.reject(Object.assign(Error('not allowed'),{name:'NotAllowedError'}));refused.catch(()=>{});globalThis.Audio.prototype.promise=refused;
+ e.controller.play('source','blob:y',1);await tick();await tick();
+ assert.deepEqual(e.errors,[PAUSED_AUTOMATIC,PAUSED_AUTOMATIC]);assert.equal(e.controller.active,true);assert.equal(bound(e),undefined);
+});
+run('a pause or a stop before the bound hands nothing back',async e=>{
+ globalThis.Audio.prototype.promise=new Promise(()=>{});
+ e.controller.play('source','blob:x',1,{startSeconds:3,endSeconds:8});const owner=e.owners.at(-1);owner.metadata();owner.seeked();await tick();
+ const beforePause=bound(e).callback;e.controller.pause();assert.equal(bound(e),undefined);beforePause();
+ assert.equal(e.controller.resume(),true);const beforeStop=bound(e).callback;e.controller.stop();assert.equal(bound(e),undefined);beforeStop();
+ assert.deepEqual(e.errors,[]);assert.equal(e.controller.active,false);
+});
+run('every clip plays on one element, which a tap unlocks once while it is idle',async e=>{
+ e.controller.unlock();const element=e.owners[0];assert.equal(e.owners.length,1);assert.equal(element.calls,1);assert.equal(element.paused,true);
+ e.controller.unlock();assert.equal(element.calls,1);
+ const first=await e.start();first._time=8;[...e.frames.values()][0]();assert.equal(e.ends,1);
+ const second=await e.start({startSeconds:10,endSeconds:12});
+ assert.equal(first,element);assert.equal(second,element);assert.equal(e.owners.length,1);assert.equal(element.src,'blob:verified');assert.equal(e.controller.playing,true);
+});
+// Review of #208: the element keeps a finished clip, so the next clip's source swap resets the playhead and the
+// browser queues a timeupdate that reaches the new clip's handlers after play() has cleared paused, before any sound.
+run('a reset timeupdate from the previous clip is not sound: the next clip left pending is still handed back at the bound',async e=>{
+ e.controller.play('first','blob:first',1);const element=e.owners.at(-1);await tick();assert.equal(e.controller.playing,true);
+ element.onended();assert.equal(e.ends,1);
+ element.promise=new Promise(()=>{});e.controller.play('second','blob:second',1);await tick();
+ assert.equal(element.paused,false);element.ontimeupdate();
+ assert.equal(e.controller.playing,false);assert.equal(e.states.at(-1).playing,false);assert.ok(bound(e),'the start bound stays armed');
+ bound(e).callback();assert.deepEqual(e.errors,[PAUSED_AUTOMATIC]);assert.equal(e.controller.active,true);
+ element.promise=null;assert.equal(e.controller.resume(),true);await tick();assert.equal(e.controller.playing,true);
+});
+run('a tap never unlocks over a clip the element holds',async e=>{
+ const owner=await e.start();const calls=owner.calls;e.controller.unlock();
+ assert.equal(owner.calls,calls);assert.equal(owner.paused,false);assert.equal(e.controller.playing,true);
 });

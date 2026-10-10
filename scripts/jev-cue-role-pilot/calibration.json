@@ -1,0 +1,44 @@
+{
+  "schema": "fia-cue-role-pilot-calibration@1",
+  "bootstrap": {
+    "falseMax": 0,
+    "trueMin": 1,
+    "modelRevision": "jev-1.13.0"
+  },
+  "languages": {
+    "eng": {
+      "status": "uncalibratable",
+      "derived": {
+        "falseMax": 0.78,
+        "trueMin": 0.52
+      },
+      "record": {
+        "policySha256": "9399176effd1f2b5fe5fccf59ddd83bfef3b5727aa148ee8dcbba6bea90a5e47",
+        "language": "eng",
+        "modelRevision": "jev-1.13.0",
+        "configSha256": "8f25025aea648b99058bacf4f64c6e844220be3fa6eac3b12d32969b6873321c",
+        "contractSha256": "82bc2d1505a40d6ee9fca0028f96ab1ea1a1d1842d0f3804054734c46fe1750d",
+        "schemaSha256": "86feecbac14b0bb4dd7051564f6d3a4d883714680cdea48ae36bf2dacb986c2d",
+        "falseMax": 0.4999,
+        "trueMin": 0.5
+      }
+    },
+    "spa": {
+      "status": "uncalibratable",
+      "derived": {
+        "falseMax": 0.78,
+        "trueMin": 0.65
+      },
+      "record": {
+        "policySha256": "7b9b7c4a3279c83b031250fb416b5d1f64870b9b6ab89552e211c2566460b6a1",
+        "language": "spa",
+        "modelRevision": "jev-1.13.0",
+        "configSha256": "8f25025aea648b99058bacf4f64c6e844220be3fa6eac3b12d32969b6873321c",
+        "contractSha256": "82bc2d1505a40d6ee9fca0028f96ab1ea1a1d1842d0f3804054734c46fe1750d",
+        "schemaSha256": "86feecbac14b0bb4dd7051564f6d3a4d883714680cdea48ae36bf2dacb986c2d",
+        "falseMax": 0.4999,
+        "trueMin": 0.5
+      }
+    }
+  }
+}
