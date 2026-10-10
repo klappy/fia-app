@@ -311,13 +311,15 @@ it('the session bar is one control with six stage cells and no per-screen bead r
  expect(bar.querySelector('.content-progress-line')).toBeNull();
  const words=document.getElementById('session-progress-words');expect(bar.getAttribute('aria-describedby')).toBe('session-progress-words');expect(words.getAttribute('aria-valuenow')).toBe('3');expect(words.getAttribute('aria-valuetext')).toMatch(/Defining the Scenes · Step 3 · unit \d+ of \d+ · (more ahead|last unit)/);
 });
-it('the visual overview selects a section without marking prior content complete and skip enters its first screen',async()=>{
+it('the overview spine opens a stage in place and its item jumps without marking prior content complete',async()=>{
+ // overview-sheet.md § Proposed composition — clarity: tapping another stage's row shows its items in place; the forward jump never completes skipped items.
  vi.useFakeTimers();await startAt('S03-U009');
  await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));
- await fireEvent.click(screen.getByRole('button',{name:'Filling the Gaps',exact:true}));await settle();
- expect(screen.getByRole('heading',{name:'Filling the Gaps'})).toBeTruthy();expect(state().completed).toEqual([]);
- await fireEvent.click(screen.getByRole('button',{name:'Skip to next activity'}));await settle();
- expect(activities[state().index].id).toBe('S05-U001');await vi.advanceTimersByTimeAsync(700);expect(players).toHaveLength(1);expect(players.at(-1).src).toBe('/audio/source/S05-U001.mp3');
+ const row=screen.getByRole('button',{name:/^Filling the Gaps/});expect(row.getAttribute('aria-expanded')).toBe('false');
+ await fireEvent.click(row);await settle();expect(row.getAttribute('aria-expanded')).toBe('true');
+ const first=screen.getByRole('group',{name:'Filling the Gaps items'}).querySelector('.ov-item');
+ await fireEvent.click(first);await settle();
+ expect(activities[state().index].id).toBe('S05-U001');expect(state().completed).toEqual([]);
 });
 it('dark colors persist without changing the primary control or interrupting narration',async()=>{
  assets.a112.relatedIds=[];await startAt('S02-U005');await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();const player=players.at(-1);player.currentTime=4;
@@ -329,18 +331,34 @@ it('dark colors persist without changing the primary control or interrupting nar
  expect(player.paused).toBe(false);expect(player.currentTime).toBe(4);
  cleanup();render(App);await settle();expect(document.documentElement.dataset.theme).toBe('dark');
 });
-it('the overview sheet opens from the bar in its fixed order and reaches Language and Passages in two taps',async()=>{
- // cookbook design/alpha-system/components/overview-sheet.md: key → intro slot (absent without content) → Language → Passages → mini-map → Close; R-404 two-tap audit.
+it('the overview sheet opens from the bar in its clarity order and reaches Language and Passages in two taps',async()=>{
+ // cookbook design/alpha-system/components/overview-sheet.md § Proposed composition — clarity (nodded 2026-10-09):
+ // here-card → intro slot (absent without content) → spine → quiet rows (key disclosure, Language, Passages) → Close; R-404 two-tap audit.
  vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',nativeName:'English',ready:1},{id:'spa',nativeName:'Español',ready:1}]);
  vi.spyOn(libraryAdapter,'passages').mockResolvedValue([bundledPack]);
  await startAt('S03-U009');await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));
  const sheet=document.querySelector('.overview-sheet');expect(sheet).toBeTruthy();
- expect([...sheet.children].map(e=>e.className.split(' ').find(c=>/^(ov-|progress-overview)/.test(c)))).toEqual(['ov-key','ov-row','ov-row','progress-overview','ov-footer']);
+ expect([...sheet.children].map(e=>e.className.split(' ').find(c=>/^(ov-|progress-overview)/.test(c)))).toEqual(['ov-here','progress-overview','ov-quiet','ov-footer']);
  expect(sheet.querySelector('.ov-intro')).toBeNull();
  expect(screen.getByRole('heading',{name:'Overview',level:2})).toBeTruthy();
- const items=[...sheet.querySelectorAll('.progress-map-item')];expect(items.length).toBeGreaterThan(0);for(const item of items)expect(['listen','Scripture','discuss','key term','picture','map','video']).toContain(item.querySelector('.progress-map-word')?.textContent);
+ // Where am I: the here-card names the stage, its step and the item, then what is now and next.
+ const here=screen.getByRole('region',{name:'You are here'});
+ expect(here.textContent).toContain('You are here · step 3 of 6');expect(here.textContent).toContain('Defining the Scenes');
+ expect(here.textContent).toMatch(/item \d+ of \d+/);expect(here.textContent).toMatch(/Now: (listen|Scripture|discuss|key term|picture|map|video)/);
+ // The spine: six stage rows; only the current stage shows its items, each a circle with its kind word sr-only, and one caption.
+ const stages=[...sheet.querySelectorAll('.ov-stage-row')];expect(stages).toHaveLength(6);
+ expect(stages.filter(b=>b.getAttribute('aria-expanded')==='true')).toHaveLength(1);
+ expect(sheet.querySelectorAll('.ov-items')).toHaveLength(1);expect(sheet.querySelectorAll('.ov-caption')).toHaveLength(1);
+ const sectionId=activities.find(a=>a.id==='S03-U009').sectionId;const screens=new Set(activities.filter(a=>a.sectionId===sectionId).map(a=>a.readingGroupId||a.id));const items=[...sheet.querySelectorAll('.ov-item')];expect(items).toHaveLength(screens.size);
+ for(const item of items)expect(item.querySelector('.sr-only').textContent).toMatch(/^(listen|Scripture|discuss|key term|picture|map|video), \d+ of \d+/);
+ expect(sheet.querySelector('.ov-caption').textContent).toMatch(/^\d+ done · (listen|Scripture|discuss|key term|picture|map|video) now · \d+ to go$/);
+ // The key is one tap away, collapsed by default: content words and the big button's four faces.
+ expect(screen.queryByRole('group',{name:'Key'})).toBeNull();
+ const toggle=screen.getByRole('button',{name:'What the icons mean'});expect(toggle.getAttribute('aria-expanded')).toBe('false');
+ await fireEvent.click(toggle);await settle();
  const key=screen.getByRole('group',{name:'Key'});
- for(const word of ['Hear and Heart','Speaking the Word','listen','Scripture','discuss','key term','picture','map','video'])expect(key.textContent).toContain(word);
+ for(const word of ['listen','Scripture','discuss','key term','picture','map','video','Play','Continue','Discuss, then continue','Finish'])expect(key.textContent).toContain(word);
+ expect(key.textContent).not.toContain('Speaking the Word');
  await fireEvent.click(screen.getByRole('button',{name:/^Language/}));await settle();
  expect(await screen.findByRole('button',{name:/Español/})).toBeTruthy();
  await fireEvent.click(screen.getByRole('button',{name:/^Passages/}));await settle();
@@ -395,19 +413,19 @@ it('every sheet dialog is named by its heading, or by its label when the header 
   await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));await settle();
  }
 });
-it('the mini map exposes every visible screen and jumps directly to a chosen image without a section detour',async()=>{
+it('the spine shows each stage on tap and jumps directly to a chosen image without a section detour',async()=>{
  await startAt('S01-U003');await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));
- expect(document.querySelectorAll('.progress-map-item')).toHaveLength(111);
  expect(document.querySelector('dialog.glass-sheet')).toBeTruthy();
- for(const title of ['Hear and Heart','Setting the Stage','Defining the Scenes','Embodying the Text','Filling the Gaps','Speaking the Word'])expect(screen.getByRole('heading',{name:title})).toBeTruthy();
- const image=document.querySelector('.progress-map-item img');
- const button=image.closest('button');const label=button.getAttribute('aria-label');
+ const titles=['Hear and Heart','Setting the Stage','Defining the Scenes','Embodying the Text','Filling the Gaps','Speaking the Word'];
+ for(const title of titles){const row=screen.getByRole('button',{name:new RegExp('^'+title)});if(row.getAttribute('aria-expanded')!=='true')await fireEvent.click(row);}
+ await settle();expect(document.querySelectorAll('.ov-item')).toHaveLength(111);
+ for(const item of document.querySelectorAll('.ov-item')){expect(item.querySelector('svg')).toBeTruthy();expect(item.querySelector('.sr-only').textContent.length).toBeGreaterThan(0);}
+ const button=[...screen.getByRole('group',{name:'Setting the Stage items'}).querySelectorAll('.ov-item')].find(b=>/^picture,/.test(b.querySelector('.sr-only').textContent));
  await fireEvent.click(button);await settle();
  expect(screen.queryByRole('region',{name:'New section'})).toBeNull();
  expect(document.querySelector('.section-transition')).toBeNull();
  expect(activities[state().index].assetId).toBeTruthy();
  expect(state().completed).toEqual([]);expect(players).toHaveLength(0);
- expect(label).toContain('Setting the Stage');
  expect(screen.getByRole('button',{name:/^Open .* full screen$/})).toBeTruthy();
 });
 
