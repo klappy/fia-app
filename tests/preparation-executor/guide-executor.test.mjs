@@ -46,3 +46,66 @@ test('Buffer artifact aliases are copied before asynchronous hashing and stock a
  crypto.subtle.digest=function(algorithm,data){if(shared?.length>10000&&data.byteLength===shared.length&&!mutated){mutated=true;shared.fill(0);}return bound(algorithm,data);};
  try{assert.equal((await executor.request(request)).reason,'review-required');assert.equal(mutated,true);}finally{crypto.subtle.digest=digest;}
 });
+
+async function canonicalInputs(){const result={};for(const[key,path]of Object.entries({ledgerBytes:'server/fia/preparation/executor/p1-canonical-unit-ledger.json',sourcePackBytes:'server/fia/compiler/presentation/source-packs.json.gz',presentationBytes:'server/fia/publication/approved-presentation.json',bundleBytes:'apps/web/public/content/bundle.json'}))result[key]=await readFile(new URL('../../'+path,import.meta.url));return result;}
+test('factory executes three P1 disposition sections without dropping provenance or narrating notes/associated pauses',async()=>{
+ const fullBytes=await readFile(new URL('../../server/fia/preparation/guide-sources.json',import.meta.url)),full=JSON.parse(fullBytes),pin=await sha256(fullBytes),canonicalP1=await canonicalInputs();
+ for(const section of ['S02','S05','S06']){
+  const f=await setup(),discovery=await createGuideDiscoveryAdapter({metadataBytes:fullBytes,metadataSha256:pin,bucket:f.objects});
+  const acquisition={...createObservedSourceAdapter({bucket:f.objects,validatePublisherURL:discovery.validatePublisherURL,fetchSource:async()=>new Response(f.source,{headers:{'Content-Type':'audio/mpeg'}})}),dependencySha256:'b'.repeat(64)};
+  const r=full.rows.find(r=>r.packId==='eng.MRK-1-1-13'&&r.stepId===section),executor=await f.create({metadataBytes:fullBytes,metadataSha256:pin,canonicalP1,presentationAliases:[{packId:r.packId,presentationSha256:r.presentationRevision,presentationId:'fia-mark-authentic@1'}],acquisition});
+  const request={packId:r.packId,presentationRevision:r.presentationRevision,language:r.language,edition:r.edition,...r.sourceUnits[0]},result=await executor.request(request);
+  assert.equal(result.reason,'review-required');const accepted=await report(f,result),d=accepted.canonicalDisposition;
+  assert.equal(d.canonicalUnits.length,r.sourceUnits.length);assert.equal(d.excluded.length,section==='S02'?1:section==='S05'?2:3);
+  assert.equal(accepted.units.length,r.sourceUnits.length-d.excluded.length);assert(d.excluded.every(x=>!accepted.units.some(u=>u.sourceUnitId===x.sourceUnitId)));
+  assert(d.excluded.every(x=>x.reason===(section==='S05'?'nonspoken-production-note':'associated-pause-correspondence-unresolved')));
+  const {projectionSha256,...payload}=d;assert.equal(projectionSha256,await sha256(encode(payload)));assert.deepEqual(accepted.acceptedPlaybackRanges,[]);
+  const warm=await executor.request(request);assert.deepEqual(warm.artifact,result.artifact);
+ }
+});
+test('canonical factory preserves P2 raw words under explicit synthetic source identity',async()=>{
+ const f=await setup(),executor=await f.create({canonicalP1:await canonicalInputs()}),result=await executor.request(request),accepted=await report(f,result);
+ assert.equal(result.reason,'review-required');assert.equal(accepted.canonicalDisposition.canonicalUnits.length,8);assert.deepEqual(accepted.canonicalDisposition.excluded,[]);
+ assert.deepEqual(accepted.units.map(u=>u.correspondenceStatus),['unmatched','unmatched',...Array(6).fill('exact-candidate')]);
+});
+
+test('default composition retains pre-canonical dependency identity and warm nodes',async()=>{
+ const f=await setup(),legacyDependency={schema:'fia-guide-executor-composition@1',metadataSha256,registrySha256,presentationAliases:[],modelRecipe,policyRevision:'guide-executor-composition-test@1',recognitionPolicy:'fia-local-raw-recognition@1/validateRecognitionIdentity@1',acceptancePolicy:'review-required-only@1',ports:{admission:'d'.repeat(64),acquisition:'b'.repeat(64),recognition:'c'.repeat(64),artifacts:{read:'a'.repeat(64),write:'a'.repeat(64)}}};
+ const expected=await sha256(encode(legacyDependency)),first=await f.create();assert.equal(first.dependencySha256,expected);
+ const old=await first.request(request),warm=await(await f.create()).request(request);assert.deepEqual(warm.artifact,old.artifact);assert.deepEqual(f.counts,{fetch:1,recognize:1});
+});
+test('canonical factory joins actual retained P2 source and untouched raw recognition',{skip:!process.env.FIA_RETAINED_P2},async()=>{
+ const source=new Uint8Array(await readFile(process.env.FIA_RETAINED_P2));assert.equal(await sha256(source),raw.source.sha256);assert.equal(source.length,raw.source.bytes);
+ const f=await setup({source,retainedRaw:true}),executor=await f.create({canonicalP1:await canonicalInputs()}),result=await executor.request(request),accepted=await report(f,result);
+ assert.equal(result.reason,'review-required');assert.equal(accepted.rawRecognitionSha256,rawPin);assert.equal(accepted.sourceSha256,raw.source.sha256);assert.equal(accepted.canonicalDisposition.canonicalUnits.length,8);assert.deepEqual(accepted.canonicalDisposition.excluded,[]);assert.equal(accepted.diagnostics.unassignedRecognizedTokens,64);assert.deepEqual(accepted.units.map(u=>u.correspondenceStatus),['unmatched','unmatched',...Array(6).fill('exact-candidate')]);assert.deepEqual(accepted.acceptedPlaybackRanges,[]);
+ const warm=await executor.request(request);assert.deepEqual(warm.artifact,result.artifact);assert.deepEqual(f.counts,{fetch:1,recognize:1});
+});
+
+test('typed window recognition retains independent raw traces and unresolved review through factory; warm reuse verifies every window',async()=>{
+ const {createWindowGuideRecognition}=await import('../../server/fia/preparation/executor/window-guide-adapter.mjs');
+ const f=await setup();let windows=0;
+ const recognition=createWindowGuideRecognition({storage:f.state,artifacts:f.artifacts,dependencySha256:'9'.repeat(64),windowSamples:32000,overlapSamples:8000,
+  prepare:async()=>({pcmSha256:'1'.repeat(64),decoderSha256:'2'.repeat(64),totalSamples:56000,sampleRate:16000}),
+  recognition:{paid:false,dependencySha256:'8'.repeat(64),async run({planIdentity,window}){windows++;return encode({schema:'fia-window-raw-words@1',windowSha256:window.windowSha256,planIdentity,window,runtimeEvidence:{scriptSha256:'3'.repeat(64),modelManifestSha256:modelRecipe.modelRevision,runtimeManifest:{fixture:'synthetic'}},roundingPolicy:'seconds-floor-start-ceil-end@1',originalSegments:[],words:[{word:'overlap',startSample:window.index?1:25000,endSampleExclusive:window.index?1000:26000}]});}}});
+ const executor=await f.create({recognition}),result=await executor.request(request);assert.equal(result.reason,'review-required');const review=await report(f,result);assert.equal(review.schema,'fia-window-guide-review@2');assert.equal(review.units.length,8);assert(review.units.every(u=>u.correspondenceStatus==='unmatched'));assert.equal(review.overlapConflicts.length,1);assert.deepEqual(review.acceptedPlaybackRanges,[]);assert.equal(windows,2);
+ const warm=await(await f.create({recognition})).request(request);assert.deepEqual(warm.artifact,result.artifact);assert.equal(windows,2);assert.equal(f.counts.fetch,1);
+ const aggregate=[...f.objects.data.entries()].map(([reference,b])=>{try{return {reference,body:JSON.parse(new TextDecoder().decode(b))};}catch{return {};}}).find(x=>x.body?.schema==='fia-window-guide-recognition@1');
+ assert(aggregate);const {verifyWindowGuideRecognition}=await import('../../server/fia/preparation/executor/window-guide-adapter.mjs');const context={input:{language:'eng',modelRecipe},source:aggregate.body.source,resolveArtifact:f.artifacts.read};
+ for(const mutate of [x=>x.source.sha256='0'.repeat(64),x=>x.recognitionInput.modelRecipe.configSha256='0'.repeat(64),x=>x.plan.windows[0].startSample++,x=>x.projection.words[0].word='substitution',x=>x.artifacts.reverse()]){const bad=structuredClone(aggregate.body);mutate(bad);await assert.rejects(verifyWindowGuideRecognition(bad,context));}
+ f.objects.data.set(aggregate.body.artifacts[0].reference,encode({tampered:true}));assert.equal((await executor.request(request)).state,'unavailable');assert.equal(windows,2);
+});
+test('unknown typed recognition marker refuses before any acquisition',async()=>{const f=await setup();await assert.rejects(f.create({recognition:{...f.options.recognition,resultSchema:'pretend-local'}}),/recognition-schema/);assert.deepEqual(f.counts,{fetch:0,recognize:0});});
+
+test('retained P3 window raws produce per-unit correspondence in actual factory request and warm review',async()=>{
+ const {createWindowGuideRecognition}=await import('../../server/fia/preparation/executor/window-guide-adapter.mjs'),f=await setup();
+ const full=await readFile(new URL('../../server/fia/preparation/guide-sources.json',import.meta.url)),metadata=JSON.parse(full),selected=metadata.rows.find(r=>r.packId==='eng.MRK-1-21-28'&&r.stepId==='S01');
+ const pins=['65676f6962670f5eea6ae27455189c95c527ed0c668d6911383bfc98f2991c49','a037531cefd5b817e916120ac532a9091e4dd0bfb9196324db577cdd95aabb3c'],raws=await Promise.all(pins.map(async p=>{const b=await readFile(new URL('./fixtures/window-p3/'+p+'.json',import.meta.url));assert.equal(await sha256(b),p);return b;})),first=JSON.parse(raws[0]),pi=first.planIdentity,source={sha256:pi.sourceSha256,reference:`originals/sha256/${pi.sourceSha256}.mp3`,bytes:853750};let acquisitions=0,recognitions=0;
+ const artifacts={...f.artifacts,async verifySource(d){assert.equal(d.sha256,source.sha256);assert.equal(d.reference,source.reference);return {...source};},async openSource(){throw Error('no decode/network in retained-raw test');}};
+ const recognition=createWindowGuideRecognition({storage:f.state,artifacts,dependencySha256:'7'.repeat(64),windowSamples:pi.windowSamples,overlapSamples:pi.overlapSamples,prepare:async()=>({pcmSha256:pi.pcmSha256,decoderSha256:pi.decoderSha256,totalSamples:pi.totalSamples,sampleRate:pi.sampleRate}),recognition:{paid:false,dependencySha256:'6'.repeat(64),async run({window}){recognitions++;return raws[window.index];}}});
+ const options={metadataBytes:full,metadataSha256:await sha256(full),modelRecipe:{modelId:'Systran/faster-whisper-tiny.en',modelRevision:pi.modelSha256,configSha256:pi.configSha256},artifacts,recognition,acquisition:{paid:false,dependencySha256:'5'.repeat(64),async run(){acquisitions++;return{sha256:source.sha256,reference:source.reference};}}};
+ const request={packId:selected.packId,presentationRevision:selected.presentationRevision,language:selected.language,edition:selected.edition,...selected.sourceUnits[0]},executor=await f.create(options),result=await executor.request(request);assert.equal(result.reason,'review-required');const review=await report(f,result);assert.equal(review.schema,'fia-window-guide-review@2');assert.deepEqual(review.units.map(u=>u.correspondenceStatus),['unmatched','unmatched','unmatched','unmatched','exact-unique','exact-unique','exact-unique','exact-unique']);assert(review.units.slice(4).every(u=>u.alternatives.length===1&&!u.reasons.includes('window-correspondence-unresolved')));assert(review.units.every(u=>u.status==='review-required'&&u.reasons.includes('browser-clock-unqualified')));assert.deepEqual(review.acceptedPlaybackRanges,[]);assert.deepEqual([acquisitions,recognitions],[1,2]);
+ const warm=await(await f.create(options)).request(request);assert.deepEqual(warm.artifact,result.artifact);assert.deepEqual([acquisitions,recognitions],[1,2]);
+ const acceptance=JSON.parse(new TextDecoder().decode(await artifacts.read(result.artifact))),alignmentRecord=[...f.state.rows.values()].find(r=>r.identity?.node==='align'&&r.artifact?.sha256===acceptance.alignmentSha256);assert(alignmentRecord);const alignment=JSON.parse(new TextDecoder().decode(await artifacts.read(alignmentRecord.artifact)));assert.equal(alignment.correspondence.rawArtifacts.length,2);assert.equal(alignment.correspondence.projection.overlapConflicts.length,1);assert.equal(alignment.correspondence.units[0].diagnostics.length,0);
+ const changed=structuredClone(acceptance);changed.units[0].correspondenceStatus='exact-unique';f.objects.data.set(result.artifact.reference,encode(changed));assert.equal((await executor.request(request)).state,'unavailable');assert.deepEqual([acquisitions,recognitions],[1,2]);
+});
+test('typed per-unit policy invalidates prior blanket-unmatched composition keys',async()=>{const f=await setup(),recognition={...f.options.recognition,resultSchema:'fia-window-guide-recognition@1'},executor=await f.create({recognition});const previous={schema:'fia-guide-executor-composition@1',metadataSha256,registrySha256,presentationAliases:[],modelRecipe,policyRevision:f.options.policyRevision,recognitionPolicy:'fia-window-guide-recognition@1/verified-projection@1',acceptancePolicy:'review-required-only@1',ports:{admission:f.options.admission.dependencySha256,acquisition:f.options.acquisition.dependencySha256,recognition:recognition.dependencySha256,artifacts:{read:f.artifacts.dependencySha256,write:f.artifacts.dependencySha256}}};assert.notEqual(executor.dependencySha256,await sha256(encode(previous)));previous.recognitionPolicy='fia-window-guide-recognition@1/per-unit-correspondence@2';assert.equal(executor.dependencySha256,await sha256(encode(previous)));assert.deepEqual(f.counts,{fetch:0,recognize:0});});

@@ -22,3 +22,20 @@ test('original quality uses exact same-origin source-hash relay and never substi
  const calls=[];const t=createPreparationTransport({origin:()=> 'https://fiaguide.app',fetch:async(url,options)=>{calls.push([url,options]);return url.startsWith('/v1/preparations/')?response(value):new Response(audio,{headers:{'Content-Type':'audio/mpeg'}});}});
  const played=await t.play(d,new AbortController().signal);assert.deepEqual(played.bytes,audio);assert.equal(calls[1][0],d.delivery.url);assert.equal(calls[1][1].credentials,'same-origin');
 });
+
+test('verified original missing legacy mapping can request unit qualification, but refused custody never falls through',async()=>{
+ const {value}=await fixture(),original={...identity,quality:'original'};value.selection.quality='original';
+ for(const reason of ['accepted-recording-required','accepted-result-changed','accepted-artifact-verification-failed','source-attempt-interrupted']){
+  const calls=[];const t=createPreparationTransport({origin:()=> 'https://fiaguide.app',fetch:async path=>{calls.push(path);return path==='/v1/preparations'?response({...value,state:'blocked',reason,result:null,resultSha256:null}):new Response(null,{status:422});}});
+  assert.equal((await t.request(original)).status,'unavailable');
+  assert.deepEqual(calls,reason==='accepted-recording-required'?['/v1/preparations','/v1/guide-unit-preparations']:['/v1/preparations']);
+ }
+ const calls=[];const t=createPreparationTransport({origin:()=> 'https://fiaguide.app',fetch:async path=>{calls.push(path);return response({...value,state:'blocked',sourceState:'uncertain',reason:'accepted-recording-required',result:null,resultSha256:null});}});
+ assert.equal((await t.request(original)).status,'unavailable');assert.deepEqual(calls,['/v1/preparations']);
+});
+test('owned explicit-request polling can join unit demand; warm playback recheck cannot enqueue a replacement',async()=>{
+ const {value}=await fixture(),original={...identity,quality:'original'};value.selection.quality='original';
+ const calls=[];const t=createPreparationTransport({origin:()=> 'https://fiaguide.app',fetch:async path=>{calls.push(path);return path.startsWith('/v1/preparations/')?response({...value,state:'blocked',reason:'accepted-recording-required',result:null,resultSha256:null}):new Response(null,{status:422});}});
+ assert.equal((await t.status(h,original)).status,'unavailable');assert.deepEqual(calls,['/v1/preparations/'+h,'/v1/guide-unit-preparations']);
+ calls.length=0;await assert.rejects(t.play({jobId:h,identity:original}),/no longer ready/);assert.deepEqual(calls,['/v1/preparations/'+h]);
+});

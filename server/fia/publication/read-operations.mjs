@@ -12,7 +12,7 @@ export function createReadOperations({readCatalog,findArtifact}) {
     },
     readArtifact(args) {
       if(!keys(args,['sha256'])||!validHash(args.sha256))return refused();
-      const outcome=found=>found?.status?found:found?{status:'ready',artifact:found.artifact,content:found.content}:{status:'unavailable',reason:'not-found'};
+      const outcome=found=>found?.status?found:found?{status:'ready',artifact:found.artifact,content:found.content,...(found.cacheControl==='private, no-store'?{cacheControl:found.cacheControl}:{})}:{status:'unavailable',reason:'not-found'};
       const found=findArtifact(args.sha256);return found?.then?found.then(outcome):outcome(found);
     },
   };

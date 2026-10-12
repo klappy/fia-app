@@ -37,7 +37,8 @@ it('forwards selected verified offline descriptor rather than asynchronous saved
 });
 it('refuses an offline range not bound to the selected manifest descriptor',async()=>{
  libraryAdapter.downloadStatus.mockResolvedValue({saved:true,active:{manifest:{presentationRevision:bundledPack.revision,files:[descriptor]},files:[{...descriptor,playbackRange:{startSeconds:4,endSeconds:9}}]}});
- render(App);await settle();expect(screen.getByRole('button',{name:'Play',exact:true}).disabled).toBe(true);expect(audio.play).not.toHaveBeenCalled();
+ // R6: no recording is bound, so the Next slot holds Skip, never a Play (enabled or disabled).
+ render(App);await settle();expect(screen.queryByRole('button',{name:'Play',exact:true})).toBeNull();expect(screen.getByRole('button',{name:'Skip to next activity'}).disabled).toBe(false);expect(audio.play).not.toHaveBeenCalled();
 });
 
 const bsb=assets['scripture-BereanStandardBible'];
@@ -66,7 +67,9 @@ it('clears Scripture overlay on navigation before returning to the same recordin
  await fireEvent.click(screen.getByRole('button',{name:'Skip to next activity'}));await settle();
  await fireEvent.click(screen.getByRole('button',{name:'Previous activity'}));await settle();
  expect(document.querySelectorAll('[data-align-word]').length).toBeGreaterThan(0);
- audio.state({src:bsb.descriptionAudio,elapsed:bsb.alignment.verses[1].start,duration:400,playing:false});await settle();expect(currentVerse()).toBe(1);
+ // R2: reading follows only a clip the app started, so returning plays the same recording again.
+ await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();
+ audio.state({src:'blob:range',elapsed:111,duration:400,playing:false});await settle();expect(currentVerse()).toBe(1);
 });
 it('rejects altered saved Scripture alignment even when the descriptor hash field is unchanged',async()=>{
  const file=officialFixture(),altered=structuredClone(file);altered.scriptureAlignment.verses[0].start=99;

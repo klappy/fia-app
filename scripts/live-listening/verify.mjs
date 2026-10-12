@@ -25,6 +25,8 @@ export function verify(report,{commit,environment,controlled,readAttachment=path
  try{const a=attached[0];const e=JSON.parse(a.body?Buffer.from(a.body,'base64').toString():readAttachment(a.path));
  if(e.schemaVersion!==1||e.outcome!=='passed'||e.expectedCommit!==commit||e.networkVersion?.commit!==commit||e.loadedCommit!==commit||e.environment!==environment||e.origin!==origins[environment]||e.loadedRelease!==`${e.networkVersion?.version}+${commit.slice(0,7)}`||e.packId!=='eng.MRK-1-14-20')throw Error('Wrong candidate, loaded shell, origin or pack');
  if(!e.claims?.firstUnitVisible||claims.some(c=>e.claims[c]!==true))throw Error('Missing asserted outcome');
+ // Elapsed setup switch ms is a recorded fact; J1's 5 s switch budget is judged by its own journey, not here.
+ if(!Number.isFinite(e.setupSwitch?.elapsedMs)||e.setupSwitch.elapsedMs<0)throw Error('Missing elapsed switch ms');
  if(e.observations?.some(o=>o.kind==='pageerror'))throw Error('Application error');
  const minimum=claims.includes('nextPlayed')?2:claims.includes('scripturePlayed')||claims.includes('explicitPlay')?1:0;
  if(!Array.isArray(e.nativePlayback)||e.nativePlayback.length<minimum)throw Error('Missing real media clock evidence');

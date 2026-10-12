@@ -31,13 +31,34 @@ test('scroll policy centers the spoken line instead of waiting for the viewport 
 });
 test('duration fallback reveals even slight overflow before narration finishes',async()=>{
  const {durationScrollTop}=await import('../src/lib/alignment.js');
- assert.equal(durationScrollTop(0,100,400,424),0);
- assert.equal(durationScrollTop(50,100,400,424),12);
- assert.equal(durationScrollTop(90,100,400,424),24);
- assert.equal(durationScrollTop(120,100,400,424),24);
- assert.equal(durationScrollTop(50,100,400,400),null);
- assert.equal(durationScrollTop(50,0,400,424),null);
- assert.equal(durationScrollTop(50,NaN,400,424),null);
+ const whole=(elapsed,duration)=>({elapsed,duration});
+ assert.equal(durationScrollTop(whole(0,100),400,424),0);
+ assert.equal(durationScrollTop(whole(50,100),400,424),12);
+ assert.equal(durationScrollTop(whole(90,100),400,424),24);
+ assert.equal(durationScrollTop(whole(120,100),400,424),24);
+ assert.equal(durationScrollTop(whole(50,100),400,400),null);
+ assert.equal(durationScrollTop(whole(50,0),400,424),null);
+ assert.equal(durationScrollTop(whole(50,NaN),400,424),null);
+});
+// Mark 1:1-13 S02-U010 is 304.51-403.61 s of one 498.77 s guide recording; its live scroll
+// range is 1637 px (640 of 2277). The file clock would open it about 1044 px down.
+const u010={startSeconds:304.51,endSeconds:403.61,file:498.77};
+const clipAt=(range,seconds)=>({elapsed:range.startSeconds+seconds,duration:range.file,progressElapsed:Math.max(0,Math.min(range.endSeconds-range.startSeconds,seconds)),progressDuration:range.endSeconds-range.startSeconds});
+test('untimed follow holds a clip cut from a shared recording at its first line',async()=>{
+ const {durationScrollTop}=await import('../src/lib/alignment.js');
+ assert.equal(durationScrollTop(clipAt(u010,0),640,2277),0);
+ assert.equal(durationScrollTop(clipAt(u010,.5),640,2277),0);
+ // Before the seek lands the clock is still at the file start; the clip has not begun.
+ assert.equal(durationScrollTop({elapsed:0,duration:u010.file,progressElapsed:0,progressDuration:99.1},640,2277),0);
+ // A known clip never falls back to the file clock.
+ assert.equal(durationScrollTop({elapsed:304.51,duration:u010.file,progressElapsed:NaN,progressDuration:99.1},640,2277),null);
+});
+test('untimed follow moves linearly through the clip and reaches the end by 90 percent',async()=>{
+ const {durationScrollTop}=await import('../src/lib/alignment.js');
+ const length=u010.endSeconds-u010.startSeconds,range=2277-640;
+ const near=(seconds,expected)=>assert.ok(Math.abs(durationScrollTop(clipAt(u010,seconds),640,2277)-expected)<1e-6,`${seconds} s`);
+ near(length*.1,0);near(length*.5,range/2);near(length*.9,range);near(length,range);
+ let last=0;for(let s=0;s<=length;s+=.25){const top=durationScrollTop(clipAt(u010,s),640,2277);assert.ok(top>=last&&top-last<=range/(.8*length)*.25+1e-6);last=top;}
 });
 
 test('overflow opens with three lines centered, accounting for headings and larger type',async()=>{
@@ -64,8 +85,34 @@ test('glass reading area excludes asymmetric chrome while preserving its clear c
  {start:81,end:85,highlightMode:'verse',words:[]}]};
  assert.deepEqual(alignmentPosition(a,77.75),{verseIndex:0,wordIndex:-1});
  assert.deepEqual(alignmentPosition(a,77.76),{verseIndex:1,wordIndex:0});
- assert.deepEqual(alignmentPosition(a,78.5),{verseIndex:1,wordIndex:-1});
- assert.equal(alignmentPosition(a,80),null);
+ assert.deepEqual(alignmentPosition(a,78.5),{verseIndex:1,wordIndex:0});
+ assert.deepEqual(alignmentPosition(a,80),{verseIndex:1,wordIndex:1});
+ assert.deepEqual(alignmentPosition(a,80.99),{verseIndex:1,wordIndex:1});
  assert.deepEqual(alignmentPosition(a,82),{verseIndex:2,wordIndex:-1});
  assert.equal(alignmentPosition(a,85),null);
+ assert.equal(alignmentPosition(a,69.99),null);
  });
+// Delivered BSB Mark 1:1-13 alignment (schema 2, delivery-media seconds).
+const bsb=JSON.parse(readFileSync('public/content/scripture-alignments/8a69afa1133b2cad7f90cfcd64fdb29bfaba2d84752d0552c896b4c7a651db01.json'));
+test('inside a word gap the last spoken word keeps the line instead of the verse centre',()=>{
+ // The four gaps measured to pull the view back: 11.66-12.32, 12.66-12.9, 19.46-19.86, 21.28-21.7 s.
+ for(const [from,to] of [[11.66,12.32],[12.66,12.9],[19.46,19.86],[21.28,21.7]]){
+  const before=alignmentPosition(bsb,from-.01);
+  for(let t=from;t<to;t+=.02){assert.deepEqual(alignmentPosition(bsb,t),before,`gap at ${t.toFixed(2)} s`);}
+  const after=alignmentPosition(bsb,to);
+  assert.ok(after.verseIndex===before.verseIndex&&after.wordIndex===before.wordIndex+1,`next word after ${to} s`);
+ }
+});
+test('reading order never steps back and the current verse stays marked between verses',()=>{
+ const first=bsb.verses[0].start,last=bsb.verses.at(-1).end;let previous=null;
+ for(let t=0;t<=bsb.duration;t+=.01){
+  const p=alignmentPosition(bsb,t);
+  if(t<first||t>=last){assert.equal(p,null,`outside the verses at ${t.toFixed(2)} s`);continue;}
+  assert.ok(p,`verse marked at ${t.toFixed(2)} s`);
+  const verse=bsb.verses[p.verseIndex];
+  if(verse.highlightMode==='word')assert.ok(p.wordIndex>=0,`word-timed verse targets a word at ${t.toFixed(2)} s`);
+  else assert.equal(p.wordIndex,-1);
+  if(previous)assert.ok(p.verseIndex>previous.verseIndex||p.verseIndex===previous.verseIndex&&p.wordIndex>=previous.wordIndex,`no backward target at ${t.toFixed(2)} s`);
+  previous=p;
+ }
+});
