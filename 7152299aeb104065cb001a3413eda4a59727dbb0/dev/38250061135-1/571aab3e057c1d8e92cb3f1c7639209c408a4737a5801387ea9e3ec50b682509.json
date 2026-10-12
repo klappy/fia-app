@@ -1,0 +1,36 @@
+{
+  "schema": "fia-listening-persona-summary@1",
+  "commit": "7152299aeb104065cb001a3413eda4a59727dbb0",
+  "environment": "dev",
+  "runId": "38250061135",
+  "attempt": "1",
+  "workflowUrl": "https://github.com/klappy/fia-app/actions/runs/38250061135",
+  "scope": "Agent-operated observations; not human research or acoustic/device proof. Hosted and controlled protocol scopes are separate.",
+  "scenario": {
+    "key": "7152299aeb104065cb001a3413eda4a59727dbb0/dev/Controlled Ready stays silent until explicit Play",
+    "scenario": "Controlled Ready stays silent until explicit Play",
+    "scope": "controlled-local-protocol-fixture; real native media, not hosted Worker",
+    "outcome": "not-covered",
+    "validation": {
+      "validator": "verifyControlled",
+      "ok": false,
+      "errors": [
+        "Missing or wrong controlled native-media receipt"
+      ]
+    },
+    "failedStep": "Controlled scenario missing or ambiguous",
+    "observedFriction": {
+      "classification": "observation-only",
+      "notices": [],
+      "assessment": "Not inferred from pass/fail; review attached observations"
+    },
+    "userFeedback": {
+      "status": "not-collected"
+    },
+    "evidence": null,
+    "baselineComparison": {
+      "status": "not-covered",
+      "reason": "No same-environment prior scenario found"
+    }
+  }
+}
