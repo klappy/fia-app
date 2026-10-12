@@ -33,3 +33,9 @@ test('location fill follows the same current position forward and backward, inde
  const before=view[2].positionRatio;state.index=activities.findIndex(a=>a.id==='S03-U001');
  view=progressState(groups,state,activities);assert.ok(view[2].positionRatio<before);
 });
+test('a stop follows the discussion activity, not the glyph kind (fb-03 lens-dev-8662ef8 Finding 1)',()=>{
+ const screens=groups.flatMap(g=>g.screens),byId=Object.fromEntries(activities.map(a=>[a.id,a]));
+ for(const s of screens)assert.equal(s.stop,s.memberIds.some(id=>byId[id].kind==='discussion'),s.id);
+ const termStops=groups[4].screens.filter(s=>s.stop&&s.kind==='term');
+ assert.ok(termStops.length>0,'Filling the Gaps has key-term discussion stops');
+});

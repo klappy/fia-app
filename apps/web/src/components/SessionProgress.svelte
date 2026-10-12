@@ -53,8 +53,8 @@
      <div class="ov-items" id={`ov-items-${i}`}>
       <div class="ov-circles" role="group" aria-label={`${group.title} items`}>
        {#each group.screens.slice(start,end) as screen,k}{@const j=start+k}{@const Icon=icons[screen.kind]||guideIcon}{@const word=kindWords[screen.kind]||kindWords.guide}
-        <button class="ov-item" class:complete={screen.complete} class:current={screen.current} class:stop={screen.kind==='discussion'&&!screen.complete&&!screen.current} aria-current={screen.current?'step':undefined} onclick={()=>onselect(screen.activityId,false)}>
-         <span class="ov-dot" aria-hidden="true"><Icon size={15}/></span><span class="sr-only">{word}, {j+1} of {n}{screen.complete?', done':''}{screen.kind==='discussion'&&!screen.complete&&!screen.current?', stop to discuss':''}{screen.label?`: ${screen.label}`:''}</span>
+        <button class="ov-item" class:complete={screen.complete} class:current={screen.current} class:stop={screen.stop&&!screen.complete&&!screen.current} aria-current={screen.current?'step':undefined} onclick={()=>onselect(screen.activityId,false)}>
+         <span class="ov-dot" aria-hidden="true"><Icon size={15}/></span><span class="sr-only">{word}, {j+1} of {n}{screen.complete?', done':''}{screen.stop&&!screen.complete&&!screen.current?', stop to discuss':''}{screen.label?`: ${screen.label}`:''}</span>
         </button>
        {/each}
       </div>
@@ -100,6 +100,7 @@
  .ov-dot{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;color:var(--ink-500);background:var(--paper-000);box-shadow:inset 0 0 0 1px var(--paper-300)}
  .ov-item.complete .ov-dot{background:var(--ink-700);color:var(--paper-000);box-shadow:none}
  .ov-item.current .ov-dot{color:var(--ink-900);box-shadow:0 0 0 2px var(--paper-050),0 0 0 4px var(--ink-900)}
+ /* The amber ring follows the stop (screen.stop), never the glyph kind (fb-03 lens-dev-8662ef8 Finding 1). */
  .ov-item.stop .ov-dot{box-shadow:inset 0 0 0 1.5px var(--fia-stop);color:var(--fia-stop)}
  .ov-window{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:-2px 0 0}
  .ov-window-step{min-height:var(--fia-tap-min,48px);padding:4px 8px;gap:4px;border-radius:12px;font-size:.8125rem;line-height:1.35;color:var(--ink-500);white-space:nowrap}
