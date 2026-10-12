@@ -442,6 +442,13 @@ it('a key-term discussion stop in Filling the Gaps wears the amber stop ring (fb
  expect(keyStops.length).toBeGreaterThan(0);
  for(const b of keyStops)expect(b.querySelector('.sr-only').textContent).toContain('stop to discuss');
 });
+it('the here-card names a key-term discussion stop next as a stop, not by its glyph (fb-03 lens-dev-8662ef8 Finding 1)',async()=>{
+ // The here-card's "then" follows screen.stop, like the spine's ring: a key-term stop reads "then discuss", not "then key term".
+ const s05=activities.filter(a=>a.sectionId==='S05'),at=s05.findIndex((a,i)=>i>0&&a.kind==='discussion'&&assets[a.assetId]?.kind==='term'&&(s05[i-1].readingGroupId||s05[i-1].id)!==(a.readingGroupId||a.id));expect(at).toBeGreaterThan(0);
+ await startAt(s05[at-1].id);await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));await settle();
+ const then=screen.getByRole('region',{name:'You are here'}).querySelector('.ov-then');
+ expect(then.textContent.replace(/\s+/g,' ').trim()).toBe('· then discuss');
+});
 it('a long stage shows a window of 12 circles around the current item, and the end words scroll it',async()=>{
  // cookbook overview-sheet.md § Long stages — the circle row is a window (captain 2026-10-09 23:20 ET "build it, then show it").
  await startAt('S05-U020');await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));
@@ -809,8 +816,9 @@ it('C3: a Downloads status report refreshes the page media snapshot',async()=>{
  await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Downloads',exact:true}));await settle();await settle();await settle();
  await waitFor(()=>expect(status.mock.calls.length).toBeGreaterThan(before));
 });
-// S3 phase 1 review: a failed refresh must not wipe the last good media snapshot, and reconnecting refreshes it.
-it('B1: an offline Downloads refresh that cannot read the media revision keeps the snapshot, so video plays after reconnecting',async()=>{
+// S3 phase 1 review (#180): after a failed offline refresh, reconnecting refreshes the media snapshot and video plays.
+// The 'online' handler's refresh restores the snapshot either way, so this does not isolate the keep-on-failure branch of updateMedia.
+it('B1: after an offline Downloads refresh that cannot read the media revision, reconnecting refreshes the snapshot and video plays the current revision',async()=>{
  vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});const path=assets.a184.src,pin={path,bytes:3,sha256:'pin',group:'video'};
  const status=vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[pin],savedFiles:[]});
  const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(3).buffer,mime:'video/mp4',timing:{status:'not-applicable'},file:{path,sha256:'pin',bytes:3}});

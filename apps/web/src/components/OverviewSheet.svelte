@@ -27,8 +27,10 @@
  const nowScreen=$derived(here&&here.current>=0?here.screens[here.current]:null);
  const nextScreen=$derived(nowScreen?(here.screens[here.current+1]||groups[activeIndex+1]?.screens[0]||null):null);
  const NowIcon=$derived(nowScreen?contentIcons[nowScreen.kind]||guideIcon:null);
- const NextIcon=$derived(nextScreen?contentIcons[nextScreen.kind]||guideIcon:null);
+ // A stop next reads as a stop ("then discuss"), whatever its glyph — the same screen.stop that rings it on the spine (#221).
+ const NextIcon=$derived(nextScreen?(nextScreen.stop?contentIcons.discussion:contentIcons[nextScreen.kind]||guideIcon):null);
  const word=screen=>kindWords[screen.kind]||kindWords.guide;
+ const nextWord=screen=>screen.stop?kindWords.discussion:word(screen);
 </script>
 <div class="overview-sheet">
  {#if here}
@@ -37,7 +39,7 @@
    <p class="ov-stage-title"><HereIcon size={26} aria-hidden="true"/><span>{here.title}</span></p>
    <p class="ov-position">{nowScreen?`item ${here.current+1} of ${here.screens.length}`:'complete'}</p>
    {#if nowScreen}
-    <p class="ov-next"><NowIcon size={18} aria-hidden="true"/><span>Now: <b>{word(nowScreen)}</b></span>{#if nextScreen}<span class="ov-then">· then <NextIcon size={16} aria-hidden="true"/> {word(nextScreen)}</span>{/if}</p>
+    <p class="ov-next"><NowIcon size={18} aria-hidden="true"/><span>Now: <b>{word(nowScreen)}</b></span>{#if nextScreen}<span class="ov-then">· then <NextIcon size={16} aria-hidden="true"/> {nextWord(nextScreen)}</span>{/if}</p>
    {/if}
   </section>
  {/if}
