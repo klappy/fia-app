@@ -60,6 +60,12 @@ test('the stop rule on real state: a key-term stop ahead is pending, current rea
  assert.equal(done.complete,true);assert.equal(openStop(done),false);assert.equal(shownKind(done),'term');
  const plain=groups.flatMap(x=>x.screens).find(s=>!s.stop&&s.kind!=='discussion');assert.ok(plain);assert.equal(shownKind(plain),plain.kind);
 });
+test('shownKind and openStop on a missing screen: no kind, no throw (#224 review)',()=>{
+ assert.equal(openStop(null),false);assert.equal(openStop(undefined),false);
+ assert.doesNotThrow(()=>shownKind(null));assert.doesNotThrow(()=>shownKind(undefined));
+ assert.equal(shownKind(null),undefined);assert.equal(shownKind(undefined),undefined);
+ assert.equal(byKind({guide:'listen'},shownKind(null)),'listen');
+});
 test('byKind: one fallback for every kind-keyed table — an unknown kind reads as guide',()=>{
  const table={guide:'listen',term:'key term'};
  assert.equal(byKind(table,'term'),'key term');assert.equal(byKind(table,'unknown'),'listen');assert.equal(byKind(table,undefined),'listen');

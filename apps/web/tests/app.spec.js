@@ -478,6 +478,8 @@ it('on a key-term discussion stop the caption and the here-card both read "discu
  await startAt(term.id);await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));await settle();
  const stage=screen.getByRole('group',{name:`${sections.find(s=>s.id===term.sectionId).title} items`}).parentElement;
  expect(stage.querySelector('.ov-item.current .sr-only').textContent).toMatch(/^key term,/);
+ // The circle you are on is still a stop for assistive tech (#224 review): ", stop to discuss", with no amber ring (that marks a stop ahead).
+ expect(stage.querySelector('.ov-item.current .sr-only').textContent).toContain(', stop to discuss');expect(stage.querySelector('.ov-item.current').classList.contains('stop')).toBe(false);
  expect(stage.querySelector('.ov-caption').textContent).toMatch(/^\d+ done · discuss now · \d+ to go$/);
  expect(screen.getByRole('region',{name:'You are here'}).querySelector('.ov-next b').textContent).toBe('discuss');
 });

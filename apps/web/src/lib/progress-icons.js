@@ -6,6 +6,5 @@ import { BookOpen, Users, Image, Map, Key, Film, Heart, Mountain, Layers, Drama,
 // the six stages — Hear and Heart, Setting the Stage, Defining the Scenes, Embodying the Text, Filling the Gaps, Speaking the Word.
 export const contentIcons = { guide: Ear, scripture: BookOpen, discussion: Users, image: Image, map: Map, term: Key, video: Film };
 export const sectionIcons = [Heart, Mountain, Layers, Drama, Puzzle, Speech];
-export const guideIcon = Ear;
 // The word for each content kind, in user words (cookbook overview-sheet.md § Copy rules), in the key's reading order.
 export const kindWords = { guide: 'listen', scripture: 'Scripture', discussion: 'discuss', term: 'key term', image: 'picture', map: 'map', video: 'video' };
