@@ -429,7 +429,15 @@ it('after a forward jump the spine announces nothing done that was skipped, and 
  const open=document.querySelector('.ov-stage-row[aria-expanded=true]');expect(document.getElementById(open.getAttribute('aria-controls'))).toBeTruthy();
  const n=windowSpan(document.querySelector('.ov-items')),[,done,togo]=document.querySelector('.ov-caption').textContent.match(/^(\d+) done · .+ now · (\d+) to go$/);
  expect(+done+1+ +togo).toBe(n);expect(+done).toBe(0);
- for(const stop of document.querySelectorAll('.ov-item.stop'))expect(stop.querySelector('.sr-only').textContent).toContain('stop to discuss');
+ // Every stop ahead says "discuss" exactly once before its label: the kind word for a plain discussion, else the stop cue (#225 review).
+ for(const stop of document.querySelectorAll('.ov-item.stop'))expect(stop.querySelector('.sr-only').textContent.split(': ')[0].match(/discuss/g)).toHaveLength(1);
+});
+it('a plain discussion stop is announced "discuss" once, not "discuss, …, stop to discuss" (#225 review)',async()=>{
+ // Hear and Heart's stops are discussion items: their kind word already says discuss, so the stop cue is not repeated.
+ await startAt('S01-U001');await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));await settle();
+ const stops=[...screen.getByRole('group',{name:'Hear and Heart items'}).querySelectorAll('.ov-item.stop')];
+ expect(stops.length,'fixture: Hear and Heart has discussion stops ahead').toBeGreaterThan(0);
+ for(const b of stops){const t=b.querySelector('.sr-only').textContent.split(': ')[0];expect(t).toMatch(/^discuss, \d+ of \d+/);expect(t).not.toContain('stop to discuss');}
 });
 it('a key-term discussion stop in Filling the Gaps wears the amber stop ring (fb-03 lens-dev-8662ef8 Finding 1)',async()=>{
  // The ring follows the stop, whatever its glyph: a discussion activity with a key-term asset is still a stop.

@@ -1,7 +1,7 @@
 <script>
  import {Check,ChevronLeft,ChevronRight} from 'lucide-svelte';
  import {contentIcons as icons,sectionIcons,kindWords} from '../lib/progress-icons.js';
- import {pendingStop,openStop,shownKind,byKind} from '../lib/progress.js';
+ import {pendingStop,stopCue,shownKind,byKind} from '../lib/progress.js';
  let {groups,onopen=()=>{},onselect=()=>{},overview=false}=$props();
  // Overview spine: the current stage starts open; tapping another stage's row opens its items in place.
  let toggled=$state(new Set());
@@ -53,12 +53,12 @@
     {#if open}
      {@const n=group.screens.length}{@const start=windowStart(group,i)}{@const end=Math.min(n,start+WINDOW)}
      <div class="ov-items" id={`ov-items-${i}`}>
-      <!-- The amber ring marks a stop still ahead (pendingStop); the spoken ", stop to discuss" marks any stop not yet done
-           (openStop), the current one included, so the circle you are on still says it is a stop (#224 review). -->
+      <!-- The amber ring marks a stop still ahead (pendingStop); the spoken ", stop to discuss" (stopCue) marks any stop not
+           yet done, the current one included (#224 review), and is dropped when the kind word already says "discuss" (#225 review). -->
       <div class="ov-circles" role="group" aria-label={`${group.title} items`}>
-       {#each group.screens.slice(start,end) as screen,k}{@const j=start+k}{@const Icon=byKind(icons,screen.kind)}{@const word=byKind(kindWords,screen.kind)}{@const pending=pendingStop(screen)}{@const toDiscuss=openStop(screen)}
-        <button class="ov-item" class:complete={screen.complete} class:current={screen.current} class:stop={pending} aria-current={screen.current?'step':undefined} onclick={()=>onselect(screen.activityId,false)}>
-         <span class="ov-dot" aria-hidden="true"><Icon size={15}/></span><span class="sr-only">{word}, {j+1} of {n}{screen.complete?', done':''}{toDiscuss?', stop to discuss':''}{screen.label?`: ${screen.label}`:''}</span>
+       {#each group.screens.slice(start,end) as screen,k}{@const j=start+k}{@const Icon=byKind(icons,screen.kind)}{@const word=byKind(kindWords,screen.kind)}
+        <button class="ov-item" class:complete={screen.complete} class:current={screen.current} class:stop={pendingStop(screen)} aria-current={screen.current?'step':undefined} onclick={()=>onselect(screen.activityId,false)}>
+         <span class="ov-dot" aria-hidden="true"><Icon size={15}/></span><span class="sr-only">{word}, {j+1} of {n}{screen.complete?', done':''}{stopCue(screen)}{screen.label?`: ${screen.label}`:''}</span>
         </button>
        {/each}
       </div>
