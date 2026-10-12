@@ -6,6 +6,7 @@
  // Language and Passages reuse LibraryPanel's views inline.
  import {Globe,Bookmark,ChevronRight,ChevronDown,CircleHelp,Play,MessageCircle,Check} from 'lucide-svelte';
  import {contentIcons,sectionIcons,guideIcon,kindWords} from '../lib/progress-icons.js';
+ import {pendingStop} from '../lib/progress.js';
  import SessionProgress from './SessionProgress.svelte';
  import LibraryPanel from './LibraryPanel.svelte';
  import {tick} from 'svelte';
@@ -27,10 +28,11 @@
  const nowScreen=$derived(here&&here.current>=0?here.screens[here.current]:null);
  const nextScreen=$derived(nowScreen?(here.screens[here.current+1]||groups[activeIndex+1]?.screens[0]||null):null);
  const NowIcon=$derived(nowScreen?contentIcons[nowScreen.kind]||guideIcon:null);
- // A stop next reads as a stop ("then discuss"), whatever its glyph — the spine's ring predicate (stop, not done, not current; #221).
- const nextKind=$derived(nextScreen?(nextScreen.stop&&!nextScreen.complete&&!nextScreen.current?'discussion':nextScreen.kind):null);
- const NextIcon=$derived(nextKind?contentIcons[nextKind]||guideIcon:null);
- const word=screen=>kindWords[screen.kind]||kindWords.guide;
+ // The "then" glyph is the spine's glyph for that item (its kind), tinted like the spine's stop ring when it is a stop still
+ // ahead; the word follows the same rule as the ring (pendingStop): a stop ahead reads "discuss", a done stop reads its kind.
+ const nextStop=$derived(pendingStop(nextScreen));
+ const NextIcon=$derived(nextScreen?contentIcons[nextScreen.kind]||guideIcon:null);
+ const word=kind=>kindWords[kind]||kindWords.guide;
 </script>
 <div class="overview-sheet">
  {#if here}
@@ -39,7 +41,7 @@
    <p class="ov-stage-title"><HereIcon size={26} aria-hidden="true"/><span>{here.title}</span></p>
    <p class="ov-position">{nowScreen?`item ${here.current+1} of ${here.screens.length}`:'complete'}</p>
    {#if nowScreen}
-    <p class="ov-next"><NowIcon size={18} aria-hidden="true"/><span>Now: <b>{word(nowScreen)}</b></span>{#if nextScreen}<span class="ov-then">· then <NextIcon size={16} aria-hidden="true"/> {kindWords[nextKind]||kindWords.guide}</span>{/if}</p>
+    <p class="ov-next"><NowIcon size={18} aria-hidden="true"/><span>Now: <b>{word(nowScreen.kind)}</b></span>{#if nextScreen}<span class="ov-then" class:stop={nextStop}>· then <NextIcon size={16} aria-hidden="true"/> {word(nextStop?'discussion':nextScreen.kind)}</span>{/if}</p>
    {/if}
   </section>
  {/if}
@@ -73,6 +75,8 @@
  .ov-next{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin-top:10px!important;padding-top:10px;border-top:1px solid var(--line);font-size:.9375rem;font-weight:500}
  .ov-next b{font-weight:600}
  .ov-then{display:inline-flex;align-items:center;gap:6px;color:var(--ink-500);font-weight:400}
+ /* A stop ahead: the glyph takes the spine's stop colour (--fia-stop); the word stays --ink-500. */
+ .ov-then.stop :global(svg){color:var(--fia-stop)}
  .ov-intro{margin:0 0 12px}
  .ov-quiet{margin-top:10px}
  .ov-row{display:flex;align-items:center;justify-content:flex-start;gap:10px;width:100%;min-height:48px;padding:4px 10px;font-size:.9375rem;color:var(--ink-700);border-top:1px solid var(--line);text-align:start}
