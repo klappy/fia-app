@@ -10,4 +10,6 @@ Validation: `app.spec.js` overview tests rewritten for the composition (child or
 
 Review round (fresh code review and design-lens HOLDs): a stage reads done only when all its items are complete (never by position after a jump); the caption's done · now · to go partition the stage; `aria-controls` only while the region exists; stage rows carry an explicit name with separators; no here-card when no stage is active; focus follows Language → Passages; `--fia-stop` added (light #8a5a00, 5.9:1 on #fff; dark #e0b45a, 7.1:1 on the dark sheet). The overview's unused section-jump parameter is removed from App (no overview control passes it since stage rows expand in place); section transitions stay covered by the visual `section-transition` state and the flow tests.
 
+Media snapshot (#180 follow-up): a new `app.spec.js` test covers the keep-on-failure branch of `updateMedia(keep)` — a failed mid-session Downloads refresh, online throughout, keeps the last good snapshot, so video still plays the pinned revision.
+
 Not covered: item titles on the circles (screens carry only the kind), design-lens@2.1 and product-lens P-01 on DEV, large-print and RTL checks on device.

@@ -53,9 +53,9 @@
      {@const n=group.screens.length}{@const start=windowStart(group,i)}{@const end=Math.min(n,start+WINDOW)}
      <div class="ov-items" id={`ov-items-${i}`}>
       <div class="ov-circles" role="group" aria-label={`${group.title} items`}>
-       {#each group.screens.slice(start,end) as screen,k}{@const j=start+k}{@const Icon=icons[screen.kind]||guideIcon}{@const word=kindWords[screen.kind]||kindWords.guide}
-        <button class="ov-item" class:complete={screen.complete} class:current={screen.current} class:stop={pendingStop(screen)} aria-current={screen.current?'step':undefined} onclick={()=>onselect(screen.activityId,false)}>
-         <span class="ov-dot" aria-hidden="true"><Icon size={15}/></span><span class="sr-only">{word}, {j+1} of {n}{screen.complete?', done':''}{pendingStop(screen)?', stop to discuss':''}{screen.label?`: ${screen.label}`:''}</span>
+       {#each group.screens.slice(start,end) as screen,k}{@const j=start+k}{@const Icon=icons[screen.kind]||guideIcon}{@const word=kindWords[screen.kind]||kindWords.guide}{@const pending=pendingStop(screen)}
+        <button class="ov-item" class:complete={screen.complete} class:current={screen.current} class:stop={pending} aria-current={screen.current?'step':undefined} onclick={()=>onselect(screen.activityId,false)}>
+         <span class="ov-dot" aria-hidden="true"><Icon size={15}/></span><span class="sr-only">{word}, {j+1} of {n}{screen.complete?', done':''}{pending?', stop to discuss':''}{screen.label?`: ${screen.label}`:''}</span>
         </button>
        {/each}
       </div>

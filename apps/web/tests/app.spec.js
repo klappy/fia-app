@@ -179,7 +179,7 @@ const settle=async()=>{await Promise.resolve();await tick();};
 const windowSpan=el=>el.querySelectorAll('.ov-item').length+[...el.querySelectorAll('.ov-window-step')].reduce((s,b)=>s+ +b.textContent.match(/\d+/)[0],0);
 // R4: a tap within the start burst never pauses; wait until the easy button is no longer busy.
 const easyIdle=()=>waitFor(()=>expect(document.querySelector('.guide-primary').hasAttribute('aria-busy')).toBe(false),{timeout:2000});
-async function startAt(id,status='ready',prefs={}){const session=createSession(activities);session.index=activities.findIndex(a=>a.id===id);session.status=status;Object.assign(session.preferences,prefs);localStorage.setItem('fia-v3-session@2',JSON.stringify({session}));render(App);await settle();await settle();await settle();}
+async function startAt(id,status='ready',prefs={},{completed}={}){const session=createSession(activities);session.index=activities.findIndex(a=>a.id===id);session.status=status;Object.assign(session.preferences,prefs);if(completed)session.completed=completed;localStorage.setItem('fia-v3-session@2',JSON.stringify({session}));render(App);await settle();await settle();await settle();}
 const originalRelated=assets.a112.relatedIds;
 const state=()=>JSON.parse(localStorage.getItem('fia-v3-session@2')).session;
 async function command(text){const kind=text==='watch the video'?'video':'map';const resource=Object.values(assets).find(a=>a.kind===kind);await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passage resources'}));await fireEvent.click(within(screen.getByText(kind==='video'?'Videos':'Maps',{selector:'summary'}).parentElement).getByRole('button',{name:resource.subtitle||resource.title,exact:true}));await settle();if(kind==='video'){await fireEvent.click(screen.getByRole('button',{name:'Play video',exact:true}));await settle();}}
@@ -453,15 +453,16 @@ it('the here-card names a key-term discussion stop next as a stop, not by its gl
  // The glyph is the spine's glyph for that circle — the key — tinted as a stop, like the spine's ring (#222 re-review).
  expect(then.querySelector('svg').getAttribute('class')).toMatch(/lucide-key/);expect(then.querySelector('svg').getAttribute('class')).not.toMatch(/lucide-users/);
  expect(then.classList.contains('stop')).toBe(true);
- const circle=[...document.querySelectorAll('.ov-item')].find(b=>b.querySelector('.sr-only').textContent.includes(', stop to discuss'));
+ // The spine circle for the same next item (index `at`, the one after the current circle) is the ringed key.
+ const circle=document.querySelector('.ov-item[aria-current="step"]').nextElementSibling;
+ expect(circle.querySelector('.sr-only').textContent).toContain(', stop to discuss');expect(circle.classList.contains('stop')).toBe(true);
  expect(circle.querySelector('svg').getAttribute('class')).toMatch(/lucide-key/);
 });
 it('the here-card names a completed key-term stop next by its kind, with the key glyph and no stop tint, like the spine (#222 re-review)',async()=>{
  const group=a=>a.readingGroupId||a.id,at=activities.findIndex((a,i)=>i>0&&a.kind==='discussion'&&assets[a.assetId]?.kind==='term'&&activities[i-1].sectionId===a.sectionId&&group(activities[i-1])!==group(a));
  expect(at,'fixture: no key-term discussion stop follows another item in its stage').toBeGreaterThan(0);
  // Revisit: the stop (its whole screen) is done; the learner is back on the item before it.
- const session=createSession(activities);session.index=at-1;session.status='ready';session.completed=activities.filter(a=>group(a)===group(activities[at])).map(a=>a.id);
- localStorage.setItem('fia-v3-session@2',JSON.stringify({session}));render(App);await settle();await settle();await settle();
+ await startAt(activities[at-1].id,'ready',{},{completed:activities.filter(a=>group(a)===group(activities[at])).map(a=>a.id)});
  await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));await settle();
  const then=screen.getByRole('region',{name:'You are here'}).querySelector('.ov-then');
  expect(then.textContent.replace(/\s+/g,' ').trim()).toBe('· then key term');
