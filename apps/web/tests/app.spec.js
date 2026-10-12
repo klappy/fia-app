@@ -431,6 +431,17 @@ it('after a forward jump the spine announces nothing done that was skipped, and 
  expect(+done+1+ +togo).toBe(n);expect(+done).toBe(0);
  for(const stop of document.querySelectorAll('.ov-item.stop'))expect(stop.querySelector('.sr-only').textContent).toContain('stop to discuss');
 });
+it('a key-term discussion stop in Filling the Gaps wears the amber stop ring (fb-03 lens-dev-8662ef8 Finding 1)',async()=>{
+ // The ring follows the stop, whatever its glyph: a discussion activity with a key-term asset is still a stop.
+ const termStop=activities.find(a=>a.sectionId==='S05'&&a.kind==='discussion'&&assets[a.assetId]?.kind==='term');expect(termStop).toBeTruthy();
+ await startAt('S01-U001');await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));
+ await fireEvent.click(screen.getByRole('button',{name:/^Filling the Gaps/}));await settle();
+ const stage=screen.getByRole('group',{name:'Filling the Gaps items'}).parentElement;
+ const stops=[...stage.querySelectorAll('.ov-item.stop')];
+ const keyStops=stops.filter(b=>/^key term,/.test(b.querySelector('.sr-only').textContent));
+ expect(keyStops.length).toBeGreaterThan(0);
+ for(const b of keyStops)expect(b.querySelector('.sr-only').textContent).toContain('stop to discuss');
+});
 it('a long stage shows a window of 12 circles around the current item, and the end words scroll it',async()=>{
  // cookbook overview-sheet.md § Long stages — the circle row is a window (captain 2026-10-09 23:20 ET "build it, then show it").
  await startAt('S05-U020');await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));

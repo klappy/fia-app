@@ -6,10 +6,12 @@ export function progressSections(sections,activities,assets){
    const id=a.readingGroupId||a.id;
    let screen=screens.at(-1);
    if(!screen||screen.id!==id){
-    screen={id,activityId:a.id,assetId:a.assetId,label:a.prompt||a.title,thumbnail:['image','map'].includes(assets[a.assetId]?.kind)?assets[a.assetId].src:null,memberIds:[],kind:assets[a.assetId]?.kind||(a.kind==='discussion'?'discussion':'guide')};
+    screen={id,activityId:a.id,assetId:a.assetId,label:a.prompt||a.title,thumbnail:['image','map'].includes(assets[a.assetId]?.kind)?assets[a.assetId].src:null,memberIds:[],kind:assets[a.assetId]?.kind||(a.kind==='discussion'?'discussion':'guide'),stop:false};
     screens.push(screen);
    }
    screen.memberIds.push(a.id);
+   // A stop is "stop here and discuss as a group" — a discussion activity, whatever its glyph (a key term, a picture, a map).
+   if(a.kind==='discussion')screen.stop=true;
   }
   return {...section,screens};
  });
