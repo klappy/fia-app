@@ -1,0 +1,35 @@
+import {createHash} from 'node:crypto';
+export const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
+export function canonical(value, seen = new Set()) {
+  if (value === null || typeof value === 'boolean') return JSON.stringify(value);
+  if (typeof value === 'string') {
+    if (value.isWellFormed() === false) throw Error('invalid-unicode');
+    return JSON.stringify(value);
+  }
+  if (typeof value !== 'object' || seen.has(value)) throw Error('unsupported-canonical-value');
+  const array = Array.isArray(value);
+  if (!array && Object.getPrototypeOf(value) !== Object.prototype) throw Error('unsupported-object');
+  const keys = Reflect.ownKeys(value);
+  if (keys.some(key => typeof key !== 'string')) throw Error('symbol-key');
+  for (const key of keys) {
+    if (array && key === 'length') continue;
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    if (!descriptor.enumerable || !('value' in descriptor)) throw Error('unsupported-property');
+  }
+  seen.add(value);
+  try {
+    if (array) {
+      if (keys.length !== value.length + 1 || Array.from({length:value.length}, (_,i)=>String(i)).some(key=>!Object.hasOwn(value,key))) throw Error('sparse-or-extended-array');
+      return `[${value.map(item => canonical(item, seen)).join(',')}]`;
+    }
+    return `{${keys.sort().map(key => `${canonical(key, seen)}:${canonical(value[key], seen)}`).join(',')}}`;
+  } finally { seen.delete(value); }
+}
+export function fields(value, names) {
+  if (!value || Object.getPrototypeOf(value) !== Object.prototype || Reflect.ownKeys(value).length !== names.length || names.some(key=>!Object.hasOwn(value,key))) throw Error('invalid-fields');
+  canonical(value);
+}
+export function bounded(value, name = 'identity') {
+  if (typeof value !== 'string' || value.length === 0 || value.length > 256 || !value.isWellFormed()) throw Error(`invalid-${name}`);
+  return value;
+}
