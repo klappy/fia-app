@@ -8,6 +8,7 @@
     "test": "node --test tests/web-shell/*.test.js tests/compiler/presentation.test.mjs tests/compiler/flow-emission.test.mjs && npm run test:reference && npm run test:worker",
     "preview": "vite preview",
     "test:release": "node --test tests/release/*.test.js && node --test tests/worker-serving/packaged.check.mjs",
+    "check:clip-text": "node scripts/clip-text/check.mjs",
     "test:e2e": "playwright test",
     "test:visual": "playwright test e2e/visual.spec.js",
     "smoke:deployed": "playwright test e2e/deployed.spec.js",

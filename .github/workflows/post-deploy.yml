@@ -108,6 +108,12 @@ jobs:
           BASE_URL: ${{ steps.target.outputs.url }}
           EXPECT_COMMIT: ${{ steps.target.outputs.commit }}
         run: npm run smoke:deployed
+      # The served guide/Scripture windows and screen text must be the bytes the
+      # CI clip-vs-text check judged (no ASR runs here).
+      - name: Served clip windows are the checked ones
+        env:
+          BASE_URL: ${{ steps.target.outputs.url }}
+        run: node scripts/clip-text/check.mjs --origin "$BASE_URL" --identity-only
       # Same-commit local protocol fixture is distinct from the hosted journey.
       - name: Controlled local listening
         id: controlled
