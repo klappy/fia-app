@@ -12,6 +12,8 @@ Review round (fresh code review and design-lens HOLDs): a stage reads done only 
 
 Re-review follow-up (#223): one stop rule (`progress.js` `shownKind`) gives the caption and the here-card the same word — a stop not yet done reads `discuss now` / `Now: discuss` whatever its glyph, where the caption had read `key term now` on a key-term stop — and one kind fallback (`byKind`) replaces the copies in both components.
 
+Re-review follow-up (#224): every stop not yet done is announced as a stop to discuss, the circle you are on included (`openStop`); the amber ring still marks only a stop ahead (`pendingStop`). `shownKind` on a missing screen returns no kind instead of throwing, and the unused `guideIcon` export is gone (the guide glyph is `contentIcons.guide`).
+
 Media snapshot (#180 follow-up): a new `app.spec.js` test covers the keep-on-failure branch of `updateMedia(keep)` — a failed mid-session Downloads refresh, online throughout, keeps the last good snapshot, so video still plays the pinned revision.
 
 Not covered: item titles on the circles (screens carry only the kind), design-lens@2.1 and product-lens P-01 on DEV, large-print and RTL checks on device.

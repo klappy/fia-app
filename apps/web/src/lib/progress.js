@@ -37,6 +37,7 @@ export const pendingStop=screen=>openStop(screen)&&!screen.current;
 // (`7 done · discuss now · 3 to go`, overview-sheet.md § Proposed composition) and on the here-card; a done stop reads as its kind.
 export const openStop=screen=>!!screen?.stop&&!screen.complete;
 // The kind an item reads as, by the stop rule above: an open stop reads as a discussion, anything else as its own kind.
-export const shownKind=screen=>openStop(screen)?'discussion':screen.kind;
+// A missing screen has no kind: undefined, never a throw (byKind then reads it as guide).
+export const shownKind=screen=>openStop(screen)?'discussion':screen?.kind;
 // One fallback for every kind-keyed table (kindWords, contentIcons): an unknown kind reads as guide (listen, the ear).
 export const byKind=(table,kind)=>table[kind]??table.guide;
