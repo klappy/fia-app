@@ -5,8 +5,8 @@
  // → the six stages (SessionProgress's overview branch: the spine) → three quiet rows (What the icons mean · Language · Passages) → Close.
  // Language and Passages reuse LibraryPanel's views inline.
  import {Globe,Bookmark,ChevronRight,ChevronDown,CircleHelp,Play,MessageCircle,Check} from 'lucide-svelte';
- import {contentIcons,sectionIcons,guideIcon,kindWords} from '../lib/progress-icons.js';
- import {pendingStop} from '../lib/progress.js';
+ import {contentIcons,sectionIcons,kindWords} from '../lib/progress-icons.js';
+ import {pendingStop,shownKind,byKind} from '../lib/progress.js';
  import SessionProgress from './SessionProgress.svelte';
  import LibraryPanel from './LibraryPanel.svelte';
  import {tick} from 'svelte';
@@ -27,12 +27,13 @@
  const HereIcon=$derived(sectionIcons[activeIndex]||sectionIcons[0]);
  const nowScreen=$derived(here&&here.current>=0?here.screens[here.current]:null);
  const nextScreen=$derived(nowScreen?(here.screens[here.current+1]||groups[activeIndex+1]?.screens[0]||null):null);
- const NowIcon=$derived(nowScreen?contentIcons[nowScreen.kind]||guideIcon:null);
+ const NowIcon=$derived(nowScreen?byKind(contentIcons,nowScreen.kind):null);
  // The "then" glyph is the spine's glyph for that item (its kind), tinted like the spine's stop ring when it is a stop still
- // ahead; the word follows the same rule as the ring (pendingStop): a stop ahead reads "discuss", a done stop reads its kind.
+ // ahead. Both words follow the stop rule (progress.js shownKind), like the spine's caption: a stop not yet done reads
+ // "discuss" (now or then), a done stop reads its kind. The glyph stays the item's kind glyph.
  const nextStop=$derived(pendingStop(nextScreen));
- const NextIcon=$derived(nextScreen?contentIcons[nextScreen.kind]||guideIcon:null);
- const word=kind=>kindWords[kind]||kindWords.guide;
+ const NextIcon=$derived(nextScreen?byKind(contentIcons,nextScreen.kind):null);
+ const word=screen=>byKind(kindWords,shownKind(screen));
 </script>
 <div class="overview-sheet">
  {#if here}
@@ -41,7 +42,7 @@
    <p class="ov-stage-title"><HereIcon size={26} aria-hidden="true"/><span>{here.title}</span></p>
    <p class="ov-position">{nowScreen?`item ${here.current+1} of ${here.screens.length}`:'complete'}</p>
    {#if nowScreen}
-    <p class="ov-next"><NowIcon size={18} aria-hidden="true"/><span>Now: <b>{word(nowScreen.kind)}</b></span>{#if nextScreen}<span class="ov-then" class:stop={nextStop}>· then <NextIcon size={16} aria-hidden="true"/> {word(nextStop?'discussion':nextScreen.kind)}</span>{/if}</p>
+    <p class="ov-next"><NowIcon size={18} aria-hidden="true"/><span>Now: <b>{word(nowScreen)}</b></span>{#if nextScreen}<span class="ov-then" class:stop={nextStop}>· then <NextIcon size={16} aria-hidden="true"/> {word(nextScreen)}</span>{/if}</p>
    {/if}
   </section>
  {/if}

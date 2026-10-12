@@ -6,7 +6,7 @@ import {tick} from 'svelte';
 import App from '../src/App.svelte';
 import * as videoDemo from '../src/lib/video-demo.js';
 import {createSession} from '../src/lib/engine.js';
-import {activities,assets} from '../src/lib/content.js';
+import {activities,assets,sections} from '../src/lib/content.js';
 let players=[];
 it.each(['a13','a184','a10'])('prepared video %s fetches only after Play',async(id)=>{
  vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});const path=assets[id].src;
@@ -454,7 +454,10 @@ it('the here-card names a key-term discussion stop next as a stop, not by its gl
  expect(then.querySelector('svg').getAttribute('class')).toMatch(/lucide-key/);expect(then.querySelector('svg').getAttribute('class')).not.toMatch(/lucide-users/);
  expect(then.classList.contains('stop')).toBe(true);
  // The spine circle for the same next item (index `at`, the one after the current circle) is the ringed key.
- const circle=document.querySelector('.ov-item[aria-current="step"]').nextElementSibling;
+ // Selected explicitly (current circle's position + 1 in its stage), so a window edge fails as an assertion, not a TypeError.
+ const circles=[...screen.getByRole('group',{name:`${sections.find(s=>s.id===activities[at].sectionId).title} items`}).querySelectorAll('.ov-item')];
+ const now=circles.findIndex(b=>b.getAttribute('aria-current')==='step');expect(now,'the current circle is in the window').toBeGreaterThanOrEqual(0);
+ const circle=circles[now+1];expect(circle,'the next circle is in the same window').toBeTruthy();
  expect(circle.querySelector('.sr-only').textContent).toContain(', stop to discuss');expect(circle.classList.contains('stop')).toBe(true);
  expect(circle.querySelector('svg').getAttribute('class')).toMatch(/lucide-key/);
 });
@@ -467,6 +470,16 @@ it('the here-card names a completed key-term stop next by its kind, with the key
  const then=screen.getByRole('region',{name:'You are here'}).querySelector('.ov-then');
  expect(then.textContent.replace(/\s+/g,' ').trim()).toBe('· then key term');
  expect(then.querySelector('svg').getAttribute('class')).toMatch(/lucide-key/);expect(then.classList.contains('stop')).toBe(false);
+});
+it('on a key-term discussion stop the caption and the here-card both read "discuss now", like the release note (#223 re-review)',async()=>{
+ // One stop rule (progress.js shownKind): a stop not yet done reads "discuss", whatever its glyph — the caption's now word
+ // (`7 done · discuss now · 3 to go`, cookbook overview-sheet.md § Proposed composition) and the here-card's "Now:" alike.
+ const term=activities.find(a=>a.kind==='discussion'&&assets[a.assetId]?.kind==='term');expect(term,'fixture: a key-term discussion stop').toBeTruthy();
+ await startAt(term.id);await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));await settle();
+ const stage=screen.getByRole('group',{name:`${sections.find(s=>s.id===term.sectionId).title} items`}).parentElement;
+ expect(stage.querySelector('.ov-item.current .sr-only').textContent).toMatch(/^key term,/);
+ expect(stage.querySelector('.ov-caption').textContent).toMatch(/^\d+ done · discuss now · \d+ to go$/);
+ expect(screen.getByRole('region',{name:'You are here'}).querySelector('.ov-next b').textContent).toBe('discuss');
 });
 it('a long stage shows a window of 12 circles around the current item, and the end words scroll it',async()=>{
  // cookbook overview-sheet.md § Long stages — the circle row is a window (captain 2026-10-09 23:20 ET "build it, then show it").

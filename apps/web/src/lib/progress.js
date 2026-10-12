@@ -32,4 +32,11 @@ export function visibleProgress(screens,current,limit=7){
 }
 // The one stop rule (fb-03 #222 re-review): a stop still ahead — not done, not where you are. The spine rings it in
 // --fia-stop and announces "stop to discuss"; the here-card's "then" reads "discuss" for it. A done stop reads as its kind.
-export const pendingStop=screen=>!!screen?.stop&&!screen.complete&&!screen.current;
+export const pendingStop=screen=>openStop(screen)&&!screen.current;
+// A stop not yet done, wherever you are — ahead or the item you are on. It reads "discuss" on the caption
+// (`7 done · discuss now · 3 to go`, overview-sheet.md § Proposed composition) and on the here-card; a done stop reads as its kind.
+export const openStop=screen=>!!screen?.stop&&!screen.complete;
+// The kind an item reads as, by the stop rule above: an open stop reads as a discussion, anything else as its own kind.
+export const shownKind=screen=>openStop(screen)?'discussion':screen.kind;
+// One fallback for every kind-keyed table (kindWords, contentIcons): an unknown kind reads as guide (listen, the ear).
+export const byKind=(table,kind)=>table[kind]??table.guide;
