@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {progressSections,progressState,visibleProgress} from '../src/lib/progress.js';
+import {progressSections,progressState,visibleProgress,pendingStop} from '../src/lib/progress.js';
 import {activities,sections,assets} from '../src/lib/content.js';
 import {createSession} from '../src/lib/engine.js';
 const groups=progressSections(sections,activities,assets);
@@ -38,4 +38,13 @@ test('a stop follows the discussion activity, not the glyph kind (fb-03 lens-dev
  for(const s of screens)assert.equal(s.stop,s.memberIds.some(id=>byId[id].kind==='discussion'),s.id);
  const termStops=groups[4].screens.filter(s=>s.stop&&s.kind==='term');
  assert.ok(termStops.length>0,'Filling the Gaps has key-term discussion stops');
+});
+test('pendingStop: a stop still ahead — not done, not current; never a non-stop or a missing screen (#222 re-review)',()=>{
+ assert.equal(pendingStop({stop:true,complete:false,current:false}),true);
+ assert.equal(pendingStop({stop:true,complete:true,current:false}),false);
+ assert.equal(pendingStop({stop:true,complete:false,current:true}),false);
+ assert.equal(pendingStop({stop:false,complete:false,current:false}),false);
+ assert.equal(pendingStop(null),false);
+ const stop=groups.flatMap(g=>g.screens).find(s=>s.stop&&s.kind==='term');assert.ok(stop,'fixture: a key-term stop');
+ assert.equal(pendingStop({...stop,complete:false,current:false}),true);
 });

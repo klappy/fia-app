@@ -450,8 +450,22 @@ it('the here-card names a key-term discussion stop next as a stop, not by its gl
  await startAt(activities[at-1].id);await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));await settle();
  const then=screen.getByRole('region',{name:'You are here'}).querySelector('.ov-then');
  expect(then.textContent.replace(/\s+/g,' ').trim()).toBe('· then discuss');
- // The glyph too: the discuss (people) icon, not the key.
- expect(then.querySelector('svg').getAttribute('class')).toMatch(/lucide-users/);expect(then.querySelector('svg').getAttribute('class')).not.toMatch(/lucide-key/);
+ // The glyph is the spine's glyph for that circle — the key — tinted as a stop, like the spine's ring (#222 re-review).
+ expect(then.querySelector('svg').getAttribute('class')).toMatch(/lucide-key/);expect(then.querySelector('svg').getAttribute('class')).not.toMatch(/lucide-users/);
+ expect(then.classList.contains('stop')).toBe(true);
+ const circle=[...document.querySelectorAll('.ov-item')].find(b=>b.querySelector('.sr-only').textContent.includes(', stop to discuss'));
+ expect(circle.querySelector('svg').getAttribute('class')).toMatch(/lucide-key/);
+});
+it('the here-card names a completed key-term stop next by its kind, with the key glyph and no stop tint, like the spine (#222 re-review)',async()=>{
+ const group=a=>a.readingGroupId||a.id,at=activities.findIndex((a,i)=>i>0&&a.kind==='discussion'&&assets[a.assetId]?.kind==='term'&&activities[i-1].sectionId===a.sectionId&&group(activities[i-1])!==group(a));
+ expect(at,'fixture: no key-term discussion stop follows another item in its stage').toBeGreaterThan(0);
+ // Revisit: the stop (its whole screen) is done; the learner is back on the item before it.
+ const session=createSession(activities);session.index=at-1;session.status='ready';session.completed=activities.filter(a=>group(a)===group(activities[at])).map(a=>a.id);
+ localStorage.setItem('fia-v3-session@2',JSON.stringify({session}));render(App);await settle();await settle();await settle();
+ await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));await settle();
+ const then=screen.getByRole('region',{name:'You are here'}).querySelector('.ov-then');
+ expect(then.textContent.replace(/\s+/g,' ').trim()).toBe('· then key term');
+ expect(then.querySelector('svg').getAttribute('class')).toMatch(/lucide-key/);expect(then.classList.contains('stop')).toBe(false);
 });
 it('a long stage shows a window of 12 circles around the current item, and the end words scroll it',async()=>{
  // cookbook overview-sheet.md § Long stages — the circle row is a window (captain 2026-10-09 23:20 ET "build it, then show it").
@@ -840,6 +854,28 @@ it('B1: after an offline Downloads refresh that cannot read the media revision, 
  await fireEvent.click(within(screen.getByText('Videos',{selector:'summary'}).parentElement).getByRole('button',{name:assets.a184.subtitle||assets.a184.title,exact:true}));await settle();
  await fireEvent.click(screen.getByRole('button',{name:'Play video',exact:true}));await settle();await settle();await settle();
  expect(request).toHaveBeenCalledTimes(1);expect(request.mock.calls[0][2]).toBe('d'.repeat(64));expect(document.querySelector('video').getAttribute('src')).toBe('blob:v');
+ expect(document.body.textContent).not.toMatch(/Download this resource before playback|has not been downloaded/);
+});
+// #180 keep-on-failure branch of updateMedia(keep): a mid-session refresh that fails keeps the last good snapshot. Online
+// throughout, so no reconnect refresh can restore it: only the kept snapshot lets the video play the pinned revision.
+it('updateMedia keep-on-failure: a failed Downloads refresh keeps the last good media snapshot, so video still plays the current revision',async()=>{
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});const path=assets.a184.src,current='d'.repeat(64);
+ const status=vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:current,files:[{path,bytes:3,sha256:'pin',group:'video'}],savedFiles:[]});
+ const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(3).buffer,mime:'video/mp4',timing:{status:'not-applicable'},file:{path,sha256:'pin',bytes:3}});
+ vi.stubGlobal('URL',class extends URL{static createObjectURL(){return 'blob:v';}static revokeObjectURL(){}});
+ vi.spyOn(navigator,'onLine','get').mockReturnValue(true);
+ await startAt('S02-U005','waiting');
+ // A non-transient failure: without keep, updateMedia would clear the snapshot and the revision.
+ status.mockRejectedValueOnce(Error('The media revision is unavailable.'));const before=status.mock.calls.length;
+ await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Downloads',exact:true}));
+ await waitFor(()=>expect(status.mock.calls.length).toBe(before+1));await settle();await settle();
+ await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));await settle();
+ const after=status.mock.calls.length;
+ await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passage resources'}));
+ await fireEvent.click(within(screen.getByText('Videos',{selector:'summary'}).parentElement).getByRole('button',{name:assets.a184.subtitle||assets.a184.title,exact:true}));await settle();
+ await fireEvent.click(screen.getByRole('button',{name:'Play video',exact:true}));await settle();await settle();await settle();
+ expect(status.mock.calls.length,'no refresh between the failure and play').toBe(after);
+ expect(request).toHaveBeenCalledTimes(1);expect(request.mock.calls[0][2]).toBe(current);expect(document.querySelector('video').getAttribute('src')).toBe('blob:v');
  expect(document.body.textContent).not.toMatch(/Download this resource before playback|has not been downloaded/);
 });
 it('B1: reconnecting refreshes a snapshot adopted offline from an older saved revision, so video plays the current revision',async()=>{

@@ -1,6 +1,7 @@
 <script>
  import {Check,ChevronLeft,ChevronRight} from 'lucide-svelte';
  import {contentIcons as icons,sectionIcons,guideIcon,kindWords} from '../lib/progress-icons.js';
+ import {pendingStop} from '../lib/progress.js';
  let {groups,onopen=()=>{},onselect=()=>{},overview=false}=$props();
  // Overview spine: the current stage starts open; tapping another stage's row opens its items in place.
  let toggled=$state(new Set());
@@ -53,8 +54,8 @@
      <div class="ov-items" id={`ov-items-${i}`}>
       <div class="ov-circles" role="group" aria-label={`${group.title} items`}>
        {#each group.screens.slice(start,end) as screen,k}{@const j=start+k}{@const Icon=icons[screen.kind]||guideIcon}{@const word=kindWords[screen.kind]||kindWords.guide}
-        <button class="ov-item" class:complete={screen.complete} class:current={screen.current} class:stop={screen.stop&&!screen.complete&&!screen.current} aria-current={screen.current?'step':undefined} onclick={()=>onselect(screen.activityId,false)}>
-         <span class="ov-dot" aria-hidden="true"><Icon size={15}/></span><span class="sr-only">{word}, {j+1} of {n}{screen.complete?', done':''}{screen.stop&&!screen.complete&&!screen.current?', stop to discuss':''}{screen.label?`: ${screen.label}`:''}</span>
+        <button class="ov-item" class:complete={screen.complete} class:current={screen.current} class:stop={pendingStop(screen)} aria-current={screen.current?'step':undefined} onclick={()=>onselect(screen.activityId,false)}>
+         <span class="ov-dot" aria-hidden="true"><Icon size={15}/></span><span class="sr-only">{word}, {j+1} of {n}{screen.complete?', done':''}{pendingStop(screen)?', stop to discuss':''}{screen.label?`: ${screen.label}`:''}</span>
         </button>
        {/each}
       </div>

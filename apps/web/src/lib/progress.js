@@ -30,3 +30,6 @@ export function visibleProgress(screens,current,limit=7){
  const start=Math.max(0,Math.min(screens.length-limit,Math.max(0,current)-Math.floor(limit/2)));
  return {screens:screens.slice(start,start+limit),before:start>0,after:start+limit<screens.length};
 }
+// The one stop rule (fb-03 #222 re-review): a stop still ahead — not done, not where you are. The spine rings it in
+// --fia-stop and announces "stop to discuss"; the here-card's "then" reads "discuss" for it. A done stop reads as its kind.
+export const pendingStop=screen=>!!screen?.stop&&!screen.complete&&!screen.current;
