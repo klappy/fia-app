@@ -1,7 +1,7 @@
 <script>
  import {Check,ChevronLeft,ChevronRight} from 'lucide-svelte';
- import {contentIcons as icons,sectionIcons,guideIcon,kindWords} from '../lib/progress-icons.js';
- import {pendingStop} from '../lib/progress.js';
+ import {contentIcons as icons,sectionIcons,kindWords} from '../lib/progress-icons.js';
+ import {pendingStop,shownKind,byKind} from '../lib/progress.js';
  let {groups,onopen=()=>{},onselect=()=>{},overview=false}=$props();
  // Overview spine: the current stage starts open; tapping another stage's row opens its items in place.
  let toggled=$state(new Set());
@@ -23,11 +23,12 @@
  function scroll(i,start,by){starts={...starts,[i]:start+by};}
  // One caption line carries the visible word (O1): `7 done · discuss now · 3 to go`. The three counts partition the
  // stage even after a jump: done and to go never count the current item; skipped items stay in to go (review #2).
+ // The now word follows the stop rule (progress.js shownKind): a stop not yet done reads "discuss now", whatever its glyph.
  function caption(group){
   const at=group.screens.findIndex(s=>s.current),others=group.screens.filter((s,j)=>j!==at);
   const done=others.filter(s=>s.complete).length,togo=others.length-done;
   if(at<0)return `${done} done · ${togo} to go`;
-  return `${done} done · ${kindWords[group.screens[at].kind]||kindWords.guide} now · ${togo} to go`;
+  return `${done} done · ${byKind(kindWords,shownKind(group.screens[at]))} now · ${togo} to go`;
  }
  let active=$derived(groups.find(g=>g.active)||groups[0]);
  let activeIndex=$derived(Math.max(0,groups.findIndex(g=>g.active)));
@@ -53,7 +54,7 @@
      {@const n=group.screens.length}{@const start=windowStart(group,i)}{@const end=Math.min(n,start+WINDOW)}
      <div class="ov-items" id={`ov-items-${i}`}>
       <div class="ov-circles" role="group" aria-label={`${group.title} items`}>
-       {#each group.screens.slice(start,end) as screen,k}{@const j=start+k}{@const Icon=icons[screen.kind]||guideIcon}{@const word=kindWords[screen.kind]||kindWords.guide}{@const pending=pendingStop(screen)}
+       {#each group.screens.slice(start,end) as screen,k}{@const j=start+k}{@const Icon=byKind(icons,screen.kind)}{@const word=byKind(kindWords,screen.kind)}{@const pending=pendingStop(screen)}
         <button class="ov-item" class:complete={screen.complete} class:current={screen.current} class:stop={pending} aria-current={screen.current?'step':undefined} onclick={()=>onselect(screen.activityId,false)}>
          <span class="ov-dot" aria-hidden="true"><Icon size={15}/></span><span class="sr-only">{word}, {j+1} of {n}{screen.complete?', done':''}{pending?', stop to discuss':''}{screen.label?`: ${screen.label}`:''}</span>
         </button>
