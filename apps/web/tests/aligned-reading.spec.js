@@ -127,3 +127,14 @@ it('word gaps hold the last spoken line and the verse stays marked between verse
  await view.rerender({asset:timed,playback:at(4.2)});await tick();
  expect(document.querySelector('p[aria-current=true]')?.textContent).toContain('one two three');
 });
+
+// fb-05 B2: list markers render from the group's purpose-derived marker; none keeps today's plain list.
+it.each([['numbered','OL',true],['bulleted','UL',true],[null,'UL',false]])('a %s reading group renders as %s',async(marker,tag,classed)=>{
+ const group={id:'G',kind:'guide',marker,text:'Intro',list:[{id:'a',text:'One'},{id:'b',text:'Two'}],activeItemId:'a'};
+ render(AlignedReading,{asset:group,playback:playback(0,false)});await tick();
+ const list=screen.getByRole('list');expect(list.tagName).toBe(tag);expect(list.className.split(' ').some(c=>c==='numbered'||c==='bulleted')).toBe(classed);
+});
+it('a separate list item shows its ordinal before its text',async()=>{
+ render(AlignedReading,{asset:{id:'q',kind:'guide',text:'What do you like?',ordinal:2},playback:playback(0,false)});await tick();
+ expect(document.querySelector('.list-ordinal').textContent).toBe('2.');expect(screen.getByRole('region').textContent).toContain('2. What do you like?');
+});

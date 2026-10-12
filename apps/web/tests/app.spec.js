@@ -296,6 +296,19 @@ it('discussion list questions each wait for confirmation and show separately',as
  expect(activities[state().index].id).toBe('S01-U004');expect(screen.queryByRole('list')).toBeNull();
 });
 
+// fb-05 B2: lists show the publisher's markers, keyed on listContracts purpose (RESULTS-B2 option A).
+it.each([['S03-U009','UL','bulleted',7],['S04-U004','UL','bulleted',7],['S05-U009','OL','numbered',3]])('the %s list carries the publisher marker',async(id,tag,marker,count)=>{
+ await startAt(id);
+ const list=screen.getByRole('list');expect(list.tagName).toBe(tag);expect(list.classList.contains(marker)).toBe(true);expect(screen.getAllByRole('listitem')).toHaveLength(count);
+});
+it('each discussion question shows its number in its list, one per screen',async()=>{
+ for(const [id,number] of [['S01-U003','1.'],['S01-U004','2.'],['S01-U008','6.']]){
+  cleanup();await startAt(id);
+  expect(document.querySelector('.list-ordinal')?.textContent).toBe(number);expect(screen.queryByRole('list')).toBeNull();
+ }
+ cleanup();await startAt('S01-U002');expect(document.querySelector('.list-ordinal')).toBeNull();
+});
+
 it('section boundaries hold a title transition and Continue reads the first instruction without skipping',async()=>{
  vi.useFakeTimers();const last=activities.filter(a=>a.sectionId==='S01').at(-1);await startAt(last.id,'waiting');
  await fireEvent.click(screen.getByRole('button',{name:'Skip to next activity',exact:true}));await settle();await vi.advanceTimersByTimeAsync(1000);
