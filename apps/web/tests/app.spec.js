@@ -444,10 +444,14 @@ it('a key-term discussion stop in Filling the Gaps wears the amber stop ring (fb
 });
 it('the here-card names a key-term discussion stop next as a stop, not by its glyph (fb-03 lens-dev-8662ef8 Finding 1)',async()=>{
  // The here-card's "then" follows screen.stop, like the spine's ring: a key-term stop reads "then discuss", not "then key term".
- const s05=activities.filter(a=>a.sectionId==='S05'),at=s05.findIndex((a,i)=>i>0&&a.kind==='discussion'&&assets[a.assetId]?.kind==='term'&&(s05[i-1].readingGroupId||s05[i-1].id)!==(a.readingGroupId||a.id));expect(at).toBeGreaterThan(0);
- await startAt(s05[at-1].id);await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));await settle();
+ // Fixture by property: any key-term discussion stop that starts its own screen in the same stage as the item before it.
+ const group=a=>a.readingGroupId||a.id,at=activities.findIndex((a,i)=>i>0&&a.kind==='discussion'&&assets[a.assetId]?.kind==='term'&&activities[i-1].sectionId===a.sectionId&&group(activities[i-1])!==group(a));
+ expect(at,'fixture: no key-term discussion stop follows another item in its stage').toBeGreaterThan(0);
+ await startAt(activities[at-1].id);await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));await settle();
  const then=screen.getByRole('region',{name:'You are here'}).querySelector('.ov-then');
  expect(then.textContent.replace(/\s+/g,' ').trim()).toBe('· then discuss');
+ // The glyph too: the discuss (people) icon, not the key.
+ expect(then.querySelector('svg').getAttribute('class')).toMatch(/lucide-users/);expect(then.querySelector('svg').getAttribute('class')).not.toMatch(/lucide-key/);
 });
 it('a long stage shows a window of 12 circles around the current item, and the end words scroll it',async()=>{
  // cookbook overview-sheet.md § Long stages — the circle row is a window (captain 2026-10-09 23:20 ET "build it, then show it").
