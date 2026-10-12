@@ -69,6 +69,11 @@ button{min-height:48px}.scene-notice button{min-width:48px;min-height:48px}.kept
 
 .reading-list{list-style:none;margin:0;padding:0;font:400 calc(24px * var(--reading-scale,1))/1.6 var(--font-scripture-latin);overflow-wrap:break-word}
 .reading-list li{margin:0}
+/* fb-05 B2: the publisher's markers, keyed on listContracts purpose (lib/content.js listMarker). */
+.reading-list.numbered{list-style:decimal;padding-inline-start:1.6em}
+.reading-list.bulleted{list-style:disc;padding-inline-start:1.3em}
+.reading-list.numbered li::marker,.reading-list.bulleted li::marker{color:var(--text-muted)}
+.list-ordinal{color:var(--text-muted);font-variant-numeric:tabular-nums}
 @media(max-width:700px){.reading-list{font-size:calc(23px * var(--reading-scale,1))}}
 
 .visual-expand-hint{position:fixed;z-index:14;left:max(20px,env(safe-area-inset-left));bottom:calc(164px + env(safe-area-inset-bottom));display:grid;place-items:center;color:var(--text-muted);pointer-events:none}

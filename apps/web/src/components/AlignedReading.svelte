@@ -78,10 +78,10 @@
  {/if}
  {#if asset.list}
  <p data-reading-item aria-current={asset.activeItemId===asset.id?'true':undefined}>{asset.text}</p>
- <ul class="reading-list">{#each asset.list as item}<li data-reading-item aria-current={asset.activeItemId===item.id?'true':undefined}>{item.text}</li>{/each}</ul>
+ <svelte:element this={asset.marker==='numbered'?'ol':'ul'} class="reading-list" class:numbered={asset.marker==='numbered'} class:bulleted={asset.marker==='bulleted'}>{#each asset.list as item}<li data-reading-item aria-current={asset.activeItemId===item.id?'true':undefined}>{item.text}</li>{/each}</svelte:element>
  {:else}
  {#each blocks as verse,i}
-  <p aria-current={position?.verseIndex===i?'true':undefined}>{#if verse.number}<sup>{verse.number}</sup>{/if}{#each alignedSegments(verse.text,asset.alignment?.verses[i]?.words) as segment}{#if segment.wordIndex!==undefined}<span data-align-word={`${i}-${segment.wordIndex}`}>{segment.text}</span>{:else}{segment.text}{/if}{/each}</p>
+  <p aria-current={position?.verseIndex===i?'true':undefined}>{#if i===0&&asset.ordinal}<span class="list-ordinal">{asset.ordinal}.</span>{" "}{/if}{#if verse.number}<sup>{verse.number}</sup>{/if}{#each alignedSegments(verse.text,asset.alignment?.verses[i]?.words) as segment}{#if segment.wordIndex!==undefined}<span data-align-word={`${i}-${segment.wordIndex}`}>{segment.text}</span>{:else}{segment.text}{/if}{/each}</p>
  {/each}
  {/if}
  </div>

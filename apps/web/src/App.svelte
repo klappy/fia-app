@@ -47,7 +47,7 @@
  function syncVisual(){const view=presentStage(session,executionPresentation.activities),asset=rawPresentation.assets[view.focal];visualOwner.retain([asset?.src,rawPresentation.assets[view.supporting]?.src].filter(Boolean));if(!online||inTransition||finished||visualCanceled===visualIdentity()||!['image','map'].includes(asset?.kind)||downloadedPaths.has(asset.src)&&(!deliveryRevision||downloadedDeliveryRevision===deliveryRevision)||!onlineMedia.has(asset.src)||!deliveryRevision)return;visualAuthorization=visualIdentity();void visualOwner.load({pack:selectedPack,path:asset.src,revision:deliveryRevision,identity:visualAuthorization});}
  $effect(()=>{session;rawPresentation;selectedPack;deliveryRevision;onlineMedia;online;downloadedPaths;downloadedDeliveryRevision;visualCanceled;untrack(syncVisual);});
  let content=$derived(presentationContent(mediaForDevice(executionPresentation,downloadedPaths),selectedPack));
- let activities=$derived(content.activities),assets=$derived(content.assets),sections=$derived(content.sections),examples=$derived(content.examples),readingGroups=$derived(content.readingGroups),contentContract=$derived(content.contentContract),defaultScriptureId=$derived(content.defaultScriptureId);
+ let activities=$derived(content.activities),assets=$derived(content.assets),sections=$derived(content.sections),examples=$derived(content.examples),readingGroups=$derived(content.readingGroups),listOrdinals=$derived(content.listOrdinals),contentContract=$derived(content.contentContract),defaultScriptureId=$derived(content.defaultScriptureId);
  let videoDeliveryState=$state({entry:null,loading:false,error:null});
  let nativeDemoVideo=$state(null),savedMedia=$state(new globalThis.Map());
  function storedStreamingSize(){try{const size=localStorage.getItem('fia-streaming-video-size');return ['small','medium','large'].includes(size)?size:'large';}catch{return 'large';}}
@@ -270,7 +270,7 @@
  let stage=$derived(presentStage(session,activities));
  let focal=$derived(assets[stage.focal]);
  let termPrompt=$derived(!session.detour&&focal?.kind==='term'&&!!activity?.audioSrc&&termDefinition!==activity.id);
- let guideText=$derived({...readingGroups[activity?.readingGroupId],id:activity?.readingGroupId||activity?.id,kind:'guide',text:readingGroups[activity?.readingGroupId]?.text||activity?.narration||activity?.prompt||'',activeItemId:activity?.id,descriptionAudio:activity?.audioSrc});
+ let guideText=$derived({...readingGroups[activity?.readingGroupId],id:activity?.readingGroupId||activity?.id,kind:'guide',text:readingGroups[activity?.readingGroupId]?.text||activity?.narration||activity?.prompt||'',activeItemId:activity?.id,ordinal:activity?.readingGroupId?undefined:listOrdinals[activity?.id],descriptionAudio:activity?.audioSrc});
  let finished=$derived(session.status==='complete'&&!session.detour);
  // R3: a notice belongs to the passage, screen and sheet that raised it. Its scope is recorded when
  // it is raised, and it ends with that scope before the next screen renders (lib/notice-scope.js).
