@@ -901,3 +901,29 @@ it('S3 revision skew: a companion video keeps playing across a revision change a
  await fireEvent.click(screen.getByRole('button',{name:'Replay',exact:true}));await settle();await settle();await settle();await settle();
  expect(request).toHaveBeenCalledTimes(2);expect(request.mock.calls[1][2]).toBe(next);expect(document.querySelector('video').getAttribute('src')).toBe('blob:v2');
 });
+// S3 phase 1 review (Bugbot, after the main merge): main clears the snapshot on a non-transient refresh failure at its own call
+// sites (mount, worker registration, passage selection). The three mid-session refreshes this lane added (Downloads status report,
+// served-identity change, reconnect) keep the last good snapshot on any failure: a refresh never makes a playable video unplayable.
+function statusFails(status,code){status.mockRejectedValueOnce(Object.assign(Error('The media revision is unavailable.'),code?{code}:{}));return status.mock.calls.length;}
+function pinned(file={path:assets.a184.src,sha256:'pin',bytes:3}){vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});const status=vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[{path:assets.a184.src,bytes:3,sha256:'pin',group:'video'}],savedFiles:[]});const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(file.bytes).buffer,mime:'video/mp4',timing:{status:'not-applicable'},file});return {status,request,revoke:blobs()};}
+function playsAtOnce(request,calls,src){expect(request).toHaveBeenCalledTimes(calls);expect(request.mock.calls.at(-1)[2]).toBe('d'.repeat(64));expect(document.querySelector('video').getAttribute('src')).toBe(src);expect(HTMLMediaElement.prototype.play).toHaveBeenCalled();expect(document.body.textContent).not.toMatch(/Download this resource before playback|available to play online|not available online yet|can’t play right now/);}
+it.each([['media-status-invalid','media-status-invalid'],['no code',undefined]])('S3 keep: a Downloads status refresh that fails (%s) keeps the snapshot, so the video plays at once with the previous revision',async(_,code)=>{
+ const {status,request}=pinned();await startAt('S02-U005','waiting');
+ await openDownloads(status,statusFails(status,code));
+ await openVideo('a184');playsAtOnce(request,1,'blob:v1');
+});
+it('S3 keep: a served-identity refresh that fails invalid keeps the snapshot, so the next play works',async()=>{
+ const {status,request}=pinned({path:assets.a184.src,sha256:'receipt',bytes:5});vi.spyOn(console,'info').mockImplementation(()=>{});await startAt('S02-U005','waiting');
+ // The SW serves another identity (videoChanged refreshes the snapshot), and the refresh fails: its manifest no longer matches.
+ const before=statusFails(status,'media-status-invalid');await openVideo('a184');await waitFor(()=>expect(status.mock.calls.length).toBe(before+1));await settle();await settle();
+ playsAtOnce(request,1,'blob:v1');
+ await fireEvent(document.querySelector('video'),new Event('ended'));await settle();await settle();
+ await openVideo('a184');playsAtOnce(request,2,'blob:v2');
+});
+it('S3 keep: a reconnect refresh that fails invalid keeps the snapshot, so the video plays at once with the previous revision',async()=>{
+ const {status,request}=pinned(),connected=vi.spyOn(navigator,'onLine','get').mockReturnValue(true);await startAt('S02-U005','waiting');
+ connected.mockReturnValue(false);window.dispatchEvent(new Event('offline'));await settle();
+ const before=statusFails(status,'media-status-invalid');connected.mockReturnValue(true);window.dispatchEvent(new Event('online'));
+ await waitFor(()=>expect(status.mock.calls.length).toBe(before+1));await settle();await settle();
+ await openVideo('a184');playsAtOnce(request,1,'blob:v1');
+});
