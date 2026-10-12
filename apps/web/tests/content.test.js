@@ -40,3 +40,11 @@ test('list markers follow listContracts purpose; an unknown purpose keeps today\
  const unknown=presentationContent({...pack,listContracts:pack.listContracts.map(b=>({...b,purpose:'roster'}))});
  assert.ok(Object.values(unknown.readingGroups).every(g=>g.marker===null));assert.deepEqual(unknown.listOrdinals,{});
 });
+
+// HOLD on #227: option A is exact only for Mark 1:1–13; a compiled pack renders exactly as before.
+test('a compiled pack with discussion and descriptive-list purposes gets no markers or ordinals',()=>{
+ assert.equal(listMarker('discussion','eng.MRK-1-14-20'),null);assert.equal(listMarker('descriptive-list','eng.MRK-1-14-20'),null);
+ const compiled=presentationContent({...pack,id:'eng.MRK-1-14-20'});
+ assert.deepEqual(compiled.listContracts.map(b=>b.purpose),['discussion','descriptive-list','descriptive-list','explanation']);
+ assert.ok(Object.values(compiled.readingGroups).every(g=>g.marker===null));assert.deepEqual(compiled.listOrdinals,{});
+});

@@ -132,7 +132,7 @@ it('word gaps hold the last spoken line and the verse stays marked between verse
 it.each([['numbered','OL',true],['bulleted','UL',true],[null,'UL',false]])('a %s reading group renders as %s',async(marker,tag,classed)=>{
  const group={id:'G',kind:'guide',marker,text:'Intro',list:[{id:'a',text:'One'},{id:'b',text:'Two'}],activeItemId:'a'};
  render(AlignedReading,{asset:group,playback:playback(0,false)});await tick();
- const list=screen.getByRole('list');expect(list.tagName).toBe(tag);expect(list.className.split(' ').some(c=>c==='numbered'||c==='bulleted')).toBe(classed);
+ const list=screen.getByRole('list');expect(list.tagName).toBe(tag);expect(list.classList.contains('reading-list')).toBe(true);expect(list.className.split(' ').some(c=>c==='numbered'||c==='bulleted')).toBe(classed);
 });
 it('a separate list item shows its ordinal before its text',async()=>{
  render(AlignedReading,{asset:{id:'q',kind:'guide',text:'What do you like?',ordinal:2},playback:playback(0,false)});await tick();
