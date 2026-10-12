@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {progressSections,progressState,visibleProgress,pendingStop,openStop,shownKind,byKind} from '../src/lib/progress.js';
+import * as progress from '../src/lib/progress.js';
+const {progressSections,progressState,visibleProgress,pendingStop,openStop,shownKind,byKind}=progress;
 import {activities,sections,assets} from '../src/lib/content.js';
 import {createSession} from '../src/lib/engine.js';
 const groups=progressSections(sections,activities,assets);
@@ -69,4 +70,14 @@ test('shownKind and openStop on a missing screen: no kind, no throw (#224 review
 test('byKind: one fallback for every kind-keyed table — an unknown kind reads as guide',()=>{
  const table={guide:'listen',term:'key term'};
  assert.equal(byKind(table,'term'),'key term');assert.equal(byKind(table,'unknown'),'listen');assert.equal(byKind(table,undefined),'listen');
+});
+test('stopCue: an open stop says ", stop to discuss" once — never after a kind word that already says discuss (#225 review)',()=>{
+ const {stopCue}=progress;assert.equal(typeof stopCue,'function');
+ assert.equal(stopCue({stop:true,complete:false,current:false,kind:'term'}),', stop to discuss');
+ assert.equal(stopCue({stop:true,complete:false,current:true,kind:'image'}),', stop to discuss');
+ assert.equal(stopCue({stop:true,complete:false,current:false,kind:'discussion'}),'');
+ assert.equal(stopCue({stop:true,complete:false,current:true,kind:'discussion'}),'');
+ assert.equal(stopCue({stop:true,complete:true,current:false,kind:'term'}),'');
+ assert.equal(stopCue({stop:false,complete:false,current:false,kind:'guide'}),'');
+ assert.equal(stopCue(null),'');assert.equal(stopCue(undefined),'');
 });
