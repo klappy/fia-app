@@ -1023,3 +1023,22 @@ it('S3 keep: a reconnect refresh that fails invalid keeps the snapshot, so the v
  await waitFor(()=>expect(status.mock.calls.length).toBe(before+1));await settle();await settle();
  await openVideo('a184');playsAtOnce(request,1,'blob:v1');
 });
+
+it.each(['content-drift','revision-changed'])('video %s displays an update notice without replacing the playing video',async(kind)=>{
+ const path=assets.a13.src;vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});
+ const status=vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[{path,bytes:3,group:'video'}]});
+ vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(3).buffer,mime:'video/mp4',notes:[{kind}]});
+ vi.stubGlobal('URL',class extends URL{static createObjectURL(){return 'blob:updated-video';}static revokeObjectURL(){}});
+ await startAt('S02-U005','waiting');const count=status.mock.calls.length;
+ await fireEvent.click(screen.getByRole('button',{name:'Play video',exact:true}));await settle();await settle();await settle();
+ expect(document.querySelector('video')?.getAttribute('src')).toBe('blob:updated-video');expect(screen.getByText('Update available. This video still plays.')).toBeTruthy();expect(screen.getByRole('button',{name:'Reload',exact:true})).toBeTruthy();
+ if(kind==='revision-changed')expect(status.mock.calls.length).toBe(count);
+ await fireEvent.click(screen.getByRole('button',{name:'Dismiss notice'}));expect(screen.queryByText('Update available. This video still plays.')).toBeNull();expect(document.querySelector('video')?.getAttribute('src')).toBe('blob:updated-video');
+});
+it('missing selected video size plays the default and explains the fallback',async()=>{
+ const path=assets.a13.src,file={path,bytes:3,group:'video'};localStorage.setItem('fia-streaming-video-size','small');
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[{...file,defaultSize:'large',variants:{large:file}}]});
+ const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(3).buffer,mime:'video/mp4'});vi.stubGlobal('URL',class extends URL{static createObjectURL(){return 'blob:default-video';}static revokeObjectURL(){}});
+ await startAt('S02-U005','waiting');await fireEvent.click(screen.getByRole('button',{name:'Play video',exact:true}));await settle();await settle();await settle();
+ expect(document.querySelector('video')?.getAttribute('src')).toBe('blob:default-video');expect(screen.getByText('Small isn’t ready for this video yet. Playing Large instead.')).toBeTruthy();expect(request.mock.calls[0][4]).toBe('large');
+});
