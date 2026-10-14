@@ -20,7 +20,7 @@ test('16MiB fixture verifies once, transfers ownership and creates one video Blo
 });
 
 test('changed MP4 plays through the bounded reader in Chromium and transfers its served identity',async({page})=>{
- const mp4=readFileSync(new URL('../apps/web/public/assets/sandals.mp4',import.meta.url));
+ const mp4=readFileSync(new URL('fixtures/video-playback.mp4',import.meta.url));
  await page.route('https://fixture.test/',route=>route.fulfill({body:'<!doctype html><title>Video playback fixture</title>',contentType:'text/html'}));await page.goto('https://fixture.test/');
  const result=await page.evaluate(async({source,data})=>{
   const read=new Function(source+';return readPlayableVideo;')(),bytes=Uint8Array.from(atob(data),c=>c.charCodeAt(0));
