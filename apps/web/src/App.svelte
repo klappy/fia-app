@@ -58,8 +58,9 @@
  // served and refreshes its snapshot; a revision-changed note is left to the next refresh. Either way,
  // updateMedia keeps a playing video (staleVideo).
  const sizeLabel={small:'Small',medium:'Medium',large:'Large'};
- let updateNotice=$state(false),updateDismissed=false,videoSizeNotice='';
- function videoChanged(change){const kinds=change.notes.map(n=>n.kind);console.info('[fia.media]',{event:'video-served',path:change.path,requested:change.requested,served:change.served,kinds});if(!kinds.includes('revision-changed'))void updateMedia(true);if(!updateDismissed&&(kinds.includes('content-drift')||kinds.includes('revision-changed')))updateNotice=true;const fallback=change.notes.find(n=>n.kind==='size-fallback');if(fallback)notice=videoSizeNotice=`${sizeLabel[fallback.requested]} isn’t ready for this video yet. Playing ${sizeLabel[fallback.served]||'the standard size'} instead.`;}
+ let updateNotice=$state(false),updateNoticeContext=$state(null),updateDismissed=false,videoSizeNotice='';
+ function videoNoticeContext(){return JSON.stringify([selectedPack.id,selectedPack.revision,activity?.id,inlineVideo?.id||focal?.id]);}
+ function videoChanged(change){const kinds=change.notes.map(n=>n.kind);console.info('[fia.media]',{event:'video-served',path:change.path,requested:change.requested,served:change.served,kinds});if(!kinds.includes('revision-changed'))void updateMedia(true);if(!updateDismissed&&(kinds.includes('content-drift')||kinds.includes('revision-changed'))){updateNoticeContext=videoNoticeContext();updateNotice=true;}const fallback=change.notes.find(n=>n.kind==='size-fallback');if(fallback)notice=videoSizeNotice=`${sizeLabel[fallback.requested]} isn’t ready for this video yet. Playing ${sizeLabel[fallback.served]||'the standard size'} instead.`;}
  let selectionGeneration=0,selectionIntent=0,selectionAbort=null;
  let preparationState=$state(null),preparedRecordings=$state(new globalThis.Map()),preparationDismissed=$state(null);let preparationEvent=0;
  const preparationOwner=createPreparationIntent({request:(identity,signal)=>libraryAdapter.prepareRecording(identity,signal),status:(id,identity,signal)=>libraryAdapter.preparationStatus(id,identity,signal),verify:(result,identity,signal)=>libraryAdapter.verifyPreparedRecording(result,identity,signal),publish:value=>{preparationState=value?{...value,event:++preparationEvent}:null;if(value?.status==='ready')preparedRecordings=new globalThis.Map(preparedRecordings).set(value.key,value.descriptor);}});
@@ -287,6 +288,7 @@
  let phoneLandscape=$state(false),landscapeDismissed=$state(false);
  let immersive=$derived(phoneLandscape&&!landscapeDismissed&&!sheet&&!inTransition&&!finished&&['image','map','video'].includes(focal?.kind));
  let inlineVideo=$state(null);
+ $effect.pre(()=>{const context=videoNoticeContext();untrack(()=>{if(updateNotice&&updateNoticeContext!==context){updateNotice=false;updateNoticeContext=null;}});});
  const videoOwner=createVideoPresentation({quiesce:()=>{revokePlayback();audio?.pause();videoPlaying=false;},notice:text=>notice=text});
  function videoIdentity(){return `${selectionGeneration}:${selectedPack.id}:${selectedPack.revision}:${swipeGeneration}:${activity.id}:${inlineVideo?.id||focal.id}`;}
  function ownsVideo(node){return videoOwner.owns(node,videoIdentity());}

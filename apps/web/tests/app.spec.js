@@ -1035,6 +1035,16 @@ it.each(['content-drift','revision-changed'])('video %s displays an update notic
  if(kind==='revision-changed')expect(status.mock.calls.length).toBe(count);
  await fireEvent.click(screen.getByRole('button',{name:'Dismiss notice'}));expect(screen.queryByText('Update available. This video still plays.')).toBeNull();expect(document.querySelector('video')?.getAttribute('src')).toBe('blob:updated-video');
 });
+it.each(['content-drift','revision-changed'])('video %s update notice ends when leaving its activity',async(kind)=>{
+ const path=assets.a13.src;vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});
+ vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[{path,bytes:3,group:'video'}]});
+ vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(3).buffer,mime:'video/mp4',notes:[{kind}]});
+ vi.stubGlobal('URL',class extends URL{static createObjectURL(){return 'blob:scoped-video';}static revokeObjectURL(){}});
+ await startAt('S02-U005','waiting');await fireEvent.click(screen.getByRole('button',{name:'Play video',exact:true}));await settle();await settle();await settle();
+ expect(screen.getByText('Update available. This video still plays.')).toBeTruthy();
+ await fireEvent.click(screen.getByRole('button',{name:'Skip to next activity'}));await settle();await settle();
+ expect(activities[state().index].id).not.toBe('S02-U005');expect(screen.queryByText('Update available. This video still plays.')).toBeNull();expect(screen.queryByRole('button',{name:'Reload',exact:true})).toBeNull();
+});
 it('missing selected video size plays the default and explains the fallback',async()=>{
  const path=assets.a13.src,file={path,bytes:3,group:'video'};localStorage.setItem('fia-streaming-video-size','small');
  vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[{...file,defaultSize:'large',variants:{large:file}}]});
