@@ -171,3 +171,28 @@ export function selectManifestSizes(manifest,selection,sizes={}){
  const tuple=['audio','image','video'].map(g=>selectedSizes[g]||'none').join('-');
  return {...manifest,catalogRevision:manifest.catalogRevision||manifest.revision,revision:Object.keys(selectedSizes).length?`${manifest.catalogRevision||manifest.revision}-${selection}-${tuple}`:manifest.revision,mediaSizes:selectedSizes,files};
 }
+
+// Playback only. Downloads and timing-sensitive media retain readVerifiedMedia.
+export async function readPlayableVideo(response,file,{signal}={}){
+ const cap=16777216;
+ if(!response?.ok||response.type==='opaque')throw Error('This video could not be received. Try again.');
+ if(response.redirected||new URL(response.url||file.deliveryURL).origin!=='https://transcode.klappy.dev')throw Error('This video came from an unapproved address.');
+ if((response.headers.get('Content-Type')||'').split(';')[0].trim()!=='video/mp4')throw Error('This video isn’t in a format the app can play.');
+ const length=response.headers.get('Content-Length'),declared=length===null?null:Number(length);
+ if(declared!==null&&(!/^\d+$/.test(length)||declared>cap))throw Error('This video is too large to play in the app.');
+ const reader=response.body?.getReader();if(!reader)throw Error('This video could not be received. Try again.');
+ const chunks=[];let count=0;
+ const cancel=()=>{void reader.cancel().catch(()=>{});};
+ signal?.addEventListener('abort',cancel,{once:true});
+ try{
+  while(true){if(signal?.aborted)throw Error('Playback canceled.');const {done,value}=await reader.read();if(signal?.aborted)throw Error('Playback canceled.');if(done)break;count+=value.byteLength;if(count>cap)throw Error('This video is too large to play in the app.');chunks.push(value);}
+ }catch(error){await reader.cancel().catch(()=>{});throw error;}
+ finally{signal?.removeEventListener('abort',cancel);reader.releaseLock();}
+ if(!count||declared!==null&&declared!==count)throw Error('This video didn’t finish loading. Try again.');
+ const bytes=new Uint8Array(count);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.byteLength;}chunks.length=0;
+ const sha256=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),v=>v.toString(16).padStart(2,'0')).join('');
+ if(signal?.aborted)throw Error('Playback canceled.');
+ const drift=sha256!==file.sha256||count!==file.bytes;
+ if(drift&&String.fromCharCode(...bytes.subarray(4,8))!=='ftyp')throw Error('This video isn’t in a format the app can play.');
+ return {bytes,served:{sha256,bytes:count},drift};
+}

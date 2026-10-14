@@ -148,7 +148,7 @@ async function status(packId=legacy){
  const active=await read(packKey(packId,'active')),pending=await read(packKey(packId,'pending'));
  let manifest,error='';try{manifest=await latest(packId,true);}catch(e){error=e.message;if(e.mediaStatusCode!=='media-status-transient'&&active?.serverSnapshot){await invalidateServerSnapshot(packId);active.serverSnapshot.invalid=true;}manifest=active?.manifest||pending?.manifest;}
  const saved=await complete(active);
- return {available:true,saved,active:active?{...active,valid:saved}:null,pending:pending?{...pending,running:jobs.has(packId)}:null,manifest,error,updateAvailable:!!(active&&manifest&&(active.manifest.catalogRevision||active.revision)!==manifest.revision),choices:manifest?['core',...(manifest.files.some(f=>f.group==='audio')?['audio']:[]),...(manifest.files.some(f=>f.group==='video'||f.group==='image')?['all']:[])].map(id=>({id,bytes:selectedFiles(manifest,id).reduce((n,f)=>n+f.bytes,0)})):[]};
+ return {available:true,mediaNotices:(await read('media-notices'))||[],saved,active:active?{...active,valid:saved}:null,pending:pending?{...pending,running:jobs.has(packId)}:null,manifest,error,updateAvailable:!!(active&&manifest&&(active.manifest.catalogRevision||active.revision)!==manifest.revision),choices:manifest?['core',...(manifest.files.some(f=>f.group==='audio')?['audio']:[]),...(manifest.files.some(f=>f.group==='video'||f.group==='image')?['all']:[])].map(id=>({id,bytes:selectedFiles(manifest,id).reduce((n,f)=>n+f.bytes,0)})):[]};
 }
 self.addEventListener('install',event=>{if(isBuild)event.waitUntil(caches.open(SHELL).then(c=>c.addAll(['/','/index.html','/manifest.webmanifest'])).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));
@@ -272,9 +272,11 @@ async function declaredMediaRevision(data,packId){
  if(record.revision!==data.revision||record.execution?.mediaIdentity?.packId!==data.mediaIdentity.packId||record.execution?.mediaIdentity?.revision!==data.mediaIdentity.revision||record.execution?.mediaAssetsSha256!==data.mediaAssetsSha256)throw Error('Media identity is not authorized by the server record.');
  return data.mediaIdentity.revision;
 }
+async function recordMediaNotices({packId,path,notes}){packId=validPack(packId)?packId:null;path=typeof path==='string'&&/^\/[A-Za-z0-9/._-]{1,240}$/.test(path)?path:null;const at=new Date().toISOString(),list=(await read('media-notices'))||[];for(const n of notes){list.push({at,build:VERSION,packId,path,...n});console.warn('[fia.media]',n.kind,path,n);}await write('media-notices',list.slice(-20));}
 self.addEventListener('message',event=>{
  const port=event.ports?.[0],type=event.data?.type,packId=event.data?.packId||legacy;
  event.waitUntil((async()=>{
+  let noticeLog=null;
   try{
    if(!validPack(packId))throw new Error('Invalid passage identity.');
    let result={};
@@ -285,15 +287,20 @@ self.addEventListener('message',event=>{
     if(type==='MEDIA_STATUS')result={deliveryRevision:manifest.deliveryRevision||null,files:manifest.files.filter(f=>f.deliveryURL),savedFiles:manifest.files.filter(f=>f.deliveryURL).map(f=>matchingSavedFile(f,active,manifest)).filter(Boolean)};
     else{
      let file=manifest.files.find(f=>f.path===event.data.path&&f.deliveryURL);
+     const video=file?.group==='video',notes=[];
      const saved=file&&matchingSavedFile(file,active,manifest);
-     if(saved)file=saved;else if(event.data.size){normalizeMediaSizes({[file?.group]:event.data.size});const variant=file?.variants?.[event.data.size];if(variant)file=variant;else if(file?.defaultSize!==event.data.size)throw Error('This media size is not prepared.');}
-     if(!file||manifest.deliveryRevision!==event.data.deliveryRevision)throw Error('This resource is not prepared for online playback.');
+     if(saved)file=saved;else if(event.data.size){normalizeMediaSizes({[file?.group]:event.data.size});const variant=file?.variants?.[event.data.size];if(variant)file=variant;else if(file?.defaultSize!==event.data.size){if(!video)throw Error('This media size is not prepared.');notes.push({kind:'size-fallback',requested:event.data.size,served:file.defaultSize||null});}}
+     if(!file)throw Error('This resource is not prepared for online playback.');
+     if(manifest.deliveryRevision!==event.data.deliveryRevision){if(!video)throw Error('This resource is not prepared for online playback.');notes.push({kind:'revision-changed',page:/^[a-f0-9]{64}$/.test(event.data.deliveryRevision)?event.data.deliveryRevision:null,worker:manifest.deliveryRevision||null});}
      const key=(event.source?.id||'')+':'+event.data.requestId;if(canceledPlayback.delete(key))throw Error('Playback canceled.');if(!event.data.requestId||playbackJobs.has(key))throw Error('Invalid playback request.');
      if(file.scripturePlaybackMode==='passage-only')validateScripturePassageFile(file,packId);validateVideoSize(file);const controller=new AbortController();playbackJobs.set(key,controller);
-     try{let response=active?.cache&&await(await caches.open(active.cache)).match(file.path),bytes=null;
-      if(response){try{bytes=await readVerifiedMedia(response,file,{signal:controller.signal});}catch(error){if(controller.signal.aborted)throw error;}}
-      if(!bytes){response=await fetch(file.deliveryURL,{cache:'no-store',signal:controller.signal});bytes=await readVerifiedMedia(response,file,{signal:controller.signal});}
-      if(controller.signal.aborted)throw Error('Playback canceled.');result={bytes:bytes.buffer,mime:file.mime,timing:file.timing,...(file.playbackRange?{playbackRange:file.playbackRange}:{}),...(file.scriptureAlignment?{scriptureAlignment:file.scriptureAlignment,scriptureAlignmentSha256:file.scriptureAlignmentSha256}:{}),...(file.scripturePlaybackMode==='passage-only'?{scriptureAlignment:null,scripturePlaybackMode:'passage-only',scriptureHighlighting:'disabled'}:{}),file:file.scripturePlaybackMode==='passage-only'?file:{path:file.path,sha256:file.sha256,bytes:file.bytes,deliveryURL:file.deliveryURL}};
+     try{let response=active?.cache&&await(await caches.open(active.cache)).match(file.path),bytes=null,served={sha256:file.sha256,bytes:file.bytes};
+      if(response){try{bytes=await readVerifiedMedia(response,file,{signal:controller.signal});}catch(error){if(controller.signal.aborted)throw error;if(video&&saved)notes.push({kind:'saved-copy-unreadable'});}}
+      if(!bytes){response=await fetch(file.deliveryURL,{cache:'no-store',signal:controller.signal,...(video?{redirect:'error'}:{})});
+       if(video){const read=await readPlayableVideo(response,file,{signal:controller.signal});bytes=read.bytes;served=read.served;if(read.drift)notes.push({kind:'content-drift',expected:{sha256:file.sha256,bytes:file.bytes},served});}
+       else bytes=await readVerifiedMedia(response,file,{signal:controller.signal});}
+      if(controller.signal.aborted)throw Error('Playback canceled.');result={bytes:bytes.buffer,mime:file.mime,timing:file.timing,...(file.playbackRange?{playbackRange:file.playbackRange}:{}),...(file.scriptureAlignment?{scriptureAlignment:file.scriptureAlignment,scriptureAlignmentSha256:file.scriptureAlignmentSha256}:{}),...(file.scripturePlaybackMode==='passage-only'?{scriptureAlignment:null,scripturePlaybackMode:'passage-only',scriptureHighlighting:'disabled'}:{}),file:file.scripturePlaybackMode==='passage-only'?file:{path:file.path,sha256:served.sha256,bytes:served.bytes,deliveryURL:file.deliveryURL},...(notes.length?{notes}:{})};
+      if(notes.length)noticeLog={packId,path:file.path,notes};
      }finally{playbackJobs.delete(key);canceledPlayback.delete(key);}
     }
    }else if(type==='PACK_SELECT'){
@@ -314,6 +321,7 @@ self.addEventListener('message',event=>{
     await meta.delete('/'+packKey(packId,'active'));await meta.delete('/'+packKey(packId,'pending'));result={saved:false};
    }else return;
    port?.postMessage({ok:true,...result},result.bytes instanceof ArrayBuffer?[result.bytes]:[]);
-  }catch(error){port?.postMessage(type==='MEDIA_STATUS'?{ok:false,error:'Media availability could not be verified.',code:error?.mediaStatusCode==='media-status-transient'?'media-status-transient':'media-status-invalid'}:{ok:false,error:error.message});}
+   if(noticeLog)await recordMediaNotices(noticeLog).catch(()=>{});
+  }catch(error){port?.postMessage(type==='MEDIA_STATUS'?{ok:false,error:'Media availability could not be verified.',code:error?.mediaStatusCode==='media-status-transient'?'media-status-transient':'media-status-invalid'}:{ok:false,error:error.message});if(type==='MEDIA_PLAY'&&error.message!=='Playback canceled.')await recordMediaNotices({packId,path:event.data.path,notes:[{kind:'play-failed',message:'Playback failed.'}]}).catch(()=>{});}
  })());
 });

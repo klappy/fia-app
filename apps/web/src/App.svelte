@@ -57,7 +57,10 @@
  // The SW re-chooses the video on every play (saved download, removal, other tab). The page plays what it
  // served and refreshes its snapshot; a revision-changed note is left to the next refresh. Either way,
  // updateMedia keeps a playing video (staleVideo).
- function videoChanged(change){const kinds=change.notes.map(n=>n.kind);console.info('[fia.media]',{event:'video-served',path:change.path,requested:change.requested,served:change.served,kinds});if(!kinds.includes('revision-changed'))void updateMedia(true);}
+ const sizeLabel={small:'Small',medium:'Medium',large:'Large'};
+ let updateNotice=$state(false),updateNoticeContext=$state(null),updateDismissed=false,videoSizeNotice='';
+ function videoNoticeContext(){return JSON.stringify([selectedPack.id,selectedPack.revision,activity?.id,inlineVideo?.id||focal?.id]);}
+ function videoChanged(change){const kinds=change.notes.map(n=>n.kind);console.info('[fia.media]',{event:'video-served',path:change.path,requested:change.requested,served:change.served,kinds});if(!kinds.includes('revision-changed'))void updateMedia(true);if(!updateDismissed&&(kinds.includes('content-drift')||kinds.includes('revision-changed'))){updateNoticeContext=videoNoticeContext();updateNotice=true;}const fallback=change.notes.find(n=>n.kind==='size-fallback');if(fallback)notice=videoSizeNotice=`${sizeLabel[fallback.requested]} isn’t ready for this video yet. Playing ${sizeLabel[fallback.served]||'the standard size'} instead.`;}
  let selectionGeneration=0,selectionIntent=0,selectionAbort=null;
  let preparationState=$state(null),preparedRecordings=$state(new globalThis.Map()),preparationDismissed=$state(null);let preparationEvent=0;
  const preparationOwner=createPreparationIntent({request:(identity,signal)=>libraryAdapter.prepareRecording(identity,signal),status:(id,identity,signal)=>libraryAdapter.preparationStatus(id,identity,signal),verify:(result,identity,signal)=>libraryAdapter.verifyPreparedRecording(result,identity,signal),publish:value=>{preparationState=value?{...value,event:++preparationEvent}:null;if(value?.status==='ready')preparedRecordings=new globalThis.Map(preparedRecordings).set(value.key,value.descriptor);}});
@@ -275,9 +278,9 @@
  // R3: a notice belongs to the passage, screen and sheet that raised it. Its scope is recorded when
  // it is raised, and it ends with that scope before the next screen renders (lib/notice-scope.js).
  // Recording runs first, so a notice raised in the same update as a passage or screen change belongs to the new one.
- let noticeText=$derived(notice||(!online?(saved?'Offline · session saved':'You’re offline'):preparationNotice||'')),raisedNotice=$state.raw(null);
+ let noticeText=$derived(notice||(!online?(saved?'Offline · session saved':'You’re offline'):preparationNotice||(updateNotice?'Update available. This video still plays.':''))),raisedNotice=$state.raw(null);
  let noticeInSheet=$derived(!!sheet&&!!raisedNotice?.sheet);
- $effect.pre(()=>{notice;const text=noticeText;untrack(()=>{raisedNotice=text?noticeScope(text,{pack:selectedPack,activityId:activity?.id,sheet,playing:isPlaying}):null;});});
+ $effect.pre(()=>{notice;const text=noticeText;untrack(()=>{raisedNotice=text?noticeScope(text,{pack:selectedPack,activityId:activity?.id,sheet,playing:isPlaying||!!videoSizeNotice&&text===videoSizeNotice}):null;});});
  $effect.pre(()=>{const now={pack:selectedPack,activityId:activity?.id,sheet,playing:isPlaying};untrack(()=>{if(!raisedNotice||!noticeEnded(raisedNotice,now))return;if(notice&&raisedNotice.text===notice)notice='';else raisedNotice=noticeScope(raisedNotice.text,now);});});
  
  const iconFor={guide:Speech,scripture:BookOpen,discussion:Users,video:Film};
@@ -285,6 +288,7 @@
  let phoneLandscape=$state(false),landscapeDismissed=$state(false);
  let immersive=$derived(phoneLandscape&&!landscapeDismissed&&!sheet&&!inTransition&&!finished&&['image','map','video'].includes(focal?.kind));
  let inlineVideo=$state(null);
+ $effect.pre(()=>{const context=videoNoticeContext();untrack(()=>{if(updateNotice&&updateNoticeContext!==context){updateNotice=false;updateNoticeContext=null;}});});
  const videoOwner=createVideoPresentation({quiesce:()=>{revokePlayback();audio?.pause();videoPlaying=false;},notice:text=>notice=text});
  function videoIdentity(){return `${selectionGeneration}:${selectedPack.id}:${selectedPack.revision}:${swipeGeneration}:${activity.id}:${inlineVideo?.id||focal.id}`;}
  function ownsVideo(node){return videoOwner.owns(node,videoIdentity());}
@@ -479,7 +483,7 @@
    const identity=videoIdentity();nativeDemoVideo={path:raw.src,url:demoUrl};if(inlineVideo)inlineVideo={...inlineVideo,src:demoUrl};await tick();if(identity!==videoIdentity())return;
   }else if(target?.videoPrepared&&!target.src?.startsWith('blob:')){
    const pack=selectedPack,identity=videoIdentity(),path=raw?.src;
-   try{const catalog=onlineMedia.get(path),file=savedMedia.get(path)||catalog?.variants?.[streamingSize]||(streamingSize==='large'&&!catalog?.variants?catalog:null);if(!file)throw Error(`${({small:'Small',medium:'Medium',large:'Large'}[streamingSize])} is not available for this video yet.`);const url=await videoDelivery.load({pack,path,revision:deliveryRevision,identity,file,size:catalog?.variants?streamingSize:undefined});if(!url||pack!==selectedPack||identity!==videoIdentity())return;if(inlineVideo)inlineVideo={...inlineVideo,src:url};await tick();if(pack!==selectedPack||identity!==videoIdentity())return;}catch(error){if(pack===selectedPack&&identity===videoIdentity())notice=error.message;return;}
+   try{const catalog=onlineMedia.get(path),variant=catalog?.variants?.[streamingSize],savedFile=savedMedia.get(path),file=savedFile||variant||catalog;if(!file)throw Error('This video isn’t ready to play yet.');const size=catalog?.variants?(variant?streamingSize:catalog.defaultSize):undefined;if(!savedFile&&!variant&&streamingSize!==(catalog?.defaultSize||'large'))notice=videoSizeNotice=`${sizeLabel[streamingSize]} isn’t ready for this video yet. Playing ${sizeLabel[catalog?.defaultSize]||'the standard size'} instead.`;const url=await videoDelivery.load({pack,path,revision:deliveryRevision,identity,file,size});if(!url||pack!==selectedPack||identity!==videoIdentity())return;if(inlineVideo)inlineVideo={...inlineVideo,src:url};await tick();if(pack!==selectedPack||identity!==videoIdentity())return;}catch(error){if(pack===selectedPack&&identity===videoIdentity())notice=error.message;return;}
   }
   if(!(inlineVideo||focal)?.src){notice='Download this resource before playback.';return;}
   audio?.stop();audioContext=null;
@@ -545,7 +549,7 @@
 
 <svelte:head><title>FIA Guide</title></svelte:head>
 
-{#snippet noticeBar()}<div class="scene-notice" class:sheet-notice={noticeInSheet} role="status" data-kind={raisedNotice?.kind}><span>{noticeText}</span><button aria-label="Dismiss notice" onclick={()=>{notice='';preparationDismissed=currentPreparation?.event??null;dismissedExecutionNotice=executionNoticeKey;}}><X size={15}/></button></div>{/snippet}
+{#snippet noticeBar()}<div class="scene-notice" class:sheet-notice={noticeInSheet} role="status" data-kind={raisedNotice?.kind}><span>{noticeText}</span>{#if !notice&&online&&!preparationNotice&&updateNotice}<button class="quiet" onclick={()=>{persist();location.reload();}}>Reload</button>{/if}<button aria-label="Dismiss notice" onclick={()=>{if(!notice&&online&&!preparationNotice&&updateNotice){updateNotice=false;updateDismissed=true;}notice='';preparationDismissed=currentPreparation?.event??null;dismissedExecutionNotice=executionNoticeKey;}}><X size={15}/></button></div>{/snippet}
 
 <main class="scene" class:immersive style={`--reading-scale:${scale}`} use:swipeNavigation={()=>({identity:`${swipeGeneration}:${selectionGeneration}:${selectedPack.id}:${activity.id}:${inTransition}:${JSON.stringify(session.detour)}`,blocked:!!sheet||immersive||selectionPending,next:!finished&&!session.detour,back:!!session.detour||session.index!==0||finished,navigate:direction=>navigate({type:direction==='next'?'CONTINUE':'BACK'},direction==='next')})}>
  <div class="scene-glass scene-glass-top" aria-hidden="true"></div>

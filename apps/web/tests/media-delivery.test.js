@@ -18,3 +18,14 @@ test('delivery identity rejects different pack, unsafe URL, duplicate paths and 
  for(const change of [s=>s.entries.push(s.entries[0]),s=>s.entries[0].delivery.url='https://evil.example/audio/a',s=>s.entries[0].timing.status='unverified',s=>s.entries[0].delivery.q='low',s=>s.entries[0].path='//host/file']){const s=fixture();change(s);assert.throws(()=>validateDelivery(s,identity));}
  assert.throws(()=>validateDeliveryIndex({schema:1,packs:[{...identity,delivery:{url:'/mutable.json',sha256:'a'.repeat(64),bytes:3}}]}));
 });
+
+test('playable video permits bounded identity drift but retains transfer safety',async()=>{
+ const {readPlayableVideo}=await import('../src/lib/media-delivery.js'),p={group:'video',bytes:6,sha256:hash('012345'),mime:'video/mp4',deliveryURL:'https://transcode.klappy.dev/video/source'},mp4='0000ftypisom-new';
+ const response=(body,type='video/mp4',headers={})=>new Response(body,{headers:{'Content-Type':type,...headers}});
+ assert.equal((await readPlayableVideo(response('012345'),p)).drift,false);
+ const r=await readPlayableVideo(response(mp4,'video/mp4; codecs=avc1'),p);assert.equal(r.drift,true);assert.deepEqual(r.served,{bytes:mp4.length,sha256:hash(mp4)});
+ for(const bad of [response('bad'),response(mp4,'text/html'),response(''),response(mp4,'video/mp4',{'Content-Length':'100'}),response(mp4,'video/mp4',{'Content-Length':'-1'})])await assert.rejects(readPlayableVideo(bad,p));
+ for(const props of [{url:'https://evil.example/video'},{redirected:true},{type:'opaque'}]){const bad=response(mp4);for(const [key,value] of Object.entries(props))Object.defineProperty(bad,key,{value});await assert.rejects(readPlayableVideo(bad,p));}
+ let canceled=false;const oversized=new ReadableStream({start(c){c.enqueue(new Uint8Array(16777217));},cancel(){canceled=true;}});await assert.rejects(readPlayableVideo(response(oversized),p),/too large/);assert.equal(canceled,true);
+ const controller=new AbortController();let cancelAbort=false;const pending=new ReadableStream({cancel(){cancelAbort=true;}});const reading=readPlayableVideo(response(pending),p,{signal:controller.signal});controller.abort();await assert.rejects(reading,/Playback canceled/);assert.equal(cancelAbort,true);
+});
