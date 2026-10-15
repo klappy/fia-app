@@ -16,19 +16,22 @@
     "test:worker": "node --test tests/worker-serving/*.test.mjs"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "agents": "0.22.0",
+    "lucide-svelte": "0.468.0",
     "svelte": "5.57.1",
-    "lucide-svelte": "0.468.0"
+    "zod": "4.4.3"
   },
   "devDependencies": {
-    "@sveltejs/vite-plugin-svelte": "5.1.1",
-    "vite": "6.4.3",
     "@playwright/test": "1.56.1",
-    "wrangler": "^4.40.0",
-    "marked": "15.0.12",
+    "@sveltejs/vite-plugin-svelte": "5.1.1",
     "@testing-library/dom": "10.4.2",
     "@testing-library/svelte": "5.4.2",
     "jsdom": "26.1.0",
-    "vitest": "4.1.11"
+    "marked": "15.0.12",
+    "vite": "6.4.3",
+    "vitest": "4.1.11",
+    "wrangler": "^4.40.0"
   },
   "version": "3.0.0-alpha.17",
   "description": "FIA Mark text in English and Spanish with verified on-demand audio and optional offline downloads.",

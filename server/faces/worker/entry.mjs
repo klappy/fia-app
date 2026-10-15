@@ -2,7 +2,13 @@ import {servePreparation} from '../../fia/preparation/worker.mjs';
 import {FiaPreparationJobs as PreparationJobs} from '../../fia/preparation/worker.mjs';
 import {createExecutableWorkerOperations,serveApprovedAudioWorker} from '../../fia/preparation/executable-presentation-runtime.mjs';
 import {serveRead} from '../http.mjs';
-import {serveMcp} from '../mcp.mjs';
+import {serveMcp as serveSdkMcp} from '../mcp.mjs';
+import {createLegacyMcpHandler} from 'agents/mcp';
+const serveMcp=(req,res,operations)=>serveSdkMcp(req,res,operations,{handle:async(server,request)=>{
+ const handler=createLegacyMcpHandler(server,{enableJsonResponse:true,corsOptions:{origin:new URL(request.url).origin}});
+ request.signal.addEventListener('abort',()=>{void server.close();},{once:true});
+ try{return await handler(request,{},{});}finally{if(request.method!=='GET')await server.close();}
+}});
 import {createReadOperations} from '../../fia/publication/read-operations.mjs';
 import snapshot from './generated/snapshot.json';
 import {snapshotStorage} from './snapshot.mjs';
