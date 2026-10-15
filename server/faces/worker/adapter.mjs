@@ -4,11 +4,14 @@ export function createWorker({origin,operations,serveRead,serveMcp}) {
  if(allowed.protocol!=='https:'||allowed.port||allowed.origin!==origin)throw Error('invalid-worker-origin');
  return {async fetch(request,env){
   const url=new URL(request.url);
-  const reserved=url.pathname==='/v1'||url.pathname.startsWith('/v1/')||url.pathname==='/mcp'||url.pathname.startsWith('/mcp/');
+  // This no-auth server has no OAuth metadata; never serve the SPA as discovery JSON.
+  const discovery=/^\/\.well-known\/(?:oauth-authorization-server|oauth-protected-resource|openid-configuration)(?:\/|$)/.test(url.pathname);
+  const reserved=discovery||url.pathname==='/v1'||url.pathname.startsWith('/v1/')||url.pathname==='/mcp'||url.pathname.startsWith('/mcp/');
   if(!reserved)return env.ASSETS.fetch(request);
   const json=(status,body,headers={})=>new Response(JSON.stringify(body),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...headers}});
   const receivedOrigin=request.headers.get('Origin');
   if(url.origin!==origin||receivedOrigin!==null&&receivedOrigin!==origin)return json(403,{status:'refused',code:'untrusted-origin'});
+  if(discovery)return json(404,{status:'unavailable',code:'oauth-not-configured'});
   if(url.pathname.startsWith('/mcp/'))return json(404,{status:'refused',code:'unsupported-operation'});
   let status=200,headers={},body=null,ended=false;
   const response={get headersSent(){return ended;},writeHead(code,values={}){status=code;headers=values;return this;},end(value){body=value??null;ended=true;}};
