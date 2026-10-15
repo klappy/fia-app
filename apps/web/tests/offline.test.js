@@ -10,7 +10,7 @@ function worker(){
  const handlers={},stores=new Map();let current=manifest(),calls=[],options=[],fail=null,failure=new TypeError('Network interrupted');const transfers=[];const replies=new Map();
  const open=async name=>{if(!stores.has(name))stores.set(name,new Map());const store=stores.get(name);return {match:async key=>store.get(String(key))?.clone(),put:async(key,value)=>store.set(String(key),value.clone()),delete:async key=>store.delete(key),addAll:async()=>{}};};
  const context={self:{location:{origin:'https://fia.test'},addEventListener:(name,fn)=>handlers[name]=fn,clients:{claim:async()=>{}},skipWaiting:async()=>{}},caches:{open,keys:async()=>[...stores.keys()],delete:async name=>stores.delete(name)},fetch:async (url,init)=>{const key=typeof url==='string'?url:url.url,path=new URL(key,'https://fia.test').pathname;calls.push(key);options.push(init);if(fail===url||fail===key||fail===path)throw failure;if(replies.has(path)){const reply=replies.get(path);return typeof reply==='function'?reply(init):reply.clone();}return url==='/offline-manifest.json'?Response.json(current):new Response(bytes[String(url)]||'live');},Response,Request,Headers,URL,Promise,console,crypto:webcrypto,AbortController,setTimeout,clearTimeout};
- vm.runInNewContext(readFileSync('src/lib/media-delivery.js','utf8').replace(/export (?=(?:async )?function)/g,'')+'\n'+readFileSync('src/lib/proxy-request.js','utf8').replace(/export (?=(?:async )?function)/g,'')+'\n'+readFileSync('public/sw.js','utf8').replace('__BUILD_ID__','test123'),context);
+ vm.runInNewContext(readFileSync('src/lib/recording-policy.js','utf8').replace(/export function/g,'function')+'\nconst generatedRecordingPaths=new Set('+JSON.stringify(JSON.parse(readFileSync('public/content/source/audio-manifest.json','utf8')).entries.filter(e=>e.recordingSource==='generated').map(e=>e.path))+');\n'+readFileSync('src/lib/media-delivery.js','utf8').replace(/export (?=(?:async )?function)/g,'')+'\n'+readFileSync('src/lib/proxy-request.js','utf8').replace(/export (?=(?:async )?function)/g,'')+'\n'+readFileSync('public/sw.js','utf8').replace('__BUILD_ID__','test123'),context);
  return {stores,calls,options,transfers,reply:(path,response)=>replies.set(path,response),respond:(path,fn)=>replies.set(path,fn),manifest:value=>current=value,fail:(value,error=new TypeError('Network interrupted'))=>{fail=value;failure=error;},async fetch(request,client={}){let promise;handlers.fetch({request,...client,respondWith:p=>promise=p});return promise;},async message(data,onprogress,clientId){let task,result;handlers.message({data,source:clientId?{id:clientId}:null,ports:[{postMessage:(r,list=[])=>{transfers.push(list);if(r.progress)onprogress?.(r.progress);else result=r;}}],waitUntil:p=>task=p});await task;return result;}};
 }
 test('selected downloads verify hashes, report exact progress and do not fetch unselected video',async()=>{const w=worker();const progress=[];assert.equal((await w.message({type:'DOWNLOAD_START',selection:'audio'},p=>progress.push(p))).ok,true);assert.equal(w.calls.includes('/video.mp4'),false);assert.equal(progress.at(-1).received,12);const status=await w.message({type:'DOWNLOAD_STATUS'});assert.equal(status.saved,true);assert.equal(status.active.selection,'audio');assert.equal(status.choices.find(c=>c.id==='all').bytes,18);});
@@ -278,4 +278,19 @@ test('audio keeps strict identity, revision and size checks while video notes ar
  const a={...args,path:f.path};assert.equal((await w.message(a)).ok,false);assert.match((await w.message({...a,deliveryRevision:'e'.repeat(64)})).error,/not prepared for online/);assert.match((await w.message({...a,size:'small'})).error,/size is not prepared/);
  for(let i=0;i<22;i++)assert.equal((await w.message({...args,requestId:'log'+i,deliveryRevision:'e'.repeat(64)})).ok,true);
  const status=await w.message({type:'DOWNLOAD_STATUS',packId:args.packId});assert.equal(status.mediaNotices.length,20);
+});
+
+test('historical saved generated narration is hidden and cannot play after policy upgrade',async()=>{
+ const w=worker();await w.message({type:'DOWNLOAD_START',selection:'all'});
+ const status=await w.message({type:'DOWNLOAD_STATUS'}),active=status.active;
+ const path='/audio/source/term-a112.mp3',body='old generated recording';
+ const file={path,group:'audio',bytes:Buffer.byteLength(body),sha256:createHash('sha256').update(body).digest('hex')};
+ active.files.push(file);active.manifest.files.push(file);
+ w.stores.get(active.cache).set(path,new Response(body));
+ w.stores.get('fia-v3-download-metadata@1').set('/active',Response.json(active));
+ const after=await w.message({type:'DOWNLOAD_STATUS'});
+ assert.equal(after.active.files.some(f=>f.path===path),false);
+ const response=await w.fetch(new Request('https://fia.test'+path));
+ assert.equal(response.status,404);
+ assert.equal(w.stores.get(active.cache).has(path),true,'policy does not delete historical evidence');
 });

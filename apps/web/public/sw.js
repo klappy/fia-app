@@ -27,12 +27,12 @@ function validate(manifest){
   for(const key of ['sha256','bytes','mime','deliveryURL'])if(f.variants[f.defaultSize][key]!==f[key])throw Error('Default variant changed.');
   for(const v of Object.values(f.variants)){if(v.variants||v.path!==f.path||v.group!==f.group||v.sourceSha256!==f.sourceSha256||v.logicalSourceSha256!==f.logicalSourceSha256)throw Error('Variant source identity changed.');validate({...manifest,files:[v]});}
  }paths.add(f.path);}
- return manifest;
+ return {...manifest,files:permittedRecordings(manifest.files,generatedRecordingPaths)};
 }
 const selectedFiles=(manifest,selection)=>manifest.files.filter(f=>f.group==='core'||selection==='all'||selection==='audio'&&f.group==='audio');
 function matchingSavedFile(file,active,manifest){
  if(active?.manifest?.deliveryRevision!==manifest.deliveryRevision)return null;
- const saved=active.files.find(f=>f.path===file.path&&f.deliveryURL);if(!saved)return null;
+ const saved=active.files.find(f=>f.path===file.path&&f.deliveryURL&&recordingAllowed(f,generatedRecordingPaths));if(!saved)return null;
  if(matchesObservedProxy(file,saved))return saved;
  const approved=[file,...Object.values(file.variants||{})];
  return approved.some(f=>['path','sha256','bytes','mime','deliveryURL','sourceSha256','sourceBytes','logicalSourceSha256','logicalSourceBytes'].every(k=>f[k]===saved[k])&&JSON.stringify(f.timing)===JSON.stringify(saved.timing)&&JSON.stringify(f.playbackRange)===JSON.stringify(saved.playbackRange)&&f.recordingLedgerSha256===saved.recordingLedgerSha256&&f.recordingLedgerEntryId===saved.recordingLedgerEntryId&&[...scripturePassagePins,'scriptureAlignmentSha256'].every(k=>f[k]===saved[k])&&JSON.stringify(f.scriptureAlignment)===JSON.stringify(saved.scriptureAlignment)&&f.duration===saved.duration)?saved:null;
@@ -148,6 +148,8 @@ async function status(packId=legacy){
  const active=await read(packKey(packId,'active')),pending=await read(packKey(packId,'pending'));
  let manifest,error='';try{manifest=await latest(packId,true);}catch(e){error=e.message;if(e.mediaStatusCode!=='media-status-transient'&&active?.serverSnapshot){await invalidateServerSnapshot(packId);active.serverSnapshot.invalid=true;}manifest=active?.manifest||pending?.manifest;}
  const saved=await complete(active);
+ if(active)active.files=permittedRecordings(active.files,generatedRecordingPaths);
+ if(manifest)manifest={...manifest,files:permittedRecordings(manifest.files,generatedRecordingPaths)};
  return {available:true,mediaNotices:(await read('media-notices'))||[],saved,active:active?{...active,valid:saved}:null,pending:pending?{...pending,running:jobs.has(packId)}:null,manifest,error,updateAvailable:!!(active&&manifest&&(active.manifest.catalogRevision||active.revision)!==manifest.revision),choices:manifest?['core',...(manifest.files.some(f=>f.group==='audio')?['audio']:[]),...(manifest.files.some(f=>f.group==='video'||f.group==='image')?['all']:[])].map(id=>({id,bytes:selectedFiles(manifest,id).reduce((n,f)=>n+f.bytes,0)})):[]};
 }
 self.addEventListener('install',event=>{if(isBuild)event.waitUntil(caches.open(SHELL).then(c=>c.addAll(['/','/index.html','/manifest.webmanifest'])).then(()=>self.skipWaiting()));});
@@ -163,6 +165,8 @@ async function cachedResponse(request,clientId){
   if(active.serverSnapshot.invalid||await read(revokedSnapshotKey(active.packId,active.serverSnapshot.record.revision))||!current||current.serverSnapshot?.invalid)return new Response('This saved presentation is no longer valid.',{status:409});
  }
  if(url.pathname==='/content/registry.json'){try{const live=await fetch(request);if(live.ok)return live;}catch{} }
+ const declared=active?.files?.find(f=>f.path===url.pathname);
+ if(generatedRecordingPaths.has(url.pathname)&&(!declared||!recordingAllowed(declared,generatedRecordingPaths)))return new Response('This recording is unavailable.',{status:404});
  const cached=active?.cache&&await (await caches.open(active.cache)).match(url.pathname);
  if(cached){
   const range=request.headers.get('range');
