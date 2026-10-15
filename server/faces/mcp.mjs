@@ -21,7 +21,7 @@ export async function serveMcp(req,res,operations) {
   if(!object(params)){error(400,rpc.id,-32602,'Invalid params');return;}
   const reply=result=>json(res,200,{jsonrpc:'2.0',id:rpc.id,result});
   if(rpc.method==='initialize'){
-    if(!('id'in rpc)||params.protocolVersion!==VERSION||!object(params.capabilities)||!object(params.clientInfo)||typeof params.clientInfo.name!=='string'||typeof params.clientInfo.version!=='string'){error(400,rpc.id,-32602,'Unsupported version or invalid initialization');return;}
+    if(!('id'in rpc)||typeof params.protocolVersion!=='string'||!params.protocolVersion.trim()||!object(params.capabilities)||!object(params.clientInfo)||typeof params.clientInfo.name!=='string'||typeof params.clientInfo.version!=='string'){error(400,rpc.id,-32602,'Invalid initialization');return;}
     reply({protocolVersion:VERSION,capabilities:{tools:{listChanged:false}},serverInfo:{name:'fia-local-text-serving',version:'0.1.0'}});return;
   }
   if(req.headers['mcp-protocol-version']!==VERSION){error(400,rpc.id,-32600,'MCP-Protocol-Version must be 2025-06-18');return;}
