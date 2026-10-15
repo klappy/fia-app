@@ -28,3 +28,11 @@ test('R1/A1: an unavailable or refused server answer still retires the saved sna
   w.offline(true);assert.equal((await w.fetch(`/v1/packs/${packId}`)).status,503);
  }
 });
+
+test('preparing response preserves previously saved offline snapshot',async()=>{
+ const f=fixture(),w=worker(f);
+ assert.equal((await w.message({type:'DOWNLOAD_START',selection:'audio',revision:f.record.revision,mediaIdentity:f.record.execution.mediaIdentity,mediaAssetsSha256:f.record.execution.mediaAssetsSha256})).ok,true);
+ const body={status:'preparing',packId};w.reply(`/v1/packs/${packId}`,Response.json(body,{status:202}));
+ const live=await w.fetch(`/v1/packs/${packId}`);assert.equal(live.status,202);assert.deepEqual(await live.json(),body);
+ w.offline(true);const offline=await w.fetch(`/v1/packs/${packId}`);assert.equal(offline.status,200);assert.equal(offline.headers.get('X-FIA-Offline-Snapshot'),'historical-verified');assert.deepEqual(await offline.json(),f.record);
+});
