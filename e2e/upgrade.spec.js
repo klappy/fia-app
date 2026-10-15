@@ -1,3 +1,4 @@
+import {replacementWorkerReady} from '../scripts/upgrade-readiness.mjs';
 import {test,expect} from '@playwright/test';
 import {createServer} from 'node:http';
 import {readFileSync,existsSync,statSync} from 'node:fs';
@@ -15,7 +16,7 @@ test('actual previous worker yields to fresh app without deleting user data',asy
  await new Promise(r=>server.listen(0,'127.0.0.1',r));const url=`http://127.0.0.1:${server.address().port}`;const context=await browser.newContext();
  try{const page=await context.newPage();await page.goto(url);await page.evaluate(async()=>{localStorage.setItem('legacy-progress-test','preserve');await navigator.serviceWorker.register('/sw.js');await navigator.serviceWorker.ready;});await page.reload();await expect.poll(()=>page.evaluate(()=>!!navigator.serviceWorker.controller)).toBeTruthy();
  const cachesBefore=await page.evaluate(()=>caches.keys());expect(cachesBefore.some(x=>x.startsWith('fia-shell-'))).toBeTruthy();
- upgraded=true;await page.reload();await page.evaluate(async()=>{const r=await navigator.serviceWorker.getRegistration();await r.update();});await expect.poll(()=>page.evaluate(async()=>{const r=await navigator.serviceWorker.getRegistration();return !!r?.active;})).toBeTruthy();await page.reload();await expect(page.getByRole('navigation',{name:'Session controls'})).toBeVisible();await expect.poll(()=>page.evaluate(()=>new Promise(resolve=>{const c=new MessageChannel();c.port1.onmessage=e=>resolve(e.data);navigator.serviceWorker.controller.postMessage({type:'DOWNLOAD_STATUS'},[c.port2]);setTimeout(()=>resolve(null),3000);}))).toMatchObject({available:true});
+ upgraded=true;await page.reload();await page.evaluate(async()=>{const r=await navigator.serviceWorker.getRegistration();await r.update();});await expect.poll(()=>page.evaluate(replacementWorkerReady)).toBeTruthy();await page.reload();await expect(page.getByRole('navigation',{name:'Session controls'})).toBeVisible();await expect.poll(()=>page.evaluate(()=>new Promise(resolve=>{const c=new MessageChannel();c.port1.onmessage=e=>resolve(e.data);navigator.serviceWorker.controller.postMessage({type:'DOWNLOAD_STATUS'},[c.port2]);setTimeout(()=>resolve(null),3000);}))).toMatchObject({available:true});
  expect(await page.evaluate(()=>localStorage.getItem('legacy-progress-test'))).toBe('preserve');expect(await page.evaluate(()=>caches.keys())).toEqual(expect.arrayContaining(cachesBefore));await page.reload();await expect(page.getByRole('navigation',{name:'Session controls'})).toBeVisible();
  }finally{await context.close();await new Promise(r=>server.close(r));}
 });

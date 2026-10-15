@@ -1,0 +1,551 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "packId",
+    "presentationRevision",
+    "language",
+    "canonicalOrderSha256",
+    "sourceDecisionSha256",
+    "events",
+    "basePresentationSha256",
+    "execution"
+  ],
+  "properties": {
+    "schema": {
+      "const": "fia-source-action-projection@2"
+    },
+    "packId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "presentationRevision": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "language": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "canonicalOrderSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "sourceDecisionSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "events": {
+      "type": "array",
+      "maxItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "eventId",
+          "anchor",
+          "phase",
+          "roles",
+          "unresolved",
+          "completion",
+          "automaticReplay",
+          "sourceActivityId",
+          "projectionRecipeSha256",
+          "orderedSteps"
+        ],
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "anchor": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "sectionId",
+              "sectionOrdinal",
+              "sourceUnitId",
+              "unitOrdinal",
+              "sourceTextSha256"
+            ],
+            "properties": {
+              "sectionId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "sectionOrdinal": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "sourceUnitId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "unitOrdinal": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "sourceTextSha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            }
+          },
+          "phase": {
+            "const": "at-source-cue"
+          },
+          "roles": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "readingRequested",
+                  "discussionRequested",
+                  "resourceLookupRequested",
+                  "pauseOnly"
+                ],
+                "properties": {
+                  "readingRequested": {
+                    "type": "boolean"
+                  },
+                  "discussionRequested": {
+                    "type": "boolean"
+                  },
+                  "resourceLookupRequested": {
+                    "type": "boolean"
+                  },
+                  "pauseOnly": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "unresolved": {
+            "type": "array",
+            "maxItems": 8,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "slotId",
+                "resourceKind",
+                "outcome",
+                "reason",
+                "candidateResourceIds"
+              ],
+              "properties": {
+                "slotId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 256
+                },
+                "resourceKind": {
+                  "enum": [
+                    "term",
+                    "image",
+                    "map",
+                    "video"
+                  ]
+                },
+                "outcome": {
+                  "enum": [
+                    "ambiguous",
+                    "unsupported"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 256
+                },
+                "candidateResourceIds": {
+                  "type": "array",
+                  "maxItems": 8,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  }
+                }
+              }
+            }
+          },
+          "completion": {
+            "const": "manual"
+          },
+          "automaticReplay": {
+            "const": false
+          },
+          "sourceActivityId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "projectionRecipeSha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "orderedSteps": {
+            "type": "array",
+            "maxItems": 8,
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/step"
+                },
+                {
+                  "properties": {
+                    "narration": {
+                      "const": ""
+                    },
+                    "audioSrc": {
+                      "const": null
+                    },
+                    "audioId": {
+                      "const": null
+                    },
+                    "execution": {
+                      "properties": {
+                        "narration": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "action"
+                          ],
+                          "properties": {
+                            "action": {
+                              "const": "none"
+                            }
+                          }
+                        },
+                        "completion": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "action"
+                          ],
+                          "properties": {
+                            "action": {
+                              "const": "manual-continue"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "prefixItems": [
+              {
+                "$ref": "#/$defs/step"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "basePresentationSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "sourceRevision",
+        "decisionEvidenceSha256",
+        "recipeRevision"
+      ],
+      "properties": {
+        "schema": {
+          "const": "fia-executable-presentation@1"
+        },
+        "sourceRevision": {
+          "type": "string",
+          "minLength": 1
+        },
+        "decisionEvidenceSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "recipeRevision": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  },
+  "$defs": {
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "sourceUnitId",
+        "sourceTextSha256",
+        "sectionId",
+        "kind",
+        "assetId",
+        "completion",
+        "narration",
+        "audioSrc",
+        "audioId",
+        "prompt",
+        "fulfills",
+        "relatedAssetIds",
+        "title",
+        "sectionTitle",
+        "eyebrow",
+        "duration",
+        "sourceText",
+        "execution"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "sourceUnitId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "sourceTextSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "sectionId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "kind": {
+          "enum": [
+            "discussion",
+            "guide"
+          ]
+        },
+        "assetId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "completion": {
+          "const": "confirm"
+        },
+        "narration": {
+          "type": "string",
+          "maxLength": 32768
+        },
+        "audioSrc": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 4096
+        },
+        "audioId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 256
+        },
+        "prompt": {
+          "type": "string",
+          "maxLength": 32768
+        },
+        "fulfills": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 256
+        },
+        "relatedAssetIds": {
+          "type": "array",
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          }
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "sectionTitle": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "eyebrow": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "duration": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "sourceText": {
+          "type": "string",
+          "maxLength": 32768
+        },
+        "execution": {
+          "$ref": "#/$defs/activityExecution"
+        }
+      }
+    },
+    "activityExecution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "narration",
+        "focalAssetId",
+        "completion"
+      ],
+      "properties": {
+        "narration": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "action"
+              ],
+              "properties": {
+                "action": {
+                  "const": "none"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "action",
+                "artifact"
+              ],
+              "properties": {
+                "action": {
+                  "const": "play-bound-audio"
+                },
+                "artifact": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "id",
+                    "sha256"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "sha256": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "action",
+                "demand"
+              ],
+              "properties": {
+                "action": {
+                  "const": "prepare-original"
+                },
+                "demand": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "id",
+                    "sha256"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "sha256": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "action",
+                "status",
+                "reason"
+              ],
+              "properties": {
+                "action": {
+                  "const": "blocked"
+                },
+                "status": {
+                  "enum": [
+                    "unsupported",
+                    "unavailable",
+                    "invalid"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          ]
+        },
+        "focalAssetId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "completion": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "action"
+          ],
+          "properties": {
+            "action": {
+              "enum": [
+                "manual-continue",
+                "advance-after-narration"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "description": "Bounded per-source-cue projection envelope, not the complete presentation schema. The execution definitions also govern server emission for all activities in the complete presentation."
+}

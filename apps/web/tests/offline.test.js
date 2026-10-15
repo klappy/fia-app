@@ -3,14 +3,15 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 import {createHash,webcrypto} from 'node:crypto';
+import {createVideoDelivery} from '../src/lib/video-delivery.js';
 const bytes={'/index.html':'app','/audio.m4a':'recording','/video.mp4':'012345'};
 const manifest=(revision='r1')=>({schema:1,packId:'fia-mark-authentic',revision,files:Object.entries(bytes).map(([path,body])=>({path,bytes:Buffer.byteLength(body),sha256:createHash('sha256').update(body).digest('hex'),group:path.endsWith('.m4a')?'audio':path.endsWith('.mp4')?'video':'core'}))});
 function worker(){
- const handlers={},stores=new Map();let current=manifest(),calls=[],options=[],fail=null;const transfers=[];const replies=new Map();
+ const handlers={},stores=new Map();let current=manifest(),calls=[],options=[],fail=null,failure=new TypeError('Network interrupted');const transfers=[];const replies=new Map();
  const open=async name=>{if(!stores.has(name))stores.set(name,new Map());const store=stores.get(name);return {match:async key=>store.get(String(key))?.clone(),put:async(key,value)=>store.set(String(key),value.clone()),delete:async key=>store.delete(key),addAll:async()=>{}};};
- const context={self:{location:{origin:'https://fia.test'},addEventListener:(name,fn)=>handlers[name]=fn,clients:{claim:async()=>{}},skipWaiting:async()=>{}},caches:{open,keys:async()=>[...stores.keys()],delete:async name=>stores.delete(name)},fetch:async (url,init)=>{const key=typeof url==='string'?url:url.url,path=new URL(key,'https://fia.test').pathname;calls.push(key);options.push(init);if(fail===url||fail===key||fail===path)throw new Error('Network interrupted');if(replies.has(path))return replies.get(path).clone();return url==='/offline-manifest.json'?Response.json(current):new Response(bytes[String(url)]||'live');},Response,Request,Headers,URL,Promise,console,crypto:webcrypto,AbortController,setTimeout,clearTimeout};
+ const context={self:{location:{origin:'https://fia.test'},addEventListener:(name,fn)=>handlers[name]=fn,clients:{claim:async()=>{}},skipWaiting:async()=>{}},caches:{open,keys:async()=>[...stores.keys()],delete:async name=>stores.delete(name)},fetch:async (url,init)=>{const key=typeof url==='string'?url:url.url,path=new URL(key,'https://fia.test').pathname;calls.push(key);options.push(init);if(fail===url||fail===key||fail===path)throw failure;if(replies.has(path)){const reply=replies.get(path);return typeof reply==='function'?reply(init):reply.clone();}return url==='/offline-manifest.json'?Response.json(current):new Response(bytes[String(url)]||'live');},Response,Request,Headers,URL,Promise,console,crypto:webcrypto,AbortController,setTimeout,clearTimeout};
  vm.runInNewContext(readFileSync('src/lib/media-delivery.js','utf8').replace(/export (?=(?:async )?function)/g,'')+'\n'+readFileSync('src/lib/proxy-request.js','utf8').replace(/export (?=(?:async )?function)/g,'')+'\n'+readFileSync('public/sw.js','utf8').replace('__BUILD_ID__','test123'),context);
- return {stores,calls,options,transfers,reply:(path,response)=>replies.set(path,response),manifest:value=>current=value,fail:value=>fail=value,async fetch(request,client={}){let promise;handlers.fetch({request,...client,respondWith:p=>promise=p});return promise;},async message(data,onprogress,clientId){let task,result;handlers.message({data,source:clientId?{id:clientId}:null,ports:[{postMessage:(r,list=[])=>{transfers.push(list);if(r.progress)onprogress?.(r.progress);else result=r;}}],waitUntil:p=>task=p});await task;return result;}};
+ return {stores,calls,options,transfers,reply:(path,response)=>replies.set(path,response),respond:(path,fn)=>replies.set(path,fn),manifest:value=>current=value,fail:(value,error=new TypeError('Network interrupted'))=>{fail=value;failure=error;},async fetch(request,client={}){let promise;handlers.fetch({request,...client,respondWith:p=>promise=p});return promise;},async message(data,onprogress,clientId){let task,result;handlers.message({data,source:clientId?{id:clientId}:null,ports:[{postMessage:(r,list=[])=>{transfers.push(list);if(r.progress)onprogress?.(r.progress);else result=r;}}],waitUntil:p=>task=p});await task;return result;}};
 }
 test('selected downloads verify hashes, report exact progress and do not fetch unselected video',async()=>{const w=worker();const progress=[];assert.equal((await w.message({type:'DOWNLOAD_START',selection:'audio'},p=>progress.push(p))).ok,true);assert.equal(w.calls.includes('/video.mp4'),false);assert.equal(progress.at(-1).received,12);const status=await w.message({type:'DOWNLOAD_STATUS'});assert.equal(status.saved,true);assert.equal(status.active.selection,'audio');assert.equal(status.choices.find(c=>c.id==='all').bytes,18);});
 test('offline video supports byte ranges and rejects invalid ranges',async()=>{const w=worker();await w.message({type:'DOWNLOAD_START',selection:'all'});let r=await w.fetch(new Request('https://fia.test/video.mp4',{headers:{Range:'bytes=2-4'}}));assert.equal(r.status,206);assert.equal(r.headers.get('Content-Range'),'bytes 2-4/6');assert.equal(await r.text(),'234');r=await w.fetch(new Request('https://fia.test/video.mp4',{headers:{Range:'bytes=9-'}}));assert.equal(r.status,416);r=await w.fetch(new Request('https://fia.test/video.mp4',{headers:{Range:'bytes=-2'}}));assert.equal(await r.text(),'45');});
@@ -189,4 +190,92 @@ test('passage-only Scripture without legacy audio validates pins, reuses saved b
  const store=w.stores.get('fia-v3-download-metadata@1');for(const [k,r]of store){if(k.includes('active')){const a=await r.clone().json();a.files.find(x=>x.path===f.path).scriptureRangeReviewSha256='9'.repeat(64);store.set(k,Response.json(a));}}
  assert.equal((await w.message({type:'MEDIA_STATUS',packId:id,revision})).savedFiles.length,0);
  for(const change of [{scriptureCanonicalTextSha256:null},{scriptureAlignment:{}},{logicalSourceSha256:'4'.repeat(64)},{scriptureHighlighting:'word'},{path:'/audio/scripture/eng.MRK-2-1-12/BSB.opus'}]){const bad=structuredClone(m);Object.assign(bad.files.find(x=>x.group==='audio'),change);const isolated=worker();isolated.reply(`/offline/${id}.json`,Response.json(bad));assert.equal((await isolated.message(args)).ok,false);}
+});
+
+// H1 (S3): the page builds its video request from its last MEDIA_STATUS snapshot, while the SW re-chooses the
+// file on every play. A sized download committed (or removed) after the snapshot used to block every play
+// with "Verified video identity mismatch." until reload. Playback must follow the SW and report the change.
+test('H1: a sized video download committed or removed after the page snapshot still plays what the service worker serves',async()=>{
+ const w=worker(),id='eng.MRK-1-1-13',revision='a'.repeat(64),deliveryRevision='b'.repeat(64),source='https://publisher.test/video.mp4',url=`https://transcode.klappy.dev/video/preset=fia,q=medium,f=mp4/${source}`,sized=`https://transcode.klappy.dev/video/preset=fia,q=medium,f=mp4,size=xlarge/${source}`;
+ const m={...manifest(),packId:id,presentationRevision:revision,deliveryRevision},file=m.files.find(f=>f.group==='video');
+ Object.assign(file,{mime:'video/mp4',deliveryURL:url,sourceSha256:'c'.repeat(64),sourceBytes:100,logicalSourceSha256:'d'.repeat(64),logicalSourceBytes:6,deliveryRevision,timing:{status:'not-applicable'}});
+ Object.assign(file,{defaultSize:'large',variants:{large:{...file}}});
+ const sha=body=>createHash('sha256').update(body).digest('hex'),pin={sha256:sha('012345'),bytes:6},receipt={sha256:sha('SIZED-LARGE'),bytes:11};
+ w.reply('/offline/'+id+'.json',Response.json(m));w.reply(new URL(url).pathname,new Response('012345',{headers:{'Content-Type':'video/mp4'}}));w.reply(new URL(sized).pathname,new Response('SIZED-LARGE',{headers:{'Content-Type':'video/mp4'}}));
+ const pack={id,revision},changes=[],played=[];let requests=0;
+ // Same wiring as App.svelte: the SW's MEDIA_PLAY reply feeds the page's video owner.
+ const owner=createVideoDelivery({fetch:async request=>{const r=await w.message({type:'MEDIA_PLAY',packId:id,revision,deliveryRevision:request.revision,path:request.path,size:request.size,requestId:`play-${++requests}`},null,'page');if(!r.ok)throw Error(r.error);return r;},create:result=>{played.push(new TextDecoder().decode(result.bytes));return `blob:${played.length}`;},revoke:()=>{},publish:()=>{},onchange:change=>changes.push(change)});
+ const snapshot=async()=>{const s=await w.message({type:'MEDIA_STATUS',packId:id,revision},null,'page');return {deliveryRevision:s.deliveryRevision,online:new Map(s.files.map(f=>[f.path,f])),saved:new Map(s.savedFiles.map(f=>[f.path,f]))};};
+ // App.svelte playVideo: file = savedMedia.get(path) || catalog.variants[streamingSize], from the snapshot.
+ const play=(page,identity)=>{const catalog=page.online.get(file.path);return owner.load({pack,path:file.path,revision:page.deliveryRevision,identity,file:page.saved.get(file.path)||catalog.variants.large,size:'large'});};
+ // Trigger (a): snapshot first, then a Large download commits a receipt in the same page, then play.
+ const stale=await snapshot();assert.equal(stale.saved.size,0);
+ assert.equal((await w.message({type:'DOWNLOAD_START',packId:id,selection:'all',sizes:{video:'large'}},null,'page')).ok,true);
+ assert.equal((await w.message({type:'DOWNLOAD_STATUS',packId:id})).active.files.find(f=>f.path===file.path).sha256,receipt.sha256);
+ assert.equal(await play(stale,'after-commit'),'blob:1');assert.deepEqual(played,['SIZED-LARGE']);
+ assert.equal(changes.length,1);assert.deepEqual(changes[0].requested,pin);assert.deepEqual(changes[0].served,receipt);
+ // A fresh snapshot (what a reload gives) agrees with the SW: no change is reported.
+ owner.clear();const fresh=await snapshot();assert.equal(fresh.saved.get(file.path).sha256,receipt.sha256);
+ assert.equal(await play(fresh,'fresh'),'blob:2');assert.equal(changes.length,1);
+ // Trigger (d): Remove from device after that snapshot, then play: the SW serves the pin again.
+ owner.clear();assert.equal((await w.message({type:'DOWNLOAD_REMOVE',packId:id},null,'page')).ok,true);
+ assert.equal(await play(fresh,'after-remove'),'blob:3');assert.deepEqual(played,['SIZED-LARGE','SIZED-LARGE','012345']);
+ assert.equal(changes.length,2);assert.deepEqual(changes[1].requested,receipt);assert.deepEqual(changes[1].served,pin);
+});
+
+test('MEDIA_STATUS distinguishes transient fetch from invalid manifests without resurrecting active metadata',async()=>{
+ const w=worker(),revision='a'.repeat(64),m={...manifest(),presentationRevision:revision};w.manifest(m);
+ assert.equal((await w.message({type:'DOWNLOAD_START',selection:'all'})).ok,true);
+ for(const [response,code] of [[new Response('',{status:503}),'media-status-transient'],[Response.json({...m,packId:'eng.MRK-1-14-20'}),'media-status-invalid'],[new Response('not json'),'media-status-invalid'],[new Response('',{status:404}),'media-status-invalid']]){
+  w.reply('/offline-manifest.json',response);const result=await w.message({type:'MEDIA_STATUS',revision});assert.equal(result.ok,false);assert.equal(result.code,code);assert.equal(result.files,undefined);
+ }
+});
+
+test('MEDIA_PLAY may reuse verified saved bytes after transient transport but never after corrupt latest authority',async()=>{
+ const w=worker(),id='eng.MRK-1-1-13',revision='a'.repeat(64),deliveryRevision='b'.repeat(64),url='https://transcode.klappy.dev/audio/saved';
+ const m={...manifest(),packId:id,presentationRevision:revision,deliveryRevision},f=m.files.find(f=>f.path==='/audio.m4a');
+ Object.assign(f,{bytes:3,sha256:createHash('sha256').update('abc').digest('hex'),mime:'audio/ogg',deliveryURL:url,sourceSha256:'c'.repeat(64),deliveryRevision});
+ w.reply('/offline/'+id+'.json',Response.json(m));w.reply('/audio/saved',new Response('abc',{headers:{'Content-Type':'audio/ogg'}}));
+ assert.equal((await w.message({type:'DOWNLOAD_START',packId:id,selection:'audio'})).ok,true);
+ const args={type:'MEDIA_PLAY',packId:id,revision,deliveryRevision,path:f.path,requestId:'warm'};
+ w.fail('/offline/'+id+'.json');const status=await w.message({type:'MEDIA_STATUS',packId:id,revision});assert.equal(status.code,'media-status-transient');assert.equal(status.error,'Media availability could not be verified.');
+ assert.equal((await w.message(args)).ok,true);w.fail(null);
+ w.reply('/offline/'+id+'.json',Response.json({...m,files:[{...f,sha256:'invalid'}]}));
+ const refused=await w.message({...args,requestId:'corrupt'});assert.equal(refused.ok,false);assert.equal(refused.code,undefined);
+ assert.equal((await w.message({type:'MEDIA_STATUS',packId:id,revision})).code,'media-status-invalid');
+});
+
+test('unknown fetch errors and authorization failures remain invalid; only explicit transport failures are transient',async()=>{
+ const w=worker(),revision='a'.repeat(64);w.fail('/offline-manifest.json',new Error('internal source secret'));
+ let result=await w.message({type:'MEDIA_STATUS',revision});assert.equal(result.code,'media-status-invalid');assert.equal(result.error,'Media availability could not be verified.');w.fail(null);
+ for(const status of [401,403,404,409,422]){w.reply('/offline-manifest.json',new Response(null,{status}));result=await w.message({type:'MEDIA_STATUS',revision});assert.equal(result.code,'media-status-invalid');}
+ for(const status of [408,429,500,502,503,504]){w.reply('/offline-manifest.json',new Response(null,{status}));result=await w.message({type:'MEDIA_STATUS',revision});assert.equal(result.code,'media-status-transient');}
+});
+
+function videoPhase2(){
+ const w=worker(),id='eng.MRK-1-1-13',revision='a'.repeat(64),deliveryRevision='b'.repeat(64),url='https://transcode.klappy.dev/video/preset=fia,q=medium,f=mp4/https://publisher.test/video.mp4';
+ const m={...manifest(),packId:id,presentationRevision:revision,deliveryRevision},f=m.files.find(f=>f.group==='video');Object.assign(f,{mime:'video/mp4',deliveryURL:url,sourceSha256:'c'.repeat(64),sourceBytes:100,logicalSourceSha256:'d'.repeat(64),logicalSourceBytes:6,deliveryRevision,timing:{status:'not-applicable'}});
+ const publish=()=>w.reply('/offline/'+id+'.json',Response.json(m));publish();w.reply(new URL(url).pathname,new Response('012345',{headers:{'Content-Type':'video/mp4'}}));
+ return {w,m,f,url,publish,args:{type:'MEDIA_PLAY',packId:id,revision,deliveryRevision,path:f.path,requestId:'phase2'}};
+}
+test('video network drift plays without changing cached media, while downloads stay strict',async()=>{
+ const {w,url,args}=videoPhase2(),body='0000ftypisom-new';w.respond(new URL(url).pathname,()=>new Response(body,{headers:{'Content-Type':'video/mp4'}}));
+ const r=await w.message(args);assert.equal(r.ok,true,r.error);assert.equal(new TextDecoder().decode(r.bytes),body);assert.equal(r.file.bytes,body.length);assert.equal(r.file.sha256,createHash('sha256').update(body).digest('hex'));assert.equal(r.notes[0].kind,'content-drift');assert.equal(w.options[w.calls.indexOf(url)].redirect,'error');
+ assert(![...w.stores.values()].some(s=>s.has('/video.mp4')));assert.equal((await w.message({type:'DOWNLOAD_STATUS',packId:args.packId})).mediaNotices.length,1);
+ assert.equal((await w.message({type:'DOWNLOAD_START',packId:args.packId,selection:'all'})).ok,false);assert.equal((await w.message({type:'DOWNLOAD_STATUS',packId:args.packId})).active,null);
+});
+test('video tolerates page revision skew and missing requested size with notes',async()=>{
+ const {w,args}=videoPhase2();let r=await w.message({...args,deliveryRevision:'e'.repeat(64)});assert.equal(r.ok,true,r.error);assert.equal(r.notes[0].kind,'revision-changed');r=await w.message({...args,size:'small'});assert.equal(r.ok,true,r.error);assert.equal(r.notes[0].kind,'size-fallback');
+});
+test('video unsafe response failures are logged and never stored',async()=>{
+ for(const [body,mime] of [['<html>bad</html>','text/html'],['bad MP4','video/mp4'],['','video/mp4']]){const {w,url,args}=videoPhase2();w.reply(new URL(url).pathname,new Response(body,{headers:{'Content-Type':mime}}));assert.equal((await w.message(args)).ok,false);const status=await w.message({type:'DOWNLOAD_STATUS',packId:args.packId});assert.equal(status.mediaNotices.at(-1).kind,'play-failed');assert.equal(status.active,null);}
+});
+test('corrupt saved video falls back to network without overwriting the saved entry',async()=>{
+ const {w,url,args}=videoPhase2();assert.equal((await w.message({type:'DOWNLOAD_START',packId:args.packId,selection:'all'})).ok,true);const s=await w.message({type:'DOWNLOAD_STATUS',packId:args.packId});w.stores.get(s.active.cache).set('/video.mp4',new Response('broken',{headers:{'Content-Type':'video/mp4'}}));const r=await w.message(args);assert.equal(r.ok,true,r.error);assert.equal(r.notes[0].kind,'saved-copy-unreadable');assert.equal(await w.stores.get(s.active.cache).get('/video.mp4').clone().text(),'broken');assert.equal((await w.message({type:'DOWNLOAD_STATUS',packId:args.packId})).saved,false);
+});
+test('audio keeps strict identity, revision and size checks while video notes are bounded',async()=>{
+ const {w,m,args,publish}=videoPhase2(),f=m.files.find(f=>f.group==='audio');Object.assign(f,{mime:'audio/ogg',deliveryURL:'https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://publisher.test/audio.m4a',sourceSha256:'c'.repeat(64),deliveryRevision:args.deliveryRevision,timing:{status:'not-applicable'}});publish();w.respond(new URL(f.deliveryURL).pathname,()=>new Response('different',{headers:{'Content-Type':'audio/ogg'}}));
+ const a={...args,path:f.path};assert.equal((await w.message(a)).ok,false);assert.match((await w.message({...a,deliveryRevision:'e'.repeat(64)})).error,/not prepared for online/);assert.match((await w.message({...a,size:'small'})).error,/size is not prepared/);
+ for(let i=0;i<22;i++)assert.equal((await w.message({...args,requestId:'log'+i,deliveryRevision:'e'.repeat(64)})).ok,true);
+ const status=await w.message({type:'DOWNLOAD_STATUS',packId:args.packId});assert.equal(status.mediaNotices.length,20);
 });

@@ -1,4 +1,4 @@
-import {readFileSync,writeFileSync} from 'node:fs';
+import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {writeSnapshot} from '../server/faces/worker/export-snapshot.mjs';
 const closure=JSON.parse(readFileSync('server/faces/worker/BACKEND-CLOSURE.json'));
@@ -11,5 +11,12 @@ const extension=buildGeneralizedSnapshot('dist',JSON.parse(readFileSync('server/
 for(const record of extension.records){if(snapshot.current[record.packId])throw Error('duplicate-generalized-record');snapshot.records.push(record);snapshot.current[record.packId]=record.revision;}
 snapshot.staticArtifacts=extension.staticArtifacts.filter(item=>!snapshot.artifacts.some(a=>a.descriptor.sha256===item.descriptor.sha256));
 snapshot.generalizedAuthority=extension.authority;
+const {exportGuideSources}=await import('../server/fia/compiler/presentation/export-guide-sources.mjs');
+snapshot.canonicalSources=exportGuideSources({outputRoot:'dist',sourceRevision:extension.authority.sourceCommit});
+const {buildApprovedAudioProofIndex}=await import('./approved-audio-proof-index.mjs');
+const approved=await buildApprovedAudioProofIndex({publicRoot:'dist',authority:{registrySha256:extension.authority.catalog.sha256,sourceRevision:extension.authority.sourceCommit}});
+mkdirSync('dist/content/approved-audio',{recursive:true});
+writeFileSync('dist'+approved.descriptor.path,approved.bytes);
+snapshot.approvedAudioProofIndex=approved.descriptor;
 writeFileSync('server/faces/worker/generated/snapshot.json',JSON.stringify(snapshot)+'\n');
 console.log(`Worker read bundle: ${snapshot.records.length} accepted immutable records; no media copied`);

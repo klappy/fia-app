@@ -6,7 +6,7 @@ import {tick} from 'svelte';
 import App from '../src/App.svelte';
 import * as videoDemo from '../src/lib/video-demo.js';
 import {createSession} from '../src/lib/engine.js';
-import {activities,assets} from '../src/lib/content.js';
+import {activities,assets,sections} from '../src/lib/content.js';
 let players=[];
 it.each(['a13','a184','a10'])('prepared video %s fetches only after Play',async(id)=>{
  vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});const path=assets[id].src;
@@ -72,7 +72,7 @@ it('switching passage waits for native release and persists the actual selected 
  vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',nativeName:'English',ready:68}]);vi.spyOn(libraryAdapter,'passages').mockResolvedValue([descriptor]);const select=vi.spyOn(libraryAdapter,'select').mockResolvedValue({descriptor,presentation});
  assets.a112.relatedIds=[];await startAt('S02-U005','waiting');await command('watch the video');const video=document.querySelector('video');
  Object.defineProperty(video,'webkitDisplayingFullscreen',{value:true,writable:true});video.webkitExitFullscreen=vi.fn();await fireEvent(video,new Event('webkitbeginfullscreen'));
- await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passages',exact:true}));await settle();await fireEvent.click(screen.getByRole('button',{name:'Open passage',exact:true}));await settle();
+ await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));await fireEvent.click(screen.getByRole('button',{name:/^Passages/}));await settle();await fireEvent.click(screen.getByRole('button',{name:'Open passage',exact:true}));await settle();
  expect(select).not.toHaveBeenCalled();expect(document.querySelector('video')).toBe(video);expect(localStorage.getItem('fia-v3-selected-pack')).not.toBe(descriptor.id);
  video.webkitDisplayingFullscreen=false;await fireEvent(video,new Event('webkitendfullscreen'));
  await waitFor(()=>expect(localStorage.getItem('fia-v3-selected-pack')).toBe(descriptor.id));expect(select).toHaveBeenCalledTimes(1);
@@ -85,7 +85,7 @@ it('newer passage intent survives an older load resolving during native presenta
  let resolveA;const select=vi.spyOn(libraryAdapter,'select').mockImplementation(id=>id===descriptors[0].id?new Promise(resolve=>resolveA=resolve):Promise.resolve(loaded[1]));
  vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',nativeName:'English',ready:68}]);vi.spyOn(libraryAdapter,'passages').mockResolvedValue(descriptors);
  assets.a112.relatedIds=[];await startAt('S02-U005','waiting');await command('watch the video');const video=document.querySelector('video');
- await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passages',exact:true}));await settle();
+ await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));await fireEvent.click(screen.getByRole('button',{name:/^Passages/}));await settle();
  await fireEvent.click(screen.getAllByRole('button',{name:'Open passage',exact:true})[0]);await settle();expect(select).toHaveBeenCalledTimes(1);
  Object.defineProperty(video,'webkitDisplayingFullscreen',{value:true,writable:true});video.webkitExitFullscreen=vi.fn();await fireEvent(video,new Event('webkitbeginfullscreen'));
  await fireEvent.click(screen.getAllByRole('button',{name:'Open passage',exact:true})[1]);await settle();expect(video.webkitExitFullscreen).toHaveBeenCalledTimes(1);
@@ -98,7 +98,7 @@ it('failed deferred passage load reports the error after native exit and preserv
  vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',nativeName:'English',ready:68}]);vi.spyOn(libraryAdapter,'passages').mockResolvedValue([descriptor]);const select=vi.spyOn(libraryAdapter,'select').mockRejectedValue(Error('Passage verification failed. Try again.'));
  assets.a112.relatedIds=[];await startAt('S02-U005','waiting');await command('watch the video');const video=document.querySelector('video');
  Object.defineProperty(video,'webkitDisplayingFullscreen',{value:true,writable:true});video.webkitExitFullscreen=vi.fn();await fireEvent(video,new Event('webkitbeginfullscreen'));
- await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passages',exact:true}));await settle();await fireEvent.click(screen.getByRole('button',{name:'Open passage',exact:true}));await settle();expect(select).not.toHaveBeenCalled();
+ await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));await fireEvent.click(screen.getByRole('button',{name:/^Passages/}));await settle();await fireEvent.click(screen.getByRole('button',{name:'Open passage',exact:true}));await settle();expect(select).not.toHaveBeenCalled();
  video.webkitDisplayingFullscreen=false;await fireEvent(video,new Event('webkitendfullscreen'));
  await waitFor(()=>expect(screen.getByText('Passage verification failed. Try again.')).toBeTruthy());expect(select).toHaveBeenCalledTimes(1);expect(localStorage.getItem('fia-v3-selected-pack')).toBeNull();expect(document.querySelector('video')).toBe(video);
 });
@@ -120,10 +120,12 @@ it('explicit return from native video preserves owner while waiting and ignores 
  Object.defineProperty(video,'webkitDisplayingFullscreen',{value:true,writable:true});video.webkitExitFullscreen=vi.fn();await fireEvent(video,new Event('webkitbeginfullscreen'));
  await fireEvent.click(screen.getByRole('button',{name:'Return to guide',exact:true}));await settle();expect(document.querySelector('video')).toBe(video);expect(state().detour).toBe('a13');
  video.webkitDisplayingFullscreen=false;video.dispatchEvent(new Event('webkitendfullscreen'));video.dispatchEvent(new Event('ended'));await settle();expect(state().detour).toBeNull();
- await fireEvent.play(video);await fireEvent.ended(video);await settle();expect(activities[state().index].id).toBe('S02-U005');expect(screen.getByRole('button',{name:'Continue',exact:true})).toBeTruthy();
+ await fireEvent.play(video);await fireEvent.ended(video);await settle();expect(activities[state().index].id).toBe('S02-U005');expect(screen.getByRole('button',{name:'Continue',exact:true}).classList.contains('guide-primary')).toBe(true);
 });
+// The one narration element: each clip loaded into it (each src set) is one entry in players.
 class FakeAudio {
- constructor(src){this.src=src;this.paused=true;this.currentTime=0;this.duration=12;players.push(this);}
+ constructor(src){this.paused=true;this.currentTime=0;this.duration=12;if(src)this.src=src;}
+ get src(){return this.source;} set src(value){this.source=value;if(value)players.push(this);}
  play(){this.paused=false;return Promise.resolve();} pause(){this.paused=true;} load(){} removeAttribute(){} end(){this.paused=true;this.onended?.();}
 }
 it('Pause between recording completion and queued next start revokes the pending session',async()=>{
@@ -173,7 +175,11 @@ it('verified proxy Scripture keeps logical recording identity and maps codec del
  player.currentTime=boundary+.020;player.ontimeupdate();await settle();expect(document.querySelectorAll('.scripture-scroll p')[1].getAttribute('aria-current')).toBe('true');
 });
 const settle=async()=>{await Promise.resolve();await tick();};
-async function startAt(id,status='ready',prefs={}){const session=createSession(activities);session.index=activities.findIndex(a=>a.id===id);session.status=status;Object.assign(session.preferences,prefs);localStorage.setItem('fia-v3-session@2',JSON.stringify({session}));render(App);await settle();await settle();await settle();}
+// A stage's `.ov-items`: the circles shown plus the counts on `‹ n earlier` and `n more ›`, which together cover the whole stage.
+const windowSpan=el=>el.querySelectorAll('.ov-item').length+[...el.querySelectorAll('.ov-window-step')].reduce((s,b)=>s+ +b.textContent.match(/\d+/)[0],0);
+// R4: a tap within the start burst never pauses; wait until the easy button is no longer busy.
+const easyIdle=()=>waitFor(()=>expect(document.querySelector('.guide-primary').hasAttribute('aria-busy')).toBe(false),{timeout:2000});
+async function startAt(id,status='ready',prefs={},{completed}={}){const session=createSession(activities);session.index=activities.findIndex(a=>a.id===id);session.status=status;Object.assign(session.preferences,prefs);if(completed)session.completed=completed;localStorage.setItem('fia-v3-session@2',JSON.stringify({session}));render(App);await settle();await settle();await settle();}
 const originalRelated=assets.a112.relatedIds;
 const state=()=>JSON.parse(localStorage.getItem('fia-v3-session@2')).session;
 async function command(text){const kind=text==='watch the video'?'video':'map';const resource=Object.values(assets).find(a=>a.kind===kind);await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passage resources'}));await fireEvent.click(within(screen.getByText(kind==='video'?'Videos':'Maps',{selector:'summary'}).parentElement).getByRole('button',{name:resource.subtitle||resource.title,exact:true}));await settle();if(kind==='video'){await fireEvent.click(screen.getByRole('button',{name:'Play video',exact:true}));await settle();}}
@@ -183,13 +189,13 @@ async function linkedVideo(){await fireEvent.click(screen.getByRole('button',{na
 beforeEach(()=>{vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:true,active:{manifest:{presentationRevision:bundledPack.revision,files:[...activities.map(a=>a.audioSrc),...Object.values(assets).flatMap(a=>[a.src,a.poster,a.descriptionAudio])].filter(Boolean).map(path=>({path}))},files:[...activities.map(a=>a.audioSrc),...Object.values(assets).flatMap(a=>[a.src,a.poster,a.descriptionAudio])].filter(Boolean).map(path=>({path}))}});vi.spyOn(libraryAdapter,'activate').mockResolvedValue({selected:true});localStorage.clear();players=[];vi.stubGlobal('Audio',FakeAudio);HTMLDialogElement.prototype.showModal=function(){this.open=true;};HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new Event('close'));};HTMLMediaElement.prototype.pause=vi.fn(function(){this.dispatchEvent(new Event('pause'));});HTMLMediaElement.prototype.play=vi.fn(function(){this.dispatchEvent(new Event('play'));return Promise.resolve();});Element.prototype.scrollTo=vi.fn();});
 afterEach(()=>{assets.a112.relatedIds=originalRelated;delete document.modelContext;cleanup();vi.restoreAllMocks();vi.unstubAllGlobals();vi.useRealTimers();});
 describe('authentic FIA flow',()=>{
- it('keeps navigation discoverable without exposing the resource menus',async()=>{assets.a112.relatedIds=[];await startAt('S02-U005');expect(screen.getByRole('button',{name:'Previous activity'})).toBeTruthy();expect(screen.getByRole('button',{name:'Skip to next activity'})).toBeTruthy();expect(screen.queryByRole('progressbar')).toBeNull();expect(screen.getByRole('button',{name:/^Open .* full screen$/})).toBeTruthy();await fireEvent.click(screen.getByRole('button',{name:'More options'}));expect(screen.queryByRole('button',{name:'Show content tools'})).toBeNull();await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));expect(screen.getByRole('button',{name:/^Open .* full screen$/})).toBeTruthy();});
+ it('keeps navigation discoverable without exposing the resource menus',async()=>{assets.a112.relatedIds=[];await startAt('S02-U005');expect(screen.getByRole('button',{name:'Previous activity'})).toBeTruthy();expect(screen.getByRole('button',{name:'Skip to next activity'})).toBeTruthy();expect(screen.queryAllByRole('progressbar').filter(p=>!p.closest('.session-progress,.session-progress-words'))).toHaveLength(0);expect(screen.getByRole('button',{name:/^Open .* full screen$/})).toBeTruthy();await fireEvent.click(screen.getByRole('button',{name:'More options'}));expect(screen.queryByRole('button',{name:'Show content tools'})).toBeNull();await fireEvent.click(document.querySelector('.menu-close'));expect(screen.getByRole('button',{name:/^Open .* full screen$/})).toBeTruthy();});
  it('reads three actual translations and returns to the authored question',async()=>{vi.useFakeTimers();await startAt('S01-U002');await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();expect(players.at(-1).src).toBe('/audio/source/S01-U002.mp3');players.at(-1).end();await settle();for(const id of ['scripture-BereanStandardBible','scripture-unfoldingWordLiteral','scripture-unfoldingWordSimplified']){expect(screen.getByText(assets[id].subtitle)).toBeTruthy();await vi.advanceTimersByTimeAsync(700);expect(players.at(-1).src).toBe(assets[id].descriptionAudio);players.at(-1).end();await settle();}expect(screen.getByRole('heading',{name:'What do you like in this passage?'})).toBeTruthy();});
  it('holds the image, then presents the required map before the next guide unit',async()=>{vi.useFakeTimers();assets.a112.relatedIds=[];await startAt('S02-U005');await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();players.at(-1).end();await settle();expect(screen.getByRole('button',{name:'Continue',exact:true})).toBeTruthy();await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));await settle();expect(document.querySelector('.media-stage').dataset.kind).toBe('map');expect(state().status).toBe('waiting');await vi.advanceTimersByTimeAsync(2000);expect(activities[state().index].id).toBe('S02-U005-resource-c197');await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));expect(activities[state().index].id).toBe('S02-U006');});
- it('pause/resume keeps the same source recording and position',async()=>{assets.a112.relatedIds=[];await startAt('S02-U005');await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();const player=players.at(-1);player.currentTime=6;await fireEvent.click(screen.getByRole('button',{name:'Pause',exact:true}));await fireEvent.click(screen.getByRole('button',{name:'Resume',exact:true}));await settle();expect(players).toHaveLength(1);expect(player.currentTime).toBe(6);expect(activities[state().index].id).toBe('S02-U005');});
+ it('pause/resume keeps the same source recording and position',async()=>{assets.a112.relatedIds=[];await startAt('S02-U005');await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();const player=players.at(-1);player.currentTime=6;await easyIdle();await fireEvent.click(screen.getByRole('button',{name:'Pause',exact:true}));await fireEvent.click(screen.getByRole('button',{name:'Resume',exact:true}));await settle();expect(players).toHaveLength(1);expect(player.currentTime).toBe(6);expect(activities[state().index].id).toBe('S02-U005');});
  it('a map detour returns to the held discussion',async()=>{await startAt('S01-U003','waiting');await command('show the map');expect(document.querySelector('.media-stage').dataset.kind).toBe('map');await fireEvent.click(screen.getByRole('button',{name:'Return to guide',exact:true}));expect(screen.getByRole('heading',{name:'What do you like in this passage?'})).toBeTruthy();expect(state().status).toBe('waiting');});
  it('explicit replay reads even when automatic Scripture reading is disabled',async()=>{await startAt('S01-U002-reading-1','ready',{readScripture:false});await fireEvent.click(screen.getByRole('button',{name:'Replay',exact:true}));await settle();expect(players.at(-1).src).toBe(assets['scripture-BereanStandardBible'].descriptionAudio);});
- it('optional video plays, pauses, and returns to its held guide point',async()=>{assets.a112.relatedIds=[];await startAt('S02-U005','waiting');await command('watch the video');await settle();expect(screen.getByRole('button',{name:'Pause',exact:true})).toBeTruthy();await fireEvent.click(screen.getByRole('button',{name:'Pause',exact:true}));await settle();expect(screen.getByRole('button',{name:'Play video',exact:true})).toBeTruthy();await fireEvent.ended(document.querySelector('video'));await settle();expect(state().detour).toBeNull();expect(state().status).toBe('waiting');expect(activities[state().index].id).toBe('S02-U005');});
+ it('optional video plays, pauses, and returns to its held guide point',async()=>{assets.a112.relatedIds=[];await startAt('S02-U005','waiting');await command('watch the video');await settle();expect(screen.getByRole('button',{name:'Pause',exact:true})).toBeTruthy();await easyIdle();await fireEvent.click(screen.getByRole('button',{name:'Pause',exact:true}));await settle();expect(screen.getByRole('button',{name:'Play video',exact:true})).toBeTruthy();await fireEvent.ended(document.querySelector('video'));await settle();expect(state().detour).toBeNull();expect(state().status).toBe('waiting');expect(activities[state().index].id).toBe('S02-U005');});
  it('restores progress without autoplay and opening preferences retains the source unit',async()=>{await startAt('S03-U007','playing');expect(players).toHaveLength(0);await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Settings'}));expect(activities[state().index].id).toBe('S03-U007');expect(players).toHaveLength(0);});
  it('in-page tools accept approved optional resources and reject unknown or stale completions',async()=>{const tools=new Map();document.modelContext={registerTool:tool=>tools.set(tool.name,tool)};assets.a112.relatedIds=[];await startAt('S02-U005','waiting');await expect(tools.get('fia_present_resource').execute({assetId:'unknown'})).rejects.toThrow();await tools.get('fia_present_resource').execute({assetId:'a184'});expect(state().detour).toBe('a184');await expect(tools.get('fia_complete_activity').execute({activityId:'S02-U005'})).rejects.toThrow();await tools.get('fia_return_to_guide').execute({});await tools.get('fia_complete_activity').execute({activityId:'S02-U005'});expect(activities[state().index].id).toBe('S02-U005-resource-c197');});
 });
@@ -234,7 +240,7 @@ it('full-screen image overlay leaves the current description uninterrupted',asyn
  await fireEvent.click(screen.getByRole('button',{name:'Close full screen'}));await settle();expect(screen.queryByRole('dialog')).toBeNull();expect(description.paused).toBe(false);expect(document.querySelector('.visual-viewport img').style.transform).toContain('scale(1)');expect(activities[state().index].id).toBe('S02-U005');
 });
 it('full-screen map preserves paused audio and the guide place',async()=>{
- await startAt('S03-U007');await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();const player=players.at(-1);await fireEvent.click(screen.getByRole('button',{name:'Pause',exact:true}));await settle();await fireEvent.click(screen.getByRole('button',{name:/^Open .* full screen$/}));await settle();
+ await startAt('S03-U007');await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();const player=players.at(-1);await easyIdle();await fireEvent.click(screen.getByRole('button',{name:'Pause',exact:true}));await settle();await fireEvent.click(screen.getByRole('button',{name:/^Open .* full screen$/}));await settle();
  expect(player.paused).toBe(true);expect(players).toHaveLength(1);
  await fireEvent(screen.getByRole('dialog'),new Event('cancel',{cancelable:true}));await settle();expect(screen.queryByRole('dialog')).toBeNull();expect(player.paused).toBe(true);expect(activities[state().index].id).toBe('S03-U007');
 
@@ -290,9 +296,22 @@ it('discussion list questions each wait for confirmation and show separately',as
  expect(activities[state().index].id).toBe('S01-U004');expect(screen.queryByRole('list')).toBeNull();
 });
 
+// fb-05 B2: lists show the publisher's markers, keyed on listContracts purpose (RESULTS-B2 option A).
+it.each([['S03-U009','UL','bulleted',7],['S04-U004','UL','bulleted',7],['S05-U009','OL','numbered',3]])('the %s list carries the publisher marker',async(id,tag,marker,count)=>{
+ await startAt(id);
+ const list=screen.getByRole('list');expect(list.tagName).toBe(tag);expect(list.classList.contains(marker)).toBe(true);expect(screen.getAllByRole('listitem')).toHaveLength(count);
+});
+it('each discussion question shows its number in its list, one per screen',async()=>{
+ for(const [id,number] of [['S01-U003','1.'],['S01-U004','2.'],['S01-U008','6.']]){
+  cleanup();await startAt(id);
+  expect(document.querySelector('.list-ordinal')?.textContent).toBe(number);expect(screen.queryByRole('list')).toBeNull();
+ }
+ cleanup();await startAt('S01-U002');expect(document.querySelector('.list-ordinal')).toBeNull();
+});
+
 it('section boundaries hold a title transition and Continue reads the first instruction without skipping',async()=>{
  vi.useFakeTimers();const last=activities.filter(a=>a.sectionId==='S01').at(-1);await startAt(last.id,'waiting');
- await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));await settle();await vi.advanceTimersByTimeAsync(1000);
+ await fireEvent.click(screen.getByRole('button',{name:'Skip to next activity',exact:true}));await settle();await vi.advanceTimersByTimeAsync(1000);
  expect(screen.getByRole('heading',{name:'Setting the Stage'})).toBeTruthy();
  expect(activities[state().index].id).toBe('S02-U001');expect(players).toHaveLength(0);
  await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));await settle();
@@ -300,13 +319,22 @@ it('section boundaries hold a title transition and Continue reads the first inst
  players.at(-1).end();await settle();await vi.advanceTimersByTimeAsync(700);
  expect(activities[state().index].kind).toBe('scripture');
 });
-it('the visual overview selects a section without marking prior content complete and skip enters its first screen',async()=>{
+it('the session bar is one control with six stage cells and no per-screen bead row',async()=>{
+ await startAt('S03-U009');
+ const bar=screen.getByRole('button',{name:'Session progress: open section overview'});
+ expect(bar.querySelectorAll('.stage-cell')).toHaveLength(6);expect(bar.querySelectorAll('.stage-cell.current')).toHaveLength(1);
+ expect(bar.querySelector('.content-progress-line')).toBeNull();
+ const words=document.getElementById('session-progress-words');expect(bar.getAttribute('aria-describedby')).toBe('session-progress-words');expect(words.getAttribute('aria-valuenow')).toBe('3');expect(words.getAttribute('aria-valuetext')).toMatch(/Defining the Scenes · Step 3 · unit \d+ of \d+ · (more ahead|last unit)/);
+});
+it('the overview spine opens a stage in place and its item jumps without marking prior content complete',async()=>{
+ // overview-sheet.md § Proposed composition — clarity: tapping another stage's row shows its items in place; the forward jump never completes skipped items.
  vi.useFakeTimers();await startAt('S03-U009');
  await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));
- await fireEvent.click(screen.getByRole('button',{name:'Filling the Gaps',exact:true}));await settle();
- expect(screen.getByRole('heading',{name:'Filling the Gaps'})).toBeTruthy();expect(state().completed).toEqual([]);
- await fireEvent.click(screen.getByRole('button',{name:'Skip to next activity'}));await settle();
- expect(activities[state().index].id).toBe('S05-U001');await vi.advanceTimersByTimeAsync(700);expect(players).toHaveLength(1);expect(players.at(-1).src).toBe('/audio/source/S05-U001.mp3');
+ const row=screen.getByRole('button',{name:/^Filling the Gaps/});expect(row.getAttribute('aria-expanded')).toBe('false');
+ await fireEvent.click(row);await settle();expect(row.getAttribute('aria-expanded')).toBe('true');
+ const first=screen.getByRole('group',{name:'Filling the Gaps items'}).querySelector('.ov-item');
+ await fireEvent.click(first);await settle();
+ expect(activities[state().index].id).toBe('S05-U001');expect(state().completed).toEqual([]);
 });
 it('dark colors persist without changing the primary control or interrupting narration',async()=>{
  assets.a112.relatedIds=[];await startAt('S02-U005');await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();const player=players.at(-1);player.currentTime=4;
@@ -318,19 +346,208 @@ it('dark colors persist without changing the primary control or interrupting nar
  expect(player.paused).toBe(false);expect(player.currentTime).toBe(4);
  cleanup();render(App);await settle();expect(document.documentElement.dataset.theme).toBe('dark');
 });
-it('the mini map exposes every visible screen and jumps directly to a chosen image without a section detour',async()=>{
+it('the overview sheet opens from the bar in its clarity order and reaches Language and Passages in two taps',async()=>{
+ // cookbook design/alpha-system/components/overview-sheet.md § Proposed composition — clarity (nodded 2026-10-09):
+ // here-card → intro slot (absent without content) → spine → quiet rows (key disclosure, Language, Passages) → Close; R-404 two-tap audit.
+ vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',nativeName:'English',ready:1},{id:'spa',nativeName:'Español',ready:1}]);
+ vi.spyOn(libraryAdapter,'passages').mockResolvedValue([bundledPack]);
+ await startAt('S03-U009');await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));
+ const sheet=document.querySelector('.overview-sheet');expect(sheet).toBeTruthy();
+ expect([...sheet.children].map(e=>e.className.split(' ').find(c=>/^(ov-|progress-overview)/.test(c)))).toEqual(['ov-here','progress-overview','ov-quiet','ov-footer']);
+ expect(sheet.querySelector('.ov-intro')).toBeNull();
+ expect(screen.getByRole('heading',{name:'Overview',level:2})).toBeTruthy();
+ // Where am I: the here-card names the stage, its step and the item, then what is now and next.
+ const here=screen.getByRole('region',{name:'You are here'});
+ expect(here.textContent).toContain('You are here · step 3 of 6');expect(here.textContent).toContain('Defining the Scenes');
+ expect(here.textContent).toMatch(/item \d+ of \d+/);expect(here.textContent).toMatch(/Now: (listen|Scripture|discuss|key term|picture|map|video)/);
+ // The spine: six stage rows; only the current stage shows its items, each a circle with its kind word sr-only, and one caption.
+ const stages=[...sheet.querySelectorAll('.ov-stage-row')];expect(stages).toHaveLength(6);
+ expect(stages.filter(b=>b.getAttribute('aria-expanded')==='true')).toHaveLength(1);
+ expect(sheet.querySelectorAll('.ov-items')).toHaveLength(1);expect(sheet.querySelectorAll('.ov-caption')).toHaveLength(1);
+ const sectionId=activities.find(a=>a.id==='S03-U009').sectionId;const screens=new Set(activities.filter(a=>a.sectionId===sectionId).map(a=>a.readingGroupId||a.id));const items=[...sheet.querySelectorAll('.ov-item')];
+ // A long stage shows a window of at most 12 circles; the window plus its two end counts still covers the whole stage.
+ expect(items).toHaveLength(Math.min(12,screens.size));expect(windowSpan(sheet.querySelector('.ov-items'))).toBe(screens.size);
+ for(const item of items)expect(item.querySelector('.sr-only').textContent).toMatch(/^(listen|Scripture|discuss|key term|picture|map|video), \d+ of \d+/);
+ expect(sheet.querySelector('.ov-caption').textContent).toMatch(/^\d+ done · (listen|Scripture|discuss|key term|picture|map|video) now · \d+ to go$/);
+ // The key is one tap away, collapsed by default: content words and the big button's four faces.
+ expect(screen.queryByRole('group',{name:'Key'})).toBeNull();
+ const toggle=screen.getByRole('button',{name:'What the icons mean'});expect(toggle.getAttribute('aria-expanded')).toBe('false');
+ await fireEvent.click(toggle);await settle();
+ const key=screen.getByRole('group',{name:'Key'});
+ for(const word of ['listen','Scripture','discuss','key term','picture','map','video','Play','Continue','Discuss, then continue','Finish'])expect(key.textContent).toContain(word);
+ expect(key.textContent).not.toContain('Speaking the Word');
+ await fireEvent.click(screen.getByRole('button',{name:/^Language/}));await settle();
+ expect(await screen.findByRole('button',{name:/Español/})).toBeTruthy();
+ await fireEvent.click(screen.getByRole('button',{name:/^Passages/}));await settle();
+ expect(await screen.findByRole('heading',{name:bundledPack.title})).toBeTruthy();
+ expect(screen.getByRole('button',{name:'Session progress: open section overview'})).toBeTruthy();
+ const close=sheet.querySelector('.ov-close');expect(close.textContent).toBe('Close');await fireEvent.click(close);await settle();
+ expect(document.querySelector('.overview-sheet')).toBeNull();
+});
+it('the FIA menu drops Language and Passages, which the overview carries (fb-03 S3)',async()=>{
+ await startAt('S01-U001');await fireEvent.click(screen.getByRole('button',{name:'More options'}));
+ const menu=document.querySelector('.scene-menu');expect([...menu.querySelectorAll('button')].map(b=>b.textContent.trim())).toEqual(['Downloads','Passage resources','Settings','About & sources']);
+ // Close is the menu's primary, in its sticky footer (more-sheet.md primary slot); the empty header collapses in CSS.
+ const close=document.querySelector('.menu-footer .menu-close.primary');expect(close.textContent).toBe('Close');await fireEvent.click(close);await settle();expect(document.querySelector('.scene-menu')).toBeNull();
+ await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));
+ expect(screen.getByRole('button',{name:/^Language/})).toBeTruthy();expect(screen.getByRole('button',{name:/^Passages/})).toBeTruthy();
+});
+it('the FIA menu dialog is named and returns focus to More when it closes (fb-03 S4)',async()=>{
+ await startAt('S01-U001');const more=screen.getByRole('button',{name:'More options'});
+ await fireEvent.click(more);await settle();
+ // The menu's header is empty and collapsed, so the dialog carries its own name.
+ expect(screen.getByRole('dialog',{name:'More options'}).querySelector('.scene-menu')).toBeTruthy();
+ await fireEvent.click(document.querySelector('.menu-footer .menu-close'));await settle();
+ expect(document.querySelector('.scene-menu')).toBeNull();expect(document.activeElement).toBe(more);
+ // Escape closes it too, with the same return.
+ await fireEvent.click(more);await settle();more.blur();
+ await fireEvent.keyDown(screen.getByRole('dialog',{name:'More options'}),{key:'Escape'});await settle();
+ expect(document.querySelector('.scene-menu')).toBeNull();expect(document.activeElement).toBe(more);
+ // Language and Passages are no longer sheets of their own; only Downloads opens from the menu into the library panel.
+ await fireEvent.click(more);await fireEvent.click(screen.getByRole('button',{name:'Downloads',exact:true}));await settle();
+ expect(screen.getByRole('dialog',{name:'Downloads'}).querySelector('.sheet-back')).toBeTruthy();
+});
+it('every sheet restores focus to the control that opened it (fb-03 follow-ups)',async()=>{
+ await startAt('S01-U001');const opener=screen.getByRole('button',{name:'Session progress: open section overview'});
+ opener.focus();await fireEvent.click(opener);await settle();
+ expect(document.querySelector('.overview-sheet')).toBeTruthy();
+ // showModal moves focus into the dialog; a keyboard user closes from inside it.
+ const close=document.querySelector('.ov-close');close.focus();await fireEvent.click(close);await settle();
+ expect(document.querySelector('.overview-sheet')).toBeNull();expect(document.activeElement).toBe(opener);
+ // A sheet reached through the menu returns to More, the control that opened the sheet stack.
+ const more=screen.getByRole('button',{name:'More options'});more.focus();await fireEvent.click(more);await settle();
+ const settings=screen.getByRole('button',{name:'Settings',exact:true});settings.focus();await fireEvent.click(settings);await settle();
+ expect(document.querySelector('.settings-panel')).toBeTruthy();
+ const closeSettings=screen.getByRole('button',{name:'Close',exact:true});closeSettings.focus();await fireEvent.click(closeSettings);await settle();
+ expect(document.querySelector('.settings-panel')).toBeNull();expect(document.activeElement).toBe(more);
+});
+it('every sheet dialog is named by its heading, or by its label when the header is empty (fb-03 follow-ups)',async()=>{
+ await startAt('S01-U001');const more=screen.getByRole('button',{name:'More options'});
+ for(const [item,name] of [['Downloads','Downloads'],['Passage resources','Explore the passage'],['Settings','Settings'],['About & sources','About this prototype']]){
+  await fireEvent.click(more);await settle();expect(screen.getByRole('dialog',{name:'More options'})).toBeTruthy();
+  await fireEvent.click(screen.getByRole('button',{name:item,exact:true}));await settle();
+  const dialog=screen.getByRole('dialog',{name});expect(dialog.getAttribute('aria-labelledby')).toBe(dialog.querySelector('h2').id);
+  await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));await settle();
+ }
+});
+it('after a forward jump the spine announces nothing done that was skipped, and the caption partitions the stage (review #1, #2, #5)',async()=>{
+ await startAt('S01-U001');await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));
+ await fireEvent.click(screen.getByRole('button',{name:/^Filling the Gaps/}));await settle();
+ const items=[...screen.getByRole('group',{name:'Filling the Gaps items'}).querySelectorAll('.ov-item')];await fireEvent.click(items[2]);await settle();
+ expect(state().completed).toEqual([]);
+ await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));await settle();
+ expect(document.querySelectorAll('.ov-stage.done')).toHaveLength(0);expect(document.querySelectorAll('.ov-stage-check')).toHaveLength(0);
+ for(const row of document.querySelectorAll('.ov-stage-row')){expect(row.getAttribute('aria-label')).not.toMatch(/done/);expect(row.getAttribute('aria-label')).toMatch(/, \d+ items$/);}
+ for(const row of document.querySelectorAll('.ov-stage-row[aria-expanded=false]'))expect(row.hasAttribute('aria-controls')).toBe(false);
+ const open=document.querySelector('.ov-stage-row[aria-expanded=true]');expect(document.getElementById(open.getAttribute('aria-controls'))).toBeTruthy();
+ const n=windowSpan(document.querySelector('.ov-items')),[,done,togo]=document.querySelector('.ov-caption').textContent.match(/^(\d+) done · .+ now · (\d+) to go$/);
+ expect(+done+1+ +togo).toBe(n);expect(+done).toBe(0);
+ // Every stop ahead says "discuss" exactly once before its label: the kind word for a plain discussion, else the stop cue (#225 review).
+ for(const stop of document.querySelectorAll('.ov-item.stop'))expect(stop.querySelector('.sr-only').textContent.split(': ')[0].match(/discuss/g)).toHaveLength(1);
+});
+it('a plain discussion stop is announced "discuss" once, not "discuss, …, stop to discuss" (#225 review)',async()=>{
+ // Hear and Heart's stops are discussion items: their kind word already says discuss, so the stop cue is not repeated.
+ await startAt('S01-U001');await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));await settle();
+ const stops=[...screen.getByRole('group',{name:'Hear and Heart items'}).querySelectorAll('.ov-item.stop')];
+ expect(stops.length,'fixture: Hear and Heart has discussion stops ahead').toBeGreaterThan(0);
+ for(const b of stops){const t=b.querySelector('.sr-only').textContent.split(': ')[0];expect(t).toMatch(/^discuss, \d+ of \d+/);expect(t).not.toContain('stop to discuss');}
+});
+it('a key-term discussion stop in Filling the Gaps wears the amber stop ring (fb-03 lens-dev-8662ef8 Finding 1)',async()=>{
+ // The ring follows the stop, whatever its glyph: a discussion activity with a key-term asset is still a stop.
+ const termStop=activities.find(a=>a.sectionId==='S05'&&a.kind==='discussion'&&assets[a.assetId]?.kind==='term');expect(termStop).toBeTruthy();
+ await startAt('S01-U001');await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));
+ await fireEvent.click(screen.getByRole('button',{name:/^Filling the Gaps/}));await settle();
+ const stage=screen.getByRole('group',{name:'Filling the Gaps items'}).parentElement;
+ const stops=[...stage.querySelectorAll('.ov-item.stop')];
+ const keyStops=stops.filter(b=>/^key term,/.test(b.querySelector('.sr-only').textContent));
+ expect(keyStops.length).toBeGreaterThan(0);
+ for(const b of keyStops)expect(b.querySelector('.sr-only').textContent).toContain('stop to discuss');
+});
+it('the here-card names a key-term discussion stop next as a stop, not by its glyph (fb-03 lens-dev-8662ef8 Finding 1)',async()=>{
+ // The here-card's "then" follows screen.stop, like the spine's ring: a key-term stop reads "then discuss", not "then key term".
+ // Fixture by property: any key-term discussion stop that starts its own screen in the same stage as the item before it.
+ const group=a=>a.readingGroupId||a.id,at=activities.findIndex((a,i)=>i>0&&a.kind==='discussion'&&assets[a.assetId]?.kind==='term'&&activities[i-1].sectionId===a.sectionId&&group(activities[i-1])!==group(a));
+ expect(at,'fixture: no key-term discussion stop follows another item in its stage').toBeGreaterThan(0);
+ await startAt(activities[at-1].id);await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));await settle();
+ const then=screen.getByRole('region',{name:'You are here'}).querySelector('.ov-then');
+ expect(then.textContent.replace(/\s+/g,' ').trim()).toBe('· then discuss');
+ // The glyph is the spine's glyph for that circle — the key — tinted as a stop, like the spine's ring (#222 re-review).
+ expect(then.querySelector('svg').getAttribute('class')).toMatch(/lucide-key/);expect(then.querySelector('svg').getAttribute('class')).not.toMatch(/lucide-users/);
+ expect(then.classList.contains('stop')).toBe(true);
+ // The spine circle for the same next item (index `at`, the one after the current circle) is the ringed key.
+ // Selected explicitly (current circle's position + 1 in its stage), so a window edge fails as an assertion, not a TypeError.
+ const circles=[...screen.getByRole('group',{name:`${sections.find(s=>s.id===activities[at].sectionId).title} items`}).querySelectorAll('.ov-item')];
+ const now=circles.findIndex(b=>b.getAttribute('aria-current')==='step');expect(now,'the current circle is in the window').toBeGreaterThanOrEqual(0);
+ const circle=circles[now+1];expect(circle,'the next circle is in the same window').toBeTruthy();
+ expect(circle.querySelector('.sr-only').textContent).toContain(', stop to discuss');expect(circle.classList.contains('stop')).toBe(true);
+ expect(circle.querySelector('svg').getAttribute('class')).toMatch(/lucide-key/);
+});
+it('the here-card names a completed key-term stop next by its kind, with the key glyph and no stop tint, like the spine (#222 re-review)',async()=>{
+ const group=a=>a.readingGroupId||a.id,at=activities.findIndex((a,i)=>i>0&&a.kind==='discussion'&&assets[a.assetId]?.kind==='term'&&activities[i-1].sectionId===a.sectionId&&group(activities[i-1])!==group(a));
+ expect(at,'fixture: no key-term discussion stop follows another item in its stage').toBeGreaterThan(0);
+ // Revisit: the stop (its whole screen) is done; the learner is back on the item before it.
+ await startAt(activities[at-1].id,'ready',{},{completed:activities.filter(a=>group(a)===group(activities[at])).map(a=>a.id)});
+ await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));await settle();
+ const then=screen.getByRole('region',{name:'You are here'}).querySelector('.ov-then');
+ expect(then.textContent.replace(/\s+/g,' ').trim()).toBe('· then key term');
+ expect(then.querySelector('svg').getAttribute('class')).toMatch(/lucide-key/);expect(then.classList.contains('stop')).toBe(false);
+});
+it('on a key-term discussion stop the caption and the here-card both read "discuss now", like the release note (#223 re-review)',async()=>{
+ // One stop rule (progress.js shownKind): a stop not yet done reads "discuss", whatever its glyph — the caption's now word
+ // (`7 done · discuss now · 3 to go`, cookbook overview-sheet.md § Proposed composition) and the here-card's "Now:" alike.
+ const term=activities.find(a=>a.kind==='discussion'&&assets[a.assetId]?.kind==='term');expect(term,'fixture: a key-term discussion stop').toBeTruthy();
+ await startAt(term.id);await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));await settle();
+ const stage=screen.getByRole('group',{name:`${sections.find(s=>s.id===term.sectionId).title} items`}).parentElement;
+ expect(stage.querySelector('.ov-item.current .sr-only').textContent).toMatch(/^key term,/);
+ // The circle you are on is still a stop for assistive tech (#224 review): ", stop to discuss", with no amber ring (that marks a stop ahead).
+ expect(stage.querySelector('.ov-item.current .sr-only').textContent).toContain(', stop to discuss');expect(stage.querySelector('.ov-item.current').classList.contains('stop')).toBe(false);
+ expect(stage.querySelector('.ov-caption').textContent).toMatch(/^\d+ done · discuss now · \d+ to go$/);
+ expect(screen.getByRole('region',{name:'You are here'}).querySelector('.ov-next b').textContent).toBe('discuss');
+});
+it('a long stage shows a window of 12 circles around the current item, and the end words scroll it',async()=>{
+ // cookbook overview-sheet.md § Long stages — the circle row is a window (captain 2026-10-09 23:20 ET "build it, then show it").
+ await startAt('S05-U020');await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));
+ const stage=screen.getByRole('group',{name:'Filling the Gaps items'}).parentElement;
+ const sectionId=activities.find(a=>a.id==='S05-U020').sectionId;const n=new Set(activities.filter(a=>a.sectionId===sectionId).map(a=>a.readingGroupId||a.id)).size;expect(n).toBeGreaterThan(12);
+ const items=()=>[...stage.querySelectorAll('.ov-item')],pos=b=>+b.querySelector('.sr-only').textContent.match(/, (\d+) of/)[1];
+ // Twelve circles, numbered through the whole stage, with the current one near the middle; the caption still counts the whole stage.
+ expect(items()).toHaveLength(12);expect(windowSpan(stage)).toBe(n);
+ const current=items().findIndex(b=>b.classList.contains('current'));expect(current).toBeGreaterThanOrEqual(4);expect(current).toBeLessThanOrEqual(6);
+ const [,done,togo]=stage.querySelector('.ov-caption').textContent.match(/^(\d+) done · .+ now · (\d+) to go$/);expect(+done+1+ +togo).toBe(n);
+ const earlier=stage.querySelector('.ov-earlier'),later=stage.querySelector('.ov-later');
+ expect(earlier.textContent.trim()).toBe(`${pos(items()[0])-1} earlier`);expect(later.textContent.trim()).toBe(`${n-pos(items().at(-1))} more`);
+ // `n more ›` scrolls forward one page; `‹ n earlier` back to the start, where the earlier word is gone and the first circle is item 1.
+ const firstBefore=pos(items()[0]);await fireEvent.click(later);await settle();
+ expect(pos(items()[0])).toBe(Math.min(firstBefore+12,n-11));expect(items()).toHaveLength(12);
+ for(let page=0;page<6&&stage.querySelector('.ov-earlier');page++){await fireEvent.click(stage.querySelector('.ov-earlier'));await settle();}
+ expect(pos(items()[0])).toBe(1);expect(stage.querySelector('.ov-earlier')).toBeNull();expect(stage.querySelector('.ov-later').textContent.trim()).toBe(`${n-12} more`);
+ // The here-card and the other rows are untouched; a short stage shows every circle and no window words.
+ expect(screen.getByRole('region',{name:'You are here'}).textContent).toContain('Filling the Gaps');
+ await fireEvent.click(screen.getByRole('button',{name:/^Speaking the Word/}));await settle();
+ const short=screen.getByRole('group',{name:'Speaking the Word items'}).parentElement;expect(short.querySelectorAll('.ov-item').length).toBeLessThanOrEqual(12);expect(short.querySelector('.ov-window')).toBeNull();
+});
+it('focus follows the overview picker when Language swaps to Passages (review #9)',async()=>{
+ vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',nativeName:'English',ready:1}]);vi.spyOn(libraryAdapter,'passages').mockResolvedValue([bundledPack]);
+ await startAt('S01-U001');await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));
+ await fireEvent.click(screen.getByRole('button',{name:/^Language/}));await settle();
+ const browse=await screen.findByRole('button',{name:/Browse passages/});browse.focus();await fireEvent.click(browse);await settle();
+ const passages=screen.getByRole('button',{name:/^Passages/});expect(passages.getAttribute('aria-expanded')).toBe('true');expect(document.activeElement).toBe(passages);
+});
+it('the spine shows each stage on tap and jumps directly to a chosen image without a section detour',async()=>{
  await startAt('S01-U003');await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));
- expect(document.querySelectorAll('.progress-map-item')).toHaveLength(111);
  expect(document.querySelector('dialog.glass-sheet')).toBeTruthy();
- for(const title of ['Hear and Heart','Setting the Stage','Defining the Scenes','Embodying the Text','Filling the Gaps','Speaking the Word'])expect(screen.getByRole('heading',{name:title})).toBeTruthy();
- const image=document.querySelector('.progress-map-item img');
- const button=image.closest('button');const label=button.getAttribute('aria-label');
+ const titles=['Hear and Heart','Setting the Stage','Defining the Scenes','Embodying the Text','Filling the Gaps','Speaking the Word'];
+ for(const title of titles){const row=screen.getByRole('button',{name:new RegExp('^'+title)});if(row.getAttribute('aria-expanded')!=='true')await fireEvent.click(row);}
+ // Every stage is open; long stages show a 12-circle window, so the windows plus their end counts cover all 111 items.
+ await settle();expect([...document.querySelectorAll('.ov-items')].reduce((sum,el)=>sum+windowSpan(el),0)).toBe(111);
+ for(const item of document.querySelectorAll('.ov-item')){expect(item.querySelector('svg')).toBeTruthy();expect(item.querySelector('.sr-only').textContent.length).toBeGreaterThan(0);}
+ // The picture may sit past the window; `n more ›` scrolls the window until it shows.
+ let button;for(let page=0;page<4&&!button;page++){button=[...screen.getByRole('group',{name:'Setting the Stage items'}).querySelectorAll('.ov-item')].find(b=>/^picture,/.test(b.querySelector('.sr-only').textContent));if(!button){await fireEvent.click(screen.getByRole('group',{name:'Setting the Stage items'}).parentElement.querySelector('.ov-later'));await settle();}}
  await fireEvent.click(button);await settle();
  expect(screen.queryByRole('region',{name:'New section'})).toBeNull();
  expect(document.querySelector('.section-transition')).toBeNull();
  expect(activities[state().index].assetId).toBeTruthy();
  expect(state().completed).toEqual([]);expect(players).toHaveLength(0);
- expect(label).toContain('Setting the Stage');
  expect(screen.getByRole('button',{name:/^Open .* full screen$/})).toBeTruthy();
 });
 
@@ -350,7 +567,7 @@ it.each(activities.filter(a=>assets[a.assetId]?.kind==='term'&&a.audioSrc).map(a
  await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));await settle();expect(activities[state().index].id).not.toBe(id);
 });
 it('restores a term definition without replaying its instruction and returns to the instruction on revisit',async()=>{
- await startAt('S05-U004','waiting');
+ await startAt('S05-U004');await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();players.at(-1).end();await settle();
  await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));await settle();cleanup();render(App);await settle();
  expect(screen.getByRole('region',{name:'Guide text'}).textContent).toContain(assets['eng-t60-v1'].description);
  await fireEvent.click(screen.getByRole('button',{name:'Skip to next activity'}));await fireEvent.click(screen.getByRole('button',{name:'Previous activity'}));await settle();
@@ -450,7 +667,7 @@ it('phone rotation makes visuals immersive without remounting the playing video'
  const prior=window.matchMedia;window.matchMedia=vi.fn(()=>query);
  try{
  await startAt('S02-U005');await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();
- const video=document.querySelector('video');video.currentTime=15;
+ const video=document.querySelector('video');video.currentTime=15;await easyIdle();
  query.matches=true;rotate();await settle();expect(document.querySelector('main').classList.contains('immersive')).toBe(true);
  expect(document.querySelector('video')).toBe(video);expect(video.currentTime).toBe(15);
  await fireEvent.click(screen.getByRole('button',{name:'Pause video',exact:true}));await settle();
@@ -466,16 +683,16 @@ it('manual listening keeps Continue central and supports play pause resume and r
  expect(screen.getByRole('button',{name:'Continue',exact:true}).classList.contains('guide-primary')).toBe(true);
  await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();const audio=players.at(-1);audio.currentTime=5;
  await fireEvent.click(screen.getByRole('button',{name:'Pause',exact:true}));await settle();
- await fireEvent.click(screen.getByRole('button',{name:'Resume',exact:true}));await settle();expect(players.at(-1)).toBe(audio);expect(audio.currentTime).toBe(5);
+ await fireEvent.click(screen.getByRole('button',{name:'Resume',exact:true}));await settle();expect(players).toHaveLength(1);expect(players.at(-1)).toBe(audio);expect(audio.currentTime).toBe(5);
  audio.end();await settle();expect(activities[state().index].id).toBe('S02-U004');
- await fireEvent.click(screen.getByRole('button',{name:'Replay',exact:true}));await settle();expect(players.at(-1)).not.toBe(audio);
+ await fireEvent.click(screen.getByRole('button',{name:'Replay',exact:true}));await settle();expect(players).toHaveLength(2);
  await fireEvent.click(screen.getByRole('button',{name:'Continue',exact:true}));await settle();expect(activities[state().index].id).not.toBe('S02-U004');expect(players.at(-1).paused).toBe(true);
 });
 
 it('shows both language counts without changing the active saved place',async()=>{
  vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',nativeName:'English',ready:68},{id:'spa',nativeName:'Español',ready:68}]);
  vi.spyOn(libraryAdapter,'passages').mockResolvedValue([]);
- await startAt('S03-U007','waiting');await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:/^Language/}));await settle();
+ await startAt('S03-U007','waiting');await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));await fireEvent.click(screen.getByRole('button',{name:/^Language/}));await settle();
  expect(screen.getByRole('button',{name:/English.*68 passages with text available/})).toBeTruthy();await fireEvent.click(screen.getByRole('button',{name:/Español/}));await settle();
  expect(screen.queryByText(/No Spanish passage is ready/)).toBeNull();expect(activities[state().index].id).toBe('S03-U007');expect(players).toHaveLength(0);
 });
@@ -630,4 +847,208 @@ it('offline saved focal image remains available without requesting media',async(
 });
 it('online unprepared visual does not falsely promise a download can prepare it',async()=>{
  vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:null,files:[]});await startAt('S02-U005');expect(screen.getByText(/not available online yet/)).toBeTruthy();expect(screen.queryByRole('button',{name:'Open Downloads',exact:true})).toBeNull();
+});
+// S3 phase 1 (H1): the page's request comes from its last media snapshot; the service worker re-chooses on every play.
+it('C1: video plays the service worker choice when a sized download committed after the snapshot, and refreshes the snapshot',async()=>{
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});const path=assets.a184.src;
+ const status=vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[{path,bytes:3,sha256:'pin',group:'video'}],savedFiles:[]});
+ const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(5).buffer,mime:'video/mp4',timing:{status:'not-applicable'},file:{path,sha256:'receipt',bytes:5}});
+ vi.stubGlobal('URL',class extends URL{static createObjectURL(){return 'blob:served-video';}static revokeObjectURL(){}});
+ const info=vi.spyOn(console,'info').mockImplementation(()=>{});
+ await startAt('S02-U005','waiting');
+ await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passage resources'}));
+ await fireEvent.click(within(screen.getByText('Videos',{selector:'summary'}).parentElement).getByRole('button',{name:assets.a184.subtitle||assets.a184.title,exact:true}));await settle();
+ const before=status.mock.calls.length;
+ await fireEvent.click(screen.getByRole('button',{name:'Play video',exact:true}));await settle();await settle();await settle();
+ expect(request).toHaveBeenCalledTimes(1);expect(document.querySelector('video').getAttribute('src')).toBe('blob:served-video');expect(HTMLMediaElement.prototype.play).toHaveBeenCalled();
+ expect(document.body.textContent).not.toMatch(/mismatch|can’t play right now/);
+ expect(status.mock.calls.length).toBe(before+1);
+ expect(info).toHaveBeenCalledWith('[fia.media]',expect.objectContaining({event:'video-served',path,requested:{sha256:'pin',bytes:3},served:{sha256:'receipt',bytes:5}}));
+});
+it('C3: a Downloads status report refreshes the page media snapshot',async()=>{
+ const status=vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[],savedFiles:[]});
+ await startAt('S02-U005');const before=status.mock.calls.length;
+ await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Downloads',exact:true}));await settle();await settle();await settle();
+ await waitFor(()=>expect(status.mock.calls.length).toBeGreaterThan(before));
+});
+// S3 phase 1 review (#180): after a failed offline refresh, reconnecting refreshes the media snapshot and video plays.
+// The 'online' handler's refresh restores the snapshot either way, so this does not isolate the keep-on-failure branch of updateMedia.
+it('B1: after an offline Downloads refresh that cannot read the media revision, reconnecting refreshes the snapshot and video plays the current revision',async()=>{
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});const path=assets.a184.src,pin={path,bytes:3,sha256:'pin',group:'video'};
+ const status=vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[pin],savedFiles:[]});
+ const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(3).buffer,mime:'video/mp4',timing:{status:'not-applicable'},file:{path,sha256:'pin',bytes:3}});
+ vi.stubGlobal('URL',class extends URL{static createObjectURL(){return 'blob:v';}static revokeObjectURL(){}});
+ const connected=vi.spyOn(navigator,'onLine','get').mockReturnValue(true);
+ await startAt('S02-U005','waiting');
+ // Offline with nothing saved: the SW's MEDIA_STATUS fails ("The media revision is unavailable."), DOWNLOAD_STATUS still answers.
+ connected.mockReturnValue(false);window.dispatchEvent(new Event('offline'));await settle();
+ status.mockRejectedValueOnce(Error('The media revision is unavailable.'));const before=status.mock.calls.length;
+ await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Downloads',exact:true}));
+ await waitFor(()=>expect(status.mock.calls.length).toBe(before+1));await settle();await settle();
+ await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));await settle();
+ connected.mockReturnValue(true);window.dispatchEvent(new Event('online'));await settle();await settle();await settle();
+ await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passage resources'}));
+ await fireEvent.click(within(screen.getByText('Videos',{selector:'summary'}).parentElement).getByRole('button',{name:assets.a184.subtitle||assets.a184.title,exact:true}));await settle();
+ await fireEvent.click(screen.getByRole('button',{name:'Play video',exact:true}));await settle();await settle();await settle();
+ expect(request).toHaveBeenCalledTimes(1);expect(request.mock.calls[0][2]).toBe('d'.repeat(64));expect(document.querySelector('video').getAttribute('src')).toBe('blob:v');
+ expect(document.body.textContent).not.toMatch(/Download this resource before playback|has not been downloaded/);
+});
+// #180 keep-on-failure branch of updateMedia(keep): a mid-session refresh that fails keeps the last good snapshot. Online
+// throughout, so no reconnect refresh can restore it: only the kept snapshot lets the video play the pinned revision.
+it('updateMedia keep-on-failure: a failed Downloads refresh keeps the last good media snapshot, so video still plays the current revision',async()=>{
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});const path=assets.a184.src,current='d'.repeat(64);
+ const status=vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:current,files:[{path,bytes:3,sha256:'pin',group:'video'}],savedFiles:[]});
+ const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(3).buffer,mime:'video/mp4',timing:{status:'not-applicable'},file:{path,sha256:'pin',bytes:3}});
+ vi.stubGlobal('URL',class extends URL{static createObjectURL(){return 'blob:v';}static revokeObjectURL(){}});
+ vi.spyOn(navigator,'onLine','get').mockReturnValue(true);
+ await startAt('S02-U005','waiting');
+ // A non-transient failure: without keep, updateMedia would clear the snapshot and the revision.
+ status.mockRejectedValueOnce(Error('The media revision is unavailable.'));const before=status.mock.calls.length;
+ await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Downloads',exact:true}));
+ await waitFor(()=>expect(status.mock.calls.length).toBe(before+1));await settle();await settle();
+ await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));await settle();
+ const after=status.mock.calls.length;
+ await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passage resources'}));
+ await fireEvent.click(within(screen.getByText('Videos',{selector:'summary'}).parentElement).getByRole('button',{name:assets.a184.subtitle||assets.a184.title,exact:true}));await settle();
+ await fireEvent.click(screen.getByRole('button',{name:'Play video',exact:true}));await settle();await settle();await settle();
+ expect(status.mock.calls.length,'no refresh between the failure and play').toBe(after);
+ expect(request).toHaveBeenCalledTimes(1);expect(request.mock.calls[0][2]).toBe(current);expect(document.querySelector('video').getAttribute('src')).toBe('blob:v');
+ expect(document.body.textContent).not.toMatch(/Download this resource before playback|has not been downloaded/);
+});
+it('B1: reconnecting refreshes a snapshot adopted offline from an older saved revision, so video plays the current revision',async()=>{
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});const path=assets.a184.src,current='d'.repeat(64),older='e'.repeat(64);
+ const status=vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:current,files:[{path,bytes:3,sha256:'pin',group:'video'}],savedFiles:[]});
+ const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(3).buffer,mime:'video/mp4',timing:{status:'not-applicable'},file:{path,sha256:'pin',bytes:3}});
+ vi.stubGlobal('URL',class extends URL{static createObjectURL(){return 'blob:v';}static revokeObjectURL(){}});
+ const connected=vi.spyOn(navigator,'onLine','get').mockReturnValue(true);
+ await startAt('S02-U005','waiting');
+ // Offline with an older saved download: the SW answers MEDIA_STATUS from the saved (older) manifest.
+ connected.mockReturnValue(false);window.dispatchEvent(new Event('offline'));await settle();
+ status.mockResolvedValueOnce({deliveryRevision:older,files:[{path,bytes:4,sha256:'old',group:'video'}],savedFiles:[{path,bytes:4,sha256:'old',group:'video'}]});const before=status.mock.calls.length;
+ await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Downloads',exact:true}));
+ await waitFor(()=>expect(status.mock.calls.length).toBe(before+1));await settle();await settle();
+ await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));await settle();
+ connected.mockReturnValue(true);window.dispatchEvent(new Event('online'));await settle();await settle();await settle();
+ await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passage resources'}));
+ await fireEvent.click(within(screen.getByText('Videos',{selector:'summary'}).parentElement).getByRole('button',{name:assets.a184.subtitle||assets.a184.title,exact:true}));await settle();
+ await fireEvent.click(screen.getByRole('button',{name:'Play video',exact:true}));await settle();await settle();await settle();
+ expect(request).toHaveBeenCalledTimes(1);expect(request.mock.calls[0][2]).toBe(current);expect(document.querySelector('video').getAttribute('src')).toBe('blob:v');
+});
+// S3 phase 1 review (Bugbot, second half): a delivery revision change found while a video plays must not stop, blank or
+// revoke it. The snapshot moves on at once; the old video is released only when it ends or is closed.
+async function openVideo(id){await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passage resources'}));await fireEvent.click(within(screen.getByText('Videos',{selector:'summary'}).parentElement).getByRole('button',{name:assets[id].subtitle||assets[id].title,exact:true}));await settle();await fireEvent.click(screen.getByRole('button',{name:'Play video',exact:true}));await settle();await settle();await settle();}
+async function openDownloads(status,before){await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Downloads',exact:true}));await waitFor(()=>expect(status.mock.calls.length).toBe(before+1));await settle();await settle();await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));await settle();}
+function blobs(){let n=0;const revoke=vi.fn();vi.stubGlobal('URL',class extends URL{static createObjectURL(){return `blob:v${++n}`;}static revokeObjectURL=revoke;});return revoke;}
+function keepsPlaying(video,src,revoke,pauses){expect(document.querySelector('video')).toBe(video);expect(video.getAttribute('src')).toBe(src);expect(HTMLMediaElement.prototype.pause.mock.calls.length).toBe(pauses);expect(revoke).not.toHaveBeenCalledWith(src);expect(document.body.textContent).not.toMatch(/Download this resource before playback|available to play online|can’t play right now/);}
+it('S3 revision skew: reconnecting to a newer delivery revision keeps the saved video playing, and the next play after it ends uses the new revision',async()=>{
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});const path=assets.a184.src,current='d'.repeat(64),older='e'.repeat(64),saved={path,bytes:4,sha256:'old',group:'video'};
+ const status=vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:current,files:[{path,bytes:3,sha256:'pin',group:'video'}],savedFiles:[]});
+ const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValueOnce({bytes:new Uint8Array(4).buffer,mime:'video/mp4',timing:{status:'not-applicable'},file:saved}).mockResolvedValue({bytes:new Uint8Array(3).buffer,mime:'video/mp4',timing:{status:'not-applicable'},file:{path,sha256:'pin',bytes:3}});
+ const revoke=blobs(),connected=vi.spyOn(navigator,'onLine','get').mockReturnValue(true);
+ await startAt('S02-U005','waiting');
+ // Offline, the SW answers MEDIA_STATUS from the older saved download, and the user plays that saved video.
+ connected.mockReturnValue(false);window.dispatchEvent(new Event('offline'));await settle();
+ status.mockResolvedValueOnce({deliveryRevision:older,files:[saved],savedFiles:[saved]});await openDownloads(status,status.mock.calls.length);
+ await openVideo('a184');expect(request).toHaveBeenCalledTimes(1);expect(request.mock.calls[0][2]).toBe(older);
+ const video=document.querySelector('video'),pauses=HTMLMediaElement.prototype.pause.mock.calls.length;expect(video.getAttribute('src')).toBe('blob:v1');
+ // The connection returns while it plays: the refresh finds the current revision.
+ const before=status.mock.calls.length;connected.mockReturnValue(true);window.dispatchEvent(new Event('online'));
+ await waitFor(()=>expect(status.mock.calls.length).toBe(before+1));await settle();await settle();await settle();
+ keepsPlaying(video,'blob:v1',revoke,pauses);
+ await fireEvent(video,new Event('ended'));await settle();await settle();
+ await openVideo('a184');expect(request).toHaveBeenCalledTimes(2);expect(request.mock.calls[1][2]).toBe(current);expect(document.querySelector('video').getAttribute('src')).toBe('blob:v2');
+});
+it('S3 revision skew: a Downloads status report with a newer delivery revision keeps the playing video, and the next play after it ends uses the new revision',async()=>{
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});const path=assets.a184.src,first='d'.repeat(64),next='f'.repeat(64);
+ const status=vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:first,files:[{path,bytes:3,sha256:'pin',group:'video'}],savedFiles:[]});
+ const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(3).buffer,mime:'video/mp4',timing:{status:'not-applicable'},file:{path,sha256:'pin',bytes:3}});
+ const revoke=blobs();await startAt('S02-U005','waiting');
+ await openVideo('a184');expect(request).toHaveBeenCalledTimes(1);expect(request.mock.calls[0][2]).toBe(first);
+ const video=document.querySelector('video'),pauses=HTMLMediaElement.prototype.pause.mock.calls.length;expect(video.getAttribute('src')).toBe('blob:v1');expect(HTMLMediaElement.prototype.play).toHaveBeenCalled();
+ // A new deploy is live; opening Downloads (status report) refreshes the snapshot while the video plays.
+ status.mockResolvedValue({deliveryRevision:next,files:[{path,bytes:3,sha256:'pin',group:'video'}],savedFiles:[]});await openDownloads(status,status.mock.calls.length);await settle();
+ keepsPlaying(video,'blob:v1',revoke,pauses);
+ await fireEvent(video,new Event('ended'));await settle();await settle();
+ await openVideo('a184');expect(request).toHaveBeenCalledTimes(2);expect(request.mock.calls[1][2]).toBe(next);expect(document.querySelector('video').getAttribute('src')).toBe('blob:v2');
+});
+it('S3 revision skew: a served-identity refresh that finds a newer delivery revision keeps the just-started video',async()=>{
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});const path=assets.a184.src,first='d'.repeat(64),next='f'.repeat(64);
+ const status=vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:first,files:[{path,bytes:3,sha256:'pin',group:'video'}],savedFiles:[]});
+ const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(5).buffer,mime:'video/mp4',timing:{status:'not-applicable'},file:{path,sha256:'receipt',bytes:5}});
+ vi.spyOn(console,'info').mockImplementation(()=>{});const revoke=blobs();await startAt('S02-U005','waiting');
+ // The SW serves another identity (videoChanged refreshes the snapshot), and the refresh finds a newer revision.
+ status.mockResolvedValue({deliveryRevision:next,files:[{path,bytes:5,sha256:'receipt',group:'video'}],savedFiles:[]});const before=status.mock.calls.length;
+ await openVideo('a184');await waitFor(()=>expect(status.mock.calls.length).toBe(before+1));await settle();await settle();
+ const video=document.querySelector('video');expect(request).toHaveBeenCalledTimes(1);expect(video?.getAttribute('src')).toBe('blob:v1');expect(HTMLMediaElement.prototype.play).toHaveBeenCalled();
+ keepsPlaying(video,'blob:v1',revoke,HTMLMediaElement.prototype.pause.mock.calls.length);
+ await fireEvent(video,new Event('ended'));await settle();await settle();
+ await openVideo('a184');expect(request).toHaveBeenCalledTimes(2);expect(request.mock.calls[1][2]).toBe(next);
+});
+it('S3 revision skew: a companion video keeps playing across a revision change and is released when it ends, so Replay fetches the new revision',async()=>{
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});const path=assets.a13.src,first='d'.repeat(64),next='f'.repeat(64);
+ const status=vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:first,files:[{path,bytes:3,sha256:'pin',group:'video'}],savedFiles:[]});
+ const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(3).buffer,mime:'video/mp4',timing:{status:'not-applicable'},file:{path,sha256:'pin',bytes:3}});
+ const revoke=blobs();await startAt('S02-U005','waiting');
+ await fireEvent.click(screen.getByRole('button',{name:'Play video',exact:true}));await settle();await settle();await settle();await settle();
+ const video=document.querySelector('video'),pauses=HTMLMediaElement.prototype.pause.mock.calls.length;expect(request).toHaveBeenCalledTimes(1);expect(request.mock.calls[0][1]).toBe(path);expect(video.getAttribute('src')).toBe('blob:v1');
+ status.mockResolvedValue({deliveryRevision:next,files:[{path,bytes:3,sha256:'pin',group:'video'}],savedFiles:[]});await openDownloads(status,status.mock.calls.length);await settle();
+ keepsPlaying(video,'blob:v1',revoke,pauses);
+ await fireEvent(video,new Event('ended'));await settle();await settle();expect(revoke).toHaveBeenCalledWith('blob:v1');
+ await fireEvent.click(screen.getByRole('button',{name:'Replay',exact:true}));await settle();await settle();await settle();await settle();
+ expect(request).toHaveBeenCalledTimes(2);expect(request.mock.calls[1][2]).toBe(next);expect(document.querySelector('video').getAttribute('src')).toBe('blob:v2');
+});
+// S3 phase 1 review (Bugbot, after the main merge): main clears the snapshot on a non-transient refresh failure at its own call
+// sites (mount, worker registration, passage selection). The three mid-session refreshes this lane added (Downloads status report,
+// served-identity change, reconnect) keep the last good snapshot on any failure: a refresh never makes a playable video unplayable.
+function statusFails(status,code){status.mockRejectedValueOnce(Object.assign(Error('The media revision is unavailable.'),code?{code}:{}));return status.mock.calls.length;}
+function pinned(file={path:assets.a184.src,sha256:'pin',bytes:3}){vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});const status=vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[{path:assets.a184.src,bytes:3,sha256:'pin',group:'video'}],savedFiles:[]});const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(file.bytes).buffer,mime:'video/mp4',timing:{status:'not-applicable'},file});return {status,request,revoke:blobs()};}
+function playsAtOnce(request,calls,src){expect(request).toHaveBeenCalledTimes(calls);expect(request.mock.calls.at(-1)[2]).toBe('d'.repeat(64));expect(document.querySelector('video').getAttribute('src')).toBe(src);expect(HTMLMediaElement.prototype.play).toHaveBeenCalled();expect(document.body.textContent).not.toMatch(/Download this resource before playback|available to play online|not available online yet|can’t play right now/);}
+it.each([['media-status-invalid','media-status-invalid'],['no code',undefined]])('S3 keep: a Downloads status refresh that fails (%s) keeps the snapshot, so the video plays at once with the previous revision',async(_,code)=>{
+ const {status,request}=pinned();await startAt('S02-U005','waiting');
+ await openDownloads(status,statusFails(status,code));
+ await openVideo('a184');playsAtOnce(request,1,'blob:v1');
+});
+it('S3 keep: a served-identity refresh that fails invalid keeps the snapshot, so the next play works',async()=>{
+ const {status,request}=pinned({path:assets.a184.src,sha256:'receipt',bytes:5});vi.spyOn(console,'info').mockImplementation(()=>{});await startAt('S02-U005','waiting');
+ // The SW serves another identity (videoChanged refreshes the snapshot), and the refresh fails: its manifest no longer matches.
+ const before=statusFails(status,'media-status-invalid');await openVideo('a184');await waitFor(()=>expect(status.mock.calls.length).toBe(before+1));await settle();await settle();
+ playsAtOnce(request,1,'blob:v1');
+ await fireEvent(document.querySelector('video'),new Event('ended'));await settle();await settle();
+ await openVideo('a184');playsAtOnce(request,2,'blob:v2');
+});
+it('S3 keep: a reconnect refresh that fails invalid keeps the snapshot, so the video plays at once with the previous revision',async()=>{
+ const {status,request}=pinned(),connected=vi.spyOn(navigator,'onLine','get').mockReturnValue(true);await startAt('S02-U005','waiting');
+ connected.mockReturnValue(false);window.dispatchEvent(new Event('offline'));await settle();
+ const before=statusFails(status,'media-status-invalid');connected.mockReturnValue(true);window.dispatchEvent(new Event('online'));
+ await waitFor(()=>expect(status.mock.calls.length).toBe(before+1));await settle();await settle();
+ await openVideo('a184');playsAtOnce(request,1,'blob:v1');
+});
+
+it.each(['content-drift','revision-changed'])('video %s displays an update notice without replacing the playing video',async(kind)=>{
+ const path=assets.a13.src;vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});
+ const status=vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[{path,bytes:3,group:'video'}]});
+ vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(3).buffer,mime:'video/mp4',notes:[{kind}]});
+ vi.stubGlobal('URL',class extends URL{static createObjectURL(){return 'blob:updated-video';}static revokeObjectURL(){}});
+ await startAt('S02-U005','waiting');const count=status.mock.calls.length;
+ await fireEvent.click(screen.getByRole('button',{name:'Play video',exact:true}));await settle();await settle();await settle();
+ expect(document.querySelector('video')?.getAttribute('src')).toBe('blob:updated-video');expect(screen.getByText('Update available. This video still plays.')).toBeTruthy();expect(screen.getByRole('button',{name:'Reload',exact:true})).toBeTruthy();
+ if(kind==='revision-changed')expect(status.mock.calls.length).toBe(count);
+ await fireEvent.click(screen.getByRole('button',{name:'Dismiss notice'}));expect(screen.queryByText('Update available. This video still plays.')).toBeNull();expect(document.querySelector('video')?.getAttribute('src')).toBe('blob:updated-video');
+});
+it.each(['content-drift','revision-changed'])('video %s update notice ends when leaving its activity',async(kind)=>{
+ const path=assets.a13.src;vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});
+ vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[{path,bytes:3,group:'video'}]});
+ vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(3).buffer,mime:'video/mp4',notes:[{kind}]});
+ vi.stubGlobal('URL',class extends URL{static createObjectURL(){return 'blob:scoped-video';}static revokeObjectURL(){}});
+ await startAt('S02-U005','waiting');await fireEvent.click(screen.getByRole('button',{name:'Play video',exact:true}));await settle();await settle();await settle();
+ expect(screen.getByText('Update available. This video still plays.')).toBeTruthy();
+ await fireEvent.click(screen.getByRole('button',{name:'Skip to next activity'}));await settle();await settle();
+ expect(activities[state().index].id).not.toBe('S02-U005');expect(screen.queryByText('Update available. This video still plays.')).toBeNull();expect(screen.queryByRole('button',{name:'Reload',exact:true})).toBeNull();
+});
+it('missing selected video size plays the default and explains the fallback',async()=>{
+ const path=assets.a13.src,file={path,bytes:3,group:'video'};localStorage.setItem('fia-streaming-video-size','small');
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[{...file,defaultSize:'large',variants:{large:file}}]});
+ const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(3).buffer,mime:'video/mp4'});vi.stubGlobal('URL',class extends URL{static createObjectURL(){return 'blob:default-video';}static revokeObjectURL(){}});
+ await startAt('S02-U005','waiting');await fireEvent.click(screen.getByRole('button',{name:'Play video',exact:true}));await settle();await settle();await settle();
+ expect(document.querySelector('video')?.getAttribute('src')).toBe('blob:default-video');expect(screen.getByText('Small isn’t ready for this video yet. Playing Large instead.')).toBeTruthy();expect(request.mock.calls[0][4]).toBe('large');
 });

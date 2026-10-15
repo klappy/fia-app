@@ -2,7 +2,8 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {projectPreparationAvailability} from '../build/preparation-availability.js';
-import {guideRecordingAvailability,hasGuidePreparation} from '../src/lib/recording-availability.js';
+import {projectScripturePassageBindings,scripturePassageBindingsDefinition} from '../build/scripture-passage-availability.js';
+import {guideRecordingAvailability,hasGuidePreparation,declaresScripturePassage} from '../src/lib/recording-availability.js';
 const catalog=JSON.parse(readFileSync(new URL('../../../server/fia/preparation/catalog.json',import.meta.url),'utf8'));
 const registry=JSON.parse(readFileSync(new URL('../public/content/registry.json',import.meta.url),'utf8'));
 const pack=registry.packs.find(p=>p.id==='eng.MRK-1-14-20');
@@ -33,4 +34,20 @@ test('automatic preparation matches the exact accepted activity and source hash'
  const rows=projectPreparationAvailability(catalog),activity=rows[0].activities[0];
  assert.equal(hasGuidePreparation(pack,activity,rows),true);
  for(const change of [{activityId:'S02-U001'},{sourceUnitId:'other'},{sourceTextSha256:'f'.repeat(64)}])assert.equal(hasGuidePreparation(pack,{...activity,...change},rows),false);
+});
+
+// B1-bis (review of #201): the packaged passage-only Scripture binding is declared by the build, by ids only.
+test('the packaged passage-only Scripture binding is projected by pack, presentation revision and reading',()=>{
+ const rows=JSON.parse(scripturePassageBindingsDefinition());
+ assert.deepEqual(rows,[{packId:'eng.MRK-1-14-20',presentationRevision:pack.revision,assetId:'scripture-BereanStandardBible'}]);
+ assert.equal(declaresScripturePassage(pack,'scripture-BereanStandardBible',rows),true);
+ for(const [p,asset] of [[pack,'scripture-unfoldingWordLiteral'],[{...pack,revision:'f'.repeat(64)},'scripture-BereanStandardBible'],[registry.packs.find(p=>p.id==='eng.MRK-1-21-28'),'scripture-BereanStandardBible'],[null,'scripture-BereanStandardBible']])assert.equal(declaresScripturePassage(p,asset,rows),false);
+ assert.equal(declaresScripturePassage(pack,'scripture-BereanStandardBible'),false,'without the build define nothing is declared');
+});
+test('a sidecar for another revision or with a second candidate is never projected',()=>{
+ const sidecar=JSON.parse(readFileSync(new URL('../public/content/delivery/eng.MRK-1-14-20/b40f0de65327a049437b071849300b7366c2267f4746d888a737aa6132caccfe.json',import.meta.url),'utf8'));
+ const only=list=>id=>id==='eng.MRK-1-14-20'?list:[];
+ assert.throws(()=>projectScripturePassageBindings({packs:[{...pack,revision:'f'.repeat(64)}]},only([sidecar])));
+ assert.throws(()=>projectScripturePassageBindings(registry,only([sidecar,sidecar])),/Ambiguous/);
+ assert.deepEqual(projectScripturePassageBindings(registry,()=>[]),[]);
 });

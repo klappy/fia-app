@@ -1,0 +1,287 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Execution extension of the existing FIA presentation; existing display/provenance fields remain unchanged. Closed execution objects are mandatory on EVERY activity. Domain validator additionally checks authority, refs and compatibility.",
+  "type": "object",
+  "required": [
+    "id",
+    "assets",
+    "activities",
+    "sections",
+    "execution"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "assets": {
+      "type": "object"
+    },
+    "sections": {
+      "type": "array",
+      "minItems": 1
+    },
+    "activities": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8192,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "sectionId",
+          "kind",
+          "completion",
+          "execution"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "sectionId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "minLength": 1
+          },
+          "assetId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "completion": {
+            "enum": [
+              "confirm",
+              "auto"
+            ]
+          },
+          "flow": {
+            "description": "Optional, additive (fia-flow-role@1): per-activity flow facts emitted by fia-server-source-action-projector@2 for fia-easy-button-policy@1. Derived from kind, execution.completion.action and resolved cue roles only; never from text.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "schema",
+              "role",
+              "hold",
+              "cue",
+              "media"
+            ],
+            "properties": {
+              "schema": {
+                "const": "fia-flow-role@1"
+              },
+              "role": {
+                "enum": [
+                  "guide",
+                  "discussion",
+                  "scripture",
+                  "video"
+                ]
+              },
+              "hold": {
+                "enum": [
+                  "manual",
+                  "auto"
+                ]
+              },
+              "cue": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "pauseOnly"
+                ],
+                "properties": {
+                  "pauseOnly": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "media": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "video"
+                ],
+                "properties": {
+                  "video": {
+                    "enum": [
+                      "bound",
+                      "none"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "execution": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "narration",
+              "focalAssetId",
+              "completion"
+            ],
+            "properties": {
+              "narration": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "action"
+                    ],
+                    "properties": {
+                      "action": {
+                        "const": "none"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "action",
+                      "artifact"
+                    ],
+                    "properties": {
+                      "action": {
+                        "const": "play-bound-audio"
+                      },
+                      "artifact": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "id",
+                          "sha256"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "sha256": {
+                            "type": "string",
+                            "pattern": "^[a-f0-9]{64}$"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "action",
+                      "demand"
+                    ],
+                    "properties": {
+                      "action": {
+                        "const": "prepare-original"
+                      },
+                      "demand": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "id",
+                          "sha256"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "sha256": {
+                            "type": "string",
+                            "pattern": "^[a-f0-9]{64}$"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "action",
+                      "status",
+                      "reason"
+                    ],
+                    "properties": {
+                      "action": {
+                        "const": "blocked"
+                      },
+                      "status": {
+                        "enum": [
+                          "unsupported",
+                          "unavailable",
+                          "invalid"
+                        ]
+                      },
+                      "reason": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  }
+                ]
+              },
+              "focalAssetId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "completion": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "action"
+                ],
+                "properties": {
+                  "action": {
+                    "enum": [
+                      "manual-continue",
+                      "advance-after-narration"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "sourceRevision",
+        "decisionEvidenceSha256",
+        "recipeRevision"
+      ],
+      "properties": {
+        "schema": {
+          "const": "fia-executable-presentation@1"
+        },
+        "sourceRevision": {
+          "type": "string",
+          "minLength": 1
+        },
+        "decisionEvidenceSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "recipeRevision": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

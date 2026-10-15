@@ -4,6 +4,7 @@ import {createFreshSourceObservations} from './executor/fresh-source-observation
 import {createReviewedOriginalStore} from './reviewed-original-store.mjs';
 import {readSource,storeSource,verifySourceReference} from './source-store.mjs';
 import {originalResponse} from './original.mjs';
+import {projectStableOriginalSidecar} from './stable-original-sidecar.mjs';
 const same=(a,b)=>canonicalJSONString(a??null)===canonicalJSONString(b??null);
 const normalized=row=>{const {coordinatorCurrent,...admission}=structuredClone(row);return admission;};
 export function currentPreparationRow(rows){const eligible=rows.filter(row=>row.eligibility==='eligible');if(eligible.length===1)return eligible[0];const current=eligible.filter(row=>row.coordinatorCurrent===true);return current.length===1?current[0]:null;}
@@ -60,7 +61,12 @@ export async function serveStableOriginal(request,ctx,env,catalog){
   const control=checked(await storage.get(controlKey));if(!control)return {state:'unavailable',reason:'stable-not-requested',result:null};
   const observed=await observer(control).read();if(observed.state!=='observed')return {state:'unavailable',reason:'stable-unobserved',result:null};
   const token=await storage.get(freshKey);if(token?.observationSha256!==observed.observationSha256)throw Error('stable-fresh-changed');
-  return (await store(control,token,false)).read(target.row.accepted.expected.resultSha256);
+  const verified=await store(control,token,false),readVerified=()=>verified.read(target.row.accepted.expected.resultSha256),outcome=await readVerified();
+  return projectStableOriginalSidecar({storage,bucket,outcome,readVerified,eligible:async()=>{
+   if(outcome.state!=='ready')return false;
+   const served=group.find(e=>e.hash===outcome.snapshot.admissionSha256);
+   return storage.transaction(async tx=>Boolean(served&&eligible(target.row)&&eligible(served.row)&&same(await tx.get(controlKey),control)&&same(await tx.get(freshKey),token)&&same((await tx.get(snapshotKey))?.served,{admissionSha256:served.hash,snapshotSha256:await sha256(canonicalJSONString(outcome.snapshot))})));
+  }});
  }
  async function store(attempt,token,promote){return createReviewedOriginalStore({storage,bucket,admissions:group.map(e=>e.row),fetchAsset:path=>env.ASSETS.fetch(new Request(new URL(path,env.FIA_API_ORIGIN),{redirect:'manual'})),readOriginal:original,eligibility:eligible,guard:async(tx,row,phase)=>{
   const control=await tx.get(controlKey),fresh=await tx.get(freshKey);if(!same(fresh,token)||!same(control,attempt)||!eligible(row))return false;

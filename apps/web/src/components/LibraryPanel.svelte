@@ -33,7 +33,11 @@
  onMount(()=>{refresh();return()=>alive=false;});
  const labels={core:'Text only',audio:'Text and audio',all:'Text and all available resources'};
  async function chooseLanguage(id){onlanguage(id);passages=await libraryAdapter.passages(id);}
- async function selectPack(id){try{busy=true;await onselect(id);}catch(e){error=e.message;}finally{busy=false;}}
+ // Opening a passage reports in its own card: busy while pending, then the server's
+ // answer if it refused. A newer Open supersedes an older one.
+ let opening=$state(null),openFailure=$state(null);let openToken=0;
+ async function selectPack(id){if(opening===id)return;const token=++openToken;opening=id;openFailure=null;try{await onselect(id);}catch(e){if(token===openToken)openFailure={id,message:e?.message||'This passage could not be opened. Your current passage stays open.',code:e?.code};}finally{if(token===openToken)opening=null;}}
+ const refusedLabel={'passage-unavailable':'Not available yet','passage-refused':'Cannot be opened'};
  async function save(){busy=true;error='';transfer=null;try{const result=await libraryAdapter.download(selection,value=>transfer=value,selectedPack,requestSizes);downloadFinished=result.saved!==false;if(result.timingPending)error='Files received. Recording timing is pending before offline playback.';}catch(e){error=e.message;}finally{busy=false;const failure=error;await refresh();error=failure||error;}}
  async function pause(){try{await libraryAdapter.pauseDownload(selectedPack);}catch(e){error=e.message;}}
  async function remove(){try{await libraryAdapter.removeDownload(selectedPack);confirmRemove=false;await refresh();}catch(e){error=e.message;}}
@@ -50,9 +54,11 @@
   <button class="quiet" onclick={()=>onview('languages')}>Language: {languages.find(l=>l.id===language)?.nativeName||language}</button>
   {#each passages as pack}
    {@const progress=pack.id===selectedPack.id?{completed,total}:progressSummary(localStorage,pack)}
-   <article class="pack-card"><span class="library-eyebrow">{pack.language==='spa'?'Español':'English'} · Text available</span><h3>{pack.title}</h3><p>{guideRecordingAvailability(pack)} · Resources download manually</p><p>{progress.completed}{progress.total?` of ${progress.total}`:''} activities completed · saved on this device</p>
+   {@const failure=openFailure?.id===pack.id?openFailure:null}
+   <article class="pack-card"><span class="library-eyebrow">{pack.language==='spa'?'Español':'English'} · Text available</span><h3>{pack.title}</h3>{#if refusedLabel[failure?.code]}<p>{refusedLabel[failure.code]}</p>{:else}<p>{guideRecordingAvailability(pack)} · Resources download manually</p>{/if}<p>{progress.completed}{progress.total?` of ${progress.total}`:''} activities completed · saved on this device</p>
     {#if progress.total}<progress aria-label="Saved passage progress" value={progress.completed} max={progress.total}></progress>{/if}
-    <button class="secondary full" onclick={()=>selectPack(pack.id)}>{progress.completed?'Resume passage':'Open passage'}<ChevronRight size={18}/></button>
+    <button class="secondary full" disabled={opening===pack.id} aria-busy={opening===pack.id?'true':undefined} onclick={()=>selectPack(pack.id)}>{progress.completed?'Resume passage':'Open passage'}<ChevronRight size={18}/></button>
+    {#if failure}<p class="library-message" role="alert">{failure.message}</p>{/if}
     {#if confirmRestart===pack.id}<p>Start this passage again? Its saved progress will be cleared.</p><div class="library-actions"><button class="secondary" onclick={()=>{onreset(pack.id);confirmRestart=null;passages=[...passages];}}>Start again</button><button class="quiet" onclick={()=>confirmRestart=null}>Keep my place</button></div>{:else}<button class="quiet full" onclick={()=>confirmRestart=pack.id}><RotateCcw size={16}/>Restart passage</button>{/if}
    </article>
   {:else}{#if !loading}<p class="library-message">No passages in this language are included yet. Your current passage stays open.</p><button class="secondary full" onclick={()=>{chooseLanguage('eng');}}>Show English passages</button>{/if}{/each}

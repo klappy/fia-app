@@ -7,7 +7,8 @@
  let viewport=$state(), following=$state(true), reducedMotion=$state(false), revision=$state(0), ready=$state(false), edgeSpace=$state({leading:0,trailing:0});
  let lastScrollTarget=null,scroller;
  let resourceId=$derived(asset.id);
- let active=$derived(!!asset.descriptionAudio && playback.src===asset.descriptionAudio);
+ // R2: the clip names the reading it voices; a URL comparison misses server passages that play from a blob.
+ let active=$derived(!!playback.assetId&&playback.assetId===asset.id);
  let blocks=$derived(asset.verses||[{text:asset.text||asset.description||''}]);
  let position=$derived(active?alignmentPosition(asset.alignment,playback.elapsed):null);
  const scrollKeys=new Set(['ArrowUp','ArrowDown','PageUp','PageDown','Home','End',' ']);
@@ -29,7 +30,7 @@
    return;
   }
   if(!asset.alignment){
-   const top=durationScrollTop(playback.elapsed,playback.duration,viewport.clientHeight,viewport.scrollHeight);
+   const top=durationScrollTop(playback,viewport.clientHeight,viewport.scrollHeight);
    if(top!==null&&Math.abs(top-viewport.scrollTop)>=1)scroller?.to(top,reducedMotion);
    return;
   }
@@ -43,7 +44,7 @@
  $effect(()=>{
   // Recheck on clock ticks, layout/text-size changes and pause/resume. Reading progress
   // must not take the screen back after a person's scroll or while a sheet is open.
-  position;asset.activeItemId;revision;reducedMotion;playback.elapsed;playback.duration;
+  position;asset.activeItemId;revision;reducedMotion;playback.elapsed;playback.duration;playback.progressElapsed;playback.progressDuration;
   if(ready&&active&&playback.playing&&following&&!suspended)untrack(scrollToReading);
   else {scroller?.stop();lastScrollTarget=null;}
  });
@@ -77,10 +78,10 @@
  {/if}
  {#if asset.list}
  <p data-reading-item aria-current={asset.activeItemId===asset.id?'true':undefined}>{asset.text}</p>
- <ul class="reading-list">{#each asset.list as item}<li data-reading-item aria-current={asset.activeItemId===item.id?'true':undefined}>{item.text}</li>{/each}</ul>
+ <svelte:element this={asset.marker==='numbered'?'ol':'ul'} class="reading-list" class:numbered={asset.marker==='numbered'} class:bulleted={asset.marker==='bulleted'}>{#each asset.list as item}<li data-reading-item aria-current={asset.activeItemId===item.id?'true':undefined}>{item.text}</li>{/each}</svelte:element>
  {:else}
  {#each blocks as verse,i}
-  <p aria-current={position?.verseIndex===i?'true':undefined}>{#if verse.number}<sup>{verse.number}</sup>{/if}{#each alignedSegments(verse.text,asset.alignment?.verses[i]?.words) as segment}{#if segment.wordIndex!==undefined}<span data-align-word={`${i}-${segment.wordIndex}`}>{segment.text}</span>{:else}{segment.text}{/if}{/each}</p>
+  <p aria-current={position?.verseIndex===i?'true':undefined}>{#if i===0&&asset.ordinal}<span class="list-ordinal">{asset.ordinal}.</span>{" "}{/if}{#if verse.number}<sup>{verse.number}</sup>{/if}{#each alignedSegments(verse.text,asset.alignment?.verses[i]?.words) as segment}{#if segment.wordIndex!==undefined}<span data-align-word={`${i}-${segment.wordIndex}`}>{segment.text}</span>{:else}{segment.text}{/if}{/each}</p>
  {/each}
  {/if}
  </div>

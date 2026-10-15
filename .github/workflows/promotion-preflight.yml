@@ -11,7 +11,7 @@ jobs:
   source-evidence:
     name: promotion-source-evidence
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -21,4 +21,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          EVIDENCE_WAIT_MS: '1200000'
         run: node scripts/promotion-source-evidence.mjs

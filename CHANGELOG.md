@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.0.0-alpha.14 — Current guided interface and playback repairs (2026-10-14)
+
+Brings the reviewed six-stage icon bar and balanced header, Overview navigation with current/next activity context, language and passage access, and publisher list markers for the approved English Mark 1:1–13 presentation. Includes truthful passage switching, recording-aligned reading, explicit playback recovery and iOS tap-start repairs accumulated since alpha.13. Video updates remain playable with scoped notices and safe size fallback; saved media retains strict identity verification.
+
+See the [release scope and source notes](release/changes/3.0.0-alpha.14-current-ui.md). This version does not claim Luke integration, later-passage visual completion, physical-device acceptance or a new narration policy. Current product direction is to pull back AI voices; this metadata release does not itself remove previously bundled generated recordings. Those content changes remain separately tracked. Each environment requires its own exact-head deployment and journey evidence before promotion.
+
 ## 3.0.0-alpha.13 — Original six-step guide audio and excerpt playback (2026-10-05)
 
 English Mark 1:1–13 now uses six original FIA publisher recordings for 111 narrated guide activities across all six steps, with reviewed excerpt ranges and existing Scripture handoffs or manual holds. Its official Berean Standard Bible recording remains a separate Scripture source. The progress circle runs from each guide or BSB excerpt’s own start to its own end while word highlighting retains the recording’s absolute clock. Recording coverage for other passages and languages remains narrower; original human recordings take priority when available, with generated narration allowed as fallback. See [recorded guide scope](release/changes/3.0.0-alpha.13-original-guide.md).
