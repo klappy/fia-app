@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.0.0-alpha.16 — Overview icon and keyboard focus contrast (2026-10-15)
+
+Revisited completed Overview activities keep a legible current icon in dark and light themes. The current ring, progress, and fresh-current appearance remain unchanged. Light-theme keyboard focus uses an opaque accent; dark focus retains its existing Sky color.
+
+Scope: [Overview contrast correction](release/changes/overview-current-icon-contrast.md) (PR237). See [release scope](release/changes/3.0.0-alpha.16-overview-contrast.md). Preserves alpha15 original-recording policy and saved-pack retention. No new passage content or media admission. Exact-build environment proofs remain required.
+
 ## 3.0.0-alpha.15 — Original-recording policy and saved-pack retention (2026-10-14)
 
 Pauses remaining AI-generated fallback narration while retaining verified original guide and Scripture recordings. Activities without an admitted original remain readable, and settings describe that policy without overstating recording availability. Saved-download status ignores intentionally withheld generated files while continuing to verify permitted originals.
