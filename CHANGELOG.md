@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.0.0-alpha.17 — MCP connector compatibility (2026-10-15)
+
+Legacy MCP initialization negotiates the supported protocol version. Unused OAuth discovery returns explicit 404 responses instead of app HTML. Origin restrictions and tool authority remain unchanged.
+
+Scope: [MCP compatibility](release/changes/mcp-connector-negotiation.md) (PR240). See [release scope](release/changes/3.0.0-alpha.17-mcp-compatibility.md). Preserves alpha16 UI and recording policy; actual ChatGPT connector recreation remains a separate verification step.
+
 ## 3.0.0-alpha.16 — Overview icon and keyboard focus contrast (2026-10-15)
 
 Revisited completed Overview activities keep a legible current icon in dark and light themes. The current ring, progress, and fresh-current appearance remain unchanged. Light-theme keyboard focus uses an opaque accent; dark focus retains its existing Sky color.
