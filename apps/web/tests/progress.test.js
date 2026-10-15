@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {progressSections,progressState,visibleProgress} from '../src/lib/progress.js';
+import * as progress from '../src/lib/progress.js';
+const {progressSections,progressState,visibleProgress,pendingStop,openStop,shownKind,byKind}=progress;
 import {activities,sections,assets} from '../src/lib/content.js';
 import {createSession} from '../src/lib/engine.js';
 const groups=progressSections(sections,activities,assets);
@@ -32,4 +33,51 @@ test('location fill follows the same current position forward and backward, inde
  assert.equal(view[0].positionRatio,1);assert.equal(view[3].positionRatio,0);
  const before=view[2].positionRatio;state.index=activities.findIndex(a=>a.id==='S03-U001');
  view=progressState(groups,state,activities);assert.ok(view[2].positionRatio<before);
+});
+test('a stop follows the discussion activity, not the glyph kind (fb-03 lens-dev-8662ef8 Finding 1)',()=>{
+ const screens=groups.flatMap(g=>g.screens),byId=Object.fromEntries(activities.map(a=>[a.id,a]));
+ for(const s of screens)assert.equal(s.stop,s.memberIds.some(id=>byId[id].kind==='discussion'),s.id);
+ const termStops=groups[4].screens.filter(s=>s.stop&&s.kind==='term');
+ assert.ok(termStops.length>0,'Filling the Gaps has key-term discussion stops');
+});
+test('pendingStop: a stop still ahead — not done, not current; never a non-stop or a missing screen (#222 re-review)',()=>{
+ assert.equal(pendingStop({stop:true,complete:false,current:false}),true);
+ assert.equal(pendingStop({stop:true,complete:true,current:false}),false);
+ assert.equal(pendingStop({stop:true,complete:false,current:true}),false);
+ assert.equal(pendingStop({stop:false,complete:false,current:false}),false);
+ assert.equal(pendingStop(null),false);
+});
+test('the stop rule on real state: a key-term stop ahead is pending, current reads "discuss", done reads its kind (#223 re-review)',()=>{
+ // Through progressState, not synthetic flags: the session's position and completions make the stop ahead, current, then done.
+ const stop=groups.flatMap(g=>g.screens).find(s=>s.stop&&s.kind==='term');assert.ok(stop,'fixture: a key-term stop');
+ const g=groups.findIndex(x=>x.screens.includes(stop)),at=groups[g].screens.indexOf(stop);
+ const on=id=>{const s=createSession(activities);s.index=activities.findIndex(a=>a.id===id);return s;};
+ const view=session=>progressState(groups,session,activities)[g].screens[at];
+ const ahead=view(on(activities[0].id));assert.equal(ahead.current,false);assert.equal(ahead.complete,false);
+ assert.equal(pendingStop(ahead),true);assert.equal(shownKind(ahead),'discussion');
+ const current=view(on(stop.activityId));
+ assert.equal(current.current,true);assert.equal(pendingStop(current),false);assert.equal(openStop(current),true);assert.equal(shownKind(current),'discussion');
+ const done=view({...on(stop.activityId),completed:stop.memberIds});
+ assert.equal(done.complete,true);assert.equal(openStop(done),false);assert.equal(shownKind(done),'term');
+ const plain=groups.flatMap(x=>x.screens).find(s=>!s.stop&&s.kind!=='discussion');assert.ok(plain);assert.equal(shownKind(plain),plain.kind);
+});
+test('shownKind and openStop on a missing screen: no kind, no throw (#224 review)',()=>{
+ assert.equal(openStop(null),false);assert.equal(openStop(undefined),false);
+ assert.doesNotThrow(()=>shownKind(null));assert.doesNotThrow(()=>shownKind(undefined));
+ assert.equal(shownKind(null),undefined);assert.equal(shownKind(undefined),undefined);
+ assert.equal(byKind({guide:'listen'},shownKind(null)),'listen');
+});
+test('byKind: one fallback for every kind-keyed table — an unknown kind reads as guide',()=>{
+ const table={guide:'listen',term:'key term'};
+ assert.equal(byKind(table,'term'),'key term');assert.equal(byKind(table,'unknown'),'listen');assert.equal(byKind(table,undefined),'listen');
+});
+test('stopCue: an open stop says ", stop to discuss" once — never after a kind word that already says discuss (#225 review)',()=>{
+ const {stopCue}=progress;assert.equal(typeof stopCue,'function');
+ assert.equal(stopCue({stop:true,complete:false,current:false,kind:'term'}),', stop to discuss');
+ assert.equal(stopCue({stop:true,complete:false,current:true,kind:'image'}),', stop to discuss');
+ assert.equal(stopCue({stop:true,complete:false,current:false,kind:'discussion'}),'');
+ assert.equal(stopCue({stop:true,complete:false,current:true,kind:'discussion'}),'');
+ assert.equal(stopCue({stop:true,complete:true,current:false,kind:'term'}),'');
+ assert.equal(stopCue({stop:false,complete:false,current:false,kind:'guide'}),'');
+ assert.equal(stopCue(null),'');assert.equal(stopCue(undefined),'');
 });

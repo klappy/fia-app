@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { contentIcons, sectionIcons, guideIcon } from '../src/lib/progress-icons.js';
+import { Ear } from 'lucide-svelte';
+import { contentIcons, sectionIcons } from '../src/lib/progress-icons.js';
 
 describe('icon vocabulary (design book tokens § Icon vocabulary)', () => {
  it('has seven content kinds and six stages', () => {
@@ -12,5 +13,5 @@ describe('icon vocabulary (design book tokens § Icon vocabulary)', () => {
   expect(new Set(sectionIcons).size).toBe(6);
   expect(content.size).toBe(7);
  });
- it('listen is the guide glyph', () => { expect(guideIcon).toBe(contentIcons.guide); });
+ it('listen is the guide glyph, the ear', () => { expect(contentIcons.guide).toBe(Ear); });
 });

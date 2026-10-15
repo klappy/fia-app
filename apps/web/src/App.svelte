@@ -47,13 +47,20 @@
  function syncVisual(){const view=presentStage(session,executionPresentation.activities),asset=rawPresentation.assets[view.focal];visualOwner.retain([asset?.src,rawPresentation.assets[view.supporting]?.src].filter(Boolean));if(!online||inTransition||finished||visualCanceled===visualIdentity()||!['image','map'].includes(asset?.kind)||downloadedPaths.has(asset.src)&&(!deliveryRevision||downloadedDeliveryRevision===deliveryRevision)||!onlineMedia.has(asset.src)||!deliveryRevision)return;visualAuthorization=visualIdentity();void visualOwner.load({pack:selectedPack,path:asset.src,revision:deliveryRevision,identity:visualAuthorization});}
  $effect(()=>{session;rawPresentation;selectedPack;deliveryRevision;onlineMedia;online;downloadedPaths;downloadedDeliveryRevision;visualCanceled;untrack(syncVisual);});
  let content=$derived(presentationContent(mediaForDevice(executionPresentation,downloadedPaths),selectedPack));
- let activities=$derived(content.activities),assets=$derived(content.assets),sections=$derived(content.sections),examples=$derived(content.examples),readingGroups=$derived(content.readingGroups),contentContract=$derived(content.contentContract),defaultScriptureId=$derived(content.defaultScriptureId);
+ let activities=$derived(content.activities),assets=$derived(content.assets),sections=$derived(content.sections),examples=$derived(content.examples),readingGroups=$derived(content.readingGroups),listOrdinals=$derived(content.listOrdinals),contentContract=$derived(content.contentContract),defaultScriptureId=$derived(content.defaultScriptureId);
  let videoDeliveryState=$state({entry:null,loading:false,error:null});
  let nativeDemoVideo=$state(null),savedMedia=$state(new globalThis.Map());
  function storedStreamingSize(){try{const size=localStorage.getItem('fia-streaming-video-size');return ['small','medium','large'].includes(size)?size:'large';}catch{return 'large';}}
  let streamingSize=$state(storedStreamingSize());
  let videoSizes=$derived(['small','medium','large'].filter(size=>{const videos=Object.values(rawPresentation.assets).filter(a=>a.kind==='video');return videos.length&&videos.every(a=>{const f=onlineMedia.get(a.src);return f?.variants?.[size]||size==='large'&&f&&!f.variants;});}));
- const videoDelivery=createVideoDelivery({fetch:(request,signal)=>libraryAdapter.playMedia(request.pack,request.path,request.revision,signal,request.size),create:result=>URL.createObjectURL(new Blob([result.bytes],{type:result.mime})),revoke:url=>tick().then(()=>URL.revokeObjectURL(url)),publish:value=>videoDeliveryState=value});
+ const videoDelivery=createVideoDelivery({fetch:(request,signal)=>libraryAdapter.playMedia(request.pack,request.path,request.revision,signal,request.size),create:result=>URL.createObjectURL(new Blob([result.bytes],{type:result.mime})),revoke:url=>tick().then(()=>URL.revokeObjectURL(url)),publish:value=>videoDeliveryState=value,onchange:videoChanged});
+ // The SW re-chooses the video on every play (saved download, removal, other tab). The page plays what it
+ // served and refreshes its snapshot; a revision-changed note is left to the next refresh. Either way,
+ // updateMedia keeps a playing video (staleVideo).
+ const sizeLabel={small:'Small',medium:'Medium',large:'Large'};
+ let updateNotice=$state(false),updateNoticeContext=$state(null),updateDismissed=false,videoSizeNotice='';
+ function videoNoticeContext(){return JSON.stringify([selectedPack.id,selectedPack.revision,activity?.id,inlineVideo?.id||focal?.id]);}
+ function videoChanged(change){const kinds=change.notes.map(n=>n.kind);console.info('[fia.media]',{event:'video-served',path:change.path,requested:change.requested,served:change.served,kinds});if(!kinds.includes('revision-changed'))void updateMedia(true);if(!updateDismissed&&(kinds.includes('content-drift')||kinds.includes('revision-changed'))){updateNoticeContext=videoNoticeContext();updateNotice=true;}const fallback=change.notes.find(n=>n.kind==='size-fallback');if(fallback)notice=videoSizeNotice=`${sizeLabel[fallback.requested]} isn’t ready for this video yet. Playing ${sizeLabel[fallback.served]||'the standard size'} instead.`;}
  let selectionGeneration=0,selectionIntent=0,selectionAbort=null;
  let preparationState=$state(null),preparedRecordings=$state(new globalThis.Map()),preparationDismissed=$state(null);let preparationEvent=0;
  const preparationOwner=createPreparationIntent({request:(identity,signal)=>libraryAdapter.prepareRecording(identity,signal),status:(id,identity,signal)=>libraryAdapter.preparationStatus(id,identity,signal),verify:(result,identity,signal)=>libraryAdapter.verifyPreparedRecording(result,identity,signal),publish:value=>{preparationState=value?{...value,event:++preparationEvent}:null;if(value?.status==='ready')preparedRecordings=new globalThis.Map(preparedRecordings).set(value.key,value.descriptor);}});
@@ -158,9 +165,15 @@
  // current passage's unanswered checks are asked again at the new generation.
  function recheckCurrent(){if(!downloadsChecked)void updateDownloaded();if(!mediaChecked)void updateMedia();}
  let playbackConsent=false,mediaGeneration=0,mediaAbort=null,mediaBlob=null,mediaTiming=null;
+ // A revision change never stops a loading or mounted video: the snapshot moves on, and the old video is
+ // released when it ends or is closed (cancel), so the next play loads the current revision.
+ let staleVideo=false;
  let mediaAlignment=$state(null),mediaLogicalPath=$state(null);
  let mediaRefreshGeneration=0;
- async function updateMedia(){const refresh=++mediaRefreshGeneration,generation=selectionGeneration,pack=selectedPack;try{const status=await libraryAdapter.mediaStatus(pack);for(const file of [...status.files,...(status.savedFiles||[])])if(file.scripturePlaybackMode==='passage-only')await verifyScripturePassageFile(file,pack.id,rawPresentation.assets);if(generation!==selectionGeneration||refresh!==mediaRefreshGeneration||pack!==selectedPack)return;if(deliveryRevision&&deliveryRevision!==status.deliveryRevision){if(deferVideo(()=>updateMedia()))return;videoDelivery.clear();stopVisual();visualOwner.clear();}deliveryRevision=status.deliveryRevision;onlineMedia=new globalThis.Map(status.files.map(f=>[f.path,f]));savedMedia=new globalThis.Map((status.savedFiles||[]).map(f=>[f.path,f]));mediaChecked=true;checked();}catch(error){if(generation===selectionGeneration&&refresh===mediaRefreshGeneration&&pack===selectedPack){if(error?.code!=='media-status-transient'){onlineMedia=new globalThis.Map();savedMedia=new globalThis.Map();deliveryRevision=null;}mediaChecked=true;checked();}}}
+ // updateMedia(keep): the mid-session refreshes (served identity, Downloads status, reconnect) keep the last good
+ // snapshot on any failure, so a refresh never makes a playable video unplayable; mount, worker and passage refreshes
+ // keep it only on a typed transient failure.
+ async function updateMedia(keep=false){const refresh=++mediaRefreshGeneration,generation=selectionGeneration,pack=selectedPack;try{const status=await libraryAdapter.mediaStatus(pack);for(const file of [...status.files,...(status.savedFiles||[])])if(file.scripturePlaybackMode==='passage-only')await verifyScripturePassageFile(file,pack.id,rawPresentation.assets);if(generation!==selectionGeneration||refresh!==mediaRefreshGeneration||pack!==selectedPack)return;if(deliveryRevision&&deliveryRevision!==status.deliveryRevision){if(videoDeliveryState.loading||videoOwner.node&&!videoOwner.node.ended)staleVideo=true;else{if(deferVideo(()=>updateMedia(keep)))return;videoDelivery.clear();}stopVisual();visualOwner.clear();}deliveryRevision=status.deliveryRevision;onlineMedia=new globalThis.Map(status.files.map(f=>[f.path,f]));savedMedia=new globalThis.Map((status.savedFiles||[]).map(f=>[f.path,f]));mediaChecked=true;checked();}catch(error){if(generation===selectionGeneration&&refresh===mediaRefreshGeneration&&pack===selectedPack){if(!keep&&error?.code!=='media-status-transient'){onlineMedia=new globalThis.Map();savedMedia=new globalThis.Map();deliveryRevision=null;}mediaChecked=true;checked();}}}
  function revokePlayback(){executableOwner.cancel();preparationOwner.cancel();videoDelivery.cancel();stopVisual();playbackConsent=false;playbackPending=false;clearTimeout(timer);timer=null;mediaGeneration++;mediaAbort?.abort();mediaAbort=null;mediaLoading=false;clipPending=false;videoPlayPending=false;}
  async function startRecording(voices,text,path,explicit=false){
   if(explicit){playbackConsent=true;authorizeVisual();}if(!playbackConsent)return;
@@ -260,14 +273,14 @@
  let stage=$derived(presentStage(session,activities));
  let focal=$derived(assets[stage.focal]);
  let termPrompt=$derived(!session.detour&&focal?.kind==='term'&&!!activity?.audioSrc&&termDefinition!==activity.id);
- let guideText=$derived({...readingGroups[activity?.readingGroupId],id:activity?.readingGroupId||activity?.id,kind:'guide',text:readingGroups[activity?.readingGroupId]?.text||activity?.narration||activity?.prompt||'',activeItemId:activity?.id,descriptionAudio:activity?.audioSrc});
+ let guideText=$derived({...readingGroups[activity?.readingGroupId],id:activity?.readingGroupId||activity?.id,kind:'guide',text:readingGroups[activity?.readingGroupId]?.text||activity?.narration||activity?.prompt||'',activeItemId:activity?.id,ordinal:activity?.readingGroupId?undefined:listOrdinals[activity?.id],descriptionAudio:activity?.audioSrc});
  let finished=$derived(session.status==='complete'&&!session.detour);
  // R3: a notice belongs to the passage, screen and sheet that raised it. Its scope is recorded when
  // it is raised, and it ends with that scope before the next screen renders (lib/notice-scope.js).
  // Recording runs first, so a notice raised in the same update as a passage or screen change belongs to the new one.
- let noticeText=$derived(notice||(!online?(saved?'Offline · session saved':'You’re offline'):preparationNotice||'')),raisedNotice=$state.raw(null);
+ let noticeText=$derived(notice||(!online?(saved?'Offline · session saved':'You’re offline'):preparationNotice||(updateNotice?'Update available. This video still plays.':''))),raisedNotice=$state.raw(null);
  let noticeInSheet=$derived(!!sheet&&!!raisedNotice?.sheet);
- $effect.pre(()=>{notice;const text=noticeText;untrack(()=>{raisedNotice=text?noticeScope(text,{pack:selectedPack,activityId:activity?.id,sheet,playing:isPlaying}):null;});});
+ $effect.pre(()=>{notice;const text=noticeText;untrack(()=>{raisedNotice=text?noticeScope(text,{pack:selectedPack,activityId:activity?.id,sheet,playing:isPlaying||!!videoSizeNotice&&text===videoSizeNotice}):null;});});
  $effect.pre(()=>{const now={pack:selectedPack,activityId:activity?.id,sheet,playing:isPlaying};untrack(()=>{if(!raisedNotice||!noticeEnded(raisedNotice,now))return;if(notice&&raisedNotice.text===notice)notice='';else raisedNotice=noticeScope(raisedNotice.text,now);});});
  
  const iconFor={guide:Speech,scripture:BookOpen,discussion:Users,video:Film};
@@ -275,6 +288,7 @@
  let phoneLandscape=$state(false),landscapeDismissed=$state(false);
  let immersive=$derived(phoneLandscape&&!landscapeDismissed&&!sheet&&!inTransition&&!finished&&['image','map','video'].includes(focal?.kind));
  let inlineVideo=$state(null);
+ $effect.pre(()=>{const context=videoNoticeContext();untrack(()=>{if(updateNotice&&updateNoticeContext!==context){updateNotice=false;updateNoticeContext=null;}});});
  const videoOwner=createVideoPresentation({quiesce:()=>{revokePlayback();audio?.pause();videoPlaying=false;},notice:text=>notice=text});
  function videoIdentity(){return `${selectionGeneration}:${selectedPack.id}:${selectedPack.revision}:${swipeGeneration}:${activity.id}:${inlineVideo?.id||focal.id}`;}
  function ownsVideo(node){return videoOwner.owns(node,videoIdentity());}
@@ -352,7 +366,7 @@
  // marks only a screen known to have no possible recording, so an admitted screen enters it only when its
  // own media ends. While availability is still being checked nothing is known, so nothing is settled (k0006).
  function settleSilent(){if(!verifying&&!inTransition&&!session.detour&&!finished&&!activity.audioSrc&&!(executableMode?executablePlayable:preparationRequest)){session={...session,status:'waiting'};persist();}}
- function cancel(){if(deferVideo(cancel))return;executableOwner.cancel();preparationOwner.cancel();nativeDemoVideo=null;videoDelivery.clear();playbackPending=false;mediaGeneration++;mediaAbort?.abort();mediaAbort=null;mediaLoading=false;if(mediaBlob){URL.revokeObjectURL(mediaBlob);mediaBlob=null;}mediaTiming=null;mediaAlignment=null;mediaLogicalPath=null;videoState={elapsed:0,duration:0};inlineVideo=null;videoPlaying=false;clearTimeout(timer);timer=null;audio?.stop();videoOwner.node?.pause();audioContext=null;clipPending=false;videoPlayPending=false;tapGate.end();}
+ function cancel(){if(deferVideo(cancel))return;executableOwner.cancel();preparationOwner.cancel();nativeDemoVideo=null;staleVideo=false;videoDelivery.clear();playbackPending=false;mediaGeneration++;mediaAbort?.abort();mediaAbort=null;mediaLoading=false;if(mediaBlob){URL.revokeObjectURL(mediaBlob);mediaBlob=null;}mediaTiming=null;mediaAlignment=null;mediaLogicalPath=null;videoState={elapsed:0,duration:0};inlineVideo=null;videoPlaying=false;clearTimeout(timer);timer=null;audio?.stop();videoOwner.node?.pause();audioContext=null;clipPending=false;videoPlayPending=false;tapGate.end();}
  function message(text){messages=[...messages.slice(-11),{role:'assistant',text}];tick().then(()=>chatLog?.scrollTo({top:chatLog.scrollHeight,behavior:'smooth'}));}
  function finishAudio(){
   const context=audioContext;audioContext=null;tapGate.end();if(!context)return;
@@ -469,7 +483,7 @@
    const identity=videoIdentity();nativeDemoVideo={path:raw.src,url:demoUrl};if(inlineVideo)inlineVideo={...inlineVideo,src:demoUrl};await tick();if(identity!==videoIdentity())return;
   }else if(target?.videoPrepared&&!target.src?.startsWith('blob:')){
    const pack=selectedPack,identity=videoIdentity(),path=raw?.src;
-   try{const catalog=onlineMedia.get(path),file=savedMedia.get(path)||catalog?.variants?.[streamingSize]||(streamingSize==='large'&&!catalog?.variants?catalog:null);if(!file)throw Error(`${({small:'Small',medium:'Medium',large:'Large'}[streamingSize])} is not available for this video yet.`);const url=await videoDelivery.load({pack,path,revision:deliveryRevision,identity,file,size:catalog?.variants?streamingSize:undefined});if(!url||pack!==selectedPack||identity!==videoIdentity())return;if(inlineVideo)inlineVideo={...inlineVideo,src:url};await tick();if(pack!==selectedPack||identity!==videoIdentity())return;}catch(error){if(pack===selectedPack&&identity===videoIdentity())notice=error.message;return;}
+   try{const catalog=onlineMedia.get(path),variant=catalog?.variants?.[streamingSize],savedFile=savedMedia.get(path),file=savedFile||variant||catalog;if(!file)throw Error('This video isn’t ready to play yet.');const size=catalog?.variants?(variant?streamingSize:catalog.defaultSize):undefined;if(!savedFile&&!variant&&streamingSize!==(catalog?.defaultSize||'large'))notice=videoSizeNotice=`${sizeLabel[streamingSize]} isn’t ready for this video yet. Playing ${sizeLabel[catalog?.defaultSize]||'the standard size'} instead.`;const url=await videoDelivery.load({pack,path,revision:deliveryRevision,identity,file,size});if(!url||pack!==selectedPack||identity!==videoIdentity())return;if(inlineVideo)inlineVideo={...inlineVideo,src:url};await tick();if(pack!==selectedPack||identity!==videoIdentity())return;}catch(error){if(pack===selectedPack&&identity===videoIdentity())notice=error.message;return;}
   }
   if(!(inlineVideo||focal)?.src){notice='Download this resource before playback.';return;}
   audio?.stop();audioContext=null;
@@ -479,7 +493,7 @@
  }
  function videoTime(event){const v=event.currentTarget;if(!ownsVideo(v))return;videoState={elapsed:Number.isFinite(v.currentTime)?v.currentTime:0,duration:Number.isFinite(v.duration)?v.duration:0};}
  function videoStarted(event){if(event&&!ownsVideo(event.currentTarget))return;audio?.stop();audioContext=null;videoPlaying=true;videoPlayPending=false;dispatch({type:'PAUSE'});}
- function videoEnded(event){if(event&&!ownsVideo(event.currentTarget))return;if(videoOwner.pending)return;if(deferVideo(()=>videoEnded()))return;videoState={elapsed:0,duration:0};videoPlaying=false;if(inlineVideo){inlineVideo=null;visualHeard=focal.id;if(!session.detour)session={...session,status:'waiting'};persist();return;}if(session.detour){navigate({type:'RETURN'});return;}dispatch({type:'MEDIA_END',activityId:activity.id});scheduleNext();}
+ function videoEnded(event){if(event&&!ownsVideo(event.currentTarget))return;if(videoOwner.pending)return;if(deferVideo(()=>videoEnded()))return;if(staleVideo){staleVideo=false;videoDelivery.clear();}videoState={elapsed:0,duration:0};videoPlaying=false;if(inlineVideo){inlineVideo=null;visualHeard=focal.id;if(!session.detour)session={...session,status:'waiting'};persist();return;}if(session.detour){navigate({type:'RETURN'});return;}dispatch({type:'MEDIA_END',activityId:activity.id});scheduleNext();}
  function setMode(mode){if(session.mode===mode)return;dispatch({type:'SET_MODE',mode});}
  function runCommand(text=command){
   if(!text.trim())return;const input=text.trim();command='';messages=[...messages.slice(-11),{role:'user',text:input}];
@@ -519,7 +533,7 @@
   audio=createAudioController(s=>{const m=mediaAlignment?.clockDomain==='delivery-media-seconds'?null:mediaTiming?.mapping;const logical={...s,src:s.src&&s.src===mediaBlob?mediaLogicalPath:s.src,assetId:s.src&&s.src===clipSrc?clipVoices:null};audioState=m?{...logical,elapsed:Math.max(0,(s.elapsed-m.offsetSeconds)/m.scale),duration:Math.max(0,(s.duration-m.offsetSeconds)/m.scale)}:logical;if(s.playing&&s.src===mediaBlob&&audioContext?.type==='narration'&&audioContext.id===(executableMode?boundPreparation?.activityId:currentPreparation?.identity.activityId)&&currentPreparation?.status==='ready')preparationDismissed=currentPreparation.event;if(s.playing&&s.src===clipSrc||!s.src&&!audio?.active)clipPending=false;},finishAudio,text=>{revokePlayback();notice=text;dispatch({type:'PAUSE'});},{allowSpeechFallback:false});
   // R4 on iOS: a later screen starts without a tap only on the element a tap once started, so a tap unlocks it before its action runs.
   const unlockAudio=event=>{if(event.isTrusted)audio.unlock();};window.addEventListener('click',unlockAudio,true);
-  const net=()=>{const wasOnline=online;online=navigator.onLine;if(!online)visualOwner.cancel();else if(!wasOnline&&visualCanceled!==visualIdentity()){visualOwner.retry();syncVisual();}};net();window.addEventListener('online',net);window.addEventListener('offline',net);
+  const net=()=>{const wasOnline=online;online=navigator.onLine;if(!online)visualOwner.cancel();else if(!wasOnline){void updateMedia(true);if(visualCanceled!==visualIdentity()){visualOwner.retry();syncVisual();}}};net();window.addEventListener('online',net);window.addEventListener('offline',net);
   if('serviceWorker'in navigator)registerWorker('/sw.js').then(()=>{updateDownloaded();updateMedia();}).catch(()=>{serviceWorkerError='Offline storage is unavailable here. Try the published HTTPS version.';});
   // A returning visit stays verifying until the saved passage itself is checked (R5).
   try{const id=localStorage.getItem('fia-v3-selected-pack');if(id&&id!==selectedPack.id){restorePending=true;restoreSavedPack(id).finally(()=>{restorePending=false;checked();});}}catch{}
@@ -535,7 +549,7 @@
 
 <svelte:head><title>FIA Guide</title></svelte:head>
 
-{#snippet noticeBar()}<div class="scene-notice" class:sheet-notice={noticeInSheet} role="status" data-kind={raisedNotice?.kind}><span>{noticeText}</span><button aria-label="Dismiss notice" onclick={()=>{notice='';preparationDismissed=currentPreparation?.event??null;dismissedExecutionNotice=executionNoticeKey;}}><X size={15}/></button></div>{/snippet}
+{#snippet noticeBar()}<div class="scene-notice" class:sheet-notice={noticeInSheet} role="status" data-kind={raisedNotice?.kind}><span>{noticeText}</span>{#if !notice&&online&&!preparationNotice&&updateNotice}<button class="quiet" onclick={()=>{persist();location.reload();}}>Reload</button>{/if}<button aria-label="Dismiss notice" onclick={()=>{if(!notice&&online&&!preparationNotice&&updateNotice){updateNotice=false;updateDismissed=true;}notice='';preparationDismissed=currentPreparation?.event??null;dismissedExecutionNotice=executionNoticeKey;}}><X size={15}/></button></div>{/snippet}
 
 <main class="scene" class:immersive style={`--reading-scale:${scale}`} use:swipeNavigation={()=>({identity:`${swipeGeneration}:${selectionGeneration}:${selectedPack.id}:${activity.id}:${inTransition}:${JSON.stringify(session.detour)}`,blocked:!!sheet||immersive||selectionPending,next:!finished&&!session.detour,back:!!session.detour||session.index!==0||finished,navigate:direction=>navigate({type:direction==='next'?'CONTINUE':'BACK'},direction==='next')})}>
  <div class="scene-glass scene-glass-top" aria-hidden="true"></div>
@@ -592,7 +606,7 @@
    <div class="menu-footer"><button class="primary full menu-close" onclick={()=>sheet=null}>Close</button></div>
   {:else if sheet==='downloads'}
    <button class="sheet-back" onclick={()=>sheet='menu'}><ChevronLeft size={18}/>FIA menu</button>
-   <LibraryPanel view="downloads" {selectedPack} onstatus={value=>{saved=value;updateDownloaded();}}/>
+   <LibraryPanel view="downloads" {selectedPack} onstatus={value=>{saved=value;updateDownloaded();updateMedia(true);}}/>
   {:else if sheet==='conversation'}
    <p class="sheet-intro">Ask to show a resource, pause, or change how we continue. This prototype supports commands; open-ended AI is not connected.</p>
    <form class="command-form" onsubmit={e=>{e.preventDefault();runCommand();}}><label class="sr-only" for="command">Tell the guide what you need</label><input bind:this={chatInput} id="command" bind:value={command} placeholder="Show me the map…" autocomplete="off"/><button class="icon-button" type="submit" aria-label="Send command" disabled={!command.trim()}><Send size={18}/></button></form>
@@ -608,7 +622,7 @@
   </div>
  {/if}
  <!-- The overview sheet is the navigation home (cookbook overview-sheet.md, adopted 2026-10-08). A refused open stays on its card while the sheet is open (openFromSheet). -->
- <OverviewSheet groups={progress} {selectedPack} {language} completed={session.completed.length} total={activities.length} onlanguage={selectLanguage} onreset={restartPack} onclose={()=>sheet=null} onopenpack={openFromSheet} onnavigate={(id,section)=>{navigate({type:'SEEK_ACTIVITY',activityId:id});transitionSection=section?activity.sectionId:null;persist();sheet=null;}}/>
+ <OverviewSheet groups={progress} {selectedPack} {language} completed={session.completed.length} total={activities.length} onlanguage={selectLanguage} onreset={restartPack} onclose={()=>sheet=null} onopenpack={openFromSheet} onnavigate={id=>{navigate({type:'SEEK_ACTIVITY',activityId:id});transitionSection=null;persist();sheet=null;}}/>
   {:else if sheet==='settings'}
    <div class="settings-panel">
     <button class="sheet-back" onclick={()=>sheet='menu'}><ChevronLeft size={18}/>FIA menu</button>

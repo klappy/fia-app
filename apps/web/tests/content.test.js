@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync,existsSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import pack from '../src/lib/pack.json' with {type:'json'};
+import {presentationContent,listMarker} from '../src/lib/content.js';
 const read=name=>JSON.parse(readFileSync(`public/content/source/${name}.json`));
 const hash=data=>createHash('sha256').update(data).digest('hex');
 test('all 130 original guide units have explicit coverage across six stages',()=>{const units=read('guide').steps.flatMap(s=>s.units);assert.equal(units.length,130);assert.equal(pack.sections.length,6);assert.deepEqual(pack.coverage.map(c=>c.id),units.map(u=>u.id));assert.equal(pack.examples.length,13);for(const a of pack.activities.filter(a=>a.audioSrc&&a.sourceUnitId)){const unit=units.find(u=>u.id===a.sourceUnitId);assert.equal(a.sourceSha256,unit.sha256);assert.equal(a.sourceText,unit.text);}});
@@ -25,4 +26,25 @@ test('reviewed descriptive lists share pages; question lists remain independent'
   assert.ok(members.every(a=>a.completion==='auto'&&!a.assetId&&a.audioSrc));
  }
  assert.ok(pack.activities.filter(a=>a.sectionId==='S01').every(a=>!a.readingGroupId));
+});
+
+// fb-05 B2 (option A): markers follow the reviewed listContracts purpose, never activity.kind.
+test('list markers follow listContracts purpose; an unknown purpose keeps today\'s unmarked list',()=>{
+ assert.equal(listMarker('discussion'),'numbered');assert.equal(listMarker('explanation'),'numbered');assert.equal(listMarker('descriptive-list'),'bulleted');
+ for(const p of [undefined,'','roster','toString','__proto__'])assert.equal(listMarker(p),null,String(p));
+ const {readingGroups,listOrdinals}=presentationContent(pack);
+ assert.deepEqual(Object.values(readingGroups).map(g=>[g.id,g.purpose,g.marker]),[['S03-U009','descriptive-list','bulleted'],['S04-U004','descriptive-list','bulleted'],['S05-U009','explanation','numbered']]);
+ assert.deepEqual(listOrdinals,{'S01-U003':1,'S01-U004':2,'S01-U005':3,'S01-U006':4,'S01-U007':5,'S01-U008':6});
+ // Non-list "stop and discuss" activities are never numbered.
+ for(const a of pack.activities.filter(a=>a.kind==='discussion'&&!pack.listContracts.some(b=>b.itemIds.includes(a.id))))assert.equal(listOrdinals[a.id],undefined,a.id);
+ const unknown=presentationContent({...pack,listContracts:pack.listContracts.map(b=>({...b,purpose:'roster'}))});
+ assert.ok(Object.values(unknown.readingGroups).every(g=>g.marker===null));assert.deepEqual(unknown.listOrdinals,{});
+});
+
+// HOLD on #227: option A is exact only for Mark 1:1–13; a compiled pack renders exactly as before.
+test('a compiled pack with discussion and descriptive-list purposes gets no markers or ordinals',()=>{
+ assert.equal(listMarker('discussion','eng.MRK-1-14-20'),null);assert.equal(listMarker('descriptive-list','eng.MRK-1-14-20'),null);
+ const compiled=presentationContent({...pack,id:'eng.MRK-1-14-20'});
+ assert.deepEqual(compiled.listContracts.map(b=>b.purpose),['discussion','descriptive-list','descriptive-list','explanation']);
+ assert.ok(Object.values(compiled.readingGroups).every(g=>g.marker===null));assert.deepEqual(compiled.listOrdinals,{});
 });

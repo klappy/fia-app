@@ -32,7 +32,8 @@ const find=predicate=>{const index=pack.activities.findIndex(predicate);if(index
 // is re-pinned to the adopted design. The four sheet states were already outside parity before this change.
 // 'progress-overview' now also paints the overview sheet (cookbook design/alpha-system/components/overview-sheet.md,
 // adopted 2026-10-08 as mocked in design/alpha-v2-screens/25-one-bar-overview.mock.html; fb-03 S2;
-// release/changes/overview-sheet.md): new-state evidence, independent visual review required.
+// release/changes/overview-sheet.md), recomposed by § Proposed composition — clarity (mock 28, nodded 2026-10-09;
+// release/changes/overview-clarity.md): new-state evidence, independent visual review required.
 const authorizedChangedStates=new Set(['initial-guide','grouped-reading','scripture','discussion','image','map','term-instruction','term-definition','section-transition','progress-overview','menu']);
 const states=[
  {name:'initial-guide',index:0,initial:true},
