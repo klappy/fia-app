@@ -293,4 +293,8 @@ test('historical saved generated narration is hidden and cannot play after polic
  const response=await w.fetch(new Request('https://fia.test'+path));
  assert.equal(response.status,404);
  assert.equal(w.stores.get(active.cache).has(path),true,'policy does not delete historical evidence');
+ w.stores.get(active.cache).delete(path);
+ const evicted=await w.message({type:'DOWNLOAD_STATUS'});
+ assert.equal(evicted.saved,true,'evicted paused fallback does not invalidate retained permitted content');
+ assert.equal(evicted.active.valid,true);
 });

@@ -140,7 +140,7 @@ async function complete(record){
  if(!record)return false;
  if(record.serverSnapshot&&!await snapshotComplete(record))return false;
  const cache=await caches.open(record.cache);
- for(const file of record.files){const response=await cache.match(file.path);if(!await verified(response,file))return false;}
+ for(const file of permittedRecordings(record.files,generatedRecordingPaths)){const response=await cache.match(file.path);if(!await verified(response,file))return false;}
  return true;
 }
 async function status(packId=legacy){
