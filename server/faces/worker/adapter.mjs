@@ -15,14 +15,14 @@ export function createWorker({origin,operations,serveRead,serveMcp}) {
   if(url.pathname.startsWith('/mcp/'))return json(404,{status:'refused',code:'unsupported-operation'});
   let status=200,headers={},body=null,ended=false;
   const response={get headersSent(){return ended;},writeHead(code,values={}){status=code;headers=values;return this;},end(value){body=value??null;ended=true;}};
-  const req={method:request.method,headers:Object.fromEntries(request.headers),async *[Symbol.asyncIterator](){
+  const req={url:request.url,signal:request.signal,method:request.method,headers:Object.fromEntries(request.headers),async *[Symbol.asyncIterator](){
    if(!request.body)return;
    const reader=request.body.getReader();
    try{while(true){const {done,value}=await reader.read();if(done)break;yield value;}}
    finally{await reader.cancel().catch(()=>{});reader.releaseLock();}
   }};
   try{
-   if(url.pathname==='/mcp')await serveMcp(req,response,operations);
+   if(url.pathname==='/mcp'){const native=await serveMcp(req,response,operations);if(native instanceof Response)return native;}
    else await serveRead(req,response,url,operations);
    if(!ended)return json(400,{status:'refused',code:'invalid-request'});
    return new Response(body,{status,headers});
