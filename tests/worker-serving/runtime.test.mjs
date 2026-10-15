@@ -33,7 +33,21 @@ test('actual packaged Workers runtime serves accepted bytes through unchanged HT
   for(const r of await Promise.all(Array.from({length:4},()=>request(rpc('read_pack',{packId})))))assert.equal((await r.json()).result.structuredContent.packId,packId);
   const abort=new AbortController();
   const stream=await mf.dispatchFetch(origin+'/mcp',{headers:{accept:'text/event-stream'},signal:abort.signal});
-  assert.equal(stream.status,200);assert.match(stream.headers.get('content-type'),/text\/event-stream/);abort.abort();
+  assert.equal(stream.status,200);assert.match(stream.headers.get('content-type'),/text\/event-stream/);
+  const reader=stream.body.getReader();
+  const pendingRead=reader.read();
+  abort.abort();
+  let timeout;
+  try{
+   const settled=await Promise.race([
+    Promise.allSettled([pendingRead,reader.closed]),
+    new Promise((_,reject)=>{timeout=setTimeout(()=>reject(Error('SSE abort failed to settle reader and closed within 2s')),2000);})
+   ]);
+   assert.equal(settled.length,2);
+   if(settled[0].status==='fulfilled')assert.equal(settled[0].value.done,true);
+   else assert.equal(settled[0].reason.name,'AbortError');
+   if(settled[1].status==='rejected')assert.equal(settled[1].reason.name,'AbortError');
+  }finally{clearTimeout(timeout);await reader.cancel().catch(()=>{});reader.releaseLock();}
   const read=await mf.dispatchFetch(origin+'/v1/packs/'+packId),record=await read.json();assert.equal(read.status,200);assert.deepEqual(record,source.readPack({packId}));
   const mcp=await mf.dispatchFetch(origin+'/mcp',{method:'POST',headers,body:JSON.stringify(rpc('read_pack',{packId}))});assert.deepEqual((await mcp.json()).result.structuredContent,record);
   const artifact=await mf.dispatchFetch(origin+record.artifact.path);assert.equal(artifact.headers.get('etag'),'"'+sha256+'"');assert.equal(hash(Buffer.from(await artifact.arrayBuffer())),sha256);
