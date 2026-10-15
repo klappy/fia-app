@@ -24,6 +24,7 @@
  import {verifyScripturePassageFile,sameScripturePassageFile,scripturePassagePins} from './lib/scripture-passage.js';
  import {hasGuidePreparation,declaresScripturePassage} from './lib/recording-availability.js';
  import {easyFace,queueable,createTapGate} from './lib/easy-button.js';
+ import {passageName} from './lib/progress-icons.js';
  import {preparationHash} from './lib/prepared-audio.js';
  import {demoVideoSource} from './lib/video-demo.js';
  import {bundledPack,libraryAdapter,hasUnresolvedInstructions,registerWorker,RESTORE_TIMEOUT_MS,restoreUnreachable} from './lib/library.js';
@@ -572,7 +573,7 @@
    {#if inlineVideo||focal?.kind==='video'}<button class="glass-icon" aria-label={isPlaying?'Pause video':'Play video'} onclick={()=>executableMode?(videoPlaying?videoOwner.node?.pause():playVideo()):automaticOff?manualPlay():primary()}>{#if isPlaying}<Pause size={24}/>{:else}<Play size={24}/>{/if}</button>{/if}
   </div>
  {/if}
- <SessionProgress groups={progress} onopen={()=>sheet='progress'}/>
+ <SessionProgress groups={progress} passage={passageName(selectedPack)} onopen={()=>sheet='progress'}/>
  {#if stage.supporting}<button class="kept-content" aria-label={`Open kept ${assets[stage.supporting].title}`} onclick={()=>navigate({type:'DETOUR',assetId:stage.supporting})}>{#if assets[stage.supporting].src&&assets[stage.supporting].kind!=='video'}<img src={assets[stage.supporting].src} alt={assets[stage.supporting].title}/>{:else}<BookOpen size={22}/>{/if}</button>{/if}
 
  {#if noticeText&&!noticeInSheet}{@render noticeBar()}{/if}
@@ -587,7 +588,9 @@
   {#if (automaticOff||preparationBusy)&&slotPlays&&!session.detour&&!inTransition&&!finished}
   <button class="step-control" aria-label={manualLabel} title={manualLabel} disabled={!manualAvailable} onclick={()=>manualPlay()}>{#if manualLabel.startsWith('Cancel')}<X size={26}/>{:else if isPlaying}<Pause size={26}/>{:else}<Play size={26}/>{/if}</button>
   {:else}<button class="step-control" aria-label="Skip to next activity" disabled={finished||!!session.detour} onclick={()=>navigate({type:'CONTINUE'},true)}><ChevronRight size={26}/></button>{/if}
-  <button class="replay-control" aria-label="Replay" disabled={finished||!!session.detour} onclick={()=>{if(executableMode){cancel();void playExecutableNarration();}else if(automaticOff){manualPlay(true);}else if(inlineVideo){const v=videoOwner.node;if(v)v.currentTime=0;videoState={...videoState,elapsed:0};playVideo();}else if(visual&&matchingVideo){openMatchingVideo();}else{cancel();playActivity(true);}}}><RotateCcw size={22}/></button>
+  <!-- Replay is an audio control (easy-button policy 2026-10-15, tier 3): grayed where this screen has no recording to replay,
+       by the same availability the fourth slot uses (slotPlays: declared while verifying, verified after). -->
+  <button class="replay-control" class:no-audio={!slotPlays} aria-label="Replay" title={slotPlays?undefined:'No recording on this screen'} disabled={finished||!!session.detour||!slotPlays} onclick={()=>{if(executableMode){cancel();void playExecutableNarration();}else if(automaticOff){manualPlay(true);}else if(inlineVideo){const v=videoOwner.node;if(v)v.currentTime=0;videoState={...videoState,elapsed:0};playVideo();}else if(visual&&matchingVideo){openMatchingVideo();}else{cancel();playActivity(true);}}}><RotateCcw size={22}/></button>
  </nav>
  <span class="sr-only" aria-live="polite">{videoPlaying?'Watching together':audioState.playing?'Listening together':session.status==='waiting'?'Continue when your group is ready':''}</span>
 </main>

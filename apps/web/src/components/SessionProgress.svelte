@@ -2,7 +2,7 @@
  import {Check,ChevronLeft,ChevronRight} from 'lucide-svelte';
  import {contentIcons as icons,sectionIcons,kindWords} from '../lib/progress-icons.js';
  import {pendingStop,stopCue,shownKind,byKind} from '../lib/progress.js';
- let {groups,onopen=()=>{},onselect=()=>{},overview=false}=$props();
+ let {groups,passage='',onopen=()=>{},onselect=()=>{},overview=false}=$props();
  // Overview spine: the current stage starts open; tapping another stage's row opens its items in place.
  let toggled=$state(new Set());
  const isOpen=i=>toggled.has(i)!==!!groups[i].active;
@@ -33,7 +33,17 @@
  let active=$derived(groups.find(g=>g.active)||groups[0]);
  let activeIndex=$derived(Math.max(0,groups.findIndex(g=>g.active)));
  // Design-book words (progress-rail § Copy rules): `<name> · Step n`, then `unit n of m` with `more ahead` or `last unit`; `complete` once the session is done.
- let stageWords=$derived(active.current<0?`${active.title} · Step ${activeIndex+1} · complete`:`${active.title} · Step ${activeIndex+1} · unit ${active.current+1} of ${active.screens.length} · ${active.current<active.screens.length-1?'more ahead':'last unit'}`);
+ let stageWords=$derived(active.current<0?`${active.title} · Step ${activeIndex+1} · complete`:`${active.title} · Step ${activeIndex+1} · unit ${active.current+1} of ${active.screens.length} · ${active.current<active.screens.length-1?'more ahead':'last unit'}`+(passage?` · ${passage}`:''));
+ // The visible line under the icons names the stage and the passage (ticket 2026-10-15 ①): the redundant "Step n" is gone from
+ // sight (the spoken words keep it). The line may wrap; the band grows with it and publishes its height as --fia-top-band,
+ // so the top glass and the content below (--chrome-top) follow and nothing overhangs or overlaps the icons.
+ let band=$state(null);
+ $effect(()=>{
+  void passage;if(overview||!band)return;const root=globalThis.document?.documentElement;if(!root)return;
+  const publish=()=>{const h=band.offsetHeight;if(h>0)root.style.setProperty('--fia-top-band',`${Math.ceil(h)}px`);};
+  publish();const observer=typeof ResizeObserver==='function'?new ResizeObserver(publish):null;observer?.observe(band);
+  return()=>{observer?.disconnect();root.style.removeProperty('--fia-top-band');};
+ });
 </script>
 {#if overview}
  <!-- The spine (cookbook overview-sheet.md § Proposed composition — clarity, nodded 2026-10-09 21:01 ET; mock 28):
@@ -80,7 +90,7 @@
       The per-screen bead row is gone from the bar; within-stage position lives in the overview and in the spoken words. -->
  <!-- The words live outside the button so assistive tech hears them: a button's aria-label overrides its children. -->
  <span id="session-progress-words" class="sr-only session-progress-words" role="progressbar" aria-label="Session progress" aria-valuemin="1" aria-valuemax={groups.length} aria-valuenow={activeIndex+1} aria-valuetext={stageWords}>{stageWords}</span>
- <button class="session-progress" aria-label="Session progress: open section overview" aria-describedby="session-progress-words" onclick={onopen}>
+ <button class="session-progress" bind:this={band} aria-label="Session progress: open section overview" aria-describedby="session-progress-words" onclick={onopen}>
   <!-- Top band (progress-rail § One bar, captain 2026-10-08 23:40–23:52 ET): no track; cells overlap 2 px and stack outward from the
        current cell; the current cell's 2 px ring is the within-stage progress arc (tick at the first screen, solid at the last). -->
   <span class="stage-bar" aria-hidden="true">
@@ -88,7 +98,7 @@
     <span class="stage-cell" class:complete={i<activeIndex||group.ratio===1} class:current={group.active} style:z-index={groups.length-Math.abs(i-activeIndex)} style:--arc={group.active?`${Math.round(100*(group.current<0?1:(group.current+1)/Math.max(1,group.screens.length)))}%`:'0%'}><StageIcon size={20}/></span>
    {/each}
   </span>
-  <span class="stage-words" aria-hidden="true"><b>{active.title}</b> · Step {activeIndex+1}</span>
+  <span class="stage-words" aria-hidden="true"><b>{active.title}</b>{#if passage}<span class="stage-sep">{' · '}</span><span class="stage-passage">{passage}</span>{/if}</span>
  </button>
 {/if}
 <style>

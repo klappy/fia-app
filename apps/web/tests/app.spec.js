@@ -326,6 +326,22 @@ it('the session bar is one control with six stage cells and no per-screen bead r
  expect(bar.querySelector('.content-progress-line')).toBeNull();
  const words=document.getElementById('session-progress-words');expect(bar.getAttribute('aria-describedby')).toBe('session-progress-words');expect(words.getAttribute('aria-valuenow')).toBe('3');expect(words.getAttribute('aria-valuetext')).toMatch(/Defining the Scenes · Step 3 · unit \d+ of \d+ · (more ahead|last unit)/);
 });
+it('the line under the stage icons names the stage and the full passage, never "Step n" (ticket 2026-10-15 ①)',async()=>{
+ await startAt('S03-U009');
+ const words=document.querySelector('.session-progress .stage-words');
+ expect(words.textContent).toBe('Defining the Scenes · Mark 1:1–13');expect(words.textContent).not.toMatch(/Step/);
+ expect(document.getElementById('session-progress-words').getAttribute('aria-valuetext')).toMatch(/· Mark 1:1–13$/);
+});
+it('Replay is an audio control: enabled on a screen with a recording, grayed where the screen has none (easy-button policy 2026-10-15, tier 3)',async()=>{
+ await startAt('S01-U002');expect(screen.getByRole('button',{name:'Replay',exact:true}).disabled).toBe(false);cleanup();
+ const original=activities[0];activities[0]={...original,audioSrc:null};
+ try{
+  vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[]});
+  await startAt(original.id);const replay=screen.getByRole('button',{name:'Replay',exact:true});
+  expect(replay.disabled).toBe(true);expect(replay.classList.contains('no-audio')).toBe(true);
+  await fireEvent.click(replay);await settle();expect(players).toHaveLength(0);
+ }finally{cleanup();activities[0]=original;}
+});
 it('the overview spine opens a stage in place and its item jumps without marking prior content complete',async()=>{
  // overview-sheet.md § Proposed composition — clarity: tapping another stage's row shows its items in place; the forward jump never completes skipped items.
  vi.useFakeTimers();await startAt('S03-U009');

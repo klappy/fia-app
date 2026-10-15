@@ -107,7 +107,7 @@ button{min-height:48px}.scene-notice button{min-width:48px;min-height:48px}.kept
 
 /* Edge-anchored cookbook glass. The content scrolls underneath, with a clear
    reading area measured between the actual frames rather than symmetric gutters. */
-.scene{--chrome-top:calc(92px + env(safe-area-inset-top));--chrome-bottom:calc(120px + max(16px,env(safe-area-inset-bottom)))}
+.scene{--chrome-top:calc(var(--fia-top-band,92px) + env(safe-area-inset-top));--chrome-bottom:calc(120px + max(16px,env(safe-area-inset-bottom)))}
 .scene-glass{position:fixed;left:0;right:0;z-index:11;pointer-events:none;background:var(--glass-fill-2);-webkit-backdrop-filter:blur(var(--blur-medium)) var(--sat-glass);backdrop-filter:blur(var(--blur-medium)) var(--sat-glass)}
 .scene-glass-top{top:0;height:var(--chrome-top)}
 .scene-glass-bottom{bottom:0;height:var(--chrome-bottom)}
@@ -149,7 +149,7 @@ button{min-height:48px}.scene-notice button{min-width:48px;min-height:48px}.kept
 @media(prefers-reduced-transparency:reduce){.sheet.glass-sheet,.glass-sheet .sheet-header{background:var(--surface);-webkit-backdrop-filter:none;backdrop-filter:none}}
 
 /* One generous hit area lets visual spacing stay compact and even. */
-.session-progress{display:flex;flex-direction:column;gap:14px;padding:14px 0 14.5px;height:92px;box-sizing:border-box;justify-content:flex-start}
+.session-progress{display:flex;flex-direction:column;gap:14px;padding:14px 0 14.5px;min-height:92px;height:auto;box-sizing:border-box;justify-content:flex-start}
 /* Top band (cookbook progress-rail § One bar, captain 2026-10-08 23:40–23:52 ET): three equal gaps measured from the 32 px circle row, never from the current cell's ring (captain 2026-10-09 01:18 ET): 14 · circles 32 · 14 · words 17.5 · 14.5 = 92; the ring is a halo and lives inside the gaps.
    No track: six 32 px cells overlapping 2 px, stacked outward from the current cell (z-index set inline); the current cell's 2 px ring is the
    within-stage arc — elapsed in --text-title from 12 o'clock, remainder in --paper-300 — on the OG ring geometry (3 px gap + 2 px). */
@@ -163,7 +163,10 @@ button{min-height:48px}.scene-notice button{min-width:48px;min-height:48px}.kept
 .stage-cell.current::after{transition:--arc 600ms var(--ease-flow,ease)}
 @media(prefers-reduced-motion:reduce){.stage-cell.current::after{transition:none}}
 [dir=rtl] .stage-cell.current::after{transform:scaleX(-1)}
-.stage-words{font:var(--type-label);color:var(--text-muted);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* The passage line (ticket 2026-10-15 ①): stage name · full passage name (+ heading). It wraps rather than clips, and wraps
+   between the stage and the passage before it breaks inside a name; the band grows with it (--fia-top-band, set by SessionProgress). */
+.stage-words{font:var(--type-label);color:var(--text-muted);text-align:center;white-space:normal;overflow-wrap:anywhere;max-width:100%;padding-inline:8px;box-sizing:border-box}
+.stage-words b,.stage-passage{display:inline-block;max-width:100%}
 .stage-words b{color:var(--text-title);font-weight:600}
 
 
