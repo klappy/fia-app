@@ -1,0 +1,49 @@
+{
+  "schema": "fia-listening-persona-summary@1",
+  "commit": "771666371c248bd1c5dbe477636258f8aeef683f",
+  "environment": "dev",
+  "runId": "38667180352",
+  "attempt": "1",
+  "workflowUrl": "https://github.com/klappy/fia-app/actions/runs/38667180352",
+  "scope": "Agent-operated observations; not human research or acoustic/device proof. Hosted and controlled protocol scopes are separate.",
+  "scenario": {
+    "key": "771666371c248bd1c5dbe477636258f8aeef683f/dev/P2 warm Replay restarts the current guide recording",
+    "scenario": "P2 warm Replay restarts the current guide recording",
+    "scope": "hosted-rendered-native",
+    "outcome": "passed",
+    "validation": {
+      "validator": "verify",
+      "ok": true,
+      "environment": "dev",
+      "commit": "771666371c248bd1c5dbe477636258f8aeef683f",
+      "errors": [],
+      "scope": "Live Chromium P2 listening only; no physical-device or audible-output claim"
+    },
+    "failedStep": null,
+    "observedFriction": {
+      "classification": "observation-only",
+      "notices": [
+        {
+          "kind": "visible-notices",
+          "text": []
+        }
+      ],
+      "assessment": "Not inferred from pass/fail; review attached observations"
+    },
+    "userFeedback": {
+      "status": "not-collected"
+    },
+    "evidence": {
+      "name": "live-listening-evidence",
+      "sha256": "f110783efa76be97cd367144bc263a7331ba644797fc89ef88781ad2d7fd8219",
+      "workflowArtifacts": "test-results (trace/video retention is finite)"
+    },
+    "baselineComparison": {
+      "baselineCommit": "5e6394dd9e3aed7a53e8ac11048fd5baeb9d5264",
+      "priorOutcome": "passed",
+      "currentOutcome": "passed",
+      "archivePath": "5e6394dd9e3aed7a53e8ac11048fd5baeb9d5264/dev/38666447726-1/b609710481b05ddc87da8a39257f0bf33f730b2a57c7dc04e1f4c1fcda7c38df.json",
+      "scope": "Outcome comparison only; no sentiment inference"
+    }
+  }
+}
