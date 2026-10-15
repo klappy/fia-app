@@ -324,7 +324,16 @@ it('the session bar is one control with six stage cells and no per-screen bead r
  const bar=screen.getByRole('button',{name:'Session progress: open section overview'});
  expect(bar.querySelectorAll('.stage-cell')).toHaveLength(6);expect(bar.querySelectorAll('.stage-cell.current')).toHaveLength(1);
  expect(bar.querySelector('.content-progress-line')).toBeNull();
- const words=document.getElementById('session-progress-words');expect(bar.getAttribute('aria-describedby')).toBe('session-progress-words');expect(words.getAttribute('aria-valuenow')).toBe('3');expect(words.getAttribute('aria-valuetext')).toMatch(/Defining the Scenes · Step 3 · unit \d+ of \d+ · (more ahead|last unit)/);
+ const words=document.getElementById('session-progress-words');expect(bar.getAttribute('aria-describedby')).toBe('session-progress-words');expect(words.getAttribute('aria-valuenow')).toBe('3');expect(words.getAttribute('aria-valuetext')).toMatch(/^Defining the Scenes · Mark 1:1–13 · unit \d+ of \d+ · (more ahead|last unit)$/);
+ expect(bar.querySelector('.stage-words').textContent).toBe('Defining the Scenes · Mark 1:1–13');expect(bar.textContent).not.toMatch(/Step \d/);
+});
+it('Replay is an audio control: live on a block with a recording, grayed and inert on a text-only block',async()=>{
+ // Ticket 2026-10-15 passage-name-replaces-step-label § Scope: replay follows the same recording rule as the fourth slot (R6).
+ await startAt('S01-U001');expect(screen.getByRole('button',{name:'Replay',exact:true}).disabled).toBe(false);cleanup();localStorage.clear();
+ const i=activities.findIndex(a=>a.id==='S01-U001'),original=activities[i];activities[i]={...original,audioSrc:null,sourceText:undefined};
+ try{await startAt('S01-U001');const replay=screen.getByRole('button',{name:'Replay',exact:true});
+  expect(replay.disabled).toBe(true);expect(replay.classList.contains('no-audio')).toBe(true);}
+ finally{activities[i]=original;}
 });
 it('the overview spine opens a stage in place and its item jumps without marking prior content complete',async()=>{
  // overview-sheet.md § Proposed composition — clarity: tapping another stage's row shows its items in place; the forward jump never completes skipped items.

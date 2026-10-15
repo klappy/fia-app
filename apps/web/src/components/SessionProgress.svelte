@@ -2,7 +2,7 @@
  import {Check,ChevronLeft,ChevronRight} from 'lucide-svelte';
  import {contentIcons as icons,sectionIcons,kindWords} from '../lib/progress-icons.js';
  import {pendingStop,stopCue,shownKind,byKind} from '../lib/progress.js';
- let {groups,onopen=()=>{},onselect=()=>{},overview=false}=$props();
+ let {groups,passage='',onopen=()=>{},onselect=()=>{},overview=false}=$props();
  // Overview spine: the current stage starts open; tapping another stage's row opens its items in place.
  let toggled=$state(new Set());
  const isOpen=i=>toggled.has(i)!==!!groups[i].active;
@@ -32,8 +32,10 @@
  }
  let active=$derived(groups.find(g=>g.active)||groups[0]);
  let activeIndex=$derived(Math.max(0,groups.findIndex(g=>g.active)));
- // Design-book words (progress-rail § Copy rules): `<name> · Step n`, then `unit n of m` with `more ahead` or `last unit`; `complete` once the session is done.
- let stageWords=$derived(active.current<0?`${active.title} · Step ${activeIndex+1} · complete`:`${active.title} · Step ${activeIndex+1} · unit ${active.current+1} of ${active.screens.length} · ${active.current<active.screens.length-1?'more ahead':'last unit'}`);
+ // Design-book words (progress-rail § Copy rules): `<name> · <passage>`, then `unit n of m` with `more ahead` or `last unit`; `complete` once the session is done.
+ // The passage name replaces the old `Step n` (ticket 2026-10-15 passage-name-replaces-step-label): the six icons already say which stage.
+ let lead=$derived(passage?`${active.title} · ${passage}`:active.title);
+ let stageWords=$derived(active.current<0?`${lead} · complete`:`${lead} · unit ${active.current+1} of ${active.screens.length} · ${active.current<active.screens.length-1?'more ahead':'last unit'}`);
 </script>
 {#if overview}
  <!-- The spine (cookbook overview-sheet.md § Proposed composition — clarity, nodded 2026-10-09 21:01 ET; mock 28):
@@ -88,7 +90,7 @@
     <span class="stage-cell" class:complete={i<activeIndex||group.ratio===1} class:current={group.active} style:z-index={groups.length-Math.abs(i-activeIndex)} style:--arc={group.active?`${Math.round(100*(group.current<0?1:(group.current+1)/Math.max(1,group.screens.length)))}%`:'0%'}><StageIcon size={20}/></span>
    {/each}
   </span>
-  <span class="stage-words" aria-hidden="true"><b>{active.title}</b> · Step {activeIndex+1}</span>
+  <span class="stage-words" aria-hidden="true"><b>{active.title}</b>{#if passage}{' · '}<span class="stage-passage">{passage}</span>{/if}</span>
  </button>
 {/if}
 <style>
