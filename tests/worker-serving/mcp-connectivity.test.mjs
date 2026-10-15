@@ -20,6 +20,13 @@ test('initialize negotiates the supported version, then lists tools without work
  assert.equal((await rpc({jsonrpc:'2.0',id:2,method:'tools/list'},{Origin:'https://evil.test'})).status,403);
  assert.equal((await worker.fetch(new Request(origin+'/mcp'),env)).status,405);
 });
+test('modern discovery receives legacy error and client can fall back to negotiated initialization',async()=>{
+ const probe=await rpc({jsonrpc:'2.0',id:1,method:'server/discover',params:{}},{'mcp-protocol-version':'2026-07-28','mcp-method':'server/discover'});
+ assert.equal(probe.status,400);assert.equal((await probe.json()).error.code,-32600);
+ const fallback=await rpc({jsonrpc:'2.0',id:2,method:'initialize',params:{protocolVersion:'2025-11-25',capabilities:{},clientInfo:{name:'fallback-fixture',version:'1'}}});
+ assert.equal(fallback.status,200);const version=(await fallback.json()).result.protocolVersion;assert.equal(version,VERSION);
+ const list=await rpc({jsonrpc:'2.0',id:3,method:'tools/list'},{'mcp-protocol-version':version});assert.equal(list.status,200);
+});
 test('unused OAuth discovery is explicit 404, routed ahead of SPA assets',async()=>{
  const config=readFileSync(new URL('../../wrangler.jsonc',import.meta.url),'utf8');
  for(const name of ['oauth-authorization-server','oauth-protected-resource','openid-configuration']){
