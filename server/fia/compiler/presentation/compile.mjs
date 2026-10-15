@@ -14,7 +14,7 @@ function verifyEvidence(guide,evidence){
  const units=new Map(guide.steps.flatMap(s=>s.units).map(u=>[u.id,u]));
  for(const u of evidence.units||evidence.groups.flatMap(g=>[g.intro,...g.items])) requireThat(units.get(u.id)?.text===u.text&&units.get(u.id)?.textSha256===u.textSha256,'semantic unit binding mismatch');
 }
-export function compilePresentation(input,{listEvidence,exampleEvidence,sourceFiles=[]}={}){
+export function validatePresentationInput(input,{listEvidence,exampleEvidence}={}){
  const {manifest,guide,scripture,resources,rights,narration}=input;
  for(const [name,hash] of Object.entries(SOURCE_BINDINGS[manifest.packId]||{}))requireThat(digest(JSON.stringify(input[name]))===hash,`pinned source identity mismatch: ${name}`);
  requireThat(SOURCE_BINDINGS[manifest.packId],'unknown source identity');
@@ -23,6 +23,13 @@ export function compilePresentation(input,{listEvidence,exampleEvidence,sourceFi
  verifyEvidence(guide,listEvidence);verifyEvidence(guide,exampleEvidence);
  const units=guide.steps.flatMap(s=>s.units), seen=new Set();
  for(const u of units){requireThat(!seen.has(u.id),'duplicate unit');seen.add(u.id);requireThat(digest(u.text)===u.textSha256,'source text hash mismatch');}
+ for(const e of scripture.editions)requireThat(e.status==='source'&&e.verses.length>0,'scripture source unavailable');
+ requireThat(scripture.editions.length>0,'no scripture');
+}
+export function sourceBinding(packId){return structuredClone(SOURCE_BINDINGS[packId]??null);}
+export function compilePresentation(input,{listEvidence,exampleEvidence,sourceFiles=[]}={}){
+ validatePresentationInput(input,{listEvidence,exampleEvidence});
+ const {manifest,guide,scripture,resources,rights}=input;
  const assets={},diagnostics=[];
  const rightsFor=collection=>rights.sources.find(r=>r.collection===collection);
  for(const e of scripture.editions){
