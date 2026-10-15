@@ -30,6 +30,15 @@
   if(at<0)return `${done} done · ${togo} to go`;
   return `${done} done · ${byKind(kindWords,shownKind(group.screens[at]))} now · ${togo} to go`;
  }
+ // The chrome below the bar starts at the bar's real height: a wrapped passage line (long names, large fonts) grows the band and
+ // --band-height carries it to --chrome-top, so the glass and content start below it. One line keeps the 92 px band.
+ let bar=$state(null);
+ $effect(()=>{
+  if(!bar||typeof ResizeObserver==='undefined')return;
+  const root=document.documentElement,set=()=>root.style.setProperty('--band-height',`${Math.max(92,Math.ceil(bar.getBoundingClientRect().height))}px`);
+  const observer=new ResizeObserver(set);observer.observe(bar);set();
+  return ()=>{observer.disconnect();root.style.removeProperty('--band-height');};
+ });
  let active=$derived(groups.find(g=>g.active)||groups[0]);
  let activeIndex=$derived(Math.max(0,groups.findIndex(g=>g.active)));
  // Design-book words (progress-rail § Copy rules): `<name> · <passage>`, then `unit n of m` with `more ahead` or `last unit`; `complete` once the session is done.
@@ -82,7 +91,7 @@
       The per-screen bead row is gone from the bar; within-stage position lives in the overview and in the spoken words. -->
  <!-- The words live outside the button so assistive tech hears them: a button's aria-label overrides its children. -->
  <span id="session-progress-words" class="sr-only session-progress-words" role="progressbar" aria-label="Session progress" aria-valuemin="1" aria-valuemax={groups.length} aria-valuenow={activeIndex+1} aria-valuetext={stageWords}>{stageWords}</span>
- <button class="session-progress" aria-label="Session progress: open section overview" aria-describedby="session-progress-words" onclick={onopen}>
+ <button bind:this={bar} class="session-progress" aria-label="Session progress: open section overview" aria-describedby="session-progress-words" onclick={onopen}>
   <!-- Top band (progress-rail § One bar, captain 2026-10-08 23:40–23:52 ET): no track; cells overlap 2 px and stack outward from the
        current cell; the current cell's 2 px ring is the within-stage progress arc (tick at the first screen, solid at the last). -->
   <span class="stage-bar" aria-hidden="true">
