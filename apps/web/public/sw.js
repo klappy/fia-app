@@ -29,7 +29,7 @@ function validate(manifest){
  }paths.add(f.path);}
  return {...manifest,files:permittedRecordings(manifest.files,generatedRecordingPaths)};
 }
-const selectedFiles=(manifest,selection)=>manifest.files.filter(f=>f.group==='core'||selection==='all'||selection==='audio'&&f.group==='audio');
+const selectedFiles=(manifest,selection)=>manifest.files.filter(f=>downloadSelectionIncludes(selection,f.group));
 function matchingSavedFile(file,active,manifest){
  if(active?.manifest?.deliveryRevision!==manifest.deliveryRevision)return null;
  const saved=active.files.find(f=>f.path===file.path&&f.deliveryURL&&recordingAllowed(f,generatedRecordingPaths));if(!saved)return null;
@@ -152,7 +152,7 @@ async function status(packId=legacy){
  const saved=await complete(active);
  if(active)active.files=permittedRecordings(active.files,generatedRecordingPaths);
  if(manifest)manifest={...manifest,files:permittedRecordings(manifest.files,generatedRecordingPaths)};
- return {available:true,mediaNotices:(await read('media-notices'))||[],saved,active:active?{...active,valid:saved}:null,pending:pending?{...pending,running:jobs.has(packId)}:null,manifest,error,updateAvailable:!!(active&&manifest&&(active.manifest.catalogRevision||active.revision)!==manifest.revision),choices:manifest?['core',...(manifest.files.some(f=>f.group==='audio')?['audio']:[]),...(manifest.files.some(f=>f.group==='video'||f.group==='image')?['all']:[])].map(id=>({id,bytes:selectedFiles(manifest,id).reduce((n,f)=>n+f.bytes,0)})):[]};
+ return {available:true,mediaNotices:(await read('media-notices'))||[],saved,active:active?{...active,valid:saved}:null,pending:pending?{...pending,running:jobs.has(packId)}:null,manifest,error,updateAvailable:!!(active&&manifest&&(active.manifest.catalogRevision||active.revision)!==manifest.revision),choices:manifest?['core',...(manifest.files.some(f=>f.group==='audio')?['audio']:[]),...(manifest.files.some(f=>f.group==='video')&&manifest.files.some(f=>f.group==='audio'||f.group==='image')?['visual']:[]),...(manifest.files.some(f=>f.group==='video'||f.group==='image')?['all']:[])].map(id=>({id,bytes:selectedFiles(manifest,id).reduce((n,f)=>n+f.bytes,0)})):[]};
 }
 self.addEventListener('install',event=>{if(isBuild)event.waitUntil(caches.open(SHELL).then(c=>c.addAll(['/','/index.html','/manifest.webmanifest'])).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));
@@ -219,7 +219,7 @@ self.addEventListener('fetch',event=>{
 });
 async function start(selection,port,packId=legacy,sizes={},revision){
  if(!isBuild)throw new Error('Downloads work on the published Site.');
- if(!['core','audio','all'].includes(selection))throw new Error('Choose a download option.');
+ if(!['core','audio','visual','all'].includes(selection))throw new Error('Choose a download option.');
  if(jobs.has(packId))throw new Error('A download is already running for this passage.');
  const controller=new AbortController();jobs.set(packId,controller);
  let pending;

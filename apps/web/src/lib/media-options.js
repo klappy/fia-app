@@ -4,7 +4,7 @@ function declaredPhoneVideoSize(file,size){
 }
 const labels={small:'Small',medium:'Medium',large:'Large',prepared:'Prepared version'};
 export function preparedDownloadSizes(manifest,selection){
- const included=selection==='all'?['image','audio','video']:selection==='audio'?['audio']:[];
+ const included=selection==='all'?['image','audio','video']:selection==='visual'?['image','audio']:selection==='audio'?['audio']:[];
  const groups={};for(const group of ['image','audio','video']){
   const files=(manifest?.files||[]).filter(f=>f.group===group),sizes=new Set(files.map(f=>{
    if(!f.deliveryURL)return null;
