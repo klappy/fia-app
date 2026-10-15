@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.0.0-alpha.15 — Original-recording policy and saved-pack retention (2026-10-14)
+
+Pauses remaining AI-generated fallback narration while retaining verified original guide and Scripture recordings. Activities without an admitted original remain readable, and settings describe that policy without overstating recording availability. Saved-download status ignores intentionally withheld generated files while continuing to verify permitted originals.
+
+A live pack-preparation response no longer retires an already verified offline snapshot; the live response still reaches the page unchanged. Explicit revocation and integrity failures retain their existing behavior.
+
+Scope: [fallback narration policy](release/changes/pause-generated-fallback-narration.md) (PR232) and [saved-pack preparation](release/changes/preserve-saved-pack-while-preparing.md) (PR233). No new recording, Luke integration, later-passage visual completion or physical-device acceptance is claimed. Each promoted environment requires its own exact-head deployment and journey proof.
+
 ## 3.0.0-alpha.14 — Current guided interface and playback repairs (2026-10-14)
 
 Brings the reviewed six-stage icon bar and balanced header, Overview navigation with current/next activity context, language and passage access, and publisher list markers for the approved English Mark 1:1–13 presentation. Includes truthful passage switching, recording-aligned reading, explicit playback recovery and iOS tap-start repairs accumulated since alpha.13. Video updates remain playable with scoped notices and safe size fallback; saved media retains strict identity verification.

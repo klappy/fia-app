@@ -1,6 +1,8 @@
 import {readdirSync,readFileSync,writeFileSync,mkdirSync,copyFileSync,statSync,existsSync} from 'node:fs';
 import {join} from 'node:path';
 import {marked} from 'marked';
+import {permittedRecordings} from '../apps/web/src/lib/recording-policy.js';
+const generatedRecordingPaths=new Set(JSON.parse(readFileSync(new URL('../apps/web/public/content/source/audio-manifest.json',import.meta.url),'utf8')).entries.filter(e=>e.recordingSource==='generated').map(e=>e.path));
 import {createHash} from 'node:crypto';
 import {verifyScriptureAudioReplacement,verifyScriptureRangeOnly} from './scripture-audio-publication.mjs';
 import {verifyRecordedGuideReplacement} from './recorded-guide-publication.mjs';
@@ -23,7 +25,8 @@ const shell=allFiles.filter(path=>!mediaPath(path)).map(digest);
 const buildId=createHash('sha256').update(JSON.stringify(shell)).digest('hex').slice(0,12);
 const deliveryHelpers=readFileSync(new URL('../apps/web/src/lib/media-delivery.js',import.meta.url),'utf8').replace(/export (?=(?:async )?function)/g,'');
 const proxyHelpers=readFileSync(new URL('../apps/web/src/lib/proxy-request.js',import.meta.url),'utf8').replace(/export (?=(?:async )?function)/g,'');
-writeFileSync('dist/sw.js',deliveryHelpers+'\n'+proxyHelpers+'\n'+readFileSync('apps/web/public/sw.js','utf8').replace('__BUILD_ID__',buildId));
+const recordingPolicy=readFileSync(new URL('../apps/web/src/lib/recording-policy.js',import.meta.url),'utf8').replace(/export function/g,'function');
+writeFileSync('dist/sw.js',recordingPolicy+'\nconst generatedRecordingPaths=new Set('+JSON.stringify([...generatedRecordingPaths])+');\n'+deliveryHelpers+'\n'+proxyHelpers+'\n'+readFileSync('apps/web/public/sw.js','utf8').replace('__BUILD_ID__',buildId));
 const registryPath='dist/content/registry.json';
 let registry;
 try{registry=JSON.parse(readFileSync(registryPath,'utf8'));}catch(error){if(error.code!=='ENOENT')throw error;}
@@ -69,13 +72,13 @@ if(e.delivery.kind!==f.group)throw Error('Delivery media kind mismatch: '+f.path
    }
    if(byPath.size!==media.filter(f=>delivery.sidecar.schema===6?byPath.has(f.path):delivery.sidecar.schema>=2||f.group!=='video').length)throw Error('Unexpected delivery entries.');
   }
-  const entries=[...shell,digest(registryPath),digest(payloadPath),digest('dist/content/delivery/index.json'),...(delivery?[digest(delivery.path),...(delivery.ledger?[digest('dist'+delivery.sidecar.sourceLedger.url)]:[]),...(delivery.recordingLedger?[digest('dist'+delivery.sidecar.recordingLedger.url),...(delivery.sidecar.recordingLedgers||[]).map(r=>digest('dist'+r.url))]:[]),...(delivery.scriptureLedger?[digest('dist'+delivery.sidecar.scriptureSourceLedger.url),...Array.from(new Set(delivery.sidecar.entries.flatMap(e=>e.scriptureReplacement?[e.scriptureAlignment.url,...Object.values(e.variants).map(v=>v.scriptureAlignment.url)]:[]))).map(url=>digest('dist'+url))]:[])]:[]),...media];
+  const entries=[...shell,digest(registryPath),digest(payloadPath),digest('dist/content/delivery/index.json'),...(delivery?[digest(delivery.path),...(delivery.ledger?[digest('dist'+delivery.sidecar.sourceLedger.url)]:[]),...(delivery.recordingLedger?[digest('dist'+delivery.sidecar.recordingLedger.url),...(delivery.sidecar.recordingLedgers||[]).map(r=>digest('dist'+r.url))]:[]),...(delivery.scriptureLedger?[digest('dist'+delivery.sidecar.scriptureSourceLedger.url),...Array.from(new Set(delivery.sidecar.entries.flatMap(e=>e.scriptureReplacement?[e.scriptureAlignment.url,...Object.values(e.variants).map(v=>v.scriptureAlignment.url)]:[]))).map(url=>digest('dist'+url))]:[])]:[]),...permittedRecordings(media,generatedRecordingPaths)];
   const revision=createHash('sha256').update(JSON.stringify(entries)).digest('hex').slice(0,12);
   const manifest={schema:1,packId:descriptor.id,presentationRevision:descriptor.revision,...(delivery?{deliveryRevision:delivery.sha256}:{}),revision,files:entries};
   writeFileSync(`dist/offline/${descriptor.id}.json`,JSON.stringify(manifest));
  }
 }
 // Legacy manifest remains readable for already installed pre-registry clients.
-const legacyEntries=allFiles.sort().map(digest),legacyRevision=createHash('sha256').update(JSON.stringify(legacyEntries)).digest('hex').slice(0,12);
+const legacyEntries=permittedRecordings(allFiles.sort().map(digest),generatedRecordingPaths),legacyRevision=createHash('sha256').update(JSON.stringify(legacyEntries)).digest('hex').slice(0,12);
 writeFileSync('dist/offline-manifest.json',JSON.stringify({schema:1,packId:'fia-mark-authentic',revision:legacyRevision,files:legacyEntries}));
 console.log(`Offline build ${buildId}: ${registry?.packs.length||0} separate passage manifests`);
