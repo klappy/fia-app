@@ -103,7 +103,7 @@
  .ov-item{width:var(--fia-tap-min,48px);height:var(--fia-tap-min,48px);padding:0;border-radius:50%}
  .ov-dot{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;color:var(--ink-500);background:var(--paper-000);box-shadow:inset 0 0 0 1px var(--paper-300)}
  .ov-item.complete .ov-dot{background:var(--ink-700);color:var(--paper-000);box-shadow:none}
- .ov-item.current .ov-dot{color:var(--ink-900);box-shadow:0 0 0 2px var(--paper-050),0 0 0 4px var(--ink-900)}
+ .ov-item.current .ov-dot{background:var(--paper-000);color:var(--ink-900);box-shadow:0 0 0 2px var(--paper-050),0 0 0 4px var(--ink-900)}
  /* The amber ring follows the stop (screen.stop), never the glyph kind (fb-03 lens-dev-8662ef8 Finding 1). */
  .ov-item.stop .ov-dot{box-shadow:inset 0 0 0 1.5px var(--fia-stop);color:var(--fia-stop)}
  .ov-window{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:-2px 0 0}
