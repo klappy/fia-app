@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "test:release": "node --test tests/release/*.test.js && node --test tests/worker-serving/packaged.check.mjs",
     "test:e2e": "playwright test",
-    "test:visual": "playwright test e2e/visual.spec.js",
+    "test:visual": "playwright test e2e/visual.spec.js e2e/overview-contrast.spec.js",
     "smoke:deployed": "playwright test e2e/deployed.spec.js",
     "test:upgrade": "playwright test e2e/upgrade.spec.js",
     "test:reference": "cd apps/web && node --test tests/*.test.js && vitest run",
@@ -30,7 +30,7 @@
     "jsdom": "26.1.0",
     "vitest": "4.1.11"
   },
-  "version": "3.0.0-alpha.15",
+  "version": "3.0.0-alpha.16",
   "description": "FIA Mark text in English and Spanish with verified on-demand audio and optional offline downloads.",
   "engines": {
     "node": ">=22"
