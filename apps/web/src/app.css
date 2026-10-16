@@ -149,7 +149,7 @@ button{min-height:48px}.scene-notice button{min-width:48px;min-height:48px}.kept
 @media(prefers-reduced-transparency:reduce){.sheet.glass-sheet,.glass-sheet .sheet-header{background:var(--surface);-webkit-backdrop-filter:none;backdrop-filter:none}}
 
 /* One generous hit area lets visual spacing stay compact and even. */
-.session-progress{display:flex;flex-direction:column;gap:14px;padding:14px 0 14.5px;height:auto;min-height:92px;box-sizing:border-box;justify-content:flex-start}
+.session-progress{display:flex;flex-direction:column;gap:14px;padding:14px 0 14.5px;height:92px;box-sizing:border-box;justify-content:flex-start}
 /* Top band (cookbook progress-rail § One bar, captain 2026-10-08 23:40–23:52 ET): three equal gaps measured from the 32 px circle row, never from the current cell's ring (captain 2026-10-09 01:18 ET): 14 · circles 32 · 14 · words 17.5 · 14.5 = 92; the ring is a halo and lives inside the gaps.
    No track: six 32 px cells overlapping 2 px, stacked outward from the current cell (z-index set inline); the current cell's 2 px ring is the
    within-stage arc — elapsed in --text-title from 12 o'clock, remainder in --paper-300 — on the OG ring geometry (3 px gap + 2 px). */
@@ -163,10 +163,10 @@ button{min-height:48px}.scene-notice button{min-width:48px;min-height:48px}.kept
 .stage-cell.current::after{transition:--arc 600ms var(--ease-flow,ease)}
 @media(prefers-reduced-motion:reduce){.stage-cell.current::after{transition:none}}
 [dir=rtl] .stage-cell.current::after{transform:scaleX(-1)}
-/* The passage line may run longer than the old `Step n`: it wraps below the icons (never over them) and the band grows with it; the
-   passage name itself stays whole on a line where it fits (ticket 2026-10-15 passage-name-replaces-step-label). */
-.stage-words{display:flex;justify-content:center;align-items:baseline;max-width:100%;min-width:0;font:var(--type-label);color:var(--text-muted);white-space:nowrap}
-.stage-words b{flex:none}.stage-sep{flex:none;white-space:pre}
+/* The words are one line in a band fixed at 92 px that never grows (RULING-TOP-BAND, captain 2026-10-16): the stage name stays whole
+   and the passage reference ends in an ellipsis; a stage name wider than the bar ellipsizes rather than spilling past the edges. */
+.stage-words{display:flex;justify-content:center;align-items:baseline;max-width:100%;min-width:0;overflow:hidden;font:var(--type-label);color:var(--text-muted);white-space:nowrap}
+.stage-words b{flex:0 0 auto;max-width:100%;overflow:hidden;text-overflow:ellipsis}.stage-sep{flex:none;white-space:pre}
 .stage-passage{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .stage-words b{color:var(--text-title);font-weight:600}
 
