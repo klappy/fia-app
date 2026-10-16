@@ -7,10 +7,16 @@ const root=resolve(fileURLToPath(new URL('../../../../',import.meta.url)));
 const json=p=>JSON.parse(readFileSync(p,'utf8'));
 const input=process.argv[2]?resolve(process.argv[2]):null;
 const bundled=JSON.parse(gunzipSync(readFileSync(new URL('./source-packs.json.gz',import.meta.url))));
+// Further books ship as sibling archives at the same source revision; the Mark archive stays pinned byte-identical.
+for(const book of ['luk']){const extra=JSON.parse(gunzipSync(readFileSync(new URL(`./source-packs-${book}.json.gz`,import.meta.url))));if(extra.revision!==bundled.revision)throw Error('source revision mismatch: '+book);Object.assign(bundled.packs,extra.packs);bundled.inventory.push(...extra.inventory);}
 const output=resolve(process.argv[3]||join(root,'apps/web/public/content'));
 const sample=process.argv.includes('--sample');
 const list=json(new URL('./lists.json',import.meta.url)),examples=json(new URL('./examples.json',import.meta.url));
-const ids=(input?readdirSync(join(input,'data/packs')):Object.keys(bundled.packs)).filter(id=>/^(eng|spa)\.MRK-/.test(id)).sort((a,b)=>a.localeCompare(b,'en',{numeric:true})).filter(id=>!sample||/MRK-1-(1-13|14-20)$/.test(id));
+const BOOKS=['MRK','LUK'];// canonical book order: Mark keeps its place, Luke follows
+// Books listed in the served catalog. Luke compiles here but joins registry.json only when the publication
+// authority (trusted-generalized.json catalog + envelopes, guide-dispatch REGISTRY_SHA) is re-pinned.
+const PUBLISHED=new Set((process.env.FIA_PUBLISH_BOOKS||'MRK').split(','));
+const ids=(input?readdirSync(join(input,'data/packs')):Object.keys(bundled.packs)).filter(id=>/^(eng|spa)\.(?:MRK|LUK)-/.test(id)).sort((a,b)=>a.slice(0,3).localeCompare(b.slice(0,3))||BOOKS.indexOf(a.slice(4,7))-BOOKS.indexOf(b.slice(4,7))||a.localeCompare(b,'en',{numeric:true})).filter(id=>!sample||/MRK-1-(1-13|14-20)$/.test(id));
 const registry={schemaVersion:1,sourceRevision:SOURCE,recipeRevision:RECIPE,packs:[]},receipt=[];
 for(const id of ids){
  const dir=input?join(input,'data/packs',id):null,files=['manifest','guide','guide-units','scripture','resources','rights','narration'];
@@ -31,7 +37,7 @@ for(const id of ids){
   result=compilePresentation(data,{listEvidence:list.packs.find(p=>p.packId===id),exampleEvidence:examples.packs.find(p=>p.packId===id),sourceFiles});
   bytes=Buffer.from(JSON.stringify(result.pack,null,2)+'\n');
  }
- const descriptor=describe(data.manifest,bytes,result);const dest=join(output,'packs',id);mkdirSync(dest,{recursive:true});writeFileSync(join(dest,descriptor.revision+'.json'),bytes);registry.packs.push(descriptor);
+ const descriptor=describe(data.manifest,bytes,result);const dest=join(output,'packs',id);mkdirSync(dest,{recursive:true});writeFileSync(join(dest,descriptor.revision+'.json'),bytes);if(PUBLISHED.has(id.slice(4,7)))registry.packs.push(descriptor);
  receipt.push({id,sha256:descriptor.revision,bytes:bytes.length,sourceUnits:data.guide.steps.flatMap(s=>s.units).length,activities:JSON.parse(bytes).activities.length,diagnostics:result.diagnostics.length});
 }
 mkdirSync(output,{recursive:true});writeFileSync(join(output,'registry.json'),JSON.stringify(registry,null,2)+'\n');
