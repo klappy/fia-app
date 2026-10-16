@@ -42,9 +42,12 @@
  let active=$derived(groups.find(g=>g.active)||groups[0]);
  let activeIndex=$derived(Math.max(0,groups.findIndex(g=>g.active)));
  // Design-book words (progress-rail § Copy rules): `<name> · <passage>`, then `unit n of m` with `more ahead` or `last unit`; `complete` once the session is done.
- // The passage name replaces the old `Step n` (ticket 2026-10-15 passage-name-replaces-step-label): the six icons already say which stage.
+ // The passage name replaces the old `Step n` on the visible line (ticket 2026-10-15 passage-name-replaces-step-label): the six icons
+ // already say which stage. The icons are aria-hidden and aria-valuetext replaces aria-valuenow when read aloud, so the spoken words
+ // carry the stage position themselves (`stage n of 6`, review of #247); the visible line stays `<name> · <passage>`.
  let lead=$derived(passage?`${active.title} · ${passage}`:active.title);
- let stageWords=$derived(active.current<0?`${lead} · complete`:`${lead} · unit ${active.current+1} of ${active.screens.length} · ${active.current<active.screens.length-1?'more ahead':'last unit'}`);
+ let position=$derived(`stage ${activeIndex+1} of ${groups.length}`);
+ let stageWords=$derived(active.current<0?`${lead} · ${position} · complete`:`${lead} · ${position} · unit ${active.current+1} of ${active.screens.length} · ${active.current<active.screens.length-1?'more ahead':'last unit'}`);
 </script>
 {#if overview}
  <!-- The spine (cookbook overview-sheet.md § Proposed composition — clarity, nodded 2026-10-09 21:01 ET; mock 28):

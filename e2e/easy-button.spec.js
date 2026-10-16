@@ -75,11 +75,11 @@ test('returning visit to a passage without recordings: checking, then one honest
  const seen=await faces(page);
  expect(seen.map(f=>f.label),JSON.stringify(seen)).toEqual([CHECKING,'Continue']);
  expect(isChecking(seen[0])).toBe(true);
- // R6: no recording can be prepared here, so no Play is offered and nothing is requested.
+ // R6: no recording can be prepared here, so no Play is offered, Replay is disabled, and settling requested nothing.
  const dock=page.getByRole('navigation',{name:'Session controls'});
  await expect(dock.getByRole('button',{name:/^Play/})).toHaveCount(0);
  await expect(dock.getByRole('button',{name:'Skip to next activity'})).toBeEnabled();
- await expect(dock.getByRole('button',{name:'Replay'})).toBeDisabled();await page.waitForTimeout(500);
+ await expect(dock.getByRole('button',{name:'Replay'})).toBeDisabled();
  expect(posts.filter(url=>new URL(url).pathname.startsWith('/v1/preparations'))).toEqual([]);
 });
 

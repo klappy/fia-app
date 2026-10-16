@@ -339,6 +339,7 @@ it('R6: a screen with no possible recording shows no enabled Play and sends no p
  await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Settings',exact:true}));await fireEvent.click(screen.getByRole('checkbox',{name:/Automatic guide narration/}));await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));
  expect([...dock.querySelectorAll('button')].map(b=>b.getAttribute('aria-label')).filter(l=>/^Play/.test(l))).toEqual([]);
  expect(screen.getByRole('button',{name:'Skip to next activity'}).disabled).toBe(false);expect(screen.getByRole('button',{name:'Replay'}).disabled).toBe(true);
+ // Replay is never clicked (it is disabled); this guards the load and the settings toggle above, not a Replay tap (review of #247).
  expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();
 });
 
