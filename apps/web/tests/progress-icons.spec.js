@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { Ear } from 'lucide-svelte';
-import { contentIcons, sectionIcons, bookName, pericopeName, passageName } from '../src/lib/progress-icons.js';
+import { Ear, BookOpen } from 'lucide-svelte';
+import { contentIcons, sectionIcons, passageIcon, bookName, pericopeName, passageName } from '../src/lib/progress-icons.js';
 
 describe('icon vocabulary (design book tokens § Icon vocabulary)', () => {
  it('has seven content kinds and six stages', () => {
@@ -14,6 +14,10 @@ describe('icon vocabulary (design book tokens § Icon vocabulary)', () => {
   expect(content.size).toBe(7);
  });
  it('listen is the guide glyph, the ear', () => { expect(contentIcons.guide).toBe(Ear); });
+ it('the passage control glyph is a book of its own, shared with neither set (ticket ④)', () => {
+  expect(passageIcon).toBeTruthy();expect(passageIcon).not.toBe(BookOpen);
+  expect(Object.values(contentIcons)).not.toContain(passageIcon);expect(sectionIcons).not.toContain(passageIcon);
+ });
 });
 
 describe('passage line under the stage icons (ticket 2026-10-15 passage-name-replaces-step-label)', () => {
