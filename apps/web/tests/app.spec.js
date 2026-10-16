@@ -325,7 +325,7 @@ it('the session bar is one control with six stage cells and no per-screen bead r
  expect(bar.querySelectorAll('.stage-cell')).toHaveLength(6);expect(bar.querySelectorAll('.stage-cell.current')).toHaveLength(1);
  expect(bar.querySelector('.content-progress-line')).toBeNull();
  const words=document.getElementById('session-progress-words');expect(bar.getAttribute('aria-describedby')).toBe('session-progress-words');expect(words.getAttribute('aria-valuenow')).toBe('3');expect(words.getAttribute('aria-valuetext')).toMatch(/^Defining the Scenes · Mark 1:1–13 · stage 3 of 6 · unit \d+ of \d+ · (more ahead|last unit)$/);
- expect(bar.querySelector('.stage-words').textContent).toBe('Defining the Scenes · Mark 1:1–13');expect(bar.querySelector('.stage-passage').textContent).toBe('· Mark 1:1–13');expect(bar.textContent).not.toMatch(/Step \d/);
+ expect(bar.querySelector('.stage-words').textContent).toBe('Defining the Scenes · Mark 1:1–13');expect(bar.querySelector('.stage-passage').textContent).toBe('Mark 1:1–13');expect(bar.querySelector('.stage-passage').getAttribute('title')).toBe('Mark 1:1–13');expect(bar.querySelector('.stage-words b').textContent).toBe('Defining the Scenes');expect(bar.textContent).not.toMatch(/Step \d/);
 });
 it('Replay is an audio control: live on a block with a recording, grayed and inert on a text-only block',async()=>{
  // Ticket 2026-10-15 passage-name-replaces-step-label § Scope: replay follows the same recording rule as the fourth slot (R6).

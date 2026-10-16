@@ -27,9 +27,9 @@ describe('passage line under the stage icons (ticket 2026-10-15 passage-name-rep
   expect(passageName({language:'eng',pericopeId:'LUK-1-1-4'})).toBe('Luke 1:1–4');
   expect(passageName({language:'spa',pericopeId:'MRK-2-23-3-6'})).toBe('Marcos 2:23–3:6');
  });
- it('appends a heading only when the data supplies one', () => {
-  expect(passageName({title:'Mark 1:1–13',heading:'John the Baptist Prepares the Way'})).toBe('Mark 1:1–13 · John the Baptist Prepares the Way');
-  expect(passageName({title:'Mark 1:1–13',heading:'  '})).toBe('Mark 1:1–13');
+ it('is the reference only, never a heading or reference title', () => {
+  expect(passageName({title:'Mark 1:1–13',heading:'John the Baptist Prepares the Way'})).toBe('Mark 1:1–13');
+  expect(passageName({language:'spa',pericopeId:'MRK-1-1-13',heading:'el bautismo y la tentación de Jesús'})).toBe('Marcos 1:1–13');
  });
  it('knows the longest names in English and Spanish', () => {
   expect(bookName('SNG','eng')).toBe('Song of Solomon');expect(bookName('1TH','eng')).toBe('1 Thessalonians');

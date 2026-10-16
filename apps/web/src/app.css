@@ -107,8 +107,7 @@ button{min-height:48px}.scene-notice button{min-width:48px;min-height:48px}.kept
 
 /* Edge-anchored cookbook glass. The content scrolls underneath, with a clear
    reading area measured between the actual frames rather than symmetric gutters. */
-/* --band-height follows the session bar's measured height (SessionProgress): 92 px on one line, taller when the passage line wraps. */
-.scene{--chrome-top:calc(var(--band-height,92px) + env(safe-area-inset-top));--chrome-bottom:calc(120px + max(16px,env(safe-area-inset-bottom)))}
+.scene{--chrome-top:calc(92px + env(safe-area-inset-top));--chrome-bottom:calc(120px + max(16px,env(safe-area-inset-bottom)))}
 .scene-glass{position:fixed;left:0;right:0;z-index:11;pointer-events:none;background:var(--glass-fill-2);-webkit-backdrop-filter:blur(var(--blur-medium)) var(--sat-glass);backdrop-filter:blur(var(--blur-medium)) var(--sat-glass)}
 .scene-glass-top{top:0;height:var(--chrome-top)}
 .scene-glass-bottom{bottom:0;height:var(--chrome-bottom)}
@@ -166,8 +165,9 @@ button{min-height:48px}.scene-notice button{min-width:48px;min-height:48px}.kept
 [dir=rtl] .stage-cell.current::after{transform:scaleX(-1)}
 /* The passage line may run longer than the old `Step n`: it wraps below the icons (never over them) and the band grows with it; the
    passage name itself stays whole on a line where it fits (ticket 2026-10-15 passage-name-replaces-step-label). */
-.stage-words{font:var(--type-label);color:var(--text-muted);text-align:center;white-space:normal;overflow-wrap:anywhere;max-width:100%}
-.stage-passage{display:inline-block;max-width:100%}
+.stage-words{display:flex;justify-content:center;align-items:baseline;max-width:100%;min-width:0;font:var(--type-label);color:var(--text-muted);white-space:nowrap}
+.stage-words b{flex:none}.stage-sep{flex:none;white-space:pre}
+.stage-passage{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .stage-words b{color:var(--text-title);font-weight:600}
 
 
