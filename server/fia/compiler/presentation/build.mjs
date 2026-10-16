@@ -13,9 +13,9 @@ const output=resolve(process.argv[3]||join(root,'apps/web/public/content'));
 const sample=process.argv.includes('--sample');
 const list=json(new URL('./lists.json',import.meta.url)),examples=json(new URL('./examples.json',import.meta.url));
 const BOOKS=['MRK','LUK'];// canonical book order: Mark keeps its place, Luke follows
-// Books listed in the served catalog. Luke compiles here but joins registry.json only when the publication
-// authority (trusted-generalized.json catalog + envelopes, guide-dispatch REGISTRY_SHA) is re-pinned.
-const PUBLISHED=new Set((process.env.FIA_PUBLISH_BOOKS||'MRK').split(','));
+// Books listed in the served catalog (Mark + Luke, matching the pinned publication authority:
+// trusted-generalized.json catalog + envelopes, guide-dispatch REGISTRY_SHA).
+const PUBLISHED=new Set((process.env.FIA_PUBLISH_BOOKS||'MRK,LUK').split(','));
 const ids=(input?readdirSync(join(input,'data/packs')):Object.keys(bundled.packs)).filter(id=>/^(eng|spa)\.(?:MRK|LUK)-/.test(id)).sort((a,b)=>a.slice(0,3).localeCompare(b.slice(0,3))||BOOKS.indexOf(a.slice(4,7))-BOOKS.indexOf(b.slice(4,7))||a.localeCompare(b,'en',{numeric:true})).filter(id=>!sample||/MRK-1-(1-13|14-20)$/.test(id));
 const registry={schemaVersion:1,sourceRevision:SOURCE,recipeRevision:RECIPE,packs:[]},receipt=[];
 for(const id of ids){

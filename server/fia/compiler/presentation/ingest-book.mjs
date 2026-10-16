@@ -36,9 +36,9 @@ const bundle=JSON.parse(gunzipSync(readFileSync(here('source-packs.json.gz'))));
 const lists=json(here('lists.json')),examples=json(here('examples.json')),bindings=json(here('source-bindings.json'));
 const shape=l=>JSON.stringify(l.groups.map(g=>[g.sectionId,g.purpose,g.layout,g.intro.id,g.items.map(i=>i.id)]));
 if(process.argv.includes('--verify-mark')){
- let ok=0;for(const l of lists.packs){const d=deriveLedgers(bundle.packs[l.packId]),e=examples.packs.find(x=>x.packId===l.packId);
+ const mark=lists.packs.filter(l=>/^(eng|spa)\.MRK-/.test(l.packId));let ok=0;for(const l of mark){const d=deriveLedgers(bundle.packs[l.packId]),e=examples.packs.find(x=>x.packId===l.packId);
   if(shape(l)===shape(d.list)&&e.boundary===d.example.boundary&&JSON.stringify(e.units.map(u=>u.id))===JSON.stringify(d.example.units.map(u=>u.id)))ok++;else console.error('mismatch',l.packId);}
- console.log(JSON.stringify({verifiedMark:ok,of:lists.packs.length}));if(ok!==lists.packs.length)process.exit(1);
+ console.log(JSON.stringify({verifiedMark:ok,of:mark.length}));if(ok!==mark.length||mark.length!==136)process.exit(1);
 }
 if(checkout&&book){
  const out={revision:bundle.revision,inventory:[],packs:{}};
