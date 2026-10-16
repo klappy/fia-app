@@ -1,5 +1,5 @@
 import {canonicalJSONString,sha256} from '../contract.mjs';
-const MAX_JSON=2097152,MAX_PRESENTATION=4194304,HASH=/^[a-f0-9]{64}$/;
+const MAX_JSON=2097152,MAX_CATALOG=4194304,MAX_PRESENTATION=4194304,HASH=/^[a-f0-9]{64}$/;
 const hash=x=>typeof x==='string'&&HASH.test(x),same=(a,b)=>canonicalJSONString(a)===canonicalJSONString(b);
 const text=x=>typeof x==='string'&&x.length>0&&x.length<=4096;
 function object(x){return x!==null&&typeof x==='object'&&!Array.isArray(x)&&Object.getPrototypeOf(x)===Object.prototype;}
@@ -9,7 +9,7 @@ function inputFor(row){return {packId:row.packId,book:row.book,language:row.lang
 // Trusted immutable metadata/registry pins and a bounded retained-byte port only.
 // This resolver does not discover sources, fetch media, run ASR, or accept timing.
 export async function createPresentationGuideUnitsResolver({metadataBytes,metadataSha256,registryBytes,registrySha256,readPresentation,totalMs=30000,presentationAliases=[]}){
- const metadataCopy=bytes(metadataBytes,MAX_JSON),registryCopy=bytes(registryBytes,MAX_JSON),reader=readPresentation,aliases=structuredClone(presentationAliases);
+ const metadataCopy=bytes(metadataBytes,MAX_JSON),registryCopy=bytes(registryBytes,MAX_CATALOG),reader=readPresentation,aliases=structuredClone(presentationAliases);
  if(typeof reader!=='function'||!Number.isSafeInteger(totalMs)||totalMs<1||totalMs>30000)throw Error('guide-units-capability');
  if(!Array.isArray(aliases)||aliases.length>1000||aliases.some(a=>!object(a)||Object.keys(a).sort().join()!=='packId,presentationId,presentationSha256'||!text(a.packId)||!text(a.presentationId)||!hash(a.presentationSha256))||new Set(aliases.map(a=>a.packId+'@'+a.presentationSha256)).size!==aliases.length)throw Error('guide-units-alias');
  const metadata=await json(metadataCopy,metadataSha256),registry=await json(registryCopy,registrySha256);
