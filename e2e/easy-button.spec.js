@@ -79,7 +79,7 @@ test('returning visit to a passage without recordings: checking, then one honest
  const dock=page.getByRole('navigation',{name:'Session controls'});
  await expect(dock.getByRole('button',{name:/^Play/})).toHaveCount(0);
  await expect(dock.getByRole('button',{name:'Skip to next activity'})).toBeEnabled();
- await dock.getByRole('button',{name:'Replay'}).click();await page.waitForTimeout(500);
+ await expect(dock.getByRole('button',{name:'Replay'})).toBeDisabled();await page.waitForTimeout(500);
  expect(posts.filter(url=>new URL(url).pathname.startsWith('/v1/preparations'))).toEqual([]);
 });
 

@@ -99,7 +99,8 @@
     <span class="stage-cell" class:complete={i<activeIndex||group.ratio===1} class:current={group.active} style:z-index={groups.length-Math.abs(i-activeIndex)} style:--arc={group.active?`${Math.round(100*(group.current<0?1:(group.current+1)/Math.max(1,group.screens.length)))}%`:'0%'}><StageIcon size={20}/></span>
    {/each}
   </span>
-  <span class="stage-words" aria-hidden="true"><b>{active.title}</b>{#if passage}{' · '}<span class="stage-passage">{passage}</span>{/if}</span>
+  <!-- The separator rides inside the passage span (inline-block), so a wrapped passage line never leaves a dangling " · " behind the stage name. -->
+  <span class="stage-words" aria-hidden="true"><b>{active.title}</b>{#if passage}{' '}<span class="stage-passage">· {passage}</span>{/if}</span>
  </button>
 {/if}
 <style>

@@ -589,8 +589,9 @@
   <button class="step-control" aria-label={manualLabel} title={manualLabel} disabled={!manualAvailable} onclick={()=>manualPlay()}>{#if manualLabel.startsWith('Cancel')}<X size={26}/>{:else if isPlaying}<Pause size={26}/>{:else}<Play size={26}/>{/if}</button>
   {:else}<button class="step-control" aria-label="Skip to next activity" disabled={finished||!!session.detour} onclick={()=>navigate({type:'CONTINUE'},true)}><ChevronRight size={26}/></button>{/if}
   <!-- Replay is an audio control (easy-button tiers: tier 3): grayed and inert where the block has no recording, video or
-       preparable narration — the same R6 rule the fourth slot uses (slotPlays) — and live wherever one exists. -->
-  <button class="replay-control" class:no-audio={!slotPlays} aria-label="Replay" disabled={finished||!!session.detour||!slotPlays} onclick={()=>{if(executableMode){cancel();void playExecutableNarration();}else if(automaticOff){manualPlay(true);}else if(inlineVideo){const v=videoOwner.node;if(v)v.currentTime=0;videoState={...videoState,elapsed:0};playVideo();}else if(visual&&matchingVideo){openMatchingVideo();}else{cancel();playActivity(true);}}}><RotateCcw size={22}/></button>
+       preparable narration — the same R6 rule the fourth slot uses (slotPlays) — and live wherever one exists. While the device check runs it stays
+       disabled until the recording can play (manualAvailable, like the fourth slot's Play), so a tap never settles silently. -->
+  <button class="replay-control" class:no-audio={!slotPlays} aria-label="Replay" disabled={finished||!!session.detour||!manualAvailable} onclick={()=>{if(executableMode){cancel();void playExecutableNarration();}else if(automaticOff){manualPlay(true);}else if(inlineVideo){const v=videoOwner.node;if(v)v.currentTime=0;videoState={...videoState,elapsed:0};playVideo();}else if(visual&&matchingVideo){openMatchingVideo();}else{cancel();playActivity(true);}}}><RotateCcw size={22}/></button>
  </nav>
  <span class="sr-only" aria-live="polite">{videoPlaying?'Watching together':audioState.playing?'Listening together':session.status==='waiting'?'Continue when your group is ready':''}</span>
 </main>
