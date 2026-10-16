@@ -79,7 +79,7 @@ button{min-height:48px}.scene-notice button{min-width:48px;min-height:48px}.kept
 .visual-expand-hint{position:fixed;z-index:14;left:max(20px,env(safe-area-inset-left));bottom:calc(164px + env(safe-area-inset-bottom));display:grid;place-items:center;color:var(--text-muted);pointer-events:none}
 
 /* Two quiet progress levels; existing navigation and primary control stay intact. */
-.session-band{position:fixed;z-index:13;top:max(0px,env(safe-area-inset-top));left:16px;right:16px;max-width:688px;margin:auto;background:var(--paper-050);display:flex;justify-content:center;align-items:flex-start;height:92px}
+.session-band{position:fixed;z-index:13;top:max(0px,env(safe-area-inset-top));left:16px;right:16px;max-width:688px;margin:auto;background:var(--paper-050);display:flex;justify-content:center;justify-content:safe center;align-items:flex-start;height:92px}
 .session-band>.session-progress{flex:1 1 auto;min-width:0}
 .progress-section-choice{display:flex;gap:28px;width:100%;min-height:64px;color:var(--text-muted)}
 .progress-section-choice[aria-current=step]{color:var(--text-title)}
@@ -176,13 +176,14 @@ button{min-height:48px}.scene-notice button{min-width:48px;min-height:48px}.kept
    stage name only and ellipsizes it only when wider than the cluster. */
 .session-band.with-passage>.session-progress{flex:0 0 auto;width:196px}
 .passage-control{flex:0 1 auto;min-width:48px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:14px;padding:14px 0 14.5px;height:92px;box-sizing:border-box}
-.passage-cell{flex:none;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:var(--text-title);background:var(--paper-050);box-shadow:inset 0 0 0 1.5px var(--text-title)}
+/* The 1.5 px muted ring and glyph match the stage cells (progress-rail § Top band passage control: "a 1.5 px muted ring"). */
+.passage-cell{flex:none;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:var(--text-muted);background:var(--paper-050);box-shadow:inset 0 0 0 1.5px var(--text-muted)}
 .passage-words{max-width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:var(--type-label);font-weight:600;color:var(--text-title)}
 .band-dot{flex:none;width:4px;height:4px;border-radius:50%;background:var(--text-muted);margin:28px 10px 0}
 /* Narrow band (largest font at 375 px, i.e. a band under ~308 px): the large-print geometry — 28 px circles and book, 3 px overlap,
    4 px dot air — so book, dot and cluster still fit in one row; `safe center` keeps the book on screen if anything still overflows.
-   Same 14 px gaps (the circles sit 2 px lower in a 32 px row), band still 92 px. Tight is tolerated only here (ticket ④). */
-.session-band{justify-content:safe center}
+   Same 14 px gaps (the circles sit 2 px lower in a 32 px row), band still 92 px. Tight is tolerated only here (ticket ④).
+   (`safe center` is set on .session-band above, after a plain `center` fallback.) */
 @media(max-width:340px){
  .session-band.with-passage>.session-progress{width:158px}
  .session-band.with-passage .stage-cell,.passage-cell{width:28px;height:28px}

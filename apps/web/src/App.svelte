@@ -268,7 +268,9 @@
  let session=$state(createSession(bundledPresentation.activities));
  let audioState=$state({playing:false,elapsed:0,duration:0}); let videoPlaying=$state(false); let videoState=$state({elapsed:0,duration:0}); let serviceWorkerError=''; let isPlaying=$derived(audioState.playing||videoPlaying);
  const historicalSnapshotNotice='Using the last verified saved passage while offline.';
- let passagesView=$state('passages');
+ let passagesView=$state('passages'),passagesHost=$state();
+ // The book's Passages sheet swaps LibraryPanel views like the overview's pickers: focus follows to the new view, never to the body (review #9, fia-app#250).
+ async function swapPassages(view){passagesView=view;await tick();(view==='languages'?passagesHost?.querySelector('.library-list button.chosen,.library-list button'):passagesHost?.querySelector('.library-panel>button.quiet'))?.focus();}
  let sheet=$state(null), command=$state(''), messages=$state([]), notice=$state(''), online=$state(true), started=$state(false), scale=$state(1), rate=$state(1), muted=$state(false), saved=$state(false);
  let audio, timer; let audioContext=$state(null); let chatInput=$state(), chatLog=$state();
  let activity=$derived(currentActivity(session,activities));
@@ -599,7 +601,7 @@
 </main>
 
 {#if sheet}
- <Sheet glass={true} opaqueHeader={sheet==='settings'||sheet==='downloads'||sheet==='progress'||sheet==='passages'||sheet==='menu'} label={sheet==='menu'?'More options':undefined} title={{downloads:'Downloads',progress:'Overview',passages:'Passages',settings:'Settings',outline:selectedPack.title,help:'Try the experience',about:'About this prototype',menu:'',conversation:'Ask the guide',words:'Words for this moment',resources:'Explore the passage',example:'Drama example'}[sheet]} notice={noticeText&&noticeInSheet?noticeBar:null} onclose={()=>sheet=null}>
+ <Sheet glass={true} opaqueHeader={sheet==='settings'||sheet==='downloads'||sheet==='progress'||sheet==='passages'||sheet==='menu'} label={sheet==='menu'?'More options':undefined} title={{downloads:'Downloads',progress:'Overview',passages:passagesView==='languages'?'Language':'Passages',settings:'Settings',outline:selectedPack.title,help:'Try the experience',about:'About this prototype',menu:'',conversation:'Ask the guide',words:'Words for this moment',resources:'Explore the passage',example:'Drama example'}[sheet]} notice={noticeText&&noticeInSheet?noticeBar:null} onclose={()=>sheet=null}>
   {#if sheet==='menu'}
    <div class="scene-menu">
     <button onclick={()=>sheet='downloads'}><Download size={19}/>Downloads</button>
@@ -631,7 +633,7 @@
  <OverviewSheet groups={progress} {selectedPack} {language} completed={session.completed.length} total={activities.length} onlanguage={selectLanguage} onreset={restartPack} onclose={()=>sheet=null} onopenpack={openFromSheet} onnavigate={id=>{navigate({type:'SEEK_ACTIVITY',activityId:id});transitionSection=null;persist();sheet=null;}}/>
   {:else if sheet==='passages'}
    <!-- Passage selection from the book control: the same LibraryPanel views the overview's Passages row uses; a refused open stays on its card (openFromSheet). -->
-   <LibraryPanel view={passagesView} {selectedPack} {language} onlanguage={selectLanguage} onview={view=>passagesView=view} completed={session.completed.length} total={activities.length} onselect={openFromSheet} onreset={restartPack}/>
+   <div class="passages-sheet" style="display:contents" bind:this={passagesHost}><LibraryPanel view={passagesView} {selectedPack} {language} onlanguage={selectLanguage} onview={swapPassages} completed={session.completed.length} total={activities.length} onselect={openFromSheet} onreset={restartPack}/></div>
   {:else if sheet==='settings'}
    <div class="settings-panel">
     <button class="sheet-back" onclick={()=>sheet='menu'}><ChevronLeft size={18}/>FIA menu</button>

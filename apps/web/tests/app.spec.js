@@ -339,6 +339,23 @@ it('the book control left of the stage cluster carries the passage reference and
  await fireEvent.click(book);await settle();
  const dialog=screen.getByRole('dialog');expect(dialog.textContent).toContain('Passages');expect(dialog.textContent).not.toContain('You are here');
 });
+it('the book Passages sheet: focus follows the view swap and the title names the open view (fia-app#250 review)',async()=>{
+ vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',nativeName:'English',ready:1}]);vi.spyOn(libraryAdapter,'passages').mockResolvedValue([bundledPack]);
+ await startAt('S01-U001');await fireEvent.click(screen.getByRole('button',{name:/^Choose passage/}));await settle();
+ const dialog=()=>screen.getByRole('dialog');expect(dialog().querySelector('.sheet-header h2').textContent).toBe('Passages');
+ const lang=await screen.findByRole('button',{name:/^Language: /});lang.focus();await fireEvent.click(lang);await settle();
+ const english=screen.getByRole('button',{name:/English/});expect(document.activeElement).toBe(english);expect(dialog().querySelector('.sheet-header h2').textContent).toBe('Language');
+ const browse=screen.getByRole('button',{name:/Browse passages/});browse.focus();await fireEvent.click(browse);await settle();
+ expect(document.activeElement).toBe(screen.getByRole('button',{name:/^Language: /}));expect(dialog().querySelector('.sheet-header h2').textContent).toBe('Passages');
+});
+it('a refused open from the book Passages sheet stays on its card, with no notice on the reading screen (fia-app#250 review)',async()=>{
+ const registry=JSON.parse(readFileSync('public/content/registry.json','utf8')),descriptor=registry.packs.find(p=>p.id==='eng.MRK-1-14-20');
+ vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',nativeName:'English',ready:68}]);vi.spyOn(libraryAdapter,'passages').mockResolvedValue([descriptor]);const select=vi.spyOn(libraryAdapter,'select').mockRejectedValue(Error('Passage verification failed. Try again.'));
+ await startAt('S01-U001');await fireEvent.click(screen.getByRole('button',{name:/^Choose passage/}));await settle();
+ await fireEvent.click(await screen.findByRole('button',{name:'Open passage',exact:true}));await settle();
+ expect(select).toHaveBeenCalledTimes(1);await waitFor(()=>expect(screen.getAllByText('Passage verification failed. Try again.')).toHaveLength(1));
+ expect(screen.getByText('Passage verification failed. Try again.').closest('.pack-card')).toBeTruthy();expect(document.querySelector('.scene-notice')).toBeNull();
+});
 it('Replay is an audio control: live on a block with a recording, grayed and inert on a text-only block',async()=>{
  // Ticket 2026-10-15 passage-name-replaces-step-label § Scope: replay follows the same recording rule as the fourth slot (R6).
  await startAt('S01-U001');expect(screen.getByRole('button',{name:'Replay',exact:true}).disabled).toBe(false);cleanup();localStorage.clear();
