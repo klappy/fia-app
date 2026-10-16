@@ -25,3 +25,12 @@ test('prepared legacy video default retains exact descriptor; explicit phone siz
  const first=planProxyDownload(manifest,'all',{video:'prepared'}),resumed=planProxyDownload(first,'all',first.mediaSizes);assert.equal(resumed.revision,first.revision);assert.deepEqual(resumed.files,first.files);
  for(const corrupt of [{sha256:null},{bytes:0},{sourceSha256:null},{sourceBytes:0},{deliveryURL:legacy.deliveryURL.replace('transcode.klappy.dev','evil.example')}])assert.throws(()=>planProxyDownload({revision:'bad',files:[{...declared,...corrupt}]},'all',{video:'prepared'}));
 });
+test('no-video package plans text, audio and images and leaves every video out',async()=>{
+ const {planProxyDownload,downloadSelectionIncludes}=await import('../src/lib/proxy-request.js');
+ assert.deepEqual(['core','audio','image','video'].map(g=>downloadSelectionIncludes('visual',g)),[true,true,true,false]);
+ assert.deepEqual(['core','audio','image','video'].map(g=>downloadSelectionIncludes('all',g)),[true,true,true,true]);
+ assert.deepEqual(['core','audio','image','video'].map(g=>downloadSelectionIncludes('core',g)),[true,false,false,false]);
+ const video={path:'/v.mp4',group:'video',bytes:9,sha256:'c'.repeat(64),mime:'video/mp4',deliveryURL:'https://transcode.klappy.dev/video/preset=fia,q=medium,f=mp4/https://example.org/v.mp4',sourceSha256:'d'.repeat(64),sourceBytes:99};
+ const planned=planProxyDownload({revision:'r',files:[{path:'/index.html',group:'core',bytes:1},video]},'visual',{});
+ assert.deepEqual(planned.files[1],video);assert.equal(planned.mediaSizes.video,undefined);
+});

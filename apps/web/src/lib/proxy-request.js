@@ -52,11 +52,15 @@ export async function fetchProxyRequest(request,{fetchImpl=globalThis.fetch,sign
  finally{clearTimeout(timer);signal?.removeEventListener('abort',abort);controller.signal.removeEventListener('abort',rejectAbort);}
 }
 
+/** Download packages: what each offline selection includes. No-video ('visual') keeps text, audio, images and maps. */
+export function downloadSelectionIncludes(selection,group){
+ return group==='core'||selection==='all'||(selection==='audio'||selection==='visual')&&group==='audio'||selection==='visual'&&group==='image';
+}
 /** Request planning has unknown totals until missing outputs have been received. */
 export function planProxyDownload(manifest,selection,sizes={}){
- if(!['core','audio','all'].includes(selection)||Object.keys(sizes).some(k=>!['audio','image','video'].includes(k))||Object.values(sizes).some(s=>s!=='prepared'&&!quality[s]))throw Error('Invalid download selection.');
+ if(!['core','audio','visual','all'].includes(selection)||Object.keys(sizes).some(k=>!['audio','image','video'].includes(k))||Object.values(sizes).some(s=>s!=='prepared'&&!quality[s]))throw Error('Invalid download selection.');
  const selectedSizes={};const files=manifest.files.map(file=>{
-  if(file.group==='core'||selection==='core'||selection==='audio'&&file.group!=='audio')return file;
+  if(file.group==='core'||!downloadSelectionIncludes(selection,file.group))return file;
   const size=sizes[file.group]||(file.group==='video'?'prepared':file.defaultSize);if(!file.deliveryURL||!size)return file;
   if(size==='prepared'){
    // An untouched qualified default is a distinct choice, not a phone-size claim.

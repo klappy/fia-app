@@ -71,3 +71,16 @@ it('catalog shows exact admitted on-request recordings without requesting prepar
  expect(screen.getByText('Guide recordings unavailable · Resources download manually')).toBeTruthy();
  expect(prepare).not.toHaveBeenCalled();expect(select).not.toHaveBeenCalled();
 });
+it('offers small, no-video and full packages with sizes computed from the manifest and sends no-video without video',async()=>{
+ const sha=c=>c.repeat(64),src='https://example.org/';
+ const media=(group,path,bytes,url,mime)=>({path,group,bytes,sha256:sha(group[0]==='a'?'a':group[0]==='i'?'b':'c'),mime,deliveryURL:url,sourceSha256:sha('d'),sourceBytes:bytes*4});
+ const manifest={revision:'fixture',files:[{path:'/index.html',group:'core',bytes:1048576},media('audio','/a.opus',2097152,`https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/${src}a.mp3`,'audio/ogg'),media('image','/i.webp',3145728,`https://transcode.klappy.dev/image/q=medium,f=webp/${src}i.jpg`,'image/webp'),media('video','/v.mp4',52428800,`https://transcode.klappy.dev/video/preset=fia,q=medium,f=mp4/${src}v.mp4`,'video/mp4')]};
+ libraryAdapter.downloadStatus.mockResolvedValue({...available,manifest,choices:['core','audio','visual','all'].map(id=>({id}))});
+ const download=vi.spyOn(libraryAdapter,'download').mockResolvedValue({saved:true});
+ render(LibraryPanel,{view:'downloads'});await settle();
+ const small=screen.getByRole('radio',{name:/Text only/}),noVideo=screen.getByRole('radio',{name:/No video/}),full=screen.getByRole('radio',{name:/Full/});
+ expect(small.checked).toBe(true);expect(small.closest('label').textContent).toContain('Small · default');
+ expect(small.closest('label').textContent).toContain('1.0 MB');expect(noVideo.closest('label').textContent).toContain('6.0 MB');expect(full.closest('label').textContent).toContain('56.0 MB');
+ await fireEvent.click(noVideo);await settle();await fireEvent.click(screen.getByRole('button',{name:'Download selection'}));
+ expect(download).toHaveBeenCalledWith('visual',expect.any(Function),expect.anything(),expect.not.objectContaining({video:expect.anything()}));
+});
