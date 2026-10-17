@@ -46,8 +46,10 @@ release moves those values and would rename the build. The entries are:
   builds through `e7eb0f0`, before #190 added flow roles;
 - `9a7733f5…295c` under `@2`: the builds from `45a3248`.
 
-The entry equal to today's build is the current build, not a historical one. Once a
-release moves the policy, it authenticates that build's rows.
+The entry equal to today's build is the current build, not a historical one. The
+registry is release bookkeeping: reads no longer authenticate rows by it. Once a
+release moves the policy, a row under an older build fails its verifier and is a
+cache miss (below), so the base is served and an explicit Open re-prepares.
 `tests/worker-serving/execution-registry.test.mjs` fails when an entry is not
 written as a literal, when one of these names changes, or when today's build is not
 registered. So a release that moves the policy or the recipe appends its own build
@@ -75,16 +77,28 @@ No packing, hash or binding check ever blocks usage:
   existing demand, so an explicit Open re-prepares), and an artifact read falls
   through to the base artifacts. A miss never answers `unavailable` because of the
   stored row; an exact revision that only the cache held answers the base's own
-  not-found. The failure goes only to the overlay's optional `diagnose` hook
-  (`{event:'executable-cache-miss',where,reason,...}`) for bookkeeping.
+  not-found. The failure goes only to the overlay's `diagnose` hook
+  (`{event:'executable-cache-miss',where,kind,reason,...}`) for bookkeeping. `kind`
+  is `verification` for a named check failure and `transient` for an unnamed
+  storage/R2 fault or a timeout (a storage fault on the read itself also falls
+  through), so a blip is told apart from a bad row. The production runtime writes
+  each miss as one structured `console.warn` line; a throwing or rejecting hook is
+  contained and never changes the answer.
+- A replaced row prunes the artifact-owner index entries for bound artifacts it no
+  longer binds, so stale owners neither count toward the 1024 cap nor cost an
+  artifact read a verification pass.
 - Integrity pins (artifact sha256/bytes, `mediaAssetsSha256`, owner indexes) stay
   for diagnostics and refresh bookkeeping, not as a usage gate. A row is served as
   executable only when it verifies, so a miss never serves different bytes.
 
-The historical-build authentication (`authenticateCurrent`, the registered builds
-above) is kept for bookkeeping; the current read no longer depends on it, because
-every unverified current row already falls through to the base. A job-status read of
-a superseded job still answers typed `blocked` (HTTP 409) with its code. Expected
+The historical-build authentication (`authenticateCurrent`) is removed: every
+unverified current row already falls through to the base, so it was unreachable. A
+job-status read of a superseded job reads its demand row. If that row never recorded
+a publication, the read answers typed `blocked` `execution-job-policy` (HTTP 409).
+If it recorded a revision, the read answers that revision's current row: after an
+identical-bytes re-prepare replaced the row, that is `ready` with the newer job's
+provenance; otherwise the old row is a cache miss and the read answers typed
+`blocked` `revision-not-found` (the base's own not-found). Expected
 publication refusals (pointer race, stale base, revocation, refused validation) and
 named post-admission refusals answer the typed `blocked` envelope with their code
 (HTTP 409) on the write path only. An unnamed fault is not disguised as a refusal. A
