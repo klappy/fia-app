@@ -158,7 +158,7 @@ test('only an authenticated historical publication yields its current read to th
  }finally{await mf.dispose();await rm(r.dir,{recursive:true,force:true});}
 });
 
-test('an explicit Open under the new policy adopts new bytes; identical bytes refuse typed and never overwrite the historical row, whose reads stay denied',async()=>{
+test('an explicit Open under the new policy adopts new bytes; identical bytes adopt the historical row through an adoption entry and never overwrite it; the old job status stays denied',async()=>{
  // Two successors of the #187/#188 build: the builds through e7eb0f0 (the same @1 recipe),
  // where eng.MRK-1-21-28 republishes identical bytes, and this tree, whose @2 recipe adds
  // flow roles, so both passages adopt new bytes.
@@ -179,16 +179,18 @@ test('an explicit Open under the new policy adopts new bytes; identical bytes re
     const current=await read('/v1/packs/'+packId);assert.equal(current.status,200);assert.equal(current.body.revision,again.body.record.revision);assert.equal(current.body.execution.schema,'fia-executable-catalog@1');
    }else{
     // The same presentation bytes under a newer job: the historical row and its
-    // provenance are immutable, so the republish is a typed conflict.
-    assert.equal(again.status,409,`${next} ${packId}: ${JSON.stringify(again.body)}`);assert.equal(again.body.schema,'fia-presentation-preparation@1');assert.equal(again.body.status,'blocked');assert.equal(again.body.reason,'executable-publication-conflict');assert.equal(again.body.record,null);
-    assert.deepEqual(await call('prepare_presentation',reopened.body.preparationDemand),again.body,'HTTP/MCP parity');
-    const current=await read('/v1/packs/'+packId);assert.equal(current.status,200);assert.equal(current.body.execution,undefined);assert.deepEqual(current.body.preparationDemand,prior.demand);
+    // provenance are immutable, so the registered replacement rule adopts the row
+    // through an adoption entry carrying the new job's provenance.
+    assert.equal(again.status,200,`${next} ${packId}: ${JSON.stringify(again.body)}`);assert.equal(again.body.status,'ready');assert.equal(again.body.record.revision,prior.revision,'hash-equal bytes keep their revision');assert.equal(again.body.record.execution.provenance.jobId,again.body.jobId);
+    assert.deepEqual(await call('prepare_presentation',reopened.body.preparationDemand),again.body,'HTTP/MCP parity and an idempotent repeat');
+    const current=await read('/v1/packs/'+packId);assert.equal(current.status,200);assert.equal(current.body.revision,prior.revision);assert.equal(current.body.execution.provenance.jobId,again.body.jobId);
+    assert.equal((await s.rows())['executable-adopted:'+key].startsWith(`executable-adoption:${key}#`),true,`${packId}: a recorded adoption entry`);
    }
    const after=await s.rows();
    assert.equal(canonicalJSONString(after[key]),canonicalJSONString(historical),`${packId}: the historical row and its provenance are preserved`);
    assert.deepEqual(after['executable-demand:'+prior.jobId],rows['executable-demand:'+prior.jobId],`${packId}: the historical request row is preserved`);
-   assert.equal((await read(`/v1/packs/${packId}?revision=${prior.revision}`)).status,404,'the exact historical revision stays denied');
-   const status=await read('/v1/presentation-preparations/'+prior.jobId);assert.equal(status.status,409,JSON.stringify(status.body));assert.equal(status.body.status,'blocked','the old job-status read stays denied, never ready');
+   assert.equal((await read(`/v1/packs/${packId}?revision=${prior.revision}`)).status,identical.includes(packId)?200:404,identical.includes(packId)?'the adopted revision serves under the new job':'the exact historical revision stays denied');
+   const status=await read('/v1/presentation-preparations/'+prior.jobId);assert.equal(status.status,409,JSON.stringify(status.body));assert.equal(status.body.status,'blocked','the old job-status read stays denied, never ready');if(identical.includes(packId))assert.equal(status.body.reason,'executable-publication-adopted');
   }
   assert.equal(r.counts.external,0);
  }finally{await mf.dispose();await rm(r.dir,{recursive:true,force:true});}
@@ -243,7 +245,7 @@ test('a recipe release (@1 to @2) never strands eng.MRK-1-14-20: the base is ser
 // Each publication authenticates and yields its current read to the base. After the move,
 // an explicit Open of eng.MRK-1-14-20 prepares under the moved policy: from @1 it adopts
 // new bytes with the approved recording still bound and served; from @2 it reproduces the
-// same bytes, which the immutable rows refuse as a typed conflict.
+// same bytes, which the registered replacement rule adopts without rewriting the row.
 test('a content release that moves today\'s policy strands no released build: {9a7733f5, @1} and {9a7733f5, @2} publications, with and without bound approved audio, still authenticate and yield to the base',async()=>{
  const open=async(read,packId)=>{const base=await read('/v1/packs/'+packId);assert.equal(base.status,200,`${packId}: ${JSON.stringify(base.body)}`);assert.ok(base.body.preparationDemand,packId);const ready=await prepare(read,base.body.preparationDemand);assert.equal(ready.status,200,JSON.stringify(ready.body));assert.equal(ready.body.status,'ready');return {demand:base.body.preparationDemand,base:base.body.revision,revision:ready.body.record.revision,jobId:ready.body.jobId};};
  const recipes={priorRecipe:'fia-server-source-action-projector@1',recipe2:'fia-server-source-action-projector@2'};
@@ -285,16 +287,16 @@ test('a content release that moves today\'s policy strands no released build: {9
    // The move is real: an explicit Open prepares under the moved policy. From the @1 row
    // (e7eb0f0) it adopts new bytes, with the approved recording still bound and served
    // from its retained bytes. From the @2 row (45a3248, DEV today) the moved policy
-   // reproduces the same bytes, and a publication row is never replaced, so the Open is
-   // the documented typed conflict: the base stays served with its demand and nothing is
-   // overwritten. The client then cannot open the passage executable: an open follow-up,
-   // due before the next content release.
+   // reproduces the same bytes, and a publication row is never replaced, so the Open
+   // adopts the row through a recorded adoption entry (the registered replacement rule):
+   // the row and its provenance stay byte for byte, and the passage opens executable.
    const stale=published['eng.MRK-1-14-20'],before=await s.rows(),again=await prepare(drifted,stale.demand);
    assert.equal(recipes[stale.build]===SOURCE_ACTION_RECIPE?'identical bytes':'adopts new bytes',reopen,state);
    if(reopen==='identical bytes'){
-    assert.equal(again.status,409,`${state}: ${JSON.stringify(again.body)}`);assert.equal(again.body.status,'blocked');assert.equal(again.body.reason,'executable-publication-conflict');assert.equal(again.body.record,null);
+    assert.equal(again.status,200,`${state}: ${JSON.stringify(again.body)}`);assert.equal(again.body.status,'ready');assert.equal(again.body.record.revision,stale.revision,'the moved policy reproduces the same bytes');
     const key=`executable-record:eng.MRK-1-14-20@${stale.revision}`,after=await s.rows();assert.equal(canonicalJSONString(after[key]),canonicalJSONString(before[key]),'the historical row and its provenance are preserved');assert.equal(after['executable-current:eng.MRK-1-14-20'],key);
-    await yields('eng.MRK-1-14-20',stale);
+    assert.equal(after[after['executable-adopted:'+key]].provenance.jobId,again.body.jobId,'a recorded adoption entry carries the new job');assert.equal(after['executable-presentation:job:'+again.body.jobId].policySha256,r.driftPolicy);
+    const current=await drifted('/v1/packs/eng.MRK-1-14-20');assert.equal(current.status,200);assert.equal(current.body.revision,stale.revision);assert.equal(current.body.execution.provenance.jobId,again.body.jobId,'the passage opens executable');assert.deepEqual(await call('read_pack',{packId:'eng.MRK-1-14-20'}),current.body,'HTTP/MCP parity');
    }else{
     assert.equal(again.status,200,`${state}: ${JSON.stringify(again.body)}`);assert.equal(again.body.status,'ready');assert.notEqual(again.body.record.revision,stale.revision,'the @2 recipe changes these bytes');
     assert.equal((await s.rows())['executable-presentation:job:'+again.body.jobId].policySha256,r.driftPolicy);

@@ -30,7 +30,11 @@ export function createExecutableOperations({reads,service,publication,storage}){
   if(!exact(args,['jobId'])||!hash(args.jobId))return refused();
   const row=await tx(t=>t.get('executable-demand:'+args.jobId));
   if(!row)return envelope('unavailable',args.jobId,'not-requested');
-  if(row.revision){const record=await reads.readPack({packId:row.args.packId,revision:row.revision});return record.status==='ready'?envelope('ready',args.jobId,null,record):envelope('blocked',args.jobId,record.reason??'publication-unavailable');}
+  if(row.revision){const record=await reads.readPack({packId:row.args.packId,revision:row.revision});
+   // A revision adopted under a newer job serves that job's provenance; the job whose
+   // provenance it no longer carries stays denied, never ready.
+   if(record.status==='ready'&&typeof record.execution?.provenance?.jobId==='string'&&record.execution.provenance.jobId!==args.jobId)return envelope('blocked',args.jobId,'executable-publication-adopted');
+   return record.status==='ready'?envelope('ready',args.jobId,null,record):envelope('blocked',args.jobId,record.reason??'publication-unavailable');}
   // A job under a superseded policy, or any named integrity refusal, stays denied typed.
   const result=await typed(()=>service.read({jobId:args.jobId}),reason=>({status:'blocked',reason}));
   // A read never repairs publication, starts interpretation or adopts a pointer.

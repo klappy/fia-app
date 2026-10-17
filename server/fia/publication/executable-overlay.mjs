@@ -7,6 +7,13 @@ const absent=reason=>({status:'unavailable',reason});
 const MAX=1048576;
 const exact=(x,keys)=>x!==null&&typeof x==='object'&&Object.getPrototypeOf(x)===Object.prototype&&Object.keys(x).sort().join()===[...keys].sort().join();
 const ROW=['schema','binding','revision','artifact','bound','mediaIdentity','mediaAssetsSha256','provenance','baseRecord'],BINDING=['packId','baseRevision','sourceRevision','capability'],DESCRIPTOR=['reference','sha256','bytes','mime'];
+const ADOPTION='fia-executable-adoption@1',ADOPTION_KEYS=['schema','record','revision','provenance'];
+const digestOf=d=>d&&typeof d==='object'?{id:d.id??null,sha256:d.sha256,bytes:d.bytes,mime:d.mime}:null;
+/** The registered replacement rule (cookbook SOURCE-TO-APP-CONTRACT "a registered
+ * replacement rule"): a new publication is hash-equal to an immutable row when every
+ * field except provenance and storage references is identical, so its bytes are the
+ * row's bytes. Only then may the new provenance be adopted beside the row. */
+const hashEqual=(old,row)=>exact(old,ROW)&&old.schema===row.schema&&same(old.binding,row.binding)&&old.revision===row.revision&&same(digestOf(old.artifact),digestOf(row.artifact))&&Array.isArray(old.bound)&&old.bound.length===row.bound.length&&old.bound.every((d,i)=>same(digestOf(d),digestOf(row.bound[i])))&&same(old.mediaIdentity,row.mediaIdentity)&&old.mediaAssetsSha256===row.mediaAssetsSha256&&same(old.baseRecord,row.baseRecord);
 
 /** Domain validation is supplied by the existing presentation compiler. This is
  * only immutable publication and a transactional catalog overlay, shared by both
@@ -42,6 +49,15 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
   need(await eligible(copy(row.binding))===true,'executable-publication-revoked');
   return {bytes,boundArtifacts};
  }
+ /** The row as currently adopted: the immutable row with the provenance of its
+  * current adoption entry, if any. Entries are immutable and keyed by their
+  * provenance hash; only the per-row adoption pointer advances. */
+ async function adopted(key,row,pointer,entry){
+  if(pointer===undefined||pointer===null)return row;
+  need(typeof pointer==='string'&&exact(entry,ADOPTION_KEYS)&&entry.schema===ADOPTION&&entry.record===key&&entry.revision===row.revision&&pointer===`executable-adoption:${key}#${await sha256(encode(entry.provenance))}`,'executable-adoption-binding');
+  return {...row,provenance:copy(entry.provenance)};
+ }
+ const adoption=async(t,key)=>{const pointer=await t.get('executable-adopted:'+key);return {pointer,entry:typeof pointer==='string'?await t.get(pointer):null};};
  function record(row){return {...copy(row.baseRecord),status:'ready',packId:row.binding.packId,revision:row.revision,artifact:{sha256:row.artifact.sha256,bytes:row.artifact.bytes,mime:row.artifact.mime},execution:{schema:'fia-executable-catalog@1',baseRevision:row.binding.baseRevision,sourceRevision:row.binding.sourceRevision,artifacts:row.bound.map(({id,sha256,bytes,mime})=>({id,sha256,bytes,mime})),mediaIdentity:row.mediaIdentity??null,mediaAssetsSha256:row.mediaAssetsSha256??null,provenance:copy(row.provenance)}};}
  async function publish({binding,presentation,boundArtifacts=[],provenance}){
   need(binding&&typeof binding.packId==='string'&&hash(binding.baseRevision)&&typeof binding.sourceRevision==='string'&&binding.sourceRevision.length<=128&&boundArtifacts.length<=1024);
@@ -60,14 +76,24 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
   for(const b of boundArtifacts){need(typeof b.id==='string'&&b.id.length>0&&!seen.has(b.id)&&hash(b.sha256)&&b.bytes instanceof Uint8Array&&await sha256(b.bytes)===b.sha256);seen.add(b.id);bound.push({id:b.id,...await retain(b.bytes)});}
   const artifact=await retain(encode(presentation)),row={schema:'fia-executable-publication@1',binding:copy(binding),revision:artifact.sha256,artifact,bound,mediaIdentity,mediaAssetsSha256,provenance:copy(provenance),baseRecord:copy(baseRecord)};
   await verified(row);
+  const key='executable-record:'+binding.packId+'@'+row.revision,adoptKey=`executable-adoption:${key}#${await sha256(encode(row.provenance))}`;
   await tx(async t=>{
-   const key='executable-record:'+binding.packId+'@'+row.revision,old=await t.get(key);
+   const old=await t.get(key);
    const current=await t.get('executable-current:'+binding.packId);
    need(current===priorPointer||current===key,'executable-pointer-conflict');
    need(await eligible(copy(binding))===true,'executable-publication-revoked');
    const currentBase=await base.readCatalog(binding.packId);need(currentBase?.status==='ready'&&currentBase.revision===binding.baseRevision,'executable-base-stale');
-   need(!old||same(old,row),'executable-publication-conflict');
-   await t.put(key,row);
+   if(!old||same(old,row)){
+    await t.put(key,row);
+    if(old&&await t.get('executable-adopted:'+key))await t.put('executable-adopted:'+key,null);
+   }else{
+    // Never a rewrite: only hash-equal bytes adopt, through an immutable entry.
+    need(hashEqual(old,row),'executable-publication-conflict');
+    const entry={schema:ADOPTION,record:key,revision:row.revision,provenance:copy(row.provenance)},prior=await t.get(adoptKey);
+    need(!prior||same(prior,entry),'executable-publication-conflict');
+    if(!prior)await t.put(adoptKey,entry);
+    await t.put('executable-adopted:'+key,adoptKey);
+   }
    for(const d of [artifact,...bound]){
     const k='executable-artifact:'+d.sha256,owners=await t.get(k)||[];
     if(!owners.includes(key)){need(owners.length<1024);await t.put(k,[...owners,key]);}
@@ -77,15 +103,16 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
   return readCatalog(binding.packId,row.revision);
  }
  async function readCatalog(packId,revision){
-  const found=await tx(async t=>{const key=revision?'executable-record:'+packId+'@'+revision:await t.get('executable-current:'+packId);return {key,row:key?await t.get(key):null};}),row=found.row;
-  if(!row&&found.key&&!revision)return absent('executable-pointer-dangling');
-  if(!row)return base.readCatalog(packId,revision);
-  try{need(row.binding.packId===packId&&(!revision||row.revision===revision)&&found.key===`executable-record:${packId}@${row.revision}`,'executable-pointer-binding');await verified(row);return record(row);}catch(error){return absent(error.message);}
+  const found=await tx(async t=>{const key=revision?'executable-record:'+packId+'@'+revision:await t.get('executable-current:'+packId),row=key?await t.get(key):null;return {key,row,...(row?await adoption(t,key):{})};});
+  if(!found.row&&found.key&&!revision)return absent('executable-pointer-dangling');
+  if(!found.row)return base.readCatalog(packId,revision);
+  try{const row=found.row;need(row.binding.packId===packId&&(!revision||row.revision===revision)&&found.key===`executable-record:${packId}@${row.revision}`,'executable-pointer-binding');const current=await adopted(found.key,row,found.pointer,found.entry);await verified(current);return record(current);}catch(error){return absent(error.message);}
  }
  /** Read-only. Authenticates the current pointer's publication exactly: closed row and
   * descriptors, pointer and artifact-owner index bindings, and every retained byte,
   * under a caller-supplied verifier instead of current validation. It grants nothing:
-  * the caller decides what an authenticated row may justify, and the row stays refused. */
+  * the caller decides what an authenticated row may justify, and the row stays refused.
+  * It reads the immutable row itself, never an adoption entry. */
  async function authenticateCurrent(packId,check){
   need(typeof check==='function');
   const {key,row,owners}=await tx(async t=>{
@@ -103,7 +130,7 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
   const owners=await tx(t=>t.get('executable-artifact:'+digest));
   if(!owners)return base.findArtifact(digest);
   for(const key of owners){
-   try{const row=await tx(t=>t.get(key));need(key===`executable-record:${row?.binding?.packId}@${row?.revision}`,'executable-owner-binding');const v=await verified(row);const d=[row.artifact,...row.bound].find(x=>x.sha256===digest);need(d);const b=digest===row.revision?v.bytes:v.boundArtifacts.find(x=>x.sha256===digest)?.bytes;need(b);return {artifact:{sha256:d.sha256,bytes:d.bytes,mime:d.mime},content:new TextDecoder('utf-8',{fatal:true}).decode(b),cacheControl:'private, no-store'};}catch{}
+   try{const {row,pointer,entry}=await tx(async t=>({row:await t.get(key),...await adoption(t,key)}));need(key===`executable-record:${row?.binding?.packId}@${row?.revision}`,'executable-owner-binding');const v=await verified(await adopted(key,row,pointer,entry));const d=[row.artifact,...row.bound].find(x=>x.sha256===digest);need(d);const b=digest===row.revision?v.bytes:v.boundArtifacts.find(x=>x.sha256===digest)?.bytes;need(b);return {artifact:{sha256:d.sha256,bytes:d.bytes,mime:d.mime},content:new TextDecoder('utf-8',{fatal:true}).decode(b),cacheControl:'private, no-store'};}catch{}
   }
   return absent('executable-artifact-unavailable');
  }

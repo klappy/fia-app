@@ -64,9 +64,9 @@ against today's proof index and the retained bytes. If a release changes
 revision, that pack's historical row stays refused (404 `execution-job-policy`, never
 a 500) until it is re-prepared. A row whose bytes the moved policy reproduces exactly
 (the same recipe and bindings, as for DEV's `{9a7733f5, @2}` rows) is never replaced.
-Its read serves the base with its demand, but an explicit Open answers `blocked`
-`executable-publication-conflict`, so the passage cannot open as executable until its
-bytes change. That is an open follow-up, due before the next content release. Only the unqualified current read (`read_pack({packId})` and
+Its read serves the base with its demand until an explicit Open, which re-prepares
+under the moved policy and adopts that row through the registered replacement rule
+below, so the passage opens as executable at the same revision. Only the unqualified current read (`read_pack({packId})` and
 `GET /v1/packs/<packId>`) may then serve the base with its existing demand, and
 only after it authenticates that historical publication exactly: the current
 pointer and artifact-owner indexes, the closed publication row, the closed job row
@@ -79,8 +79,22 @@ publication generations, so the demand is the existing four-field one (cookbook
 backport linked from the release note).
 
 Publication rows and their provenance are immutable. Republishing identical bytes
-under a newer job is a typed `blocked` `executable-publication-conflict`, never a
-replacement. Expected publication conflicts (pointer race, stale base, revocation,
+under a newer job is never a replacement. It is the registered replacement rule
+(cookbook `SOURCE-TO-APP-CONTRACT.md`, "generation identity or a registered
+replacement rule"; package-luke ask default 1): when the new publication is
+hash-equal to the existing row (same binding, revision, artifact and bound
+descriptors by id, sha256, bytes and mime, media binding and base record; only
+provenance and storage references may differ) and has itself passed current
+validation, the server records an immutable adoption entry
+`executable-adoption:<record key>#<sha256(provenance)>`
+(`fia-executable-adoption@1`: record, revision, new provenance) and advances the
+per-row pointer `executable-adopted:<record key>`. The row is not rewritten. Catalog
+and artifact reads verify the row with the adopted provenance, under current
+validation; a forged or mismatched entry refuses (`executable-adoption-binding`). A
+repeat is idempotent. The superseded job's status read stays denied (`blocked`
+`executable-publication-adopted`). `authenticateCurrent` reads the immutable row
+only. Any other difference under the same revision (bound bytes, media or base
+record) is still a typed `blocked` `executable-publication-conflict`. Expected publication conflicts (pointer race, stale base, revocation,
 refused validation), named post-admission refusals and a stale-policy job-status
 read answer the typed `blocked` envelope with their code (HTTP 409). An unnamed
 fault is not disguised as a refusal. A transient storage or fetch fault during
