@@ -16,7 +16,7 @@ function fixture(){
  const artifacts={async write(b){const sha=await sha256(b);blobs.set(sha,new Uint8Array(b));return {reference:sha,sha256:sha};},async read(d){if(state.readFault)throw state.readFault;return new Uint8Array(blobs.get(d.reference));}};
  const base={readCatalog:async(id,revision)=>id===packId&&(!revision||revision===binding.baseRevision)?{status:'ready',packId:id,revision:binding.baseRevision,artifact:{sha256:binding.baseRevision,bytes:2,mime:'application/json'}}:{status:'unavailable',reason:'not-found'},findArtifact:async()=>null};
  const make=(extra={})=>createExecutableOverlay({storage,artifacts,base,eligible:()=>true,validate:async c=>c.presentation.execution.schema==='fixture',...extra});
- return {kv,blobs,state,make};
+ return {kv,blobs,state,make,storage};
 }
 const bound=async text=>{const bytes=new TextEncoder().encode(text);return {id:'bound:'+text,bytes,sha256:await sha256(bytes)};};
 
@@ -53,6 +53,19 @@ test('transient storage and R2 faults are told apart from verification misses; b
  ]);
  assert.ok(seen.every(d=>d.event==='executable-cache-miss'));
  f.state.storageFault=null;assert.equal((await overlay.readCatalog(packId)).revision,record.revision,'once the fault clears the cached row is served again');
+});
+
+test('a storage fault on an exact-revision read throws (publish is never turned into not-found); the pointer read still falls back',async()=>{
+ const f=fixture(),record=await f.make().publish(candidate),seen=[],overlay=f.make({diagnose:d=>seen.push(d)});
+ f.state.storageFault=Error('Durable Object storage operation exceeded timeout');
+ await assert.rejects(overlay.readCatalog(packId,record.revision),/exceeded timeout/);
+ assert.equal((await overlay.readCatalog(packId)).revision,binding.baseRevision);
+ assert.deepEqual(seen.map(d=>[d.where,d.kind]),[['readCatalog','transient']]);
+ // publish()'s post-commit read: a fault there rejects instead of answering a not-found record.
+ f.state.storageFault=null;let commits=0,armed=false;
+ const flaky=f.make({diagnose:d=>seen.push(d),storage:{transaction:async fn=>{if(armed)throw Error('storage blip');const out=await f.storage.transaction(fn);if(++commits===2)armed=true;return out;}}});
+ await assert.rejects(flaky.publish({...candidate,presentation:{...candidate.presentation,other:2}}),/storage blip/);
+ assert.equal(commits,2,'the pointer was committed before the post-commit read faulted');
 });
 
 test('replacing a row prunes owner-index entries for bound artifacts it no longer binds',async()=>{

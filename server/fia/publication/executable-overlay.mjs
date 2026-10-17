@@ -98,7 +98,9 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
  async function readCatalog(packId,revision){
   let found;
   try{found=await tx(async t=>{const key=revision?'executable-record:'+packId+'@'+revision:await t.get('executable-current:'+packId);return {key,row:key?await t.get(key):null};});}
-  catch(error){fault('readCatalog',{packId},error);return base.readCatalog(packId,revision);}
+  // An exact-revision read (including publish()'s post-commit read) cannot be answered
+  // by the base, so its storage fault propagates; only the pointer read falls through.
+  catch(error){if(revision)throw error;fault('readCatalog',{packId},error);return base.readCatalog(packId);}
   const row=found.row;
   if(!row&&found.key&&!revision)miss('readCatalog',{packId,key:found.key,kind:'verification',reason:'executable-pointer-dangling'});
   if(!row)return base.readCatalog(packId,revision);
