@@ -348,6 +348,15 @@ it('the book Passages sheet: focus follows the view swap and the title names the
  const browse=screen.getByRole('button',{name:/Browse passages/});browse.focus();await fireEvent.click(browse);await settle();
  expect(document.activeElement).toBe(screen.getByRole('button',{name:/^Language: /}));expect(dialog().querySelector('.sheet-header h2').textContent).toBe('Passages');
 });
+it('the book Passages sheet focuses the chosen language, not the first, when the chosen one is second (fia-app#250 reviews 6226129643, 6226183019)',async()=>{
+ vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',nativeName:'English',ready:1},{id:'spa',nativeName:'Español',ready:1}]);vi.spyOn(libraryAdapter,'passages').mockResolvedValue([bundledPack]);
+ localStorage.setItem('fia-v3-library-language','spa');
+ await startAt('S01-U001');await fireEvent.click(screen.getByRole('button',{name:/^Choose passage/}));await settle();
+ const lang=await screen.findByRole('button',{name:/^Language: /});lang.focus();await fireEvent.click(lang);await settle();
+ const spanish=screen.getByRole('button',{name:/Español/}),english=screen.getByRole('button',{name:/English/});
+ expect(spanish.classList.contains('chosen')).toBe(true);expect(english.classList.contains('chosen')).toBe(false);
+ expect(document.activeElement).toBe(spanish);
+});
 it('a refused open from the book Passages sheet stays on its card, with no notice on the reading screen (fia-app#250 review)',async()=>{
  const registry=JSON.parse(readFileSync('public/content/registry.json','utf8')),descriptor=registry.packs.find(p=>p.id==='eng.MRK-1-14-20');
  vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',nativeName:'English',ready:68}]);vi.spyOn(libraryAdapter,'passages').mockResolvedValue([descriptor]);const select=vi.spyOn(libraryAdapter,'select').mockRejectedValue(Error('Passage verification failed. Try again.'));

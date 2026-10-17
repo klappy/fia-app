@@ -270,7 +270,7 @@
  const historicalSnapshotNotice='Using the last verified saved passage while offline.';
  let passagesView=$state('passages'),passagesHost=$state();
  // The book's Passages sheet swaps LibraryPanel views like the overview's pickers: focus follows to the new view, never to the body (review #9, fia-app#250).
- async function swapPassages(view){passagesView=view;await tick();(view==='languages'?passagesHost?.querySelector('.library-list button.chosen,.library-list button'):passagesHost?.querySelector('.library-panel>button.quiet'))?.focus();}
+ async function swapPassages(view){passagesView=view;await tick();(view==='languages'?(passagesHost?.querySelector('.library-list button.chosen')||passagesHost?.querySelector('.library-list button')):passagesHost?.querySelector('.library-panel>button.quiet'))?.focus();}
  let sheet=$state(null), command=$state(''), messages=$state([]), notice=$state(''), online=$state(true), started=$state(false), scale=$state(1), rate=$state(1), muted=$state(false), saved=$state(false);
  let audio, timer; let audioContext=$state(null); let chatInput=$state(), chatLog=$state();
  let activity=$derived(currentActivity(session,activities));
