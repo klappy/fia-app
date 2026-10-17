@@ -7,7 +7,6 @@ import {createExecutableOverlay} from '../publication/executable-overlay.mjs';
 import {createExecutableOperations} from '../publication/executable-operations.mjs';
 import {createExecutablePresentationService} from './executable-presentation-service.mjs';
 import {createExecutablePresentationResolver,createCanonicalGuideReader} from './executable-presentation-resolver.mjs';
-import {SOURCE_ACTION_RECIPE} from '../compiler/presentation/source-action-projector.mjs';
 import guideSources from './guide-sources.json' with {type:'json'};
 import preparationCatalog from './catalog.json' with {type:'json'};
 import {eligibleRows,resolveSelection} from './service.mjs';
@@ -26,6 +25,9 @@ export const EXECUTION_POLICY='fia-source-to-app/7fa17af806c139cfc353cace39fa6d5
 // 3. The builds from 45a3248 (the #197 promotion): the same policy under @2.
 // 4. The builds from #249 (Luke text published, catalog f5ce2e24): proof index 7140879c
 //    (its authority names the new catalog), the same EXECUTION_POLICY, under @2.
+// The registry is release bookkeeping (execution-registry.test.mjs). Reads no longer
+// authenticate rows by it: a row under a superseded build is a cache miss served from
+// the base, and an explicit Open re-prepares under today's build.
 export const SUPERSEDED_BUILDS=Object.freeze([
  {policy:'35e074a65296fbb4743e17bfe28f52b7e0e2b8b558c7a0d4a5fb7ceecad85a47',recipe:'fia-server-source-action-projector@1',approvedAudio:false},
  {policy:'9a7733f5139e9cf7352bfe4018f3164715e69abc9eba3776052bdc324f33295c',recipe:'fia-server-source-action-projector@1',approvedAudio:true},
@@ -79,10 +81,6 @@ export async function createExecutableRuntime({ctx,env,snapshot,capabilities={}}
  const resolve=capabilities.resolve??createExecutablePresentationResolver({reads:baseReads,resolveCanonicalSource:createCanonicalGuideReader({canonicalSources:snapshot.canonicalSources??[],fetchAsset:path=>env.ASSETS.fetch(new Request(new URL(path,env.FIA_API_ORIGIN),{redirect:'manual'}))}),composeDecisionInputs:capabilities.composeDecisionInputs??null,resolveBindings});
  const currentPolicy=capabilities.policySha256??policySha256;
  const service=createExecutablePresentationService({storage:ctx.storage,artifacts,resolve,eligible,interpret:capabilities.interpret??null,policySha256:currentPolicy});
- // The released builds (SUPERSEDED_BUILDS) other than today's: an entry equal to
- // today's build is the current build, not a historical one. Provider is not
- // superseded, so a historical job must carry today's. No other value is recognized.
- const historical=SUPERSEDED_BUILDS.filter((h,i)=>!(h.policy===currentPolicy&&h.recipe===SOURCE_ACTION_RECIPE)&&SUPERSEDED_BUILDS.findIndex(x=>x.policy===h.policy&&x.recipe===h.recipe)===i).map(h=>({...h,jobs:createExecutablePresentationService({storage:ctx.storage,artifacts,resolve,eligible,interpret:capabilities.interpret??null,policySha256:h.policy,recipeRevision:h.recipe})}));
  if(typeof ctx.storage.list==='function'){
   const retained=await ctx.storage.list({prefix:'executable-presentation:job:'});
   await service.recoverInterrupted({jobIds:[...retained.values()].map(row=>row.jobId)});
@@ -102,28 +100,15 @@ export async function createExecutableRuntime({ctx,env,snapshot,capabilities={}}
    }else if(bound.schema!=='fia-bound-narration-demand@1'||!eligibleRows(preparationCatalog).some(row=>resolveSelection(bound.identity,{entries:[row]})))return false;}
   return true;
  };
- const publication=createExecutableOverlay({storage:ctx.storage,artifacts,base,eligible,validate:verifier(service,true)});
- // The recognized transitions. Read-only: the current pointer's publication, its owner
- // indexes and retained bytes authenticate exactly; its job row is closed, its id
- // recomputes, and it reproduces the publication under one registered historical build
- // (policy and recipe) with today's provider; its request row binds that exact
- // publication. Any other failure, including a reason string alone, stays refused.
- async function historicalTransition(packId){
-  for(const {policy,recipe,approvedAudio,jobs} of historical){
-   try{
-    const row=await publication.authenticateCurrent(packId,verifier(jobs,approvedAudio)),jobId=row.provenance?.jobId;
-    const [job,request]=await ctx.storage.transaction(async t=>[await t.get('executable-presentation:job:'+jobId),await t.get('executable-demand:'+jobId)]);
-    if(job?.policySha256===policy&&job.recipeRevision===recipe&&same(job.args,row.binding)&&request&&Object.keys(request).sort().join()==='args,revision'&&same(request.args,row.binding)&&request.revision===row.revision)return true;
-   }catch{}
-  }
-  return false;
- }
+ // Cache misses are bookkeeping only (cookbook package-luke RULING.md § DEV publication
+ // conflict): one structured log line per miss, never a change to the answer.
+ const diagnose=capabilities.diagnose??(event=>console.warn(JSON.stringify(event)));
+ const publication=createExecutableOverlay({storage:ctx.storage,artifacts,base,eligible,validate:verifier(service,true),diagnose});
  const reads=createReadOperations(publication),readPack=reads.readPack;
- // An authenticated historical publication stays refused by its exact revision and
- // its old job status, but it no longer shadows the current base record on the
- // unqualified read: the base is served with its existing demand, so an explicit Open
- // prepares under the current policy. Every other refusal stays fail-closed.
- reads.readPack=async args=>{let record=await readPack(args);if(record?.status==='unavailable'&&record.reason==='execution-job-policy'&&args&&Object.keys(args).join()==='packId'&&await historicalTransition(args.packId))record=await baseReads.readPack(args);if(record?.status!=='ready'||record.execution)return record;const sourceRevision=record.authority?.rawInventoryCommit;if(record.packId===args.packId&&preparable(record,sourceRevision))return {...record,preparationDemand:{packId:args.packId,baseRevision:record.revision,sourceRevision,capability:'executable-presentation'}};return record;};
+ // A row under a superseded build fails its verifier, so the overlay already serves the
+ // base (cache miss); the base read gains its demand here, and an explicit Open
+ // re-prepares under today's build.
+ reads.readPack=async args=>{const record=await readPack(args);if(record?.status!=='ready'||record.execution)return record;const sourceRevision=record.authority?.rawInventoryCommit;if(record.packId===args.packId&&preparable(record,sourceRevision))return {...record,preparationDemand:{packId:args.packId,baseRevision:record.revision,sourceRevision,capability:'executable-presentation'}};return record;};
  const ops=createExecutableOperations({reads,service,publication,storage:ctx.storage});
  return {...ops,readApprovedAudio:selected=>retained?retained.read(selected):{status:'unavailable',reason:'approved-audio-unavailable'}};
 }
