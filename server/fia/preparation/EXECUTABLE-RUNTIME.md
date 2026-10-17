@@ -61,26 +61,37 @@ A policy move strands no registered row only while that pack's base revision and
 approved-audio binding rows are unchanged. The verifier checks a bound recording
 against today's proof index and the retained bytes. If a release changes
 `eng.MRK-1-14-20`'s binding (its delivery, ledger, evidence or base bytes) or its base
-revision, that pack's historical row stays refused (404 `execution-job-policy`, never
-a 500) until it is re-prepared. A row whose bytes the moved policy reproduces exactly
-(the same recipe and bindings, as for DEV's `{9a7733f5, @2}` rows) is never replaced.
-Its read serves the base with its demand, but an explicit Open answers `blocked`
-`executable-publication-conflict`, so the passage cannot open as executable until its
-bytes change. That is an open follow-up, due before the next content release. Only the unqualified current read (`read_pack({packId})` and
-`GET /v1/packs/<packId>`) may then serve the base with its existing demand, and
-only after it authenticates that historical publication exactly: the current
-pointer and artifact-owner indexes, the closed publication row, the closed job row
-with its recomputed id and retained context bytes, the request row bound to that
-revision, and the publication reproduced under that historical build. A reason
-string alone never qualifies; a forged, unregistered or corrupt row, a wrong
-pointer or index, or missing bytes stays refused. The read writes nothing. The
-historical revision and its old job-status read stay denied. This tree has no
-publication generations, so the demand is the existing four-field one (cookbook
-backport linked from the release note).
+revision, that pack's historical row no longer verifies and is a cache miss (below)
+until it is re-prepared. A row whose bytes the moved policy reproduces exactly (the
+same recipe and bindings, as for DEV's `{9a7733f5, @2}` rows) is replaced by the
+re-preparation under its unchanged content key, and the pointer advances, so the
+passage opens executable.
 
-Publication rows and their provenance are immutable. Republishing identical bytes
-under a newer job is a typed `blocked` `executable-publication-conflict`, never a
-replacement. Expected publication conflicts (pointer race, stale base, revocation,
+**The publication store is a content-keyed cache, never an identity or trust
+ledger** (cookbook ruling "DEV publication conflict", 2026-10-17, `work/active/
+2026-10-15-fia-package-luke/RULING.md`). Packing algorithms and checksums never
+block usage:
+
+- A publish whose record key (`executable-record:<packId>@<revision>`) already
+  exists replaces the row and advances the pointer. There is no
+  `executable-publication-conflict` and no adoption ledger.
+- A stored row that fails byte, hash, length, binding, eligibility or validation
+  checks, or a dangling or foreign pointer, is a cache miss: the catalog read falls
+  through to the base catalog (the unqualified read then carries its existing
+  four-field demand, so an explicit Open re-prepares), and an artifact read falls
+  through to the base artifacts. It never answers `unavailable` because of the
+  stored row. Each miss is signalled through the overlay's `diagnostics` hook
+  (`executable-cache-miss`, and `executable-cache-replace` when a publish replaces
+  a different row), which the Worker logs for bookkeeping only. The read writes
+  nothing.
+- Integrity pins (the registered historical builds, owner indexes, retained-byte
+  hashes) stay for diagnostics and refresh bookkeeping, not as a usage gate.
+
+An exact executable revision the base does not hold reads `not-found` once its row
+misses. This tree has no publication generations, so the demand is the existing
+four-field one (cookbook backport linked from the release note).
+
+Expected publication refusals (pointer race, stale base, revocation,
 refused validation), named post-admission refusals and a stale-policy job-status
 read answer the typed `blocked` envelope with their code (HTTP 409). An unnamed
 fault is not disguised as a refusal. A transient storage or fetch fault during
@@ -91,8 +102,8 @@ Publication stores verified bytes before atomically advancing its pointer.
 New publication checks the latest base, while an eligible previously published
 pinned version remains readable. Both catalog and artifact reads recheck
 authority and deterministic provenance, including current narration capability
-availability. Foreign/dangling pointers, changed assets and corrupt evidence
-refuse service.
+availability. Foreign/dangling pointers, changed assets and corrupt evidence are
+never served as executable; they are cache misses that fall through to the base.
 
 Catalog `execution.artifacts` lists the bound JSON dependencies as
 `{id,sha256,bytes,mime}`. `execution.mediaIdentity:{packId,revision}` is emitted

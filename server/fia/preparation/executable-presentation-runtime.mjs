@@ -102,7 +102,9 @@ export async function createExecutableRuntime({ctx,env,snapshot,capabilities={}}
    }else if(bound.schema!=='fia-bound-narration-demand@1'||!eligibleRows(preparationCatalog).some(row=>resolveSelection(bound.identity,{entries:[row]})))return false;}
   return true;
  };
- const publication=createExecutableOverlay({storage:ctx.storage,artifacts,base,eligible,validate:verifier(service,true)});
+ // A failing stored row is a cache miss (the read falls through to the base); it is
+ // logged for bookkeeping only and never answers the user `unavailable`.
+ const publication=createExecutableOverlay({storage:ctx.storage,artifacts,base,eligible,validate:verifier(service,true),diagnostics:event=>console.warn(JSON.stringify(event))});
  // The recognized transitions. Read-only: the current pointer's publication, its owner
  // indexes and retained bytes authenticate exactly; its job row is closed, its id
  // recomputes, and it reproduces the publication under one registered historical build

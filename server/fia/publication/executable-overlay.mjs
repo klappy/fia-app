@@ -8,12 +8,20 @@ const MAX=1048576;
 const exact=(x,keys)=>x!==null&&typeof x==='object'&&Object.getPrototypeOf(x)===Object.prototype&&Object.keys(x).sort().join()===[...keys].sort().join();
 const ROW=['schema','binding','revision','artifact','bound','mediaIdentity','mediaAssetsSha256','provenance','baseRecord'],BINDING=['packId','baseRevision','sourceRevision','capability'],DESCRIPTOR=['reference','sha256','bytes','mime'];
 
-/** Domain validation is supplied by the existing presentation compiler. This is
- * only immutable publication and a transactional catalog overlay, shared by both
- * HTTP and MCP. No model/preparation work is reachable from a read. */
-export function createExecutableOverlay({storage,artifacts,base,eligible,validate}){
+/** Domain validation is supplied by the existing presentation compiler. This is a
+ * content-keyed cache of executable publications and a transactional catalog overlay,
+ * shared by both HTTP and MCP. It is never an identity or trust ledger: a publish whose
+ * record key already exists replaces that row and advances the pointer, and a stored row
+ * that fails byte, hash, length, binding or validation checks is a cache miss whose read
+ * falls through to the base catalog (which carries its preparation demand, so an Open
+ * re-prepares). Integrity checks feed `diagnostics` only; they never gate usage.
+ * No model/preparation work is reachable from a read. */
+export function createExecutableOverlay({storage,artifacts,base,eligible,validate,diagnostics=()=>{}}){
  need(typeof storage?.transaction==='function'&&typeof artifacts?.read==='function'&&typeof artifacts?.write==='function'&&typeof base?.readCatalog==='function'&&typeof base?.findArtifact==='function'&&typeof eligible==='function'&&typeof validate==='function');
  const tx=storage.transaction.bind(storage);
+ // Bookkeeping only: a diagnostics fault never changes what a read answers.
+ const signal=(event,where,detail)=>{try{diagnostics({event,where,...detail});}catch{}};
+ const miss=(where,detail)=>signal('executable-cache-miss',where,detail);
  async function bytesFor(d){
   need(hash(d?.sha256)&&typeof d.reference==='string'&&Number.isSafeInteger(d.bytes)&&d.bytes>0&&d.bytes<=MAX);
   const b=await artifacts.read({reference:d.reference,sha256:d.sha256});
@@ -66,7 +74,8 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
    need(current===priorPointer||current===key,'executable-pointer-conflict');
    need(await eligible(copy(binding))===true,'executable-publication-revoked');
    const currentBase=await base.readCatalog(binding.packId);need(currentBase?.status==='ready'&&currentBase.revision===binding.baseRevision,'executable-base-stale');
-   need(!old||same(old,row),'executable-publication-conflict');
+   // Content-keyed cache: an existing row under this key is replaced, never a conflict.
+   if(old&&!same(old,row))signal('executable-cache-replace','publish',{packId:binding.packId,revision:row.revision,reason:'executable-row-replaced'});
    await t.put(key,row);
    for(const d of [artifact,...bound]){
     const k='executable-artifact:'+d.sha256,owners=await t.get(k)||[];
@@ -78,9 +87,10 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
  }
  async function readCatalog(packId,revision){
   const found=await tx(async t=>{const key=revision?'executable-record:'+packId+'@'+revision:await t.get('executable-current:'+packId);return {key,row:key?await t.get(key):null};}),row=found.row;
-  if(!row&&found.key&&!revision)return absent('executable-pointer-dangling');
+  if(!row&&found.key&&!revision)miss('read-catalog',{packId,revision:null,reason:'executable-pointer-dangling'});
   if(!row)return base.readCatalog(packId,revision);
-  try{need(row.binding.packId===packId&&(!revision||row.revision===revision)&&found.key===`executable-record:${packId}@${row.revision}`,'executable-pointer-binding');await verified(row);return record(row);}catch(error){return absent(error.message);}
+  try{need(row.binding.packId===packId&&(!revision||row.revision===revision)&&found.key===`executable-record:${packId}@${row.revision}`,'executable-pointer-binding');await verified(row);return record(row);}
+  catch(error){miss('read-catalog',{packId,revision:revision??null,reason:error?.message??String(error)});return base.readCatalog(packId,revision);}
  }
  /** Read-only. Authenticates the current pointer's publication exactly: closed row and
   * descriptors, pointer and artifact-owner index bindings, and every retained byte,
@@ -103,9 +113,11 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
   const owners=await tx(t=>t.get('executable-artifact:'+digest));
   if(!owners)return base.findArtifact(digest);
   for(const key of owners){
-   try{const row=await tx(t=>t.get(key));need(key===`executable-record:${row?.binding?.packId}@${row?.revision}`,'executable-owner-binding');const v=await verified(row);const d=[row.artifact,...row.bound].find(x=>x.sha256===digest);need(d);const b=digest===row.revision?v.bytes:v.boundArtifacts.find(x=>x.sha256===digest)?.bytes;need(b);return {artifact:{sha256:d.sha256,bytes:d.bytes,mime:d.mime},content:new TextDecoder('utf-8',{fatal:true}).decode(b),cacheControl:'private, no-store'};}catch{}
+   let row;
+   try{row=await tx(t=>t.get(key));need(key===`executable-record:${row?.binding?.packId}@${row?.revision}`,'executable-owner-binding');const v=await verified(row);const d=[row.artifact,...row.bound].find(x=>x.sha256===digest);need(d);const b=digest===row.revision?v.bytes:v.boundArtifacts.find(x=>x.sha256===digest)?.bytes;need(b);return {artifact:{sha256:d.sha256,bytes:d.bytes,mime:d.mime},content:new TextDecoder('utf-8',{fatal:true}).decode(b),cacheControl:'private, no-store'};}
+   catch(error){miss('find-artifact',{sha256:digest,packId:row?.binding?.packId??null,revision:row?.revision??null,reason:error?.message??String(error)});}
   }
-  return absent('executable-artifact-unavailable');
+  return await base.findArtifact(digest)??absent('executable-artifact-unavailable');
  }
  return Object.freeze({publish,readCatalog,findArtifact,authenticateCurrent});
 }
