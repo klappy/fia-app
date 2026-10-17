@@ -79,7 +79,8 @@ button{min-height:48px}.scene-notice button{min-width:48px;min-height:48px}.kept
 .visual-expand-hint{position:fixed;z-index:14;left:max(20px,env(safe-area-inset-left));bottom:calc(164px + env(safe-area-inset-bottom));display:grid;place-items:center;color:var(--text-muted);pointer-events:none}
 
 /* Two quiet progress levels; existing navigation and primary control stay intact. */
-.session-progress{position:fixed;z-index:13;top:max(0px,env(safe-area-inset-top));left:16px;right:16px;max-width:688px;margin:auto;background:var(--paper-050)}
+.session-band{position:fixed;z-index:13;top:max(0px,env(safe-area-inset-top));left:16px;right:16px;max-width:688px;margin:auto;background:var(--paper-050);display:flex;justify-content:center;justify-content:safe center;align-items:flex-start;height:92px}
+.session-band>.session-progress{flex:1 1 auto;min-width:0}
 .progress-section-choice{display:flex;gap:28px;width:100%;min-height:64px;color:var(--text-muted)}
 .progress-section-choice[aria-current=step]{color:var(--text-title)}
 .section-transition{min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:170px 32px;gap:26px;text-align:center}
@@ -111,7 +112,7 @@ button{min-height:48px}.scene-notice button{min-width:48px;min-height:48px}.kept
 .scene-glass{position:fixed;left:0;right:0;z-index:11;pointer-events:none;background:var(--glass-fill-2);-webkit-backdrop-filter:blur(var(--blur-medium)) var(--sat-glass);backdrop-filter:blur(var(--blur-medium)) var(--sat-glass)}
 .scene-glass-top{top:0;height:var(--chrome-top)}
 .scene-glass-bottom{bottom:0;height:var(--chrome-bottom)}
-.session-progress{background:transparent}
+.session-band{background:transparent}
 .media-stage.reading-stage{padding:0}
 .reading-stage .scripture-scroll{scroll-padding-top:var(--chrome-top);scroll-padding-bottom:var(--chrome-bottom)}
 .visual-explorer,.video-well{height:calc(100dvh - var(--chrome-bottom));padding-top:var(--chrome-top)}
@@ -169,6 +170,27 @@ button{min-height:48px}.scene-notice button{min-width:48px;min-height:48px}.kept
 .stage-words b{flex:0 0 auto;max-width:100%;overflow:hidden;text-overflow:ellipsis}.stage-sep{flex:none;white-space:pre}
 .stage-passage{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .stage-words b{color:var(--text-title);font-weight:600}
+/* Book control (progress-rail § Top band passage control, ticket ④): the book at the inline start, a 4 px dot centred on the circle row
+   with 10 px air either side, then the cluster, which keeps its own width so it shifts toward the inline end. Same 14 · 32 · 14 · words
+   stack as the cluster; the band stays 92 px. The reference under the book is one line and ends in an ellipsis; the cluster keeps the
+   stage name only and ellipsizes it only when wider than the cluster. */
+.session-band.with-passage>.session-progress{flex:0 0 auto;width:196px}
+.passage-control{flex:0 1 auto;min-width:48px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:14px;padding:14px 0 14.5px;height:92px;box-sizing:border-box}
+/* The 1.5 px muted ring and glyph match the stage cells (progress-rail § Top band passage control: "a 1.5 px muted ring"). */
+.passage-cell{flex:none;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:var(--text-muted);background:var(--paper-050);box-shadow:inset 0 0 0 1.5px var(--text-muted)}
+.passage-words{max-width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:var(--type-label);font-weight:600;color:var(--text-title)}
+.band-dot{flex:none;width:4px;height:4px;border-radius:50%;background:var(--text-muted);margin:28px 10px 0}
+/* Narrow band (largest font at 375 px, i.e. a band under ~308 px): the large-print geometry — 28 px circles and book, 3 px overlap,
+   4 px dot air — so book, dot and cluster still fit in one row; `safe center` keeps the book on screen if anything still overflows.
+   Same 14 px gaps (the circles sit 2 px lower in a 32 px row), band still 92 px. Tight is tolerated only here (ticket ④).
+   (`safe center` is set on .session-band above, after a plain `center` fallback.) */
+@media(max-width:340px){
+ .session-band.with-passage>.session-progress{width:158px}
+ .session-band.with-passage .stage-cell,.passage-cell{width:28px;height:28px}
+ .session-band.with-passage .stage-cell+.stage-cell{margin-left:-3px}
+ .passage-control{gap:16px;padding-top:16px}
+ .band-dot{margin:28px 4px 0}
+}
 
 
 /* One interaction language across navigation, media, primary and sheet buttons.
@@ -275,7 +297,7 @@ button:enabled:active { translate: 0 0; scale: var(--press-scale); opacity: .86;
 .resource-visual > .visual-identification { padding-inline:max(20px,env(safe-area-inset-left)) max(20px,env(safe-area-inset-right)); }
 
 /* Rotation changes the existing stage, preserving the live media element. */
-.scene.immersive .scene-glass,.scene.immersive .scene-controls,.scene.immersive .session-progress{display:none}
+.scene.immersive .scene-glass,.scene.immersive .scene-controls,.scene.immersive .session-band{display:none}
 .scene.immersive .resource-visual{padding:0;height:100dvh;min-height:100dvh}
 .scene.immersive .visual-identification,.scene.immersive .resource-visual::after{display:none}
 .scene.immersive .resource-visual>.visual-explorer,.scene.immersive .resource-visual>.video-well{padding:0;height:100dvh}

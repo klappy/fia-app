@@ -1,4 +1,4 @@
-import { BookOpen, Users, Image, Map, Key, Film, Heart, Mountain, Layers, Drama, Puzzle, Speech, Ear } from 'lucide-svelte';
+import { BookOpen, BookMarked, Users, Image, Map, Key, Film, Heart, Mountain, Layers, Drama, Puzzle, Speech, Ear } from 'lucide-svelte';
 
 // One vocabulary for the progress bar, mini map and section transitions.
 // Two sets that never share a glyph (cookbook design/alpha-system/tokens.md § Icon vocabulary, adopted 2026-10-08):
@@ -6,6 +6,9 @@ import { BookOpen, Users, Image, Map, Key, Film, Heart, Mountain, Layers, Drama,
 // the six stages — Hear and Heart, Setting the Stage, Defining the Scenes, Embodying the Text, Filling the Gaps, Speaking the Word.
 export const contentIcons = { guide: Ear, scripture: BookOpen, discussion: Users, image: Image, map: Map, term: Key, video: Film };
 export const sectionIcons = [Heart, Mountain, Layers, Drama, Puzzle, Speech];
+// The passage control left of the stage cluster (cookbook progress-rail.md § Top band passage control, ticket ④): a closed book
+// with a ribbon, never BookOpen, which is the scripture content kind; it belongs to neither set.
+export const passageIcon = BookMarked;
 // The word for each content kind, in user words (cookbook overview-sheet.md § Copy rules), in the key's reading order.
 export const kindWords = { guide: 'listen', scripture: 'Scripture', discussion: 'discuss', term: 'key term', image: 'picture', map: 'map', video: 'video' };
 
