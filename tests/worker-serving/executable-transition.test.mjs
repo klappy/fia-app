@@ -346,3 +346,20 @@ test('resolver: base id fia-mark-authentic@1 for eng.MRK-1-1-13 is a typed refus
  const outcome=await service.request({packId,baseRevision:descriptor.revision,sourceRevision:source.revision,capability:'executable-presentation'});
  assert.deepEqual(outcome,{status:'blocked',reason:'presentation-base-unsupported'});assert.equal(writes,0,'nothing is admitted for an unsatisfiable demand');
 });
+
+// Registry entry 4: the builds from #249 (Luke text published) serve proof index 7140879c,
+// whose authority names catalog f5ce2e24. Replayed from its stored bytes, never from today's
+// index, with the EXECUTION_POLICY those builds wrote written out: a later content or code
+// release may move either, and the replay must still write entry 4's literal policy.
+const F5CE2E24_POLICY='85233c7eae23efb5ad52150a1232600ad4376e8a865173bc8a62208cc6fe6a9d';
+const P7140879C={id:'approved-audio-proof-index',path:'/content/approved-audio/7140879c9b324a068e48dc83eaff85669022528977f104c02434332b58415c56.json',sha256:'7140879c9b324a068e48dc83eaff85669022528977f104c02434332b58415c56',bytes:4311,mime:'application/json'};
+test('the #249 build (catalog f5ce2e24, proof index 7140879c, @2) replays to registry entry 4 and its rows stay registered',async()=>{
+ const storedBytes=new Uint8Array(await readFile(APPROVED+P7140879C.sha256+'.json')),stored=JSON.parse(new TextDecoder().decode(storedBytes));
+ assert.equal(storedBytes.length,P7140879C.bytes);assert.equal(await sha256(storedBytes),P7140879C.sha256,'the stored 7140879c proof index is byte-exact');
+ assert.deepEqual(stored.authority,{registrySha256:'f5ce2e2475e4198a927ad4daa07b3285053070f4a3a308141e55e54ab13f33b3',sourceRevision:'f8776d92b090b5af5b17b17dc1137f25fb059ed0'});
+ const policy=await sha256(canonicalJSONString({policy:'fia-source-to-app/7fa17af806c139cfc353cace39fa6d50ed9e061b',approvedAudio:P7140879C}));
+ assert.equal(policy,F5CE2E24_POLICY,'the replayed #249 build must write registry entry 4\'s literal policy. Never edit entry 4 or F5CE2E24_POLICY: a moved policy is a new build, appended as its own literal entry');
+ const {SUPERSEDED_BUILDS}=await import('../../server/fia/preparation/executable-presentation-runtime.mjs');
+ assert.deepEqual(SUPERSEDED_BUILDS[3],{policy:F5CE2E24_POLICY,recipe:'fia-server-source-action-projector@2',approvedAudio:true});
+ const prior=SUPERSEDED_BUILDS.slice(0,3).map(b=>b.policy);assert.ok(!prior.includes(F5CE2E24_POLICY),'entry 4 is a new build beside entries 1-3, which stay');
+});

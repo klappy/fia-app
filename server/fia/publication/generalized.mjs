@@ -2,7 +2,7 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {createHash} from 'node:crypto';
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
-export const MAX_BYTES=1048576;
+export const MAX_BYTES=1048576,CATALOG_MAX_BYTES=4194304;// Mark + Luke catalog exceeds 1 MiB; packs keep 1 MiB
 export const CATALOG_ID='fia-mark-catalog';
 export function generalizedRecords(registry,authority){
  const artifact=(sha256,bytes)=>({sha256,bytes,mime:'application/json',path:'/v1/artifacts/'+sha256});
@@ -11,12 +11,12 @@ export function generalizedRecords(registry,authority){
 }
 export function buildGeneralizedSnapshot(root,authority){
  if(!['compilerCommit','sourceCommit','recipeCommit'].every(k=>/^[a-f0-9]{40}$/.test(authority[k]||'')))throw Error('invalid-generalized-authority');
- const load=(path,expected)=>{if(!/^\/content\/(?:registry\.json|packs\/(?:eng|spa)\.MRK-[0-9-]+\/[a-f0-9]{64}\.json)$/.test(path))throw Error('invalid-static-path');const bytes=readFileSync(resolve(root,'.'+path));if(bytes.length>MAX_BYTES||bytes.length!==expected.bytes||hash(bytes)!==expected.sha256||!Buffer.from(bytes.toString('utf8')).equals(bytes))throw Error('unaccepted-generalized-bytes');return JSON.parse(bytes);};
+ const load=(path,expected)=>{if(!/^\/content\/(?:registry\.json|packs\/(?:eng|spa)\.(?:MRK|LUK)-[0-9-]+\/[a-f0-9]{64}\.json)$/.test(path))throw Error('invalid-static-path');const bytes=readFileSync(resolve(root,'.'+path));if(bytes.length>(path==='/content/registry.json'?CATALOG_MAX_BYTES:MAX_BYTES)||bytes.length!==expected.bytes||hash(bytes)!==expected.sha256||!Buffer.from(bytes.toString('utf8')).equals(bytes))throw Error('unaccepted-generalized-bytes');return JSON.parse(bytes);};
  const registry=load('/content/registry.json',authority.catalog);
- if(registry.schemaVersion!==1||!Array.isArray(registry.packs)||registry.packs.length!==136||new Set(registry.packs.map(d=>d.id)).size!==136||registry.packs.filter(d=>d.language==='eng').length!==68||registry.packs.filter(d=>d.language==='spa').length!==68)throw Error('invalid-generalized-catalog');
+ if(registry.schemaVersion!==1||!Array.isArray(registry.packs)||registry.packs.length!==330||new Set(registry.packs.map(d=>d.id)).size!==330||registry.packs.filter(d=>d.language==='eng').length!==165||registry.packs.filter(d=>d.language==='spa').length!==165||registry.packs.filter(d=>d.id.slice(4,7)==='MRK').length!==136)throw Error('invalid-generalized-catalog');
  const staticArtifacts=[{descriptor:{sha256:authority.catalog.sha256,bytes:authority.catalog.bytes,mime:'application/json',path:'/v1/artifacts/'+authority.catalog.sha256},staticPath:'/content/registry.json'}];
  for(const d of registry.packs){
-  if(!/^(eng|spa)\.MRK-[0-9]+-[0-9]+(?:-[0-9]+){1,2}$/.test(d.id)||d.id.length>80||d.language!==d.id.slice(0,3)||d.revision!==d.presentation.sha256||d.presentation.url!==`/content/packs/${d.id}/${d.revision}.json`)throw Error('invalid-generalized-descriptor');
+  if(!/^(eng|spa)\.(?:MRK|LUK)-[0-9]+-[0-9]+(?:-[0-9]+){1,2}$/.test(d.id)||d.id.length>80||d.language!==d.id.slice(0,3)||d.revision!==d.presentation.sha256||d.presentation.url!==`/content/packs/${d.id}/${d.revision}.json`)throw Error('invalid-generalized-descriptor');
   const pack=load(d.presentation.url,d.presentation);
   if(pack.id!==d.id&&!(d.id==='eng.MRK-1-1-13'&&pack.id==='fia-mark-authentic@1'))throw Error('presentation-identity-mismatch');
   if(pack.assets?.[d.defaultScriptureId]?.kind!=='scripture'||!['activities','sections','examples','listContracts'].every(k=>Array.isArray(pack[k])))throw Error('invalid-generalized-shape');
