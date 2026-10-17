@@ -63,10 +63,13 @@ against today's proof index and the retained bytes. If a release changes
 `eng.MRK-1-14-20`'s binding (its delivery, ledger, evidence or base bytes) or its base
 revision, that pack's historical row stays refused (404 `execution-job-policy`, never
 a 500) until it is re-prepared. A row whose bytes the moved policy reproduces exactly
-(the same recipe and bindings, as for DEV's `{9a7733f5, @2}` rows) is never replaced.
-Its read serves the base with its demand, but an explicit Open answers `blocked`
-`executable-publication-conflict`, so the passage cannot open as executable until its
-bytes change. That is an open follow-up, due before the next content release. Only the unqualified current read (`read_pack({packId})` and
+(the same recipe and bindings, as for DEV's `{9a7733f5, @2}` rows) is republished in
+place: the overlay is a content-keyed cache, so a publish whose record key already
+exists replaces that row with the new binding and provenance and advances the
+pointer, and the passage opens. There is no `executable-publication-conflict`
+(captain ruling 2026-10-17, cookbook `work/active/2026-10-15-fia-package-luke/RULING.md`
+§ DEV publication conflict: no packing algorithm or checksum ever blocks usage; the
+store solves deterministic caching, not identity or trust). Only the unqualified current read (`read_pack({packId})` and
 `GET /v1/packs/<packId>`) may then serve the base with its existing demand, and
 only after it authenticates that historical publication exactly: the current
 pointer and artifact-owner indexes, the closed publication row, the closed job row
@@ -78,9 +81,13 @@ historical revision and its old job-status read stay denied. This tree has no
 publication generations, so the demand is the existing four-field one (cookbook
 backport linked from the release note).
 
-Publication rows and their provenance are immutable. Republishing identical bytes
-under a newer job is a typed `blocked` `executable-publication-conflict`, never a
-replacement. Expected publication conflicts (pointer race, stale base, revocation,
+Publication rows are a cache keyed by their content digest, not an identity ledger.
+Republishing identical bytes under a newer job replaces the row's binding and
+provenance in place and advances the pointer; integrity pins (sha256, byte length)
+exist for cache bookkeeping and diagnostics, never as a gate. A stored row whose
+retained bytes, digests or bindings no longer verify is a cache miss: catalog and
+artifact reads fall through to the base catalog instead of answering `unavailable`
+for it. Expected publication conflicts (pointer race, stale base, revocation,
 refused validation), named post-admission refusals and a stale-policy job-status
 read answer the typed `blocked` envelope with their code (HTTP 409). An unnamed
 fault is not disguised as a refusal. A transient storage or fetch fault during

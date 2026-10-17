@@ -5,6 +5,11 @@ const need=(x,reason='executable-publication-invalid')=>{if(!x)throw Error(reaso
 const same=(a,b)=>canonicalJSONString(a)===canonicalJSONString(b);
 const absent=reason=>({status:'unavailable',reason});
 const MAX=1048576;
+/** Packing/checksum failures on a stored row (corrupt or mis-sized retained bytes, a media
+ * digest that no longer matches) are a cache miss, never a usage gate: the read falls through
+ * to the base catalog. Policy refusals (revoked, refused validation, base unavailable) and
+ * pointer/owner index bindings are not in this set and still answer as themselves. */
+const CACHE_MISS=new Set(['executable-artifact-corrupt','executable-publication-invalid','executable-media-binding','executable-media-base-unavailable']);
 const exact=(x,keys)=>x!==null&&typeof x==='object'&&Object.getPrototypeOf(x)===Object.prototype&&Object.keys(x).sort().join()===[...keys].sort().join();
 const ROW=['schema','binding','revision','artifact','bound','mediaIdentity','mediaAssetsSha256','provenance','baseRecord'],BINDING=['packId','baseRevision','sourceRevision','capability'],DESCRIPTOR=['reference','sha256','bytes','mime'];
 
@@ -66,7 +71,10 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
    need(current===priorPointer||current===key,'executable-pointer-conflict');
    need(await eligible(copy(binding))===true,'executable-publication-revoked');
    const currentBase=await base.readCatalog(binding.packId);need(currentBase?.status==='ready'&&currentBase.revision===binding.baseRevision,'executable-base-stale');
-   need(!old||same(old,row),'executable-publication-conflict');
+   // Content-keyed cache: the key is the artifact digest, so a same-key publish carries the
+   // same bytes and only refreshes binding/provenance. It replaces in place; never a conflict
+   // (captain ruling 2026-10-17 — checksums are cache bookkeeping, not a gate). `old` is unused.
+   void old;
    await t.put(key,row);
    for(const d of [artifact,...bound]){
     const k='executable-artifact:'+d.sha256,owners=await t.get(k)||[];
@@ -80,7 +88,8 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
   const found=await tx(async t=>{const key=revision?'executable-record:'+packId+'@'+revision:await t.get('executable-current:'+packId);return {key,row:key?await t.get(key):null};}),row=found.row;
   if(!row&&found.key&&!revision)return absent('executable-pointer-dangling');
   if(!row)return base.readCatalog(packId,revision);
-  try{need(row.binding.packId===packId&&(!revision||row.revision===revision)&&found.key===`executable-record:${packId}@${row.revision}`,'executable-pointer-binding');await verified(row);return record(row);}catch(error){return absent(error.message);}
+  try{need(row.binding.packId===packId&&(!revision||row.revision===revision)&&found.key===`executable-record:${packId}@${row.revision}`,'executable-pointer-binding');await verified(row);return record(row);}
+  catch(error){return CACHE_MISS.has(error.message)?base.readCatalog(packId,revision):absent(error.message);}
  }
  /** Read-only. Authenticates the current pointer's publication exactly: closed row and
   * descriptors, pointer and artifact-owner index bindings, and every retained byte,
@@ -105,7 +114,7 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
   for(const key of owners){
    try{const row=await tx(t=>t.get(key));need(key===`executable-record:${row?.binding?.packId}@${row?.revision}`,'executable-owner-binding');const v=await verified(row);const d=[row.artifact,...row.bound].find(x=>x.sha256===digest);need(d);const b=digest===row.revision?v.bytes:v.boundArtifacts.find(x=>x.sha256===digest)?.bytes;need(b);return {artifact:{sha256:d.sha256,bytes:d.bytes,mime:d.mime},content:new TextDecoder('utf-8',{fatal:true}).decode(b),cacheControl:'private, no-store'};}catch{}
   }
-  return absent('executable-artifact-unavailable');
+  return base.findArtifact(digest);
  }
  return Object.freeze({publish,readCatalog,findArtifact,authenticateCurrent});
 }
