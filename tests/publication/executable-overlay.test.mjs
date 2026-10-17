@@ -54,3 +54,34 @@ test('server media identity requires exact verified base assets and rejects fore
  const key=`executable-record:${request.packId}@${record.revision}`;await f.storage.transaction(async t=>{const row=await t.get(key);row.mediaIdentity.packId='spa.MRK-1-14-20';await t.put(key,row);});
  assert.equal((await overlay.readCatalog(request.packId)).status,'unavailable');assert.equal((await overlay.findArtifact(record.revision)).status,'unavailable');
  }finally{await f.close();}});
+// Registered replacement rule (cookbook SOURCE-TO-APP-CONTRACT.md "a registered
+// replacement rule"): a moved policy that reproduces hash-equal bytes adopts the
+// immutable row through an adoption entry; anything else still conflicts.
+test('hash-equal republish under a newer job adopts the row without rewriting it; idempotent; the superseded job stays denied',async()=>{const f=await fixture();try{
+ let jobId=h('1');const overlay=f.make(),service={request:async()=>({status:'ready',jobId,...candidate}),read:async()=>({status:'blocked',reason:'execution-job-policy'})};
+ const ops=createExecutableOperations({reads:createReadOperations(overlay),service,publication:overlay,storage:f.storage});
+ const first=await ops.preparePresentation(binding);assert.equal(first.status,'ready');const revision=first.record.revision,key=`executable-record:${binding.packId}@${revision}`;
+ const row=await f.storage.transaction(t=>t.get(key));
+ jobId=h('2');const adopted=await ops.preparePresentation(binding);
+ assert.equal(adopted.status,'ready',JSON.stringify(adopted));assert.equal(adopted.record.revision,revision,'the same bytes, the same revision');assert.equal(adopted.record.execution.provenance.jobId,h('2'));
+ const state=async()=>f.storage.transaction(async t=>{const pointer=await t.get('executable-adopted:'+key);return {row:await t.get(key),current:await t.get('executable-current:'+binding.packId),pointer,entry:await t.get(pointer)};});
+ const after=await state();assert.deepEqual(after.row,row,'the immutable row is never rewritten');assert.equal(after.current,key);
+ assert.deepEqual(after.entry,{schema:'fia-executable-adoption@1',record:key,revision,provenance:{...candidate.provenance,jobId:h('2')}});assert.match(after.pointer,new RegExp(`^executable-adoption:${key}#[a-f0-9]{64}$`));
+ assert.equal((await overlay.readCatalog(binding.packId)).execution.provenance.jobId,h('2'));assert.equal((await overlay.readCatalog(binding.packId,revision)).status,'ready');assert.equal((await overlay.findArtifact(revision)).artifact.sha256,revision);
+ assert.equal((await ops.readPresentationPreparation({jobId:h('2')})).status,'ready');
+ assert.deepEqual(await ops.readPresentationPreparation({jobId:h('1')}),{schema:'fia-presentation-preparation@1',status:'blocked',jobId:h('1'),reason:'executable-publication-adopted',record:null});
+ const again=await ops.preparePresentation(binding);assert.equal(again.status,'ready');assert.deepEqual(again.record,adopted.record,'idempotent repeat');assert.deepEqual(await state(),after,'a repeat writes no new entry');
+ f.reopen();assert.equal((await f.make().readCatalog(binding.packId)).execution.provenance.jobId,h('2'),'adoption survives restart');
+ // A forged adoption entry never serves.
+ await f.storage.transaction(t=>t.put(after.pointer,{...after.entry,provenance:{...after.entry.provenance,jobId:h('3')}}));
+ assert.equal((await f.make().readCatalog(binding.packId)).reason,'executable-adoption-binding');assert.equal((await f.make().findArtifact(revision)).status,'unavailable');
+}finally{await f.close();}});
+test('same revision with different bound bytes or base record is still a typed conflict and writes nothing',async()=>{const f=await fixture();try{
+ const overlay=f.make(),first=await overlay.publish({...candidate,provenance:{...candidate.provenance,jobId:h('1')}}),key=`executable-record:${binding.packId}@${first.revision}`;
+ const bytes=new TextEncoder().encode('{"bound":true}'),bound={id:'bound:1',sha256:await sha256(bytes),bytes};
+ await assert.rejects(overlay.publish({...candidate,boundArtifacts:[bound],provenance:{...candidate.provenance,jobId:h('2')}}),/^Error: executable-publication-conflict$/);
+ const original=f.base.readCatalog;f.base.readCatalog=async(id,rev)=>({...await original(id,rev),identity:{packId:id,other:true}});
+ await assert.rejects(overlay.publish({...candidate,provenance:{...candidate.provenance,jobId:h('2')}}),/^Error: executable-publication-conflict$/);f.base.readCatalog=original;
+ const left=await f.storage.transaction(async t=>({adopted:await t.get('executable-adopted:'+key),current:await t.get('executable-current:'+binding.packId)}));
+ assert.equal(left.adopted,undefined);assert.equal(left.current,key);assert.equal((await overlay.readCatalog(binding.packId)).execution.provenance.jobId,h('1'));
+}finally{await f.close();}});
