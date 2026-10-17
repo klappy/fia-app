@@ -19,7 +19,7 @@ export function createExecutableOperations({reads,service,publication,storage}){
   const conflict=await typed(()=>tx(async t=>{const old=await t.get(key);if(old&&Object.keys(args).some(k=>old.args[k]!==args[k]))throw Error('presentation-job-conflict');await t.put(key,{args:structuredClone(args),revision:old?.revision??null});}),reason=>envelope('blocked',result.jobId,reason));
   if(conflict)return conflict;
   if(result.status!=='ready')return envelope(['preparing','unavailable','blocked'].includes(result.status)?result.status:'blocked',result.jobId,result.reason??'presentation-not-ready');
-  // Publication conflicts (identical identity, pointer race, stale base, revocation,
+  // Publication refusals (pointer race, stale base, revocation,
   // refused validation) are expected immutable outcomes, never an HTTP 500.
   const record=await typed(()=>publication.publish({binding:args,presentation:result.presentation,boundArtifacts:result.boundArtifacts,provenance:{...result.provenance,jobId:result.jobId}}),reason=>({status:'unavailable',reason}));
   if(record.status!=='ready')return envelope('blocked',result.jobId,record.reason??'publication-refused');
