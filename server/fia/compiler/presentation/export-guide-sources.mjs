@@ -10,7 +10,7 @@ export function exportGuideSources({outputRoot,sourceRevision,archiveBytes=readF
  const source=JSON.parse(gunzipSync(archiveBytes,{maxOutputLength:134217728}));
  if(!/^[a-f0-9]{40}$/.test(sourceRevision)||source.revision!==sourceRevision)throw Error('canonical-source-revision');
  const items=[];for(const [packId,pack]of Object.entries(source.packs)){
-  if(!/^(eng|spa)\.MRK-[0-9-]+$/.test(packId)||pack.guide?.packId!==packId)throw Error('canonical-source-pack');
+  if(!/^(eng|spa)\.(?:MRK|LUK)-[0-9-]+$/.test(packId)||pack.guide?.packId!==packId)throw Error('canonical-source-pack');
   const bytes=Buffer.from(JSON.stringify(pack.guide)),sha256=hash(bytes);
   if(bytes.length<1||bytes.length>1048576||sourceBindings[packId]?.guide!==sha256)throw Error('canonical-source-guide-pin');
   items.push({descriptor:{packId,sourceRevision,sha256,bytes:bytes.length,staticPath:`/content/source-guides/${sha256}.json`},bytes});

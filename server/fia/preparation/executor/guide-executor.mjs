@@ -15,7 +15,7 @@ async function bounded(fn,ms,onTimeout=()=>{}){let timer;try{return await Promis
 // Private free-execution composition only. No public route, acceptance policy or publisher is installed.
 export async function createGuideExecutor({metadataBytes,metadataSha256,registryBytes,registrySha256,presentationAliases=[],canonicalP1=null,readPresentation,storage,bucket,modelRecipe,policyRevision,admission=null,acquisition=null,recognition=null,unitDerivativePreparation=null,artifacts,stepMs=30000}){
  const canonical=canonicalP1?Object.fromEntries(Object.entries(canonicalP1).map(([key,value])=>[key,copyBytes(value,33554432)])):null;
- const metadata=copyBytes(metadataBytes,2097152),registry=copyBytes(registryBytes,2097152),aliases=structuredClone(presentationAliases),recipe=structuredClone(modelRecipe),read=readPresentation;
+ const metadata=copyBytes(metadataBytes,2097152),registry=copyBytes(registryBytes,4194304),aliases=structuredClone(presentationAliases),recipe=structuredClone(modelRecipe),read=readPresentation;
  const resultSchema=recognition?.resultSchema;if(resultSchema!==undefined&&resultSchema!==WINDOW_GUIDE_SCHEMA)throw Error('guide-executor-recognition-schema');const windowed=resultSchema===WINDOW_GUIDE_SCHEMA;
  const derivative=port(unitDerivativePreparation,'request',true);if(derivative&&!windowed)throw Error('guide-executor-derivative-schema');
  const authorize=port(admission,'check'),acquire=port(acquisition,'run',true),recognize=port(recognition,'run',true),artifactRead=port(artifacts,'read'),artifactWrite=port(artifacts,'write'),sourceVerify=typeof artifacts?.verifySource==='function'?port(artifacts,'verifySource'):null;
