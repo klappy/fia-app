@@ -25,3 +25,15 @@ test('prepared legacy video default retains exact descriptor; explicit phone siz
  const first=planProxyDownload(manifest,'all',{video:'prepared'}),resumed=planProxyDownload(first,'all',first.mediaSizes);assert.equal(resumed.revision,first.revision);assert.deepEqual(resumed.files,first.files);
  for(const corrupt of [{sha256:null},{bytes:0},{sourceSha256:null},{sourceBytes:0},{deliveryURL:legacy.deliveryURL.replace('transcode.klappy.dev','evil.example')}])assert.throws(()=>planProxyDownload({revision:'bad',files:[{...declared,...corrupt}]},'all',{video:'prepared'}));
 });
+test('no-video package plans text, audio and images and leaves every video out',async()=>{
+ const {planProxyDownload,downloadSelectionIncludes}=await import('../src/lib/proxy-request.js');
+ assert.deepEqual(['core','audio','image','video'].map(g=>downloadSelectionIncludes('visual',g)),[true,true,true,false]);
+ assert.deepEqual(['core','audio','image','video'].map(g=>downloadSelectionIncludes('all',g)),[true,true,true,true]);
+ assert.deepEqual(['core','audio','image','video'].map(g=>downloadSelectionIncludes('core',g)),[true,false,false,false]);
+ const video={path:'/v.mp4',group:'video',bytes:9,sha256:'c'.repeat(64),mime:'video/mp4',deliveryURL:'https://transcode.klappy.dev/video/preset=fia,q=medium,f=mp4/https://example.org/v.mp4',sourceSha256:'d'.repeat(64),sourceBytes:99};
+ const planned=planProxyDownload({revision:'r',files:[{path:'/index.html',group:'core',bytes:1},video]},'visual',{});
+ assert.deepEqual(planned.files[1],video);assert.equal(planned.mediaSizes.video,undefined);
+});
+test('transfer total counts each shared proxied clip once and stays unknown while any output is undeclared',async()=>{const {downloadTransferBytes}=await import('../src/lib/proxy-request.js');const u='https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://source.test/a.mp3';
+ assert.equal(downloadTransferBytes([{path:'/core.json',bytes:10,sha256:'c'.repeat(64)},{path:'/a1',deliveryURL:u,sha256:'a'.repeat(64),bytes:100},{path:'/a2',deliveryURL:u,sha256:'a'.repeat(64),bytes:100},{path:'/b',deliveryURL:u+'?b',sha256:'b'.repeat(64),bytes:50}]),160);
+ assert.equal(downloadTransferBytes([{path:'/a1',deliveryURL:u,sha256:null,bytes:null}]),null);});

@@ -52,11 +52,23 @@ export async function fetchProxyRequest(request,{fetchImpl=globalThis.fetch,sign
  finally{clearTimeout(timer);signal?.removeEventListener('abort',abort);controller.signal.removeEventListener('abort',rejectAbort);}
 }
 
+/** Download packages: what each offline selection includes. No-video ('visual') keeps text, audio, images and maps. */
+export function downloadSelectionIncludes(selection,group){
+ return group==='core'||selection==='all'||(selection==='audio'||selection==='visual')&&group==='audio'||selection==='visual'&&group==='image';
+}
+/** Bytes a download transfers: each distinct proxied output (delivery URL + sha256) counts once, because several
+ * passage paths can share one transcoded clip (Mark 1:1-13: 143 audio paths, 38 clips). Null while any output is undeclared. */
+export function downloadOutputKey(file){return file.deliveryURL&&file.sha256?file.deliveryURL+'#'+file.sha256:null;}
+export function downloadTransferBytes(files){
+ if(files.some(f=>f.bytes===null))return null;const seen=new Set();let total=0;
+ for(const f of files){const key=downloadOutputKey(f);if(key){if(seen.has(key))continue;seen.add(key);}total+=f.bytes;}
+ return total;
+}
 /** Request planning has unknown totals until missing outputs have been received. */
 export function planProxyDownload(manifest,selection,sizes={}){
- if(!['core','audio','all'].includes(selection)||Object.keys(sizes).some(k=>!['audio','image','video'].includes(k))||Object.values(sizes).some(s=>s!=='prepared'&&!quality[s]))throw Error('Invalid download selection.');
+ if(!['core','audio','visual','all'].includes(selection)||Object.keys(sizes).some(k=>!['audio','image','video'].includes(k))||Object.values(sizes).some(s=>s!=='prepared'&&!quality[s]))throw Error('Invalid download selection.');
  const selectedSizes={};const files=manifest.files.map(file=>{
-  if(file.group==='core'||selection==='core'||selection==='audio'&&file.group!=='audio')return file;
+  if(file.group==='core'||!downloadSelectionIncludes(selection,file.group))return file;
   const size=sizes[file.group]||(file.group==='video'?'prepared':file.defaultSize);if(!file.deliveryURL||!size)return file;
   if(size==='prepared'){
    // An untouched qualified default is a distinct choice, not a phone-size claim.
