@@ -78,7 +78,8 @@ it('offers small, no-video and full packages with sizes computed from the manife
  libraryAdapter.downloadStatus.mockResolvedValue({...available,manifest,choices:['core','audio','visual','all'].map(id=>({id}))});
  const download=vi.spyOn(libraryAdapter,'download').mockResolvedValue({saved:true});
  render(LibraryPanel,{view:'downloads'});await settle();
- const small=screen.getByRole('radio',{name:/Text only/}),noVideo=screen.getByRole('radio',{name:/No video/}),full=screen.getByRole('radio',{name:/Full/});
+ // Each package radio keeps its plain name; package name, size and note are its description (fia-app#248 post-deploy).
+ const small=screen.getByRole('radio',{name:'Text only',description:/^Small · default · /}),noVideo=screen.getByRole('radio',{name:'Text, audio, images and maps',description:/^No video · /}),full=screen.getByRole('radio',{name:'Text and all available resources',description:/^Full · /});expect(screen.getByRole('radio',{name:'Text and audio',description:/Adds recordings\./})).toBeTruthy();
  expect(small.checked).toBe(true);expect(small.closest('label').textContent).toContain('Small · default');
  expect(small.closest('label').textContent).toContain('1.0 MB');expect(noVideo.closest('label').textContent).toContain('6.0 MB');expect(full.closest('label').textContent).toContain('56.0 MB');
  await fireEvent.click(noVideo);await settle();await fireEvent.click(screen.getByRole('button',{name:'Download selection'}));
