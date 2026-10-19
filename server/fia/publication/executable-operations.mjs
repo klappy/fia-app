@@ -6,7 +6,7 @@ const refused=()=>({status:'refused',code:'invalid-request'});
 // conflict and answers typed with its code; an unnamed fault still propagates.
 const code=error=>typeof error?.message==='string'&&/^[a-z0-9]+(?:-[a-z0-9]+)+$/.test(error.message)&&error.message.length<=80?error.message:null;
 async function typed(run,denied){try{return await run();}catch(error){const reason=code(error);if(reason===null)throw error;return denied(reason);}}
-export function validPresentationDemand(x){return exact(x,['packId','baseRevision','sourceRevision','capability'])&&typeof x.packId==='string'&&/^(eng|spa)\.MRK-[0-9-]+$/.test(x.packId)&&x.packId.length<=80&&hash(x.baseRevision)&&typeof x.sourceRevision==='string'&&/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(x.sourceRevision)&&x.capability==='executable-presentation';}
+export function validPresentationDemand(x){return exact(x,['packId','baseRevision','sourceRevision','capability'])&&typeof x.packId==='string'&&/^(eng|spa)\.(?:MRK|LUK)-[0-9-]+$/.test(x.packId)&&x.packId.length<=80&&hash(x.baseRevision)&&typeof x.sourceRevision==='string'&&/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(x.sourceRevision)&&x.capability==='executable-presentation';}
 export function createExecutableOperations({reads,service,publication,storage}){
  const tx=storage.transaction.bind(storage);
  const envelope=(status,jobId,reason=null,record=null)=>({schema:'fia-presentation-preparation@1',status,jobId,reason,record});
@@ -19,7 +19,7 @@ export function createExecutableOperations({reads,service,publication,storage}){
   const conflict=await typed(()=>tx(async t=>{const old=await t.get(key);if(old&&Object.keys(args).some(k=>old.args[k]!==args[k]))throw Error('presentation-job-conflict');await t.put(key,{args:structuredClone(args),revision:old?.revision??null});}),reason=>envelope('blocked',result.jobId,reason));
   if(conflict)return conflict;
   if(result.status!=='ready')return envelope(['preparing','unavailable','blocked'].includes(result.status)?result.status:'blocked',result.jobId,result.reason??'presentation-not-ready');
-  // Publication conflicts (identical identity, pointer race, stale base, revocation,
+  // Publication refusals (pointer race, stale base, revocation,
   // refused validation) are expected immutable outcomes, never an HTTP 500.
   const record=await typed(()=>publication.publish({binding:args,presentation:result.presentation,boundArtifacts:result.boundArtifacts,provenance:{...result.provenance,jobId:result.jobId}}),reason=>({status:'unavailable',reason}));
   if(record.status!=='ready')return envelope('blocked',result.jobId,record.reason??'publication-refused');

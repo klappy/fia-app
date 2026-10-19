@@ -232,7 +232,7 @@
  async function runSelection(id,intent,options){const finish=trackSelection();try{await loadSelectedPack(id,intent,options);}catch(error){if(intent===selectionIntent)throw error;}finally{finish();}}
  // Opened from the overview's Passages picker: a refusal is shown in the sheet, next to its card.
  // Only when the sheet was closed before the answer arrived does the reading screen say it.
- async function openFromSheet(id){try{await selectPack(id);}catch(error){if(sheet!=='progress')notice=error?.message||'The passage could not be opened. Try again.';throw error;}}
+ async function openFromSheet(id){try{await selectPack(id);}catch(error){if(sheet!=='progress'&&sheet!=='passages')notice=error?.message||'The passage could not be opened. Try again.';throw error;}}
  // A saved passage that cannot be restored falls back once: the default stays open and
  // the saved key is cleared, so later launches are quiet. A missing connection is not a
  // verdict about the passage, so that key is kept for the next launch.
@@ -268,6 +268,9 @@
  let session=$state(createSession(bundledPresentation.activities));
  let audioState=$state({playing:false,elapsed:0,duration:0}); let videoPlaying=$state(false); let videoState=$state({elapsed:0,duration:0}); let serviceWorkerError=''; let isPlaying=$derived(audioState.playing||videoPlaying);
  const historicalSnapshotNotice='Using the last verified saved passage while offline.';
+ let passagesView=$state('passages'),passagesHost=$state();
+ // The book's Passages sheet swaps LibraryPanel views like the overview's pickers: focus follows to the new view, never to the body (review #9, fia-app#250).
+ async function swapPassages(view){passagesView=view;await tick();(view==='languages'?(passagesHost?.querySelector('.library-list button.chosen')||passagesHost?.querySelector('.library-list button')):passagesHost?.querySelector('.library-panel>button.quiet'))?.focus();}
  let sheet=$state(null), command=$state(''), messages=$state([]), notice=$state(''), online=$state(true), started=$state(false), scale=$state(1), rate=$state(1), muted=$state(false), saved=$state(false);
  let audio, timer; let audioContext=$state(null); let chatInput=$state(), chatLog=$state();
  let activity=$derived(currentActivity(session,activities));
@@ -573,7 +576,8 @@
    {#if inlineVideo||focal?.kind==='video'}<button class="glass-icon" aria-label={isPlaying?'Pause video':'Play video'} onclick={()=>executableMode?(videoPlaying?videoOwner.node?.pause():playVideo()):automaticOff?manualPlay():primary()}>{#if isPlaying}<Pause size={24}/>{:else}<Play size={24}/>{/if}</button>{/if}
   </div>
  {/if}
- <SessionProgress groups={progress} passage={passageName(selectedPack)} onopen={()=>sheet='progress'}/>
+ <!-- The book control opens passage selection directly (cookbook progress-rail.md § Top band passage control, ticket ④). -->
+ <SessionProgress groups={progress} passage={passageName(selectedPack)} onopen={()=>sheet='progress'} onpassages={()=>{passagesView='passages';sheet='passages';}}/>
  {#if stage.supporting}<button class="kept-content" aria-label={`Open kept ${assets[stage.supporting].title}`} onclick={()=>navigate({type:'DETOUR',assetId:stage.supporting})}>{#if assets[stage.supporting].src&&assets[stage.supporting].kind!=='video'}<img src={assets[stage.supporting].src} alt={assets[stage.supporting].title}/>{:else}<BookOpen size={22}/>{/if}</button>{/if}
 
  {#if noticeText&&!noticeInSheet}{@render noticeBar()}{/if}
@@ -597,7 +601,7 @@
 </main>
 
 {#if sheet}
- <Sheet glass={true} opaqueHeader={sheet==='settings'||sheet==='downloads'||sheet==='progress'||sheet==='menu'} label={sheet==='menu'?'More options':undefined} title={{downloads:'Downloads',progress:'Overview',settings:'Settings',outline:selectedPack.title,help:'Try the experience',about:'About this prototype',menu:'',conversation:'Ask the guide',words:'Words for this moment',resources:'Explore the passage',example:'Drama example'}[sheet]} notice={noticeText&&noticeInSheet?noticeBar:null} onclose={()=>sheet=null}>
+ <Sheet glass={true} opaqueHeader={sheet==='settings'||sheet==='downloads'||sheet==='progress'||sheet==='passages'||sheet==='menu'} label={sheet==='menu'?'More options':undefined} title={{downloads:'Downloads',progress:'Overview',passages:passagesView==='languages'?'Language':'Passages',settings:'Settings',outline:selectedPack.title,help:'Try the experience',about:'About this prototype',menu:'',conversation:'Ask the guide',words:'Words for this moment',resources:'Explore the passage',example:'Drama example'}[sheet]} notice={noticeText&&noticeInSheet?noticeBar:null} onclose={()=>sheet=null}>
   {#if sheet==='menu'}
    <div class="scene-menu">
     <button onclick={()=>sheet='downloads'}><Download size={19}/>Downloads</button>
@@ -627,6 +631,9 @@
  {/if}
  <!-- The overview sheet is the navigation home (cookbook overview-sheet.md, adopted 2026-10-08). A refused open stays on its card while the sheet is open (openFromSheet). -->
  <OverviewSheet groups={progress} {selectedPack} {language} completed={session.completed.length} total={activities.length} onlanguage={selectLanguage} onreset={restartPack} onclose={()=>sheet=null} onopenpack={openFromSheet} onnavigate={id=>{navigate({type:'SEEK_ACTIVITY',activityId:id});transitionSection=null;persist();sheet=null;}}/>
+  {:else if sheet==='passages'}
+   <!-- Passage selection from the book control: the same LibraryPanel views the overview's Passages row uses; a refused open stays on its card (openFromSheet). -->
+   <div class="passages-sheet" style="display:contents" bind:this={passagesHost}><LibraryPanel view={passagesView} {selectedPack} {language} onlanguage={selectLanguage} onview={swapPassages} completed={session.completed.length} total={activities.length} onselect={openFromSheet} onreset={restartPack}/></div>
   {:else if sheet==='settings'}
    <div class="settings-panel">
     <button class="sheet-back" onclick={()=>sheet='menu'}><ChevronLeft size={18}/>FIA menu</button>

@@ -5,7 +5,7 @@ const META='fia-v3-download-metadata@1', SHELL=`fia-v3-shell-${VERSION}`, PREFIX
 const jobs=new Map(),playbackJobs=new Map(),canceledPlayback=new Set();
 const legacy='fia-mark-authentic';
 const packKey=(id,key)=>id===legacy?key:`pack:${id}:${key}`;
-const validPack=id=>id===legacy||/^(eng|spa)\.MRK-\d+(?:-\d+)+$/.test(id);
+const validPack=id=>id===legacy||/^(eng|spa)\.(?:MRK|LUK)-\d+(?:-\d+)+$/.test(id);
 const json=value=>new Response(JSON.stringify(value),{headers:{'Content-Type':'application/json'}});
 async function read(key){return (await (await caches.open(META)).match('/'+key))?.json()||null;}
 async function write(key,value){await (await caches.open(META)).put('/'+key,json(value));}
