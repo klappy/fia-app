@@ -29,7 +29,7 @@ function validate(manifest){
  }paths.add(f.path);}
  return {...manifest,files:permittedRecordings(manifest.files,generatedRecordingPaths)};
 }
-const selectedFiles=(manifest,selection)=>manifest.files.filter(f=>f.group==='core'||selection==='all'||selection==='audio'&&f.group==='audio');
+const selectedFiles=(manifest,selection)=>manifest.files.filter(f=>downloadSelectionIncludes(selection,f.group));
 function matchingSavedFile(file,active,manifest){
  if(active?.manifest?.deliveryRevision!==manifest.deliveryRevision)return null;
  const saved=active.files.find(f=>f.path===file.path&&f.deliveryURL&&recordingAllowed(f,generatedRecordingPaths));if(!saved)return null;
@@ -152,7 +152,7 @@ async function status(packId=legacy){
  const saved=await complete(active);
  if(active)active.files=permittedRecordings(active.files,generatedRecordingPaths);
  if(manifest)manifest={...manifest,files:permittedRecordings(manifest.files,generatedRecordingPaths)};
- return {available:true,mediaNotices:(await read('media-notices'))||[],saved,active:active?{...active,valid:saved}:null,pending:pending?{...pending,running:jobs.has(packId)}:null,manifest,error,updateAvailable:!!(active&&manifest&&(active.manifest.catalogRevision||active.revision)!==manifest.revision),choices:manifest?['core',...(manifest.files.some(f=>f.group==='audio')?['audio']:[]),...(manifest.files.some(f=>f.group==='video'||f.group==='image')?['all']:[])].map(id=>({id,bytes:selectedFiles(manifest,id).reduce((n,f)=>n+f.bytes,0)})):[]};
+ return {available:true,mediaNotices:(await read('media-notices'))||[],saved,active:active?{...active,valid:saved}:null,pending:pending?{...pending,running:jobs.has(packId)}:null,manifest,error,updateAvailable:!!(active&&manifest&&(active.manifest.catalogRevision||active.revision)!==manifest.revision),choices:manifest?['core',...(manifest.files.some(f=>f.group==='audio')?['audio']:[]),...(manifest.files.some(f=>f.group==='video')&&manifest.files.some(f=>f.group==='image')?['visual']:[]),...(manifest.files.some(f=>f.group==='video'||f.group==='image')?['all']:[])].map(id=>({id,bytes:downloadTransferBytes(selectedFiles(manifest,id))})):[]};
 }
 self.addEventListener('install',event=>{if(isBuild)event.waitUntil(caches.open(SHELL).then(c=>c.addAll(['/','/index.html','/manifest.webmanifest'])).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));
@@ -219,7 +219,7 @@ self.addEventListener('fetch',event=>{
 });
 async function start(selection,port,packId=legacy,sizes={},revision){
  if(!isBuild)throw new Error('Downloads work on the published Site.');
- if(!['core','audio','all'].includes(selection))throw new Error('Choose a download option.');
+ if(!['core','audio','visual','all'].includes(selection))throw new Error('Choose a download option.');
  if(jobs.has(packId))throw new Error('A download is already running for this passage.');
  const controller=new AbortController();jobs.set(packId,controller);
  let pending;
@@ -236,9 +236,10 @@ async function start(selection,port,packId=legacy,sizes={},revision){
   const serverSnapshot=await retainServerSnapshot(packId,revision,cache,controller.signal);
   if(serverSnapshot){const binding=serverSnapshot.record.execution?.mediaIdentity||{packId:serverSnapshot.record.packId,revision:serverSnapshot.record.revision};if(binding.packId!==manifest.packId||binding.revision!==manifest.presentationRevision)throw Error('The saved media belongs to a different server presentation.');}
   const downloadFiles=[...files,...(serverSnapshot?.files||[])];
-  pending={packId,cache:cacheId,revision:manifest.revision,selection,manifest,files,...(serverSnapshot?{serverSnapshot}:{}),bytes:downloadFiles.some(f=>f.bytes===null)?null:downloadFiles.reduce((n,f)=>n+f.bytes,0),received:0,count:0,status:'downloading'};
+  pending={packId,cache:cacheId,revision:manifest.revision,selection,manifest,files,...(serverSnapshot?{serverSnapshot}:{}),bytes:downloadTransferBytes(downloadFiles),received:0,count:0,status:'downloading'};
   await write(packKey(packId,'pending'),pending);
   const report=()=>port?.postMessage({progress:{received:pending.received,bytes:pending.bytes,count:pending.count,total:downloadFiles.length}});
+  const transferred=new Map();
   for(const file of downloadFiles){
    if(controller.signal.aborted)throw new Error('Download paused. Verified files are kept for Resume.');
    let response=await cache.match(file.path);
@@ -246,15 +247,19 @@ async function start(selection,port,packId=legacy,sizes={},revision){
     const prior=priorPending?.files.find(f=>f.path===file.path&&observedProxyMatchesRequest(file.proxyRequest,f));
     if(prior&&await verified(response?.clone(),prior)){Object.assign(file,{bytes:prior.bytes,sha256:prior.sha256,proxyReceipt:prior.proxyReceipt,timing:{status:file.timingDependent?'pending-qualification':'not-applicable'}});}
     else {const result=await fetchProxyRequest(file.proxyRequest,{signal:controller.signal});Object.assign(file,{bytes:result.receipt.output.bytes,sha256:result.receipt.output.sha256,proxyReceipt:result.receipt,timing:{status:file.timingDependent?'pending-qualification':'not-applicable'}});await cache.put(file.path,new Response(result.bytes,{headers:{'Content-Type':file.mime,'Content-Length':String(file.bytes)}}));response=await cache.match(file.path);}
-    pending.bytes=downloadFiles.some(f=>f.bytes===null)?null:downloadFiles.reduce((n,f)=>n+f.bytes,0);
+    pending.bytes=downloadTransferBytes(downloadFiles);
    }
+   const outputKey=downloadOutputKey(file),twin=outputKey&&transferred.get(outputKey),shared=!!twin&&twin!==file.path;
+   // A clip shared by several paths is fetched once; later paths reuse the verified copy.
+   if(shared&&!await verified(response?.clone(),file)){const copy=await cache.match(twin);if(await verified(copy?.clone(),file)){await cache.put(file.path,new Response(await copy.arrayBuffer(),{headers:copy.headers}));response=await cache.match(file.path);}}
    if(!await verified(response?.clone(),file)){
     const timeout=setTimeout(()=>controller.abort(),30000);
     try{response=await fetch(file.deliveryURL||file.path,{cache:'no-store',signal:controller.signal});if(file.deliveryURL){const bytes=await readVerifiedMedia(response,file,{signal:controller.signal});response=new Response(bytes,{headers:{'Content-Type':file.mime}});}else if(!await verified(response.clone(),file))throw new Error('A file could not be verified. Retry to keep the files already downloaded.');
      const headers=new Headers(response.headers);headers.set('Content-Length',String(file.bytes));await cache.put(file.path,new Response(await response.arrayBuffer(),{headers}));
     }finally{clearTimeout(timeout);}
    }
-   pending.received+=file.bytes;pending.count++;await write(packKey(packId,'pending'),pending);report();
+   if(outputKey&&!transferred.has(outputKey))transferred.set(outputKey,file.path);
+   if(!shared)pending.received+=file.bytes;pending.count++;await write(packKey(packId,'pending'),pending);report();
   }
   if(controller.signal.aborted)throw new Error('Download paused. Verified files are kept for Resume.');
   if(files.some(f=>f.timing?.status==='pending-qualification')){pending.status='timing-pending';pending.error='Files received. Recording timing must be qualified before this selection can play offline.';await write(packKey(packId,'pending'),pending);return {saved:false,received:true,timingPending:true};}
@@ -323,7 +328,7 @@ self.addEventListener('message',event=>{
     const meta=await caches.open(META);
     const active=await read(packKey(packId,'active')),pending=await read(packKey(packId,'pending'));
     const owned=new Set([active?.cache,pending?.cache]);
-    await Promise.all(keys.filter(k=>packId===legacy?owned.has(k)||new RegExp('^'+PREFIX+'[a-zA-Z0-9]+-(core|audio|all)(-repair)?$').test(k):k.startsWith(prefix)).map(k=>caches.delete(k)));
+    await Promise.all(keys.filter(k=>packId===legacy?owned.has(k)||new RegExp('^'+PREFIX+'[a-zA-Z0-9]+-(core|audio|visual|all)(-repair)?$').test(k):k.startsWith(prefix)).map(k=>caches.delete(k)));
     await meta.delete('/'+packKey(packId,'active'));await meta.delete('/'+packKey(packId,'pending'));result={saved:false};
    }else return;
    port?.postMessage({ok:true,...result},result.bytes instanceof ArrayBuffer?[result.bytes]:[]);
