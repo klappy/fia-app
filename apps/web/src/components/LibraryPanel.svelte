@@ -4,7 +4,7 @@
  import {libraryAdapter,bundledPack,formatBytes} from '../lib/library.js';
  import {guideRecordingAvailability} from '../lib/recording-availability.js';
  import {progressSummary} from '../lib/session-store.js';
- import {planProxyDownload,downloadSelectionIncludes} from '../lib/proxy-request.js';
+ import {planProxyDownload,downloadSelectionIncludes,downloadTransferBytes} from '../lib/proxy-request.js';
  import {preparedDownloadSizes} from '../lib/media-options.js';
  let {view,selectedPack=bundledPack,language='eng',onlanguage,onselect,onreset,onview,completed=0,total=0,onstatus=()=>{}}=$props();
  let languages=$state([]),passages=$state([]),loading=$state(true),error=$state(''),download=$state(null),selection=$state('core'),busy=$state(false),transfer=$state(null),confirmRemove=$state(false),confirmRestart=$state(null),downloadFinished=$state(false);
@@ -17,13 +17,13 @@
  let ready=$derived(Object.entries(effectiveSizes).every(([k,v])=>v==='prepared'?sizes.groups[k].prepared:sizes.groups[k].requestable||sizes.groups[k].available.includes(v)));
  let requestSizes=$derived(Object.fromEntries(Object.entries(effectiveSizes).filter(([group])=>download?.manifest?.files.some(f=>f.group===group&&f.deliveryURL))));
  let resumeMatches=$derived(download?.pending?.selection===selection&&['audio','image','video'].every(g=>(download.pending.manifest?.mediaSizes?.[g]||null)===(requestSizes[g]||null)));
- // Each package's total comes from the manifest: declared bytes for the sizes it would request, or null while any output is still undeclared.
+ // Each package's total is the real proxied output it would transfer: declared output bytes (verified against the live proxy, see the unit's RESULTS) for the sizes it would request, each shared clip counted once; null while any output is still undeclared.
  function packageTotal(choice){
   const manifest=download?.manifest;if(!manifest)return null;const prepared=preparedDownloadSizes(manifest,choice);
   const chosen=Object.fromEntries(Object.entries(prepared.groups).filter(([,g])=>g.included&&g.count).map(([k,g])=>[k,mediaSizes[k]||(k==='video'&&g.prepared?'prepared':g.size)]));
   if(!Object.entries(chosen).every(([k,v])=>v==='prepared'?prepared.groups[k].prepared:prepared.groups[k].requestable||prepared.groups[k].available.includes(v)))return null;
   const request=Object.fromEntries(Object.entries(chosen).filter(([group])=>manifest.files.some(f=>f.group===group&&f.deliveryURL)));
-  try{const m=planProxyDownload(manifest,choice,request),files=m.files.filter(f=>downloadSelectionIncludes(choice,f.group));if(files.some(f=>f.bytes===null))return null;return files.reduce((n,f)=>n+f.bytes,0);}catch{return null;}
+  try{const m=planProxyDownload(manifest,choice,request),files=m.files.filter(f=>downloadSelectionIncludes(choice,f.group));return downloadTransferBytes(files);}catch{return null;}
  }
  let choiceTotals=$derived(Object.fromEntries((download?.choices||[]).map(c=>[c.id,packageTotal(c.id)])));
  let selectedTotal=$derived(ready?choiceTotals[selection]??packageTotal(selection):null);

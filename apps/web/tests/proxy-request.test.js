@@ -34,3 +34,6 @@ test('no-video package plans text, audio and images and leaves every video out',
  const planned=planProxyDownload({revision:'r',files:[{path:'/index.html',group:'core',bytes:1},video]},'visual',{});
  assert.deepEqual(planned.files[1],video);assert.equal(planned.mediaSizes.video,undefined);
 });
+test('transfer total counts each shared proxied clip once and stays unknown while any output is undeclared',async()=>{const {downloadTransferBytes}=await import('../src/lib/proxy-request.js');const u='https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/https://source.test/a.mp3';
+ assert.equal(downloadTransferBytes([{path:'/core.json',bytes:10,sha256:'c'.repeat(64)},{path:'/a1',deliveryURL:u,sha256:'a'.repeat(64),bytes:100},{path:'/a2',deliveryURL:u,sha256:'a'.repeat(64),bytes:100},{path:'/b',deliveryURL:u+'?b',sha256:'b'.repeat(64),bytes:50}]),160);
+ assert.equal(downloadTransferBytes([{path:'/a1',deliveryURL:u,sha256:null,bytes:null}]),null);});
