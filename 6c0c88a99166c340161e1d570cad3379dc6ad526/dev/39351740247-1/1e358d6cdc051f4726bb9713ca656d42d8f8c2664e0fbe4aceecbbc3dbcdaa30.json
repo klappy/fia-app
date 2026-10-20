@@ -1,0 +1,42 @@
+{
+  "schema": "fia-listening-persona-summary@1",
+  "commit": "6c0c88a99166c340161e1d570cad3379dc6ad526",
+  "environment": "dev",
+  "runId": "39351740247",
+  "attempt": "1",
+  "workflowUrl": "https://github.com/klappy/fia-app/actions/runs/39351740247",
+  "scope": "Agent-operated observations; not human research or acoustic/device proof. Hosted and controlled protocol scopes are separate.",
+  "scenario": {
+    "key": "6c0c88a99166c340161e1d570cad3379dc6ad526/dev/Controlled pending guide OFF→ON does not resurrect playback",
+    "scenario": "Controlled pending guide OFF→ON does not resurrect playback",
+    "scope": "controlled-local-protocol-fixture; real native media, not hosted Worker",
+    "outcome": "passed",
+    "validation": {
+      "validator": "verifyControlled",
+      "ok": true,
+      "errors": []
+    },
+    "failedStep": null,
+    "observedFriction": {
+      "classification": "observation-only",
+      "notices": [],
+      "assessment": "Not inferred from pass/fail; review attached observations"
+    },
+    "userFeedback": {
+      "status": "not-collected"
+    },
+    "evidence": {
+      "name": "controlled-pending.json",
+      "sha256": "c49ed9700d90c4f77b8c19407a51be866a8b9e2689ec15de0f639ec345b54eac",
+      "claimMode": "cancel",
+      "loadedCommit": "6c0c88a99166c340161e1d570cad3379dc6ad526"
+    },
+    "baselineComparison": {
+      "baselineCommit": "869fa213195b915263ce0f13f31ce5c0b76d5743",
+      "priorOutcome": "passed",
+      "currentOutcome": "passed",
+      "archivePath": "869fa213195b915263ce0f13f31ce5c0b76d5743/dev/39342531188-1/1e358d6cdc051f4726bb9713ca656d42d8f8c2664e0fbe4aceecbbc3dbcdaa30.json",
+      "scope": "Outcome comparison only; no sentiment inference"
+    }
+  }
+}
