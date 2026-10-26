@@ -1541,7 +1541,7 @@
     },
     {
       "path": "server/faces/worker/BACKEND-CLOSURE.json",
-      "sha256": "cc5dfad3fc51bb9252717717bd958e9fc172a45ec8e7c52ae8278a6dadb2e4fe"
+      "sha256": "4620789a3045e1934d6114ada040426abba11cdc485f4ed4284c257adf202ea7"
     },
     {
       "path": "server/faces/worker/adapter.mjs",
@@ -2033,11 +2033,11 @@
     },
     {
       "path": "server/fia/publication/executable-operations.mjs",
-      "sha256": "e60909a7197936b6fa8c7470391b262b2a40dc480e5fd136e6c1b0d76ad32a95"
+      "sha256": "2dccc156261720debc6cfa08306805825c6c3a2ee643c8ce920c1b8767c251e2"
     },
     {
       "path": "server/fia/publication/executable-overlay.mjs",
-      "sha256": "f8667f057a6a542b4902c9eacc483d29ea455b31564a27c331b06f1b51998cc5"
+      "sha256": "cdbcaeb73d2bcb84654029e0bc1838baf2013e1a3a61c440b886aae65ce9d5a7"
     },
     {
       "path": "server/fia/publication/full-text.json",
@@ -2780,6 +2780,10 @@
     {
       "path": "apps/web/tests/cross-passage-download-reuse.test.js",
       "sha256": "f196de0fb2ff02a47e6d19e94162aa9057026a278e488c27434bd899fd7e9e65"
+    },
+    {
+      "path": "tests/worker-serving/executable-cache-followups.test.mjs",
+      "sha256": "a33fe01d41a2d05d88c67a1e1cec0e57fa5b12bcb21e7682e32df6af82799dff"
     }
   ],
   "generatedFiles": [
