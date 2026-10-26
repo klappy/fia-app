@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {createExecutableOperations} from '../../server/fia/publication/executable-operations.mjs';
 import {createExecutableOverlay} from '../../server/fia/publication/executable-overlay.mjs';
 import {createExecutableRuntime} from '../../server/fia/preparation/executable-presentation-runtime.mjs';
 import {sha256} from '../../server/fia/preparation/contract.mjs';
@@ -131,4 +132,26 @@ test('post-commit artifact readback failure rejects rather than misreporting com
  const f=fixture();let reads=0;const failure=Error('R2 GET failed: connection reset'),artifacts={write:async b=>{const sha=await sha256(b);f.blobs.set(sha,new Uint8Array(b));return{reference:sha,sha256:sha};},read:async d=>{if(++reads===3)throw failure;return new Uint8Array(f.blobs.get(d.reference));}},overlay=f.make({artifacts});
  await assert.rejects(overlay.publish(candidate),e=>e===failure);
  const key=f.kv.get('executable-current:'+packId),row=f.kv.get(key);assert.ok(row,'publication was committed before exact readback');assert.equal((await overlay.readCatalog(packId,row.revision)).status,'ready');
+});
+
+
+test('malformed stored rows and invalid JSON or UTF8 are verification misses, while actual artifact TypeError remains transient',async()=>{
+ for(const kind of ['missing-artifact','missing-binding','null-bound','invalid-json','invalid-utf8','json-null','json-array']){
+  const f=fixture(),record=await f.make().publish(candidate),key=f.kv.get('executable-current:'+packId),row=f.kv.get(key);
+  let revision=record.revision;
+  if(kind==='missing-artifact')delete row.artifact;
+  else if(kind==='missing-binding')delete row.binding;
+  else if(kind==='null-bound')row.bound=[null];
+  else {const bytes=kind==='invalid-utf8'?new Uint8Array([255]):new TextEncoder().encode(kind==='json-null'?'null':kind==='json-array'?'[]':'{invalid json');revision=await sha256(bytes);row.revision=revision;row.artifact={...row.artifact,sha256:revision,reference:revision,bytes:bytes.length};f.blobs.set(revision,bytes);}
+  f.kv.set('executable-record:'+packId+'@'+revision,row);const seen=[],overlay=f.make({diagnose:d=>seen.push(d)});
+  assert.equal((await overlay.readCatalog(packId,revision)).status,'unavailable',kind);assert.equal(seen[0].kind,'verification',kind);
+ }
+ const f=fixture(),record=await f.make().publish(candidate),overlay=f.make();f.state.readFault=TypeError('fetch failed');await assert.rejects(overlay.readCatalog(packId,record.revision),TypeError);f.state.readFault=null;assert.equal((await overlay.readCatalog(packId,record.revision)).status,'ready');
+});
+test('production preparation propagates postcommit timeout and retains committed recovery; ordinary refusal stays typed',async()=>{
+ const f=fixture();let reads=0;const artifacts={write:async b=>{const sha=await sha256(b);f.blobs.set(sha,new Uint8Array(b));return{reference:sha,sha256:sha};},read:async d=>{if(++reads===3)throw Error('execution-storage-timeout');return new Uint8Array(f.blobs.get(d.reference));}},overlay=f.make({artifacts}),jobId=h('d'),service={request:async()=>({status:'ready',jobId,presentation:candidate.presentation,boundArtifacts:[],provenance:candidate.provenance}),read:async()=>({status:'ready',jobId})};
+ const ops=createExecutableOperations({reads:createReadOperations(overlay),service,publication:overlay,storage:f.storage});
+ await assert.rejects(ops.preparePresentation(binding),/execution-storage-timeout/);const key=f.kv.get('executable-current:'+packId),row=f.kv.get(key);assert.ok(row);assert.equal((await overlay.readCatalog(packId,row.revision)).status,'ready');
+ const recovered=await ops.preparePresentation(binding);assert.equal(recovered.status,'ready');assert.equal((await ops.readPresentationPreparation({jobId})).status,'ready');
+ const denied=createExecutableOperations({reads:createReadOperations(overlay),service,publication:{publish:async()=>{throw Error('executable-publication-revoked');}},storage:f.storage});assert.equal((await denied.preparePresentation(binding)).reason,'executable-publication-revoked');
 });

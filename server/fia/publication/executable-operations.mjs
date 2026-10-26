@@ -3,8 +3,8 @@ const object=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
 const exact=(x,keys)=>object(x)&&Object.keys(x).sort().join()===keys.toSorted().join();
 const refused=()=>({status:'refused',code:'invalid-request'});
 // A named domain refusal (a kebab-case code thrown by a check) is an expected
-// conflict and answers typed with its code; an unnamed fault still propagates.
-const code=error=>typeof error?.message==='string'&&/^[a-z0-9]+(?:-[a-z0-9]+)+$/.test(error.message)&&error.message.length<=80?error.message:null;
+// conflict and answers typed with its code; unnamed faults and timeouts propagate.
+const code=error=>typeof error?.message==='string'&&/^[a-z0-9]+(?:-[a-z0-9]+)+$/.test(error.message)&&error.message.length<=80&&!/-timeout$/.test(error.message)?error.message:null;
 async function typed(run,denied){try{return await run();}catch(error){const reason=code(error);if(reason===null)throw error;return denied(reason);}}
 export function validPresentationDemand(x){return exact(x,['packId','baseRevision','sourceRevision','capability'])&&typeof x.packId==='string'&&/^(eng|spa)\.(?:MRK|LUK)-[0-9-]+$/.test(x.packId)&&x.packId.length<=80&&hash(x.baseRevision)&&typeof x.sourceRevision==='string'&&/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(x.sourceRevision)&&x.capability==='executable-presentation';}
 export function createExecutableOperations({reads,service,publication,storage}){

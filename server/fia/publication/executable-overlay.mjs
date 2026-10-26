@@ -39,10 +39,12 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
   await bytesFor(out);return out;
  }
  async function verified(row,check=validate){
-  need(row?.schema==='fia-executable-publication@1'&&hash(row.revision)&&row.artifact.sha256===row.revision&&Array.isArray(row.bound)&&row.bound.length<=1024);
+  need(row?.schema==='fia-executable-publication@1'&&hash(row.revision)&&row.artifact?.sha256===row.revision&&row.binding&&typeof row.binding.packId==='string'&&hash(row.binding.baseRevision)&&Array.isArray(row.bound)&&row.bound.length<=1024&&row.bound.every(d=>d&&typeof d.id==='string'));
   need(await eligible(copy(row.binding))===true,'executable-publication-revoked');
   const pinnedBase=await base.readCatalog(row.binding.packId,row.binding.baseRevision);need(pinnedBase?.status==='ready'&&pinnedBase.revision===row.binding.baseRevision,'executable-base-unavailable');
-  const bytes=await bytesFor(row.artifact),presentation=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
+  const bytes=await bytesFor(row.artifact);let presentation;
+  try{presentation=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));}catch{throw Error('executable-artifact-corrupt');}
+  need(presentation!==null&&typeof presentation==='object'&&!Array.isArray(presentation),'executable-artifact-corrupt');
   if(presentation.assets){
    need(same(row.mediaIdentity,{packId:row.binding.packId,revision:row.binding.baseRevision})&&row.mediaAssetsSha256===await sha256(encode(presentation.assets)),'executable-media-binding');
    const original=await base.findArtifact(row.binding.baseRevision);need(original?.content&&await sha256(new TextEncoder().encode(original.content))===row.binding.baseRevision&&same(JSON.parse(original.content).assets,presentation.assets),'executable-media-base-unavailable');
