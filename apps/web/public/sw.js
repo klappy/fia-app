@@ -223,8 +223,9 @@ async function savedElsewhere(file,packId,signal){
  if(packId===legacy)return null;
  const own=`${PREFIX}${packId}-`,outputKey=downloadOutputKey(file);
  for(const name of await caches.keys()){
-  signal?.throwIfAborted();if(!name.startsWith(PREFIX)||name.startsWith(own))continue;
-  const cache=await caches.open(name),samePath=await cache.match(file.path);
+  signal?.throwIfAborted();if(!name.startsWith(PREFIX))continue;
+  // A prefix collision is ambiguous; only a matching other-pack record may override it.
+  const cache=await caches.open(name),samePath=name.startsWith(own)?null:await cache.match(file.path);
   if(await verified(samePath?.clone(),file))return samePath;
   if(!outputKey)continue;
   // Cache names embed a pack id; existing validation/key helpers identify its declared records.
@@ -235,7 +236,7 @@ async function savedElsewhere(file,packId,signal){
     signal?.throwIfAborted();let record;try{record=await read(packKey(other,state));}catch{continue;}
     if(record?.packId!==other||record.cache!==name||!Array.isArray(record.files))continue;
     for(const candidate of record.files){
-     signal?.throwIfAborted();if(!candidate||typeof candidate.path!=='string'||!/^\/(?!\/|.*(?:\.\.|[?#]))/.test(candidate.path)||candidate.path===file.path||downloadOutputKey(candidate)!==outputKey||candidate.sourceSha256!==file.sourceSha256||candidate.group!==file.group||candidate.mime!==file.mime||candidate.bytes!==file.bytes)continue;
+     signal?.throwIfAborted();if(!candidate||typeof candidate.path!=='string'||!/^\/(?!\/|.*(?:\.\.|[?#]))/.test(candidate.path)||downloadOutputKey(candidate)!==outputKey||candidate.sourceSha256!==file.sourceSha256||candidate.group!==file.group||candidate.mime!==file.mime||candidate.bytes!==file.bytes)continue;
      const response=await cache.match(candidate.path);
      if((response?.headers.get('Content-Type')||'').split(';')[0].trim()===file.mime&&await verified(response?.clone(),file))return response;
     }
