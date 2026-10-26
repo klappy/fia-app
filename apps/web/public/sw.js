@@ -235,7 +235,7 @@ async function savedElsewhere(file,packId,signal){
     signal?.throwIfAborted();let record;try{record=await read(packKey(other,state));}catch{continue;}
     if(record?.packId!==other||record.cache!==name||!Array.isArray(record.files))continue;
     for(const candidate of record.files){
-     signal?.throwIfAborted();if(!candidate||typeof candidate.path!=='string'||candidate.path===file.path||downloadOutputKey(candidate)!==outputKey||candidate.sourceSha256!==file.sourceSha256||candidate.group!==file.group||candidate.mime!==file.mime||candidate.bytes!==file.bytes)continue;
+     signal?.throwIfAborted();if(!candidate||typeof candidate.path!=='string'||!/^\/(?!\/|.*(?:\.\.|[?#]))/.test(candidate.path)||candidate.path===file.path||downloadOutputKey(candidate)!==outputKey||candidate.sourceSha256!==file.sourceSha256||candidate.group!==file.group||candidate.mime!==file.mime||candidate.bytes!==file.bytes)continue;
      const response=await cache.match(candidate.path);
      if((response?.headers.get('Content-Type')||'').split(';')[0].trim()===file.mime&&await verified(response?.clone(),file))return response;
     }
