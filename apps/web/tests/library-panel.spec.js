@@ -4,10 +4,10 @@ import {render,screen,fireEvent,cleanup} from '@testing-library/svelte';
 import {tick} from 'svelte';
 import LibraryPanel from '../src/components/LibraryPanel.svelte';
 import {libraryAdapter} from '../src/lib/library.js';
-const settle=async()=>{await Promise.resolve();await tick();};
+const settle=async()=>{for(let i=0;i<5;i++){await Promise.resolve();await tick();}};
 const available={available:true,saved:false,manifest:{revision:'fixture',files:[{path:'/index.html',group:'core',bytes:1024}]},choices:[{id:'core',bytes:1024},{id:'audio',bytes:2048},{id:'all',bytes:4096}]};
-beforeEach(()=>vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue(available));
-afterEach(()=>{cleanup();vi.restoreAllMocks();});
+beforeEach(()=>{vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue(available);vi.spyOn(libraryAdapter,'passages').mockResolvedValue([]);});
+afterEach(()=>{cleanup();vi.useRealTimers();vi.restoreAllMocks();});
 it('keeps development downloads unavailable instead of offering a simulated action',async()=>{libraryAdapter.downloadStatus.mockResolvedValue({available:false,reason:'Downloads work on the published Site.'});render(LibraryPanel,{view:'downloads'});await settle();expect(screen.getByText('Downloads work on the published Site.')).toBeTruthy();expect(screen.queryByRole('button',{name:'Download selection'})).toBeNull();});
 it('sends the selected tier, displays real adapter progress and waits for completion',async()=>{let finish;vi.spyOn(libraryAdapter,'download').mockImplementation((selection,progress)=>{progress({received:512,bytes:1024,count:1,total:2});return new Promise(resolve=>finish=resolve);});render(LibraryPanel,{view:'downloads'});await settle();await fireEvent.click(screen.getByRole('radio',{name:/Text only/}));await fireEvent.click(screen.getByRole('button',{name:'Download selection'}));await settle();expect(libraryAdapter.download.mock.calls[0][0]).toBe('core');expect(screen.getByRole('progressbar',{name:'Download progress'}).value).toBe(512);expect(screen.getByRole('button',{name:'Pause download'})).toBeTruthy();expect(screen.queryByText(/^Saved ·/)).toBeNull();finish({saved:true});await settle();});
 it('shows interrupted state and keeps removal separate from progress reset',async()=>{libraryAdapter.downloadStatus.mockResolvedValue({...available,pending:{selection:'audio',received:1024,bytes:2048,running:false}});vi.spyOn(libraryAdapter,'removeDownload').mockResolvedValue({saved:false});const reset=vi.fn();render(LibraryPanel,{view:'downloads',onreset:reset});await settle();expect(screen.getByRole('radio',{name:/Text only/}).checked).toBe(true);await fireEvent.click(screen.getByRole('radio',{name:/Text and audio/}));expect(screen.getByRole('button',{name:'Resume download'})).toBeTruthy();await fireEvent.click(screen.getByRole('button',{name:'Remove from device'}));expect(libraryAdapter.removeDownload).not.toHaveBeenCalled();await fireEvent.click(screen.getByRole('button',{name:'Remove download',exact:true}));await settle();expect(libraryAdapter.removeDownload).toHaveBeenCalledOnce();expect(reset).not.toHaveBeenCalled();});
@@ -35,7 +35,7 @@ it('labels the saved tuple independently of current size preferences and omits s
  localStorage.setItem('fia-download-media-sizes',JSON.stringify({audio:'large',image:'large',video:'large'}));
  const manifest={revision:'saved',mediaSizes:{audio:'small',image:'medium',video:'large'},files:[{group:'audio',deliveryURL:'https://transcode.klappy.dev/audio/q=low/f'},{group:'image',deliveryURL:'https://transcode.klappy.dev/image/q=medium/f'},{group:'video',deliveryURL:'https://transcode.klappy.dev/video/q=medium/f'}]};
  libraryAdapter.downloadStatus.mockResolvedValue({...available,saved:true,active:{selection:'all',bytes:4096,manifest}});render(LibraryPanel,{view:'downloads'});await settle();
- expect(screen.getByRole('status').textContent).toContain('Saved · Text and all available resources · Custom ·');
+ expect(screen.getAllByRole('status').some(n=>n.textContent.includes('Saved · Text and all available resources · Custom ·'))).toBe(true);
  expect(screen.queryByText(/total$/)).toBeNull();localStorage.removeItem('fia-download-media-sizes');
 });
 
@@ -93,7 +93,7 @@ it('whole book: previews each package total, then saves only unsaved passages th
  const download=vi.spyOn(libraryAdapter,'download').mockResolvedValue({saved:true});
  render(LibraryPanel,{view:'downloads',selectedPack:book[0]});await settle();
  expect(screen.getAllByRole('radio',{name:'Text and audio',exact:true}).length).toBe(1);
- await fireEvent.click(screen.getByRole('button',{name:'Check book size'}));await settle();await settle();
+ for(let i=0;i<12;i++)await settle();
  const sizes=screen.getByRole('list',{name:'Whole book size by package'});expect(sizes.textContent).toContain('Text only');expect(sizes.textContent).toContain('2 passages · 1 saved');
  expect(screen.getByText(/1\.0 KB|0\.0 MB to download · 1 of 2 passages/)).toBeTruthy();
  await fireEvent.click(screen.getByRole('button',{name:'Download whole book'}));await settle();await settle();await settle();
@@ -111,7 +111,7 @@ it.each(['mixed','all','worker-mixed','worker-all'])('whole book: %s failed chec
  });
  const download=vi.spyOn(libraryAdapter,'download').mockResolvedValue({saved:true});
  render(LibraryPanel,{view:'downloads',selectedPack:packs[0]});await settle();
- await fireEvent.click(screen.getByRole('button',{name:'Check book size'}));await settle();await settle();
+ for(let i=0;i<12;i++)await settle();
  expect(screen.getByText(/Book size is incomplete/)).toBeTruthy();
  expect(screen.queryByText('Nothing to save for this choice.')).toBeNull();
  expect(screen.getByRole('button',{name:'Download whole book'}).disabled).toBe(true);
@@ -121,4 +121,62 @@ it.each(['mixed','all','worker-mixed','worker-all'])('whole book: %s failed chec
  expect(screen.queryByRole('button',{name:'Retry book size check'})).toBeNull();
  expect(screen.getByRole('list',{name:'Whole book size by package'}).textContent).toContain('2 passages');
  expect(screen.getByRole('button',{name:'Download whole book'}).disabled).toBe(false);
+});
+
+it('automatically checks whole-book sizes when Downloads opens without a check click',async()=>{
+ const packs=[{id:'eng.MRK-1-1-13',pericopeId:'MRK-1-1-13',language:'eng',title:'Mark 1:1–13'}];
+ libraryAdapter.passages.mockResolvedValue(packs);const download=vi.spyOn(libraryAdapter,'download'),prepare=vi.spyOn(libraryAdapter,'prepareRecording');
+ render(LibraryPanel,{view:'downloads',selectedPack:packs[0]});for(let i=0;i<12;i++)await settle();
+ expect(libraryAdapter.passages).toHaveBeenCalledOnce();expect(libraryAdapter.downloadStatus).toHaveBeenCalledTimes(2);
+ expect(screen.queryByRole('button',{name:'Check book size',exact:true})).toBeNull();expect(screen.getByRole('button',{name:'Download whole book'}).disabled).toBe(false);
+ expect(download).not.toHaveBeenCalled();expect(prepare).not.toHaveBeenCalled();
+});
+
+it('automatic book checks retry only transient failures and recover without a click, preserving the tier',async()=>{
+ vi.useFakeTimers();const packs=[{id:'eng.MRK-1-1-13',pericopeId:'MRK-1-1-13',language:'eng',title:'Mark 1:1–13'},{id:'eng.MRK-1-14-20',pericopeId:'MRK-1-14-20',language:'eng',title:'Mark 1:14–20'}];
+ libraryAdapter.passages.mockResolvedValue(packs);let bad=0;libraryAdapter.downloadStatus.mockImplementation(async p=>p.id===packs[1].id&&++bad<2?{available:true,error:'Media status is temporarily unavailable.',choices:[]}:available);
+ const download=vi.spyOn(libraryAdapter,'download'),prepare=vi.spyOn(libraryAdapter,'prepareRecording');render(LibraryPanel,{view:'downloads',selectedPack:packs[0]});await vi.advanceTimersByTimeAsync(0);for(let i=0;i<12;i++)await settle();
+ expect(screen.getByText(/Checking again automatically/)).toBeTruthy();expect(screen.getByRole('button',{name:'Download whole book'}).disabled).toBe(true);expect(screen.queryByRole('button',{name:'Retry book size check'})).toBeNull();
+ await fireEvent.click(screen.getByRole('radio',{name:'Text and audio',exact:true}));await vi.advanceTimersByTimeAsync(1000);for(let i=0;i<12;i++)await settle();
+ expect(screen.queryByText(/Book size is incomplete/)).toBeNull();expect(screen.getByRole('radio',{name:'Text and audio',exact:true}).checked).toBe(true);expect(screen.getByRole('button',{name:'Download whole book'}).disabled).toBe(false);
+ expect(libraryAdapter.passages).toHaveBeenCalledOnce();expect(libraryAdapter.downloadStatus.mock.calls.filter(([p])=>p.id===packs[1].id)).toHaveLength(2);expect(download).not.toHaveBeenCalled();expect(prepare).not.toHaveBeenCalled();
+});
+it('automatic book checks stop after three transient attempts and close cancels backoff',async()=>{
+ vi.useFakeTimers();const pack={id:'eng.MRK-1-1-13',pericopeId:'MRK-1-1-13',language:'eng',title:'Mark 1:1–13'};libraryAdapter.passages.mockResolvedValue([pack]);let first=true;libraryAdapter.downloadStatus.mockImplementation(async()=>{if(first){first=false;return available;}return {available:true,error:'Media status is temporarily unavailable.',choices:[]};});
+ const view=render(LibraryPanel,{view:'downloads',selectedPack:pack});await vi.advanceTimersByTimeAsync(0);await vi.advanceTimersByTimeAsync(4000);for(let i=0;i<12;i++)await settle();
+ expect(libraryAdapter.downloadStatus).toHaveBeenCalledTimes(4);expect(screen.getByRole('button',{name:'Retry book size check'})).toBeTruthy();expect(screen.getByRole('button',{name:'Download whole book'}).disabled).toBe(true);await vi.advanceTimersByTimeAsync(60000);expect(libraryAdapter.downloadStatus).toHaveBeenCalledTimes(4);
+ await fireEvent.click(screen.getByRole('button',{name:'Retry book size check'}));for(let i=0;i<8;i++)await settle();const calls=libraryAdapter.downloadStatus.mock.calls.length;view.unmount();await vi.advanceTimersByTimeAsync(60000);expect(libraryAdapter.downloadStatus).toHaveBeenCalledTimes(calls);
+});
+it('closing and changing passage ignore active book replies, then a new sheet checks automatically',async()=>{
+ const p1={id:'eng.MRK-1-1-13',pericopeId:'MRK-1-1-13',language:'eng',title:'Mark 1:1–13'},p2={id:'eng.LUK-1-1-4',pericopeId:'LUK-1-1-4',language:'eng',title:'Luke 1:1–4'};let release,first=true;libraryAdapter.passages.mockImplementation(async()=>[p1,p2]);libraryAdapter.downloadStatus.mockImplementation(async p=>{if(first){first=false;return available;}if(p.id===p1.id)return new Promise(r=>release=r);return available;});
+ const view=render(LibraryPanel,{view:'downloads',selectedPack:p1});for(let i=0;i<12;i++)await settle();expect(release).toBeTypeOf('function');await view.rerender({view:'downloads',selectedPack:p2});for(let i=0;i<12;i++)await settle();release({available:true,error:'Media status is temporarily unavailable.',choices:[]});for(let i=0;i<12;i++)await settle();
+ expect(screen.getByRole('heading',{name:'Save the whole book'})).toBeTruthy();expect(screen.queryByText(/Book size is incomplete/)).toBeNull();expect(screen.getByRole('button',{name:'Download whole book'}).disabled).toBe(false);view.unmount();
+ render(LibraryPanel,{view:'downloads',selectedPack:p2});for(let i=0;i<12;i++)await settle();expect(screen.getByRole('button',{name:'Download whole book'}).disabled).toBe(false);
+});
+
+it('catalog transport failure recovers automatically; unknown catalog failure is an honest terminal state',async()=>{
+ vi.useFakeTimers();const pack={id:'eng.MRK-1-1-13',pericopeId:'MRK-1-1-13',language:'eng',title:'Mark 1:1–13'};libraryAdapter.passages.mockRejectedValueOnce(TypeError('Failed to fetch')).mockResolvedValue([pack]);
+ const view=render(LibraryPanel,{view:'downloads',selectedPack:pack});await vi.advanceTimersByTimeAsync(0);expect(screen.queryByText('Nothing to save for this choice.')).toBeNull();await vi.advanceTimersByTimeAsync(1000);for(let i=0;i<12;i++)await settle();expect(screen.getByRole('button',{name:'Download whole book'}).disabled).toBe(false);view.unmount();
+ libraryAdapter.passages.mockRejectedValue(Error('The passage catalog is unavailable. Your current passage stays open.'));render(LibraryPanel,{view:'downloads',selectedPack:pack});await vi.advanceTimersByTimeAsync(0);for(let i=0;i<12;i++)await settle();expect(screen.getByText('Book sizes could not be checked. You can try again.')).toBeTruthy();expect(screen.getByRole('button',{name:'Retry book size check'})).toBeTruthy();expect(screen.queryByText('Nothing to save for this choice.')).toBeNull();expect(screen.queryByRole('button',{name:'Download whole book'})).toBeNull();
+});
+
+it('a transient initial passage-status rejection does not suppress automatic book checking',async()=>{
+ const pack={id:'eng.MRK-1-1-13',pericopeId:'MRK-1-1-13',language:'eng',title:'Mark 1:1–13'};libraryAdapter.passages.mockResolvedValue([pack]);libraryAdapter.downloadStatus.mockRejectedValueOnce(TypeError('Failed to fetch')).mockResolvedValue(available);render(LibraryPanel,{view:'downloads',selectedPack:pack});for(let i=0;i<16;i++)await settle();
+ expect(screen.queryByText('Failed to fetch')).toBeNull();expect(screen.getByRole('button',{name:'Download whole book'}).disabled).toBe(false);expect(libraryAdapter.downloadStatus).toHaveBeenCalledTimes(2);
+});
+
+it('a hanging status read has a bounded checking state and a late response cannot resurrect it',async()=>{
+ vi.useFakeTimers();const pack={id:'eng.MRK-1-1-13',pericopeId:'MRK-1-1-13',language:'eng',title:'Mark 1:1–13'};libraryAdapter.passages.mockResolvedValue([pack]);let release;libraryAdapter.downloadStatus.mockResolvedValueOnce(available).mockImplementation(()=>new Promise(r=>release=r));render(LibraryPanel,{view:'downloads',selectedPack:pack});await vi.advanceTimersByTimeAsync(0);expect(screen.getByText('Checking book sizes…')).toBeTruthy();await vi.advanceTimersByTimeAsync(60000);expect(screen.getByText('Book sizes could not be checked. You can try again.')).toBeTruthy();expect(screen.getByRole('button',{name:'Retry book size check'}).disabled).toBe(false);release(available);for(let i=0;i<12;i++)await settle();expect(screen.getByText('Book sizes could not be checked. You can try again.')).toBeTruthy();expect(screen.queryByRole('button',{name:'Download whole book'})).toBeNull();
+});
+
+it('late initial passage refresh cannot overwrite the new passage or notify its saved status',async()=>{
+ const a={id:'eng.MRK-1-1-13',pericopeId:'MRK-1-1-13',language:'eng',title:'Mark 1:1–13'},b={id:'eng.LUK-1-1-4',pericopeId:'LUK-1-1-4',language:'eng',title:'Luke 1:1–4'};let old;const status=vi.fn();libraryAdapter.passages.mockResolvedValue([a,b]);const saved={...available,saved:true,active:{selection:'core',bytes:1024,manifest:available.manifest}};libraryAdapter.downloadStatus.mockImplementation(p=>p.id===a.id?new Promise(r=>old=r):Promise.resolve(saved));
+ const view=render(LibraryPanel,{view:'downloads',selectedPack:a,onstatus:status});for(let i=0;i<8;i++)await settle();await view.rerender({view:'downloads',selectedPack:b,onstatus:status});for(let i=0;i<12;i++)await settle();expect(status).toHaveBeenLastCalledWith(true);old(available);for(let i=0;i<12;i++)await settle();expect(status).toHaveBeenCalledTimes(1);expect(status).toHaveBeenLastCalledWith(true);expect(screen.queryByText('Not saved on this device')).toBeNull();
+});
+it('a hanging initial passage refresh cannot leave device checking or prevent bounded automatic book progress',async()=>{
+ vi.useFakeTimers();const pack={id:'eng.MRK-1-1-13',pericopeId:'MRK-1-1-13',language:'eng',title:'Mark 1:1–13'};libraryAdapter.passages.mockResolvedValue([pack]);let first=true;libraryAdapter.downloadStatus.mockImplementation(()=>{if(first){first=false;return new Promise(()=>{});}return Promise.resolve(available);});render(LibraryPanel,{view:'downloads',selectedPack:pack});await vi.advanceTimersByTimeAsync(75000);for(let i=0;i<12;i++)await settle();expect(screen.queryByText('Checking device storage…')).toBeNull();expect(screen.getByRole('button',{name:'Download whole book'}).disabled).toBe(false);
+});
+
+it('a timed-out refresh preserves verified saved status instead of inventing unavailable tiers',async()=>{
+ vi.useFakeTimers();const pack={id:'eng.MRK-1-1-13',pericopeId:'MRK-1-1-13',language:'eng',title:'Mark 1:1–13'},saved={...available,saved:true,active:{selection:'core',bytes:1024,manifest:available.manifest}};libraryAdapter.passages.mockResolvedValue([pack]);libraryAdapter.downloadStatus.mockResolvedValue(saved);render(LibraryPanel,{view:'downloads',selectedPack:pack});await vi.advanceTimersByTimeAsync(0);await settle();libraryAdapter.downloadStatus.mockImplementation(()=>new Promise(()=>{}));await fireEvent.click(screen.getByRole('button',{name:'Check for updates and saved files'}));await vi.advanceTimersByTimeAsync(15000);await settle();expect(screen.getAllByRole('status').some(n=>n.textContent.includes('Saved · Text only'))).toBe(true);expect(screen.getByRole('alert').textContent).toContain('Download status could not be checked');expect(screen.getByRole('radio',{name:'Text only',exact:true})).toBeTruthy();expect(screen.queryByText('Not saved on this device')).toBeNull();
 });

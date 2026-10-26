@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {bookOf,bookPassages,passageTier,passageSatisfied,bookTotals,bookStatuses,downloadBook} from '../src/lib/book-download.js';
+import {bookOf,bookPassages,passageTier,passageSatisfied,bookTotals,bookStatuses,observeBookStatuses,retryableBookStatus,downloadBook} from '../src/lib/book-download.js';
 const st=(choices,extra={})=>({available:true,saved:false,manifest:{files:[{group:'core'},{group:'audio'},{group:'image'},{group:'video'}]},choices:Object.entries(choices).map(([id,bytes])=>({id,bytes})),...extra});
 test('book passages share book and language, in catalog order',()=>{
  const packs=[{id:'eng.MRK-1-1-13',pericopeId:'MRK-1-1-13',language:'eng'},{id:'eng.LUK-1-1-4',pericopeId:'LUK-1-1-4',language:'eng'},{id:'spa.MRK-1-1-13',pericopeId:'MRK-1-1-13',language:'spa'},{id:'eng.MRK-16-9-20',pericopeId:'MRK-16-9-20',language:'eng'}];
@@ -62,4 +62,24 @@ test('fulfilled worker errors without usable choices remain unresolved through b
  const mixed=await bookStatuses(packs,{downloadStatus:async p=>p.id==='a'?known:failed});
  assert.deepEqual(bookTotals(mixed).core,{bytes:10,remaining:10,unknown:0,unresolved:1,saved:0,count:2});
  assert.deepEqual(bookTotals([failed,failed]).core,{bytes:0,remaining:0,unknown:0,unresolved:2,saved:0,count:2});
+});
+
+test('automatic status observation retries only transient unresolved passages, at bounded delays',async()=>{
+ const packs=[{id:'ok'},{id:'bad'},{id:'invalid'},{id:'unknown'}],calls=[],waits=[],snapshots=[];let n=0;const good={available:true,choices:[{id:'core',bytes:10}]};
+ const out=await observeBookStatuses(packs,{downloadStatus:async p=>{calls.push(p.id);if(p.id==='ok')return good;if(p.id==='bad')return ++n<3?{available:true,error:'Media status is temporarily unavailable.',choices:[]}:good;return {available:true,error:p.id==='invalid'?'Invalid download file.':'Unrecognized failure.',choices:[]};}},{wait:async ms=>waits.push(ms),onstatus:(s,retrying)=>snapshots.push({s,retrying})});
+ assert.deepEqual(waits,[1000,3000]);assert.deepEqual(calls,['ok','bad','invalid','unknown','bad','bad']);assert.equal(bookTotals(out).core.unresolved,2);assert.equal(snapshots.at(-1).retrying,false);
+ assert.equal(retryableBookStatus({available:true,error:'Media status is temporarily unavailable.',choices:[{id:'core'}]}),false);
+});
+test('three transient attempts settle; cancellation during active replies and backoff makes no later reads',async()=>{
+ const failed={available:true,error:'Media status is temporarily unavailable.',choices:[]};let calls=0,stopped=false,reported=0;
+ await observeBookStatuses([{id:'a'}],{downloadStatus:async()=>{calls++;return failed;}},{wait:async()=>{}});assert.equal(calls,3);
+ calls=0;await observeBookStatuses([{id:'a'}],{downloadStatus:async()=>{calls++;return failed;}},{wait:async()=>{stopped=true;},shouldStop:()=>stopped});assert.equal(calls,1);
+ stopped=false;calls=0;const out=await observeBookStatuses([{id:'a'},{id:'b'}],{downloadStatus:async()=>{calls++;stopped=true;return failed;}},{shouldStop:()=>stopped,onstatus:()=>reported++});assert.equal(out,null);assert.equal(reported,0);assert.equal(calls,1);
+});
+
+test('catalog failures share the same bounded attempt budget and never become an empty book',async()=>{
+ const good={available:true,choices:[{id:'core',bytes:10}]},waits=[];let catalogs=0,statuses=0;
+ const result=await observeBookStatuses(async()=>{if(++catalogs===1)throw TypeError('Failed to fetch');return [{id:'a'}];},{downloadStatus:async()=>++statuses===1?{available:true,error:'Media status is temporarily unavailable.',choices:[]}:good},{wait:async ms=>waits.push(ms)});
+ assert.equal(catalogs,2);assert.equal(statuses,2);assert.deepEqual(waits,[1000,3000]);assert.equal(bookTotals(result).core.count,1);
+ catalogs=0;await assert.rejects(observeBookStatuses(async()=>{catalogs++;throw Error('The passage catalog is unavailable. Your current passage stays open.');},{downloadStatus:()=>assert.fail('status before catalog')},{wait:()=>assert.fail('unknown catalog error retried')}),/catalog is unavailable/);assert.equal(catalogs,1);
 });

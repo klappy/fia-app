@@ -29,11 +29,12 @@ export function passageSatisfied(status,tier){
  * is set during download; `unresolved` counts failed/missing status checks separately.
  * `remaining` leaves out files already saved on the device. */
 const fileKey=f=>(f.deliveryURL||f.path)+'#'+(f.sha256||'');
+export const unresolvedBookStatus=status=>!status||status.available===false||!Array.isArray(status.choices)||!!(status.error&&!status.choices.length);
 export function bookTotals(statuses){
  return Object.fromEntries(tierOrder.map(id=>{
   let bytes=0,remaining=0,unknown=0,unresolved=0,saved=0,count=0;const all=new Map(),have=new Set(),wanted=new Map();
   for(const status of statuses){
-   if(!status||status.available===false||!Array.isArray(status.choices)||(status.error&&!status.choices.length)){count++;unresolved++;continue;}
+   if(unresolvedBookStatus(status)){count++;unresolved++;continue;}
    const tier=passageTier(status,id);if(!tier)continue;count++;const done=passageSatisfied(status,tier);if(done)saved++;
    const files=status.manifest?.files?.filter(f=>downloadSelectionIncludes(tier,f.group));
    if(!files){const value=status.choices.find(c=>c.id===tier)?.bytes;if(Number.isFinite(value)){bytes+=value;if(!done)remaining+=value;}else if(!done)unknown++;continue;}
@@ -46,11 +47,38 @@ export function bookTotals(statuses){
  }));
 }
 /** Statuses for every passage, a few at a time; a failed status is kept as an error entry. */
-export async function bookStatuses(packs,adapter,{concurrency=4}={}){
+export async function bookStatuses(packs,adapter,{concurrency=4,shouldStop=()=>false}={}){
  const out=new Array(packs.length);let next=0;
- async function worker(){while(next<packs.length){const i=next++;try{out[i]=await adapter.downloadStatus(packs[i]);}catch(error){out[i]={available:false,error:error?.message||'Status unavailable.',choices:[]};}}}
+ async function worker(){while(next<packs.length&&!shouldStop()){const i=next++;try{out[i]=await adapter.downloadStatus(packs[i]);}catch(error){out[i]={available:false,error:error?.message||'Status unavailable.',choices:[]};}}}
  await Promise.all(Array.from({length:Math.min(concurrency,packs.length)},worker));
  return out;
+}
+/** Only known transport/status failures are eligible for bounded automatic retry.
+ * Validation, refusal and unknown errors settle for an optional user retry. */
+export function retryableBookStatus(status){
+ if(!unresolvedBookStatus(status))return false;
+ return /^(Media status is temporarily unavailable\.|Failed to fetch|fetch failed|Load failed|NetworkError when attempting to fetch resource\.|Download stopped responding\. Reopen Downloads to check and resume\.)$/.test(status?.error||'');
+}
+/** Read status only. Initial attempt plus two bounded retries of transient failures;
+ * successful passages are never rechecked in this operation. */
+export async function observeBookStatuses(packsOrLoad,adapter,{onstatus=()=>{},onpacks=()=>{},shouldStop=()=>false,wait=ms=>new Promise(resolve=>setTimeout(resolve,ms))}={}){
+ let packs=Array.isArray(packsOrLoad)?packsOrLoad:null,statuses=packs?new Array(packs.length):null,pending=packs?packs.map((_,i)=>i):null;
+ // The same three-attempt budget covers catalog and status reads: no nested retries.
+ for(let attempt=0;attempt<3&&!shouldStop();attempt++){
+  if(!packs){try{
+   packs=await packsOrLoad();if(shouldStop())return null;
+   if(!Array.isArray(packs))throw Error('The passage catalog is not compatible.');
+   statuses=new Array(packs.length);pending=packs.map((_,i)=>i);onpacks(packs);
+  }catch(error){if(shouldStop())return null;if(attempt===2||!retryableBookStatus({available:false,error:error?.message}))throw error;
+   await wait([1000,3000][attempt]);if(shouldStop())return null;continue;
+  }}
+  const values=await bookStatuses(pending.map(i=>packs[i]),adapter,{shouldStop});if(shouldStop())return null;
+  pending.forEach((index,i)=>statuses[index]=values[i]);
+  const retry=attempt<2?pending.filter(i=>retryableBookStatus(statuses[i])):[];
+  onstatus([...statuses],retry.length>0);if(!retry.length)return statuses;
+  await wait([1000,3000][attempt]);if(shouldStop())return null;pending=retry;
+ }
+ return null;
 }
 /** Downloads each passage in turn. Passages already saved at the tier are skipped
  * without a fetch; a stop request ends after the current passage pauses. */
