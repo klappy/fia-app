@@ -99,3 +99,23 @@ it('whole book: previews each package total, then saves only unsaved passages th
  await fireEvent.click(screen.getByRole('button',{name:'Download whole book'}));await settle();await settle();await settle();
  expect(download).toHaveBeenCalledOnce();expect(download.mock.calls[0][0]).toBe('core');expect(download.mock.calls[0][2].id).toBe('eng.MRK-1-1-13');
 });
+
+const wholeBook=[{id:'eng.MRK-1-1-13',pericopeId:'MRK-1-1-13',language:'eng',title:'Mark 1:1–13'},{id:'eng.MRK-1-14-20',pericopeId:'MRK-1-14-20',language:'eng',title:'Mark 1:14–20'}];
+it('whole book: the finished result stays visible after the post-download status refresh',async()=>{
+ vi.spyOn(libraryAdapter,'passages').mockResolvedValue(wholeBook);vi.spyOn(libraryAdapter,'download').mockResolvedValue({saved:true});
+ render(LibraryPanel,{view:'downloads',selectedPack:wholeBook[0]});await settle();
+ await fireEvent.click(screen.getByRole('button',{name:'Check book size'}));for(let i=0;i<5;i++)await settle();
+ await fireEvent.click(screen.getByRole('button',{name:'Download whole book'}));for(let i=0;i<15;i++)await settle();
+ expect(libraryAdapter.download).toHaveBeenCalledTimes(2);expect(libraryAdapter.passages.mock.calls.length).toBe(2);
+ expect(screen.getByText(/^Book download finished\. 2 saved · 0 already saved\.$/)).toBeTruthy();
+});
+it('whole book: closing the sheet pauses the running passage and starts no further passage',async()=>{
+ vi.spyOn(libraryAdapter,'passages').mockResolvedValue(wholeBook);let fail;
+ const download=vi.spyOn(libraryAdapter,'download').mockImplementation(()=>new Promise((resolve,reject)=>fail=reject));
+ const pause=vi.spyOn(libraryAdapter,'pauseDownload').mockImplementation(async()=>fail(new Error('Download paused.')));
+ const view=render(LibraryPanel,{view:'downloads',selectedPack:wholeBook[0]});await settle();
+ await fireEvent.click(screen.getByRole('button',{name:'Check book size'}));for(let i=0;i<5;i++)await settle();
+ await fireEvent.click(screen.getByRole('button',{name:'Download whole book'}));for(let i=0;i<5;i++)await settle();
+ expect(download).toHaveBeenCalledOnce();view.unmount();for(let i=0;i<10;i++)await settle();
+ expect(pause).toHaveBeenCalledWith(wholeBook[0]);expect(download).toHaveBeenCalledOnce();
+});

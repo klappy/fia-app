@@ -40,7 +40,7 @@
    else {languages=await libraryAdapter.languages();passages=await libraryAdapter.passages(language);}
   }catch(e){if(alive)error=e.message;}finally{if(alive)loading=false;}
  }
- onMount(()=>{refresh();return()=>alive=false;});
+ onMount(()=>{refresh();return()=>{alive=false;if(bookBusy)pauseBook();};});
  const labels={core:'Text only',audio:'Text and audio',visual:'Text, audio, images and maps',all:'Text and all available resources'};
  const packageNames={core:'Small · default',visual:'No video',all:'Full'};
  const packageNotes={core:'Scripture, guide and app.',audio:'Adds recordings.',visual:'Leaves out video, which uses the most space.',all:'Everything, including video.'};
@@ -56,8 +56,8 @@
  let bookPacks=$state([]),bookStatusList=$state(null),bookChecking=$state(false),bookBusy=$state(false),bookProgress=$state(null),bookResult=$state(null);let bookStop=false;
  let bookName=$derived(String(selectedPack.title||'').replace(/\s+\d[\s\S]*$/,'')||'this book');
  let bookTotalsByTier=$derived(bookStatusList?bookTotals(bookStatusList):null);
- async function checkBook(){bookChecking=true;bookResult=null;try{bookPacks=bookPassages(await libraryAdapter.passages(selectedPack.language||language),selectedPack);bookStatusList=await bookStatuses(bookPacks,libraryAdapter);}catch(e){error=e.message;}finally{bookChecking=false;}}
- async function saveBook(){bookBusy=true;bookStop=false;bookResult=null;error='';try{bookResult=await downloadBook(bookPacks,selection,libraryAdapter,{onprogress:value=>bookProgress=value,shouldStop:()=>bookStop});}catch(e){error=e.message;}finally{bookBusy=false;bookProgress=null;await refresh();await checkBook();}}
+ async function checkBook({keepResult=false}={}){bookChecking=true;if(!keepResult)bookResult=null;try{bookPacks=bookPassages(await libraryAdapter.passages(selectedPack.language||language),selectedPack);bookStatusList=await bookStatuses(bookPacks,libraryAdapter);}catch(e){error=e.message;}finally{bookChecking=false;}}
+ async function saveBook(){bookBusy=true;bookStop=false;bookResult=null;error='';try{bookResult=await downloadBook(bookPacks,selection,libraryAdapter,{onprogress:value=>bookProgress=value,shouldStop:()=>bookStop});}catch(e){error=e.message;}finally{bookBusy=false;bookProgress=null;if(alive){await refresh();await checkBook({keepResult:true});}}}
  async function pauseBook(){bookStop=true;const pack=bookProgress?.pack;if(pack)try{await libraryAdapter.pauseDownload(pack);}catch(e){error=e.message;}}
  function bookLine(t){if(!t?.count)return 'Not offered in this book';return `${formatBytes(t.bytes)}${t.unknown?` + ${t.unknown} set during download`:''} · ${t.count} passages${t.saved?` · ${t.saved} saved`:''}`;}
  async function remove(){try{await libraryAdapter.removeDownload(selectedPack);confirmRemove=false;await refresh();}catch(e){error=e.message;}}

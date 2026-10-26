@@ -50,8 +50,12 @@ export async function bookStatuses(packs,adapter,{concurrency=4}={}){
  return out;
 }
 /** Downloads each passage in turn. Passages already saved at the tier are skipped
- * without a fetch; a stop request ends after the current passage pauses. */
-export async function downloadBook(packs,selection,adapter,{onprogress=()=>{},shouldStop=()=>false}={}){
+ * without a fetch; a stop request ends after the current passage pauses. One book
+ * loop runs at a time on the page: a second call waits for the running loop to end
+ * (a closed sheet stops its loop), then runs, so two loops never fetch side by side. */
+let running=Promise.resolve();
+export function downloadBook(...args){const run=running.then(()=>bookLoop(...args));running=run.catch(()=>{});return run;}
+async function bookLoop(packs,selection,adapter,{onprogress=()=>{},shouldStop=()=>false}={}){
  const result={saved:0,skipped:0,failed:[],stopped:false};
  for(let i=0;i<packs.length;i++){
   if(shouldStop()){result.stopped=true;break;}
@@ -61,6 +65,7 @@ export async function downloadBook(packs,selection,adapter,{onprogress=()=>{},sh
   onprogress({index:i,total:packs.length,pack,tier,transfer:null,...result});
   if(!status?.available||!tier){result.failed.push({pack,message:status?.reason||status?.error||'Not available to save.'});continue;}
   if(passageSatisfied(status,tier)){result.skipped++;continue;}
+  if(shouldStop()){result.stopped=true;break;}
   try{const done=await adapter.download(tier,transfer=>onprogress({index:i,total:packs.length,pack,tier,transfer,...result}),pack,{});if(done?.saved===false)result.failed.push({pack,message:'Files received; recording timing is pending.'});else result.saved++;}
   catch(error){if(shouldStop()){result.stopped=true;break;}result.failed.push({pack,message:error?.message||'Download failed.'});}
  }

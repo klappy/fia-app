@@ -37,3 +37,16 @@ test('downloadBook skips saved passages without a fetch, uses each passage tier 
  let stop=false;calls.length=0;const r2=await downloadBook(packs,'all',{...adapter,download:async(tier,progress,pack)=>{calls.push(pack.id);stop=true;throw Error('Download paused.');}},{shouldStop:()=>stop});
  assert.deepEqual(calls,['b']);assert.equal(r2.stopped,true);assert.equal(r2.failed.length,0);
 });
+test('a second downloadBook waits for the running loop instead of running beside it',async()=>{
+ const packs=[{id:'a'},{id:'b'}];const log=[];let release;const gate=new Promise(r=>release=r);
+ const adapter={downloadStatus:async p=>{log.push('status:'+p.id);return st({core:1});},download:async(tier,progress,pack)=>{log.push('get:'+pack.id);if(pack.id==='a'&&!log.includes('released')){await gate;}return {saved:true};}};
+ const first=downloadBook(packs,'core',adapter),second=downloadBook(packs,'core',adapter);
+ for(let i=0;i<20;i++)await Promise.resolve();
+ assert.deepEqual(log,['status:a','get:a']);log.push('released');release();
+ const [r1,r2]=await Promise.all([first,second]);assert.equal(r1.saved,2);assert.equal(r2.saved,2);
+ assert.deepEqual(log.slice(3),['status:b','get:b','status:a','get:a','status:b','get:b']);
+});
+test('a stop requested before a passage starts fetches nothing more',async()=>{
+ let stop=false;const calls=[];const adapter={downloadStatus:async()=>{stop=true;return st({core:1});},download:async(tier,progress,pack)=>{calls.push(pack.id);return {saved:true};}};
+ const r=await downloadBook([{id:'a'},{id:'b'}],'core',adapter,{shouldStop:()=>stop});assert.deepEqual(calls,[]);assert.equal(r.stopped,true);
+});
