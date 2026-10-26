@@ -54,3 +54,12 @@ test('legitimate unoffered tiers are not failed checks; saved and recovered stat
  const warning={...recovered,error:'Latest status could not be refreshed; showing verified saved data.'};
  assert.equal(bookTotals([warning]).core.unresolved,0);
 });
+
+test('fulfilled worker errors without usable choices remain unresolved through bookStatuses',async()=>{
+ const packs=[{id:'a'},{id:'b'}],known={available:true,saved:false,choices:[{id:'core',bytes:10}]};
+ // DOWNLOAD_STATUS replies ok:true even when status() catches a manifest lookup failure.
+ const failed={ok:true,available:true,saved:false,active:null,pending:null,manifest:undefined,error:'Manifest lookup failed.',choices:[]};
+ const mixed=await bookStatuses(packs,{downloadStatus:async p=>p.id==='a'?known:failed});
+ assert.deepEqual(bookTotals(mixed).core,{bytes:10,remaining:10,unknown:0,unresolved:1,saved:0,count:2});
+ assert.deepEqual(bookTotals([failed,failed]).core,{bytes:0,remaining:0,unknown:0,unresolved:2,saved:0,count:2});
+});

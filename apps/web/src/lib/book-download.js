@@ -33,7 +33,7 @@ export function bookTotals(statuses){
  return Object.fromEntries(tierOrder.map(id=>{
   let bytes=0,remaining=0,unknown=0,unresolved=0,saved=0,count=0;const all=new Map(),have=new Set(),wanted=new Map();
   for(const status of statuses){
-   if(!status||status.available===false||!Array.isArray(status.choices)){count++;unresolved++;continue;}
+   if(!status||status.available===false||!Array.isArray(status.choices)||(status.error&&!status.choices.length)){count++;unresolved++;continue;}
    const tier=passageTier(status,id);if(!tier)continue;count++;const done=passageSatisfied(status,tier);if(done)saved++;
    const files=status.manifest?.files?.filter(f=>downloadSelectionIncludes(tier,f.group));
    if(!files){const value=status.choices.find(c=>c.id===tier)?.bytes;if(Number.isFinite(value)){bytes+=value;if(!done)remaining+=value;}else if(!done)unknown++;continue;}

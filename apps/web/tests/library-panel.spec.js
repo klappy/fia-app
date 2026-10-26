@@ -100,13 +100,13 @@ it('whole book: previews each package total, then saves only unsaved passages th
  expect(download).toHaveBeenCalledOnce();expect(download.mock.calls[0][0]).toBe('core');expect(download.mock.calls[0][2].id).toBe('eng.MRK-1-1-13');
 });
 
-it.each(['mixed','all'])('whole book: %s failed checks show an incomplete preview and retry recovers',async mode=>{
+it.each(['mixed','all','worker-mixed','worker-all'])('whole book: %s failed checks show an incomplete preview and retry recovers',async mode=>{
  const packs=[{id:'eng.MRK-1-1-13',pericopeId:'MRK-1-1-13',language:'eng',title:'Mark 1:1–13'},{id:'eng.MRK-1-14-20',pericopeId:'MRK-1-14-20',language:'eng',title:'Mark 1:14–20'}];
  let recover=false,initial=true;
  vi.spyOn(libraryAdapter,'passages').mockResolvedValue(packs);
  libraryAdapter.downloadStatus.mockImplementation(async pack=>{
   if(initial){initial=false;return {...available,choices:[{id:'core',bytes:1024}]};}
-  if(pack&&!recover&&(mode==='all'||pack.id===packs[1].id))throw Error('Status connection failed.');
+  if(pack&&!recover&&(mode.endsWith('all')||pack.id===packs[1].id)){if(mode.startsWith('worker'))return {ok:true,available:true,saved:false,active:null,pending:null,manifest:undefined,error:'Manifest lookup failed.',choices:[]};throw Error('Status connection failed.');}
   return {...available,choices:[{id:'core',bytes:1024}]};
  });
  const download=vi.spyOn(libraryAdapter,'download').mockResolvedValue({saved:true});
