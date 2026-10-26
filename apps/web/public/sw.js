@@ -7,7 +7,7 @@ const jobs=new Map(),playbackJobs=new Map(),canceledPlayback=new Set();
 const audioReuse=new Map(),AUDIO_REUSE_MAX=16*1024*1024,AUDIO_REUSE_TTL=60000;
 function clearAudioReuse(client,pack){for(const [key,e]of audioReuse)if((!client||e.client===client)&&(!pack||e.pack===pack)){audioReuse.delete(key);if(!e.ready)e.controller.abort();}}
 async function reusableAudioResponse(file,{client,pack,revision,signal}){
- const now=Date.now();for(const [k,e]of audioReuse)if(e.expires<=now&&!e.users){audioReuse.delete(k);e.controller.abort();}
+ const now=Date.now();for(const [k,e]of audioReuse)if(e.ready&&e.expires<=now){audioReuse.delete(k);}
  // Existing transaction reuse identity plus source/config/current authority, not unit path.
  const key=JSON.stringify([client,pack,revision,file.sourceSha256,downloadOutputKey(file),file.bytes,file.mime]);
  for(const [k,e]of audioReuse)if(e.client===client&&e.pack===pack&&e.revision!==revision){audioReuse.delete(k);if(!e.ready)e.controller.abort();}
@@ -16,8 +16,8 @@ async function reusableAudioResponse(file,{client,pack,revision,signal}){
   let used=[...audioReuse.values()].reduce((n,e)=>n+e.size,0);
   for(const [k,e]of audioReuse){if(used+file.bytes<=AUDIO_REUSE_MAX)break;if(!e.users){used-=e.size;audioReuse.delete(k);e.controller.abort();}}
   if(!client||audioReuse.size>=4||file.bytes>8*1024*1024||used+file.bytes>AUDIO_REUSE_MAX)return fetch(file.deliveryURL,{cache:'no-store',signal});
-  const controller=new AbortController();entry={client,pack,revision,size:file.bytes,controller,users:0,ready:false,expires:now+AUDIO_REUSE_TTL};audioReuse.set(key,entry);
-  entry.promise=(async()=>{const response=await fetch(file.deliveryURL,{cache:'no-store',signal:controller.signal});const bytes=await readVerifiedMedia(response,file,{signal:controller.signal});if(controller.signal.aborted)throw Error('Playback canceled.');entry.ready=true;return bytes;})().catch(error=>{if(audioReuse.get(key)===entry)audioReuse.delete(key);throw error;});
+  const controller=new AbortController();entry={client,pack,revision,size:file.bytes,controller,users:0,ready:false,expires:Infinity};audioReuse.set(key,entry);
+  entry.promise=(async()=>{const response=await fetch(file.deliveryURL,{cache:'no-store',signal:controller.signal});const bytes=await readVerifiedMedia(response,file,{signal:controller.signal});if(controller.signal.aborted)throw Error('Playback canceled.');entry.ready=true;entry.expires=Date.now()+AUDIO_REUSE_TTL;return bytes;})().catch(error=>{if(audioReuse.get(key)===entry)audioReuse.delete(key);throw error;});
  }
  entry.users++;let abort;
  try{
@@ -361,6 +361,6 @@ self.addEventListener('message',event=>{
    }else return;
    port?.postMessage({ok:true,...result},result.bytes instanceof ArrayBuffer?[result.bytes]:[]);
    if(noticeLog)await recordMediaNotices(noticeLog).catch(()=>{});
-  }catch(error){port?.postMessage(type==='MEDIA_STATUS'?{ok:false,error:'Media availability could not be verified.',code:error?.mediaStatusCode==='media-status-transient'?'media-status-transient':'media-status-invalid'}:{ok:false,error:error.message});if(type==='MEDIA_PLAY'&&error.message!=='Playback canceled.'){clearAudioReuse(event.source?.id,packId);}if(type==='MEDIA_PLAY'&&error.message!=='Playback canceled.')await recordMediaNotices({packId,path:event.data.path,notes:[{kind:'play-failed',message:'Playback failed.'}]}).catch(()=>{});}
+  }catch(error){port?.postMessage(type==='MEDIA_STATUS'?{ok:false,error:'Media availability could not be verified.',code:error?.mediaStatusCode==='media-status-transient'?'media-status-transient':'media-status-invalid'}:{ok:false,error:error.message});if(type==='MEDIA_PLAY'&&error.message!=='Playback canceled.')await recordMediaNotices({packId,path:event.data.path,notes:[{kind:'play-failed',message:'Playback failed.'}]}).catch(()=>{});}
  })());
 });
