@@ -105,7 +105,7 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
   if(!row&&found.key&&!revision)miss('readCatalog',{packId,key:found.key,kind:'verification',reason:'executable-pointer-dangling'});
   if(!row)return base.readCatalog(packId,revision);
   try{need(row.binding?.packId===packId&&(!revision||row.revision===revision)&&found.key===`executable-record:${packId}@${row.revision}`,'executable-pointer-binding');await verified(row);return record(row);}
-  catch(error){fault('readCatalog',{packId,key:found.key},error);return base.readCatalog(packId,revision);}
+  catch(error){fault('readCatalog',{packId,key:found.key},error);if(revision&&kindOf(error)==='transient')throw error;return base.readCatalog(packId,revision);}
  }
  async function findArtifact(digest){
   let owners;

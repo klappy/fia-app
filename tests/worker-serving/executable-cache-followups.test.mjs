@@ -3,6 +3,10 @@ import assert from 'node:assert/strict';
 import {createExecutableOverlay} from '../../server/fia/publication/executable-overlay.mjs';
 import {createExecutableRuntime} from '../../server/fia/preparation/executable-presentation-runtime.mjs';
 import {sha256} from '../../server/fia/preparation/contract.mjs';
+import {createReadOperations} from '../../server/fia/publication/read-operations.mjs';
+import {createWorker} from '../../server/faces/worker/adapter.mjs';
+import {serveRead} from '../../server/faces/http.mjs';
+import {serveMcp} from '../../server/faces/mcp.mjs';
 // Follow-ups to fia-app#254 (cookbook package-luke RULING.md § DEV publication conflict):
 // cache misses are signalled for bookkeeping in production, a rejecting hook is contained,
 // transient faults are told apart from verification misses, a replaced row prunes its
@@ -105,4 +109,26 @@ test('the production runtime signals cache misses: a structured log line by defa
  const warn=console.warn,lines=[];console.warn=(...a)=>lines.push(a);
  try{const fallback=await runtime({});assert.equal((await fallback.ops.readPack({packId})).revision,fallback.revision);}finally{console.warn=warn;}
  assert.equal(lines.length,1);const logged=JSON.parse(lines[0][0]);assert.equal(logged.event,'executable-cache-miss');assert.equal(logged.reason,'executable-pointer-dangling');
+});
+
+test('verification-phase exact R2 and timeout faults propagate while pointer fallback and healthy exact recovery remain',async()=>{
+ for(const failure of [Error('R2 GET failed: connection reset'),Error('execution-storage-timeout')]){
+  const f=fixture(),record=await f.make().publish(candidate),seen=[],overlay=f.make({diagnose:d=>seen.push(d)});f.state.readFault=failure;
+  await assert.rejects(overlay.readCatalog(packId,record.revision),e=>e===failure);
+  assert.equal((await overlay.readCatalog(packId)).revision,binding.baseRevision);
+  assert.deepEqual(seen.map(d=>[d.where,d.kind,d.reason]),[['readCatalog','transient',failure.message],['readCatalog','transient',failure.message]]);
+  f.state.readFault=null;assert.equal((await overlay.readCatalog(packId,record.revision)).revision,record.revision);
+ }
+});
+test('exact HTTP verification fault is transient500 not authority404; corruption and revocation still fail closed',async()=>{
+ const f=fixture(),record=await f.make().publish(candidate),overlay=f.make(),worker=createWorker({origin:'https://dev.fiaguide.app',operations:createReadOperations(overlay),serveRead,serveMcp}),request=()=>new Request('https://dev.fiaguide.app/v1/packs/'+packId+'?revision='+record.revision);
+ f.state.readFault=Error('R2 GET failed: connection reset');assert.equal((await worker.fetch(request(),{})).status,500);
+ f.state.readFault=null;assert.equal((await worker.fetch(request(),{})).status,200);
+ const bytes=f.blobs.get(record.revision);f.blobs.set(record.revision,new TextEncoder().encode('corrupt'));assert.equal((await worker.fetch(request(),{})).status,404);
+ f.blobs.set(record.revision,bytes);const revoked=f.make({eligible:()=>false});assert.equal((await revoked.readCatalog(packId,record.revision)).status,'unavailable');assert.equal((await revoked.readCatalog(packId)).revision,binding.baseRevision);
+});
+test('post-commit artifact readback failure rejects rather than misreporting committed publication unavailable',async()=>{
+ const f=fixture();let reads=0;const failure=Error('R2 GET failed: connection reset'),artifacts={write:async b=>{const sha=await sha256(b);f.blobs.set(sha,new Uint8Array(b));return{reference:sha,sha256:sha};},read:async d=>{if(++reads===3)throw failure;return new Uint8Array(f.blobs.get(d.reference));}},overlay=f.make({artifacts});
+ await assert.rejects(overlay.publish(candidate),e=>e===failure);
+ const key=f.kv.get('executable-current:'+packId),row=f.kv.get(key);assert.ok(row,'publication was committed before exact readback');assert.equal((await overlay.readCatalog(packId,row.revision)).status,'ready');
 });
