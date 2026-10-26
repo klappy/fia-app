@@ -9,7 +9,7 @@ export async function inspectCueRoleQuestions(c){
  need(c.canonicalUnits.length<=256,'cue-question-envelope');
  const questions=[],unsupported=[],excluded=[];
  for(const u of c.canonicalUnits){
-  const activities=c.basePresentation.activities.filter(a=>a.sourceUnitId===u.sourceUnitId);
+  const activities=c.basePresentation.activities.filter(a=>a.sourceUnitId===u.sourceUnitId&&a.fulfills==null);
   if(activities.length!==1){
    const anchor=(({text,...value})=>value)(u),examples=(c.basePresentation.examples??[]).filter(e=>e.id===u.sourceUnitId),coverage=(c.basePresentation.coverage??[]).filter(e=>e.id===u.sourceUnitId);
    if(activities.length===0&&examples.length===1&&coverage.length===1&&examples[0].text===u.text&&examples[0].sha256===u.sourceTextSha256&&coverage[0].treatment==='optional-example'&&coverage[0].textSha256===u.sourceTextSha256){excluded.push({sourceAnchor:anchor,sourceText:u.text,reason:'reviewed-optional-example'});continue;}
