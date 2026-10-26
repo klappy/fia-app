@@ -15,7 +15,7 @@ export async function inspectCueRoleQuestions(c){
    if(activities.length===0&&examples.length===1&&coverage.length===1&&examples[0].text===u.text&&examples[0].sha256===u.sourceTextSha256&&coverage[0].treatment==='optional-example'&&coverage[0].textSha256===u.sourceTextSha256){excluded.push({sourceAnchor:anchor,sourceText:u.text,reason:'reviewed-optional-example'});continue;}
    unsupported.push({sourceAnchor:anchor,sourceText:u.text,reason:'cue-question-primary-anchor',activityIds:activities.map(a=>a.id)});continue;
   }const a=activities[0];
-  need(a.sectionId===u.sectionId&&a.sourceText===u.text&&(a.sourceSha256??a.sourceTextSha256)===u.sourceTextSha256,'cue-question-primary-source');
+  need(a.sectionId===u.sectionId&&(a.sourceText===undefined||a.sourceText===u.text)&&(a.sourceSha256??a.sourceTextSha256)===u.sourceTextSha256,'cue-question-primary-source');
   // Role-only classification requires source text, not unrelated resource HTML.
   const candidates=[];
   const {text,...sourceAnchor}=u;
