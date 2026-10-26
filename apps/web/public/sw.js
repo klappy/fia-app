@@ -219,7 +219,31 @@ self.addEventListener('fetch',event=>{
 });
 // Whole-book downloads: a verified copy in another passage's cache serves as this passage's file.
 // The passage's own revisions are never a source, so an update still fetches what it repairs.
-async function savedElsewhere(file,packId){if(packId===legacy)return null;const own=`${PREFIX}${packId}-`;for(const name of await caches.keys()){if(!name.startsWith(PREFIX)||name.startsWith(own))continue;const response=await (await caches.open(name)).match(file.path);if(await verified(response?.clone(),file))return response;}return null;}
+async function savedElsewhere(file,packId,signal){
+ if(packId===legacy)return null;
+ const own=`${PREFIX}${packId}-`,outputKey=downloadOutputKey(file);
+ for(const name of await caches.keys()){
+  signal?.throwIfAborted();if(!name.startsWith(PREFIX)||name.startsWith(own))continue;
+  const cache=await caches.open(name),samePath=await cache.match(file.path);
+  if(await verified(samePath?.clone(),file))return samePath;
+  if(!outputKey)continue;
+  // Cache names embed a pack id; existing validation/key helpers identify its declared records.
+  const suffix=name.slice(PREFIX.length);
+  for(let cut=suffix.indexOf('-');cut!==-1;cut=suffix.indexOf('-',cut+1)){
+   const other=suffix.slice(0,cut);if(other===packId||other===legacy||!validPack(other))continue;
+   for(const state of ['active','pending']){
+    signal?.throwIfAborted();let record;try{record=await read(packKey(other,state));}catch{continue;}
+    if(record?.packId!==other||record.cache!==name||!Array.isArray(record.files))continue;
+    for(const candidate of record.files){
+     signal?.throwIfAborted();if(!candidate||typeof candidate.path!=='string'||candidate.path===file.path||downloadOutputKey(candidate)!==outputKey||candidate.sourceSha256!==file.sourceSha256||candidate.group!==file.group||candidate.mime!==file.mime||candidate.bytes!==file.bytes)continue;
+     const response=await cache.match(candidate.path);
+     if((response?.headers.get('Content-Type')||'').split(';')[0].trim()===file.mime&&await verified(response?.clone(),file))return response;
+    }
+   }
+  }
+ }
+ return null;
+}
 async function start(selection,port,packId=legacy,sizes={},revision){
  if(!isBuild)throw new Error('Downloads work on the published Site.');
  if(!['core','audio','visual','all'].includes(selection))throw new Error('Choose a download option.');
@@ -256,7 +280,7 @@ async function start(selection,port,packId=legacy,sizes={},revision){
    // A clip shared by several paths is fetched once; later paths reuse the verified copy.
    if(shared&&!await verified(response?.clone(),file)){const copy=await cache.match(twin);if(await verified(copy?.clone(),file)){await cache.put(file.path,new Response(await copy.arrayBuffer(),{headers:copy.headers}));response=await cache.match(file.path);}}
    // A file another passage already saved and verified (the app, the catalog, a shared clip) is copied, not fetched again.
-   if(!await verified(response?.clone(),file)){const elsewhere=await savedElsewhere(file,packId);if(elsewhere){await cache.put(file.path,new Response(await elsewhere.arrayBuffer(),{headers:elsewhere.headers}));response=await cache.match(file.path);}}
+   if(!await verified(response?.clone(),file)){const elsewhere=await savedElsewhere(file,packId,controller.signal);if(elsewhere){await cache.put(file.path,new Response(await elsewhere.arrayBuffer(),{headers:elsewhere.headers}));response=await cache.match(file.path);}}
    if(!await verified(response?.clone(),file)){
     const timeout=setTimeout(()=>controller.abort(),30000);
     try{response=await fetch(file.deliveryURL||file.path,{cache:'no-store',signal:controller.signal});if(file.deliveryURL){const bytes=await readVerifiedMedia(response,file,{signal:controller.signal});response=new Response(bytes,{headers:{'Content-Type':file.mime}});}else if(!await verified(response.clone(),file))throw new Error('A file could not be verified. Retry to keep the files already downloaded.');

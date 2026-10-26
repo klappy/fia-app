@@ -946,7 +946,7 @@
     },
     {
       "path": "apps/web/public/sw.js",
-      "sha256": "77723c2f6c239a91a146a5f885dd7afd03bfac83c3eb125dc327cee7ddb17764"
+      "sha256": "43a5f0e8203ea247aed1da6feaf4d5df02d972dd983a3202f56df4a96bea4bde"
     },
     {
       "path": "apps/web/src/App.svelte",
@@ -2776,6 +2776,10 @@
     {
       "path": "release/changes/whole-book-download.md",
       "sha256": "a11d26c438845623940ceb3833f0443430f8d4ef8fb79042a0c725b2fb71d83c"
+    },
+    {
+      "path": "apps/web/tests/cross-passage-download-reuse.test.js",
+      "sha256": "04d3eaf92159c640541c88a4ab1bbc583e493751eeffb4e4806ee52b57e4f4ec"
     }
   ],
   "generatedFiles": [
@@ -5981,8 +5985,8 @@
     },
     {
       "path": "sw.js",
-      "sha256": "6dd38d2afb453d50dbad5323fc0cc6561a5beb73b6c9f708962076ab66768966",
-      "bytes": 82631
+      "sha256": "ecadb4e6a0fcb1629353096d293081aee76fadd18575000b5030970a496874fc",
+      "bytes": 83865
     },
     {
       "path": "content/approved-audio/7140879c9b324a068e48dc83eaff85669022528977f104c02434332b58415c56.json",
