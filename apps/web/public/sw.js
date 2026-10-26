@@ -3,6 +3,29 @@ const VERSION='__BUILD_ID__';
 const isBuild=!VERSION.startsWith('__');
 const META='fia-v3-download-metadata@1', SHELL=`fia-v3-shell-${VERSION}`, PREFIX='fia-v3-pack-';
 const jobs=new Map(),playbackJobs=new Map(),canceledPlayback=new Set();
+// Volatile verified audio only; each play still checks current authority and hashes.
+const audioReuse=new Map(),AUDIO_REUSE_MAX=16*1024*1024,AUDIO_REUSE_TTL=60000;
+function clearAudioReuse(client,pack){for(const [key,e]of audioReuse)if((!client||e.client===client)&&(!pack||e.pack===pack)){audioReuse.delete(key);if(!e.ready)e.controller.abort();}}
+async function reusableAudioResponse(file,{client,pack,revision,signal}){
+ const now=Date.now();for(const [k,e]of audioReuse)if(e.expires<=now&&!e.users){audioReuse.delete(k);e.controller.abort();}
+ // Existing transaction reuse identity plus source/config/current authority, not unit path.
+ const key=JSON.stringify([client,pack,revision,file.sourceSha256,downloadOutputKey(file),file.bytes,file.mime]);
+ for(const [k,e]of audioReuse)if(e.client===client&&e.pack===pack&&e.revision!==revision){audioReuse.delete(k);if(!e.ready)e.controller.abort();}
+ let entry=audioReuse.get(key);
+ if(!entry){
+  let used=[...audioReuse.values()].reduce((n,e)=>n+e.size,0);
+  for(const [k,e]of audioReuse){if(used+file.bytes<=AUDIO_REUSE_MAX)break;if(!e.users){used-=e.size;audioReuse.delete(k);e.controller.abort();}}
+  if(!client||audioReuse.size>=4||file.bytes>8*1024*1024||used+file.bytes>AUDIO_REUSE_MAX)return fetch(file.deliveryURL,{cache:'no-store',signal});
+  const controller=new AbortController();entry={client,pack,revision,size:file.bytes,controller,users:0,ready:false,expires:now+AUDIO_REUSE_TTL};audioReuse.set(key,entry);
+  entry.promise=(async()=>{const response=await fetch(file.deliveryURL,{cache:'no-store',signal:controller.signal});const bytes=await readVerifiedMedia(response,file,{signal:controller.signal});if(controller.signal.aborted)throw Error('Playback canceled.');entry.ready=true;return bytes;})().catch(error=>{if(audioReuse.get(key)===entry)audioReuse.delete(key);throw error;});
+ }
+ entry.users++;let abort;
+ try{
+  signal.throwIfAborted();const canceled=new Promise((_,reject)=>{abort=()=>reject(Error('Playback canceled.'));signal.addEventListener('abort',abort,{once:true});});
+  const bytes=await Promise.race([entry.promise,canceled]);signal.throwIfAborted();return new Response(bytes,{headers:{'Content-Type':file.mime,'Content-Length':String(bytes.length)}});
+ }finally{signal.removeEventListener('abort',abort);entry.users--;if(!entry.users&&!entry.ready){if(audioReuse.get(key)===entry)audioReuse.delete(key);entry.controller.abort();}}
+}
+
 const legacy='fia-mark-authentic';
 const packKey=(id,key)=>id===legacy?key:`pack:${id}:${key}`;
 const validPack=id=>id===legacy||/^(eng|spa)\.(?:MRK|LUK)-\d+(?:-\d+)+$/.test(id);
@@ -312,14 +335,14 @@ self.addEventListener('message',event=>{
      if(file.scripturePlaybackMode==='passage-only')validateScripturePassageFile(file,packId);validateVideoSize(file);const controller=new AbortController();playbackJobs.set(key,controller);
      try{let response=active?.cache&&await(await caches.open(active.cache)).match(file.path),bytes=null,served={sha256:file.sha256,bytes:file.bytes};
       if(response){try{bytes=await readVerifiedMedia(response,file,{signal:controller.signal});}catch(error){if(controller.signal.aborted)throw error;if(video&&saved)notes.push({kind:'saved-copy-unreadable'});}}
-      if(!bytes){response=await fetch(file.deliveryURL,{cache:'no-store',signal:controller.signal,...(video?{redirect:'error'}:{})});
+      if(!bytes){response=video?await fetch(file.deliveryURL,{cache:'no-store',signal:controller.signal,redirect:'error'}):file.group==='audio'?await reusableAudioResponse(file,{client:event.source?.id,pack:packId,revision:manifest.deliveryRevision,signal:controller.signal}):await fetch(file.deliveryURL,{cache:'no-store',signal:controller.signal});
        if(video){const read=await readPlayableVideo(response,file,{signal:controller.signal});bytes=read.bytes;served=read.served;if(read.drift)notes.push({kind:'content-drift',expected:{sha256:file.sha256,bytes:file.bytes},served});}
        else bytes=await readVerifiedMedia(response,file,{signal:controller.signal});}
       if(controller.signal.aborted)throw Error('Playback canceled.');result={bytes:bytes.buffer,mime:file.mime,timing:file.timing,...(file.playbackRange?{playbackRange:file.playbackRange}:{}),...(file.scriptureAlignment?{scriptureAlignment:file.scriptureAlignment,scriptureAlignmentSha256:file.scriptureAlignmentSha256}:{}),...(file.scripturePlaybackMode==='passage-only'?{scriptureAlignment:null,scripturePlaybackMode:'passage-only',scriptureHighlighting:'disabled'}:{}),file:file.scripturePlaybackMode==='passage-only'?file:{path:file.path,sha256:served.sha256,bytes:served.bytes,deliveryURL:file.deliveryURL},...(notes.length?{notes}:{})};
       if(notes.length)noticeLog={packId,path:file.path,notes};
      }finally{playbackJobs.delete(key);canceledPlayback.delete(key);}
     }
-   }else if(type==='PACK_SELECT'){
+   }else if(type==='PACK_SELECT'){clearAudioReuse(event.source?.id);
     const active=await read(packKey(packId,'active'));
     const matches=active&&(active.manifest?.presentationRevision===event.data.revision||!active.serverSnapshot?.invalid&&active.serverSnapshot?.record.revision===event.data.revision);
     if(event.source?.id){const prior=await read('client-'+event.source.id);await write('client-'+event.source.id,{...(matches?active:{packId,revision:event.data.revision}),...(prior?.shell==='network'?{shell:'network'}:{})});}
@@ -327,7 +350,7 @@ self.addEventListener('message',event=>{
    }else if(type==='DOWNLOAD_STATUS'||type==='CACHE_STATUS')result=await status(packId);
    else if(type==='DOWNLOAD_START'){const active=await read(packKey(packId,'active'));if(active&&event.source?.id&&!await read('client-'+event.source.id))await write('client-'+event.source.id,active);result=await start(event.data.selection,port,packId,event.data.sizes||{},event.data.revision);}
    else if(type==='DOWNLOAD_PAUSE'){jobs.get(packId)?.abort();result={paused:true};}
-   else if(type==='DOWNLOAD_REMOVE'){
+   else if(type==='DOWNLOAD_REMOVE'){clearAudioReuse(null,packId);
     if(jobs.has(packId))throw new Error('Pause the download before removing it.');
     const keys=await caches.keys(),prefix=packId===legacy?PREFIX:`${PREFIX}${packId}-`;
     const meta=await caches.open(META);
@@ -338,6 +361,6 @@ self.addEventListener('message',event=>{
    }else return;
    port?.postMessage({ok:true,...result},result.bytes instanceof ArrayBuffer?[result.bytes]:[]);
    if(noticeLog)await recordMediaNotices(noticeLog).catch(()=>{});
-  }catch(error){port?.postMessage(type==='MEDIA_STATUS'?{ok:false,error:'Media availability could not be verified.',code:error?.mediaStatusCode==='media-status-transient'?'media-status-transient':'media-status-invalid'}:{ok:false,error:error.message});if(type==='MEDIA_PLAY'&&error.message!=='Playback canceled.')await recordMediaNotices({packId,path:event.data.path,notes:[{kind:'play-failed',message:'Playback failed.'}]}).catch(()=>{});}
+  }catch(error){port?.postMessage(type==='MEDIA_STATUS'?{ok:false,error:'Media availability could not be verified.',code:error?.mediaStatusCode==='media-status-transient'?'media-status-transient':'media-status-invalid'}:{ok:false,error:error.message});if(type==='MEDIA_PLAY'&&error.message!=='Playback canceled.'){clearAudioReuse(event.source?.id,packId);}if(type==='MEDIA_PLAY'&&error.message!=='Playback canceled.')await recordMediaNotices({packId,path:event.data.path,notes:[{kind:'play-failed',message:'Playback failed.'}]}).catch(()=>{});}
  })());
 });
