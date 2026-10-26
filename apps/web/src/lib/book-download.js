@@ -26,12 +26,15 @@ export function passageSatisfied(status,tier){
 /** Book totals per tier. Files shared by passages (the app, the catalog, shared clips)
  * count once: the worker copies a verified file already saved by another passage
  * instead of fetching it again. `unknown` counts passages with an output whose size
- * is set during download; `remaining` leaves out files already saved on the device. */
+ * is set during download; `unresolved` counts failed/missing status checks separately.
+ * `remaining` leaves out files already saved on the device. */
 const fileKey=f=>(f.deliveryURL||f.path)+'#'+(f.sha256||'');
 export function bookTotals(statuses){
  return Object.fromEntries(tierOrder.map(id=>{
-  let bytes=0,remaining=0,unknown=0,saved=0,count=0;const all=new Map(),have=new Set(),wanted=new Map();
-  for(const status of statuses){const tier=passageTier(status,id);if(!tier)continue;count++;const done=passageSatisfied(status,tier);if(done)saved++;
+  let bytes=0,remaining=0,unknown=0,unresolved=0,saved=0,count=0;const all=new Map(),have=new Set(),wanted=new Map();
+  for(const status of statuses){
+   if(!status||status.available===false||!Array.isArray(status.choices)){count++;unresolved++;continue;}
+   const tier=passageTier(status,id);if(!tier)continue;count++;const done=passageSatisfied(status,tier);if(done)saved++;
    const files=status.manifest?.files?.filter(f=>downloadSelectionIncludes(tier,f.group));
    if(!files){const value=status.choices.find(c=>c.id===tier)?.bytes;if(Number.isFinite(value)){bytes+=value;if(!done)remaining+=value;}else if(!done)unknown++;continue;}
    if(!done&&files.some(f=>!Number.isFinite(f.bytes)))unknown++;
@@ -39,7 +42,7 @@ export function bookTotals(statuses){
   }
   for(const value of all.values())bytes+=value;
   for(const [key,value] of wanted)if(!have.has(key))remaining+=value;
-  return [id,{bytes,remaining,unknown,saved,count}];
+  return [id,{bytes,remaining,unknown,unresolved,saved,count}];
  }));
 }
 /** Statuses for every passage, a few at a time; a failed status is kept as an error entry. */

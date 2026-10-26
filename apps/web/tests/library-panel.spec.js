@@ -99,3 +99,26 @@ it('whole book: previews each package total, then saves only unsaved passages th
  await fireEvent.click(screen.getByRole('button',{name:'Download whole book'}));await settle();await settle();await settle();
  expect(download).toHaveBeenCalledOnce();expect(download.mock.calls[0][0]).toBe('core');expect(download.mock.calls[0][2].id).toBe('eng.MRK-1-1-13');
 });
+
+it.each(['mixed','all'])('whole book: %s failed checks show an incomplete preview and retry recovers',async mode=>{
+ const packs=[{id:'eng.MRK-1-1-13',pericopeId:'MRK-1-1-13',language:'eng',title:'Mark 1:1–13'},{id:'eng.MRK-1-14-20',pericopeId:'MRK-1-14-20',language:'eng',title:'Mark 1:14–20'}];
+ let recover=false,initial=true;
+ vi.spyOn(libraryAdapter,'passages').mockResolvedValue(packs);
+ libraryAdapter.downloadStatus.mockImplementation(async pack=>{
+  if(initial){initial=false;return {...available,choices:[{id:'core',bytes:1024}]};}
+  if(pack&&!recover&&(mode==='all'||pack.id===packs[1].id))throw Error('Status connection failed.');
+  return {...available,choices:[{id:'core',bytes:1024}]};
+ });
+ const download=vi.spyOn(libraryAdapter,'download').mockResolvedValue({saved:true});
+ render(LibraryPanel,{view:'downloads',selectedPack:packs[0]});await settle();
+ await fireEvent.click(screen.getByRole('button',{name:'Check book size'}));await settle();await settle();
+ expect(screen.getByText(/Book size is incomplete/)).toBeTruthy();
+ expect(screen.queryByText('Nothing to save for this choice.')).toBeNull();
+ expect(screen.getByRole('button',{name:'Download whole book'}).disabled).toBe(true);
+ expect(download).not.toHaveBeenCalled();
+ const retry=screen.getByRole('button',{name:'Retry book size check'});recover=true;await fireEvent.click(retry);await settle();await settle();
+ expect(screen.queryByText(/Book size is incomplete/)).toBeNull();
+ expect(screen.queryByRole('button',{name:'Retry book size check'})).toBeNull();
+ expect(screen.getByRole('list',{name:'Whole book size by package'}).textContent).toContain('2 passages');
+ expect(screen.getByRole('button',{name:'Download whole book'}).disabled).toBe(false);
+});

@@ -59,7 +59,7 @@
  async function checkBook(){bookChecking=true;bookResult=null;try{bookPacks=bookPassages(await libraryAdapter.passages(selectedPack.language||language),selectedPack);bookStatusList=await bookStatuses(bookPacks,libraryAdapter);}catch(e){error=e.message;}finally{bookChecking=false;}}
  async function saveBook(){bookBusy=true;bookStop=false;bookResult=null;error='';try{bookResult=await downloadBook(bookPacks,selection,libraryAdapter,{onprogress:value=>bookProgress=value,shouldStop:()=>bookStop});}catch(e){error=e.message;}finally{bookBusy=false;bookProgress=null;await refresh();await checkBook();}}
  async function pauseBook(){bookStop=true;const pack=bookProgress?.pack;if(pack)try{await libraryAdapter.pauseDownload(pack);}catch(e){error=e.message;}}
- function bookLine(t){if(!t?.count)return 'Not offered in this book';return `${formatBytes(t.bytes)}${t.unknown?` + ${t.unknown} set during download`:''} · ${t.count} passages${t.saved?` · ${t.saved} saved`:''}`;}
+ function bookLine(t){if(!t?.count)return 'Not offered in this book';const unresolved=t.unresolved||0,size=unresolved===t.count?'Size unavailable':`${unresolved?'At least ':''}${formatBytes(t.bytes)}${t.unknown?` + ${t.unknown} set during download`:''}`;return `${size} · ${t.count} passages${t.saved?` · ${t.saved} saved`:''}${unresolved?` · ${unresolved} not checked`:''}`;}
  async function remove(){try{await libraryAdapter.removeDownload(selectedPack);confirmRemove=false;await refresh();}catch(e){error=e.message;}}
 </script>
 <div class="library-panel">
@@ -111,10 +111,11 @@
     {:else}
      <ul class="book-sizes" aria-label="Whole book size by package">{#each download.choices as choice}<li class:chosen={selection===choice.id}><strong>{labels[choice.id]}</strong><small>{bookLine(bookTotalsByTier[choice.id])}</small></li>{/each}</ul>
      {@const chosen=bookTotalsByTier[selection]}
-     <p>{chosen.count?`${formatBytes(chosen.remaining)}${chosen.unknown?` + ${chosen.unknown} passages sized during download`:''} to download · ${chosen.count-chosen.saved} of ${chosen.count} passages`:'Nothing to save for this choice.'}</p>
+    <p>{chosen.unresolved?`Book size is incomplete: ${chosen.unresolved} passage${chosen.unresolved===1?'':'s'} could not be checked. Retry the check before downloading.`:chosen.count?`${formatBytes(chosen.remaining)}${chosen.unknown?` + ${chosen.unknown} passages sized during download`:''} to download · ${chosen.count-chosen.saved} of ${chosen.count} passages`:'Nothing to save for this choice.'}</p>
+    {#if chosen.unresolved}<button class="secondary full" disabled={bookChecking||busy||bookBusy} onclick={checkBook}>{bookChecking?'Checking book size…':'Retry book size check'}</button>{/if}
      {#if bookProgress}<progress aria-label="Book download progress" value={bookProgress.index} max={bookProgress.total||1}></progress><p role="status">Passage {Math.min(bookProgress.index+1,bookProgress.total)} of {bookProgress.total}{bookProgress.pack?` · ${bookProgress.pack.title}`:''}{bookProgress.transfer?` · ${formatBytes(bookProgress.transfer.received)} verified`:''}</p>{/if}
      {#if bookResult}<p role="status">{bookResult.stopped?'Book download paused. Saved passages are kept; Download whole book resumes.':'Book download finished.'} {bookResult.saved} saved · {bookResult.skipped} already saved{bookResult.failed.length?` · ${bookResult.failed.length} not saved`:''}.</p>{/if}
-     {#if bookBusy}<button class="secondary full" onclick={pauseBook}><Pause size={18}/>Pause book download</button>{:else}<button class="secondary full" disabled={busy||!chosen.count||chosen.saved===chosen.count||download.pending?.running} onclick={saveBook}><Download size={18}/>Download whole book</button>{/if}
+    {#if bookBusy}<button class="secondary full" onclick={pauseBook}><Pause size={18}/>Pause book download</button>{:else}<button class="secondary full" disabled={busy||bookChecking||!chosen.count||!!chosen.unresolved||chosen.saved===chosen.count||download.pending?.running} onclick={saveBook}><Download size={18}/>Download whole book</button>{/if}
     {/if}
    </article>
   {/if}
