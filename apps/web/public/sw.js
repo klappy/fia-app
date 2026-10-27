@@ -89,11 +89,21 @@ async function snapshotComplete(active){
  try{serverRecord(snapshot.record,active.packId);const expected=serverFiles(snapshot.record);if(JSON.stringify(expected)!==JSON.stringify(snapshot.files))return false;const cache=await caches.open(active.cache);for(const f of expected)await serverJSON(await cache.match(f.path),f,snapshot.record);return true;}catch{return false;}
 }
 async function savedServerSnapshot(packId,revision){const active=await read(packKey(packId,'active'));if(revision&&active?.serverSnapshot?.record.revision!==revision)return null;return await snapshotComplete(active)?active:null;}
-async function retainServerSnapshot(packId,revision,cache,signal){
+async function retainServerSnapshot(packId,revision,cache,signal,onprogress){
  if(packId===legacy||revision===undefined)return null;
  if(!isPassageHash(revision))throw Error('Invalid server revision.');
- let record;try{const r=await fetchLatest(`/v1/packs/${packId}${revision?'?revision='+revision:''}`,{cache:'no-store',redirect:'error',signal});if(r.status!==200||r.redirected)throw Error('Server record unavailable.');record=serverRecord(await r.json(),packId);if(revision&&record.revision!==revision)throw Error('Server revision changed.');const files=serverFiles(record);for(const f of files){let r=await cache.match(f.path);try{await serverJSON(r,f,record);}catch{r=await fetchLatest(f.path,{cache:'no-store',redirect:'error',signal});await serverJSON(r,f,record);await cache.put(f.path,r);}}return {record,files,invalid:false};}
- catch(error){if(error.mediaStatusCode!=='media-status-transient')await invalidateServerSnapshot(packId);throw error;}
+ const checkCanceled=()=>{if(signal.aborted)throw Object.assign(Error('Download paused. Verified files are kept for Resume.'),{name:'AbortError'});};
+ let record;try{
+  checkCanceled();const r=await fetchLatest(`/v1/packs/${packId}${revision?'?revision='+revision:''}`,{cache:'no-store',redirect:'error',signal});checkCanceled();
+  if(r.status!==200||r.redirected)throw Error('Server record unavailable.');record=serverRecord(await r.json(),packId);checkCanceled();if(revision&&record.revision!==revision)throw Error('Server revision changed.');
+  const files=serverFiles(record);onprogress?.({phase:'record-verified',verified:0,total:files.length});
+  for(const [index,f] of files.entries()){
+   checkCanceled();let response=await cache.match(f.path);try{await serverJSON(response,f,record);}catch{checkCanceled();response=await fetchLatest(f.path,{cache:'no-store',redirect:'error',signal});await serverJSON(response,f,record);checkCanceled();await cache.put(f.path,response);}
+   checkCanceled();onprogress?.({phase:'artifact-verified',verified:index+1,total:files.length});
+  }
+  return {record,files,invalid:false};
+ }
+ catch(error){if(!(signal.aborted&&error.name==='AbortError')&&error.mediaStatusCode!=='media-status-transient')await invalidateServerSnapshot(packId);throw error;}
 }
 // Catalog retrieval may precede UI cancellation/activation. Keep its artifact
 // lookup context separate from PACK_SELECT's native-media custody.
@@ -251,7 +261,11 @@ async function start(selection,port,packId=legacy,sizes={},revision){
  if(jobs.has(packId))throw new Error('A download is already running for this passage.');
  const controller=new AbortController();jobs.set(packId,controller);
  let pending;
+ // Real bounded preflight work keeps the existing inactivity guard informed.
+ // These are metadata milestones, never payload bytes or saved availability.
+ const preflight=stage=>{if(controller.signal.aborted)throw Error('Download paused. Verified files are kept for Resume.');port?.postMessage({progress:{received:0,bytes:null,count:0,total:0,preflight:stage}});};
  try{
+  preflight({phase:'authority-check',verified:0,total:null});
   let manifest;
   try{manifest=await latest(packId,true);}catch(error){if(error.mediaStatusCode!=='media-status-transient'){await invalidateServerSnapshot(packId);throw error;}const previous=await read(packKey(packId,'pending'));if(!previous)throw error;manifest=validate(previous.manifest);}
   const priorPending=await read(packKey(packId,'pending'));if(!Object.keys(sizes).length&&priorPending?.selection===selection)sizes=priorPending.manifest.mediaSizes||{};
@@ -261,7 +275,7 @@ async function start(selection,port,packId=legacy,sizes={},revision){
   // A repair stages separately from the last working copy, even at the same revision.
   const cacheId=active?.cache===cacheName?cacheName+'-repair':cacheName;
   const cache=await caches.open(cacheId);
-  const serverSnapshot=await retainServerSnapshot(packId,revision,cache,controller.signal);
+  const serverSnapshot=await retainServerSnapshot(packId,revision,cache,controller.signal,preflight);
   if(serverSnapshot){const binding=serverSnapshot.record.execution?.mediaIdentity||{packId:serverSnapshot.record.packId,revision:serverSnapshot.record.revision};if(binding.packId!==manifest.packId||binding.revision!==manifest.presentationRevision)throw Error('The saved media belongs to a different server presentation.');}
   const downloadFiles=[...files,...(serverSnapshot?.files||[])];
   pending={packId,cache:cacheId,revision:manifest.revision,selection,manifest,files,...(serverSnapshot?{serverSnapshot}:{}),bytes:downloadTransferBytes(downloadFiles),received:0,count:0,status:'downloading'};
