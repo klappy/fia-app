@@ -48,13 +48,15 @@ async function fetchLatest(path,options){
  if([408,429,500,502,503,504].includes(response.status))throw Object.assign(Error('Media status is temporarily unavailable.'),{mediaStatusCode:'media-status-transient'});
  return response;
 }
-async function latest(packId=legacy,media=false){
+async function latest(packId=legacy,media=false,onprogress){
  const request=media?fetchLatest:fetch;
  const response=await request(packId===legacy?'/offline-manifest.json':`/offline/${packId}.json`,{cache:'no-store'});
  if(!response.ok)throw new Error('Could not check the latest download. Connect and try again.');
  const manifest=validate(await response.json());if(manifest.packId!==packId)throw new Error('The download belongs to a different passage.');
+ onprogress?.({phase:'manifest-verified',verified:0,total:null});
  const delivery=manifest.files.find(f=>f.group==='core'&&f.path===`/content/delivery/${packId}/${manifest.deliveryRevision}.json`);
  if(delivery){const r=await request(delivery.path,{cache:'no-store'});if(!await verified(r.clone(),delivery))throw Error('Delivery source metadata changed.');const sidecar=validateDelivery(await r.json(),{packId,presentationRevision:manifest.presentationRevision});for(const f of manifest.files){const e=sidecar.entries.find(e=>e.path===f.path);if(e){if(e.source.sha256!==f.sourceSha256)throw Error('Source identity changed.');f.sourceBytes=e.source.bytes;for(const v of Object.values(f.variants||{}))v.sourceBytes=e.source.bytes;}}}
+ if(delivery)onprogress?.({phase:'delivery-verified',verified:0,total:null});
  return manifest;
 }
 async function verified(response,file){
@@ -263,11 +265,11 @@ async function start(selection,port,packId=legacy,sizes={},revision){
  let pending;
  // Real bounded preflight work keeps the existing inactivity guard informed.
  // These are metadata milestones, never payload bytes or saved availability.
- const preflight=stage=>{if(controller.signal.aborted)throw Error('Download paused. Verified files are kept for Resume.');port?.postMessage({progress:{received:0,bytes:null,count:0,total:0,preflight:stage}});};
+ const preflight=stage=>{if(controller.signal.aborted)throw Object.assign(Error('Download paused. Verified files are kept for Resume.'),{name:'AbortError'});port?.postMessage({progress:{received:0,bytes:null,count:0,total:0,preflight:stage}});};
  try{
   preflight({phase:'authority-check',verified:0,total:null});
   let manifest;
-  try{manifest=await latest(packId,true);}catch(error){if(error.mediaStatusCode!=='media-status-transient'){await invalidateServerSnapshot(packId);throw error;}const previous=await read(packKey(packId,'pending'));if(!previous)throw error;manifest=validate(previous.manifest);}
+  try{manifest=await latest(packId,true,preflight);}catch(error){if(controller.signal.aborted&&error.name==='AbortError')throw error;if(error.mediaStatusCode!=='media-status-transient'){await invalidateServerSnapshot(packId);throw error;}const previous=await read(packKey(packId,'pending'));if(!previous)throw error;manifest=validate(previous.manifest);}
   const priorPending=await read(packKey(packId,'pending'));if(!Object.keys(sizes).length&&priorPending?.selection===selection)sizes=priorPending.manifest.mediaSizes||{};
   manifest=planProxyDownload(manifest,selection,sizes);
   const files=selectedFiles(manifest,selection),cacheName=`${PREFIX}${packId===legacy?'':packId+'-'}${manifest.revision}-${selection}`;
