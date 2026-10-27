@@ -30,10 +30,9 @@ test('book totals count a file shared by passages once and skip files already sa
  assert.deepEqual(t.core,{bytes:130,remaining:20,unknown:0,saved:1,count:3});
  assert.deepEqual(t.audio,{bytes:170,remaining:170,unknown:0,saved:0,count:3});
 });
-test('downloadBook skips saved passages without a fetch, uses each passage tier and stops on request',async()=>{
- const packs=[{id:'a'},{id:'b'},{id:'c'}];const statuses={a:st({core:1,audio:2},{saved:true,active:{selection:'audio'}}),b:st({core:1}),c:st({core:1,audio:2})};const calls=[];
- const adapter={downloadStatus:async p=>statuses[p.id],download:async(tier,progress,pack,sizes)=>{calls.push([pack.id,tier,sizes]);progress({received:1,bytes:1});return {saved:true};}};
- const r=await downloadBook(packs,'audio',adapter);assert.deepEqual(calls,[['b','core',{}],['c','audio',{}]]);assert.equal(r.saved,2);assert.equal(r.skipped,1);
- let stop=false;calls.length=0;const r2=await downloadBook(packs,'all',{...adapter,download:async(tier,progress,pack)=>{calls.push(pack.id);stop=true;throw Error('Download paused.');}},{shouldStop:()=>stop});
- assert.deepEqual(calls,['b']);assert.equal(r2.stopped,true);assert.equal(r2.failed.length,0);
+test('whole-book containment refuses every tier before status, writes or active snapshot replacement',async()=>{
+ const active={packId:'exec',revision:'exec-r',selection:'audio'};const before=structuredClone(active);const calls=[];
+ const adapter={downloadStatus:async()=>{calls.push('status');return st({core:1});},download:async()=>{calls.push('write');active.revision='base-r';return {saved:true};}};
+ for(const tier of ['core','audio','visual','all'])await assert.rejects(downloadBook([{id:'other'},{id:'exec'}],tier,adapter),/Whole-book saving is temporarily unavailable/);
+ assert.deepEqual(calls,[]);assert.deepEqual(active,before);
 });

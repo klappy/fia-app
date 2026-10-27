@@ -279,6 +279,9 @@ async function start(selection,port,packId=legacy,sizes={},revision){
   const cache=await caches.open(cacheId);
   const serverSnapshot=await retainServerSnapshot(packId,revision,cache,controller.signal,preflight);
   if(serverSnapshot){const binding=serverSnapshot.record.execution?.mediaIdentity||{packId:serverSnapshot.record.packId,revision:serverSnapshot.record.revision};if(binding.packId!==manifest.packId||binding.revision!==manifest.presentationRevision)throw Error('The saved media belongs to a different server presentation.');}
+  // Old loaded callers use the same Save protocol. Never downgrade a verified
+  // executable Saved snapshot to a static base (or a snapshot-less legacy save).
+  if(active?.serverSnapshot?.record.execution&&!serverSnapshot?.record.execution&&await snapshotComplete(active))throw Error('The executable saved passage is preserved. Reload before saving this selection.');
   const downloadFiles=[...files,...(serverSnapshot?.files||[])];
   pending={packId,cache:cacheId,revision:manifest.revision,selection,manifest,files,...(serverSnapshot?{serverSnapshot}:{}),bytes:downloadTransferBytes(downloadFiles),received:0,count:0,status:'downloading'};
   await write(packKey(packId,'pending'),pending);
