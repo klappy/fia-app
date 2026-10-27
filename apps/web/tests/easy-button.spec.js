@@ -334,11 +334,12 @@ it('R6: a screen with no possible recording shows no enabled Play and sends no p
  render(App);await heading(unadmitted.presentation.activities[0].prompt);await waitFor(()=>expect(readFace().label).toBe('Continue'));
  const dock=screen.getByRole('navigation',{name:'Session controls'});
  expect([...dock.querySelectorAll('button')].filter(b=>/^Play/.test(b.getAttribute('aria-label'))&&!b.disabled)).toHaveLength(0);
- await fireEvent.click(screen.getByRole('button',{name:'Replay'}));await wait(20);
+ expect(screen.getByRole('button',{name:'Replay'}).disabled).toBe(true);
  // GAP-R6: with automatic guide narration off the Next slot still holds Skip; no Play, enabled or disabled.
  await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Settings',exact:true}));await fireEvent.click(screen.getByRole('checkbox',{name:/Automatic guide narration/}));await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));
  expect([...dock.querySelectorAll('button')].map(b=>b.getAttribute('aria-label')).filter(l=>/^Play/.test(l))).toEqual([]);
- expect(screen.getByRole('button',{name:'Skip to next activity'}).disabled).toBe(false);await fireEvent.click(screen.getByRole('button',{name:'Replay'}));await wait(20);
+ expect(screen.getByRole('button',{name:'Skip to next activity'}).disabled).toBe(false);expect(screen.getByRole('button',{name:'Replay'}).disabled).toBe(true);
+ // Replay is never clicked (it is disabled); this guards the load and the settings toggle above, not a Replay tap (review of #247).
  expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();
 });
 
@@ -418,6 +419,20 @@ it('B1/K4: while checking, the Next slot follows what the screen declares; Mark 
  restored.resolve(unadmitted);await heading(other);await answer('eng.MRK-1-21-28');await verified();slots.stop();
  expect(slots.on(other)).toEqual(['Skip to next activity']);
  expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();
+});
+
+// Review of #247 (finding 3): Replay follows the fourth slot's Play while checking. Mark 1:1–13 declares a recording,
+// but until the device check answers nothing can play, so Replay stays disabled (a tap cannot settle the screen
+// silently) and comes on once the check answers.
+it('B1/K4: while checking, Replay on a declared recording stays disabled until the check answers',async()=>{
+ const pending=[];libraryAdapter.mediaStatus.mockImplementation(p=>{const d=deferred();pending.push({id:p.id,d});return d.promise;});
+ vi.spyOn(libraryAdapter,'select').mockImplementation(async id=>pack(id));
+ localStorage.setItem('fia-v3-preferences@1',JSON.stringify({muted:true,preferences:createSession(activities).preferences}));
+ render(App);await heading(activities[0].prompt);await wait(30);
+ expect(readFace().label).toBe(CHECKING);const replay=()=>screen.getByRole('button',{name:'Replay'});
+ expect(replay().disabled).toBe(true);expect(replay().classList.contains('no-audio')).toBe(false);
+ await waitFor(()=>expect(pending.some(a=>a.id==='eng.MRK-1-1-13')).toBe(true));for(const a of pending.splice(0))a.d.resolve(bundledMedia);await verified();
+ expect(replay().disabled).toBe(false);
 });
 
 // B1-bis (review of #201): a passage-only Scripture recording is declared by the packaged build (the passage's

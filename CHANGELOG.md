@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.0.0-alpha.18 — Luke, passage controls and downloads (2026-10-26)
+
+Adds Luke text in English and Spanish beside Mark, with publisher audio admitted for Luke 1:1–4. The session bar identifies the passage, disables Replay without playable audio, and provides a book control for passage selection. Downloads offer a no-video package, stable accessible package names, size previews and resumable whole-book saving. Executable preparation uses a verified cache that falls back to preparation on a cache miss.
+
+Includes the client-flow, shell and compiler-graph acceptance proofs already merged on DEV. See the [release scope and limits](release/changes/3.0.0-alpha.18-existing-dev.md). This metadata preparation does not establish a new environment deployment, all-passage audio coverage, full QA matrix or physical-device acceptance. Exact-candidate review, checks and DEV → staging → production proofs remain required.
+
 ## 3.0.0-alpha.17 — MCP connector compatibility (2026-10-15)
 
 Legacy MCP initialization negotiates the supported protocol version. Unused OAuth discovery returns explicit 404 responses instead of app HTML. Origin restrictions and tool authority remain unchanged.

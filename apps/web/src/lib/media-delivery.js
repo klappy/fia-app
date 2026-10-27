@@ -1,6 +1,6 @@
 const sha=/^[a-f0-9]{64}$/;
 const local=/^\/(?!\/|.*(?:\.\.|[?#]))/;
-const pack=/^(eng|spa)\.MRK-\d+(?:-\d+)+$/;
+const pack=/^(eng|spa)\.(?:MRK|LUK)-\d+(?:-\d+)+$/;
 const positive=n=>Number.isSafeInteger(n)&&n>0;
 function videoKeys(value,keys){if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).sort().join(',')!==keys.split(',').sort().join(','))throw Error('Unknown or missing video contract field.');}
 export function validateDeliveryIndex(index){

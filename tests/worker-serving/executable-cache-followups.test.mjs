@@ -1,0 +1,177 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createExecutableOperations} from '../../server/fia/publication/executable-operations.mjs';
+import {createExecutableOverlay} from '../../server/fia/publication/executable-overlay.mjs';
+import {createExecutableRuntime} from '../../server/fia/preparation/executable-presentation-runtime.mjs';
+import {sha256} from '../../server/fia/preparation/contract.mjs';
+import {createReadOperations} from '../../server/fia/publication/read-operations.mjs';
+import {createWorker} from '../../server/faces/worker/adapter.mjs';
+import {serveRead} from '../../server/faces/http.mjs';
+import {serveMcp} from '../../server/faces/mcp.mjs';
+// Follow-ups to fia-app#254 (cookbook package-luke RULING.md § DEV publication conflict):
+// cache misses are signalled for bookkeeping in production, a rejecting hook is contained,
+// transient faults are told apart from verification misses, a replaced row prunes its
+// stale owner-index entries, and the unreachable historical authentication is gone.
+const h=x=>x.repeat(64),packId='eng.MRK-1-14-20';
+const binding={packId,baseRevision:h('a'),sourceRevision:'b'.repeat(40),capability:'executable-presentation'};
+const candidate={binding,presentation:{id:packId,execution:{schema:'fixture'},activities:[]},boundArtifacts:[],provenance:{recipe:h('c')}};
+function fixture(){
+ const kv=new Map(),blobs=new Map(),state={storageFault:null,readFault:null};
+ const storage={transaction:async fn=>{if(state.storageFault)throw state.storageFault;const staged=new Map(kv);const out=await fn({get:async k=>staged.has(k)?structuredClone(staged.get(k)):undefined,put:async(k,v)=>{staged.set(k,structuredClone(v));},delete:async k=>{staged.delete(k);}});kv.clear();for(const [k,v] of staged)kv.set(k,v);return out;}};
+ const artifacts={async write(b){const sha=await sha256(b);blobs.set(sha,new Uint8Array(b));return {reference:sha,sha256:sha};},async read(d){if(state.readFault)throw state.readFault;return new Uint8Array(blobs.get(d.reference));}};
+ const base={readCatalog:async(id,revision)=>id===packId&&(!revision||revision===binding.baseRevision)?{status:'ready',packId:id,revision:binding.baseRevision,artifact:{sha256:binding.baseRevision,bytes:2,mime:'application/json'}}:{status:'unavailable',reason:'not-found'},findArtifact:async()=>null};
+ const make=(extra={})=>createExecutableOverlay({storage,artifacts,base,eligible:()=>true,validate:async c=>c.presentation.execution.schema==='fixture',...extra});
+ return {kv,blobs,state,make,storage};
+}
+const bound=async text=>{const bytes=new TextEncoder().encode(text);return {id:'bound:'+text,bytes,sha256:await sha256(bytes)};};
+
+test('a rejecting or throwing diagnose hook is contained and never changes the read',async()=>{
+ const f=fixture(),record=await f.make().publish(candidate);f.blobs.set(record.revision,new TextEncoder().encode('corrupt'));
+ const unhandled=[],listen=e=>unhandled.push(e);process.on('unhandledRejection',listen);
+ try{
+  const rejecting=f.make({diagnose:async()=>{throw Error('metrics-down');}});
+  assert.equal((await rejecting.readCatalog(packId)).revision,binding.baseRevision);assert.equal(await rejecting.findArtifact(record.revision),null);
+  const throwing=f.make({diagnose:()=>{throw Error('metrics-down');}});
+  assert.equal((await throwing.readCatalog(packId)).revision,binding.baseRevision);
+  await new Promise(r=>setImmediate(r));
+  assert.deepEqual(unhandled,[],'an async hook rejection is not an unhandled rejection');
+ }finally{process.off('unhandledRejection',listen);}
+});
+
+test('transient storage and R2 faults are told apart from verification misses; both serve the base',async()=>{
+ const f=fixture(),record=await f.make().publish(candidate),seen=[],overlay=f.make({diagnose:d=>seen.push(d)}),stored=f.blobs.get(record.revision);
+ f.blobs.set(record.revision,new TextEncoder().encode('corrupt'));
+ assert.equal((await overlay.readCatalog(packId)).revision,binding.baseRevision);
+ f.blobs.set(record.revision,stored);f.state.readFault=Error('R2 GET failed: connection reset');
+ assert.equal((await overlay.readCatalog(packId)).revision,binding.baseRevision);
+ f.state.readFault=Error('execution-storage-timeout');
+ assert.equal(await overlay.findArtifact(record.revision),null);
+ f.state.readFault=null;f.state.storageFault=Error('Durable Object storage operation exceeded timeout');
+ assert.equal((await overlay.readCatalog(packId)).revision,binding.baseRevision,'a storage fault on the read falls through to the base');
+ assert.equal(await overlay.findArtifact(record.revision),null);
+ assert.deepEqual(seen.map(d=>[d.where,d.kind,d.reason]),[
+  ['readCatalog','verification','executable-artifact-corrupt'],
+  ['readCatalog','transient','R2 GET failed: connection reset'],
+  ['findArtifact','transient','execution-storage-timeout'],
+  ['readCatalog','transient','Durable Object storage operation exceeded timeout'],
+  ['findArtifact','transient','Durable Object storage operation exceeded timeout'],
+ ]);
+ assert.ok(seen.every(d=>d.event==='executable-cache-miss'));
+ f.state.storageFault=null;assert.equal((await overlay.readCatalog(packId)).revision,record.revision,'once the fault clears the cached row is served again');
+});
+
+test('a storage fault on an exact-revision read throws (publish is never turned into not-found); the pointer read still falls back',async()=>{
+ const f=fixture(),record=await f.make().publish(candidate),seen=[],overlay=f.make({diagnose:d=>seen.push(d)});
+ f.state.storageFault=Error('Durable Object storage operation exceeded timeout');
+ await assert.rejects(overlay.readCatalog(packId,record.revision),/exceeded timeout/);
+ assert.equal((await overlay.readCatalog(packId)).revision,binding.baseRevision);
+ assert.deepEqual(seen.map(d=>[d.where,d.kind]),[['readCatalog','transient']]);
+ // publish()'s post-commit read: a fault there rejects instead of answering a not-found record.
+ f.state.storageFault=null;let commits=0,armed=false;
+ const flaky=f.make({diagnose:d=>seen.push(d),storage:{transaction:async fn=>{if(armed)throw Error('storage blip');const out=await f.storage.transaction(fn);if(++commits===2)armed=true;return out;}}});
+ await assert.rejects(flaky.publish({...candidate,presentation:{...candidate.presentation,other:2}}),/storage blip/);
+ assert.equal(commits,2,'the pointer was committed before the post-commit read faulted');
+});
+
+test('replacing a row prunes owner-index entries for bound artifacts it no longer binds',async()=>{
+ const f=fixture(),seen=[],overlay=f.make({diagnose:d=>seen.push(d)}),old=await bound('old'),kept=await bound('kept'),added=await bound('new');
+ const first=await overlay.publish({...candidate,boundArtifacts:[old,kept]}),key=`executable-record:${packId}@${first.revision}`;
+ assert.deepEqual(f.kv.get('executable-artifact:'+old.sha256),[key]);
+ // Another key that shares the dropped artifact keeps its own owner entry.
+ const other=await overlay.publish({...candidate,presentation:{...candidate.presentation,other:1},boundArtifacts:[old]}),otherKey=`executable-record:${packId}@${other.revision}`;
+ assert.deepEqual(f.kv.get('executable-artifact:'+old.sha256),[key,otherKey]);
+ const again=await overlay.publish({...candidate,boundArtifacts:[kept,added]});assert.equal(again.revision,first.revision,'same presentation bytes, same content key');
+ assert.deepEqual(f.kv.get('executable-artifact:'+old.sha256),[otherKey],'the replaced row no longer owns the dropped artifact');
+ assert.deepEqual(f.kv.get('executable-artifact:'+kept.sha256),[key]);assert.deepEqual(f.kv.get('executable-artifact:'+added.sha256),[key]);
+ assert.deepEqual(f.kv.get('executable-artifact:'+first.revision),[key]);
+ // Dropped by the only row that owned it: the index entry is removed.
+ await overlay.publish({...candidate,boundArtifacts:[kept]});assert.equal(f.kv.has('executable-artifact:'+added.sha256),false);
+ seen.length=0;assert.equal(await overlay.findArtifact(added.sha256),null);assert.deepEqual(seen,[],'no stale owner costs findArtifact a verification pass');
+ assert.equal((await overlay.findArtifact(old.sha256)).content,'old','the other owner still serves the shared artifact');
+});
+
+test('the overlay exposes no historical authentication; a superseded row is a plain cache miss',()=>{
+ assert.deepEqual(Object.keys(fixture().make()),['publish','readCatalog','findArtifact']);
+});
+
+async function runtime(capabilities){
+ const content=JSON.stringify({id:packId}),revision=await sha256(new TextEncoder().encode(content)),artifact={sha256:revision,bytes:content.length,mime:'application/json'};
+ const snapshot={schema:'fia.worker-read-snapshot.v1',artifacts:[{descriptor:artifact,content}],records:[{status:'ready',packId,revision,artifact}],current:{[packId]:revision}};
+ const kv=new Map([['executable-current:'+packId,`executable-record:${packId}@${h('f')}`]]);
+ const storage={transaction:async fn=>fn({get:async k=>structuredClone(kv.get(k)),put:async(k,v)=>{kv.set(k,structuredClone(v));}})};
+ const env={ASSETS:{fetch:async()=>new Response('',{status:404})},FIA_ORIGINALS:{get:async()=>null,put:async()=>{}},FIA_API_ORIGIN:'https://dev.fiaguide.app'};
+ const ops=await createExecutableRuntime({ctx:{storage},env,snapshot,capabilities});
+ return {ops,revision};
+}
+test('the production runtime signals cache misses: a structured log line by default, or the supplied hook',async()=>{
+ const seen=[],{ops,revision}=await runtime({diagnose:d=>seen.push(d)});
+ assert.equal((await ops.readPack({packId})).revision,revision,'a dangling pointer serves the base');
+ assert.deepEqual(seen.map(d=>[d.event,d.where,d.kind,d.reason]),[['executable-cache-miss','readCatalog','verification','executable-pointer-dangling']]);
+ const warn=console.warn,lines=[];console.warn=(...a)=>lines.push(a);
+ try{const fallback=await runtime({});assert.equal((await fallback.ops.readPack({packId})).revision,fallback.revision);}finally{console.warn=warn;}
+ assert.equal(lines.length,1);const logged=JSON.parse(lines[0][0]);assert.equal(logged.event,'executable-cache-miss');assert.equal(logged.reason,'executable-pointer-dangling');
+});
+
+test('verification-phase exact R2 and timeout faults propagate while pointer fallback and healthy exact recovery remain',async()=>{
+ for(const failure of [Error('R2 GET failed: connection reset'),Error('execution-storage-timeout')]){
+  const f=fixture(),record=await f.make().publish(candidate),seen=[],overlay=f.make({diagnose:d=>seen.push(d)});f.state.readFault=failure;
+  await assert.rejects(overlay.readCatalog(packId,record.revision),e=>e===failure);
+  assert.equal((await overlay.readCatalog(packId)).revision,binding.baseRevision);
+  assert.deepEqual(seen.map(d=>[d.where,d.kind,d.reason]),[['readCatalog','transient',failure.message],['readCatalog','transient',failure.message]]);
+  f.state.readFault=null;assert.equal((await overlay.readCatalog(packId,record.revision)).revision,record.revision);
+ }
+});
+test('exact HTTP verification fault is transient500 not authority404; corruption and revocation still fail closed',async()=>{
+ const f=fixture(),record=await f.make().publish(candidate),overlay=f.make(),worker=createWorker({origin:'https://dev.fiaguide.app',operations:createReadOperations(overlay),serveRead,serveMcp}),request=()=>new Request('https://dev.fiaguide.app/v1/packs/'+packId+'?revision='+record.revision);
+ f.state.readFault=Error('R2 GET failed: connection reset');assert.equal((await worker.fetch(request(),{})).status,500);
+ f.state.readFault=null;assert.equal((await worker.fetch(request(),{})).status,200);
+ const bytes=f.blobs.get(record.revision);f.blobs.set(record.revision,new TextEncoder().encode('corrupt'));assert.equal((await worker.fetch(request(),{})).status,404);
+ f.blobs.set(record.revision,bytes);const revoked=f.make({eligible:()=>false});assert.equal((await revoked.readCatalog(packId,record.revision)).status,'unavailable');assert.equal((await revoked.readCatalog(packId)).revision,binding.baseRevision);
+});
+test('post-commit artifact readback failure rejects rather than misreporting committed publication unavailable',async()=>{
+ const f=fixture();let reads=0;const failure=Error('R2 GET failed: connection reset'),artifacts={write:async b=>{const sha=await sha256(b);f.blobs.set(sha,new Uint8Array(b));return{reference:sha,sha256:sha};},read:async d=>{if(++reads===3)throw failure;return new Uint8Array(f.blobs.get(d.reference));}},overlay=f.make({artifacts});
+ await assert.rejects(overlay.publish(candidate),e=>e===failure);
+ const key=f.kv.get('executable-current:'+packId),row=f.kv.get(key);assert.ok(row,'publication was committed before exact readback');assert.equal((await overlay.readCatalog(packId,row.revision)).status,'ready');
+});
+
+
+test('malformed stored rows and invalid JSON or UTF8 are verification misses, while actual artifact TypeError remains transient',async()=>{
+ for(const kind of ['missing-artifact','missing-binding','null-bound','invalid-json','invalid-utf8','json-null','json-array','missing-provenance','null-provenance','array-provenance','missing-base-record','array-binding','array-artifact']){
+  const f=fixture(),record=await f.make().publish(candidate),key=f.kv.get('executable-current:'+packId),row=f.kv.get(key);
+  let revision=record.revision;
+  if(kind==='missing-artifact')delete row.artifact;
+  else if(kind==='missing-binding')delete row.binding;
+  else if(kind==='null-bound')row.bound=[null];
+  else if(kind==='missing-provenance')delete row.provenance;
+  else if(kind==='null-provenance')row.provenance=null;
+  else if(kind==='array-provenance')row.provenance=[];
+  else if(kind==='missing-base-record')delete row.baseRecord;
+  else if(kind==='array-binding')row.binding=[];
+  else if(kind==='array-artifact')row.artifact=[];
+  else {const bytes=kind==='invalid-utf8'?new Uint8Array([255]):new TextEncoder().encode(kind==='json-null'?'null':kind==='json-array'?'[]':'{invalid json');revision=await sha256(bytes);row.revision=revision;row.artifact={...row.artifact,sha256:revision,reference:revision,bytes:bytes.length};f.blobs.set(revision,bytes);}
+  f.kv.set('executable-record:'+packId+'@'+revision,row);const seen=[],overlay=f.make({diagnose:d=>seen.push(d)});
+  assert.equal((await overlay.readCatalog(packId,revision)).status,'unavailable',kind);assert.equal(seen[0].kind,'verification',kind);
+ }
+ const f=fixture(),record=await f.make().publish(candidate),overlay=f.make();f.state.readFault=TypeError('fetch failed');await assert.rejects(overlay.readCatalog(packId,record.revision),TypeError);f.state.readFault=null;assert.equal((await overlay.readCatalog(packId,record.revision)).status,'ready');
+});
+test('production preparation propagates postcommit timeout and retains committed recovery; ordinary refusal stays typed',async()=>{
+ const f=fixture();let reads=0;const artifacts={write:async b=>{const sha=await sha256(b);f.blobs.set(sha,new Uint8Array(b));return{reference:sha,sha256:sha};},read:async d=>{if(++reads===3)throw Error('execution-storage-timeout');return new Uint8Array(f.blobs.get(d.reference));}},overlay=f.make({artifacts}),jobId=h('d'),service={request:async()=>({status:'ready',jobId,presentation:candidate.presentation,boundArtifacts:[],provenance:candidate.provenance}),read:async()=>({status:'ready',jobId})};
+ const ops=createExecutableOperations({reads:createReadOperations(overlay),service,publication:overlay,storage:f.storage});
+ await assert.rejects(ops.preparePresentation(binding),/execution-storage-timeout/);const key=f.kv.get('executable-current:'+packId),row=f.kv.get(key);assert.ok(row);assert.equal((await overlay.readCatalog(packId,row.revision)).status,'ready');
+ const recovered=await ops.preparePresentation(binding);assert.equal(recovered.status,'ready');assert.equal((await ops.readPresentationPreparation({jobId})).status,'ready');
+ const denied=createExecutableOperations({reads:createReadOperations(overlay),service,publication:{publish:async()=>{throw Error('executable-publication-revoked');}},storage:f.storage});assert.equal((await denied.preparePresentation(binding)).reason,'executable-publication-revoked');
+});
+
+
+test('only publication timeout propagates; request, demand transaction and status timeouts retain typed baseline',async()=>{
+ const jobId=h('d'),ready={status:'ready',jobId,presentation:candidate.presentation,boundArtifacts:[],provenance:candidate.provenance},rows=new Map(),timeout=()=>{throw Error('execution-storage-timeout');},storage={transaction:async fn=>fn({get:async k=>rows.get(k),put:async(k,v)=>rows.set(k,v)})};
+ const make=(service,store=storage)=>createExecutableOperations({reads:{},service,publication:{publish:timeout},storage:store});
+ assert.equal((await make({request:timeout}).preparePresentation(binding)).status,'blocked');
+ assert.equal((await make({request:async()=>ready},{transaction:timeout}).preparePresentation(binding)).status,'blocked');
+ rows.set('executable-demand:'+jobId,{args:binding,revision:null});assert.equal((await make({read:timeout}).readPresentationPreparation({jobId})).status,'blocked');
+ await assert.rejects(make({request:async()=>ready}).preparePresentation(binding),/execution-storage-timeout/);
+});
+test('cached provenance is checked before verifier dereference while eligible and verifier IO faults remain transient',async()=>{
+ for(const provenance of [undefined,null,[]]){const f=fixture(),record=await f.make().publish(candidate),key=f.kv.get('executable-current:'+packId),row=f.kv.get(key);row.provenance=provenance;f.kv.set(key,row);let calls=0;const overlay=f.make({validate:async c=>{calls++;return Boolean(c.provenance.jobId);}});assert.equal((await overlay.readCatalog(packId,record.revision)).status,'unavailable');assert.equal(calls,0);}
+ for(const port of ['eligible','validate']){const f=fixture(),record=await f.make().publish(candidate),failure=TypeError(port+' IO failed'),overlay=f.make({[port]:async()=>{throw failure;}});await assert.rejects(overlay.readCatalog(packId,record.revision),e=>e===failure);}
+});

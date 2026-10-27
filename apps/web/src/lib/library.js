@@ -5,7 +5,7 @@ import {createPreparationTransport} from './prepared-audio.js';
 import {bundledPresentation} from './content.js';
 const empty={status:'unavailable',count:0};
 export const bundledPack=Object.freeze({id:'eng.MRK-1-1-13',revision:'ccd72f23c23f932651b500b730b285f32fabd37e50037b5af91d8881f1403975',language:'eng',pericopeId:'MRK-1-1-13',title:'Mark 1:1–13',defaultScriptureId:'scripture-BereanStandardBible',source:'bundled',capabilities:{text:{available:true},guideNarration:{status:'packaged',count:111},scriptureAudio:{status:'packaged',count:3},resourceAudio:{status:'packaged',count:29},generatedAudio:{status:'packaged',count:143},images:{status:'packaged',count:8},video:{status:'packaged',count:3}}});
-const validId=id=>/^(eng|spa)\.MRK-\d+(?:-\d+)+$/.test(id);
+const validId=id=>/^(eng|spa)\.(?:MRK|LUK)-\d+(?:-\d+)+$/.test(id);
 export function validateRegistry(value){
  if(value?.schemaVersion!==1||!Array.isArray(value.packs)||!value.packs.length)throw new Error('The passage catalog is not compatible.');
  const seen=new Set();for(const p of value.packs){

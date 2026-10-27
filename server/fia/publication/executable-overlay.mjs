@@ -1,19 +1,31 @@
 import {canonicalJSONString,sha256} from '../preparation/contract.mjs';
 const hash=x=>typeof x==='string'&&/^[a-f0-9]{64}$/.test(x);
+const object=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
 const copy=x=>structuredClone(x),encode=x=>new TextEncoder().encode(canonicalJSONString(x));
 const need=(x,reason='executable-publication-invalid')=>{if(!x)throw Error(reason);};
 const same=(a,b)=>canonicalJSONString(a)===canonicalJSONString(b);
-const absent=reason=>({status:'unavailable',reason});
 const MAX=1048576;
-const exact=(x,keys)=>x!==null&&typeof x==='object'&&Object.getPrototypeOf(x)===Object.prototype&&Object.keys(x).sort().join()===[...keys].sort().join();
-const ROW=['schema','binding','revision','artifact','bound','mediaIdentity','mediaAssetsSha256','provenance','baseRecord'],BINDING=['packId','baseRevision','sourceRevision','capability'],DESCRIPTOR=['reference','sha256','bytes','mime'];
+// A named domain code (kebab-case, thrown by a check) is a verification miss; an
+// unnamed fault (storage/R2 exception, TypeError) or a timeout is transient.
+const named=e=>typeof e?.message==='string'&&/^[a-z0-9]+(?:-[a-z0-9]+)+$/.test(e.message)&&e.message.length<=80;
+const kindOf=e=>named(e)&&!/-timeout$/.test(e.message)?'verification':'transient';
 
 /** Domain validation is supplied by the existing presentation compiler. This is
- * only immutable publication and a transactional catalog overlay, shared by both
- * HTTP and MCP. No model/preparation work is reachable from a read. */
-export function createExecutableOverlay({storage,artifacts,base,eligible,validate}){
+ * a content-keyed cache over the base catalog, shared by both HTTP and MCP; it is
+ * never an identity or trust ledger (cookbook package-luke RULING.md § DEV
+ * publication conflict). A publish whose record key exists replaces the row and
+ * advances the pointer. A stored row that fails byte, hash, length or binding
+ * verification is a cache miss: reads fall through to the base catalog, and the
+ * failure is reported only to the optional `diagnose` hook, tagged `kind`
+ * `verification` or `transient` (a storage/R2 fault: the same read may succeed on
+ * retry). No model/preparation work is reachable from a read. */
+export function createExecutableOverlay({storage,artifacts,base,eligible,validate,diagnose=()=>{}}){
  need(typeof storage?.transaction==='function'&&typeof artifacts?.read==='function'&&typeof artifacts?.write==='function'&&typeof base?.readCatalog==='function'&&typeof base?.findArtifact==='function'&&typeof eligible==='function'&&typeof validate==='function');
  const tx=storage.transaction.bind(storage);
+ // Diagnostics only: integrity pins feed bookkeeping, never a usage gate.
+ // A throwing or rejecting hook is contained; it never changes the read's answer.
+ const miss=(where,detail)=>{try{const r=diagnose({event:'executable-cache-miss',where,...detail});if(typeof r?.then==='function')Promise.resolve(r).catch(()=>{});}catch{}};
+ const fault=(where,detail,error)=>miss(where,{...detail,kind:kindOf(error),reason:error?.message});
  async function bytesFor(d){
   need(hash(d?.sha256)&&typeof d.reference==='string'&&Number.isSafeInteger(d.bytes)&&d.bytes>0&&d.bytes<=MAX);
   const b=await artifacts.read({reference:d.reference,sha256:d.sha256});
@@ -28,10 +40,12 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
   await bytesFor(out);return out;
  }
  async function verified(row,check=validate){
-  need(row?.schema==='fia-executable-publication@1'&&hash(row.revision)&&row.artifact.sha256===row.revision&&Array.isArray(row.bound)&&row.bound.length<=1024);
+  need(row?.schema==='fia-executable-publication@1'&&hash(row.revision)&&object(row.artifact)&&row.artifact.sha256===row.revision&&object(row.binding)&&typeof row.binding.packId==='string'&&hash(row.binding.baseRevision)&&typeof row.binding.sourceRevision==='string'&&row.binding.sourceRevision.length<=128&&Array.isArray(row.bound)&&row.bound.length<=1024&&row.bound.every(d=>object(d)&&typeof d.id==='string')&&object(row.provenance)&&object(row.baseRecord));
   need(await eligible(copy(row.binding))===true,'executable-publication-revoked');
   const pinnedBase=await base.readCatalog(row.binding.packId,row.binding.baseRevision);need(pinnedBase?.status==='ready'&&pinnedBase.revision===row.binding.baseRevision,'executable-base-unavailable');
-  const bytes=await bytesFor(row.artifact),presentation=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
+  const bytes=await bytesFor(row.artifact);let presentation;
+  try{presentation=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));}catch{throw Error('executable-artifact-corrupt');}
+  need(object(presentation),'executable-artifact-corrupt');
   if(presentation.assets){
    need(same(row.mediaIdentity,{packId:row.binding.packId,revision:row.binding.baseRevision})&&row.mediaAssetsSha256===await sha256(encode(presentation.assets)),'executable-media-binding');
    const original=await base.findArtifact(row.binding.baseRevision);need(original?.content&&await sha256(new TextEncoder().encode(original.content))===row.binding.baseRevision&&same(JSON.parse(original.content).assets,presentation.assets),'executable-media-base-unavailable');
@@ -61,13 +75,21 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
   const artifact=await retain(encode(presentation)),row={schema:'fia-executable-publication@1',binding:copy(binding),revision:artifact.sha256,artifact,bound,mediaIdentity,mediaAssetsSha256,provenance:copy(provenance),baseRecord:copy(baseRecord)};
   await verified(row);
   await tx(async t=>{
-   const key='executable-record:'+binding.packId+'@'+row.revision,old=await t.get(key);
+   const key='executable-record:'+binding.packId+'@'+row.revision;
    const current=await t.get('executable-current:'+binding.packId);
    need(current===priorPointer||current===key,'executable-pointer-conflict');
    need(await eligible(copy(binding))===true,'executable-publication-revoked');
    const currentBase=await base.readCatalog(binding.packId);need(currentBase?.status==='ready'&&currentBase.revision===binding.baseRevision,'executable-base-stale');
-   need(!old||same(old,row),'executable-publication-conflict');
+   // Content-keyed cache: an existing row under this key is replaced, never a conflict.
+   // Owner-index entries for artifacts the replaced row bound and this one does not are
+   // pruned, so they neither count toward the 1024 cap nor cost findArtifact a pass.
+   const replaced=await t.get(key),keep=new Set([artifact,...bound].map(d=>d.sha256));
    await t.put(key,row);
+   for(const d of [replaced?.artifact,...(Array.isArray(replaced?.bound)?replaced.bound:[])]){
+    if(!hash(d?.sha256)||keep.has(d.sha256))continue;
+    const k='executable-artifact:'+d.sha256,owners=await t.get(k);if(!Array.isArray(owners)||!owners.includes(key))continue;
+    const rest=owners.filter(o=>o!==key);if(!rest.length&&typeof t.delete==='function')await t.delete(k);else await t.put(k,rest);
+   }
    for(const d of [artifact,...bound]){
     const k='executable-artifact:'+d.sha256,owners=await t.get(k)||[];
     if(!owners.includes(key)){need(owners.length<1024);await t.put(k,[...owners,key]);}
@@ -77,35 +99,25 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
   return readCatalog(binding.packId,row.revision);
  }
  async function readCatalog(packId,revision){
-  const found=await tx(async t=>{const key=revision?'executable-record:'+packId+'@'+revision:await t.get('executable-current:'+packId);return {key,row:key?await t.get(key):null};}),row=found.row;
-  if(!row&&found.key&&!revision)return absent('executable-pointer-dangling');
+  let found;
+  try{found=await tx(async t=>{const key=revision?'executable-record:'+packId+'@'+revision:await t.get('executable-current:'+packId);return {key,row:key?await t.get(key):null};});}
+  // An exact-revision read (including publish()'s post-commit read) cannot be answered
+  // by the base, so its storage fault propagates; only the pointer read falls through.
+  catch(error){if(revision)throw error;fault('readCatalog',{packId},error);return base.readCatalog(packId);}
+  const row=found.row;
+  if(!row&&found.key&&!revision)miss('readCatalog',{packId,key:found.key,kind:'verification',reason:'executable-pointer-dangling'});
   if(!row)return base.readCatalog(packId,revision);
-  try{need(row.binding.packId===packId&&(!revision||row.revision===revision)&&found.key===`executable-record:${packId}@${row.revision}`,'executable-pointer-binding');await verified(row);return record(row);}catch(error){return absent(error.message);}
- }
- /** Read-only. Authenticates the current pointer's publication exactly: closed row and
-  * descriptors, pointer and artifact-owner index bindings, and every retained byte,
-  * under a caller-supplied verifier instead of current validation. It grants nothing:
-  * the caller decides what an authenticated row may justify, and the row stays refused. */
- async function authenticateCurrent(packId,check){
-  need(typeof check==='function');
-  const {key,row,owners}=await tx(async t=>{
-   const key=await t.get('executable-current:'+packId),row=typeof key==='string'?await t.get(key):null,owners=[];
-   if(row&&exact(row,ROW)&&Array.isArray(row.bound))for(const d of [row.artifact,...row.bound])owners.push(await t.get('executable-artifact:'+d?.sha256));
-   return {key,row,owners};
-  });
-  need(exact(row,ROW)&&exact(row.binding,BINDING)&&row.binding.packId===packId&&key===`executable-record:${packId}@${row.revision}`,'executable-pointer-binding');
-  need(exact(row.artifact,DESCRIPTOR)&&row.artifact.mime==='application/json'&&row.bound.every(d=>exact(d,['id',...DESCRIPTOR])&&d.mime==='application/json'),'executable-publication-invalid');
-  need(owners.length===row.bound.length+1&&owners.every(o=>Array.isArray(o)&&o.includes(key)),'executable-owner-binding');
-  await verified(row,check);
-  return copy(row);
+  try{need(row.binding?.packId===packId&&(!revision||row.revision===revision)&&found.key===`executable-record:${packId}@${row.revision}`,'executable-pointer-binding');await verified(row);return record(row);}
+  catch(error){fault('readCatalog',{packId,key:found.key},error);if(revision&&kindOf(error)==='transient')throw error;return base.readCatalog(packId,revision);}
  }
  async function findArtifact(digest){
-  const owners=await tx(t=>t.get('executable-artifact:'+digest));
-  if(!owners)return base.findArtifact(digest);
+  let owners;
+  try{owners=await tx(t=>t.get('executable-artifact:'+digest));}catch(error){fault('findArtifact',{digest},error);return base.findArtifact(digest);}
+  if(!Array.isArray(owners))return base.findArtifact(digest);
   for(const key of owners){
-   try{const row=await tx(t=>t.get(key));need(key===`executable-record:${row?.binding?.packId}@${row?.revision}`,'executable-owner-binding');const v=await verified(row);const d=[row.artifact,...row.bound].find(x=>x.sha256===digest);need(d);const b=digest===row.revision?v.bytes:v.boundArtifacts.find(x=>x.sha256===digest)?.bytes;need(b);return {artifact:{sha256:d.sha256,bytes:d.bytes,mime:d.mime},content:new TextDecoder('utf-8',{fatal:true}).decode(b),cacheControl:'private, no-store'};}catch{}
+   try{const row=await tx(t=>t.get(key));need(key===`executable-record:${row?.binding?.packId}@${row?.revision}`,'executable-owner-binding');const v=await verified(row);const d=[row.artifact,...row.bound].find(x=>x.sha256===digest);need(d);const b=digest===row.revision?v.bytes:v.boundArtifacts.find(x=>x.sha256===digest)?.bytes;need(b);return {artifact:{sha256:d.sha256,bytes:d.bytes,mime:d.mime},content:new TextDecoder('utf-8',{fatal:true}).decode(b),cacheControl:'private, no-store'};}catch(error){fault('findArtifact',{digest,key},error);}
   }
-  return absent('executable-artifact-unavailable');
+  return base.findArtifact(digest);
  }
- return Object.freeze({publish,readCatalog,findArtifact,authenticateCurrent});
+ return Object.freeze({publish,readCatalog,findArtifact});
 }

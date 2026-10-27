@@ -1,0 +1,3 @@
+# Save a whole book from the Downloads sheet
+
+The Downloads sheet now has a "Save the whole book" card under the passage card. "Check book size" shows the total for each package across every passage of the current book (for example Mark), counting passages already saved and passages whose size is set during download. "Download whole book" then saves each passage in turn with the package chosen above, through the same verified per-passage download as before. Passages already saved at that package (or a larger one) are skipped without a fetch, and a paused or interrupted book download resumes: finished passages are kept and the interrupted passage reuses its verified files. The package radios and their accessible names are unchanged.

@@ -5,7 +5,7 @@ const META='fia-v3-download-metadata@1', SHELL=`fia-v3-shell-${VERSION}`, PREFIX
 const jobs=new Map(),playbackJobs=new Map(),canceledPlayback=new Set();
 const legacy='fia-mark-authentic';
 const packKey=(id,key)=>id===legacy?key:`pack:${id}:${key}`;
-const validPack=id=>id===legacy||/^(eng|spa)\.MRK-\d+(?:-\d+)+$/.test(id);
+const validPack=id=>id===legacy||/^(eng|spa)\.(?:MRK|LUK)-\d+(?:-\d+)+$/.test(id);
 const json=value=>new Response(JSON.stringify(value),{headers:{'Content-Type':'application/json'}});
 async function read(key){return (await (await caches.open(META)).match('/'+key))?.json()||null;}
 async function write(key,value){await (await caches.open(META)).put('/'+key,json(value));}
@@ -29,7 +29,7 @@ function validate(manifest){
  }paths.add(f.path);}
  return {...manifest,files:permittedRecordings(manifest.files,generatedRecordingPaths)};
 }
-const selectedFiles=(manifest,selection)=>manifest.files.filter(f=>f.group==='core'||selection==='all'||selection==='audio'&&f.group==='audio');
+const selectedFiles=(manifest,selection)=>manifest.files.filter(f=>downloadSelectionIncludes(selection,f.group));
 function matchingSavedFile(file,active,manifest){
  if(active?.manifest?.deliveryRevision!==manifest.deliveryRevision)return null;
  const saved=active.files.find(f=>f.path===file.path&&f.deliveryURL&&recordingAllowed(f,generatedRecordingPaths));if(!saved)return null;
@@ -48,13 +48,15 @@ async function fetchLatest(path,options){
  if([408,429,500,502,503,504].includes(response.status))throw Object.assign(Error('Media status is temporarily unavailable.'),{mediaStatusCode:'media-status-transient'});
  return response;
 }
-async function latest(packId=legacy,media=false){
+async function latest(packId=legacy,media=false,onprogress){
  const request=media?fetchLatest:fetch;
  const response=await request(packId===legacy?'/offline-manifest.json':`/offline/${packId}.json`,{cache:'no-store'});
  if(!response.ok)throw new Error('Could not check the latest download. Connect and try again.');
  const manifest=validate(await response.json());if(manifest.packId!==packId)throw new Error('The download belongs to a different passage.');
+ onprogress?.({phase:'manifest-verified',verified:0,total:null});
  const delivery=manifest.files.find(f=>f.group==='core'&&f.path===`/content/delivery/${packId}/${manifest.deliveryRevision}.json`);
  if(delivery){const r=await request(delivery.path,{cache:'no-store'});if(!await verified(r.clone(),delivery))throw Error('Delivery source metadata changed.');const sidecar=validateDelivery(await r.json(),{packId,presentationRevision:manifest.presentationRevision});for(const f of manifest.files){const e=sidecar.entries.find(e=>e.path===f.path);if(e){if(e.source.sha256!==f.sourceSha256)throw Error('Source identity changed.');f.sourceBytes=e.source.bytes;for(const v of Object.values(f.variants||{}))v.sourceBytes=e.source.bytes;}}}
+ if(delivery)onprogress?.({phase:'delivery-verified',verified:0,total:null});
  return manifest;
 }
 async function verified(response,file){
@@ -89,11 +91,21 @@ async function snapshotComplete(active){
  try{serverRecord(snapshot.record,active.packId);const expected=serverFiles(snapshot.record);if(JSON.stringify(expected)!==JSON.stringify(snapshot.files))return false;const cache=await caches.open(active.cache);for(const f of expected)await serverJSON(await cache.match(f.path),f,snapshot.record);return true;}catch{return false;}
 }
 async function savedServerSnapshot(packId,revision){const active=await read(packKey(packId,'active'));if(revision&&active?.serverSnapshot?.record.revision!==revision)return null;return await snapshotComplete(active)?active:null;}
-async function retainServerSnapshot(packId,revision,cache,signal){
+async function retainServerSnapshot(packId,revision,cache,signal,onprogress){
  if(packId===legacy||revision===undefined)return null;
  if(!isPassageHash(revision))throw Error('Invalid server revision.');
- let record;try{const r=await fetchLatest(`/v1/packs/${packId}${revision?'?revision='+revision:''}`,{cache:'no-store',redirect:'error',signal});if(r.status!==200||r.redirected)throw Error('Server record unavailable.');record=serverRecord(await r.json(),packId);if(revision&&record.revision!==revision)throw Error('Server revision changed.');const files=serverFiles(record);for(const f of files){let r=await cache.match(f.path);try{await serverJSON(r,f,record);}catch{r=await fetchLatest(f.path,{cache:'no-store',redirect:'error',signal});await serverJSON(r,f,record);await cache.put(f.path,r);}}return {record,files,invalid:false};}
- catch(error){if(error.mediaStatusCode!=='media-status-transient')await invalidateServerSnapshot(packId);throw error;}
+ const checkCanceled=()=>{if(signal.aborted)throw Object.assign(Error('Download paused. Verified files are kept for Resume.'),{name:'AbortError'});};
+ let record;try{
+  checkCanceled();const r=await fetchLatest(`/v1/packs/${packId}${revision?'?revision='+revision:''}`,{cache:'no-store',redirect:'error',signal});checkCanceled();
+  if(r.status!==200||r.redirected)throw Error('Server record unavailable.');record=serverRecord(await r.json(),packId);checkCanceled();if(revision&&record.revision!==revision)throw Error('Server revision changed.');
+  const files=serverFiles(record);onprogress?.({phase:'record-verified',verified:0,total:files.length});
+  for(const [index,f] of files.entries()){
+   checkCanceled();let response=await cache.match(f.path);try{await serverJSON(response,f,record);}catch{checkCanceled();response=await fetchLatest(f.path,{cache:'no-store',redirect:'error',signal});await serverJSON(response,f,record);checkCanceled();await cache.put(f.path,response);}
+   checkCanceled();onprogress?.({phase:'artifact-verified',verified:index+1,total:files.length});
+  }
+  return {record,files,invalid:false};
+ }
+ catch(error){if(!(signal.aborted&&error.name==='AbortError')&&error.mediaStatusCode!=='media-status-transient')await invalidateServerSnapshot(packId);throw error;}
 }
 // Catalog retrieval may precede UI cancellation/activation. Keep its artifact
 // lookup context separate from PACK_SELECT's native-media custody.
@@ -152,7 +164,7 @@ async function status(packId=legacy){
  const saved=await complete(active);
  if(active)active.files=permittedRecordings(active.files,generatedRecordingPaths);
  if(manifest)manifest={...manifest,files:permittedRecordings(manifest.files,generatedRecordingPaths)};
- return {available:true,mediaNotices:(await read('media-notices'))||[],saved,active:active?{...active,valid:saved}:null,pending:pending?{...pending,running:jobs.has(packId)}:null,manifest,error,updateAvailable:!!(active&&manifest&&(active.manifest.catalogRevision||active.revision)!==manifest.revision),choices:manifest?['core',...(manifest.files.some(f=>f.group==='audio')?['audio']:[]),...(manifest.files.some(f=>f.group==='video'||f.group==='image')?['all']:[])].map(id=>({id,bytes:selectedFiles(manifest,id).reduce((n,f)=>n+f.bytes,0)})):[]};
+ return {available:true,mediaNotices:(await read('media-notices'))||[],saved,active:active?{...active,valid:saved}:null,pending:pending?{...pending,running:jobs.has(packId)}:null,manifest,error,updateAvailable:!!(active&&manifest&&(active.manifest.catalogRevision||active.revision)!==manifest.revision),choices:manifest?['core',...(manifest.files.some(f=>f.group==='audio')?['audio']:[]),...(manifest.files.some(f=>f.group==='video')&&manifest.files.some(f=>f.group==='image')?['visual']:[]),...(manifest.files.some(f=>f.group==='video'||f.group==='image')?['all']:[])].map(id=>({id,bytes:downloadTransferBytes(selectedFiles(manifest,id))})):[]};
 }
 self.addEventListener('install',event=>{if(isBuild)event.waitUntil(caches.open(SHELL).then(c=>c.addAll(['/','/index.html','/manifest.webmanifest'])).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));
@@ -217,15 +229,47 @@ self.addEventListener('fetch',event=>{
  })());
  else event.respondWith(cachedResponse(event.request,event.clientId));
 });
+// Whole-book downloads: a verified copy in another passage's cache serves as this passage's file.
+// The passage's own revisions are never a source, so an update still fetches what it repairs.
+async function savedElsewhere(file,packId,signal){
+ if(packId===legacy)return null;
+ const own=`${PREFIX}${packId}-`,outputKey=downloadOutputKey(file);
+ for(const name of await caches.keys()){
+  signal?.throwIfAborted();if(!name.startsWith(PREFIX))continue;
+  // A prefix collision is ambiguous; only a matching other-pack record may override it.
+  const cache=await caches.open(name),samePath=name.startsWith(own)?null:await cache.match(file.path);
+  if(await verified(samePath?.clone(),file))return samePath;
+  if(!outputKey)continue;
+  // Cache names embed a pack id; existing validation/key helpers identify its declared records.
+  const suffix=name.slice(PREFIX.length);
+  for(let cut=suffix.indexOf('-');cut!==-1;cut=suffix.indexOf('-',cut+1)){
+   const other=suffix.slice(0,cut);if(other===packId||other===legacy||!validPack(other))continue;
+   for(const state of ['active','pending']){
+    signal?.throwIfAborted();let record;try{record=await read(packKey(other,state));}catch{continue;}
+    if(record?.packId!==other||record.cache!==name||!Array.isArray(record.files))continue;
+    for(const candidate of record.files){
+     signal?.throwIfAborted();if(!candidate||typeof candidate.path!=='string'||!/^\/(?!\/|.*(?:\.\.|[?#]))/.test(candidate.path)||downloadOutputKey(candidate)!==outputKey||candidate.sourceSha256!==file.sourceSha256||candidate.group!==file.group||candidate.mime!==file.mime||candidate.bytes!==file.bytes)continue;
+     const response=await cache.match(candidate.path);
+     if((response?.headers.get('Content-Type')||'').split(';')[0].trim()===file.mime&&await verified(response?.clone(),file))return response;
+    }
+   }
+  }
+ }
+ return null;
+}
 async function start(selection,port,packId=legacy,sizes={},revision){
  if(!isBuild)throw new Error('Downloads work on the published Site.');
- if(!['core','audio','all'].includes(selection))throw new Error('Choose a download option.');
+ if(!['core','audio','visual','all'].includes(selection))throw new Error('Choose a download option.');
  if(jobs.has(packId))throw new Error('A download is already running for this passage.');
  const controller=new AbortController();jobs.set(packId,controller);
  let pending;
+ // Real bounded preflight work keeps the existing inactivity guard informed.
+ // These are metadata milestones, never payload bytes or saved availability.
+ const preflight=stage=>{if(controller.signal.aborted)throw Object.assign(Error('Download paused. Verified files are kept for Resume.'),{name:'AbortError'});port?.postMessage({progress:{received:0,bytes:null,count:0,total:0,preflight:stage}});};
  try{
+  preflight({phase:'authority-check',verified:0,total:null});
   let manifest;
-  try{manifest=await latest(packId,true);}catch(error){if(error.mediaStatusCode!=='media-status-transient'){await invalidateServerSnapshot(packId);throw error;}const previous=await read(packKey(packId,'pending'));if(!previous)throw error;manifest=validate(previous.manifest);}
+  try{manifest=await latest(packId,true,preflight);}catch(error){if(controller.signal.aborted&&error.name==='AbortError')throw error;if(error.mediaStatusCode!=='media-status-transient'){await invalidateServerSnapshot(packId);throw error;}const previous=await read(packKey(packId,'pending'));if(!previous)throw error;manifest=validate(previous.manifest);}
   const priorPending=await read(packKey(packId,'pending'));if(!Object.keys(sizes).length&&priorPending?.selection===selection)sizes=priorPending.manifest.mediaSizes||{};
   manifest=planProxyDownload(manifest,selection,sizes);
   const files=selectedFiles(manifest,selection),cacheName=`${PREFIX}${packId===legacy?'':packId+'-'}${manifest.revision}-${selection}`;
@@ -233,12 +277,13 @@ async function start(selection,port,packId=legacy,sizes={},revision){
   // A repair stages separately from the last working copy, even at the same revision.
   const cacheId=active?.cache===cacheName?cacheName+'-repair':cacheName;
   const cache=await caches.open(cacheId);
-  const serverSnapshot=await retainServerSnapshot(packId,revision,cache,controller.signal);
+  const serverSnapshot=await retainServerSnapshot(packId,revision,cache,controller.signal,preflight);
   if(serverSnapshot){const binding=serverSnapshot.record.execution?.mediaIdentity||{packId:serverSnapshot.record.packId,revision:serverSnapshot.record.revision};if(binding.packId!==manifest.packId||binding.revision!==manifest.presentationRevision)throw Error('The saved media belongs to a different server presentation.');}
   const downloadFiles=[...files,...(serverSnapshot?.files||[])];
-  pending={packId,cache:cacheId,revision:manifest.revision,selection,manifest,files,...(serverSnapshot?{serverSnapshot}:{}),bytes:downloadFiles.some(f=>f.bytes===null)?null:downloadFiles.reduce((n,f)=>n+f.bytes,0),received:0,count:0,status:'downloading'};
+  pending={packId,cache:cacheId,revision:manifest.revision,selection,manifest,files,...(serverSnapshot?{serverSnapshot}:{}),bytes:downloadTransferBytes(downloadFiles),received:0,count:0,status:'downloading'};
   await write(packKey(packId,'pending'),pending);
   const report=()=>port?.postMessage({progress:{received:pending.received,bytes:pending.bytes,count:pending.count,total:downloadFiles.length}});
+  const transferred=new Map();
   for(const file of downloadFiles){
    if(controller.signal.aborted)throw new Error('Download paused. Verified files are kept for Resume.');
    let response=await cache.match(file.path);
@@ -246,15 +291,21 @@ async function start(selection,port,packId=legacy,sizes={},revision){
     const prior=priorPending?.files.find(f=>f.path===file.path&&observedProxyMatchesRequest(file.proxyRequest,f));
     if(prior&&await verified(response?.clone(),prior)){Object.assign(file,{bytes:prior.bytes,sha256:prior.sha256,proxyReceipt:prior.proxyReceipt,timing:{status:file.timingDependent?'pending-qualification':'not-applicable'}});}
     else {const result=await fetchProxyRequest(file.proxyRequest,{signal:controller.signal});Object.assign(file,{bytes:result.receipt.output.bytes,sha256:result.receipt.output.sha256,proxyReceipt:result.receipt,timing:{status:file.timingDependent?'pending-qualification':'not-applicable'}});await cache.put(file.path,new Response(result.bytes,{headers:{'Content-Type':file.mime,'Content-Length':String(file.bytes)}}));response=await cache.match(file.path);}
-    pending.bytes=downloadFiles.some(f=>f.bytes===null)?null:downloadFiles.reduce((n,f)=>n+f.bytes,0);
+    pending.bytes=downloadTransferBytes(downloadFiles);
    }
+   const outputKey=downloadOutputKey(file),twin=outputKey&&transferred.get(outputKey),shared=!!twin&&twin!==file.path;
+   // A clip shared by several paths is fetched once; later paths reuse the verified copy.
+   if(shared&&!await verified(response?.clone(),file)){const copy=await cache.match(twin);if(await verified(copy?.clone(),file)){await cache.put(file.path,new Response(await copy.arrayBuffer(),{headers:copy.headers}));response=await cache.match(file.path);}}
+   // A file another passage already saved and verified (the app, the catalog, a shared clip) is copied, not fetched again.
+   if(!await verified(response?.clone(),file)){const elsewhere=await savedElsewhere(file,packId,controller.signal);if(elsewhere){await cache.put(file.path,new Response(await elsewhere.arrayBuffer(),{headers:elsewhere.headers}));response=await cache.match(file.path);}}
    if(!await verified(response?.clone(),file)){
     const timeout=setTimeout(()=>controller.abort(),30000);
     try{response=await fetch(file.deliveryURL||file.path,{cache:'no-store',signal:controller.signal});if(file.deliveryURL){const bytes=await readVerifiedMedia(response,file,{signal:controller.signal});response=new Response(bytes,{headers:{'Content-Type':file.mime}});}else if(!await verified(response.clone(),file))throw new Error('A file could not be verified. Retry to keep the files already downloaded.');
      const headers=new Headers(response.headers);headers.set('Content-Length',String(file.bytes));await cache.put(file.path,new Response(await response.arrayBuffer(),{headers}));
     }finally{clearTimeout(timeout);}
    }
-   pending.received+=file.bytes;pending.count++;await write(packKey(packId,'pending'),pending);report();
+   if(outputKey&&!transferred.has(outputKey))transferred.set(outputKey,file.path);
+   if(!shared)pending.received+=file.bytes;pending.count++;await write(packKey(packId,'pending'),pending);report();
   }
   if(controller.signal.aborted)throw new Error('Download paused. Verified files are kept for Resume.');
   if(files.some(f=>f.timing?.status==='pending-qualification')){pending.status='timing-pending';pending.error='Files received. Recording timing must be qualified before this selection can play offline.';await write(packKey(packId,'pending'),pending);return {saved:false,received:true,timingPending:true};}
@@ -323,7 +374,7 @@ self.addEventListener('message',event=>{
     const meta=await caches.open(META);
     const active=await read(packKey(packId,'active')),pending=await read(packKey(packId,'pending'));
     const owned=new Set([active?.cache,pending?.cache]);
-    await Promise.all(keys.filter(k=>packId===legacy?owned.has(k)||new RegExp('^'+PREFIX+'[a-zA-Z0-9]+-(core|audio|all)(-repair)?$').test(k):k.startsWith(prefix)).map(k=>caches.delete(k)));
+    await Promise.all(keys.filter(k=>packId===legacy?owned.has(k)||new RegExp('^'+PREFIX+'[a-zA-Z0-9]+-(core|audio|visual|all)(-repair)?$').test(k):k.startsWith(prefix)).map(k=>caches.delete(k)));
     await meta.delete('/'+packKey(packId,'active'));await meta.delete('/'+packKey(packId,'pending'));result={saved:false};
    }else return;
    port?.postMessage({ok:true,...result},result.bytes instanceof ArrayBuffer?[result.bytes]:[]);
