@@ -71,3 +71,31 @@ it('catalog shows exact admitted on-request recordings without requesting prepar
  expect(screen.getByText('Guide recordings unavailable · Resources download manually')).toBeTruthy();
  expect(prepare).not.toHaveBeenCalled();expect(select).not.toHaveBeenCalled();
 });
+it('offers small, no-video and full packages with sizes computed from the manifest and sends no-video without video',async()=>{
+ const sha=c=>c.repeat(64),src='https://example.org/';
+ const media=(group,path,bytes,url,mime)=>({path,group,bytes,sha256:sha(group[0]==='a'?'a':group[0]==='i'?'b':'c'),mime,deliveryURL:url,sourceSha256:sha('d'),sourceBytes:bytes*4});
+ const manifest={revision:'fixture',files:[{path:'/index.html',group:'core',bytes:1048576},media('audio','/a.opus',2097152,`https://transcode.klappy.dev/audio/preset=voice,q=medium,f=opus/${src}a.mp3`,'audio/ogg'),media('image','/i.webp',3145728,`https://transcode.klappy.dev/image/q=medium,f=webp/${src}i.jpg`,'image/webp'),media('video','/v.mp4',52428800,`https://transcode.klappy.dev/video/preset=fia,q=medium,f=mp4/${src}v.mp4`,'video/mp4')]};
+ libraryAdapter.downloadStatus.mockResolvedValue({...available,manifest,choices:['core','audio','visual','all'].map(id=>({id}))});
+ const download=vi.spyOn(libraryAdapter,'download').mockResolvedValue({saved:true});
+ render(LibraryPanel,{view:'downloads'});await settle();
+ // Each package radio keeps its plain name; package name, size and note are its description (fia-app#248 post-deploy).
+ const small=screen.getByRole('radio',{name:'Text only',description:/^Small · default · /}),noVideo=screen.getByRole('radio',{name:'Text, audio, images and maps',description:/^No video · /}),full=screen.getByRole('radio',{name:'Text and all available resources',description:/^Full · /});expect(screen.getByRole('radio',{name:'Text and audio',description:/Adds recordings\./})).toBeTruthy();
+ expect(small.checked).toBe(true);expect(small.closest('label').textContent).toContain('Small · default');
+ expect(small.closest('label').textContent).toContain('1.0 MB');expect(noVideo.closest('label').textContent).toContain('6.0 MB');expect(full.closest('label').textContent).toContain('56.0 MB');
+ await fireEvent.click(noVideo);await settle();await fireEvent.click(screen.getByRole('button',{name:'Download selection'}));
+ expect(download).toHaveBeenCalledWith('visual',expect.any(Function),expect.anything(),expect.not.objectContaining({video:expect.anything()}));
+});
+
+it('whole book: previews each package total, then saves only unsaved passages through the passage path',async()=>{
+ const book=[{id:'eng.MRK-1-1-13',pericopeId:'MRK-1-1-13',language:'eng',title:'Mark 1:1–13'},{id:'eng.MRK-1-14-20',pericopeId:'MRK-1-14-20',language:'eng',title:'Mark 1:14–20'},{id:'eng.LUK-1-1-4',pericopeId:'LUK-1-1-4',language:'eng',title:'Luke 1:1–4'}];
+ vi.spyOn(libraryAdapter,'passages').mockResolvedValue(book);
+ libraryAdapter.downloadStatus.mockImplementation(async pack=>{return pack?.id==='eng.MRK-1-14-20'?{...available,saved:true,active:{selection:'core',bytes:1024,manifest:available.manifest}}:available;});
+ const download=vi.spyOn(libraryAdapter,'download').mockResolvedValue({saved:true});
+ render(LibraryPanel,{view:'downloads',selectedPack:book[0]});await settle();
+ expect(screen.getAllByRole('radio',{name:'Text and audio',exact:true}).length).toBe(1);
+ await fireEvent.click(screen.getByRole('button',{name:'Check book size'}));await settle();await settle();
+ const sizes=screen.getByRole('list',{name:'Whole book size by package'});expect(sizes.textContent).toContain('Text only');expect(sizes.textContent).toContain('2 passages · 1 saved');
+ expect(screen.getByText(/1\.0 KB|0\.0 MB to download · 1 of 2 passages/)).toBeTruthy();
+ await fireEvent.click(screen.getByRole('button',{name:'Download whole book'}));await settle();await settle();await settle();
+ expect(download).toHaveBeenCalledOnce();expect(download.mock.calls[0][0]).toBe('core');expect(download.mock.calls[0][2].id).toBe('eng.MRK-1-1-13');
+});

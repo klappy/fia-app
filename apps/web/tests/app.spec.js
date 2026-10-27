@@ -324,7 +324,54 @@ it('the session bar is one control with six stage cells and no per-screen bead r
  const bar=screen.getByRole('button',{name:'Session progress: open section overview'});
  expect(bar.querySelectorAll('.stage-cell')).toHaveLength(6);expect(bar.querySelectorAll('.stage-cell.current')).toHaveLength(1);
  expect(bar.querySelector('.content-progress-line')).toBeNull();
- const words=document.getElementById('session-progress-words');expect(bar.getAttribute('aria-describedby')).toBe('session-progress-words');expect(words.getAttribute('aria-valuenow')).toBe('3');expect(words.getAttribute('aria-valuetext')).toMatch(/Defining the Scenes · Step 3 · unit \d+ of \d+ · (more ahead|last unit)/);
+ const words=document.getElementById('session-progress-words');expect(bar.getAttribute('aria-describedby')).toBe('session-progress-words');expect(words.getAttribute('aria-valuenow')).toBe('3');expect(words.getAttribute('aria-valuetext')).toMatch(/^Defining the Scenes · Mark 1:1–13 · stage 3 of 6 · unit \d+ of \d+ · (more ahead|last unit)$/);
+ // Ticket ④: the passage reference moved under the book control; the cluster's words line is the stage name only.
+ expect(bar.querySelector('.stage-words').textContent).toBe('Defining the Scenes');expect(bar.querySelector('.stage-passage')).toBeNull();expect(bar.querySelector('.stage-words b').textContent).toBe('Defining the Scenes');expect(bar.textContent).not.toMatch(/Step \d/);
+});
+it('the book control left of the stage cluster carries the passage reference and opens passage selection (ticket ④)',async()=>{
+ vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',nativeName:'English',ready:1}]);
+ await startAt('S03-U009');
+ const book=screen.getByRole('button',{name:'Choose passage: Mark 1:1–13',exact:true}),bar=screen.getByRole('button',{name:'Session progress: open section overview'});
+ const band=book.closest('.session-band');expect(band).toBeTruthy();expect(band.contains(bar)).toBe(true);
+ // Order: book, dot gap, cluster.
+ const kids=[...band.children].filter(n=>!n.classList.contains('sr-only'));expect(kids.map(n=>n.className.split(' ')[0])).toEqual(['passage-control','band-dot','session-progress']);
+ expect(book.querySelector('.passage-cell svg')).toBeTruthy();expect(book.querySelector('.passage-words').textContent).toBe('Mark 1:1–13');expect(book.querySelector('.passage-words').getAttribute('title')).toBe('Mark 1:1–13');
+ await fireEvent.click(book);await settle();
+ const dialog=screen.getByRole('dialog');expect(dialog.textContent).toContain('Passages');expect(dialog.textContent).not.toContain('You are here');
+});
+it('the book Passages sheet: focus follows the view swap and the title names the open view (fia-app#250 review)',async()=>{
+ vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',nativeName:'English',ready:1}]);vi.spyOn(libraryAdapter,'passages').mockResolvedValue([bundledPack]);
+ await startAt('S01-U001');await fireEvent.click(screen.getByRole('button',{name:/^Choose passage/}));await settle();
+ const dialog=()=>screen.getByRole('dialog');expect(dialog().querySelector('.sheet-header h2').textContent).toBe('Passages');
+ const lang=await screen.findByRole('button',{name:/^Language: /});lang.focus();await fireEvent.click(lang);await settle();
+ const english=screen.getByRole('button',{name:/English/});expect(document.activeElement).toBe(english);expect(dialog().querySelector('.sheet-header h2').textContent).toBe('Language');
+ const browse=screen.getByRole('button',{name:/Browse passages/});browse.focus();await fireEvent.click(browse);await settle();
+ expect(document.activeElement).toBe(screen.getByRole('button',{name:/^Language: /}));expect(dialog().querySelector('.sheet-header h2').textContent).toBe('Passages');
+});
+it('the book Passages sheet focuses the chosen language, not the first, when the chosen one is second (fia-app#250 reviews 6226129643, 6226183019)',async()=>{
+ vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',nativeName:'English',ready:1},{id:'spa',nativeName:'Español',ready:1}]);vi.spyOn(libraryAdapter,'passages').mockResolvedValue([bundledPack]);
+ localStorage.setItem('fia-v3-library-language','spa');
+ await startAt('S01-U001');await fireEvent.click(screen.getByRole('button',{name:/^Choose passage/}));await settle();
+ const lang=await screen.findByRole('button',{name:/^Language: /});lang.focus();await fireEvent.click(lang);await settle();
+ const spanish=screen.getByRole('button',{name:/Español/}),english=screen.getByRole('button',{name:/English/});
+ expect(spanish.classList.contains('chosen')).toBe(true);expect(english.classList.contains('chosen')).toBe(false);
+ expect(document.activeElement).toBe(spanish);
+});
+it('a refused open from the book Passages sheet stays on its card, with no notice on the reading screen (fia-app#250 review)',async()=>{
+ const registry=JSON.parse(readFileSync('public/content/registry.json','utf8')),descriptor=registry.packs.find(p=>p.id==='eng.MRK-1-14-20');
+ vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',nativeName:'English',ready:68}]);vi.spyOn(libraryAdapter,'passages').mockResolvedValue([descriptor]);const select=vi.spyOn(libraryAdapter,'select').mockRejectedValue(Error('Passage verification failed. Try again.'));
+ await startAt('S01-U001');await fireEvent.click(screen.getByRole('button',{name:/^Choose passage/}));await settle();
+ await fireEvent.click(await screen.findByRole('button',{name:'Open passage',exact:true}));await settle();
+ expect(select).toHaveBeenCalledTimes(1);await waitFor(()=>expect(screen.getAllByText('Passage verification failed. Try again.')).toHaveLength(1));
+ expect(screen.getByText('Passage verification failed. Try again.').closest('.pack-card')).toBeTruthy();expect(document.querySelector('.scene-notice')).toBeNull();
+});
+it('Replay is an audio control: live on a block with a recording, grayed and inert on a text-only block',async()=>{
+ // Ticket 2026-10-15 passage-name-replaces-step-label § Scope: replay follows the same recording rule as the fourth slot (R6).
+ await startAt('S01-U001');expect(screen.getByRole('button',{name:'Replay',exact:true}).disabled).toBe(false);cleanup();localStorage.clear();
+ const i=activities.findIndex(a=>a.id==='S01-U001'),original=activities[i];activities[i]={...original,audioSrc:null,sourceText:undefined};
+ try{await startAt('S01-U001');const replay=screen.getByRole('button',{name:'Replay',exact:true});
+  expect(replay.disabled).toBe(true);expect(replay.classList.contains('no-audio')).toBe(true);}
+ finally{activities[i]=original;}
 });
 it('the overview spine opens a stage in place and its item jumps without marking prior content complete',async()=>{
  // overview-sheet.md § Proposed composition — clarity: tapping another stage's row shows its items in place; the forward jump never completes skipped items.

@@ -46,8 +46,10 @@ release moves those values and would rename the build. The entries are:
   builds through `e7eb0f0`, before #190 added flow roles;
 - `9a7733f5…295c` under `@2`: the builds from `45a3248`.
 
-The entry equal to today's build is the current build, not a historical one. Once a
-release moves the policy, it authenticates that build's rows.
+The entry equal to today's build is the current build, not a historical one. The
+registry is release bookkeeping: reads no longer authenticate rows by it. Once a
+release moves the policy, a row under an older build fails its verifier and is a
+cache miss (below), so the base is served and an explicit Open re-prepares.
 `tests/worker-serving/execution-registry.test.mjs` fails when an entry is not
 written as a literal, when one of these names changes, or when today's build is not
 registered. So a release that moves the policy or the recipe appends its own build
@@ -57,42 +59,58 @@ index it served, stored byte for byte in `tests/worker-serving/fixtures/approved
 release. A job under `@1` is projected without flow roles, so its publication
 reproduces exactly.
 
-A policy move strands no registered row only while that pack's base revision and its
-approved-audio binding rows are unchanged. The verifier checks a bound recording
-against today's proof index and the retained bytes. If a release changes
-`eng.MRK-1-14-20`'s binding (its delivery, ledger, evidence or base bytes) or its base
-revision, that pack's historical row stays refused (404 `execution-job-policy`, never
-a 500) until it is re-prepared. A row whose bytes the moved policy reproduces exactly
-(the same recipe and bindings, as for DEV's `{9a7733f5, @2}` rows) is never replaced.
-Its read serves the base with its demand, but an explicit Open answers `blocked`
-`executable-publication-conflict`, so the passage cannot open as executable until its
-bytes change. That is an open follow-up, due before the next content release. Only the unqualified current read (`read_pack({packId})` and
-`GET /v1/packs/<packId>`) may then serve the base with its existing demand, and
-only after it authenticates that historical publication exactly: the current
-pointer and artifact-owner indexes, the closed publication row, the closed job row
-with its recomputed id and retained context bytes, the request row bound to that
-revision, and the publication reproduced under that historical build. A reason
-string alone never qualifies; a forged, unregistered or corrupt row, a wrong
-pointer or index, or missing bytes stays refused. The read writes nothing. The
-historical revision and its old job-status read stay denied. This tree has no
-publication generations, so the demand is the existing four-field one (cookbook
-backport linked from the release note).
+The executable publication store is a content-keyed cache over the base catalog,
+never an identity or trust ledger (cookbook `klappy/fia-app-cookbook`
+`work/active/2026-10-15-fia-package-luke/RULING.md` § DEV publication conflict,
+recorded 9281c61; same rule as `work/86ed/2026-10-01-fia-alpha-v2/RULING.md:89`).
+No packing, hash or binding check ever blocks usage:
 
-Publication rows and their provenance are immutable. Republishing identical bytes
-under a newer job is a typed `blocked` `executable-publication-conflict`, never a
-replacement. Expected publication conflicts (pointer race, stale base, revocation,
-refused validation), named post-admission refusals and a stale-policy job-status
-read answer the typed `blocked` envelope with their code (HTTP 409). An unnamed
-fault is not disguised as a refusal. A transient storage or fetch fault during
-resolution answers `blocked` with its code and writes no job row, so it can be
-retried.
+- A publish whose record key (`executable-record:<packId>@<revision>`) already exists
+  replaces the row and advances the current pointer. There is no
+  `executable-publication-conflict`. A moved policy that reproduces identical bytes
+  (DEV's `{9a7733f5, @2}` rows for `eng.MRK-1-14-20`, Mark 1:14–20) rewrites the row
+  under the newer job, and the explicit Open is `ready`, never a 409.
+- A stored row that fails byte, hash, length, provenance or binding verification
+  (corrupt or missing retained bytes, a foreign/dangling pointer, a wrong owner index,
+  changed assets, a superseded policy, revocation) is a cache miss. The catalog read
+  falls through to the base catalog (the current read serves the base with its
+  existing demand, so an explicit Open re-prepares), and an artifact read falls
+  through to the base artifacts. A miss never answers `unavailable` because of the
+  stored row; an exact revision that only the cache held answers the base's own
+  not-found. The failure goes only to the overlay's `diagnose` hook
+  (`{event:'executable-cache-miss',where,kind,reason,...}`) for bookkeeping. `kind`
+  is `verification` for a named check failure and `transient` for an unnamed
+  storage/R2 fault or a timeout (a storage fault on the read itself also falls
+  through), so a blip is told apart from a bad row. The production runtime writes
+  each miss as one structured `console.warn` line; a throwing or rejecting hook is
+  contained and never changes the answer.
+- A replaced row prunes the artifact-owner index entries for bound artifacts it no
+  longer binds, so stale owners neither count toward the 1024 cap nor cost an
+  artifact read a verification pass.
+- Integrity pins (artifact sha256/bytes, `mediaAssetsSha256`, owner indexes) stay
+  for diagnostics and refresh bookkeeping, not as a usage gate. A row is served as
+  executable only when it verifies, so a miss never serves different bytes.
+
+The historical-build authentication (`authenticateCurrent`) is removed: every
+unverified current row already falls through to the base, so it was unreachable. A
+job-status read of a superseded job reads its demand row. If that row never recorded
+a publication, the read answers typed `blocked` `execution-job-policy` (HTTP 409).
+If it recorded a revision, the read answers that revision's current row: after an
+identical-bytes re-prepare replaced the row, that is `ready` with the newer job's
+provenance; otherwise the old row is a cache miss and the read answers typed
+`blocked` `revision-not-found` (the base's own not-found). Expected
+publication refusals (pointer race, stale base, revocation, refused validation) and
+named post-admission refusals answer the typed `blocked` envelope with their code
+(HTTP 409) on the write path only. An unnamed fault is not disguised as a refusal. A
+transient storage or fetch fault during resolution answers `blocked` with its code
+and writes no job row, so it can be retried.
 
 Publication stores verified bytes before atomically advancing its pointer.
 New publication checks the latest base, while an eligible previously published
 pinned version remains readable. Both catalog and artifact reads recheck
 authority and deterministic provenance, including current narration capability
-availability. Foreign/dangling pointers, changed assets and corrupt evidence
-refuse service.
+availability, and serve the cached row only when it verifies; otherwise they fall
+through to the base.
 
 Catalog `execution.artifacts` lists the bound JSON dependencies as
 `{id,sha256,bytes,mime}`. `execution.mediaIdentity:{packId,revision}` is emitted

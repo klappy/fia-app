@@ -1,8 +1,8 @@
 <script>
  import {Check,ChevronLeft,ChevronRight} from 'lucide-svelte';
- import {contentIcons as icons,sectionIcons,kindWords} from '../lib/progress-icons.js';
+ import {contentIcons as icons,sectionIcons,kindWords,passageIcon as PassageIcon} from '../lib/progress-icons.js';
  import {pendingStop,stopCue,shownKind,byKind} from '../lib/progress.js';
- let {groups,onopen=()=>{},onselect=()=>{},overview=false}=$props();
+ let {groups,passage='',onopen=()=>{},onpassages=null,onselect=()=>{},overview=false}=$props();
  // Overview spine: the current stage starts open; tapping another stage's row opens its items in place.
  let toggled=$state(new Set());
  const isOpen=i=>toggled.has(i)!==!!groups[i].active;
@@ -32,8 +32,13 @@
  }
  let active=$derived(groups.find(g=>g.active)||groups[0]);
  let activeIndex=$derived(Math.max(0,groups.findIndex(g=>g.active)));
- // Design-book words (progress-rail § Copy rules): `<name> · Step n`, then `unit n of m` with `more ahead` or `last unit`; `complete` once the session is done.
- let stageWords=$derived(active.current<0?`${active.title} · Step ${activeIndex+1} · complete`:`${active.title} · Step ${activeIndex+1} · unit ${active.current+1} of ${active.screens.length} · ${active.current<active.screens.length-1?'more ahead':'last unit'}`);
+ // Design-book words (progress-rail § Copy rules): `<name> · <passage>`, then `unit n of m` with `more ahead` or `last unit`; `complete` once the session is done.
+ // The passage name replaces the old `Step n` on the visible line (ticket 2026-10-15 passage-name-replaces-step-label): the six icons
+ // already say which stage. The icons are aria-hidden and aria-valuetext replaces aria-valuenow when read aloud, so the spoken words
+ // carry the stage position themselves (`stage n of 6`, review of #247); the visible line stays `<name> · <passage>`.
+ let lead=$derived(passage?`${active.title} · ${passage}`:active.title);
+ let position=$derived(`stage ${activeIndex+1} of ${groups.length}`);
+ let stageWords=$derived(active.current<0?`${lead} · ${position} · complete`:`${lead} · ${position} · unit ${active.current+1} of ${active.screens.length} · ${active.current<active.screens.length-1?'more ahead':'last unit'}`);
 </script>
 {#if overview}
  <!-- The spine (cookbook overview-sheet.md § Proposed composition — clarity, nodded 2026-10-09 21:01 ET; mock 28):
@@ -78,18 +83,32 @@
 {:else}
  <!-- One bar, six stage icons (cookbook design/alpha-system/components/progress-rail.md § One bar, adopted 2026-10-08).
       The per-screen bead row is gone from the bar; within-stage position lives in the overview and in the spoken words. -->
- <!-- The words live outside the button so assistive tech hears them: a button's aria-label overrides its children. -->
- <span id="session-progress-words" class="sr-only session-progress-words" role="progressbar" aria-label="Session progress" aria-valuemin="1" aria-valuemax={groups.length} aria-valuenow={activeIndex+1} aria-valuetext={stageWords}>{stageWords}</span>
- <button class="session-progress" aria-label="Session progress: open section overview" aria-describedby="session-progress-words" onclick={onopen}>
-  <!-- Top band (progress-rail § One bar, captain 2026-10-08 23:40–23:52 ET): no track; cells overlap 2 px and stack outward from the
-       current cell; the current cell's 2 px ring is the within-stage progress arc (tick at the first screen, solid at the last). -->
-  <span class="stage-bar" aria-hidden="true">
-   {#each groups as group,i}{@const StageIcon=sectionIcons[i]||sectionIcons[0]}
-    <span class="stage-cell" class:complete={i<activeIndex||group.ratio===1} class:current={group.active} style:z-index={groups.length-Math.abs(i-activeIndex)} style:--arc={group.active?`${Math.round(100*(group.current<0?1:(group.current+1)/Math.max(1,group.screens.length)))}%`:'0%'}><StageIcon size={20}/></span>
-   {/each}
-  </span>
-  <span class="stage-words" aria-hidden="true"><b>{active.title}</b> · Step {activeIndex+1}</span>
- </button>
+ <!-- Top band (progress-rail § Top band passage control, ticket ④): the book control at the inline start, a dot gap, then the
+      six-stage cluster. The passage reference sits under the book; the cluster's words line is the stage name only. -->
+ <div class="session-band" class:with-passage={!!onpassages}>
+  <!-- The words live outside the buttons so assistive tech hears them: a button's aria-label overrides its children. -->
+  <span id="session-progress-words" class="sr-only session-progress-words" role="progressbar" aria-label="Session progress" aria-valuemin="1" aria-valuemax={groups.length} aria-valuenow={activeIndex+1} aria-valuetext={stageWords}>{stageWords}</span>
+  {#if onpassages}
+   <button class="passage-control" aria-label={passage?`Choose passage: ${passage}`:'Choose passage'} onclick={onpassages}>
+    <span class="passage-cell" aria-hidden="true"><PassageIcon size={20}/></span>
+    <!-- One line, never wraps: the reference ends in an ellipsis on overflow; the full text stays in the label and the title. -->
+    {#if passage}<span class="passage-words" aria-hidden="true" title={passage}>{passage}</span>{/if}
+   </button>
+   <span class="band-dot" aria-hidden="true"></span>
+  {/if}
+  <button class="session-progress" aria-label="Session progress: open section overview" aria-describedby="session-progress-words" onclick={onopen}>
+   <!-- No track; cells overlap 2 px and stack outward from the current cell; the current cell's 2 px ring is the within-stage
+        progress arc (tick at the first screen, solid at the last) (captain 2026-10-08 23:40–23:52 ET). -->
+   <span class="stage-bar" aria-hidden="true">
+    {#each groups as group,i}{@const StageIcon=sectionIcons[i]||sectionIcons[0]}
+     <span class="stage-cell" class:complete={i<activeIndex||group.ratio===1} class:current={group.active} style:z-index={groups.length-Math.abs(i-activeIndex)} style:--arc={group.active?`${Math.round(100*(group.current<0?1:(group.current+1)/Math.max(1,group.screens.length)))}%`:'0%'}><StageIcon size={20}/></span>
+    {/each}
+   </span>
+   <!-- The stage name only (the passage moved under the book); it ellipsizes only when wider than the cluster. Without a book
+        control (no passage chooser wired) the old `<name> · <passage>` line stays, so the passage is never lost. -->
+   <span class="stage-words" aria-hidden="true"><b>{active.title}</b>{#if passage&&!onpassages}<span class="stage-sep">{' · '}</span><span class="stage-passage" title={passage}>{passage}</span>{/if}</span>
+  </button>
+ </div>
 {/if}
 <style>
  .ov-spine{list-style:none;margin:0;padding:0}
