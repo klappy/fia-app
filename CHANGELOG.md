@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased — temporary whole-book containment
+
+Whole-book saving is temporarily unavailable in the updated client while its executable Saved-snapshot restoration boundary is corrected. Per-passage saving remains available. Alpha18 originally shipped whole-book save/resume as recorded below; this subsequent containment does not rewrite that release history. Already-loaded old clients and workers are a separate update-lifecycle limitation; the client guard alone does not disable their book loop.
+
 ## 3.0.0-alpha.18 — Luke, passage controls and downloads (2026-10-26)
 
 Adds Luke text in English and Spanish beside Mark, with publisher audio admitted for Luke 1:1–4. The session bar identifies the passage, disables Replay without playable audio, and provides a book control for passage selection. Downloads offer a no-video package, stable accessible package names, size previews and resumable whole-book saving. Executable preparation uses a verified cache that falls back to preparation on a cache miss.
