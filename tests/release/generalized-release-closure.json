@@ -946,7 +946,7 @@
     },
     {
       "path": "apps/web/public/sw.js",
-      "sha256": "966b00d9ba9e2172c4547d5c3a88641fbd7b2f8ca6162a65cbc8f934a863aee6"
+      "sha256": "392549b23204530d1d88f1d47a3c9843920a8596e98998fb043b7ef377374202"
     },
     {
       "path": "apps/web/src/App.svelte",
@@ -1317,7 +1317,7 @@
     },
     {
       "path": "e2e/live-listening/journey.spec.js",
-      "sha256": "578d494d37dd2f6cfbd532edbf8ba942e4d2847d4c3f332e950bc420f810c578"
+      "sha256": "7723e6e0acc8c420c8882e7affae45d2bbcf61d222958bec80936fd8a1b98e03"
     },
     {
       "path": "e2e/notice-scope.spec.js",
@@ -2784,6 +2784,10 @@
     {
       "path": "tests/worker-serving/executable-cache-followups.test.mjs",
       "sha256": "a33fe01d41a2d05d88c67a1e1cec0e57fa5b12bcb21e7682e32df6af82799dff"
+    },
+    {
+      "path": "apps/web/tests/download-preflight-progress.test.js",
+      "sha256": "2a6d224430dc7a70c18b6fd2bd89a6775dbb4e21f944736f39c3f48dcf41076e"
     }
   ],
   "generatedFiles": [
@@ -5989,8 +5993,8 @@
     },
     {
       "path": "sw.js",
-      "sha256": "6d9b1f9c3978f45f38d7e264c82df40281bf709bfba7b68e8b32d4c35b5a627e",
-      "bytes": 83981
+      "sha256": "207e38a8f6e01f9db2559a07f0671d0526e4ae09318d193a1db75947b3687b7e",
+      "bytes": 85236
     },
     {
       "path": "content/approved-audio/7140879c9b324a068e48dc83eaff85669022528977f104c02434332b58415c56.json",
