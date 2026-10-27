@@ -6,7 +6,7 @@
  import {progressSummary} from '../lib/session-store.js';
  import {planProxyDownload,downloadSelectionIncludes,downloadTransferBytes} from '../lib/proxy-request.js';
  import {preparedDownloadSizes} from '../lib/media-options.js';
- import {bookPassages,bookStatuses,bookTotals,downloadBook} from '../lib/book-download.js';
+ import {bookPassages,observeBookStatuses,bookTotals,downloadBook} from '../lib/book-download.js';
  let {view,selectedPack=bundledPack,language='eng',onlanguage,onselect,onreset,onview,completed=0,total=0,onstatus=()=>{}}=$props();
  let languages=$state([]),passages=$state([]),loading=$state(true),error=$state(''),download=$state(null),selection=$state('core'),busy=$state(false),transfer=$state(null),confirmRemove=$state(false),confirmRestart=$state(null),downloadFinished=$state(false);
  let sizes=$derived(preparedDownloadSizes(download?.manifest,selection));
@@ -33,14 +33,28 @@
 
  let savedSizes=$derived.by(()=>{const active=download?.active;if(!active||active.selection==='core')return '';const prepared=preparedDownloadSizes(active.manifest,active.selection);const values=Object.entries(prepared.groups).filter(([,g])=>g.included&&g.count).map(([key,g])=>active.manifest?.mediaSizes?.[key]||g.size);if(!values.length||values.some(v=>!prepared.labels[v]))return 'Saved sizes unavailable';return new Set(values).size===1?prepared.labels[values[0]]:'Custom';});
  let alive=true;
+ let refreshToken=0,stopRefresh=()=>{};
+ function cancelRefresh(){refreshToken++;stopRefresh();stopRefresh=()=>{};}
  async function refresh(){
-  loading=true;error='';
+  cancelRefresh();const token=refreshToken,pack=selectedPack,mode=view,locale=language;
+  const current=()=>alive&&token===refreshToken&&selectedPack.id===pack.id&&view===mode;
+  let timer,cancelRead;const canceled=new Promise(resolve=>cancelRead=resolve);
+  stopRefresh=()=>{clearTimeout(timer);cancelRead(null);};loading=true;error='';
   try{
-   if(view==='downloads'){download=await libraryAdapter.downloadStatus(selectedPack);onstatus(download.saved);if(!download.choices?.some(c=>c.id===selection))selection=download.choices?.[0]?.id||'core';}
-   else {languages=await libraryAdapter.languages();passages=await libraryAdapter.passages(language);}
-  }catch(e){if(alive)error=e.message;}finally{if(alive)loading=false;}
+   if(mode==='downloads'){
+    const result=await Promise.race([libraryAdapter.downloadStatus(pack),canceled,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Download status could not be checked. You can try again.')),15000);})]);
+    if(!current())return;download=result;onstatus(result.saved);if(!result.choices?.some(c=>c.id===selection))selection=result.choices?.[0]?.id||'core';
+   }else{
+    const nextLanguages=await libraryAdapter.languages();if(!current())return;
+    const nextPassages=await libraryAdapter.passages(locale);if(!current())return;languages=nextLanguages;passages=nextPassages;
+   }
+  }catch(e){if(current())error=e.message;}finally{clearTimeout(timer);if(current()){loading=false;stopRefresh=()=>{};}}
  }
- onMount(()=>{refresh();return()=>alive=false;});
+ onMount(()=>()=>{alive=false;cancelRefresh();cancelBookCheck();});
+ $effect(()=>{const identity=selectedPack.id,locale=selectedPack.language||language,mode=view;let current=true;
+  queueMicrotask(async()=>{if(!current||!alive)return;await refresh();if(current&&alive&&mode==='downloads'&&download?.available!==false)checkBook();});
+  return()=>{current=false;cancelRefresh();cancelBookCheck();bookStatusList=null;bookCheckError='';download=null;};
+ });
  const labels={core:'Text only',audio:'Text and audio',visual:'Text, audio, images and maps',all:'Text and all available resources'};
  const packageNames={core:'Small · default',visual:'No video',all:'Full'};
  const packageNotes={core:'Scripture, guide and app.',audio:'Adds recordings.',visual:'Leaves out video, which uses the most space.',all:'Everything, including video.'};
@@ -53,13 +67,23 @@
  async function save(){busy=true;error='';transfer=null;try{const result=await libraryAdapter.download(selection,value=>transfer=value,selectedPack,requestSizes);downloadFinished=result.saved!==false;if(result.timingPending)error='Files received. Recording timing is pending before offline playback.';}catch(e){error=e.message;}finally{busy=false;const failure=error;await refresh();error=failure||error;}}
  async function pause(){try{await libraryAdapter.pauseDownload(selectedPack);}catch(e){error=e.message;}}
  // Whole book: the same tier as the passage choice above, run passage by passage through the worker.
- let bookPacks=$state([]),bookStatusList=$state(null),bookChecking=$state(false),bookBusy=$state(false),bookProgress=$state(null),bookResult=$state(null);let bookStop=false;
+ let bookPacks=$state([]),bookStatusList=$state(null),bookChecking=$state(false),bookRetrying=$state(false),bookCheckError=$state(''),bookBusy=$state(false),bookProgress=$state(null),bookResult=$state(null);let bookStop=false;
  let bookName=$derived(String(selectedPack.title||'').replace(/\s+\d[\s\S]*$/,'')||'this book');
  let bookTotalsByTier=$derived(bookStatusList?bookTotals(bookStatusList):null);
- async function checkBook(){bookChecking=true;bookResult=null;try{bookPacks=bookPassages(await libraryAdapter.passages(selectedPack.language||language),selectedPack);bookStatusList=await bookStatuses(bookPacks,libraryAdapter);}catch(e){error=e.message;}finally{bookChecking=false;}}
+ let checkToken=0,checkPromise=null,checkTimer=null,checkDeadline=null,finishWait=null;
+ function cancelBookCheck(){checkToken++;clearTimeout(checkTimer);clearTimeout(checkDeadline);finishWait?.();finishWait=null;checkPromise=null;bookChecking=false;bookRetrying=false;}
+ function checkBook(){
+  if(checkPromise)return checkPromise;const token=++checkToken,pack=selectedPack,locale=pack.language||language;
+  const stopped=()=>!alive||token!==checkToken;bookChecking=true;bookRetrying=false;bookCheckError='';bookResult=null;
+  checkDeadline=setTimeout(()=>{if(!stopped()){bookCheckError='Book sizes could not be checked. You can try again.';cancelBookCheck();}},60000);
+  checkPromise=(async()=>{try{
+   await observeBookStatuses(async()=>bookPassages(await libraryAdapter.passages(locale),pack),libraryAdapter,{shouldStop:stopped,onpacks:packs=>{if(!stopped())bookPacks=packs;},onstatus:(statuses,retrying)=>{if(!stopped()){bookStatusList=statuses;bookRetrying=retrying;const selected=statuses[bookPacks.findIndex(p=>p.id===pack.id)];if(!download?.manifest&&selected?.manifest){download=selected;onstatus(selected.saved);error='';}}},wait:ms=>new Promise(resolve=>{finishWait=resolve;checkTimer=setTimeout(()=>{finishWait=null;resolve();},ms);})});
+  }catch(e){if(!stopped())bookCheckError='Book sizes could not be checked. You can try again.';}
+  finally{if(!stopped()){clearTimeout(checkDeadline);bookChecking=false;bookRetrying=false;checkPromise=null;finishWait=null;}}})();return checkPromise;
+ }
  async function saveBook(){bookBusy=true;bookStop=false;bookResult=null;error='';try{bookResult=await downloadBook(bookPacks,selection,libraryAdapter,{onprogress:value=>bookProgress=value,shouldStop:()=>bookStop});}catch(e){error=e.message;}finally{bookBusy=false;bookProgress=null;await refresh();await checkBook();}}
  async function pauseBook(){bookStop=true;const pack=bookProgress?.pack;if(pack)try{await libraryAdapter.pauseDownload(pack);}catch(e){error=e.message;}}
- function bookLine(t){if(!t?.count)return 'Not offered in this book';return `${formatBytes(t.bytes)}${t.unknown?` + ${t.unknown} set during download`:''} · ${t.count} passages${t.saved?` · ${t.saved} saved`:''}`;}
+ function bookLine(t){if(!t?.count)return 'Not offered in this book';const unresolved=t.unresolved||0,size=unresolved===t.count?'Size unavailable':`${unresolved?'At least ':''}${formatBytes(t.bytes)}${t.unknown?` + ${t.unknown} set during download`:''}`;return `${size} · ${t.count} passages${t.saved?` · ${t.saved} saved`:''}${unresolved?` · ${unresolved} not checked`:''}`;}
  async function remove(){try{await libraryAdapter.removeDownload(selectedPack);confirmRemove=false;await refresh();}catch(e){error=e.message;}}
 </script>
 <div class="library-panel">
@@ -104,17 +128,18 @@
     {#if download.error}<p class="fine-print">{download.error} {download.manifest?'Showing the last saved file list.':''}</p>{/if}
    {:else if download}<p class="library-message">{download.reason}</p>{/if}
   </article>
-  {#if download?.available}
+  {#if download?.available||(download?.available!==false&&(bookChecking||bookCheckError||bookStatusList))}
    <article class="pack-card book-card" aria-labelledby="book-download-title"><span class="library-eyebrow">{selectedPack.language==='spa'?'Español':'English'} · {bookName}</span><h3 id="book-download-title">Save the whole book</h3>
     <p class="fine-print">Saves every passage of {bookName} with the choice above ({labels[selection]}). Passages already saved are kept; an interrupted passage resumes from its verified files.</p>
-    {#if !bookStatusList}<button class="secondary full" disabled={bookChecking||busy} aria-busy={bookChecking?'true':undefined} onclick={checkBook}>{bookChecking?'Checking book size…':'Check book size'}</button>
+    {#if !bookStatusList}<p role="status">{bookCheckError||'Checking book sizes…'}</p>{#if bookCheckError}<button class="secondary full" disabled={bookChecking||busy} onclick={checkBook}>Retry book size check</button>{/if}
     {:else}
-     <ul class="book-sizes" aria-label="Whole book size by package">{#each download.choices as choice}<li class:chosen={selection===choice.id}><strong>{labels[choice.id]}</strong><small>{bookLine(bookTotalsByTier[choice.id])}</small></li>{/each}</ul>
+     <ul class="book-sizes" aria-label="Whole book size by package">{#each (download?.choices?.length?download.choices:[{id:selection}]) as choice}<li class:chosen={selection===choice.id}><strong>{labels[choice.id]}</strong><small>{bookLine(bookTotalsByTier[choice.id])}</small></li>{/each}</ul>
      {@const chosen=bookTotalsByTier[selection]}
-     <p>{chosen.count?`${formatBytes(chosen.remaining)}${chosen.unknown?` + ${chosen.unknown} passages sized during download`:''} to download · ${chosen.count-chosen.saved} of ${chosen.count} passages`:'Nothing to save for this choice.'}</p>
+    <p>{chosen.unresolved?`Book size is incomplete: ${chosen.unresolved} passage${chosen.unresolved===1?'':'s'} could not be checked. ${bookRetrying?'Checking again automatically…':'You can try checking again.'}`:chosen.count?`${formatBytes(chosen.remaining)}${chosen.unknown?` + ${chosen.unknown} passages sized during download`:''} to download · ${chosen.count-chosen.saved} of ${chosen.count} passages`:'Nothing to save for this choice.'}</p>
+    {#if chosen.unresolved&&!bookChecking}<button class="secondary full" disabled={bookChecking||busy||bookBusy} onclick={checkBook}>{bookChecking?'Checking book size…':'Retry book size check'}</button>{/if}
      {#if bookProgress}<progress aria-label="Book download progress" value={bookProgress.index} max={bookProgress.total||1}></progress><p role="status">Passage {Math.min(bookProgress.index+1,bookProgress.total)} of {bookProgress.total}{bookProgress.pack?` · ${bookProgress.pack.title}`:''}{bookProgress.transfer?` · ${formatBytes(bookProgress.transfer.received)} verified`:''}</p>{/if}
      {#if bookResult}<p role="status">{bookResult.stopped?'Book download paused. Saved passages are kept; Download whole book resumes.':'Book download finished.'} {bookResult.saved} saved · {bookResult.skipped} already saved{bookResult.failed.length?` · ${bookResult.failed.length} not saved`:''}.</p>{/if}
-     {#if bookBusy}<button class="secondary full" onclick={pauseBook}><Pause size={18}/>Pause book download</button>{:else}<button class="secondary full" disabled={busy||!chosen.count||chosen.saved===chosen.count||download.pending?.running} onclick={saveBook}><Download size={18}/>Download whole book</button>{/if}
+    {#if bookBusy}<button class="secondary full" onclick={pauseBook}><Pause size={18}/>Pause book download</button>{:else}<button class="secondary full" disabled={busy||bookChecking||!chosen.count||!!chosen.unresolved||chosen.saved===chosen.count||download.pending?.running} onclick={saveBook}><Download size={18}/>Download whole book</button>{/if}
     {/if}
    </article>
   {/if}
