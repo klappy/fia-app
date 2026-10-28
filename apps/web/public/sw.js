@@ -150,6 +150,45 @@ async function historicalServerRead({match,packId,revision,digest,clientId,answe
  const headers=new Headers(response.headers);headers.set(offlineServerHeader,'historical-verified');headers.set('Cache-Control','private, no-store');return new Response(await response.arrayBuffer(),{status:200,headers});
 }
 
+// Only a coherent selected Saved presentation can name retained approved audio.
+// A hash in a URL or another passage's copy is never sufficient authority.
+async function approvedAudioContext(request,clientId){
+ const url=new URL(request.url),route=/^\/v1\/approved-audio\/([a-f0-9]{64})\/([a-f0-9]{64})\.(ogg|mp3)$/.exec(url.pathname);
+ if(!route||url.search||request.headers.has('range')||!clientId)return null;
+ try{
+  const pin=await read('client-'+clientId),packId=pin?.packId;if(!validPack(packId)||packId===legacy)return null;
+  const active=await read(packKey(packId,'active')),record=active?.serverSnapshot?.record;
+  if(!record||pin.serverSnapshot?.invalid||(pin.serverSnapshot?.record.revision||pin.revision)!==record.revision||await read(revokedSnapshotKey(packId,record.revision))||!await complete(active))return null;
+  const manifest=validate(active.manifest);if(active.packId!==packId||manifest.packId!==packId||record.execution?.mediaIdentity?.packId!==packId||record.execution.mediaIdentity.revision!==manifest.presentationRevision)return null;
+  const dependency=record.execution.artifacts.find(f=>f.id==='approved-audio:'+route[1]);if(!dependency)return null;
+  const cache=await caches.open(active.cache),presentationResponse=await cache.match(artifactPath(record.revision));await serverJSON(presentationResponse,serverFiles(record)[0],record);const presentation=await presentationResponse.json();
+  if(!presentation.activities.some(a=>a.execution?.narration?.action==='play-bound-audio'&&a.execution.narration.artifact?.id===dependency.id&&a.execution.narration.artifact.sha256===dependency.sha256))return null;
+  const boundResponse=await cache.match(artifactPath(dependency.sha256));await serverJSON(boundResponse,dependency,record);const bound=await boundResponse.json(),delivery=bound.delivery,mime=route[3]==='ogg'?'audio/ogg':'audio/mpeg';
+  if(bound.schema!=='fia-bound-narration-audio@1'||bound.id!==dependency.id||Object.keys(bound).sort().join(',')!=='delivery,id,playbackRange,schema'||!delivery||Object.keys(delivery).sort().join(',')!=='bytes,mime,sha256,url'||delivery.url!==url.pathname||delivery.sha256!==route[2]||delivery.mime!==mime||!Number.isSafeInteger(delivery.bytes)||delivery.bytes<=0||delivery.bytes>16777216)return null;
+  const file=permittedRecordings(active.files,generatedRecordingPaths).find(f=>f.group==='audio'&&f.sha256===delivery.sha256&&f.bytes===delivery.bytes&&f.mime===mime&&manifest.files.some(d=>d.path===f.path&&matchingSavedFile(d,active,manifest)===f));
+  return file?{packId,active,record,file,cache,clientId}:null;
+ }catch{return null;}
+}
+async function approvedContextCurrent(context){
+ if(!context)return false;const pin=await read('client-'+context.clientId),current=await read(packKey(context.packId,'active'));
+ return pin?.packId===context.packId&&!pin.serverSnapshot?.invalid&&(pin.serverSnapshot?.record.revision||pin.revision)===context.record.revision&&!!current&&current.cache===context.active.cache&&current.serverSnapshot?.record.revision===context.record.revision&&!current.serverSnapshot.invalid&&!await read(revokedSnapshotKey(context.packId,context.record.revision));
+}
+async function retireApprovedContext(context){if(await approvedContextCurrent(context))await invalidateServerSnapshot(context.packId);}
+async function historicalApprovedAudio(context,answer){
+ if(!await approvedContextCurrent(context))return answer||new Response('This approved recording is not saved for this presentation.',{status:503});
+ const response=await context.cache.match(context.file.path);if(!response?.ok||response.headers.get('Content-Type')!==context.file.mime)return answer||new Response('This saved recording could not be verified.',{status:503});
+ const bytes=await response.arrayBuffer();if(bytes.byteLength!==context.file.bytes||await contentHash(bytes)!==context.file.sha256||!await approvedContextCurrent(context))return answer||new Response('This saved recording could not be verified.',{status:503});
+ const headers=new Headers({'Content-Type':context.file.mime,'Content-Length':String(context.file.bytes),'ETag':'"'+context.file.sha256+'"','Cache-Control':'private, no-store',[offlineServerHeader]:'historical-verified'});
+ return new Response(bytes,{status:200,headers});
+}
+async function approvedAudioRead(request,clientId){
+ const context=await approvedAudioContext(request,clientId);let response;
+ try{response=await fetch(request,{cache:'no-store',redirect:'error'});}catch(error){if(error?.name==='TypeError'||error?.name==='AbortError')return historicalApprovedAudio(context);await retireApprovedContext(context);return Response.error();}
+ if([408,429,500,502,503,504].includes(response.status))return historicalApprovedAudio(context,response);
+ if(context&&(response.status!==200||response.redirected||response.headers.get('Content-Type')!==context.file.mime||response.headers.get('Content-Length')!==String(context.file.bytes)||response.headers.get('ETag')!=='"'+context.file.sha256+'"'||!await verified(response.clone(),context.file)))await retireApprovedContext(context);
+ return response;
+}
+
 async function complete(record){
  if(!record)return false;
  if(record.serverSnapshot&&!await snapshotComplete(record))return false;
@@ -208,6 +247,7 @@ self.addEventListener('fetch',event=>{
  const inFamily=root=>path===root||path.startsWith(root+'/');
  // Online destinations retain their own responses/errors, never an installed app shell.
  if(path==='/version.json'||path==='/build-status.html'||inFamily('/build-status')){event.respondWith(fetch(event.request,{cache:'no-store'}));return;}
+ if(path.startsWith('/v1/approved-audio/')){event.respondWith(approvedAudioRead(event.request,event.clientId));return;}
  if(/^\/v1\/(?:packs|artifacts)\//.test(path)){event.respondWith(serverRead(event.request,event.clientId));return;}
  if(['/v1','/mcp','/docs','/content/source'].some(inFamily)){event.respondWith(fetch(event.request));return;}
  if(event.request.mode==='navigate')event.respondWith((async()=>{
