@@ -50,6 +50,12 @@ There is no list of revisions or files.
 
 **The 96bb fixture.** `tests/preparation/fixtures/source-associations/spa-luk-1-1-4-s05-u003.raw-fragment.json` is a dev-time public read at 96bb023 (Terry's classification, cookbook 37433d2). A test shows it is refused against the archive descriptor (eb744452 / b6de7d69). Any join over it is an isolated test result, never a runtime explicit claim.
 
+## Composer (unrouted)
+
+`composer.mjs` builds each pack's descriptor from the retained archive guide record, after checking that record against `source-bindings.json`. It asks the guide-fragment@1 producer for exactly that file and issues a receipt only when the receipt equals the descriptor. The issuer also requires the guide-fragment@1 policy revision, which carries the acquisition-profile hash, and the JSON content kind.
+
+**Precondition before any wiring (PR293 review N1).** Today the archives and bindings are constructor parameters. A production constructor must load the retained archives and `source-bindings.json` itself, with pinned bytes (as `SOURCE_ARCHIVE_SHA256` pins the Mark archive for `exportGuideSources`). Callers must never pass them in. This is not built yet.
+
 ## Coverage
 
 Run `node server/fia/preparation/source-associations/coverage.mjs [language book]...`. The default is English Mark and Spanish Luke.

@@ -72,8 +72,13 @@ test('the issuer accepts only a genuine verified read() and re-hashes the whole 
  await assert.rejects((fakeProducerReceipt({...base,owner:'evil'})),/producer-receipt-class/,'fake owner');
  const tampered=new Uint8Array(bytes);tampered[tampered.length-12]^=1;await assert.rejects((fakeProducerReceipt({...base,issuerBytes:tampered})),/producer-receipt-bytes/,'bytes that differ from the observed sha (unverified file sha)');
  await assert.rejects((fakeProducerReceipt({...base,path:'spa/json/42.content.json?x'})),/producer-receipt-class|fresh-source-policy/);await assert.rejects((fakeProducerReceipt({...base,revision:'96bb'})),/producer-receipt-version/);
- await assert.rejects((fakeProducerReceipt({...base,sourceVersionKind:'discovery-snapshot'})),/producer-receipt-version/);await assert.rejects((fakeProducerReceipt({...base,contentType:'text/plain'})),/fresh-response-refused|producer-receipt-media/);
+ await assert.rejects((fakeProducerReceipt({...base,sourceVersionKind:'discovery-snapshot'})),/producer-receipt-version/);await assert.rejects((fakeProducerReceipt({...base,contentType:'text/plain'})),/fresh-media-refused|fresh-response-refused|producer-receipt-media/);
  assert.throws(()=>issueProducerReceipt({state:'unobserved'},bytes),/producer-receipt-unobserved/);
+});
+test('a genuine read under another policy revision is refused, so the acquisition-profile hash is enforced (PR293 review N2)',async()=>{
+ const bytes=fileOf(LUKE,[OPEN,U3,CLOSE]),read=await fakeObservedRead({bytes,revision:SYN_REV,path:PATH,policy:{revision:'fake-producer@1',maxBytes:6291456,totalMs:5000,progressMs:5000}});
+ assert.throws(()=>issueProducerReceipt(read,bytes),/producer-receipt-recipe/);
+ assert.ok(isProducerReceipt(issueProducerReceipt(await fakeObservedRead({bytes,revision:SYN_REV,path:PATH}),bytes)),'the guide-fragment@1 policy issues');
 });
 test('a shaped look-alike of a read() result is refused, however self-consistent (PR290 review finding 1)',async()=>{
  const bytes=fileOf(LUKE,[OPEN,U3,CLOSE]),genuine=await fakeObservedRead({bytes,revision:SYN_REV,path:PATH});

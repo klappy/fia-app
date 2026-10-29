@@ -1,6 +1,6 @@
 import {createHash} from 'node:crypto';
 import {canonicalJSONString,sha256} from './contract.mjs';
-import {createFreshSourceObservations,JSON_CONTENT} from './executor/fresh-source-observation.mjs';
+import {createFreshSourceObservations,createProfileJsonPort} from './executor/fresh-source-observation.mjs';
 // guide-fragment@1: request-driven, version-bound retention of one class-A publisher guide file, inside the existing
 // FIA_PREPARATION_JOBS Durable Object and FIA_ORIGINALS bucket, on the fresh-source-observation primitive's JSON port. It is the
 // producer behind source-associations/composer.mjs, which asks for exactly the file the retained archive describes and turns the
@@ -8,14 +8,18 @@ import {createFreshSourceObservations,JSON_CONTENT} from './executor/fresh-sourc
 export const GUIDE_FRAGMENT_JOB='guide-fragment@1';
 // The class-A acquisition profile (draft CONTRACT Q24). Its sha256 is part of the policy revision, and so of every observation binding:
 // a profile change is a recipe change. 6 MiB inside the primitive's 16 MiB ceiling; the guide files observed at 96bb were 1.72-2.62 MB.
-export const GUIDE_ACQUISITION_PROFILE=Object.freeze({schema:'fia-guide-acquisition-profile@1',contractClause:'CONTRACT Q24 (proposed, fia-app-cookbook PR 266)',sourceClass:'A',owner:'BibleAquifer',collections:Object.freeze(['FIATranslationGuide']),origin:'https://raw.githubusercontent.com',path:'<lang>/json/<NN>.content.json',languages:Object.freeze(['eng','spa']),revision:'exact 40-hex publisher-version, taken from the retained archive descriptor',media:Object.freeze(['application/json']),shape:'top-level JSON array',maxBytes:6291456,totalMs:30000,progressMs:15000,redirects:'refused',query:'refused',credentials:'none',expectedSha256:'required, from the retained archive descriptor'});
+export const GUIDE_ACQUISITION_PROFILE=Object.freeze({schema:'fia-guide-acquisition-profile@1',contractClause:'CONTRACT Q24 (proposed, fia-app-cookbook PR 266)',sourceClass:'A',owner:'BibleAquifer',collections:Object.freeze(['FIATranslationGuide']),origin:'https://raw.githubusercontent.com',path:'<lang>/json/<NN>.content.json',languages:Object.freeze(['eng','spa']),revision:'exact 40-hex publisher-version, taken from the retained archive descriptor',media:Object.freeze(['application/json','text/plain']),mediaRule:'text/plain admitted only for this profile\'s composed class-A URL; under either type the body must begin with [, equal the known Content-Length within maxBytes, decode as strict UTF-8 and parse as one top-level JSON array before quarantine; promoted only when sha256 equals the descriptor; observed Content-Type recorded verbatim in the receipt; any other type unsupported',shape:'top-level JSON array',maxBytes:6291456,totalMs:30000,progressMs:15000,redirects:'refused',query:'refused',credentials:'none',expectedSha256:'required, from the retained archive descriptor'});
 const profileSha256=createHash('sha256').update(canonicalJSONString(GUIDE_ACQUISITION_PROFILE)).digest('hex');
 export const GUIDE_FRAGMENT_POLICY=Object.freeze({revision:`fia-guide-fragment@1:profile:${profileSha256}`,maxBytes:GUIDE_ACQUISITION_PROFILE.maxBytes,totalMs:GUIDE_ACQUISITION_PROFILE.totalMs,progressMs:GUIDE_ACQUISITION_PROFILE.progressMs});
 export const GUIDE_REPOSITORY='BibleAquifer/FIATranslationGuide';
+// The guide-fragment job's own JSON port, built from the profile's media list. Its source-URL rule is this profile's composed
+// class-A URL shape (origin, owner, an allowed collection, an exact revision, a guide path), so text/plain reaches nothing else.
+const CLASS_A_URL=new RegExp(`^https://raw\\.githubusercontent\\.com/${GUIDE_ACQUISITION_PROFILE.owner}/(?:${GUIDE_ACQUISITION_PROFILE.collections.join('|')})/[a-f0-9]{40}/(?:eng|spa)/json/\\d{1,3}\\.content\\.json$`);
+const GUIDE_PORT=createProfileJsonPort({media:[...GUIDE_ACQUISITION_PROFILE.media],sourceUrl:url=>CLASS_A_URL.test(url)});
 const JOB_KEY='guide-fragment:job',hex=x=>createHash('sha256').update(x).digest('hex');
 const ticketFor=n=>({checkId:n===1?'guide-fragment@1:first':`guide-fragment@1:retry-${n}`,sequence:n,expectedPreviousObservationSha256:null,previousSourceSha256:null});
 // Final refusals for this exact file under this recipe; ineligibility and interruptions are never final (Retry rules as visual-original).
-const UNSUPPORTED=new Set(['fresh-response-refused','fresh-response-status','fresh-known-length-required','fresh-byte-limit','fresh-byte-length','fresh-signature-mismatch','fresh-shape-mismatch','fresh-source-policy']);
+const UNSUPPORTED=new Set(['fresh-response-refused','fresh-response-status','fresh-known-length-required','fresh-byte-limit','fresh-byte-length','fresh-signature-mismatch','fresh-shape-mismatch','fresh-media-refused','fresh-source-policy']);
 const refusal=r=>UNSUPPORTED.has(r)?{reason:'guide-unsupported',subReason:r,final:true}:r==='fresh-ineligible'?{reason:'guide-ineligible',subReason:r,final:false}:{reason:'interrupted',subReason:r??null,final:false};
 const custodyRefusal=error=>error?.message==='fresh-ineligible'?{reason:'guide-ineligible',subReason:'fresh-ineligible',final:false}:{reason:'retained-evidence-unavailable',subReason:error?.message??null,final:false};
 function trusted(v){
@@ -38,7 +42,7 @@ export function createGuideFragmentJob({storage,bucket,eligibility,fetchSource,m
  const strict=context=>{try{const result=eligibility(context);if(result&&typeof result.then==='function')Promise.resolve(result).catch(()=>{});return result===true;}catch{return false;}};
  async function context(source){const s=trusted(sourceOf(source??{})),identity=await guideFragmentIdentity(s);return {s,identity,source:{logicalId:identity.logicalId,url:identity.url,sourceVersionKind:'publisher-version',sourceVersion:s.revision,publisherVersion:s.revision}};}
  // An expected whole-file sha is checked at head promotion and on read: a mismatching file is never promoted or exposed.
- const observer=(c,n=1,expected=null,seen={})=>createFreshSourceObservations({storage,bucket,source:c.source,policy:{...GUIDE_FRAGMENT_POLICY},admissions:[ticketFor(n)],content:JSON_CONTENT,
+ const observer=(c,n=1,expected=null,seen={})=>createFreshSourceObservations({storage,bucket,source:c.source,policy:{...GUIDE_FRAGMENT_POLICY},admissions:[ticketFor(n)],content:GUIDE_PORT,
   eligibility:ctx=>{if(ctx.source.url!==c.source.url||ctx.source.sourceVersion!==c.s.revision)return false;if(expected&&ctx.observedContent&&ctx.observedContent.sha256!==expected){seen.mismatch=true;return false;}return strict(ctx);},
   ...(fetchSource?{fetchSource}:{}),...(makeStream?{makeStream}:{}),...(now?{now}:{})});
  const base=c=>({job:GUIDE_FRAGMENT_JOB,recipe:GUIDE_FRAGMENT_POLICY.revision,sourceIdentitySha256:c.identity.sourceIdentitySha256,source:c.s});
