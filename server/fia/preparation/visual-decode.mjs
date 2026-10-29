@@ -76,7 +76,8 @@ async function decodePng(bytes,limits,clock){
     if(clock()>limits.decodeMs)refuse('decode-deadline',{final:false});
    }catch(error){failure=error;inflate.destroy();reject(error);}
   });
-  inflate.on('error',error=>{if(!failure){failure=error;reject(new VisualDecodeRefusal(/unexpected end/i.test(error.message)?'png-truncated-idat':'png-zlib-invalid'));}});
+  // `failure` holds the typed refusal itself, so every exit path (including a writer woken from 'drain') throws the same refusal.
+  inflate.on('error',error=>{if(!failure){failure=new VisualDecodeRefusal(/unexpected end/i.test(error.message)?'png-truncated-idat':'png-zlib-invalid');reject(failure);}});
   inflate.on('end',()=>resolve());
  });
  // `settled` handles done from the start (no unhandled rejection) and ends any drain wait once a refusal destroys the inflater.

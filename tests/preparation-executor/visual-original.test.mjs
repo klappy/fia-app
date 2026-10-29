@@ -80,6 +80,17 @@ test('a Retry after a decoded ready fetches 0 and decodes 0, returning the kept 
  const retried=await call(mf,{retry:true});assert.equal(retried.gets,1,'Retry fetches nothing');assert.equal(retried.decodes,1,'Retry decodes nothing');assert.deepEqual(retried.result,first.result);
  const again=await call(mf,{retry:true});assert.equal(again.gets,1);assert.equal(again.decodes,1);assert.deepEqual(again.result,first.result);
 });
+test('a large PNG with corrupt zlib is a kept final visual-unsupported png-zlib-invalid; read and Retry fetch 0 and decode 0',async t=>{
+ // 1024x1024 noise, one IDAT with a bad zlib header: large enough that the zlib error arrives while the writer waits on 'drain'.
+ const w=1024,h=1024,rows=Buffer.alloc(h*(1+w*3));for(let i=0;i<rows.length;i+=32)createHash('sha256').update('j'+i).digest().copy(rows,i);for(let y=0;y<h;y++)rows[y*(1+w*3)]=0;
+ const z=Buffer.from(deflateSync(rows,{level:1}));z[0]=0x78;z[1]=0x00;
+ const ih=Buffer.alloc(13);ih.writeUInt32BE(w,0);ih.writeUInt32BE(h,4);ih[8]=8;ih[9]=2;
+ const bad=Buffer.concat([Buffer.from([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a]),chunk('IHDR',ih),chunk('IDAT',z),chunk('IEND',Buffer.alloc(0))]).toString('base64');
+ const mf=await fixture(t),first=await call(mf,{body:bad});
+ assert.equal(first.result.state,'unavailable',JSON.stringify(first.result));assert.equal(first.result.reason,'visual-unsupported');assert.equal(first.result.subReason,'png-zlib-invalid');assert.equal(first.result.final,true);assert.equal(first.result.custody,'retained');assert.equal(first.gets,1);assert.equal(first.decodes,1);
+ const read=await call(mf,{op:'read'});assert.equal(read.gets,1);assert.equal(read.decodes,1);assert.deepEqual(read.result,first.result);
+ const retried=await call(mf,{body:bad,retry:true});assert.equal(retried.gets,1,'Retry fetches nothing');assert.equal(retried.decodes,1,'Retry decodes nothing');assert.deepEqual(retried.result,first.result);
+});
 test('a Retry after a final visual-unsupported decode fetches 0 and decodes 0, and never overrides the verdict',async t=>{
  const mf=await fixture(t),first=await call(mf,{fixture:'interlaced'});assert.equal(first.result.reason,'visual-unsupported');assert.equal(first.result.subReason,'decode-not-streamable');assert.equal(first.result.final,true);assert.equal(first.decodes,1);
  const retried=await call(mf,{fixture:'interlaced',retry:true});assert.equal(retried.gets,1);assert.equal(retried.decodes,1);assert.deepEqual(retried.result,first.result);

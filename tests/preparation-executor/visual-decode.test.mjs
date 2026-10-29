@@ -142,3 +142,18 @@ test('progressive JPEG scans are capped by the recipe (maxJpegScans 32) before d
 test('the recipe decode deadline applies to JPEG too, as interrupted (not final)',async()=>{
  let t=0;await assert.rejects(decodeVisual(file('baseline-37x23.jpg'),{mime:'image/jpeg',limits,clock:()=>(t+=limits.decodeMs+1)}),e=>e.subReason==='decode-deadline'&&e.final===false);
 });
+// Re-review of 873cbd2: a zlib stream error that arrives while the writer waits on 'drain' must still surface as the typed
+// refusal, never the raw zlib Error, so the verdict is final and kept.
+function noisyZ(w,h,level=1){const px=Buffer.alloc(w*h*3);for(let i=0;i<px.length;i+=32)createHash('sha256').update('z'+i).digest().copy(px,i);return Buffer.from(deflateSync(filterRows(px,w,h,3,[0]),{level}));}
+function badZlibPng({w,h,parts,corrupt}){const z=noisyZ(w,h);corrupt(z);const size=Math.ceil(z.length/parts),idat=[];for(let n=0;n<z.length;n+=size)idat.push(chunk('IDAT',z.subarray(n,n+size)));return Buffer.concat([SIG,header(w,h),...idat,chunk('IEND',Buffer.alloc(0))]);}
+const badHeader=z=>{z[0]=0x78;z[1]=0x00;};// FCHECK fails: "incorrect header check"
+const badBlock=z=>{z[2]|=0x06;};// BTYPE 11: "invalid block type"
+for(const [name,args] of [
+ ['a large single IDAT with a bad zlib header',{w:1024,h:1024,parts:1,corrupt:badHeader}],
+ ['8 IDATs of about 128 KiB+ with an invalid block type',{w:1024,h:1024,parts:8,corrupt:badBlock}],
+ ['a 128x128 single IDAT with a bad zlib header',{w:128,h:128,parts:1,corrupt:badHeader}],
+ ['a small IDAT with an invalid block type',{w:9,h:7,parts:1,corrupt:badBlock}],
+])test(`zlib corruption is typed png-zlib-invalid (final), never a raw Error: ${name}`,()=>noUnhandled(async()=>{
+ const bytes=badZlibPng(args);if(args.w===1024)assert.ok(bytes.length>1024*1024,String(bytes.length));
+ await assert.rejects(settlesWithin(decode(bytes,'image/png'),5000),e=>{assert.ok(e instanceof VisualDecodeRefusal,`raw ${e}`);assert.equal(e.subReason,'png-zlib-invalid');assert.equal(e.final,true);return true;});
+}));
