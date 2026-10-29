@@ -13,8 +13,8 @@ const refuse=(r,o)=>{throw new VisualDecodeRefusal(r,o);};
 // png-chunk-unsupported, jpeg-marker-unsupported or jpeg-format-unsupported. Ancillary entries are only those the first-proof
 // originals carry (c4: pHYs, zTXt; a1400: none), each validated for position, count, length and content.
 const f=Object.freeze;
-export const PNG_ALLOWLIST=f({critical:f(['IHDR','PLTE','IDAT','IEND']),ancillary:f({pHYs:'once, before the first IDAT, length 9, pixels per unit at most 2^31-1, unit 0 or 1',zTXt:'any count between IHDR and IEND; keyword 1-79 Latin-1 bytes with no leading, trailing or double space; compression method 0; exactly one complete zlib stream using every byte; text within 65536 bytes and without NUL'})});
-export const JPEG_ALLOWLIST=f({markers:f(['SOI','DQT','DHT','SOF0','SOF1','SOF2','SOS','EOI']),dqt:'before the first scan; Pq 0 (8-bit), Tq 0-3, 64 entries of 1-255 each, exact length',dht:'Tc 0-1, Th 0-1 for SOF0 and 0-3 otherwise (re-checked at SOF), a valid prefix code (no over-subscription, no all-ones code), distinct symbols, DC 0-11, AC SSSS 1-10 or EOB/ZRL (EOBn only for SOF2), exact length; redefinition applies in stream order',sof:'one frame; 8-bit, 1 or 3 components, distinct ids, H and V 1-4, Tq 0-3 defined before the first scan',sos:'Ns 1-4 in frame order, Ls 6+2Ns, Td and Ta 0-3 (0-1 for SOF0), every used table defined; sequential: Ss 0, Se 63, Ah Al 0, each component in exactly one scan; progressive: DC Ss=Se=0, AC Ns 1 with 1<=Ss<=Se<=63, successive approximation per component and band; at most 10 blocks per MCU; no restart markers (no DRI)'});
+export const PNG_ALLOWLIST=f({critical:f(['IHDR','PLTE','IDAT','IEND']),ancillary:f({pHYs:'once, before the first IDAT, length 9, unit 0 or 1',zTXt:'any count between IHDR and IEND; keyword 1-79 Latin-1 bytes with no leading, trailing or double space; compression method 0; exactly one complete zlib stream using every byte; text within 65536 bytes'})});
+export const JPEG_ALLOWLIST=f({markers:f(['SOI','DQT','DHT','SOF0','SOF1','SOF2','SOS','EOI']),dqt:'Pq 0 (8-bit), Tq 0-3, 64 entries of 1-255 each, exact length',dht:'Tc 0-1, Th 0-1 for SOF0 and 0-3 otherwise (re-checked at SOF), at most 256 codes, exact length',sof:'8-bit, 1 or 3 components, distinct ids, H and V 1-4, Tq 0-3 defined before the first scan; an interleaved scan has at most 10 blocks per MCU',sos:'Td and Ta each 0-3 (0-1 for SOF0), tables it uses defined before it; in a sequential frame each component in exactly one scan; no restart markers (no DRI)'});
 const PNG_SIG=[0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a];
 export function sniffRaster(bytes){
  if(bytes.length>=8&&PNG_SIG.every((v,i)=>bytes[i]===v))return 'image/png';
@@ -49,13 +49,13 @@ function pngStructure(bytes,limits,clock){
   }else if(type==='PLTE'){if(plte||ihdr.color===0||ihdr.color===4)refuse('png-plte-invalid');if(idat.length||!length||length%3||length>768)refuse('png-chunk-invalid');plte=length/3;}
   else if(type==='IDAT'){if(idatDone)refuse('png-chunk-order');idat.push(data);}
   else if(type==='IEND'){if(length)refuse('png-chunk-invalid');iend=true;if(pos!==bytes.length)refuse('png-trailing-data');break;}
-  else if(type==='pHYs'){if(phys||idat.length||length!==9||data[8]>1||u32(data,0)>0x7fffffff||u32(data,4)>0x7fffffff)refuse('png-chunk-invalid');phys=true;}
+  else if(type==='pHYs'){if(phys||idat.length||length!==9||data[8]>1)refuse('png-chunk-invalid');phys=true;}
   else if(type==='zTXt'){
    const k=data.indexOf(0);if(k<1||k>79||k+2>length||data[k+1]!==0)refuse('png-chunk-invalid');
    for(let i=0;i<k;i++){const c=data[i];if(!(c>=32&&c<=126||c>=161)||c===32&&(i===0||i===k-1||data[i-1]===32))refuse('png-chunk-invalid');}
-   // Exactly one complete zlib stream consuming every byte, text within 64 KiB and without NUL.
+   // Exactly one complete zlib stream consuming every byte, text within 64 KiB.
    const z=data.subarray(k+2);let out;try{out=inflateSync(z,{info:true,maxOutputLength:65536});}catch{refuse('png-chunk-invalid');}
-   if(out.engine.bytesWritten!==z.length||out.buffer.includes(0))refuse('png-chunk-invalid');
+   if(out.engine.bytesWritten!==z.length)refuse('png-chunk-invalid');
   }
   else refuse('png-chunk-unsupported');
   if(type!=='IDAT'&&idat.length)idatDone=true;
@@ -112,7 +112,7 @@ async function decodePng(bytes,limits,clock){
 // Walks every JPEG segment and entropy-coded scan to EOI, so the pinned decoder can never read past the end of the bytes.
 const SOF=new Set([0xc0,0xc1,0xc2]),SOF_UNSUPPORTED=new Set([0xc3,0xc5,0xc6,0xc7,0xc9,0xca,0xcb,0xcd,0xce,0xcf]);
 function jpegStructure(bytes,limits){
- let pos=2,frame=null,scans=0;const covered=new Set(),dcAl=new Map(),acAl=new Map(),qt=new Set(),dcT=new Set(),acT=new Set(),acRuns=[];
+ let pos=2,frame=null,scans=0;const covered=new Set(),dcAl=new Map(),acAl=new Map(),qt=new Set(),dcT=new Set(),acT=new Set();
  for(;;){
   if(pos+2>bytes.length)refuse('jpeg-truncated');
   if(bytes[pos]!==0xff)refuse('jpeg-structure');
@@ -124,19 +124,11 @@ function jpegStructure(bytes,limits){
   const length=u16(bytes,pos);if(length<2||pos+length>bytes.length)refuse('jpeg-truncated');
   if(SOF_UNSUPPORTED.has(marker))refuse('jpeg-format-unsupported');
   if(!SOF.has(marker)&&marker!==0xdb&&marker!==0xc4&&marker!==0xda)refuse('jpeg-marker-unsupported');
-  // DQT (B.2.4.1): Pq 0, Tq 0-3, 64 entries of 1-255, exact length. Only before the first scan: jpeg-js binds quantization tables
-  // after parsing, so a later redefinition would not be applied in stream order.
-  if(marker===0xdb){if(scans)refuse('jpeg-table-invalid');for(let q=pos+2;q<pos+length;q+=65){const pq=bytes[q]>>4,tq=bytes[q]&15;if(pq!==0||tq>3||q+65>pos+length)refuse('jpeg-table-invalid');for(let i=1;i<=64;i++)if(!bytes[q+i])refuse('jpeg-table-invalid');qt.add(tq);}}
-  // DHT (B.2.4.2, Annex C): Tc 0-1, Th 0-3 (0-1 for SOF0, re-checked at SOF), a valid prefix code (no over-subscription and no
-  // all-ones code), distinct symbols, DC categories 0-11 and AC RRRRSSSS with SSSS 1-10 or EOB/ZRL (EOBn only when progressive,
-  // re-checked at SOF), exact length. Redefinition is applied in stream order by the decoder, so it stays legal.
-  if(marker===0xc4){for(let q=pos+2;q<pos+length;){if(q+17>pos+length)refuse('jpeg-table-invalid');const tc=bytes[q]>>4,th=bytes[q]&15;let n=0,avail=1;
-   for(let i=1;i<=16;i++){n+=bytes[q+i];avail=avail*2-bytes[q+i];if(avail<0)refuse('jpeg-table-invalid');}
-   if(tc>1||th>3||frame?.sof===0xc0&&th>1||n<1||avail<1||q+17+n>pos+length)refuse('jpeg-table-invalid');
-   const values=bytes.subarray(q+17,q+17+n);if(new Set(values).size!==n)refuse('jpeg-table-invalid');
-   for(const v of values){if(tc===0?v>11:(v&15)>10)refuse('jpeg-table-invalid');if(tc===1&&(v&15)===0&&v!==0&&v!==0xf0)acRuns.push(v);}
-   if(frame&&frame.sof!==0xc2&&acRuns.length)refuse('jpeg-table-invalid');
-   (tc?acT:dcT).add(th);q+=17+n;}}
+  // DQT (B.2.4.1): Pq 0, Tq 0-3, 64 entries of 1-255, exact length.
+  if(marker===0xdb){for(let q=pos+2;q<pos+length;q+=65){const pq=bytes[q]>>4,tq=bytes[q]&15;if(pq!==0||tq>3||q+65>pos+length)refuse('jpeg-table-invalid');for(let i=1;i<=64;i++)if(!bytes[q+i])refuse('jpeg-table-invalid');qt.add(tq);}}
+  // DHT (B.2.4.2): Tc 0-1, Th 0-3, and 0-1 for SOF0 (tables defined before the frame are re-checked at SOF); at most 256 codes, exact length.
+  if(marker===0xc4){for(let q=pos+2;q<pos+length;){if(q+17>pos+length)refuse('jpeg-table-invalid');const tc=bytes[q]>>4,th=bytes[q]&15;let n=0;for(let i=1;i<=16;i++)n+=bytes[q+i];
+   if(tc>1||th>3||frame?.sof===0xc0&&th>1||n>256||q+17+n>pos+length)refuse('jpeg-table-invalid');(tc?acT:dcT).add(th);q+=17+n;}}
   if(SOF.has(marker)){
    if(frame||length<8)refuse('jpeg-structure');
    frame={sof:marker,precision:bytes[pos+2],height:u16(bytes,pos+3),width:u16(bytes,pos+5),components:bytes[pos+7],ids:[]};
@@ -150,14 +142,13 @@ function jpegStructure(bytes,limits){
    if(frame.width*frame.height>limits.maxJpegPixels)refuse('decode-not-streamable');
    // Tables defined before the frame are re-checked now that the frame type is known.
    if(marker===0xc0&&[...dcT,...acT].some(th=>th>1))refuse('jpeg-table-invalid');
-   if(marker!==0xc2&&acRuns.length)refuse('jpeg-table-invalid');
   }
   // SOS: 1-4 components, Ls = 6 + 2*Ns, each selector a distinct frame component, spectral and approximation fields in range.
   if(marker===0xda){
    if(!frame)refuse('jpeg-structure');
    const ns=bytes[pos+2];if(ns<1||ns>4||length!==6+2*ns)refuse('jpeg-scan-invalid');
-   // Selectors: frame components in frame order, distinct; in a sequential frame each component appears in exactly one scan.
-   const seen=new Set();let last=-1;for(let i=0;i<ns;i++){const id=bytes[pos+3+2*i],at=frame.ids.indexOf(id);if(at<=last||seen.has(id)||frame.sof!==0xc2&&covered.has(id))refuse('jpeg-scan-invalid');last=at;seen.add(id);}
+   // Selectors: distinct frame components; in a sequential frame each component appears in exactly one scan.
+   const seen=new Set();for(let i=0;i<ns;i++){const id=bytes[pos+3+2*i];if(!frame.ids.includes(id)||seen.has(id)||frame.sof!==0xc2&&covered.has(id))refuse('jpeg-scan-invalid');seen.add(id);}
    for(const id of seen)covered.add(id);
    const ss=bytes[pos+3+2*ns],se=bytes[pos+4+2*ns],ah=bytes[pos+5+2*ns]>>4,al=bytes[pos+5+2*ns]&15;
    if(ns>1&&[...seen].reduce((n,id)=>n+frame.hv.get(id),0)>10)refuse('jpeg-sampling-invalid');

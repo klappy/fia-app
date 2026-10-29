@@ -127,6 +127,20 @@ test('4408649050: a failed in-flight decode is non-final for every joined caller
  assert.equal((await call(mf,{op:'counts'})).waiting,0);
  const later=await call(mf);assert.equal(later.result.state,'ready');assert.deepEqual(later.result,first.result);assert.equal(later.gets,1);assert.equal(later.decodes,2,'one failed attempt, then one recovering decode');
 });
+test('the in-flight decode gate never crosses source identity or Durable Object: identical bytes from two sources each decode once',async t=>{
+ // One DO per source identity (the job marker binds it); two identities with identical bytes, in one isolate.
+ const mf=await fixture(t),a={url:'https://publisher.invalid/maps/a.png'},b={url:'https://publisher.invalid/maps/b.png'};
+ for(const [object,args] of [['one',a],['two',b]]){const r=await call(mf,args,object);assert.equal(r.result.state,'ready',JSON.stringify(r));}
+ for(const object of ['one','two']){await call(mf,{op:'dropDecode'},object);await call(mf,{op:'holdReads'},object);}
+ const pending=[call(mf,a,'one'),call(mf,{op:'read',...a},'one'),call(mf,b,'two'),call(mf,{op:'read',...b},'two')];
+ const held=async o=>(await call(mf,{op:'heldReads'},o)).held;
+ for(let n=0;n<300&&((await held('one'))<1||(await held('two'))<1);n++)await new Promise(r=>setTimeout(r,10));
+ await new Promise(r=>setTimeout(r,200));
+ assert.equal(await held('one'),1,'source a decodes once in its own DO');assert.equal(await held('two'),1,'source b decodes once in its own DO, never joining a');
+ for(const object of ['one','two'])await call(mf,{op:'releaseReads'},object);
+ const outs=await Promise.all(pending);for(const o of outs)assert.equal(o.result.state,'ready',JSON.stringify(o.result));
+ assert.notEqual(outs[0].result.sourceIdentitySha256,outs[2].result.sourceIdentitySha256);assert.equal(outs[0].result.original.sha256,outs[2].result.original.sha256);
+});
 test('a Retry after a final visual-unsupported decode fetches 0 and decodes 0, and never overrides the verdict',async t=>{
  const mf=await fixture(t),first=await call(mf,{fixture:'interlaced'});assert.equal(first.result.reason,'visual-unsupported');assert.equal(first.result.subReason,'decode-not-streamable');assert.equal(first.result.final,true);assert.equal(first.decodes,1);
  const retried=await call(mf,{fixture:'interlaced',retry:true});assert.equal(retried.gets,1);assert.equal(retried.decodes,1);assert.deepEqual(retried.result,first.result);

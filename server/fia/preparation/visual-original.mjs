@@ -67,7 +67,8 @@ export async function decodeRetained(bucket,original,{clock,readbackMs=VISUAL_OR
  catch(error){if(!(error instanceof VisualDecodeRefusal))throw error;
   return {state:'unavailable',reason:error.final?'visual-unsupported':'interrupted',subReason:error.subReason,final:error.final,recipeSha256:RECIPE_SHA256,originalSha256:original.sha256,bytes:original.bytes,mime:original.contentType,decoder:null,width:null,height:null,pixelsSha256:null};}
 }
-const INFLIGHT=new Map();
+// In-flight decodes per Durable Object (its storage object) and per source identity, so coalescing never crosses either.
+const INFLIGHT=new WeakMap();
 // A kept decode row is accepted only in its exact shape with the invariants of its state; anything else fails closed as corrupt.
 const DECODE_FIELDS='bytes,decoder,final,height,mime,originalSha256,pixelsSha256,reason,recipeSha256,state,subReason,width';
 const dimension=v=>Number.isSafeInteger(v)&&v>=1&&v<=VISUAL_ORIGINAL_RECIPE.limits.maxDimension;
@@ -99,8 +100,9 @@ export function createVisualOriginalJob({storage,bucket,source,eligibility,fetch
   const key=`visual-original:decode:${RECIPE_SHA256}:${original.sha256}`,prior=await storage.get(key);
   if(prior)return keptDecode(prior,original);
   // One decode per original in this isolate: concurrent first callers join the in-flight decode instead of starting their own.
-  const gate=`${RECIPE_SHA256}:${original.sha256}:${original.sourceKey}`;let run=INFLIGHT.get(gate);
-  if(!run){run=decodeRetained(bucket,original).finally(()=>INFLIGHT.delete(gate));INFLIGHT.set(gate,run);}
+  let runs=INFLIGHT.get(storage);if(!runs)INFLIGHT.set(storage,runs=new Map());
+  const gate=canonicalJSONString({recipe:RECIPE_SHA256,logicalId:c.identity.logicalId,sourceVersion:s.sourceVersion,sha256:original.sha256,sourceKey:original.sourceKey});let run=runs.get(gate);
+  if(!run){run=decodeRetained(bucket,original).finally(()=>runs.delete(gate));runs.set(gate,run);}
   const record=await run;
   if(record.final)await storage.transaction(async tx=>{if(!await tx.get(key))await tx.put(key,record);});
   return record;
