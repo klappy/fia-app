@@ -111,13 +111,30 @@ export function createRecordedJevWire(file) {
   }};
 }
 
+/** Calls in the registered plan: tuning pass plus held-out pass totals from the registration's own budget, or null. */
+export function registeredPlanCalls(registration) {
+  const t = registration?.budget?.tuningPassSemanticResidue?.total, h = registration?.budget?.heldoutPassSemanticResidue?.total;
+  return Number.isSafeInteger(t) && Number.isSafeInteger(h) && t > 0 && h > 0 ? t + h : null;
+}
+
+/** Calibrated bands must be finite, inside [0,1] and ordered, as main's calibrationMatches requires (adapter.mjs:75). */
+export function assertBands(calibration) {
+  for (const [lang, b] of Object.entries(calibration.languages ?? {})) {
+    if (b?.status !== 'calibrated') continue;
+    if (!Number.isFinite(b.falseMax) || !Number.isFinite(b.trueMin) || b.falseMax < 0 || b.trueMin > 1 || b.falseMax >= b.trueMin) throw new TransportError(`calibration-bands:${lang}`);
+  }
+}
+
 /** Registered question set and budget (jev-noul-registration.json). Returns the reasons it does not authorize a live call. */
 export function registrationGaps(registration, entitlement) {
   const gaps = [];
   if (registration?.schema !== 'fia-association-noul-registration@1' || registration.questionSet !== QUESTION_SET) gaps.push('registration-missing');
   else {
     if (registration.status !== 'registered') gaps.push(`registration-status:${registration.status}`);
-    if (!Number.isSafeInteger(registration.authorizedCalls) || registration.authorizedCalls < 1) gaps.push('no-authorized-calls');
+    // The ceiling must cover the registered plan itself: one tuning pass plus one held-out pass, read from the budget.
+    const plan = registeredPlanCalls(registration);
+    if (plan === null) gaps.push('registration-budget-missing');
+    else if (!Number.isSafeInteger(registration.authorizedCalls) || registration.authorizedCalls < plan) gaps.push('authorized-calls-below-registered-plan');
     if (registration.limits?.maxQuestions !== LIMITS.maxQuestions || registration.limits?.maxStateBytes !== LIMITS.maxStateBytes) gaps.push('registration-limits-mismatch');
   }
   if (!(plain(entitlement) && entitlement.verified === true && typeof entitlement.evidence === 'string' && entitlement.evidence.trim() && typeof entitlement.route === 'string')) gaps.push('entitlement-unverified');
@@ -137,6 +154,7 @@ export function createJevNoulTransport({mode, AI, calibration, registration = nu
     if (typeof AI?.run !== 'function') throw new TransportError('not-activated:no-ai-binding');
   } else throw new TransportError('mode');
   if (calibration?.schema !== 'fia-association-noul-calibration@1' || calibration.questionSet !== QUESTION_SET) throw new TransportError('calibration-invalid');
+  assertBands(calibration);
   let calls = 0;
   return {
     name: mode === 'live' ? 'jev-live' : 'jev-recorded-wire',

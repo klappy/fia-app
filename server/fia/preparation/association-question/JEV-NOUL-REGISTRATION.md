@@ -2,7 +2,7 @@
 
 This is the machine-readable registration in `jev-noul-registration.json`. `registrationGaps()` checks it, and the live transport (`createJevNoulTransport({mode: 'live'})`) refuses with `not-activated:<gaps>` unless the following all hold:
 
-1. The registration's `status` is `registered`, its `authorizedCalls` is at least 1, and its limits equal the code's limits.
+1. The registration's `status` is `registered`, its limits equal the code's limits, and its `authorizedCalls` is at least **18**: the registered plan read from its own budget (`tuningPassSemanticResidue.total` 10 + `heldoutPassSemanticResidue.total` 8). A ceiling below the plan, for example 1 or 17, is refused as `authorized-calls-below-registered-plan`.
 2. Trusted composition supplies a verified execution entitlement: `{verified: true, route, evidence}`.
 3. An AI binding is supplied.
 
@@ -16,7 +16,7 @@ This is the machine-readable registration in `jev-noul-registration.json`. `regi
 | Calls per case | 1, with no retry |
 | Questions per call | at most 31 (1 + 2 × visual candidates; at most 15 visual candidates) |
 | Input per call | `state` of at most 8,192 bytes; response of at most 16,384 bytes; 10 s deadline |
-| Ceiling | `authorizedCalls`. The transport counts its calls and stops with `budget-exhausted` at the ceiling. |
+| Ceiling | `authorizedCalls`, at least 18. The transport counts its calls and stops with `budget-exhausted` at the ceiling. |
 
 ## Budget (PR289 split at e67bb5c, semantic-residue cases only)
 

@@ -7,7 +7,7 @@ import {readFile, mkdtemp, rm, access} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {buildRequest} from '../../server/fia/preparation/association-question/request.mjs';
-import {buildQuestions, parseWire, compose, wireOf, createRecordedJevWire, createJevNoulTransport, registrationGaps, LIMITS, QUESTION_SET, TransportError} from '../../server/fia/preparation/association-question/jev-noul.mjs';
+import {buildQuestions, parseWire, compose, wireOf, createRecordedJevWire, createJevNoulTransport, registrationGaps, registeredPlanCalls, LIMITS, QUESTION_SET, TransportError} from '../../server/fia/preparation/association-question/jev-noul.mjs';
 import {fitCalibration, tuningProbabilities, labelledPairs} from '../../server/fia/preparation/association-question/jev-calibrate.mjs';
 import {runAdapter, main, WIRE_LABEL} from '../../server/fia/preparation/association-question/cli.mjs';
 import {INVALID} from '../../server/fia/preparation/association-question/normalize.mjs';
@@ -134,18 +134,32 @@ test('wire test: the live transport refuses without registration plus verified e
   const calibration = await calibrationFromFixtures();
   const fakeAI = {run: async () => { throw Error('must not be called'); }};
   assert.throws(() => createJevNoulTransport({mode: 'live', AI: fakeAI, calibration, registration, entitlement: null}),
-    e => e instanceof TransportError && e.reason === 'not-activated:registration-status:registered-not-funded,no-authorized-calls,entitlement-unverified');
-  const funded = {...registration, status: 'registered', authorizedCalls: 1};
+    e => e instanceof TransportError && e.reason === 'not-activated:registration-status:registered-not-funded,authorized-calls-below-registered-plan,entitlement-unverified');
+  const ok = {verified: true, route: 'r', evidence: 'e'};
+  // B1: the ceiling must cover the registered plan (tuning 10 + held-out 8 = 18), read from the registration's budget.
+  assert.equal(registeredPlanCalls(registration), 18);
+  for (const n of [1, 17]) assert.deepEqual(registrationGaps({...registration, status: 'registered', authorizedCalls: n}, ok), ['authorized-calls-below-registered-plan'], `${n}`);
+  assert.deepEqual(registrationGaps({...registration, status: 'registered', authorizedCalls: 18}, ok), []);
+  assert.deepEqual(registrationGaps({...registration, status: 'registered', authorizedCalls: 18, budget: {}}, ok), ['registration-budget-missing']);
+  assert.throws(() => createJevNoulTransport({mode: 'live', AI: fakeAI, calibration, registration: {...registration, status: 'registered', authorizedCalls: 17}, entitlement: ok}), /not-activated:authorized-calls-below-registered-plan/);
+  const funded = {...registration, status: 'registered', authorizedCalls: 18};
   assert.throws(() => createJevNoulTransport({mode: 'live', AI: fakeAI, calibration, registration: funded, entitlement: {verified: false}}), /not-activated:entitlement-unverified/);
   assert.throws(() => createJevNoulTransport({mode: 'live', AI: null, calibration, registration: funded, entitlement: {verified: true, route: 'r', evidence: 'e'}}), /not-activated:no-ai-binding/);
   assert.deepEqual(registrationGaps({...funded, limits: {...funded.limits, maxQuestions: 99}}, {verified: true, route: 'r', evidence: 'e'}), ['registration-limits-mismatch']);
   assert.throws(() => createJevNoulTransport({mode: 'recorded-wire', AI: fakeAI, calibration}), /recorded-wire-needs-recorded-shim/);
-  // The ceiling: with a (test-only) funded registration and entitlement over the recorded shim, the second call stops.
+  // The ceiling: with a (test-only) registration funded at 18 and an entitlement over the recorded shim, all 18 calls run and the 19th stops.
   const t = createJevNoulTransport({mode: 'live', AI: createRecordedJevWire(wire), calibration, registration: funded, entitlement: {verified: true, route: 'test-only', evidence: 'test-only'}});
-  const req = async id => buildRequest(caseOf(id));
-  await t.respond(await req('eng.MRK-1-14-20:S02-U008'));
-  await assert.rejects(t.respond(await req('eng.MRK-1-1-13:S02-U005')), e => e.reason === 'budget-exhausted');
-  assert.equal(t.calls, 1);
+  const one = await buildRequest(caseOf('eng.MRK-1-14-20:S02-U008'));
+  for (let k = 0; k < 18; k++) await t.respond(one);
+  assert.equal(t.calls, 18);
+  await assert.rejects(t.respond(one), e => e.reason === 'budget-exhausted');
+  assert.equal(t.calls, 18);
+  // N1: calibrated bands must be finite, inside [0,1] and ordered (as main's calibrationMatches, adapter.mjs:75).
+  for (const bad of [{falseMax: 0.8, trueMin: 0.8}, {falseMax: 0.9, trueMin: 0.2}, {falseMax: -0.1, trueMin: 0.8}, {falseMax: 0.1, trueMin: 1.2}, {falseMax: NaN, trueMin: 0.8}, {falseMax: 0.1, trueMin: Infinity}, {falseMax: '0.1', trueMin: 0.8}]) {
+    const c = {...calibration, languages: {...calibration.languages, eng: {...calibration.languages.eng, ...bad}}};
+    assert.throws(() => createJevNoulTransport({mode: 'recorded-wire', AI: createRecordedJevWire(wire), calibration: c}), e => e.reason === 'calibration-bands:eng', JSON.stringify(bad));
+  }
+  assert.doesNotThrow(() => createJevNoulTransport({mode: 'recorded-wire', AI: createRecordedJevWire(wire), calibration: {...calibration, languages: {eng: {status: 'not-separable', falseMax: 0.9, trueMin: 0.2}}}}), 'uncalibrated languages are not used, so they are not band-checked');
   assert.equal(registration.questionSet, QUESTION_SET); assert.equal(registration.authorizedCalls, 0);
   await assert.rejects(main(['--cases', new URL('inputs-wire-subset.json', fx).pathname, '--transport', 'jev', '--out', join(tmpdir(), 'never.json')]), /not-activated/);
 });
