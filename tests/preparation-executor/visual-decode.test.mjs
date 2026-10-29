@@ -302,3 +302,12 @@ test('4408860752: a flood of valid one-symbol DHT redefinitions is refused by th
  const few=beforeSof('baseline-37x23.jpg',Buffer.concat(new Array(40).fill(one)));let calls=0;
  await assert.rejects(decodeVisual(few,{mime:'image/jpeg',limits,clock:()=>++calls>1?limits.decodeMs+1:0}),e=>e.subReason==='decode-deadline'&&e.final===false);
 });
+test('Codex 6489170234: a zTXt inflate that throws after the deadline is a non-final decode-deadline, not a final refusal',async()=>{
+ const {bytes}=png(),tail=bytes.length-12,bad=chunk('zTXt',Buffer.from('Comment\0\0garbage','latin1')),big=chunk('zTXt',Buffer.concat([Buffer.from('Comment\0\0','latin1'),deflateSync(Buffer.alloc(65536,0x61))]));
+ for(const z of [bad,big]){
+  const file=new Uint8Array(Buffer.concat([bytes.subarray(0,tail),z,bytes.subarray(tail)]));let calls=0;
+  // The clock is under the deadline at the pre-inflate check, then over it when the throw is classified.
+  await assert.rejects(decodeVisual(file,{mime:'image/png',limits,clock:()=>++calls>1?limits.decodeMs+1:0}),e=>e.subReason==='decode-deadline'&&e.final===false);
+  await assert.rejects(decodeVisual(file,{mime:'image/png',limits}),e=>e.final===true&&['png-chunk-invalid','png-ancillary-cap'].includes(e.subReason));
+ }
+});
