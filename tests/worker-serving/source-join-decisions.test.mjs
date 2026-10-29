@@ -7,7 +7,7 @@ import {buildSourceIndex,associatePack,SOURCE_ASSOCIATION_RECIPE} from '../../se
 import {readRetainedArchives} from '../../server/fia/preparation/source-associations/retained.mjs';
 import {guideFragmentIdentity,GUIDE_FRAGMENT_POLICY,GUIDE_FRAGMENT_JOB} from '../../server/fia/preparation/guide-fragment.mjs';
 import {GUIDE_FRAGMENT_READ_SCHEMA} from '../../server/fia/preparation/guide-fragment-admission.mjs';
-import {createSourceJoinReader,SOURCE_JOIN_SCHEMA,SOURCE_JOIN_RECIPE} from '../../server/fia/preparation/source-join-decisions.mjs';
+import {createSourceJoinReader,createGuideAcquisition,SOURCE_JOIN_SCHEMA,SOURCE_JOIN_RECIPE} from '../../server/fia/preparation/source-join-decisions.mjs';
 import {createTrustedSourceActionComposer,trustedExecutionRecipe,withinJoinLimits,JOIN_MAX_REQUESTED,JOIN_MAX_DECISIONS} from '../../server/fia/preparation/trusted-source-actions.mjs';
 
 // The runtime consumer of the guide fragment object's read-only decisions (Terry ANSWER-FRAGMENT-CROSS-OBJECT-AUTHORITY,
@@ -168,4 +168,34 @@ test('join limits: 8 requested media and 256 decisions are the edges; one more i
  assert.equal(withinJoinLimits(row(1),0),true);assert.equal(withinJoinLimits(row(8),0),true,'8 requested is within');assert.equal(withinJoinLimits(row(9),0),false,'9 requested is dropped');
  assert.equal(withinJoinLimits(row(0),0),false);
  assert.equal(withinJoinLimits(row(1),255),true,'the 256th decision is within');assert.equal(withinJoinLimits(row(1),256),false,'a 257th is dropped');
+});
+
+// #313 QA (comment 6499486774): the first acquisition is the ordinary demand path (Terry eb4d8d5), kept apart from the read-only
+// reader. One /demand {packId} per explicit preparation, on the object named from the runtime's own composed source; only retained
+// continues; every other answer, and the profile deadline, is typed and leaves the Open on the base.
+test('acquisition: one /demand for the composed source, never retry; only retained continues; every other answer is typed',async()=>{
+ const s=await snapshotFor();
+ try{
+  const g=archive.packs[packId].guide,source={repo:`BibleAquifer/${g.provenance.collection}`,revision:g.provenance.revision,path:g.sourceFile};
+  const seen=[],events=[],acquisition=answer=>createGuideAcquisition({snapshot:s.snapshot,fetchAsset:s.fetchAsset,demandGuide:async q=>{seen.push(q);return typeof answer==='function'?answer():answer;},diagnose:e=>events.push(e)});
+  assert.deepEqual(await acquisition({job:'guide-fragment@1',state:'retained'})(packId),{state:'retained'});
+  assert.deepEqual(seen,[{source,packId}],'the composed source and the pack, nothing else (no retry)');
+  for(const reason of ['refresh-unavailable','guide-ineligible','fresh-ineligible','guide-sha-mismatch','interrupted','guide-not-promoted','retained-evidence-unavailable','guide-unsupported','guide-admission-unavailable'])
+   assert.deepEqual(await acquisition({state:'unavailable',reason})(packId),{state:'unavailable',reason},reason);
+  assert.deepEqual(await acquisition({state:'preparing',custody:'none'})(packId),{state:'unavailable',reason:'preparing'},'a concurrent joiner is base for this Open');
+  for(const bad of [null,'text',{}])assert.deepEqual(await acquisition(bad)(packId),{state:'unavailable',reason:'acquisition-unavailable'},JSON.stringify(bad));
+  assert.deepEqual(await acquisition(()=>{throw Error('boom');})(packId),{state:'unavailable',reason:'acquisition-unavailable'});
+  assert.deepEqual(await acquisition({state:'retained'})('eng.MRK-9-9-9'),{state:'unavailable',reason:'composer-unknown-pack'},'an unknown pack is never demanded');
+  assert.ok(events.every(e=>e.event==='source-join-acquisition'&&e.packId),'each outcome is recorded');
+  // The profile deadline: this Open continues on the base; the owning attempt is the object's.
+  const hung=createGuideAcquisition({snapshot:s.snapshot,fetchAsset:s.fetchAsset,demandGuide:()=>new Promise(()=>{}),deadlineMs:20});
+  assert.deepEqual(await hung(packId),{state:'unavailable',reason:'acquisition-deadline'});
+  assert.equal(GUIDE_FRAGMENT_POLICY.totalMs,30000,'the default deadline is the acquisition profile\'s');
+ }finally{await rm(s.dir,{recursive:true,force:true});}
+});
+test('the reader never acquires: joinsFor calls only the read-only /fragment port',async()=>{
+ const t=await harness();
+ try{const reader=createSourceJoinReader({snapshot:t.snapshot,fetchAsset:t.fetchAsset,readFragment:async q=>{t.asked.push(q);return structuredClone(await fixtureResponse());}});
+  assert.equal((await reader.joinsFor(packId)).state,'ready');assert.ok(t.asked.every(q=>Object.keys(q).sort().join()==='name,packId'));}
+ finally{await rm(t.dir,{recursive:true,force:true});}
 });

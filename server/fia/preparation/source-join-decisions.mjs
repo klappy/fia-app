@@ -1,6 +1,6 @@
 import {canonicalJSONString,sha256} from './contract.mjs';
 import {createCanonicalGuideRecords,descriptorOf} from './source-associations/composer.mjs';
-import {guideFragmentIdentity,GUIDE_FRAGMENT_POLICY,GUIDE_FRAGMENT_JOB} from './guide-fragment.mjs';
+import {guideFragmentIdentity,guideFragmentObject,GUIDE_FRAGMENT_POLICY,GUIDE_FRAGMENT_JOB} from './guide-fragment.mjs';
 import {GUIDE_FRAGMENT_READ_SCHEMA,GUIDE_FRAGMENT_READ_KEYS,GUIDE_FRAGMENT_DECISION_KEYS} from './guide-fragment-admission.mjs';
 import {SOURCE_ASSOCIATION_RECIPE} from './source-associations/index.mjs';
 
@@ -110,4 +110,40 @@ export function createSourceJoinReader({snapshot,fetchAsset,readFragment}){
    return {state:'ready',packId,sourceRevision:loaded.row.sourceRevision,provenance,joins,responseSha256:await sha(response)};
   }catch(error){if(error instanceof Refused)return unavailable(error.reason);return unavailable('join-unreadable');}
  }
+}
+
+// ---- Acquisition (the producer's demand), kept apart from the read-only reader above.
+// The first acquisition of the archive-pinned guide file is the ordinary demand path (Terry eb4d8d5: Q9, Q11, Q16): an explicit
+// preparation demands it as a missing dependency, once, before the composer reads. The guide fragment object's admitted /demand
+// (Otto's seat, guide-fragment-admission.mjs) composes the class-A URL, issues the first ticket and verifies the sha; a warm demand
+// verifies the retained head with zero upstream calls (Q14). The runtime composes the source from its own snapshot (binding 1)
+// and names the object from it (guideFragmentObject, binding 2). It never passes retry, never polls and never loops. Only
+// retained lets the reader continue; every other answer, a timeout included, leaves this Open on the base, typed.
+const DEMAND_ORIGIN='https://guide-fragment.internal';
+export function guideDemandPort(env){
+ if(typeof env?.FIA_PREPARATION_JOBS?.idFromName!=='function'||typeof env?.FIA_PREPARATION_JOBS?.get!=='function')return null;
+ return async function demandGuide({source,packId}){
+  const stub=await guideFragmentObject(env,source);
+  const response=await stub.fetch(new Request(DEMAND_ORIGIN+'/demand',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({packId}),redirect:'manual'}));
+  if(!(response.headers.get('content-type')||'').startsWith('application/json')){response.body?.cancel().catch(()=>{});return null;}
+  try{return await response.json();}catch{return null;}
+ };
+}
+// deadlineMs: the acquisition profile's own total deadline. The acquisition runs before the resolver, outside its 10 s steps; on
+// the deadline this Open continues on the base while the owning attempt continues, or ends interrupted, in the object.
+export function createGuideAcquisition({snapshot,fetchAsset,demandGuide,deadlineMs=GUIDE_FRAGMENT_POLICY.totalMs,diagnose=()=>{}}){
+ if(typeof demandGuide!=='function'||!Number.isSafeInteger(deadlineMs)||deadlineMs<=0)throw Error('source-join-capability');
+ const records=createCanonicalGuideRecords({snapshot,fetchAsset});
+ const settle=(packId,outcome)=>{try{diagnose({event:'source-join-acquisition',packId,...outcome});}catch{}return outcome;};
+ return async function acquire(packId){
+  try{
+   const loaded=await records.guideRecordFor(packId);if(loaded.refused)return settle(packId,{state:'unavailable',reason:loaded.refused});
+   const descriptor=descriptorOf(loaded.guide);if(!descriptor)return settle(packId,{state:'unavailable',reason:'composer-descriptor-incomplete'});
+   const source={repo:`${descriptor.owner}/${descriptor.collection}`,revision:descriptor.revision,path:descriptor.path};
+   let timer;const deadline=new Promise(resolve=>{timer=setTimeout(()=>resolve({state:'unavailable',reason:'acquisition-deadline'}),deadlineMs);});
+   const answer=await Promise.race([Promise.resolve().then(()=>demandGuide({source,packId})).catch(()=>({state:'unavailable',reason:'acquisition-unavailable'})),deadline]).finally(()=>clearTimeout(timer));
+   if(plain(answer)&&answer.state==='retained')return settle(packId,{state:'retained'});
+   return settle(packId,{state:'unavailable',reason:plain(answer)&&text(answer.reason,80)?answer.reason:plain(answer)&&text(answer.state,80)?answer.state:'acquisition-unavailable'});
+  }catch{return settle(packId,{state:'unavailable',reason:'acquisition-unavailable'});}
+ };
 }

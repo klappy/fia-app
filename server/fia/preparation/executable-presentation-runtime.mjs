@@ -8,7 +8,7 @@ import {createExecutableOperations} from '../publication/executable-operations.m
 import {createExecutablePresentationService} from './executable-presentation-service.mjs';
 import {createExecutablePresentationResolver,createCanonicalGuideReader} from './executable-presentation-resolver.mjs';
 import {createTrustedSourceActionComposer,trustedExecutionRecipe} from './trusted-source-actions.mjs';
-import {createSourceJoinReader,fragmentPort} from './source-join-decisions.mjs';
+import {createSourceJoinReader,fragmentPort,createGuideAcquisition,guideDemandPort} from './source-join-decisions.mjs';
 import {SOURCE_ACTION_RECIPE} from '../compiler/presentation/source-action-projector.mjs';
 import guideSources from './guide-sources.json' with {type:'json'};
 import preparationCatalog from './catalog.json' with {type:'json'};
@@ -86,8 +86,16 @@ export async function createExecutableRuntime({ctx,env,snapshot,capabilities={}}
  // object's internal read-only /fragment op (PR308) and re-verified here (source-join-decisions.mjs). Without the object namespace or
  // a trusted snapshot there is no reader, and the composer decides from trusted metadata alone, exactly as before.
  const assetFetch=path=>env.ASSETS.fetch(new Request(new URL(path,env.FIA_API_ORIGIN),{redirect:'manual'})),readFragment=capabilities.readFragment??fragmentPort(env);
- const sourceJoins=Array.isArray(snapshot?.canonicalSources)&&readFragment?createSourceJoinReader({snapshot,fetchAsset:assetFetch,readFragment}):null;
- const resolve=capabilities.resolve??createExecutablePresentationResolver({reads:baseReads,resolveCanonicalSource:createCanonicalGuideReader({canonicalSources:snapshot.canonicalSources??[],fetchAsset:path=>env.ASSETS.fetch(new Request(new URL(path,env.FIA_API_ORIGIN),{redirect:'manual'}))}),composeDecisionInputs:capabilities.composeDecisionInputs??createTrustedSourceActionComposer({policySha256:currentPolicy,sourceJoins}),resolveBindings});
+ const joinReader=Array.isArray(snapshot?.canonicalSources)&&readFragment?createSourceJoinReader({snapshot,fetchAsset:assetFetch,readFragment}):null;
+ // The first acquisition of the pinned guide file runs once per explicit preparation, before the resolver (and so outside its
+ // 10 s steps), bounded by the acquisition profile's deadline. Reads never acquire: the resolver runs only for a preparation.
+ const demandGuide=capabilities.demandGuide??guideDemandPort(env);
+ const acquireGuide=joinReader&&demandGuide?createGuideAcquisition({snapshot,fetchAsset:assetFetch,demandGuide,...(capabilities.acquisitionDeadlineMs?{deadlineMs:capabilities.acquisitionDeadlineMs}:{}),diagnose:event=>(capabilities.diagnose??(e=>console.warn(JSON.stringify(e))))(event)}):null;
+ // Only a retained acquisition lets this Open read the fragment (Otto, 9e3f243): any other outcome is base for this Open, typed.
+ const acquired=new Map();
+ const sourceJoins=joinReader&&(acquireGuide?Object.freeze({async joinsFor(packId){const a=acquired.get(packId);return a?.state==='retained'?joinReader.joinsFor(packId):{state:'unavailable',reason:'guide-not-acquired',...(a?.reason?{subReason:a.reason}:{})};}}):joinReader);
+ const resolver=capabilities.resolve??createExecutablePresentationResolver({reads:baseReads,resolveCanonicalSource:createCanonicalGuideReader({canonicalSources:snapshot.canonicalSources??[],fetchAsset:path=>env.ASSETS.fetch(new Request(new URL(path,env.FIA_API_ORIGIN),{redirect:'manual'}))}),composeDecisionInputs:capabilities.composeDecisionInputs??createTrustedSourceActionComposer({policySha256:currentPolicy,sourceJoins}),resolveBindings});
+ const resolve=acquireGuide&&!capabilities.resolve?async args=>{if(typeof args?.packId==='string')acquired.set(args.packId,await acquireGuide(args.packId));return resolver(args);}:resolver;
  const recipeRevision=trustedExecutionRecipe(SOURCE_ACTION_RECIPE,{sourceJoins:!capabilities.composeDecisionInputs&&!!sourceJoins});
  const service=createExecutablePresentationService({storage:ctx.storage,artifacts,resolve,eligible,interpret:capabilities.interpret??null,policySha256:currentPolicy,recipeRevision});
  // Earlier builds' rows still authenticate for exact-revision reads (pinned Active and Saved sessions; OFFLINE L96, Terry

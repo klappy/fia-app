@@ -1541,7 +1541,7 @@
     },
     {
       "path": "server/faces/worker/BACKEND-CLOSURE.json",
-      "sha256": "5042e4fc64582117d9995ee4cb6a93c3673e3c6150743fd8655522dffacad908"
+      "sha256": "045ef5790c6afda048bfe64701bcfcdafaa5ea5dd87424be0b45f37c9a4086ad"
     },
     {
       "path": "server/faces/worker/adapter.mjs",
@@ -1649,7 +1649,7 @@
     },
     {
       "path": "server/fia/preparation/executable-presentation-runtime.mjs",
-      "sha256": "196e3b36f66d4877e2d3a1627204316fb5812ee8f7a8e3b1009c2aa166ce2568"
+      "sha256": "bdbdac70d1b0aa0844785a8df885809e1999722f660e269fc0c696c7f08be627"
     },
     {
       "path": "server/fia/preparation/executable-presentation-service.mjs",
@@ -2693,7 +2693,7 @@
     },
     {
       "path": "tests/worker-serving/executable-transition.test.mjs",
-      "sha256": "15c54e8ee44cb7b4a92ef533bb7334dd33b1a1c33a58d4acef6602c5bac37f9c"
+      "sha256": "6c526080b11df1d569d387838f089709eaf0fa515bf79a6786b28d1b59dbe48d"
     },
     {
       "path": "tests/worker-serving/execution-registry.test.mjs",
@@ -2895,15 +2895,19 @@
     },
     {
       "path": "server/fia/preparation/source-join-decisions.mjs",
-      "sha256": "361164b7fdb65f6f75780c148d5d9161a7e96cdd70d686f0f991723df8361ed1"
+      "sha256": "9e3bd3b696878396cea52f826c9f388db41ec1ce7812d33c08ecb7b9ead70c11"
     },
     {
       "path": "tests/worker-serving/source-join-decisions.test.mjs",
-      "sha256": "f4fa05883b64bb11b73532f0b04ef0f5bd296e789a61acc3f4429549359caeba"
+      "sha256": "467b80667a428803fa61339088dc1a57df054f820133210464c03f567247b2e5"
     },
     {
       "path": "tests/worker-serving/source-join-transition.test.mjs",
-      "sha256": "45bf192f9174ae7b9452482180d93365b2cbbd436cc29ff56e40a6ce9389d584"
+      "sha256": "16c81a176554b641927bc5ff611c36ada32f2505dcb97633eb68dee3a8036e77"
+    },
+    {
+      "path": "tests/worker-serving/source-join-acquisition.test.mjs",
+      "sha256": "698b00e99b87cbcdcb7dc8616d386b0ec4973b655c95bd64bef5785e7bb51565"
     }
   ],
   "generatedFiles": [
