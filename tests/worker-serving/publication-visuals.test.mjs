@@ -61,7 +61,7 @@ test('stale expectations, conflicting entries and a withdrawn publication are re
  let live=true;const t=await harness({authority:()=>live});const g=t.record.execution.publication.generation;
  const listed=await t.overlay.publishVisuals({packId,revision:t.record.revision,expectedPublicationGeneration:g,visuals:[a1400]});
  live=false;
- assert.deepEqual(await t.overlay.readCatalog(packId,t.record.revision,listed.execution.publication.generation),{status:'unavailable',reason:'publication-generation-unavailable'});
+ assert.deepEqual(await t.overlay.readCatalog(packId,t.record.revision,listed.execution.publication.generation),{status:'unavailable',reason:'publication-generation-invalid'});
  assert.notEqual((await t.overlay.readCatalog(packId))?.execution?.publication?.generation,listed.execution.publication.generation,'the current read falls through to the base');
 });
 
@@ -73,7 +73,7 @@ test('a row that lists a visual without a publication authority is never served'
  const g=listed.execution.publication.generation;
  assert.equal((await overlay.readCatalog(packId,record.revision,g)).status,'ready','served with the authority');
  const plain=createExecutableOverlay(ports);
- assert.deepEqual(await plain.readCatalog(packId,record.revision,g),{status:'unavailable',reason:'publication-generation-unavailable'});
+ assert.deepEqual(await plain.readCatalog(packId,record.revision,g),{status:'unavailable',reason:'publication-generation-invalid'});
  assert.equal((await plain.readCatalog(packId,record.revision,record.execution.publication.generation)).status,'ready','a row with no visuals needs no authority');
  assert.equal((await plain.retainedVisual({packId,executionRevision:record.revision,assetId:'a1400',sha256:h('a')})).status,'unavailable');
 });

@@ -481,7 +481,7 @@ test('two synthetic shells: generations coexist, exact A stays readable, B faili
   // another generation); B, whose retained base differs, stays current and exact.
   const baseKey=`preparation/executable/${pinA.baseManifest.sha256}.json`,good=await (await s.bucket.get(baseKey)).arrayBuffer();
   await s.bucket.put(baseKey,new Uint8Array([123]));
-  const corrupt=await read(`/v1/packs/${packId}?revision=${revision}&generation=${pinA.generation}`);assert.equal(corrupt.status,404);assert.equal(corrupt.body.reason,'publication-generation-unavailable');
+  const corrupt=await read(`/v1/packs/${packId}?revision=${revision}&generation=${pinA.generation}`);assert.equal(corrupt.status,404);assert.equal(corrupt.body.reason,'publication-generation-invalid','a retained row that fails verification is a denial, typed apart from an absent one (Terry 0be2e40 b)');
   assert.deepEqual((await read('/v1/packs/'+packId+'?execution=2')).body.execution.publication,pinB);
   await s.bucket.put(baseKey,new Uint8Array(good));assert.equal((await read(`/v1/packs/${packId}?revision=${revision}&generation=${pinA.generation}`)).status,200);
   const again=await prepare(read,{...demand,expectedPublicationGeneration:pinB.generation});assert.equal(again.status,200);assert.deepEqual(again.body.record.execution.publication,pinB);assert.deepEqual(again.body.record.execution.provenance,readyB.body.record.execution.provenance,'an identical generation is reused with its original provenance');

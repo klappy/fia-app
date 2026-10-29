@@ -201,11 +201,14 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
   catch(error){if(revision)throw error;fault('readCatalog',{packId},error);return base.readCatalog(packId);}
   if(found.ambiguous)return {status:'unavailable',reason:'publication-generation-ambiguous'};
   const row=found.row;
+  // An absent exact generation row is a typed selection refusal, not a revocation (OFFLINE L37, L45, L61; Terry 0be2e40 case a).
   if(found.exact&&!row)return {status:'unavailable',reason:'publication-generation-unavailable'};
   if(!row&&found.key&&!revision)miss('readCatalog',{packId,key:found.key,kind:'verification',reason:'executable-pointer-dangling'});
   if(!row)return base.readCatalog(packId,revision);
   try{need(row.binding?.packId===packId&&(!revision||row.revision===revision)&&(!generation||row.publication?.generation===generation)&&found.key===keyFor(row),'executable-pointer-binding');await verified(row);return record(row);}
-  catch(error){fault('readCatalog',{packId,key:found.key},error);if(revision&&kindOf(error)==='transient')throw error;if(found.exact)return {status:'unavailable',reason:'publication-generation-unavailable'};return base.readCatalog(packId,revision);}
+  // An exact generation whose retained row fails its own binding or verification is an observed invalid identity/hash, a denial
+  // (OFFLINE L60, L43, L57; Terry 0be2e40 case b), typed apart from an absent row (case a, a selection refusal).
+  catch(error){fault('readCatalog',{packId,key:found.key},error);if(revision&&kindOf(error)==='transient')throw error;if(found.exact)return {status:'unavailable',reason:'publication-generation-invalid'};return base.readCatalog(packId,revision);}
  }
  async function findArtifact(digest){
   let owners;

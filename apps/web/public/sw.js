@@ -51,7 +51,7 @@ async function fetchLatest(path,options){
 async function latest(packId=legacy,media=false,onprogress){
  const request=media?fetchLatest:fetch;
  const response=await request(packId===legacy?'/offline-manifest.json':`/offline/${packId}.json`,{cache:'no-store'});
- if(!response.ok)throw new Error('Could not check the latest download. Connect and try again.');
+ if(!response.ok){response.body?.cancel().catch(()=>{});throw new Error('Could not check the latest download. Connect and try again.');}
  const manifest=validate(await response.json());if(manifest.packId!==packId)throw new Error('The download belongs to a different passage.');
  onprogress?.({phase:'manifest-verified',verified:0,total:null});
  return verifyDelivery(manifest,packId,request,onprogress);
@@ -76,7 +76,7 @@ async function boundMediaManifest(record,signal,onprogress){
  const d=record.execution.mediaManifest;
  if(!d||!isPassageHash(d.sha256)||!Number.isSafeInteger(d.bytes)||d.bytes<1||d.bytes>1048576||d.mime!=='application/json'||typeof d.id!=='string')throw Error('The saved media manifest is invalid.');
  const response=await fetchLatest(artifactPath(d.sha256),{cache:'no-store',redirect:'error',signal});
- if(response.status!==200||response.redirected||!await verified(response.clone(),d))throw Error('The saved media manifest could not be verified.');
+ if(response.status!==200||response.redirected||!await verified(response.clone(),d)){response.body?.cancel().catch(()=>{});throw Error('The saved media manifest could not be verified.');}
  const value=await response.json(),media=record.execution.mediaIdentity;
  if(value?.id!==d.id||value.packId!==record.packId||value.executionRevision!==record.revision||value.presentationRevision!==media?.revision||value.mediaIdentity?.packId!==media?.packId||value.mediaIdentity?.revision!==media?.revision||value.mediaAssetsSha256!==record.execution.mediaAssetsSha256)throw Error('The saved media manifest belongs to a different server presentation.');
  onprogress?.({phase:'bound-manifest-verified',verified:0,total:null});
@@ -114,20 +114,26 @@ async function snapshotComplete(active,{authorityOnly=false}={}){
 }
 // An observed tombstone (a revoked snapshot's marker) is honored before any saved record is served (OFFLINE L61).
 async function savedServerSnapshot(packId,revision){const active=await read(packKey(packId,'active'));if(revision&&active?.serverSnapshot?.record.revision!==revision)return null;if(active?.serverSnapshot&&await read(revokedSnapshotKey(packId,active.serverSnapshot.record.revision)))return null;return await snapshotComplete(active)?active:null;}
-// A refusal is classified by its typed reason, not its HTTP status (Terry b34dadc). publication-generation-ambiguous asks the
-// reader to name a generation: a selection refusal that revokes nothing. Every other typed refusal is a denial, as before.
+// A refusal is classified by its typed reason, not its HTTP status (Terry b34dadc, 0be2e40). Only reasons the OFFLINE contract
+// decides are classified as selection or currency outcomes that revoke nothing:
+//  - publication-generation-ambiguous: the legacy selector met several generations (L37; b34dadc);
+//  - publication-generation-unavailable: the exact generation row is absent (L37, L45, L61; 0be2e40 case a);
+//  - execution-not-current: "A newer shell alone is not revocation" (L43).
+// publication-generation-invalid (a retained row that fails its binding or verification, 0be2e40 case b) is a denial (L60, L43,
+// L57). Any other reason is not decided by the contract today; it keeps the behavior it had before b34dadc (it retires the copy)
+// and is an open item, not a ruling.
 async function refusalReason(response){try{const body=await response.json();return typeof body?.reason==='string'?body.reason:null;}catch{return null;}}
-const ambiguousReason=reason=>reason==='publication-generation-ambiguous';
+const selectionReasons=new Set(['publication-generation-ambiguous','publication-generation-unavailable','execution-not-current']);
+const selectionReason=reason=>selectionReasons.has(reason);
 // Each Saved copy is rechecked by its own exact pinned read (?revision=&generation= of the saved record), never a fallback read.
 // Its typed answer decides it: a denial, a changed identity or changed artifacts retire it (the revocation marker is the revision's,
-// so every generation sharing it is retired too, OFFLINE L60); the same record keeps it eligible; anything else (ambiguous,
+// so every generation sharing it is retired too, OFFLINE L60); the same record keeps it eligible; anything else (a selection refusal,
 // transient, a server that answered another revision or generation) leaves the last verified copy served and says so.
 async function recheckSavedCopy(packId,active){
  const snapshot=active?.serverSnapshot,record=snapshot?.record;if(!record||snapshot.invalid)return null;
  const generation=record.execution?.publication?.generation??null;if(generation!==null&&!isPassageHash(generation))return {state:'unconfirmed',reason:'generation-invalid'};
  let r,capability;try{({response:r,capability}=await readExecutionRecord(packId,record.revision,generation));}catch(error){return {state:'unconfirmed',reason:error?.mediaStatusCode??'record-unreachable'};}
- if([408,429,500,502,503,504].includes(r.status)){r.body?.cancel().catch(()=>{});return {state:'unconfirmed',reason:'record-'+r.status};}
- if(r.status!==200||r.redirected){const reason=r.redirected?null:await refusalReason(r);if(r.redirected)r.body?.cancel().catch(()=>{});if(ambiguousReason(reason))return {state:'unconfirmed',reason:'record-'+r.status+':'+reason};await invalidateServerSnapshot(packId);return {state:'revoked',reason:'record-'+r.status+(reason?':'+reason:'')};}
+ if(r.status!==200||r.redirected){const reason=r.redirected?null:await refusalReason(r);if(r.redirected)r.body?.cancel().catch(()=>{});if(selectionReason(reason))return {state:'unconfirmed',reason:'record-'+r.status+':'+reason};await invalidateServerSnapshot(packId);return {state:'revoked',reason:'record-'+r.status+(reason?':'+reason:'')};}
  let fresh;try{fresh=serverRecord(await r.json(),packId);}catch{await invalidateServerSnapshot(packId);return {state:'revoked',reason:'record-invalid'};}
  // A server that answers another revision or generation has not answered for this copy: it stays, unconfirmed.
  if(fresh.revision!==record.revision)return {state:'unconfirmed',reason:'record-revision-changed'};
@@ -157,7 +163,11 @@ async function retainServerSnapshot(packId,revision,generation,cache,signal,onpr
   // F11: the snapshot is read with the capability the page reads with (execution=2), so an offline reload
   // gets the same shape; an older server that refuses it is read once without it, as the page does.
   checkCanceled();const {response:r,capability}=await readExecutionRecord(packId,revision,generation,signal);checkCanceled();
-  if(r.status!==200||r.redirected){r.body?.cancel().catch(()=>{});throw Error('Server record unavailable.');}record=serverRecord(await r.json(),packId);checkCanceled();if(revision&&record.revision!==revision||capability&&!sameGeneration(record,generation))throw Error('Server revision changed.');
+  // PR312 review C1: a refused Save is classified like the recheck. A selection refusal (selectionReasons) or a 200 of another
+  // revision or generation has not answered for this record: the Save fails and the existing Saved copy is kept, unconfirmed.
+  // A denial still retires it (OFFLINE L60).
+  if(r.status!==200||r.redirected){const reason=r.redirected?null:await refusalReason(r);if(r.redirected)r.body?.cancel().catch(()=>{});throw Object.assign(Error('Server record unavailable.'),selectionReason(reason)?{mediaStatusCode:'media-authority-unconfirmed'}:{});}
+  record=serverRecord(await r.json(),packId);checkCanceled();if(revision&&record.revision!==revision||capability&&!sameGeneration(record,generation))throw Object.assign(Error('Server revision changed.'),{mediaStatusCode:'media-authority-unconfirmed'});
   const files=serverFiles(record);onprogress?.({phase:'record-verified',verified:0,total:files.length});
   for(const [index,f] of files.entries()){
    checkCanceled();let response=await cache.match(f.path);try{await serverJSON(response,f,record);}catch{checkCanceled();response=await fetchLatest(f.path,{cache:'no-store',redirect:'error',signal});await serverJSON(response,f,record);checkCanceled();await cache.put(f.path,response);}
@@ -165,7 +175,7 @@ async function retainServerSnapshot(packId,revision,generation,cache,signal,onpr
   }
   return {record,files,invalid:false,...(capability?{capability}:{})};
  }
- catch(error){if(!(signal.aborted&&error.name==='AbortError')&&error.mediaStatusCode!=='media-status-transient')await invalidateServerSnapshot(packId);throw error;}
+ catch(error){if(!(signal.aborted&&error.name==='AbortError')&&!['media-status-transient','media-authority-unconfirmed'].includes(error.mediaStatusCode))await invalidateServerSnapshot(packId);throw error;}
 }
 // Catalog retrieval may precede UI cancellation/activation. Keep its artifact
 // lookup context separate from PACK_SELECT's native-media custody.
@@ -199,8 +209,8 @@ async function serverRead(request,clientId){
  // the pack, so it never retires a saved snapshot; the page retries without the capability.
  if(match&&capability&&response.status===400)return response;
  try{
-  // B1 (PR311 review): an ambiguous refusal reaches the page unchanged and is never taken as the record, and it retires nothing.
-  if(match){if(response.status!==200||response.redirected){if(!response.redirected&&ambiguousReason(await refusalReason(response.clone())))return response;throw Error('Server record unavailable.');}const record=serverRecord(await response.clone().json(),packId);if(revision&&record.revision!==revision)throw Error('Server revision changed.');await rememberServerRead(clientId,record);}
+  // B1 (PR311 review): a selection refusal reaches the page unchanged and is never taken as the record, and it retires nothing.
+  if(match){if(response.status!==200||response.redirected){if(!response.redirected&&selectionReason(await refusalReason(response.clone())))return response;throw Error('Server record unavailable.');}const record=serverRecord(await response.clone().json(),packId);if(revision&&record.revision!==revision)throw Error('Server revision changed.');await rememberServerRead(clientId,record);}
   else if(file)await serverJSON(response.clone(),file,active.serverSnapshot.record);
  }catch{if(packId)await invalidateServerSnapshot(packId);}
  return response;
@@ -303,7 +313,7 @@ async function originalVisualRead(request){
   if(response.redirected||!await keptVisual(response,sha)){await cache.delete(url.pathname);return new Response('This image could not be verified.',{status:502,headers:{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store'}});}
   await cache.put(url.pathname,response.clone());await(await caches.open(META)).delete('/'+visualTombstoneKey(sha));return response;
  }
- if([408,429,500,502,503,504].includes(response.status)){if(await read(visualTombstoneKey(sha)))return response;return kept||await savedVisual(url.pathname,sha)||response;}
+ if([408,429,500,502,503,504].includes(response.status)){if(await read(visualTombstoneKey(sha)))return response;const copy=kept||await savedVisual(url.pathname,sha);if(!copy)return response;response.body?.cancel().catch(()=>{});return copy;}
  return response;
 }
 // F11: a Saved original (its pack's verified copy under the same path) answers only when the server cannot,
@@ -532,15 +542,15 @@ async function declaredMediaRevision(data,packId){
  if(data.mediaIdentity?.packId!==packId||!isPassageHash(data.mediaIdentity?.revision)||!isPassageHash(data.mediaAssetsSha256)||!isPassageHash(data.revision))throw Error('Invalid declared media identity.');
  // The media identity is the execution's, the same in every generation of it. A Saved copy of this revision is read by its own
  // generation and that answer decides it; the page's displayed generation names only the displayed copy (Terry b34dadc). Without
- // either, the read is by revision. A typed publication-generation-ambiguous refusal, like a transient answer, revokes nothing and
+ // either, the read is by revision. A typed selection refusal (selectionReasons), like a transient answer, revokes nothing and
  // leaves the last verified copy; a denial retires the Saved copy only when the read was that copy's own. Refused bodies are read.
  const saved=await read(packKey(packId,'active')),savedRecord=saved?.serverSnapshot?.record;
  const savedGeneration=savedRecord?.revision===data.revision&&isPassageHash(savedRecord.execution?.publication?.generation??'')?savedRecord.execution.publication.generation:null;
- const generation=savedGeneration||(isPassageHash(data.generation??'')?data.generation:null),ownRead=!!savedRecord&&savedRecord.revision===data.revision&&(savedGeneration===null||generation===savedGeneration);
+ const generation=savedGeneration||(isPassageHash(data.generation??'')?data.generation:null),ownRead=!!savedRecord&&savedRecord.revision===data.revision&&generation===savedGeneration;
  let record;try{const response=await fetchLatest(`/v1/packs/${packId}?revision=${data.revision}${generation?'&generation='+generation:''}`,{cache:'no-store',redirect:'error'});
-  if(response.status!==200||response.redirected){const reason=response.redirected?null:await refusalReason(response);if(response.redirected)response.body?.cancel().catch(()=>{});throw Object.assign(Error('Media authority is unavailable.'),ambiguousReason(reason)?{mediaStatusCode:'media-authority-ambiguous'}:{});}
+  if(response.status!==200||response.redirected){const reason=response.redirected?null:await refusalReason(response);if(response.redirected)response.body?.cancel().catch(()=>{});throw Object.assign(Error('Media authority is unavailable.'),selectionReason(reason)?{mediaStatusCode:'media-authority-unconfirmed'}:{});}
   record=serverRecord(await response.json(),packId);}
- catch(error){if(!['media-status-transient','media-authority-ambiguous'].includes(error.mediaStatusCode)){if(ownRead||!savedRecord)await invalidateServerSnapshot(packId);throw error;}const active=await savedServerSnapshot(packId,data.revision);if(!active)throw error;record=active.serverSnapshot.record;}
+ catch(error){if(!['media-status-transient','media-authority-unconfirmed'].includes(error.mediaStatusCode)){if(ownRead||!savedRecord)await invalidateServerSnapshot(packId);throw error;}const active=await savedServerSnapshot(packId,data.revision);if(!active)throw error;record=active.serverSnapshot.record;}
  if(record.revision!==data.revision||record.execution?.mediaIdentity?.packId!==data.mediaIdentity.packId||record.execution?.mediaIdentity?.revision!==data.mediaIdentity.revision||record.execution?.mediaAssetsSha256!==data.mediaAssetsSha256)throw Error('Media identity is not authorized by the server record.');
  return data.mediaIdentity.revision;
 }

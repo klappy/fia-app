@@ -1,6 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {sha256} from '../../server/fia/preparation/contract.mjs';
 import {createExecutableOverlay} from '../../server/fia/publication/executable-overlay.mjs';
+import {createReadOperations} from '../../server/fia/publication/read-operations.mjs';
 
 // F7a1 OFFLINE L96 cases that need a controlled overlay (PR295 review B2), in process: a concurrent
 // pointer change between capture and commit, revocation of a shared source, and reuse of an identical
@@ -34,7 +35,7 @@ test('a pointer change between capture and commit refuses adoption typed; the ne
 test('revocation of the shared source denies every generation that depends on it',async()=>{
  const t=await harness();const a=await t.publish({});t.setShell('b');const b=await t.publish({expectedPublicationGeneration:a.execution.publication.generation});
  t.revoke();
- for(const g of [a,b].map(r=>r.execution.publication.generation))assert.deepEqual(await t.overlay.readCatalog(packId,a.revision,g),{status:'unavailable',reason:'publication-generation-unavailable'});
+ for(const g of [a,b].map(r=>r.execution.publication.generation))assert.deepEqual(await t.overlay.readCatalog(packId,a.revision,g),{status:'unavailable',reason:'publication-generation-invalid'});
  assert.equal((await t.overlay.readCatalog(packId))?.execution,undefined,'the current read falls through to the base catalog');
 });
 
@@ -83,4 +84,19 @@ test('a stored fia-bound-manifest@1 row with @1 bytes reads exactly under the cu
  t.values.set(key,{...old,manifestBuilder:CURRENT_BOUND_MANIFEST_BUILDER});
  assert.equal((await t.overlay.readCatalog(packId,a.revision,generation)).status,'unavailable','relabelled with the current builder, the @1 bytes are refused');
  assert.equal((await t.overlay.readCatalog(packId,a.revision,a.execution.publication.generation)).status,'ready','the current row is unaffected');
+});
+
+// Terry 0be2e40: the three facts once merged as publication-generation-unavailable are typed apart, so the client can apply the
+// law to each. (a) An absent generation row is a selection refusal (OFFLINE L37, L45, L61). (b) A retained row that fails its own
+// binding or verification is a denial (L60, L43, L57). (c) The exact read passes the catalog's own refusal through unchanged (L43).
+test('an absent generation, an invalid retained row and a catalog refusal reach the reader with distinct typed reasons',async()=>{
+ const t=await harness();const a=await t.publish({});const g=a.execution.publication.generation;
+ assert.deepEqual(await t.overlay.readCatalog(packId,a.revision,h('0')),{status:'unavailable',reason:'publication-generation-unavailable'},'(a) absent row');
+ const key=`executable-generation:${packId}@${g}`,row=t.values.get(key);t.values.set(key,{...row,binding:{...row.binding,packId:'eng.MRK-1-21-28'}});
+ assert.deepEqual(await t.overlay.readCatalog(packId,a.revision,g),{status:'unavailable',reason:'publication-generation-invalid'},'(b) row fails its binding');
+ const reads=reason=>createReadOperations({readCatalog:async()=>({status:'unavailable',reason}),findArtifact:async()=>null});
+ for(const reason of ['execution-not-current','revision-not-found','not-found'])
+  assert.deepEqual(await reads(reason).readPack({packId,revision:h('a'),generation:h('b')}),{status:'unavailable',reason},`(c) ${reason} passes through`);
+ const other=createReadOperations({readCatalog:async()=>({status:'ready',packId,revision:h('a'),execution:{publication:{generation:h('c')}}}),findArtifact:async()=>null});
+ assert.deepEqual(await other.readPack({packId,revision:h('a'),generation:h('b')}),{status:'unavailable',reason:'publication-generation-mismatch'},'(c) a ready record of another generation is typed apart');
 });

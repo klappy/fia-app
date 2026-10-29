@@ -150,10 +150,13 @@ test('the Saved copy is rechecked by its own generation, not the displayed one, 
  assert.equal(s.servedManifest.reason,'record-404:publication-generation-unavailable','the displayed generation answers only for the displayed copy');
  t.w.calls.length=0;assert.equal((await mediaStatus(t,{generation:h('5')})).ok,true);
  assert.ok(t.w.calls.includes(`/v1/packs/${packId}?revision=${t.f.record.revision}&generation=${t.generation}`),'media authority reads the Saved copy by its own generation');
- // Its own exact read denied: the copy is retired even though the displayed generation still answers.
- const d=setup({ambiguous:true});assert.equal((await d.save('all')).ok,true);
- d.w.reply(`/v1/packs/${packId}`,()=>{const q=new URLSearchParams(d.w.calls.at(-1).split('?')[1]||'');return q.get('generation')===d.generation?Response.json({status:'unavailable',reason:'publication-generation-unavailable'},{status:404}):Response.json({...d.record,execution:{...d.record.execution,publication:{...d.record.execution.publication,generation:h('5')}}});});
+ // Its own exact read denied (Terry 0be2e40 case b, a retained row that fails verification): the copy is retired even though
+ // the displayed generation still answers. Its own generation row absent (case a) is a selection refusal: the copy is kept.
+ const own=(t,reason)=>t.w.reply(`/v1/packs/${packId}`,()=>{const q=new URLSearchParams(t.w.calls.at(-1).split('?')[1]||'');return q.get('generation')===t.generation?Response.json({status:'unavailable',reason},{status:404}):Response.json({...t.record,execution:{...t.record.execution,publication:{...t.record.execution.publication,generation:h('5')}}});});
+ const d=setup({ambiguous:true});assert.equal((await d.save('all')).ok,true);own(d,'publication-generation-invalid');
  const ds=await d.status(h('5'));assert.equal(ds.savedAuthority.state,'revoked');assert.equal(ds.saved,false);
+ const a=setup({ambiguous:true});assert.equal((await a.save('all')).ok,true);own(a,'publication-generation-unavailable');
+ const as=await a.status(h('5'));assert.equal(as.savedAuthority.state,'unconfirmed');assert.equal(as.saved,true,'(a) an absent row keeps the last verified copy');
 });
 test('no legacy fallback: an ambiguous recheck keeps the last verified copy with visible status and never reads by revision alone',async()=>{
  const t=setup({ambiguous:true});assert.equal((await t.save('all')).ok,true);
@@ -186,4 +189,37 @@ test('an observed 404 for a published original is honored before serving any kep
  t.w.reply(photoPath,()=>new Response('gone',{status:404}));assert.equal((await t.w.fetch(photoPath)).status,404);
  t.w.offline(true);const r=await t.w.fetch(photoPath);assert.equal(r.type==='error'||r.status!==200,true,'no Saved copy answers for a tombstoned original');
  t.w.offline(false);t.w.reply(photoPath,()=>new Response('err',{status:503}));assert.equal((await t.w.fetch(photoPath)).status,503,'nor on a transient answer');
+});
+
+// Terry 0be2e40: each typed reason the law decides is classified apart; the server passes the catalog's own reason through (case c).
+test('typed reasons on the Saved copy\'s own read: (a) absent and execution-not-current keep it; (b) invalid retires it',async()=>{
+ for(const [reason,state,saved] of [['publication-generation-unavailable','unconfirmed',true],['execution-not-current','unconfirmed',true],['publication-generation-invalid','revoked',false]]){
+  const t=setup({ambiguous:true});assert.equal((await t.save('all')).ok,true);
+  t.w.reply(`/v1/packs/${packId}`,()=>Response.json({status:'unavailable',reason},{status:404}));
+  const s=await t.status();assert.equal(s.savedAuthority.state,state,reason);assert.equal(s.saved,saved,reason);
+  const m=await mediaStatus(t);assert.equal(m.ok,saved,reason);assert.equal((await t.status()).saved,saved,`${reason}: media authority agrees`);
+  t.w.reply(`/v1/packs/${packId}`,()=>Response.json({status:'unavailable',reason},{status:404}));
+  assert.equal((await t.w.fetch(`/v1/packs/${packId}?revision=${t.f.record.revision}&execution=2`)).status,404);assert.equal((await savedRecord(t)).serverSnapshot.invalid===true,!saved,`${reason}: page read`);
+ }
+});
+// PR312 review C1: a refused Save must not retire the existing Saved copy unless the refusal is a denial.
+test('C1: a Save refused as ambiguous, or answered with another generation, keeps the existing Saved copy; a denial retires it',async()=>{
+ const t=setup({ambiguous:true});assert.equal((await t.save('all')).ok,true);
+ const refused=await t.save('all',null);assert.equal(refused.ok,false,'a Save with no generation is refused');
+ let s=await t.status();assert.equal(s.saved,true,'the Saved copy is kept');assert.notEqual((await savedRecord(t)).serverSnapshot.invalid,true);
+ const o=setup({ambiguous:true});assert.equal((await o.save('all')).ok,true);
+ o.w.reply(`/v1/packs/${packId}`,()=>{const q=new URLSearchParams(o.w.calls.at(-1).split('?')[1]||'');return q.get('generation')===h('5')?Response.json(o.record):Response.json(o.record);});
+ assert.equal((await o.save('all',h('5'))).ok,false,'a 200 of another generation is not the requested record');
+ assert.notEqual((await savedRecord(o)).serverSnapshot.invalid,true,'and retires nothing');
+ const d=setup({ambiguous:true});assert.equal((await d.save('all')).ok,true);
+ d.w.reply(`/v1/packs/${packId}`,()=>Response.json({status:'unavailable',reason:'publication-generation-invalid'},{status:404}));
+ assert.equal((await d.save('all')).ok,false);assert.equal((await savedRecord(d)).serverSnapshot.invalid,true,'a denial still retires it');
+});
+// PR312 review item 2: a denial about the displayed generation is not about a Saved copy that has no generation.
+test('a Saved copy without a generation is not retired by a denial of the displayed generation',async()=>{
+ const t=setup({ambiguous:true});assert.equal((await t.save('all')).ok,true);
+ const meta=t.w.stores.get(META),active=await savedRecord(t);delete active.serverSnapshot.record.execution.publication;meta.set(activeKey,Response.json(active));
+ t.w.reply(`/v1/packs/${packId}`,()=>{const q=new URLSearchParams(t.w.calls.at(-1).split('?')[1]||'');return q.has('generation')?Response.json({status:'unavailable',reason:'publication-generation-invalid'},{status:404}):Response.json(t.record);});
+ await mediaStatus(t,{generation:h('5')});
+ assert.notEqual((await savedRecord(t)).serverSnapshot.invalid,true,'the denial named another copy');
 });
