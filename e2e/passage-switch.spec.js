@@ -10,7 +10,7 @@ test.beforeAll(()=>{process.env[SW_EVENTS]='1';});
 test.afterAll(()=>{if(priorEvents===undefined)delete process.env[SW_EVENTS];else process.env[SW_EVENTS]=priorEvents;});
 const U='eng.MRK-1-14-20',refusal={status:'unavailable',reason:'fault-injected'};
 const controlled=page=>page.waitForFunction(()=>navigator.serviceWorker?.controller!==null&&navigator.serviceWorker?.controller!==undefined,null,{timeout:5000});
-async function refuse(context,delay=0){await context.route(`**/v1/packs/${U}`,async route=>{if(delay)await new Promise(r=>setTimeout(r,delay));await route.fulfill({status:404,contentType:'application/json',body:JSON.stringify(refusal)});});}
+async function refuse(context,delay=0){await context.route(`**/v1/packs/${U}*`,async route=>{if(delay)await new Promise(r=>setTimeout(r,delay));await route.fulfill({status:404,contentType:'application/json',body:JSON.stringify(refusal)});});}
 const seen=(page,path)=>{const responses=[];page.on('response',r=>{if(new URL(r.url()).pathname===path)responses.push(r);});return responses;};
 const passages=async page=>{await page.getByRole('button',{name:'Session progress: open section overview'}).click();await page.getByRole('button',{name:/^Passages/}).click();};
 const card=(page,title)=>page.getByRole('dialog').locator('article.pack-card').filter({has:page.getByRole('heading',{name:title,exact:true})});

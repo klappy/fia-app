@@ -1,6 +1,6 @@
 import {createPreparationIntent} from './preparation-intent.js';
 import {createExecutionTransport,passageUnreachable} from './execution-transport.js';
-import {validateExecutablePresentation} from './executable-presentation.js';
+import {validateExecutablePresentation,validateVisualResources,validatePublicationPin,validateJSONDescriptor} from './executable-presentation.js';
 import {createPreparationTransport} from './prepared-audio.js';
 import {bundledPresentation} from './content.js';
 const empty={status:'unavailable',count:0};
@@ -55,6 +55,12 @@ export async function selectServerPresentation(id,{explicit=false,signal,transpo
  }
  if(record.status!=='ready'||record.packId!==id||record.identity?.packId!==id)throw notOpened(record);
  const identity=record.identity;
+ // Declared visual resources ride the catalog record (F4); this build validates them and does not act on them.
+ if(record.execution&&Object.hasOwn(record.execution,'visualResources'))validateVisualResources(record.execution.visualResources);
+ // A generation pin and its bound manifest come together or not at all (OFFLINE L9/L23; review N1).
+ if(record.execution&&Object.hasOwn(record.execution,'publication')!==Object.hasOwn(record.execution,'mediaManifest'))throw Error('The publication is invalid.');
+ if(record.execution&&Object.hasOwn(record.execution,'publication'))validatePublicationPin(record.execution.publication);
+ if(record.execution&&Object.hasOwn(record.execution,'mediaManifest'))validateJSONDescriptor(record.execution.mediaManifest);
  const media=record.execution?.mediaIdentity;
  if(media!==undefined&&(Object.keys(media||{}).sort().join(',')!=='packId,revision'||media.packId!==id||!/^([a-f0-9]{64})$/.test(media.revision)||!/^([a-f0-9]{64})$/.test(record.execution.mediaAssetsSha256)))throw Error('The media identity is invalid.');
  const descriptor={id:record.packId,revision:record.revision,language:identity.language,pericopeId:identity.pericopeId,title:identity.title,defaultScriptureId:identity.defaultScriptureId,capabilities:record.capabilities,diagnostics:record.diagnostics||[],...(record.offlineSnapshot==='historical-verified'?{offlineSnapshot:record.offlineSnapshot}:{}),...(media?{mediaIdentity:media,mediaAssetsSha256:record.execution.mediaAssetsSha256}:{}),presentation:{sha256:record.artifact.sha256,bytes:record.artifact.bytes}};
