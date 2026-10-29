@@ -22,7 +22,7 @@ const UNSUPPORTED=new Set(['fresh-response-refused','fresh-response-status','fre
 const custodyRefusal=error=>error?.message==='fresh-ineligible'?{reason:'visual-ineligible',subReason:'fresh-ineligible',final:false}:{reason:'retained-evidence-unavailable',subReason:error?.message??null,final:false};
 const refusal=r=>UNSUPPORTED.has(r)?{reason:'visual-unsupported',subReason:r,final:true}:r==='fresh-ineligible'?{reason:'visual-ineligible',subReason:r,final:false}:{reason:'interrupted',subReason:r??null,final:false};
 function trusted(v){
- if(!v||Object.getPrototypeOf(v)!==Object.prototype||Object.keys(v).sort().join()!=='kind,sourceVersion,url'||!KINDS.has(v.kind)||typeof v.url!=='string'||typeof v.sourceVersion!=='string'||!v.sourceVersion||v.sourceVersion.length>256)throw Error('visual-source');
+ if(!v||Object.getPrototypeOf(v)!==Object.prototype||Object.keys(v).sort().join()!=='kind,sourceVersion,url'||!KINDS.has(v.kind)||typeof v.url!=='string'||typeof v.sourceVersion!=='string'||!v.sourceVersion.trim()||v.sourceVersion.length>256)throw Error('visual-source');
  const url=new URL(v.url);if(url.protocol!=='https:'||url.username||url.password||url.search||url.hash||v.url.length>1024)throw Error('visual-source');
  return {kind:v.kind,url:v.url,sourceVersion:v.sourceVersion};
 }
@@ -41,12 +41,16 @@ const decode=Object.freeze({state:'unavailable',reason:'decoder-unavailable',dec
 export function createVisualOriginalJob({storage,bucket,source,eligibility,fetchSource,makeStream,now}){
  const s=trusted(structuredClone(source));if(typeof eligibility!=='function'||typeof storage?.transaction!=='function'||!bucket)throw Error('visual-capability');
  async function context(){const identity=await visualOriginalIdentity(s);return {identity,source:{logicalId:identity.logicalId,url:s.url,sourceVersionKind:'discovery-snapshot',sourceVersion:s.sourceVersion,publisherVersion:null}};}
-  const observer=(c,n=1)=>createFreshSourceObservations({storage,bucket,source:c.source,policy:{...VISUAL_ORIGINAL_POLICY},admissions:[ticketFor(n)],content:VISUAL_CONTENT,eligibility:context=>context.source.url===s.url&&context.source.sourceVersion===s.sourceVersion&&eligibility(context)===true,...(fetchSource?{fetchSource}:{}),...(makeStream?{makeStream}:{}),...(now?{now}:{})});
+  const observer=(c,n=1)=>createFreshSourceObservations({storage,bucket,source:c.source,policy:{...VISUAL_ORIGINAL_POLICY},admissions:[ticketFor(n)],content:VISUAL_CONTENT,eligibility:context=>context.source.url===s.url&&context.source.sourceVersion===s.sourceVersion&&strict(context),...(fetchSource?{fetchSource}:{}),...(makeStream?{makeStream}:{}),...(now?{now}:{})});
+ // Strict synchronous true, like the primitive's allowed(): a returned promise is observed so a rejection is never left unhandled.
+ const strict=context=>{try{const result=eligibility(context);if(result&&typeof result.then==='function')Promise.resolve(result).catch(()=>{});return result===true;}catch{return false;}};
  const base=c=>({job:VISUAL_ORIGINAL_JOB,recipe:VISUAL_ORIGINAL_RECIPE,sourceIdentitySha256:c.identity.sourceIdentitySha256,kind:s.kind});
  const attemptOf=marker=>{if(!Number.isSafeInteger(marker?.attempt)||marker.attempt<1)throw Error('visual-identity-corrupt');return marker.attempt;};
  async function bind(c){return storage.transaction(async tx=>{const marker=await tx.get(JOB_KEY);if(marker&&marker.logicalId!==c.identity.logicalId)throw Error('visual-identity-corrupt');if(marker)return attemptOf(marker);await tx.put(JOB_KEY,{schema:'fia-visual-original-job@1',logicalId:c.identity.logicalId,attempt:1});return 1;});}
  // A deliberate Retry opens the next ticket only when the current attempt ended uncertain with a non-final reason; concurrent Retries share it.
- async function reopen(c,n){const row=(await observer(c,n).status(ticketFor(n).checkId)).operation;if(row?.state!=='uncertain'||refusal(row.reason).final)return n;return storage.transaction(async tx=>{const marker=await tx.get(JOB_KEY),current=attemptOf(marker);if(current!==n)return current;await tx.put(JOB_KEY,{...marker,attempt:n+1});return n+1;});}
+ async function reopen(c,n){const row=(await observer(c,n).status(ticketFor(n).checkId)).operation;// Reopenable: an uncertain attempt with a non-final reason, or a completed attempt whose observed bytes were refused at head
+  // promotion (fresh-ineligible, never promoted), since eligibility is the caller's current state and may since have cleared.
+  const reopenable=row?.state==='uncertain'&&!refusal(row.reason).final||row?.state==='completed'&&row.promoted===false&&row.reason==='fresh-ineligible';if(!reopenable)return n;return storage.transaction(async tx=>{const marker=await tx.get(JOB_KEY),current=attemptOf(marker);if(current!==n)return current;await tx.put(JOB_KEY,{...marker,attempt:n+1});return n+1;});}
  async function retained(c){const head=await observer(c).read();if(head.state!=='observed')return null;return {...base(c),state:'unavailable',reason:'decoder-unavailable',custody:'retained',original:observed(head.observation,head.observationSha256),decode};}
  // A demand fetches at most once per attempt: a repeat or a concurrent demand joins the current ticket. After a non-final
  // interruption a plain demand reports `interrupted` with 0 fetches; only `retry:true` (SOURCE-TO-APP's deliberate Retry) opens a new attempt.
@@ -55,7 +59,9 @@ export function createVisualOriginalJob({storage,bucket,source,eligibility,fetch
   // A demand already cancelled is refused before any row is written, so it cannot consume the shared ticket.
   if(signal?.aborted)return {...base(c),state:'unavailable',reason:'interrupted',subReason:'fresh-aborted',final:false,custody:'none',decode};
   // An ineligible demand is refused before the job marker, sequence or attempt rows exist, so it cannot poison the shared job.
-  let admitted=false;try{admitted=eligibility({phase:'demand',source:structuredClone(c.source),admission:null,observedContent:null})===true;}catch{}if(!admitted)return {...base(c),state:'unavailable',reason:'visual-ineligible',subReason:'fresh-ineligible',final:false,custody:'none',decode};
+  // The primitive's own source checks run before any durable write, so a source it would refuse never leaves a job marker.
+  try{observer(c);}catch(error){return {...base(c),state:'unavailable',reason:'visual-unsupported',subReason:error.message,final:true,custody:'none',decode};}
+  const admitted=strict({phase:'demand',source:structuredClone(c.source),admission:null,observedContent:null});if(!admitted)return {...base(c),state:'unavailable',reason:'visual-ineligible',subReason:'fresh-ineligible',final:false,custody:'none',decode};
   let n=await bind(c);
   try{const prior=await retained(c);if(prior)return prior;}catch(error){return {...base(c),state:'unavailable',...custodyRefusal(error),custody:'unverified',decode};}
   if(retry===true)n=await reopen(c,n);

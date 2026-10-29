@@ -108,6 +108,13 @@ for(const status of [404,410,403])test(`a ${status} stays final visual-unsupport
  const retried=await call(mf,{retry:true});assert.equal(retried.gets,1);assert.equal(retried.result.subReason,'fresh-response-status');
 });
 test('a Retry after a final signature refusal fetches nothing more',async t=>{const mf=await fixture(t),bad=await call(mf,{mime:'image/jpeg'});assert.equal(bad.result.final,true);const retried=await call(mf,{retry:true});assert.equal(retried.gets,1);assert.equal(retried.result.subReason,'fresh-signature-mismatch');});
+test('a hash refused at promotion is reopened by a deliberate Retry once it is cleared',async t=>{
+ const mf=await fixture(t),bad=await call(mf,{badHash:sha(PNG)});assert.equal(bad.result.reason,'visual-ineligible');assert.equal(bad.gets,1);
+ const plain=await call(mf);assert.equal(plain.gets,1,'no automatic refetch');assert.equal(plain.result.reason,'visual-ineligible');
+ const stillBad=await call(mf,{badHash:sha(PNG),retry:true});assert.equal(stillBad.result.reason,'visual-ineligible');assert.equal(stillBad.gets,2);
+ const cleared=await call(mf,{retry:true});assert.equal(cleared.gets,3);assert.equal(cleared.result.custody,'retained',JSON.stringify(cleared.result));assert.equal(cleared.result.original.sha256,sha(PNG));
+ const after=await call(mf,{retry:true});assert.equal(after.gets,3);assert.equal(after.result.custody,'retained');
+});
 test('query-string source is refused before any fetch',async t=>{const mf=await fixture(t),out=await call(mf,{url:'https://publisher.invalid/c4.png?sig=1'});assert.match(out.error,/visual-source/);assert.equal(out.gets,0);});
 test('audio default is unchanged: same keys, no contentType or content binding',async()=>{
  const rows=new Map(),objects=new Map();const storage={get:async k=>structuredClone(rows.get(k)),async transaction(fn){return fn({get:async k=>structuredClone(rows.get(k)),put:async(k,v)=>rows.set(k,structuredClone(v))});}};
@@ -127,4 +134,21 @@ test('no byte of a split signature reaches the quarantine stream until the whole
  const bad=[[0x89,0x50,0x4e,0x47],[0x0d,0x0a,0x1a,0x00,1,2,3]];const refused=await run(VISUAL_CONTENT,'image/png',bad);assert.equal(refused.error,'fresh-signature-mismatch');assert.deepEqual(refused.written,[]);
  const good=[[0x89,0x50],[0x4e,0x47,0x0d],[0x0a,0x1a,0x0a,9,9]];const stored=await run(VISUAL_CONTENT,'image/png',good);assert.equal(stored.error,null);assert.deepEqual(stored.written,good.flat());
  const audio=await run(AUDIO_CONTENT,'audio/mpeg',[[1],[2,3]]);assert.equal(audio.error,null);assert.deepEqual(audio.written,[1,2,3]);
+});
+
+function memory(){const rows=new Map(),objects=new Map();return {rows,objects,storage:{get:async k=>structuredClone(rows.get(k)),list:async()=>new Map(rows),async transaction(fn){return fn({get:async k=>structuredClone(rows.get(k)),put:async(k,v)=>rows.set(k,structuredClone(v))});}},bucket:{get:async key=>{const b=objects.get(key);return b?{size:b.length,body:new Blob([b]).stream()}:null;},put:async(key,body)=>{const b=body instanceof Uint8Array?body.slice():new Uint8Array(await new Response(body).arrayBuffer());if(!objects.has(key))objects.set(key,b);return {};}}};}
+test('a blank or whitespace version, or a source the primitive would refuse, writes nothing and is a typed refusal',async()=>{
+ const {createVisualOriginalJob}=await import('../../server/fia/preparation/visual-original.mjs');
+ for(const sourceVersion of ['',' ','\t\n'])assert.throws(()=>createVisualOriginalJob({...memory(),source:{kind:'map',url:'https://publisher.invalid/c4.png',sourceVersion},eligibility:()=>true}),/visual-source/);
+ const m=memory();let gets=0;const job=createVisualOriginalJob({...m,source:{kind:'map',url:'https://publisher.invalid/'+'a'.repeat(990),sourceVersion:'r1'},eligibility:()=>true,fetchSource:async()=>{gets++;throw Error('no');}});
+ const out=await job.demand();assert.equal(out.reason,'visual-unsupported');assert.equal(out.subReason,'fresh-text');assert.equal(out.final,true);assert.equal(m.rows.size,0);assert.equal(m.objects.size,0);assert.equal(gets,0);
+});
+test('a rejected eligibility promise is ineligible and never an unhandled rejection',async()=>{
+ const {createVisualOriginalJob}=await import('../../server/fia/preparation/visual-original.mjs');const unhandled=[];const on=e=>unhandled.push(e);process.on('unhandledRejection',on);
+ try{const m=memory(),job=createVisualOriginalJob({...m,source:{kind:'map',url:'https://publisher.invalid/c4.png',sourceVersion:'r1'},eligibility:()=>Promise.reject(Error('policy-down'))});
+  const out=await job.demand();assert.equal(out.reason,'visual-ineligible');assert.equal(out.final,false);assert.equal(m.rows.size,0);
+  const n=memory(),later=createVisualOriginalJob({...n,source:{kind:'map',url:'https://publisher.invalid/c4.png',sourceVersion:'r1'},makeStream:()=>new TransformStream(),fetchSource:async()=>{throw Error('must-not-fetch');},eligibility:c=>c.phase==='demand'?true:Promise.reject(Error('policy-down'))});
+  const refused=await later.demand();assert.equal(refused.reason,'visual-ineligible');
+  const r=await later.read();assert.equal(r.state,'unavailable');
+  await new Promise(r=>setTimeout(r,20));assert.deepEqual(unhandled,[]);}finally{process.off('unhandledRejection',on);}
 });
