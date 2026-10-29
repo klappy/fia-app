@@ -37,6 +37,8 @@ export function validatePublicationPin(value){
  validateJSONDescriptor(value.baseManifest,/^base-offline:[a-f0-9]{64}$/);need(value.baseManifest.id===`base-offline:${value.baseManifest.sha256}`);
  return value;
 }
+// A visual preparation demand on its own (F9 sends it as declared), without the entry it came from.
+export function validateVisualDemand(value){need(plain(value)&&plain(value.visualDemand)&&assetId(value.visualDemand.assetId)&&['image','map'].includes(value.visualDemand.kind));visualDemand(value,value.visualDemand);return value;}
 function visualDemand(value,entry){
  need(plain(value));
  const keys=['packId','baseRevision','sourceRevision','capability','visualDemand','expectedExecutionRevision',...(Object.hasOwn(value,'expectedPublicationGeneration')?['expectedPublicationGeneration']:[])];
