@@ -1,0 +1,153 @@
+{
+  "schema": "fia-association-eval-manual@1",
+  "language": "spa",
+  "book": "LUK",
+  "sourceRevision": "f8776d92b090b5af5b17b17dc1137f25fb059ed0",
+  "sourceArchive": "server/fia/compiler/presentation/source-packs-luk.json.gz",
+  "author": "otto-assoc-eval-cases",
+  "authoredAt": "2026-10-29",
+  "claim": "fia-app-cookbook work/active/2026-10-06-cross-pericope-media/CLAIM-ASSOCIATION-EVAL-SPA-LUKE-2026-10-29.md (d4c4dea)",
+  "method": "Manual, unit by unit, from the retained archive only (no outside read). A unit is associate only when its own text asks the group to look at a picture, map or video that is one of the pack's catalog candidates, cited by typed identity. A unit that names a place, person or term without asking for a visual is none. A unit that asks for a visual absent from the pack catalog is unresolved and is not gold. No visual is invented. Rows count as gold only after an independent reviewer accepts the exact text.",
+  "selection": "spa.LUK-1-26-38 (guide spa-luk-p3-v1.0.1) was chosen as the first eligible untagged unit for a visual manual case under this batch's guard, which admits only units whose compiled HTML carries no resource tag. Earlier Spanish Luke units that name Galilea carry resource tags (for example spa-luk-p1-v1.1, Luke 1:1-4, S05-U003 with a FIAKeyTerms reference) and are outside this guard. No claim is made about Galilea, or about any visual, being absent elsewhere in the current source.",
+  "acceptance": {
+    "review": "5693932562",
+    "verdict": "APPROVE",
+    "reviewedCommit": "c26348892ce051d109b9ebdafe3cb4ddc88563be",
+    "submittedAt": "2026-10-29T06:55:07Z",
+    "agreement": "6/6 (4 none, 2 unresolved, 0 associate)",
+    "scope": "exact adjudication text of every row and unresolved entry"
+  },
+  "acceptedStatus": "accepted-by-independent-review",
+  "rows": [
+    {
+      "packId": "spa.LUK-1-26-38",
+      "unitId": "S02-U003",
+      "unitTextSha256": "28c50d4bd8435b6e576bfede39b0f0d27f91a437463b11a27e4a506088861374",
+      "guideRevision": "eb744452eb8d7c852caadde9d3181cddfe571119",
+      "guideFileSha256": "b6de7d69975c25a50226122a531148bdad3fdeec3efae4f46bc4b1ef409ec5f7",
+      "guideContentSha256": "015fd13ea68dac10e75274d0e8f935472b90e235788b3facb3fc5c55ecf13135",
+      "status": "accepted-by-independent-review",
+      "output": {
+        "decision": "none",
+        "association": {
+          "requested": [],
+          "optionalCompanions": null,
+          "companionPairs": null
+        },
+        "display": {
+          "primaryCollection": null,
+          "primaryAssetId": null,
+          "relatedAssetIds": null,
+          "insertions": null
+        }
+      },
+      "evidence": {
+        "basis": "background-only",
+        "reason": "Historical background naming Nazaret and the region of Galilea. The unit gives no instruction to look at or show any picture, map or video; naming a place is not a visual request."
+      },
+      "acceptedBy": "review 5693932562"
+    },
+    {
+      "packId": "spa.LUK-1-26-38",
+      "unitId": "S02-U013",
+      "unitTextSha256": "c2f4d676603cc3cb0967e70328d628f7ba969749cd9327e870dfe4a4f488bb6e",
+      "guideRevision": "eb744452eb8d7c852caadde9d3181cddfe571119",
+      "guideFileSha256": "b6de7d69975c25a50226122a531148bdad3fdeec3efae4f46bc4b1ef409ec5f7",
+      "guideContentSha256": "015fd13ea68dac10e75274d0e8f935472b90e235788b3facb3fc5c55ecf13135",
+      "status": "accepted-by-independent-review",
+      "output": {
+        "decision": "none",
+        "association": {
+          "requested": [],
+          "optionalCompanions": null,
+          "companionPairs": null
+        },
+        "display": {
+          "primaryCollection": null,
+          "primaryAssetId": null,
+          "relatedAssetIds": null,
+          "insertions": null
+        }
+      },
+      "evidence": {
+        "basis": "interpretive-statement",
+        "reason": "\"Esta narrativa muestra que\" means \"this narrative shows that\": an interpretive statement about prophecy (Galilea, David, a virgin). \"muestra\" here is not an instruction to show a resource."
+      },
+      "acceptedBy": "review 5693932562"
+    },
+    {
+      "packId": "spa.LUK-1-26-38",
+      "unitId": "S03-U011",
+      "unitTextSha256": "8fabbbe61879c503cc8faeebae29be6f0a60c2cc82b748d14d74903324fd28e0",
+      "guideRevision": "eb744452eb8d7c852caadde9d3181cddfe571119",
+      "guideFileSha256": "b6de7d69975c25a50226122a531148bdad3fdeec3efae4f46bc4b1ef409ec5f7",
+      "guideContentSha256": "015fd13ea68dac10e75274d0e8f935472b90e235788b3facb3fc5c55ecf13135",
+      "status": "accepted-by-independent-review",
+      "output": {
+        "decision": "none",
+        "association": {
+          "requested": [],
+          "optionalCompanions": null,
+          "companionPairs": null
+        },
+        "display": {
+          "primaryCollection": null,
+          "primaryAssetId": null,
+          "relatedAssetIds": null,
+          "insertions": null
+        }
+      },
+      "evidence": {
+        "basis": "group-made-illustration",
+        "reason": "The group is asked to create its own storyboard, sketch or illustration of the story. That is a group activity, not a request to view a provided picture, map or video."
+      },
+      "acceptedBy": "review 5693932562"
+    },
+    {
+      "packId": "spa.LUK-1-26-38",
+      "unitId": "S04-U015",
+      "unitTextSha256": "652d69dab004c83a7c0998e0d1ebd171e0604913d3348564f7a53df12419ab72",
+      "guideRevision": "eb744452eb8d7c852caadde9d3181cddfe571119",
+      "guideFileSha256": "b6de7d69975c25a50226122a531148bdad3fdeec3efae4f46bc4b1ef409ec5f7",
+      "guideContentSha256": "015fd13ea68dac10e75274d0e8f935472b90e235788b3facb3fc5c55ecf13135",
+      "status": "accepted-by-independent-review",
+      "output": {
+        "decision": "none",
+        "association": {
+          "requested": [],
+          "optionalCompanions": null,
+          "companionPairs": null
+        },
+        "display": {
+          "primaryCollection": null,
+          "primaryAssetId": null,
+          "relatedAssetIds": null,
+          "insertions": null
+        }
+      },
+      "evidence": {
+        "basis": "drama-direction",
+        "reason": "\"Muestren que Isabel está embarazada y María está comprometida con José\" directs the actors to portray these facts in the drama. It asks for no visual resource."
+      },
+      "acceptedBy": "review 5693932562"
+    }
+  ],
+  "unresolved": [
+    {
+      "packId": "spa.LUK-1-26-38",
+      "unitId": "S02-U004",
+      "unitTextSha256": "ac1262b59823cefe9d3826aa41a9d6e1aa1871a4aeb71a7987629713d15e85c4",
+      "requestedKind": "map",
+      "reason": "no-eligible-candidate-in-pack-catalog",
+      "note": "A real map cue: the unit asks to show the region of Galilea and the city of Nazaret on the map of Israel (\"en el mapa de Israel\"). This pack's candidate catalog supplies no eligible image, map or video candidate, so no typed binding exists. This is a candidate-pool gap in this pack, not a claim that the publisher lacks the map. Not gold; no visual invented."
+    },
+    {
+      "packId": "spa.LUK-1-26-38",
+      "unitId": "S05-U003",
+      "unitTextSha256": "478f9d8b1f3ca7b0a4fbb30e6e0001815dbbef3ca96d563c737e80104e5aee78",
+      "requestedKind": "map",
+      "reason": "no-eligible-candidate-in-pack-catalog",
+      "note": "A real map cue that repeats the request (\"Si aún no lo han hecho\", if not already done) for Galilea and Nazaret on the map of Israel. Same candidate-pool gap in this pack; not a claim about publisher assets. Not gold; no visual invented."
+    }
+  ]
+}
