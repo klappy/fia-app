@@ -8,7 +8,7 @@ import {createExecutableOperations} from '../publication/executable-operations.m
 import {createExecutablePresentationService} from './executable-presentation-service.mjs';
 import {createExecutablePresentationResolver,createCanonicalGuideReader} from './executable-presentation-resolver.mjs';
 import {createTrustedSourceActionComposer,trustedExecutionRecipe} from './trusted-source-actions.mjs';
-import {createSourceJoinReader,fragmentPort,createGuideAcquisition,guideDemandPort,createGuideDescriptorKey} from './source-join-decisions.mjs';
+import {createSourceJoinReader,fragmentPort,createGuideAcquisition,guideDemandPort,createGuideDescriptorKey,createPreparationOutcomes} from './source-join-decisions.mjs';
 import {SOURCE_ACTION_RECIPE} from '../compiler/presentation/source-action-projector.mjs';
 import guideSources from './guide-sources.json' with {type:'json'};
 import preparationCatalog from './catalog.json' with {type:'json'};
@@ -99,10 +99,10 @@ export async function createExecutableRuntime({ctx,env,snapshot,capabilities={}}
  const demandGuide=capabilities.demandGuide??guideDemandPort(env);
  const acquireGuide=joinReader&&demandGuide?createGuideAcquisition({snapshot,fetchAsset:assetFetch,demandGuide,...(capabilities.acquisitionDeadlineMs?{deadlineMs:capabilities.acquisitionDeadlineMs}:{}),diagnose:event=>(capabilities.diagnose??(e=>console.warn(JSON.stringify(e))))(event)}):null;
  // Only a retained acquisition lets this Open read the fragment (Otto, 9e3f243): any other outcome is base for this Open, typed.
- const acquired=new Map();
- const sourceJoins=joinReader&&(acquireGuide?Object.freeze({async joinsFor(packId){const a=acquired.get(packId);if(a?.state!=='retained')return {state:'unavailable',reason:'guide-not-acquired',...(a?.reason?{subReason:a.reason}:{})};const joined=await joinReader.joinsFor(packId);acquired.set(packId,{...a,join:{state:joined?.state==='ready'?'ready':'unavailable',reason:joined?.reason??null}});return joined;}}):joinReader);
+ const outcomes=createPreparationOutcomes(capabilities.turnDeadlineMs?{turnDeadlineMs:capabilities.turnDeadlineMs}:{});
+ const sourceJoins=joinReader&&(acquireGuide?Object.freeze({async joinsFor(packId){const a=outcomes.current(packId);if(a?.state!=='retained')return {state:'unavailable',reason:'guide-not-acquired',...(a?.reason?{subReason:a.reason}:{})};const joined=await joinReader.joinsFor(packId);outcomes.joined(packId,{state:joined?.state==='ready'?'ready':'unavailable',reason:joined?.reason??null});return joined;}}):joinReader);
  const resolver=capabilities.resolve??createExecutablePresentationResolver({reads:baseReads,resolveCanonicalSource:createCanonicalGuideReader({canonicalSources:snapshot.canonicalSources??[],fetchAsset:path=>env.ASSETS.fetch(new Request(new URL(path,env.FIA_API_ORIGIN),{redirect:'manual'}))}),composeDecisionInputs:capabilities.composeDecisionInputs??createTrustedSourceActionComposer({policySha256:currentPolicy,sourceJoins}),resolveBindings});
- const resolve=acquireGuide&&!capabilities.resolve?async args=>{if(typeof args?.packId==='string'){const outcome=await acquireGuide(args.packId);acquired.set(args.packId,outcome);
+ const resolve=acquireGuide&&!capabilities.resolve?async args=>{if(typeof args?.packId==='string'){outcomes.hold(args.packId,await acquireGuide(args.packId));
   // Terry 85eff6a (C1), remedy (ii): the outcome is held for this preparation and committed only beside the record it publishes
   // (review 5701105621 P2-1); a failed resolve, write or validation settles nothing.
   }  return resolver(args);}:resolver;
@@ -162,11 +162,12 @@ export async function createExecutableRuntime({ctx,env,snapshot,capabilities={}}
  // re-prepares under today's build.
  reads.readPack=async args=>{let record=await readPack(args);if(record?.status==='ready'&&record.execution&&!args.revision&&(record.execution.provenance?.recipeRevision!==recipeRevision||!await settledJoin(record)))record=await baseReads.readPack({packId:args.packId});if(record?.status!=='ready'||record.execution)return record;const sourceRevision=record.authority?.rawInventoryCommit;if(record.packId===args.packId&&preparable(record,sourceRevision))return {...record,preparationDemand:{packId:args.packId,baseRevision:record.revision,sourceRevision,capability:'executable-presentation'}};return record;};
  // The held acquisition outcome is committed beside the record only once that record is published (review 5701105621 P2-1).
- const publishing=acquireGuide?{...publication,publish:async args=>{const record=await publication.publish(args);const packId=args?.binding?.packId,held=typeof packId==='string'?acquired.get(packId):null;
-  if(record?.status==='ready'&&held&&held.state!=='not-applicable'&&typeof record.revision==='string'){await ctx.storage.put(joinOutcomeKey(record.packId,record.revision),{...outcomeOf(held),recipe:recipeRevision});acquired.delete(packId);}
+ const publishing=acquireGuide?{...publication,publish:async args=>{const record=await publication.publish(args);const held=outcomes.current(args?.binding?.packId);
+  if(record?.status==='ready'&&held&&held.state!=='not-applicable'&&typeof record.revision==='string'&&record.packId===args?.binding?.packId)await ctx.storage.put(joinOutcomeKey(record.packId,record.revision),{...outcomeOf(held),recipe:recipeRevision});
   return record;}}:publication;
  const ops=createExecutableOperations({reads,service,publication:publishing,storage:ctx.storage});
- return {...ops,readApprovedAudio:selected=>retained?retained.read(selected):{status:'unavailable',reason:'approved-audio-unavailable'}};
+ // Explicit preparations of one pack take turns, each with its own outcome (review 5701363820 N1).
+ return {...ops,...(acquireGuide?{preparePresentation:args=>typeof args?.packId==='string'?outcomes.run(args.packId,()=>ops.preparePresentation(args)):ops.preparePresentation(args)}:{}),readApprovedAudio:selected=>retained?retained.read(selected):{status:'unavailable',reason:'approved-audio-unavailable'}};
 }
 export function createExecutableWorkerOperations({env,fallback}){
  if(!env.FIA_PREPARATION_JOBS||!env.FIA_ORIGINALS)return fallback;
