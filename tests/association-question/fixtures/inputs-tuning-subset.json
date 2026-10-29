@@ -1,0 +1,340 @@
+{
+  "schema": "fia-association-eval@1",
+  "sourceRevision": "f8776d92b090b5af5b17b17dc1137f25fb059ed0",
+  "archives": {
+    "server/fia/compiler/presentation/source-packs.json.gz": "48f8c768b108f2b9977048db26fa54c82af4eea7f54c66fa650ef84f7d61ecd7",
+    "server/fia/compiler/presentation/source-packs-luk.json.gz": "98537437857e748d48ce8ad639c95a6b9a8b61b315594ffc1b94328fc0df0283"
+  },
+  "goldSources": {
+    "ledger": {
+      "path": "scripts/association-eval/sources/association-ledger.json",
+      "sha256": "123733d7aa1c127d8929efa2493b2ae5078657629c0f7b2647e1c44a916656c1"
+    },
+    "approvedPresentation": {
+      "path": "server/fia/publication/approved-presentation.json",
+      "sha256": "ccd72f23c23f932651b500b730b285f32fabd37e50037b5af91d8881f1403975",
+      "bytes": 454295
+    }
+  },
+  "rawSource": {
+    "path": "scripts/association-eval/sources/raw-unit-fragments.json",
+    "sha256": "07d67b01497c3468389b6b7027f8f7060cfa2f8f40d3e1825211a23a8f67d718",
+    "pinnedRevision": "eb744452eb8d7c852caadde9d3181cddfe571119",
+    "currentRevision": "96bb023ab1852ab8bdc3a469fcc820e9f9ea1e30"
+  },
+  "kind": "inputs",
+  "cases": [
+    {
+      "caseId": "eng.MRK-1-1-13:S02-U005",
+      "packId": "eng.MRK-1-1-13",
+      "pericope": "MRK-1-1-13",
+      "language": "eng",
+      "source": {
+        "sourceRevision": "f8776d92b090b5af5b17b17dc1137f25fb059ed0",
+        "guide": {
+          "sourceId": "eng-mrk-p1-v2.1",
+          "revision": "eb744452eb8d7c852caadde9d3181cddfe571119",
+          "sourceFile": "eng/json/41.content.json",
+          "fileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c",
+          "contentSha256": "2347d166bf34db52915f3a76f379f1f9afa9ca78a1af163be091541cbaccc898"
+        },
+        "unit": {
+          "unitId": "S02-U005",
+          "kind": "paragraph",
+          "text": "Stop here and look at a picture and map of the Jordan River as a group. Pause this audio here.",
+          "textSha256": "bcd0b87371b477506053d64c8d8b257bca25c314ada0742fc001b7e3f6620fd4",
+          "html": "Stop here and look at a picture and map of the Jordan River as a group. Pause this audio here.",
+          "htmlSha256": "bcd0b87371b477506053d64c8d8b257bca25c314ada0742fc001b7e3f6620fd4"
+        }
+      },
+      "candidates": [
+        {
+          "collection": "FIAImages",
+          "id": "a112",
+          "kind": "image",
+          "title": "Jordan River",
+          "sourceFile": "eng/json/010.content.json",
+          "sourceFileSha256": "331c6dac75af0395e426f5c527dba7ef0e47acd23c848d63ab18da5821d1bff7",
+          "collectionRevision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a203",
+          "kind": "image",
+          "title": "Sandals",
+          "sourceFile": "eng/json/019.content.json",
+          "sourceFileSha256": "8447fcabbe01dc1c9453465a401b5c5fb93fdb5cfb63ac1b2d29fc5a08fa988e",
+          "collectionRevision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a204",
+          "kind": "image",
+          "title": "Sandals",
+          "sourceFile": "eng/json/019.content.json",
+          "sourceFileSha256": "8447fcabbe01dc1c9453465a401b5c5fb93fdb5cfb63ac1b2d29fc5a08fa988e",
+          "collectionRevision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a111",
+          "kind": "image",
+          "title": "Wilderness or Desert",
+          "sourceFile": "eng/json/023.content.json",
+          "sourceFileSha256": "494f479035529d1bda30d2f3d6e88e47d0d722880c3b708d71e7130c9cdf7714",
+          "collectionRevision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+        },
+        {
+          "collection": "FIAMaps",
+          "id": "c201",
+          "kind": "map",
+          "title": "Aerial View of Judea and Jerusalem",
+          "sourceFile": "eng/json/001.content.json",
+          "sourceFileSha256": "b18ab809dbc64a880ec92f4490435d0155933a384e7bdf082d604b247e3f6b78",
+          "collectionRevision": "4bc9bb9f1d9082e5d71a047a35bf8e608f473602"
+        },
+        {
+          "collection": "FIAMaps",
+          "id": "c202",
+          "kind": "map",
+          "title": "Important Locations in Jerusalem",
+          "sourceFile": "eng/json/009.content.json",
+          "sourceFileSha256": "3eed9e1acac0dd90cdffe1f3a4e885e5a567db8a73b5c38db0c31584ba6a6ed2",
+          "collectionRevision": "4bc9bb9f1d9082e5d71a047a35bf8e608f473602"
+        },
+        {
+          "collection": "FIAMaps",
+          "id": "c197",
+          "kind": "map",
+          "title": "Locations in the Book of Mark",
+          "sourceFile": "eng/json/011.content.json",
+          "sourceFileSha256": "6f177fe40a3f463f5c16c1163158a029aeb8d88106cece9c27d495f9107f1c5a",
+          "collectionRevision": "4bc9bb9f1d9082e5d71a047a35bf8e608f473602"
+        },
+        {
+          "collection": "FIAMaps",
+          "id": "c168",
+          "kind": "map",
+          "title": "Nazareth and Judea",
+          "sourceFile": "eng/json/013.content.json",
+          "sourceFileSha256": "1a452c70ee2acfd880614ba51ff51d9c57246c5107b2cb1a55ae22e7d4c5ec68",
+          "collectionRevision": "4bc9bb9f1d9082e5d71a047a35bf8e608f473602"
+        },
+        {
+          "collection": "VideoBibleDictionary",
+          "id": "a13",
+          "kind": "video",
+          "title": "Jordan River",
+          "sourceFile": "eng/json/008.content.json",
+          "sourceFileSha256": "b6c6a377ce2e249e4ea3b51f50e96ca2e01928d1caed56c844bcf193a4d296fb",
+          "collectionRevision": "1c02713d022bd96a29c78f5b75455315d6d35a6e"
+        },
+        {
+          "collection": "VideoBibleDictionary",
+          "id": "a184",
+          "kind": "video",
+          "title": "Sandals",
+          "sourceFile": "eng/json/015.content.json",
+          "sourceFileSha256": "f5084d0a8d3487b9a0bc6335c92ca71635e5bfbadd2ea495b0a7bad37536b550",
+          "collectionRevision": "1c02713d022bd96a29c78f5b75455315d6d35a6e"
+        },
+        {
+          "collection": "VideoBibleDictionary",
+          "id": "a10",
+          "kind": "video",
+          "title": "Wilderness or Desert",
+          "sourceFile": "eng/json/018.content.json",
+          "sourceFileSha256": "20293f22477757922aee0cb0f3a69c703329a198542529e8a60477694fe12c9a",
+          "collectionRevision": "1c02713d022bd96a29c78f5b75455315d6d35a6e"
+        }
+      ]
+    },
+    {
+      "caseId": "eng.MRK-2-1-12:S02-U004",
+      "packId": "eng.MRK-2-1-12",
+      "pericope": "MRK-2-1-12",
+      "language": "eng",
+      "source": {
+        "sourceRevision": "f8776d92b090b5af5b17b17dc1137f25fb059ed0",
+        "guide": {
+          "sourceId": "eng-mrk-p7-v2.1",
+          "revision": "eb744452eb8d7c852caadde9d3181cddfe571119",
+          "sourceFile": "eng/json/41.content.json",
+          "fileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c",
+          "contentSha256": "b6b083917bbc472368580afb87a8d65a9957167917444dc80e99c6a5dab994ff"
+        },
+        "unit": {
+          "unitId": "S02-U004",
+          "kind": "paragraph",
+          "text": "Stop here and show the team a map of the Sea of Galilee that includes Capernaum. Pause this audio here.",
+          "textSha256": "76249945afc7add588c92a8f87a76dc8f1a3e02e60af6b264b71d89305454e9c",
+          "html": "Stop here and show the team a map of the Sea of Galilee that includes Capernaum. Pause this audio here.",
+          "htmlSha256": "76249945afc7add588c92a8f87a76dc8f1a3e02e60af6b264b71d89305454e9c"
+        }
+      },
+      "candidates": [
+        {
+          "collection": "FIAImages",
+          "id": "a146",
+          "kind": "image",
+          "title": "House in the Time of Jesus",
+          "sourceFile": "eng/json/008.content.json",
+          "sourceFileSha256": "000f5e2c442da11b88d79607389cf505c3cbaf7e4fe8bb82c2283c15b5c29e20",
+          "collectionRevision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a147",
+          "kind": "image",
+          "title": "House in the Time of Jesus",
+          "sourceFile": "eng/json/008.content.json",
+          "sourceFileSha256": "000f5e2c442da11b88d79607389cf505c3cbaf7e4fe8bb82c2283c15b5c29e20",
+          "collectionRevision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a165",
+          "kind": "image",
+          "title": "House in the Time of Jesus",
+          "sourceFile": "eng/json/008.content.json",
+          "sourceFileSha256": "000f5e2c442da11b88d79607389cf505c3cbaf7e4fe8bb82c2283c15b5c29e20",
+          "collectionRevision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a193",
+          "kind": "image",
+          "title": "House in the Time of Jesus",
+          "sourceFile": "eng/json/008.content.json",
+          "sourceFileSha256": "000f5e2c442da11b88d79607389cf505c3cbaf7e4fe8bb82c2283c15b5c29e20",
+          "collectionRevision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a91",
+          "kind": "image",
+          "title": "Sleeping Mat",
+          "sourceFile": "eng/json/019.content.json",
+          "sourceFileSha256": "8447fcabbe01dc1c9453465a401b5c5fb93fdb5cfb63ac1b2d29fc5a08fa988e",
+          "collectionRevision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a92",
+          "kind": "image",
+          "title": "Sleeping Mat",
+          "sourceFile": "eng/json/019.content.json",
+          "sourceFileSha256": "8447fcabbe01dc1c9453465a401b5c5fb93fdb5cfb63ac1b2d29fc5a08fa988e",
+          "collectionRevision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+        },
+        {
+          "collection": "FIAMaps",
+          "id": "c2",
+          "kind": "map",
+          "title": "Galilee Area with Capernaum",
+          "sourceFile": "eng/json/007.content.json",
+          "sourceFileSha256": "c2e796ad27262766e822dedbf1d212bfb9966af8b6c68353635595cf3d5fc3b1",
+          "collectionRevision": "4bc9bb9f1d9082e5d71a047a35bf8e608f473602"
+        },
+        {
+          "collection": "VideoBibleDictionary",
+          "id": "a145",
+          "kind": "video",
+          "title": "House in the Time of Jesus",
+          "sourceFile": "eng/json/007.content.json",
+          "sourceFileSha256": "29bf66b1c746d1b90d462543b90f11f0cb50bbec789db4d327d9a890bcd805d9",
+          "collectionRevision": "1c02713d022bd96a29c78f5b75455315d6d35a6e"
+        },
+        {
+          "collection": "VideoBibleDictionary",
+          "id": "a31",
+          "kind": "video",
+          "title": "Sleeping Mat",
+          "sourceFile": "eng/json/015.content.json",
+          "sourceFileSha256": "f5084d0a8d3487b9a0bc6335c92ca71635e5bfbadd2ea495b0a7bad37536b550",
+          "collectionRevision": "1c02713d022bd96a29c78f5b75455315d6d35a6e"
+        }
+      ]
+    },
+    {
+      "caseId": "spa.MRK-4-35-41:S03-U017",
+      "packId": "spa.MRK-4-35-41",
+      "pericope": "MRK-4-35-41",
+      "language": "spa",
+      "source": {
+        "sourceRevision": "f8776d92b090b5af5b17b17dc1137f25fb059ed0",
+        "guide": {
+          "sourceId": "spa-mrk-p17-v2.2",
+          "revision": "eb744452eb8d7c852caadde9d3181cddfe571119",
+          "sourceFile": "spa/json/41.content.json",
+          "fileSha256": "f3115ec318cc774bdf463f278540e3cac6671ee13376e29dd7eeb6add18c078a",
+          "contentSha256": "bfc0529d0621f9006b03aa39eedf5dfadcb42c14f733553fcde7e725cf715814"
+        },
+        "unit": {
+          "unitId": "S03-U017",
+          "kind": "paragraph",
+          "text": "Deténganse y muestren a sus traductores la foto del barco nuevamente y elijan una manera de mostrar el tamaño del barco. Por ejemplo, pueden dibujar las dimensiones en el suelo con un palo. O bien pueden poner palos para mostrar el contorno del barco. Pidan a 13 personas que se ubiquen dentro de las líneas dibujadas. Identifiquen la parte delantera y la parte trasera del barco. Jesús iría a la parte de atrás del barco para recostarse en el asiento que usa el hombre que guía el barco. Jesús pone su cabeza en la almohada sobre la cual se sentaría la persona que guía el barco. Pausen la grabación aquí.",
+          "textSha256": "7d51984cc07786313a839d42710d6dfb2aa9d56a8ad3fa049f4fec2a87347a92",
+          "html": "Deténganse y muestren a sus traductores la foto del <data class=\"resource-ref\" data-content-id=\"a293\" data-resource-code=\"FIAImages\">barco</data> nuevamente y elijan una manera de mostrar el tamaño del barco. Por ejemplo, pueden dibujar las dimensiones en el suelo con un palo. O bien pueden poner palos para mostrar el contorno del barco. Pidan a 13 personas que se ubiquen dentro de las líneas dibujadas. Identifiquen la parte delantera y la parte trasera del barco. Jesús iría a la parte de atrás del barco para recostarse en el asiento que usa el hombre que guía el barco. Jesús pone su cabeza en la almohada sobre la cual se sentaría la persona que guía el barco. Pausen la grabación aquí.",
+          "htmlSha256": "8204cca8d9a1fb33fe416e2e4f327db9aecbc41c21810388e0041acdee67324f"
+        }
+      },
+      "candidates": [
+        {
+          "collection": "FIAImages",
+          "id": "a293",
+          "kind": "image",
+          "title": "Barco",
+          "sourceFile": "eng/json/002.content.json",
+          "sourceFileSha256": "335c55d7da5aabe5618d0d58b0370ffcd6580bad138e1ce55ef5c9d85096bc7a",
+          "collectionRevision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a1400",
+          "kind": "image",
+          "title": "Mar de Galilea",
+          "sourceFile": "eng/json/019.content.json",
+          "sourceFileSha256": "8447fcabbe01dc1c9453465a401b5c5fb93fdb5cfb63ac1b2d29fc5a08fa988e",
+          "collectionRevision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a274",
+          "kind": "image",
+          "title": "Tormenta en el Mar de Galilea",
+          "sourceFile": "eng/json/019.content.json",
+          "sourceFileSha256": "8447fcabbe01dc1c9453465a401b5c5fb93fdb5cfb63ac1b2d29fc5a08fa988e",
+          "collectionRevision": "136ff7c6b2381b84d241e27524005dcad71424ba"
+        },
+        {
+          "collection": "FIAMaps",
+          "id": "c3",
+          "kind": "map",
+          "title": "Galilee Area with Capernaum and Gerasa",
+          "sourceFile": "eng/json/007.content.json",
+          "sourceFileSha256": "c2e796ad27262766e822dedbf1d212bfb9966af8b6c68353635595cf3d5fc3b1",
+          "collectionRevision": "4bc9bb9f1d9082e5d71a047a35bf8e608f473602"
+        },
+        {
+          "collection": "FIAMaps",
+          "id": "c195",
+          "kind": "map",
+          "title": "Sea of Galilee with Capernaum and Decapolis",
+          "sourceFile": "eng/json/017.content.json",
+          "sourceFileSha256": "93b9688e8df3b8b73ef7cfa5bbbdeb24aa04d03ba6245b0a2fa7f5f25f0d4670",
+          "collectionRevision": "4bc9bb9f1d9082e5d71a047a35bf8e608f473602"
+        },
+        {
+          "collection": "VideoBibleDictionary",
+          "id": "a11",
+          "kind": "video",
+          "title": "Mar de Galilea",
+          "sourceFile": "eng/json/015.content.json",
+          "sourceFileSha256": "f5084d0a8d3487b9a0bc6335c92ca71635e5bfbadd2ea495b0a7bad37536b550",
+          "collectionRevision": "1c02713d022bd96a29c78f5b75455315d6d35a6e"
+        }
+      ]
+    }
+  ]
+}

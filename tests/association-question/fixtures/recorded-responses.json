@@ -1,0 +1,75 @@
+{
+  "schema": "fia-association-question-recorded@1",
+  "label": "Hand-written pipeline fixtures. Not provider output; not a measure of Jev accuracy.",
+  "records": [
+    {
+      "requestSha256": "0d002e9e2819dd247f607b6c60c21e9571cd98ad1a8dee0bdf61c5d17823ecd1",
+      "caseId": "eng.MRK-1-1-13:S02-U005",
+      "modelId": "recorded-fixture",
+      "modelVersion": null,
+      "response": {
+        "decision": "associate",
+        "association": {
+          "requested": [
+            {
+              "collection": "FIAImages",
+              "id": "a112"
+            },
+            {
+              "collection": "FIAMaps",
+              "id": "c197"
+            }
+          ],
+          "optionalCompanions": null,
+          "companionPairs": null
+        },
+        "display": {
+          "primaryCollection": "FIAMaps",
+          "primaryAssetId": "c197",
+          "relatedAssetIds": [
+            "c197",
+            "a112"
+          ],
+          "insertions": null
+        },
+        "confidence": 0.9
+      }
+    },
+    {
+      "requestSha256": "aa770609b56d5a1a6f1c8d5f9756a51b77a69fe173cd576412aa11477c80995f",
+      "caseId": "eng.MRK-2-1-12:S02-U004",
+      "modelId": "recorded-fixture",
+      "modelVersion": null,
+      "response": {
+        "decision": "abstain",
+        "association": null,
+        "display": null
+      }
+    },
+    {
+      "requestSha256": "43b467589b661ce509e1af940960f4078382720e9683261bdb22be12fd7ed447",
+      "caseId": "spa.MRK-4-35-41:S03-U017",
+      "modelId": "recorded-fixture",
+      "modelVersion": null,
+      "response": {
+        "decision": "associate",
+        "association": {
+          "requested": [
+            {
+              "collection": "FIAImages",
+              "id": "a9999"
+            }
+          ],
+          "optionalCompanions": null,
+          "companionPairs": null
+        },
+        "display": {
+          "primaryCollection": null,
+          "primaryAssetId": null,
+          "relatedAssetIds": null,
+          "insertions": null
+        }
+      }
+    }
+  ]
+}
