@@ -52,7 +52,7 @@ test('no explicit result is reachable in production, and no production module is
  const allowed=/^server\/fia\/preparation\/source-associations\/(?:producer-receipt|composer)\.mjs$/;
  for(const dir of ['server','apps','packages','scripts']){const root=new URL(`../../${dir}/`,import.meta.url);
   for(const f of readdirSync(root,{recursive:true}).filter(f=>/\.(mjs|js|cjs|ts|svelte)$/.test(f)&&!f.includes('node_modules'))){const path=`${dir}/${f}`,src=readFileSync(new URL(f,root),'utf8');
-   assert.doesNotMatch(src,/fake-guide-producer/,path);if(allowed.test(path))continue;
+   assert.doesNotMatch(src,/fake-guide-producer|archive-guide-composer/,path);if(!/^server\/fia\/preparation\/source-associations\/composer\.mjs$/.test(path))assert.doesNotMatch(src,/composeWithGuideRecords/,`${path} must not compose over a caller-built guide-record loader`);if(allowed.test(path))continue;
    assert.doesNotMatch(src,/issueProducerReceipt/,`${path} must not issue producer receipts`);
    assert.doesNotMatch(src,/import\s*\*\s*as\s+\w+\s+from\s*['"][^'"]*producer-receipt/,`${path}: namespace import of producer-receipt`);
    assert.doesNotMatch(src,/import\s*\(\s*['"`][^'"`]*producer-receipt/,`${path}: dynamic import of producer-receipt`);}}

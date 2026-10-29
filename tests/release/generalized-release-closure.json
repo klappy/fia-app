@@ -1541,7 +1541,7 @@
     },
     {
       "path": "server/faces/worker/BACKEND-CLOSURE.json",
-      "sha256": "877a87f28b3ef6e79bacc995d716637f9ef9ca147377d700c5ca9d6701827fe5"
+      "sha256": "ff3d9e69ebea79b012d1a4627183a89c8ae5b2a7aad0d3eb7f6af8bc4e91e5c6"
     },
     {
       "path": "server/faces/worker/adapter.mjs",
@@ -1809,7 +1809,7 @@
     },
     {
       "path": "server/fia/preparation/executor/fresh-source-observation.mjs",
-      "sha256": "f13a1e320a95b6165c14108918911abbf2550162315656ad503849faa908d123"
+      "sha256": "3e84c8bfe9e0b732a968e9c0dfd9e7df01efb57c591a98cf6bba0289aea73dd7"
     },
     {
       "path": "server/fia/preparation/executor/guide-executor.mjs",
@@ -2815,7 +2815,7 @@
     },
     {
       "path": "server/fia/preparation/source-associations/README.md",
-      "sha256": "c9020df442b96dd9baf34d4325187fed29b2d8a484b886127b226f626781c387"
+      "sha256": "6d6afcbebfc66b8a7f683221db3bd3ced4a2e033a1a8671665b6dce1ad289aa4"
     },
     {
       "path": "server/fia/preparation/source-associations/index.mjs",
@@ -2831,7 +2831,7 @@
     },
     {
       "path": "tests/preparation/source-associations.test.mjs",
-      "sha256": "e9c881eac2fe3aa12f722c3eabc2f14cf5005af90efcec0a8b018e19a152801f"
+      "sha256": "a513a91568beb0f3a6913c0232d8ba47bc9f3ab1b98920b77224019375c9d564"
     },
     {
       "path": "tests/worker-serving/source-associations.test.mjs",
@@ -2855,15 +2855,19 @@
     },
     {
       "path": "server/fia/preparation/source-associations/composer.mjs",
-      "sha256": "9af234eb563c1b4620be9005917fa9be7efdea9239480c462c71d2cc03015103"
+      "sha256": "0f0601246abe8a7626b42614ca29ca99a98741c3e02e6be26e0ef690a9f6364e"
     },
     {
       "path": "tests/preparation-executor/guide-fragment.test.mjs",
-      "sha256": "b7710c456949dfc41f35b417e0b6e3c9782059a22241efc4aee907e411667f6e"
+      "sha256": "404447a1ab52bae367c73c0cf0afa6f3fab7ac5b29896c3d0e3aaa32e1e8a4aa"
     },
     {
       "path": "tests/worker-serving/guide-fragment.test.mjs",
       "sha256": "802ecdc1d5dfa614285d5daef61a720253d88ba86dcf9c1927aed85eecaf3038"
+    },
+    {
+      "path": "tests/preparation/support/archive-guide-composer.mjs",
+      "sha256": "00f71efea5a0981dc1711e009e680426e7258107f15815789c593a30ddad2a76"
     }
   ],
   "generatedFiles": [
