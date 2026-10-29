@@ -1341,11 +1341,11 @@
     },
     {
       "path": "package-lock.json",
-      "sha256": "c8846885302d72d07144929da0132b1852ffebf40f6e1d133bb2f1802f64a502"
+      "sha256": "946b8d6af8ec29e4a075da818b8d28e46f4fddd12916603152bd2fed165a44d0"
     },
     {
       "path": "package.json",
-      "sha256": "efc5f0a0c153926014b4d15a9b6701f0221323dad51d07becca66e124a0b6635"
+      "sha256": "8edc69610cba3a0afd857f6b35d7c00b17722ae48b788ef58711721a47aae7f5"
     },
     {
       "path": "playwright.config.js",
@@ -1681,7 +1681,7 @@
     },
     {
       "path": "server/fia/preparation/executor/FRESH-SOURCE-OBSERVATION.md",
-      "sha256": "dd51b65bf850b849f0979eb624d809dc023f3bbbde5400a66eaec03848b034ed"
+      "sha256": "eac5ccca0201c552df85e7f07ccfdd2bcd5829670dfa12ca7593f526128098e0"
     },
     {
       "path": "server/fia/preparation/executor/GUIDE-EXECUTOR.md",
@@ -2803,15 +2803,59 @@
     },
     {
       "path": "server/fia/preparation/visual-original.mjs",
-      "sha256": "722b2138a805f8efe6ebf8d5deee3fe66f6ae00ae914021a87fd099b84efefef"
+      "sha256": "8d555597a3714967f3181470f44d48b8d5b8da49152b1e344977ee3814a77ab7"
     },
     {
       "path": "tests/preparation-executor/visual-original.test.mjs",
-      "sha256": "22bcb3ca21cdc21fed75607d0b1f9b983a503c4a7d005b63b9060154ff54800e"
+      "sha256": "d5d232177f50d8409c192670f32f499d9615882a6eaa0625bd07f479049ba540"
     },
     {
       "path": "tests/worker-serving/visual-original.test.mjs",
       "sha256": "49774e4d5bfe7cacfab361319fa8a85435b344f2a91a32481e807be398470053"
+    },
+    {
+      "path": "server/fia/preparation/visual-decode.mjs",
+      "sha256": "ebd14e02db6a555b26cf78476bff7200f7da6757087cf7a465b5981c3ce0a96f"
+    },
+    {
+      "path": "tests/preparation-executor/fixtures/visual/baseline-37x23.jpg",
+      "sha256": "dedfdd49b618bf0d4f0a4920a6af44d563aea2ebf4a647c802c821d53a6f6d9f"
+    },
+    {
+      "path": "tests/preparation-executor/fixtures/visual/gray-12x10.jpg",
+      "sha256": "ac3d36282a880bce37829fa1c109f0d5303515f59048ff1d48e8aa3512060be6"
+    },
+    {
+      "path": "tests/preparation-executor/fixtures/visual/interlaced-16x16.png",
+      "sha256": "0ced7f5cfd985dac4109464701b0da3f5f4bcebc61ae5b9c7ff4f7495a11d80d"
+    },
+    {
+      "path": "tests/preparation-executor/fixtures/visual/over-2mp-1500x1400.jpg",
+      "sha256": "14a6ed06eb3198d1cc4693353cce241e5fdde20f6a9296bf1c916c43def374ce"
+    },
+    {
+      "path": "tests/preparation-executor/fixtures/visual/palette-20x9.png",
+      "sha256": "6584640a9d1bb7d3938ec4aee9ea7e5967173ea8ebddeaa6a6a27b63297ebc75"
+    },
+    {
+      "path": "tests/preparation-executor/fixtures/visual/palette4bit-20x9.png",
+      "sha256": "2389159dda2490cf68781242ec5be5b578afa302208f7ce0fd5581780a667183"
+    },
+    {
+      "path": "tests/preparation-executor/fixtures/visual/progressive-40x30.jpg",
+      "sha256": "0edd3f153394ffa7aad4c3c7fa97c81183e507be2745bd234dac7311d8609aba"
+    },
+    {
+      "path": "tests/preparation-executor/fixtures/visual/rgb-31x17.png",
+      "sha256": "7e844dd90230a60be03d28c40bce5c178cac04de8edb7e370ec4de79dc27b0b6"
+    },
+    {
+      "path": "tests/preparation-executor/visual-decode.test.mjs",
+      "sha256": "d6c90fef4f7c690de31967315a09a443c0533df99c7b3ee984ff75b1db237b3c"
+    },
+    {
+      "path": "tests/worker-serving/visual-decode.test.mjs",
+      "sha256": "08dedfc349b0ef5655aa683c3cb8fbb68da24cc0be4550e1bfb1bbdf04497b68"
     }
   ],
   "generatedFiles": [
