@@ -57,3 +57,18 @@ test('frozen previous object: a demand carrying expectedPublicationGeneration is
  assert.deepEqual(seen,['baseRevision,capability,packId,sourceRevision','baseRevision,capability,packId,sourceRevision']);
  assert.deepEqual(await ops.preparePresentation({...demand,expectedPublicationGeneration:'bad'}),{status:'refused',code:'invalid-request'},'retried, and the previous build refuses its own malformed input');
 });
+
+// PR295 review B1 (OFFLINE L39 "compare it with the current pointer before work"): a supplied, stale
+// expectation is refused typed before the presentation service starts or joins any durable work.
+test('a stale expectedPublicationGeneration is refused before any service work, even while the job is not ready',async()=>{
+ const {createExecutableOperations}=await import('../../server/fia/publication/executable-operations.mjs');
+ const calls=[];const storage={transaction:async fn=>fn({get:async()=>undefined,put:async()=>{}})};
+ const service={request:async()=>{calls.push('request');return {status:'preparing',jobId:h('f')};}};
+ const publication={currentGeneration:async()=>h('6'),publish:async()=>{calls.push('publish');return {status:'ready'};}};
+ const ops=createExecutableOperations({reads:{readPack:async()=>null},service,publication,storage});
+ const demand={packId,baseRevision,sourceRevision:'f8776d92b090b5af5b17b17dc1137f25fb059ed0',capability:'executable-presentation'};
+ for(const expectedPublicationGeneration of [h('7'),null])assert.deepEqual(await ops.preparePresentation({...demand,expectedPublicationGeneration}),{schema:'fia-presentation-preparation@1',status:'blocked',jobId:null,reason:'publication-generation-stale',record:null});
+ assert.deepEqual(calls,[],'no durable work starts or is joined');
+ assert.equal((await ops.preparePresentation({...demand,expectedPublicationGeneration:h('6')})).status,'preparing');assert.deepEqual(calls,['request'],'a current expectation proceeds');
+ assert.equal((await ops.preparePresentation(demand)).status,'preparing','a legacy demand without the field is unchanged');
+});

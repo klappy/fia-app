@@ -113,6 +113,9 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
    Object.assign(row,{publication:{schema:PUBLICATION_PIN_SCHEMA,generation,baseManifest:baseDescriptor},mediaManifest:bound.descriptor,baseManifestArtifact:baseArtifact,mediaManifestArtifact:mediaArtifact});
   }
   await verified(row);
+  // An identical generation already retained is reused only after it verifies now (review N2): a corrupt or
+  // revoked stored row is refused, never re-pointed to.
+  if(row.publication){const stored=await tx(t=>t.get(keyFor(row)));if(stored){need(keyFor(stored)===keyFor(row),'executable-owner-binding');await verified(stored);}}
   await tx(async t=>{
    const key=keyFor(row);
    const current=await t.get('executable-current:'+binding.packId);

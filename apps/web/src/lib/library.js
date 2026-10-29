@@ -57,6 +57,8 @@ export async function selectServerPresentation(id,{explicit=false,signal,transpo
  const identity=record.identity;
  // Declared visual resources ride the catalog record (F4); this build validates them and does not act on them.
  if(record.execution&&Object.hasOwn(record.execution,'visualResources'))validateVisualResources(record.execution.visualResources);
+ // A generation pin and its bound manifest come together or not at all (OFFLINE L9/L23; review N1).
+ if(record.execution&&Object.hasOwn(record.execution,'publication')!==Object.hasOwn(record.execution,'mediaManifest'))throw Error('The publication is invalid.');
  if(record.execution&&Object.hasOwn(record.execution,'publication'))validatePublicationPin(record.execution.publication);
  if(record.execution&&Object.hasOwn(record.execution,'mediaManifest'))validateJSONDescriptor(record.execution.mediaManifest);
  const media=record.execution?.mediaIdentity;
