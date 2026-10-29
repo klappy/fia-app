@@ -142,9 +142,10 @@ export async function serveOriginalVisual(request,env,{currentRevision}={}){
  if(response.status===200||response.status===304)return response;
  // A HEAD answer has no body to classify, so a HEAD refusal asks the object again with GET; refusals read no bytes.
  // The client still receives no body for HEAD, with the same status and headers as the GET refusal.
+ // The refusal is read once and answered with a fresh Response; the object's response is never handed on after a read.
  const typed=request.method==='HEAD'?await (await stubFor(env,entry)).fetch(new Request(`${HOST}/serve?${query}`,{method:'GET',headers})).catch(()=>null):response;
- const body=typed?await typed.clone().json().catch(()=>null):null;
- const answer=!body||typeof body.reason!=='string'?refusal(503,'interrupted',{subReason:'visual-object-version-skew',final:false}):typed;
+ const body=typed?await typed.json().catch(()=>null):null;
+ const answer=!body||typeof body.reason!=='string'?refusal(503,'interrupted',{subReason:'visual-object-version-skew',final:false}):refusal(typed.status,body.reason,Object.fromEntries(Object.entries(body).filter(([k])=>k!=='status'&&k!=='reason')));
  return request.method==='HEAD'?new Response(null,{status:answer.status,headers:answer.headers}):answer;
 }
 
