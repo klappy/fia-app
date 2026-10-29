@@ -63,6 +63,22 @@ export function nativeAudioFiles(boundArtifacts){
  return [...files.values()];
 }
 
+// F7a3 (SOURCE-TO-APP L101; OFFLINE native visual descriptors): a published original's native manifest entry
+// is exactly {path,group:'image',assetId,kind,sha256,bytes,mime,width,height}; its path is the server-chosen
+// /v1/original-visuals/<sourceIdentity>/<consumer>/<original> whose last segment is the original's SHA-256.
+const VISUAL_PATH=/^\/v1\/original-visuals\/[a-f0-9]{64}\/[a-f0-9]{64}\/([a-f0-9]{64})$/;
+export function validVisualEntry(e){
+ if(!object(e)||Object.keys(e).sort().join()!=='assetId,bytes,group,height,kind,mime,path,sha256,width')return false;
+ const m=typeof e.path==='string'&&VISUAL_PATH.exec(e.path);
+ return !!m&&m[1]===e.sha256&&e.group==='image'&&typeof e.assetId==='string'&&/^[A-Za-z0-9_-]{1,256}$/.test(e.assetId)&&['image','map'].includes(e.kind)&&hash(e.sha256)&&Number.isSafeInteger(e.bytes)&&e.bytes>0&&['image/jpeg','image/png'].includes(e.mime)&&Number.isSafeInteger(e.width)&&e.width>0&&Number.isSafeInteger(e.height)&&e.height>0;
+}
+export function nativeVisualFiles(visuals){
+ need(Array.isArray(visuals)&&visuals.length<=1024,'bound-visual-invalid');
+ const assets=new Set(),paths=new Set();
+ for(const e of visuals){need(validVisualEntry(e)&&!assets.has(e.assetId)&&!paths.has(e.path),'bound-visual-invalid');assets.add(e.assetId);paths.add(e.path);}
+ return structuredClone(visuals);
+}
+
 // generation = SHA256(UTF8(canonicalJSONString(preimage))) over the closed preimage (OFFLINE L25-L31).
 export async function publicationGeneration({packId,executionRevision,baseRevision,sourceRevision,baseManifest,mediaManifest,artifacts}){
  need(validDescriptor(baseManifest,/^base-offline:[a-f0-9]{64}$/)&&baseManifest.id===`base-offline:${baseManifest.sha256}`&&validDescriptor(mediaManifest)&&Array.isArray(artifacts)&&artifacts.length<=1024&&artifacts.every(a=>validDescriptor(a)),'generation-preimage-invalid');
