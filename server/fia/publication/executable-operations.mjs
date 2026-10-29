@@ -81,5 +81,7 @@ export function createExecutableOperations({reads,service,publication,storage,vi
   // A read never repairs publication, starts interpretation or adopts a pointer.
   return envelope(result.status==='preparing'?'preparing':result.status==='unavailable'?'unavailable':'blocked',args.jobId,result.status==='ready'?'publication-not-committed':result.reason??'presentation-not-ready');
  }
- return Object.freeze({...reads,preparePresentation,readPresentationPreparation});
+ // Read-only historical visual authority for the original-visuals route (Otto's), never a write.
+ async function retainedVisual(args){return typeof publication?.retainedVisual==='function'?publication.retainedVisual(structuredClone(args??{})):{status:'unavailable',reason:'execution-not-current'};}
+ return Object.freeze({...reads,preparePresentation,readPresentationPreparation,retainedVisual});
 }

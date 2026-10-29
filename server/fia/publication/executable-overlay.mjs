@@ -173,6 +173,18 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
   });
   return readCatalog(packId,revision,generation);
  }
+ // Historical access for the original-visuals route (F7a / port acceptance condition): ready only when a
+ // retained generation of exactly this execution revision verifies now (bytes, eligibility, current visual
+ // authority) and lists exactly this native entry. Read-only; a forged or revoked revision is unavailable.
+ async function retainedVisual({packId,executionRevision,assetId,sha256:digest}){
+  if(typeof packId!=='string'||!hash(executionRevision)||typeof assetId!=='string'||!hash(digest))return {status:'refused',code:'invalid-request'};
+  let keys;try{keys=await tx(t=>t.get(`executable-generations:${packId}@${executionRevision}`));}catch(error){fault('retainedVisual',{packId},error);return {status:'unavailable',reason:'retained-evidence-unavailable'};}
+  for(const key of Array.isArray(keys)?keys:[]){
+   try{const row=await tx(t=>t.get(key));need(key===keyFor(row)&&row.revision===executionRevision&&row.binding.packId===packId,'executable-owner-binding');const entry=(row.visuals??[]).find(e=>e.assetId===assetId&&e.sha256===digest);if(!entry)continue;await verified(row);return {status:'ready',entry:copy(entry)};}
+   catch(error){fault('retainedVisual',{packId,key},error);}
+  }
+  return {status:'unavailable',reason:'execution-not-current'};
+ }
  async function readCatalog(packId,revision,generation){
   let found;
   try{found=await tx(async t=>{
@@ -199,5 +211,5 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
   }
   return base.findArtifact(digest);
  }
- return Object.freeze({publish,publishVisuals,readCatalog,findArtifact,currentGeneration});
+ return Object.freeze({publish,publishVisuals,readCatalog,findArtifact,currentGeneration,retainedVisual});
 }
