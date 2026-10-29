@@ -113,16 +113,29 @@ async function snapshotComplete(active,{authorityOnly=false}={}){
  try{serverRecord(snapshot.record,active.packId);const expected=serverFiles(snapshot.record);if(JSON.stringify(expected)!==JSON.stringify(snapshot.files))return false;const cache=await caches.open(active.cache);for(const f of expected)await serverJSON(await cache.match(f.path),f,snapshot.record);return true;}catch{return false;}
 }
 async function savedServerSnapshot(packId,revision){const active=await read(packKey(packId,'active'));if(revision&&active?.serverSnapshot?.record.revision!==revision)return null;return await snapshotComplete(active)?active:null;}
-async function retainServerSnapshot(packId,revision,cache,signal,onprogress){
+// The server record of exactly what the page shows: its revision and, when the page holds one, the source-issued publication
+// generation it rendered (OFFLINE exact selection, ?revision=&generation=). Once a visual publishes, an execution has several
+// retained generations and a revision-only read is refused as publication-generation-ambiguous; that refusal stands, so without
+// the displayed generation the read fails closed. An older server that refuses the capability has no generations and is read
+// once by revision alone. Returns the answer and the capability it was read under.
+async function readExecutionRecord(packId,revision,generation,signal){
+ const at=q=>fetchLatest(`/v1/packs/${packId}${q?'?'+q:''}`,{cache:'no-store',redirect:'error',signal});
+ const exact=ask=>[revision?'revision='+revision:null,ask&&generation?'generation='+generation:null,ask?'execution=2':null].filter(Boolean).join('&');
+ let response=await at(exact(true)),capability='2';
+ if(response.status===400){response=await at(exact(false));capability=null;}
+ return {response,capability};
+}
+// The record answers for exactly the displayed generation, or there was none to name.
+const sameGeneration=(record,generation)=>!generation||record.execution?.publication?.generation===generation;
+async function retainServerSnapshot(packId,revision,generation,cache,signal,onprogress){
  if(packId===legacy||revision===undefined)return null;
- if(!isPassageHash(revision))throw Error('Invalid server revision.');
+ if(!isPassageHash(revision)||generation!=null&&!isPassageHash(generation))throw Error('Invalid server revision.');
  const checkCanceled=()=>{if(signal.aborted)throw Object.assign(Error('Download paused. Verified files are kept for Resume.'),{name:'AbortError'});};
  let record;try{
   // F11: the snapshot is read with the capability the page reads with (execution=2), so an offline reload
   // gets the same shape; an older server that refuses it is read once without it, as the page does.
-  const query=ask=>[revision?'revision='+revision:null,ask?'execution=2':null].filter(Boolean).join('&'),read=ask=>fetchLatest(`/v1/packs/${packId}${query(ask)?'?'+query(ask):''}`,{cache:'no-store',redirect:'error',signal});
-  checkCanceled();let r=await read(true),capability='2';if(r.status===400){r=await read(false);capability=null;}checkCanceled();
-  if(r.status!==200||r.redirected)throw Error('Server record unavailable.');record=serverRecord(await r.json(),packId);checkCanceled();if(revision&&record.revision!==revision)throw Error('Server revision changed.');
+  checkCanceled();const {response:r,capability}=await readExecutionRecord(packId,revision,generation,signal);checkCanceled();
+  if(r.status!==200||r.redirected)throw Error('Server record unavailable.');record=serverRecord(await r.json(),packId);checkCanceled();if(revision&&record.revision!==revision||capability&&!sameGeneration(record,generation))throw Error('Server revision changed.');
   const files=serverFiles(record);onprogress?.({phase:'record-verified',verified:0,total:files.length});
   for(const [index,f] of files.entries()){
    checkCanceled();let response=await cache.match(f.path);try{await serverJSON(response,f,record);}catch{checkCanceled();response=await fetchLatest(f.path,{cache:'no-store',redirect:'error',signal});await serverJSON(response,f,record);checkCanceled();await cache.put(f.path,response);}
@@ -294,24 +307,32 @@ async function complete(record){
 // F11 availability (QA, e52eccf): the Downloads choices are the files the Save would take. For an executable passage named by
 // its exact revision, that is the served execution's verified mediaManifest (execution=2), the same bound manifest start() reads;
 // it lists only published originals. Unreachable or without one, the choices stay those of the build manifest.
-async function servedMediaManifest(packId,revision,manifest){
- if(packId===legacy||!isPassageHash(revision??'')||!manifest)return null;
+async function servedMediaManifest(packId,revision,build,generation=null){
+ if(packId===legacy||!isPassageHash(revision??'')||!build)return {reason:'no-execution-revision'};
+ if(generation!==null&&!isPassageHash(generation))return {reason:'generation-invalid'};
  try{
-  const r=await fetchLatest(`/v1/packs/${packId}?revision=${revision}&execution=2`,{cache:'no-store',redirect:'error'});
-  if(r.status!==200||r.redirected)return null;const record=serverRecord(await r.json(),packId);
-  if(record.revision!==revision||!record.execution?.mediaManifest)return null;
-  return {...await boundMediaManifest(record),catalogRevision:manifest.catalogRevision||manifest.revision};
- }catch{return null;}
+  const {response:r,capability}=await readExecutionRecord(packId,revision,generation);
+  if(r.status!==200||r.redirected){const b=await r.json().catch(()=>null);return {reason:`record-${r.status}${typeof b?.reason==='string'?':'+b.reason:''}`};}
+  const record=serverRecord(await r.json(),packId);
+  if(record.revision!==revision)return {reason:'record-revision-changed'};
+  if(capability&&!sameGeneration(record,generation))return {reason:'record-generation-changed'};
+  if(!record.execution?.mediaManifest)return {reason:'no-media-manifest'};
+  // As the Save requires (start()): the execution's media belongs to the build's passage presentation (review N1).
+  const media=record.execution.mediaIdentity;if(media?.packId!==build.packId||media.revision!==build.presentationRevision)return {reason:'media-identity-mismatch'};
+  return {manifest:{...await boundMediaManifest(record),catalogRevision:build.catalogRevision||build.revision}};
+ }catch(error){return {reason:error?.mediaStatusCode??String(error?.message||error).slice(0,160)};}
 }
-async function status(packId=legacy,revision){
+async function status(packId=legacy,revision,generation=null){
  if(!isBuild)return {available:false,saved:false,reason:'Downloads work on the published Site. This local development preview does not store offline content.'};
  const active=await read(packKey(packId,'active')),pending=await read(packKey(packId,'pending'));
  let manifest,error='';try{manifest=await latest(packId,true);}catch(e){error=e.message;if(e.mediaStatusCode!=='media-status-transient'&&active?.serverSnapshot){await invalidateServerSnapshot(packId);active.serverSnapshot.invalid=true;}manifest=active?.manifest||pending?.manifest;}
  const saved=await complete(active);
  if(active)active.files=permittedRecordings(active.files,generatedRecordingPaths);
  if(manifest)manifest={...manifest,files:permittedRecordings(manifest.files,generatedRecordingPaths)};
- const build=manifest,served=await servedMediaManifest(packId,revision,build);if(served)manifest={...served,files:permittedRecordings(served.files,generatedRecordingPaths)};
- return {available:true,mediaNotices:(await read('media-notices'))||[],saved,active:active?{...active,valid:saved}:null,pending:pending?{...pending,running:jobs.has(packId)}:null,manifest,error,updateAvailable:!!(active&&build&&(active.manifest.catalogRevision||active.revision)!==build.revision),choices:manifest?['core',...(manifest.files.some(f=>f.group==='audio')?['audio']:[]),...(manifest.files.some(f=>f.group==='video')&&manifest.files.some(f=>f.group==='image')?['visual']:[]),...(manifest.files.some(f=>f.group==='video'||f.group==='image')?['all']:[])].map(id=>({id,bytes:downloadTransferBytes(selectedFiles(manifest,id))})):[]};
+ const build=manifest,served=await servedMediaManifest(packId,revision,build,generation);if(served.manifest)manifest={...served.manifest,files:permittedRecordings(served.manifest.files,generatedRecordingPaths)};
+ // Why the choices are (or are not) the served execution's: observable, never a silent fallback (PR310 review B1).
+ const servedManifest=served.manifest?{state:'used',revision:served.manifest.revision}:{state:'not-used',reason:served.reason};
+ return {available:true,servedManifest,mediaNotices:(await read('media-notices'))||[],saved,active:active?{...active,valid:saved}:null,pending:pending?{...pending,running:jobs.has(packId)}:null,manifest,error,updateAvailable:!!(active&&build&&(active.manifest.catalogRevision||active.revision)!==build.revision),choices:manifest?['core',...(manifest.files.some(f=>f.group==='audio')?['audio']:[]),...(manifest.files.some(f=>f.group==='video')&&manifest.files.some(f=>f.group==='image')?['visual']:[]),...(manifest.files.some(f=>f.group==='video'||f.group==='image')?['all']:[])].map(id=>({id,bytes:downloadTransferBytes(selectedFiles(manifest,id))})):[]};
 }
 self.addEventListener('install',event=>{if(isBuild)event.waitUntil(caches.open(SHELL).then(c=>c.addAll(['/','/index.html','/manifest.webmanifest'])).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));
@@ -406,7 +427,7 @@ async function savedElsewhere(file,packId,signal){
  }
  return null;
 }
-async function start(selection,port,packId=legacy,sizes={},revision){
+async function start(selection,port,packId=legacy,sizes={},revision,generation=null){
  if(!isBuild)throw new Error('Downloads work on the published Site.');
  if(!['core','audio','visual','all'].includes(selection))throw new Error('Choose a download option.');
  if(jobs.has(packId))throw new Error('A download is already running for this passage.');
@@ -425,7 +446,7 @@ async function start(selection,port,packId=legacy,sizes={},revision){
   // A repair stages separately from the last working copy, even at the same revision.
   const cacheId=active?.cache===cacheName?cacheName+'-repair':cacheName;
   const cache=await caches.open(cacheId);
-  const serverSnapshot=await retainServerSnapshot(packId,revision,cache,controller.signal,preflight);
+  const serverSnapshot=await retainServerSnapshot(packId,revision,generation,cache,controller.signal,preflight);
   if(serverSnapshot){const binding=serverSnapshot.record.execution?.mediaIdentity||{packId:serverSnapshot.record.packId,revision:serverSnapshot.record.revision};if(binding.packId!==manifest.packId||binding.revision!==manifest.presentationRevision)throw Error('The saved media belongs to a different server presentation.');}
   // The build's manifest still names the catalog revision an update is measured against.
   if(serverSnapshot?.record.execution?.mediaManifest)manifest={...await boundMediaManifest(serverSnapshot.record,controller.signal,preflight),catalogRevision:manifest.catalogRevision||manifest.revision};
@@ -523,8 +544,8 @@ self.addEventListener('message',event=>{
     const matches=active&&(active.manifest?.presentationRevision===event.data.revision||!active.serverSnapshot?.invalid&&active.serverSnapshot?.record.revision===event.data.revision);
     if(event.source?.id){const prior=await read('client-'+event.source.id);await write('client-'+event.source.id,{...(matches?active:{packId,revision:event.data.revision}),...(prior?.shell==='network'?{shell:'network'}:{})});}
     await write('selected',{packId});result={selected:true};
-   }else if(type==='DOWNLOAD_STATUS'||type==='CACHE_STATUS')result=await status(packId,event.data.revision);
-   else if(type==='DOWNLOAD_START'){const active=await read(packKey(packId,'active'));if(active&&event.source?.id&&!await read('client-'+event.source.id))await write('client-'+event.source.id,active);result=await start(event.data.selection,port,packId,event.data.sizes||{},event.data.revision);}
+   }else if(type==='DOWNLOAD_STATUS'||type==='CACHE_STATUS')result=await status(packId,event.data.revision,event.data.generation??null);
+   else if(type==='DOWNLOAD_START'){const active=await read(packKey(packId,'active'));if(active&&event.source?.id&&!await read('client-'+event.source.id))await write('client-'+event.source.id,active);result=await start(event.data.selection,port,packId,event.data.sizes||{},event.data.revision,event.data.generation??null);}
    else if(type==='DOWNLOAD_PAUSE'){jobs.get(packId)?.abort();result={paused:true};}
    else if(type==='DOWNLOAD_REMOVE'){
     if(jobs.has(packId))throw new Error('Pause the download before removing it.');

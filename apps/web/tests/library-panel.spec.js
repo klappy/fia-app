@@ -101,3 +101,19 @@ it('withholds whole-book writes while retaining explicit per-passage saving and 
  expect(download).toHaveBeenCalledOnce();expect(download.mock.calls[0][2].id).toBe('eng.MRK-1-1-13');
  expect(active.selection).toBe('audio');
 });
+
+// QA/real-UI at the generation fix (trace 11:40): with 'all' checked on the U008 served manifest, "Download selection" stayed
+// disabled. Native verified originals carry no delivery URL and no size: they are saved as they are served, so they need no size
+// choice; the audio and other groups keep theirs.
+it('a served manifest with native originals can be saved with "all"; their group needs no size choice',async()=>{
+ const h=c=>c.repeat(64),native=(id,kind,c)=>({path:`/v1/original-visuals/${h('1')}/${h('2')}/${h(c)}`,group:'image',assetId:id,kind,sha256:h(c),bytes:5000,mime:kind==='map'?'image/png':'image/jpeg',width:3,height:2});
+ const audio={path:'/audio/scripture/mrk-1-14-20.webm',group:'audio',bytes:2048,sha256:h('3'),deliveryURL:'https://transcode.klappy.dev/audio/q=medium/https://example.invalid/a.mp3',sourceSha256:h('4'),sourceBytes:4096};
+ const manifest={revision:h('9'),files:[{path:'/index.html',group:'core',bytes:1024,sha256:h('5')},audio,native('a1400','image','a'),native('c4','map','c')]};
+ libraryAdapter.downloadStatus.mockResolvedValue({available:true,saved:false,manifest,choices:[{id:'core',bytes:1024},{id:'audio',bytes:3072},{id:'all',bytes:13072}],servedManifest:{state:'used',revision:h('9')}});
+ const download=vi.spyOn(libraryAdapter,'download').mockResolvedValue({saved:true,selection:'all'});
+ render(LibraryPanel,{view:'downloads'});await settle();
+ await fireEvent.click(screen.getByRole('radio',{name:/^Text and all available resources/}));await settle();
+ const button=screen.getByRole('button',{name:'Download selection'});expect(button.disabled).toBe(false);
+ await fireEvent.click(button);await settle();
+ expect(download.mock.calls[0][0]).toBe('all');expect(Object.keys(download.mock.calls[0][3])).not.toContain('image');
+});

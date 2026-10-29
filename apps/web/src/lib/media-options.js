@@ -14,8 +14,10 @@ export function preparedDownloadSizes(manifest,selection){
   const available=['small','medium','large'].filter(size=>files.length&&files.every(f=>{const selected=f.variants?.[size]||f;if(group==='video')return declaredPhoneVideoSize(selected,size);return f.variants?!!f.variants[size]:sizes.size===1&&sizes.has(size);}));
   const requestable=files.length>0&&files.every(f=>f.deliveryURL&&f.sourceSha256&&Number.isSafeInteger(f.sourceBytes)&&f.sourceBytes>0);
   const prepared=files.length>0&&files.every(f=>f.deliveryURL&&/^[a-f0-9]{64}$/.test(f.sha256)&&Number.isSafeInteger(f.bytes)&&f.bytes>0&&f.sourceSha256&&Number.isSafeInteger(f.sourceBytes)&&f.sourceBytes>0);
-  groups[group]={requestable,prepared,included:included.includes(group),count:files.length,available,size:files.length&&sizes.size===1?[...sizes][0]:null};
+  // Native verified files (a published original, saved by path and sha as served) have no delivery URL and no size to choose.
+  const native=files.length>0&&files.every(f=>!f.deliveryURL&&!f.variants&&/^[a-f0-9]{64}$/.test(f.sha256)&&Number.isSafeInteger(f.bytes)&&f.bytes>0);
+  groups[group]={requestable,prepared,native,included:included.includes(group),count:files.length,available,size:files.length&&sizes.size===1?[...sizes][0]:null};
  }
- const active=Object.values(groups).filter(g=>g.included&&g.count),sizes=new Set(active.map(g=>g.size));
+ const active=Object.values(groups).filter(g=>g.included&&g.count&&!g.native),sizes=new Set(active.map(g=>g.size));
  return {groups,preset:active.length&&sizes.size===1&&[...sizes][0]?[...sizes][0]:'custom',labels};
 }

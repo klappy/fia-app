@@ -95,6 +95,7 @@ export async function prepareVisual(pack,assetId,{signal,transport=executionTran
 // not answered is a missing connection: the restore stops with that answer and R1's fallback says so.
 export const RESTORE_TIMEOUT_MS=15000;
 export const restoreUnreachable=passageUnreachable;
+const displayed=pack=>typeof pack?.displayedGeneration==='string'&&/^[a-f0-9]{64}$/.test(pack.displayedGeneration)?{generation:pack.displayedGeneration}:{};
 export function mediaSelection(pack){return {packId:pack.id,revision:pack.revision,...(pack.mediaIdentity?{mediaIdentity:{...pack.mediaIdentity},mediaAssetsSha256:pack.mediaAssetsSha256}:{})};}
 export const libraryAdapter={
  playBoundAudio:(...args)=>executionTransport.playBoundAudio(...args),
@@ -110,8 +111,9 @@ export const libraryAdapter={
  select:selectServerPresentation,
  async mediaStatus(pack=bundledPack){return workerRequest('MEDIA_STATUS',mediaSelection(pack));},
  async playMedia(pack,path,deliveryRevision,signal,size){const requestId=crypto.randomUUID();const cancel=()=>{workerRequest('MEDIA_CANCEL',{packId:pack.id,requestId}).catch(()=>{});};if(signal.aborted)throw Error('Playback canceled.');signal.addEventListener('abort',cancel,{once:true});try{const result=await workerRequest('MEDIA_PLAY',{...mediaSelection(pack),path,deliveryRevision,requestId,size});if(signal.aborted)throw Error('Playback canceled.');return result;}catch(error){cancel();throw error;}finally{signal.removeEventListener('abort',cancel);}},
- async downloadStatus(pack=bundledPack){return workerRequest('DOWNLOAD_STATUS',{packId:pack.id,...(pack.revision?{revision:pack.revision}:{})});},
- async download(selection,onprogress,pack=bundledPack,sizes={}){return workerRequest('DOWNLOAD_START',{selection,...mediaSelection(pack),sizes:sizes&&typeof sizes==='object'&&!Array.isArray(sizes)?{...sizes}:sizes},onprogress);},
+ // The displayed publication generation (OFFLINE exact selection) names exactly what the page shows for the Downloads choices and the Save.
+ async downloadStatus(pack=bundledPack){return workerRequest('DOWNLOAD_STATUS',{packId:pack.id,...(pack.revision?{revision:pack.revision}:{}),...displayed(pack)});},
+ async download(selection,onprogress,pack=bundledPack,sizes={}){return workerRequest('DOWNLOAD_START',{selection,...mediaSelection(pack),...displayed(pack),sizes:sizes&&typeof sizes==='object'&&!Array.isArray(sizes)?{...sizes}:sizes},onprogress);},
  async pauseDownload(pack=bundledPack){return workerRequest('DOWNLOAD_PAUSE',{packId:pack.id});},
  async removeDownload(pack=bundledPack){return workerRequest('DOWNLOAD_REMOVE',{packId:pack.id});},
  activate(pack){const selection=mediaSelection(pack);activationQueue=activationQueue.catch(()=>{}).then(()=>workerRequest('PACK_SELECT',selection));return activationQueue;},
