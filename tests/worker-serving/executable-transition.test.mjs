@@ -407,8 +407,8 @@ test('an asking read declares a1400 then c4 as preparable; a visual demand is ad
   // Routed (Otto's capabilities.visuals port): this harness forbids every outbound fetch, so the one publisher GET the
   // demand makes fails, and the answer is typed unavailable: interrupted (non-final). visual-route.test.mjs runs the
   // routed demand against a publisher fixture through ready, publication and the read route.
-  const unrouted=await prepare(read,visualResources[0].preparationDemand);
-  assert.equal(unrouted.status,404,JSON.stringify(unrouted.body));assert.deepEqual(unrouted.body,{schema:'fia-presentation-preparation@1',status:'unavailable',jobId:null,reason:'interrupted',record:null});
+  const routed=await prepare(read,visualResources[0].preparationDemand);
+  assert.equal(routed.status,404,JSON.stringify(routed.body));assert.deepEqual(routed.body,{schema:'fia-presentation-preparation@1',status:'unavailable',jobId:null,reason:'interrupted',record:null});
   const stale=await prepare(read,demand('c4','map','f'.repeat(64)));assert.equal(stale.status,409);assert.equal(stale.body.reason,'execution-revision-stale');
   const forged=await prepare(read,demand('a293','image'));assert.equal(forged.status,409);assert.equal(forged.body.reason,'execution-admission-refused');
   const malformed=await prepare(read,{...demand('c4','map'),visualDemand:{assetId:'c4',kind:'video'}});assert.equal(malformed.status,400);

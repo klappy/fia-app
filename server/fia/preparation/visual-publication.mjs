@@ -5,9 +5,10 @@ import {createVisualOriginalJob,visualOriginalIdentity,VISUAL_ORIGINAL_RECIPE_SH
 // First proof only (PLAN §8a item 2): English eng.MRK-1-14-20 S02-U008, a1400 then c4. Sources come only from this
 // registry, keyed by the verified base asset; nothing reaches a job from a caller URL. The URL equals the pinned base pack's
 // sourceEvidence (tests check it). The Q20 family comes from the publisher path (photos/ is a photo, maps/ a map), never from
-// the base data. Both bind at the retained pack's pin (collection revision, sourceFile and its sha256). The §8a item 4 re-bind
-// of c4 to FIAMaps ec486d3 eng/json/048.content.json waits: the committed record (ANSWER-T5) gives that file's sha256 only
-// truncated, and no out-of-scope source may be read to complete it (coordinator STOP, INCIDENT-OUT-OF-SCOPE-SOURCE-RETRIEVAL).
+// the base data. Both bind at the retained pack's pin (collection revision, sourceFile and its sha256), as Q19 requires:
+// the selection binds the coherent presentation's own sourceEvidence (CONTRACT L59; ANSWER-T5 L80; Terry's
+// ANSWER-INCIDENT-ROUTE-CLASSIFICATION at cookbook 37433d2). The c4 re-bind to FIAMaps 048 (§8a item 4) belongs to a Q14
+// refresh that re-pins the base presentation too; binding the source alone to 048 would be incoherent.
 const f=Object.freeze;
 export const VISUAL_FIRST_PROOF=f([
  f({packId:'eng.MRK-1-14-20',baseRevision:'92ad518474f159f6567124052ae12d180a482c949509da0b725593442e62f746',assetId:'a1400',kind:'image',

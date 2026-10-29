@@ -45,7 +45,7 @@ const prepare=(read,demand)=>read('/v1/presentation-preparations',{method:'POST'
 const door=async(mf,source)=>{const ns=await mf.getDurableObjectNamespace('FIA_PREPARATION_JOBS'),{name}=await visualOriginalIdentity(source),stub=ns.get(ns.idFromName(name));
  return {stub,dump:async()=>(await stub.fetch('https://route.test/dump')).json(),put:async(key,value)=>(await stub.fetch('https://route.test/put',{method:'POST',body:JSON.stringify({key,value})})).json()};};
 
-test('the first-proof registry equals the pinned base pack (the c4 re-bind to FIAMaps 048 is a recorded gap)',async()=>{
+test('the first-proof registry binds the retained base pack pin (Q19 coherence; the c4 048 re-bind is a Q14 refresh)',async()=>{
  const pack=JSON.parse(readFileSync(resolve(publicRoot,'content/packs/eng.MRK-1-14-20/92ad518474f159f6567124052ae12d180a482c949509da0b725593442e62f746.json'),'utf8'));
  for(const e of VISUAL_FIRST_PROOF){const asset=pack.assets[e.assetId];assert.equal(asset.kind,e.kind);assert.equal(asset.sourceEvidence.url,e.source.url);assert.equal(e.baseRevision,'92ad518474f159f6567124052ae12d180a482c949509da0b725593442e62f746');}
  const a=VISUAL_FIRST_PROOF.find(e=>e.assetId==='a1400').source,ae=pack.assets.a1400.sourceEvidence;
