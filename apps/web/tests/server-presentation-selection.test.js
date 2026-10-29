@@ -16,3 +16,11 @@ test('explicit server media binding remains distinct from projected identity on 
 test('malformed explicit media authority is refused rather than mapped to base revision',async()=>{for(const mediaIdentity of [{packId:'other',revision:h},{packId:id,revision:'bad'},null]){const f=fixture();f.record.execution={mediaIdentity,mediaAssetsSha256:'d'.repeat(64)};await assert.rejects(selectServerPresentation(id,{transport:f.transport}),/media identity/);}});
 
 test('historical verified selection is read-only even with explicit consent and fresh authority clears its marker',async()=>{const f=fixture();f.record.offlineSnapshot='historical-verified';const saved=await selectServerPresentation(id,{explicit:true,transport:f.transport});assert.equal(saved.descriptor.offlineSnapshot,'historical-verified');assert.deepEqual(f.calls,['readPack','readArtifact']);delete f.record.offlineSnapshot;f.calls.length=0;const fresh=await selectServerPresentation(id,{transport:f.transport});assert.equal(fresh.descriptor.offlineSnapshot,undefined);assert.deepEqual(f.calls,['readPack','readArtifact']);});
+
+// PR295 review N1: a catalog generation pin and its bound manifest come together, with a well-formed pin.
+test('a catalog publication pin without its mediaManifest, or the reverse, or a pin naming another base, refuses',async()=>{
+ const pin={schema:'fia-executable-publication-pin@1',generation:'c'.repeat(64),baseManifest:{id:`base-offline:${'d'.repeat(64)}`,sha256:'d'.repeat(64),bytes:10,mime:'application/json'}},manifest={id:'bound-offline:'+'e'.repeat(64),sha256:'e'.repeat(64),bytes:20,mime:'application/json'};
+ const withExecution=execution=>{const f=fixture();f.record.execution={schema:'fia-executable-catalog@1',...execution};return f;};
+ const ok=withExecution({publication:pin,mediaManifest:manifest});assert.equal((await selectServerPresentation(id,{transport:ok.transport})).descriptor.revision,h);
+ for(const execution of [{publication:pin},{mediaManifest:manifest},{publication:{...pin,baseManifest:{...pin.baseManifest,id:`base-offline:${'f'.repeat(64)}`}},mediaManifest:manifest}]){const f=withExecution(execution);await assert.rejects(selectServerPresentation(id,{transport:f.transport}),JSON.stringify(Object.keys(execution)));}
+});

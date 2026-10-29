@@ -34,7 +34,7 @@ export function validateJSONDescriptor(value,idPattern=null){
 export function validatePublicationPin(value){
  exact(value,'schema,generation,baseManifest');
  need(value.schema==='fia-executable-publication-pin@1'&&hash(value.generation));
- validateJSONDescriptor(value.baseManifest,/^base-offline:[a-f0-9]{64}$/);
+ validateJSONDescriptor(value.baseManifest,/^base-offline:[a-f0-9]{64}$/);need(value.baseManifest.id===`base-offline:${value.baseManifest.sha256}`);
  return value;
 }
 function visualDemand(value,entry){

@@ -139,7 +139,7 @@ export async function createExecutableRuntime({ctx,env,snapshot,capabilities={}}
 export function createExecutableWorkerOperations({env,fallback}){
  if(!env.FIA_PREPARATION_JOBS||!env.FIA_ORIGINALS)return fallback;
  const call=async(operation,args)=>{const stub=env.FIA_PREPARATION_JOBS.get(env.FIA_PREPARATION_JOBS.idFromName(ROOT));const response=await stub.fetch(new Request(`https://preparation.internal${PATH}${operation}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(args)}));if(!response.ok)throw Error('executable-authority-unavailable');return response.json();};
- const ops=Object.fromEntries(['readPack','readArtifact','preparePresentation','readPresentationPreparation'].map(operation=>[operation,args=>call(operation,args)]));
+ const ops=Object.fromEntries(['readPack','readArtifact','preparePresentation','readPresentationPreparation','retainedVisual'].map(operation=>[operation,args=>call(operation,args)]));
  // Worker/object deploy overlap (PLAN §3): the object may still run the previous build, whose reads
  // refuse the execution capability. Retry once without it, so the caller gets the old shape.
  // The same overlap for a demand that carries expectedPublicationGeneration (F7a1): a previous-build object
@@ -157,7 +157,7 @@ export async function serveExecutableObject(request,ctx,env,capabilities,runtime
  }
  if(!url.pathname.startsWith(PATH))return null;
  need(url.origin==='https://preparation.internal'&&request.method==='POST'&&!url.search&&ctx.id.toString()===env.FIA_PREPARATION_JOBS.idFromName(ROOT).toString(),'execution-object-custody');
- const operation=url.pathname.slice(PATH.length);need(['readPack','readArtifact','preparePresentation','readPresentationPreparation'].includes(operation),'execution-operation');
+ const operation=url.pathname.slice(PATH.length);need(['readPack','readArtifact','preparePresentation','readPresentationPreparation','retainedVisual'].includes(operation),'execution-operation');
  need(capabilities?.snapshot&&env.FIA_ORIGINALS,'execution-runtime-unavailable');
  const text=await request.text();need(new TextEncoder().encode(text).length<=16384,'execution-request-size');
  const ops=await runtime(),result=await ops[operation](JSON.parse(text));return Response.json(result);

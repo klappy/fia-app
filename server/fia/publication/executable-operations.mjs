@@ -26,6 +26,15 @@ export function createExecutableOperations({reads,service,publication,storage,vi
   if(Object.hasOwn(expectation,'expectedPublicationGeneration')){const {expectedPublicationGeneration,...rest}=args;args=rest;}
   if(!validPresentationDemand(args))return refused();
   if(!service)return envelope('unavailable',null,'presentation-preparation-unavailable');
+  // OFFLINE L39: a supplied expectation is compared with the current pointer before any work, so a stale
+  // demand never starts or joins durable work. The publication compares again, and swaps atomically.
+  if(Object.hasOwn(expectation,'expectedPublicationGeneration')){
+   if(typeof publication?.currentGeneration!=='function')return envelope('blocked',null,'publication-generation-stale');
+   // A storage fault on this read is a typed, non-final answer, never a 500 (review N-c).
+   let current;try{current=await typed(()=>publication.currentGeneration(args.packId),reason=>({refusal:reason}));}catch{return envelope('unavailable',null,'interrupted');}
+   if(current?.refusal)return envelope('blocked',null,current.refusal);
+   if(current!==expectation.expectedPublicationGeneration)return envelope('blocked',null,'publication-generation-stale');
+  }
   const result=await typed(()=>service.request(structuredClone(args),{subscriberId:crypto.randomUUID()}),reason=>({status:'blocked',reason}));
   if(!hash(result?.jobId))return envelope(['blocked','unavailable'].includes(result?.status)?result.status:'blocked',null,result?.reason??'preparation-identity-invalid');
   const key='executable-demand:'+result.jobId;
@@ -94,5 +103,7 @@ export function createExecutableOperations({reads,service,publication,storage,vi
   // A read never repairs publication, starts interpretation or adopts a pointer.
   return envelope(result.status==='preparing'?'preparing':result.status==='unavailable'?'unavailable':'blocked',args.jobId,result.status==='ready'?'publication-not-committed':result.reason??'presentation-not-ready');
  }
- return Object.freeze({...reads,preparePresentation,readPresentationPreparation});
+ // Read-only historical visual authority for the original-visuals route (Otto's), never a write.
+ async function retainedVisual(args){return typeof publication?.retainedVisual==='function'?publication.retainedVisual(structuredClone(args??{})):{status:'unavailable',reason:'execution-not-current'};}
+ return Object.freeze({...reads,preparePresentation,readPresentationPreparation,retainedVisual});
 }
