@@ -1541,7 +1541,7 @@
     },
     {
       "path": "server/faces/worker/BACKEND-CLOSURE.json",
-      "sha256": "ff3d9e69ebea79b012d1a4627183a89c8ae5b2a7aad0d3eb7f6af8bc4e91e5c6"
+      "sha256": "1246a617d697ab9e372b2adbad18911af206040da4b9339d94ffc73dd5276e23"
     },
     {
       "path": "server/faces/worker/adapter.mjs",
@@ -2025,7 +2025,7 @@
     },
     {
       "path": "server/fia/preparation/worker.mjs",
-      "sha256": "e9f8ce3579b7857e2b82b6901ea6ba73112e45d804914705a694df708dfbb6c8"
+      "sha256": "0923835ff777aacac74e421f2e875c78624bc8d49cac5188618d15658ce48833"
     },
     {
       "path": "server/fia/publication/approved-presentation.json",
@@ -2851,7 +2851,7 @@
     },
     {
       "path": "server/fia/preparation/guide-fragment.mjs",
-      "sha256": "085d4b953a3008d3ba6819c64750ec394dc862a539de5862b101e1fc2aa6c3ab"
+      "sha256": "f8774fc91eede70c48386cc78c004706555824a1c26d9304e39b23213b887d7a"
     },
     {
       "path": "server/fia/preparation/source-associations/composer.mjs",
@@ -2859,7 +2859,7 @@
     },
     {
       "path": "tests/preparation-executor/guide-fragment.test.mjs",
-      "sha256": "404447a1ab52bae367c73c0cf0afa6f3fab7ac5b29896c3d0e3aaa32e1e8a4aa"
+      "sha256": "4540d426c370fb6e92c9445fa041188c9a93db53237fecd880c1d7a473e20c6d"
     },
     {
       "path": "tests/worker-serving/guide-fragment.test.mjs",
@@ -2868,6 +2868,10 @@
     {
       "path": "tests/preparation/support/archive-guide-composer.mjs",
       "sha256": "00f71efea5a0981dc1711e009e680426e7258107f15815789c593a30ddad2a76"
+    },
+    {
+      "path": "tests/worker-serving/guide-fragment-dispatch.test.mjs",
+      "sha256": "dcbb670a9b0f680f0754e35c597c6d58a29323c8106c1752cfc0aa92db91fbce"
     }
   ],
   "generatedFiles": [

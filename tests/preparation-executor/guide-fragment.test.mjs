@@ -169,7 +169,7 @@ test('MIME 6. no other port accepts text/plain, and the profile port admits it o
 // the gitignored generated/snapshot.json, which exists only after a build.
 const {exportGuideSources}=await import('../../server/fia/compiler/presentation/export-guide-sources.mjs');
 const exportDir=await mkdtemp(join(tmpdir(),'guide-composer-canonical-'));
-const SNAPSHOT={canonicalSources:exportGuideSources({outputRoot:exportDir,sourceRevision:archives[0].revision})};await rm(exportDir,{recursive:true,force:true});
+let SNAPSHOT;try{SNAPSHOT={canonicalSources:exportGuideSources({outputRoot:exportDir,sourceRevision:archives[0].revision})};}finally{await rm(exportDir,{recursive:true,force:true});}
 const MARK='eng.MRK-1-14-20',markGuide=archives.find(x=>x.packs[MARK]).packs[MARK].guide,markBytes=Buffer.from(JSON.stringify(markGuide));
 const markSource=SNAPSHOT.canonicalSources.find(d=>d.packId===MARK);
 function canonical(bytes=markBytes){return {sources:[markSource],assets:{[markSource.staticPath]:bytes.toString('base64')}};}

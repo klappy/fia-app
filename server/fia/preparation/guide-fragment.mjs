@@ -81,3 +81,21 @@ export function createGuideFragmentJob({storage,bucket,eligibility,fetchSource,m
  }
  return Object.freeze({demand,retainedGuideFile});
 }
+
+// Internal dispatch for FiaPreparationJobs (worker.mjs). It answers only https://guide-fragment.internal and returns null for
+// every other origin, so no public request reaches it. The object must be the one named for the requested source identity.
+// Ticket admission is not built, so eligibility refuses by default: every demand is typed guide-ineligible before any write.
+// The dispatch is wired but inert. read returns metadata only, never bytes; receipts are issued only inside a trusted composer.
+const INTERNAL_ORIGIN='https://guide-fragment.internal',reply=(status,body)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json','cache-control':'no-store'}});
+export async function serveGuideFragmentObject(request,ctx,env,{eligibility=()=>false}={}){
+ const url=new URL(request.url);if(url.origin!==INTERNAL_ORIGIN)return null;
+ const op=url.pathname;if(request.method!=='POST'||!['/demand','/read'].includes(op))return reply(404,{job:GUIDE_FRAGMENT_JOB,state:'unavailable',reason:'guide-unknown-operation'});
+ let body;try{body=await request.json();}catch{return reply(400,{job:GUIDE_FRAGMENT_JOB,state:'unavailable',reason:'guide-unsupported',subReason:'guide-request-shape'});}
+ const source={repo:body?.repo,revision:body?.revision,path:body?.path};
+ let identity;try{identity=await guideFragmentIdentity(source);}catch{return reply(400,{job:GUIDE_FRAGMENT_JOB,state:'unavailable',reason:'guide-unsupported',subReason:'guide-source'});}
+ if(!env?.FIA_PREPARATION_JOBS||!env?.FIA_ORIGINALS||ctx.id.toString()!==env.FIA_PREPARATION_JOBS.idFromName(identity.name).toString())return reply(403,{job:GUIDE_FRAGMENT_JOB,state:'unavailable',reason:'guide-object-identity'});
+ const job=createGuideFragmentJob({storage:ctx.storage,bucket:env.FIA_ORIGINALS,eligibility});
+ if(op==='/demand')return reply(200,await job.demand({...source,expectedSha256:body.expectedSha256,...(body.retry===true?{retry:true}:{})}));
+ const file=await job.retainedGuideFile({...source,expectedSha256:body.expectedSha256});const {read,bytes,...meta}=file;
+ return reply(200,file.state==='retained'?{...meta,file:{sha256:read.observation.sha256,bytes:read.observation.bytes,contentType:read.observation.contentType}}:meta);
+}
