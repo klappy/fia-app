@@ -10,7 +10,7 @@ import {buildGeneralizedSnapshot} from '../../server/fia/publication/generalized
 import {exportGuideSources,exportAssociationSources,ASSOCIATION_SOURCE_SCHEMA} from '../../server/fia/compiler/presentation/export-guide-sources.mjs';
 import {buildApprovedAudioProofIndex} from '../../scripts/approved-audio-proof-index.mjs';
 import {guideFragmentIdentity,GUIDE_REPOSITORY} from '../../server/fia/preparation/guide-fragment.mjs';
-import {admissionEligibility,GUIDE_FRAGMENT_READ_SCHEMA,GUIDE_FRAGMENT_READ_KEYS} from '../../server/fia/preparation/guide-fragment-admission.mjs';
+import {admissionEligibility,GUIDE_FRAGMENT_READ_SCHEMA,GUIDE_FRAGMENT_READ_KEYS,GUIDE_FRAGMENT_DECISION_KEYS} from '../../server/fia/preparation/guide-fragment-admission.mjs';
 import {GUIDE_FRAGMENT_POLICY} from '../../server/fia/preparation/guide-fragment.mjs';
 import {SOURCE_ASSOCIATION_RECIPE} from '../../server/fia/preparation/source-associations/index.mjs';
 import {canonicalJSONString} from '../../server/fia/preparation/contract.mjs';
@@ -91,6 +91,7 @@ test('a sha mismatch is never promoted and yields nothing; a deliberate Retry wh
 test('the wrong object, and an object built without a trusted snapshot, are refused',async t=>{
  const {call,ns}=await release(t,{dir:await scratch(t)});
  const wrong=await call('/demand',{packId:LUKE},ns.get(ns.idFromName('guide-fragment@1:'+'0'.repeat(64))));assert.equal(wrong.status,403);assert.equal(wrong.body.reason,'guide-object-identity');
+ const wrongFrag=await call('/fragment',{packId:LUKE},ns.get(ns.idFromName('guide-fragment@1:'+'0'.repeat(64))));assert.equal(wrongFrag.status,403,'/fragment answers only in the object named for its source');assert.equal(wrongFrag.body.reason,'guide-object-identity');
  const {serveGuideFragmentObject}=await import('../../server/fia/preparation/guide-fragment.mjs');
  const none=await serveGuideFragmentObject(new Request('https://guide-fragment.internal/demand',{method:'POST',body:JSON.stringify({packId:LUKE})}),{id:{toString:()=>'x'}},{},{snapshot:null});
  assert.equal(none.status,503);const nb=await none.json();assert.equal(nb.reason,'guide-admission-unavailable');assert.equal(nb.subReason,'guide-no-trusted-snapshot','snapshot:null is no trusted snapshot');
@@ -138,7 +139,7 @@ test('fragment read: after the synthetic-pin acquisition it returns the receipt 
  for(const k of ['unitTextSha256','unitHtmlSha256','guideContentSha256','referenceSha256'])assert.match(d.binding[k],/^[a-f0-9]{64}$/,k);
  assert.deepEqual([d.unitId,d.namespace,d.contentId,d.jsonPath,d.htmlSha256],['S05-U003','FIAKeyTerms','spa-t55-v1','$[0].content#p1',sha(U3)],'the consumer fields are explicit on the decision');
  assert.equal(d.bindingSha256,sha(canonicalJSONString(d.binding)),'bindingSha256 is the hash of the canonical binding');
- for(const x of a.decisions){for(const k of ['unitId','namespace','contentId','jsonPath','htmlSha256','bindingSha256'])assert.ok(k in x,k);assert.equal(x.bindingSha256,sha(canonicalJSONString(x.binding)));}
+ for(const x of a.decisions){assert.deepEqual(Object.keys(x),[...GUIDE_FRAGMENT_DECISION_KEYS],'every decision has exactly the closed decision keys, in order');assert.equal(x.bindingSha256,sha(canonicalJSONString(x.binding)));}
  assert.equal(counts.publisher,1,'zero upstream calls for the fragment read');assert.equal(counts.other,0);
  assert.deepEqual(after,before,'Durable Object rows and R2 objects are unchanged by /fragment');
  assert.deepEqual((await call('/fragment',{packId:LUKE})).body,warm.body,'a repeat answers the same bytes');
@@ -164,6 +165,10 @@ test('fragment read: without an association row the receipt is still answered an
  assert.equal((await call('/demand',{packId:LUKE})).body.state,'retained');
  const r=await call('/fragment',{packId:LUKE});assert.equal(r.body.state,'composed');assert.equal(r.body.receipt.fileSha256,sha(SYN_FILE));
  assert.deepEqual(r.body.associations,{state:'unavailable',reason:'association-inputs-unavailable',subReason:'association-source-row',indexSha256:null,decisions:null});assert.equal(counts.publisher,1);
+});
+test('association schema: one constant shared by the exporter and the fragment reader',async()=>{
+ const ix=await import('../../server/fia/preparation/source-associations/index.mjs'),src=await readFile('server/fia/preparation/guide-fragment-admission.mjs','utf8'),exp=await readFile('server/fia/compiler/presentation/export-guide-sources.mjs','utf8');
+ assert.equal(ASSOCIATION_SOURCE_SCHEMA,ix.ASSOCIATION_SOURCE_SCHEMA);for(const [name,text] of [['admission',src],['exporter',exp]])assert.doesNotMatch(text,/fia-association-source@/,`${name} must import the schema, not restate it`);
 });
 test('association export: every Mark pack row is pinned by source-bindings and fails closed before any write',async t=>{
  const authority=JSON.parse(await readFile('server/fia/publication/trusted-generalized.json')),dir=await scratch(t);

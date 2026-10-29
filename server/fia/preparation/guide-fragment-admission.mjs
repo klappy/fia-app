@@ -2,7 +2,7 @@ import {createHash} from 'node:crypto';
 import {canonicalJSONString} from './contract.mjs';
 import {createCanonicalGuideRecords,createGuideComposer,descriptorOf} from './source-associations/composer.mjs';
 import {createGuideFragmentJob,guideFragmentIdentity,GUIDE_FRAGMENT_JOB,GUIDE_ACQUISITION_PROFILE,GUIDE_FRAGMENT_POLICY} from './guide-fragment.mjs';
-import {SOURCE_ASSOCIATION_RECIPE,buildSourceIndex,associatePack} from './source-associations/index.mjs';
+import {SOURCE_ASSOCIATION_RECIPE,ASSOCIATION_SOURCE_SCHEMA,buildSourceIndex,associatePack} from './source-associations/index.mjs';
 import {createCanonicalGuideReader} from './executable-presentation-resolver.mjs';
 // The reviewed admission component for the first acquisition of an archive-pinned guide snapshot (Terry ANSWER-Q24-FIRST-
 // ACQUISITION, cookbook eb4d8d5; CONTRACT Q24 as amended by cookbook PR268). It runs inside the guide object, with the trusted build
@@ -74,6 +74,10 @@ export const GUIDE_FRAGMENT_READ_KEYS=Object.freeze({
  paragraph:Object.freeze(['jsonPath','htmlSha256']),
  associations:Object.freeze(['state','reason','subReason','indexSha256','decisions']),
 });
+// Every decision carries exactly these keys, null where its type has none: associatePack's own fields, plus the explicit consumer
+// fields (contentId, jsonPath, htmlSha256, bindingSha256). A decision with any other key refuses the whole decision list.
+export const GUIDE_FRAGMENT_DECISION_KEYS=Object.freeze(['packId','unitId','stepId','type','reason','kind','namespace','resourceId','contentId','jsonPath','htmlSha256','candidates','dependency','evidence','binding','bindingSha256']);
+const DECISION_SOURCE_KEYS=new Set(['packId','unitId','stepId','type','reason','kind','namespace','resourceId','candidates','dependency','evidence','binding']);
 const PARAGRAPHS_MAX=4096,hex=x=>createHash('sha256').update(x).digest('hex');
 async function fragment(job,base,descriptor,identity,loaded,snapshot,env){
  const producer={demand:async()=>{throw Error('guide-fragment-read-only');},retainedGuideFile:source=>job.retainedGuideFile(source)};
@@ -106,6 +110,7 @@ async function associations(receipt,packId,loaded,snapshot,fetchAsset){
  // htmlSha256 (null when the decision has no raw anchor), and bindingSha256 = sha256 of the canonical binding. The binding covers the
  // unit text and HTML hashes, the reference hash (namespace, contentId, label, unit HTML) and the raw fragment's HTML hash, from which
  // the paragraph's text hash and typed refs are derived, so those are not repeated.
- return {state:'composed',reason:null,subReason:null,indexSha256:index.indexSha256,decisions:decisions.map(d=>({...d,namespace:d.namespace??null,contentId:d.evidence?.contentId??null,jsonPath:d.evidence?.rawJsonPath??null,htmlSha256:d.evidence?.rawFragmentSha256??null,bindingSha256:hex(canonicalJSONString(d.binding))}))};
+ if(decisions.some(d=>Object.keys(d).some(k=>!DECISION_SOURCE_KEYS.has(k))||!d.binding))return none('association-index-refused','decision-unknown-key');
+ const closed=d=>({...Object.fromEntries(GUIDE_FRAGMENT_DECISION_KEYS.map(k=>[k,d[k]??null])),contentId:d.evidence?.contentId??null,jsonPath:d.evidence?.rawJsonPath??null,htmlSha256:d.evidence?.rawFragmentSha256??null,bindingSha256:hex(canonicalJSONString(d.binding))});
+ return {state:'composed',reason:null,subReason:null,indexSha256:index.indexSha256,decisions:decisions.map(closed)};
 }
-const ASSOCIATION_SOURCE_SCHEMA='fia-association-source@1';

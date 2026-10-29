@@ -2,6 +2,8 @@ import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {resolve,join} from 'node:path';
+import {ASSOCIATION_SOURCE_SCHEMA} from '../../preparation/source-associations/index.mjs';
+export {ASSOCIATION_SOURCE_SCHEMA};
 export const SOURCE_ARCHIVE_SHA256='48f8c768b108f2b9977048db26fa54c82af4eea7f54c66fa650ef84f7d61ecd7';
 const hash=b=>createHash('sha256').update(b).digest('hex');
 /** Packages already trusted raw guide metadata; never interprets or prepares it. */
@@ -23,7 +25,6 @@ export function exportGuideSources({outputRoot,sourceRevision,archiveBytes=readF
 // Association inputs for the source-association index, one content-addressed file per pack beside its guide: the pack's compiled
 // manifest, resources and guide-units (each checked against source-bindings.json before any write, as the guide is) and the pack's
 // archive inventory rows. Rows have the canonical-source shape, so the Worker reads them through the same re-hashing reader.
-export const ASSOCIATION_SOURCE_SCHEMA='fia-association-source@1';
 export function exportAssociationSources({outputRoot,sourceRevision,archiveBytes=readFileSync(new URL('./source-packs.json.gz',import.meta.url)),sourceBindings=JSON.parse(readFileSync(new URL('./source-bindings.json',import.meta.url)))}){
  if(hash(archiveBytes)!==SOURCE_ARCHIVE_SHA256)throw Error('canonical-source-archive-pin');
  const source=JSON.parse(gunzipSync(archiveBytes,{maxOutputLength:134217728}));
