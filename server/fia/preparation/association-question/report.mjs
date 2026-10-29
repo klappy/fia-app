@@ -13,16 +13,18 @@ import {fileURLToPath, pathToFileURL} from 'node:url';
 import {resolve} from 'node:path';
 
 export const REPORT_SCHEMA = 'fia-association-question-report@1';
-export const STRATA = Object.freeze(['exact-source-inline', 'semantic-residue']);
+export const STRATA = Object.freeze(['exact-source-inline', 'semantic-residue', 'spanish-luke']);
 const TYPED_INLINE_TAG = /<data\b(?=[^>]*\bdata-resource-code="(?:FIAImages|FIAMaps)")(?=[^>]*\bdata-content-id="[^"]+")[^>]*>/;
 
-export const stratumOf = inputCase => (TYPED_INLINE_TAG.test(inputCase.source.unit.html) ? 'exact-source-inline' : 'semantic-residue');
+// Spanish Luke (PR294's manual rows) is reported apart from Spanish Mark; the stratum comes from the input's pack id, never gold.
+export const stratumOf = inputCase => (inputCase.packId.startsWith('spa.LUK-') ? 'spanish-luke'
+  : TYPED_INLINE_TAG.test(inputCase.source.unit.html) ? 'exact-source-inline' : 'semantic-residue');
 
 /**
  * @param {{score: Function, inputs: object, gold: object, split: object, decisions: object, label?: string}} args
  * `score` is PR289's exported score(gold, decisions, {split, only}).
  */
-export function buildReport({score, inputs, gold, split, decisions}) {
+export function buildReport({score, inputs, gold, split, decisions, coverage = null}) {
   const stratum = new Map(inputs.cases.map(c => [c.caseId, stratumOf(c)]));
   const splitOf = new Map(split.cases.map(c => [c.caseId, c.split]));
   for (const c of gold.cases) if (!stratum.has(c.caseId)) throw Error(`gold-case-without-input:${c.caseId}`);
@@ -39,7 +41,13 @@ export function buildReport({score, inputs, gold, split, decisions}) {
     strata[s] = {cases: g.cases.length, decidedInStratum: d.decisions.length,
       tuning: score(g, d, {split, only: 'tuning'}), heldout: score(g, d, {split, only: 'heldout'})};
   }
-  return {schema: REPORT_SCHEMA, label: decisions.producer?.label ?? null, producer: decisions.producer ?? null,
+  const luke = gold.cases.filter(c => stratum.get(c.caseId) === 'spanish-luke');
+  const spanishLuke = {cases: luke.length, pericopes: [...new Set(inputs.cases.filter(c => stratum.get(c.caseId) === 'spanish-luke').map(c => c.pericope))].sort(),
+    negativeCases: luke.filter(c => c.output.decision === 'none').length,
+    positiveVisualAssociations: luke.filter(c => c.output.decision === 'associate').length,
+    unresolvedRequests: coverage?.spanishLuke?.manualStandard?.unresolvedNotGold?.map(u => ({caseId: u.caseId, requestedKind: u.requestedKind, reason: u.reason})) ?? null,
+    note: 'Same-input/output check of negative cases, not a model-quality claim; unresolved requests are not gold.'};
+  return {schema: REPORT_SCHEMA, label: decisions.producer?.label ?? null, producer: decisions.producer ?? null, spanishLuke,
     note: 'exact-source-inline results never count as model quality; recorded-response runs are pipeline tests, not Jev accuracy',
     denominators: Object.fromEntries(Object.entries(denominators).sort()), strata};
 }
@@ -55,6 +63,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   if (!a['eval-dir'] || !a.decisions) throw Error('usage: --eval-dir <scripts/association-eval> --decisions <file>');
   const dir = resolve(a['eval-dir']), read = async p => JSON.parse(await readFile(p, 'utf8'));
   const {score} = await import(pathToFileURL(`${dir}/score.mjs`));
-  const report = buildReport({score, inputs: await read(`${dir}/inputs.json`), gold: await read(`${dir}/gold.json`), split: await read(`${dir}/split.json`), decisions: await read(a.decisions)});
+  const coverage = await read(`${dir}/coverage.json`).catch(() => null);
+  const report = buildReport({score, inputs: await read(`${dir}/inputs.json`), gold: await read(`${dir}/gold.json`), split: await read(`${dir}/split.json`), decisions: await read(a.decisions), coverage});
   console.log(JSON.stringify(report, null, 2));
 }

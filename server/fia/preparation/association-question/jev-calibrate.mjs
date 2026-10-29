@@ -55,12 +55,13 @@ export async function fitCalibration({cases, modelRevision, source}) {
 }
 
 /** Recorded-wire probabilities for the tuning semantic-residue cases. Refuses mixed or unverified model versions. */
-export async function tuningProbabilities({inputs, gold, split, wireFile}) {
+export async function tuningProbabilities({inputs, gold, split, wireFile, observe = () => {}}) {
   const AI = createRecordedJevWire(wireFile), splitOf = new Map(split.cases.map(c => [c.caseId, c.split]));
   const goldOf = new Map(gold.cases.map(c => [c.caseId, c.output]));
   const cases = [], versions = new Set();
   for (const input of inputs.cases) {
     if (splitOf.get(input.caseId) !== 'tuning' || stratumOf(input) !== 'semantic-residue') continue;
+    observe(input.caseId); // every case the fit reads; held-out, exact-source and Spanish Luke cases never reach here
     const {request} = await buildRequest(input);
     const q = buildQuestions(request);
     if (q.refused) continue;

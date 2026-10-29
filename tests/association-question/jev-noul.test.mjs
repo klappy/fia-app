@@ -21,6 +21,7 @@ const registration = await j('jev-noul-registration.json', here), committedCalib
 const caseOf = id => structuredClone(inputs.cases.find(c => c.caseId === id));
 const evalDir = new URL('../../scripts/association-eval/', import.meta.url);
 const pr289Present = await access(new URL('score.mjs', evalDir)).then(() => true, () => false);
+const lukeEval = pr289Present && JSON.parse(await readFile(new URL('gold.json', evalDir), 'utf8')).cases.some(c => c.caseId.startsWith('spa.LUK-'));
 
 test('wire test: questions are built only from the request, deterministically, within the hard caps', async () => {
   const {request} = await buildRequest(caseOf('eng.MRK-1-1-13:S02-U005'));
@@ -163,4 +164,22 @@ test('wire test: PR289 score.mjs and the stratified report accept the composed d
     const report = buildReport({score, inputs: fullInputs, gold: fullGold, split: fullSplit, decisions});
     assert.equal(report.strata['exact-source-inline'].tuning.overall.abstained, 1, 'the inline case is reported apart and abstains');
   } finally { await rm(dir, {recursive: true, force: true}); }
+});
+
+test('wire test: the fit reads tuning cases only; held-out, exact-source and Spanish Luke cases are never fitted', async () => {
+  const seen = [];
+  await tuningProbabilities({inputs, gold, split, wireFile: wire, observe: id => seen.push(id)});
+  const splitOf = new Map(split.cases.map(c => [c.caseId, c.split]));
+  assert.deepEqual(seen, ['eng.MRK-1-1-13:S02-U005', 'eng.MRK-2-1-12:S02-U004']);
+  assert.ok(seen.every(id => splitOf.get(id) === 'tuning'));
+  assert.ok(!seen.includes('eng.MRK-1-14-20:S02-U008'), 'held-out case read by the fit');
+  if (lukeEval) {
+    const read = async n => JSON.parse(await readFile(new URL(n, evalDir), 'utf8'));
+    const [fi, fg, fs] = await Promise.all(['inputs.json', 'gold.json', 'split.json'].map(read));
+    const all = [];
+    await tuningProbabilities({inputs: fi, gold: fg, split: fs, wireFile: wire, observe: id => all.push(id)});
+    const s = new Map(fs.cases.map(c => [c.caseId, c.split]));
+    assert.ok(all.length > 0 && all.every(id => s.get(id) === 'tuning'), 'a held-out case reached the fit');
+    assert.ok(!all.some(id => id.startsWith('spa.LUK-')), 'Spanish Luke (held-out) reached the fit');
+  }
 });

@@ -211,7 +211,8 @@ test('end to end: PR289 score.mjs accepts the decisions file unchanged (checked 
     assert.equal(result.overall.precision, 1);
     assert.deepEqual(result.unknownCases, []);
     const report = buildReport({score, inputs: await read('inputs.json'), gold, split, decisions});
-    assert.deepEqual(report.denominators, {
+    // Mark denominators; Spanish Luke (PR294) is its own stratum and is checked by its own test.
+    assert.deepEqual(Object.fromEntries(Object.entries(report.denominators).filter(([k]) => !k.startsWith('spanish-luke/'))), {
       'exact-source-inline/spa/heldout': 3, 'exact-source-inline/spa/tuning': 3,
       'semantic-residue/eng/heldout': 4, 'semantic-residue/eng/tuning': 8,
       'semantic-residue/spa/heldout': 4, 'semantic-residue/spa/tuning': 2
@@ -248,4 +249,43 @@ test('no gold value appears in the prompt template, and a request carries only v
 test('stratum comes from source HTML: typed inline tags are exact-source, everything else is semantic residue', () => {
   const kinds = inputsFile.cases.map(c => [c.caseId, stratumOf(c)]);
   assert.deepEqual(kinds, [['eng.MRK-1-1-13:S02-U005', 'semantic-residue'], ['eng.MRK-2-1-12:S02-U004', 'semantic-residue'], ['spa.MRK-4-35-41:S03-U017', 'exact-source-inline']]);
+});
+
+// Round trip over every accepted gold output: PR289's 24 Mark cases plus PR294's 4 Spanish Luke none cases (28).
+// Requires PR289 and PR294 (94e1f29) case files. On main both are absent; on PR289 alone the Spanish Luke rows are absent.
+const evalGold = pr289Present ? JSON.parse(await readFile(new URL('gold.json', evalDir), 'utf8')) : null;
+const lukePresent = !!evalGold?.cases.some(c => c.caseId.startsWith('spa.LUK-'));
+test('round trip: all 28 accepted gold outputs pass the normalizer unchanged, with gold excluded from inputs', {skip: !lukePresent && 'needs PR289 plus PR294 94e1f29 case files: absent on main; PR289 alone lacks the 4 Spanish Luke rows'}, async () => {
+  const evalInputs = JSON.parse(await readFile(new URL('inputs.json', evalDir), 'utf8'));
+  const {GOLD_ONLY_KEYS} = await import(new URL('cases.mjs', evalDir));
+  const banned = new Set(GOLD_ONLY_KEYS);
+  const walk = (v, path) => { if (Array.isArray(v)) v.forEach((x, i) => walk(x, `${path}[${i}]`)); else if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) { assert.ok(!banned.has(k), `${path}.${k}`); walk(x, `${path}.${k}`); } };
+  assert.equal(evalGold.cases.length, 28);
+  let passed = 0;
+  for (const g of evalGold.cases) {
+    const input = evalInputs.cases.find(c => c.caseId === g.caseId);
+    walk(input, g.caseId);
+    const {request} = await buildRequest(input);
+    walk(request.input, `request:${g.caseId}`);
+    const n = normalizeOutput(structuredClone(g.output), request);
+    assert.deepEqual(n.normalization, {status: 'accepted', reason: null}, g.caseId);
+    assert.deepEqual(n.output, g.output, `${g.caseId} changed in the round trip`);
+    passed++;
+  }
+  assert.equal(passed, 28);
+  const luke = evalGold.cases.filter(c => c.caseId.startsWith('spa.LUK-'));
+  assert.deepEqual([luke.length, luke.filter(c => c.output.decision === 'none').length, luke.filter(c => c.output.decision === 'associate').length], [4, 4, 0]);
+});
+
+test('report: Spanish Luke is its own stratum: 4 negatives in 1 pericope, 0 positive visual associations, 2 unresolved map requests (same-input/output check)', {skip: !lukePresent && 'needs PR289 plus PR294 94e1f29 case files: absent on main; PR289 alone lacks the 4 Spanish Luke rows'}, async () => {
+  const read = async n => JSON.parse(await readFile(new URL(n, evalDir), 'utf8'));
+  const {score} = await import(new URL('score.mjs', evalDir));
+  const [i, g, s, c] = await Promise.all(['inputs.json', 'gold.json', 'split.json', 'coverage.json'].map(read));
+  const r = buildReport({score, inputs: i, gold: g, split: s, decisions: {schema: 'fia-association-eval-decisions@1', decisions: []}, coverage: c});
+  assert.deepEqual({...r.spanishLuke, note: undefined}, {cases: 4, pericopes: ['LUK-1-26-38'], negativeCases: 4, positiveVisualAssociations: 0, note: undefined,
+    unresolvedRequests: [{caseId: 'spa.LUK-1-26-38:S02-U004', requestedKind: 'map', reason: 'no-eligible-candidate-in-pack-catalog'}, {caseId: 'spa.LUK-1-26-38:S05-U003', requestedKind: 'map', reason: 'no-eligible-candidate-in-pack-catalog'}]});
+  assert.match(r.spanishLuke.note, /not a model-quality claim/);
+  assert.equal(r.denominators['spanish-luke/spa/heldout'], 4);
+  assert.equal(r.denominators['semantic-residue/spa/heldout'], 4, 'Spanish Mark denominators unchanged');
+  assert.equal(r.denominators['spanish-luke/spa/tuning'], undefined);
 });

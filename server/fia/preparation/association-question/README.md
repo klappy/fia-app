@@ -63,6 +63,7 @@ Anything else becomes the decision `invalid-provider-output` with a typed reason
 `report.mjs` assigns each case a stratum from its input's source HTML, never from gold:
 - **exact-source-inline:** a typed inline tag with `data-resource-code` FIAImages or FIAMaps and a `data-content-id`. These cases belong to the deterministic index, and a score on them never counts as model quality.
 - **semantic-residue:** every other case. Model quality is measured here.
+- **spanish-luke:** cases from `spa.LUK-*` packs (PR294's manual rows), taken from the input's pack id. They are reported apart from Spanish Mark. Today that is 4 negative cases in 1 pericope, with 0 positive visual associations and 2 unresolved map requests. It is a same-input/output check, not a model-quality claim, and these cases are held out, so they are never fitted.
 
 At 4359d1e this stratum matches PR289's gold source for all 24 cases (`ledger-inline` against the rest). The gold case denominators are:
 
