@@ -163,6 +163,7 @@ function boundApprovedDelivery(bound,dependency){
  if(!route||bound.schema!=='fia-bound-narration-audio@1'||bound.id!==dependency.id||dependency.id!=='approved-audio:'+route[1]||Object.keys(bound).sort().join(',')!=='delivery,id,playbackRange,schema'||Object.keys(delivery).sort().join(',')!=='bytes,mime,sha256,url'||delivery.sha256!==route[2]||delivery.mime!==(route[3]==='ogg'?'audio/ogg':'audio/mpeg')||!Number.isSafeInteger(delivery.bytes)||delivery.bytes<=0||delivery.bytes>16777216)return null;
  return delivery;
 }
+const approvedTransientStatus=status=>[408,429].includes(status)||status>=500;
 async function verifiedApprovedResponse(response,delivery){return response.status===200&&!response.redirected&&response.headers.get('Content-Type')===delivery.mime&&response.headers.get('Content-Length')===String(delivery.bytes)&&response.headers.get('ETag')==='"'+delivery.sha256+'"'&&await verified(response.clone(),delivery);}
 async function verifyApprovedOutputs(packId,snapshot,cache,signal,onprogress){
  if(!snapshot)return [];
@@ -172,7 +173,7 @@ async function verifyApprovedOutputs(packId,snapshot,cache,signal,onprogress){
  for(const dependency of record.execution?.artifacts||[]){check();if(!dependency.id.startsWith('approved-audio:')||!presentation.activities.some(a=>a.execution?.narration?.action==='play-bound-audio'&&a.execution.narration.artifact?.id===dependency.id&&a.execution.narration.artifact.sha256===dependency.sha256))continue;const key=refusedApprovedKey(packId,record.revision,dependency);refused.push({dependency,key,marker:JSON.stringify(await read(key)||null),legacyKey:legacyRefusedApprovedKey(packId,record.revision,dependency),legacyMarker:JSON.stringify(await read(legacyRefusedApprovedKey(packId,record.revision,dependency))||null)});}
  for(const [index,{dependency}] of refused.entries()){
   check();const response=await cache.match(artifactPath(dependency.sha256));await serverJSON(response,dependency,record);const delivery=boundApprovedDelivery(await response.json(),dependency);if(!delivery)throw Error('The approved recording binding could not be verified.');
-  const live=await fetch(new URL(delivery.url,self.location.origin).href,{cache:'no-store',redirect:'manual',signal});if(!await verifiedApprovedResponse(live,delivery)){if(![408,429,500,502,503,504].includes(live.status))await retireApprovedContext({packId,record,dependency});throw Error('The approved recording is still unavailable. Its refusal is preserved.');}check();
+  const live=await fetch(new URL(delivery.url,self.location.origin).href,{cache:'no-store',redirect:'manual',signal});if(!await verifiedApprovedResponse(live,delivery)){if(!approvedTransientStatus(live.status))await retireApprovedContext({packId,record,dependency});throw Error('The approved recording is still unavailable. Its refusal is preserved.');}check();
   onprogress?.({phase:'approved-output-verified',verified:index+1,total:refused.length});
  }
  return refused.flatMap(({key,marker,legacyKey,legacyMarker})=>[{key,marker},{key:legacyKey,marker:legacyMarker}]);
@@ -221,10 +222,12 @@ async function historicalApprovedAudio(context,answer){
 async function approvedAudioRead(request,clientId){
  const context=await approvedAudioAuthority(request,clientId);let response;
  try{response=await fetch(request,{cache:'no-store',redirect:'manual'});}catch(error){if(error?.name==='TypeError'||error?.name==='AbortError')return historicalApprovedAudio(context);await retireApprovedContext(context);return Response.error();}
- if([408,429,500,502,503,504].includes(response.status))return historicalApprovedAudio(context,response);
+ if(approvedTransientStatus(response.status))return historicalApprovedAudio(context,response);
  if(context){try{if(!await verifiedApprovedResponse(response,context.delivery))await retireApprovedContext(context);}catch(error){if(error?.name==='TypeError'||error?.name==='AbortError')return historicalApprovedAudio(context);await retireApprovedContext(context);return Response.error();}}
  return response;
 }
+
+async function restorableSaved(record){if(!await complete(record))return false;const snapshot=record.serverSnapshot;if(!snapshot)return true;if(await read(revokedSnapshotKey(record.packId,snapshot.record.revision)))return false;for(const dependency of snapshot.record.execution?.artifacts||[])if(await approvedRefused(record.packId,snapshot.record.revision,dependency))return false;return true;}
 
 async function complete(record){
  if(!record)return false;
@@ -395,7 +398,7 @@ async function start(selection,port,packId=legacy,sizes={},revision){
   if(!await complete(pending))throw new Error('Storage changed before verification finished. Retry the download.');
   if(controller.signal.aborted)throw new Error('Download authority changed before activation.');
   // Single metadata write is the commit point. An interrupted update keeps active intact.
-  await approvedAuthorityTurn(packId,async()=>{for(const {key,marker} of verifiedRefusals)if(JSON.stringify(await read(key)||null)!==marker)throw Error('Recording authority changed after verification. Retry the Save.');await write(packKey(packId,'active'),pending);for(const {key} of verifiedRefusals){if(controller.signal.aborted)break;await(await caches.open(META)).delete('/'+key);}if(serverSnapshot&&!controller.signal.aborted)await(await caches.open(META)).delete('/'+revokedSnapshotKey(packId,serverSnapshot.record.revision));await(await caches.open(META)).delete('/'+packKey(packId,'pending'));if(controller.signal.aborted){for(const {key} of verifiedRefusals)await write(key,refusalMarker());await invalidateServerSnapshot(packId);throw new Error('Download authority changed during activation.');}});
+  await approvedAuthorityTurn(packId,async()=>{for(const {key,marker} of verifiedRefusals)if(JSON.stringify(await read(key)||null)!==marker)throw Error('Recording authority changed after verification. Retry the Save.');await write(packKey(packId,'active'),pending);for(const {key} of verifiedRefusals){if(controller.signal.aborted)break;await(await caches.open(META)).delete('/'+key);}if(serverSnapshot&&!controller.signal.aborted)await(await caches.open(META)).delete('/'+revokedSnapshotKey(packId,serverSnapshot.record.revision));await(await caches.open(META)).delete('/'+packKey(packId,'pending'));if(controller.signal.aborted){for(const {key,marker} of verifiedRefusals)if(marker!=='null')await write(key,JSON.parse(marker));if(await restorableSaved(active))await write(packKey(packId,'active'),active);else await invalidateServerSnapshot(packId);throw new Error('Download authority changed during activation.');}});
   // Keep the prior revision for already-open clients. Removal clears every revision.
   // Do not switch an open page's media beneath its loaded text and alignment.
   return {saved:true,selection};
