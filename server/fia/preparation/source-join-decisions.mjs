@@ -1,6 +1,6 @@
 import {canonicalJSONString,sha256} from './contract.mjs';
 import {createCanonicalGuideRecords,descriptorOf} from './source-associations/composer.mjs';
-import {guideFragmentIdentity,guideFragmentObject,GUIDE_FRAGMENT_POLICY,GUIDE_FRAGMENT_JOB} from './guide-fragment.mjs';
+import {guideFragmentIdentity,guideFragmentObject,GUIDE_FRAGMENT_POLICY,GUIDE_FRAGMENT_JOB,GUIDE_UNSUPPORTED_REASONS} from './guide-fragment.mjs';
 import {GUIDE_FRAGMENT_READ_SCHEMA,GUIDE_FRAGMENT_READ_KEYS,GUIDE_FRAGMENT_DECISION_KEYS} from './guide-fragment-admission.mjs';
 import {SOURCE_ASSOCIATION_RECIPE} from './source-associations/index.mjs';
 
@@ -120,13 +120,14 @@ export function createSourceJoinReader({snapshot,fetchAsset,readFragment}){
 // and names the object from it (guideFragmentObject, binding 2). It never passes retry, never polls and never loops. Only
 // retained lets the reader continue; every other answer, a timeout included, leaves this Open on the base, typed.
 const DEMAND_ORIGIN='https://guide-fragment.internal';
-// Terry 85eff6a (C1): which acquisition misses are final. Final under the current descriptor and recipe: guide-sha-mismatch,
-// descriptor-mismatch, refresh-unavailable, and guide-unsupported with a recipe/profile sub-reason. Everything else is non-final
-// (transient, deadline, preparing, interrupted, ineligible including a source-policy or admission refusal, a request-shape refusal
-// and anything unknown): it may serve base, but a later explicit Open demands again.
-const FINAL_REASONS=new Set(['guide-sha-mismatch','descriptor-mismatch','refresh-unavailable']);
-const REQUEST_SHAPE=new Set(['guide-request-shape','guide-batch-refused','guide-caller-authority']);
-export function acquisitionFinal(reason,subReason=null){return FINAL_REASONS.has(reason)||reason==='guide-unsupported'&&typeof subReason==='string'&&!REQUEST_SHAPE.has(subReason);}
+// Terry 85eff6a (C1), as an allowlist (review 5700626016 B1). Final under the current descriptor and recipe only:
+// guide-sha-mismatch, descriptor-mismatch, refresh-unavailable, and guide-unsupported whose sub-reason is one of the guide object's
+// own recipe/profile refusals (GUIDE_UNSUPPORTED_REASONS, guide-fragment.mjs). Everything else is non-final, including the object's
+// other guide-unsupported answers (composer-guide-unavailable, composer-unknown-pack, composer-ambiguous-source,
+// composer-descriptor-incomplete, guide-source, a storage fault), fragment-too-many-paragraphs (not named by Terry; an open item)
+// and any unknown sub-reason. The object's own final flag is not trusted for this.
+const FINAL_REASONS=new Set(['guide-sha-mismatch','descriptor-mismatch','refresh-unavailable']),RECIPE_UNSUPPORTED=new Set(GUIDE_UNSUPPORTED_REASONS);
+export function acquisitionFinal(reason,subReason=null){return FINAL_REASONS.has(reason)||reason==='guide-unsupported'&&RECIPE_UNSUPPORTED.has(subReason);}
 export function guideDemandPort(env){
  if(typeof env?.FIA_PREPARATION_JOBS?.idFromName!=='function'||typeof env?.FIA_PREPARATION_JOBS?.get!=='function')return null;
  return async function demandGuide({source,packId}){

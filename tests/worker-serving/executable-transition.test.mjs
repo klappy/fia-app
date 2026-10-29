@@ -423,12 +423,22 @@ test('the #249 build (catalog f5ce2e24, proof index 7140879c, @2) replays to reg
  const prior=SUPERSEDED_BUILDS.slice(0,3).map(b=>b.policy);assert.ok(!prior.includes(F5CE2E24_POLICY),'entry 4 is a new build beside entries 1-3, which stay');
 });
 
-// Review 5699870877 B1: pinned acquisition accounting across every test above (they run first, in order). No read demanded; every
-// explicit Open that prepared demanded exactly once, a refused one none; the counts are pinned.
-const PINNED_OPENS={prepared:23,refused:1,demands:23};
-test('guide acquisitions: no read demands, each explicit Open demands exactly once, and the count is pinned',()=>{
- assert.deepEqual(acquisitions.reads.filter(r=>r.demanded),[],'a read never demands');
- assert.deepEqual(acquisitions.opens.filter(o=>o.status===200&&o.demanded!==1),[],'each explicit Open that prepares demands exactly once');
- assert.deepEqual(acquisitions.opens.filter(o=>o.status!==200&&o.demanded!==0),[],'an Open refused before preparation (the 409 execution-job-policy case) demands nothing');
- assert.deepEqual({prepared:acquisitions.opens.filter(o=>o.status===200).length,refused:acquisitions.opens.filter(o=>o.status!==200).length,demands:guideDemands.length},PINNED_OPENS,'the explicit Opens this file makes, pinned');
+// Review 5699870877 B1 and 5700626016 N2: self-contained acquisition accounting. Its own world and Opens: every read demands
+// nothing; each explicit Open that prepares demands exactly once; the counts are pinned.
+test('guide acquisitions: no read demands, each explicit Open demands exactly once, and the count is pinned',async()=>{
+ acquisitions.reads.length=0;acquisitions.opens.length=0;guideDemands.length=0;
+ const r=await releases(),mf=await r.after();
+ try{
+  const read=http(mf),call=mcp(mf),packId='eng.MRK-1-14-20';
+  const base=await read('/v1/packs/'+packId);assert.ok(base.body.preparationDemand);
+  await call('read_pack',{packId});
+  const first=await prepare(read,base.body.preparationDemand);assert.equal(first.body.status,'ready');
+  await read('/v1/packs/'+packId);await read(`/v1/packs/${packId}?revision=${first.body.record.revision}`);await read('/v1/artifacts/'+first.body.record.revision);
+  const second=await prepare(read,base.body.preparationDemand);assert.equal(second.body.status,'ready');
+  await read('/v1/packs/'+packId);
+  assert.deepEqual(acquisitions.reads.filter(x=>x.demanded),[],'a read never demands');
+  assert.deepEqual(acquisitions.opens.map(o=>[o.status,o.demanded]),[[200,1],[200,1]],'each explicit Open demands exactly once');
+  assert.deepEqual({reads:acquisitions.reads.length,opens:acquisitions.opens.length,demands:guideDemands.length},{reads:6,opens:2,demands:2},'pinned');
+  assert.equal(r.counts.external,0);
+ }finally{await mf.dispose();await rm(r.dir,{recursive:true,force:true});}
 });

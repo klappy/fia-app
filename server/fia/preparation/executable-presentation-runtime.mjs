@@ -107,7 +107,9 @@ export async function createExecutableRuntime({ctx,env,snapshot,capabilities={}}
  // A recorded non-final miss, or a final one whose keyed descriptor or recipe moved, does not settle the current publication.
  const settledJoin=async record=>{
   if(!acquireGuide||typeof ctx.storage.get!=='function')return true;const base=record.execution?.baseRevision;if(typeof base!=='string')return true;
-  const outcome=await ctx.storage.get(joinOutcomeKey(record.packId,base));if(!outcome||outcome.state==='retained')return true;
+  // Review 5700626016 N1: a record with no stored outcome (prepared before outcomes were recorded, e.g. on 4da564b or 1f2c559) is not
+  // settled either: the current read re-offers the demand, and the next explicit Open demands.
+  const outcome=await ctx.storage.get(joinOutcomeKey(record.packId,base));if(!outcome)return false;if(outcome.state==='retained')return true;
   if(!outcome.final||outcome.recipe!==recipeRevision)return false;
   const current=await descriptorKey(record.packId);return !!current&&current.fileSha256===outcome.fileSha256&&current.revision===outcome.revision;
  };

@@ -26,6 +26,7 @@ async function world(){
 export class FiaPreparationJobs extends Jobs{async fetch(request){const url=new URL(request.url);
  if(url.origin==='https://guide-fragment.internal'&&url.pathname==='/demand'){const n=(await this.ctx.storage.get('test-demands'))||0;await this.ctx.storage.put('test-demands',n+1);return Response.json(${JSON.stringify(answer)});}
  if(url.origin==='https://guide-fragment.internal'&&url.pathname==='/fragment'){const n=(await this.ctx.storage.get('test-fragments'))||0;await this.ctx.storage.put('test-fragments',n+1);}
+ if(url.origin==='https://outcome.test'&&url.pathname==='/forget'){for(const k of (await this.ctx.storage.list({prefix:'source-join-outcome:'})).keys())await this.ctx.storage.delete(k);return Response.json(true);}
  if(url.origin==='https://outcome.test')return Response.json({demands:(await this.ctx.storage.get('test-demands'))||0,fragments:(await this.ctx.storage.get('test-fragments'))||0});
  return super.fetch(request);}}
 export default worker;`;
@@ -44,7 +45,8 @@ async function drive(mf){
  const ops=async()=>(await ns.get(ns.idFromName(name)).fetch('https://outcome.test/')).json(),demands=async()=>(await ops()).demands;
  const current=()=>read('/v1/packs/'+PACK);
  const open=async demand=>{const r=await read('/v1/presentation-preparations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(demand)});assert.equal(r.status,200,JSON.stringify(r.body));assert.equal(r.body.status,'ready');return r.body.record;};
- return {read,current,open,demands,ops};
+ const forget=async()=>(await ns.get(ns.idFromName(ROOT)).fetch('https://outcome.test/forget')).json();
+ return {read,current,open,demands,ops,forget};
 }
 
 test('a non-final miss serves base, and the next explicit Open demands again; reads never demand',async()=>{
@@ -82,5 +84,35 @@ test('a final miss stands with no new demand until the recipe moves; then the ne
    await t.open(moved.body.preparationDemand);assert.equal(await t.demands(),2,'the explicit Open demands again');
   }finally{await mf.dispose();}
   assert.equal(w.counts.outbound,0);
+ }finally{await rm(w.dir,{recursive:true,force:true});}
+});
+
+// Review 5700626016 N1: a record with no stored outcome (prepared before outcomes were recorded) is not settled either.
+test('a publication with no recorded join outcome re-offers the demand, and the next explicit Open demands again',async()=>{
+ const w=await world();
+ try{
+  const mf=await w.runtime({answer:{state:'unavailable',reason:'guide-sha-mismatch',final:true}});
+  try{
+   const t=await drive(mf),first=await t.current();const record=await t.open(first.body.preparationDemand);assert.equal(await t.demands(),1);
+   assert.equal((await t.current()).body.revision,record.revision,'with its final outcome the publication stands');
+   await t.forget();
+   const after=await t.current();assert.equal(after.body.execution,undefined,'without an outcome it is not settled');assert.ok(after.body.preparationDemand);
+   assert.equal(await t.demands(),1,'the read did not demand');
+   await t.open(after.body.preparationDemand);assert.equal(await t.demands(),2,'the next explicit Open demands');
+  }finally{await mf.dispose();}
+ }finally{await rm(w.dir,{recursive:true,force:true});}
+});
+
+// Review 5700626016 B1: finality is an allowlist (Terry 85eff6a). guide-unsupported is final only with one of the object's own recipe
+// sub-reasons; the object's other guide-unsupported answers (here a transient ASSETS read) are non-final, so the next Open demands.
+test('guide-unsupported/composer-guide-unavailable is non-final: the next explicit Open demands again',async()=>{
+ const w=await world();
+ try{
+  const mf=await w.runtime({answer:{state:'unavailable',reason:'guide-unsupported',subReason:'composer-guide-unavailable',final:true}});
+  try{
+   const t=await drive(mf),first=await t.current();await t.open(first.body.preparationDemand);assert.equal(await t.demands(),1);
+   const after=await t.current();assert.equal(after.body.execution,undefined,'not the settled publication');assert.ok(after.body.preparationDemand);
+   await t.open(after.body.preparationDemand);assert.equal(await t.demands(),2,'the next explicit Open demands again');
+  }finally{await mf.dispose();}
  }finally{await rm(w.dir,{recursive:true,force:true});}
 });
