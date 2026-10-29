@@ -15,16 +15,18 @@ const modulePath=fileURLToPath(new URL('../../server/fia/preparation/visual-orig
 const worker=`import {createVisualOriginalJob} from ${JSON.stringify(modulePath)};
 const fixtures=${JSON.stringify({png:PNG.toString('base64'),jpeg:JPEG.toString('base64'),interlaced:INTERLACED.toString('base64')})};
 const decode=b=>Uint8Array.from(atob(b),c=>c.charCodeAt(0));
-export class Job {constructor(ctx,env){this.ctx=ctx;this.env=env;this.gets=0;this.gates=[];}
+export class Job {constructor(ctx,env){this.ctx=ctx;this.env=env;this.gets=0;this.decodes=0;this.gates=[];
+  // Counts decodes: only the decode readback calls arrayBuffer() on a retained object (custody verifies by streaming the body).
+  const self=this,raw=env.ORIGINALS;this.bucket=new Proxy(raw,{get(t,p){if(p==='get')return async(...a)=>{const o=await t.get(...a);return o&&new Proxy(o,{get(ot,op){if(op==='arrayBuffer')return ()=>{self.decodes++;return ot.arrayBuffer();};const v=ot[op];return typeof v==='function'?v.bind(ot):v;}});};const v=t[p];return typeof v==='function'?v.bind(t):v;}});}
  async fetch(request){const args=await request.json();if(args.op==='corrupt'){for(const o of (await this.env.ORIGINALS.list({prefix:'originals/visual/sha256/'})).objects)await this.env.ORIGINALS.put(o.key,new Uint8Array(o.size).fill(1));return Response.json({corrupted:true});}if(args.op==='counts')return Response.json({gets:this.gets,waiting:this.gates.length});if(args.op==='release'){for(const r of this.gates.splice(0))r();return Response.json({released:true});}
   const source={kind:args.kind||'map',url:args.url||'https://publisher.invalid/maps/c4.png',sourceVersion:'fixture-revision-1'};
-  try{const job=createVisualOriginalJob({storage:this.ctx.storage,bucket:this.env.ORIGINALS,source,eligibility:c=>!args.ineligible&&!(args.badHash&&c.observedContent?.sha256===args.badHash),now:()=>1000,fetchSource:async(url,options)=>{this.gets++;if(args.fail)throw null;if(options.redirect!=='manual')throw Error('wrong-redirect');if(args.gate)await new Promise(r=>this.gates.push(r));
+  try{const job=createVisualOriginalJob({storage:this.ctx.storage,bucket:this.bucket,source,eligibility:c=>!args.ineligible&&!(args.badHash&&c.observedContent?.sha256===args.badHash),now:()=>1000,fetchSource:async(url,options)=>{this.gets++;if(args.fail)throw null;if(options.redirect!=='manual')throw Error('wrong-redirect');if(args.gate)await new Promise(r=>this.gates.push(r));
     if(args.redirect)return new Response(null,{status:302,headers:{location:'https://elsewhere.invalid/x.png'}});if(args.httpStatus)return new Response('no',{status:args.httpStatus,headers:{'content-type':'text/plain','content-length':'2'}});
     const bytes=args.body?decode(args.body):args.size?new Uint8Array(args.size).fill(7).map((v,i)=>i<8?[0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a][i]:v):decode(fixtures[args.fixture||'png']);
     const headers={'content-type':args.mime||'image/png'};if(!args.noLength)headers['content-length']=String(args.length??bytes.length);
     let sent=false;const cuts=args.split?[0,...args.split,bytes.length]:null;return new Response(new ReadableStream({pull(c){if(sent){c.close();return;}sent=true;if(cuts){for(let i=0;i<cuts.length-1;i++)c.enqueue(bytes.slice(cuts[i],cuts[i+1]));return;}for(let n=0;n<bytes.length;n+=65536)c.enqueue(bytes.slice(n,n+65536));}}),{status:200,headers});}});
    const result=args.op==='read'?await job.read():await job.demand({...(args.aborted?{signal:AbortSignal.abort()}:{}),...(args.retry?{retry:true}:{})});
-   const objects=(await this.env.ORIGINALS.list()).objects;return Response.json({result,gets:this.gets,objects:objects.map(o=>o.key),rows:[...(await this.ctx.storage.list()).keys()]});}catch(error){return Response.json({error:error.message,gets:this.gets});}}
+   const objects=(await this.env.ORIGINALS.list()).objects;return Response.json({result,gets:this.gets,decodes:this.decodes,objects:objects.map(o=>o.key),rows:[...(await this.ctx.storage.list()).keys()]});}catch(error){return Response.json({error:error.message,gets:this.gets});}}
 }
 export default {fetch(request,env){const name=new URL(request.url).pathname.slice(1)||'one';return env.JOBS.get(env.JOBS.idFromName(name)).fetch(request);}};`;
 const bundle=await build({stdin:{contents:worker,resolveDir:resolve('.')},bundle:true,format:'esm',platform:'browser',external:['node:crypto','node:zlib'],write:false});
@@ -72,6 +74,15 @@ test('two demands at once fetch once and the joiner sees preparing',async t=>{
  const mf=await fixture(t),first=call(mf,{gate:true});for(let n=0;n<200&&(await call(mf,{op:'counts'})).waiting<1;n++)await new Promise(r=>setTimeout(r,5));
  const joined=await call(mf,{gate:true});assert.equal(joined.result.state,'preparing');assert.equal(joined.gets,1);
  await call(mf,{op:'release'});const done=await first;assert.equal(done.result.custody,'retained');assert.equal(done.gets,1);
+});
+test('a Retry after a decoded ready fetches 0 and decodes 0, returning the kept verdict',async t=>{
+ const mf=await fixture(t),first=await call(mf);assert.equal(first.result.state,'ready');assert.equal(first.gets,1);assert.equal(first.decodes,1);
+ const retried=await call(mf,{retry:true});assert.equal(retried.gets,1,'Retry fetches nothing');assert.equal(retried.decodes,1,'Retry decodes nothing');assert.deepEqual(retried.result,first.result);
+ const again=await call(mf,{retry:true});assert.equal(again.gets,1);assert.equal(again.decodes,1);assert.deepEqual(again.result,first.result);
+});
+test('a Retry after a final visual-unsupported decode fetches 0 and decodes 0, and never overrides the verdict',async t=>{
+ const mf=await fixture(t),first=await call(mf,{fixture:'interlaced'});assert.equal(first.result.reason,'visual-unsupported');assert.equal(first.result.subReason,'decode-not-streamable');assert.equal(first.result.final,true);assert.equal(first.decodes,1);
+ const retried=await call(mf,{fixture:'interlaced',retry:true});assert.equal(retried.gets,1);assert.equal(retried.decodes,1);assert.deepEqual(retried.result,first.result);
 });
 for(const [name,args,reason] of [
  ['wrong MIME',{mime:'audio/mpeg'},'fresh-response-refused'],
