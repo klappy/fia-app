@@ -7,7 +7,8 @@ const refused=()=>({status:'refused',code:'invalid-request'});
 export function createReadOperations({readCatalog,findArtifact}) {
   return {
     readPack(args) {
-      if(!keys(args,['packId','revision'])||!validId(args.packId)||('revision'in args&&!validHash(args.revision)))return refused();
+      // execution:'2' is a page's capability to receive visual resources; the read itself is unchanged.
+      if(!keys(args,['packId','revision','execution'])||!validId(args.packId)||('revision'in args&&!validHash(args.revision))||('execution'in args&&args.execution!=='2'))return refused();
       return readCatalog(args.packId,args.revision);
     },
     readArtifact(args) {
