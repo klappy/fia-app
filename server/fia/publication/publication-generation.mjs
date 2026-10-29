@@ -88,22 +88,45 @@ export function nativeVisualFiles(visuals){
  return structuredClone(visuals);
 }
 
-// The bound-manifest builder is versioned inside each publication row (PR295 review N1; OFFLINE L43: a
-// newer build alone is not revocation). A row is rebuilt for verification with exactly the rules of the
-// builder version that published it; every earlier version stays here as a pure function.
+// The bound-manifest builder is versioned inside each publication row (PR295/PR296 review N1; OFFLINE L43: a
+// newer build alone is not revocation). A row is re-validated and rebuilt with exactly the frozen rules of the
+// version that published it: each version owns its own base-manifest validator and builder (review N-a, N-b),
+// so a later edit to the shared current functions can never silently change an earlier version.
+// fia-bound-manifest@1 (F7a1), frozen verbatim: base validation without the delivery-sidecar parity rule,
+// and the base files plus the identity fields.
+function validateBaseManifestV1(bytes,{packId,baseRevision}){
+ need(bytes instanceof Uint8Array&&bytes.length>0&&bytes.length<=MAX,'base-manifest-invalid');
+ const m=decode(bytes);
+ need(object(m)&&m.schema===1&&m.packId===packId&&m.presentationRevision===baseRevision&&typeof m.revision==='string'&&m.revision.length>0&&Array.isArray(m.files)&&m.files.length>0&&m.files.length<=4096,'base-manifest-invalid');
+ need(!Object.hasOwn(m,'deliveryRevision')||hash(m.deliveryRevision),'base-manifest-invalid');
+ const paths=new Set();
+ for(const f of m.files){need(object(f)&&typeof f.path==='string'&&f.path.startsWith('/')&&!f.path.startsWith('//')&&!paths.has(f.path)&&hash(f.sha256)&&Number.isSafeInteger(f.bytes)&&f.bytes>0&&typeof f.group==='string','base-manifest-invalid');paths.add(f.path);}
+ return m;
+}
+async function buildBoundManifestV1(base,{packId,executionRevision,baseRevision,mediaAssetsSha256}){
+ need(base?.packId===packId&&base.presentationRevision===baseRevision&&hash(executionRevision)&&hash(mediaAssetsSha256),'bound-manifest-identity');
+ const content={schema:1,packId,presentationRevision:baseRevision,...(Object.hasOwn(base,'deliveryRevision')?{deliveryRevision:base.deliveryRevision}:{}),executionRevision,mediaIdentity:{packId,revision:baseRevision},mediaAssetsSha256,files:structuredClone(base.files)};
+ const revision=await sha256(new TextEncoder().encode(canonicalJSONString(content)));
+ const manifest={...content,id:`bound-offline:${revision}`,revision};
+ const bytes=new TextEncoder().encode(canonicalJSONString(manifest));
+ need(bytes.length<=MAX,'bound-manifest-size');
+ return {manifest,bytes,descriptor:jsonDescriptor(manifest.id,bytes,await sha256(bytes))};
+}
+// Each version: validate(bytes,{packId,baseRevision}) -> base; build(base,identity,{boundArtifacts,visuals}).
 export const BOUND_MANIFEST_BUILDERS=Object.freeze({
- // fia-bound-manifest@1 (F7a1): the base files and the identity fields, no native files.
- 'fia-bound-manifest@1':(base,identity)=>buildBoundManifest(base,identity),
- // fia-bound-manifest@2 (F7a2): @1 plus one native audio file per bound approved recording (OFFLINE L51-L53).
- 'fia-bound-manifest@2':(base,identity,{boundArtifacts=[]}={})=>buildBoundManifest(base,identity,nativeAudioFiles(boundArtifacts)),
+ 'fia-bound-manifest@1':Object.freeze({validate:validateBaseManifestV1,build:(base,identity)=>buildBoundManifestV1(base,identity)}),
+ // fia-bound-manifest@2 (F7a2): delivery-sidecar parity (OFFLINE L15/L97) and one native audio file per bound
+ // approved recording (OFFLINE L51-L53).
+ 'fia-bound-manifest@2':Object.freeze({validate:validateBaseManifest,build:(base,identity,{boundArtifacts=[]}={})=>buildBoundManifest(base,identity,nativeAudioFiles(boundArtifacts))}),
  // fia-bound-manifest@3 (F7a3): @2 plus the published native visual entries, in declaration order.
- 'fia-bound-manifest@3':(base,identity,{boundArtifacts=[],visuals=[]}={})=>buildBoundManifest(base,identity,[...nativeAudioFiles(boundArtifacts),...nativeVisualFiles(visuals)]),
+ 'fia-bound-manifest@3':Object.freeze({validate:validateBaseManifest,build:(base,identity,{boundArtifacts=[],visuals=[]}={})=>buildBoundManifest(base,identity,[...nativeAudioFiles(boundArtifacts),...nativeVisualFiles(visuals)])}),
 });
 export const CURRENT_BOUND_MANIFEST_BUILDER='fia-bound-manifest@3';
-export function boundManifestFor(version,base,identity,inputs={}){
- const build=Object.hasOwn(BOUND_MANIFEST_BUILDERS,version)?BOUND_MANIFEST_BUILDERS[version]:null;
- need(build,'bound-manifest-builder-unknown');
- return build(base,identity,inputs);
+const builderFor=version=>{need(Object.hasOwn(BOUND_MANIFEST_BUILDERS,version),'bound-manifest-builder-unknown');return BOUND_MANIFEST_BUILDERS[version];};
+// Validate the retained base bytes and build the bound manifest, both under one version's rules.
+export async function boundManifestFor(version,baseBytes,ctx,identity,inputs={}){
+ const v=builderFor(version),base=v.validate(baseBytes,ctx);
+ return {base,...await v.build(base,identity,inputs)};
 }
 
 // generation = SHA256(UTF8(canonicalJSONString(preimage))) over the closed preimage (OFFLINE L25-L31).
