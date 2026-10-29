@@ -14,7 +14,8 @@ const KINDS=new Set(['photo','illustration','map']),CHECK='visual-original@1:fir
 // Final typed refusals for this source under this recipe, named as SOURCE-TO-APP's `visual-unsupported` (cookbook PR265) with the
 // recipe sub-reason; `fresh-ineligible` is `visual-ineligible`. Anything else is an interrupted attempt, never a verdict.
 const UNSUPPORTED=new Set(['fresh-response-refused','fresh-known-length-required','fresh-byte-limit','fresh-byte-length','fresh-signature-mismatch','fresh-source-policy']);
-const refusal=r=>UNSUPPORTED.has(r)?{reason:'visual-unsupported',subReason:r,final:true}:r==='fresh-ineligible'?{reason:'visual-ineligible',subReason:r,final:true}:{reason:'interrupted',subReason:r??null,final:false};
+// Ineligibility belongs to the caller's current admission, not to the source, so it is never final for the shared job.
+const refusal=r=>UNSUPPORTED.has(r)?{reason:'visual-unsupported',subReason:r,final:true}:r==='fresh-ineligible'?{reason:'visual-ineligible',subReason:r,final:false}:{reason:'interrupted',subReason:r??null,final:false};
 function trusted(v){
  if(!v||Object.getPrototypeOf(v)!==Object.prototype||Object.keys(v).sort().join()!=='kind,sourceVersion,url'||!KINDS.has(v.kind)||typeof v.url!=='string'||typeof v.sourceVersion!=='string'||!v.sourceVersion||v.sourceVersion.length>256)throw Error('visual-source');
  const url=new URL(v.url);if(url.protocol!=='https:'||url.username||url.password||url.search||url.hash||v.url.length>1024)throw Error('visual-source');
@@ -40,7 +41,10 @@ export function createVisualOriginalJob({storage,bucket,source,eligibility,fetch
  async function retained(c){const head=await observer(c).read();if(head.state!=='observed')return null;return {...base(c),state:'unavailable',reason:'decoder-unavailable',custody:'retained',original:observed(head.observation,head.observationSha256),decode};}
  // A demand fetches at most once per source under this recipe: a repeat or a concurrent demand joins the one ticket.
  async function demand({signal}={}){
-  const c=await context();await bind(c);
+  const c=await context();
+  // An ineligible demand is refused before the job marker, sequence or attempt rows exist, so it cannot poison the shared job.
+  let admitted=false;try{admitted=eligibility()===true;}catch{}if(!admitted)return {...base(c),state:'unavailable',reason:'visual-ineligible',subReason:'fresh-ineligible',final:false,custody:'none',decode};
+  await bind(c);
   try{const prior=await retained(c);if(prior)return prior;}catch(error){return {...base(c),state:'unavailable',reason:'retained-evidence-unavailable',subReason:error.message,final:false,custody:'unverified',decode};}
   let outcome;try{outcome=await observer(c).observe(CHECK,{signal});}catch(error){return {...base(c),state:'unavailable',...refusal(error.message),custody:'none',decode};}
   if(outcome.state==='preparing')return {...base(c),state:'preparing',custody:'none',decode};
