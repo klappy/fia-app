@@ -85,6 +85,7 @@ async function serverJSON(response,file,record){
  return response;
 }
 const revokedSnapshotKey=(packId,revision)=>packKey(packId,'revoked-server:'+revision);
+const refusedApprovedKey=(packId,revision,dependency)=>packKey(packId,'refused-approved:'+revision+':'+dependency.sha256);
 async function invalidateServerSnapshot(packId){jobs.get(packId)?.abort();const key=packKey(packId,'active'),active=await read(key);if(active?.serverSnapshot){await write(revokedSnapshotKey(packId,active.serverSnapshot.record.revision),{revoked:true});active.serverSnapshot.invalid=true;await write(key,active);}}
 async function snapshotComplete(active){
  const snapshot=active?.serverSnapshot;if(!snapshot||snapshot.invalid)return false;
@@ -150,42 +151,59 @@ async function historicalServerRead({match,packId,revision,digest,clientId,answe
  const headers=new Headers(response.headers);headers.set(offlineServerHeader,'historical-verified');headers.set('Cache-Control','private, no-store');return new Response(await response.arrayBuffer(),{status:200,headers});
 }
 
-// Only a coherent selected Saved presentation can name retained approved audio.
+// Binding authority is independent of whether its audio bytes are already Saved.
 // A hash in a URL or another passage's copy is never sufficient authority.
-async function approvedAudioContext(request,clientId){
+function boundApprovedDelivery(bound,dependency){
+ const delivery=bound?.delivery,route=/^\/v1\/approved-audio\/([a-f0-9]{64})\/([a-f0-9]{64})\.(ogg|mp3)$/.exec(delivery?.url||'');
+ if(!route||bound.schema!=='fia-bound-narration-audio@1'||bound.id!==dependency.id||dependency.id!=='approved-audio:'+route[1]||Object.keys(bound).sort().join(',')!=='delivery,id,playbackRange,schema'||Object.keys(delivery).sort().join(',')!=='bytes,mime,sha256,url'||delivery.sha256!==route[2]||delivery.mime!==(route[3]==='ogg'?'audio/ogg':'audio/mpeg')||!Number.isSafeInteger(delivery.bytes)||delivery.bytes<=0||delivery.bytes>16777216)return null;
+ return delivery;
+}
+async function verifiedApprovedResponse(response,delivery){return response.status===200&&!response.redirected&&response.headers.get('Content-Type')===delivery.mime&&response.headers.get('Content-Length')===String(delivery.bytes)&&response.headers.get('ETag')==='"'+delivery.sha256+'"'&&await verified(response.clone(),delivery);}
+async function verifyRefusedApprovedOutputs(packId,snapshot,cache,signal,onprogress){
+ if(!snapshot)return [];
+ const record=snapshot.record,refused=[];
+ const check=()=>{if(signal.aborted)throw Object.assign(Error('Download paused. Verified files are kept for Resume.'),{name:'AbortError'});};
+ for(const dependency of record.execution?.artifacts||[]){check();const key=refusedApprovedKey(packId,record.revision,dependency);if(await read(key))refused.push({dependency,key});}
+ for(const [index,{dependency}] of refused.entries()){
+  check();const response=await cache.match(artifactPath(dependency.sha256));await serverJSON(response,dependency,record);const delivery=boundApprovedDelivery(await response.json(),dependency);if(!delivery)throw Error('The refused recording binding could not be verified.');
+  const live=await fetch(new URL(delivery.url,self.location.origin).href,{cache:'no-store',redirect:'error',signal});if(!await verifiedApprovedResponse(live,delivery))throw Error('The approved recording is still unavailable. Its refusal is preserved.');check();
+  onprogress?.({phase:'approved-output-verified',verified:index+1,total:refused.length});
+ }
+ return refused.map(item=>item.key);
+}
+async function approvedAudioAuthority(request,clientId){
  const url=new URL(request.url),route=/^\/v1\/approved-audio\/([a-f0-9]{64})\/([a-f0-9]{64})\.(ogg|mp3)$/.exec(url.pathname);
  if(!route||url.search||request.headers.has('range')||!clientId)return null;
  try{
   const pin=await read('client-'+clientId),packId=pin?.packId;if(!validPack(packId)||packId===legacy)return null;
   const active=await read(packKey(packId,'active')),record=active?.serverSnapshot?.record;
-  if(!record||pin.serverSnapshot?.invalid||(pin.serverSnapshot?.record.revision||pin.revision)!==record.revision||await read(revokedSnapshotKey(packId,record.revision))||!await complete(active))return null;
+  if(!record||pin.serverSnapshot?.invalid||(pin.serverSnapshot?.record.revision||pin.revision)!==record.revision||await read(revokedSnapshotKey(packId,record.revision))||!await snapshotComplete(active))return null;
   const manifest=validate(active.manifest);if(active.packId!==packId||manifest.packId!==packId||record.execution?.mediaIdentity?.packId!==packId||record.execution.mediaIdentity.revision!==manifest.presentationRevision)return null;
   const dependency=record.execution.artifacts.find(f=>f.id==='approved-audio:'+route[1]);if(!dependency)return null;
   const cache=await caches.open(active.cache),presentationResponse=await cache.match(artifactPath(record.revision));await serverJSON(presentationResponse,serverFiles(record)[0],record);const presentation=await presentationResponse.json();
   if(!presentation.activities.some(a=>a.execution?.narration?.action==='play-bound-audio'&&a.execution.narration.artifact?.id===dependency.id&&a.execution.narration.artifact.sha256===dependency.sha256))return null;
-  const boundResponse=await cache.match(artifactPath(dependency.sha256));await serverJSON(boundResponse,dependency,record);const bound=await boundResponse.json(),delivery=bound.delivery,mime=route[3]==='ogg'?'audio/ogg':'audio/mpeg';
-  if(bound.schema!=='fia-bound-narration-audio@1'||bound.id!==dependency.id||Object.keys(bound).sort().join(',')!=='delivery,id,playbackRange,schema'||!delivery||Object.keys(delivery).sort().join(',')!=='bytes,mime,sha256,url'||delivery.url!==url.pathname||delivery.sha256!==route[2]||delivery.mime!==mime||!Number.isSafeInteger(delivery.bytes)||delivery.bytes<=0||delivery.bytes>16777216)return null;
+  const boundResponse=await cache.match(artifactPath(dependency.sha256));await serverJSON(boundResponse,dependency,record);const delivery=boundApprovedDelivery(await boundResponse.json(),dependency);if(!delivery||delivery.url!==url.pathname)return null;const mime=delivery.mime;
   const file=permittedRecordings(active.files,generatedRecordingPaths).find(f=>f.group==='audio'&&f.sha256===delivery.sha256&&f.bytes===delivery.bytes&&f.mime===mime&&manifest.files.some(d=>d.path===f.path&&matchingSavedFile(d,active,manifest)===f));
-  return file?{packId,active,record,file,cache,clientId}:null;
+  return {packId,active,record,dependency,delivery,file,cache,clientId};
  }catch{return null;}
 }
 async function approvedContextCurrent(context){
  if(!context)return false;const pin=await read('client-'+context.clientId),current=await read(packKey(context.packId,'active'));
  return pin?.packId===context.packId&&!pin.serverSnapshot?.invalid&&(pin.serverSnapshot?.record.revision||pin.revision)===context.record.revision&&!!current&&current.cache===context.active.cache&&current.serverSnapshot?.record.revision===context.record.revision&&!current.serverSnapshot.invalid&&!await read(revokedSnapshotKey(context.packId,context.record.revision));
 }
-async function retireApprovedContext(context){if(await approvedContextCurrent(context))await invalidateServerSnapshot(context.packId);}
+async function retireApprovedContext(context){if(await approvedContextCurrent(context)){await write(refusedApprovedKey(context.packId,context.record.revision,context.dependency),{refused:true});await invalidateServerSnapshot(context.packId);}}
 async function historicalApprovedAudio(context,answer){
- if(!await approvedContextCurrent(context))return answer||new Response('This approved recording is not saved for this presentation.',{status:503});
+ if(!context?.file||!await approvedContextCurrent(context)||await read(refusedApprovedKey(context.packId,context.record.revision,context.dependency))||!await complete(context.active))return answer||new Response('This approved recording is not saved for this presentation.',{status:503});
  const response=await context.cache.match(context.file.path);if(!response?.ok||response.headers.get('Content-Type')!==context.file.mime)return answer||new Response('This saved recording could not be verified.',{status:503});
- const bytes=await response.arrayBuffer();if(bytes.byteLength!==context.file.bytes||await contentHash(bytes)!==context.file.sha256||!await approvedContextCurrent(context))return answer||new Response('This saved recording could not be verified.',{status:503});
+ const bytes=await response.arrayBuffer();if(bytes.byteLength!==context.file.bytes||await contentHash(bytes)!==context.file.sha256||!await approvedContextCurrent(context)||await read(refusedApprovedKey(context.packId,context.record.revision,context.dependency)))return answer||new Response('This saved recording could not be verified.',{status:503});
  const headers=new Headers({'Content-Type':context.file.mime,'Content-Length':String(context.file.bytes),'ETag':'"'+context.file.sha256+'"','Cache-Control':'private, no-store',[offlineServerHeader]:'historical-verified'});
  return new Response(bytes,{status:200,headers});
 }
 async function approvedAudioRead(request,clientId){
- const context=await approvedAudioContext(request,clientId);let response;
+ const context=await approvedAudioAuthority(request,clientId);let response;
  try{response=await fetch(request,{cache:'no-store',redirect:'error'});}catch(error){if(error?.name==='TypeError'||error?.name==='AbortError')return historicalApprovedAudio(context);await retireApprovedContext(context);return Response.error();}
  if([408,429,500,502,503,504].includes(response.status))return historicalApprovedAudio(context,response);
- if(context&&(response.status!==200||response.redirected||response.headers.get('Content-Type')!==context.file.mime||response.headers.get('Content-Length')!==String(context.file.bytes)||response.headers.get('ETag')!=='"'+context.file.sha256+'"'||!await verified(response.clone(),context.file)))await retireApprovedContext(context);
+ if(context&&!await verifiedApprovedResponse(response,context.delivery))await retireApprovedContext(context);
  return response;
 }
 
@@ -322,6 +340,8 @@ async function start(selection,port,packId=legacy,sizes={},revision){
   // Old loaded callers use the same Save protocol. Never downgrade a verified
   // executable Saved snapshot to a static base (or a snapshot-less legacy save).
   if(active?.serverSnapshot?.record.execution&&!serverSnapshot?.record.execution&&await snapshotComplete(active))throw Error('The executable saved passage is preserved. Reload before saving this selection.');
+  // Re-saving pack/proxy bytes cannot erase a canonical binding refusal.
+  const verifiedRefusals=downloadSelectionIncludes(selection,'audio')?await verifyRefusedApprovedOutputs(packId,serverSnapshot,cache,controller.signal,preflight):[];
   const downloadFiles=[...files,...(serverSnapshot?.files||[])];
   pending={packId,cache:cacheId,revision:manifest.revision,selection,manifest,files,...(serverSnapshot?{serverSnapshot}:{}),bytes:downloadTransferBytes(downloadFiles),received:0,count:0,status:'downloading'};
   await write(packKey(packId,'pending'),pending);
@@ -355,7 +375,7 @@ async function start(selection,port,packId=legacy,sizes={},revision){
   if(!await complete(pending))throw new Error('Storage changed before verification finished. Retry the download.');
   if(controller.signal.aborted)throw new Error('Download authority changed before activation.');
   // Single metadata write is the commit point. An interrupted update keeps active intact.
-  await write(packKey(packId,'active'),pending);if(serverSnapshot&&!controller.signal.aborted)await(await caches.open(META)).delete('/'+revokedSnapshotKey(packId,serverSnapshot.record.revision));if(controller.signal.aborted){await invalidateServerSnapshot(packId);throw new Error('Download authority changed during activation.');}await(await caches.open(META)).delete('/'+packKey(packId,'pending'));
+  await write(packKey(packId,'active'),pending);for(const key of verifiedRefusals){if(controller.signal.aborted)break;await(await caches.open(META)).delete('/'+key);}if(serverSnapshot&&!controller.signal.aborted)await(await caches.open(META)).delete('/'+revokedSnapshotKey(packId,serverSnapshot.record.revision));if(controller.signal.aborted){await invalidateServerSnapshot(packId);throw new Error('Download authority changed during activation.');}await(await caches.open(META)).delete('/'+packKey(packId,'pending'));
   // Keep the prior revision for already-open clients. Removal clears every revision.
   // Do not switch an open page's media beneath its loaded text and alignment.
   return {saved:true,selection};
