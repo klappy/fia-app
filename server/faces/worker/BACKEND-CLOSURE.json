@@ -367,8 +367,20 @@
     },
     {
       "path": "server/fia/preparation/executable-presentation-runtime.mjs",
-      "sha256": "c969b54de6ba07336c2441c31c2a065e454b606320057f17f7ecb9ca4f8dcef8",
-      "bytes": 16736,
+      "sha256": "1be1ba88f829ae2ee592ca42a08fa584873b7bb706610d744249509a8bede3ad",
+      "bytes": 16875,
+      "role": "worker-runtime"
+    },
+    {
+      "path": "server/fia/preparation/trusted-source-actions.mjs",
+      "sha256": "3643e5f0b66d1a968d0a8fbff132262b9db5a9ba0dfff96e5b04b1a52f3ab684",
+      "bytes": 5966,
+      "role": "worker-runtime"
+    },
+    {
+      "path": "server/fia/preparation/trusted-source-actions.json",
+      "sha256": "6bc865bb74b899ee4388a577cb896331e4f3a17ce8c1db57655b1bcbea8f52e4",
+      "bytes": 2144,
       "role": "worker-runtime"
     },
     {

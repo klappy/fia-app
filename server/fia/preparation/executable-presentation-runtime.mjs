@@ -7,6 +7,7 @@ import {createExecutableOverlay} from '../publication/executable-overlay.mjs';
 import {createExecutableOperations} from '../publication/executable-operations.mjs';
 import {createExecutablePresentationService} from './executable-presentation-service.mjs';
 import {createExecutablePresentationResolver,createCanonicalGuideReader} from './executable-presentation-resolver.mjs';
+import {createTrustedSourceActionComposer} from './trusted-source-actions.mjs';
 import guideSources from './guide-sources.json' with {type:'json'};
 import preparationCatalog from './catalog.json' with {type:'json'};
 import {eligibleRows,resolveSelection} from './service.mjs';
@@ -78,8 +79,8 @@ export async function createExecutableRuntime({ctx,env,snapshot,capabilities={}}
   for(const binding of next.bindings)need((await retained.registerBinding(binding)).status==='ready','approved-audio-registration');
   return {narrationBindings:{...original.narrationBindings,...next.narrationBindings},boundArtifacts:[...original.boundArtifacts,...next.boundArtifacts]};
  });
- const resolve=capabilities.resolve??createExecutablePresentationResolver({reads:baseReads,resolveCanonicalSource:createCanonicalGuideReader({canonicalSources:snapshot.canonicalSources??[],fetchAsset:path=>env.ASSETS.fetch(new Request(new URL(path,env.FIA_API_ORIGIN),{redirect:'manual'}))}),composeDecisionInputs:capabilities.composeDecisionInputs??null,resolveBindings});
  const currentPolicy=capabilities.policySha256??policySha256;
+ const resolve=capabilities.resolve??createExecutablePresentationResolver({reads:baseReads,resolveCanonicalSource:createCanonicalGuideReader({canonicalSources:snapshot.canonicalSources??[],fetchAsset:path=>env.ASSETS.fetch(new Request(new URL(path,env.FIA_API_ORIGIN),{redirect:'manual'}))}),composeDecisionInputs:capabilities.composeDecisionInputs??createTrustedSourceActionComposer({policySha256:currentPolicy}),resolveBindings});
  const service=createExecutablePresentationService({storage:ctx.storage,artifacts,resolve,eligible,interpret:capabilities.interpret??null,policySha256:currentPolicy});
  if(typeof ctx.storage.list==='function'){
   const retained=await ctx.storage.list({prefix:'executable-presentation:job:'});

@@ -63,10 +63,13 @@ async function releases(){
  const drift={...proof.descriptor,path:`/content/approved-audio/${driftSha256}.json`,sha256:driftSha256,bytes:driftBytes.length},indexes=new Map([[proof.descriptor.path,proof.bytes],[drift.path,driftBytes],[D3BE5884.path,storedBytes]]);
  const base={schema:'fia.worker-read-snapshot.v1',records:extension.records,current:extension.current,staticArtifacts:extension.staticArtifacts,artifacts:[],canonicalSources,generalizedAuthority:extension.authority};
  const counts={external:0};
- async function runtime(snapshot,{projector=null}={}){
+ // trusted:false replays a build from before trusted source actions shipped (every build
+ // named here, and the hypothetical content release that only moves today's policy): the
+ // trusted metadata loads with no rows, exactly as those builds composed no decisions.
+ async function runtime(snapshot,{projector=null,trusted=false}={}){
   // projector: the source-action projector source of an earlier release, bundled in
   // place of the current module so the persisted state carries that release's rows.
-  const bundled=await build({stdin:{contents:entry,resolveDir:process.cwd(),sourcefile:'transition-entry.mjs',loader:'js'},bundle:true,platform:'browser',format:'esm',external:['node:*'],write:false,plugins:[{name:'transition-snapshot',setup(b){b.onResolve({filter:/generated\/snapshot\.json$/},()=>({path:'snapshot',namespace:'transition'}));b.onLoad({filter:/.*/,namespace:'transition'},()=>({contents:JSON.stringify(snapshot),loader:'json'}));if(projector)b.onLoad({filter:/source-action-projector\.mjs$/},()=>({contents:projector,loader:'js',resolveDir:dirname(projectorPath)}));}}]});
+  const bundled=await build({stdin:{contents:entry,resolveDir:process.cwd(),sourcefile:'transition-entry.mjs',loader:'js'},bundle:true,platform:'browser',format:'esm',external:['node:*'],write:false,plugins:[{name:'transition-snapshot',setup(b){b.onResolve({filter:/generated\/snapshot\.json$/},()=>({path:'snapshot',namespace:'transition'}));b.onLoad({filter:/.*/,namespace:'transition'},()=>({contents:JSON.stringify(snapshot),loader:'json'}));if(projector)b.onLoad({filter:/source-action-projector\.mjs$/},()=>({contents:projector,loader:'js',resolveDir:dirname(projectorPath)}));if(!trusted)b.onLoad({filter:/trusted-source-actions\.json$/},async args=>({contents:JSON.stringify({...JSON.parse(await readFile(args.path,'utf8')),rows:[]}),loader:'json'}));}}]});
   return new Miniflare({...convertV4MiniflareOptions({modules:true,script:bundled.outputFiles[0].text,compatibilityDate:'2026-09-01',compatibilityFlags:['nodejs_compat'],bindings:{FIA_API_ORIGIN:origin},durableObjects:{FIA_PREPARATION_JOBS:{className:'FiaPreparationJobs',useSQLite:true}},r2Buckets:['FIA_ORIGINALS'],serviceBindings:{ASSETS:async request=>{const path=new URL(request.url).pathname;assert.ok(/^\/content\/[a-zA-Z0-9._/-]+$/.test(path)&&!path.includes('..'),path);let bytes;try{bytes=indexes.has(path)?indexes.get(path):await readFile((path.startsWith('/content/source-guides/')?dir:publicRoot)+path);}catch(error){if(error.code!=='ENOENT')throw error;return new Response('Not found',{status:404});}return new Response(bytes,{headers:{'Content-Type':'application/json','Content-Length':String(bytes.length)}});}},outboundService:()=>{counts.external++;throw Error('External work forbidden');}}),resourcePersistencePath:join(dir,'storage')});
  }
  const current={...base,approvedAudioProofIndex:proof.descriptor};
@@ -76,7 +79,7 @@ async function releases(){
  const released={...base,approvedAudioProofIndex:D3BE5884,generalizedAuthority:{...extension.authority,catalog:{...extension.authority.catalog,sha256:stored.authority.registrySha256},sourceCommit:stored.authority.sourceRevision}};
  const driftPolicy=await sha256(canonicalJSONString({policy:'fia-source-to-app/7fa17af806c139cfc353cace39fa6d50ed9e061b',approvedAudio:drift}));
  const binding=stored.bindings.find(b=>b.packId==='eng.MRK-1-14-20');assert.deepEqual(binding?.media,APPROVED_MEDIA,'the stored index binds the retained recording');
- return {dir,counts,driftPolicy,before:async()=>runtime(base,{projector:await priorProjector()}),priorRecipe:async()=>runtime(released,{projector:await priorProjector()}),recipe2:()=>runtime(released),after:()=>runtime(current),drifted:()=>runtime({...base,approvedAudioProofIndex:drift})};
+ return {dir,counts,driftPolicy,before:async()=>runtime(base,{projector:await priorProjector()}),priorRecipe:async()=>runtime(released,{projector:await priorProjector()}),recipe2:()=>runtime(released),after:()=>runtime(current,{trusted:true}),untrusted:()=>runtime(current),drifted:()=>runtime({...base,approvedAudioProofIndex:drift})};
 }
 // Explicit seeding, as an operator retains DEV's recording: one immutable R2 media object
 // plus its seed receipt. Nothing in a read or a preparation acquires it.
@@ -332,6 +335,41 @@ test('the default passage is not offered a preparation it cannot fulfil, and a f
   assert.equal(record.body.preparationDemand,undefined);
   assert.equal((await read('/v1/packs/eng.MRK-1-1-13')).body.revision,record.body.revision);
  }finally{await mf.dispose();await rm(r.dir,{recursive:true,force:true});}
+});
+
+// The exact admitted tuple (cookbook ANSWER-P2-LEDGER-APPLICABILITY 572bac9; claim
+// CLAIM-S02-U008-TRUSTED-PLACEMENT): eng.MRK-1-14-20 S02-U008 requests FIAMaps/c4 and
+// FIAImages/a1400. An explicit Open of this tree places both through the explicitResult
+// boundary in verified base order (a1400 is base asset 21, c4 is 22), and changes nothing
+// else: every other step, all narration and holds, the assets, and Spanish stay as the
+// same tree composes them with no trusted rows.
+test('an explicit Open places the trusted S02-U008 tuple: focal a1400, derived step S02-U008-resource-c4, nothing else moves',async()=>{
+ const r=await releases(),opened={},demands={};
+ try{
+  for(const name of ['untrusted','after']){
+   const mf=await r[name]();
+   try{
+    const read=http(mf);opened[name]={};
+    for(const packId of ['eng.MRK-1-14-20','spa.MRK-1-14-20']){
+     // The state persists across the two builds, so the second Opens with the base demand the first was offered.
+     if(name==='untrusted'){const base=await read('/v1/packs/'+packId);assert.equal(base.status,200);assert.ok(base.body.preparationDemand,packId);demands[packId]=base.body.preparationDemand;}
+     const ready=await prepare(read,demands[packId]);assert.equal(ready.status,200,JSON.stringify(ready.body));assert.equal(ready.body.status,'ready');
+     opened[name][packId]=(await read('/v1/artifacts/'+ready.body.record.revision)).body;
+    }
+   }finally{await mf.dispose();}
+  }
+  const before=opened.untrusted['eng.MRK-1-14-20'],after=opened.after['eng.MRK-1-14-20'];
+  const index=after.activities.findIndex(a=>a.id==='S02-U008'),[primary,derived]=after.activities.slice(index,index+2),prior=before.activities.find(a=>a.id==='S02-U008');
+  assert.equal(primary.kind,'discussion');assert.equal(primary.assetId,'a1400');assert.equal(primary.execution.focalAssetId,'a1400');assert.equal(primary.completion,'confirm');assert.deepEqual(primary.execution.completion,{action:'manual-continue'});
+  assert.deepEqual(primary.execution.narration,prior.execution.narration,'narration is unchanged');assert.equal(primary.narration,prior.narration);assert.equal(primary.sourceText,prior.sourceText);assert.equal(primary.prompt,prior.prompt);assert.deepEqual(primary.relatedAssetIds,prior.relatedAssetIds,'no legacy relatedIds are imported');
+  assert.equal(prior.execution.focalAssetId,null);assert.deepEqual(prior.execution.completion,{action:'manual-continue'},'the hold was already manual');
+  assert.equal(derived.id,'S02-U008-resource-c4');assert.equal(derived.fulfills,'S02-U008');assert.equal(derived.assetId,'c4');assert.equal(derived.execution.focalAssetId,'c4');assert.deepEqual(derived.execution.narration,{action:'none'});assert.equal(derived.narration,'');assert.equal(derived.completion,'confirm');
+  assert.deepEqual(after.activities.filter(a=>!a.id.startsWith('S02-U008')),before.activities.filter(a=>a.id!=='S02-U008'),'every other step is byte-identical');
+  assert.equal(after.activities.length,before.activities.length+1);assert.deepEqual(after.assets,before.assets,'the asset graph is unchanged');
+  assert.deepEqual(after.activities.filter(a=>a.execution.focalAssetId&&['image','map','video'].includes(after.assets[a.execution.focalAssetId]?.kind)).map(a=>[a.id,a.execution.focalAssetId]),[['S02-U008','a1400'],['S02-U008-resource-c4','c4']],'no other visual placement and no video');
+  assert.notEqual(after.execution.decisionEvidenceSha256,before.execution.decisionEvidenceSha256);
+  assert.deepEqual(opened.after['spa.MRK-1-14-20'],opened.untrusted['spa.MRK-1-14-20'],'the Spanish row is not admitted');
+ }finally{await rm(r.dir,{recursive:true,force:true});}
 });
 
 test('resolver: base id fia-mark-authentic@1 for eng.MRK-1-1-13 is a typed refusal from the service, never a thrown 500',async()=>{

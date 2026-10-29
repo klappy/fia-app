@@ -1,0 +1,40 @@
+{
+  "schema": "fia-trusted-source-actions@1",
+  "purpose": "Exact independently reviewed source-to-resource facts consumed as trusted versioned metadata. Each row is re-verified against the current base and canonical source at demand; any mismatch is dropped, never repaired or inferred. Only requested-medium relations are carried: no curated primary, display order, legacy relatedIds or optional companions.",
+  "evidence": {
+    "ledgerSchema": "fia-unit-media-associations@1",
+    "ledgerStatus": "accepted-by-exact-independent-review-before-source-use",
+    "ledgerSha256": "123733d7aa1c127d8929efa2493b2ae5078657629c0f7b2647e1c44a916656c1",
+    "ledger": "klappy/fia-app-cookbook work/active/2026-10-05-generalized-media-associations/association-ledger.json blob 3f25859fdd596727946a0aba3f1e529d26151c95",
+    "applicability": "klappy/fia-app-cookbook work/active/2026-10-03-fia-v3-integrated-delivery/ANSWER-P2-LEDGER-APPLICABILITY-2026-10-26.md commit 572bac9",
+    "sourceRevision": "f8776d92b090b5af5b17b17dc1137f25fb059ed0",
+    "guideRevision": "eb744452eb8d7c852caadde9d3181cddfe571119"
+  },
+  "rows": [
+    {
+      "packId": "eng.MRK-1-14-20",
+      "language": "eng",
+      "guideSourceId": "eng-mrk-p2-v2.2",
+      "guideContentSha256": "d0b5c7d9f92ad6faa97bb8b2718d627e4044804c18e4bf7ef1432cb207ed5ec9",
+      "guideFileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c",
+      "unitId": "S02-U008",
+      "unitTextSha256": "33235d01384b23c5a5a29b2139ddc35898ad7c532298d6804113aa6030f670da",
+      "requested": [
+        {
+          "collection": "FIAMaps",
+          "id": "c4",
+          "title": "Galilee Area with Caesarea Philippi and Capernaum",
+          "sourceFile": "eng/json/007.content.json",
+          "sourceFileSha256": "c2e796ad27262766e822dedbf1d212bfb9966af8b6c68353635595cf3d5fc3b1"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a1400",
+          "title": "Sea of Galilee",
+          "sourceFile": "eng/json/019.content.json",
+          "sourceFileSha256": "8447fcabbe01dc1c9453465a401b5c5fb93fdb5cfb63ac1b2d29fc5a08fa988e"
+        }
+      ]
+    }
+  ]
+}
