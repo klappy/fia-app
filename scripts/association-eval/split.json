@@ -7,6 +7,7 @@
     "MRK-1-1-13": "tuning"
   },
   "strata": {
+    "LUK-1-26-38": "manual-spa-luke",
     "MRK-1-1-13": "approved-presentation",
     "MRK-1-14-20": "semantic",
     "MRK-2-1-12": "semantic",
@@ -17,6 +18,7 @@
     "MRK-8-11-21": "ledger-inline"
   },
   "ranks": {
+    "LUK-1-26-38": "45a564c967ecedfbbfd562e765f10af4878dea2b3a49f9976cb9284b4998a0eb",
     "MRK-1-14-20": "2916375dc372d2b462a5f00112368de9e7032252c94e42d9ca5b8d76606ebf23",
     "MRK-2-1-12": "65986b7a1b155fd082ab5728145fa7d4511f0f771125c2df22f789af801c41fe",
     "MRK-3-7-12": "33ea1b0016e754b8a88e03e965a8633e02cbd01c39c71530f1b39452d14beb95",
@@ -26,6 +28,7 @@
     "MRK-8-11-21": "6c2b833b8c362793ed7c4af805e35e9a1dbb0a8d5e28f9bd5c8204936ae44b68"
   },
   "assignment": {
+    "LUK-1-26-38": "heldout",
     "MRK-1-1-13": "tuning",
     "MRK-1-14-20": "heldout",
     "MRK-2-1-12": "tuning",
@@ -109,6 +112,30 @@
       "split": "tuning"
     },
     {
+      "caseId": "spa.LUK-1-26-38:S02-U003",
+      "pericope": "LUK-1-26-38",
+      "language": "spa",
+      "split": "heldout"
+    },
+    {
+      "caseId": "spa.LUK-1-26-38:S02-U013",
+      "pericope": "LUK-1-26-38",
+      "language": "spa",
+      "split": "heldout"
+    },
+    {
+      "caseId": "spa.LUK-1-26-38:S03-U011",
+      "pericope": "LUK-1-26-38",
+      "language": "spa",
+      "split": "heldout"
+    },
+    {
+      "caseId": "spa.LUK-1-26-38:S04-U015",
+      "pericope": "LUK-1-26-38",
+      "language": "spa",
+      "split": "heldout"
+    },
+    {
       "caseId": "spa.MRK-1-14-20:S02-U008",
       "pericope": "MRK-1-14-20",
       "language": "spa",
@@ -187,5 +214,7 @@
     "spa/heldout": 7,
     "spa/tuning": 5
   },
-  "countsSpanishLuke": {}
+  "countsSpanishLuke": {
+    "heldout": 4
+  }
 }

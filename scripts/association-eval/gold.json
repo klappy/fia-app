@@ -1413,6 +1413,210 @@
       }
     },
     {
+      "caseId": "spa.LUK-1-26-38:S02-U003",
+      "output": {
+        "decision": "none",
+        "association": {
+          "requested": [],
+          "optionalCompanions": null,
+          "companionPairs": null
+        },
+        "display": {
+          "primaryCollection": null,
+          "primaryAssetId": null,
+          "relatedAssetIds": null,
+          "insertions": null
+        }
+      },
+      "provenance": {
+        "goldSource": "manual-spa-luke",
+        "manualSchema": "fia-association-eval-manual@1",
+        "manualPath": "scripts/association-eval/sources/manual-spa-luke.json",
+        "adjudication": {
+          "author": "otto-assoc-eval-cases",
+          "authoredAt": "2026-10-29",
+          "status": "accepted-by-independent-review",
+          "acceptedBy": "review 5693932562",
+          "acceptance": {
+            "review": "5693932562",
+            "verdict": "APPROVE",
+            "reviewedCommit": "c26348892ce051d109b9ebdafe3cb4ddc88563be",
+            "submittedAt": "2026-10-29T06:55:07Z",
+            "agreement": "6/6 (4 none, 2 unresolved, 0 associate)",
+            "scope": "exact adjudication text of every row and unresolved entry"
+          },
+          "claim": "fia-app-cookbook work/active/2026-10-06-cross-pericope-media/CLAIM-ASSOCIATION-EVAL-SPA-LUKE-2026-10-29.md (d4c4dea)",
+          "selection": "spa.LUK-1-26-38 (guide spa-luk-p3-v1.0.1) was chosen as the first eligible untagged unit for a visual manual case under this batch's guard, which admits only units whose compiled HTML carries no resource tag. Earlier Spanish Luke units that name Galilea carry resource tags (for example spa-luk-p1-v1.1, Luke 1:1-4, S05-U003 with a FIAKeyTerms reference) and are outside this guard. No claim is made about Galilea, or about any visual, being absent elsewhere in the current source.",
+          "method": "Manual, unit by unit, from the retained archive only (no outside read). A unit is associate only when its own text asks the group to look at a picture, map or video that is one of the pack's catalog candidates, cited by typed identity. A unit that names a place, person or term without asking for a visual is none. A unit that asks for a visual absent from the pack catalog is unresolved and is not gold. No visual is invented. Rows count as gold only after an independent reviewer accepts the exact text."
+        },
+        "evidence": {
+          "basis": "background-only",
+          "reason": "Historical background naming Nazaret and the region of Galilea. The unit gives no instruction to look at or show any picture, map or video; naming a place is not a visual request."
+        },
+        "notScored": {
+          "association.optionalCompanions": "not adjudicated",
+          "association.companionPairs": "not adjudicated",
+          "display.primaryCollection": "not adjudicated",
+          "display.primaryAssetId": "not adjudicated",
+          "display.relatedAssetIds": "not adjudicated",
+          "display.insertions": "not adjudicated"
+        }
+      }
+    },
+    {
+      "caseId": "spa.LUK-1-26-38:S02-U013",
+      "output": {
+        "decision": "none",
+        "association": {
+          "requested": [],
+          "optionalCompanions": null,
+          "companionPairs": null
+        },
+        "display": {
+          "primaryCollection": null,
+          "primaryAssetId": null,
+          "relatedAssetIds": null,
+          "insertions": null
+        }
+      },
+      "provenance": {
+        "goldSource": "manual-spa-luke",
+        "manualSchema": "fia-association-eval-manual@1",
+        "manualPath": "scripts/association-eval/sources/manual-spa-luke.json",
+        "adjudication": {
+          "author": "otto-assoc-eval-cases",
+          "authoredAt": "2026-10-29",
+          "status": "accepted-by-independent-review",
+          "acceptedBy": "review 5693932562",
+          "acceptance": {
+            "review": "5693932562",
+            "verdict": "APPROVE",
+            "reviewedCommit": "c26348892ce051d109b9ebdafe3cb4ddc88563be",
+            "submittedAt": "2026-10-29T06:55:07Z",
+            "agreement": "6/6 (4 none, 2 unresolved, 0 associate)",
+            "scope": "exact adjudication text of every row and unresolved entry"
+          },
+          "claim": "fia-app-cookbook work/active/2026-10-06-cross-pericope-media/CLAIM-ASSOCIATION-EVAL-SPA-LUKE-2026-10-29.md (d4c4dea)",
+          "selection": "spa.LUK-1-26-38 (guide spa-luk-p3-v1.0.1) was chosen as the first eligible untagged unit for a visual manual case under this batch's guard, which admits only units whose compiled HTML carries no resource tag. Earlier Spanish Luke units that name Galilea carry resource tags (for example spa-luk-p1-v1.1, Luke 1:1-4, S05-U003 with a FIAKeyTerms reference) and are outside this guard. No claim is made about Galilea, or about any visual, being absent elsewhere in the current source.",
+          "method": "Manual, unit by unit, from the retained archive only (no outside read). A unit is associate only when its own text asks the group to look at a picture, map or video that is one of the pack's catalog candidates, cited by typed identity. A unit that names a place, person or term without asking for a visual is none. A unit that asks for a visual absent from the pack catalog is unresolved and is not gold. No visual is invented. Rows count as gold only after an independent reviewer accepts the exact text."
+        },
+        "evidence": {
+          "basis": "interpretive-statement",
+          "reason": "\"Esta narrativa muestra que\" means \"this narrative shows that\": an interpretive statement about prophecy (Galilea, David, a virgin). \"muestra\" here is not an instruction to show a resource."
+        },
+        "notScored": {
+          "association.optionalCompanions": "not adjudicated",
+          "association.companionPairs": "not adjudicated",
+          "display.primaryCollection": "not adjudicated",
+          "display.primaryAssetId": "not adjudicated",
+          "display.relatedAssetIds": "not adjudicated",
+          "display.insertions": "not adjudicated"
+        }
+      }
+    },
+    {
+      "caseId": "spa.LUK-1-26-38:S03-U011",
+      "output": {
+        "decision": "none",
+        "association": {
+          "requested": [],
+          "optionalCompanions": null,
+          "companionPairs": null
+        },
+        "display": {
+          "primaryCollection": null,
+          "primaryAssetId": null,
+          "relatedAssetIds": null,
+          "insertions": null
+        }
+      },
+      "provenance": {
+        "goldSource": "manual-spa-luke",
+        "manualSchema": "fia-association-eval-manual@1",
+        "manualPath": "scripts/association-eval/sources/manual-spa-luke.json",
+        "adjudication": {
+          "author": "otto-assoc-eval-cases",
+          "authoredAt": "2026-10-29",
+          "status": "accepted-by-independent-review",
+          "acceptedBy": "review 5693932562",
+          "acceptance": {
+            "review": "5693932562",
+            "verdict": "APPROVE",
+            "reviewedCommit": "c26348892ce051d109b9ebdafe3cb4ddc88563be",
+            "submittedAt": "2026-10-29T06:55:07Z",
+            "agreement": "6/6 (4 none, 2 unresolved, 0 associate)",
+            "scope": "exact adjudication text of every row and unresolved entry"
+          },
+          "claim": "fia-app-cookbook work/active/2026-10-06-cross-pericope-media/CLAIM-ASSOCIATION-EVAL-SPA-LUKE-2026-10-29.md (d4c4dea)",
+          "selection": "spa.LUK-1-26-38 (guide spa-luk-p3-v1.0.1) was chosen as the first eligible untagged unit for a visual manual case under this batch's guard, which admits only units whose compiled HTML carries no resource tag. Earlier Spanish Luke units that name Galilea carry resource tags (for example spa-luk-p1-v1.1, Luke 1:1-4, S05-U003 with a FIAKeyTerms reference) and are outside this guard. No claim is made about Galilea, or about any visual, being absent elsewhere in the current source.",
+          "method": "Manual, unit by unit, from the retained archive only (no outside read). A unit is associate only when its own text asks the group to look at a picture, map or video that is one of the pack's catalog candidates, cited by typed identity. A unit that names a place, person or term without asking for a visual is none. A unit that asks for a visual absent from the pack catalog is unresolved and is not gold. No visual is invented. Rows count as gold only after an independent reviewer accepts the exact text."
+        },
+        "evidence": {
+          "basis": "group-made-illustration",
+          "reason": "The group is asked to create its own storyboard, sketch or illustration of the story. That is a group activity, not a request to view a provided picture, map or video."
+        },
+        "notScored": {
+          "association.optionalCompanions": "not adjudicated",
+          "association.companionPairs": "not adjudicated",
+          "display.primaryCollection": "not adjudicated",
+          "display.primaryAssetId": "not adjudicated",
+          "display.relatedAssetIds": "not adjudicated",
+          "display.insertions": "not adjudicated"
+        }
+      }
+    },
+    {
+      "caseId": "spa.LUK-1-26-38:S04-U015",
+      "output": {
+        "decision": "none",
+        "association": {
+          "requested": [],
+          "optionalCompanions": null,
+          "companionPairs": null
+        },
+        "display": {
+          "primaryCollection": null,
+          "primaryAssetId": null,
+          "relatedAssetIds": null,
+          "insertions": null
+        }
+      },
+      "provenance": {
+        "goldSource": "manual-spa-luke",
+        "manualSchema": "fia-association-eval-manual@1",
+        "manualPath": "scripts/association-eval/sources/manual-spa-luke.json",
+        "adjudication": {
+          "author": "otto-assoc-eval-cases",
+          "authoredAt": "2026-10-29",
+          "status": "accepted-by-independent-review",
+          "acceptedBy": "review 5693932562",
+          "acceptance": {
+            "review": "5693932562",
+            "verdict": "APPROVE",
+            "reviewedCommit": "c26348892ce051d109b9ebdafe3cb4ddc88563be",
+            "submittedAt": "2026-10-29T06:55:07Z",
+            "agreement": "6/6 (4 none, 2 unresolved, 0 associate)",
+            "scope": "exact adjudication text of every row and unresolved entry"
+          },
+          "claim": "fia-app-cookbook work/active/2026-10-06-cross-pericope-media/CLAIM-ASSOCIATION-EVAL-SPA-LUKE-2026-10-29.md (d4c4dea)",
+          "selection": "spa.LUK-1-26-38 (guide spa-luk-p3-v1.0.1) was chosen as the first eligible untagged unit for a visual manual case under this batch's guard, which admits only units whose compiled HTML carries no resource tag. Earlier Spanish Luke units that name Galilea carry resource tags (for example spa-luk-p1-v1.1, Luke 1:1-4, S05-U003 with a FIAKeyTerms reference) and are outside this guard. No claim is made about Galilea, or about any visual, being absent elsewhere in the current source.",
+          "method": "Manual, unit by unit, from the retained archive only (no outside read). A unit is associate only when its own text asks the group to look at a picture, map or video that is one of the pack's catalog candidates, cited by typed identity. A unit that names a place, person or term without asking for a visual is none. A unit that asks for a visual absent from the pack catalog is unresolved and is not gold. No visual is invented. Rows count as gold only after an independent reviewer accepts the exact text."
+        },
+        "evidence": {
+          "basis": "drama-direction",
+          "reason": "\"Muestren que Isabel está embarazada y María está comprometida con José\" directs the actors to portray these facts in the drama. It asks for no visual resource."
+        },
+        "notScored": {
+          "association.optionalCompanions": "not adjudicated",
+          "association.companionPairs": "not adjudicated",
+          "display.primaryCollection": "not adjudicated",
+          "display.primaryAssetId": "not adjudicated",
+          "display.relatedAssetIds": "not adjudicated",
+          "display.insertions": "not adjudicated"
+        }
+      }
+    },
+    {
       "caseId": "spa.MRK-1-14-20:S02-U008",
       "output": {
         "decision": "associate",

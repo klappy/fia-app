@@ -201,7 +201,9 @@ export function manualCases(archive, doc) {
     if (!row.evidence?.basis || !row.evidence?.reason) fail(`manual-evidence-missing:${input.caseId}`);
     rows.push({row, input, gold: {caseId: input.caseId, output: structuredClone(o), provenance: {
       goldSource: 'manual-spa-luke', manualSchema: doc.schema, manualPath: 'scripts/association-eval/' + MANUAL_SPA_LUKE,
-      adjudication: {author: doc.author, authoredAt: doc.authoredAt, status: row.status, claim: doc.claim, method: doc.method},
+      adjudication: {author: doc.author, authoredAt: doc.authoredAt, status: row.status, acceptedBy: row.acceptedBy ?? null,
+        acceptance: row.status === MANUAL_ACCEPTED ? (doc.acceptance ?? fail(`manual-accepted-without-review:${input.caseId}`)) : null,
+        claim: doc.claim, selection: doc.selection ?? null, method: doc.method},
       evidence: row.evidence,
       notScored: Object.fromEntries([['association.optionalCompanions', o.association.optionalCompanions], ['association.companionPairs', o.association.companionPairs],
         ...Object.entries(o.display).map(([k, v]) => ['display.' + k, v])].filter(([, v]) => v === null).map(([k]) => [k, 'not adjudicated'])),
@@ -311,7 +313,10 @@ function manualReport(manual, assignment) {
   const count = rows => Object.fromEntries(['associate', 'none'].map(d => [d, rows.filter(r => r.row.output.decision === d).length]));
   const accepted = manual.rows.filter(r => r.row.status === MANUAL_ACCEPTED), proposed = manual.rows.filter(r => r.row.status === MANUAL_PROPOSED);
   const pericopes = [...new Set(manual.rows.map(r => r.input.pericope))].sort();
+  const associates = accepted.filter(r => r.row.output.decision === 'associate').length;
   return {source: 'scripts/association-eval/' + MANUAL_SPA_LUKE, pericopes,
+    qualifiesSpanishLukeMappingCoverage: associates > 0,
+    coverageNote: 'Accepted none rows are negative examples: they test that a model does not invent a visual, and they do not qualify Spanish Luke mapping coverage. Unresolved rows are real visual cues whose pack catalog supplies no eligible candidate; that is a candidate-pool gap, not a statement about publisher assets.',
     splitIfAccepted: Object.fromEntries(pericopes.map(p => [p, assignment[p]])),
     accepted: {cases: accepted.length, byDecision: count(accepted)},
     proposedPendingIndependentReview: {cases: proposed.length, byDecision: count(proposed), caseIds: proposed.map(r => r.input.caseId)},
