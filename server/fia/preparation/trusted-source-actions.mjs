@@ -16,6 +16,12 @@ const KIND={FIAMaps:'map',FIAImages:'image'};
 const encode=v=>new TextEncoder().encode(canonicalJSONString(v));
 const hash=v=>typeof v==='string'&&/^[a-f0-9]{64}$/.test(v);
 
+// The identity of the shipped metadata folds into the execution recipe, so a row
+// prepared before (or under other) trusted metadata is a different build: its job and
+// publication no longer reproduce today's, and the current read re-offers the demand.
+export const TRUSTED_SOURCE_ACTIONS_SHA256=await sha256(encode(trustedSourceActions));
+export const trustedExecutionRecipe=recipe=>`${recipe}+${TRUSTED_SOURCE_ACTION_POLICY}:${TRUSTED_SOURCE_ACTIONS_SHA256}`;
+
 function validMetadata(m){
  return m?.schema===TRUSTED_SOURCE_ACTION_POLICY&&hash(m.evidence?.ledgerSha256)&&/^[a-f0-9]{40}$/.test(m.evidence?.sourceRevision??'')&&/^[a-f0-9]{40}$/.test(m.evidence?.guideRevision??'')&&Array.isArray(m.rows)&&m.rows.length<=256&&m.rows.every(r=>typeof r.packId==='string'&&typeof r.unitId==='string'&&hash(r.unitTextSha256)&&hash(r.guideContentSha256)&&hash(r.guideFileSha256)&&Array.isArray(r.requested)&&r.requested.length>0&&r.requested.length<=8&&r.requested.every(q=>KIND[q.collection]&&typeof q.id==='string'&&hash(q.sourceFileSha256)))
   &&new Set(m.rows.map(r=>r.packId+' '+r.unitId)).size===m.rows.length;

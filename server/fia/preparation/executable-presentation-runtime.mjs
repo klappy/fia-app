@@ -7,7 +7,8 @@ import {createExecutableOverlay} from '../publication/executable-overlay.mjs';
 import {createExecutableOperations} from '../publication/executable-operations.mjs';
 import {createExecutablePresentationService} from './executable-presentation-service.mjs';
 import {createExecutablePresentationResolver,createCanonicalGuideReader} from './executable-presentation-resolver.mjs';
-import {createTrustedSourceActionComposer} from './trusted-source-actions.mjs';
+import {createTrustedSourceActionComposer,trustedExecutionRecipe} from './trusted-source-actions.mjs';
+import {SOURCE_ACTION_RECIPE} from '../compiler/presentation/source-action-projector.mjs';
 import guideSources from './guide-sources.json' with {type:'json'};
 import preparationCatalog from './catalog.json' with {type:'json'};
 import {eligibleRows,resolveSelection} from './service.mjs';
@@ -81,7 +82,13 @@ export async function createExecutableRuntime({ctx,env,snapshot,capabilities={}}
  });
  const currentPolicy=capabilities.policySha256??policySha256;
  const resolve=capabilities.resolve??createExecutablePresentationResolver({reads:baseReads,resolveCanonicalSource:createCanonicalGuideReader({canonicalSources:snapshot.canonicalSources??[],fetchAsset:path=>env.ASSETS.fetch(new Request(new URL(path,env.FIA_API_ORIGIN),{redirect:'manual'}))}),composeDecisionInputs:capabilities.composeDecisionInputs??createTrustedSourceActionComposer({policySha256:currentPolicy}),resolveBindings});
- const service=createExecutablePresentationService({storage:ctx.storage,artifacts,resolve,eligible,interpret:capabilities.interpret??null,policySha256:currentPolicy});
+ const recipeRevision=trustedExecutionRecipe(SOURCE_ACTION_RECIPE);
+ const service=createExecutablePresentationService({storage:ctx.storage,artifacts,resolve,eligible,interpret:capabilities.interpret??null,policySha256:currentPolicy,recipeRevision});
+ // The build just before trusted source actions wrote rows under the bare recipe. They
+ // still authenticate for exact-revision reads (pinned Active and Saved sessions); the
+ // current read treats them as a cache miss below. This service only reads.
+ const prior=recipeRevision===SOURCE_ACTION_RECIPE?null:createExecutablePresentationService({storage:ctx.storage,artifacts,resolve,eligible,interpret:capabilities.interpret??null,policySha256:currentPolicy});
+ const jobs={read:async args=>{let outcome=null;try{outcome=await service.read(args);}catch(error){if(!prior)throw error;}if(outcome?.status==='ready'||!prior)return outcome;try{const earlier=await prior.read(args);return earlier.status==='ready'?earlier:outcome??earlier;}catch(error){if(outcome)return outcome;throw error;}}};
  if(typeof ctx.storage.list==='function'){
   const retained=await ctx.storage.list({prefix:'executable-presentation:job:'});
   await service.recoverInterrupted({jobIds:[...retained.values()].map(row=>row.jobId)});
@@ -104,12 +111,12 @@ export async function createExecutableRuntime({ctx,env,snapshot,capabilities={}}
  // Cache misses are bookkeeping only (cookbook package-luke RULING.md § DEV publication
  // conflict): one structured log line per miss, never a change to the answer.
  const diagnose=capabilities.diagnose??(event=>console.warn(JSON.stringify(event)));
- const publication=createExecutableOverlay({storage:ctx.storage,artifacts,base,eligible,validate:verifier(service,true),diagnose});
+ const publication=createExecutableOverlay({storage:ctx.storage,artifacts,base,eligible,validate:verifier(jobs,true),diagnose});
  const reads=createReadOperations(publication),readPack=reads.readPack;
  // A row under a superseded build fails its verifier, so the overlay already serves the
  // base (cache miss); the base read gains its demand here, and an explicit Open
  // re-prepares under today's build.
- reads.readPack=async args=>{const record=await readPack(args);if(record?.status!=='ready'||record.execution)return record;const sourceRevision=record.authority?.rawInventoryCommit;if(record.packId===args.packId&&preparable(record,sourceRevision))return {...record,preparationDemand:{packId:args.packId,baseRevision:record.revision,sourceRevision,capability:'executable-presentation'}};return record;};
+ reads.readPack=async args=>{let record=await readPack(args);if(record?.status==='ready'&&record.execution&&!args.revision&&record.execution.provenance?.recipeRevision!==recipeRevision)record=await baseReads.readPack({packId:args.packId});if(record?.status!=='ready'||record.execution)return record;const sourceRevision=record.authority?.rawInventoryCommit;if(record.packId===args.packId&&preparable(record,sourceRevision))return {...record,preparationDemand:{packId:args.packId,baseRevision:record.revision,sourceRevision,capability:'executable-presentation'}};return record;};
  const ops=createExecutableOperations({reads,service,publication,storage:ctx.storage});
  return {...ops,readApprovedAudio:selected=>retained?retained.read(selected):{status:'unavailable',reason:'approved-audio-unavailable'}};
 }
