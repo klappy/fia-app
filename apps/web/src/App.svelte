@@ -276,7 +276,7 @@
  let activity=$derived(currentActivity(session,activities));
  let stage=$derived(presentStage(session,activities));
  let focal=$derived(assets[stage.focal]);
- let termPrompt=$derived(!session.detour&&focal?.kind==='term'&&!!activity?.audioSrc&&termDefinition!==activity.id);
+ let termPrompt=$derived(!session.detour&&focal?.kind==='term'&&termDefinition!==activity.id);
  let guideText=$derived({...readingGroups[activity?.readingGroupId],id:activity?.readingGroupId||activity?.id,kind:'guide',text:readingGroups[activity?.readingGroupId]?.text||activity?.narration||activity?.prompt||'',activeItemId:activity?.id,ordinal:activity?.readingGroupId?undefined:listOrdinals[activity?.id],descriptionAudio:activity?.audioSrc});
  let finished=$derived(session.status==='complete'&&!session.detour);
  // R3: a notice belongs to the passage, screen and sheet that raised it. Its scope is recorded when
@@ -428,11 +428,17 @@
  function cancelStart(){revokePlayback();cancel();dispatch({type:'PAUSE'});}
  // Branches follow the primaryLabel chain, so the handler does what the label says.
  function primaryAction(){
+  if(finished){reset();return;}
+  if(inTransition){navigate({type:'CONTINUE'},true);return;}
+  // Term phases are source content, independent of optional narration availability.
+  if(primaryLabel==='Continue'&&termPrompt){
+   if(automaticOff||!focal.descriptionAudio){cancel();termDefinition=activity.id;persist();}
+   else describe(focal.id,true);
+   return;
+  }
   if(executableMode&&!session.detour){executablePrimary();return;}
   const starts=!['Continue','Return','Begin again','Pause'].includes(primaryLabel);
   if(starts&&!isPlaying&&!playbackPending)authorizeVisual();
-  if(finished){reset();return;}
-  if(inTransition){navigate({type:'CONTINUE'},true);return;}
   if(automaticOff&&!session.detour){navigate({type:'CONTINUE'},true);return;}
   if(isPlaying||playbackPending){revokePlayback();audio?.pause();videoOwner.node?.pause();dispatch({type:'PAUSE'});return;}
   startAction();

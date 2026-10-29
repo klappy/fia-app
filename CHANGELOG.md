@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.0.0-alpha.19 — Whole-book saving containment (2026-10-27)
+
+Whole-book saving is temporarily unavailable in the updated client while its executable Saved-snapshot restoration boundary is corrected. Per-passage saving remains available. Alpha18 originally shipped whole-book save/resume as recorded below; this subsequent containment does not rewrite that release history. Already-loaded old clients and workers are a separate update-lifecycle limitation; the client guard alone does not disable their book loop.
+
+The worker now refuses to replace a verified executable Saved snapshot with a base or snapshot-less save (PR277). See the [release scope and limits](release/changes/3.0.0-alpha.19-wholebook-containment.md). First saves without a prior executable Saved snapshot are outside this guard; old offline workers must update; already-replaced snapshots are not recovered; and a rejected old-client save can leave an unreferenced `-repair` artifact cache, a known storage overhead with a follow-up queued.
+
+Verified Saved approved audio now plays offline; canonical refusals fail closed (PR279). Known PR279 limits: 501/505/52x/530 responses can retire Saved instead of being treated as transient; a pause during activation can leave the passage unsaved until another Save succeeds; offline approved audio needs verified core files; and each audio Save downloads the audio twice.
+
 ## 3.0.0-alpha.18 — Luke, passage controls and downloads (2026-10-26)
 
 Adds Luke text in English and Spanish beside Mark, with publisher audio admitted for Luke 1:1–4. The session bar identifies the passage, disables Replay without playable audio, and provides a book control for passage selection. Downloads offer a no-video package, stable accessible package names, size previews and resumable whole-book saving. Executable preparation uses a verified cache that falls back to preparation on a cache miss.

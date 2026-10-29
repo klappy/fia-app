@@ -86,16 +86,18 @@ it('offers small, no-video and full packages with sizes computed from the manife
  expect(download).toHaveBeenCalledWith('visual',expect.any(Function),expect.anything(),expect.not.objectContaining({video:expect.anything()}));
 });
 
-it('whole book: previews each package total, then saves only unsaved passages through the passage path',async()=>{
- const book=[{id:'eng.MRK-1-1-13',pericopeId:'MRK-1-1-13',language:'eng',title:'Mark 1:1–13'},{id:'eng.MRK-1-14-20',pericopeId:'MRK-1-14-20',language:'eng',title:'Mark 1:14–20'},{id:'eng.LUK-1-1-4',pericopeId:'LUK-1-1-4',language:'eng',title:'Luke 1:1–4'}];
- vi.spyOn(libraryAdapter,'passages').mockResolvedValue(book);
- libraryAdapter.downloadStatus.mockImplementation(async pack=>{return pack?.id==='eng.MRK-1-14-20'?{...available,saved:true,active:{selection:'core',bytes:1024,manifest:available.manifest}}:available;});
+it('withholds whole-book writes while retaining explicit per-passage saving and existing saved state',async()=>{
+ const active={selection:'audio',bytes:2048,manifest:available.manifest};
+ libraryAdapter.downloadStatus.mockResolvedValue({...available,saved:true,active});
  const download=vi.spyOn(libraryAdapter,'download').mockResolvedValue({saved:true});
- render(LibraryPanel,{view:'downloads',selectedPack:book[0]});await settle();
- expect(screen.getAllByRole('radio',{name:'Text and audio',exact:true}).length).toBe(1);
- await fireEvent.click(screen.getByRole('button',{name:'Check book size'}));await settle();await settle();
- const sizes=screen.getByRole('list',{name:'Whole book size by package'});expect(sizes.textContent).toContain('Text only');expect(sizes.textContent).toContain('2 passages · 1 saved');
- expect(screen.getByText(/1\.0 KB|0\.0 MB to download · 1 of 2 passages/)).toBeTruthy();
- await fireEvent.click(screen.getByRole('button',{name:'Download whole book'}));await settle();await settle();await settle();
- expect(download).toHaveBeenCalledOnce();expect(download.mock.calls[0][0]).toBe('core');expect(download.mock.calls[0][2].id).toBe('eng.MRK-1-1-13');
+ const passages=vi.spyOn(libraryAdapter,'passages');
+ render(LibraryPanel,{view:'downloads'});await settle();
+ expect(screen.getByText(/Whole-book saving is temporarily unavailable/)).toBeTruthy();
+ expect(screen.queryByRole('button',{name:'Download whole book'})).toBeNull();
+ expect(screen.queryByRole('button',{name:'Check book size'})).toBeNull();
+ expect(passages).not.toHaveBeenCalled();expect(download).not.toHaveBeenCalled();
+ expect(screen.getByText(/^Saved ·/)).toBeTruthy();
+ await fireEvent.click(screen.getByRole('button',{name:'Save selection again',exact:true}));await settle();
+ expect(download).toHaveBeenCalledOnce();expect(download.mock.calls[0][2].id).toBe('eng.MRK-1-1-13');
+ expect(active.selection).toBe('audio');
 });

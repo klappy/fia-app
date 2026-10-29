@@ -1,5 +1,6 @@
 import {canonicalJSONString,sha256} from '../preparation/contract.mjs';
 const hash=x=>typeof x==='string'&&/^[a-f0-9]{64}$/.test(x);
+const object=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
 const copy=x=>structuredClone(x),encode=x=>new TextEncoder().encode(canonicalJSONString(x));
 const need=(x,reason='executable-publication-invalid')=>{if(!x)throw Error(reason);};
 const same=(a,b)=>canonicalJSONString(a)===canonicalJSONString(b);
@@ -39,10 +40,12 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
   await bytesFor(out);return out;
  }
  async function verified(row,check=validate){
-  need(row?.schema==='fia-executable-publication@1'&&hash(row.revision)&&row.artifact.sha256===row.revision&&Array.isArray(row.bound)&&row.bound.length<=1024);
+  need(row?.schema==='fia-executable-publication@1'&&hash(row.revision)&&object(row.artifact)&&row.artifact.sha256===row.revision&&object(row.binding)&&typeof row.binding.packId==='string'&&hash(row.binding.baseRevision)&&typeof row.binding.sourceRevision==='string'&&row.binding.sourceRevision.length<=128&&Array.isArray(row.bound)&&row.bound.length<=1024&&row.bound.every(d=>object(d)&&typeof d.id==='string')&&object(row.provenance)&&object(row.baseRecord));
   need(await eligible(copy(row.binding))===true,'executable-publication-revoked');
   const pinnedBase=await base.readCatalog(row.binding.packId,row.binding.baseRevision);need(pinnedBase?.status==='ready'&&pinnedBase.revision===row.binding.baseRevision,'executable-base-unavailable');
-  const bytes=await bytesFor(row.artifact),presentation=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
+  const bytes=await bytesFor(row.artifact);let presentation;
+  try{presentation=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));}catch{throw Error('executable-artifact-corrupt');}
+  need(object(presentation),'executable-artifact-corrupt');
   if(presentation.assets){
    need(same(row.mediaIdentity,{packId:row.binding.packId,revision:row.binding.baseRevision})&&row.mediaAssetsSha256===await sha256(encode(presentation.assets)),'executable-media-binding');
    const original=await base.findArtifact(row.binding.baseRevision);need(original?.content&&await sha256(new TextEncoder().encode(original.content))===row.binding.baseRevision&&same(JSON.parse(original.content).assets,presentation.assets),'executable-media-base-unavailable');
@@ -105,7 +108,7 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
   if(!row&&found.key&&!revision)miss('readCatalog',{packId,key:found.key,kind:'verification',reason:'executable-pointer-dangling'});
   if(!row)return base.readCatalog(packId,revision);
   try{need(row.binding?.packId===packId&&(!revision||row.revision===revision)&&found.key===`executable-record:${packId}@${row.revision}`,'executable-pointer-binding');await verified(row);return record(row);}
-  catch(error){fault('readCatalog',{packId,key:found.key},error);return base.readCatalog(packId,revision);}
+  catch(error){fault('readCatalog',{packId,key:found.key},error);if(revision&&kindOf(error)==='transient')throw error;return base.readCatalog(packId,revision);}
  }
  async function findArtifact(digest){
   let owners;
