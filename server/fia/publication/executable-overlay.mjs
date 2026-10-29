@@ -1,4 +1,5 @@
 import {canonicalJSONString,sha256} from '../preparation/contract.mjs';
+import {PUBLICATION_PIN_SCHEMA,publicationGeneration,jsonDescriptor,validDescriptor,boundManifestFor,CURRENT_BOUND_MANIFEST_BUILDER} from './publication-generation.mjs';
 const hash=x=>typeof x==='string'&&/^[a-f0-9]{64}$/.test(x);
 const object=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
 const copy=x=>structuredClone(x),encode=x=>new TextEncoder().encode(canonicalJSONString(x));
@@ -9,6 +10,9 @@ const MAX=1048576;
 // unnamed fault (storage/R2 exception, TypeError) or a timeout is transient.
 const named=e=>typeof e?.message==='string'&&/^[a-z0-9]+(?:-[a-z0-9]+)+$/.test(e.message)&&e.message.length<=80;
 const kindOf=e=>named(e)&&!/-timeout$/.test(e.message)?'verification':'transient';
+// F7a1: a generation-aware publication is stored by (packId, generation); a legacy one by (packId, revision).
+const keyFor=row=>row?.publication?`executable-generation:${row?.binding?.packId}@${row.publication.generation}`:`executable-record:${row?.binding?.packId}@${row?.revision}`;
+const describe=d=>({id:d.id,sha256:d.sha256,bytes:d.bytes,mime:d.mime});
 
 /** Domain validation is supplied by the existing presentation compiler. This is
  * a content-keyed cache over the base catalog, shared by both HTTP and MCP; it is
@@ -19,7 +23,11 @@ const kindOf=e=>named(e)&&!/-timeout$/.test(e.message)?'verification':'transient
  * failure is reported only to the optional `diagnose` hook, tagged `kind`
  * `verification` or `transient` (a storage/R2 fault: the same read may succeed on
  * retry). No model/preparation work is reachable from a read. */
-export function createExecutableOverlay({storage,artifacts,base,eligible,validate,diagnose=()=>{}}){
+// baseManifests (F7a1, optional): {read(packId)} returning the build-pinned, hash-verified UTF-8 bytes of the
+// passage's offline manifest ({bytes,sha256}). With it, a publication of a presentation with assets becomes
+// generation-aware: it retains that base manifest, builds and retains the bound mediaManifest, computes its
+// generation, and is stored by generation (OFFLINE-EXECUTION "Publication generations").
+export function createExecutableOverlay({storage,artifacts,base,eligible,validate,diagnose=()=>{},baseManifests=null}){
  need(typeof storage?.transaction==='function'&&typeof artifacts?.read==='function'&&typeof artifacts?.write==='function'&&typeof base?.readCatalog==='function'&&typeof base?.findArtifact==='function'&&typeof eligible==='function'&&typeof validate==='function');
  const tx=storage.transaction.bind(storage);
  // Diagnostics only: integrity pins feed bookkeeping, never a usage gate.
@@ -52,16 +60,35 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
   }else need(row.mediaIdentity===null&&row.mediaAssetsSha256===null,'executable-media-binding');
   const boundArtifacts=[];
   for(const d of row.bound)boundArtifacts.push({id:d.id,sha256:d.sha256,bytes:await bytesFor(d)});
+  // Historical validation: the closure is rebuilt from this row's own retained base-manifest bytes, never
+  // from today's build pin, so a newer shell alone is not revocation (OFFLINE "Historical eligibility").
+  let manifests=null;
+  if(row.publication!==undefined){
+   const pin=row.publication;
+   need(object(pin)&&Object.keys(pin).sort().join()==='baseManifest,generation,schema'&&pin.schema===PUBLICATION_PIN_SCHEMA&&hash(pin.generation)&&validDescriptor(pin.baseManifest,/^base-offline:[a-f0-9]{64}$/)&&pin.baseManifest.id===`base-offline:${pin.baseManifest.sha256}`&&validDescriptor(row.mediaManifest)&&hash(row.mediaAssetsSha256),'publication-pin-invalid');
+   need(row.baseManifestArtifact?.sha256===pin.baseManifest.sha256&&row.baseManifestArtifact.bytes===pin.baseManifest.bytes&&row.mediaManifestArtifact?.sha256===row.mediaManifest.sha256&&row.mediaManifestArtifact.bytes===row.mediaManifest.bytes,'publication-pin-invalid');
+   const baseBytes=await bytesFor(row.baseManifestArtifact),mediaBytes=await bytesFor(row.mediaManifestArtifact);
+   const bound=await boundManifestFor(row.manifestBuilder,baseBytes,{packId:row.binding.packId,baseRevision:row.binding.baseRevision},{packId:row.binding.packId,executionRevision:row.revision,baseRevision:row.binding.baseRevision,mediaAssetsSha256:row.mediaAssetsSha256},{boundArtifacts,visuals:row.visuals??[]});
+   need(same(bound.descriptor,row.mediaManifest)&&same(Array.from(bound.bytes),Array.from(mediaBytes)),'publication-manifest-mismatch');
+   const {generation}=await publicationGeneration({packId:row.binding.packId,executionRevision:row.revision,baseRevision:row.binding.baseRevision,sourceRevision:row.binding.sourceRevision,baseManifest:pin.baseManifest,mediaManifest:row.mediaManifest,artifacts:row.bound.map(describe)});
+   need(generation===pin.generation,'publication-generation-mismatch');
+   manifests={base:baseBytes,media:mediaBytes};
+  }
   need(await check({presentation,boundArtifacts,provenance:copy(row.provenance),binding:copy(row.binding)})===true,'executable-publication-refused');
   need(await eligible(copy(row.binding))===true,'executable-publication-revoked');
-  return {bytes,boundArtifacts};
+  return {bytes,boundArtifacts,manifests};
  }
- function record(row){return {...copy(row.baseRecord),status:'ready',packId:row.binding.packId,revision:row.revision,artifact:{sha256:row.artifact.sha256,bytes:row.artifact.bytes,mime:row.artifact.mime},execution:{schema:'fia-executable-catalog@1',baseRevision:row.binding.baseRevision,sourceRevision:row.binding.sourceRevision,artifacts:row.bound.map(({id,sha256,bytes,mime})=>({id,sha256,bytes,mime})),mediaIdentity:row.mediaIdentity??null,mediaAssetsSha256:row.mediaAssetsSha256??null,provenance:copy(row.provenance)}};}
- async function publish({binding,presentation,boundArtifacts=[],provenance}){
+ function record(row){return {...copy(row.baseRecord),status:'ready',packId:row.binding.packId,revision:row.revision,artifact:{sha256:row.artifact.sha256,bytes:row.artifact.bytes,mime:row.artifact.mime},execution:{schema:'fia-executable-catalog@1',baseRevision:row.binding.baseRevision,sourceRevision:row.binding.sourceRevision,artifacts:row.bound.map(({id,sha256,bytes,mime})=>({id,sha256,bytes,mime})),mediaIdentity:row.mediaIdentity??null,mediaAssetsSha256:row.mediaAssetsSha256??null,provenance:copy(row.provenance),...(row.publication?{publication:copy(row.publication),mediaManifest:copy(row.mediaManifest)}:{})}};}
+ async function generationAt(key){if(!key)return null;const row=await tx(t=>t.get(key));return hash(row?.publication?.generation)?row.publication.generation:null;}
+ // The generation the current pointer selects for this pack, or null (OFFLINE expectedPublicationGeneration).
+ async function currentGeneration(packId){return generationAt(await tx(t=>t.get('executable-current:'+packId)));}
+ async function publish({binding,presentation,boundArtifacts=[],provenance,expectedPublicationGeneration}){
   need(binding&&typeof binding.packId==='string'&&hash(binding.baseRevision)&&typeof binding.sourceRevision==='string'&&binding.sourceRevision.length<=128&&boundArtifacts.length<=1024);
   const baseRecord=await base.readCatalog(binding.packId,binding.baseRevision);need(baseRecord?.status==='ready'&&baseRecord.revision===binding.baseRevision,'executable-base-unavailable');
   const baseCurrent=await base.readCatalog(binding.packId);need(baseCurrent?.status==='ready'&&baseCurrent.revision===binding.baseRevision,'executable-base-stale');
   const priorPointer=await tx(t=>t.get('executable-current:'+binding.packId));
+  // A supplied expectation binds the intended prior publication before any work; mismatch is typed stale.
+  if(expectedPublicationGeneration!==undefined){need(expectedPublicationGeneration===null||hash(expectedPublicationGeneration),'executable-publication-invalid');need(expectedPublicationGeneration===await generationAt(priorPointer),'publication-generation-stale');}
   need(await eligible(copy(binding))===true,'executable-publication-revoked');
   need(await validate({binding:copy(binding),presentation:copy(presentation),boundArtifacts:copy(boundArtifacts),provenance:copy(provenance)})===true,'executable-publication-refused');
   let mediaIdentity=null,mediaAssetsSha256=null;
@@ -73,51 +100,77 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
   const seen=new Set(),bound=[];
   for(const b of boundArtifacts){need(typeof b.id==='string'&&b.id.length>0&&!seen.has(b.id)&&hash(b.sha256)&&b.bytes instanceof Uint8Array&&await sha256(b.bytes)===b.sha256);seen.add(b.id);bound.push({id:b.id,...await retain(b.bytes)});}
   const artifact=await retain(encode(presentation)),row={schema:'fia-executable-publication@1',binding:copy(binding),revision:artifact.sha256,artifact,bound,mediaIdentity,mediaAssetsSha256,provenance:copy(provenance),baseRecord:copy(baseRecord)};
+  // Retain the verified base manifest, then build and retain the bound manifest, then compute the generation
+  // (OFFLINE L33: presentation first, manifest from it, then the record; no hash cycle).
+  if(baseManifests&&mediaAssetsSha256){
+   const pinned=await baseManifests.read(binding.packId);
+   need(pinned?.bytes instanceof Uint8Array&&hash(pinned.sha256)&&await sha256(pinned.bytes)===pinned.sha256,'base-manifest-unavailable');
+   // Validated (inside boundManifestFor) before anything is retained.
+   const bound=await boundManifestFor(CURRENT_BOUND_MANIFEST_BUILDER,pinned.bytes,{packId:binding.packId,baseRevision:binding.baseRevision},{packId:binding.packId,executionRevision:row.revision,baseRevision:binding.baseRevision,mediaAssetsSha256},{boundArtifacts:copy(boundArtifacts),visuals:[]});
+   const baseArtifact=await retain(pinned.bytes),baseDescriptor=jsonDescriptor(`base-offline:${pinned.sha256}`,pinned.bytes,pinned.sha256);
+   const mediaArtifact=await retain(bound.bytes);
+   const {generation}=await publicationGeneration({packId:binding.packId,executionRevision:row.revision,baseRevision:binding.baseRevision,sourceRevision:binding.sourceRevision,baseManifest:baseDescriptor,mediaManifest:bound.descriptor,artifacts:row.bound.map(describe)});
+   Object.assign(row,{manifestBuilder:CURRENT_BOUND_MANIFEST_BUILDER,publication:{schema:PUBLICATION_PIN_SCHEMA,generation,baseManifest:baseDescriptor},mediaManifest:bound.descriptor,baseManifestArtifact:baseArtifact,mediaManifestArtifact:mediaArtifact});
+  }
   await verified(row);
+  // An identical generation already retained is reused only after it verifies now (review N2): a corrupt or
+  // revoked stored row is refused, never re-pointed to.
+  if(row.publication){const stored=await tx(t=>t.get(keyFor(row)));if(stored){need(keyFor(stored)===keyFor(row),'executable-owner-binding');await verified(stored);}}
   await tx(async t=>{
-   const key='executable-record:'+binding.packId+'@'+row.revision;
+   const key=keyFor(row);
    const current=await t.get('executable-current:'+binding.packId);
-   need(current===priorPointer||current===key,'executable-pointer-conflict');
+   need(current===priorPointer||current===key,row.publication?'publication-generation-stale':'executable-pointer-conflict');
    need(await eligible(copy(binding))===true,'executable-publication-revoked');
    const currentBase=await base.readCatalog(binding.packId);need(currentBase?.status==='ready'&&currentBase.revision===binding.baseRevision,'executable-base-stale');
    // Content-keyed cache: an existing row under this key is replaced, never a conflict.
    // Owner-index entries for artifacts the replaced row bound and this one does not are
    // pruned, so they neither count toward the 1024 cap nor cost findArtifact a pass.
-   const replaced=await t.get(key),keep=new Set([artifact,...bound].map(d=>d.sha256));
+   const replaced=await t.get(key),own=[artifact,...bound,...(row.publication?[row.baseManifestArtifact,row.mediaManifestArtifact]:[])],keep=new Set(own.map(d=>d.sha256));
+   // An identical generation is reused with its original provenance, never overwritten (OFFLINE L31).
+   if(row.publication&&replaced){await t.put('executable-current:'+binding.packId,key);return;}
    await t.put(key,row);
+   if(row.publication){const k=`executable-generations:${binding.packId}@${row.revision}`,keys=await t.get(k)||[];if(!keys.includes(key)){need(keys.length<1024);await t.put(k,[...keys,key]);}}
    for(const d of [replaced?.artifact,...(Array.isArray(replaced?.bound)?replaced.bound:[])]){
     if(!hash(d?.sha256)||keep.has(d.sha256))continue;
     const k='executable-artifact:'+d.sha256,owners=await t.get(k);if(!Array.isArray(owners)||!owners.includes(key))continue;
     const rest=owners.filter(o=>o!==key);if(!rest.length&&typeof t.delete==='function')await t.delete(k);else await t.put(k,rest);
    }
-   for(const d of [artifact,...bound]){
+   for(const d of own){
     const k='executable-artifact:'+d.sha256,owners=await t.get(k)||[];
     if(!owners.includes(key)){need(owners.length<1024);await t.put(k,[...owners,key]);}
    }
    await t.put('executable-current:'+binding.packId,key);
   });
-  return readCatalog(binding.packId,row.revision);
+  return readCatalog(binding.packId,row.revision,row.publication?.generation);
  }
- async function readCatalog(packId,revision){
+ // Selectors (OFFLINE "Exact selection"): none = the current pointer; revision = the single retained
+ // publication with that revision (several generations are ambiguous, counted before eligibility);
+ // revision and generation = that exact stored record, never a fallback.
+ async function readCatalog(packId,revision,generation){
   let found;
-  try{found=await tx(async t=>{const key=revision?'executable-record:'+packId+'@'+revision:await t.get('executable-current:'+packId);return {key,row:key?await t.get(key):null};});}
+  try{found=await tx(async t=>{
+   if(generation){const key=`executable-generation:${packId}@${generation}`;return {key,row:await t.get(key),exact:true};}
+   if(revision){const keys=await t.get(`executable-generations:${packId}@${revision}`);if(Array.isArray(keys)&&keys.length>1)return {ambiguous:true};const key=Array.isArray(keys)&&keys.length===1?keys[0]:'executable-record:'+packId+'@'+revision;return {key,row:await t.get(key)};}
+   const key=await t.get('executable-current:'+packId);return {key,row:key?await t.get(key):null};});}
   // An exact-revision read (including publish()'s post-commit read) cannot be answered
   // by the base, so its storage fault propagates; only the pointer read falls through.
   catch(error){if(revision)throw error;fault('readCatalog',{packId},error);return base.readCatalog(packId);}
+  if(found.ambiguous)return {status:'unavailable',reason:'publication-generation-ambiguous'};
   const row=found.row;
+  if(found.exact&&!row)return {status:'unavailable',reason:'publication-generation-unavailable'};
   if(!row&&found.key&&!revision)miss('readCatalog',{packId,key:found.key,kind:'verification',reason:'executable-pointer-dangling'});
   if(!row)return base.readCatalog(packId,revision);
-  try{need(row.binding?.packId===packId&&(!revision||row.revision===revision)&&found.key===`executable-record:${packId}@${row.revision}`,'executable-pointer-binding');await verified(row);return record(row);}
-  catch(error){fault('readCatalog',{packId,key:found.key},error);if(revision&&kindOf(error)==='transient')throw error;return base.readCatalog(packId,revision);}
+  try{need(row.binding?.packId===packId&&(!revision||row.revision===revision)&&(!generation||row.publication?.generation===generation)&&found.key===keyFor(row),'executable-pointer-binding');await verified(row);return record(row);}
+  catch(error){fault('readCatalog',{packId,key:found.key},error);if(revision&&kindOf(error)==='transient')throw error;if(found.exact)return {status:'unavailable',reason:'publication-generation-unavailable'};return base.readCatalog(packId,revision);}
  }
  async function findArtifact(digest){
   let owners;
   try{owners=await tx(t=>t.get('executable-artifact:'+digest));}catch(error){fault('findArtifact',{digest},error);return base.findArtifact(digest);}
   if(!Array.isArray(owners))return base.findArtifact(digest);
   for(const key of owners){
-   try{const row=await tx(t=>t.get(key));need(key===`executable-record:${row?.binding?.packId}@${row?.revision}`,'executable-owner-binding');const v=await verified(row);const d=[row.artifact,...row.bound].find(x=>x.sha256===digest);need(d);const b=digest===row.revision?v.bytes:v.boundArtifacts.find(x=>x.sha256===digest)?.bytes;need(b);return {artifact:{sha256:d.sha256,bytes:d.bytes,mime:d.mime},content:new TextDecoder('utf-8',{fatal:true}).decode(b),cacheControl:'private, no-store'};}catch(error){fault('findArtifact',{digest,key},error);}
+   try{const row=await tx(t=>t.get(key));need(key===keyFor(row),'executable-owner-binding');const v=await verified(row);const d=[row.artifact,...row.bound,...(row.publication?[row.baseManifestArtifact,row.mediaManifestArtifact]:[])].find(x=>x?.sha256===digest);need(d);const b=digest===row.revision?v.bytes:v.manifests&&digest===row.baseManifestArtifact?.sha256?v.manifests.base:v.manifests&&digest===row.mediaManifestArtifact?.sha256?v.manifests.media:v.boundArtifacts.find(x=>x.sha256===digest)?.bytes;need(b);return {artifact:{sha256:d.sha256,bytes:d.bytes,mime:d.mime},content:new TextDecoder('utf-8',{fatal:true}).decode(b),cacheControl:'private, no-store'};}catch(error){fault('findArtifact',{digest,key},error);}
   }
   return base.findArtifact(digest);
  }
- return Object.freeze({publish,readCatalog,findArtifact});
+ return Object.freeze({publish,readCatalog,findArtifact,currentGeneration});
 }
