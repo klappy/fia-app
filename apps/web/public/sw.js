@@ -291,14 +291,27 @@ async function complete(record){
  for(const file of permittedRecordings(record.files,generatedRecordingPaths)){const response=await cache.match(file.path);if(!await verified(response,file))return false;}
  return true;
 }
-async function status(packId=legacy){
+// F11 availability (QA, e52eccf): the Downloads choices are the files the Save would take. For an executable passage named by
+// its exact revision, that is the served execution's verified mediaManifest (execution=2), the same bound manifest start() reads;
+// it lists only published originals. Unreachable or without one, the choices stay those of the build manifest.
+async function servedMediaManifest(packId,revision,manifest){
+ if(packId===legacy||!isPassageHash(revision??'')||!manifest)return null;
+ try{
+  const r=await fetchLatest(`/v1/packs/${packId}?revision=${revision}&execution=2`,{cache:'no-store',redirect:'error'});
+  if(r.status!==200||r.redirected)return null;const record=serverRecord(await r.json(),packId);
+  if(record.revision!==revision||!record.execution?.mediaManifest)return null;
+  return {...await boundMediaManifest(record),catalogRevision:manifest.catalogRevision||manifest.revision};
+ }catch{return null;}
+}
+async function status(packId=legacy,revision){
  if(!isBuild)return {available:false,saved:false,reason:'Downloads work on the published Site. This local development preview does not store offline content.'};
  const active=await read(packKey(packId,'active')),pending=await read(packKey(packId,'pending'));
  let manifest,error='';try{manifest=await latest(packId,true);}catch(e){error=e.message;if(e.mediaStatusCode!=='media-status-transient'&&active?.serverSnapshot){await invalidateServerSnapshot(packId);active.serverSnapshot.invalid=true;}manifest=active?.manifest||pending?.manifest;}
  const saved=await complete(active);
  if(active)active.files=permittedRecordings(active.files,generatedRecordingPaths);
  if(manifest)manifest={...manifest,files:permittedRecordings(manifest.files,generatedRecordingPaths)};
- return {available:true,mediaNotices:(await read('media-notices'))||[],saved,active:active?{...active,valid:saved}:null,pending:pending?{...pending,running:jobs.has(packId)}:null,manifest,error,updateAvailable:!!(active&&manifest&&(active.manifest.catalogRevision||active.revision)!==manifest.revision),choices:manifest?['core',...(manifest.files.some(f=>f.group==='audio')?['audio']:[]),...(manifest.files.some(f=>f.group==='video')&&manifest.files.some(f=>f.group==='image')?['visual']:[]),...(manifest.files.some(f=>f.group==='video'||f.group==='image')?['all']:[])].map(id=>({id,bytes:downloadTransferBytes(selectedFiles(manifest,id))})):[]};
+ const build=manifest,served=await servedMediaManifest(packId,revision,build);if(served)manifest={...served,files:permittedRecordings(served.files,generatedRecordingPaths)};
+ return {available:true,mediaNotices:(await read('media-notices'))||[],saved,active:active?{...active,valid:saved}:null,pending:pending?{...pending,running:jobs.has(packId)}:null,manifest,error,updateAvailable:!!(active&&build&&(active.manifest.catalogRevision||active.revision)!==build.revision),choices:manifest?['core',...(manifest.files.some(f=>f.group==='audio')?['audio']:[]),...(manifest.files.some(f=>f.group==='video')&&manifest.files.some(f=>f.group==='image')?['visual']:[]),...(manifest.files.some(f=>f.group==='video'||f.group==='image')?['all']:[])].map(id=>({id,bytes:downloadTransferBytes(selectedFiles(manifest,id))})):[]};
 }
 self.addEventListener('install',event=>{if(isBuild)event.waitUntil(caches.open(SHELL).then(c=>c.addAll(['/','/index.html','/manifest.webmanifest'])).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));
@@ -510,7 +523,7 @@ self.addEventListener('message',event=>{
     const matches=active&&(active.manifest?.presentationRevision===event.data.revision||!active.serverSnapshot?.invalid&&active.serverSnapshot?.record.revision===event.data.revision);
     if(event.source?.id){const prior=await read('client-'+event.source.id);await write('client-'+event.source.id,{...(matches?active:{packId,revision:event.data.revision}),...(prior?.shell==='network'?{shell:'network'}:{})});}
     await write('selected',{packId});result={selected:true};
-   }else if(type==='DOWNLOAD_STATUS'||type==='CACHE_STATUS')result=await status(packId);
+   }else if(type==='DOWNLOAD_STATUS'||type==='CACHE_STATUS')result=await status(packId,event.data.revision);
    else if(type==='DOWNLOAD_START'){const active=await read(packKey(packId,'active'));if(active&&event.source?.id&&!await read('client-'+event.source.id))await write('client-'+event.source.id,active);result=await start(event.data.selection,port,packId,event.data.sizes||{},event.data.revision);}
    else if(type==='DOWNLOAD_PAUSE'){jobs.get(packId)?.abort();result={paused:true};}
    else if(type==='DOWNLOAD_REMOVE'){
