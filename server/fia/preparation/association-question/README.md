@@ -12,7 +12,7 @@ It consumes PR289 (otto-assoc-eval-cases) at `4359d1e1bd4f40ee2379bacbd0ea634054
 | `normalize.mjs` | `normalizeOutput(raw, request)` parses provider output strictly into PR289's output fields. `provenanceFor(...)` builds the separate provenance wrapper. |
 | `transports.mjs` | The transport interface, plus `recorded` (fixture replay), `none` (requests only) and an unactivated Jev stub. |
 | `cli.mjs` | Reads `inputs.json` (optionally `--only` some case ids), builds requests, calls the transport and writes a PR289 decisions file (or a requests file for `none`). |
-| `jev-noul.mjs` | The resource-association questions on the documented Jev `noul` wire (`fia-association-noul@1`): per-case question set, strict wire parser, deterministic composer, recorded-wire shim, and the live transport gate. See `JEV-NOUL-CONTRACT.md`. |
+| `jev-noul.mjs` | The resource-association questions on the documented Jev `noul` wire (`fia-association-noul@2`): per-case question set, strict wire parser, deterministic composer, recorded-wire shim, and the live transport gate. See `JEV-NOUL-CONTRACT.md`. |
 | `jev-calibrate.mjs` | Per-language calibration bands, fit on tuning semantic-residue cases only. |
 | `jev-noul.schema.json`, `jev-noul-calibration.json` (uncalibrated), `jev-noul-registration.json` | The wire and calibration schema, the committed calibration, and the registered question and budget record (`JEV-NOUL-REGISTRATION.md`). |
 | `report.mjs` | Scores a decisions file with PR289's `score.mjs`, unchanged, separately for exact-source and semantic-residue cases, by split and language, and gives the denominators. |
@@ -88,15 +88,17 @@ The fixture `tests/association-question/fixtures/inputs-tuning-subset.json` hold
 
 ## Jev transport (recorded wire only; live is not activated)
 
-`jev-noul.mjs` puts the association question on the documented wire in `../jev/adapter.mjs`: named `noul` questions, `AI.run('typesafe/jev', {state, questions})`, `answers[key].noul`, and the version from `model_version ?? version`. No committed doc shows a richer question type, so it stays on `noul`. Nothing is reused from the cue-role questions or calibration.
+`jev-noul.mjs` puts the association question on the documented `noul` wire in `../jev/adapter.mjs`. No committed doc shows a richer question type, and nothing is reused from cue-role.
 
 How it works:
-- **Questions:** each case asks one `asksVisual` question plus `requested_<i>` and `primary_<i>` for each image or map candidate. That is at most 31 questions per call, at most 15 visual candidates, and a `state` of at most 8 KiB. A case over a cap is not sent.
-- **Composition:** the answers are composed deterministically into PR289's output shape, then run through the normalizer. Authority stays `model-resolved`.
-- **Calibration:** per-language bands, fit on tuning semantic-residue cases only. The composer abstains on the uncertain band. The committed calibration is uncalibrated.
-- **Version check:** the observed 2026-10-06 wire carried `model` but no `model_version`. Such a response is refused as `provider-model-version-unverified`.
-- **Live gate:** `createJevNoulTransport({mode: 'live'})` refuses with `not-activated:<gaps>` unless the registration (`jev-noul-registration.json`, currently `registered-not-funded` with 0 authorized calls) and a verified execution entitlement are both present. The CLI's `--transport jev` therefore always refuses today.
+- **Calls:** up to two per case. Call 1 asks `asksVisual`, `requested_<i>`, `primary_<i>` and `companion_<v>`. Call 2 asks pairwise `before_<a>_<b>` and `pair_<v>_<i>`, and is sent only when it is needed.
+- **Caps:** at most 35 questions per call, 15 visual and 4 video candidates, 8 requested visuals to order, and 8 KiB of `state`.
+- **Composition:** deterministic, into the full PR289/PR294 gold shape: requested, optional companions, companion pairs, primary, `relatedAssetIds` in order, and insertions with `fulfills` (the projector rule, `source-action-projector.mjs:93`). The result goes through the normalizer, and authority stays `model-resolved`.
+- **Uncertainty:** an uncertain or contradictory answer leaves the field null or makes the case abstain.
+- **Calibration:** per-language bands, fit on tuning semantic-residue cases only, in two passes so no request depends on gold.
+- **Version check:** the observed 2026-10-06 wire carried no `model_version`, and such a response is refused as unverified.
+- **Live gate:** `createJevNoulTransport({mode: 'live'})` refuses with `not-activated:<gaps>` unless the registration (`registered-not-funded`, 0 authorized calls) and a verified execution entitlement are present. `authorizedCalls` must also cover the plan, which is 36 calls.
 
-The tests use recorded documented-wire fixtures only. They are **wire tests, not model quality**. The provider preflight, the budget and the exact live-call prerequisites are in `JEV-NOUL-REGISTRATION.md`.
+The tests use recorded documented-wire fixtures only. They are **wire tests, not model quality**. `JEV-NOUL-CONTRACT.md` has the per-field rules, and `JEV-NOUL-REGISTRATION.md` has the preflight, the budget and the live-call prerequisites.
 
 The older stub, `createJevTransport()` in `transports.mjs`, still throws `not-activated`.

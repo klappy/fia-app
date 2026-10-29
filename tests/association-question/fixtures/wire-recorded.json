@@ -4,8 +4,9 @@
   "records": [
     {
       "caseId": "eng.MRK-1-1-13:S02-U005",
-      "wireRequestSha256": "454ad933d594adcec9d5476cb9b1f2c6aa656d630fd3b6d8de533846530f4893",
-      "questionCount": 17,
+      "call": 1,
+      "wireRequestSha256": "194211c5a6153e5abe52088fc3b43c8c7a03ff53fb62679ca83c687c4379d01b",
+      "questionCount": 20,
       "response": {
         "model_version": "jev-fixture-1",
         "answers": {
@@ -76,14 +77,42 @@
           "primary_7": {
             "type": "noul",
             "noul": 0.08
+          },
+          "companion_0": {
+            "type": "noul",
+            "noul": 0.08
+          },
+          "companion_1": {
+            "type": "noul",
+            "noul": 0.08
+          },
+          "companion_2": {
+            "type": "noul",
+            "noul": 0.08
+          }
+        }
+      }
+    },
+    {
+      "caseId": "eng.MRK-1-1-13:S02-U005",
+      "call": 2,
+      "wireRequestSha256": "ab8ad7e51e4e1232a456d5a1f5c1ba4b706a031e627819f882c134c1d3eb3d40",
+      "questionCount": 1,
+      "response": {
+        "model_version": "jev-fixture-1",
+        "answers": {
+          "before_1_5": {
+            "type": "noul",
+            "noul": 0.92
           }
         }
       }
     },
     {
       "caseId": "eng.MRK-1-14-20:S02-U008",
-      "wireRequestSha256": "b2a56bbf1aade82b5226ccb0b123c758451e6ab9485f510b0230f6e77bc469f8",
-      "questionCount": 17,
+      "call": 1,
+      "wireRequestSha256": "6ec0ceea994259b092dc50e2cfb9dd84a4907e3366ae5a93210e62cd2ff20801",
+      "questionCount": 19,
       "response": {
         "model_version": "jev-fixture-1",
         "answers": {
@@ -154,14 +183,46 @@
           "primary_7": {
             "type": "noul",
             "noul": 0.84
+          },
+          "companion_0": {
+            "type": "noul",
+            "noul": 0.85
+          },
+          "companion_1": {
+            "type": "noul",
+            "noul": 0.1
+          }
+        }
+      }
+    },
+    {
+      "caseId": "eng.MRK-1-14-20:S02-U008",
+      "call": 2,
+      "wireRequestSha256": "2d3530146910d2ba03f006ae3d16549d6e7c2eb185bd03b3d9742f246d8b4e0a",
+      "questionCount": 3,
+      "response": {
+        "model_version": "jev-fixture-1",
+        "answers": {
+          "before_0_7": {
+            "type": "noul",
+            "noul": 0.06
+          },
+          "pair_0_0": {
+            "type": "noul",
+            "noul": 0.9
+          },
+          "pair_0_7": {
+            "type": "noul",
+            "noul": 0.1
           }
         }
       }
     },
     {
       "caseId": "eng.MRK-2-1-12:S02-U004",
-      "wireRequestSha256": "03a8c4d411789772cae7ef6b9ecee2e1f2c5a555b32249e10011134a7e0c1765",
-      "questionCount": 15,
+      "call": 1,
+      "wireRequestSha256": "2dacbc90c5c7d899c4d657099d9ed8491ac33252938892c5eca17806fa6b7613",
+      "questionCount": 17,
       "response": {
         "model_version": "jev-fixture-1",
         "answers": {
@@ -224,14 +285,23 @@
           "primary_6": {
             "type": "noul",
             "noul": 0.8
+          },
+          "companion_0": {
+            "type": "noul",
+            "noul": 0.12
+          },
+          "companion_1": {
+            "type": "noul",
+            "noul": 0.12
           }
         }
       }
     },
     {
       "caseId": "spa.MRK-4-35-41:S03-U017",
-      "wireRequestSha256": "a787e43a239f1350596f6c013037ebda63e18d079e958649cd7e4d7a141e566f",
-      "questionCount": 11,
+      "call": 1,
+      "wireRequestSha256": "7abfa3582f2db208f03cd07c71062239c8b421486926589da215bae0dca5e9ec",
+      "questionCount": 12,
       "response": {
         "model_version": "jev-fixture-1",
         "answers": {
@@ -276,6 +346,10 @@
             "noul": 0.05
           },
           "primary_4": {
+            "type": "noul",
+            "noul": 0.05
+          },
+          "companion_0": {
             "type": "noul",
             "noul": 0.05
           }
