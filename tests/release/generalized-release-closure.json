@@ -1465,7 +1465,7 @@
     },
     {
       "path": "scripts/live-listening/controlled-authority.mjs",
-      "sha256": "0d32a018c71805c41e0f45edacf3b89825b152015b02aef1c1e88e2a1652c9ce"
+      "sha256": "37d76c9ad1785e61fb96430d2ded085cecd8d8337a5d0070c8fc3fae66767e07"
     },
     {
       "path": "scripts/live-listening/controlled-pending.mjs",
@@ -1521,7 +1521,7 @@
     },
     {
       "path": "scripts/worker-preview.mjs",
-      "sha256": "244a0dcf85ebe7067be706d82ec0fa05737db602a4cc759ed67597b0553060af"
+      "sha256": "01efb5ed0222d156dce8475f97365279f64df9c253985f47ab7acdaba0b5925a"
     },
     {
       "path": "server/core/artifacts/store.mjs",
@@ -2936,6 +2936,14 @@
     {
       "path": "apps/web/tests/visual-stage.spec.js",
       "sha256": "d5c69d2cb4f7d706bda1c66efbaf6870c64788cb2d8cd746a0abc2c40c40ceae"
+    },
+    {
+      "path": "scripts/live-listening/source-policy.mjs",
+      "sha256": "8a0853084ed22ab4b5bee9cb72c68169a54d44fa846e51541feeb197e7757a0b"
+    },
+    {
+      "path": "tests/worker-serving/u008-source-policy.test.mjs",
+      "sha256": "6ab0c1cd694e1e794bdae258a42f755e78503ae0576128c98ff1401d4f5bbd24"
     }
   ],
   "generatedFiles": [
