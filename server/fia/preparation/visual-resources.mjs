@@ -5,7 +5,7 @@
 // actions (trusted-source-actions.json), so nothing outside the admitted tuples is ever declared.
 // Each is `preparable` with the exact demand the server will admit (F5a), or `unavailable:
 // visual-ineligible` when its verified source evidence cannot qualify for visual-original@1.
-// mediaManifest and publication (OFFLINE L9/L23) are not emitted here; they belong to F7a.
+// mediaManifest and publication (OFFLINE L9/L23) come from the generation-aware publication (F7a1-F7a3).
 import trustedSourceActions from './trusted-source-actions.json' with {type:'json'};
 
 export const VISUAL_RESOURCES_CAPABILITY='2';
@@ -29,8 +29,16 @@ export function visualSourceEligible(asset){
  return url.protocol==='https:'&&!url.username&&!url.password&&!url.search&&!url.hash&&/\.(?:jpe?g|png)$/i.test(url.pathname);
 }
 
-// record: the ready executable catalog record being served; presentation: its verified bytes, parsed.
-export function declareVisualResources({record,presentation,placements=trustedVisualPlacements()}){
+// The fold (after F7a3): an entry is `ready` only when the verified bound manifest of the generation being
+// served lists that asset's native image file. The overlay re-checks every listed file against the current
+// publication authority on each read, so a listed file is a published, current original (SOURCE-TO-APP L99).
+function readyFile(manifest,assetId,kind){
+ const files=Array.isArray(manifest?.files)?manifest.files.filter(f=>f?.group==='image'&&f.assetId===assetId):[];
+ return files.length===1&&files[0].kind===kind&&hash(files[0].sha256)&&typeof files[0].path==='string'&&files[0].path.endsWith('/'+files[0].sha256)?files[0]:null;
+}
+// record: the ready executable catalog record being served; presentation: its verified bytes, parsed;
+// manifest: its verified bound mediaManifest, parsed, when the publication carries one.
+export function declareVisualResources({record,presentation,manifest=null,placements=trustedVisualPlacements()}){
  const ex=record?.execution;
  if(record?.status!=='ready'||ex?.schema!=='fia-executable-catalog@1'||presentation?.id!==record.packId||!hash(record.revision)||!hash(ex.baseRevision))return null;
  const entries=[],seen=new Set();
@@ -39,6 +47,8 @@ export function declareVisualResources({record,presentation,placements=trustedVi
   if(!asset||!['image','map'].includes(asset.kind)||seen.has(assetId))continue;
   if(!placements.has(`${record.packId} ${activity.sourceUnitId} ${asset.sourceEvidence?.id??asset.id}`))continue;
   seen.add(assetId);
+  const file=manifest&&visualSourceEligible(asset)&&readyFile(manifest,assetId,asset.kind);
+  if(file){entries.push({assetId,kind:asset.kind,status:'ready',ready:{path:file.path,sha256:file.sha256}});continue;}
   entries.push(visualSourceEligible(asset)
    ?{assetId,kind:asset.kind,status:'preparable',preparationDemand:{packId:record.packId,baseRevision:ex.baseRevision,sourceRevision:ex.sourceRevision,capability:'executable-presentation',visualDemand:{assetId,kind:asset.kind},expectedExecutionRevision:record.revision,...(ex.publication?{expectedPublicationGeneration:ex.publication.generation}:{})}}
    :{assetId,kind:asset.kind,status:'unavailable',reason:'visual-ineligible'});

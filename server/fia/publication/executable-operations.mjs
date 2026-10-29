@@ -51,6 +51,7 @@ export function createExecutableOperations({reads,service,publication,storage,vi
   const entry=(record.execution.visualResources??[]).find(e=>e.assetId===args.visualDemand.assetId&&e.kind===args.visualDemand.kind);
   if(!entry)return {refusal:envelope('blocked',null,'execution-admission-refused')};
   if(entry.status==='unavailable')return {refusal:envelope('unavailable',null,entry.reason)};
+  if(entry.status==='ready')return {refusal:envelope('ready',hash(record.execution.provenance?.jobId)?record.execution.provenance.jobId:null,null,record)};
   if(entry.status!=='preparable'||!sameJSON(args,entry.preparationDemand))return {refusal:envelope('blocked',null,'execution-admission-refused')};
   return {record,entry};
  }
@@ -65,9 +66,21 @@ export function createExecutableOperations({reads,service,publication,storage,vi
    catch(error){return envelope('unavailable',null,code(error)&&VISUAL_REASONS.has(code(error))?code(error):'interrupted');}
    // The fence again: a newer execution may have been adopted while custody ran. Its source
    // evidence stays reusable by the job; this demand cannot speak for the newer execution.
-   const after=await currentVisual(args);if(after.refusal)return after.refusal.reason==='execution-revision-stale'?after.refusal:envelope('blocked',null,'execution-revision-stale');
+   const after=await currentVisual(args);if(after.refusal)return after.refusal.status==='ready'||after.refusal.reason==='execution-revision-stale'||after.refusal.reason==='publication-generation-stale'?after.refusal:envelope('blocked',null,'execution-revision-stale');
    if(outcome?.state==='unavailable'&&VISUAL_REASONS.has(outcome.reason))return envelope('unavailable',null,outcome.reason);
-   if(outcome?.state==='ready')return envelope('blocked',null,'visual-publication-unavailable');
+   // The fold: a decoded original published for this execution becomes a new generation that lists it,
+   // with every other currently published declared visual (F7a3), then the asking record is answered.
+   if(outcome?.state==='ready'){
+    const record=after.record,generation=record.execution.publication?.generation;
+    if(!outcome.publication?.manifestEntry||!generation||typeof publication?.publishVisuals!=='function'||typeof visuals.published!=='function')return envelope('blocked',null,'visual-publication-unavailable');
+    const listed=[];
+    for(const e of record.execution.visualResources??[]){if(e.status==='unavailable')continue;const p=await visuals.published({packId:args.packId,baseRevision:args.baseRevision,executionRevision:record.revision,assetId:e.assetId});if(p?.manifestEntry)listed.push(p.manifestEntry);}
+    if(!listed.some(e=>e.assetId===args.visualDemand.assetId))return envelope('blocked',null,'visual-publication-unavailable');
+    await publication.publishVisuals({packId:args.packId,revision:record.revision,expectedPublicationGeneration:generation,visuals:listed});
+    const refreshed=await reads.readPack({packId:args.packId,execution:'2'}),served=(refreshed?.execution?.visualResources??[]).find(e=>e.assetId===args.visualDemand.assetId);
+    if(refreshed?.status!=='ready'||served?.status!=='ready')return envelope('blocked',null,'visual-publication-unavailable');
+    return envelope('ready',hash(refreshed.execution.provenance?.jobId)?refreshed.execution.provenance.jobId:null,null,refreshed);
+   }
    return envelope('unavailable',null,'interrupted');
   }catch(error){if(code(error))return envelope('blocked',null,code(error));throw error;}
  }

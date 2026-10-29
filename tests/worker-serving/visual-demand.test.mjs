@@ -86,3 +86,40 @@ test('frozen previous object: an asking pack read through this Worker returns th
  assert.deepEqual(await ops.readPack({packId:'eng.MRK-0-0-0',execution:'2'}),{status:'unavailable',reason:'not-found'},'other answers pass through unchanged');
  assert.deepEqual(await ops.readPack({packId,execution:'3'}),{status:'refused',code:'invalid-request'},'a malformed capability stays refused');
 });
+
+// The fold (after F7a3): ready only for an asset its verified bound manifest lists; the F5a ready path
+// publishes the decoded original as a new generation and answers the refreshed asking record.
+const listed=(assetId,kind,c)=>({path:`/v1/original-visuals/${h('1')}/${h('2')}/${h(c)}`,group:'image',assetId,kind,sha256:h(c),bytes:100,mime:kind==='map'?'image/png':'image/jpeg',width:30,height:20});
+test('the fold: a declared asset is ready only when the served bound manifest lists its native file',()=>{
+ const rec={...record(),execution:{...record().execution,publication:{schema:'fia-executable-publication-pin@1',generation:h('6'),baseManifest:{id:`base-offline:${h('5')}`,sha256:h('5'),bytes:1,mime:'application/json'}}}};
+ const none=declareVisualResources({record:rec,presentation:presentation(),manifest:{files:[]}});assert.deepEqual(none.map(e=>e.status),['preparable','preparable']);
+ assert.equal(none[0].preparationDemand.expectedPublicationGeneration,h('6'),'the declared demand carries the served generation');
+ const one=declareVisualResources({record:rec,presentation:presentation(),manifest:{files:[{path:'/index.html',group:'core'},listed('a1400','image','a')]}});
+ assert.deepEqual(one[0],{assetId:'a1400',kind:'image',status:'ready',ready:{path:listed('a1400','image','a').path,sha256:h('a')}});assert.equal(one[1].status,'preparable');
+ assert.equal(declareVisualResources({record:rec,presentation:presentation(),manifest:{files:[listed('a1400','map','a')]}})[0].status,'preparable','a wrong kind is not ready');
+ assert.equal(declareVisualResources({record:rec,presentation:presentation(),manifest:{files:[listed('a1400','image','a'),listed('a1400','image','b')]}})[0].status,'preparable','two files for one asset are not ready');
+});
+
+test('F5a ready path: the decoded original is published as a new generation and the refreshed record answers',async()=>{
+ const g1=h('6'),g2=h('7'),pin=g=>({schema:'fia-executable-publication-pin@1',generation:g,baseManifest:{id:`base-offline:${h('5')}`,sha256:h('5'),bytes:1,mime:'application/json'}});
+ let manifest={files:[]},generation=g1;const published=new Map(),calls=[];
+ const reads={readPack:async args=>{const r=record();r.execution.publication=pin(generation);r.execution.provenance={jobId:h('0')};if(args.execution==='2')r.execution.visualResources=declareVisualResources({record:r,presentation:presentation(),manifest});return r;}};
+ const visuals={demand:async req=>{calls.push(['demand',req.assetId]);published.set(req.assetId,listed(req.assetId,req.kind,req.assetId==='c4'?'c':'a'));return {state:'ready',publication:{ready:{},manifestEntry:published.get(req.assetId)}};},published:async q=>{calls.push(['published',q.assetId]);return published.has(q.assetId)?{ready:{path:published.get(q.assetId).path,sha256:published.get(q.assetId).sha256},manifestEntry:published.get(q.assetId)}:null;}};
+ const publication={publishVisuals:async args=>{calls.push(['publishVisuals',args.expectedPublicationGeneration,args.visuals.map(v=>v.assetId)]);manifest={files:args.visuals};generation=g2;}};
+ const storage={transaction:async fn=>fn({get:async()=>undefined,put:async()=>{}})};
+ const ops=createExecutableOperations({reads,service:null,publication,storage,visuals});
+ const demand={...demandFor('a1400','image'),expectedPublicationGeneration:g1};
+ const r=await ops.preparePresentation(demand);
+ assert.equal(r.status,'ready',JSON.stringify(r));assert.equal(r.jobId,h('0'));
+ assert.deepEqual(r.record.execution.visualResources[0],{assetId:'a1400',kind:'image',status:'ready',ready:{path:published.get('a1400').path,sha256:h('a')}});
+ assert.equal(r.record.execution.visualResources[1].status,'preparable');assert.equal(r.record.execution.publication.generation,g2);
+ assert.deepEqual(calls.filter(c=>c[0]==='publishVisuals'),[['publishVisuals',g1,['a1400']]]);
+ // A stale generation expectation is typed before custody; a demand for an already ready asset answers ready.
+ assert.equal((await ops.preparePresentation(demand)).reason,'publication-generation-stale');
+ assert.equal((await ops.preparePresentation({...demandFor('a1400','image'),expectedPublicationGeneration:g2})).status,'ready');
+ const c4=await ops.preparePresentation({...demandFor('c4','map'),expectedPublicationGeneration:g2});assert.equal(c4.status,'ready');
+ assert.deepEqual(c4.record.execution.visualResources.map(e=>e.status),['ready','ready']);assert.deepEqual(calls.filter(c=>c[0]==='publishVisuals').at(-1),['publishVisuals',g2,['a1400','c4']],'a1400 then c4');
+ // Without a generation-aware publication, a decoded original is not published.
+ const legacy=createExecutableOperations({reads:{readPack:async args=>{const r=record();if(args.execution==='2')r.execution.visualResources=declareVisualResources({record:r,presentation:presentation()});return r;}},service:null,publication,storage,visuals});
+ assert.equal((await legacy.preparePresentation(demandFor('c4','map'))).reason,'visual-publication-unavailable');
+});
