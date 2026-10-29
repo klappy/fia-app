@@ -127,9 +127,9 @@ async function readExecutionRecord(packId,revision,generation,signal){
 }
 // The record answers for exactly the displayed generation, or there was none to name.
 const sameGeneration=(record,generation)=>!generation||record.execution?.publication?.generation===generation;
-async function retainServerSnapshot(packId,revision,cache,signal,onprogress,generation=null){
+async function retainServerSnapshot(packId,revision,generation,cache,signal,onprogress){
  if(packId===legacy||revision===undefined)return null;
- if(!isPassageHash(revision)||generation!==null&&!isPassageHash(generation))throw Error('Invalid server revision.');
+ if(!isPassageHash(revision)||generation!=null&&!isPassageHash(generation))throw Error('Invalid server revision.');
  const checkCanceled=()=>{if(signal.aborted)throw Object.assign(Error('Download paused. Verified files are kept for Resume.'),{name:'AbortError'});};
  let record;try{
   // F11: the snapshot is read with the capability the page reads with (execution=2), so an offline reload
@@ -446,7 +446,7 @@ async function start(selection,port,packId=legacy,sizes={},revision,generation=n
   // A repair stages separately from the last working copy, even at the same revision.
   const cacheId=active?.cache===cacheName?cacheName+'-repair':cacheName;
   const cache=await caches.open(cacheId);
-  const serverSnapshot=await retainServerSnapshot(packId,revision,cache,controller.signal,preflight,generation);
+  const serverSnapshot=await retainServerSnapshot(packId,revision,generation,cache,controller.signal,preflight);
   if(serverSnapshot){const binding=serverSnapshot.record.execution?.mediaIdentity||{packId:serverSnapshot.record.packId,revision:serverSnapshot.record.revision};if(binding.packId!==manifest.packId||binding.revision!==manifest.presentationRevision)throw Error('The saved media belongs to a different server presentation.');}
   // The build's manifest still names the catalog revision an update is measured against.
   if(serverSnapshot?.record.execution?.mediaManifest)manifest={...await boundMediaManifest(serverSnapshot.record,controller.signal,preflight),catalogRevision:manifest.catalogRevision||manifest.revision};
