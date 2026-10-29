@@ -5,14 +5,15 @@ import {createVisualOriginalJob,visualOriginalIdentity,VISUAL_ORIGINAL_RECIPE_SH
 // First proof only (PLAN §8a item 2): English eng.MRK-1-14-20 S02-U008, a1400 then c4. Sources come only from this
 // registry, keyed by the verified base asset; nothing reaches a job from a caller URL. The URL equals the pinned base pack's
 // sourceEvidence (tests check it). The Q20 family comes from the publisher path (photos/ is a photo, maps/ a map), never from
-// the base data. a1400 binds FIAImages at the pack's pin; c4 is re-bound (§8a item 4, ANSWER-T5 Q2) from FIAMaps 4bc9bb9
-// eng/json/007.content.json to the current ec486d3 eng/json/048.content.json, whose sha256 Terry verified.
+// the base data. Both bind at the retained pack's pin (collection revision, sourceFile and its sha256). The §8a item 4 re-bind
+// of c4 to FIAMaps ec486d3 eng/json/048.content.json waits: the committed record (ANSWER-T5) gives that file's sha256 only
+// truncated, and no out-of-scope source may be read to complete it (coordinator STOP, INCIDENT-OUT-OF-SCOPE-SOURCE-RETRIEVAL).
 const f=Object.freeze;
 export const VISUAL_FIRST_PROOF=f([
  f({packId:'eng.MRK-1-14-20',baseRevision:'92ad518474f159f6567124052ae12d180a482c949509da0b725593442e62f746',assetId:'a1400',kind:'image',
   source:f({kind:'photo',url:'https://s3.amazonaws.com/cbbt-er.public/media/photos/a1400/1000.jpg',sourceVersion:'FIAImages@136ff7c6b2381b84d241e27524005dcad71424ba:eng/json/019.content.json@8447fcabbe01dc1c9453465a401b5c5fb93fdb5cfb63ac1b2d29fc5a08fa988e'})}),
  f({packId:'eng.MRK-1-14-20',baseRevision:'92ad518474f159f6567124052ae12d180a482c949509da0b725593442e62f746',assetId:'c4',kind:'map',
-  source:f({kind:'map',url:'https://s3.amazonaws.com/cbbt-er.public/media/maps/eng/c4/v1/original.png',sourceVersion:'FIAMaps@ec486d3b079cf2aff012baf8bfab419df28fe5bb:eng/json/048.content.json@ad0703dec8fce8f738325a1b462a41414fc06bd171a26e77ad951c96621d03fc'})}),
+  source:f({kind:'map',url:'https://s3.amazonaws.com/cbbt-er.public/media/maps/eng/c4/v1/original.png',sourceVersion:'FIAMaps@4bc9bb9f1d9082e5d71a047a35bf8e608f473602:eng/json/007.content.json@c2e796ad27262766e822dedbf1d212bfb9966af8b6c68353635595cf3d5fc3b1'})}),
 ]);
 export const VISUAL_PUBLICATION_SCHEMA='fia-visual-publication@1';
 // A deliberate Retry reopens an attempt at most once per this interval per source (ahead of F5a's own rate limit).

@@ -45,14 +45,14 @@ const prepare=(read,demand)=>read('/v1/presentation-preparations',{method:'POST'
 const door=async(mf,source)=>{const ns=await mf.getDurableObjectNamespace('FIA_PREPARATION_JOBS'),{name}=await visualOriginalIdentity(source),stub=ns.get(ns.idFromName(name));
  return {stub,dump:async()=>(await stub.fetch('https://route.test/dump')).json(),put:async(key,value)=>(await stub.fetch('https://route.test/put',{method:'POST',body:JSON.stringify({key,value})})).json()};};
 
-test('the first-proof registry equals the pinned base pack, with c4 re-bound from FIAMaps 007 to 048',async()=>{
+test('the first-proof registry equals the pinned base pack (the c4 re-bind to FIAMaps 048 is a recorded gap)',async()=>{
  const pack=JSON.parse(readFileSync(resolve(publicRoot,'content/packs/eng.MRK-1-14-20/92ad518474f159f6567124052ae12d180a482c949509da0b725593442e62f746.json'),'utf8'));
  for(const e of VISUAL_FIRST_PROOF){const asset=pack.assets[e.assetId];assert.equal(asset.kind,e.kind);assert.equal(asset.sourceEvidence.url,e.source.url);assert.equal(e.baseRevision,'92ad518474f159f6567124052ae12d180a482c949509da0b725593442e62f746');}
  const a=VISUAL_FIRST_PROOF.find(e=>e.assetId==='a1400').source,ae=pack.assets.a1400.sourceEvidence;
  assert.equal(a.sourceVersion,`FIAImages@${ae.titleProvenance.revision}:${ae.sourceFile}@${ae.sourceFileSha256}`);assert.equal(a.kind,'photo');assert.match(a.url,/\/media\/photos\//);
  const c=VISUAL_FIRST_PROOF.find(e=>e.assetId==='c4').source,ce=pack.assets.c4.sourceEvidence;
- assert.equal(ce.sourceFile,'eng/json/007.content.json','the pack still pins the old location');assert.equal(c.kind,'map');assert.match(c.url,/\/media\/maps\//);
- assert.equal(c.sourceVersion,'FIAMaps@ec486d3b079cf2aff012baf8bfab419df28fe5bb:eng/json/048.content.json@ad0703dec8fce8f738325a1b462a41414fc06bd171a26e77ad951c96621d03fc','§8a item 4 re-bind');
+ assert.equal(c.kind,'map');assert.match(c.url,/\/media\/maps\//);
+ assert.equal(c.sourceVersion,`FIAMaps@${ce.titleProvenance.revision}:${ce.sourceFile}@${ce.sourceFileSha256}`,'bound at the retained pack pin');
 });
 
 test('English S02-U008 end to end in the real Worker: admitted demand, original, publication, exact-byte read; typed refusals',async t=>{
