@@ -76,9 +76,13 @@ export function visualAuthorityFrom(visuals,{readPublication=null}={}){
   const outcome=await readPublication(args);
   if(outcome?.status==='ready')return matches(outcome,entry);
   // Only the object's own verified answers withdraw the entry (review 5698617371). Every other non-ready outcome, including the
-  // object's typed refusals (503 storage, 400/405 skew, 404 visual-ineligible, custody) and the port's final:false outcomes, is
+  // object's typed refusals (503 storage, 400/405 skew, custody) and the port's final:false outcomes, is
   // operational: transient, never an observed denial (Terry 0be2e40 case b; OFFLINE L45, L60).
   if(outcome?.status==='unavailable'&&WITHDRAWN.has(outcome.reason))return false;
+  // A de-listed first-proof pin (visual-ineligible, from the port or the object) is deterministic and not a revocation (Terry c4e3c0d):
+  // the overlay answers a pinned historical read with the typed, non-revoking publication-visual-delisted. New demands and
+  // publications stay visual-ineligible (visual-publication.mjs).
+  if(outcome?.status==='unavailable'&&outcome.reason==='visual-ineligible')throw Error('publication-visual-delisted');
   throw Error(VISUAL_AUTHORITY_UNAVAILABLE);
  };
 }

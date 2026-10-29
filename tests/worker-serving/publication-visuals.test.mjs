@@ -137,7 +137,7 @@ test('an unavailable visual authority makes the exact read transient; only a rea
  const t=await harness({authority:args=>authority(args)});
  const listed=await t.overlay.publishVisuals({packId,revision:t.record.revision,expectedPublicationGeneration:t.record.execution.publication.generation,visuals:[a1400]}),g=listed.execution.publication.generation;
  assert.equal((await t.overlay.readCatalog(packId,t.record.revision,g)).status,'ready');
- for(mode of ['unavailable','unreachable','skew','storage503','invalidRequest','method405','ineligible','nothing'])await assert.rejects(t.overlay.readCatalog(packId,t.record.revision,g),/temporarily unavailable/,`${mode}: transient, never invalid`);
+ for(mode of ['unavailable','unreachable','skew','storage503','invalidRequest','method405','nothing'])await assert.rejects(t.overlay.readCatalog(packId,t.record.revision,g),/temporarily unavailable/,`${mode}: transient, never invalid`);
  for(mode of ['withdrawn','stale'])assert.deepEqual(await t.overlay.readCatalog(packId,t.record.revision,g),{status:'unavailable',reason:'publication-generation-invalid'},mode);
  mode='ready';assert.equal((await t.overlay.readCatalog(packId,t.record.revision,g)).status,'ready','the row is served again once the authority answers');
 });
@@ -146,4 +146,20 @@ test('an unavailable visual authority makes the exact read transient; only a rea
 test('the runtime wires readPublication into the visual authority',async()=>{
  const {readFile}=await import('node:fs/promises'),source=await readFile('server/fia/preparation/executable-presentation-runtime.mjs','utf8');
  assert.match(source,/visualAuthorityFrom\(capabilities\.visuals,\{readPublication:capabilities\.readVisualPublication\?\?\(args=>readVisualPublication\(env,args\)\)\}\)/);
+});
+
+// Terry c4e3c0d (review 5698718376 D1): a deploy that de-lists a superseded first-proof pin is not a revocation. The pinned exact read
+// of a retained generation answers the typed, non-revoking publication-visual-delisted (a 404-style unavailable, never a 500 and
+// never publication-generation-invalid); revision and pointer reads keep falling back to the base; a real withdrawal still revokes.
+test('a de-listed first-proof pin answers publication-visual-delisted on the exact read; other reads serve the base; a withdrawal still revokes',async()=>{
+ const {visualAuthorityFrom}=await import('../../server/fia/preparation/executable-presentation-runtime.mjs');
+ let answer={status:'ready',ready:{path:a1400.path,sha256:a1400.sha256},manifestEntry:a1400};
+ const authority=visualAuthorityFrom({published:async()=>null},{readPublication:async()=>structuredClone(answer)});
+ const t=await harness({authority:args=>authority(args)});
+ const listed=await t.overlay.publishVisuals({packId,revision:t.record.revision,expectedPublicationGeneration:t.record.execution.publication.generation,visuals:[a1400]}),g=listed.execution.publication.generation;
+ for(answer of [{status:'unavailable',reason:'visual-ineligible',final:false},{status:'unavailable',reason:'visual-ineligible'}]){
+  assert.deepEqual(await t.overlay.readCatalog(packId,t.record.revision,g),{status:'unavailable',reason:'publication-visual-delisted'},JSON.stringify(answer));
+  assert.notEqual((await t.overlay.readCatalog(packId))?.execution?.publication?.generation,g,'the pointer read does not serve the de-listed generation');
+ }
+ answer={status:'unavailable',reason:'visual-not-published'};assert.deepEqual(await t.overlay.readCatalog(packId,t.record.revision,g),{status:'unavailable',reason:'publication-generation-invalid'},'a real withdrawal still revokes');
 });

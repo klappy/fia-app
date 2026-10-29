@@ -129,7 +129,9 @@ async function savedServerSnapshot(packId,revision){const active=await read(pack
 // other typed reason not listed here; observed tombstones are honored first (L61). An untyped refusal is not decided by existing law (4851c72): it keeps the interim behavior of retiring
 // the copy, and is an open item, not a ruling.
 async function refusalReason(response){try{const body=await response.json();return typeof body?.reason==='string'?body.reason:null;}catch{return null;}}
-const selectionReasons=new Set(['publication-generation-ambiguous','publication-generation-unavailable','execution-not-current','publication-generation-mismatch','not-found','revision-not-found']);
+//  - publication-visual-delisted: a deploy de-listed a superseded first-proof pin; not a revocation (Terry c4e3c0d; OFFLINE L37,
+//    L43, L45, L57, L60, L61; CONTRACT Q19, Q22).
+const selectionReasons=new Set(['publication-generation-ambiguous','publication-generation-unavailable','execution-not-current','publication-generation-mismatch','not-found','revision-not-found','publication-visual-delisted']);
 const selectionReason=reason=>selectionReasons.has(reason);
 // Each Saved copy is rechecked by its own exact pinned read (?revision=&generation= of the saved record), never a fallback read.
 // Its typed answer decides it: a denial, a changed identity or changed artifacts retire it (the revocation marker is the revision's,
@@ -139,6 +141,9 @@ async function recheckSavedCopy(packId,active){
  const snapshot=active?.serverSnapshot,record=snapshot?.record;if(!record||snapshot.invalid)return null;
  const generation=record.execution?.publication?.generation??null,checked={revision:record.revision,generation};if(generation!==null&&!isPassageHash(generation))return {state:'unconfirmed',reason:'generation-invalid'};
  let r,capability;try{({response:r,capability}=await readExecutionRecord(packId,record.revision,generation));}catch(error){return {state:'unconfirmed',reason:error?.mediaStatusCode??'record-unreachable'};}
+ // Review thread 4413098490: a server that refused the capability was read by revision alone, so it did not answer for this copy's
+ // generation; that answer neither confirms nor retires it (a selection outcome, OFFLINE L37).
+ if(generation&&!capability){r.body?.cancel().catch(()=>{});return {state:'unconfirmed',reason:'record-compat-no-generation'};}
  if(r.status!==200||r.redirected){const reason=r.redirected?null:await refusalReason(r);if(r.redirected)r.body?.cancel().catch(()=>{});if(selectionReason(reason))return {state:'unconfirmed',reason:'record-'+r.status+':'+reason};await invalidateServerSnapshot(packId,checked);return {state:'revoked',reason:'record-'+r.status+(reason?':'+reason:'')};}
  let fresh;try{fresh=serverRecord(await r.json(),packId);}catch{await invalidateServerSnapshot(packId,checked);return {state:'revoked',reason:'record-invalid'};}
  // A server that answers another revision or generation has not answered for this copy: it stays, unconfirmed.
@@ -169,6 +174,8 @@ async function retainServerSnapshot(packId,revision,generation,cache,signal,onpr
   // F11: the snapshot is read with the capability the page reads with (execution=2), so an offline reload
   // gets the same shape; an older server that refuses it is read once without it, as the page does.
   checkCanceled();const {response:r,capability}=await readExecutionRecord(packId,revision,generation,signal);checkCanceled();
+  // Review thread 4413098490: a Save that names a generation cannot be satisfied by a read that dropped it; it fails, and retires nothing.
+  if(generation&&!capability){r.body?.cancel().catch(()=>{});throw Object.assign(Error('Server record unavailable.'),{mediaStatusCode:'media-authority-unconfirmed'});}
   // PR312 review C1: a refused Save is classified like the recheck. A selection refusal (selectionReasons) or a 200 of another
   // revision or generation has not answered for this record: the Save fails and the existing Saved copy is kept, unconfirmed.
   // A denial still retires it (OFFLINE L60).
@@ -313,7 +320,8 @@ async function originalVisualRead(request){
  let response;
  try{response=await fetch(url.pathname,{cache:'no-store',redirect:'error',credentials:'same-origin',headers:kept?{'If-None-Match':`"${sha}"`}:{}});}
  catch(error){if(await read(visualTombstoneKey(url.pathname)))return Response.error();if(kept)return kept;return await savedVisual(url.pathname,sha)||Response.error();}
- if(response.status===304&&kept)return kept;
+ // Review thread 4413098504: a tombstone written by an overlapping read while this revalidation was out is honored first.
+ if(response.status===304&&kept){if(await read(visualTombstoneKey(url.pathname)))return new Response('This image has been withdrawn.',{status:410,headers:{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store'}});return kept;}
  if(response.status===404||response.status===410){await cache.delete(url.pathname);await write(visualTombstoneKey(url.pathname),{tombstone:true,status:response.status});return response;}
  if(response.status===200){
   if(response.redirected||!await keptVisual(response,sha)){await cache.delete(url.pathname);return new Response('This image could not be verified.',{status:502,headers:{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store'}});}

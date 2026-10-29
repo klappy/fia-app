@@ -277,3 +277,34 @@ test('a transient exact read (unavailable visual authority) keeps the Saved copy
  t.w.reply(`/v1/packs/${packId}`,()=>Response.json({status:'unavailable',reason:'publication-generation-invalid'},{status:404}));
  assert.equal((await t.status()).saved,false);
 });
+// Terry c4e3c0d (review 5698718376 D1): a de-listed first-proof pin is not a revocation. Its typed answer keeps the last verified copy
+// on every path, unconfirmed, with no eligibility claim.
+test('publication-visual-delisted keeps the Saved copy on every path, including a refused Save',async()=>{
+ const t=setup({ambiguous:true});assert.equal((await t.save('all')).ok,true);
+ t.w.reply(`/v1/packs/${packId}`,()=>Response.json({status:'unavailable',reason:'publication-visual-delisted'},{status:404}));
+ const s=await t.status();assert.equal(s.saved,true);assert.equal(s.savedAuthority.state,'unconfirmed');assert.equal(s.savedAuthority.reason,'record-404:publication-visual-delisted');
+ assert.equal((await mediaStatus(t)).ok,true);assert.equal((await t.w.fetch(`/v1/packs/${packId}?revision=${t.f.record.revision}&execution=2`)).status,404);
+ assert.equal((await t.save('all')).ok,false);assert.notEqual((await savedRecord(t)).serverSnapshot.invalid,true);assert.equal((await t.status()).saved,true);
+});
+// Review thread 4413098490: a server that refuses execution=2 is read by revision alone; that read does not answer for the copy's
+// generation, so neither another generation nor different artifacts confirm or retire it, and a Save naming a generation fails.
+test('a compatibility read without the generation neither confirms nor retires a generation-pinned Saved copy',async()=>{
+ for(const variant of ['another generation','different artifacts']){
+  const t=setup({ambiguous:true});assert.equal((await t.save('all')).ok,true);
+  const other=variant==='another generation'?{...t.record,execution:{...t.record.execution,publication:{...t.record.execution.publication,generation:h('5')}}}:{...t.record,execution:{...t.record.execution,artifacts:[...(t.record.execution.artifacts??[]),{id:'extra',sha256:h('4'),bytes:2,mime:'application/json'}]}};
+  t.w.reply(`/v1/packs/${packId}`,()=>new URLSearchParams(t.w.calls.at(-1).split('?')[1]||'').has('execution')?Response.json({status:'refused',code:'invalid-request'},{status:400}):Response.json(other));
+  const s=await t.status();assert.equal(s.savedAuthority.state,'unconfirmed',variant);assert.equal(s.savedAuthority.reason,'record-compat-no-generation',variant);assert.equal(s.saved,true,variant);
+  assert.notEqual((await savedRecord(t)).serverSnapshot.invalid,true,variant);
+  assert.equal((await t.save('all')).ok,false,`${variant}: a Save naming the generation fails`);assert.notEqual((await savedRecord(t)).serverSnapshot.invalid,true,`${variant}: and retires nothing`);
+ }
+});
+// Review thread 4413098504: a revalidation (304) that returns after an overlapping read observed the route's 404 does not serve the
+// withdrawn bytes.
+test('a 304 that returns after an overlapping 404 does not serve the withdrawn original',async()=>{
+ const t=setup({ambiguous:true});assert.equal((await t.w.fetch(photoPath)).status,200,'kept online');
+ let release;const late=new Promise(r=>release=r);
+ t.w.reply(photoPath,init=>init?.headers?.['If-None-Match']?late.then(()=>new Response(null,{status:304})):new Response('gone',{status:404}));
+ const revalidating=t.w.fetch(photoPath);await new Promise(r=>setTimeout(r,5));
+ t.w.reply(photoPath,()=>new Response('gone',{status:404}));assert.equal((await t.w.fetch(photoPath)).status,404,'the overlapping read observes the withdrawal');
+ release();const r=await revalidating;assert.notEqual(r.status,200,'the late 304 does not serve the kept bytes');
+});

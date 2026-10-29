@@ -208,7 +208,9 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
   try{need(row.binding?.packId===packId&&(!revision||row.revision===revision)&&(!generation||row.publication?.generation===generation)&&found.key===keyFor(row),'executable-pointer-binding');await verified(row);return record(row);}
   // An exact generation whose retained row fails its own binding or verification is an observed invalid identity/hash, a denial
   // (OFFLINE L60, L43, L57; Terry 0be2e40 case b), typed apart from an absent row (case a, a selection refusal).
-  catch(error){fault('readCatalog',{packId,key:found.key},error);if(revision&&kindOf(error)==='transient')throw error;if(found.exact)return {status:'unavailable',reason:'publication-generation-invalid'};return base.readCatalog(packId,revision);}
+  // A de-listed first-proof pin is not a revocation (Terry c4e3c0d): the exact read of a retained generation answers a typed,
+  // non-revoking unavailable; a revision or pointer read falls back to the base as before.
+  catch(error){fault('readCatalog',{packId,key:found.key},error);if(revision&&kindOf(error)==='transient')throw error;if(found.exact)return {status:'unavailable',reason:error?.message==='publication-visual-delisted'?'publication-visual-delisted':'publication-generation-invalid'};return base.readCatalog(packId,revision);}
  }
  async function findArtifact(digest){
   let owners;
