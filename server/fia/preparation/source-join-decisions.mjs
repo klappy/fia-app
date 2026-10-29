@@ -73,7 +73,9 @@ export function fragmentPort(env){
 export function createSourceJoinReader({snapshot,fetchAsset,readFragment}){
  if(typeof readFragment!=='function')throw Error('source-join-capability');
  const records=createCanonicalGuideRecords({snapshot,fetchAsset});
- return Object.freeze({async joinsFor(packId){
+ // PR313 review N1: every failure in the reader is a typed unavailable, so the Open stays ready on the base.
+ return Object.freeze({async joinsFor(packId){try{return await joinsFrom(packId);}catch{return unavailable('join-unreadable');}}});
+ async function joinsFrom(packId){
   // Binding 1: the descriptor is this runtime's own.
   const loaded=await records.guideRecordFor(packId);if(loaded.refused)return unavailable(loaded.refused,loaded.subReason??null);
   const descriptor=descriptorOf(loaded.guide);if(!descriptor)return unavailable('composer-descriptor-incomplete');
@@ -106,6 +108,6 @@ export function createSourceJoinReader({snapshot,fetchAsset,readFragment}){
    // The source revision is this runtime's own canonical row's, never the response's.
    const provenance={schema:GUIDE_FRAGMENT_READ_SCHEMA,policyRevision:response.policyRevision,recipe:response.recipe,sourceRevision:loaded.row.sourceRevision,descriptor,observationSha256:r.observationSha256,fileSha256:r.fileSha256,bytes:r.bytes,indexSha256:a.indexSha256};
    return {state:'ready',packId,sourceRevision:loaded.row.sourceRevision,provenance,joins,responseSha256:await sha(response)};
-  }catch(error){if(error instanceof Refused)return unavailable(error.reason);throw error;}
- }});
+  }catch(error){if(error instanceof Refused)return unavailable(error.reason);return unavailable('join-unreadable');}
+ }
 }

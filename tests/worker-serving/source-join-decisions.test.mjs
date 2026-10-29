@@ -8,7 +8,7 @@ import {readRetainedArchives} from '../../server/fia/preparation/source-associat
 import {guideFragmentIdentity,GUIDE_FRAGMENT_POLICY,GUIDE_FRAGMENT_JOB} from '../../server/fia/preparation/guide-fragment.mjs';
 import {GUIDE_FRAGMENT_READ_SCHEMA} from '../../server/fia/preparation/guide-fragment-admission.mjs';
 import {createSourceJoinReader,SOURCE_JOIN_SCHEMA,SOURCE_JOIN_RECIPE} from '../../server/fia/preparation/source-join-decisions.mjs';
-import {createTrustedSourceActionComposer,trustedExecutionRecipe} from '../../server/fia/preparation/trusted-source-actions.mjs';
+import {createTrustedSourceActionComposer,trustedExecutionRecipe,withinJoinLimits,JOIN_MAX_REQUESTED,JOIN_MAX_DECISIONS} from '../../server/fia/preparation/trusted-source-actions.mjs';
 
 // The runtime consumer of the guide fragment object's read-only decisions (Terry ANSWER-FRAGMENT-CROSS-OBJECT-AUTHORITY,
 // cookbook 0a36cb2): one case per binding, each refusal typed unavailable, never explicit.
@@ -148,4 +148,24 @@ test('an explicit key-term reference beside the image join is passed over, not a
  try{const joined=await t.reader.joinsFor(packId);assert.equal(joined.state,'ready',JSON.stringify(joined));assert.deepEqual(joined.joins.map(j=>[j.unitId,j.resourceId]),[['S03-U017','a293']]);
   assert.equal((await createTrustedSourceActionComposer({policySha256,sourceJoins:t.reader})(await contextFor())).length,1);}
  finally{await rm(t.dir,{recursive:true,force:true});}
+});
+
+// PR313 review N1: every failure in the reader is a typed unavailable, never a thrown error that blocks the Open. A lone surrogate
+// in an unchecked field makes the answer's canonical hash fail; the reader answers unavailable and the composer decides nothing.
+test('a reader failure that is not a refusal is typed unavailable, and the Open keeps the base',async()=>{
+ const t=await harness(r=>at(r,c=>{c.subReason='\uD800';}));
+ try{const joined=await t.reader.joinsFor(packId);assert.equal(joined.state,'unavailable');assert.equal(joined.reason,'join-unreadable');
+  assert.deepEqual(await createTrustedSourceActionComposer({policySha256,sourceJoins:t.reader})(await contextFor()),[]);}
+ finally{await rm(t.dir,{recursive:true,force:true});}
+ const throwing={joinsFor:async()=>({state:'ready',packId,sourceRevision:archive.revision,provenance:{},joins:[{unitId:'S03-U017',collection:'FIAImages',resourceId:'a293',binding:null,evidence:{}}]})};
+ assert.deepEqual(await createTrustedSourceActionComposer({policySha256,sourceJoins:throwing})(await contextFor()),[],'a join the composer cannot read is dropped');
+});
+// PR313 review N2: a join row decides at most 8 media (as trusted rows, and the input schema's maxItems 8), and join decisions are
+// added only while the total stays within the resolver's 256. Over either limit the join is dropped.
+test('join limits: 8 requested media and 256 decisions are the edges; one more is dropped',()=>{
+ const row=n=>({requested:Array.from({length:n},(_,i)=>({id:'a'+i}))});
+ assert.equal(JOIN_MAX_REQUESTED,8);assert.equal(JOIN_MAX_DECISIONS,256);
+ assert.equal(withinJoinLimits(row(1),0),true);assert.equal(withinJoinLimits(row(8),0),true,'8 requested is within');assert.equal(withinJoinLimits(row(9),0),false,'9 requested is dropped');
+ assert.equal(withinJoinLimits(row(0),0),false);
+ assert.equal(withinJoinLimits(row(1),255),true,'the 256th decision is within');assert.equal(withinJoinLimits(row(1),256),false,'a 257th is dropped');
 });

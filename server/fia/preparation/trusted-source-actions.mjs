@@ -77,6 +77,11 @@ function joinRows(joined,context){
  return rows;
 }
 
+// PR313 review N2: a join row decides at most JOIN_MAX_REQUESTED media, as a trusted row does (validMetadata, requested<=8;
+// the input schema's maxItems 8), and the composer adds join decisions only while the total stays within the resolver's
+// JOIN_MAX_DECISIONS. Over either limit the join is dropped, unavailable, and the Open stays ready on the base.
+export const JOIN_MAX_REQUESTED=8,JOIN_MAX_DECISIONS=256;
+export function withinJoinLimits(row,decisionCount){return Array.isArray(row?.requested)&&row.requested.length>0&&row.requested.length<=JOIN_MAX_REQUESTED&&decisionCount<JOIN_MAX_DECISIONS;}
 /** Trusted composer for createExecutablePresentationResolver({composeDecisionInputs}). */
 // policySha256 is the consuming service's current execution policy: the decision job
 // accepts an explicit result only under the policy that composed it.
@@ -95,11 +100,14 @@ export function createTrustedSourceActionComposer({policySha256,metadata=trusted
   }
   if(sourceJoins&&context.basePresentation?.id){
    const joined=await sourceJoins.joinsFor(context.basePresentation.id);
-   if(joined?.state==='ready')for(const {row,evidence,joins} of joinRows(joined,context)){
-    if(decided.has(row.unitId))continue;
-    const match=await admitted(row,evidence,context);if(!match)continue;
+   let rows=[];try{rows=joined?.state==='ready'?joinRows(joined,context):[];}catch{rows=[];}
+   for(const {row,evidence,joins} of rows){
+    if(decided.has(row.unitId)||!withinJoinLimits(row,decisions.length))continue;
+    // PR313 review N1: a join that cannot be decided is dropped, never a failure of the Open.
+    let match;try{match=await admitted(row,evidence,context);}catch{continue;}if(!match)continue;
     // Binding 5: the observation, file, producer policy and index recipe are in the decision's own provenance.
-    decisions.push(await decision(match,context,async()=>({mode:'deterministic',contractSha256:await sha256(SOURCE_JOIN_RULING),schemaSha256:await sha256(encode({schema:joined.provenance.schema,policyRevision:joined.provenance.policyRevision,recipe:joined.provenance.recipe})),questionSha256:await sha256(encode(joins.map(j=>j.binding))),policySha256,modelRevision:null,configSha256:await sha256(encode(joined.provenance)),rawEvidenceSha256:joined.provenance.observationSha256})));
+    let joinDecision;try{joinDecision=await decision(match,context,async()=>({mode:'deterministic',contractSha256:await sha256(SOURCE_JOIN_RULING),schemaSha256:await sha256(encode({schema:joined.provenance.schema,policyRevision:joined.provenance.policyRevision,recipe:joined.provenance.recipe})),questionSha256:await sha256(encode(joins.map(j=>j.binding))),policySha256,modelRevision:null,configSha256:await sha256(encode(joined.provenance)),rawEvidenceSha256:joined.provenance.observationSha256}));}catch{continue;}
+    decisions.push(joinDecision);
     decided.add(row.unitId);
    }
   }
