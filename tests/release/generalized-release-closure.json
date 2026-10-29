@@ -946,7 +946,7 @@
     },
     {
       "path": "apps/web/public/sw.js",
-      "sha256": "8162c0639960da4c9811c35d11aa9ee328f9296f58f56706e546384806d87919"
+      "sha256": "9619cea89144ceaa42011ac8f01b88a71b97bcb58a87f72d8c7dd017135ffaec"
     },
     {
       "path": "apps/web/src/App.svelte",
@@ -1157,7 +1157,7 @@
     },
     {
       "path": "apps/web/tests/offline-execution.test.js",
-      "sha256": "0f9b2e57260cdfc5f6da2e70ad57e4e69e716aff213c3eb38ceb3bdbd25778f0"
+      "sha256": "54f1a04ac7e42cadb7cb2c0ceab56f14468ca067304992819f015a83a32356e5"
     },
     {
       "path": "apps/web/tests/offline.test.js",
@@ -2944,6 +2944,10 @@
     {
       "path": "tests/worker-serving/u008-source-policy.test.mjs",
       "sha256": "6ab0c1cd694e1e794bdae258a42f755e78503ae0576128c98ff1401d4f5bbd24"
+    },
+    {
+      "path": "apps/web/tests/offline-visual-save.test.js",
+      "sha256": "ae14812e397a8eeb594a4a385506b72e7a4c2e624a02c90d4db65e4d68df02cd"
     }
   ],
   "generatedFiles": [
@@ -6149,8 +6153,8 @@
     },
     {
       "path": "sw.js",
-      "sha256": "df1e12939dba790c839ef8dabf29474067e1bc27edfde3ccbb466fe8caff6b55",
-      "bytes": 99587
+      "sha256": "044ce078635cfbb3d45407a2ee8ee970f1ff80754eea4f305268342a2d41eb3a",
+      "bytes": 102985
     },
     {
       "path": "content/approved-audio/7140879c9b324a068e48dc83eaff85669022528977f104c02434332b58415c56.json",
