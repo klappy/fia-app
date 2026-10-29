@@ -123,3 +123,63 @@ test('F5a ready path: the decoded original is published as a new generation and 
  const legacy=createExecutableOperations({reads:{readPack:async args=>{const r=record();if(args.execution==='2')r.execution.visualResources=declareVisualResources({record:r,presentation:presentation()});return r;}},service:null,publication,storage,visuals});
  assert.equal((await legacy.preparePresentation(demandFor('c4','map'))).reason,'visual-publication-unavailable');
 });
+
+// PR302 review B1: a listed file whose path does not end in its own sha is not ready.
+test('the fold: a listed file whose path does not end in its own sha stays preparable',()=>{
+ const rec={...record(),execution:{...record().execution,publication:{schema:'fia-executable-publication-pin@1',generation:h('6'),baseManifest:{id:`base-offline:${h('5')}`,sha256:h('5'),bytes:1,mime:'application/json'}}}};
+ const wrong={...listed('a1400','image','a'),path:`/v1/original-visuals/${h('1')}/${h('2')}/${h('b')}`};
+ assert.equal(declareVisualResources({record:rec,presentation:presentation(),manifest:{files:[wrong]}})[0].status,'preparable');
+ assert.equal(declareVisualResources({record:rec,presentation:presentation(),manifest:{files:[listed('a1400','image','a')]}})[0].status,'ready','the control');
+});
+
+// PR302 review B2 and N5: the runtime's served-manifest check, through the real read operations' readArtifact.
+test('the runtime declares ready only from the served bound manifest it verifies: bytes, sha, id and executionRevision',async()=>{
+ const {visualResourcesFor}=await import('../../server/fia/preparation/executable-presentation-runtime.mjs');
+ const {createReadOperations}=await import('../../server/fia/publication/read-operations.mjs');
+ const {sha256}=await import('../../server/fia/preparation/contract.mjs');
+ const enc=s=>new TextEncoder().encode(s),content=JSON.stringify(presentation()),rev=await sha256(enc(content));
+ const build=async(m=x=>x)=>{const manifest={id:'bound-offline:x',executionRevision:rev,files:[listed('a1400','image','a')]};const text=JSON.stringify(m(manifest)),sha=await sha256(enc(text));return {text,descriptor:{id:'bound-offline:x',sha256:sha,bytes:enc(text).length,mime:'application/json'}};};
+ const declare=async(served,descriptor=served.descriptor)=>{const store=new Map([[rev,{content}],[descriptor.sha256,{content:served.text}]]);const reads=createReadOperations({readCatalog:()=>null,findArtifact:d=>store.get(d)??null});const r=record(rev);r.execution.publication={schema:'fia-executable-publication-pin@1',generation:h('6'),baseManifest:{id:`base-offline:${h('5')}`,sha256:h('5'),bytes:1,mime:'application/json'}};r.execution.mediaManifest=descriptor;return (await visualResourcesFor(reads.readArtifact)(r)).execution.visualResources[0].status;};
+ const good=await build();assert.equal(await declare(good),'ready');
+ assert.equal(await declare(good,{...good.descriptor,bytes:good.descriptor.bytes+1}),'preparable','wrong bytes');
+ assert.equal(await declare(await build(m=>({...m,id:'bound-offline:y'}))),'preparable','wrong id');
+ assert.equal(await declare(await build(m=>({...m,executionRevision:h('9')}))),'preparable','wrong executionRevision');
+ const other=await build(m=>({...m,files:[...m.files]}));
+ assert.equal(await declare({...other,text:other.text.replace('"a1400"','"a1400" ')},other.descriptor),'preparable','bytes that do not hash to the descriptor (N5)');
+});
+
+// PR302 review B3, N1 and N2, on the F5a ready path.
+function readyPath({moveDuringDemand=false,adoptAfterPublish=false,unlisted=false}={}){
+ const g1=h('6'),g2=h('7'),pin=g=>({schema:'fia-executable-publication-pin@1',generation:g,baseManifest:{id:`base-offline:${h('5')}`,sha256:h('5'),bytes:1,mime:'application/json'}});
+ let manifest={files:[]},generation=g1,revision=h('e');const published=new Map();
+ const reads={readPack:async args=>{const r=record(revision);r.execution.publication=pin(generation);r.execution.provenance={jobId:h('0')};if(args.execution==='2')r.execution.visualResources=declareVisualResources({record:r,presentation:presentation(),manifest});return r;}};
+ const visuals={demand:async req=>{if(moveDuringDemand)generation=h('8');published.set(req.assetId,listed(req.assetId,req.kind,'a'));return {state:'ready',publication:{ready:{},manifestEntry:published.get(req.assetId)}};},published:async q=>published.has(q.assetId)?{ready:{path:published.get(q.assetId).path,sha256:published.get(q.assetId).sha256},manifestEntry:published.get(q.assetId)}:null};
+ const publication={publishVisuals:async args=>{manifest={files:unlisted?[]:args.visuals};generation=g2;if(adoptAfterPublish)revision=h('d');}};
+ return {ops:createExecutableOperations({reads,service:null,publication,storage:{transaction:async fn=>fn({get:async()=>undefined,put:async()=>{}})},visuals}),demand:{...demandFor('a1400','image'),expectedPublicationGeneration:g1},g2};
+}
+test('a generation moved during custody is answered as publication-generation-stale (B3)',async()=>{
+ const t=readyPath({moveDuringDemand:true});const r=await t.ops.preparePresentation(t.demand);
+ assert.equal(r.status,'blocked');assert.equal(r.reason,'publication-generation-stale');
+});
+test('an execution adopted after publishVisuals never answers ready for this demand (N2)',async()=>{
+ const t=readyPath({adoptAfterPublish:true});const r=await t.ops.preparePresentation(t.demand);
+ assert.equal(r.status,'blocked');assert.equal(r.reason,'visual-publication-unavailable');
+ const control=readyPath();assert.equal((await control.ops.preparePresentation(control.demand)).status,'ready');
+});
+test('an already ready asset answers ready only to a demand bound to this execution\'s base and source (N1)',async()=>{
+ const t=readyPath();assert.equal((await t.ops.preparePresentation(t.demand)).status,'ready');
+ const again={...t.demand,expectedPublicationGeneration:t.g2};assert.equal((await t.ops.preparePresentation(again)).status,'ready');
+ for(const bad of [{...again,baseRevision:h('c')},{...again,sourceRevision:'0'.repeat(40)}]){const r=await t.ops.preparePresentation(bad);assert.equal(r.status,'blocked');assert.equal(r.reason,'execution-admission-refused');}
+});
+
+// PR302 review N3: the image-group filter, the eligibility gate on ready, and the refreshed-entry check.
+test('the fold: only an image-group file of an eligible source can make an asset ready',()=>{
+ const rec={...record(),execution:{...record().execution,publication:{schema:'fia-executable-publication-pin@1',generation:h('6'),baseManifest:{id:`base-offline:${h('5')}`,sha256:h('5'),bytes:1,mime:'application/json'}}}};
+ assert.equal(declareVisualResources({record:rec,presentation:presentation(),manifest:{files:[{...listed('a1400','image','a'),group:'audio'}]}})[0].status,'preparable','another group');
+ const p=presentation();p.assets.a1400={...p.assets.a1400,sourceEvidence:{...p.assets.a1400.sourceEvidence,url:'http://example.invalid/a1400.jpg'}};assert.equal(visualSourceEligible(p.assets.a1400),false);
+ assert.deepEqual(declareVisualResources({record:rec,presentation:p,manifest:{files:[listed('a1400','image','a')]}})[0],{assetId:'a1400',kind:'image',status:'unavailable',reason:'visual-ineligible'},'an ineligible source is never ready');
+});
+test('a publication that does not list the demanded asset answers visual-publication-unavailable, never ready',async()=>{
+ const t=readyPath({unlisted:true});const r=await t.ops.preparePresentation(t.demand);
+ assert.equal(r.status,'blocked');assert.equal(r.reason,'visual-publication-unavailable');
+});
