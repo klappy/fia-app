@@ -20,6 +20,7 @@ const JOB_KEY='guide-fragment:job',hex=x=>createHash('sha256').update(x).digest(
 const ticketFor=n=>({checkId:n===1?'guide-fragment@1:first':`guide-fragment@1:retry-${n}`,sequence:n,expectedPreviousObservationSha256:null,previousSourceSha256:null});
 // Final refusals for this exact file under this recipe; ineligibility and interruptions are never final (Retry rules as visual-original).
 const UNSUPPORTED=new Set(['fresh-response-refused','fresh-response-status','fresh-known-length-required','fresh-byte-limit','fresh-byte-length','fresh-signature-mismatch','fresh-shape-mismatch','fresh-media-refused','fresh-source-policy']);
+export const GUIDE_UNSUPPORTED_REASONS=Object.freeze([...UNSUPPORTED]);
 const refusal=r=>UNSUPPORTED.has(r)?{reason:'guide-unsupported',subReason:r,final:true}:r==='fresh-ineligible'?{reason:'guide-ineligible',subReason:r,final:false}:{reason:'interrupted',subReason:r??null,final:false};
 const custodyRefusal=error=>error?.message==='fresh-ineligible'?{reason:'guide-ineligible',subReason:'fresh-ineligible',final:false}:{reason:'retained-evidence-unavailable',subReason:error?.message??null,final:false};
 function trusted(v){

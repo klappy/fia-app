@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {createRequire} from 'node:module';import {mkdtemp,rm} from 'node:fs/promises';import {readFileSync} from 'node:fs';import {tmpdir} from 'node:os';import {join,resolve} from 'node:path';import {fileURLToPath} from 'node:url';import {createHash} from 'node:crypto';
 import {createFreshSourceObservations,createProfileJsonPort,JSON_CONTENT,AUDIO_CONTENT,VISUAL_CONTENT} from '../../server/fia/preparation/executor/fresh-source-observation.mjs';
-import {guideFragmentIdentity,GUIDE_FRAGMENT_POLICY,GUIDE_ACQUISITION_PROFILE,GUIDE_REPOSITORY} from '../../server/fia/preparation/guide-fragment.mjs';
+import {guideFragmentIdentity,GUIDE_FRAGMENT_POLICY,GUIDE_ACQUISITION_PROFILE,GUIDE_REPOSITORY,GUIDE_UNSUPPORTED_REASONS} from '../../server/fia/preparation/guide-fragment.mjs';
 import {createGuideComposer} from '../../server/fia/preparation/source-associations/composer.mjs';
 import {createArchiveGuideComposer} from '../preparation/support/archive-guide-composer.mjs';
 import {buildSourceIndex,associatePack,verifyDecision} from '../../server/fia/preparation/source-associations/index.mjs';
@@ -197,4 +197,13 @@ test('note (a). createProfileJsonPort refuses a URL rule that accepts foreign UR
  assert.throws(()=>createProfileJsonPort({media:['application/json','text/plain'],sourceUrl:u=>/content\.json$/.test(u)}),/fresh-capability/,'path shape only');
  assert.throws(()=>createProfileJsonPort({media:['application/json','text/plain'],sourceUrl:()=>false}),/fresh-capability/,'a rule that refuses the class-A shape is useless');
  assert.doesNotThrow(()=>createProfileJsonPort({media:['application/json'],sourceUrl:()=>true}),'without text/plain the rule grants nothing');
+});
+test('GUIDE_UNSUPPORTED_REASONS is exactly the set the job refusal() treats as final guide-unsupported, frozen',()=>{
+ const src=readFileSync(new URL('../../server/fia/preparation/guide-fragment.mjs',import.meta.url),'utf8');
+ const set=/^const UNSUPPORTED=new Set\(\[([^\]]*)\]\);$/m.exec(src);assert.ok(set,'UNSUPPORTED literal');
+ const literal=[...set[1].matchAll(/'([^']+)'/g)].map(m=>m[1]);
+ assert.deepEqual([...GUIDE_UNSUPPORTED_REASONS],literal,'the export equals the private set, in order');assert.equal(new Set(literal).size,literal.length);
+ assert.match(src,/^const refusal=r=>UNSUPPORTED\.has\(r\)\?\{reason:'guide-unsupported',subReason:r,final:true\}:/m,'only UNSUPPORTED members are final');
+ assert.ok(Object.isFrozen(GUIDE_UNSUPPORTED_REASONS));assert.throws(()=>{GUIDE_UNSUPPORTED_REASONS.push('fresh-ineligible');});
+ for(const r of ['fresh-ineligible','fresh-aborted','fresh-response-status-transient'])assert.equal(GUIDE_UNSUPPORTED_REASONS.includes(r),false,r);
 });
