@@ -173,23 +173,25 @@ test('join limits: 8 requested media and 256 decisions are the edges; one more i
 // #313 QA (comment 6499486774): the first acquisition is the ordinary demand path (Terry eb4d8d5), kept apart from the read-only
 // reader. One /demand {packId} per explicit preparation, on the object named from the runtime's own composed source; only retained
 // continues; every other answer, and the profile deadline, is typed and leaves the Open on the base.
-test('acquisition: one /demand for the composed source, never retry; only retained continues; every other answer is typed',async()=>{
+test('acquisition: one /demand for the composed source, never retry; only retained continues; every other answer is typed and classed',async()=>{
  const s=await snapshotFor();
  try{
-  const g=archive.packs[packId].guide,source={repo:`BibleAquifer/${g.provenance.collection}`,revision:g.provenance.revision,path:g.sourceFile};
+  const g=archive.packs[packId].guide,source={repo:`BibleAquifer/${g.provenance.collection}`,revision:g.provenance.revision,path:g.sourceFile},key={fileSha256:g.sourceFileSha256,revision:g.provenance.revision};
   const seen=[],events=[],acquisition=answer=>createGuideAcquisition({snapshot:s.snapshot,fetchAsset:s.fetchAsset,demandGuide:async q=>{seen.push(q);return typeof answer==='function'?answer():answer;},diagnose:e=>events.push(e)});
-  assert.deepEqual(await acquisition({job:'guide-fragment@1',state:'retained'})(packId),{state:'retained'});
+  assert.deepEqual(await acquisition({job:'guide-fragment@1',state:'retained'})(packId),{state:'retained',...key});
   assert.deepEqual(seen,[{source,packId}],'the composed source and the pack, nothing else (no retry)');
-  for(const reason of ['refresh-unavailable','guide-ineligible','fresh-ineligible','guide-sha-mismatch','interrupted','guide-not-promoted','retained-evidence-unavailable','guide-unsupported','guide-admission-unavailable'])
-   assert.deepEqual(await acquisition({state:'unavailable',reason})(packId),{state:'unavailable',reason},reason);
-  assert.deepEqual(await acquisition({state:'preparing',custody:'none'})(packId),{state:'unavailable',reason:'preparing'},'a concurrent joiner is base for this Open');
-  for(const bad of [null,'text',{}])assert.deepEqual(await acquisition(bad)(packId),{state:'unavailable',reason:'acquisition-unavailable'},JSON.stringify(bad));
-  assert.deepEqual(await acquisition(()=>{throw Error('boom');})(packId),{state:'unavailable',reason:'acquisition-unavailable'});
-  assert.deepEqual(await acquisition({state:'retained'})('eng.MRK-9-9-9'),{state:'unavailable',reason:'composer-unknown-pack'},'an unknown pack is never demanded');
+  // Terry 85eff6a: final under the descriptor and recipe; everything else is non-final.
+  for(const [answer,final] of [[{state:'unavailable',reason:'guide-sha-mismatch'},true],[{state:'unavailable',reason:'descriptor-mismatch'},true],[{state:'unavailable',reason:'refresh-unavailable'},true],[{state:'unavailable',reason:'guide-unsupported',subReason:'fresh-media-type'},true],
+   [{state:'unavailable',reason:'guide-unsupported',subReason:'guide-request-shape'},false],[{state:'unavailable',reason:'guide-ineligible'},false],[{state:'unavailable',reason:'fresh-ineligible'},false],[{state:'unavailable',reason:'interrupted'},false],[{state:'unavailable',reason:'guide-not-promoted'},false],[{state:'unavailable',reason:'retained-evidence-unavailable'},false],[{state:'unavailable',reason:'guide-admission-unavailable'},false]]){
+   const r=await acquisition(answer)(packId);assert.deepEqual([r.state,r.reason,r.final,r.fileSha256],['unavailable',answer.reason,final,key.fileSha256],JSON.stringify(answer));
+  }
+  const p=await acquisition({state:'preparing',custody:'none'})(packId);assert.deepEqual([p.state,p.reason,p.final],['unavailable','preparing',false],'a concurrent joiner is base for this Open, non-final');
+  for(const bad of [null,'text',{}]){const r=await acquisition(bad)(packId);assert.deepEqual([r.state,r.reason,r.final],['unavailable','acquisition-unavailable',false],JSON.stringify(bad));}
+  assert.equal((await acquisition(()=>{throw Error('boom');})(packId)).reason,'acquisition-unavailable');
+  assert.deepEqual(await acquisition({state:'retained'})('eng.MRK-9-9-9'),{state:'not-applicable',reason:'composer-unknown-pack'},'an unknown pack is never demanded');
   assert.ok(events.every(e=>e.event==='source-join-acquisition'&&e.packId),'each outcome is recorded');
-  // The profile deadline: this Open continues on the base; the owning attempt is the object's.
   const hung=createGuideAcquisition({snapshot:s.snapshot,fetchAsset:s.fetchAsset,demandGuide:()=>new Promise(()=>{}),deadlineMs:20});
-  assert.deepEqual(await hung(packId),{state:'unavailable',reason:'acquisition-deadline'});
+  const d=await hung(packId);assert.deepEqual([d.state,d.reason,d.final],['unavailable','acquisition-deadline',false]);
   assert.equal(GUIDE_FRAGMENT_POLICY.totalMs,30000,'the default deadline is the acquisition profile\'s');
  }finally{await rm(s.dir,{recursive:true,force:true});}
 });

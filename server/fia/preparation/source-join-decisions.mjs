@@ -120,6 +120,13 @@ export function createSourceJoinReader({snapshot,fetchAsset,readFragment}){
 // and names the object from it (guideFragmentObject, binding 2). It never passes retry, never polls and never loops. Only
 // retained lets the reader continue; every other answer, a timeout included, leaves this Open on the base, typed.
 const DEMAND_ORIGIN='https://guide-fragment.internal';
+// Terry 85eff6a (C1): which acquisition misses are final. Final under the current descriptor and recipe: guide-sha-mismatch,
+// descriptor-mismatch, refresh-unavailable, and guide-unsupported with a recipe/profile sub-reason. Everything else is non-final
+// (transient, deadline, preparing, interrupted, ineligible including a source-policy or admission refusal, a request-shape refusal
+// and anything unknown): it may serve base, but a later explicit Open demands again.
+const FINAL_REASONS=new Set(['guide-sha-mismatch','descriptor-mismatch','refresh-unavailable']);
+const REQUEST_SHAPE=new Set(['guide-request-shape','guide-batch-refused','guide-caller-authority']);
+export function acquisitionFinal(reason,subReason=null){return FINAL_REASONS.has(reason)||reason==='guide-unsupported'&&typeof subReason==='string'&&!REQUEST_SHAPE.has(subReason);}
 export function guideDemandPort(env){
  if(typeof env?.FIA_PREPARATION_JOBS?.idFromName!=='function'||typeof env?.FIA_PREPARATION_JOBS?.get!=='function')return null;
  return async function demandGuide({source,packId}){
@@ -137,13 +144,21 @@ export function createGuideAcquisition({snapshot,fetchAsset,demandGuide,deadline
  const settle=(packId,outcome)=>{try{diagnose({event:'source-join-acquisition',packId,...outcome});}catch{}return outcome;};
  return async function acquire(packId){
   try{
-   const loaded=await records.guideRecordFor(packId);if(loaded.refused)return settle(packId,{state:'unavailable',reason:loaded.refused});
-   const descriptor=descriptorOf(loaded.guide);if(!descriptor)return settle(packId,{state:'unavailable',reason:'composer-descriptor-incomplete'});
+   const loaded=await records.guideRecordFor(packId);if(loaded.refused)return settle(packId,{state:'not-applicable',reason:loaded.refused});
+   const descriptor=descriptorOf(loaded.guide);if(!descriptor)return settle(packId,{state:'not-applicable',reason:'composer-descriptor-incomplete'});
    const source={repo:`${descriptor.owner}/${descriptor.collection}`,revision:descriptor.revision,path:descriptor.path};
    let timer;const deadline=new Promise(resolve=>{timer=setTimeout(()=>resolve({state:'unavailable',reason:'acquisition-deadline'}),deadlineMs);});
    const answer=await Promise.race([Promise.resolve().then(()=>demandGuide({source,packId})).catch(()=>({state:'unavailable',reason:'acquisition-unavailable'})),deadline]).finally(()=>clearTimeout(timer));
-   if(plain(answer)&&answer.state==='retained')return settle(packId,{state:'retained'});
-   return settle(packId,{state:'unavailable',reason:plain(answer)&&text(answer.reason,80)?answer.reason:plain(answer)&&text(answer.state,80)?answer.state:'acquisition-unavailable'});
+   const key={fileSha256:descriptor.fileSha256,revision:descriptor.revision};
+   if(plain(answer)&&answer.state==='retained')return settle(packId,{state:'retained',...key});
+   const reason=plain(answer)&&text(answer.reason,80)?answer.reason:plain(answer)&&text(answer.state,80)?answer.state:'acquisition-unavailable',subReason=plain(answer)&&text(answer.subReason,80)?answer.subReason:null;
+   return settle(packId,{state:'unavailable',reason,...(subReason?{subReason}:{}),final:acquisitionFinal(reason,subReason),...key});
   }catch{return settle(packId,{state:'unavailable',reason:'acquisition-unavailable'});}
  };
+}
+
+// The current descriptor key of a pack's pinned guide file, as acquisition records it (a Q14 re-pin changes it).
+export function createGuideDescriptorKey({snapshot,fetchAsset}){
+ const records=createCanonicalGuideRecords({snapshot,fetchAsset});
+ return async packId=>{try{const loaded=await records.guideRecordFor(packId);if(loaded.refused)return null;const d=descriptorOf(loaded.guide);return d?{fileSha256:d.fileSha256,revision:d.revision}:null;}catch{return null;}};
 }

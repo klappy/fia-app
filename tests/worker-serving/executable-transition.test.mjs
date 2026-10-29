@@ -33,7 +33,7 @@ const APPROVED_MEDIA={sha256:'0599996af6b15cf55853cfee33d2b4405e5ee95bd9068f297c
 // Test-only entry: the release Worker plus a storage door on its own origin, so a test
 // can read and tamper with one persisted state. It is never part of a release bundle.
 const entry=`import worker,{FiaPreparationJobs as Jobs} from ${JSON.stringify(resolve('server/faces/worker/entry.mjs'))};
-export class FiaPreparationJobs extends Jobs{async fetch(request){const url=new URL(request.url);if(url.origin!=='https://transition.test')return super.fetch(request);
+export class FiaPreparationJobs extends Jobs{async fetch(request){const url=new URL(request.url);if(url.origin==='https://guide-fragment.internal'&&url.pathname==='/demand'){await this.env.ASSETS.fetch(new Request('https://assets.invalid/__guide-demand'));return Response.json({state:'unavailable',reason:'guide-sha-mismatch',final:true});}if(url.origin!=='https://transition.test')return super.fetch(request);
  if(url.pathname==='/dump')return Response.json(Object.fromEntries(await this.ctx.storage.list()));
  const {key,value}=await request.json();if(value===null)await this.ctx.storage.delete(key);else await this.ctx.storage.put(key,value);return Response.json(true);}}
 export default worker;`;
@@ -63,10 +63,7 @@ async function releases(){
  assert.equal(storedBytes.length,D3BE5884.bytes);assert.equal(await sha256(storedBytes),D3BE5884.sha256,'the stored d3be5884 proof index is byte-exact');
  const drift={...proof.descriptor,path:`/content/approved-audio/${driftSha256}.json`,sha256:driftSha256,bytes:driftBytes.length},indexes=new Map([[proof.descriptor.path,proof.bytes],[drift.path,driftBytes],[D3BE5884.path,storedBytes]]);
  const base={schema:'fia.worker-read-snapshot.v1',records:extension.records,current:extension.current,staticArtifacts:extension.staticArtifacts,artifacts:[],canonicalSources,generalizedAuthority:extension.authority};
- // guideAcquisitions: an explicit Open now demands the archive-pinned guide file first (claim 18841a7; Terry eb4d8d5). This test's
- // world refuses that one composed class-A URL, as a controlled outbound does, so the Open stays on the base; it is counted apart
- // from any other external work, which stays forbidden.
- const counts={external:0,guideAcquisitions:0};
+ const counts={external:0};
  // trusted:false replays a build from before trusted source actions shipped (every build
  // named here, and the hypothetical content release that only moves today's policy): it
  // composes no decisions and keeps the bare recipe, exactly as those builds did.
@@ -74,7 +71,7 @@ async function releases(){
   // projector: the source-action projector source of an earlier release, bundled in
   // place of the current module so the persisted state carries that release's rows.
   const bundled=await build({stdin:{contents:entry,resolveDir:process.cwd(),sourcefile:'transition-entry.mjs',loader:'js'},bundle:true,platform:'browser',format:'esm',external:['node:*'],write:false,plugins:[{name:'transition-snapshot',setup(b){b.onResolve({filter:/generated\/snapshot\.json$/},()=>({path:'snapshot',namespace:'transition'}));b.onLoad({filter:/.*/,namespace:'transition'},()=>({contents:JSON.stringify(snapshot),loader:'json'}));if(projector)b.onLoad({filter:/source-action-projector\.mjs$/},()=>({contents:projector,loader:'js',resolveDir:dirname(projectorPath)}));if(!trusted)b.onLoad({filter:/trusted-source-actions\.mjs$/},()=>({contents:'export const createTrustedSourceActionComposer=()=>async()=>[];export const trustedExecutionRecipe=recipe=>recipe;',loader:'js'}));}}]});
-  return new Miniflare({...convertV4MiniflareOptions({modules:true,script:bundled.outputFiles[0].text,compatibilityDate:'2026-09-01',compatibilityFlags:['nodejs_compat'],bindings:{FIA_API_ORIGIN:origin},durableObjects:{FIA_PREPARATION_JOBS:{className:'FiaPreparationJobs',useSQLite:true}},r2Buckets:['FIA_ORIGINALS'],serviceBindings:{ASSETS:async request=>{const path=new URL(request.url).pathname;assert.ok(/^\/content\/[a-zA-Z0-9._/-]+$/.test(path)&&!path.includes('..'),path);let bytes;try{bytes=indexes.has(path)?indexes.get(path):await readFile((path.startsWith('/content/source-guides/')?dir:publicRoot)+path);}catch(error){if(error.code!=='ENOENT')throw error;return new Response('Not found',{status:404});}return new Response(bytes,{headers:{'Content-Type':'application/json','Content-Length':String(bytes.length)}});}},outboundService:request=>{if(/^https:\/\/raw\.githubusercontent\.com\/BibleAquifer\/FIATranslationGuide\/[a-f0-9]{40}\/[a-z]{3}\/json\/[0-9]+\.content\.json$/.test(request.url)){counts.guideAcquisitions++;throw Error('Guide acquisition refused in this test');}counts.external++;throw Error('External work forbidden');}}),resourcePersistencePath:join(dir,'storage')});
+  return watched(new Miniflare({...convertV4MiniflareOptions({modules:true,script:bundled.outputFiles[0].text,compatibilityDate:'2026-09-01',compatibilityFlags:['nodejs_compat'],bindings:{FIA_API_ORIGIN:origin},durableObjects:{FIA_PREPARATION_JOBS:{className:'FiaPreparationJobs',useSQLite:true}},r2Buckets:['FIA_ORIGINALS'],serviceBindings:{ASSETS:async request=>{const path=new URL(request.url).pathname;if(path==='/__guide-demand'){guideDemands.push(phase.current);return new Response('ok');}assert.ok(/^\/content\/[a-zA-Z0-9._/-]+$/.test(path)&&!path.includes('..'),path);let bytes;try{bytes=indexes.has(path)?indexes.get(path):await readFile((path.startsWith('/content/source-guides/')?dir:publicRoot)+path);}catch(error){if(error.code!=='ENOENT')throw error;return new Response('Not found',{status:404});}return new Response(bytes,{headers:{'Content-Type':'application/json','Content-Length':String(bytes.length)}});}},outboundService:()=>{counts.external++;throw Error('External work forbidden');}}),resourcePersistencePath:join(dir,'storage')}));
  }
  const current={...base,approvedAudioProofIndex:proof.descriptor};
  // A released build's snapshot carries the stored index and the catalog authority that
@@ -92,6 +89,14 @@ async function retainApprovedAudio(mf){
  const seeded=await createRetainedApprovedAudio({bucket,validateBinding:async()=>false}).retain({media:APPROVED_MEDIA,bytes,provenance:{kind:'retained-reviewed-trace',sha256:APPROVED_MEDIA.sha256}});
  assert.equal(seeded.status,'ready',JSON.stringify(seeded));return {key:`approved-audio/media/${APPROVED_MEDIA.sha256}.${APPROVED_MEDIA.extension}`,bytes};
 }
+// Guide acquisitions (claim 18841a7; Terry eb4d8d5, 85eff6a). This test is about recipe and publication transitions, so its door
+// answers the guide object's /demand with a final miss (guide-sha-mismatch): each publication stands as before, and nothing
+// reaches the network. Every request is watched (the door reports each /demand to this process): a read never demands, and each
+// explicit Open demands exactly once. The real acquisition is source-join-acquisition.test.mjs.
+const acquisitions={reads:[],opens:[]},guideDemands=[],phase={current:null};
+function watched(mf){const dispatch=mf.dispatchFetch.bind(mf);mf.dispatchFetch=async(url,init={})=>{const path=new URL(typeof url==='string'?url:url.url,origin).pathname,body=typeof init?.body==='string'?init.body:'';
+ const open=init?.method==='POST'&&(path==='/v1/presentation-preparations'||path==='/mcp'&&body.includes('"prepare_presentation"'));const before=guideDemands.length;phase.current=open?'open':'read';
+ let status=null;try{const response=await dispatch(url,init);status=response.status;return response;}finally{phase.current=null;(open?acquisitions.opens:acquisitions.reads).push({path,status,demanded:guideDemands.length-before});}};return mf;}
 const http=mf=>async(path,init)=>{const r=await mf.dispatchFetch(origin+path,init);return {status:r.status,type:r.headers.get('content-type'),body:await r.json()};};
 const mcp=mf=>async(name,args)=>{const r=await mf.dispatchFetch(origin+'/mcp',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json, text/event-stream','MCP-Protocol-Version':'2025-06-18'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',params:{name,arguments:args}})});const body=await r.json();assert.equal(r.status,200,JSON.stringify(body));return body.result.structuredContent;};
 const prepare=(read,demand)=>read('/v1/presentation-preparations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(demand)});
@@ -416,4 +421,14 @@ test('the #249 build (catalog f5ce2e24, proof index 7140879c, @2) replays to reg
  const {SUPERSEDED_BUILDS}=await import('../../server/fia/preparation/executable-presentation-runtime.mjs');
  assert.deepEqual(SUPERSEDED_BUILDS[3],{policy:F5CE2E24_POLICY,recipe:'fia-server-source-action-projector@2',approvedAudio:true});
  const prior=SUPERSEDED_BUILDS.slice(0,3).map(b=>b.policy);assert.ok(!prior.includes(F5CE2E24_POLICY),'entry 4 is a new build beside entries 1-3, which stay');
+});
+
+// Review 5699870877 B1: pinned acquisition accounting across every test above (they run first, in order). No read demanded; every
+// explicit Open that prepared demanded exactly once, a refused one none; the counts are pinned.
+const PINNED_OPENS={prepared:23,refused:1,demands:23};
+test('guide acquisitions: no read demands, each explicit Open demands exactly once, and the count is pinned',()=>{
+ assert.deepEqual(acquisitions.reads.filter(r=>r.demanded),[],'a read never demands');
+ assert.deepEqual(acquisitions.opens.filter(o=>o.status===200&&o.demanded!==1),[],'each explicit Open that prepares demands exactly once');
+ assert.deepEqual(acquisitions.opens.filter(o=>o.status!==200&&o.demanded!==0),[],'an Open refused before preparation (the 409 execution-job-policy case) demands nothing');
+ assert.deepEqual({prepared:acquisitions.opens.filter(o=>o.status===200).length,refused:acquisitions.opens.filter(o=>o.status!==200).length,demands:guideDemands.length},PINNED_OPENS,'the explicit Opens this file makes, pinned');
 });

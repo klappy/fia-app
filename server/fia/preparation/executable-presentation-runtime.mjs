@@ -8,7 +8,7 @@ import {createExecutableOperations} from '../publication/executable-operations.m
 import {createExecutablePresentationService} from './executable-presentation-service.mjs';
 import {createExecutablePresentationResolver,createCanonicalGuideReader} from './executable-presentation-resolver.mjs';
 import {createTrustedSourceActionComposer,trustedExecutionRecipe} from './trusted-source-actions.mjs';
-import {createSourceJoinReader,fragmentPort,createGuideAcquisition,guideDemandPort} from './source-join-decisions.mjs';
+import {createSourceJoinReader,fragmentPort,createGuideAcquisition,guideDemandPort,createGuideDescriptorKey} from './source-join-decisions.mjs';
 import {SOURCE_ACTION_RECIPE} from '../compiler/presentation/source-action-projector.mjs';
 import guideSources from './guide-sources.json' with {type:'json'};
 import preparationCatalog from './catalog.json' with {type:'json'};
@@ -95,8 +95,22 @@ export async function createExecutableRuntime({ctx,env,snapshot,capabilities={}}
  const acquired=new Map();
  const sourceJoins=joinReader&&(acquireGuide?Object.freeze({async joinsFor(packId){const a=acquired.get(packId);return a?.state==='retained'?joinReader.joinsFor(packId):{state:'unavailable',reason:'guide-not-acquired',...(a?.reason?{subReason:a.reason}:{})};}}):joinReader);
  const resolver=capabilities.resolve??createExecutablePresentationResolver({reads:baseReads,resolveCanonicalSource:createCanonicalGuideReader({canonicalSources:snapshot.canonicalSources??[],fetchAsset:path=>env.ASSETS.fetch(new Request(new URL(path,env.FIA_API_ORIGIN),{redirect:'manual'}))}),composeDecisionInputs:capabilities.composeDecisionInputs??createTrustedSourceActionComposer({policySha256:currentPolicy,sourceJoins}),resolveBindings});
- const resolve=acquireGuide&&!capabilities.resolve?async args=>{if(typeof args?.packId==='string')acquired.set(args.packId,await acquireGuide(args.packId));return resolver(args);}:resolver;
+ const resolve=acquireGuide&&!capabilities.resolve?async args=>{if(typeof args?.packId==='string'){const outcome=await acquireGuide(args.packId);acquired.set(args.packId,outcome);
+  // Terry 85eff6a (C1), remedy (ii): the publication may serve base, and the join's outcome is recorded beside it, keyed by the
+  // pack, its base revision, the acquisition's descriptor key and this recipe. The current read re-offers the demand while the miss
+  // is non-final, or once a final miss's descriptor or recipe moved; only an explicit Open demands again. No read demands.
+  if(outcome.state!=='not-applicable'&&typeof args.baseRevision==='string')await ctx.storage.put(joinOutcomeKey(args.packId,args.baseRevision),{...outcome,recipe:recipeRevision});}
+  return resolver(args);}:resolver;
  const recipeRevision=trustedExecutionRecipe(SOURCE_ACTION_RECIPE,{sourceJoins:!capabilities.composeDecisionInputs&&!!sourceJoins});
+ const joinOutcomeKey=(packId,baseRevision)=>`source-join-outcome:${packId}@${baseRevision}`;
+ const descriptorKey=acquireGuide?createGuideDescriptorKey({snapshot,fetchAsset:assetFetch}):null;
+ // A recorded non-final miss, or a final one whose keyed descriptor or recipe moved, does not settle the current publication.
+ const settledJoin=async record=>{
+  if(!acquireGuide||typeof ctx.storage.get!=='function')return true;const base=record.execution?.baseRevision;if(typeof base!=='string')return true;
+  const outcome=await ctx.storage.get(joinOutcomeKey(record.packId,base));if(!outcome||outcome.state==='retained')return true;
+  if(!outcome.final||outcome.recipe!==recipeRevision)return false;
+  const current=await descriptorKey(record.packId);return !!current&&current.fileSha256===outcome.fileSha256&&current.revision===outcome.revision;
+ };
  const service=createExecutablePresentationService({storage:ctx.storage,artifacts,resolve,eligible,interpret:capabilities.interpret??null,policySha256:currentPolicy,recipeRevision});
  // Earlier builds' rows still authenticate for exact-revision reads (pinned Active and Saved sessions; OFFLINE L96, Terry
  // 4178e01 point 4); the current read treats them as a cache miss below. Those builds are: the one just before trusted source
@@ -133,7 +147,7 @@ export async function createExecutableRuntime({ctx,env,snapshot,capabilities={}}
  // A row under a superseded build fails its verifier, so the overlay already serves the
  // base (cache miss); the base read gains its demand here, and an explicit Open
  // re-prepares under today's build.
- reads.readPack=async args=>{let record=await readPack(args);if(record?.status==='ready'&&record.execution&&!args.revision&&record.execution.provenance?.recipeRevision!==recipeRevision)record=await baseReads.readPack({packId:args.packId});if(record?.status!=='ready'||record.execution)return record;const sourceRevision=record.authority?.rawInventoryCommit;if(record.packId===args.packId&&preparable(record,sourceRevision))return {...record,preparationDemand:{packId:args.packId,baseRevision:record.revision,sourceRevision,capability:'executable-presentation'}};return record;};
+ reads.readPack=async args=>{let record=await readPack(args);if(record?.status==='ready'&&record.execution&&!args.revision&&(record.execution.provenance?.recipeRevision!==recipeRevision||!await settledJoin(record)))record=await baseReads.readPack({packId:args.packId});if(record?.status!=='ready'||record.execution)return record;const sourceRevision=record.authority?.rawInventoryCommit;if(record.packId===args.packId&&preparable(record,sourceRevision))return {...record,preparationDemand:{packId:args.packId,baseRevision:record.revision,sourceRevision,capability:'executable-presentation'}};return record;};
  const ops=createExecutableOperations({reads,service,publication,storage:ctx.storage});
  return {...ops,readApprovedAudio:selected=>retained?retained.read(selected):{status:'unavailable',reason:'approved-audio-unavailable'}};
 }

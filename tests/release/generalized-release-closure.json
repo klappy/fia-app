@@ -1541,7 +1541,7 @@
     },
     {
       "path": "server/faces/worker/BACKEND-CLOSURE.json",
-      "sha256": "045ef5790c6afda048bfe64701bcfcdafaa5ea5dd87424be0b45f37c9a4086ad"
+      "sha256": "988e72e9d86ae592d187eca2876e1ea85c27c85eb4dd94e270fdbee2726be43f"
     },
     {
       "path": "server/faces/worker/adapter.mjs",
@@ -1649,7 +1649,7 @@
     },
     {
       "path": "server/fia/preparation/executable-presentation-runtime.mjs",
-      "sha256": "bdbdac70d1b0aa0844785a8df885809e1999722f660e269fc0c696c7f08be627"
+      "sha256": "01213bf9377de61f88e50a5a862e829d8c80a5005364c71c0d10e987cf6fb97b"
     },
     {
       "path": "server/fia/preparation/executable-presentation-service.mjs",
@@ -2693,7 +2693,7 @@
     },
     {
       "path": "tests/worker-serving/executable-transition.test.mjs",
-      "sha256": "6c526080b11df1d569d387838f089709eaf0fa515bf79a6786b28d1b59dbe48d"
+      "sha256": "1c0a0457d68969098519bf01d9476212f12f9b7f17ec5b530512c086989e5332"
     },
     {
       "path": "tests/worker-serving/execution-registry.test.mjs",
@@ -2895,19 +2895,23 @@
     },
     {
       "path": "server/fia/preparation/source-join-decisions.mjs",
-      "sha256": "9e3bd3b696878396cea52f826c9f388db41ec1ce7812d33c08ecb7b9ead70c11"
+      "sha256": "316527821cf379e1d1c7c4524f9916ec88238d4a555281775537930c9b1467bf"
     },
     {
       "path": "tests/worker-serving/source-join-decisions.test.mjs",
-      "sha256": "467b80667a428803fa61339088dc1a57df054f820133210464c03f567247b2e5"
+      "sha256": "0ca46eeb7fe954c1abf481f35fef81e9f58cc9ac2a0f4eeeffe4234c57ee8e0b"
     },
     {
       "path": "tests/worker-serving/source-join-transition.test.mjs",
-      "sha256": "16c81a176554b641927bc5ff611c36ada32f2505dcb97633eb68dee3a8036e77"
+      "sha256": "e3e08ce2461032634e53bc5fa2b1604dcb4706cf536b877051f072ca8e86d0b4"
     },
     {
       "path": "tests/worker-serving/source-join-acquisition.test.mjs",
       "sha256": "698b00e99b87cbcdcb7dc8616d386b0ec4973b655c95bd64bef5785e7bb51565"
+    },
+    {
+      "path": "tests/worker-serving/source-join-outcome.test.mjs",
+      "sha256": "19e8c9a6b69850eaefcbe22cc1b4457ecc6d1e88e6d8bb73575faf54f8ed8858"
     }
   ],
   "generatedFiles": [
