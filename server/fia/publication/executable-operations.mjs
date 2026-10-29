@@ -30,7 +30,8 @@ export function createExecutableOperations({reads,service,publication,storage,vi
   // demand never starts or joins durable work. The publication compares again, and swaps atomically.
   if(Object.hasOwn(expectation,'expectedPublicationGeneration')){
    if(typeof publication?.currentGeneration!=='function')return envelope('blocked',null,'publication-generation-stale');
-   const current=await typed(()=>publication.currentGeneration(args.packId),reason=>({refusal:reason}));
+   // A storage fault on this read is a typed, non-final answer, never a 500 (review N-c).
+   let current;try{current=await typed(()=>publication.currentGeneration(args.packId),reason=>({refusal:reason}));}catch{return envelope('unavailable',null,'interrupted');}
    if(current?.refusal)return envelope('blocked',null,current.refusal);
    if(current!==expectation.expectedPublicationGeneration)return envelope('blocked',null,'publication-generation-stale');
   }

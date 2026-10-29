@@ -117,7 +117,30 @@ test('a row published by fia-bound-manifest@1 still verifies under @2; @2 adds t
  assert.equal(CURRENT_BOUND_MANIFEST_BUILDER,'fia-bound-manifest@2');assert.deepEqual(Object.keys(BOUND_MANIFEST_BUILDERS),['fia-bound-manifest@1','fia-bound-manifest@2']);
  const path=`/v1/approved-audio/${h('1')}/${h('a')}.ogg`,boundArtifacts=[{id:'a',bytes:enc({schema:'fia-bound-narration-audio@1',id:'a',delivery:{url:path,sha256:h('a'),bytes:9,mime:'audio/ogg'},playbackRange:null})}];
  const identity={packId,executionRevision,baseRevision,mediaAssetsSha256};
- const v1=await boundManifestFor('fia-bound-manifest@1',base(),identity,{boundArtifacts}),v2=await boundManifestFor('fia-bound-manifest@2',base(),identity,{boundArtifacts});
- assert.deepEqual(v1,await buildBoundManifest(base(),identity),'@1 ignores bound audio, exactly as the F7a1 deploy built it');
+ const bytes=enc(base()),ctx={packId,baseRevision};
+ const v1=await boundManifestFor('fia-bound-manifest@1',bytes,ctx,identity,{boundArtifacts}),v2=await boundManifestFor('fia-bound-manifest@2',bytes,ctx,identity,{boundArtifacts});
+ const {base:_b,...v1built}=v1;assert.deepEqual(v1built,await buildBoundManifest(base(),identity),'@1 ignores bound audio, exactly as the F7a1 deploy built it');
  assert.deepEqual(v2.manifest.files.at(-1),{path,group:'audio',sha256:h('a'),bytes:9,mime:'audio/ogg'});assert.notEqual(v1.descriptor.sha256,v2.descriptor.sha256);
+});
+
+// Review N-a: fia-bound-manifest@1 is pinned by golden bytes, so no later edit to shared code changes it.
+// Review N-b: each version validates with its own frozen rules; a base the F7a1 deploy accepted (a delivery
+// revision with no listed sidecar, which @2's parity rule refuses) still validates under @1.
+test('fia-bound-manifest@1 output is pinned by golden bytes, and its own base validation is frozen',async()=>{
+ const {boundManifestFor}=await import('../../server/fia/publication/publication-generation.mjs');
+ const golden={schema:1,packId,presentationRevision:baseRevision,deliveryRevision:h('d'),revision:'golden',files:[{path:'/index.html',bytes:10,sha256:h('1'),group:'core'}]};
+ const bytes=enc(golden),ctx={packId,baseRevision},identity={packId,executionRevision,baseRevision,mediaAssetsSha256};
+ const v1=await boundManifestFor('fia-bound-manifest@1',bytes,ctx,identity);
+ assert.equal(v1.descriptor.sha256,'7a08a98479c2e48d25aed33acb489c4170f46781003b812e33854bb0a4329201','golden @1 bytes: equal to what the F7a1 deploy (a220379) builds for these inputs');
+ await assert.rejects(boundManifestFor('fia-bound-manifest@2',bytes,ctx,identity),/base-manifest-invalid/,'@2 parity refuses what @1 accepted');
+ await assert.rejects(boundManifestFor('fia-bound-manifest@9',bytes,ctx,identity),/bound-manifest-builder-unknown/);
+});
+
+// Review N-c: a storage fault on the pre-work generation read is typed and non-final, never a 500.
+test('a storage fault on the pre-work currentGeneration read answers typed interrupted',async()=>{
+ const {createExecutableOperations}=await import('../../server/fia/publication/executable-operations.mjs');
+ const storage={transaction:async fn=>fn({get:async()=>undefined,put:async()=>{}})},calls=[];
+ const ops=createExecutableOperations({reads:{readPack:async()=>null},service:{request:async()=>{calls.push('request');return {status:'preparing',jobId:h('f')};}},publication:{currentGeneration:async()=>{throw new TypeError('storage gone');}},storage});
+ const r=await ops.preparePresentation({packId,baseRevision,sourceRevision:'f8776d92b090b5af5b17b17dc1137f25fb059ed0',capability:'executable-presentation',expectedPublicationGeneration:h('6')});
+ assert.deepEqual(r,{schema:'fia-presentation-preparation@1',status:'unavailable',jobId:null,reason:'interrupted',record:null});assert.deepEqual(calls,[]);
 });
