@@ -215,8 +215,9 @@ test('PNG allowlist: the recipe names it; pHYs and zTXt (what c4 carries) pass; 
 test('pHYs and zTXt are validated: count, position, length, unit, keyword, method and content',async()=>{
  const {bytes}=png(),tailAt=bytes.length-12,afterIdat=c=>Buffer.concat([bytes.subarray(0,tailAt),c,bytes.subarray(tailAt)]);
  for(const bad of [png({extra:[pHYs(),pHYs()]}).bytes,afterIdat(pHYs()),png({extra:[chunk('pHYs',Buffer.alloc(8))]}).bytes,png({extra:[pHYs(2)]}).bytes,
-  afterIdat(zTXt('Comment',1)),afterIdat(zTXt('')),afterIdat(zTXt(' lead')),afterIdat(zTXt('a  b')),afterIdat(zTXt('k'.repeat(80))),afterIdat(chunk('zTXt',Buffer.from('Comment\0\0garbage'))),afterIdat(zTXt('Comment',0,'x'.repeat(70000)))])
+  afterIdat(zTXt('Comment',1)),afterIdat(zTXt('')),afterIdat(zTXt(' lead')),afterIdat(zTXt('a  b')),afterIdat(zTXt('k'.repeat(80))),afterIdat(chunk('zTXt',Buffer.from('Comment\0\0garbage')))])
   await refused(decode(bad,'image/png'),'png-chunk-invalid');
+ await refused(decode(afterIdat(zTXt('Comment',0,'x'.repeat(70000))),'image/png'),'png-ancillary-cap');
 });
 // JPEG surgery helpers on the stripped baseline fixture (markers DQT, SOF0, DHT, SOS, EOI only).
 const seg=(m,body)=>{const s=Buffer.alloc(4+body.length);s[0]=0xff;s[1]=m;s.writeUInt16BE(2+body.length,2);body.copy(s,4);return s;};
@@ -264,4 +265,30 @@ test('4408717333: zTXt must be exactly one complete zlib stream (no trailing byt
 });
 test('4408770646: an empty DQT or DHT segment (no table) is refused',async()=>{
  for(const m of [0xdb,0xc4])await refused(decode(beforeSof('baseline-37x23.jpg',seg(m,Buffer.alloc(0))),'image/jpeg'),'jpeg-table-invalid');
+});
+// Codex round 6 on PR285 cd5ca75, each reproduced first.
+test('4408810294: total decompressed ancillary text is capped by the recipe, and the deadline is checked around every inflate',async()=>{
+ const z=deflateSync(Buffer.alloc(65536,0x61)),one=chunk('zTXt',Buffer.concat([Buffer.from('Comment\0\0','latin1'),z])),{bytes}=png(),tail=bytes.length-12;
+ const many=Buffer.concat([bytes.subarray(0,tail),...new Array(15000).fill(one),bytes.subarray(tail)]);
+ const t=Date.now();await refused(settlesWithin(decode(many,'image/png'),5000),'png-ancillary-cap');assert.ok(Date.now()-t<1000,`${Date.now()-t} ms`);
+ assert.ok(VISUAL_ORIGINAL_RECIPE.limits.maxAncillaryTextBytes>=69&&VISUAL_ORIGINAL_RECIPE.limits.maxAncillaryTextBytes<=65536);
+ // Three small zTXt chunks: the clock is read around each inflate, so an overrun during parsing is a non-final decode-deadline.
+ const small=chunk('zTXt',Buffer.concat([Buffer.from('Comment\0\0','latin1'),deflateSync(Buffer.from('map'))])),three=Buffer.concat([bytes.subarray(0,tail),small,small,small,bytes.subarray(tail)]);
+ let calls=0;await assert.rejects(decodeVisual(new Uint8Array(three),{mime:'image/png',limits,clock:()=>++calls>2?limits.decodeMs+1:0}),e=>e.subReason==='decode-deadline'&&e.final===false&&calls<=4);
+});
+test('4408810291: a jpeg-js throw after the deadline is a non-final decode-deadline, never a final jpeg-decode-error',async()=>{
+ const b=file('baseline-37x23.jpg'),cut=Buffer.concat([b.subarray(0,b.length-200),Buffer.from([0xff,0xd9])]);
+ await refused(decode(cut,'image/jpeg'),'jpeg-decode-error');
+ let t=0;await assert.rejects(decodeVisual(new Uint8Array(cut),{mime:'image/jpeg',limits,clock:()=>(t+=limits.decodeMs+1)}),e=>e.subReason==='decode-deadline'&&e.final===false);
+});
+test('reviewer probe: a DQT after the scan (values x4, before EOI) is refused, since jpeg-js would apply it to pixels already scanned',async()=>{
+ const b=jpg('baseline-37x23.jpg'),q=segs(b).find(x=>x.m===0xdb),dqt=Buffer.from(b.subarray(q.at,q.at+2+q.len));
+ for(let t=q.at+4;t<q.at+2+q.len;t+=65)for(let i=1;i<=64;i++)dqt[t-q.at+i]=Math.min(255,dqt[t-q.at+i]*4);
+ await refused(decode(insertAt(b,b.length-2,dqt),'image/jpeg'),'jpeg-table-invalid');
+});
+test('a DHT after the scan does not change pixels (jpeg-js builds Huffman tables in stream order), so it stays legal',async()=>{
+ const b=jpg('baseline-37x23.jpg'),h=segs(b).find(x=>x.m===0xc4),late=insertAt(b,b.length-2,b.subarray(h.at,h.at+2+h.len));
+ const base=await decode(b,'image/jpeg'),after=await decode(late,'image/jpeg');assert.equal(after.pixelsSha256,base.pixelsSha256);
+ // A different (still valid) DHT after the scan: same pixels, because the scan was already decoded with the table in effect.
+ const other=insertAt(b,b.length-2,dht(0,0,[0,1,1,1,1,1,1,1,1,1,1,1],[0,1,2,3,4,5,6,7,8,9,10]));assert.equal((await decode(other,'image/jpeg')).pixelsSha256,base.pixelsSha256);
 });

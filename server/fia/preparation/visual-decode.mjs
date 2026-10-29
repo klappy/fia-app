@@ -13,8 +13,8 @@ const refuse=(r,o)=>{throw new VisualDecodeRefusal(r,o);};
 // png-chunk-unsupported, jpeg-marker-unsupported or jpeg-format-unsupported. Ancillary entries are only those the first-proof
 // originals carry (c4: pHYs, zTXt; a1400: none), each validated for position, count, length and content.
 const f=Object.freeze;
-export const PNG_ALLOWLIST=f({critical:f(['IHDR','PLTE','IDAT','IEND']),ancillary:f({pHYs:'once, before the first IDAT, length 9, unit 0 or 1',zTXt:'any count between IHDR and IEND; keyword 1-79 Latin-1 bytes with no leading, trailing or double space; compression method 0; exactly one complete zlib stream using every byte; text within 65536 bytes'})});
-export const JPEG_ALLOWLIST=f({markers:f(['SOI','DQT','DHT','SOF0','SOF1','SOF2','SOS','EOI']),dqt:'at least one table; Pq 0 (8-bit), Tq 0-3, 64 entries of 1-255 each, exact length',dht:'at least one table; Tc 0-1, Th 0-1 for SOF0 and 0-3 otherwise (re-checked at SOF), at most 256 codes, exact length',sof:'8-bit, 1 or 3 components, distinct ids, H and V 1-4, Tq 0-3 defined before the first scan; an interleaved scan has at most 10 blocks per MCU',sos:'Td and Ta each 0-3 (0-1 for SOF0), tables it uses defined before it; in a sequential frame each component in exactly one scan; no restart markers (no DRI)'});
+export const PNG_ALLOWLIST=f({critical:f(['IHDR','PLTE','IDAT','IEND']),ancillary:f({pHYs:'once, before the first IDAT, length 9, unit 0 or 1',zTXt:'any count between IHDR and IEND; keyword 1-79 Latin-1 bytes with no leading, trailing or double space; compression method 0; exactly one complete zlib stream using every byte; all zTXt text together within maxAncillaryTextBytes'})});
+export const JPEG_ALLOWLIST=f({markers:f(['SOI','DQT','DHT','SOF0','SOF1','SOF2','SOS','EOI']),dqt:'before the first scan; at least one table; Pq 0 (8-bit), Tq 0-3, 64 entries of 1-255 each, exact length',dht:'at least one table; Tc 0-1, Th 0-1 for SOF0 and 0-3 otherwise (re-checked at SOF), at most 256 codes, exact length',sof:'8-bit, 1 or 3 components, distinct ids, H and V 1-4, Tq 0-3 defined before the first scan; an interleaved scan has at most 10 blocks per MCU',sos:'Td and Ta each 0-3 (0-1 for SOF0), tables it uses defined before it; in a sequential frame each component in exactly one scan; no restart markers (no DRI)'});
 const PNG_SIG=[0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a];
 export function sniffRaster(bytes){
  if(bytes.length>=8&&PNG_SIG.every((v,i)=>bytes[i]===v))return 'image/png';
@@ -28,7 +28,7 @@ const u16=(b,i)=>(b[i]<<8)|b[i+1];
 // Supported subset: 8-bit samples, non-interlaced, every standard colour type. Channels per colour type.
 const PNG_CHANNELS=new Map([[0,1],[2,3],[3,1],[4,2],[6,4]]);
 function pngStructure(bytes,limits,clock){
- let pos=8,ihdr=null,plte=0,idat=[],idatDone=false,iend=false,first=true,chunks=0,phys=false;
+ let pos=8,ihdr=null,plte=0,idat=[],idatDone=false,iend=false,first=true,chunks=0,phys=false,ancillaryText=0;
  while(pos<bytes.length){
   // Bounded parse: the recipe caps the chunk count (so no PNG holds one view per tiny chunk), and the deadline is checked as it goes.
   if(++chunks>limits.maxPngChunks)refuse('png-chunk-cap');if(!(chunks&1023)&&clock()>limits.decodeMs)refuse('decode-deadline',{final:false});
@@ -53,8 +53,13 @@ function pngStructure(bytes,limits,clock){
   else if(type==='zTXt'){
    const k=data.indexOf(0);if(k<1||k>79||k+2>length||data[k+1]!==0)refuse('png-chunk-invalid');
    for(let i=0;i<k;i++){const c=data[i];if(!(c>=32&&c<=126||c>=161)||c===32&&(i===0||i===k-1||data[i-1]===32))refuse('png-chunk-invalid');}
-   // Exactly one complete zlib stream consuming every byte, text within 64 KiB.
-   const z=data.subarray(k+2);let out;try{out=inflateSync(z,{info:true,maxOutputLength:65536});}catch{refuse('png-chunk-invalid');}
+   // Exactly one complete zlib stream consuming every byte. All zTXt text together stays within the recipe's
+   // maxAncillaryTextBytes (one inflate never produces more than what is left), and the deadline is checked around each inflate.
+   if(clock()>limits.decodeMs)refuse('decode-deadline',{final:false});
+   const z=data.subarray(k+2),left=limits.maxAncillaryTextBytes-ancillaryText;let out;
+   try{out=inflateSync(z,{info:true,maxOutputLength:left+1});}catch(error){refuse(/maxOutputLength|buffer|larger than|Cannot create a Buffer/i.test(error?.message??'')||error?.code==='ERR_BUFFER_TOO_LARGE'?'png-ancillary-cap':'png-chunk-invalid');}
+   if(out.buffer.length>left)refuse('png-ancillary-cap');ancillaryText+=out.buffer.length;
+   if(clock()>limits.decodeMs)refuse('decode-deadline',{final:false});
    if(out.engine.bytesWritten!==z.length)refuse('png-chunk-invalid');
   }
   else refuse('png-chunk-unsupported');
@@ -126,6 +131,9 @@ function jpegStructure(bytes,limits){
   if(!SOF.has(marker)&&marker!==0xdb&&marker!==0xc4&&marker!==0xda)refuse('jpeg-marker-unsupported');
   // DQT (B.2.4.1): Pq 0, Tq 0-3, 64 entries of 1-255, exact length.
   if((marker===0xdb||marker===0xc4)&&length===2)refuse('jpeg-table-invalid');// a table segment carries at least one table
+  // jpeg-js binds quantization tables only after the whole file is parsed, so a DQT after a scan would change pixels already
+  // scanned (a conformant decoder uses the table in effect at the scan): refuse any DQT after the first SOS.
+  if(marker===0xdb&&scans)refuse('jpeg-table-invalid');
   if(marker===0xdb){for(let q=pos+2;q<pos+length;q+=65){const pq=bytes[q]>>4,tq=bytes[q]&15;if(pq!==0||tq>3||q+65>pos+length)refuse('jpeg-table-invalid');for(let i=1;i<=64;i++)if(!bytes[q+i])refuse('jpeg-table-invalid');qt.add(tq);}}
   // DHT (B.2.4.2): Tc 0-1, Th 0-3, and 0-1 for SOF0 (tables defined before the frame are re-checked at SOF); at most 256 codes, exact length.
   if(marker===0xc4){for(let q=pos+2;q<pos+length;){if(q+17>pos+length)refuse('jpeg-table-invalid');const tc=bytes[q]>>4,th=bytes[q]&15;let n=0;for(let i=1;i<=16;i++)n+=bytes[q+i];
@@ -181,7 +189,7 @@ function jpegStructure(bytes,limits){
 function decodeJpegFull(bytes,limits,clock){
  const frame=jpegStructure(bytes,limits);let image;
  try{image=decodeJpeg(bytes,{useTArray:true,formatAsRGBA:false,tolerantDecoding:false,maxResolutionInMP:limits.maxJpegPixels/1e6,maxMemoryUsageInMB:limits.maxJpegMemoryMB});}
- catch{refuse('jpeg-decode-error');}
+ catch{if(clock()>limits.decodeMs)refuse('decode-deadline',{final:false});refuse('jpeg-decode-error');}
  // jpeg-js decodes synchronously and cannot be pre-empted: maxJpegScans bounds the work, and the deadline is checked on return.
  if(clock()>limits.decodeMs)refuse('decode-deadline',{final:false});
  if(image.width!==frame.width||image.height!==frame.height||image.data.length!==frame.width*frame.height*3)refuse('dimension-mismatch');
