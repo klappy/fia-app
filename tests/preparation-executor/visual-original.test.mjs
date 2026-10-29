@@ -16,11 +16,11 @@ export class Job {constructor(ctx,env){this.ctx=ctx;this.env=env;this.gets=0;thi
  async fetch(request){const args=await request.json();if(args.op==='counts')return Response.json({gets:this.gets,waiting:this.gates.length});if(args.op==='release'){for(const r of this.gates.splice(0))r();return Response.json({released:true});}
   const source={kind:args.kind||'map',url:args.url||'https://publisher.invalid/maps/c4.png',sourceVersion:'fixture-revision-1'};
   try{const job=createVisualOriginalJob({storage:this.ctx.storage,bucket:this.env.ORIGINALS,source,eligibility:c=>!args.ineligible&&!(args.badHash&&c.observedContent?.sha256===args.badHash),now:()=>1000,fetchSource:async(url,options)=>{this.gets++;if(args.fail)throw null;if(options.redirect!=='manual')throw Error('wrong-redirect');if(args.gate)await new Promise(r=>this.gates.push(r));
-    if(args.redirect)return new Response(null,{status:302,headers:{location:'https://elsewhere.invalid/x.png'}});
+    if(args.redirect)return new Response(null,{status:302,headers:{location:'https://elsewhere.invalid/x.png'}});if(args.httpStatus)return new Response('no',{status:args.httpStatus,headers:{'content-type':'text/plain','content-length':'2'}});
     const bytes=args.body?decode(args.body):args.size?new Uint8Array(args.size).fill(7).map((v,i)=>i<8?[0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a][i]:v):decode(fixtures[args.fixture||'png']);
     const headers={'content-type':args.mime||'image/png'};if(!args.noLength)headers['content-length']=String(args.length??bytes.length);
     let sent=false;const cuts=args.split?[0,...args.split,bytes.length]:null;return new Response(new ReadableStream({pull(c){if(sent){c.close();return;}sent=true;if(cuts){for(let i=0;i<cuts.length-1;i++)c.enqueue(bytes.slice(cuts[i],cuts[i+1]));return;}for(let n=0;n<bytes.length;n+=65536)c.enqueue(bytes.slice(n,n+65536));}}),{status:200,headers});}});
-   const result=args.op==='read'?await job.read():await job.demand();
+   const result=args.op==='read'?await job.read():await job.demand({...(args.aborted?{signal:AbortSignal.abort()}:{}),...(args.retry?{retry:true}:{})});
    const objects=(await this.env.ORIGINALS.list()).objects;return Response.json({result,gets:this.gets,objects:objects.map(o=>o.key),rows:[...(await this.ctx.storage.list()).keys()]});}catch(error){return Response.json({error:error.message,gets:this.gets});}}
 }
 export default {fetch(request,env){const name=new URL(request.url).pathname.slice(1)||'one';return env.JOBS.get(env.JOBS.idFromName(name)).fetch(request);}};`;
@@ -93,6 +93,21 @@ test('a signature split across chunks is buffered: a match is stored intact, a m
  const jpeg=await call(mf,{fixture:'jpeg',mime:'image/jpeg',url:'https://publisher.invalid/a.jpg',split:[1,2]},'jpeg');assert.equal(jpeg.result.original.sha256,sha(JPEG));
  const clean=await fixture(t),bad=Buffer.from(PNG);bad[5]=0;const out=await call(clean,{body:bad.toString('base64'),split:[4]});assert.equal(out.result.reason,'visual-unsupported');assert.equal(out.result.subReason,'fresh-signature-mismatch');assert.deepEqual(out.objects,[],JSON.stringify(out.objects));
 });
+test('an already-aborted demand writes nothing; a later normal demand fetches once and stores',async t=>{
+ const mf=await fixture(t),aborted=await call(mf,{aborted:true});assert.equal(aborted.result.reason,'interrupted');assert.equal(aborted.result.subReason,'fresh-aborted');assert.equal(aborted.result.final,false);assert.equal(aborted.gets,0);assert.deepEqual(aborted.rows,[]);assert.deepEqual(aborted.objects,[]);
+ const ok=await call(mf);assert.equal(ok.gets,1);assert.equal(ok.result.custody,'retained',JSON.stringify(ok.result));
+});
+for(const status of [503,500,429,408])test(`a transient ${status} is interrupted, not final; a plain demand fetches nothing and a deliberate Retry fetches once and stores`,async t=>{
+ const mf=await fixture(t),down=await call(mf,{httpStatus:status});assert.equal(down.gets,1);assert.equal(down.result.reason,'interrupted');assert.equal(down.result.subReason,'fresh-response-status-transient');assert.equal(down.result.final,false);assert.ok(!down.objects.some(k=>k.startsWith('originals/visual/sha256/')));
+ const plain=await call(mf);assert.equal(plain.gets,1,'no automatic refetch');assert.equal(plain.result.reason,'interrupted');
+ const retried=await call(mf,{retry:true});assert.equal(retried.gets,2);assert.equal(retried.result.custody,'retained',JSON.stringify(retried.result));assert.equal(retried.result.original.sha256,sha(PNG));
+ const again=await call(mf,{retry:true});assert.equal(again.gets,2,'Retry after retention fetches nothing');assert.equal(again.result.custody,'retained');
+});
+for(const status of [404,410,403])test(`a ${status} stays final visual-unsupported and even a Retry fetches nothing more`,async t=>{
+ const mf=await fixture(t),gone=await call(mf,{httpStatus:status});assert.equal(gone.result.reason,'visual-unsupported');assert.equal(gone.result.subReason,'fresh-response-status');assert.equal(gone.result.final,true);
+ const retried=await call(mf,{retry:true});assert.equal(retried.gets,1);assert.equal(retried.result.subReason,'fresh-response-status');
+});
+test('a Retry after a final signature refusal fetches nothing more',async t=>{const mf=await fixture(t),bad=await call(mf,{mime:'image/jpeg'});assert.equal(bad.result.final,true);const retried=await call(mf,{retry:true});assert.equal(retried.gets,1);assert.equal(retried.result.subReason,'fresh-signature-mismatch');});
 test('query-string source is refused before any fetch',async t=>{const mf=await fixture(t),out=await call(mf,{url:'https://publisher.invalid/c4.png?sig=1'});assert.match(out.error,/visual-source/);assert.equal(out.gets,0);});
 test('audio default is unchanged: same keys, no contentType or content binding',async()=>{
  const rows=new Map(),objects=new Map();const storage={get:async k=>structuredClone(rows.get(k)),async transaction(fn){return fn({get:async k=>structuredClone(rows.get(k)),put:async(k,v)=>rows.set(k,structuredClone(v))});}};

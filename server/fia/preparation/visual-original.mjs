@@ -10,10 +10,14 @@ export const VISUAL_ORIGINAL_POLICY=Object.freeze({revision:'fia-visual-original
 // validation step (F6, T5 ruled at cookbook d922aa5) that re-checks the read-back bytes and fetches nothing, so adding
 // a decoder fills `decoder` here and the null fields of `decode` below without changing the custody receipt.
 export const VISUAL_ORIGINAL_RECIPE=Object.freeze({schema:'fia-visual-original-recipe@1',job:'visual-original@1',custody:VISUAL_ORIGINAL_POLICY.revision,formats:Object.freeze(['image/jpeg','image/png']),limits:Object.freeze({maxBytes:VISUAL_ORIGINAL_POLICY.maxBytes,totalMs:VISUAL_ORIGINAL_POLICY.totalMs,progressMs:VISUAL_ORIGINAL_POLICY.progressMs,maxPixels:null}),decoder:null});
-const KINDS=new Set(['photo','illustration','map']),CHECK='visual-original@1:first',JOB_KEY='visual-original:job';
+const KINDS=new Set(['photo','illustration','map']),JOB_KEY='visual-original:job';
+// One fenced ticket per attempt: attempt 1 on the first demand, and a new one only on a deliberate Retry after a non-final interruption.
+const ticketFor=n=>({checkId:n===1?'visual-original@1:first':`visual-original@1:retry-${n}`,sequence:n,expectedPreviousObservationSha256:null,previousSourceSha256:null});
 // Final typed refusals for this source under this recipe, named as SOURCE-TO-APP's `visual-unsupported` (cookbook PR265) with the
 // recipe sub-reason; `fresh-ineligible` is `visual-ineligible`. Anything else is an interrupted attempt, never a verdict.
-const UNSUPPORTED=new Set(['fresh-response-refused','fresh-known-length-required','fresh-byte-limit','fresh-byte-length','fresh-signature-mismatch','fresh-source-policy']);
+// HTTP status: a redirect (fresh-response-refused) and a non-transient status such as 404 or 410 (fresh-response-status) are final,
+// because the identity is the exact URL and version; 408, 425, 429 and 5xx (fresh-response-status-transient) are interrupted.
+const UNSUPPORTED=new Set(['fresh-response-refused','fresh-response-status','fresh-known-length-required','fresh-byte-limit','fresh-byte-length','fresh-signature-mismatch','fresh-source-policy']);
 // Ineligibility belongs to the caller's current admission, not to the source, so it is never final for the shared job.
 const custodyRefusal=error=>error?.message==='fresh-ineligible'?{reason:'visual-ineligible',subReason:'fresh-ineligible',final:false}:{reason:'retained-evidence-unavailable',subReason:error?.message??null,final:false};
 const refusal=r=>UNSUPPORTED.has(r)?{reason:'visual-unsupported',subReason:r,final:true}:r==='fresh-ineligible'?{reason:'visual-ineligible',subReason:r,final:false}:{reason:'interrupted',subReason:r??null,final:false};
@@ -37,19 +41,25 @@ const decode=Object.freeze({state:'unavailable',reason:'decoder-unavailable',dec
 export function createVisualOriginalJob({storage,bucket,source,eligibility,fetchSource,makeStream,now}){
  const s=trusted(structuredClone(source));if(typeof eligibility!=='function'||typeof storage?.transaction!=='function'||!bucket)throw Error('visual-capability');
  async function context(){const identity=await visualOriginalIdentity(s);return {identity,source:{logicalId:identity.logicalId,url:s.url,sourceVersionKind:'discovery-snapshot',sourceVersion:s.sourceVersion,publisherVersion:null}};}
- const ticket={checkId:CHECK,sequence:1,expectedPreviousObservationSha256:null,previousSourceSha256:null};
- const observer=c=>createFreshSourceObservations({storage,bucket,source:c.source,policy:{...VISUAL_ORIGINAL_POLICY},admissions:[ticket],content:VISUAL_CONTENT,eligibility:context=>context.source.url===s.url&&context.source.sourceVersion===s.sourceVersion&&eligibility(context)===true,...(fetchSource?{fetchSource}:{}),...(makeStream?{makeStream}:{}),...(now?{now}:{})});
+  const observer=(c,n=1)=>createFreshSourceObservations({storage,bucket,source:c.source,policy:{...VISUAL_ORIGINAL_POLICY},admissions:[ticketFor(n)],content:VISUAL_CONTENT,eligibility:context=>context.source.url===s.url&&context.source.sourceVersion===s.sourceVersion&&eligibility(context)===true,...(fetchSource?{fetchSource}:{}),...(makeStream?{makeStream}:{}),...(now?{now}:{})});
  const base=c=>({job:VISUAL_ORIGINAL_JOB,recipe:VISUAL_ORIGINAL_RECIPE,sourceIdentitySha256:c.identity.sourceIdentitySha256,kind:s.kind});
- async function bind(c){await storage.transaction(async tx=>{const marker=await tx.get(JOB_KEY);if(marker&&marker.logicalId!==c.identity.logicalId)throw Error('visual-identity-corrupt');if(!marker)await tx.put(JOB_KEY,{schema:'fia-visual-original-job@1',logicalId:c.identity.logicalId});});}
+ const attemptOf=marker=>{if(!Number.isSafeInteger(marker?.attempt)||marker.attempt<1)throw Error('visual-identity-corrupt');return marker.attempt;};
+ async function bind(c){return storage.transaction(async tx=>{const marker=await tx.get(JOB_KEY);if(marker&&marker.logicalId!==c.identity.logicalId)throw Error('visual-identity-corrupt');if(marker)return attemptOf(marker);await tx.put(JOB_KEY,{schema:'fia-visual-original-job@1',logicalId:c.identity.logicalId,attempt:1});return 1;});}
+ // A deliberate Retry opens the next ticket only when the current attempt ended uncertain with a non-final reason; concurrent Retries share it.
+ async function reopen(c,n){const row=(await observer(c,n).status(ticketFor(n).checkId)).operation;if(row?.state!=='uncertain'||refusal(row.reason).final)return n;return storage.transaction(async tx=>{const marker=await tx.get(JOB_KEY),current=attemptOf(marker);if(current!==n)return current;await tx.put(JOB_KEY,{...marker,attempt:n+1});return n+1;});}
  async function retained(c){const head=await observer(c).read();if(head.state!=='observed')return null;return {...base(c),state:'unavailable',reason:'decoder-unavailable',custody:'retained',original:observed(head.observation,head.observationSha256),decode};}
- // A demand fetches at most once per source under this recipe: a repeat or a concurrent demand joins the one ticket.
- async function demand({signal}={}){
+ // A demand fetches at most once per attempt: a repeat or a concurrent demand joins the current ticket. After a non-final
+ // interruption a plain demand reports `interrupted` with 0 fetches; only `retry:true` (SOURCE-TO-APP's deliberate Retry) opens a new attempt.
+ async function demand({signal,retry=false}={}){
   const c=await context();
+  // A demand already cancelled is refused before any row is written, so it cannot consume the shared ticket.
+  if(signal?.aborted)return {...base(c),state:'unavailable',reason:'interrupted',subReason:'fresh-aborted',final:false,custody:'none',decode};
   // An ineligible demand is refused before the job marker, sequence or attempt rows exist, so it cannot poison the shared job.
   let admitted=false;try{admitted=eligibility({phase:'demand',source:structuredClone(c.source),admission:null,observedContent:null})===true;}catch{}if(!admitted)return {...base(c),state:'unavailable',reason:'visual-ineligible',subReason:'fresh-ineligible',final:false,custody:'none',decode};
-  await bind(c);
+  let n=await bind(c);
   try{const prior=await retained(c);if(prior)return prior;}catch(error){return {...base(c),state:'unavailable',...custodyRefusal(error),custody:'unverified',decode};}
-  let outcome;try{outcome=await observer(c).observe(CHECK,{signal});}catch(error){return {...base(c),state:'unavailable',...refusal(error.message),custody:'none',decode};}
+  if(retry===true)n=await reopen(c,n);
+  let outcome;try{outcome=await observer(c,n).observe(ticketFor(n).checkId,{signal});}catch(error){return {...base(c),state:'unavailable',...refusal(error.message),custody:'none',decode};}
   if(outcome.state==='preparing')return {...base(c),state:'preparing',custody:'none',decode};
   if(outcome.state==='uncertain')return {...base(c),state:'unavailable',...refusal(outcome.reason),custody:'none',decode};
   try{const kept=await retained(c);if(kept)return kept;}catch(error){return {...base(c),state:'unavailable',...custodyRefusal(error),custody:'unverified',decode};}
