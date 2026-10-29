@@ -57,14 +57,17 @@ export function composeWithGuideRecords({guideRecordFor,producer}){
   return d?{descriptor:d}:{refused:'composer-descriptor-incomplete'};
  }
  // One pack in, one typed outcome out: {state:'composed', receipt} or {state:'unavailable', reason}.
- async function compose(packId){
+ // compose demands the file first (which may acquire it); composeRetained only reads what is already retained: it never calls
+ // producer.demand, so it never writes and never fetches. A file that is not retained is a typed guide-not-retained.
+ const compose=packId=>composeFrom(packId,true),composeRetained=packId=>composeFrom(packId,false);
+ async function composeFrom(packId,acquire){
   const {descriptor,refused,subReason}=await descriptorFor(packId);if(refused)return {packId,state:'unavailable',reason:refused,subReason:subReason??null};
   const source={repo:`${descriptor.owner}/${descriptor.collection}`,revision:descriptor.revision,path:descriptor.path,expectedSha256:descriptor.fileSha256};
-  const demanded=await producer.demand(source);if(demanded?.state!=='retained')return {packId,state:'unavailable',reason:demanded?.reason??'producer-unavailable',subReason:demanded?.subReason??null,descriptor};
+  if(acquire){const demanded=await producer.demand(source);if(demanded?.state!=='retained')return {packId,state:'unavailable',reason:demanded?.reason??'producer-unavailable',subReason:demanded?.subReason??null,descriptor};}
   const file=await producer.retainedGuideFile(source);if(file?.state!=='retained')return {packId,state:'unavailable',reason:file?.reason??'producer-unavailable',subReason:file?.subReason??null,descriptor};
   let receipt;try{receipt=issueProducerReceipt(file.read,file.bytes);}catch(error){return {packId,state:'unavailable',reason:'composer-receipt-refused',subReason:error.message,descriptor};}
   if(Object.keys(descriptor).some(k=>receipt[k]!==descriptor[k]))return {packId,state:'unavailable',reason:'descriptor-mismatch',descriptor};
   return {packId,state:'composed',receipt,descriptor};
  }
- return Object.freeze({descriptorFor,compose});
+ return Object.freeze({descriptorFor,compose,composeRetained});
 }
