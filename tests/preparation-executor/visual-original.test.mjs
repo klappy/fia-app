@@ -18,11 +18,11 @@ const decode=b=>Uint8Array.from(atob(b),c=>c.charCodeAt(0));
 export class Job {constructor(ctx,env){this.ctx=ctx;this.env=env;this.gets=0;this.gates=[];}
  async fetch(request){const args=await request.json();if(args.op==='corrupt'){for(const o of (await this.env.ORIGINALS.list({prefix:'originals/visual/sha256/'})).objects)await this.env.ORIGINALS.put(o.key,new Uint8Array(o.size).fill(1));return Response.json({corrupted:true});}if(args.op==='counts')return Response.json({gets:this.gets,waiting:this.gates.length});if(args.op==='release'){for(const r of this.gates.splice(0))r();return Response.json({released:true});}
   const source={kind:args.kind||'map',url:args.url||'https://publisher.invalid/maps/c4.png',sourceVersion:'fixture-revision-1'};
-  try{const job=createVisualOriginalJob({storage:this.ctx.storage,bucket:this.env.ORIGINALS,source,eligibility:()=>!args.ineligible,now:()=>1000,fetchSource:async(url,options)=>{this.gets++;if(args.fail)throw null;if(options.redirect!=='manual')throw Error('wrong-redirect');if(args.gate)await new Promise(r=>this.gates.push(r));
+  try{const job=createVisualOriginalJob({storage:this.ctx.storage,bucket:this.env.ORIGINALS,source,eligibility:c=>!args.ineligible&&!(args.badHash&&c.observedContent?.sha256===args.badHash),now:()=>1000,fetchSource:async(url,options)=>{this.gets++;if(args.fail)throw null;if(options.redirect!=='manual')throw Error('wrong-redirect');if(args.gate)await new Promise(r=>this.gates.push(r));
     if(args.redirect)return new Response(null,{status:302,headers:{location:'https://elsewhere.invalid/x.png'}});
     const bytes=args.body?decode(args.body):args.size?new Uint8Array(args.size).fill(7).map((v,i)=>i<8?[0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a][i]:v):decode(fixtures[args.fixture||'png']);
     const headers={'content-type':args.mime||'image/png'};if(!args.noLength)headers['content-length']=String(args.length??bytes.length);
-    let sent=false;return new Response(new ReadableStream({pull(c){if(sent){c.close();return;}sent=true;for(let n=0;n<bytes.length;n+=65536)c.enqueue(bytes.slice(n,n+65536));}}),{status:200,headers});}});
+    let sent=false;const cuts=args.split?[0,...args.split,bytes.length]:null;return new Response(new ReadableStream({pull(c){if(sent){c.close();return;}sent=true;if(cuts){for(let i=0;i<cuts.length-1;i++)c.enqueue(bytes.slice(cuts[i],cuts[i+1]));return;}for(let n=0;n<bytes.length;n+=65536)c.enqueue(bytes.slice(n,n+65536));}}),{status:200,headers});}});
    const result=args.op==='read'?await job.read():await job.demand();
    const objects=(await this.env.ORIGINALS.list()).objects;return Response.json({result,gets:this.gets,objects:objects.map(o=>o.key),rows:[...(await this.ctx.storage.list()).keys()]});}catch(error){return Response.json({error:error.message,gets:this.gets});}}
 }
@@ -89,6 +89,22 @@ test('an ineligible demand writes nothing and does not poison the shared job for
  const mf=await fixture(t),refused=await call(mf,{ineligible:true});assert.equal(refused.result.reason,'visual-ineligible');assert.equal(refused.result.final,false);assert.equal(refused.gets,0);assert.deepEqual(refused.objects,[]);assert.deepEqual(refused.rows,[]);
  const ok=await call(mf);assert.equal(ok.gets,1,JSON.stringify(ok));assert.equal(ok.result.custody,'retained');assert.equal(ok.result.state,'ready');assert.equal(ok.result.decode.width,2);
 });
+test('a known-bad observed hash is refused at head promotion as non-final visual-ineligible',async t=>{
+ const mf=await fixture(t),out=await call(mf,{badHash:sha(PNG)});assert.equal(out.gets,1);assert.equal(out.result.state,'unavailable');assert.equal(out.result.reason,'visual-ineligible',JSON.stringify(out.result));assert.equal(out.result.final,false);assert.notEqual(out.result.custody,'retained');
+ const read=await call(mf,{op:'read',badHash:sha(PNG)});assert.equal(read.result.reason,'visual-not-requested');assert.equal(read.gets,1);
+});
+test('a known-bad hash found after retention is refused on read and on demand as non-final visual-ineligible',async t=>{
+ const mf=await fixture(t),first=await call(mf);assert.equal(first.result.custody,'retained');
+ const read=await call(mf,{op:'read',badHash:sha(PNG)});assert.equal(read.error,undefined,JSON.stringify(read));assert.equal(read.result.reason,'visual-ineligible');assert.equal(read.result.subReason,'fresh-ineligible');assert.equal(read.result.final,false);
+ const demand=await call(mf,{badHash:sha(PNG)});assert.equal(demand.result.reason,'visual-ineligible');assert.equal(demand.result.final,false);assert.equal(demand.gets,1);
+ const ineligibleRead=await call(mf,{op:'read',ineligible:true});assert.equal(ineligibleRead.result.reason,'visual-ineligible');
+ const again=await call(mf,{op:'read'});assert.equal(again.result.custody,'retained');
+});
+test('a signature split across chunks is buffered: a match is stored intact, a mismatch leaves no quarantine object',async t=>{
+ const mf=await fixture(t),ok=await call(mf,{split:[1,3,5]});assert.equal(ok.result.custody,'retained',JSON.stringify(ok));assert.equal(ok.result.original.sha256,sha(PNG));assert.equal(ok.result.original.bytes,PNG.length);
+ const jpeg=await call(mf,{fixture:'jpeg',mime:'image/jpeg',url:'https://publisher.invalid/a.jpg',split:[1,2]},'jpeg');assert.equal(jpeg.result.original.sha256,sha(JPEG));
+ const clean=await fixture(t),bad=Buffer.from(PNG);bad[5]=0;const out=await call(clean,{body:bad.toString('base64'),split:[4]});assert.equal(out.result.reason,'visual-unsupported');assert.equal(out.result.subReason,'fresh-signature-mismatch');assert.deepEqual(out.objects,[],JSON.stringify(out.objects));
+});
 test('query-string source is refused before any fetch',async t=>{const mf=await fixture(t),out=await call(mf,{url:'https://publisher.invalid/c4.png?sig=1'});assert.match(out.error,/visual-source/);assert.equal(out.gets,0);});
 test('audio default is unchanged: same keys, no contentType or content binding',async()=>{
  const rows=new Map(),objects=new Map();const storage={get:async k=>structuredClone(rows.get(k)),async transaction(fn){return fn({get:async k=>structuredClone(rows.get(k)),put:async(k,v)=>rows.set(k,structuredClone(v))});}};
@@ -97,4 +113,15 @@ test('audio default is unchanged: same keys, no contentType or content binding',
  assert.equal((await task.observe('c')).state,'completed');const head=await task.read();
  assert.equal(head.observation.sourceKey,`originals/sha256/${sha(Buffer.from([1,2,3]))}.mp3`);assert.equal('contentType' in head.observation,false);assert.deepEqual(Object.keys(head.observation.binding).sort(),['admission','policy','schema','source']);
  assert.ok([...objects.keys()].some(k=>/^originals\/quarantine\/checks\/.*\.mp3$/.test(k)));
+});
+test('no byte of a split signature reaches the quarantine stream until the whole signature matches; audio passes straight through',async()=>{
+ async function run(content,mime,chunks){const rows=new Map(),objects=new Map(),written=[];const storage={get:async k=>structuredClone(rows.get(k)),async transaction(fn){return fn({get:async k=>structuredClone(rows.get(k)),put:async(k,v)=>rows.set(k,structuredClone(v))});}};
+  const bucket={get:async key=>{const b=objects.get(key);return b?{size:b.length,body:new Blob([b]).stream()}:null;},put:async(key,body)=>{const b=body instanceof Uint8Array?body.slice():new Uint8Array(await new Response(body).arrayBuffer());if(!objects.has(key))objects.set(key,b);return {};}};
+  const total=chunks.reduce((n,c)=>n+c.length,0),task=createFreshSourceObservations({storage,bucket,content,source:{logicalId:'l',url:'https://publisher.invalid/x',sourceVersionKind:'discovery-snapshot',sourceVersion:'v',publisherVersion:null},policy:{revision:'p',maxBytes:1024,totalMs:1000,progressMs:100},admissions:[{checkId:'c',sequence:1,expectedPreviousObservationSha256:null,previousSourceSha256:null}],eligibility:()=>true,
+   makeStream:()=>new TransformStream({transform(chunk,c){written.push([...chunk]);c.enqueue(chunk);}}),
+   fetchSource:async()=>new Response(new ReadableStream({start(c){for(const x of chunks)c.enqueue(new Uint8Array(x));c.close();}}),{headers:{'content-type':mime,'content-length':String(total)}})});
+  let error=null;try{await task.observe('c');}catch(e){error=e.message;}return {error,written:written.flat()};}
+ const bad=[[0x89,0x50,0x4e,0x47],[0x0d,0x0a,0x1a,0x00,1,2,3]];const refused=await run(VISUAL_CONTENT,'image/png',bad);assert.equal(refused.error,'fresh-signature-mismatch');assert.deepEqual(refused.written,[]);
+ const good=[[0x89,0x50],[0x4e,0x47,0x0d],[0x0a,0x1a,0x0a,9,9]];const stored=await run(VISUAL_CONTENT,'image/png',good);assert.equal(stored.error,null);assert.deepEqual(stored.written,good.flat());
+ const audio=await run(AUDIO_CONTENT,'audio/mpeg',[[1],[2,3]]);assert.equal(audio.error,null);assert.deepEqual(audio.written,[1,2,3]);
 });

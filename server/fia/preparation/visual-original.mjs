@@ -27,6 +27,7 @@ const KINDS=new Set(['photo','illustration','map']),CHECK='visual-original@1:fir
 // recipe sub-reason; `fresh-ineligible` is `visual-ineligible`. Anything else is an interrupted attempt, never a verdict.
 const UNSUPPORTED=new Set(['fresh-response-refused','fresh-known-length-required','fresh-byte-limit','fresh-byte-length','fresh-signature-mismatch','fresh-source-policy']);
 // Ineligibility belongs to the caller's current admission, not to the source, so it is never final for the shared job.
+const custodyRefusal=error=>error?.message==='fresh-ineligible'?{reason:'visual-ineligible',subReason:'fresh-ineligible',final:false}:{reason:'retained-evidence-unavailable',subReason:error?.message??null,final:false};
 const refusal=r=>UNSUPPORTED.has(r)?{reason:'visual-unsupported',subReason:r,final:true}:r==='fresh-ineligible'?{reason:'visual-ineligible',subReason:r,final:false}:{reason:'interrupted',subReason:r??null,final:false};
 function trusted(v){
  if(!v||Object.getPrototypeOf(v)!==Object.prototype||Object.keys(v).sort().join()!=='kind,sourceVersion,url'||!KINDS.has(v.kind)||typeof v.url!=='string'||typeof v.sourceVersion!=='string'||!v.sourceVersion||v.sourceVersion.length>256)throw Error('visual-source');
@@ -58,12 +59,14 @@ export async function decodeRetained(bucket,original,{clock}={}){
  catch(error){if(!(error instanceof VisualDecodeRefusal))throw error;
   return {state:'unavailable',reason:error.final?'visual-unsupported':'interrupted',subReason:error.subReason,final:error.final,recipeSha256:RECIPE_SHA256,originalSha256:original.sha256,bytes:original.bytes,mime:original.contentType,decoder:null,width:null,height:null,pixelsSha256:null};}
 }
-// Runs inside the visual object: storage is ctx.storage, bucket is env.FIA_ORIGINALS. eligibility is the caller's current trusted admission check.
+// Runs inside the visual object: storage is ctx.storage, bucket is env.FIA_ORIGINALS. eligibility is the caller's current trusted admission check;
+// it receives the primitive's full synchronous context {phase,source,admission,observedContent} (phase 'demand' before any write), so a
+// known-bad observed hash is refused at head promotion and on every later read.
 export function createVisualOriginalJob({storage,bucket,source,eligibility,fetchSource,makeStream,now}){
  const s=trusted(structuredClone(source));if(typeof eligibility!=='function'||typeof storage?.transaction!=='function'||!bucket)throw Error('visual-capability');
  async function context(){const identity=await visualOriginalIdentity(s);return {identity,source:{logicalId:identity.logicalId,url:s.url,sourceVersionKind:'discovery-snapshot',sourceVersion:s.sourceVersion,publisherVersion:null}};}
  const ticket={checkId:CHECK,sequence:1,expectedPreviousObservationSha256:null,previousSourceSha256:null};
- const observer=c=>createFreshSourceObservations({storage,bucket,source:c.source,policy:{...VISUAL_ORIGINAL_POLICY},admissions:[ticket],content:VISUAL_CONTENT,eligibility:({source:seen})=>seen.url===s.url&&seen.sourceVersion===s.sourceVersion&&eligibility()===true,...(fetchSource?{fetchSource}:{}),...(makeStream?{makeStream}:{}),...(now?{now}:{})});
+ const observer=c=>createFreshSourceObservations({storage,bucket,source:c.source,policy:{...VISUAL_ORIGINAL_POLICY},admissions:[ticket],content:VISUAL_CONTENT,eligibility:context=>context.source.url===s.url&&context.source.sourceVersion===s.sourceVersion&&eligibility(context)===true,...(fetchSource?{fetchSource}:{}),...(makeStream?{makeStream}:{}),...(now?{now}:{})});
  const base=c=>({job:VISUAL_ORIGINAL_JOB,recipe:VISUAL_ORIGINAL_RECIPE,recipeSha256:RECIPE_SHA256,sourceIdentitySha256:c.identity.sourceIdentitySha256,kind:s.kind});
  async function bind(c){await storage.transaction(async tx=>{const marker=await tx.get(JOB_KEY);if(marker&&marker.logicalId!==c.identity.logicalId)throw Error('visual-identity-corrupt');if(!marker)await tx.put(JOB_KEY,{schema:'fia-visual-original-job@1',logicalId:c.identity.logicalId});});}
  // A final decode verdict is kept per recipe identity and original sha256, so a repeat or a read neither refetches nor re-decodes.
@@ -84,15 +87,15 @@ export function createVisualOriginalJob({storage,bucket,source,eligibility,fetch
  async function demand({signal}={}){
   const c=await context();
   // An ineligible demand is refused before the job marker, sequence or attempt rows exist, so it cannot poison the shared job.
-  let admitted=false;try{admitted=eligibility()===true;}catch{}if(!admitted)return {...base(c),state:'unavailable',reason:'visual-ineligible',subReason:'fresh-ineligible',final:false,custody:'none',decode};
+  let admitted=false;try{admitted=eligibility({phase:'demand',source:structuredClone(c.source),admission:null,observedContent:null})===true;}catch{}if(!admitted)return {...base(c),state:'unavailable',reason:'visual-ineligible',subReason:'fresh-ineligible',final:false,custody:'none',decode};
   await bind(c);
-  try{const prior=await retained(c);if(prior)return prior;}catch(error){return {...base(c),state:'unavailable',reason:'retained-evidence-unavailable',subReason:error.message,final:false,custody:'unverified',decode};}
+  try{const prior=await retained(c);if(prior)return prior;}catch(error){return {...base(c),state:'unavailable',...custodyRefusal(error),custody:'unverified',decode};}
   let outcome;try{outcome=await observer(c).observe(CHECK,{signal});}catch(error){return {...base(c),state:'unavailable',...refusal(error.message),custody:'none',decode};}
   if(outcome.state==='preparing')return {...base(c),state:'preparing',custody:'none',decode};
   if(outcome.state==='uncertain')return {...base(c),state:'unavailable',...refusal(outcome.reason),custody:'none',decode};
-  let after;try{after=await retained(c);}catch(error){return {...base(c),state:'unavailable',reason:'retained-evidence-unavailable',subReason:error.message,final:false,custody:'unverified',decode};}
-  return after??{...base(c),state:'unavailable',reason:outcome.reason??'visual-not-promoted',custody:'none',decode};
+  try{const kept=await retained(c);if(kept)return kept;}catch(error){return {...base(c),state:'unavailable',...custodyRefusal(error),custody:'unverified',decode};}
+  return {...base(c),state:'unavailable',...(outcome.reason?refusal(outcome.reason):{reason:'visual-not-promoted',subReason:null,final:false}),custody:'none',decode};
  }
- async function read(){const c=await context();let r;try{r=await retained(c);}catch(error){return {...base(c),state:'unavailable',reason:'retained-evidence-unavailable',subReason:error.message,final:false,custody:'unverified',decode};}return r??{...base(c),state:'unavailable',reason:'visual-not-requested',custody:'none',decode};}
+ async function read(){const c=await context();let kept;try{kept=await retained(c);}catch(error){return {...base(c),state:'unavailable',...custodyRefusal(error),custody:'unverified',decode};}return kept??{...base(c),state:'unavailable',reason:'visual-not-requested',custody:'none',decode};}
  return Object.freeze({demand,read});
 }
