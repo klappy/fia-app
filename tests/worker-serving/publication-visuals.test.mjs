@@ -131,13 +131,19 @@ test('an unavailable visual authority makes the exact read transient; only a rea
  const {visualAuthorityFrom}=await import('../../server/fia/preparation/executable-presentation-runtime.mjs');
  let mode='ready';
  const ready={status:'ready',ready:{path:a1400.path,sha256:a1400.sha256},manifestEntry:a1400};
- const answers={ready,unavailable:{status:'unavailable',reason:'preparation-storage-unavailable',final:false},unreachable:{status:'unavailable',reason:'interrupted',subReason:'visual-object-unreachable',final:false},skew:{status:'unavailable',reason:'interrupted',subReason:'visual-object-version-skew',final:false},withdrawn:{status:'unavailable',reason:'visual-not-published'},stale:{status:'unavailable',reason:'visual-publication-stale'}};
+ const answers={ready,unavailable:{status:'unavailable',reason:'preparation-storage-unavailable',final:false},unreachable:{status:'unavailable',reason:'interrupted',subReason:'visual-object-unreachable',final:false},skew:{status:'unavailable',reason:'interrupted',subReason:'visual-object-version-skew',final:false},storage503:{status:'unavailable',reason:'preparation-storage-unavailable'},invalidRequest:{status:'unavailable',reason:'invalid-request'},method405:{status:'unavailable',reason:'unsupported-method'},ineligible:{status:'unavailable',reason:'visual-ineligible'},nothing:null,withdrawn:{status:'unavailable',reason:'visual-not-published'},stale:{status:'unavailable',reason:'visual-publication-stale'}};
  const port={published:async()=>mode==='ready'?{ready:ready.ready,manifestEntry:a1400}:null};
  const authority=visualAuthorityFrom(port,{readPublication:async()=>structuredClone(answers[mode])});
  const t=await harness({authority:args=>authority(args)});
  const listed=await t.overlay.publishVisuals({packId,revision:t.record.revision,expectedPublicationGeneration:t.record.execution.publication.generation,visuals:[a1400]}),g=listed.execution.publication.generation;
  assert.equal((await t.overlay.readCatalog(packId,t.record.revision,g)).status,'ready');
- for(mode of ['unavailable','unreachable','skew'])await assert.rejects(t.overlay.readCatalog(packId,t.record.revision,g),/temporarily unavailable/,`${mode}: transient, never invalid`);
+ for(mode of ['unavailable','unreachable','skew','storage503','invalidRequest','method405','ineligible','nothing'])await assert.rejects(t.overlay.readCatalog(packId,t.record.revision,g),/temporarily unavailable/,`${mode}: transient, never invalid`);
  for(mode of ['withdrawn','stale'])assert.deepEqual(await t.overlay.readCatalog(packId,t.record.revision,g),{status:'unavailable',reason:'publication-generation-invalid'},mode);
  mode='ready';assert.equal((await t.overlay.readCatalog(packId,t.record.revision,g)).status,'ready','the row is served again once the authority answers');
+});
+
+// Review 5698617371: the runtime wires the typed object read; without it a storage outage would revoke a Saved copy again.
+test('the runtime wires readPublication into the visual authority',async()=>{
+ const {readFile}=await import('node:fs/promises'),source=await readFile('server/fia/preparation/executable-presentation-runtime.mjs','utf8');
+ assert.match(source,/visualAuthorityFrom\(capabilities\.visuals,\{readPublication:capabilities\.readVisualPublication\?\?\(args=>readVisualPublication\(env,args\)\)\}\)/);
 });

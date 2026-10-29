@@ -65,7 +65,7 @@ async function originalBindings(context){
 // readPublication (the same object read, typed), an operational outcome (final:false) throws an unnamed error, which the overlay
 // classes as transient, so the exact read is transient and a Saved copy is kept; only the object's own answer (ready, not
 // published, stale) decides the entry.
-const VISUAL_AUTHORITY_UNAVAILABLE='Visual publication authority is temporarily unavailable.';
+const VISUAL_AUTHORITY_UNAVAILABLE='Visual publication authority is temporarily unavailable.',WITHDRAWN=new Set(['visual-not-published','visual-publication-stale']);
 export function visualAuthorityFrom(visuals,{readPublication=null}={}){
  if(!visuals||typeof visuals.published!=='function')return null;
  const matches=(p,entry)=>!!p&&typeof p.manifestEntry==='object'&&p.manifestEntry!==null&&same(p.manifestEntry,entry)&&p.ready?.path===entry.path&&p.ready?.sha256===entry.sha256;
@@ -75,8 +75,11 @@ export function visualAuthorityFrom(visuals,{readPublication=null}={}){
   if(!/^[a-f0-9]{64}$/.test(executionRevision??''))return false;
   const outcome=await readPublication(args);
   if(outcome?.status==='ready')return matches(outcome,entry);
-  if(outcome?.final===false&&outcome.reason!=='visual-ineligible')throw Error(VISUAL_AUTHORITY_UNAVAILABLE);
-  return false;
+  // Only the object's own verified answers withdraw the entry (review 5698617371). Every other non-ready outcome, including the
+  // object's typed refusals (503 storage, 400/405 skew, 404 visual-ineligible, custody) and the port's final:false outcomes, is
+  // operational: transient, never an observed denial (Terry 0be2e40 case b; OFFLINE L45, L60).
+  if(outcome?.status==='unavailable'&&WITHDRAWN.has(outcome.reason))return false;
+  throw Error(VISUAL_AUTHORITY_UNAVAILABLE);
  };
 }
 // The served bound manifest, parsed, only when it is exactly the record's descriptor for this execution;
