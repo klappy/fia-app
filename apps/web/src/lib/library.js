@@ -53,6 +53,10 @@ export async function selectServerPresentation(id,{explicit=false,signal,transpo
   const abort=()=>observer.cancel();signal?.addEventListener('abort',abort,{once:true});
   try{signal?.throwIfAborted();const result=await observer.start(demand,{explicit:true});signal?.throwIfAborted();if(!result)throw Object.assign(Error('This passage could not be loaded. Your current passage stays open.'),{code:'passage-preparation-failed'});record=result.descriptor;}finally{signal?.removeEventListener('abort',abort);observer.cancel();}
  }
+ // The preparation answer is not a capability read, so it carries no visual declarations (F4: the server emits
+ // them only to a read that asks). The adopted execution is read once more by exact revision with the capability
+ // (a GET, never a demand); it replaces the answer only as the same ready execution, otherwise the answer stands.
+ if(explicit&&record.status==='ready'&&record.execution&&!Object.hasOwn(record.execution,'visualResources')){try{const asked=await transport.readPack(id,{revision:record.revision,signal});if(asked?.status==='ready'&&asked.packId===id&&asked.revision===record.revision&&asked.artifact?.sha256===record.artifact?.sha256)record=asked;}catch(error){signal?.throwIfAborted();}}
  if(record.status!=='ready'||record.packId!==id||record.identity?.packId!==id)throw notOpened(record);
  const identity=record.identity;
  // Declared visual resources ride the catalog record (F4); the stage acts on them per step (F9).
