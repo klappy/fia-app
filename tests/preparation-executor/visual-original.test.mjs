@@ -15,10 +15,10 @@ const modulePath=fileURLToPath(new URL('../../server/fia/preparation/visual-orig
 const worker=`import {createVisualOriginalJob} from ${JSON.stringify(modulePath)};
 const fixtures=${JSON.stringify({png:PNG.toString('base64'),jpeg:JPEG.toString('base64'),interlaced:INTERLACED.toString('base64')})};
 const decode=b=>Uint8Array.from(atob(b),c=>c.charCodeAt(0));
-export class Job {constructor(ctx,env){this.ctx=ctx;this.env=env;this.gets=0;this.decodes=0;this.gates=[];
+export class Job {constructor(ctx,env){this.ctx=ctx;this.env=env;this.gets=0;this.decodes=0;this.gates=[];this.readGates=[];
   // Counts decodes: only the decode readback calls arrayBuffer() on a retained object (custody verifies by streaming the body).
-  const self=this,raw=env.ORIGINALS;this.bucket=new Proxy(raw,{get(t,p){if(p==='get')return async(...a)=>{const o=await t.get(...a);return o&&new Proxy(o,{get(ot,op){if(op==='arrayBuffer')return ()=>{self.decodes++;return ot.arrayBuffer();};const v=ot[op];return typeof v==='function'?v.bind(ot):v;}});};const v=t[p];return typeof v==='function'?v.bind(t):v;}});}
- async fetch(request){const args=await request.json();if(args.op==='corruptDecode'){const rows=await this.ctx.storage.list({prefix:'visual-original:decode:'});for(const [k,v] of rows){const next={...v,...args.patch};for(const d of args.drop||[])delete next[d];await this.ctx.storage.put(k,next);}return Response.json({patched:rows.size});}if(args.op==='corrupt'){for(const o of (await this.env.ORIGINALS.list({prefix:'originals/visual/sha256/'})).objects)await this.env.ORIGINALS.put(o.key,new Uint8Array(o.size).fill(1));return Response.json({corrupted:true});}if(args.op==='counts')return Response.json({gets:this.gets,waiting:this.gates.length});if(args.op==='release'){for(const r of this.gates.splice(0))r();return Response.json({released:true});}
+  const self=this,raw=env.ORIGINALS;this.bucket=new Proxy(raw,{get(t,p){if(p==='get')return async(...a)=>{const o=await t.get(...a);return o&&new Proxy(o,{get(ot,op){if(op==='arrayBuffer')return async()=>{if(self.holdReads)await new Promise(r=>self.readGates.push(r));if(self.failNext){self.failNext=false;self.decodes++;await new Promise(r=>setTimeout(r,50));throw Error('r2-readback-down');}self.decodes++;return ot.arrayBuffer();};const v=ot[op];return typeof v==='function'?v.bind(ot):v;}});};const v=t[p];return typeof v==='function'?v.bind(t):v;}});}
+ async fetch(request){const args=await request.json();if(args.op==='holdReads'){this.holdReads=true;return Response.json({ok:1});}if(args.op==='releaseReads'){this.holdReads=false;for(const r of this.readGates.splice(0))r();return Response.json({ok:1});}if(args.op==='heldReads')return Response.json({held:this.readGates.length});if(args.op==='armFail'){this.failNext=true;return Response.json({armed:true});}if(args.op==='dropDecode'){const rows=await this.ctx.storage.list({prefix:'visual-original:decode:'});for(const k of rows.keys())await this.ctx.storage.delete(k);this.decodes=0;return Response.json({dropped:rows.size});}if(args.op==='corruptDecode'){const rows=await this.ctx.storage.list({prefix:'visual-original:decode:'});for(const [k,v] of rows){const next={...v,...args.patch};for(const d of args.drop||[])delete next[d];await this.ctx.storage.put(k,next);}return Response.json({patched:rows.size});}if(args.op==='corrupt'){for(const o of (await this.env.ORIGINALS.list({prefix:'originals/visual/sha256/'})).objects)await this.env.ORIGINALS.put(o.key,new Uint8Array(o.size).fill(1));return Response.json({corrupted:true});}if(args.op==='counts')return Response.json({gets:this.gets,waiting:this.gates.length});if(args.op==='release'){for(const r of this.gates.splice(0))r();return Response.json({released:true});}
   const source={kind:args.kind||'map',url:args.url||'https://publisher.invalid/maps/c4.png',sourceVersion:'fixture-revision-1'};
   try{const job=createVisualOriginalJob({storage:this.ctx.storage,bucket:this.bucket,source,eligibility:c=>!args.ineligible&&!(args.badHash&&c.observedContent?.sha256===args.badHash),now:()=>1000,fetchSource:async(url,options)=>{this.gets++;if(args.fail)throw null;if(options.redirect!=='manual')throw Error('wrong-redirect');if(args.gate)await new Promise(r=>this.gates.push(r));
     if(args.redirect)return new Response(null,{status:302,headers:{location:'https://elsewhere.invalid/x.png'}});if(args.httpStatus)return new Response('no',{status:args.httpStatus,headers:{'content-type':'text/plain','content-length':'2'}});
@@ -97,6 +97,35 @@ test('4408596866: a kept decode row with valid identity but malformed evidence f
   const n=await call(mf,{op:'corruptDecode',patch,drop});assert.equal(n.patched,1);
   for(const op of ['read',undefined]){const out=await call(mf,op?{op}:{});assert.notEqual(out.result.state,'ready',JSON.stringify({patch,drop,out:out.result}));assert.equal(out.result.reason,'retained-evidence-unavailable');assert.equal(out.result.subReason,'visual-decode-record-corrupt');assert.equal(out.result.final,false);assert.equal(out.gets,1);}
  }
+});
+test('4408649050: concurrent first decodes coalesce: N callers give exactly 1 readback and 1 decode, and the same verdict',async t=>{
+ // Large enough (1024x1024 noise, about 3 MiB) that a decode spans many awaits, so request interleaving is real.
+ const w=1024,h=1024,rows=Buffer.alloc(h*(1+w*3));for(let i=0;i<rows.length;i+=32)createHash('sha256').update('c'+i).digest().copy(rows,i);for(let y=0;y<h;y++)rows[y*(1+w*3)]=0;
+ const ih=Buffer.alloc(13);ih.writeUInt32BE(w,0);ih.writeUInt32BE(h,4);ih[8]=8;ih[9]=2;const big=(z)=>Buffer.concat([Buffer.from([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a]),chunk('IHDR',ih),chunk('IDAT',z),chunk('IEND',Buffer.alloc(0))]).toString('base64');
+ const good=big(deflateSync(rows,{level:1})),badZ=Buffer.from(deflateSync(rows,{level:1}));badZ[2]|=0x06;const bad=big(badZ);
+ for(const body of [good,bad]){
+  const mf=await fixture(t),first=await call(mf,{body});assert.equal(first.decodes,1);
+  // Custody retained, decode row gone: the state a burst of first demands meets before the first decode row is written.
+  // Every request constructs its own createVisualOriginalJob instance inside the DO handler, so the callers are separate factory
+  // instances sharing one durable source identity; the large decode spans many awaits, so their interleaving is real.
+  assert.equal((await call(mf,{op:'dropDecode'})).dropped,1);
+  // Deterministic interleaving: hold every readback, issue the burst, let every caller reach its decode step, then release.
+  await call(mf,{op:'holdReads'});const pending=[...Array(6)].map((_,i)=>call(mf,i%2?{op:'read'}:{body}));
+  for(let n=0;n<300&&(await call(mf,{op:'heldReads'})).held<1;n++)await new Promise(r=>setTimeout(r,10));
+  await new Promise(r=>setTimeout(r,300));assert.equal((await call(mf,{op:'heldReads'})).held,1,'exactly one readback is in flight; the others joined it');
+  await call(mf,{op:'releaseReads'});const outs=await Promise.all(pending);
+  const counts=await call(mf,{op:'read'});assert.equal(counts.decodes,1,`decodes after the burst: ${counts.decodes}`);assert.equal(counts.gets,1);
+  for(const o of outs)assert.deepEqual(o.result,first.result);
+ }
+});
+test('4408649050: a failed in-flight decode is non-final for every joined caller, and a later demand recovers it',async t=>{
+ const mf=await fixture(t),first=await call(mf);assert.equal(first.result.state,'ready');
+ await call(mf,{op:'dropDecode'});await call(mf,{op:'armFail'});
+ // Each request below constructs its own job instance (the DO handler pattern); all join the one in-flight decode.
+ const outs=await Promise.all([...Array(4)].map(()=>call(mf)));
+ for(const o of outs){assert.equal(o.result.state,'unavailable',JSON.stringify(o.result));assert.equal(o.result.reason,'retained-evidence-unavailable');assert.equal(o.result.final,false);}
+ assert.equal((await call(mf,{op:'counts'})).waiting,0);
+ const later=await call(mf);assert.equal(later.result.state,'ready');assert.deepEqual(later.result,first.result);assert.equal(later.gets,1);assert.equal(later.decodes,2,'one failed attempt, then one recovering decode');
 });
 test('a Retry after a final visual-unsupported decode fetches 0 and decodes 0, and never overrides the verdict',async t=>{
  const mf=await fixture(t),first=await call(mf,{fixture:'interlaced'});assert.equal(first.result.reason,'visual-unsupported');assert.equal(first.result.subReason,'decode-not-streamable');assert.equal(first.result.final,true);assert.equal(first.decodes,1);

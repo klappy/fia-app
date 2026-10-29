@@ -37,7 +37,7 @@ test('PNG fixture decodes to its dimensions, and its pixel hash equals the indep
  assert.equal(r.pixelsSha256,'041456b9f6c0652743da98646829f600693df83412c38f148cd7c9fa7f829ff7');assert.equal('pixels' in r||'data' in r,false,'pixels never leave the decoder');
 });
 test('every PNG filter type, a split IDAT and an ancillary chunk decode back to the exact samples',async()=>{
- for(const filters of [[0],[1],[2],[3],[4],[0,1,2,3,4]]){const {bytes,pixels}=png({filters,extra:[chunk('tEXt',Buffer.from('k\0v'))]});const r=await decode(bytes,'image/png');assert.equal(r.pixelsSha256,sha(pixels),String(filters));}
+ for(const filters of [[0],[1],[2],[3],[4],[0,1,2,3,4]]){const {bytes,pixels}=png({filters,extra:[chunk('pHYs',Buffer.from([0,0,11,19,0,0,11,19,1]))]});const r=await decode(bytes,'image/png');assert.equal(r.pixelsSha256,sha(pixels),String(filters));}
  const rgba=png({w:5,h:4,ch:4,color:6});const r=await decode(rgba.bytes,'image/png');assert.equal(r.width,5);assert.equal(r.pixelsSha256,sha(rgba.pixels));
 });
 test('8-bit palette PNG decodes; a 4-bit palette is an unsupported subset, never decoded',async()=>{
@@ -62,7 +62,7 @@ for(const [name,make,mime,subReason] of [
  ['interlaced PNG fixture',()=>file('interlaced-16x16.png'),'image/png','decode-not-streamable'],
  ['oversize pixels (5000x4000 = 20 MP)',()=>Buffer.concat([SIG,header(5000,4000),chunk('IDAT',deflateSync(Buffer.alloc(1))),chunk('IEND',Buffer.alloc(0))]),'image/png','pixel-cap'],
  ['oversize dimension (9000 wide)',()=>Buffer.concat([SIG,header(9000,1),chunk('IDAT',deflateSync(Buffer.alloc(1))),chunk('IEND',Buffer.alloc(0))]),'image/png','dimension-cap'],
- ['unknown critical chunk',()=>png({extra:[chunk('ABCD',Buffer.alloc(1))]}).bytes,'image/png','png-unknown-critical-chunk'],
+ ['unknown critical chunk',()=>png({extra:[chunk('ABCD',Buffer.alloc(1))]}).bytes,'image/png','png-chunk-unsupported'],
  ['MIME mismatch (PNG bytes observed as image/jpeg)',()=>good(),'image/jpeg','mime-signature-mismatch'],
  ['MIME mismatch (JPEG bytes observed as image/png)',()=>file('baseline-37x23.jpg'),'image/png','mime-signature-mismatch'],
  ['unlisted MIME',()=>good(),'image/webp','mime-signature-mismatch'],
@@ -194,4 +194,44 @@ test('4408596885: progressive successive approximation is enforced per component
  await refused(decode(progressive(s=>{const r=s[ref(s)];r.set(r.ah+1,r.ah);}),'image/jpeg'),'jpeg-scan-order');
  // A DC first scan marked as a refinement (Ah>0 with no prior DC scan).
  await refused(decode(progressive(s=>{const d=s[dc(s)];d.set(d.al+1,d.al);}),'image/jpeg'),'jpeg-scan-order');
+});
+// Codex round 3 on PR285 0097b60: the supported subset is an explicit allowlist in the recipe (PNG chunks, JPEG markers and SOF
+// component fields); everything outside it is a typed refusal. Each finding is reproduced here first.
+test('4408649034: tRNS is outside the PNG chunk allowlist (RGBA with tRNS, RGB with a 1-byte tRNS)',async()=>{
+ const rgba=png({w:5,h:4,ch:4,color:6,extra:[chunk('tRNS',Buffer.alloc(6))]}).bytes,rgb=png({extra:[chunk('tRNS',Buffer.alloc(1))]}).bytes;
+ await refused(decode(rgba,'image/png'),'png-chunk-unsupported');await refused(decode(rgb,'image/png'),'png-chunk-unsupported');
+});
+function sof(name,mutate){const b=Buffer.from(file(name)),at=b.indexOf(Buffer.from([0xff,0xc0]))>=0?b.indexOf(Buffer.from([0xff,0xc0])):b.indexOf(Buffer.from([0xff,0xc2]));mutate(b,at+4);return b;}
+test('4408649041: SOF sampling factors outside 1-4 are refused jpeg-sampling-invalid',async()=>{
+ for(const hv of [0x55,0x15,0x51,0xf1,0x05])await refused(decode(sof('gray-12x10.jpg',(b,p)=>{b[p+7]=hv;}),'image/jpeg'),'jpeg-sampling-invalid');
+});
+const pHYs=(unit=1)=>chunk('pHYs',Buffer.from([0,0,11,19,0,0,11,19,unit])),zTXt=(key='Comment',method=0,text='map')=>chunk('zTXt',Buffer.concat([Buffer.from(key,'latin1'),Buffer.from([0,method]),deflateSync(Buffer.from(text))]));
+test('PNG allowlist: the recipe names it; pHYs and zTXt (what c4 carries) pass; every other ancillary chunk is png-chunk-unsupported',async()=>{
+ assert.deepEqual(VISUAL_ORIGINAL_RECIPE.allowlist['image/png'].critical,['IHDR','PLTE','IDAT','IEND']);assert.deepEqual(Object.keys(VISUAL_ORIGINAL_RECIPE.allowlist['image/png'].ancillary),['pHYs','zTXt']);
+ const {bytes,pixels}=png({extra:[pHYs()]}),withText=Buffer.concat([bytes.subarray(0,bytes.length-12),zTXt(),bytes.subarray(bytes.length-12)]);
+ assert.equal((await decode(withText,'image/png')).pixelsSha256,sha(pixels));
+ for(const type of ['tRNS','gAMA','cHRM','sRGB','iCCP','tEXt','iTXt','bKGD','tIME','sBIT','hIST','sPLT','eXIf','acTL'])await refused(decode(png({extra:[chunk(type,Buffer.alloc(4))]}).bytes,'image/png'),'png-chunk-unsupported');
+});
+test('pHYs and zTXt are validated: count, position, length, unit, keyword, method and content',async()=>{
+ const {bytes}=png(),tailAt=bytes.length-12,afterIdat=c=>Buffer.concat([bytes.subarray(0,tailAt),c,bytes.subarray(tailAt)]);
+ for(const bad of [png({extra:[pHYs(),pHYs()]}).bytes,afterIdat(pHYs()),png({extra:[chunk('pHYs',Buffer.alloc(8))]}).bytes,png({extra:[pHYs(2)]}).bytes,
+  afterIdat(zTXt('Comment',1)),afterIdat(zTXt('')),afterIdat(zTXt(' lead')),afterIdat(zTXt('a  b')),afterIdat(zTXt('k'.repeat(80))),afterIdat(chunk('zTXt',Buffer.from('Comment\0\0garbage'))),afterIdat(zTXt('Comment',0,'x'.repeat(70000)))])
+  await refused(decode(bad,'image/png'),'png-chunk-invalid');
+});
+// JPEG surgery helpers on the stripped baseline fixture (markers DQT, SOF0, DHT, SOS, EOI only).
+const seg=(m,body)=>{const s=Buffer.alloc(4+body.length);s[0]=0xff;s[1]=m;s.writeUInt16BE(2+body.length,2);body.copy(s,4);return s;};
+const afterSoi=extra=>{const b=Buffer.from(file('baseline-37x23.jpg'));return Buffer.concat([b.subarray(0,2),extra,b.subarray(2)]);};
+test('JPEG marker allowlist: APPn, COM and DRI are jpeg-marker-unsupported; the recipe names the allowlist',async()=>{
+ assert.deepEqual(VISUAL_ORIGINAL_RECIPE.allowlist['image/jpeg'].markers,['SOI','DQT','DHT','SOF0','SOF1','SOF2','SOS','EOI']);
+ for(const m of [0xe0,0xe1,0xe2,0xee,0xfe,0xdd])await refused(decode(afterSoi(seg(m,Buffer.from(m===0xdd?[0,4]:[1,2,3,4]))),'image/jpeg'),'jpeg-marker-unsupported');
+});
+test('JPEG tables: undefined quantization or Huffman tables, bad DQT precision and overlong DHT are jpeg-table-invalid',async()=>{
+ await refused(decode(sof('baseline-37x23.jpg',(b,p)=>{b[p+8]=3;}),'image/jpeg'),'jpeg-table-invalid');
+ await refused(decode(sof('baseline-37x23.jpg',(b,p)=>{b[p+8]=7;}),'image/jpeg'),'jpeg-table-invalid');
+ const b=Buffer.from(file('baseline-37x23.jpg')),q=b.indexOf(Buffer.from([0xff,0xdb]));const pq=Buffer.from(b);pq[q+4]|=0x10;await refused(decode(pq,'image/jpeg'),'jpeg-table-invalid');
+ const h=b.indexOf(Buffer.from([0xff,0xc4])),bad=Buffer.from(b);bad[h+5]=0xff;await refused(decode(bad,'image/jpeg'),'jpeg-table-invalid');
+ await refused(decode(withScanHeader((c,rest)=>Buffer.concat([Buffer.from([3,c[0][0],0x22,...c[1],...c[2]]),rest])),'image/jpeg'),'jpeg-table-invalid');
+});
+test('an interleaved scan over 10 blocks per MCU is jpeg-sampling-invalid',async()=>{
+ await refused(decode(sof('baseline-37x23.jpg',(b,p)=>{b[p+7]=0x44;}),'image/jpeg'),'jpeg-sampling-invalid');
 });

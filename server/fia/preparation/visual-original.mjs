@@ -1,7 +1,7 @@
 import {canonicalJSONString,sha256} from './contract.mjs';
 import {createFreshSourceObservations,VISUAL_CONTENT} from './executor/fresh-source-observation.mjs';
 import {createHash} from 'node:crypto';
-import {decodeVisual,VisualDecodeRefusal,PNG_DECODER,JPEG_DECODER} from './visual-decode.mjs';
+import {decodeVisual,VisualDecodeRefusal,PNG_DECODER,JPEG_DECODER,PNG_ALLOWLIST,JPEG_ALLOWLIST} from './visual-decode.mjs';
 // visual-original@1: lazy fetch-and-store of one trusted picture or map original, inside the existing
 // FIA_PREPARATION_JOBS Durable Object and FIA_ORIGINALS bucket, on the fresh-source-observation primitive.
 // Decode (F6, T5 YES with conditions at cookbook d922aa5): a full decode of the read-back retained bytes is the only way to "ready".
@@ -19,7 +19,8 @@ export const VISUAL_ORIGINAL_RECIPE=freeze({schema:'fia-visual-original-recipe@2
  subsets:freeze({'image/png':'8-bit samples, colour types 0/2/3/4/6, non-interlaced (interlaced: decode-not-streamable)','image/jpeg':'8-bit baseline, extended or progressive Huffman (SOF0/1/2), 1 or 3 components, at most maxJpegPixels (larger: decode-not-streamable)'}),
  // maxPixels 17 MP fits the largest map c175 (16.0 MP); maxJpegPixels 2 MP fits every 1000 px picture. decodeMs is a wall deadline; the CPU ceiling is the platform's.
  limits:freeze({maxBytes:VISUAL_ORIGINAL_POLICY.maxBytes,totalMs:VISUAL_ORIGINAL_POLICY.totalMs,progressMs:VISUAL_ORIGINAL_POLICY.progressMs,maxDimension:8192,maxPixels:17000000,maxJpegPixels:2000000,maxJpegMemoryMB:64,maxJpegScans:32,maxPngChunks:16384,decodeMs:20000}),
- decoder:freeze({'image/png':PNG_DECODER,'image/jpeg':JPEG_DECODER})});
+ decoder:freeze({'image/png':PNG_DECODER,'image/jpeg':JPEG_DECODER}),
+ allowlist:freeze({'image/png':PNG_ALLOWLIST,'image/jpeg':JPEG_ALLOWLIST})});
 const RECIPE_SHA256=createHash('sha256').update(canonicalJSONString(VISUAL_ORIGINAL_RECIPE)).digest('hex');
 export const VISUAL_ORIGINAL_RECIPE_SHA256=RECIPE_SHA256;
 const KINDS=new Set(['photo','illustration','map']),JOB_KEY='visual-original:job';
@@ -66,6 +67,7 @@ export async function decodeRetained(bucket,original,{clock,readbackMs=VISUAL_OR
  catch(error){if(!(error instanceof VisualDecodeRefusal))throw error;
   return {state:'unavailable',reason:error.final?'visual-unsupported':'interrupted',subReason:error.subReason,final:error.final,recipeSha256:RECIPE_SHA256,originalSha256:original.sha256,bytes:original.bytes,mime:original.contentType,decoder:null,width:null,height:null,pixelsSha256:null};}
 }
+const INFLIGHT=new Map();
 // A kept decode row is accepted only in its exact shape with the invariants of its state; anything else fails closed as corrupt.
 const DECODE_FIELDS='bytes,decoder,final,height,mime,originalSha256,pixelsSha256,reason,recipeSha256,state,subReason,width';
 const dimension=v=>Number.isSafeInteger(v)&&v>=1&&v<=VISUAL_ORIGINAL_RECIPE.limits.maxDimension;
@@ -96,7 +98,10 @@ export function createVisualOriginalJob({storage,bucket,source,eligibility,fetch
  async function decoded(c,original){
   const key=`visual-original:decode:${RECIPE_SHA256}:${original.sha256}`,prior=await storage.get(key);
   if(prior)return keptDecode(prior,original);
-  const record=await decodeRetained(bucket,original);
+  // One decode per original in this isolate: concurrent first callers join the in-flight decode instead of starting their own.
+  const gate=`${RECIPE_SHA256}:${original.sha256}:${original.sourceKey}`;let run=INFLIGHT.get(gate);
+  if(!run){run=decodeRetained(bucket,original).finally(()=>INFLIGHT.delete(gate));INFLIGHT.set(gate,run);}
+  const record=await run;
   if(record.final)await storage.transaction(async tx=>{if(!await tx.get(key))await tx.put(key,record);});
   return record;
  }
