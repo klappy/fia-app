@@ -5,6 +5,7 @@ import {readFile} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
+import {U008_SOURCE_POLICY,u008Sources,createSourcePolicyOutbound} from './source-policy.mjs';
 const sha256=bytes=>createHash('sha256').update(bytes).digest('hex');
 // Opt-in local fixture (SCRIPTED-JOURNEYS J4 passage-only row): one approved Scripture recording,
 // retained in the local originals bucket before the first read, as a hosted Worker retains it. The bytes
@@ -20,14 +21,23 @@ async function retainApprovedAudio(repo,runtime,snapshot,file){
  if(result.status!=='ready')throw Error(`The approved-audio fixture was not retained: ${result.reason||result.status}`);
  return bindings.map(b=>({packId:b.packId,assetId:b.assetId,sha256:digest}));
 }
-export async function createControlledAuthority(repo,origin,{approvedAudio=null}={}){
+// The outbound service: without a named source policy every outbound request is refused, exactly as before.
+// The only policy is the QA-only U008 first proof (source-policy.mjs), chosen by explicit opt-in.
+const forbidden=()=>{throw Error('Controlled pending test forbids outbound requests');};
+export async function outboundFor(repo,sourcePolicy,options={}){
+ if(sourcePolicy===null||sourcePolicy===undefined)return forbidden;
+ if(sourcePolicy!==U008_SOURCE_POLICY)throw Error(`Unknown source policy: ${sourcePolicy}`);
+ return createSourcePolicyOutbound(await u008Sources(repo),options);
+}
+export async function createControlledAuthority(repo,origin,{approvedAudio=null,sourcePolicy=null}={}){
  const require=createRequire(join(repo,'package.json')),{build}=require('esbuild'),{Miniflare,convertV4MiniflareOptions}=require('miniflare');
  const snapshot=await readFile(join(repo,'server/faces/worker/generated/snapshot.json'));
  const bundled=await build({entryPoints:[join(repo,'server/faces/worker/entry.mjs')],bundle:true,platform:'browser',format:'esm',external:['node:*'],write:false});
- const observations=[];
- const runtime=new Miniflare({...convertV4MiniflareOptions({modules:true,script:bundled.outputFiles[0].text,compatibilityDate:'2026-09-01',compatibilityFlags:['nodejs_compat'],bindings:{FIA_API_ORIGIN:origin},durableObjects:{FIA_PREPARATION_JOBS:{className:'FiaPreparationJobs',useSQLite:true}},r2Buckets:['FIA_ORIGINALS'],serviceBindings:{ASSETS:async request=>{const path=new URL(request.url).pathname,file=resolve(repo,'dist','.'+path);if(!file.startsWith(join(repo,'dist')+'/'))return new Response('Invalid asset',{status:403});try{return new Response(await readFile(file),{headers:{'Content-Type':'application/json'}});}catch(error){if(error.code==='ENOENT')return new Response('Not found',{status:404});throw error;}}},outboundService:()=>{throw Error('Controlled pending test forbids outbound requests');}})});
+ const observations=[],sourceObservations=[];
+ const outboundService=await outboundFor(repo,sourcePolicy,{observe:o=>{sourceObservations.push(o);console.log('source-observation '+JSON.stringify(o));}});
+ const runtime=new Miniflare({...convertV4MiniflareOptions({modules:true,script:bundled.outputFiles[0].text,compatibilityDate:'2026-09-01',compatibilityFlags:['nodejs_compat'],bindings:{FIA_API_ORIGIN:origin},durableObjects:{FIA_PREPARATION_JOBS:{className:'FiaPreparationJobs',useSQLite:true}},r2Buckets:['FIA_ORIGINALS'],serviceBindings:{ASSETS:async request=>{const path=new URL(request.url).pathname,file=resolve(repo,'dist','.'+path);if(!file.startsWith(join(repo,'dist')+'/'))return new Response('Invalid asset',{status:403});try{return new Response(await readFile(file),{headers:{'Content-Type':'application/json'}});}catch(error){if(error.code==='ENOENT')return new Response('Not found',{status:404});throw error;}}},outboundService})});
  await runtime.ready;
  let retained=[];
  try{if(approvedAudio)retained=await retainApprovedAudio(repo,runtime,snapshot,approvedAudio);}catch(error){await runtime.dispose();throw error;}
- return {snapshotSha256:createHash('sha256').update(snapshot).digest('hex'),retained,observations,async fetch(url,options){const response=await runtime.dispatchFetch(url,options);const bytes=await response.clone().arrayBuffer();observations.push({url,method:options.method,status:response.status,sha256:createHash('sha256').update(new Uint8Array(bytes)).digest('hex'),bytes:bytes.byteLength});return response;},dispose:()=>runtime.dispose()};
+ return {snapshotSha256:createHash('sha256').update(snapshot).digest('hex'),retained,observations,sourcePolicy,sourceObservations,async fetch(url,options){const response=await runtime.dispatchFetch(url,options);const bytes=await response.clone().arrayBuffer();observations.push({url,method:options.method,status:response.status,sha256:createHash('sha256').update(new Uint8Array(bytes)).digest('hex'),bytes:bytes.byteLength});return response;},dispose:()=>runtime.dispose()};
 }
