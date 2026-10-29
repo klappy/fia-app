@@ -2824,6 +2824,74 @@
     {
       "path": "tests/worker-serving/trusted-source-actions.test.mjs",
       "sha256": "90fbd578306aa1733b55da5452d0bd564c86e7dd55e7873022985a076c8b6193"
+    },
+    {
+      "path": "server/fia/preparation/source-associations/README.md",
+      "sha256": "420e6aae7266943bba6a14d6bd0ff6a48514a449533db92916aca88ab360156d"
+    },
+    {
+      "path": "server/fia/preparation/source-associations/index.mjs",
+      "sha256": "3105d902512df61fc7c2edc947d00d73d3cd64af0d34b0dc91a6dfbd5bd53fe4"
+    },
+    {
+      "path": "server/fia/preparation/source-associations/retained.mjs",
+      "sha256": "74a2ed5f21bc0cf2975c115ab0ffa46ba369fe187a8a38df39fbc76ea9b08f8a"
+    },
+    {
+      "path": "server/fia/preparation/source-associations/coverage.mjs",
+      "sha256": "8360e6799d99efdd19b87b79f4b28a022b99d6a1dba3b89d4b7d8f86f82c12f5"
+    },
+    {
+      "path": "tests/preparation/source-associations.test.mjs",
+      "sha256": "a513a91568beb0f3a6913c0232d8ba47bc9f3ab1b98920b77224019375c9d564"
+    },
+    {
+      "path": "tests/worker-serving/source-associations.test.mjs",
+      "sha256": "b904477cfed0259fe3d772f6936f848ff029a458b6258702ed8168de893c52e9"
+    },
+    {
+      "path": "tests/preparation/fixtures/source-associations/spa-luk-1-1-4-s05-u003.raw-fragment.json",
+      "sha256": "cbfba7ec2bc60ba87f2c9b54eadb96ba997dcabe9ec06578aa84055c26271ecc"
+    },
+    {
+      "path": "server/fia/preparation/source-associations/producer-receipt.mjs",
+      "sha256": "263d6a71675cedff04f3325aeb3e7cc0383f9f0ec060bd11c46af637d3340def"
+    },
+    {
+      "path": "tests/preparation/support/fake-guide-producer.mjs",
+      "sha256": "cb2e01f242eeb6e806c46356f0187db9b8cba580ee7df7e00b341c6db4987c7d"
+    },
+    {
+      "path": "server/fia/preparation/guide-fragment.mjs",
+      "sha256": "37a5c4a723e5e92322713b7d4a3bba66029214d5d7e46e98f4e032978d715f7b"
+    },
+    {
+      "path": "server/fia/preparation/source-associations/composer.mjs",
+      "sha256": "3d0719cffd3f172e977759904fee8711abd58b8079c248774e2c1dd7dbba0fcf"
+    },
+    {
+      "path": "tests/preparation-executor/guide-fragment.test.mjs",
+      "sha256": "4540d426c370fb6e92c9445fa041188c9a93db53237fecd880c1d7a473e20c6d"
+    },
+    {
+      "path": "tests/worker-serving/guide-fragment.test.mjs",
+      "sha256": "802ecdc1d5dfa614285d5daef61a720253d88ba86dcf9c1927aed85eecaf3038"
+    },
+    {
+      "path": "tests/preparation/support/archive-guide-composer.mjs",
+      "sha256": "00f71efea5a0981dc1711e009e680426e7258107f15815789c593a30ddad2a76"
+    },
+    {
+      "path": "tests/worker-serving/guide-fragment-dispatch.test.mjs",
+      "sha256": "70f01d5b4f58c83495c86453d7b0abe0f4fc9ee5fa30313f9142f462e726dce1"
+    },
+    {
+      "path": "server/fia/preparation/guide-fragment-admission.mjs",
+      "sha256": "4f87c3b71c604b2430340ab840b25b8505d54ec107e682d19f0220dde1aa0b94"
+    },
+    {
+      "path": "tests/worker-serving/guide-fragment-admission.test.mjs",
+      "sha256": "9f0379eb8fde547911ce6c8e0993aa83d765c1a1937aaa0a850afe47b93df4e8"
     }
   ],
   "generatedFiles": [

@@ -1,6 +1,7 @@
 import catalog from './catalog.json';
 import {createExecutableRuntime,serveExecutableObject} from './executable-presentation-runtime.mjs';
 import {serveGuideUnitPreparation,serveGuideUnitObject,serveGuidePreparation,serveGuidePreparationObject,captureGuideCapabilities,initializeGuideLifecycle,runGuideAlarm} from './guide-dispatch.mjs';
+import {serveGuideFragmentObject} from './guide-fragment.mjs';
 import {serveStableOriginal,stableOriginalRequest,currentPreparationRow} from './stable-original-coordinator.mjs';
 import {json,resolveSelection,operationId,indexedCatalog,readBounded,prepareAccepted,eligibleRows} from './service.mjs';
 import {createReviewedOriginalStore} from './reviewed-original-store.mjs';
@@ -86,6 +87,7 @@ export class FiaPreparationJobs{
   async fetch(request){
     await this.guideBoot;
     const execution=await serveExecutableObject(request,this.ctx,this.env,this.presentationExecutionCapabilities(),()=>this.executionRuntime??=createExecutableRuntime({ctx:this.ctx,env:this.env,...this.presentationExecutionCapabilities()}));if(execution)return execution;
+    const fragment=await serveGuideFragmentObject(request,this.ctx,this.env,{snapshot:this.presentationExecutionCapabilities()?.snapshot??null});if(fragment)return fragment;
     const unit=await serveGuideUnitObject(request,this.ctx,this.env,catalog,this.guideCapabilities);if(unit)return unit;
     const guide=await serveGuidePreparationObject(request,this.ctx,this.env,catalog,this.guideCapabilities);if(guide)return guide;
     if(await this.ctx.storage.get('guide-job'))return json(404,{status:'unavailable'});
