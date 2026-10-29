@@ -37,15 +37,28 @@ test('preparing response preserves previously saved offline snapshot',async()=>{
  w.offline(true);const offline=await w.fetch(`/v1/packs/${packId}`);assert.equal(offline.status,200);assert.equal(offline.headers.get('X-FIA-Offline-Snapshot'),'historical-verified');assert.deepEqual(await offline.json(),f.record);
 });
 
-// F4 client half: a page may ask for execution=2. This build forwards that read as it
-// forwards any other, but a saved snapshot answers only a read with the capability it
-// was saved under (none yet), so an asking page never receives an older shape from it.
-test('execution=2 pack reads pass through online and never take a snapshot saved without the capability',async()=>{const f=fixture(),w=worker(f);const online=await w.fetch(`/v1/packs/${packId}?execution=2`);assert.equal(online.status,200);assert.deepEqual(await online.json(),f.record);assert.ok(w.calls.includes(`/v1/packs/${packId}?execution=2`));
- assert.equal((await save(w,f)).ok,true);w.offline(true);
+// F4 client half, then F11: a page may ask for execution=2, and an explicit Save now reads the snapshot with
+// that capability. A snapshot answers a read with the capability it was saved under, and a snapshot saved with
+// it also answers a plain read in the plain shape; one saved without it never answers an asking read.
+test('execution=2 pack reads pass through online; a snapshot answers only reads its saved capability covers',async()=>{const f=fixture(),w=worker(f);const online=await w.fetch(`/v1/packs/${packId}?execution=2`);assert.equal(online.status,200);assert.deepEqual(await online.json(),f.record);assert.ok(w.calls.includes(`/v1/packs/${packId}?execution=2`));
+ assert.equal((await save(w,f)).ok,true);assert.ok(w.calls.includes(`/v1/packs/${packId}?revision=${f.record.revision}&execution=2`),'Save reads with the capability');w.offline(true);
  const plain=await w.fetch(`/v1/packs/${packId}`);assert.equal(plain.status,200);assert.equal(plain.headers.get('X-FIA-Offline-Snapshot'),'historical-verified');
- const asking=await w.fetch(`/v1/packs/${packId}?execution=2`);assert.equal(asking.status,503);assert.equal(asking.headers.get('X-FIA-Offline-Snapshot'),null);
- w.offline(false);w.reply(`/v1/packs/${packId}`,new Response('unavailable',{status:503}));const transient=await w.fetch(`/v1/packs/${packId}?execution=2`);assert.equal(transient.status,503);assert.equal(transient.headers.get('X-FIA-Offline-Snapshot'),null,'the server answer passes through unchanged');
- assert.equal((await w.fetch(`/v1/packs/${packId}`)).headers.get('X-FIA-Offline-Snapshot'),'historical-verified','the saved snapshot is kept for reads without the capability');
+ const asking=await w.fetch(`/v1/packs/${packId}?execution=2`);assert.equal(asking.status,200);assert.equal(asking.headers.get('X-FIA-Offline-Snapshot'),'historical-verified');assert.deepEqual(await asking.json(),f.record);
+ w.offline(false);w.reply(`/v1/packs/${packId}`,new Response('unavailable',{status:503}));const transient=await w.fetch(`/v1/packs/${packId}?execution=2`);assert.equal(transient.headers.get('X-FIA-Offline-Snapshot'),'historical-verified','a transient answer uses the snapshot saved with the capability');
+ // Saved where the server refused the capability: plain reads only.
+ const g=fixture(),v=worker(g);v.reply(`/v1/packs/${packId}`,()=>v.calls.at(-1).includes('execution=2')?Response.json({status:'refused',code:'invalid-request'},{status:400}):Response.json(g.record));
+ assert.equal((await save(v,g)).ok,true);v.offline(true);
+ assert.equal((await v.fetch(`/v1/packs/${packId}`)).headers.get('X-FIA-Offline-Snapshot'),'historical-verified');
+ const older=await v.fetch(`/v1/packs/${packId}?execution=2`);assert.equal(older.status,503);assert.equal(older.headers.get('X-FIA-Offline-Snapshot'),null,'an asking page never receives the older shape');
+});
+
+// F11: the plain read of a snapshot saved with the capability carries no capability fields.
+test('a snapshot saved with execution=2 answers a plain read without visualResources, publication or mediaManifest',async()=>{const f=fixture(),w=worker(f);
+ const declared={...f.record,execution:{...f.record.execution,visualResources:[{assetId:'a1400',kind:'image',status:'unavailable',reason:'decoder-unavailable'}]}};
+ w.reply(`/v1/packs/${packId}`,()=>Response.json(w.calls.at(-1).includes('execution=2')?declared:f.record));
+ assert.equal((await save(w,f)).ok,true);w.offline(true);
+ assert.deepEqual(await (await w.fetch(`/v1/packs/${packId}?execution=2`)).json(),declared);
+ assert.deepEqual(await (await w.fetch(`/v1/packs/${packId}`)).json(),f.record);
 });
 
 // Carry-forward from the PR287 review (sw.js:147): an older server refuses the execution=2 read
