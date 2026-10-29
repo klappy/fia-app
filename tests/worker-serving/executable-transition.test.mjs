@@ -11,6 +11,7 @@ import {canonicalJSONString,sha256} from '../../server/fia/preparation/contract.
 import {createExecutableOperations} from '../../server/fia/publication/executable-operations.mjs';
 import {createRetainedApprovedAudio} from '../../server/fia/preparation/approved-audio-runtime.mjs';
 import {SOURCE_ACTION_RECIPE} from '../../server/fia/compiler/presentation/source-action-projector.mjs';
+import {trustedExecutionRecipe} from '../../server/fia/preparation/trusted-source-actions.mjs';
 import {createExecutionTransport} from '../../apps/web/src/lib/execution-transport.js';
 import {selectServerPresentation} from '../../apps/web/src/lib/library.js';
 const require=createRequire(resolve(process.env.FIA_WORKER_DEPENDENCIES||'package.json')),{build}=require('esbuild'),{Miniflare,convertV4MiniflareOptions}=require('miniflare');
@@ -32,7 +33,7 @@ const APPROVED_MEDIA={sha256:'0599996af6b15cf55853cfee33d2b4405e5ee95bd9068f297c
 // Test-only entry: the release Worker plus a storage door on its own origin, so a test
 // can read and tamper with one persisted state. It is never part of a release bundle.
 const entry=`import worker,{FiaPreparationJobs as Jobs} from ${JSON.stringify(resolve('server/faces/worker/entry.mjs'))};
-export class FiaPreparationJobs extends Jobs{async fetch(request){const url=new URL(request.url);if(url.origin!=='https://transition.test')return super.fetch(request);
+export class FiaPreparationJobs extends Jobs{async fetch(request){const url=new URL(request.url);if(url.origin==='https://guide-fragment.internal'&&url.pathname==='/demand'){await this.env.ASSETS.fetch(new Request('https://assets.invalid/__guide-demand'));return Response.json({state:'unavailable',reason:'guide-sha-mismatch',final:true});}if(url.origin!=='https://transition.test')return super.fetch(request);
  if(url.pathname==='/dump')return Response.json(Object.fromEntries(await this.ctx.storage.list()));
  const {key,value}=await request.json();if(value===null)await this.ctx.storage.delete(key);else await this.ctx.storage.put(key,value);return Response.json(true);}}
 export default worker;`;
@@ -63,11 +64,14 @@ async function releases(){
  const drift={...proof.descriptor,path:`/content/approved-audio/${driftSha256}.json`,sha256:driftSha256,bytes:driftBytes.length},indexes=new Map([[proof.descriptor.path,proof.bytes],[drift.path,driftBytes],[D3BE5884.path,storedBytes]]);
  const base={schema:'fia.worker-read-snapshot.v1',records:extension.records,current:extension.current,staticArtifacts:extension.staticArtifacts,artifacts:[],canonicalSources,generalizedAuthority:extension.authority};
  const counts={external:0};
- async function runtime(snapshot,{projector=null}={}){
+ // trusted:false replays a build from before trusted source actions shipped (every build
+ // named here, and the hypothetical content release that only moves today's policy): it
+ // composes no decisions and keeps the bare recipe, exactly as those builds did.
+ async function runtime(snapshot,{projector=null,trusted=false}={}){
   // projector: the source-action projector source of an earlier release, bundled in
   // place of the current module so the persisted state carries that release's rows.
-  const bundled=await build({stdin:{contents:entry,resolveDir:process.cwd(),sourcefile:'transition-entry.mjs',loader:'js'},bundle:true,platform:'browser',format:'esm',external:['node:*'],write:false,plugins:[{name:'transition-snapshot',setup(b){b.onResolve({filter:/generated\/snapshot\.json$/},()=>({path:'snapshot',namespace:'transition'}));b.onLoad({filter:/.*/,namespace:'transition'},()=>({contents:JSON.stringify(snapshot),loader:'json'}));if(projector)b.onLoad({filter:/source-action-projector\.mjs$/},()=>({contents:projector,loader:'js',resolveDir:dirname(projectorPath)}));}}]});
-  return new Miniflare({...convertV4MiniflareOptions({modules:true,script:bundled.outputFiles[0].text,compatibilityDate:'2026-09-01',compatibilityFlags:['nodejs_compat'],bindings:{FIA_API_ORIGIN:origin},durableObjects:{FIA_PREPARATION_JOBS:{className:'FiaPreparationJobs',useSQLite:true}},r2Buckets:['FIA_ORIGINALS'],serviceBindings:{ASSETS:async request=>{const path=new URL(request.url).pathname;assert.ok(/^\/content\/[a-zA-Z0-9._/-]+$/.test(path)&&!path.includes('..'),path);let bytes;try{bytes=indexes.has(path)?indexes.get(path):await readFile((path.startsWith('/content/source-guides/')?dir:publicRoot)+path);}catch(error){if(error.code!=='ENOENT')throw error;return new Response('Not found',{status:404});}return new Response(bytes,{headers:{'Content-Type':'application/json','Content-Length':String(bytes.length)}});}},outboundService:()=>{counts.external++;throw Error('External work forbidden');}}),resourcePersistencePath:join(dir,'storage')});
+  const bundled=await build({stdin:{contents:entry,resolveDir:process.cwd(),sourcefile:'transition-entry.mjs',loader:'js'},bundle:true,platform:'browser',format:'esm',external:['node:*'],write:false,plugins:[{name:'transition-snapshot',setup(b){b.onResolve({filter:/generated\/snapshot\.json$/},()=>({path:'snapshot',namespace:'transition'}));b.onLoad({filter:/.*/,namespace:'transition'},()=>({contents:JSON.stringify(snapshot),loader:'json'}));if(projector)b.onLoad({filter:/source-action-projector\.mjs$/},()=>({contents:projector,loader:'js',resolveDir:dirname(projectorPath)}));if(!trusted)b.onLoad({filter:/trusted-source-actions\.mjs$/},()=>({contents:'export const createTrustedSourceActionComposer=()=>async()=>[];export const trustedExecutionRecipe=recipe=>recipe;',loader:'js'}));}}]});
+  return watched(new Miniflare({...convertV4MiniflareOptions({modules:true,script:bundled.outputFiles[0].text,compatibilityDate:'2026-09-01',compatibilityFlags:['nodejs_compat'],bindings:{FIA_API_ORIGIN:origin},durableObjects:{FIA_PREPARATION_JOBS:{className:'FiaPreparationJobs',useSQLite:true}},r2Buckets:['FIA_ORIGINALS'],serviceBindings:{ASSETS:async request=>{const path=new URL(request.url).pathname;if(path==='/__guide-demand'){guideDemands.push(phase.current);return new Response('ok');}assert.ok(/^\/content\/[a-zA-Z0-9._/-]+$/.test(path)&&!path.includes('..'),path);let bytes;try{bytes=indexes.has(path)?indexes.get(path):await readFile((path.startsWith('/content/source-guides/')?dir:publicRoot)+path);}catch(error){if(error.code!=='ENOENT')throw error;return new Response('Not found',{status:404});}return new Response(bytes,{headers:{'Content-Type':'application/json','Content-Length':String(bytes.length)}});}},outboundService:()=>{counts.external++;throw Error('External work forbidden');}}),resourcePersistencePath:join(dir,'storage')}));
  }
  const current={...base,approvedAudioProofIndex:proof.descriptor};
  // A released build's snapshot carries the stored index and the catalog authority that
@@ -76,7 +80,7 @@ async function releases(){
  const released={...base,approvedAudioProofIndex:D3BE5884,generalizedAuthority:{...extension.authority,catalog:{...extension.authority.catalog,sha256:stored.authority.registrySha256},sourceCommit:stored.authority.sourceRevision}};
  const driftPolicy=await sha256(canonicalJSONString({policy:'fia-source-to-app/7fa17af806c139cfc353cace39fa6d50ed9e061b',approvedAudio:drift}));
  const binding=stored.bindings.find(b=>b.packId==='eng.MRK-1-14-20');assert.deepEqual(binding?.media,APPROVED_MEDIA,'the stored index binds the retained recording');
- return {dir,counts,driftPolicy,before:async()=>runtime(base,{projector:await priorProjector()}),priorRecipe:async()=>runtime(released,{projector:await priorProjector()}),recipe2:()=>runtime(released),after:()=>runtime(current),drifted:()=>runtime({...base,approvedAudioProofIndex:drift})};
+ return {dir,counts,driftPolicy,before:async()=>runtime(base,{projector:await priorProjector()}),priorRecipe:async()=>runtime(released,{projector:await priorProjector()}),recipe2:()=>runtime(released),after:()=>runtime(current,{trusted:true}),untrusted:()=>runtime(current),drifted:()=>runtime({...base,approvedAudioProofIndex:drift})};
 }
 // Explicit seeding, as an operator retains DEV's recording: one immutable R2 media object
 // plus its seed receipt. Nothing in a read or a preparation acquires it.
@@ -85,6 +89,14 @@ async function retainApprovedAudio(mf){
  const seeded=await createRetainedApprovedAudio({bucket,validateBinding:async()=>false}).retain({media:APPROVED_MEDIA,bytes,provenance:{kind:'retained-reviewed-trace',sha256:APPROVED_MEDIA.sha256}});
  assert.equal(seeded.status,'ready',JSON.stringify(seeded));return {key:`approved-audio/media/${APPROVED_MEDIA.sha256}.${APPROVED_MEDIA.extension}`,bytes};
 }
+// Guide acquisitions (claim 18841a7; Terry eb4d8d5, 85eff6a). This test is about recipe and publication transitions, so its door
+// answers the guide object's /demand with a final miss (guide-sha-mismatch): each publication stands as before, and nothing
+// reaches the network. Every request is watched (the door reports each /demand to this process): a read never demands, and each
+// explicit Open demands exactly once. The real acquisition is source-join-acquisition.test.mjs.
+const acquisitions={reads:[],opens:[]},guideDemands=[],phase={current:null};
+function watched(mf){const dispatch=mf.dispatchFetch.bind(mf);mf.dispatchFetch=async(url,init={})=>{const path=new URL(typeof url==='string'?url:url.url,origin).pathname,body=typeof init?.body==='string'?init.body:'';
+ const open=init?.method==='POST'&&(path==='/v1/presentation-preparations'||path==='/mcp'&&body.includes('"prepare_presentation"'));const before=guideDemands.length;phase.current=open?'open':'read';
+ let status=null;try{const response=await dispatch(url,init);status=response.status;return response;}finally{phase.current=null;(open?acquisitions.opens:acquisitions.reads).push({path,status,demanded:guideDemands.length-before});}};return mf;}
 const http=mf=>async(path,init)=>{const r=await mf.dispatchFetch(origin+path,init);return {status:r.status,type:r.headers.get('content-type'),body:await r.json()};};
 const mcp=mf=>async(name,args)=>{const r=await mf.dispatchFetch(origin+'/mcp',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json, text/event-stream','MCP-Protocol-Version':'2025-06-18'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',params:{name,arguments:args}})});const body=await r.json();assert.equal(r.status,200,JSON.stringify(body));return body.result.structuredContent;};
 const prepare=(read,demand)=>read('/v1/presentation-preparations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(demand)});
@@ -226,7 +238,7 @@ test('a recipe release (@1 to @2) never strands eng.MRK-1-14-20: the base is ser
   assert.equal(restored.descriptor.revision,base.body.revision);assert.equal(restored.presentation.execution,undefined);
   const opened=await selectServerPresentation(packId,{explicit:true,transport});
   assert.notEqual(opened.descriptor.revision,stored);assert.notEqual(opened.descriptor.revision,base.body.revision);
-  assert.equal(opened.presentation.execution.recipeRevision,SOURCE_ACTION_RECIPE);
+  assert.equal(opened.presentation.execution.recipeRevision,trustedExecutionRecipe(SOURCE_ACTION_RECIPE,{sourceJoins:true}),'today\'s recipe: @2 with the trusted source-action identity and, wired to the guide fragment object, the source-join identity (claim 18841a7; Terry 4178e01)');
   assert.ok(opened.presentation.activities.every(a=>a.flow?.schema==='fia-flow-role@1'&&a.flow.role===a.kind),'re-prepared under the current recipe');
   const current=await read('/v1/packs/'+packId);assert.equal(current.status,200);assert.equal(current.body.revision,opened.descriptor.revision);assert.equal(current.body.execution.schema,'fia-executable-catalog@1');
   assert.equal(r.counts.external,0);
@@ -334,6 +346,55 @@ test('the default passage is not offered a preparation it cannot fulfil, and a f
  }finally{await mf.dispose();await rm(r.dir,{recursive:true,force:true});}
 });
 
+// The exact admitted tuple (cookbook ANSWER-P2-LEDGER-APPLICABILITY 572bac9; claim
+// CLAIM-S02-U008-TRUSTED-PLACEMENT): eng.MRK-1-14-20 S02-U008 requests FIAMaps/c4 and
+// FIAImages/a1400. The deploy sequence: a build without trusted source actions prepares
+// the passage to ready; this tree then serves the base with its demand (the old row is a
+// cache miss for the current read, since the trusted identity is part of the recipe); the
+// facilitator's explicit Open prepares a NEW revision that places both assets through the
+// explicitResult boundary in verified base order (a1400 is base asset 21, c4 is 22); and an
+// exact-revision read of the old revision still resolves, so pinned Active and Saved
+// sessions stay coherent. Nothing else moves: other steps, narration, holds, the assets.
+test('a trusted-metadata release re-offers eng.MRK-1-14-20: base plus demand, an explicit Open places focal a1400 and S02-U008-resource-c4, the old revision still resolves',async()=>{
+ const r=await releases(),packId='eng.MRK-1-14-20';let mf=await r.untrusted();
+ try{
+  let read=http(mf);
+  const base=await read('/v1/packs/'+packId);assert.equal(base.status,200);assert.ok(base.body.preparationDemand);
+  const ready=await prepare(read,base.body.preparationDemand);assert.equal(ready.status,200,JSON.stringify(ready.body));assert.equal(ready.body.status,'ready');
+  const stored=ready.body.record.revision,before=(await read('/v1/artifacts/'+stored)).body;
+  assert.equal(before.execution.recipeRevision,SOURCE_ACTION_RECIPE);assert.equal(before.activities.find(a=>a.id==='S02-U008').execution.focalAssetId,null);
+  assert.equal((await read('/v1/packs/'+packId)).body.revision,stored,'the untrusted build serves its publication');
+  await mf.dispose();mf=await r.after();read=http(mf);
+  const reopened=await read('/v1/packs/'+packId);
+  assert.equal(reopened.status,200,JSON.stringify(reopened.body));assert.equal(reopened.body.status,'ready');
+  assert.equal(reopened.body.revision,base.body.revision,'the base record is served, not the untrusted publication');
+  assert.equal(reopened.body.execution,undefined);assert.deepEqual(reopened.body.preparationDemand,base.body.preparationDemand);
+  const pinned=await read(`/v1/packs/${packId}?revision=${stored}`);assert.equal(pinned.status,200,'a pinned session still reads its exact revision');assert.equal(pinned.body.revision,stored);assert.equal(pinned.body.execution.schema,'fia-executable-catalog@1');
+  assert.deepEqual((await read('/v1/artifacts/'+stored)).body,before,'and its exact bytes');
+  const transport=createExecutionTransport({fetch:(url,init={})=>mf.dispatchFetch(origin+url,{method:init.method,headers:init.headers,body:init.body})});
+  const restored=await selectServerPresentation(packId,{transport});
+  assert.equal(restored.descriptor.revision,base.body.revision);assert.equal(restored.presentation.execution,undefined);
+  const opened=await selectServerPresentation(packId,{explicit:true,transport}),after=opened.presentation;
+  assert.notEqual(opened.descriptor.revision,stored);assert.notEqual(opened.descriptor.revision,base.body.revision);
+  assert.equal(after.execution.recipeRevision,trustedExecutionRecipe(SOURCE_ACTION_RECIPE,{sourceJoins:true}));assert.notEqual(after.execution.recipeRevision,SOURCE_ACTION_RECIPE);
+  const index=after.activities.findIndex(a=>a.id==='S02-U008'),[primary,derived]=after.activities.slice(index,index+2),prior=before.activities.find(a=>a.id==='S02-U008');
+  assert.equal(primary.kind,'discussion');assert.equal(primary.assetId,'a1400');assert.equal(primary.execution.focalAssetId,'a1400');assert.equal(primary.completion,'confirm');assert.deepEqual(primary.execution.completion,{action:'manual-continue'});
+  assert.deepEqual(primary.execution.narration,prior.execution.narration,'narration is unchanged');assert.equal(primary.narration,prior.narration);assert.equal(primary.sourceText,prior.sourceText);assert.equal(primary.prompt,prior.prompt);assert.deepEqual(primary.relatedAssetIds,prior.relatedAssetIds,'no legacy relatedIds are imported');
+  assert.deepEqual(prior.execution.completion,{action:'manual-continue'},'the hold was already manual');
+  assert.equal(derived.id,'S02-U008-resource-c4');assert.equal(derived.fulfills,'S02-U008');assert.equal(derived.assetId,'c4');assert.equal(derived.execution.focalAssetId,'c4');assert.deepEqual(derived.execution.narration,{action:'none'});assert.equal(derived.narration,'');assert.equal(derived.completion,'confirm');
+  assert.deepEqual(after.activities.filter(a=>!a.id.startsWith('S02-U008')),before.activities.filter(a=>a.id!=='S02-U008'),'every other step is unchanged');
+  assert.equal(after.activities.length,before.activities.length+1);assert.deepEqual(after.assets,before.assets,'the asset graph is unchanged');
+  assert.deepEqual(after.activities.filter(a=>a.execution.focalAssetId&&['image','map','video'].includes(after.assets[a.execution.focalAssetId]?.kind)).map(a=>[a.id,a.execution.focalAssetId]),[['S02-U008','a1400'],['S02-U008-resource-c4','c4']],'no other visual placement and no video');
+  const current=await read('/v1/packs/'+packId);assert.equal(current.status,200);assert.equal(current.body.revision,opened.descriptor.revision);assert.equal(current.body.execution.schema,'fia-executable-catalog@1');
+  assert.equal((await read(`/v1/packs/${packId}?revision=${stored}`)).body.revision,stored,'the old revision still resolves after the pointer advances');
+  // Spanish is not admitted: its Open under this tree places no visual.
+  const spa=await read('/v1/packs/spa.MRK-1-14-20'),spaReady=await prepare(read,spa.body.preparationDemand);assert.equal(spaReady.body.status,'ready');
+  const spaPresentation=(await read('/v1/artifacts/'+spaReady.body.record.revision)).body;
+  assert.deepEqual(spaPresentation.activities.filter(a=>a.execution.focalAssetId&&['image','map','video'].includes(spaPresentation.assets[a.execution.focalAssetId]?.kind)),[],'the Spanish row is not admitted');
+  assert.equal(r.counts.external,0);
+ }finally{await mf.dispose();await rm(r.dir,{recursive:true,force:true});}
+});
+
 test('resolver: base id fia-mark-authentic@1 for eng.MRK-1-1-13 is a typed refusal from the service, never a thrown 500',async()=>{
  const {gunzipSync}=await import('node:zlib'),{createExecutablePresentationResolver}=await import('../../server/fia/preparation/executable-presentation-resolver.mjs'),{createExecutablePresentationService}=await import('../../server/fia/preparation/executable-presentation-service.mjs');
  const registry=JSON.parse(await readFile(publicRoot+'/content/registry.json')),source=JSON.parse(gunzipSync(await readFile('server/fia/compiler/presentation/source-packs.json.gz'))),packId='eng.MRK-1-1-13',descriptor=registry.packs.find(d=>d.id===packId),content=await readFile(publicRoot+descriptor.presentation.url,'utf8');
@@ -360,4 +421,24 @@ test('the #249 build (catalog f5ce2e24, proof index 7140879c, @2) replays to reg
  const {SUPERSEDED_BUILDS}=await import('../../server/fia/preparation/executable-presentation-runtime.mjs');
  assert.deepEqual(SUPERSEDED_BUILDS[3],{policy:F5CE2E24_POLICY,recipe:'fia-server-source-action-projector@2',approvedAudio:true});
  const prior=SUPERSEDED_BUILDS.slice(0,3).map(b=>b.policy);assert.ok(!prior.includes(F5CE2E24_POLICY),'entry 4 is a new build beside entries 1-3, which stay');
+});
+
+// Review 5699870877 B1 and 5700626016 N2: self-contained acquisition accounting. Its own world and Opens: every read demands
+// nothing; each explicit Open that prepares demands exactly once; the counts are pinned.
+test('guide acquisitions: no read demands, each explicit Open demands exactly once, and the count is pinned',async()=>{
+ acquisitions.reads.length=0;acquisitions.opens.length=0;guideDemands.length=0;
+ const r=await releases(),mf=await r.after();
+ try{
+  const read=http(mf),call=mcp(mf),packId='eng.MRK-1-14-20';
+  const base=await read('/v1/packs/'+packId);assert.ok(base.body.preparationDemand);
+  await call('read_pack',{packId});
+  const first=await prepare(read,base.body.preparationDemand);assert.equal(first.body.status,'ready');
+  await read('/v1/packs/'+packId);await read(`/v1/packs/${packId}?revision=${first.body.record.revision}`);await read('/v1/artifacts/'+first.body.record.revision);
+  const second=await prepare(read,base.body.preparationDemand);assert.equal(second.body.status,'ready');
+  await read('/v1/packs/'+packId);
+  assert.deepEqual(acquisitions.reads.filter(x=>x.demanded),[],'a read never demands');
+  assert.deepEqual(acquisitions.opens.map(o=>[o.status,o.demanded]),[[200,1],[200,1]],'each explicit Open demands exactly once');
+  assert.deepEqual({reads:acquisitions.reads.length,opens:acquisitions.opens.length,demands:guideDemands.length},{reads:6,opens:2,demands:2},'pinned');
+  assert.equal(r.counts.external,0);
+ }finally{await mf.dispose();await rm(r.dir,{recursive:true,force:true});}
 });
