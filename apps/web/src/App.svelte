@@ -44,6 +44,9 @@
  // F9: the declarations served for this exact execution record. A ready answer to a visual demand carries
  // the refreshed record of the same revision; its declarations replace the page's for that revision only.
  function declarations(){return servedDeclarations&&servedDeclarations.packId===selectedPack.id&&servedDeclarations.revision===selectedPack.revision?servedDeclarations:selectedPack;}
+ // The Downloads choices and the Save name exactly the generation this page displays: the one its declarations came with, refreshed
+ // by a visual's ready answer (OFFLINE exact selection). Without one, the worker fails closed.
+ let downloadPack=$derived(executableMode&&declarations().publication?{...selectedPack,displayedGeneration:declarations().publication.generation}:selectedPack);
  function serverVisual(id){return executableMode?declarations().visualResources?.find(e=>e.assetId===id)??null:null;}
  const visualSlot=id=>`server-visual:${id}`;
  // A deliberate action (a tap, a gesture, a tool call) authorizes at most one visual demand for this view;
@@ -649,7 +652,7 @@
    <div class="menu-footer"><button class="primary full menu-close" onclick={()=>sheet=null}>Close</button></div>
   {:else if sheet==='downloads'}
    <button class="sheet-back" onclick={()=>sheet='menu'}><ChevronLeft size={18}/>FIA menu</button>
-   <LibraryPanel view="downloads" {selectedPack} onstatus={value=>{saved=value;updateDownloaded();updateMedia(true);}}/>
+   <LibraryPanel view="downloads" selectedPack={downloadPack} onstatus={value=>{saved=value;updateDownloaded();updateMedia(true);}}/>
   {:else if sheet==='conversation'}
    <p class="sheet-intro">Ask to show a resource, pause, or change how we continue. This prototype supports commands; open-ended AI is not connected.</p>
    <form class="command-form" onsubmit={e=>{e.preventDefault();runCommand();}}><label class="sr-only" for="command">Tell the guide what you need</label><input bind:this={chatInput} id="command" bind:value={command} placeholder="Show me the map…" autocomplete="off"/><button class="icon-button" type="submit" aria-label="Send command" disabled={!command.trim()}><Send size={18}/></button></form>

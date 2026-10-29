@@ -12,16 +12,16 @@
  let sizes=$derived(preparedDownloadSizes(download?.manifest,selection));
  function storedSizes(){try{return JSON.parse(localStorage.getItem('fia-download-media-sizes')||'{}');}catch{return {};}}
  let mediaSizes=$state(storedSizes());
- let effectiveSizes=$derived(Object.fromEntries(Object.entries(sizes.groups).filter(([,g])=>g.included&&g.count).map(([k,g])=>[k,mediaSizes[k]||(k==='video'&&g.prepared?'prepared':g.size)])));
+ let effectiveSizes=$derived(Object.fromEntries(Object.entries(sizes.groups).filter(([,g])=>g.included&&g.count&&!g.native).map(([k,g])=>[k,mediaSizes[k]||(k==='video'&&g.prepared?'prepared':g.size)])));
  let preset=$derived(new Set(Object.values(effectiveSizes)).size===1?Object.values(effectiveSizes)[0]:'custom');
- let availablePresets=$derived(['small','medium','large'].filter(size=>Object.values(sizes.groups).filter(g=>g.included&&g.count).every(g=>g.requestable||g.available.includes(size))));
+ let availablePresets=$derived(['small','medium','large'].filter(size=>Object.values(sizes.groups).filter(g=>g.included&&g.count&&!g.native).every(g=>g.requestable||g.available.includes(size))));
  let ready=$derived(Object.entries(effectiveSizes).every(([k,v])=>v==='prepared'?sizes.groups[k].prepared:sizes.groups[k].requestable||sizes.groups[k].available.includes(v)));
  let requestSizes=$derived(Object.fromEntries(Object.entries(effectiveSizes).filter(([group])=>download?.manifest?.files.some(f=>f.group===group&&f.deliveryURL))));
  let resumeMatches=$derived(download?.pending?.selection===selection&&['audio','image','video'].every(g=>(download.pending.manifest?.mediaSizes?.[g]||null)===(requestSizes[g]||null)));
  // Each package's total is the real proxied output it would transfer: declared output bytes (verified against the live proxy, see the unit's RESULTS) for the sizes it would request, each shared clip counted once; null while any output is still undeclared.
  function packageTotal(choice){
   const manifest=download?.manifest;if(!manifest)return null;const prepared=preparedDownloadSizes(manifest,choice);
-  const chosen=Object.fromEntries(Object.entries(prepared.groups).filter(([,g])=>g.included&&g.count).map(([k,g])=>[k,mediaSizes[k]||(k==='video'&&g.prepared?'prepared':g.size)]));
+  const chosen=Object.fromEntries(Object.entries(prepared.groups).filter(([,g])=>g.included&&g.count&&!g.native).map(([k,g])=>[k,mediaSizes[k]||(k==='video'&&g.prepared?'prepared':g.size)]));
   if(!Object.entries(chosen).every(([k,v])=>v==='prepared'?prepared.groups[k].prepared:prepared.groups[k].requestable||prepared.groups[k].available.includes(v)))return null;
   const request=Object.fromEntries(Object.entries(chosen).filter(([group])=>manifest.files.some(f=>f.group===group&&f.deliveryURL)));
   try{const m=planProxyDownload(manifest,choice,request),files=m.files.filter(f=>downloadSelectionIncludes(choice,f.group));return downloadTransferBytes(files);}catch{return null;}
