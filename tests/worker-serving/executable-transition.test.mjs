@@ -516,3 +516,19 @@ test('the #249 build (catalog f5ce2e24, proof index 7140879c, @2) replays to reg
  assert.deepEqual(SUPERSEDED_BUILDS[3],{policy:F5CE2E24_POLICY,recipe:'fia-server-source-action-projector@2',approvedAudio:true});
  const prior=SUPERSEDED_BUILDS.slice(0,3).map(b=>b.policy);assert.ok(!prior.includes(F5CE2E24_POLICY),'entry 4 is a new build beside entries 1-3, which stay');
 });
+
+// QA 2026-10-29 09:44 at 70f1f34: a natural Open reached S02-U008 with no visualResources and no visual demand.
+// The page's own path, end to end in the real Worker: an explicit Open adopts the preparation answer's record,
+// which no capability read produced, so it must still carry the declarations of an asking read.
+test('an explicit Open through the client library carries the declared a1400 and c4 for the adopted execution',async()=>{
+ const r=await releases(),packId='eng.MRK-1-14-20',mf=await r.after();
+ try{
+  const transport=createExecutionTransport({fetch:(url,init={})=>mf.dispatchFetch(origin+url,{method:init.method,headers:init.headers,body:init.body})});
+  const opened=await selectServerPresentation(packId,{explicit:true,transport});
+  const declared=opened.descriptor.visualResources;
+  assert.ok(Array.isArray(declared),'the adopted execution carries visualResources');
+  assert.deepEqual(declared.map(e=>[e.assetId,e.kind,e.status]),[['a1400','image','preparable'],['c4','map','preparable']]);
+  assert.ok(declared.every(e=>e.preparationDemand.expectedExecutionRevision===opened.descriptor.revision),'declared for the adopted execution');
+  const again=await selectServerPresentation(packId,{transport});assert.deepEqual(again.descriptor.visualResources,declared,'a restore reads the same declarations');
+ }finally{await mf.dispose();await rm(r.dir,{recursive:true,force:true});}
+});
