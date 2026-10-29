@@ -1,0 +1,1152 @@
+{
+  "schema": "fia-association-eval-decisions@1",
+  "producer": {
+    "id": "perturbed-fixture",
+    "kind": "manual",
+    "perturbations": {
+      "eng.MRK-1-14-20:S02-U008": "dropped-requested FIAImages:a1400",
+      "spa.MRK-1-14-20:S02-U010": "wrong-primary a1524",
+      "eng.MRK-2-1-12:S02-U006": "extra-requested FIAImages:a1400",
+      "spa.MRK-4-35-41:S03-U017": "abstain",
+      "spa.MRK-1-14-20:S02-U008": "companion-as-requested VideoBibleDictionary:a11",
+      "spa.MRK-8-11-21:S05-U013": "collection-mismatch FIAMaps:a280",
+      "eng.MRK-1-1-13:S03-U019": "related-order-mismatch",
+      "eng.MRK-1-1-13:S02-U005": "insertion-mismatch",
+      "eng.MRK-1-1-13:S03-U007": "provenance-only change: no error",
+      "spa.MRK-2-1-12:S02-U006": "dropped-companion VideoBibleDictionary:a31",
+      "eng.MRK-1-14-20:S03-U020": "missed-association",
+      "spa.MRK-3-7-12:S05-U006": "omitted: missing-decision",
+      "eng.LUK-1-1-4:S01-U001": "unknown-case"
+    }
+  },
+  "decisions": [
+    {
+      "caseId": "eng.MRK-1-1-13:S02-U005",
+      "output": {
+        "decision": "associate",
+        "association": {
+          "requested": [
+            {
+              "collection": "FIAImages",
+              "id": "a112"
+            },
+            {
+              "collection": "FIAMaps",
+              "id": "c197"
+            }
+          ],
+          "optionalCompanions": null,
+          "companionPairs": null
+        },
+        "display": {
+          "primaryCollection": "FIAImages",
+          "primaryAssetId": "a112",
+          "relatedAssetIds": [
+            "a112",
+            "c197"
+          ],
+          "insertions": []
+        }
+      },
+      "provenance": {
+        "producer": "perturbation-fixture"
+      }
+    },
+    {
+      "caseId": "eng.MRK-1-1-13:S02-U008",
+      "output": {
+        "decision": "associate",
+        "association": {
+          "requested": [
+            {
+              "collection": "FIAImages",
+              "id": "a203"
+            },
+            {
+              "collection": "FIAImages",
+              "id": "a204"
+            }
+          ],
+          "optionalCompanions": null,
+          "companionPairs": null
+        },
+        "display": {
+          "primaryCollection": "FIAImages",
+          "primaryAssetId": "a203",
+          "relatedAssetIds": [
+            "a203",
+            "a204"
+          ],
+          "insertions": [
+            {
+              "activityId": "S02-U008-resource-a204",
+              "assetId": "a204",
+              "fulfills": "S02-U008"
+            }
+          ]
+        }
+      },
+      "provenance": {
+        "producer": "perturbation-fixture"
+      }
+    },
+    {
+      "caseId": "eng.MRK-1-1-13:S03-U007",
+      "output": {
+        "decision": "associate",
+        "association": {
+          "requested": [
+            {
+              "collection": "FIAMaps",
+              "id": "c168"
+            }
+          ],
+          "optionalCompanions": null,
+          "companionPairs": null
+        },
+        "display": {
+          "primaryCollection": "FIAMaps",
+          "primaryAssetId": "c168",
+          "relatedAssetIds": [
+            "c168"
+          ],
+          "insertions": []
+        },
+        "provenance": {
+          "adjudicator": "someone-else",
+          "when": "1999-01-01"
+        },
+        "confidence": 0.1
+      },
+      "provenance": {
+        "producer": "perturbation-fixture"
+      }
+    },
+    {
+      "caseId": "eng.MRK-1-1-13:S03-U019",
+      "output": {
+        "decision": "associate",
+        "association": {
+          "requested": [
+            {
+              "collection": "FIAImages",
+              "id": "a112"
+            },
+            {
+              "collection": "FIAImages",
+              "id": "a111"
+            }
+          ],
+          "optionalCompanions": null,
+          "companionPairs": null
+        },
+        "display": {
+          "primaryCollection": "FIAImages",
+          "primaryAssetId": "a112",
+          "relatedAssetIds": [
+            "a111",
+            "a112"
+          ],
+          "insertions": [
+            {
+              "activityId": "S03-U019-resource-a111",
+              "assetId": "a111",
+              "fulfills": "S03-U019"
+            }
+          ]
+        }
+      },
+      "provenance": {
+        "producer": "perturbation-fixture"
+      }
+    },
+    {
+      "caseId": "eng.MRK-1-1-13:S03-U021",
+      "output": {
+        "decision": "associate",
+        "association": {
+          "requested": [
+            {
+              "collection": "FIAMaps",
+              "id": "c201"
+            },
+            {
+              "collection": "FIAMaps",
+              "id": "c202"
+            }
+          ],
+          "optionalCompanions": null,
+          "companionPairs": null
+        },
+        "display": {
+          "primaryCollection": "FIAMaps",
+          "primaryAssetId": "c201",
+          "relatedAssetIds": [
+            "c201",
+            "c202"
+          ],
+          "insertions": [
+            {
+              "activityId": "S03-U021-resource-c202",
+              "assetId": "c202",
+              "fulfills": "S03-U021"
+            }
+          ]
+        }
+      },
+      "provenance": {
+        "producer": "perturbation-fixture"
+      }
+    },
+    {
+      "caseId": "eng.MRK-1-1-13:S05-U015",
+      "output": {
+        "decision": "associate",
+        "association": {
+          "requested": [
+            {
+              "collection": "FIAImages",
+              "id": "a111"
+            }
+          ],
+          "optionalCompanions": null,
+          "companionPairs": null
+        },
+        "display": {
+          "primaryCollection": "FIAImages",
+          "primaryAssetId": "a111",
+          "relatedAssetIds": [
+            "a111"
+          ],
+          "insertions": []
+        }
+      },
+      "provenance": {
+        "producer": "perturbation-fixture"
+      }
+    },
+    {
+      "caseId": "eng.MRK-1-14-20:S02-U008",
+      "output": {
+        "decision": "associate",
+        "association": {
+          "requested": [
+            {
+              "collection": "FIAMaps",
+              "id": "c4"
+            }
+          ],
+          "optionalCompanions": [
+            {
+              "collection": "VideoBibleDictionary",
+              "id": "a11"
+            }
+          ],
+          "companionPairs": [
+            {
+              "from": {
+                "collection": "FIAImages",
+                "id": "a1400"
+              },
+              "to": {
+                "collection": "VideoBibleDictionary",
+                "id": "a11"
+              }
+            }
+          ]
+        },
+        "display": {
+          "primaryCollection": "FIAMaps",
+          "primaryAssetId": "c4",
+          "relatedAssetIds": [
+            "c4",
+            "a1400"
+          ],
+          "insertions": null
+        }
+      },
+      "provenance": {
+        "producer": "perturbation-fixture"
+      }
+    },
+    {
+      "caseId": "eng.MRK-1-14-20:S02-U010",
+      "output": {
+        "decision": "associate",
+        "association": {
+          "requested": [
+            {
+              "collection": "FIAImages",
+              "id": "a1523"
+            },
+            {
+              "collection": "FIAImages",
+              "id": "a1524"
+            },
+            {
+              "collection": "FIAImages",
+              "id": "a1525"
+            },
+            {
+              "collection": "FIAImages",
+              "id": "a1526"
+            },
+            {
+              "collection": "FIAImages",
+              "id": "a1527"
+            }
+          ],
+          "optionalCompanions": [
+            {
+              "collection": "VideoBibleDictionary",
+              "id": "a19"
+            }
+          ],
+          "companionPairs": [
+            {
+              "from": {
+                "collection": "FIAImages",
+                "id": "a1523"
+              },
+              "to": {
+                "collection": "VideoBibleDictionary",
+                "id": "a19"
+              }
+            },
+            {
+              "from": {
+                "collection": "FIAImages",
+                "id": "a1524"
+              },
+              "to": {
+                "collection": "VideoBibleDictionary",
+                "id": "a19"
+              }
+            },
+            {
+              "from": {
+                "collection": "FIAImages",
+                "id": "a1525"
+              },
+              "to": {
+                "collection": "VideoBibleDictionary",
+                "id": "a19"
+              }
+            },
+            {
+              "from": {
+                "collection": "FIAImages",
+                "id": "a1526"
+              },
+              "to": {
+                "collection": "VideoBibleDictionary",
+                "id": "a19"
+              }
+            },
+            {
+              "from": {
+                "collection": "FIAImages",
+                "id": "a1527"
+              },
+              "to": {
+                "collection": "VideoBibleDictionary",
+                "id": "a19"
+              }
+            }
+          ]
+        },
+        "display": {
+          "primaryCollection": "FIAImages",
+          "primaryAssetId": "a1523",
+          "relatedAssetIds": [
+            "a1523",
+            "a1524",
+            "a1525",
+            "a1526",
+            "a1527"
+          ],
+          "insertions": null
+        }
+      },
+      "provenance": {
+        "producer": "perturbation-fixture"
+      }
+    },
+    {
+      "caseId": "eng.MRK-1-14-20:S02-U013",
+      "output": {
+        "decision": "associate",
+        "association": {
+          "requested": [
+            {
+              "collection": "FIAImages",
+              "id": "a293"
+            }
+          ],
+          "optionalCompanions": [],
+          "companionPairs": []
+        },
+        "display": {
+          "primaryCollection": "FIAImages",
+          "primaryAssetId": "a293",
+          "relatedAssetIds": [
+            "a293"
+          ],
+          "insertions": null
+        }
+      },
+      "provenance": {
+        "producer": "perturbation-fixture"
+      }
+    },
+    {
+      "caseId": "eng.MRK-1-14-20:S03-U020",
+      "output": {
+        "decision": "none",
+        "association": null,
+        "display": null
+      },
+      "provenance": {
+        "producer": "perturbation-fixture"
+      }
+    },
+    {
+      "caseId": "eng.MRK-2-1-12:S02-U004",
+      "output": {
+        "decision": "associate",
+        "association": {
+          "requested": [
+            {
+              "collection": "FIAMaps",
+              "id": "c2"
+            }
+          ],
+          "optionalCompanions": [],
+          "companionPairs": []
+        },
+        "display": {
+          "primaryCollection": "FIAMaps",
+          "primaryAssetId": "c2",
+          "relatedAssetIds": [
+            "c2"
+          ],
+          "insertions": null
+        }
+      },
+      "provenance": {
+        "producer": "perturbation-fixture"
+      }
+    },
+    {
+      "caseId": "eng.MRK-2-1-12:S02-U006",
+      "output": {
+        "decision": "associate",
+        "association": {
+          "requested": [
+            {
+              "collection": "FIAImages",
+              "id": "a146"
+            },
+            {
+              "collection": "FIAImages",
+              "id": "a147"
+            },
+            {
+              "collection": "FIAImages",
+              "id": "a165"
+            },
+            {
+              "collection": "FIAImages",
+              "id": "a193"
+            },
+            {
+              "collection": "FIAImages",
+              "id": "a91"
+            },
+            {
+              "collection": "FIAImages",
+              "id": "a92"
+            },
+            {
+              "collection": "FIAImages",
+              "id": "a1400"
+            }
+          ],
+          "optionalCompanions": [
+            {
+              "collection": "VideoBibleDictionary",
+              "id": "a145"
+            },
+            {
+              "collection": "VideoBibleDictionary",
+              "id": "a31"
+            }
+          ],
+          "companionPairs": [
+            {
+              "from": {
+                "collection": "FIAImages",
+                "id": "a146"
+              },
+              "to": {
+                "collection": "VideoBibleDictionary",
+                "id": "a145"
+              }
+            },
+            {
+              "from": {
+                "collection": "FIAImages",
+                "id": "a147"
+              },
+              "to": {
+                "collection": "VideoBibleDictionary",
+                "id": "a145"
+              }
+            },
+            {
+              "from": {
+                "collection": "FIAImages",
+                "id": "a165"
+              },
+              "to": {
+                "collection": "VideoBibleDictionary",
+                "id": "a145"
+              }
+            },
+            {
+              "from": {
+                "collection": "FIAImages",
+                "id": "a193"
+              },
+              "to": {
+                "collection": "VideoBibleDictionary",
+                "id": "a145"
+              }
+            },
+            {
+              "from": {
+                "collection": "FIAImages",
+                "id": "a91"
+              },
+              "to": {
+                "collection": "VideoBibleDictionary",
+                "id": "a31"
+              }
+            },
+            {
+              "from": {
+                "collection": "FIAImages",
+                "id": "a92"
+              },
+              "to": {
+                "collection": "VideoBibleDictionary",
+                "id": "a31"
+              }
+            }
+          ]
+        },
+        "display": {
+          "primaryCollection": "FIAImages",
+          "primaryAssetId": "a146",
+          "relatedAssetIds": [
+            "a146",
+            "a147",
+            "a165",
+            "a193",
+            "a91",
+            "a92"
+          ],
+          "insertions": null
+        }
+      },
+      "provenance": {
+        "producer": "perturbation-fixture"
+      }
+    },
+    {
+      "caseId": "spa.MRK-1-14-20:S02-U008",
+      "output": {
+        "decision": "associate",
+        "association": {
+          "requested": [
+            {
+              "collection": "FIAMaps",
+              "id": "c4"
+            },
+            {
+              "collection": "FIAImages",
+              "id": "a1400"
+            },
+            {
+              "collection": "VideoBibleDictionary",
+              "id": "a11"
+            }
+          ],
+          "optionalCompanions": [
+            {
+              "collection": "VideoBibleDictionary",
+              "id": "a11"
+            }
+          ],
+          "companionPairs": [
+            {
+              "from": {
+                "collection": "FIAImages",
+                "id": "a1400"
+              },
+              "to": {
+                "collection": "VideoBibleDictionary",
+                "id": "a11"
+              }
+            }
+          ]
+        },
+        "display": {
+          "primaryCollection": "FIAMaps",
+          "primaryAssetId": "c4",
+          "relatedAssetIds": [
+            "c4",
+            "a1400"
+          ],
+          "insertions": null
+        }
+      },
+      "provenance": {
+        "producer": "perturbation-fixture"
+      }
+    },
+    {
+      "caseId": "spa.MRK-1-14-20:S02-U010",
+      "output": {
+        "decision": "associate",
+        "association": {
+          "requested": [
+            {
+              "collection": "FIAImages",
+              "id": "a1523"
+            },
+            {
+              "collection": "FIAImages",
+              "id": "a1524"
+            },
+            {
+              "collection": "FIAImages",
+              "id": "a1525"
+            },
+            {
+              "collection": "FIAImages",
+              "id": "a1526"
+            },
+            {
+              "collection": "FIAImages",
+              "id": "a1527"
+            }
+          ],
+          "optionalCompanions": [
+            {
+              "collection": "VideoBibleDictionary",
+              "id": "a19"
+            }
+          ],
+          "companionPairs": [
+            {
+              "from": {
+                "collection": "FIAImages",
+                "id": "a1523"
+              },
+              "to": {
+                "collection": "VideoBibleDictionary",
+                "id": "a19"
+              }
+            },
+            {
+              "from": {
+                "collection": "FIAImages",
+                "id": "a1524"
+              },
+              "to": {
+                "collection": "VideoBibleDictionary",
+                "id": "a19"
+              }
+            },
+            {
+              "from": {
+                "collection": "FIAImages",
+                "id": "a1525"
+              },
+              "to": {
+                "collection": "VideoBibleDictionary",
+                "id": "a19"
+              }
+            },
+            {
+              "from": {
+                "collection": "FIAImages",
+                "id": "a1526"
+              },
+              "to": {
+                "collection": "VideoBibleDictionary",
+                "id": "a19"
+              }
+            },
+            {
+              "from": {
+                "collection": "FIAImages",
+                "id": "a1527"
+              },
+              "to": {
+                "collection": "VideoBibleDictionary",
+                "id": "a19"
+              }
+            }
+          ]
+        },
+        "display": {
+          "primaryCollection": "FIAImages",
+          "primaryAssetId": "a1524",
+          "relatedAssetIds": [
+            "a1523",
+            "a1524",
+            "a1525",
+            "a1526",
+            "a1527"
+          ],
+          "insertions": null
+        }
+      },
+      "provenance": {
+        "producer": "perturbation-fixture"
+      }
+    },
+    {
+      "caseId": "spa.MRK-1-14-20:S02-U013",
+      "output": {
+        "decision": "associate",
+        "association": {
+          "requested": [
+            {
+              "collection": "FIAImages",
+              "id": "a293"
+            }
+          ],
+          "optionalCompanions": [],
+          "companionPairs": []
+        },
+        "display": {
+          "primaryCollection": "FIAImages",
+          "primaryAssetId": "a293",
+          "relatedAssetIds": [
+            "a293"
+          ],
+          "insertions": null
+        }
+      },
+      "provenance": {
+        "producer": "perturbation-fixture"
+      }
+    },
+    {
+      "caseId": "spa.MRK-1-14-20:S03-U020",
+      "output": {
+        "decision": "associate",
+        "association": {
+          "requested": [
+            {
+              "collection": "FIAImages",
+              "id": "a1400"
+            },
+            {
+              "collection": "FIAImages",
+              "id": "a293"
+            },
+            {
+              "collection": "FIAImages",
+              "id": "a1523"
+            },
+            {
+              "collection": "FIAImages",
+              "id": "a1524"
+            },
+            {
+              "collection": "FIAImages",
+              "id": "a1525"
+            },
+            {
+              "collection": "FIAImages",
+              "id": "a1526"
+            },
+            {
+              "collection": "FIAImages",
+              "id": "a1527"
+            }
+          ],
+          "optionalCompanions": [
+            {
+              "collection": "VideoBibleDictionary",
+              "id": "a11"
+            },
+            {
+              "collection": "VideoBibleDictionary",
+              "id": "a19"
+            }
+          ],
+          "companionPairs": [
+            {
+              "from": {
+                "collection": "FIAImages",
+                "id": "a1400"
+              },
+              "to": {
+                "collection": "VideoBibleDictionary",
+                "id": "a11"
+              }
+            },
+            {
+              "from": {
+                "collection": "FIAImages",
+                "id": "a1523"
+              },
+              "to": {
+                "collection": "VideoBibleDictionary",
+                "id": "a19"
+              }
+            },
+            {
+              "from": {
+                "collection": "FIAImages",
+                "id": "a1524"
+              },
+              "to": {
+                "collection": "VideoBibleDictionary",
+                "id": "a19"
+              }
+            },
+            {
+              "from": {
+                "collection": "FIAImages",
+                "id": "a1525"
+              },
+              "to": {
+                "collection": "VideoBibleDictionary",
+                "id": "a19"
+              }
+            },
+            {
+              "from": {
+                "collection": "FIAImages",
+                "id": "a1526"
+              },
+              "to": {
+                "collection": "VideoBibleDictionary",
+                "id": "a19"
+              }
+            },
+            {
+              "from": {
+                "collection": "FIAImages",
+                "id": "a1527"
+              },
+              "to": {
+                "collection": "VideoBibleDictionary",
+                "id": "a19"
+              }
+            }
+          ]
+        },
+        "display": {
+          "primaryCollection": "FIAImages",
+          "primaryAssetId": "a1400",
+          "relatedAssetIds": [
+            "a1400",
+            "a293",
+            "a1523",
+            "a1524",
+            "a1525",
+            "a1526",
+            "a1527"
+          ],
+          "insertions": null
+        }
+      },
+      "provenance": {
+        "producer": "perturbation-fixture"
+      }
+    },
+    {
+      "caseId": "spa.MRK-2-1-12:S02-U004",
+      "output": {
+        "decision": "associate",
+        "association": {
+          "requested": [
+            {
+              "collection": "FIAMaps",
+              "id": "c2"
+            }
+          ],
+          "optionalCompanions": [],
+          "companionPairs": []
+        },
+        "display": {
+          "primaryCollection": "FIAMaps",
+          "primaryAssetId": "c2",
+          "relatedAssetIds": [
+            "c2"
+          ],
+          "insertions": null
+        }
+      },
+      "provenance": {
+        "producer": "perturbation-fixture"
+      }
+    },
+    {
+      "caseId": "spa.MRK-2-1-12:S02-U006",
+      "output": {
+        "decision": "associate",
+        "association": {
+          "requested": [
+            {
+              "collection": "FIAImages",
+              "id": "a146"
+            },
+            {
+              "collection": "FIAImages",
+              "id": "a147"
+            },
+            {
+              "collection": "FIAImages",
+              "id": "a165"
+            },
+            {
+              "collection": "FIAImages",
+              "id": "a193"
+            },
+            {
+              "collection": "FIAImages",
+              "id": "a91"
+            },
+            {
+              "collection": "FIAImages",
+              "id": "a92"
+            }
+          ],
+          "optionalCompanions": [
+            {
+              "collection": "VideoBibleDictionary",
+              "id": "a145"
+            }
+          ],
+          "companionPairs": [
+            {
+              "from": {
+                "collection": "FIAImages",
+                "id": "a146"
+              },
+              "to": {
+                "collection": "VideoBibleDictionary",
+                "id": "a145"
+              }
+            },
+            {
+              "from": {
+                "collection": "FIAImages",
+                "id": "a147"
+              },
+              "to": {
+                "collection": "VideoBibleDictionary",
+                "id": "a145"
+              }
+            },
+            {
+              "from": {
+                "collection": "FIAImages",
+                "id": "a165"
+              },
+              "to": {
+                "collection": "VideoBibleDictionary",
+                "id": "a145"
+              }
+            },
+            {
+              "from": {
+                "collection": "FIAImages",
+                "id": "a193"
+              },
+              "to": {
+                "collection": "VideoBibleDictionary",
+                "id": "a145"
+              }
+            },
+            {
+              "from": {
+                "collection": "FIAImages",
+                "id": "a91"
+              },
+              "to": {
+                "collection": "VideoBibleDictionary",
+                "id": "a31"
+              }
+            },
+            {
+              "from": {
+                "collection": "FIAImages",
+                "id": "a92"
+              },
+              "to": {
+                "collection": "VideoBibleDictionary",
+                "id": "a31"
+              }
+            }
+          ]
+        },
+        "display": {
+          "primaryCollection": "FIAImages",
+          "primaryAssetId": "a146",
+          "relatedAssetIds": [
+            "a146",
+            "a147",
+            "a165",
+            "a193",
+            "a91",
+            "a92"
+          ],
+          "insertions": null
+        }
+      },
+      "provenance": {
+        "producer": "perturbation-fixture"
+      }
+    },
+    {
+      "caseId": "spa.MRK-4-1-20:S03-U021",
+      "output": {
+        "decision": "associate",
+        "association": {
+          "requested": [
+            {
+              "collection": "FIAImages",
+              "id": "a293"
+            }
+          ],
+          "optionalCompanions": null,
+          "companionPairs": null
+        },
+        "display": {
+          "primaryCollection": "FIAImages",
+          "primaryAssetId": "a293",
+          "relatedAssetIds": null,
+          "insertions": null
+        }
+      },
+      "provenance": {
+        "producer": "perturbation-fixture"
+      }
+    },
+    {
+      "caseId": "spa.MRK-4-35-41:S03-U017",
+      "output": {
+        "decision": "abstain",
+        "association": {
+          "requested": [
+            {
+              "collection": "FIAImages",
+              "id": "a293"
+            }
+          ],
+          "optionalCompanions": null,
+          "companionPairs": null
+        },
+        "display": {
+          "primaryCollection": "FIAImages",
+          "primaryAssetId": "a293",
+          "relatedAssetIds": null,
+          "insertions": null
+        }
+      },
+      "provenance": {
+        "producer": "perturbation-fixture"
+      }
+    },
+    {
+      "caseId": "spa.MRK-6-45-56:S05-U005",
+      "output": {
+        "decision": "associate",
+        "association": {
+          "requested": [
+            {
+              "collection": "FIAImages",
+              "id": "a293"
+            }
+          ],
+          "optionalCompanions": null,
+          "companionPairs": null
+        },
+        "display": {
+          "primaryCollection": "FIAImages",
+          "primaryAssetId": "a293",
+          "relatedAssetIds": null,
+          "insertions": null
+        }
+      },
+      "provenance": {
+        "producer": "perturbation-fixture"
+      }
+    },
+    {
+      "caseId": "spa.MRK-8-11-21:S05-U009",
+      "output": {
+        "decision": "associate",
+        "association": {
+          "requested": [
+            {
+              "collection": "FIAImages",
+              "id": "a293"
+            }
+          ],
+          "optionalCompanions": null,
+          "companionPairs": null
+        },
+        "display": {
+          "primaryCollection": "FIAImages",
+          "primaryAssetId": "a293",
+          "relatedAssetIds": null,
+          "insertions": null
+        }
+      },
+      "provenance": {
+        "producer": "perturbation-fixture"
+      }
+    },
+    {
+      "caseId": "spa.MRK-8-11-21:S05-U013",
+      "output": {
+        "decision": "associate",
+        "association": {
+          "requested": [
+            {
+              "collection": "FIAMaps",
+              "id": "a280"
+            }
+          ],
+          "optionalCompanions": null,
+          "companionPairs": null
+        },
+        "display": {
+          "primaryCollection": "FIAImages",
+          "primaryAssetId": "a280",
+          "relatedAssetIds": null,
+          "insertions": null
+        }
+      },
+      "provenance": {
+        "producer": "perturbation-fixture"
+      }
+    },
+    {
+      "caseId": "eng.LUK-1-1-4:S01-U001",
+      "output": {
+        "decision": "abstain"
+      }
+    }
+  ]
+}

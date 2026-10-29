@@ -1,0 +1,1930 @@
+{
+  "schema": "fia-unit-media-associations@1",
+  "status": "accepted-by-exact-independent-review-before-source-use",
+  "sourceRevision": "f8776d92b090b5af5b17b17dc1137f25fb059ed0",
+  "guideRevision": "eb744452eb8d7c852caadde9d3181cddfe571119",
+  "policy": {
+    "focal": "Curated primary visual display choice only: first source-requested medium; preserve every requested resource as related. No video replaces a picture request. Activity kind/completion/order/text unchanged.",
+    "requested": "All listed source-requested images/maps remain associated; no image selection by title heuristic.",
+    "companions": "Optional explicit selection only; project into separate typed association metadata, never legacy asset.relatedIds consumed by autoplayVideo. No replacement for requested media.",
+    "language": "Spanish rows bind their own unit text and explicitly use reviewed English guide typed passage associations for shared media; no claim of Spanish explicit IDs.",
+    "identity": "collection+id; no cross-collection ID coercion",
+    "delivery": "source association only, no playback/download readiness"
+  },
+  "rows": [
+    {
+      "packId": "eng.MRK-1-14-20",
+      "guideContentSha256": "d0b5c7d9f92ad6faa97bb8b2718d627e4044804c18e4bf7ef1432cb207ed5ec9",
+      "guideSourceId": "eng-mrk-p2-v2.2",
+      "guideFileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c",
+      "unitId": "S02-U008",
+      "unitText": "Stop here and look at a map of the Galilee area and a picture of the Sea of Galilee as a group. Pause this audio here.",
+      "unitTextSha256": "33235d01384b23c5a5a29b2139ddc35898ad7c532298d6804113aa6030f670da",
+      "associationBasis": {
+        "language": "eng",
+        "sharedEnglishSource": false,
+        "guideArticle": "eng-mrk-p2-v2.2",
+        "guideFileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c",
+        "guideUri": "https://raw.githubusercontent.com/BibleAquifer/FIATranslationGuide/eb744452eb8d7c852caadde9d3181cddfe571119/eng/json/41.content.json"
+      },
+      "requested": [
+        {
+          "collection": "FIAMaps",
+          "id": "c4",
+          "title": "Galilee Area with Caesarea Philippi and Capernaum",
+          "sourceFile": "eng/json/007.content.json",
+          "sourceFileSha256": "c2e796ad27262766e822dedbf1d212bfb9966af8b6c68353635595cf3d5fc3b1",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "c4",
+            "resource_code": "FIAMaps",
+            "label": "Galilee Area with Caesarea Philippi and Capernaum",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a1400",
+          "title": "Sea of Galilee",
+          "sourceFile": "eng/json/019.content.json",
+          "sourceFileSha256": "8447fcabbe01dc1c9453465a401b5c5fb93fdb5cfb63ac1b2d29fc5a08fa988e",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a1400",
+            "resource_code": "FIAImages",
+            "label": "Sea of Galilee",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        }
+      ],
+      "optionalCompanions": [
+        {
+          "collection": "VideoBibleDictionary",
+          "id": "a11",
+          "title": "Sea of Galilee",
+          "sourceFile": "eng/json/015.content.json",
+          "sourceFileSha256": "f5084d0a8d3487b9a0bc6335c92ca71635e5bfbadd2ea495b0a7bad37536b550",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a11",
+            "resource_code": "VideoBibleDictionary",
+            "label": "Sea of Galilee",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        }
+      ],
+      "primaryAssetId": "c4",
+      "primaryCollection": "FIAMaps",
+      "primaryDecision": "curated-display-choice-for-reviewed-source-prompt; first-requested-kind and stable listed source candidate; not evidence of uniquely preferred image",
+      "relatedAssetIds": [
+        "c4",
+        "a1400"
+      ],
+      "companionPairs": [
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a1400"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a11"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        }
+      ]
+    },
+    {
+      "packId": "eng.MRK-1-14-20",
+      "guideContentSha256": "d0b5c7d9f92ad6faa97bb8b2718d627e4044804c18e4bf7ef1432cb207ed5ec9",
+      "guideSourceId": "eng-mrk-p2-v2.2",
+      "guideFileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c",
+      "unitId": "S02-U010",
+      "unitText": "Stop here and look at a picture of a fishing net as a group. Pause this audio here.",
+      "unitTextSha256": "12cec89b4a9b597e52ee4e50d325b52f1475e8a9dc766a4aa18838cf0f586957",
+      "associationBasis": {
+        "language": "eng",
+        "sharedEnglishSource": false,
+        "guideArticle": "eng-mrk-p2-v2.2",
+        "guideFileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c",
+        "guideUri": "https://raw.githubusercontent.com/BibleAquifer/FIATranslationGuide/eb744452eb8d7c852caadde9d3181cddfe571119/eng/json/41.content.json"
+      },
+      "requested": [
+        {
+          "collection": "FIAImages",
+          "id": "a1523",
+          "title": "Fishing Net",
+          "sourceFile": "eng/json/006.content.json",
+          "sourceFileSha256": "21fa2242043505b852c9fab517cc6a2b634a298ca320d97d9773823589be0087",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a1523",
+            "resource_code": "FIAImages",
+            "label": "Fishing Net",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a1524",
+          "title": "Fishing Net",
+          "sourceFile": "eng/json/006.content.json",
+          "sourceFileSha256": "21fa2242043505b852c9fab517cc6a2b634a298ca320d97d9773823589be0087",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a1524",
+            "resource_code": "FIAImages",
+            "label": "Fishing Net",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a1525",
+          "title": "Fishing Net",
+          "sourceFile": "eng/json/006.content.json",
+          "sourceFileSha256": "21fa2242043505b852c9fab517cc6a2b634a298ca320d97d9773823589be0087",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a1525",
+            "resource_code": "FIAImages",
+            "label": "Fishing Net",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a1526",
+          "title": "Fishing Net",
+          "sourceFile": "eng/json/006.content.json",
+          "sourceFileSha256": "21fa2242043505b852c9fab517cc6a2b634a298ca320d97d9773823589be0087",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a1526",
+            "resource_code": "FIAImages",
+            "label": "Fishing Net",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a1527",
+          "title": "Fishing Net",
+          "sourceFile": "eng/json/006.content.json",
+          "sourceFileSha256": "21fa2242043505b852c9fab517cc6a2b634a298ca320d97d9773823589be0087",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a1527",
+            "resource_code": "FIAImages",
+            "label": "Fishing Net",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        }
+      ],
+      "optionalCompanions": [
+        {
+          "collection": "VideoBibleDictionary",
+          "id": "a19",
+          "title": "Fishing Net",
+          "sourceFile": "eng/json/005.content.json",
+          "sourceFileSha256": "64ab1d2149026f5969ee176e69b081e1030fbb68cc9fe357a02745ea90613695",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a19",
+            "resource_code": "VideoBibleDictionary",
+            "label": "Fishing Net",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        }
+      ],
+      "primaryAssetId": "a1523",
+      "primaryCollection": "FIAImages",
+      "primaryDecision": "curated-display-choice-for-reviewed-source-prompt; first-requested-kind and stable listed source candidate; not evidence of uniquely preferred image",
+      "relatedAssetIds": [
+        "a1523",
+        "a1524",
+        "a1525",
+        "a1526",
+        "a1527"
+      ],
+      "companionPairs": [
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a1523"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a19"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        },
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a1524"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a19"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        },
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a1525"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a19"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        },
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a1526"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a19"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        },
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a1527"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a19"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        }
+      ]
+    },
+    {
+      "packId": "eng.MRK-1-14-20",
+      "guideContentSha256": "d0b5c7d9f92ad6faa97bb8b2718d627e4044804c18e4bf7ef1432cb207ed5ec9",
+      "guideSourceId": "eng-mrk-p2-v2.2",
+      "guideFileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c",
+      "unitId": "S02-U013",
+      "unitText": "Stop here and look at a picture of a boat with oars as a group. Pause this audio here.",
+      "unitTextSha256": "818319a817899992a298d0bd7d98c83ef4d52f752cf38eafefbacc98c07d6227",
+      "associationBasis": {
+        "language": "eng",
+        "sharedEnglishSource": false,
+        "guideArticle": "eng-mrk-p2-v2.2",
+        "guideFileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c",
+        "guideUri": "https://raw.githubusercontent.com/BibleAquifer/FIATranslationGuide/eb744452eb8d7c852caadde9d3181cddfe571119/eng/json/41.content.json"
+      },
+      "requested": [
+        {
+          "collection": "FIAImages",
+          "id": "a293",
+          "title": "Boat",
+          "sourceFile": "eng/json/002.content.json",
+          "sourceFileSha256": "335c55d7da5aabe5618d0d58b0370ffcd6580bad138e1ce55ef5c9d85096bc7a",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a293",
+            "resource_code": "FIAImages",
+            "label": "Boat",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        }
+      ],
+      "optionalCompanions": [],
+      "primaryAssetId": "a293",
+      "primaryCollection": "FIAImages",
+      "primaryDecision": "curated-display-choice-for-reviewed-source-prompt; first-requested-kind and stable listed source candidate; not evidence of uniquely preferred image",
+      "relatedAssetIds": [
+        "a293"
+      ],
+      "companionPairs": []
+    },
+    {
+      "packId": "eng.MRK-1-14-20",
+      "guideContentSha256": "d0b5c7d9f92ad6faa97bb8b2718d627e4044804c18e4bf7ef1432cb207ed5ec9",
+      "guideSourceId": "eng-mrk-p2-v2.2",
+      "guideFileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c",
+      "unitId": "S03-U020",
+      "unitText": "Stop here if it would be helpful to look again at the pictures of the Sea of Galilee, the boat with oars and the net as a group. Pause this audio here.",
+      "unitTextSha256": "81c15823be58eebd668609b661fec80872d38cd347ee7cd0b6352252b99ed872",
+      "associationBasis": {
+        "language": "eng",
+        "sharedEnglishSource": false,
+        "guideArticle": "eng-mrk-p2-v2.2",
+        "guideFileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c",
+        "guideUri": "https://raw.githubusercontent.com/BibleAquifer/FIATranslationGuide/eb744452eb8d7c852caadde9d3181cddfe571119/eng/json/41.content.json"
+      },
+      "requested": [
+        {
+          "collection": "FIAImages",
+          "id": "a1400",
+          "title": "Sea of Galilee",
+          "sourceFile": "eng/json/019.content.json",
+          "sourceFileSha256": "8447fcabbe01dc1c9453465a401b5c5fb93fdb5cfb63ac1b2d29fc5a08fa988e",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a1400",
+            "resource_code": "FIAImages",
+            "label": "Sea of Galilee",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a293",
+          "title": "Boat",
+          "sourceFile": "eng/json/002.content.json",
+          "sourceFileSha256": "335c55d7da5aabe5618d0d58b0370ffcd6580bad138e1ce55ef5c9d85096bc7a",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a293",
+            "resource_code": "FIAImages",
+            "label": "Boat",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a1523",
+          "title": "Fishing Net",
+          "sourceFile": "eng/json/006.content.json",
+          "sourceFileSha256": "21fa2242043505b852c9fab517cc6a2b634a298ca320d97d9773823589be0087",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a1523",
+            "resource_code": "FIAImages",
+            "label": "Fishing Net",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a1524",
+          "title": "Fishing Net",
+          "sourceFile": "eng/json/006.content.json",
+          "sourceFileSha256": "21fa2242043505b852c9fab517cc6a2b634a298ca320d97d9773823589be0087",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a1524",
+            "resource_code": "FIAImages",
+            "label": "Fishing Net",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a1525",
+          "title": "Fishing Net",
+          "sourceFile": "eng/json/006.content.json",
+          "sourceFileSha256": "21fa2242043505b852c9fab517cc6a2b634a298ca320d97d9773823589be0087",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a1525",
+            "resource_code": "FIAImages",
+            "label": "Fishing Net",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a1526",
+          "title": "Fishing Net",
+          "sourceFile": "eng/json/006.content.json",
+          "sourceFileSha256": "21fa2242043505b852c9fab517cc6a2b634a298ca320d97d9773823589be0087",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a1526",
+            "resource_code": "FIAImages",
+            "label": "Fishing Net",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a1527",
+          "title": "Fishing Net",
+          "sourceFile": "eng/json/006.content.json",
+          "sourceFileSha256": "21fa2242043505b852c9fab517cc6a2b634a298ca320d97d9773823589be0087",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a1527",
+            "resource_code": "FIAImages",
+            "label": "Fishing Net",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        }
+      ],
+      "optionalCompanions": [
+        {
+          "collection": "VideoBibleDictionary",
+          "id": "a11",
+          "title": "Sea of Galilee",
+          "sourceFile": "eng/json/015.content.json",
+          "sourceFileSha256": "f5084d0a8d3487b9a0bc6335c92ca71635e5bfbadd2ea495b0a7bad37536b550",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a11",
+            "resource_code": "VideoBibleDictionary",
+            "label": "Sea of Galilee",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "VideoBibleDictionary",
+          "id": "a19",
+          "title": "Fishing Net",
+          "sourceFile": "eng/json/005.content.json",
+          "sourceFileSha256": "64ab1d2149026f5969ee176e69b081e1030fbb68cc9fe357a02745ea90613695",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a19",
+            "resource_code": "VideoBibleDictionary",
+            "label": "Fishing Net",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        }
+      ],
+      "primaryAssetId": "a1400",
+      "primaryCollection": "FIAImages",
+      "primaryDecision": "curated-display-choice-for-reviewed-source-prompt; first-requested-kind and stable listed source candidate; not evidence of uniquely preferred image",
+      "relatedAssetIds": [
+        "a1400",
+        "a293",
+        "a1523",
+        "a1524",
+        "a1525",
+        "a1526",
+        "a1527"
+      ],
+      "companionPairs": [
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a1400"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a11"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        },
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a1523"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a19"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        },
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a1524"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a19"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        },
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a1525"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a19"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        },
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a1526"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a19"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        },
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a1527"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a19"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        }
+      ]
+    },
+    {
+      "packId": "eng.MRK-2-1-12",
+      "guideContentSha256": "b6b083917bbc472368580afb87a8d65a9957167917444dc80e99c6a5dab994ff",
+      "guideSourceId": "eng-mrk-p7-v2.1",
+      "guideFileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c",
+      "unitId": "S02-U004",
+      "unitText": "Stop here and show the team a map of the Sea of Galilee that includes Capernaum. Pause this audio here.",
+      "unitTextSha256": "76249945afc7add588c92a8f87a76dc8f1a3e02e60af6b264b71d89305454e9c",
+      "associationBasis": {
+        "language": "eng",
+        "sharedEnglishSource": false,
+        "guideArticle": "eng-mrk-p7-v2.1",
+        "guideFileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c",
+        "guideUri": "https://raw.githubusercontent.com/BibleAquifer/FIATranslationGuide/eb744452eb8d7c852caadde9d3181cddfe571119/eng/json/41.content.json"
+      },
+      "requested": [
+        {
+          "collection": "FIAMaps",
+          "id": "c2",
+          "title": "Galilee Area with Capernaum",
+          "sourceFile": "eng/json/007.content.json",
+          "sourceFileSha256": "c2e796ad27262766e822dedbf1d212bfb9966af8b6c68353635595cf3d5fc3b1",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "c2",
+            "resource_code": "FIAMaps",
+            "label": "Galilee Area with Capernaum",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        }
+      ],
+      "optionalCompanions": [],
+      "primaryAssetId": "c2",
+      "primaryCollection": "FIAMaps",
+      "primaryDecision": "curated-display-choice-for-reviewed-source-prompt; first-requested-kind and stable listed source candidate; not evidence of uniquely preferred image",
+      "relatedAssetIds": [
+        "c2"
+      ],
+      "companionPairs": []
+    },
+    {
+      "packId": "eng.MRK-2-1-12",
+      "guideContentSha256": "b6b083917bbc472368580afb87a8d65a9957167917444dc80e99c6a5dab994ff",
+      "guideSourceId": "eng-mrk-p7-v2.1",
+      "guideFileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c",
+      "unitId": "S02-U006",
+      "unitText": "Stop here and show your team a picture of a typical house in the Galilee region during that time. Show your team a photo of a sleeping mat. Discuss with your team, how do people build houses in your culture? What would be an unusual or surprising way for someone to enter a house where you live? Pause this audio here.",
+      "unitTextSha256": "48ea30e628fcf6d08f98583ef31f530ee931f07c129b1bd996741dfc70bac41e",
+      "associationBasis": {
+        "language": "eng",
+        "sharedEnglishSource": false,
+        "guideArticle": "eng-mrk-p7-v2.1",
+        "guideFileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c",
+        "guideUri": "https://raw.githubusercontent.com/BibleAquifer/FIATranslationGuide/eb744452eb8d7c852caadde9d3181cddfe571119/eng/json/41.content.json"
+      },
+      "requested": [
+        {
+          "collection": "FIAImages",
+          "id": "a146",
+          "title": "House in the Time of Jesus",
+          "sourceFile": "eng/json/008.content.json",
+          "sourceFileSha256": "000f5e2c442da11b88d79607389cf505c3cbaf7e4fe8bb82c2283c15b5c29e20",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a146",
+            "resource_code": "FIAImages",
+            "label": "House in the Time of Jesus",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a147",
+          "title": "House in the Time of Jesus",
+          "sourceFile": "eng/json/008.content.json",
+          "sourceFileSha256": "000f5e2c442da11b88d79607389cf505c3cbaf7e4fe8bb82c2283c15b5c29e20",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a147",
+            "resource_code": "FIAImages",
+            "label": "House in the Time of Jesus",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a165",
+          "title": "House in the Time of Jesus",
+          "sourceFile": "eng/json/008.content.json",
+          "sourceFileSha256": "000f5e2c442da11b88d79607389cf505c3cbaf7e4fe8bb82c2283c15b5c29e20",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a165",
+            "resource_code": "FIAImages",
+            "label": "House in the Time of Jesus",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a193",
+          "title": "House in the Time of Jesus",
+          "sourceFile": "eng/json/008.content.json",
+          "sourceFileSha256": "000f5e2c442da11b88d79607389cf505c3cbaf7e4fe8bb82c2283c15b5c29e20",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a193",
+            "resource_code": "FIAImages",
+            "label": "House in the Time of Jesus",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a91",
+          "title": "Sleeping Mat",
+          "sourceFile": "eng/json/019.content.json",
+          "sourceFileSha256": "8447fcabbe01dc1c9453465a401b5c5fb93fdb5cfb63ac1b2d29fc5a08fa988e",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a91",
+            "resource_code": "FIAImages",
+            "label": "Sleeping Mat",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a92",
+          "title": "Sleeping Mat",
+          "sourceFile": "eng/json/019.content.json",
+          "sourceFileSha256": "8447fcabbe01dc1c9453465a401b5c5fb93fdb5cfb63ac1b2d29fc5a08fa988e",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a92",
+            "resource_code": "FIAImages",
+            "label": "Sleeping Mat",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        }
+      ],
+      "optionalCompanions": [
+        {
+          "collection": "VideoBibleDictionary",
+          "id": "a145",
+          "title": "House in the Time of Jesus",
+          "sourceFile": "eng/json/007.content.json",
+          "sourceFileSha256": "29bf66b1c746d1b90d462543b90f11f0cb50bbec789db4d327d9a890bcd805d9",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a145",
+            "resource_code": "VideoBibleDictionary",
+            "label": "House in the Time of Jesus",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "VideoBibleDictionary",
+          "id": "a31",
+          "title": "Sleeping Mat",
+          "sourceFile": "eng/json/015.content.json",
+          "sourceFileSha256": "f5084d0a8d3487b9a0bc6335c92ca71635e5bfbadd2ea495b0a7bad37536b550",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a31",
+            "resource_code": "VideoBibleDictionary",
+            "label": "Sleeping Mat",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        }
+      ],
+      "primaryAssetId": "a146",
+      "primaryCollection": "FIAImages",
+      "primaryDecision": "curated-display-choice-for-reviewed-source-prompt; first-requested-kind and stable listed source candidate; not evidence of uniquely preferred image",
+      "relatedAssetIds": [
+        "a146",
+        "a147",
+        "a165",
+        "a193",
+        "a91",
+        "a92"
+      ],
+      "companionPairs": [
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a146"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a145"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        },
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a147"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a145"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        },
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a165"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a145"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        },
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a193"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a145"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        },
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a91"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a31"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        },
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a92"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a31"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        }
+      ]
+    },
+    {
+      "packId": "spa.MRK-1-14-20",
+      "guideContentSha256": "e1c1687e23948a580e9c31160405e2131ba6d19b866f49664fe177dad8861e54",
+      "guideSourceId": "spa-mrk-p2-v2.2",
+      "guideFileSha256": "f3115ec318cc774bdf463f278540e3cac6671ee13376e29dd7eeb6add18c078a",
+      "unitId": "S02-U008",
+      "unitText": "Deténganse aquí y en grupo miren un mapa del área de Galilea y una imagen del Mar de Galilea. Pausen este audio aquí.",
+      "unitTextSha256": "1afdabab31de3201061fb2c7d4c584102644c45542ccc373a5427eb02d4499a8",
+      "associationBasis": {
+        "language": "spa",
+        "sharedEnglishSource": true,
+        "guideArticle": "eng-mrk-p2-v2.2",
+        "guideFileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c",
+        "guideUri": "https://raw.githubusercontent.com/BibleAquifer/FIATranslationGuide/eb744452eb8d7c852caadde9d3181cddfe571119/eng/json/41.content.json"
+      },
+      "requested": [
+        {
+          "collection": "FIAMaps",
+          "id": "c4",
+          "title": "Galilee Area with Caesarea Philippi and Capernaum",
+          "sourceFile": "eng/json/007.content.json",
+          "sourceFileSha256": "c2e796ad27262766e822dedbf1d212bfb9966af8b6c68353635595cf3d5fc3b1",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "c4",
+            "resource_code": "FIAMaps",
+            "label": "Galilee Area with Caesarea Philippi and Capernaum",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a1400",
+          "title": "Mar de Galilea",
+          "sourceFile": "eng/json/019.content.json",
+          "sourceFileSha256": "8447fcabbe01dc1c9453465a401b5c5fb93fdb5cfb63ac1b2d29fc5a08fa988e",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a1400",
+            "resource_code": "FIAImages",
+            "label": "Sea of Galilee",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        }
+      ],
+      "optionalCompanions": [
+        {
+          "collection": "VideoBibleDictionary",
+          "id": "a11",
+          "title": "Mar de Galilea",
+          "sourceFile": "eng/json/015.content.json",
+          "sourceFileSha256": "f5084d0a8d3487b9a0bc6335c92ca71635e5bfbadd2ea495b0a7bad37536b550",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a11",
+            "resource_code": "VideoBibleDictionary",
+            "label": "Sea of Galilee",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        }
+      ],
+      "primaryAssetId": "c4",
+      "primaryCollection": "FIAMaps",
+      "primaryDecision": "curated-display-choice-for-reviewed-source-prompt; first-requested-kind and stable listed source candidate; not evidence of uniquely preferred image",
+      "relatedAssetIds": [
+        "c4",
+        "a1400"
+      ],
+      "companionPairs": [
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a1400"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a11"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        }
+      ]
+    },
+    {
+      "packId": "spa.MRK-1-14-20",
+      "guideContentSha256": "e1c1687e23948a580e9c31160405e2131ba6d19b866f49664fe177dad8861e54",
+      "guideSourceId": "spa-mrk-p2-v2.2",
+      "guideFileSha256": "f3115ec318cc774bdf463f278540e3cac6671ee13376e29dd7eeb6add18c078a",
+      "unitId": "S02-U010",
+      "unitText": "Deténganse aquí y en grupo miren una imagen de una red de pesca. Pausen este audio aquí.",
+      "unitTextSha256": "da482dab697fb340e1607ec708781b3291b5a4ba24dc5ad5b4323692fa94fd36",
+      "associationBasis": {
+        "language": "spa",
+        "sharedEnglishSource": true,
+        "guideArticle": "eng-mrk-p2-v2.2",
+        "guideFileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c",
+        "guideUri": "https://raw.githubusercontent.com/BibleAquifer/FIATranslationGuide/eb744452eb8d7c852caadde9d3181cddfe571119/eng/json/41.content.json"
+      },
+      "requested": [
+        {
+          "collection": "FIAImages",
+          "id": "a1523",
+          "title": "Red de pesca",
+          "sourceFile": "eng/json/006.content.json",
+          "sourceFileSha256": "21fa2242043505b852c9fab517cc6a2b634a298ca320d97d9773823589be0087",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a1523",
+            "resource_code": "FIAImages",
+            "label": "Fishing Net",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a1524",
+          "title": "Red de pesca",
+          "sourceFile": "eng/json/006.content.json",
+          "sourceFileSha256": "21fa2242043505b852c9fab517cc6a2b634a298ca320d97d9773823589be0087",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a1524",
+            "resource_code": "FIAImages",
+            "label": "Fishing Net",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a1525",
+          "title": "Red de pesca",
+          "sourceFile": "eng/json/006.content.json",
+          "sourceFileSha256": "21fa2242043505b852c9fab517cc6a2b634a298ca320d97d9773823589be0087",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a1525",
+            "resource_code": "FIAImages",
+            "label": "Fishing Net",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a1526",
+          "title": "Red de pesca",
+          "sourceFile": "eng/json/006.content.json",
+          "sourceFileSha256": "21fa2242043505b852c9fab517cc6a2b634a298ca320d97d9773823589be0087",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a1526",
+            "resource_code": "FIAImages",
+            "label": "Fishing Net",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a1527",
+          "title": "Red de pesca",
+          "sourceFile": "eng/json/006.content.json",
+          "sourceFileSha256": "21fa2242043505b852c9fab517cc6a2b634a298ca320d97d9773823589be0087",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a1527",
+            "resource_code": "FIAImages",
+            "label": "Fishing Net",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        }
+      ],
+      "optionalCompanions": [
+        {
+          "collection": "VideoBibleDictionary",
+          "id": "a19",
+          "title": "Red de pesca",
+          "sourceFile": "eng/json/005.content.json",
+          "sourceFileSha256": "64ab1d2149026f5969ee176e69b081e1030fbb68cc9fe357a02745ea90613695",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a19",
+            "resource_code": "VideoBibleDictionary",
+            "label": "Fishing Net",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        }
+      ],
+      "primaryAssetId": "a1523",
+      "primaryCollection": "FIAImages",
+      "primaryDecision": "curated-display-choice-for-reviewed-source-prompt; first-requested-kind and stable listed source candidate; not evidence of uniquely preferred image",
+      "relatedAssetIds": [
+        "a1523",
+        "a1524",
+        "a1525",
+        "a1526",
+        "a1527"
+      ],
+      "companionPairs": [
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a1523"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a19"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        },
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a1524"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a19"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        },
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a1525"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a19"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        },
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a1526"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a19"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        },
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a1527"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a19"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        }
+      ]
+    },
+    {
+      "packId": "spa.MRK-1-14-20",
+      "guideContentSha256": "e1c1687e23948a580e9c31160405e2131ba6d19b866f49664fe177dad8861e54",
+      "guideSourceId": "spa-mrk-p2-v2.2",
+      "guideFileSha256": "f3115ec318cc774bdf463f278540e3cac6671ee13376e29dd7eeb6add18c078a",
+      "unitId": "S02-U013",
+      "unitText": "Deténganse aquí y en grupo miren una imagen de un barco con remos. Pausen este audio aquí.",
+      "unitTextSha256": "85c04a503d63627f3d19ec244619e6bc28aaf5491cad68cd68bfe9f6ff470eb6",
+      "associationBasis": {
+        "language": "spa",
+        "sharedEnglishSource": true,
+        "guideArticle": "eng-mrk-p2-v2.2",
+        "guideFileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c",
+        "guideUri": "https://raw.githubusercontent.com/BibleAquifer/FIATranslationGuide/eb744452eb8d7c852caadde9d3181cddfe571119/eng/json/41.content.json"
+      },
+      "requested": [
+        {
+          "collection": "FIAImages",
+          "id": "a293",
+          "title": "Barco",
+          "sourceFile": "eng/json/002.content.json",
+          "sourceFileSha256": "335c55d7da5aabe5618d0d58b0370ffcd6580bad138e1ce55ef5c9d85096bc7a",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a293",
+            "resource_code": "FIAImages",
+            "label": "Boat",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        }
+      ],
+      "optionalCompanions": [],
+      "primaryAssetId": "a293",
+      "primaryCollection": "FIAImages",
+      "primaryDecision": "curated-display-choice-for-reviewed-source-prompt; first-requested-kind and stable listed source candidate; not evidence of uniquely preferred image",
+      "relatedAssetIds": [
+        "a293"
+      ],
+      "companionPairs": []
+    },
+    {
+      "packId": "spa.MRK-1-14-20",
+      "guideContentSha256": "e1c1687e23948a580e9c31160405e2131ba6d19b866f49664fe177dad8861e54",
+      "guideSourceId": "spa-mrk-p2-v2.2",
+      "guideFileSha256": "f3115ec318cc774bdf463f278540e3cac6671ee13376e29dd7eeb6add18c078a",
+      "unitId": "S03-U020",
+      "unitText": "Deténganse aquí si les sería útil mirar nuevamente las imágenes del Mar de Galilea, el barco con remos y la red en grupo. Pausen este audio aquí.",
+      "unitTextSha256": "00cdf03cc119f662888eb973c3dcadceb75f7ffe3bcd41c3601e267ed74d864c",
+      "associationBasis": {
+        "language": "spa",
+        "sharedEnglishSource": true,
+        "guideArticle": "eng-mrk-p2-v2.2",
+        "guideFileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c",
+        "guideUri": "https://raw.githubusercontent.com/BibleAquifer/FIATranslationGuide/eb744452eb8d7c852caadde9d3181cddfe571119/eng/json/41.content.json"
+      },
+      "requested": [
+        {
+          "collection": "FIAImages",
+          "id": "a1400",
+          "title": "Mar de Galilea",
+          "sourceFile": "eng/json/019.content.json",
+          "sourceFileSha256": "8447fcabbe01dc1c9453465a401b5c5fb93fdb5cfb63ac1b2d29fc5a08fa988e",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a1400",
+            "resource_code": "FIAImages",
+            "label": "Sea of Galilee",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a293",
+          "title": "Barco",
+          "sourceFile": "eng/json/002.content.json",
+          "sourceFileSha256": "335c55d7da5aabe5618d0d58b0370ffcd6580bad138e1ce55ef5c9d85096bc7a",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a293",
+            "resource_code": "FIAImages",
+            "label": "Boat",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a1523",
+          "title": "Red de pesca",
+          "sourceFile": "eng/json/006.content.json",
+          "sourceFileSha256": "21fa2242043505b852c9fab517cc6a2b634a298ca320d97d9773823589be0087",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a1523",
+            "resource_code": "FIAImages",
+            "label": "Fishing Net",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a1524",
+          "title": "Red de pesca",
+          "sourceFile": "eng/json/006.content.json",
+          "sourceFileSha256": "21fa2242043505b852c9fab517cc6a2b634a298ca320d97d9773823589be0087",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a1524",
+            "resource_code": "FIAImages",
+            "label": "Fishing Net",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a1525",
+          "title": "Red de pesca",
+          "sourceFile": "eng/json/006.content.json",
+          "sourceFileSha256": "21fa2242043505b852c9fab517cc6a2b634a298ca320d97d9773823589be0087",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a1525",
+            "resource_code": "FIAImages",
+            "label": "Fishing Net",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a1526",
+          "title": "Red de pesca",
+          "sourceFile": "eng/json/006.content.json",
+          "sourceFileSha256": "21fa2242043505b852c9fab517cc6a2b634a298ca320d97d9773823589be0087",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a1526",
+            "resource_code": "FIAImages",
+            "label": "Fishing Net",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a1527",
+          "title": "Red de pesca",
+          "sourceFile": "eng/json/006.content.json",
+          "sourceFileSha256": "21fa2242043505b852c9fab517cc6a2b634a298ca320d97d9773823589be0087",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a1527",
+            "resource_code": "FIAImages",
+            "label": "Fishing Net",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        }
+      ],
+      "optionalCompanions": [
+        {
+          "collection": "VideoBibleDictionary",
+          "id": "a11",
+          "title": "Mar de Galilea",
+          "sourceFile": "eng/json/015.content.json",
+          "sourceFileSha256": "f5084d0a8d3487b9a0bc6335c92ca71635e5bfbadd2ea495b0a7bad37536b550",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a11",
+            "resource_code": "VideoBibleDictionary",
+            "label": "Sea of Galilee",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "VideoBibleDictionary",
+          "id": "a19",
+          "title": "Red de pesca",
+          "sourceFile": "eng/json/005.content.json",
+          "sourceFileSha256": "64ab1d2149026f5969ee176e69b081e1030fbb68cc9fe357a02745ea90613695",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a19",
+            "resource_code": "VideoBibleDictionary",
+            "label": "Fishing Net",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        }
+      ],
+      "primaryAssetId": "a1400",
+      "primaryCollection": "FIAImages",
+      "primaryDecision": "curated-display-choice-for-reviewed-source-prompt; first-requested-kind and stable listed source candidate; not evidence of uniquely preferred image",
+      "relatedAssetIds": [
+        "a1400",
+        "a293",
+        "a1523",
+        "a1524",
+        "a1525",
+        "a1526",
+        "a1527"
+      ],
+      "companionPairs": [
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a1400"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a11"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        },
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a1523"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a19"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        },
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a1524"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a19"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        },
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a1525"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a19"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        },
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a1526"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a19"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        },
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a1527"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a19"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        }
+      ]
+    },
+    {
+      "packId": "spa.MRK-2-1-12",
+      "guideContentSha256": "8cfdaabf701286fdedf73c56e39c094c4a16d8404159215060cd6c3be4bbd9d2",
+      "guideSourceId": "spa-mrk-p7-v2.1",
+      "guideFileSha256": "f3115ec318cc774bdf463f278540e3cac6671ee13376e29dd7eeb6add18c078a",
+      "unitId": "S02-U004",
+      "unitText": "Deténganse aquí y muestren al equipo un mapa del Mar de Galilea que incluya a Cafarnaúm. Detén este audio aquí.",
+      "unitTextSha256": "2e4dade851811f521903856eb964cdc36d3006e2d873f337ffab08398029c067",
+      "associationBasis": {
+        "language": "spa",
+        "sharedEnglishSource": true,
+        "guideArticle": "eng-mrk-p7-v2.1",
+        "guideFileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c",
+        "guideUri": "https://raw.githubusercontent.com/BibleAquifer/FIATranslationGuide/eb744452eb8d7c852caadde9d3181cddfe571119/eng/json/41.content.json"
+      },
+      "requested": [
+        {
+          "collection": "FIAMaps",
+          "id": "c2",
+          "title": "Galilee Area with Capernaum",
+          "sourceFile": "eng/json/007.content.json",
+          "sourceFileSha256": "c2e796ad27262766e822dedbf1d212bfb9966af8b6c68353635595cf3d5fc3b1",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "c2",
+            "resource_code": "FIAMaps",
+            "label": "Galilee Area with Capernaum",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        }
+      ],
+      "optionalCompanions": [],
+      "primaryAssetId": "c2",
+      "primaryCollection": "FIAMaps",
+      "primaryDecision": "curated-display-choice-for-reviewed-source-prompt; first-requested-kind and stable listed source candidate; not evidence of uniquely preferred image",
+      "relatedAssetIds": [
+        "c2"
+      ],
+      "companionPairs": []
+    },
+    {
+      "packId": "spa.MRK-2-1-12",
+      "guideContentSha256": "8cfdaabf701286fdedf73c56e39c094c4a16d8404159215060cd6c3be4bbd9d2",
+      "guideSourceId": "spa-mrk-p7-v2.1",
+      "guideFileSha256": "f3115ec318cc774bdf463f278540e3cac6671ee13376e29dd7eeb6add18c078a",
+      "unitId": "S02-U006",
+      "unitText": "Deténganse aquí y enséñenle a su equipo una imagen de una típica casa de la región de Galilea de esa época. Enséñenle a su equipo una foto de un petate para dormir. Hablen con su equipo sobre cómo las personas construyen casas en su cultura. ¿Cuál sería una manera inusual o sorprendente en que alguien entre a la casa donde ustedes viven? Detén este audio aquí.",
+      "unitTextSha256": "0ed5fb9628a60abe13de3cb154b4d2e6e1591555fdea754602dda32ebc952b15",
+      "associationBasis": {
+        "language": "spa",
+        "sharedEnglishSource": true,
+        "guideArticle": "eng-mrk-p7-v2.1",
+        "guideFileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c",
+        "guideUri": "https://raw.githubusercontent.com/BibleAquifer/FIATranslationGuide/eb744452eb8d7c852caadde9d3181cddfe571119/eng/json/41.content.json"
+      },
+      "requested": [
+        {
+          "collection": "FIAImages",
+          "id": "a146",
+          "title": "Casa en el tiempo de Jesús",
+          "sourceFile": "eng/json/008.content.json",
+          "sourceFileSha256": "000f5e2c442da11b88d79607389cf505c3cbaf7e4fe8bb82c2283c15b5c29e20",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a146",
+            "resource_code": "FIAImages",
+            "label": "House in the Time of Jesus",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a147",
+          "title": "Casa en el tiempo de Jesús",
+          "sourceFile": "eng/json/008.content.json",
+          "sourceFileSha256": "000f5e2c442da11b88d79607389cf505c3cbaf7e4fe8bb82c2283c15b5c29e20",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a147",
+            "resource_code": "FIAImages",
+            "label": "House in the Time of Jesus",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a165",
+          "title": "Casa en el tiempo de Jesús",
+          "sourceFile": "eng/json/008.content.json",
+          "sourceFileSha256": "000f5e2c442da11b88d79607389cf505c3cbaf7e4fe8bb82c2283c15b5c29e20",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a165",
+            "resource_code": "FIAImages",
+            "label": "House in the Time of Jesus",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a193",
+          "title": "Casa en el tiempo de Jesús",
+          "sourceFile": "eng/json/008.content.json",
+          "sourceFileSha256": "000f5e2c442da11b88d79607389cf505c3cbaf7e4fe8bb82c2283c15b5c29e20",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a193",
+            "resource_code": "FIAImages",
+            "label": "House in the Time of Jesus",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a91",
+          "title": "Esterilla para dormir",
+          "sourceFile": "eng/json/019.content.json",
+          "sourceFileSha256": "8447fcabbe01dc1c9453465a401b5c5fb93fdb5cfb63ac1b2d29fc5a08fa988e",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a91",
+            "resource_code": "FIAImages",
+            "label": "Sleeping Mat",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "FIAImages",
+          "id": "a92",
+          "title": "Esterilla para dormir",
+          "sourceFile": "eng/json/019.content.json",
+          "sourceFileSha256": "8447fcabbe01dc1c9453465a401b5c5fb93fdb5cfb63ac1b2d29fc5a08fa988e",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a92",
+            "resource_code": "FIAImages",
+            "label": "Sleeping Mat",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        }
+      ],
+      "optionalCompanions": [
+        {
+          "collection": "VideoBibleDictionary",
+          "id": "a145",
+          "title": "Casa en el tiempo de Jesús",
+          "sourceFile": "eng/json/007.content.json",
+          "sourceFileSha256": "29bf66b1c746d1b90d462543b90f11f0cb50bbec789db4d327d9a890bcd805d9",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a145",
+            "resource_code": "VideoBibleDictionary",
+            "label": "House in the Time of Jesus",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        },
+        {
+          "collection": "VideoBibleDictionary",
+          "id": "a31",
+          "title": "Esterilla para dormir",
+          "sourceFile": "eng/json/015.content.json",
+          "sourceFileSha256": "f5084d0a8d3487b9a0bc6335c92ca71635e5bfbadd2ea495b0a7bad37536b550",
+          "typedGuideAssociation": {
+            "reference_id": 0,
+            "content_id": "a31",
+            "resource_code": "VideoBibleDictionary",
+            "label": "Sleeping Mat",
+            "language": "eng"
+          },
+          "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+        }
+      ],
+      "primaryAssetId": "a146",
+      "primaryCollection": "FIAImages",
+      "primaryDecision": "curated-display-choice-for-reviewed-source-prompt; first-requested-kind and stable listed source candidate; not evidence of uniquely preferred image",
+      "relatedAssetIds": [
+        "a146",
+        "a147",
+        "a165",
+        "a193",
+        "a91",
+        "a92"
+      ],
+      "companionPairs": [
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a146"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a145"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        },
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a147"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a145"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        },
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a165"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a145"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        },
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a193"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a145"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        },
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a91"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a31"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        },
+        {
+          "from": {
+            "collection": "FIAImages",
+            "id": "a92"
+          },
+          "to": {
+            "collection": "VideoBibleDictionary",
+            "id": "a31"
+          },
+          "basis": "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations",
+          "behavior": "related-optional-explicit-play"
+        }
+      ]
+    }
+  ],
+  "inlineCandidates": [
+    {
+      "packId": "eng.MRK-3-7-12",
+      "guideContentSha256": "d5ca29d13a9947768875d44b70c90e8d3b3823990aed58b1ea8bb2f23bd0a086",
+      "guideFileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c",
+      "unitId": "S05-U006",
+      "unitText": "Stop here and look at a photo of the boat as a group. Choose a way to show the boat size, perhaps by drawing the dimensions on the ground with a stick and asking people to step inside the drawn lines. Pause the audio here.",
+      "unitTextSha256": "c87f12e1378c1fd55cda67576d5d3b4584306bd3832dd0b14272c4daf7fa917d",
+      "htmlSha256": "71a499a943af4e4115080bdafc0e558cc8a14beecaf51ffdbff331977d22fee3",
+      "referenceTag": "<data class=\"resource-ref\" data-content-id=\"a293\" data-resource-code=\"FIAImages\">",
+      "collection": "FIAImages",
+      "id": "a293",
+      "sourceFile": "eng/json/002.content.json",
+      "sourceFileSha256": "335c55d7da5aabe5618d0d58b0370ffcd6580bad138e1ce55ef5c9d85096bc7a",
+      "status": "exact-typed-inline-candidate",
+      "primaryAssetId": "a293",
+      "primaryCollection": "FIAImages",
+      "primaryDecision": "typed-inline-resource-reference"
+    },
+    {
+      "packId": "eng.MRK-4-1-20",
+      "guideContentSha256": "adea31dcb2995a0fe1ad800e55190cbcae7fce6f69071fe52bacdb4f2ba89218",
+      "guideFileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c",
+      "unitId": "S03-U021",
+      "unitText": "Stop and show a picture of a man sitting in a small boat close to the shore of a lake. Pause the audio here.",
+      "unitTextSha256": "a79f3bdc76c5507e088bbf09a8906453398fbd1fb60da7cd1dd216ea21b3d326",
+      "htmlSha256": "66c9a9d61fd0e5da100142fdb35cddf1da47183170a75d96c3f9c0b86074ffad",
+      "referenceTag": "<data class=\"resource-ref\" data-content-id=\"a293\" data-resource-code=\"FIAImages\">",
+      "collection": "FIAImages",
+      "id": "a293",
+      "sourceFile": "eng/json/002.content.json",
+      "sourceFileSha256": "335c55d7da5aabe5618d0d58b0370ffcd6580bad138e1ce55ef5c9d85096bc7a",
+      "status": "exact-typed-inline-candidate",
+      "primaryAssetId": "a293",
+      "primaryCollection": "FIAImages",
+      "primaryDecision": "typed-inline-resource-reference"
+    },
+    {
+      "packId": "eng.MRK-4-35-41",
+      "guideContentSha256": "1621c11f90e36e5d5ac0781c2f094d6deec8d0ffb22e4ba1ecdbafe4c8bbfa1f",
+      "guideFileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c",
+      "unitId": "S03-U017",
+      "unitText": "Stop and show your translators the photo of the boat again and choose a way to show the boat size. For example, you might draw the dimensions on the ground with a stick. Or you might put sticks down to show the outline of the boat. Ask 13 people to step inside the drawn lines. Identify the front and back of the boat. Jesus would go to the back of the boat to lie down on the seat used by the man who guides the boat. Jesus puts his head on the pillow that the person guiding the boat would sit on. Pause the recording here.",
+      "unitTextSha256": "ae5b4579964747dcf8869765d8651ff6b5f84fd44e63dbb0822d5f9384834184",
+      "htmlSha256": "9655c0c8973c44737cc1dfc0520f7acb7c82b036aa57748100cabbec33ef83a4",
+      "referenceTag": "<data class=\"resource-ref\" data-content-id=\"a293\" data-resource-code=\"FIAImages\">",
+      "collection": "FIAImages",
+      "id": "a293",
+      "sourceFile": "eng/json/002.content.json",
+      "sourceFileSha256": "335c55d7da5aabe5618d0d58b0370ffcd6580bad138e1ce55ef5c9d85096bc7a",
+      "status": "exact-typed-inline-candidate",
+      "primaryAssetId": "a293",
+      "primaryCollection": "FIAImages",
+      "primaryDecision": "typed-inline-resource-reference"
+    },
+    {
+      "packId": "eng.MRK-6-45-56",
+      "guideContentSha256": "d2bdbd2f4f28ec8f2c2e07a4193f153d6269fa1cb1e057277724527412909308",
+      "guideFileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c",
+      "unitId": "S05-U005",
+      "unitText": "Show your team a picture of a boat and oars and remind them that this is the same type of boat as those used earlier in Mark. Pause this audio here.",
+      "unitTextSha256": "fb0c6ea1f4b3ea2d4263169a211a9a7fd14a2c0c5f6f6258ae9aa7084944a99d",
+      "htmlSha256": "0aa4628f1764db77a0816efe12a72a1ac6388d3e5b7ce383659ce1e77c91eeb9",
+      "referenceTag": "<data class=\"resource-ref\" data-content-id=\"a293\" data-resource-code=\"FIAImages\">",
+      "collection": "FIAImages",
+      "id": "a293",
+      "sourceFile": "eng/json/002.content.json",
+      "sourceFileSha256": "335c55d7da5aabe5618d0d58b0370ffcd6580bad138e1ce55ef5c9d85096bc7a",
+      "status": "exact-typed-inline-candidate",
+      "primaryAssetId": "a293",
+      "primaryCollection": "FIAImages",
+      "primaryDecision": "typed-inline-resource-reference"
+    },
+    {
+      "packId": "eng.MRK-8-11-21",
+      "guideContentSha256": "149d0ec1cc97565ea64c0e5c559553ae34b4ffc6cea8008d28ff75043df4816e",
+      "guideFileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c",
+      "unitId": "S05-U009",
+      "unitText": "Stop here and show the picture of the boat if needed. Pause this audio here.",
+      "unitTextSha256": "c194d0b65c27d7cfaa0a39fa0fc4121e0eacf848a17da753a79b8f14c17dfa1a",
+      "htmlSha256": "8b7ccad82d07f84fa7675ed9d95d49c2182cfff2e9f452cd2f77f22d1e7a610e",
+      "referenceTag": "<data class=\"resource-ref\" data-content-id=\"a293\" data-resource-code=\"FIAImages\">",
+      "collection": "FIAImages",
+      "id": "a293",
+      "sourceFile": "eng/json/002.content.json",
+      "sourceFileSha256": "335c55d7da5aabe5618d0d58b0370ffcd6580bad138e1ce55ef5c9d85096bc7a",
+      "status": "exact-typed-inline-candidate",
+      "primaryAssetId": "a293",
+      "primaryCollection": "FIAImages",
+      "primaryDecision": "typed-inline-resource-reference"
+    },
+    {
+      "packId": "eng.MRK-8-11-21",
+      "guideContentSha256": "149d0ec1cc97565ea64c0e5c559553ae34b4ffc6cea8008d28ff75043df4816e",
+      "guideFileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c",
+      "unitId": "S05-U013",
+      "unitText": "Show the pictures of the baskets again if needed.",
+      "unitTextSha256": "76751ee13d5d678355a0fc2bcf183dc2165676a4d325f0a1be6192152c634671",
+      "htmlSha256": "95f0dd94744563f7e46395c7422ac56cc3409a9bc593bf3d3788a6ee55e570f5",
+      "referenceTag": "<data class=\"resource-ref\" data-content-id=\"a280\" data-resource-code=\"FIAImages\">",
+      "collection": "FIAImages",
+      "id": "a280",
+      "sourceFile": "eng/json/002.content.json",
+      "sourceFileSha256": "335c55d7da5aabe5618d0d58b0370ffcd6580bad138e1ce55ef5c9d85096bc7a",
+      "status": "exact-typed-inline-candidate",
+      "primaryAssetId": "a280",
+      "primaryCollection": "FIAImages",
+      "primaryDecision": "typed-inline-resource-reference"
+    },
+    {
+      "packId": "spa.MRK-3-7-12",
+      "guideContentSha256": "2581170c13f85ed8fecf8975e7bd81d43f55456afa942a4175c473b6fd36b21d",
+      "guideFileSha256": "f3115ec318cc774bdf463f278540e3cac6671ee13376e29dd7eeb6add18c078a",
+      "unitId": "S05-U006",
+      "unitText": "Deténganse aquí y miren una foto del barco en grupo. Elijan una manera de mostrar el tamaño del barco, tal vez dibujando las dimensiones en el suelo con un palo y pidiendo a las personas que entren dentro de las líneas dibujadas. Pausen el audio aquí.",
+      "unitTextSha256": "8a46c118c54666f57d84ae83f00340d70a4afab6d6f6007a4c62bd441246a5e9",
+      "htmlSha256": "ab93167282a826eab164a20307bb1951d189cfad639aa70a693149de6007936c",
+      "referenceTag": "<data class=\"resource-ref\" data-content-id=\"a293\" data-resource-code=\"FIAImages\">",
+      "collection": "FIAImages",
+      "id": "a293",
+      "sourceFile": "eng/json/002.content.json",
+      "sourceFileSha256": "335c55d7da5aabe5618d0d58b0370ffcd6580bad138e1ce55ef5c9d85096bc7a",
+      "status": "exact-typed-inline-candidate",
+      "primaryAssetId": "a293",
+      "primaryCollection": "FIAImages",
+      "primaryDecision": "typed-inline-resource-reference"
+    },
+    {
+      "packId": "spa.MRK-4-1-20",
+      "guideContentSha256": "3092af0779f4599219191c6bfd31679e3c0a382449e9dcce925c1f324add4fb5",
+      "guideFileSha256": "f3115ec318cc774bdf463f278540e3cac6671ee13376e29dd7eeb6add18c078a",
+      "unitId": "S03-U021",
+      "unitText": "Deténganse y busquen una imagen de un hombre sentado en un barco pequeño cerca de la orilla de un lago. Detengan el audio aquí.",
+      "unitTextSha256": "a86824c044adccea0fbfd6721109e325b735e206eb2b5faa0b292ae2e4cbae16",
+      "htmlSha256": "2e2abf9a32e63f3ae55b803f8602086ecf6534d493e7119f0bbd3d4e8c71d43f",
+      "referenceTag": "<data class=\"resource-ref\" data-content-id=\"a293\" data-resource-code=\"FIAImages\">",
+      "collection": "FIAImages",
+      "id": "a293",
+      "sourceFile": "eng/json/002.content.json",
+      "sourceFileSha256": "335c55d7da5aabe5618d0d58b0370ffcd6580bad138e1ce55ef5c9d85096bc7a",
+      "status": "exact-typed-inline-candidate",
+      "primaryAssetId": "a293",
+      "primaryCollection": "FIAImages",
+      "primaryDecision": "typed-inline-resource-reference"
+    },
+    {
+      "packId": "spa.MRK-4-35-41",
+      "guideContentSha256": "bfc0529d0621f9006b03aa39eedf5dfadcb42c14f733553fcde7e725cf715814",
+      "guideFileSha256": "f3115ec318cc774bdf463f278540e3cac6671ee13376e29dd7eeb6add18c078a",
+      "unitId": "S03-U017",
+      "unitText": "Deténganse y muestren a sus traductores la foto del barco nuevamente y elijan una manera de mostrar el tamaño del barco. Por ejemplo, pueden dibujar las dimensiones en el suelo con un palo. O bien pueden poner palos para mostrar el contorno del barco. Pidan a 13 personas que se ubiquen dentro de las líneas dibujadas. Identifiquen la parte delantera y la parte trasera del barco. Jesús iría a la parte de atrás del barco para recostarse en el asiento que usa el hombre que guía el barco. Jesús pone su cabeza en la almohada sobre la cual se sentaría la persona que guía el barco. Pausen la grabación aquí.",
+      "unitTextSha256": "7d51984cc07786313a839d42710d6dfb2aa9d56a8ad3fa049f4fec2a87347a92",
+      "htmlSha256": "8204cca8d9a1fb33fe416e2e4f327db9aecbc41c21810388e0041acdee67324f",
+      "referenceTag": "<data class=\"resource-ref\" data-content-id=\"a293\" data-resource-code=\"FIAImages\">",
+      "collection": "FIAImages",
+      "id": "a293",
+      "sourceFile": "eng/json/002.content.json",
+      "sourceFileSha256": "335c55d7da5aabe5618d0d58b0370ffcd6580bad138e1ce55ef5c9d85096bc7a",
+      "status": "exact-typed-inline-candidate",
+      "primaryAssetId": "a293",
+      "primaryCollection": "FIAImages",
+      "primaryDecision": "typed-inline-resource-reference"
+    },
+    {
+      "packId": "spa.MRK-6-45-56",
+      "guideContentSha256": "816618d3c6512a635fa5d27ed79c05bff1aa9763a401561d3b16cc15e7d6d6dc",
+      "guideFileSha256": "f3115ec318cc774bdf463f278540e3cac6671ee13376e29dd7eeb6add18c078a",
+      "unitId": "S05-U005",
+      "unitText": "Muestren a su equipo una imagen de un barco y remos y recuérdenles que es el mismo tipo de barco que usaron anteriormente en Marcos. Pausen este audio aquí.",
+      "unitTextSha256": "79e70863f5a35e1d0859dc9acc02599fb7d7db4c89b6e8a6c20fd9a057e1e4ad",
+      "htmlSha256": "55967c858307d05b1b3a0337e6d3cf242437054a57549c9d3aa98cdf63a159d0",
+      "referenceTag": "<data class=\"resource-ref\" data-content-id=\"a293\" data-resource-code=\"FIAImages\">",
+      "collection": "FIAImages",
+      "id": "a293",
+      "sourceFile": "eng/json/002.content.json",
+      "sourceFileSha256": "335c55d7da5aabe5618d0d58b0370ffcd6580bad138e1ce55ef5c9d85096bc7a",
+      "status": "exact-typed-inline-candidate",
+      "primaryAssetId": "a293",
+      "primaryCollection": "FIAImages",
+      "primaryDecision": "typed-inline-resource-reference"
+    },
+    {
+      "packId": "spa.MRK-8-11-21",
+      "guideContentSha256": "d43261420f2d5568e745c23e7ae5c89087ea2f7ed255d76732aa342a4148e939",
+      "guideFileSha256": "f3115ec318cc774bdf463f278540e3cac6671ee13376e29dd7eeb6add18c078a",
+      "unitId": "S05-U009",
+      "unitText": "Deténganse aquí y muestren la imagen del barco si es necesario. Pausen este audio aquí.",
+      "unitTextSha256": "9aefb1b4ecc5168237cd8c0023297da664cee6714da54cfd258f0af17b1b8759",
+      "htmlSha256": "b5217dd63f508ba7520b7f1511ce622f12e46d231581d4acdb27f3a75246c199",
+      "referenceTag": "<data class=\"resource-ref\" data-content-id=\"a293\" data-resource-code=\"FIAImages\">",
+      "collection": "FIAImages",
+      "id": "a293",
+      "sourceFile": "eng/json/002.content.json",
+      "sourceFileSha256": "335c55d7da5aabe5618d0d58b0370ffcd6580bad138e1ce55ef5c9d85096bc7a",
+      "status": "exact-typed-inline-candidate",
+      "primaryAssetId": "a293",
+      "primaryCollection": "FIAImages",
+      "primaryDecision": "typed-inline-resource-reference"
+    },
+    {
+      "packId": "spa.MRK-8-11-21",
+      "guideContentSha256": "d43261420f2d5568e745c23e7ae5c89087ea2f7ed255d76732aa342a4148e939",
+      "guideFileSha256": "f3115ec318cc774bdf463f278540e3cac6671ee13376e29dd7eeb6add18c078a",
+      "unitId": "S05-U013",
+      "unitText": "Muestren las imágenes de las cestas nuevamente si son necesarias.",
+      "unitTextSha256": "b78b189c232a295ab935590ad38d22fb71860d8f8e63ca1c3c5dd580ddaa47d9",
+      "htmlSha256": "f5d212bc075324859ecbf305e2b222ce8251b8b5334b751fa080c4dd6ec285bd",
+      "referenceTag": "<data class=\"resource-ref\" data-content-id=\"a280\" data-resource-code=\"FIAImages\">",
+      "collection": "FIAImages",
+      "id": "a280",
+      "sourceFile": "eng/json/002.content.json",
+      "sourceFileSha256": "335c55d7da5aabe5618d0d58b0370ffcd6580bad138e1ce55ef5c9d85096bc7a",
+      "status": "exact-typed-inline-candidate",
+      "primaryAssetId": "a280",
+      "primaryCollection": "FIAImages",
+      "primaryDecision": "typed-inline-resource-reference"
+    }
+  ],
+  "unresolved": [
+    {
+      "packId": "eng.MRK-1-14-20",
+      "collection": "FIAImages",
+      "id": "a105",
+      "reason": "typed-guide-association-absent-from-normalized-resource-catalog",
+      "guideArticle": "eng-mrk-p2-v2.2",
+      "guideFileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c"
+    },
+    {
+      "packId": "eng.MRK-1-14-20",
+      "collection": "FIAImages",
+      "id": "a106",
+      "reason": "typed-guide-association-absent-from-normalized-resource-catalog",
+      "guideArticle": "eng-mrk-p2-v2.2",
+      "guideFileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c"
+    },
+    {
+      "packId": "eng.MRK-1-14-20",
+      "collection": "FIAImages",
+      "id": "a150",
+      "reason": "typed-guide-association-absent-from-normalized-resource-catalog",
+      "guideArticle": "eng-mrk-p2-v2.2",
+      "guideFileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c"
+    },
+    {
+      "packId": "spa.MRK-1-14-20",
+      "collection": "FIAImages",
+      "id": "a105",
+      "reason": "typed-guide-association-absent-from-normalized-resource-catalog",
+      "guideArticle": "eng-mrk-p2-v2.2",
+      "guideFileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c"
+    },
+    {
+      "packId": "spa.MRK-1-14-20",
+      "collection": "FIAImages",
+      "id": "a106",
+      "reason": "typed-guide-association-absent-from-normalized-resource-catalog",
+      "guideArticle": "eng-mrk-p2-v2.2",
+      "guideFileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c"
+    },
+    {
+      "packId": "spa.MRK-1-14-20",
+      "collection": "FIAImages",
+      "id": "a150",
+      "reason": "typed-guide-association-absent-from-normalized-resource-catalog",
+      "guideArticle": "eng-mrk-p2-v2.2",
+      "guideFileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c"
+    },
+    {
+      "packId": "eng.MRK-4-35-41",
+      "collection": "VideoBibleDictionary",
+      "id": "a274",
+      "reason": "typed-video-absent-from-normalized-videos; same-bare-id-present-as-FIAImages-must-not-coerce",
+      "evidence": "eng-mrk-p17-v2.2 raw typed passage association"
+    },
+    {
+      "packId": "spa.MRK-4-35-41",
+      "collection": "VideoBibleDictionary",
+      "id": "a274",
+      "reason": "typed-video-absent-from-normalized-videos; same-bare-id-present-as-FIAImages-must-not-coerce",
+      "evidence": "eng-mrk-p17-v2.2 raw typed passage association"
+    }
+  ]
+}

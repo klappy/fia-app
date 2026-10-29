@@ -1,0 +1,190 @@
+{
+  "schema": "fia-association-eval@1",
+  "kind": "split",
+  "seed": "fia-association-eval-split@1",
+  "heldOutFraction": 0.5,
+  "pinned": {
+    "MRK-1-1-13": "tuning"
+  },
+  "strata": {
+    "MRK-1-1-13": "approved-presentation",
+    "MRK-1-14-20": "semantic",
+    "MRK-2-1-12": "semantic",
+    "MRK-3-7-12": "ledger-inline",
+    "MRK-4-1-20": "ledger-inline",
+    "MRK-4-35-41": "ledger-inline",
+    "MRK-6-45-56": "ledger-inline",
+    "MRK-8-11-21": "ledger-inline"
+  },
+  "ranks": {
+    "MRK-1-14-20": "2916375dc372d2b462a5f00112368de9e7032252c94e42d9ca5b8d76606ebf23",
+    "MRK-2-1-12": "65986b7a1b155fd082ab5728145fa7d4511f0f771125c2df22f789af801c41fe",
+    "MRK-3-7-12": "33ea1b0016e754b8a88e03e965a8633e02cbd01c39c71530f1b39452d14beb95",
+    "MRK-4-1-20": "2de9266f241dbc9889e19acc6b8d3ec2047c53c43c01479e4f17899e09cd7197",
+    "MRK-4-35-41": "bc36f8d45eac3428c75d845e16fef9e29139b62e1bdb1f518c370965a487ef7c",
+    "MRK-6-45-56": "66d4d66336317bf6fada6e81616118d4af7b1cd941a0b5b21d17ea8cdf7473bf",
+    "MRK-8-11-21": "6c2b833b8c362793ed7c4af805e35e9a1dbb0a8d5e28f9bd5c8204936ae44b68"
+  },
+  "assignment": {
+    "MRK-1-1-13": "tuning",
+    "MRK-1-14-20": "heldout",
+    "MRK-2-1-12": "tuning",
+    "MRK-3-7-12": "heldout",
+    "MRK-4-1-20": "heldout",
+    "MRK-4-35-41": "tuning",
+    "MRK-6-45-56": "heldout",
+    "MRK-8-11-21": "tuning"
+  },
+  "cases": [
+    {
+      "caseId": "eng.MRK-1-1-13:S02-U005",
+      "pericope": "MRK-1-1-13",
+      "language": "eng",
+      "split": "tuning"
+    },
+    {
+      "caseId": "eng.MRK-1-1-13:S02-U008",
+      "pericope": "MRK-1-1-13",
+      "language": "eng",
+      "split": "tuning"
+    },
+    {
+      "caseId": "eng.MRK-1-1-13:S03-U007",
+      "pericope": "MRK-1-1-13",
+      "language": "eng",
+      "split": "tuning"
+    },
+    {
+      "caseId": "eng.MRK-1-1-13:S03-U019",
+      "pericope": "MRK-1-1-13",
+      "language": "eng",
+      "split": "tuning"
+    },
+    {
+      "caseId": "eng.MRK-1-1-13:S03-U021",
+      "pericope": "MRK-1-1-13",
+      "language": "eng",
+      "split": "tuning"
+    },
+    {
+      "caseId": "eng.MRK-1-1-13:S05-U015",
+      "pericope": "MRK-1-1-13",
+      "language": "eng",
+      "split": "tuning"
+    },
+    {
+      "caseId": "eng.MRK-1-14-20:S02-U008",
+      "pericope": "MRK-1-14-20",
+      "language": "eng",
+      "split": "heldout"
+    },
+    {
+      "caseId": "eng.MRK-1-14-20:S02-U010",
+      "pericope": "MRK-1-14-20",
+      "language": "eng",
+      "split": "heldout"
+    },
+    {
+      "caseId": "eng.MRK-1-14-20:S02-U013",
+      "pericope": "MRK-1-14-20",
+      "language": "eng",
+      "split": "heldout"
+    },
+    {
+      "caseId": "eng.MRK-1-14-20:S03-U020",
+      "pericope": "MRK-1-14-20",
+      "language": "eng",
+      "split": "heldout"
+    },
+    {
+      "caseId": "eng.MRK-2-1-12:S02-U004",
+      "pericope": "MRK-2-1-12",
+      "language": "eng",
+      "split": "tuning"
+    },
+    {
+      "caseId": "eng.MRK-2-1-12:S02-U006",
+      "pericope": "MRK-2-1-12",
+      "language": "eng",
+      "split": "tuning"
+    },
+    {
+      "caseId": "spa.MRK-1-14-20:S02-U008",
+      "pericope": "MRK-1-14-20",
+      "language": "spa",
+      "split": "heldout"
+    },
+    {
+      "caseId": "spa.MRK-1-14-20:S02-U010",
+      "pericope": "MRK-1-14-20",
+      "language": "spa",
+      "split": "heldout"
+    },
+    {
+      "caseId": "spa.MRK-1-14-20:S02-U013",
+      "pericope": "MRK-1-14-20",
+      "language": "spa",
+      "split": "heldout"
+    },
+    {
+      "caseId": "spa.MRK-1-14-20:S03-U020",
+      "pericope": "MRK-1-14-20",
+      "language": "spa",
+      "split": "heldout"
+    },
+    {
+      "caseId": "spa.MRK-2-1-12:S02-U004",
+      "pericope": "MRK-2-1-12",
+      "language": "spa",
+      "split": "tuning"
+    },
+    {
+      "caseId": "spa.MRK-2-1-12:S02-U006",
+      "pericope": "MRK-2-1-12",
+      "language": "spa",
+      "split": "tuning"
+    },
+    {
+      "caseId": "spa.MRK-3-7-12:S05-U006",
+      "pericope": "MRK-3-7-12",
+      "language": "spa",
+      "split": "heldout"
+    },
+    {
+      "caseId": "spa.MRK-4-1-20:S03-U021",
+      "pericope": "MRK-4-1-20",
+      "language": "spa",
+      "split": "heldout"
+    },
+    {
+      "caseId": "spa.MRK-4-35-41:S03-U017",
+      "pericope": "MRK-4-35-41",
+      "language": "spa",
+      "split": "tuning"
+    },
+    {
+      "caseId": "spa.MRK-6-45-56:S05-U005",
+      "pericope": "MRK-6-45-56",
+      "language": "spa",
+      "split": "heldout"
+    },
+    {
+      "caseId": "spa.MRK-8-11-21:S05-U009",
+      "pericope": "MRK-8-11-21",
+      "language": "spa",
+      "split": "tuning"
+    },
+    {
+      "caseId": "spa.MRK-8-11-21:S05-U013",
+      "pericope": "MRK-8-11-21",
+      "language": "spa",
+      "split": "tuning"
+    }
+  ],
+  "counts": {
+    "eng/heldout": 4,
+    "eng/tuning": 8,
+    "spa/heldout": 7,
+    "spa/tuning": 5
+  }
+}
