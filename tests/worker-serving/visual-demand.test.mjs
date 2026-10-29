@@ -145,17 +145,18 @@ test('the runtime declares ready only from the served bound manifest it verifies
  assert.equal(await declare(await build(m=>({...m,id:'bound-offline:y'}))),'preparable','wrong id');
  assert.equal(await declare(await build(m=>({...m,executionRevision:h('9')}))),'preparable','wrong executionRevision');
  const other=await build(m=>({...m,files:[...m.files]}));
- assert.equal(await declare({...other,text:other.text.replace('"a1400"','"a1400" ')},other.descriptor),'preparable','bytes that do not hash to the descriptor (N5)');
+ const tampered=other.text.replace('"width":30','"width":31');assert.notEqual(tampered,other.text);assert.equal(new TextEncoder().encode(tampered).length,other.descriptor.bytes,'same length: only the sha can tell');
+ assert.equal(await declare({...other,text:tampered},other.descriptor),'preparable','bytes that do not hash to the descriptor (N5)');
 });
 
 // PR302 review B3, N1 and N2, on the F5a ready path.
-function readyPath({moveDuringDemand=false,adoptAfterPublish=false,unlisted=false}={}){
+function readyPath({moveDuringDemand=false,adoptAfterPublish=false,unlisted=false,unpublished=false}={}){
  const g1=h('6'),g2=h('7'),pin=g=>({schema:'fia-executable-publication-pin@1',generation:g,baseManifest:{id:`base-offline:${h('5')}`,sha256:h('5'),bytes:1,mime:'application/json'}});
  let manifest={files:[]},generation=g1,revision=h('e');const published=new Map();
  const reads={readPack:async args=>{const r=record(revision);r.execution.publication=pin(generation);r.execution.provenance={jobId:h('0')};if(args.execution==='2')r.execution.visualResources=declareVisualResources({record:r,presentation:presentation(),manifest});return r;}};
- const visuals={demand:async req=>{if(moveDuringDemand)generation=h('8');published.set(req.assetId,listed(req.assetId,req.kind,'a'));return {state:'ready',publication:{ready:{},manifestEntry:published.get(req.assetId)}};},published:async q=>published.has(q.assetId)?{ready:{path:published.get(q.assetId).path,sha256:published.get(q.assetId).sha256},manifestEntry:published.get(q.assetId)}:null};
- const publication={publishVisuals:async args=>{manifest={files:unlisted?[]:args.visuals};generation=g2;if(adoptAfterPublish)revision=h('d');}};
- return {ops:createExecutableOperations({reads,service:null,publication,storage:{transaction:async fn=>fn({get:async()=>undefined,put:async()=>{}})},visuals}),demand:{...demandFor('a1400','image'),expectedPublicationGeneration:g1},g2};
+ const visuals={demand:async req=>{if(moveDuringDemand)generation=h('8');published.set(req.assetId,listed(req.assetId,req.kind,'a'));return {state:'ready',publication:{ready:{},manifestEntry:published.get(req.assetId)}};},published:async q=>published.has(q.assetId)&&!unpublished?{ready:{path:published.get(q.assetId).path,sha256:published.get(q.assetId).sha256},manifestEntry:published.get(q.assetId)}:null};
+ const writes=[];const publication={publishVisuals:async args=>{writes.push(args);manifest={files:unlisted?[]:args.visuals};generation=g2;if(adoptAfterPublish)revision=h('d');}};
+ return {ops:createExecutableOperations({reads,service:null,publication,storage:{transaction:async fn=>fn({get:async()=>undefined,put:async()=>{}})},visuals}),demand:{...demandFor('a1400','image'),expectedPublicationGeneration:g1},g2,writes};
 }
 test('a generation moved during custody is answered as publication-generation-stale (B3)',async()=>{
  const t=readyPath({moveDuringDemand:true});const r=await t.ops.preparePresentation(t.demand);
@@ -182,4 +183,10 @@ test('the fold: only an image-group file of an eligible source can make an asset
 test('a publication that does not list the demanded asset answers visual-publication-unavailable, never ready',async()=>{
  const t=readyPath({unlisted:true});const r=await t.ops.preparePresentation(t.demand);
  assert.equal(r.status,'blocked');assert.equal(r.reason,'visual-publication-unavailable');
+});
+
+// PR302 re-review: when the publication authority does not return the demanded asset, nothing is written.
+test('a decoded original the authority does not return is answered unavailable before any generation is written',async()=>{
+ const t=readyPath({unpublished:true});const r=await t.ops.preparePresentation(t.demand);
+ assert.equal(r.status,'blocked');assert.equal(r.reason,'visual-publication-unavailable');assert.deepEqual(t.writes,[],'no generation is written');
 });
