@@ -141,6 +141,9 @@ async function serverRead(request,clientId){
  if([408,429,500,502,503,504].includes(response.status))return historicalServerRead({match,packId,revision,digest,clientId,capability,answer:response});
  // A live preparation is not a revocation of an already verified saved pack.
  if(match&&response.status===202&&!response.redirected)return response;
+ // An older server refuses the execution=2 capability as a malformed read. That says nothing about
+ // the pack, so it never retires a saved snapshot; the page retries without the capability.
+ if(match&&capability&&response.status===400)return response;
  try{
   if(match){if(response.status!==200||response.redirected)throw Error('Server record unavailable.');const record=serverRecord(await response.clone().json(),packId);if(revision&&record.revision!==revision)throw Error('Server revision changed.');await rememberServerRead(clientId,record);}
   else if(file)await serverJSON(response.clone(),file,active.serverSnapshot.record);

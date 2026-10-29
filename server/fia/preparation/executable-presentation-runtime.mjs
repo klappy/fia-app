@@ -8,6 +8,7 @@ import {createExecutableOperations} from '../publication/executable-operations.m
 import {createExecutablePresentationService} from './executable-presentation-service.mjs';
 import {createExecutablePresentationResolver,createCanonicalGuideReader} from './executable-presentation-resolver.mjs';
 import {createTrustedSourceActionComposer,trustedExecutionRecipe} from './trusted-source-actions.mjs';
+import {declareVisualResources,VISUAL_RESOURCES_CAPABILITY} from './visual-resources.mjs';
 import {SOURCE_ACTION_RECIPE} from '../compiler/presentation/source-action-projector.mjs';
 import guideSources from './guide-sources.json' with {type:'json'};
 import preparationCatalog from './catalog.json' with {type:'json'};
@@ -116,8 +117,14 @@ export async function createExecutableRuntime({ctx,env,snapshot,capabilities={}}
  // A row under a superseded build fails its verifier, so the overlay already serves the
  // base (cache miss); the base read gains its demand here, and an explicit Open
  // re-prepares under today's build.
- reads.readPack=async args=>{let record=await readPack(args);if(record?.status==='ready'&&record.execution&&!args.revision&&record.execution.provenance?.recipeRevision!==recipeRevision)record=await baseReads.readPack({packId:args.packId});if(record?.status!=='ready'||record.execution)return record;const sourceRevision=record.authority?.rawInventoryCommit;if(record.packId===args.packId&&preparable(record,sourceRevision))return {...record,preparationDemand:{packId:args.packId,baseRevision:record.revision,sourceRevision,capability:'executable-presentation'}};return record;};
- const ops=createExecutableOperations({reads,service,publication,storage:ctx.storage});
+ // F4 server half: visualResources is declared only to a read that asks with execution=2, on the
+ // executable record being served, from its verified presentation bytes. Reads never fetch or decode.
+ const readArtifact=reads.readArtifact;
+ const withVisualResources=async record=>{try{const artifact=await readArtifact({sha256:record.revision});if(artifact?.status!=='ready'||typeof artifact.content!=='string')return record;const visualResources=declareVisualResources({record,presentation:JSON.parse(artifact.content)});return visualResources?{...record,execution:{...record.execution,visualResources}}:record;}catch{return record;}};
+ reads.readPack=async args=>{const asking=args?.execution===VISUAL_RESOURCES_CAPABILITY;let record=await readPack(args);if(record?.status==='ready'&&record.execution&&!args.revision&&record.execution.provenance?.recipeRevision!==recipeRevision)record=await baseReads.readPack({packId:args.packId});if(record?.status==='ready'&&record.execution)return asking?withVisualResources(record):record;if(record?.status!=='ready')return record;const sourceRevision=record.authority?.rawInventoryCommit;if(record.packId===args.packId&&preparable(record,sourceRevision))return {...record,preparationDemand:{packId:args.packId,baseRevision:record.revision,sourceRevision,capability:'executable-presentation'}};return record;};
+ // visuals: the visual-original@1 routing port (Otto's seat, inside FiaPreparationJobs). Absent until
+ // routed, so a visualDemand is admitted and then answered typed visual-routing-unavailable.
+ const ops=createExecutableOperations({reads,service,publication,storage:ctx.storage,visuals:capabilities.visuals??null});
  return {...ops,readApprovedAudio:selected=>retained?retained.read(selected):{status:'unavailable',reason:'approved-audio-unavailable'}};
 }
 export function createExecutableWorkerOperations({env,fallback}){

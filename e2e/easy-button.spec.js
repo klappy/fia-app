@@ -100,7 +100,7 @@ for(const tap of [false,true])test(`returning visit with a restore slower than a
  test.skip(process.env.FIA_WORKER_PREVIEW!=='1','Opt-in actual packaged Worker preview only');
  // The first request of the restore is held 5.5 s, longer than any check the launch used to wait for.
  let held=0;
- await context.route('**/v1/packs/eng.MRK-1-21-28',async route=>{held++;await new Promise(r=>setTimeout(r,5500));await route.continue();});
+ await context.route('**/v1/packs/eng.MRK-1-21-28*',async route=>{held++;await new Promise(r=>setTimeout(r,5500));await route.continue();});
  await page.addInitScript(()=>{if(!localStorage.getItem('fia-v3-selected-pack'))localStorage.setItem('fia-v3-selected-pack','eng.MRK-1-21-28');});
  await page.goto('/');
  const centre=page.locator('nav[aria-label="Session controls"] .guide-primary');
@@ -119,7 +119,7 @@ for(const tap of [false,true])test(`returning visit with a restore slower than a
 // A restore read that is accepted and never answered ("lie-fi"): the record, or the presentation
 // artifact after it. The artifact read goes through the service worker once it controls the page,
 // so holding it needs the Chromium flag below.
-for(const read of [{name:'record',pattern:'**/v1/packs/eng.MRK-1-21-28'},{name:'presentation artifact',pattern:'**/v1/artifacts/**',serviceWorker:true}])test(`returning visit whose restore ${read.name} never answers: checking until the restore's bound, then one Begin that says it could not be reached; the key is kept`,async({page,context})=>{
+for(const read of [{name:'record',pattern:'**/v1/packs/eng.MRK-1-21-28*'},{name:'presentation artifact',pattern:'**/v1/artifacts/**',serviceWorker:true}])test(`returning visit whose restore ${read.name} never answers: checking until the restore's bound, then one Begin that says it could not be reached; the key is kept`,async({page,context})=>{
  test.skip(process.env.FIA_WORKER_PREVIEW!=='1','Opt-in actual packaged Worker preview only');
  test.skip(read.serviceWorker&&process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS!=='1','Needs PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1 to hold a service-worker read');
  test.setTimeout(90000);

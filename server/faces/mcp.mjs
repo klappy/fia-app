@@ -1,10 +1,11 @@
 import {json} from './http.mjs';
 export const VERSION='2025-06-18';
-const schema=properties=>({type:'object',properties,required:Object.keys(properties).filter(k=>k!=='revision'),additionalProperties:false});
+const OPTIONAL=['revision','execution','visualDemand','expectedExecutionRevision'];
+const schema=properties=>({type:'object',properties,required:Object.keys(properties).filter(k=>!OPTIONAL.includes(k)),additionalProperties:false});
 const tools=[
- {name:'read_pack',description:'Read a pinned package outcome; no preparation or paid work.',inputSchema:schema({packId:{type:'string'},revision:{type:'string'}}),annotations:{readOnlyHint:true,destructiveHint:false,idempotentHint:true,openWorldHint:false}},
+ {name:'read_pack',description:'Read a pinned package outcome; no preparation or paid work.',inputSchema:schema({packId:{type:'string'},revision:{type:'string'},execution:{const:'2'}}),annotations:{readOnlyHint:true,destructiveHint:false,idempotentHint:true,openWorldHint:false}},
  {name:'read_artifact',description:'Read exact immutable JSON bytes as UTF-8 content by SHA-256.',inputSchema:schema({sha256:{type:'string'}}),annotations:{readOnlyHint:true,destructiveHint:false,idempotentHint:true,openWorldHint:false}},
- {name:'prepare_presentation',description:'Explicitly prepare one source-bound executable presentation. Starts or joins durable work.',inputSchema:schema({packId:{type:'string'},baseRevision:{type:'string'},sourceRevision:{type:'string'},capability:{const:'executable-presentation'}}),annotations:{readOnlyHint:false,destructiveHint:false,idempotentHint:true,openWorldHint:false}},
+ {name:'prepare_presentation',description:'Explicitly prepare one source-bound executable presentation. Starts or joins durable work.',inputSchema:schema({packId:{type:'string'},baseRevision:{type:'string'},sourceRevision:{type:'string'},capability:{const:'executable-presentation'},visualDemand:{type:'object',properties:{assetId:{type:'string'},kind:{enum:['image','map']}},required:['assetId','kind'],additionalProperties:false},expectedExecutionRevision:{type:'string'}}),annotations:{readOnlyHint:false,destructiveHint:false,idempotentHint:true,openWorldHint:false}},
  {name:'read_presentation_preparation',description:'Read a previously requested presentation job; never starts interpretation or publication.',inputSchema:schema({jobId:{type:'string'}}),annotations:{readOnlyHint:true,destructiveHint:false,idempotentHint:true,openWorldHint:false}}
 ];
 const object=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);

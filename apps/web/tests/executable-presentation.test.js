@@ -63,3 +63,11 @@ test('execution accepts visualResources, mediaManifest and publication absent or
  for(const [n,mutate] of bad.entries()){const p=fixture(),e=structuredClone(extensions);mutate(e);Object.assign(p.execution,e);assert.throws(()=>validateExecutablePresentation(p),String(n));}
  {const p=fixture();p.execution.visualResource=[];assert.throws(()=>validateExecutablePresentation(p),'an unknown key still refuses');}
 });
+
+// Step-0 amendment (cookbook PR265): visual-unsupported is a typed unavailable reason, accepted by
+// the first build that asks with execution=2.
+test('visualResources accepts the visual-unsupported reason and still refuses unknown reasons',async()=>{
+ const {validateVisualResources}=await import('../src/lib/executable-presentation.js');
+ assert.ok(validateVisualResources([{assetId:'c4',kind:'map',status:'unavailable',reason:'visual-unsupported'}]));
+ assert.throws(()=>validateVisualResources([{assetId:'c4',kind:'map',status:'unavailable',reason:'too-big'}]));
+});

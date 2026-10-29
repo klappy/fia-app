@@ -23,7 +23,7 @@ function activityExecution(value){
 // their closed shapes; it never acts on them, and no server emits them to it unasked
 // (pack reads opt in with ?execution=2). Readiness, bytes and authority stay server-side.
 const EXECUTION_EXTENSIONS=['visualResources','mediaManifest','publication'];
-const VISUAL_REASONS=['decoder-unavailable','visual-ineligible','retained-evidence-unavailable','execution-admission-refused','execution-uncertain','interrupted'];
+const VISUAL_REASONS=['decoder-unavailable','visual-ineligible','visual-unsupported','retained-evidence-unavailable','execution-admission-refused','execution-uncertain','interrupted'];
 const assetId=value=>typeof value==='string'&&value.length>0&&value.length<=256&&/^[A-Za-z0-9_-]+$/.test(value);
 const plain=value=>value!==null&&typeof value==='object'&&Object.getPrototypeOf(value)===Object.prototype;
 export function validateJSONDescriptor(value,idPattern=null){

@@ -387,6 +387,37 @@ test('a trusted-metadata release re-offers eng.MRK-1-14-20: base plus demand, an
  }finally{await mf.dispose();await rm(r.dir,{recursive:true,force:true});}
 });
 
+// F4 server half and F5a, end to end in the real Worker. A page that asks with execution=2 gets
+// visualResources on the executable record: a1400 then c4, preparable, each with its exact demand.
+// A page that does not ask gets today's record unchanged. A visual demand is admitted against the
+// current execution and answered typed: unrouted custody is visual-routing-unavailable, and a stale
+// execution revision is execution-revision-stale. Never a 500, and no fetch.
+test('an asking read declares a1400 then c4 as preparable; a visual demand is admitted or refused typed',async()=>{
+ const r=await releases(),packId='eng.MRK-1-14-20',mf=await r.after();
+ try{
+  const read=http(mf),call=mcp(mf);
+  const base=await read('/v1/packs/'+packId);const ready=await prepare(read,base.body.preparationDemand);assert.equal(ready.body.status,'ready');
+  const plain=await read('/v1/packs/'+packId),asking=await read('/v1/packs/'+packId+'?execution=2');
+  assert.equal(plain.status,200);assert.equal(asking.status,200);assert.equal(plain.body.execution.visualResources,undefined,'a page that does not ask gets today\'s record');
+  const {visualResources,...rest}=asking.body.execution;assert.deepEqual({...asking.body,execution:rest},plain.body,'nothing else differs');
+  const demand=(assetId,kind,expectedExecutionRevision=plain.body.revision)=>({packId,baseRevision:plain.body.execution.baseRevision,sourceRevision:plain.body.execution.sourceRevision,capability:'executable-presentation',visualDemand:{assetId,kind},expectedExecutionRevision});
+  assert.deepEqual(visualResources,[{assetId:'a1400',kind:'image',status:'preparable',preparationDemand:demand('a1400','image')},{assetId:'c4',kind:'map',status:'preparable',preparationDemand:demand('c4','map')}]);
+  assert.deepEqual(await call('read_pack',{packId,execution:'2'}),asking.body,'HTTP/MCP parity');
+  assert.deepEqual((await read(`/v1/packs/${packId}?revision=${plain.body.revision}&execution=2`)).body.execution.visualResources,visualResources,'the exact revision declares the same');
+  const unrouted=await prepare(read,visualResources[0].preparationDemand);
+  assert.equal(unrouted.status,404,JSON.stringify(unrouted.body));assert.deepEqual(unrouted.body,{schema:'fia-presentation-preparation@1',status:'unavailable',jobId:null,reason:'visual-routing-unavailable',record:null});
+  const stale=await prepare(read,demand('c4','map','f'.repeat(64)));assert.equal(stale.status,409);assert.equal(stale.body.reason,'execution-revision-stale');
+  const forged=await prepare(read,demand('a293','image'));assert.equal(forged.status,409);assert.equal(forged.body.reason,'execution-admission-refused');
+  const malformed=await prepare(read,{...demand('c4','map'),visualDemand:{assetId:'c4',kind:'video'}});assert.equal(malformed.status,400);
+  assert.equal((await read('/v1/packs/'+packId)).body.revision,plain.body.revision,'no demand publishes or moves the pointer');
+  // Spanish is not admitted, and a base record declares nothing.
+  const spa=await read('/v1/packs/spa.MRK-1-14-20');const spaReady=await prepare(read,spa.body.preparationDemand);assert.equal(spaReady.body.status,'ready');
+  assert.deepEqual((await read('/v1/packs/spa.MRK-1-14-20?execution=2')).body.execution.visualResources,[]);
+  const other=await read('/v1/packs/eng.MRK-1-21-28'),otherAsking=await read('/v1/packs/eng.MRK-1-21-28?execution=2');assert.deepEqual(otherAsking.body,other.body);
+  assert.equal(r.counts.external,0,'reads and demands fetch nothing');
+ }finally{await mf.dispose();await rm(r.dir,{recursive:true,force:true});}
+});
+
 test('resolver: base id fia-mark-authentic@1 for eng.MRK-1-1-13 is a typed refusal from the service, never a thrown 500',async()=>{
  const {gunzipSync}=await import('node:zlib'),{createExecutablePresentationResolver}=await import('../../server/fia/preparation/executable-presentation-resolver.mjs'),{createExecutablePresentationService}=await import('../../server/fia/preparation/executable-presentation-service.mjs');
  const registry=JSON.parse(await readFile(publicRoot+'/content/registry.json')),source=JSON.parse(gunzipSync(await readFile('server/fia/compiler/presentation/source-packs.json.gz'))),packId='eng.MRK-1-1-13',descriptor=registry.packs.find(d=>d.id===packId),content=await readFile(publicRoot+descriptor.presentation.url,'utf8');
