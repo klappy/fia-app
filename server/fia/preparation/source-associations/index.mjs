@@ -1,13 +1,14 @@
 import {createHash} from 'node:crypto';
 import {canonicalJSONString} from '../contract.mjs';
+import {isProducerReceipt,GUIDE_SOURCE_CLASS} from './producer-receipt.mjs';
 // Pure source-association index (no network, no fs). It builds a version-bound index of guide units and of FIAKeyTerms,
 // FIAImages and FIAMaps resources from the retained compiled source archives, then makes deterministic exact joins.
-// A typed inline reference is source-explicit only when retained raw publisher HTML for that pack carries the same tag,
+// A typed inline reference is source-explicit only when a producer receipt for that pack's own archive-described file carries the same tag,
 // anchored to exactly one unit. Compiled-guide annotations alone never are. Passage-level resource lists, unit term ids,
 // compiled relatedIds/primary, titles and ledgers are never joins. Output is association only: no medium, autoplay,
 // pause, order, source selection or admission policy.
 export const SOURCE_ASSOCIATION_RECIPE='fia-source-association@1';
-export const RAW_DEPENDENCY='retained raw publisher HTML at 96bb';
+export const RAW_DEPENDENCY='class-A guide-text source route and admission (CONTRACT acquisition-profile clause, Q2; reviewed source route and ticket admission, Q3; Otto seat)';
 const sha=x=>createHash('sha256').update(x).digest('hex');
 const NAMESPACES=Object.freeze({FIAKeyTerms:'term',FIAImages:'image',FIAMaps:'map'});
 const KIND_NAMESPACE=Object.freeze({image:'FIAImages',map:'FIAMaps'});
@@ -28,26 +29,30 @@ export function inlineReferences(html){
 }
 const plain=html=>html.replace(/<[^>]*>/g,'').replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&lt;/g,'<').replace(/&gt;/g,'>').trim();
 // archives: [{revision,inventory,packs}] as retained in server/fia/compiler/presentation/source-packs*.json.gz.
-// raw (optional): {packs:{[packId]:{repo, revision, path, fileSha256, fragments:[{jsonPath, html, sha256}]}}}, retained raw
-// publisher HTML fragments for a pack, from a version-bound producer that verified the whole file's sha256. Each fragment must
-// hash to its declared sha256, and the provenance must name the pack's own guide repo and source file at a 40-hex revision;
-// otherwise the pack's raw evidence is invalid and its references fail closed as raw-provenance-invalid. There is no trusted
-// flag: authority comes only from those bytes carrying the exact tag, anchored by text hash to exactly one unit.
-// The repo retains no raw publisher HTML today, so every compiled reference is raw-provenance-unavailable.
-function rawPackOf(entry,guide){
- if(!entry)return null;
- const fields=['repo','revision','path','fileSha256','fragments'];
- if(!entry||Object.getPrototypeOf(entry)!==Object.prototype||Object.keys(entry).sort().join()!==[...fields].sort().join())return {invalid:'raw-shape'};
- if(typeof entry.repo!=='string'||entry.repo.split('/').length!==2||entry.repo.split('/')[1]!==guide.provenance?.collection)return {invalid:'raw-repo'};
- if(!/^[a-f0-9]{40}$/.test(entry.revision)||!/^[a-f0-9]{64}$/.test(entry.fileSha256))return {invalid:'raw-identity'};
- if(entry.path!==guide.sourceFile)return {invalid:'raw-path'};
- if(!Array.isArray(entry.fragments)||!entry.fragments.length||entry.fragments.some(f=>!f||typeof f.html!=='string'||typeof f.jsonPath!=='string'||sha(f.html)!==f.sha256))return {invalid:'raw-fragment'};
- return {repo:entry.repo,revision:entry.revision,path:entry.path,fileSha256:entry.fileSha256,paragraphs:entry.fragments.map(f=>({jsonPath:f.jsonPath,htmlSha256:f.sha256,textSha256:sha(plain(f.html)),refs:inlineReferences(f.html)}))};
+// raw (optional): an array of producer receipts (producer-receipt.mjs), the only accepted form of raw publisher evidence.
+// Anything else (a plain object, a JSON body, a caller-declared sha or fragment, a copy of a receipt) is refused: every typed
+// reference in the index then reports raw-provenance-invalid. A receipt serves a pack only when it equals the descriptor that this
+// index composes from the retained compiled archive: owner (class-A rule), provenance.collection, provenance.revision, sourceFile
+// and sourceFileSha256. Otherwise that pack reports raw-provenance-invalid. No production composer issues receipts yet, so in
+// production every compiled reference is raw-provenance-unavailable and no explicit result is reachable.
+function rawReceipts(raw){
+ if(raw===null)return {byPath:new Map(),refused:null};
+ if(!Array.isArray(raw)||raw.some(r=>!isProducerReceipt(r)))return {byPath:new Map(),refused:'raw-not-producer-receipt'};
+ const byPath=new Map();for(const r of raw)byPath.set(r.path,byPath.has(r.path)?{invalid:'raw-duplicate-path'}:r);
+ return {byPath,refused:null};
+}
+function rawPackOf(receipts,packId,guide){
+ if(receipts.refused)return {invalid:receipts.refused};
+ const r=receipts.byPath.get(guide.sourceFile);if(!r)return null;if(r.invalid)return {invalid:r.invalid};
+ const descriptor={owner:GUIDE_SOURCE_CLASS.owner,collection:guide.provenance?.collection,revision:guide.provenance?.revision,path:guide.sourceFile,fileSha256:guide.sourceFileSha256};
+ if(Object.keys(descriptor).some(k=>!descriptor[k]||r[k]!==descriptor[k]))return {invalid:'raw-descriptor-mismatch'};
+ const paragraphs=r.packs[packId];if(!paragraphs)return null;
+ return {repo:`${r.owner}/${r.collection}`,revision:r.revision,path:r.path,fileSha256:r.fileSha256,paragraphs:paragraphs.map(x=>({jsonPath:x.jsonPath,htmlSha256:sha(x.html),textSha256:sha(plain(x.html)),refs:inlineReferences(x.html)}))};
 }
 export function buildSourceIndex(archives,{raw=null}={}){
  if(!Array.isArray(archives)||!archives.length)throw Error('source-index-input');
  const revision=archives[0].revision;if(archives.some(a=>a?.revision!==revision||!a.packs||!Array.isArray(a.inventory)))throw Error('source-index-revision');
- if(raw!==null&&(!raw||typeof raw.packs!=='object'||!raw.packs))throw Error('source-index-raw');
+ const receipts=rawReceipts(raw);
  const inventory=new Map(archives.flatMap(a=>a.inventory.map(f=>[f.path,f.sha256])));
  const packs={};
  for(const archive of archives)for(const packId of Object.keys(archive.packs).sort()){
@@ -58,7 +63,7 @@ export function buildSourceIndex(archives,{raw=null}={}){
   // Terms are keyed by their language-bound source id (spa-t55-v1), the id inline references carry.
   for(const t of p.resources?.terms??[])resources.push({namespace:'FIAKeyTerms',id:t.text?.sourceId??null,language:typeof t.text?.sourceId==='string'?t.text.sourceId.split('-')[0]:null,termId:t.id,title:t.title??null,sourceFile:t.sourceFile,sourceFileSha256:null,revision:manifest.sourceRevisions?.FIAKeyTerms??null,provenanceRevision:manifest.sourceRevisions?.FIAKeyTerms??null,kind:'term'});
   for(const [namespace,group] of [['FIAImages','images'],['FIAMaps','maps']])for(const a of p.resources?.[group]??[])resources.push({namespace,id:a.id,language:null,title:a.title??null,sourceFile:a.sourceFile,sourceFileSha256:a.sourceFileSha256,revision:a.titleProvenance?.revision??null,provenanceRevision:manifest.sourceRevisions?.[namespace]??null,provenanceNamespace:a.titleProvenance?.collection??null,kind:a.kind});
-  const rawPack=rawPackOf(raw?.packs?.[packId]??null,guide);
+  const rawPack=rawPackOf(receipts,packId,guide);
   packs[packId]={packId,language,pericope:manifest.pericope,passage:manifest.passage,
    guide:{sourceId:guide.sourceId,version:guide.version,revision:guide.provenance?.revision??null,sourceFile:guide.sourceFile,sourceFileSha256:guide.sourceFileSha256,contentSha256:guide.contentSha256,packFileSha256:inventory.get(`data/packs/${packId}/guide.json`)??null},
    raw:rawPack,
@@ -140,5 +145,5 @@ export function coverageReport(index,{language,book}){
   for(const k of ['units','unitsWithDecision','unitsExplicit','unitsRawProvenanceUnavailable'])totals[k]+=row[k];for(const [k,v] of Object.entries(counts))totals.decisions[k]=(totals.decisions[k]||0)+v;
  }
  totals.pericopesWithExplicit=rows.filter(r=>r.unitsExplicit>0).length;totals.pericopesWithDecision=rows.filter(r=>r.unitsWithDecision>0).length;totals.pericopesWithRaw=rows.filter(r=>r.rawAvailable).length;
- return {schema:'fia-source-association-coverage@1',recipe:SOURCE_ASSOCIATION_RECIPE,sourceRevision:index.sourceRevision,indexSha256:index.indexSha256,language,book,dependency:totals.pericopesWithRaw<ids.length?{missing:RAW_DEPENDENCY,next:'a version-bound raw producer must retain verified publisher unit HTML per source revision (repo, revision, path, whole-file sha256, per-fragment JSON path and sha256) and pass it as the raw input to buildSourceIndex; then re-run this report'}:null,totals,pericopes:rows};
+ return {schema:'fia-source-association-coverage@1',recipe:SOURCE_ASSOCIATION_RECIPE,sourceRevision:index.sourceRevision,indexSha256:index.indexSha256,language,book,dependency:totals.pericopesWithRaw<ids.length?{missing:RAW_DEPENDENCY,next:'a reviewed class-A acquisition-profile clause and source route (Otto seat), then a trusted composer that reads the fresh-source-observation primitive on retained storage and passes producer receipts to buildSourceIndex; then re-run this report'}:null,totals,pericopes:rows};
 }

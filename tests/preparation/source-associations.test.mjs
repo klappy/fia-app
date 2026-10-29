@@ -1,23 +1,27 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {createHash} from 'node:crypto';import {readFileSync} from 'node:fs';
 import {buildSourceIndex,associatePack,associateAll,verifyDecision,coverageReport,inlineReferences,requestedKinds,SOURCE_ASSOCIATION_RECIPE,RAW_DEPENDENCY} from '../../server/fia/preparation/source-associations/index.mjs';
 import {readRetainedArchives} from '../../server/fia/preparation/source-associations/retained.mjs';
+import {issueProducerReceipt,isProducerReceipt} from '../../server/fia/preparation/source-associations/producer-receipt.mjs';
+import {fakeProducerReceipt} from './support/fake-guide-producer.mjs';
+import {readdirSync} from 'node:fs';
 const archives=readRetainedArchives(),index=buildSourceIndex(archives),sha=x=>createHash('sha256').update(x).digest('hex');
 const of=(ix,packId,unitId)=>associatePack(ix,packId).filter(d=>d.unitId===unitId);
 // A one-pack archive cloned from the retained bytes, mutated per case.
 function packOf(packId){return structuredClone(archives.find(x=>x.packs[packId]).packs[packId]);}
-function mini(packId,mutate,raw=null){const a=archives.find(x=>x.packs[packId]),pack=packOf(packId);mutate?.(pack);return buildSourceIndex([{revision:a.revision,inventory:a.inventory.filter(f=>f.path.startsWith(`data/packs/${packId}/`)),packs:{[packId]:pack}}],{raw});}
+function mini(packId,mutate,raw=null){ // raw: an array of producer receipts, or a forged value under test
+ const a=archives.find(x=>x.packs[packId]),pack=packOf(packId);mutate?.(pack);return buildSourceIndex([{revision:a.revision,inventory:a.inventory.filter(f=>f.path.startsWith(`data/packs/${packId}/`)),packs:{[packId]:pack}}],{raw});}
 const unitOf=(pack,id)=>pack.guide.steps.flatMap(s=>s.units).find(u=>u.id===id);
 // Re-hash consistently in guide.json and guide-units.json, as an honest upstream edit would.
 const setUnit=(p,id,text,html=text)=>{const u=unitOf(p,id);u.text=text;u.html=html;u.textSha256=sha(text);for(const st of p['guide-units'].steps)for(const x of st.units)if(x.id===id)x.textSha256=u.textSha256;};
-// Test data only: one paragraph of verified public publisher bytes (BibleAquifer/FIATranslationGuide 96bb, spa/json/42.content.json),
-// with its full extraction provenance. The runtime module never fetches; nothing else from the file is committed.
-const FIX=JSON.parse(readFileSync(new URL('./fixtures/source-associations/spa-luk-1-1-4-s05-u003.raw-fragment.json',import.meta.url)));
-const realFragment={jsonPath:`${FIX.provenance.jsonPath}#p${FIX.provenance.paragraphIndex}`,html:FIX.fragment,sha256:FIX.provenance.fragmentSha256};
-const rawOf=(packId,fragments,over={})=>({packs:{[packId]:{repo:FIX.provenance.repo,revision:FIX.provenance.revision,path:FIX.provenance.path,fileSha256:FIX.provenance.fileSha256,fragments,...over}}});
-// Derived fragments (re-hashed edits of the real one) exercise the join rules; they are not publisher evidence.
-const derived=(html,jsonPath='derived')=>({jsonPath,html,sha256:sha(html)});
-const fixtureRaw=(packId,htmls)=>rawOf(packId,htmls.map(h=>h===FIX.fragment?realFragment:derived(h)));
 const LUKE='spa.LUK-1-1-4',GALILEA='<data class="resource-ref" data-content-id="spa-t55-v1" data-resource-code="FIAKeyTerms">Galilea</data>';
+// Synthetic whole publisher-shaped files (test data only): one Text article per pack id whose content is the given paragraphs.
+// The S05-U003 paragraph is the retained compiled unit HTML wrapped in <p>; no publisher bytes are used.
+const SYN_REV='5'.repeat(40),PATH='spa/json/42.content.json',U3=`<p>${packOf(LUKE).guide.steps.flatMap(s=>s.units).find(u=>u.id==='S05-U003').html}</p>`,OPEN='<p>Synthetic opening paragraph.</p>',CLOSE='<p>Synthetic closing paragraph.</p>';
+function usfm(packId){const book=packId.slice(4,7),n=packId.slice(8).split('-');return n.length===3?[`${book} ${n[0]}:${n[1]}`,`${book} ${n[0]}:${n[2]}`]:[`${book} ${n[0]}:${n[1]}`,`${book} ${n[2]}:${n[3]}`];}
+function fileOf(packId,htmls){const [s0,e0]=usfm(packId);return new Uint8Array(Buffer.from(JSON.stringify([{content_id:'synthetic',media_type:'Text',language:packId.slice(0,3),associations:{passage:[{start_ref_usfm:s0,end_ref_usfm:e0}]},content:htmls.join('')}])));}
+// The archive descriptor of the pack is pinned to the synthetic file (test-only fixture pin); the receipt comes from the fake producer.
+function withReceipt(packId,htmls,{mutate,pin=true,receipt={},filePack=packId}={}){const bytes=fileOf(filePack,htmls),r=fakeProducerReceipt({bytes,revision:SYN_REV,path:PATH,...receipt});return {receipt:r,bytes,ix:mini(packId,p=>{if(pin){p.guide.provenance.revision=SYN_REV;p.guide.sourceFileSha256=sha(bytes);}mutate?.(p);},[r])};}
+const reasonAt=(ix,packId=LUKE,unitId='S05-U003')=>of(ix,packId,unitId)[0].reason;
 
 test('index is version-bound and deterministic, and keeps unit HTML and reference evidence',()=>{
  assert.equal(index.sourceRevision,'f8776d92b090b5af5b17b17dc1137f25fb059ed0');assert.equal(index.recipe,SOURCE_ASSOCIATION_RECIPE);
@@ -29,58 +33,91 @@ test('index is version-bound and deterministic, and keeps unit HTML and referenc
  const t55=index.packs[LUKE].resources.find(r=>r.id==='spa-t55-v1');assert.deepEqual([t55.namespace,t55.language,t55.termId],['FIAKeyTerms','spa','term-spa-t55']);
  assert.deepEqual(associateAll(index),associateAll(buildSourceIndex(readRetainedArchives())));
 });
-test('1. Luke 1:1-4 Galilea spa-t55-v1 at S05-U003: a typed provenance gap without raw source, explicit from verified publisher bytes, nothing at S02',()=>{
+test('1. Luke 1:1-4 Galilea spa-t55-v1 at S05-U003: a typed gap in production; explicit only through a branded producer receipt that equals the archive descriptor; nothing at S02',()=>{
  const [gap,...rest]=of(index,LUKE,'S05-U003');assert.equal(rest.length,0);
- assert.equal(gap.type,'unresolved');assert.equal(gap.reason,'raw-provenance-unavailable');assert.equal(gap.dependency,RAW_DEPENDENCY);assert.equal(gap.evidence.provenance,'retained-compiled-guide-html');
- assert.deepEqual([gap.namespace,gap.resourceId,gap.evidence.label],['FIAKeyTerms','spa-t55-v1','Galilea']);
+ assert.equal(gap.type,'unresolved');assert.equal(gap.reason,'raw-provenance-unavailable');assert.equal(gap.dependency,RAW_DEPENDENCY);assert.match(RAW_DEPENDENCY,/class-A guide-text source route and admission/);assert.doesNotMatch(RAW_DEPENDENCY,/[a-f0-9]{7,}/,'names the route dependency, not a revision');
+ assert.deepEqual([gap.namespace,gap.resourceId,gap.evidence.label,gap.evidence.provenance],['FIAKeyTerms','spa-t55-v1','Galilea','retained-compiled-guide-html']);
  assert.ok(!associatePack(index,LUKE).some(d=>d.stepId==='S02'&&d.resourceId==='spa-t55-v1'));
- assert.equal(sha(FIX.fragment),FIX.provenance.fragmentSha256);assert.deepEqual([FIX.provenance.repo,FIX.provenance.revision,FIX.provenance.path,FIX.provenance.fileSha256],['BibleAquifer/FIATranslationGuide','96bb023ab1852ab8bdc3a469fcc820e9f9ea1e30','spa/json/42.content.json','6d6713a2bfb846d4b7275a9f2c2a76f59e3963fcfbdadc5acf2d5374f789811d']);
- const withRaw=mini(LUKE,null,rawOf(LUKE,[realFragment]));
- const [d]=of(withRaw,LUKE,'S05-U003');assert.equal(d.type,'explicit',JSON.stringify(d));assert.deepEqual([d.namespace,d.resourceId],['FIAKeyTerms','spa-t55-v1']);assert.equal(d.evidence.provenance,'raw-publisher-html');assert.equal(d.evidence.rawFragmentSha256,FIX.provenance.fragmentSha256);assert.equal(d.evidence.rawRevision,FIX.provenance.revision);assert.equal(d.evidence.rawFileSha256,FIX.provenance.fileSha256);
- assert.equal(of(buildSourceIndex(archives,{raw:rawOf(LUKE,[realFragment])}),LUKE,'S05-U003')[0].type,'explicit','the real fragment joins against the full retained index too');
- assert.equal(verifyDecision(d,withRaw).type,'verified');
- assert.ok(!associatePack(withRaw,LUKE).some(x=>x.stepId==='S02'&&x.type==='explicit'));
+ const {ix,receipt,bytes}=withReceipt(LUKE,[OPEN,U3,CLOSE]);assert.ok(isProducerReceipt(receipt));
+ const [d]=of(ix,LUKE,'S05-U003');assert.equal(d.type,'explicit',JSON.stringify(d));assert.deepEqual([d.namespace,d.resourceId],['FIAKeyTerms','spa-t55-v1']);
+ assert.equal(d.evidence.provenance,'raw-publisher-html');assert.equal(d.evidence.rawFileSha256,sha(bytes));assert.equal(d.evidence.rawRevision,SYN_REV);assert.equal(d.evidence.rawJsonPath,'$[0].content#p1');assert.equal(d.evidence.rawFragmentSha256,sha(U3));
+ assert.equal(verifyDecision(d,ix).type,'verified');assert.ok(!associatePack(ix,LUKE).some(x=>x.stepId==='S02'&&x.type==='explicit'));
  for(const k of ['autoplay','pause','order','medium','primary'])assert.equal(k in d,false,'association only');
 });
-test('2. joins match exactly on namespace, language, source and unit',()=>{
- const html=FIX.fragment;
- assert.equal(of(mini(LUKE,null,fixtureRaw(LUKE,[html.replace('data-resource-code="FIAKeyTerms"','data-resource-code="FIAImages"')])),LUKE,'S05-U003')[0].reason,'compiled-only-annotation','raw tag in another namespace');
- assert.equal(of(mini(LUKE,null,fixtureRaw(LUKE,[html.replace('spa-t55-v1','spa-t55-v2')])),LUKE,'S05-U003')[0].reason,'compiled-only-annotation','raw tag for another source id');
- const other=packOf(LUKE).guide.steps.flatMap(s=>s.units).find(u=>u.id==='S05-U004').html;
- assert.equal(of(mini(LUKE,null,fixtureRaw(LUKE,[other+' '+GALILEA])),LUKE,'S05-U003')[0].reason,'unanchored','raw tag anchored to another unit');
- assert.equal(of(mini(LUKE,p=>{const u=unitOf(p,'S05-U003');setUnit(p,'S05-U003',u.text,u.html.replace('spa-t55-v1','eng-t55-v1'));}),LUKE,'S05-U003')[0].reason,'language-mismatch');
- assert.equal(of(mini(LUKE,null,fixtureRaw('spa.LUK-1-5-25',[html])),LUKE,'S05-U003')[0].reason,'raw-provenance-unavailable','raw evidence for another pack never applies');
+test('no explicit result is reachable in production, and no production module issues receipts or imports the test composer',()=>{
+ assert.equal(associateAll(index).filter(x=>x.type==='explicit').length,0);
+ const root=new URL('../../server/',import.meta.url),files=readdirSync(root,{recursive:true}).filter(f=>/\.(mjs|js)$/.test(f));
+ for(const f of files){const src=readFileSync(new URL(f,root),'utf8');assert.doesNotMatch(src,/fake-guide-producer/,f);if(!f.endsWith('source-associations/producer-receipt.mjs'))assert.doesNotMatch(src,/issueProducerReceipt/,`${f} must not issue producer receipts until the reviewed composer exists`);}
 });
-test('a tampered fragment or a provenance record that does not match fails closed',()=>{
- const run=raw=>of(mini(LUKE,null,raw),LUKE,'S05-U003')[0].reason;
- assert.equal(run(rawOf(LUKE,[{...realFragment,html:FIX.fragment.replace('Galilea<','Judea<')}])),'raw-provenance-invalid','fragment bytes no longer match the recorded sha256');
- assert.equal(run(rawOf(LUKE,[realFragment],{path:'spa/json/41.content.json'})),'raw-provenance-invalid','another publisher file');
- assert.equal(run(rawOf(LUKE,[realFragment],{repo:'someone/OtherGuide'})),'raw-provenance-invalid','another repo');
- assert.equal(run(rawOf(LUKE,[realFragment],{revision:'96bb'})),'raw-provenance-invalid','not an exact revision');
- assert.equal(run(rawOf(LUKE,[realFragment],{fileSha256:'x'})),'raw-provenance-invalid');
- assert.equal(run(rawOf(LUKE,[realFragment],{trusted:true})),'raw-provenance-invalid','a declared trusted flag is never authority');
- const label=FIX.fragment.replace('<data class="resource-ref" data-content-id="spa-t55-v1" data-resource-code="FIAKeyTerms">Galilea</data>','Galilea');
- assert.equal(run(rawOf(LUKE,[derived(label)])),'compiled-only-annotation','a label or text match without the raw tag is not a join');
+test('caller-supplied raw evidence is refused with a type, never explicit',()=>{
+ const {receipt,bytes}=withReceipt(LUKE,[OPEN,U3,CLOSE]),pinned=p=>{p.guide.provenance.revision=SYN_REV;p.guide.sourceFileSha256=sha(bytes);};
+ const forged=[
+  ['plain object (the old fragment form)',{packs:{[LUKE]:{repo:'BibleAquifer/FIATranslationGuide',revision:SYN_REV,path:PATH,fileSha256:sha(bytes),fragments:[{jsonPath:'$[0].content#p1',html:U3,sha256:sha(U3)}]}}}],
+  ['plain receipt-shaped object',[{...receipt}]],['JSON round-trip of a receipt',[JSON.parse(JSON.stringify(receipt))]],['structured clone of a receipt',[structuredClone(receipt)]],
+  ['receipt plus a forged entry',[receipt,{...receipt,path:'spa/json/41.content.json'}]],['whole-file bytes object',{files:[{repo:'BibleAquifer/FIATranslationGuide',revision:SYN_REV,path:PATH,bytes}]}],['trusted flag',[{...receipt,trusted:true}]],
+ ];
+ for(const [why,raw] of forged){const ix=mini(LUKE,pinned,raw);assert.equal(reasonAt(ix),'raw-provenance-invalid',why);assert.ok(!associateAll(ix).some(d=>d.type==='explicit'),why);}
+ assert.equal(reasonAt(buildSourceIndex(archives,{raw:{packs:{}}}),'eng.MRK-4-35-41','S03-U017'),'raw-provenance-invalid','a refused raw input fails every pack closed');
+});
+test('the issuer verifies the read and the whole bytes itself: fake owner, unverified file sha, wrong class or media are not issued',()=>{
+ const bytes=fileOf(LUKE,[OPEN,U3,CLOSE]),base={bytes,revision:SYN_REV,path:PATH};
+ assert.throws(()=>fakeProducerReceipt({...base,owner:'evil'}),/producer-receipt-class/,'fake owner');
+ assert.throws(()=>fakeProducerReceipt({...base,observedSha256:'e'.repeat(64)}),/producer-receipt-bytes/,'unverified file sha');
+ const tampered=new Uint8Array(bytes);tampered[tampered.length-12]^=1;assert.throws(()=>issueProducerReceipt({state:'observed',observation:{binding:{source:{url:`https://raw.githubusercontent.com/BibleAquifer/FIATranslationGuide/${SYN_REV}/${PATH}`,sourceVersionKind:'publisher-version',sourceVersion:SYN_REV,publisherVersion:SYN_REV}},sha256:sha(bytes),bytes:bytes.length,contentType:'application/json'}},tampered),/producer-receipt-bytes/,'bytes that differ from the observed sha');
+ assert.throws(()=>fakeProducerReceipt({...base,path:'spa/json/42.content.json?x'}),/producer-receipt-class/);assert.throws(()=>fakeProducerReceipt({...base,revision:'96bb'}),/producer-receipt-version/);
+ assert.throws(()=>fakeProducerReceipt({...base,sourceVersionKind:'discovery-snapshot'}),/producer-receipt-version/);assert.throws(()=>fakeProducerReceipt({...base,contentType:'text/plain'}),/producer-receipt-media/);
+ assert.throws(()=>issueProducerReceipt({state:'unobserved'},bytes),/producer-receipt-unobserved/);
+});
+test('a receipt that differs from the archive descriptor is raw-provenance-invalid: exactly 96bb versus eb744452, and owner, collection, path, sha',()=>{
+ const archived=index.packs[LUKE].guide;assert.equal(archived.revision,'eb744452eb8d7c852caadde9d3181cddfe571119');assert.equal(archived.sourceFile,PATH);
+ const bytes=fileOf(LUKE,[OPEN,U3,CLOSE]),r96=fakeProducerReceipt({bytes,revision:'96bb023ab1852ab8bdc3a469fcc820e9f9ea1e30',path:PATH});
+ const shaOnly=mini(LUKE,p=>{p.guide.sourceFileSha256=sha(bytes);},[r96]);assert.equal(shaOnly.packs[LUKE].guide.revision,'eb744452eb8d7c852caadde9d3181cddfe571119');
+ assert.equal(reasonAt(shaOnly),'raw-provenance-invalid','96bb receipt against the eb744452 archive descriptor');assert.equal(shaOnly.packs[LUKE].raw.invalid,'raw-descriptor-mismatch');
+ assert.equal(reasonAt(buildSourceIndex(archives,{raw:[r96]})),'raw-provenance-invalid','and against the unmodified retained archive');
+ assert.equal(reasonAt(withReceipt(LUKE,[OPEN,U3,CLOSE],{receipt:{collection:'OtherGuide'}}).ix),'raw-provenance-invalid','collection');
+ assert.equal(reasonAt(withReceipt(LUKE,[OPEN,U3,CLOSE],{mutate:p=>{p.guide.sourceFileSha256='f'.repeat(64);}}).ix),'raw-provenance-invalid','file sha');
+ const wrongPath=withReceipt(LUKE,[OPEN,U3,CLOSE],{receipt:{path:'spa/json/41.content.json'}});assert.equal(reasonAt(wrongPath.ix),'raw-provenance-unavailable','a receipt for another file never serves this pack');
+ const markPack=Object.keys(index.packs).find(id=>id.startsWith('spa.MRK-')&&associatePack(index,id).some(d=>d.reason==='raw-provenance-unavailable')),markUnit=associatePack(index,markPack).find(d=>d.reason==='raw-provenance-unavailable').unitId;
+ assert.equal(of(buildSourceIndex(archives,{raw:[wrongPath.receipt]}),markPack,markUnit)[0].reason,'raw-provenance-invalid','correct sha, wrong path: the Mark descriptor does not match');
+ const two=fakeProducerReceipt({bytes,revision:SYN_REV,path:PATH});assert.equal(reasonAt(mini(LUKE,p=>{p.guide.provenance.revision=SYN_REV;p.guide.sourceFileSha256=sha(bytes);},[two,fakeProducerReceipt({bytes,revision:SYN_REV,path:PATH})])),'raw-provenance-invalid','two receipts for one path');
+});
+test('the 96bb dev-time public-read fixture is refused against the archive descriptor; a join over it is an isolated test result only',()=>{
+ const FIX=JSON.parse(readFileSync(new URL('./fixtures/source-associations/spa-luk-1-1-4-s05-u003.raw-fragment.json',import.meta.url)));
+ assert.match(FIX.label,/Dev-time public read/);assert.equal(sha(FIX.fragment),FIX.provenance.fragmentSha256);assert.equal(FIX.provenance.revision,'96bb023ab1852ab8bdc3a469fcc820e9f9ea1e30');
+ const bytes=fileOf(LUKE,[OPEN,FIX.fragment,CLOSE]),r=fakeProducerReceipt({bytes,revision:FIX.provenance.revision,path:FIX.provenance.path});
+ const runtime=buildSourceIndex(archives,{raw:[r]});assert.equal(reasonAt(runtime),'raw-provenance-invalid');assert.equal(runtime.packs[LUKE].raw.invalid,'raw-descriptor-mismatch');
+ assert.deepEqual([index.packs[LUKE].guide.revision,index.packs[LUKE].guide.sourceFileSha256.slice(0,8)],['eb744452eb8d7c852caadde9d3181cddfe571119','b6de7d69']);
+ assert.ok(!associateAll(runtime).some(d=>d.type==='explicit'));
+ // Isolated test only: with the archive descriptor pinned to this synthetic whole file, the fixture paragraph joins.
+ const isolated=mini(LUKE,p=>{p.guide.provenance.revision=FIX.provenance.revision;p.guide.sourceFileSha256=sha(bytes);},[r]);const [d]=of(isolated,LUKE,'S05-U003');
+ assert.equal(d.type,'explicit');assert.equal(d.evidence.rawFragmentSha256,FIX.provenance.fragmentSha256);
+});
+test('2. joins match exactly on namespace, language, source and unit',()=>{
+ assert.equal(reasonAt(withReceipt(LUKE,[OPEN,U3.replace('data-resource-code="FIAKeyTerms"','data-resource-code="FIAImages"'),CLOSE]).ix),'compiled-only-annotation','raw tag in another namespace');
+ assert.equal(reasonAt(withReceipt(LUKE,[OPEN,U3.replace('spa-t55-v1','spa-t55-v2'),CLOSE]).ix),'compiled-only-annotation','raw tag for another source id');
+ const other=packOf(LUKE).guide.steps.flatMap(s=>s.units).find(u=>u.id==='S05-U004').html;
+ assert.equal(reasonAt(withReceipt(LUKE,[`<p>${other} ${GALILEA}</p>`]).ix),'unanchored','raw tag anchored to another unit');
+ assert.equal(reasonAt(mini(LUKE,p=>{const u=unitOf(p,'S05-U003');setUnit(p,'S05-U003',u.text,u.html.replace('spa-t55-v1','eng-t55-v1'));})),'language-mismatch');
+ assert.equal(reasonAt(withReceipt(LUKE,[U3],{filePack:'spa.LUK-1-5-25'}).ix),'raw-provenance-unavailable','raw evidence for another pack never applies');
+ assert.equal(reasonAt(withReceipt(LUKE,[OPEN,U3.replace(GALILEA,'Galilea'),CLOSE]).ix),'compiled-only-annotation','a label or text match without the raw tag is not a join');
 });
 test('3. a stale HTML or reference change with unchanged text is invalidated',()=>{
- const html=FIX.fragment,withRaw=mini(LUKE,null,fixtureRaw(LUKE,[html]));
- const [d]=of(withRaw,LUKE,'S05-U003'),[gap]=of(index,LUKE,'S05-U003');
+ const {ix}=withReceipt(LUKE,[U3]),[d]=of(ix,LUKE,'S05-U003'),[gap]=of(index,LUKE,'S05-U003');
  for(const change of [h=>h.replace('>Galilea<','>Galilee<'),h=>h.replace('spa-t55-v1','spa-t56-v1'),h=>h.replace(GALILEA,'Galilea')]){
-  const moved=mini(LUKE,p=>{unitOf(p,'S05-U003').html=change(unitOf(p,'S05-U003').html);},fixtureRaw(LUKE,[html]));
+  const moved=withReceipt(LUKE,[U3],{mutate:p=>{unitOf(p,'S05-U003').html=change(unitOf(p,'S05-U003').html);}}).ix;
   assert.equal(verifyDecision(d,moved).reason,'reference-drift');assert.equal(verifyDecision(gap,moved).reason,'reference-drift');
  }
- assert.equal(verifyDecision(d,mini(LUKE,null,rawOf(LUKE,[realFragment],{revision:'1'.repeat(40)}))).reason,'revision-drift');
+ const bytes=fileOf(LUKE,[U3]),other='6'.repeat(40);assert.equal(verifyDecision(d,mini(LUKE,p=>{p.guide.provenance.revision=other;p.guide.sourceFileSha256=sha(bytes);},[fakeProducerReceipt({bytes,revision:other,path:PATH})])).reason,'revision-drift');
  const [a293]=of(index,'eng.MRK-4-35-41','S03-U017');
  assert.equal(verifyDecision(a293,mini('eng.MRK-4-35-41',p=>{p.resources.images.find(a=>a.id==='a293').sourceFileSha256='f'.repeat(64);})).reason,'revision-drift');
  const drift=mini('eng.MRK-4-35-41',p=>{p.resources.images.find(a=>a.id==='a293').titleProvenance.revision='0'.repeat(40);});assert.equal(of(drift,'eng.MRK-4-35-41','S03-U017')[0].reason,'revision-drift');
  assert.equal(verifyDecision(a293,mini('eng.MRK-4-35-41',p=>{const u=unitOf(p,'S03-U017');setUnit(p,'S03-U017',u.text+' Changed.',u.html+' Changed.');})).reason,'text-drift');
 });
 test('4. an ambiguous anchor abstains',()=>{
- const html=FIX.fragment;
- assert.equal(of(mini(LUKE,null,fixtureRaw(LUKE,[html,html])),LUKE,'S05-U003')[0].reason,'ambiguous-anchor','two raw paragraphs anchor to the unit');
- const twin=mini(LUKE,p=>{const u=unitOf(p,'S05-U003');setUnit(p,'S05-U004',u.text,u.text);},fixtureRaw(LUKE,[html]));
- assert.equal(of(twin,LUKE,'S05-U003')[0].reason,'ambiguous-anchor','two units share the anchor text');
- const split=html.replace(GALILEA,GALILEA.replace('>Galilea<','>Gali<')+GALILEA.replace('>Galilea<','>lea<'));assert.equal(of(mini(LUKE,null,fixtureRaw(LUKE,[split])),LUKE,'S05-U003')[0].reason,'ambiguous-anchor','the tag repeats inside the anchor');
+ assert.equal(reasonAt(withReceipt(LUKE,[U3,U3]).ix),'ambiguous-anchor','two raw paragraphs anchor to the unit');
+ const twin=withReceipt(LUKE,[U3],{mutate:p=>{const u=unitOf(p,'S05-U003');setUnit(p,'S05-U004',u.text,u.text);}}).ix;
+ assert.equal(reasonAt(twin),'ambiguous-anchor','two units share the anchor text');
+ const split=U3.replace(GALILEA,GALILEA.replace('>Galilea<','>Gali<')+GALILEA.replace('>Galilea<','>lea<'));assert.equal(reasonAt(withReceipt(LUKE,[split]).ix),'ambiguous-anchor','the tag repeats inside the anchor');
  assert.ok(!associateAll(twin).some(d=>d.type==='explicit'));
 });
 test('5. denarius a325 and a345 article-only links stay semantic-needed with no choice',()=>{

@@ -2815,11 +2815,11 @@
     },
     {
       "path": "server/fia/preparation/source-associations/README.md",
-      "sha256": "e19669622f37bdb6d9015bbf75fd1448b4e3adba8057414117e1bea0adb70a5e"
+      "sha256": "3afafe78b2e5c1538cdd18e092e6c52811fcf2a651d3b78ee9fb489840618b38"
     },
     {
       "path": "server/fia/preparation/source-associations/index.mjs",
-      "sha256": "324f0b03e7357a844f1ec96283974c7c76c6eaf146a866f207809c5a3a9e0dc4"
+      "sha256": "3105d902512df61fc7c2edc947d00d73d3cd64af0d34b0dc91a6dfbd5bd53fe4"
     },
     {
       "path": "server/fia/preparation/source-associations/retained.mjs",
@@ -2831,7 +2831,7 @@
     },
     {
       "path": "tests/preparation/source-associations.test.mjs",
-      "sha256": "9843bb01e9b1100426a26462bc23075e4cedf8f14da9311b98f1f1911ef79068"
+      "sha256": "7dde20c58e24b6f6f84a29c58f7450e37403479a9710581a094ebfcf96d5a62d"
     },
     {
       "path": "tests/worker-serving/source-associations.test.mjs",
@@ -2839,7 +2839,15 @@
     },
     {
       "path": "tests/preparation/fixtures/source-associations/spa-luk-1-1-4-s05-u003.raw-fragment.json",
-      "sha256": "3825bcaa7aed4876f5c40824cddfda85fcbb879adddd971a2e04c04776e5c103"
+      "sha256": "cbfba7ec2bc60ba87f2c9b54eadb96ba997dcabe9ec06578aa84055c26271ecc"
+    },
+    {
+      "path": "server/fia/preparation/source-associations/producer-receipt.mjs",
+      "sha256": "2f118873427192edefe56d546a424ec8ddba2ec83cca66f63afa55a15214f6a1"
+    },
+    {
+      "path": "tests/preparation/support/fake-guide-producer.mjs",
+      "sha256": "cbd000774e82c40c3efef81b829e8a74ac048ea5e3cbd73ac6439fbdde9981fa"
     }
   ],
   "generatedFiles": [
