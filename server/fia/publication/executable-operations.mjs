@@ -26,6 +26,14 @@ export function createExecutableOperations({reads,service,publication,storage,vi
   if(Object.hasOwn(expectation,'expectedPublicationGeneration')){const {expectedPublicationGeneration,...rest}=args;args=rest;}
   if(!validPresentationDemand(args))return refused();
   if(!service)return envelope('unavailable',null,'presentation-preparation-unavailable');
+  // OFFLINE L39: a supplied expectation is compared with the current pointer before any work, so a stale
+  // demand never starts or joins durable work. The publication compares again, and swaps atomically.
+  if(Object.hasOwn(expectation,'expectedPublicationGeneration')){
+   if(typeof publication?.currentGeneration!=='function')return envelope('blocked',null,'publication-generation-stale');
+   const current=await typed(()=>publication.currentGeneration(args.packId),reason=>({refusal:reason}));
+   if(current?.refusal)return envelope('blocked',null,current.refusal);
+   if(current!==expectation.expectedPublicationGeneration)return envelope('blocked',null,'publication-generation-stale');
+  }
   const result=await typed(()=>service.request(structuredClone(args),{subscriberId:crypto.randomUUID()}),reason=>({status:'blocked',reason}));
   if(!hash(result?.jobId))return envelope(['blocked','unavailable'].includes(result?.status)?result.status:'blocked',null,result?.reason??'preparation-identity-invalid');
   const key='executable-demand:'+result.jobId;

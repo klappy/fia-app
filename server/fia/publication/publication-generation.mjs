@@ -24,6 +24,11 @@ export function validateBaseManifest(bytes,{packId,baseRevision}){
  const m=decode(bytes);
  need(object(m)&&m.schema===1&&m.packId===packId&&m.presentationRevision===baseRevision&&typeof m.revision==='string'&&m.revision.length>0&&Array.isArray(m.files)&&m.files.length>0&&m.files.length<=4096,'base-manifest-invalid');
  need(!Object.hasOwn(m,'deliveryRevision')||hash(m.deliveryRevision),'base-manifest-invalid');
+ // OFFLINE L15/L97: a present deliveryRevision names the delivery sidecar the base lists; absence is valid only
+ // when no file or variant depends on delivery metadata; a dependent value always equals the manifest's.
+ const dependents=m.files.flatMap(f=>[f,...(object(f.variants)?Object.values(f.variants):[])]).filter(f=>object(f)&&(Object.hasOwn(f,'deliveryURL')||Object.hasOwn(f,'deliveryRevision')));
+ if(Object.hasOwn(m,'deliveryRevision'))need(m.files.some(f=>f.group==='core'&&f.path===`/content/delivery/${packId}/${m.deliveryRevision}.json`)&&dependents.every(f=>f.deliveryRevision===m.deliveryRevision),'base-manifest-invalid');
+ else need(dependents.length===0,'base-manifest-invalid');
  const paths=new Set();
  for(const f of m.files){need(object(f)&&typeof f.path==='string'&&f.path.startsWith('/')&&!f.path.startsWith('//')&&!paths.has(f.path)&&hash(f.sha256)&&Number.isSafeInteger(f.bytes)&&f.bytes>0&&typeof f.group==='string','base-manifest-invalid');paths.add(f.path);}
  return m;
@@ -36,7 +41,8 @@ export async function buildBoundManifest(base,{packId,executionRevision,baseRevi
  need(base?.packId===packId&&base.presentationRevision===baseRevision&&hash(executionRevision)&&hash(mediaAssetsSha256),'bound-manifest-identity');
  // Native files follow the base files; a path the base already lists must be byte-identical, never replaced.
  const files=structuredClone(base.files),byPath=new Map(files.map(f=>[f.path,f]));
- for(const f of native){const prior=byPath.get(f.path);if(prior){need(prior.sha256===f.sha256&&prior.bytes===f.bytes,'bound-manifest-conflict');continue;}files.push(structuredClone(f));byPath.set(f.path,f);}
+ // A native path never overlaps a base path (review N4): the base files are mirrored, never shared or replaced.
+ for(const f of native){need(!byPath.has(f.path),'bound-manifest-conflict');files.push(structuredClone(f));byPath.set(f.path,f);}
  const content={schema:1,packId,presentationRevision:baseRevision,...(Object.hasOwn(base,'deliveryRevision')?{deliveryRevision:base.deliveryRevision}:{}),executionRevision,mediaIdentity:{packId,revision:baseRevision},mediaAssetsSha256,files};
  const revision=await sha256(new TextEncoder().encode(canonicalJSONString(content)));
  const manifest={...content,id:`bound-offline:${revision}`,revision};
@@ -48,7 +54,9 @@ export async function buildBoundManifest(base,{packId,executionRevision,baseRevi
 // F7a2 (OFFLINE L51-L53): each bound play-bound-audio artifact maps its verified delivery to one native
 // descriptor {path,group:'audio',sha256,bytes,mime}, at its exact same-origin path. Identical descriptors are
 // deduplicated (several ranges may share one recording); conflicting descriptors at one path fail.
-const AUDIO_MIME=new Set(['audio/mpeg','audio/wav','audio/ogg']);
+// The approved route is the only bound audio path (review N3): /v1/approved-audio/<binding>/<media>.(ogg|mp3),
+// the extension matching the MIME and the media segment equal to its SHA-256. The binding never produces WAV.
+const AUDIO_EXT={'audio/ogg':'ogg','audio/mpeg':'mp3'},APPROVED_PATH=/^\/v1\/approved-audio\/[a-f0-9]{64}\/([a-f0-9]{64})\.(ogg|mp3)$/;
 export function nativeAudioFiles(boundArtifacts){
  const files=new Map();
  for(const a of boundArtifacts){
@@ -56,11 +64,28 @@ export function nativeAudioFiles(boundArtifacts){
   let v;try{v=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(a.bytes));}catch{throw Error('bound-artifact-invalid');}
   if(v?.schema!=='fia-bound-narration-audio@1')continue;
   const d=v.delivery,url=d?.url;
-  need(typeof url==='string'&&url.startsWith('/')&&!url.startsWith('//')&&!/[?#\\]|\/\.\.?(?:\/|$)/.test(url)&&url.length<=1024&&hash(d.sha256)&&Number.isSafeInteger(d.bytes)&&d.bytes>0&&AUDIO_MIME.has(d.mime),'bound-audio-delivery-invalid');
+  const m=typeof url==='string'&&APPROVED_PATH.exec(url);
+  need(m&&hash(d.sha256)&&m[1]===d.sha256&&Number.isSafeInteger(d.bytes)&&d.bytes>0&&AUDIO_EXT[d.mime]===m[2],'bound-audio-delivery-invalid');
   const file={path:url,group:'audio',sha256:d.sha256,bytes:d.bytes,mime:d.mime},prior=files.get(url);
   need(!prior||canonicalJSONString(prior)===canonicalJSONString(file),'bound-manifest-conflict');files.set(url,file);
  }
  return [...files.values()];
+}
+
+// The bound-manifest builder is versioned inside each publication row (PR295 review N1; OFFLINE L43: a
+// newer build alone is not revocation). A row is rebuilt for verification with exactly the rules of the
+// builder version that published it; every earlier version stays here as a pure function.
+export const BOUND_MANIFEST_BUILDERS=Object.freeze({
+ // fia-bound-manifest@1 (F7a1): the base files and the identity fields, no native files.
+ 'fia-bound-manifest@1':(base,identity)=>buildBoundManifest(base,identity),
+ // fia-bound-manifest@2 (F7a2): @1 plus one native audio file per bound approved recording (OFFLINE L51-L53).
+ 'fia-bound-manifest@2':(base,identity,{boundArtifacts=[]}={})=>buildBoundManifest(base,identity,nativeAudioFiles(boundArtifacts)),
+});
+export const CURRENT_BOUND_MANIFEST_BUILDER='fia-bound-manifest@2';
+export function boundManifestFor(version,base,identity,inputs={}){
+ const build=Object.hasOwn(BOUND_MANIFEST_BUILDERS,version)?BOUND_MANIFEST_BUILDERS[version]:null;
+ need(build,'bound-manifest-builder-unknown');
+ return build(base,identity,inputs);
 }
 
 // generation = SHA256(UTF8(canonicalJSONString(preimage))) over the closed preimage (OFFLINE L25-L31).
