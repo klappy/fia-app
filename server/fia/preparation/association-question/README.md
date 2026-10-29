@@ -41,7 +41,8 @@ The provider answers in PR289's gold output shape, field for field, with every k
 The rules:
 - `null` means "not decided" and stays `null`; no default is ever filled in.
 - `abstain` has `association` and `display` set to `null`.
-- `none` has `requested: []`.
+- `none` has `requested: []` and every display field `null`: it asks for no visual, so display content on it is rejected.
+- When the primary pair is set, both `primaryCollection` and `primaryAssetId` must be strings.
 - Every reference must be in the supplied candidate set. A bare display id must name exactly one candidate.
 - `fulfills` must be the target unit id.
 - List order is kept, because PR289 scores related and insertion order.

@@ -70,6 +70,10 @@ function parse(raw, request) {
   }
   exact(d, ['primaryCollection', 'primaryAssetId', 'relatedAssetIds', 'insertions'], 'display');
   if ((d.primaryCollection === null) !== (d.primaryAssetId === null)) reject('primary-half-null');
+  // Both primary fields are strings or both null; arrays/numbers/objects must not reach the template-literal lookup.
+  if (d.primaryAssetId !== null && (typeof d.primaryCollection !== 'string' || typeof d.primaryAssetId !== 'string')) reject('primary-not-string');
+  // A 'none' decision asks for no visual, so it carries no display content.
+  if (raw.decision === 'none' && Object.values(d).some(v => v !== null)) reject('none-with-display');
   if (d.primaryAssetId !== null && !byRef.has(`${d.primaryCollection}:${d.primaryAssetId}`)) reject('primary-out-of-candidate-set');
   let relatedAssetIds = null;
   if (d.relatedAssetIds !== null) {
