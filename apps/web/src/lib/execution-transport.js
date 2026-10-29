@@ -92,7 +92,8 @@ export function createExecutionTransport({fetch:fetchArtifact=globalThis.fetch}=
   return value;
  }
  transport.preparePresentation=async(demand,{signal}={})=>{
-  if(!shape(demand,['packId','baseRevision','sourceRevision','capability'])||!text(demand.packId)||typeof demand.baseRevision!=='string'||!hashPattern.test(demand.baseRevision)||typeof demand.sourceRevision!=='string'||!/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(demand.sourceRevision)||demand.capability!=='executable-presentation')throw Error('The server presentation demand is invalid.');
+  // expectedPublicationGeneration (OFFLINE, F7a1) rides a server-issued demand unchanged: a SHA-256 or null.
+  if(!shape(demand,['packId','baseRevision','sourceRevision','capability',...(demand&&Object.hasOwn(demand,'expectedPublicationGeneration')?['expectedPublicationGeneration']:[])])||demand&&Object.hasOwn(demand,'expectedPublicationGeneration')&&demand.expectedPublicationGeneration!==null&&!hashPattern.test(demand.expectedPublicationGeneration??'')||!text(demand.packId)||typeof demand.baseRevision!=='string'||!hashPattern.test(demand.baseRevision)||typeof demand.sourceRevision!=='string'||!/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(demand.sourceRevision)||demand.capability!=='executable-presentation')throw Error('The server presentation demand is invalid.');
   signal?.throwIfAborted();
   return presentationStatus('/v1/presentation-preparations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(demand),signal});
  };

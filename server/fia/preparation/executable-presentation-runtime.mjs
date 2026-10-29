@@ -112,7 +112,11 @@ export async function createExecutableRuntime({ctx,env,snapshot,capabilities={}}
  // Cache misses are bookkeeping only (cookbook package-luke RULING.md § DEV publication
  // conflict): one structured log line per miss, never a change to the answer.
  const diagnose=capabilities.diagnose??(event=>console.warn(JSON.stringify(event)));
- const publication=createExecutableOverlay({storage:ctx.storage,artifacts,base,eligible,validate:verifier(jobs,true),diagnose});
+ // F7a1: the build pins each passage's offline manifest in the snapshot; a publication retains exactly those
+ // verified bytes as its base manifest (OFFLINE L23). Without a pin, publication stays revision-keyed.
+ const offlinePins=new Map((Array.isArray(snapshot.offlineManifests)?snapshot.offlineManifests:[]).map(d=>[d.packId,d]));
+ const baseManifests=offlinePins.size?{read:async packId=>{const d=offlinePins.get(packId);need(d&&d.path===`/offline/${packId}.json`&&/^[a-f0-9]{64}$/.test(d.sha256)&&Number.isSafeInteger(d.bytes)&&d.bytes>0&&d.bytes<=1048576,'base-manifest-unpinned');const item=await bounded(()=>readStaticArtifact({staticPath:d.path,descriptor:{sha256:d.sha256,bytes:d.bytes,mime:'application/json'}},path=>env.ASSETS.fetch(new Request(new URL(path,env.FIA_API_ORIGIN),{redirect:'manual'}))));need(typeof item?.content==='string','base-manifest-unavailable');const bytes=new TextEncoder().encode(item.content);need(bytes.length===d.bytes&&await sha256(bytes)===d.sha256,'base-manifest-unavailable');return {bytes,sha256:d.sha256};}}:null;
+ const publication=createExecutableOverlay({storage:ctx.storage,artifacts,base,eligible,validate:verifier(jobs,true),diagnose,baseManifests});
  const reads=createReadOperations(publication),readPack=reads.readPack;
  // A row under a superseded build fails its verifier, so the overlay already serves the
  // base (cache miss); the base read gains its demand here, and an explicit Open
@@ -121,7 +125,9 @@ export async function createExecutableRuntime({ctx,env,snapshot,capabilities={}}
  // executable record being served, from its verified presentation bytes. Reads never fetch or decode.
  const readArtifact=reads.readArtifact;
  const withVisualResources=async record=>{try{const artifact=await readArtifact({sha256:record.revision});if(artifact?.status!=='ready'||typeof artifact.content!=='string')return record;const visualResources=declareVisualResources({record,presentation:JSON.parse(artifact.content)});return visualResources?{...record,execution:{...record.execution,visualResources}}:record;}catch{return record;}};
- reads.readPack=async args=>{const asking=args?.execution===VISUAL_RESOURCES_CAPABILITY;let record=await readPack(args);if(record?.status==='ready'&&record.execution&&!args.revision&&record.execution.provenance?.recipeRevision!==recipeRevision)record=await baseReads.readPack({packId:args.packId});if(record?.status==='ready'&&record.execution)return asking?withVisualResources(record):record;if(record?.status!=='ready')return record;const sourceRevision=record.authority?.rawInventoryCommit;if(record.packId===args.packId&&preparable(record,sourceRevision))return {...record,preparationDemand:{packId:args.packId,baseRevision:record.revision,sourceRevision,capability:'executable-presentation'}};return record;};
+ // mediaManifest and publication reach only a page that asks (PLAN §3 Skew across builds).
+ const withoutGeneration=record=>{if(!record.execution||!Object.hasOwn(record.execution,'publication'))return record;const {publication:_p,mediaManifest:_m,...execution}=record.execution;return {...record,execution};};
+ reads.readPack=async args=>{const asking=args?.execution===VISUAL_RESOURCES_CAPABILITY;let record=await readPack(args);if(record?.status==='ready'&&record.execution&&!args.revision&&record.execution.provenance?.recipeRevision!==recipeRevision)record=await baseReads.readPack({packId:args.packId});if(record?.status==='ready'&&record.execution)return asking?withVisualResources(record):withoutGeneration(record);if(record?.status!=='ready')return record;const sourceRevision=record.authority?.rawInventoryCommit;if(record.packId===args.packId&&preparable(record,sourceRevision))return {...record,preparationDemand:{packId:args.packId,baseRevision:record.revision,sourceRevision,capability:'executable-presentation',...(asking&&baseManifests?{expectedPublicationGeneration:await publication.currentGeneration(args.packId)}:{})}};return record;};
  // visuals: the visual-original@1 routing port (Otto's seat, inside FiaPreparationJobs). Absent until
  // routed, so a visualDemand is admitted and then answered typed visual-routing-unavailable.
  const ops=createExecutableOperations({reads,service,publication,storage:ctx.storage,visuals:capabilities.visuals??null});
@@ -133,6 +139,10 @@ export function createExecutableWorkerOperations({env,fallback}){
  const ops=Object.fromEntries(['readPack','readArtifact','preparePresentation','readPresentationPreparation'].map(operation=>[operation,args=>call(operation,args)]));
  // Worker/object deploy overlap (PLAN §3): the object may still run the previous build, whose reads
  // refuse the execution capability. Retry once without it, so the caller gets the old shape.
+ // The same overlap for a demand that carries expectedPublicationGeneration (F7a1): a previous-build object
+ // refuses the unknown key, so it is retried once without it; the publication still compares-and-swaps on
+ // the pointer it captures, so nothing is adopted over a newer publication.
+ ops.preparePresentation=async args=>{const result=await call('preparePresentation',args);if(args&&typeof args==='object'&&!Object.hasOwn(args,'visualDemand')&&(args.expectedPublicationGeneration===null||/^[a-f0-9]{64}$/.test(args.expectedPublicationGeneration??''))&&result?.status==='refused'&&result.code==='invalid-request'){const {expectedPublicationGeneration,...plain}=args;return call('preparePresentation',plain);}return result;};
  ops.readPack=async args=>{const result=await call('readPack',args);if(args&&typeof args==='object'&&args.execution==='2'&&result?.status==='refused'&&result.code==='invalid-request'){const {execution,...plain}=args;return call('readPack',plain);}return result;};
  return ops;
 }

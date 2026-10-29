@@ -71,7 +71,7 @@ async function releases(){
   // projector: the source-action projector source of an earlier release, bundled in
   // place of the current module so the persisted state carries that release's rows.
   const bundled=await build({stdin:{contents:entry,resolveDir:process.cwd(),sourcefile:'transition-entry.mjs',loader:'js'},bundle:true,platform:'browser',format:'esm',external:['node:*'],write:false,plugins:[{name:'transition-snapshot',setup(b){b.onResolve({filter:/generated\/snapshot\.json$/},()=>({path:'snapshot',namespace:'transition'}));b.onLoad({filter:/.*/,namespace:'transition'},()=>({contents:JSON.stringify(snapshot),loader:'json'}));if(projector)b.onLoad({filter:/source-action-projector\.mjs$/},()=>({contents:projector,loader:'js',resolveDir:dirname(projectorPath)}));if(!trusted)b.onLoad({filter:/trusted-source-actions\.mjs$/},()=>({contents:'export const createTrustedSourceActionComposer=()=>async()=>[];export const trustedExecutionRecipe=recipe=>recipe;',loader:'js'}));}}]});
-  return new Miniflare({...convertV4MiniflareOptions({modules:true,script:bundled.outputFiles[0].text,compatibilityDate:'2026-09-01',compatibilityFlags:['nodejs_compat'],bindings:{FIA_API_ORIGIN:origin},durableObjects:{FIA_PREPARATION_JOBS:{className:'FiaPreparationJobs',useSQLite:true}},r2Buckets:['FIA_ORIGINALS'],serviceBindings:{ASSETS:async request=>{const path=new URL(request.url).pathname;assert.ok(/^\/content\/[a-zA-Z0-9._/-]+$/.test(path)&&!path.includes('..'),path);let bytes;try{bytes=indexes.has(path)?indexes.get(path):await readFile((path.startsWith('/content/source-guides/')?dir:publicRoot)+path);}catch(error){if(error.code!=='ENOENT')throw error;return new Response('Not found',{status:404});}return new Response(bytes,{headers:{'Content-Type':'application/json','Content-Length':String(bytes.length)}});}},outboundService:()=>{counts.external++;throw Error('External work forbidden');}}),resourcePersistencePath:join(dir,'storage')});
+  return new Miniflare({...convertV4MiniflareOptions({modules:true,script:bundled.outputFiles[0].text,compatibilityDate:'2026-09-01',compatibilityFlags:['nodejs_compat'],bindings:{FIA_API_ORIGIN:origin},durableObjects:{FIA_PREPARATION_JOBS:{className:'FiaPreparationJobs',useSQLite:true}},r2Buckets:['FIA_ORIGINALS'],serviceBindings:{ASSETS:async request=>{const path=new URL(request.url).pathname;assert.ok(/^\/(?:content|offline)\/[a-zA-Z0-9._/-]+$/.test(path)&&!path.includes('..'),path);let bytes;try{bytes=indexes.has(path)?indexes.get(path):await readFile((path.startsWith('/content/source-guides/')||path.startsWith('/offline/')?dir:publicRoot)+path);}catch(error){if(error.code!=='ENOENT')throw error;return new Response('Not found',{status:404});}return new Response(bytes,{headers:{'Content-Type':'application/json','Content-Length':String(bytes.length)}});}},outboundService:()=>{counts.external++;throw Error('External work forbidden');}}),resourcePersistencePath:join(dir,'storage')});
  }
  const current={...base,approvedAudioProofIndex:proof.descriptor};
  // A released build's snapshot carries the stored index and the catalog authority that
@@ -80,7 +80,7 @@ async function releases(){
  const released={...base,approvedAudioProofIndex:D3BE5884,generalizedAuthority:{...extension.authority,catalog:{...extension.authority.catalog,sha256:stored.authority.registrySha256},sourceCommit:stored.authority.sourceRevision}};
  const driftPolicy=await sha256(canonicalJSONString({policy:'fia-source-to-app/7fa17af806c139cfc353cace39fa6d50ed9e061b',approvedAudio:drift}));
  const binding=stored.bindings.find(b=>b.packId==='eng.MRK-1-14-20');assert.deepEqual(binding?.media,APPROVED_MEDIA,'the stored index binds the retained recording');
- return {dir,counts,driftPolicy,before:async()=>runtime(base,{projector:await priorProjector()}),priorRecipe:async()=>runtime(released,{projector:await priorProjector()}),recipe2:()=>runtime(released),after:()=>runtime(current,{trusted:true}),untrusted:()=>runtime(current),drifted:()=>runtime({...base,approvedAudioProofIndex:drift})};
+ return {dir,counts,driftPolicy,before:async()=>runtime(base,{projector:await priorProjector()}),priorRecipe:async()=>runtime(released,{projector:await priorProjector()}),recipe2:()=>runtime(released),after:()=>runtime(current,{trusted:true}),generations:pins=>runtime({...current,offlineManifests:pins},{trusted:true}),untrusted:()=>runtime(current),drifted:()=>runtime({...base,approvedAudioProofIndex:drift})};
 }
 // Explicit seeding, as an operator retains DEV's recording: one immutable R2 media object
 // plus its seed receipt. Nothing in a read or a preparation acquires it.
@@ -416,6 +416,51 @@ test('an asking read declares a1400 then c4 as preparable; a visual demand is ad
   const other=await read('/v1/packs/eng.MRK-1-21-28'),otherAsking=await read('/v1/packs/eng.MRK-1-21-28?execution=2');assert.deepEqual(otherAsking.body,other.body);
   assert.equal(r.counts.external,0,'reads and demands fetch nothing');
  }finally{await mf.dispose();await rm(r.dir,{recursive:true,force:true});}
+});
+
+// F7a1 two-build regression (OFFLINE-EXECUTION L96, "Publication generations"): the same presentation under
+// two byte-different shells. Build A publishes generation A from its pinned base manifest. Build B serves a
+// different offline manifest at the same path: A stays current and exactly readable from its own retained
+// bytes (a newer shell alone is not revocation) until an explicit demand that names A adopts generation B.
+// Both coexist with the same revision; the legacy revision selector is ambiguous; a stale expectation is
+// typed; an identical generation is reused; and only an asking page sees publication and mediaManifest.
+test('two builds with different shells: generations coexist, exact A stays readable, stale expectations are typed',async()=>{
+ const r=await releases(),packId='eng.MRK-1-14-20',registry=JSON.parse(await readFile(publicRoot+'/content/registry.json','utf8')),d=registry.packs.find(p=>p.id===packId);
+ const {writeFile,mkdir}=await import('node:fs/promises');await mkdir(join(r.dir,'offline'),{recursive:true});
+ const shell=async label=>{const manifest={schema:1,packId,presentationRevision:d.revision,deliveryRevision:'b'.repeat(64),revision:label,files:[{path:'/index.html',bytes:label.length,sha256:await sha256(new TextEncoder().encode(label)),group:'core'},{path:d.presentation.url,bytes:d.presentation.bytes,sha256:d.revision,group:'core'}]};const bytes=new TextEncoder().encode(JSON.stringify(manifest));await writeFile(join(r.dir,'offline',packId+'.json'),bytes);return {pins:[{packId,path:`/offline/${packId}.json`,sha256:await sha256(bytes),bytes:bytes.length}],bytes};};
+ let mf=null;
+ try{
+  const A=await shell('shell-a');mf=await r.generations(A.pins);let read=http(mf);
+  const base=await read('/v1/packs/'+packId+'?execution=2');assert.equal(base.status,200);assert.equal(base.body.preparationDemand.expectedPublicationGeneration,null,'no generation is selected yet');
+  const plainDemand=(await read('/v1/packs/'+packId)).body.preparationDemand;assert.equal(Object.hasOwn(plainDemand,'expectedPublicationGeneration'),false,'a page that does not ask gets today\'s demand');
+  const readyA=await prepare(read,base.body.preparationDemand);assert.equal(readyA.status,200,JSON.stringify(readyA.body));
+  const revision=readyA.body.record.revision,pinA=readyA.body.record.execution.publication,mediaA=readyA.body.record.execution.mediaManifest;
+  assert.equal(pinA.schema,'fia-executable-publication-pin@1');assert.deepEqual(pinA.baseManifest,{id:`base-offline:${A.pins[0].sha256}`,sha256:A.pins[0].sha256,bytes:A.pins[0].bytes,mime:'application/json'});
+  const asking=await read('/v1/packs/'+packId+'?execution=2'),plain=await read('/v1/packs/'+packId);
+  assert.deepEqual(asking.body.execution.publication,pinA);assert.deepEqual(asking.body.execution.mediaManifest,mediaA);
+  assert.equal(plain.body.execution.publication,undefined);assert.equal(plain.body.execution.mediaManifest,undefined,'publication and mediaManifest reach only an asking page');
+  const bound=(await read('/v1/artifacts/'+mediaA.sha256)).body;
+  assert.equal(bound.id,mediaA.id);assert.equal(bound.executionRevision,revision);assert.equal(bound.presentationRevision,d.revision);assert.deepEqual(bound.mediaIdentity,{packId,revision:d.revision});assert.equal(bound.deliveryRevision,'b'.repeat(64));assert.equal(bound.files[0].sha256,await sha256(new TextEncoder().encode('shell-a')));
+  assert.deepEqual((await read('/v1/artifacts/'+A.pins[0].sha256)).body,JSON.parse(new TextDecoder().decode(A.bytes)),'the retained base manifest is readable byte for byte');
+  assert.equal((await read(`/v1/packs/${packId}?revision=${revision}`)).body.revision,revision,'one retained generation: the legacy selector answers');
+  await mf.dispose();mf=null;
+  const B=await shell('shell-b');mf=await r.generations(B.pins);read=http(mf);const call=mcp(mf);
+  const stillA=await read('/v1/packs/'+packId+'?execution=2');assert.equal(stillA.status,200);assert.deepEqual(stillA.body.execution.publication,pinA,'a newer shell alone is not revocation');
+  const demand={packId,baseRevision:d.revision,sourceRevision:plain.body.execution.sourceRevision,capability:'executable-presentation'};
+  const stale=await prepare(read,{...demand,expectedPublicationGeneration:'f'.repeat(64)});assert.equal(stale.status,409);assert.equal(stale.body.reason,'publication-generation-stale');
+  const readyB=await prepare(read,{...demand,expectedPublicationGeneration:pinA.generation});assert.equal(readyB.status,200,JSON.stringify(readyB.body));
+  const pinB=readyB.body.record.execution.publication;assert.notEqual(pinB.generation,pinA.generation);assert.equal(readyB.body.record.revision,revision,'same presentation, new generation');
+  assert.deepEqual((await read('/v1/packs/'+packId+'?execution=2')).body.execution.publication,pinB);
+  const exactA=await read(`/v1/packs/${packId}?revision=${revision}&generation=${pinA.generation}&execution=2`);assert.equal(exactA.status,200);assert.deepEqual(exactA.body.execution.publication,pinA,'exact A stays readable from its own retained base manifest');
+  assert.deepEqual(await call('read_pack',{packId,revision,generation:pinA.generation,execution:'2'}),exactA.body,'HTTP/MCP parity');
+  assert.deepEqual((await read(`/v1/packs/${packId}?revision=${revision}&generation=${pinB.generation}&execution=2`)).body.execution.publication,pinB);
+  const ambiguous=await read(`/v1/packs/${packId}?revision=${revision}`);assert.equal(ambiguous.status,404);assert.deepEqual(ambiguous.body,{status:'unavailable',reason:'publication-generation-ambiguous'});
+  const missing=await read(`/v1/packs/${packId}?revision=${revision}&generation=${'0'.repeat(64)}`);assert.equal(missing.status,404);assert.equal(missing.body.reason,'publication-generation-unavailable');
+  assert.equal((await read(`/v1/packs/${packId}?generation=${pinA.generation}`)).status,400,'generation needs revision');
+  const late=await prepare(read,{...demand,expectedPublicationGeneration:pinA.generation});assert.equal(late.status,409);assert.equal(late.body.reason,'publication-generation-stale');
+  const again=await prepare(read,{...demand,expectedPublicationGeneration:pinB.generation});assert.equal(again.status,200);assert.deepEqual(again.body.record.execution.publication,pinB);assert.deepEqual(again.body.record.execution.provenance,readyB.body.record.execution.provenance,'an identical generation is reused with its original provenance');
+  assert.equal(r.counts.external,0);
+ }finally{if(mf)await mf.dispose();await rm(r.dir,{recursive:true,force:true});}
 });
 
 test('resolver: base id fia-mark-authentic@1 for eng.MRK-1-1-13 is a typed refusal from the service, never a thrown 500',async()=>{
