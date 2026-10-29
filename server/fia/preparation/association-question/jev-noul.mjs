@@ -165,7 +165,9 @@ export function compose(probabilities, keys, bands, videoKeys = {}) {
   return {raw: {decision: 'associate', association: {requested: requested.map(i => ref(keys[i])),
     optionalCompanions: companionIdx === null ? null : companionIdx.map(v => ref(videoKeys[v])), companionPairs: null},
     display: {primaryCollection: primary?.collection ?? null, primaryAssetId: primary?.id ?? null, relatedAssetIds: null, insertions: null}},
-    reason: primary ? 'associate' : 'associate-primary-undecided', requestedIdx: requested, companionIdx, primaryIdx: primaries.length === 1 ? primaries[0] : null};
+    reason: primary ? 'associate' : 'associate-primary-undecided', requestedIdx: requested, companionIdx, primaryIdx: primaries.length === 1 ? primaries[0] : null,
+    // Call-1 primary answers that forbid promoting a visual to primary later: every confident "yes" and confident "no".
+    primaryYes: primaries, primaryNo: requested.filter(i => probabilities[`primary_${i}`] <= bands.falseMax)};
 }
 
 /**
@@ -200,9 +202,14 @@ export function composeFollowUp(first, p2, keys, videoKeys, bands, unitId) {
   else if (p2) order = orderFrom(p2, r, bands);
   if (order === null) notes.push(r.length > 1 && p2 ? 'order-uncertain-or-inconsistent' : 'order-not-asked');
   else {
-    if (first.primaryIdx !== null && first.primaryIdx !== order[0]) {
+    // A call-1 primary answer contradicts promoting order[0] when: a decided primary is not order[0]; call 1 gave two or
+    // more confident primaries; or call 1 answered a confident "no" for order[0]. Each case nulls every display field.
+    const contradiction = first.primaryIdx !== null ? (first.primaryIdx !== order[0] ? 'contradiction-primary-vs-order' : null)
+      : (first.primaryYes?.length ?? 0) > 1 ? 'contradiction-several-primaries'
+      : (first.primaryNo ?? []).includes(order[0]) ? 'contradiction-order-first-not-primary' : null;
+    if (contradiction) {
       out.display = {primaryCollection: null, primaryAssetId: null, relatedAssetIds: null, insertions: null};
-      notes.push('contradiction-primary-vs-order');
+      notes.push(contradiction);
     } else {
       const focal = ref(keys[order[0]]);
       out.display = {primaryCollection: focal.collection, primaryAssetId: focal.id, relatedAssetIds: order.map(i => ref(keys[i]).id),
@@ -272,7 +279,9 @@ export function registrationGaps(registration, entitlement) {
     if (plan === null) gaps.push('registration-budget-missing');
     else if (!Number.isSafeInteger(registration.authorizedCalls) || registration.authorizedCalls < plan) gaps.push('authorized-calls-below-registered-plan');
     const l = registration.limits ?? {};
-    if (l.maxQuestions !== LIMITS.maxQuestions || l.maxStateBytes !== LIMITS.maxStateBytes || l.callsPerCase !== LIMITS.maxCallsPerCase) gaps.push('registration-limits-mismatch');
+    if (l.maxQuestions !== LIMITS.maxQuestions || l.maxStateBytes !== LIMITS.maxStateBytes || l.callsPerCase !== LIMITS.maxCallsPerCase
+      || l.maxVisualCandidates !== LIMITS.maxVisualCandidates || l.maxVideoCandidates !== LIMITS.maxVideoCandidates
+      || l.maxOrderedRequested !== LIMITS.maxOrderedRequested || l.retries !== 0) gaps.push('registration-limits-mismatch');
   }
   if (!(plain(entitlement) && entitlement.verified === true && typeof entitlement.evidence === 'string' && entitlement.evidence.trim() && typeof entitlement.route === 'string')) gaps.push('entitlement-unverified');
   return gaps;

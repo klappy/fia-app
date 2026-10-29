@@ -62,7 +62,7 @@ The composer uses the language's calibrated bands, `falseMax < trueMin`. A proba
    - `primaryCollection` and `primaryAssetId` are the first related asset;
    - `insertions` is `{activityId: '<unitId>-resource-<assetId>', assetId, fulfills: '<unitId>'}` for each related asset after the first.
 
-   If a decided call-1 primary disagrees with the decided order, that is a contradiction, and every display field becomes null. If the order is undecided, `relatedAssetIds` and `insertions` stay null, and the call-1 primary stands.
+   A call-1 primary answer that contradicts the decided order sets every display field to null. That happens when a decided primary is not the first related asset, when call 1 gave two or more confident primaries, or when call 1 answered a confident "no" for the first related asset. An undecided primary is filled from the order only when no call-1 primary answer contradicts it. If the order is undecided, `relatedAssetIds` and `insertions` stay null, and the call-1 primary stands.
 5. **`companionPairs`.** Each pair is `{from: requested visual, to: video}` for each certain "yes" `pair_<v>_<i>`. An uncertain answer, or a companion that accompanies nothing, leaves the field null. With no companions it is `[]`.
 
 The composed object then goes through `normalizeOutput`. Its authority is always `model-resolved`, and every reason is recorded in `provenance.jev.notes`.

@@ -352,3 +352,36 @@ test('identity rules 5 and 6: a missing identity is never stamped; provenance ke
   assert.equal(both.output.decision, 'associate');
   assert.deepEqual(both.provenance.jev.calls[0].identity, {observed: {model_version: 'jev-fixture-1', version: 'jev-fixture-1'}, resolved: 'jev-fixture-1', suppliedBy: ['model_version', 'version'], status: 'resolved', reason: null});
 });
+
+// Review 5695150955 N1: an undecided call-1 primary is promoted from the order only when no call-1 primary answer contradicts it.
+test('N1 (a): a confident "no" primary answer for order[0] is a contradiction, never a promotion (recorded wire)', async () => {
+  const calibration = await calibrationFromFixtures();
+  // eng.MRK-1-14-20:S02-U008 as recorded, but call 1 answers primary "no" (0.05) for every candidate; call 2 still orders c4 first.
+  const rec = {...wire, records: wire.records.map(r => r.caseId === 'eng.MRK-1-14-20:S02-U008' && r.call === 1
+    ? {...r, response: {...r.response, answers: Object.fromEntries(Object.entries(r.response.answers).map(([k, v]) => [k, k.startsWith('primary_') ? {...v, noul: 0.05} : v]))}} : r)};
+  const doc = await runAdapter({casesFile: {...inputs, cases: [caseOf('eng.MRK-1-14-20:S02-U008')]}, transport: createJevNoulTransport({mode: 'recorded-wire', AI: createRecordedJevWire(rec), calibration})});
+  const d = doc.decisions[0];
+  assert.deepEqual(d.output.display, {primaryCollection: null, primaryAssetId: null, relatedAssetIds: null, insertions: null});
+  assert.ok(d.provenance.jev.notes.includes('contradiction-order-first-not-primary'));
+  assert.equal(d.output.decision, 'associate', 'the association itself still stands');
+});
+
+test('N1 (b): two confident call-1 primaries are a contradiction, never a promotion (recorded wire)', async () => {
+  const calibration = await calibrationFromFixtures();
+  const {request} = await buildRequest(caseOf('eng.MRK-1-14-20:S02-U008'));
+  const q = buildQuestions(request), both = Object.entries(q.keys).filter(([, id]) => id === 'FIAMaps:c4' || id === 'FIAImages:a1400').map(([i]) => i);
+  const rec = {...wire, records: wire.records.map(r => r.caseId === 'eng.MRK-1-14-20:S02-U008' && r.call === 1
+    ? {...r, response: {...r.response, answers: {...r.response.answers, ...Object.fromEntries(both.map(i => [`primary_${i}`, {type: 'noul', noul: 0.9}]))}}} : r)};
+  const doc = await runAdapter({casesFile: {...inputs, cases: [caseOf('eng.MRK-1-14-20:S02-U008')]}, transport: createJevNoulTransport({mode: 'recorded-wire', AI: createRecordedJevWire(rec), calibration})});
+  const d = doc.decisions[0];
+  assert.deepEqual(d.output.display, {primaryCollection: null, primaryAssetId: null, relatedAssetIds: null, insertions: null});
+  assert.ok(d.provenance.jev.notes.includes('contradiction-several-primaries'));
+});
+
+test('N3: registrationGaps compares the visual, video and ordered caps and retries 0 with the code limits', () => {
+  const ok = {verified: true, route: 'r', evidence: 'e'}, funded = {...registration, status: 'registered', authorizedCalls: 36};
+  assert.deepEqual(registrationGaps(funded, ok), []);
+  for (const [k, v] of [['maxVisualCandidates', 16], ['maxVideoCandidates', 5], ['maxOrderedRequested', 9], ['retries', 1]]) {
+    assert.deepEqual(registrationGaps({...funded, limits: {...funded.limits, [k]: v}}, ok), ['registration-limits-mismatch'], k);
+  }
+});
