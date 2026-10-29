@@ -148,6 +148,27 @@ test('the port publishes only while executionRevision is the current pointer (ch
  const skew=await serveOriginalVisual(new Request(url),old,{currentRevision:async()=>'a'.repeat(64)});assert.equal(skew.status,503);assert.deepEqual(await skew.json(),{status:'unavailable',reason:'interrupted',subReason:'visual-object-version-skew',final:false});
  const nopointer=await serveOriginalVisual(new Request(url),old,{currentRevision:async()=>null});assert.equal(nopointer.status,503);assert.equal((await nopointer.json()).subReason,'execution-pointer-unavailable');
 });
+test('a non-current revision is served only when retainedVisual is ready for that exact revision and sha; otherwise it stays 410',async()=>{
+ const a=VISUAL_FIRST_PROOF.find(e=>e.assetId==='a1400'),src=(await visualOriginalIdentity(a.source)).sourceIdentitySha256,orig='d'.repeat(64),cur='c'.repeat(64),old='b'.repeat(64);
+ const url=`https://dev.fiaguide.app/v1/original-visuals/${src}/${'1'.repeat(64)}/${orig}`,asked=[];
+ // The object: serves only when the authority it is given equals the row's revision (old); a recipe-stale row gives no revision.
+ const object=({stale=false}={})=>({FIA_ORIGINALS:{},FIA_PREPARATION_JOBS:{idFromName:n=>n,get:()=>({fetch:async request=>{const q=new URL(request.url).searchParams,authority=q.get('current');asked.push([request.method,authority]);
+  if(stale)return Response.json({status:'unavailable',reason:'visual-publication-stale'},{status:410});
+  if(authority===old)return new Response(request.method==='HEAD'?null:'BYTES',{status:200,headers:{etag:`"${orig}"`,'content-type':'image/jpeg'}});
+  return Response.json({status:'unavailable',reason:'visual-publication-stale',subReason:'execution-not-current',executionRevision:old},{status:410});}})}});
+ const calls=[],retained=answer=>async args=>{calls.push(args);return answer;},ready={status:'ready',entry:{assetId:'a1400',sha256:orig}};
+ const run=async(env,opts,method='GET')=>serveOriginalVisual(new Request(url,{method}),env,{currentRevision:async()=>cur,...opts});
+ // Retained, verified, eligible: the exact original of that revision, by asking the object again with that revision.
+ asked.length=0;const ok=await run(object(),{retainedVisual:retained(ready)});assert.equal(ok.status,200);assert.equal(await ok.text(),'BYTES');assert.equal(ok.headers.get('etag'),`"${orig}"`);
+ assert.deepEqual(calls.at(-1),{packId:a.packId,executionRevision:old,assetId:'a1400',sha256:orig});assert.deepEqual(asked,[['GET',cur],['GET',old]]);
+ asked.length=0;const head=await run(object(),{retainedVisual:retained(ready)},'HEAD');assert.equal(head.status,200);assert.deepEqual(asked,[['HEAD',cur],['GET',cur],['HEAD',old]]);
+ // Revoked, forged or never-current (the authority says unavailable), another sha, no op, or the revision equal to current: 410.
+ for(const [label,opts] of [['revoked',{retainedVisual:retained({status:'unavailable',reason:'execution-not-current'})}],['other sha',{retainedVisual:retained({status:'ready',entry:{sha256:'e'.repeat(64)}})}],['other path',{retainedVisual:retained({status:'ready',entry:{sha256:orig,path:'/v1/original-visuals/x'}})}],['no op',{}],['throws',{retainedVisual:async()=>{throw Error('down');}}]]){
+  asked.length=0;const r=await run(object(),opts);assert.equal(r.status,410,label);const body=await r.json();assert.equal(body.subReason,'execution-not-current',label);assert.equal('executionRevision' in body,false,label);assert.deepEqual(asked,[['GET',cur]],label);
+ }
+ // A recipe change revokes it: the stale refusal carries no revision, so the authority is never asked.
+ calls.length=0;const stale=await run(object({stale:true}),{retainedVisual:retained(ready)});assert.equal(stale.status,410);assert.equal(calls.length,0);
+});
 test('Retry is accepted by the port and floored per source; an older object answers typed and non-final',async t=>{
  const {mf,dir,counts}=await runtime();t.after(async()=>{await mf.dispose();await rm(dir,{recursive:true,force:true});});
  const a=VISUAL_FIRST_PROOF.find(e=>e.assetId==='a1400'),d=await door(mf,a.source);

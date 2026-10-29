@@ -89,7 +89,9 @@ async function serve(ctx,env,entry,job,args,request){
  if(!row||row.schema!==VISUAL_PUBLICATION_SCHEMA||row.original?.sha256!==args.original||row.consumerSha256!==args.consumer)return refusal(404,'visual-not-published');
  // Current authority: the consumer must still be a first-proof consumer of this exact base revision, under today's recipe.
  if(row.consumer.packId!==entry.packId||row.consumer.baseRevision!==entry.baseRevision||row.consumer.assetId!==entry.assetId||row.recipeSha256!==VISUAL_ORIGINAL_RECIPE_SHA256)return refusal(410,'visual-publication-stale');
- if(row.consumer.executionRevision!==args.current)return refusal(410,'visual-publication-stale',{subReason:'execution-not-current'});
+ // The row's own revision is returned so the Worker can ask the authority whether a retained generation of exactly that
+ // revision still lists this original (retainedVisual); only then does it ask again with that revision as authority.
+ if(row.consumer.executionRevision!==args.current)return refusal(410,'visual-publication-stale',{subReason:'execution-not-current',executionRevision:row.consumer.executionRevision});
  const state=await job.read();
  // The job re-verifies its custody (receipt, head, retained bytes) on read: a failure there is an integrity refusal.
  if(state.reason==='retained-evidence-unavailable')return refusal(409,'visual-original-integrity',{subReason:state.subReason??null});
@@ -125,7 +127,10 @@ export async function publishVisual(env,{packId,baseRevision,executionRevision,a
 // Public read route: GET/HEAD /v1/original-visuals/<sourceIdentitySha>/<consumerSha>/<originalSha>, nothing else.
 const ROUTE=/^\/v1\/original-visuals\/([a-f0-9]{64})\/([a-f0-9]{64})\/([a-f0-9]{64})$/;
 let sourceIndex=null;
-export async function serveOriginalVisual(request,env,{currentRevision}={}){
+// retainedVisual({packId,executionRevision,assetId,sha256}): the authority's read-only check (F7a3) that a retained, verified,
+// currently eligible publication generation of exactly that revision lists this native entry. Only on its ready does the route
+// serve a consumer whose revision is no longer the current pointer; forged, never-current and revoked revisions stay 410.
+export async function serveOriginalVisual(request,env,{currentRevision,retainedVisual}={}){
  const url=new URL(request.url);if(!url.pathname.startsWith('/v1/original-visuals/')&&url.pathname!=='/v1/original-visuals')return null;
  const m=ROUTE.exec(url.pathname);if(!m||url.search)return refusal(m?400:404,m?'invalid-request':'unknown-visual');
  if(!['GET','HEAD'].includes(request.method))return refusal(405,'method-not-allowed');
@@ -134,19 +139,28 @@ export async function serveOriginalVisual(request,env,{currentRevision}={}){
  if(!env.FIA_PREPARATION_JOBS||!env.FIA_ORIGINALS)return refusal(503,'preparation-storage-unavailable');
  let current=null;try{current=typeof currentRevision==='function'?await currentRevision(entry.packId):null;}catch{current=null;}
  if(!HEX.test(current??''))return refusal(503,'interrupted',{subReason:'execution-pointer-unavailable',final:false});
- const query=new URLSearchParams({packId:entry.packId,baseRevision:entry.baseRevision,assetId:entry.assetId,consumer:m[2],original:m[3],current});
  const headers=new Headers();for(const h of ['if-none-match','range'])if(request.headers.has(h))headers.set(h,request.headers.get(h));
- let response;try{response=await (await stubFor(env,entry)).fetch(new Request(`${HOST}/serve?${query}`,{method:request.method,headers}));}
- catch{return refusal(503,'interrupted',{final:false});}
- // An object still on the previous code has no visual namespace: its untyped answer becomes a typed, non-final refusal.
- if(response.status===200||response.status===304)return response;
- // A HEAD answer has no body to classify, so a HEAD refusal asks the object again with GET; refusals read no bytes.
- // The client still receives no body for HEAD, with the same status and headers as the GET refusal.
- // The refusal is read once and answered with a fresh Response; the object's response is never handed on after a read.
- const typed=request.method==='HEAD'?await (await stubFor(env,entry)).fetch(new Request(`${HOST}/serve?${query}`,{method:'GET',headers})).catch(()=>null):response;
- const body=typed?await typed.json().catch(()=>null):null;
- const answer=!body||typeof body.reason!=='string'?refusal(503,'interrupted',{subReason:'visual-object-version-skew',final:false}):refusal(typed.status,body.reason,Object.fromEntries(Object.entries(body).filter(([k])=>k!=='status'&&k!=='reason')));
- return request.method==='HEAD'?new Response(null,{status:answer.status,headers:answer.headers}):answer;
+ const ask=async(method,authority)=>{const query=new URLSearchParams({packId:entry.packId,baseRevision:entry.baseRevision,assetId:entry.assetId,consumer:m[2],original:m[3],current:authority});
+  try{return await (await stubFor(env,entry)).fetch(new Request(`${HOST}/serve?${query}`,{method,headers}));}catch{return null;}};
+ // A refusal is read once and answered with a fresh Response; a HEAD refusal has no body, so it is classified by a GET
+ // (refusals read no bytes). An object still on the previous code answers untyped: that becomes typed, non-final.
+ const classify=async(response,authority)=>{if(!response)return {answer:refusal(503,'interrupted',{final:false})};
+  const typed=request.method==='HEAD'?await ask('GET',authority):response,body=typed?await typed.json().catch(()=>null):null;
+  if(!body||typeof body.reason!=='string')return {answer:refusal(503,'interrupted',{subReason:'visual-object-version-skew',final:false})};
+  return {body,answer:refusal(typed.status,body.reason,Object.fromEntries(Object.entries(body).filter(([k])=>!['status','reason','executionRevision'].includes(k))))};};
+ const done=answer=>request.method==='HEAD'?new Response(null,{status:answer.status,headers:answer.headers}):answer;
+ let response=await ask(request.method,current);if(response&&(response.status===200||response.status===304))return response;
+ let {body,answer}=await classify(response,current);
+ const historical=body?.subReason==='execution-not-current'&&HEX.test(body.executionRevision??'')&&body.executionRevision!==current?body.executionRevision:null;
+ if(historical&&typeof retainedVisual==='function'){
+  let retained=null;try{retained=await retainedVisual({packId:entry.packId,executionRevision:historical,assetId:entry.assetId,sha256:m[3]});}catch{retained=null;}
+  // Only that row's own original: the authority's entry must name this exact sha256 (and this path when it names one).
+  if(retained?.status==='ready'&&retained.entry?.sha256===m[3]&&(retained.entry.path===undefined||retained.entry.path===url.pathname)){
+   response=await ask(request.method,historical);if(response&&(response.status===200||response.status===304))return response;
+   ({answer}=await classify(response,historical));
+  }
+ }
+ return done(answer);
 }
 
 // ---- The capabilities.visuals port for F5a (Auggie's executable operations call demand at most once per admitted demand).
