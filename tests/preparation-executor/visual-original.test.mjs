@@ -1,19 +1,22 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {createRequire} from 'node:module';import {mkdtemp,rm} from 'node:fs/promises';import {tmpdir} from 'node:os';import {join,resolve} from 'node:path';import {fileURLToPath} from 'node:url';import {deflateSync,crc32} from 'node:zlib';import {createHash} from 'node:crypto';
-import {visualOriginalIdentity,VISUAL_ORIGINAL_POLICY,VISUAL_ORIGINAL_RECIPE} from '../../server/fia/preparation/visual-original.mjs';
+import test from 'node:test';import assert from 'node:assert/strict';import {createRequire} from 'node:module';import {mkdtemp,rm} from 'node:fs/promises';import {readFileSync} from 'node:fs';import {tmpdir} from 'node:os';import {join,resolve} from 'node:path';import {fileURLToPath} from 'node:url';import {deflateSync,crc32} from 'node:zlib';import {createHash} from 'node:crypto';
+import {visualOriginalIdentity,VISUAL_ORIGINAL_POLICY,VISUAL_ORIGINAL_RECIPE,VISUAL_ORIGINAL_RECIPE_SHA256} from '../../server/fia/preparation/visual-original.mjs';
 import {createFreshSourceObservations,AUDIO_CONTENT,VISUAL_CONTENT} from '../../server/fia/preparation/executor/fresh-source-observation.mjs';
 const require=createRequire(resolve(process.env.FIA_WORKER_DEPENDENCIES||'package.json')),{Miniflare,convertV4MiniflareOptions}=require('miniflare'),{build}=require('esbuild');
-// Fixtures: a real 2x2 RGB PNG and a real 1x1 baseline JPEG; no publisher is contacted.
+// Fixtures: a real 2x2 RGB PNG built here, and real JPEG/PNG files made by ImageMagick (fixtures/visual); no publisher is contacted.
 function chunk(type,data){const body=Buffer.concat([Buffer.from(type,'ascii'),data]),out=Buffer.alloc(12+data.length);out.writeUInt32BE(data.length,0);body.copy(out,4);out.writeUInt32BE(crc32(body)>>>0,8+data.length);return out;}
 const ihdr=Buffer.alloc(13);ihdr.writeUInt32BE(2,0);ihdr.writeUInt32BE(2,4);ihdr[8]=8;ihdr[9]=2;
 const PNG=Buffer.concat([Buffer.from([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a]),chunk('IHDR',ihdr),chunk('IDAT',deflateSync(Buffer.from([0,200,30,40,200,30,40,0,10,20,30,10,20,30]))),chunk('IEND',Buffer.alloc(0))]);
-const JPEG=Buffer.from('/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=','base64');
+const fixtureFile=name=>readFileSync(new URL(`./fixtures/visual/${name}`,import.meta.url));
+const JPEG=fixtureFile('baseline-37x23.jpg'),INTERLACED=fixtureFile('interlaced-16x16.png');
+// The 2x2 PNG's unfiltered scanlines, hashed independently of the decoder.
+const PNG_PIXELS='200,30,40,200,30,40,10,20,30,10,20,30';
 const sha=x=>createHash('sha256').update(x).digest('hex');
 const modulePath=fileURLToPath(new URL('../../server/fia/preparation/visual-original.mjs',import.meta.url));
 const worker=`import {createVisualOriginalJob} from ${JSON.stringify(modulePath)};
-const fixtures=${JSON.stringify({png:PNG.toString('base64'),jpeg:JPEG.toString('base64')})};
+const fixtures=${JSON.stringify({png:PNG.toString('base64'),jpeg:JPEG.toString('base64'),interlaced:INTERLACED.toString('base64')})};
 const decode=b=>Uint8Array.from(atob(b),c=>c.charCodeAt(0));
 export class Job {constructor(ctx,env){this.ctx=ctx;this.env=env;this.gets=0;this.gates=[];}
- async fetch(request){const args=await request.json();if(args.op==='counts')return Response.json({gets:this.gets,waiting:this.gates.length});if(args.op==='release'){for(const r of this.gates.splice(0))r();return Response.json({released:true});}
+ async fetch(request){const args=await request.json();if(args.op==='corrupt'){for(const o of (await this.env.ORIGINALS.list({prefix:'originals/visual/sha256/'})).objects)await this.env.ORIGINALS.put(o.key,new Uint8Array(o.size).fill(1));return Response.json({corrupted:true});}if(args.op==='counts')return Response.json({gets:this.gets,waiting:this.gates.length});if(args.op==='release'){for(const r of this.gates.splice(0))r();return Response.json({released:true});}
   const source={kind:args.kind||'map',url:args.url||'https://publisher.invalid/maps/c4.png',sourceVersion:'fixture-revision-1'};
   try{const job=createVisualOriginalJob({storage:this.ctx.storage,bucket:this.env.ORIGINALS,source,eligibility:()=>true,now:()=>1000,fetchSource:async(url,options)=>{this.gets++;if(args.fail)throw null;if(options.redirect!=='manual')throw Error('wrong-redirect');if(args.gate)await new Promise(r=>this.gates.push(r));
     if(args.redirect)return new Response(null,{status:302,headers:{location:'https://elsewhere.invalid/x.png'}});
@@ -24,7 +27,7 @@ export class Job {constructor(ctx,env){this.ctx=ctx;this.env=env;this.gets=0;thi
    const objects=(await this.env.ORIGINALS.list()).objects;return Response.json({result,gets:this.gets,objects:objects.map(o=>o.key)});}catch(error){return Response.json({error:error.message,gets:this.gets});}}
 }
 export default {fetch(request,env){const name=new URL(request.url).pathname.slice(1)||'one';return env.JOBS.get(env.JOBS.idFromName(name)).fetch(request);}};`;
-const bundle=await build({stdin:{contents:worker,resolveDir:resolve('.')},bundle:true,format:'esm',platform:'browser',external:['node:crypto'],write:false});
+const bundle=await build({stdin:{contents:worker,resolveDir:resolve('.')},bundle:true,format:'esm',platform:'browser',external:['node:crypto','node:zlib'],write:false});
 async function fixture(t){const directory=await mkdtemp(join(tmpdir(),'visual-original-'));const mf=new Miniflare({...convertV4MiniflareOptions({name:'visual-original-fixture',modules:true,script:bundle.outputFiles[0].text,compatibilityDate:'2026-09-01',compatibilityFlags:['nodejs_compat'],durableObjects:{JOBS:{className:'Job',useSQLite:true}},r2Buckets:['ORIGINALS']}),resourcePersistencePath:directory});t.after(async()=>{await mf.dispose();await rm(directory,{recursive:true,force:true});});return mf;}
 const call=(mf,args={},object='one')=>mf.dispatchFetch(`https://fixture.invalid/${object}`,{method:'POST',body:JSON.stringify(args)}).then(r=>r.json());
 
@@ -39,22 +42,31 @@ test('identity is per source, shared across packs and languages, and refuses que
  assert.notEqual((await visualOriginalIdentity({kind:'map',url:'https://publisher.invalid/maps/c5.png',sourceVersion:'r1'})).name,a.name);
  for(const bad of [{kind:'map',url:'https://publisher.invalid/c4.png?x=1',sourceVersion:'r1'},{kind:'map',url:'http://publisher.invalid/c4.png',sourceVersion:'r1'},{kind:'video',url:'https://publisher.invalid/c4.png',sourceVersion:'r1'},{kind:'map',url:'https://publisher.invalid/c4.png',sourceVersion:'r1',packId:'eng.MRK-1-14-20'}])await assert.rejects(visualOriginalIdentity(bad),/visual-source/);
 });
-test('fixture PNG is fetched once, stored content-addressed with readback, and stays decoder-unavailable',async t=>{
+test('fixture PNG is fetched once, stored content-addressed, read back and fully decoded to ready',async t=>{
  const mf=await fixture(t),first=await call(mf);assert.equal(first.gets,1,JSON.stringify(first));
- const r=first.result;assert.equal(r.state,'unavailable');assert.equal(r.reason,'decoder-unavailable');assert.equal(r.custody,'retained');assert.deepEqual(r.decode,{state:'unavailable',reason:'decoder-unavailable',decoder:null,width:null,height:null,pixelsSha256:null});assert.deepEqual(r.recipe,JSON.parse(JSON.stringify(VISUAL_ORIGINAL_RECIPE)));assert.equal(r.recipe.decoder,null);assert.notEqual(r.state,'ready');
+ const r=first.result;assert.equal(r.state,'ready',JSON.stringify(r));assert.equal(r.custody,'retained');assert.deepEqual(r.recipe,JSON.parse(JSON.stringify(VISUAL_ORIGINAL_RECIPE)));assert.equal(r.recipeSha256,VISUAL_ORIGINAL_RECIPE_SHA256);
+ assert.deepEqual(r.decode,{state:'ready',reason:null,subReason:null,decoder:JSON.parse(JSON.stringify(VISUAL_ORIGINAL_RECIPE.decoder['image/png'])),width:2,height:2,pixelsSha256:sha(Buffer.from(PNG_PIXELS.split(',').map(Number)))});
+ assert.ok(!first.objects.some(k=>/pixel|decoded/.test(k)),'decoded pixels are never stored');
  assert.equal(r.original.sha256,sha(PNG));assert.equal(r.original.bytes,PNG.length);assert.equal(r.original.contentType,'image/png');assert.equal(r.original.sourceKey,`originals/visual/sha256/${sha(PNG)}.png`);
  assert.ok(first.objects.includes(r.original.sourceKey));assert.ok(first.objects.some(k=>/^originals\/quarantine\/checks\/[a-f0-9]{64}\/[-a-f0-9]{36}\.bin$/.test(k)));assert.ok(first.objects.some(k=>k.startsWith('originals/observations/')));assert.ok(!first.objects.some(k=>k.endsWith('.mp3')));
  const again=await call(mf);assert.equal(again.gets,1,'repeat fetches nothing');assert.deepEqual(again.result,r);
  const read=await call(mf,{op:'read'});assert.equal(read.gets,1,'read fetches nothing');assert.deepEqual(read.result,r);
 });
-test('fixture JPEG is stored with a .jpg key and its own MIME',async t=>{
+test('fixture JPEG is stored with a .jpg key and its own MIME, and decodes through EOI to its dimensions',async t=>{
  const mf=await fixture(t),out=await call(mf,{fixture:'jpeg',mime:'image/jpeg',kind:'photo',url:'https://publisher.invalid/a1400/1000.jpg'});
- assert.equal(out.result.custody,'retained',JSON.stringify(out));assert.equal(out.result.original.contentType,'image/jpeg');assert.equal(out.result.original.sourceKey,`originals/visual/sha256/${sha(JPEG)}.jpg`);assert.equal(out.result.reason,'decoder-unavailable');
+ assert.equal(out.result.custody,'retained',JSON.stringify(out));assert.equal(out.result.original.contentType,'image/jpeg');assert.equal(out.result.original.sourceKey,`originals/visual/sha256/${sha(JPEG)}.jpg`);
+ assert.equal(out.result.state,'ready');assert.equal(out.result.decode.width,37);assert.equal(out.result.decode.height,23);assert.equal(out.result.decode.decoder.name,'jpeg-js');assert.equal(out.result.decode.decoder.version,'0.4.4');assert.match(out.result.decode.pixelsSha256,/^[a-f0-9]{64}$/);
 });
-test('two demands at once fetch once and the joiner sees preparing',async t=>{
- const mf=await fixture(t),first=call(mf,{gate:true});for(let n=0;n<200&&(await call(mf,{op:'counts'})).waiting<1;n++)await new Promise(r=>setTimeout(r,5));
- const joined=await call(mf,{gate:true});assert.equal(joined.result.state,'preparing');assert.equal(joined.gets,1);
- await call(mf,{op:'release'});const done=await first;assert.equal(done.result.custody,'retained');assert.equal(done.gets,1);
+test('a retained interlaced PNG is a final visual-unsupported decode-not-streamable, kept with 0 refetches and 0 re-decodes',async t=>{
+ const mf=await fixture(t),out=await call(mf,{fixture:'interlaced'});
+ assert.equal(out.result.state,'unavailable',JSON.stringify(out));assert.equal(out.result.reason,'visual-unsupported');assert.equal(out.result.subReason,'decode-not-streamable');assert.equal(out.result.final,true);assert.equal(out.result.custody,'retained');assert.equal(out.result.decode.width,null);
+ const again=await call(mf,{fixture:'interlaced'});assert.equal(again.gets,1);assert.deepEqual(again.result,out.result);
+});
+test('a kept ready verdict is never returned over corrupted retained bytes: the read is retained-evidence-unavailable, with no refetch',async t=>{
+ const mf=await fixture(t),first=await call(mf);assert.equal(first.result.state,'ready');
+ const repeat=await call(mf,{op:'read'});assert.deepEqual(repeat.result,first.result,'a repeat read returns the kept verdict');
+ await call(mf,{op:'corrupt'});const read=await call(mf,{op:'read'});assert.equal(read.gets,1);
+ assert.equal(read.result.state,'unavailable');assert.equal(read.result.reason,'retained-evidence-unavailable');assert.equal(read.result.final,false);assert.equal(read.result.custody,'unverified');assert.notEqual(read.result.decode.state,'ready');
 });
 for(const [name,args,reason] of [
  ['wrong MIME',{mime:'audio/mpeg'},'fresh-response-refused'],
