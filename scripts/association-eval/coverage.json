@@ -128,6 +128,49 @@
     },
     "adjudicatedGoldCases": 0,
     "cases": [],
+    "manualStandard": {
+      "source": "scripts/association-eval/sources/manual-spa-luke.json",
+      "pericopes": [
+        "LUK-1-26-38"
+      ],
+      "splitIfAccepted": {
+        "LUK-1-26-38": "heldout"
+      },
+      "accepted": {
+        "cases": 0,
+        "byDecision": {
+          "associate": 0,
+          "none": 0
+        }
+      },
+      "proposedPendingIndependentReview": {
+        "cases": 4,
+        "byDecision": {
+          "associate": 0,
+          "none": 4
+        },
+        "caseIds": [
+          "spa.LUK-1-26-38:S02-U003",
+          "spa.LUK-1-26-38:S02-U013",
+          "spa.LUK-1-26-38:S03-U011",
+          "spa.LUK-1-26-38:S04-U015"
+        ]
+      },
+      "unresolvedNotGold": [
+        {
+          "caseId": "spa.LUK-1-26-38:S02-U004",
+          "requestedKind": "map",
+          "reason": "requested-visual-absent-from-pack-catalog",
+          "candidates": 0
+        },
+        {
+          "caseId": "spa.LUK-1-26-38:S05-U003",
+          "requestedKind": "map",
+          "reason": "requested-visual-absent-from-pack-catalog",
+          "candidates": 0
+        }
+      ]
+    },
     "finding": "No accepted, independently adjudicated association evidence exists for any Spanish Luke unit: the reviewed ledger covers Mark 1:14-20, 2:1-12 and typed inline Mark rows only, and the approved presentation is English Mark 1:1-13. Historical Spanish Mark gold does not prove Spanish Luke.",
     "adjudicationNeeded": [
       "For each spa.LUK pack, a source author identifies, unit by unit, which units request a picture, map or video, binding the exact unit id, unit text sha256, guide revision and guide file sha256 from source-packs-luk.json.gz at the stated source revision.",
@@ -139,6 +182,7 @@
   "limits": [
     "The accepted foundation is 24 ledger units in 14 packs (12 semantic rows, 12 typed inline) plus 6 approved first-Mark units. Cases whose typed inline tag is absent from current raw publisher source are excluded and listed in excludedByRawGate. All gold cases are positive associations; no adjudicated no-visual negatives are included yet.",
     "Historical counts (379 candidate instructions over 114 of 136 packs; 357 outside coverage) are review workload, not acceptance figures for the current 165-pack-per-language set.",
-    "October 6 cue-role pilot outputs are not resource-association gold and are not read."
+    "October 6 cue-role pilot outputs are not resource-association gold and are not read.",
+    "Manual Spanish Luke rows are admitted only when their compiled unit html carries no resource tag (no raw-fragment verification without an outside read), and count as gold only once accepted by an independent reviewer."
   ]
 }

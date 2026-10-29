@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
-import {buildCases, OUTPUT_FILES, GOLD_ONLY_KEYS, LEDGER_SHA256, APPROVED_SHA256, APPROVED_UNITS, assignSplit, rawGate, collectCases} from '../../scripts/association-eval/cases.mjs';
+import {buildCases, OUTPUT_FILES, GOLD_ONLY_KEYS, LEDGER_SHA256, APPROVED_SHA256, APPROVED_UNITS, assignSplit, rawGate, collectCases, manualCases, MANUAL_SPA_LUKE, MANUAL_ACCEPTED, MANUAL_PROPOSED} from '../../scripts/association-eval/cases.mjs';
 import {score, goldAsDecisions, ERROR_TYPES} from '../../scripts/association-eval/score.mjs';
 
 const dir = new URL('../../scripts/association-eval/', import.meta.url);
@@ -130,3 +130,60 @@ test('perturbed decisions file yields exactly the expected errors; provenance is
 });
 
 function round(x) { return Math.round(x * 1e6) / 1e6; }
+
+// ---- Manual Spanish Luke standard (claim d4c4dea): proposed rows, admission by independent acceptance only. ----
+const manualDoc = json(MANUAL_SPA_LUKE);
+const accept = doc => ({...structuredClone(doc), rows: doc.rows.map(r => ({...structuredClone(r), status: MANUAL_ACCEPTED}))});
+
+test('Spanish Luke manual rows: proposed, bound to the archive, none counted as gold before independent review', () => {
+  const m = coverage.spanishLuke.manualStandard;
+  assert.equal(coverage.spanishLuke.adjudicatedGoldCases, 0);
+  assert.deepEqual(m.accepted, {cases: 0, byDecision: {associate: 0, none: 0}});
+  assert.deepEqual(m.proposedPendingIndependentReview.byDecision, {associate: 0, none: 4});
+  assert.deepEqual(m.proposedPendingIndependentReview.caseIds, ['spa.LUK-1-26-38:S02-U003', 'spa.LUK-1-26-38:S02-U013', 'spa.LUK-1-26-38:S03-U011', 'spa.LUK-1-26-38:S04-U015']);
+  assert.deepEqual(m.unresolvedNotGold.map(u => [u.caseId, u.requestedKind, u.candidates]), [['spa.LUK-1-26-38:S02-U004', 'map', 0], ['spa.LUK-1-26-38:S05-U003', 'map', 0]]);
+  assert.ok(!inputs.cases.some(c => c.caseId.startsWith('spa.LUK-')) && !gold.cases.some(c => c.caseId.startsWith('spa.LUK-')));
+  assert.deepEqual(split.countsSpanishLuke, {});
+  for (const r of manualDoc.rows) assert.equal(r.status, MANUAL_PROPOSED);
+});
+
+test('accepting the Spanish Luke rows admits them by the same deterministic split, apart from Spanish Mark, moving nothing else', () => {
+  const after = buildCases({manual: accept(manualDoc)});
+  const [i2, g2, s2, c2] = ['inputs', 'gold', 'split', 'coverage'].map(k => JSON.parse(after[k]));
+  const luke = g2.cases.filter(c => c.caseId.startsWith('spa.LUK-'));
+  assert.equal(luke.length, 4);
+  for (const c of luke) { assert.equal(c.output.decision, 'none'); assert.deepEqual(c.output.association.requested, []); assert.equal(c.provenance.goldSource, 'manual-spa-luke'); }
+  assert.equal(c2.spanishLuke.adjudicatedGoldCases, 4);
+  assert.deepEqual(c2.spanishLuke.manualStandard.accepted.byDecision, {associate: 0, none: 4});
+  assert.equal(s2.assignment['LUK-1-26-38'], coverage.spanishLuke.manualStandard.splitIfAccepted['LUK-1-26-38']);
+  assert.equal(s2.assignment['LUK-1-26-38'], 'heldout');
+  for (const [p, v] of Object.entries(split.assignment)) assert.equal(s2.assignment[p], v, `${p} moved`);
+  assert.equal(s2.assignment['MRK-1-1-13'], 'tuning');
+  assert.deepEqual(s2.counts, split.counts, 'Spanish Mark coverage is unchanged');
+  assert.deepEqual(s2.countsSpanishLuke, {heldout: 4});
+  const banned = new Set(GOLD_ONLY_KEYS);
+  const walk = v => { if (Array.isArray(v)) v.forEach(walk); else if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) { assert.ok(!banned.has(k), k); walk(x); } };
+  i2.cases.filter(c => c.caseId.startsWith('spa.LUK-')).forEach(walk);
+  // Gold "none" is scored: none is correct, an association is an extra request, abstain is an abstention, absence is missing.
+  const only = {...g2, cases: luke};
+  const r = score(only, {schema: 'fia-association-eval-decisions@1', decisions: [
+    {caseId: 'spa.LUK-1-26-38:S02-U003', output: luke[0].output},
+    {caseId: 'spa.LUK-1-26-38:S02-U013', output: {decision: 'associate', association: {requested: [{collection: 'FIAMaps', id: 'c1'}]}, display: {}}},
+    {caseId: 'spa.LUK-1-26-38:S03-U011', output: {decision: 'abstain'}}]});
+  assert.equal(r.overall.cases, 4); assert.equal(r.overall.abstained, 1); assert.equal(r.overall.missing, 1);
+  assert.equal(r.overall.errors['extra-requested'], 1); assert.equal(r.overall.errors['missing-decision'], 1);
+  assert.equal(r.overall.casePrecision, 0.5);
+});
+
+test('Spanish Luke manual guards: tagged units, uncited associations, false unresolved and text drift are refused', () => {
+  const archive = collectCases().archive;
+  const base = manualDoc.rows[0];
+  const bad = patch => ({...structuredClone(manualDoc), rows: [{...structuredClone(base), ...patch}], unresolved: []});
+  assert.throws(() => manualCases(archive, bad({unitId: 'S05-U002', unitTextSha256: archive.packs['spa.LUK-1-26-38'].guide.steps.flatMap(s => s.units).find(u => u.id === 'S05-U002').textSha256})), /manual-row-has-resource-tag/);
+  assert.throws(() => manualCases(archive, bad({unitTextSha256: 'f'.repeat(64)})), /manual-text-drift/);
+  assert.throws(() => manualCases(archive, bad({output: {...base.output, decision: 'associate', association: {requested: [{collection: 'FIAMaps', id: 'c1'}], optionalCompanions: null, companionPairs: null}}})), /manual-associate-without-cited-evidence/);
+  assert.throws(() => manualCases(archive, bad({output: {...base.output, decision: 'abstain'}})), /manual-decision/);
+  const withMap = Object.keys(archive.packs).find(id => id.startsWith('spa.LUK-') && (archive.packs[id].resources.maps || []).length);
+  const unit = archive.packs[withMap].guide.steps.flatMap(s => s.units).find(u => !/data-resource-code/.test(u.html));
+  assert.throws(() => manualCases(archive, {...structuredClone(manualDoc), rows: [], unresolved: [{packId: withMap, unitId: unit.id, unitTextSha256: unit.textSha256, requestedKind: 'map', reason: 'x'}]}), /manual-unresolved-but-candidate-exists/);
+});

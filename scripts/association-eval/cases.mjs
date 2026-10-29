@@ -46,6 +46,10 @@ const repo = p => new URL('../../' + p, import.meta.url);
 const ref = a => ({collection: a.collection, id: a.id});
 const fail = m => { throw Error(m); };
 
+// Manual Spanish Luke standard (claim d4c4dea). Rows count as gold only once accepted by an independent reviewer.
+export const MANUAL_SPA_LUKE = 'sources/manual-spa-luke.json';
+export const MANUAL_ACCEPTED = 'accepted-by-independent-review';
+export const MANUAL_PROPOSED = 'proposed-pending-independent-review';
 export const OUTPUT_FILES = Object.freeze({inputs: 'inputs.json', gold: 'gold.json', split: 'split.json', coverage: 'coverage.json'});
 
 function pinned(url, sha, bytes) {
@@ -166,6 +170,54 @@ function ledgerCases(archive, ledger) {
   return out;
 }
 
+// Manual rows bind the exact unit text, guide revision, guide file and content shas from the retained archive. A row is
+// admitted only when its compiled unit html carries no resource tag: without an outside read the raw-fragment gate cannot
+// verify a tag, and a tagless unit has none to leak. Unresolved rows must truly lack a candidate of the requested kind.
+export function manualCases(archive, doc) {
+  if (doc.schema !== 'fia-association-eval-manual@1' || doc.language !== 'spa' || doc.book !== 'LUK') fail('manual-schema');
+  if (doc.sourceRevision !== archive.revision) fail('manual-source-revision-drift');
+  const check = (input, row) => {
+    const {guide, unit} = input.source;
+    if (row.unitTextSha256 !== unit.textSha256) fail(`manual-text-drift:${input.caseId}`);
+    if (row.guideRevision !== undefined && row.guideRevision !== guide.revision) fail(`manual-guide-revision-drift:${input.caseId}`);
+    if (row.guideFileSha256 !== undefined && row.guideFileSha256 !== guide.fileSha256) fail(`manual-guide-file-drift:${input.caseId}`);
+    if (row.guideContentSha256 !== undefined && row.guideContentSha256 !== guide.contentSha256) fail(`manual-guide-content-drift:${input.caseId}`);
+    if ((unit.html.match(RAW_TAG) || []).length) fail(`manual-row-has-resource-tag:${input.caseId}`);
+    if (!input.packId.startsWith('spa.LUK-')) fail(`manual-row-not-spanish-luke:${input.caseId}`);
+  };
+  const rows = [], unresolved = [];
+  for (const row of doc.rows) {
+    const input = buildInput(archive, row.packId, row.unitId);
+    check(input, row);
+    if (![MANUAL_ACCEPTED, MANUAL_PROPOSED].includes(row.status)) fail(`manual-status:${input.caseId}`);
+    const o = row.output;
+    if (!['associate', 'none'].includes(o.decision)) fail(`manual-decision:${input.caseId}`);
+    if (o.decision === 'none' && o.association.requested.length) fail(`manual-none-with-requested:${input.caseId}`);
+    if (o.decision === 'associate') {
+      if (!o.association.requested.length || !row.evidence?.citation) fail(`manual-associate-without-cited-evidence:${input.caseId}`);
+      bindAgainst(input, o.association.requested, 'manual');
+      bindAgainst(input, o.association.optionalCompanions || [], 'manual-companion');
+    }
+    if (!row.evidence?.basis || !row.evidence?.reason) fail(`manual-evidence-missing:${input.caseId}`);
+    rows.push({row, input, gold: {caseId: input.caseId, output: structuredClone(o), provenance: {
+      goldSource: 'manual-spa-luke', manualSchema: doc.schema, manualPath: 'scripts/association-eval/' + MANUAL_SPA_LUKE,
+      adjudication: {author: doc.author, authoredAt: doc.authoredAt, status: row.status, claim: doc.claim, method: doc.method},
+      evidence: row.evidence,
+      notScored: Object.fromEntries([['association.optionalCompanions', o.association.optionalCompanions], ['association.companionPairs', o.association.companionPairs],
+        ...Object.entries(o.display).map(([k, v]) => ['display.' + k, v])].filter(([, v]) => v === null).map(([k]) => [k, 'not adjudicated'])),
+    }}});
+  }
+  for (const u of doc.unresolved) {
+    const input = buildInput(archive, u.packId, u.unitId);
+    check(input, u);
+    if (input.candidates.some(c => c.kind === u.requestedKind)) fail(`manual-unresolved-but-candidate-exists:${input.caseId}`);
+    unresolved.push({caseId: input.caseId, requestedKind: u.requestedKind, reason: u.reason, candidates: input.candidates.length});
+  }
+  const ids = [...rows.map(r => r.input.caseId), ...unresolved.map(u => u.caseId)];
+  if (new Set(ids).size !== ids.length) fail('manual-duplicate-unit');
+  return {rows, unresolved};
+}
+
 function approvedCases(archive, approved) {
   const packId = 'eng.MRK-1-1-13';
   const acts = approved.activities;
@@ -237,13 +289,14 @@ export function strataOf(goldCases) {
   return strata;
 }
 
-function lukeReport(archive, gold) {
+function lukeReport(archive, gold, manual, assignment) {
   const packs = Object.keys(archive.packs).filter(id => id.startsWith('spa.LUK-')).sort();
   const units = packs.reduce((n, id) => n + archive.packs[id].guide.steps.flatMap(s => s.units).length, 0);
   const records = Object.fromEntries(['images', 'maps', 'videos'].map(k => [k, packs.reduce((n, id) => n + (archive.packs[id].resources[k] || []).length, 0)]));
   const goldCases = gold.filter(g => g.caseId.startsWith('spa.LUK-')).map(g => g.caseId);
   return {
     packs: packs.length, guideUnits: units, catalogRecords: records, adjudicatedGoldCases: goldCases.length, cases: goldCases,
+    manualStandard: manualReport(manual, assignment),
     finding: 'No accepted, independently adjudicated association evidence exists for any Spanish Luke unit: the reviewed ledger covers Mark 1:14-20, 2:1-12 and typed inline Mark rows only, and the approved presentation is English Mark 1:1-13. Historical Spanish Mark gold does not prove Spanish Luke.',
     adjudicationNeeded: [
       'For each spa.LUK pack, a source author identifies, unit by unit, which units request a picture, map or video, binding the exact unit id, unit text sha256, guide revision and guide file sha256 from source-packs-luk.json.gz at the stated source revision.',
@@ -252,6 +305,17 @@ function lukeReport(archive, gold) {
       'No runtime per-item human queue is introduced; adjudication is an offline batch that precedes scoring.',
     ],
   };
+}
+
+function manualReport(manual, assignment) {
+  const count = rows => Object.fromEntries(['associate', 'none'].map(d => [d, rows.filter(r => r.row.output.decision === d).length]));
+  const accepted = manual.rows.filter(r => r.row.status === MANUAL_ACCEPTED), proposed = manual.rows.filter(r => r.row.status === MANUAL_PROPOSED);
+  const pericopes = [...new Set(manual.rows.map(r => r.input.pericope))].sort();
+  return {source: 'scripts/association-eval/' + MANUAL_SPA_LUKE, pericopes,
+    splitIfAccepted: Object.fromEntries(pericopes.map(p => [p, assignment[p]])),
+    accepted: {cases: accepted.length, byDecision: count(accepted)},
+    proposedPendingIndependentReview: {cases: proposed.length, byDecision: count(proposed), caseIds: proposed.map(r => r.input.caseId)},
+    unresolvedNotGold: manual.unresolved};
 }
 
 const RAW_TAG = /<data\b[^>]*\bdata-resource-code="[^"]*"[^>]*>/g;
@@ -263,6 +327,8 @@ export function rawGate(built, fragmentsDoc) {
   const byId = new Map(fragmentsDoc.fragments.map(f => [f.caseId, f]));
   const kept = [], excluded = [];
   for (const b of built) {
+    // Manual Spanish Luke rows were admitted tagless by manualCases; they have no tag to verify and no committed fragment.
+    if (b.gold.provenance.goldSource === 'manual-spa-luke') { kept.push(b); continue; }
     const f = byId.get(b.input.caseId) || fail(`raw-fragment-missing:${b.input.caseId}`);
     if (f.contentId !== b.input.source.guide.sourceId) fail(`raw-fragment-article:${b.input.caseId}`);
     if (f.pinned.match !== 'exact-html' || f.pinned.html !== b.input.source.unit.html) fail(`compiled-html-differs-from-raw:${b.input.caseId}`);
@@ -276,27 +342,33 @@ export function rawGate(built, fragmentsDoc) {
   return {kept, excluded};
 }
 
-export function collectCases() {
+export function collectCases(opt = {}) {
   const ledgerRaw = pinned(here('./sources/association-ledger.json'), LEDGER_SHA256);
   const approvedRaw = pinned(repo('server/fia/publication/approved-presentation.json'), APPROVED_SHA256, APPROVED_BYTES);
   const ledger = JSON.parse(ledgerRaw), approved = JSON.parse(approvedRaw);
   if (ledger.schema !== 'fia-unit-media-associations@1') fail('ledger-schema');
   const archive = loadArchives();
   if (archive.revision !== ledger.sourceRevision) fail('ledger-source-revision-drift');
-  const built = [...approvedCases(archive, approved), ...ledgerCases(archive, ledger)];
+  const manualDoc = opt.manual ?? JSON.parse(readFileSync(here('./' + MANUAL_SPA_LUKE)));
+  const manual = manualCases(archive, manualDoc);
+  const accepted = manual.rows.filter(r => r.row.status === MANUAL_ACCEPTED).map(({input, gold}) => ({input, gold}));
+  const built = [...approvedCases(archive, approved), ...ledgerCases(archive, ledger), ...accepted];
   const ids = built.map(b => b.input.caseId);
   if (new Set(ids).size !== ids.length) fail('duplicate-case-id');
   const order = (a, b) => (a.input.caseId < b.input.caseId ? -1 : a.input.caseId > b.input.caseId ? 1 : 0);
   built.sort(order);
-  return {built, ledger, archive};
+  return {built, ledger, archive, manual};
 }
 
-export function buildCases() {
+export function buildCases(opt = {}) {
   const fragmentsRaw = readFileSync(here('./sources/raw-unit-fragments.json'));
   const fragmentsDoc = JSON.parse(fragmentsRaw);
-  const {built: all, ledger, archive} = collectCases();
+  const {built: all, ledger, archive, manual} = collectCases(opt);
   const {kept: built, excluded} = rawGate(all, fragmentsDoc);
-  const split = assignSplit(strataOf(built.map(b => ({pericope: b.input.pericope, goldSource: b.gold.provenance.goldSource}))));
+  const strata = strataOf(built.map(b => ({pericope: b.input.pericope, goldSource: b.gold.provenance.goldSource})));
+  const split = assignSplit(strata);
+  // Where each manual pericope lands under the same deterministic split once its rows are accepted (other pericopes do not move).
+  const withManual = assignSplit({...strata, ...strataOf(manual.rows.map(r => ({pericope: r.input.pericope, goldSource: 'manual-spa-luke'})))});
   const header = {schema: SCHEMA, sourceRevision: archive.revision, archives: archive.archiveSha,
     goldSources: {ledger: {path: 'scripts/association-eval/sources/association-ledger.json', sha256: LEDGER_SHA256},
       approvedPresentation: {path: 'server/fia/publication/approved-presentation.json', sha256: APPROVED_SHA256, bytes: APPROVED_BYTES}},
@@ -305,20 +377,26 @@ export function buildCases() {
   const inputs = {...header, kind: 'inputs', cases: built.map(b => b.input)};
   const gold = {...header, kind: 'gold', cases: built.map(b => b.gold)};
   const caseSplit = built.map(b => ({caseId: b.input.caseId, pericope: b.input.pericope, language: b.input.language, split: split.assignment[b.input.pericope]}));
-  const counts = {};
-  for (const c of caseSplit) { const k = `${c.language}/${c.split}`; counts[k] = (counts[k] || 0) + 1; }
+  // Spanish Luke is counted apart, so it never blends into the Spanish Mark held-out coverage.
+  const counts = {}, countsSpanishLuke = {};
+  for (const c of caseSplit) {
+    if (c.pericope.startsWith('LUK-')) { countsSpanishLuke[c.split] = (countsSpanishLuke[c.split] || 0) + 1; continue; }
+    const k = `${c.language}/${c.split}`; counts[k] = (counts[k] || 0) + 1;
+  }
   const bySource = {};
   for (const g of gold.cases) bySource[g.provenance.goldSource] = (bySource[g.provenance.goldSource] || 0) + 1;
-  const splitDoc = {schema: SCHEMA, kind: 'split', ...split, cases: caseSplit, counts: Object.fromEntries(Object.entries(counts).sort())};
+  const splitDoc = {schema: SCHEMA, kind: 'split', ...split, cases: caseSplit, counts: Object.fromEntries(Object.entries(counts).sort()),
+    countsSpanishLuke: Object.fromEntries(Object.entries(countsSpanishLuke).sort())};
   const coverage = {schema: SCHEMA, kind: 'coverage', cases: built.length, bySource: Object.fromEntries(Object.entries(bySource).sort()),
     byLanguage: Object.fromEntries(['eng', 'spa'].map(l => [l, built.filter(b => b.input.language === l).length])),
     candidateCases: all.length, excludedByRawGate: excluded,
     ledgerUnresolvedNotCases: ledger.unresolved.map(u => ({packId: u.packId, collection: u.collection, id: u.id, reason: u.reason})),
-    spanishLuke: lukeReport(archive, gold.cases),
+    spanishLuke: lukeReport(archive, gold.cases, manual, withManual.assignment),
     limits: [
       'The accepted foundation is 24 ledger units in 14 packs (12 semantic rows, 12 typed inline) plus 6 approved first-Mark units. Cases whose typed inline tag is absent from current raw publisher source are excluded and listed in excludedByRawGate. All gold cases are positive associations; no adjudicated no-visual negatives are included yet.',
       'Historical counts (379 candidate instructions over 114 of 136 packs; 357 outside coverage) are review workload, not acceptance figures for the current 165-pack-per-language set.',
       'October 6 cue-role pilot outputs are not resource-association gold and are not read.',
+      'Manual Spanish Luke rows are admitted only when their compiled unit html carries no resource tag (no raw-fragment verification without an outside read), and count as gold only once accepted by an independent reviewer.',
     ]};
   const text = o => JSON.stringify(o, null, 2) + '\n';
   return {inputs: text(inputs), gold: text(gold), split: text(splitDoc), coverage: text(coverage)};
