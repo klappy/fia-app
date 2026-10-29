@@ -1,8 +1,8 @@
 // F7a1 (cross-pericope PLAN §7; OFFLINE-EXECUTION "Publication generations retain their own verified base
 // manifest"). Pure, deterministic pieces of a generation-aware executable publication:
 // - the retained base manifest: the exact build-pinned UTF-8 bytes of the passage's offline manifest;
-// - the bound mediaManifest: in this slice the base manifest's files plus its identity fields (F7a2 adds the
-//   bound narration entries, F7a3 the native visual entries);
+// - the bound mediaManifest: the base manifest's files plus its identity fields, and the native files of the
+//   bound narration audio (F7a2); F7a3 adds the native visual entries;
 // - the publication generation: SHA-256 of the closed canonical preimage.
 // No I/O and no authority here: the overlay retains bytes and checks current eligibility.
 import {canonicalJSONString,sha256} from '../preparation/contract.mjs';
@@ -32,14 +32,35 @@ export function validateBaseManifest(bytes,{packId,baseRevision}){
 // The bound manifest (OFFLINE L13-L17): the existing offline shape, with deliveryRevision mirrored exactly
 // (present only when the verified base has it), plus id, executionRevision, mediaIdentity and mediaAssetsSha256.
 // Its revision is the SHA-256 of its canonical content without `id` and `revision`; its id names that revision.
-export async function buildBoundManifest(base,{packId,executionRevision,baseRevision,mediaAssetsSha256}){
+export async function buildBoundManifest(base,{packId,executionRevision,baseRevision,mediaAssetsSha256},native=[]){
  need(base?.packId===packId&&base.presentationRevision===baseRevision&&hash(executionRevision)&&hash(mediaAssetsSha256),'bound-manifest-identity');
- const content={schema:1,packId,presentationRevision:baseRevision,...(Object.hasOwn(base,'deliveryRevision')?{deliveryRevision:base.deliveryRevision}:{}),executionRevision,mediaIdentity:{packId,revision:baseRevision},mediaAssetsSha256,files:structuredClone(base.files)};
+ // Native files follow the base files; a path the base already lists must be byte-identical, never replaced.
+ const files=structuredClone(base.files),byPath=new Map(files.map(f=>[f.path,f]));
+ for(const f of native){const prior=byPath.get(f.path);if(prior){need(prior.sha256===f.sha256&&prior.bytes===f.bytes,'bound-manifest-conflict');continue;}files.push(structuredClone(f));byPath.set(f.path,f);}
+ const content={schema:1,packId,presentationRevision:baseRevision,...(Object.hasOwn(base,'deliveryRevision')?{deliveryRevision:base.deliveryRevision}:{}),executionRevision,mediaIdentity:{packId,revision:baseRevision},mediaAssetsSha256,files};
  const revision=await sha256(new TextEncoder().encode(canonicalJSONString(content)));
  const manifest={...content,id:`bound-offline:${revision}`,revision};
  const bytes=new TextEncoder().encode(canonicalJSONString(manifest));
  need(bytes.length<=MAX,'bound-manifest-size');
  return {manifest,bytes,descriptor:jsonDescriptor(manifest.id,bytes,await sha256(bytes))};
+}
+
+// F7a2 (OFFLINE L51-L53): each bound play-bound-audio artifact maps its verified delivery to one native
+// descriptor {path,group:'audio',sha256,bytes,mime}, at its exact same-origin path. Identical descriptors are
+// deduplicated (several ranges may share one recording); conflicting descriptors at one path fail.
+const AUDIO_MIME=new Set(['audio/mpeg','audio/wav','audio/ogg']);
+export function nativeAudioFiles(boundArtifacts){
+ const files=new Map();
+ for(const a of boundArtifacts){
+  need(a?.bytes instanceof Uint8Array,'bound-artifact-invalid');
+  let v;try{v=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(a.bytes));}catch{throw Error('bound-artifact-invalid');}
+  if(v?.schema!=='fia-bound-narration-audio@1')continue;
+  const d=v.delivery,url=d?.url;
+  need(typeof url==='string'&&url.startsWith('/')&&!url.startsWith('//')&&!/[?#\\]|\/\.\.?(?:\/|$)/.test(url)&&url.length<=1024&&hash(d.sha256)&&Number.isSafeInteger(d.bytes)&&d.bytes>0&&AUDIO_MIME.has(d.mime),'bound-audio-delivery-invalid');
+  const file={path:url,group:'audio',sha256:d.sha256,bytes:d.bytes,mime:d.mime},prior=files.get(url);
+  need(!prior||canonicalJSONString(prior)===canonicalJSONString(file),'bound-manifest-conflict');files.set(url,file);
+ }
+ return [...files.values()];
 }
 
 // generation = SHA256(UTF8(canonicalJSONString(preimage))) over the closed preimage (OFFLINE L25-L31).

@@ -430,7 +430,7 @@ test('two builds with different shells: generations coexist, exact A stays reada
  const shell=async label=>{const manifest={schema:1,packId,presentationRevision:d.revision,deliveryRevision:'b'.repeat(64),revision:label,files:[{path:'/index.html',bytes:label.length,sha256:await sha256(new TextEncoder().encode(label)),group:'core'},{path:d.presentation.url,bytes:d.presentation.bytes,sha256:d.revision,group:'core'}]};const bytes=new TextEncoder().encode(JSON.stringify(manifest));await writeFile(join(r.dir,'offline',packId+'.json'),bytes);return {pins:[{packId,path:`/offline/${packId}.json`,sha256:await sha256(bytes),bytes:bytes.length}],bytes};};
  let mf=null;
  try{
-  const A=await shell('shell-a');mf=await r.generations(A.pins);let read=http(mf);
+  const A=await shell('shell-a');mf=await r.generations(A.pins);await retainApprovedAudio(mf);let read=http(mf);
   const base=await read('/v1/packs/'+packId+'?execution=2');assert.equal(base.status,200);assert.equal(base.body.preparationDemand.expectedPublicationGeneration,null,'no generation is selected yet');
   const plainDemand=(await read('/v1/packs/'+packId)).body.preparationDemand;assert.equal(Object.hasOwn(plainDemand,'expectedPublicationGeneration'),false,'a page that does not ask gets today\'s demand');
   const readyA=await prepare(read,base.body.preparationDemand);assert.equal(readyA.status,200,JSON.stringify(readyA.body));
@@ -441,6 +441,11 @@ test('two builds with different shells: generations coexist, exact A stays reada
   assert.equal(plain.body.execution.publication,undefined);assert.equal(plain.body.execution.mediaManifest,undefined,'publication and mediaManifest reach only an asking page');
   const bound=(await read('/v1/artifacts/'+mediaA.sha256)).body;
   assert.equal(bound.id,mediaA.id);assert.equal(bound.executionRevision,revision);assert.equal(bound.presentationRevision,d.revision);assert.deepEqual(bound.mediaIdentity,{packId,revision:d.revision});assert.equal(bound.deliveryRevision,'b'.repeat(64));assert.equal(bound.files[0].sha256,await sha256(new TextEncoder().encode('shell-a')));
+  // F7a2: the bound approved BSB recording is listed once, at its exact same-origin delivery path, beside the base files.
+  const narration=(await read('/v1/artifacts/'+revision)).body.activities.filter(a=>a.execution?.narration?.action==='play-bound-audio');assert.ok(narration.length>0,'the presentation binds the approved recording');
+  const native=bound.files.filter(f=>f.path.startsWith('/v1/approved-audio/'));assert.equal(native.length,1,'once per generation');
+  assert.deepEqual(native[0],{path:native[0].path,group:'audio',sha256:APPROVED_MEDIA.sha256,bytes:APPROVED_MEDIA.bytes,mime:APPROVED_MEDIA.mime});assert.match(native[0].path,new RegExp(`^/v1/approved-audio/[a-f0-9]{64}/${APPROVED_MEDIA.sha256}\\.ogg$`));
+  assert.deepEqual(bound.files.slice(0,2),JSON.parse(new TextDecoder().decode(A.bytes)).files,'the base files come first, unchanged');
   assert.deepEqual((await read('/v1/artifacts/'+A.pins[0].sha256)).body,JSON.parse(new TextDecoder().decode(A.bytes)),'the retained base manifest is readable byte for byte');
   assert.equal((await read(`/v1/packs/${packId}?revision=${revision}`)).body.revision,revision,'one retained generation: the legacy selector answers');
   await mf.dispose();mf=null;

@@ -57,3 +57,18 @@ test('frozen previous object: a demand carrying expectedPublicationGeneration is
  assert.deepEqual(seen,['baseRevision,capability,packId,sourceRevision','baseRevision,capability,packId,sourceRevision']);
  assert.deepEqual(await ops.preparePresentation({...demand,expectedPublicationGeneration:'bad'}),{status:'refused',code:'invalid-request'},'retried, and the previous build refuses its own malformed input');
 });
+
+// F7a2 (OFFLINE L51-L53): bound narration audio becomes native manifest files at its exact delivery path.
+test('bound approved audio maps to one native audio file per path; conflicts and unsafe paths fail',async()=>{
+ const {nativeAudioFiles}=await import('../../server/fia/publication/publication-generation.mjs');
+ const audio=(id,url,sha=h('a'),bytes=641001,mime='audio/ogg')=>({id,bytes:enc({schema:'fia-bound-narration-audio@1',id,delivery:{url,sha256:sha,bytes,mime},playbackRange:{startSeconds:1,endSeconds:9}})});
+ const demand={id:'source-narration:S01-U001',bytes:enc({schema:'fia-bound-narration-demand@1',id:'source-narration:S01-U001',identity:{}})};
+ const path=`/v1/approved-audio/${h('1')}/${h('a')}.ogg`;
+ assert.deepEqual(nativeAudioFiles([audio('approved-audio:1',path),audio('approved-audio:2',path),demand]),[{path,group:'audio',sha256:h('a'),bytes:641001,mime:'audio/ogg'}],'two ranges of one recording are one file; demands add nothing');
+ assert.throws(()=>nativeAudioFiles([audio('a',path),audio('b',path,h('b'))]),/bound-manifest-conflict/);
+ for(const url of ['https://example.invalid/a.ogg','//host/a.ogg','/a.ogg?x=1','/v1/../a.ogg','/a#b'])assert.throws(()=>nativeAudioFiles([audio('a',url)]),/bound-audio-delivery-invalid/,url);
+ assert.throws(()=>nativeAudioFiles([audio('a',path,h('a'),1,'video/mp4')]),/bound-audio-delivery-invalid/);
+ const built=await buildBoundManifest(base(),{packId,executionRevision,baseRevision,mediaAssetsSha256},nativeAudioFiles([audio('a',path)]));
+ assert.deepEqual(built.manifest.files,[...base().files,{path,group:'audio',sha256:h('a'),bytes:641001,mime:'audio/ogg'}]);
+ await assert.rejects(buildBoundManifest(base(),{packId,executionRevision,baseRevision,mediaAssetsSha256},[{path:'/index.html',group:'audio',sha256:h('3'),bytes:10,mime:'audio/ogg'}]),/bound-manifest-conflict/,'a base path is never replaced');
+});

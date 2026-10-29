@@ -1,5 +1,5 @@
 import {canonicalJSONString,sha256} from '../preparation/contract.mjs';
-import {PUBLICATION_PIN_SCHEMA,validateBaseManifest,buildBoundManifest,publicationGeneration,jsonDescriptor,validDescriptor} from './publication-generation.mjs';
+import {PUBLICATION_PIN_SCHEMA,validateBaseManifest,buildBoundManifest,publicationGeneration,jsonDescriptor,validDescriptor,nativeAudioFiles} from './publication-generation.mjs';
 const hash=x=>typeof x==='string'&&/^[a-f0-9]{64}$/.test(x);
 const object=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
 const copy=x=>structuredClone(x),encode=x=>new TextEncoder().encode(canonicalJSONString(x));
@@ -68,7 +68,7 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
    need(object(pin)&&Object.keys(pin).sort().join()==='baseManifest,generation,schema'&&pin.schema===PUBLICATION_PIN_SCHEMA&&hash(pin.generation)&&validDescriptor(pin.baseManifest,/^base-offline:[a-f0-9]{64}$/)&&pin.baseManifest.id===`base-offline:${pin.baseManifest.sha256}`&&validDescriptor(row.mediaManifest)&&hash(row.mediaAssetsSha256),'publication-pin-invalid');
    need(row.baseManifestArtifact?.sha256===pin.baseManifest.sha256&&row.baseManifestArtifact.bytes===pin.baseManifest.bytes&&row.mediaManifestArtifact?.sha256===row.mediaManifest.sha256&&row.mediaManifestArtifact.bytes===row.mediaManifest.bytes,'publication-pin-invalid');
    const baseBytes=await bytesFor(row.baseManifestArtifact),mediaBytes=await bytesFor(row.mediaManifestArtifact);
-   const bound=await buildBoundManifest(validateBaseManifest(baseBytes,{packId:row.binding.packId,baseRevision:row.binding.baseRevision}),{packId:row.binding.packId,executionRevision:row.revision,baseRevision:row.binding.baseRevision,mediaAssetsSha256:row.mediaAssetsSha256});
+   const bound=await buildBoundManifest(validateBaseManifest(baseBytes,{packId:row.binding.packId,baseRevision:row.binding.baseRevision}),{packId:row.binding.packId,executionRevision:row.revision,baseRevision:row.binding.baseRevision,mediaAssetsSha256:row.mediaAssetsSha256},nativeAudioFiles(boundArtifacts));
    need(same(bound.descriptor,row.mediaManifest)&&same(Array.from(bound.bytes),Array.from(mediaBytes)),'publication-manifest-mismatch');
    const {generation}=await publicationGeneration({packId:row.binding.packId,executionRevision:row.revision,baseRevision:row.binding.baseRevision,sourceRevision:row.binding.sourceRevision,baseManifest:pin.baseManifest,mediaManifest:row.mediaManifest,artifacts:row.bound.map(describe)});
    need(generation===pin.generation,'publication-generation-mismatch');
@@ -107,7 +107,7 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
    need(pinned?.bytes instanceof Uint8Array&&hash(pinned.sha256)&&await sha256(pinned.bytes)===pinned.sha256,'base-manifest-unavailable');
    const baseManifest=validateBaseManifest(pinned.bytes,{packId:binding.packId,baseRevision:binding.baseRevision});
    const baseArtifact=await retain(pinned.bytes),baseDescriptor=jsonDescriptor(`base-offline:${pinned.sha256}`,pinned.bytes,pinned.sha256);
-   const bound=await buildBoundManifest(baseManifest,{packId:binding.packId,executionRevision:row.revision,baseRevision:binding.baseRevision,mediaAssetsSha256});
+   const bound=await buildBoundManifest(baseManifest,{packId:binding.packId,executionRevision:row.revision,baseRevision:binding.baseRevision,mediaAssetsSha256},nativeAudioFiles(boundArtifacts));
    const mediaArtifact=await retain(bound.bytes);
    const {generation}=await publicationGeneration({packId:binding.packId,executionRevision:row.revision,baseRevision:binding.baseRevision,sourceRevision:binding.sourceRevision,baseManifest:baseDescriptor,mediaManifest:bound.descriptor,artifacts:row.bound.map(describe)});
    Object.assign(row,{publication:{schema:PUBLICATION_PIN_SCHEMA,generation,baseManifest:baseDescriptor},mediaManifest:bound.descriptor,baseManifestArtifact:baseArtifact,mediaManifestArtifact:mediaArtifact});
