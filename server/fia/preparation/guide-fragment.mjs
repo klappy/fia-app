@@ -79,7 +79,10 @@ export function createGuideFragmentJob({storage,bucket,eligibility,fetchSource,m
   const bytes=new Uint8Array(await object.arrayBuffer());if(bytes.length!==o.bytes||hex(bytes)!==o.sha256)return none({...base(c),reason:'retained-evidence-unavailable',subReason:'guide-bytes-integrity'});
   return {...base(c),state:'retained',read,bytes};
  }
- return Object.freeze({demand,retainedGuideFile});
+ // Whether this identity already has a promoted head, and its source sha (the primitive's head record, fresh-source-observation
+ // keys(): `fresh-head:<sha256(logicalId)>`). Admission uses it to refuse any further check as refresh-unavailable (Q24).
+ async function promotedHead({repo,revision,path}={}){const c=await context({repo,revision,path}),h=await storage.get(`fresh-head:${await sha256(c.identity.logicalId)}`);return h?{exists:true,sourceSha256:h.sourceSha256,bytes:h.bytes}:{exists:false};}
+ return Object.freeze({demand,retainedGuideFile,promotedHead});
 }
 
 // Internal dispatch for FiaPreparationJobs (worker.mjs). It answers only https://guide-fragment.internal and returns null for
@@ -87,8 +90,17 @@ export function createGuideFragmentJob({storage,bucket,eligibility,fetchSource,m
 // Ticket admission is not built, so eligibility refuses by default: every demand is typed guide-ineligible before any write.
 // The dispatch is wired but inert. read returns metadata only, never bytes; receipts are issued only inside a trusted composer.
 const INTERNAL_ORIGIN='https://guide-fragment.internal',reply=(status,body)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json','cache-control':'no-store'}});
-export async function serveGuideFragmentObject(request,ctx,env,{eligibility=()=>false}={}){
+export async function serveGuideFragmentObject(request,ctx,env,capabilities){
  const url=new URL(request.url);if(url.origin!==INTERNAL_ORIGIN)return null;
+ // The dispatch passes {snapshot}: the trusted build snapshot (entry.mjs), or null when the object has none. With a snapshot the
+ // reviewed admission component (guide-fragment-admission.mjs) serves the demand; with null it is refused, typed. Called without
+ // capabilities, the handler keeps its inert form: eligibility refuses every demand.
+ if(capabilities!==undefined){
+  if(!capabilities||typeof capabilities!=='object'||Object.keys(capabilities).join()!=='snapshot')return reply(500,{job:GUIDE_FRAGMENT_JOB,state:'unavailable',reason:'guide-admission-unavailable',subReason:'guide-capabilities-shape'});
+  if(!capabilities.snapshot)return reply(503,{job:GUIDE_FRAGMENT_JOB,state:'unavailable',reason:'guide-admission-unavailable',subReason:'guide-no-trusted-snapshot'});
+  const {serveGuideAdmission}=await import('./guide-fragment-admission.mjs');return serveGuideAdmission(request,ctx,env,capabilities.snapshot);
+ }
+ const eligibility=()=>false;
  const op=url.pathname;if(request.method!=='POST'||!['/demand','/read'].includes(op))return reply(404,{job:GUIDE_FRAGMENT_JOB,state:'unavailable',reason:'guide-unknown-operation'});
  let body;try{body=await request.json();}catch{return reply(400,{job:GUIDE_FRAGMENT_JOB,state:'unavailable',reason:'guide-unsupported',subReason:'guide-request-shape'});}
  const source={repo:body?.repo,revision:body?.revision,path:body?.path};

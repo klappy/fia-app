@@ -1541,7 +1541,7 @@
     },
     {
       "path": "server/faces/worker/BACKEND-CLOSURE.json",
-      "sha256": "1246a617d697ab9e372b2adbad18911af206040da4b9339d94ffc73dd5276e23"
+      "sha256": "db804cb182be584b983bdd5fb16d9a5ce648b5841ccde2bc088e088d65322356"
     },
     {
       "path": "server/faces/worker/adapter.mjs",
@@ -2025,7 +2025,7 @@
     },
     {
       "path": "server/fia/preparation/worker.mjs",
-      "sha256": "0923835ff777aacac74e421f2e875c78624bc8d49cac5188618d15658ce48833"
+      "sha256": "4dd4316007d58fb7e430cfd52c13e3dc53787e77e6f29956e7c9b3bcbc4cdebd"
     },
     {
       "path": "server/fia/publication/approved-presentation.json",
@@ -2815,7 +2815,7 @@
     },
     {
       "path": "server/fia/preparation/source-associations/README.md",
-      "sha256": "6d6afcbebfc66b8a7f683221db3bd3ced4a2e033a1a8671665b6dce1ad289aa4"
+      "sha256": "420e6aae7266943bba6a14d6bd0ff6a48514a449533db92916aca88ab360156d"
     },
     {
       "path": "server/fia/preparation/source-associations/index.mjs",
@@ -2851,11 +2851,11 @@
     },
     {
       "path": "server/fia/preparation/guide-fragment.mjs",
-      "sha256": "f8774fc91eede70c48386cc78c004706555824a1c26d9304e39b23213b887d7a"
+      "sha256": "37a5c4a723e5e92322713b7d4a3bba66029214d5d7e46e98f4e032978d715f7b"
     },
     {
       "path": "server/fia/preparation/source-associations/composer.mjs",
-      "sha256": "0f0601246abe8a7626b42614ca29ca99a98741c3e02e6be26e0ef690a9f6364e"
+      "sha256": "3d0719cffd3f172e977759904fee8711abd58b8079c248774e2c1dd7dbba0fcf"
     },
     {
       "path": "tests/preparation-executor/guide-fragment.test.mjs",
@@ -2871,7 +2871,15 @@
     },
     {
       "path": "tests/worker-serving/guide-fragment-dispatch.test.mjs",
-      "sha256": "dcbb670a9b0f680f0754e35c597c6d58a29323c8106c1752cfc0aa92db91fbce"
+      "sha256": "70f01d5b4f58c83495c86453d7b0abe0f4fc9ee5fa30313f9142f462e726dce1"
+    },
+    {
+      "path": "server/fia/preparation/guide-fragment-admission.mjs",
+      "sha256": "4f87c3b71c604b2430340ab840b25b8505d54ec107e682d19f0220dde1aa0b94"
+    },
+    {
+      "path": "tests/worker-serving/guide-fragment-admission.test.mjs",
+      "sha256": "9f0379eb8fde547911ce6c8e0993aa83d765c1a1937aaa0a850afe47b93df4e8"
     }
   ],
   "generatedFiles": [

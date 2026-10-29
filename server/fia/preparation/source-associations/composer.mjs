@@ -24,26 +24,37 @@ import {createCanonicalGuideReader} from '../executable-presentation-resolver.mj
 export function createGuideComposer(options){
  // Exactly these three ports (PR297 review N-c): any other key, such as archives or bindings, is refused, never ignored.
  if(!options||Object.keys(options).sort().join()!=='fetchAsset,producer,snapshot')throw Error('composer-capability');
- const {snapshot,fetchAsset,producer}=options,sources=snapshot?.canonicalSources;if(!Array.isArray(sources)||typeof fetchAsset!=='function')throw Error('composer-capability');
- const read=createCanonicalGuideReader({canonicalSources:sources,fetchAsset}),revisions=new Map();
- for(const d of sources){if(!revisions.has(d.packId))revisions.set(d.packId,new Set());revisions.get(d.packId).add(d.sourceRevision);}
+ const {snapshot,fetchAsset,producer}=options;
+ return composeWithGuideRecords({guideRecordFor:createCanonicalGuideRecords({snapshot,fetchAsset}).guideRecordFor,producer});
+}
+// The trusted canonical selection: guide records read only through createCanonicalGuideReader over the build snapshot's
+// canonicalSources, each re-hashed against its build-pinned row. Shared by the composer and the guide-fragment admission component.
+// rowFor(packId) returns the snapshot row in effect, so a caller can confirm the descriptor is still the current one.
+export function createCanonicalGuideRecords({snapshot,fetchAsset}){
+ const sources=snapshot?.canonicalSources;if(!Array.isArray(sources)||typeof fetchAsset!=='function')throw Error('composer-capability');
+ const read=createCanonicalGuideReader({canonicalSources:sources,fetchAsset}),rows=new Map();
+ for(const d of sources){if(!rows.has(d.packId))rows.set(d.packId,[]);rows.get(d.packId).push(d);}
+ const rowFor=packId=>{const r=rows.get(packId);return r?.length===1?r[0]:null;};
  async function guideRecordFor(packId){
-  const r=revisions.get(packId);if(!r)return {refused:'composer-unknown-pack'};if(r.size!==1)return {refused:'composer-ambiguous-source'};
-  let loaded;try{loaded=await read({packId,sourceRevision:[...r][0]});}catch(error){return {refused:'composer-guide-unavailable',subReason:error?.code??error?.message??null};}
+  const r=rows.get(packId);if(!r)return {refused:'composer-unknown-pack'};if(r.length!==1)return {refused:'composer-ambiguous-source'};
+  let loaded;try{loaded=await read({packId,sourceRevision:r[0].sourceRevision});}catch(error){return {refused:'composer-guide-unavailable',subReason:error?.code??error?.message??null};}
   let guide;try{guide=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(loaded.bytes));}catch{return {refused:'composer-guide-unavailable',subReason:'canonical-guide-shape'};}
-  return guide?.packId===packId?{guide}:{refused:'composer-guide-unavailable',subReason:'canonical-guide-pack'};
+  return guide?.packId===packId?{guide,row:r[0]}:{refused:'composer-guide-unavailable',subReason:'canonical-guide-pack'};
  }
- return composeWithGuideRecords({guideRecordFor,producer});
+ return Object.freeze({guideRecordFor,rowFor});
+}
+// The class-A descriptor for a guide record (Q24): owner from the class rule, the rest from the record itself.
+export function descriptorOf(guide){
+ const d={owner:GUIDE_SOURCE_CLASS.owner,collection:guide?.provenance?.collection,revision:guide?.provenance?.revision,path:guide?.sourceFile,fileSha256:guide?.sourceFileSha256};
+ return Object.values(d).some(v=>typeof v!=='string'||!v)?null:Object.freeze(d);
 }
 // The shared composition over a guide-record loader. Only this module's production constructor and isolated test support call it;
 // the import-boundary test refuses any other production caller, so no caller-built loader can stand in for the trusted one.
 export function composeWithGuideRecords({guideRecordFor,producer}){
  if(typeof guideRecordFor!=='function'||typeof producer?.demand!=='function'||typeof producer?.retainedGuideFile!=='function')throw Error('composer-capability');
  async function descriptorFor(packId){
-  const loaded=await guideRecordFor(packId);if(loaded.refused)return loaded;const guide=loaded.guide;
-  const d={owner:GUIDE_SOURCE_CLASS.owner,collection:guide.provenance?.collection,revision:guide.provenance?.revision,path:guide.sourceFile,fileSha256:guide.sourceFileSha256};
-  if(Object.values(d).some(v=>typeof v!=='string'||!v))return {refused:'composer-descriptor-incomplete'};
-  return {descriptor:Object.freeze(d)};
+  const loaded=await guideRecordFor(packId);if(loaded.refused)return loaded;const d=descriptorOf(loaded.guide);
+  return d?{descriptor:d}:{refused:'composer-descriptor-incomplete'};
  }
  // One pack in, one typed outcome out: {state:'composed', receipt} or {state:'unavailable', reason}.
  async function compose(packId){

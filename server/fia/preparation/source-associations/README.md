@@ -62,6 +62,16 @@ The archive-and-bindings composer, `tests/preparation/support/archive-guide-comp
 
 **Known limit, stated plainly.** `snapshot.canonicalSources` holds only the 136 Mark packs today, because `exportGuideSources` reads only the Mark archive. Through the production constructor, every Luke pack, Spanish Luke included, gets the typed refusal `composer-unknown-pack`. Exporting Luke guide records needs `scripts/package-worker.mjs` and `export-guide-sources.mjs`. Both are held files, and the coordinator sequences that change after PR295.
 
+## Admission (first acquisition)
+
+`server/fia/preparation/guide-fragment-admission.mjs` is the reviewed admission component, following Terry's ANSWER-Q24-FIRST-ACQUISITION (cookbook `eb4d8d5`). It runs inside the guide object with the trusted build snapshot. The dispatch passes `{snapshot: this.presentationExecutionCapabilities()?.snapshot ?? null}` and nothing else. `snapshot: null` is refused with the typed `guide-admission-unavailable`.
+
+- **Input.** A demand names only `{packId}`, or `{packId, retry: true}`. The source is composed from the snapshot's canonical guide record under the class rule. A caller URL, revision, sha, fragment, descriptor, batch or polling key is refused with a type.
+- **Tickets.** Sequence 1. A Retry is allowed only while no head exists.
+- **Eligibility.** Strict at every phase.
+- **Once a head exists,** any further check is `refresh-unavailable`. A warm demand reads the retained file with zero upstream calls.
+- **Luke.** Today the snapshot holds Mark only, so a Luke `packId` gets `composer-unknown-pack` until the Luke export lands.
+
 ## Coverage
 
 Run `node server/fia/preparation/source-associations/coverage.mjs [language book]...`. The default is English Mark and Spanish Luke.

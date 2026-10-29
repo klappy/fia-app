@@ -87,7 +87,7 @@ export class FiaPreparationJobs{
   async fetch(request){
     await this.guideBoot;
     const execution=await serveExecutableObject(request,this.ctx,this.env,this.presentationExecutionCapabilities(),()=>this.executionRuntime??=createExecutableRuntime({ctx:this.ctx,env:this.env,...this.presentationExecutionCapabilities()}));if(execution)return execution;
-    const fragment=await serveGuideFragmentObject(request,this.ctx,this.env);if(fragment)return fragment;
+    const fragment=await serveGuideFragmentObject(request,this.ctx,this.env,{snapshot:this.presentationExecutionCapabilities()?.snapshot??null});if(fragment)return fragment;
     const unit=await serveGuideUnitObject(request,this.ctx,this.env,catalog,this.guideCapabilities);if(unit)return unit;
     const guide=await serveGuidePreparationObject(request,this.ctx,this.env,catalog,this.guideCapabilities);if(guide)return guide;
     if(await this.ctx.storage.get('guide-job'))return json(404,{status:'unavailable'});
