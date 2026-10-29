@@ -2815,15 +2815,15 @@
     },
     {
       "path": "server/fia/preparation/association-question/README.md",
-      "sha256": "7cf480a04411efdaabd5f18a11e8c78859f12e198787856acb284641d26f5ff6"
+      "sha256": "3d2ab4352c851cf04a46f83b9e754842bab6637916d6e62f8232bfd8ea36c4f3"
     },
     {
       "path": "server/fia/preparation/association-question/cli.mjs",
-      "sha256": "3b561c6a5514ea6ddb6002a7342d313ff8f70277e19678729a920af859865307"
+      "sha256": "bf7cbe6c1a612b95ebe7a8ddf0b5c07cf5f8c9b0859c0592b8bfb98a7e4bbedf"
     },
     {
       "path": "server/fia/preparation/association-question/normalize.mjs",
-      "sha256": "d081ea4d86e61184c82b8713343756b8917d1cfbac67a97e4cd0740bd44b7bd1"
+      "sha256": "5cf1af41aa70b3fb05c920c9405683685421ec2e74e03debaf5493002ddf8945"
     },
     {
       "path": "server/fia/preparation/association-question/report.mjs",
@@ -2852,6 +2852,62 @@
     {
       "path": "tests/worker-serving/association-question.test.mjs",
       "sha256": "13d8f9dcf3f3a6cc87405cae725c5f584be48544e90a098a3e483436ff40ff03"
+    },
+    {
+      "path": "server/fia/preparation/association-question/JEV-NOUL-CONTRACT.md",
+      "sha256": "56a1baf10eecb58e8363a79e0e5ae449847690d7fa92791cee1c839a773f6426"
+    },
+    {
+      "path": "server/fia/preparation/association-question/JEV-NOUL-REGISTRATION.md",
+      "sha256": "c53059ccf97829e31fb661152937db6c88397eef924329d55ccd104f06ce3d36"
+    },
+    {
+      "path": "server/fia/preparation/association-question/jev-calibrate.mjs",
+      "sha256": "80cc2528c878e8e30019d0c6629ef6363e250ecb89cbf47428d9cf556e5a5d56"
+    },
+    {
+      "path": "server/fia/preparation/association-question/jev-noul-calibration.json",
+      "sha256": "c7f260ace775c33371178b626b5b08f08b79a512d9475410bf015620d8cdb1a4"
+    },
+    {
+      "path": "server/fia/preparation/association-question/jev-noul-registration.json",
+      "sha256": "f4fc0d3139887d3eb961bb726837ebc614d010214e055cd9d520908ef687868a"
+    },
+    {
+      "path": "server/fia/preparation/association-question/jev-noul.mjs",
+      "sha256": "ddc52a602756cc6171087b563b6c8dd4a47eccec9e037bfbf87a239563263a98"
+    },
+    {
+      "path": "server/fia/preparation/association-question/jev-noul.schema.json",
+      "sha256": "9a3f83b8cda011d55c82df3fcb08d317270d7199804f444e7cfaf81b5eaf2539"
+    },
+    {
+      "path": "tests/association-question/fixtures/gold-wire-subset.json",
+      "sha256": "e042f959d531ec8329f628c1882f3e1e1aa39df1d83db3ec1d29d9dc34b824ba"
+    },
+    {
+      "path": "tests/association-question/fixtures/inputs-wire-subset.json",
+      "sha256": "4c02cab96d57b2d9647944af9a314c6cf88e6569ff022b4850d676a5d31f29c3"
+    },
+    {
+      "path": "tests/association-question/fixtures/split-wire-subset.json",
+      "sha256": "bc9e1384a18f8737b0f6857638a508c2bfd7bce4dc9e1c77acd30104b9bedb05"
+    },
+    {
+      "path": "tests/association-question/fixtures/wire-observed-shape.json",
+      "sha256": "87af599acf63972e2c2e52549c0ab07268c9881fcde2a27855ba043c531e294f"
+    },
+    {
+      "path": "tests/association-question/fixtures/wire-recorded.json",
+      "sha256": "aa534cd006aff56fa27a4f5a1191c9b2b2700e83e32d8db22bf5dc831a2ba062"
+    },
+    {
+      "path": "tests/association-question/jev-noul.test.mjs",
+      "sha256": "a8739789da92233feee9eff28c1dac54803698fcf1a78b4b7110b62e876b57ee"
+    },
+    {
+      "path": "tests/worker-serving/association-question-jev.test.mjs",
+      "sha256": "6f96629a20ccbaea3397fd4079203e3959627d049a105c477d7571abfc12a5c3"
     }
   ],
   "generatedFiles": [

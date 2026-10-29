@@ -1,0 +1,332 @@
+{
+  "schema": "fia-association-eval@1",
+  "sourceRevision": "f8776d92b090b5af5b17b17dc1137f25fb059ed0",
+  "archives": {
+    "server/fia/compiler/presentation/source-packs.json.gz": "48f8c768b108f2b9977048db26fa54c82af4eea7f54c66fa650ef84f7d61ecd7",
+    "server/fia/compiler/presentation/source-packs-luk.json.gz": "98537437857e748d48ce8ad639c95a6b9a8b61b315594ffc1b94328fc0df0283"
+  },
+  "goldSources": {
+    "ledger": {
+      "path": "scripts/association-eval/sources/association-ledger.json",
+      "sha256": "123733d7aa1c127d8929efa2493b2ae5078657629c0f7b2647e1c44a916656c1"
+    },
+    "approvedPresentation": {
+      "path": "server/fia/publication/approved-presentation.json",
+      "sha256": "ccd72f23c23f932651b500b730b285f32fabd37e50037b5af91d8881f1403975",
+      "bytes": 454295
+    }
+  },
+  "rawSource": {
+    "path": "scripts/association-eval/sources/raw-unit-fragments.json",
+    "sha256": "07d67b01497c3468389b6b7027f8f7060cfa2f8f40d3e1825211a23a8f67d718",
+    "pinnedRevision": "eb744452eb8d7c852caadde9d3181cddfe571119",
+    "currentRevision": "96bb023ab1852ab8bdc3a469fcc820e9f9ea1e30"
+  },
+  "kind": "gold",
+  "cases": [
+    {
+      "caseId": "eng.MRK-1-1-13:S02-U005",
+      "output": {
+        "decision": "associate",
+        "association": {
+          "requested": [
+            {
+              "collection": "FIAImages",
+              "id": "a112"
+            },
+            {
+              "collection": "FIAMaps",
+              "id": "c197"
+            }
+          ],
+          "optionalCompanions": null,
+          "companionPairs": null
+        },
+        "display": {
+          "primaryCollection": "FIAImages",
+          "primaryAssetId": "a112",
+          "relatedAssetIds": [
+            "a112",
+            "c197"
+          ],
+          "insertions": [
+            {
+              "activityId": "S02-U005-resource-c197",
+              "assetId": "c197",
+              "fulfills": "S02-U005"
+            }
+          ]
+        }
+      },
+      "provenance": {
+        "goldSource": "approved-presentation",
+        "presentationPath": "server/fia/publication/approved-presentation.json",
+        "presentationSha256": "ccd72f23c23f932651b500b730b285f32fabd37e50037b5af91d8881f1403975",
+        "presentationBytes": 454295,
+        "presentationId": "fia-mark-authentic@1",
+        "prototypeCommit": "0af90274f13b32a776466e436cd114e6de759783",
+        "recipeCommit": "35fcbe52170dacea23ffe9f0aa070a1c92fed508",
+        "approvedSource": {
+          "repository": "klappy/fia-functional-poc",
+          "commit": "df479a8a0a2003fcddab1303bf8f8c22b3f9ce88",
+          "guideCommit": "5d6d59a22caa8f8539c5ff6a3e1ec74c4cfa5c6d",
+          "guideFileSha256": "938515635c9635e6ed614eab84c1a7e0a4cc3269a3231147431a88dd95bb321c",
+          "guideContentSha256": "2347d166bf34db52915f3a76f379f1f9afa9ca78a1af163be091541cbaccc898"
+        },
+        "adjudication": {
+          "basis": "approved manual first-Mark presentation (bundled-passage-v1; 2026-09-11 independent review)",
+          "receipt": "apps/web/docs/V3-BLUEPRINT.md L161; fia-app-cookbook product/guidance/bundled-passage-v1.md L13"
+        },
+        "evidence": {
+          "activityId": "S02-U005",
+          "activityKind": "discussion",
+          "unitTextMatchesArchive": true
+        },
+        "disclosedNotScored": {
+          "nonVisualRelatedAssetIds": [],
+          "nonVisualInsertions": [],
+          "assetLevelVideoCompanions": {
+            "a112": [
+              "a13"
+            ],
+            "c197": []
+          },
+          "note": "Key-term assets are outside the visual candidate set. Video companions are asset-level, optional and not autoplay; the approved file adjudicates no unit-level companion, so companion fields are null (not scored). Historical generated descriptions are provenance only and authorize no new text or voice."
+        },
+        "notScored": {
+          "association.optionalCompanions": "asset-level only in the approved file",
+          "association.companionPairs": "asset-level only in the approved file"
+        }
+      }
+    },
+    {
+      "caseId": "eng.MRK-1-14-20:S02-U008",
+      "output": {
+        "decision": "associate",
+        "association": {
+          "requested": [
+            {
+              "collection": "FIAMaps",
+              "id": "c4"
+            },
+            {
+              "collection": "FIAImages",
+              "id": "a1400"
+            }
+          ],
+          "optionalCompanions": [
+            {
+              "collection": "VideoBibleDictionary",
+              "id": "a11"
+            }
+          ],
+          "companionPairs": [
+            {
+              "from": {
+                "collection": "FIAImages",
+                "id": "a1400"
+              },
+              "to": {
+                "collection": "VideoBibleDictionary",
+                "id": "a11"
+              }
+            }
+          ]
+        },
+        "display": {
+          "primaryCollection": "FIAMaps",
+          "primaryAssetId": "c4",
+          "relatedAssetIds": [
+            "c4",
+            "a1400"
+          ],
+          "insertions": null
+        }
+      },
+      "provenance": {
+        "goldSource": "ledger-row",
+        "ledgerSchema": "fia-unit-media-associations@1",
+        "ledgerSha256": "123733d7aa1c127d8929efa2493b2ae5078657629c0f7b2647e1c44a916656c1",
+        "ledgerSourceRevision": "f8776d92b090b5af5b17b17dc1137f25fb059ed0",
+        "ledgerGuideRevision": "eb744452eb8d7c852caadde9d3181cddfe571119",
+        "adjudication": {
+          "author": "jobs_author",
+          "reviewer": "jobs_review",
+          "acceptedAt": "2026-10-05",
+          "status": "accepted-by-exact-independent-review-before-source-use",
+          "receipt": "fia-app-cookbook work/active/2026-10-05-generalized-media-associations/RESULTS.md"
+        },
+        "evidence": {
+          "associationBasis": {
+            "language": "eng",
+            "sharedEnglishSource": false,
+            "guideArticle": "eng-mrk-p2-v2.2",
+            "guideFileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c",
+            "guideUri": "https://raw.githubusercontent.com/BibleAquifer/FIATranslationGuide/eb744452eb8d7c852caadde9d3181cddfe571119/eng/json/41.content.json"
+          },
+          "guideSourceId": "eng-mrk-p2-v2.2",
+          "primaryDecision": "curated-display-choice-for-reviewed-source-prompt; first-requested-kind and stable listed source candidate; not evidence of uniquely preferred image",
+          "requested": [
+            {
+              "collection": "FIAMaps",
+              "id": "c4",
+              "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association",
+              "typedGuideAssociation": {
+                "reference_id": 0,
+                "content_id": "c4",
+                "resource_code": "FIAMaps",
+                "label": "Galilee Area with Caesarea Philippi and Capernaum",
+                "language": "eng"
+              }
+            },
+            {
+              "collection": "FIAImages",
+              "id": "a1400",
+              "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association",
+              "typedGuideAssociation": {
+                "reference_id": 0,
+                "content_id": "a1400",
+                "resource_code": "FIAImages",
+                "label": "Sea of Galilee",
+                "language": "eng"
+              }
+            }
+          ],
+          "optionalCompanions": [
+            {
+              "collection": "VideoBibleDictionary",
+              "id": "a11",
+              "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association"
+            }
+          ],
+          "companionBehavior": [
+            "related-optional-explicit-play"
+          ],
+          "companionBasis": [
+            "explicit-reviewed-pair-from-source-prompt-and-typed-guide-passage-associations"
+          ]
+        },
+        "notScored": {
+          "display.insertions": "ledger does not adjudicate activity insertions"
+        }
+      }
+    },
+    {
+      "caseId": "eng.MRK-2-1-12:S02-U004",
+      "output": {
+        "decision": "associate",
+        "association": {
+          "requested": [
+            {
+              "collection": "FIAMaps",
+              "id": "c2"
+            }
+          ],
+          "optionalCompanions": [],
+          "companionPairs": []
+        },
+        "display": {
+          "primaryCollection": "FIAMaps",
+          "primaryAssetId": "c2",
+          "relatedAssetIds": [
+            "c2"
+          ],
+          "insertions": null
+        }
+      },
+      "provenance": {
+        "goldSource": "ledger-row",
+        "ledgerSchema": "fia-unit-media-associations@1",
+        "ledgerSha256": "123733d7aa1c127d8929efa2493b2ae5078657629c0f7b2647e1c44a916656c1",
+        "ledgerSourceRevision": "f8776d92b090b5af5b17b17dc1137f25fb059ed0",
+        "ledgerGuideRevision": "eb744452eb8d7c852caadde9d3181cddfe571119",
+        "adjudication": {
+          "author": "jobs_author",
+          "reviewer": "jobs_review",
+          "acceptedAt": "2026-10-05",
+          "status": "accepted-by-exact-independent-review-before-source-use",
+          "receipt": "fia-app-cookbook work/active/2026-10-05-generalized-media-associations/RESULTS.md"
+        },
+        "evidence": {
+          "associationBasis": {
+            "language": "eng",
+            "sharedEnglishSource": false,
+            "guideArticle": "eng-mrk-p7-v2.1",
+            "guideFileSha256": "7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c",
+            "guideUri": "https://raw.githubusercontent.com/BibleAquifer/FIATranslationGuide/eb744452eb8d7c852caadde9d3181cddfe571119/eng/json/41.content.json"
+          },
+          "guideSourceId": "eng-mrk-p7-v2.1",
+          "primaryDecision": "curated-display-choice-for-reviewed-source-prompt; first-requested-kind and stable listed source candidate; not evidence of uniquely preferred image",
+          "requested": [
+            {
+              "collection": "FIAMaps",
+              "id": "c2",
+              "relationEvidence": "reviewed-unit-instruction-plus-typed-passage-association",
+              "typedGuideAssociation": {
+                "reference_id": 0,
+                "content_id": "c2",
+                "resource_code": "FIAMaps",
+                "label": "Galilee Area with Capernaum",
+                "language": "eng"
+              }
+            }
+          ],
+          "optionalCompanions": [],
+          "companionBehavior": [],
+          "companionBasis": []
+        },
+        "notScored": {
+          "display.insertions": "ledger does not adjudicate activity insertions"
+        }
+      }
+    },
+    {
+      "caseId": "spa.MRK-4-35-41:S03-U017",
+      "output": {
+        "decision": "associate",
+        "association": {
+          "requested": [
+            {
+              "collection": "FIAImages",
+              "id": "a293"
+            }
+          ],
+          "optionalCompanions": null,
+          "companionPairs": null
+        },
+        "display": {
+          "primaryCollection": "FIAImages",
+          "primaryAssetId": "a293",
+          "relatedAssetIds": null,
+          "insertions": null
+        }
+      },
+      "provenance": {
+        "goldSource": "ledger-inline",
+        "ledgerSchema": "fia-unit-media-associations@1",
+        "ledgerSha256": "123733d7aa1c127d8929efa2493b2ae5078657629c0f7b2647e1c44a916656c1",
+        "ledgerSourceRevision": "f8776d92b090b5af5b17b17dc1137f25fb059ed0",
+        "ledgerGuideRevision": "eb744452eb8d7c852caadde9d3181cddfe571119",
+        "adjudication": {
+          "author": "jobs_author",
+          "reviewer": "jobs_review",
+          "acceptedAt": "2026-10-05",
+          "status": "accepted-by-exact-independent-review-before-source-use",
+          "receipt": "fia-app-cookbook work/active/2026-10-05-generalized-media-associations/RESULTS.md"
+        },
+        "evidence": {
+          "status": "exact-typed-inline-candidate",
+          "primaryDecision": "typed-inline-resource-reference",
+          "referenceTag": "<data class=\"resource-ref\" data-content-id=\"a293\" data-resource-code=\"FIAImages\">",
+          "htmlSha256": "8204cca8d9a1fb33fe416e2e4f327db9aecbc41c21810388e0041acdee67324f"
+        },
+        "notScored": {
+          "association.optionalCompanions": "not adjudicated for inline rows",
+          "association.companionPairs": "not adjudicated for inline rows",
+          "display.relatedAssetIds": "not adjudicated for inline rows",
+          "display.insertions": "not adjudicated for inline rows"
+        }
+      }
+    }
+  ]
+}

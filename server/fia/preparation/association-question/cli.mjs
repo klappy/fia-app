@@ -9,13 +9,15 @@ import {fileURLToPath} from 'node:url';
 import {canonical, sha256} from '../jev/adapter.mjs';
 import {buildRequest, fixedIdentity} from './request.mjs';
 import {normalizeOutput, provenanceFor, AUTHORITY} from './normalize.mjs';
-import {createRecordedTransport, createNoTransport, createJevTransport, TransportError} from './transports.mjs';
+import {createRecordedTransport, createNoTransport, TransportError} from './transports.mjs';
+import {createJevNoulTransport, createRecordedJevWire} from './jev-noul.mjs';
 
 // PR289 score.mjs DECISIONS_SCHEMA, exactly.
 export const DECISIONS_SCHEMA = 'fia-association-eval-decisions@1';
 export const PRODUCER_ID = 'fia-association-question-adapter@1';
 export const REQUESTS_SCHEMA = 'fia-association-question-requests@1';
 export const RECORDED_LABEL = 'pipeline-test: recorded responses; not a measure of Jev accuracy';
+export const WIRE_LABEL = 'wire-test: recorded documented-wire fixtures; not a measure of Jev quality';
 
 // Case files are PR289 scripts/association-eval/inputs.json exactly: {schema: 'fia-association-eval@1', kind: 'inputs', cases: [...]}.
 export function caseInputs(file) {
@@ -39,13 +41,13 @@ export async function runAdapter({casesFile, transport}) {
   if (new Set(ids).size !== ids.length) throw new TransportError('case-id-duplicate');
   built.sort((a, b) => a.request.caseId < b.request.caseId ? -1 : 1);
   const casesSha256 = await sha256(canonical(built.map(b => b.requestSha256)));
-  const producer = {id: PRODUCER_ID, kind: 'model', authority: AUTHORITY, transport: transport.name, label: transport.name === 'recorded' ? RECORDED_LABEL : `transport:${transport.name}`, ...(await fixedIdentity())};
+  const producer = {id: PRODUCER_ID, kind: 'model', authority: AUTHORITY, transport: transport.name, label: transport.name === 'recorded' ? RECORDED_LABEL : transport.name === 'jev-recorded-wire' ? WIRE_LABEL : `transport:${transport.name}`, ...(await fixedIdentity())};
   if (!transport.respond) return {schema: REQUESTS_SCHEMA, producer, casesSha256, requests: built};
   const decisions = [];
   for (const b of built) {
-    const {modelId, modelVersion, raw} = await transport.respond(b); // errors propagate; nothing is retried or invented
+    const {modelId, modelVersion, raw, wire = null} = await transport.respond(b); // errors propagate; nothing is retried or invented
     const n = normalizeOutput(raw, b.request);
-    decisions.push({caseId: b.request.caseId, output: n.output, confidence: n.confidence, provenance: await provenanceFor({transport: transport.name, modelId, modelVersion, request: b.request, requestSha256: b.requestSha256, raw, normalization: n.normalization})});
+    decisions.push({caseId: b.request.caseId, output: n.output, confidence: n.confidence, provenance: await provenanceFor({transport: transport.name, modelId, modelVersion, request: b.request, requestSha256: b.requestSha256, raw, normalization: n.normalization, wire})});
   }
   return {schema: DECISIONS_SCHEMA, producer, casesSha256, decisions};
 }
@@ -61,14 +63,22 @@ function args(argv) {
 
 export async function main(argv) {
   const a = args(argv);
-  if (!a.cases || !a.out || !a.transport) throw Error('usage: --cases <inputs.json> --transport recorded|none [--responses <file>] [--only <caseId,...>] --out <file>');
+  if (!a.cases || !a.out || !a.transport) throw Error('usage: --cases <inputs.json> --transport recorded|none|jev-recorded-wire [--responses <file>] [--wire <file> --calibration <file>] [--only <caseId,...>] --out <file>');
   const casesFile = selectCases(JSON.parse(await readFile(a.cases, 'utf8')), a.only ? a.only.split(',') : null);
   let transport;
   if (a.transport === 'recorded') {
     if (!a.responses) throw Error('usage: --transport recorded needs --responses');
     transport = createRecordedTransport(JSON.parse(await readFile(a.responses, 'utf8')));
   } else if (a.transport === 'none') transport = createNoTransport();
-  else if (a.transport === 'jev') transport = createJevTransport();
+  else if (a.transport === 'jev-recorded-wire') {
+    if (!a.wire || !a.calibration) throw Error('usage: --transport jev-recorded-wire needs --wire and --calibration');
+    transport = createJevNoulTransport({mode: 'recorded-wire', AI: createRecordedJevWire(JSON.parse(await readFile(a.wire, 'utf8'))), calibration: JSON.parse(await readFile(a.calibration, 'utf8'))});
+  } else if (a.transport === 'jev') {
+    // Live: refuses unless the registration and a verified execution entitlement are both present. No entitlement is supplied here.
+    const registration = JSON.parse(await readFile(new URL('./jev-noul-registration.json', import.meta.url), 'utf8'));
+    const calibration = JSON.parse(await readFile(a.calibration ?? new URL('./jev-noul-calibration.json', import.meta.url), 'utf8'));
+    transport = createJevNoulTransport({mode: 'live', AI: null, calibration, registration, entitlement: null});
+  }
   else throw Error(`unknown transport ${a.transport}`);
   const doc = await runAdapter({casesFile, transport});
   await writeFile(a.out, JSON.stringify(doc, null, 2) + '\n');

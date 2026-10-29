@@ -107,10 +107,10 @@ export function normalizeOutput(raw, request) {
 }
 
 /** Provenance wrapper, kept apart from the scored output. Authority is fixed; no argument can change it. */
-export async function provenanceFor({transport, modelId = null, modelVersion = null, request, requestSha256, raw, normalization}) {
+export async function provenanceFor({transport, modelId = null, modelVersion = null, request, requestSha256, raw, normalization, wire = null}) {
   let responseSha256 = null;
   try { responseSha256 = raw === undefined ? null : await sha256(canonical(raw, 65536)); } catch { responseSha256 = null; }
   return {authority: AUTHORITY, transport, modelId, modelVersion, questionId: request.questionId, policyId: request.policyId,
     policySha256: request.policySha256, promptTemplateSha256: request.promptTemplateSha256, requestSha256, responseSha256,
-    normalization: normalization.status, invalidReason: normalization.reason};
+    normalization: normalization.status, invalidReason: normalization.reason, ...(wire ? {jev: wire} : {})};
 }

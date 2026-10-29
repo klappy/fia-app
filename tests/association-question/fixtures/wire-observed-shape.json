@@ -1,0 +1,90 @@
+{
+  "schema": "fia-association-noul-wire-recorded@1",
+  "label": "WIRE TEST fixtures: hand-written noul values in the documented wire shape (server/fia/preparation/jev/adapter.mjs L138-147). Not provider output; not a measure of Jev quality. This file uses the observed 2026-10-06 envelope, with model and no model_version (scripts/jev-cue-role-pilot/run.test.mjs:32).",
+  "records": [
+    {
+      "caseId": "eng.MRK-1-14-20:S02-U008",
+      "wireRequestSha256": "b2a56bbf1aade82b5226ccb0b123c758451e6ab9485f510b0230f6e77bc469f8",
+      "response": {
+        "state": "Completed",
+        "result": {
+          "model": "jev-1.13.0",
+          "answers": {
+            "asksVisual": {
+              "type": "noul",
+              "noul": 0.9
+            },
+            "requested_0": {
+              "type": "noul",
+              "noul": 0.83
+            },
+            "primary_0": {
+              "type": "noul",
+              "noul": 0.1
+            },
+            "requested_1": {
+              "type": "noul",
+              "noul": 0.1
+            },
+            "primary_1": {
+              "type": "noul",
+              "noul": 0.1
+            },
+            "requested_2": {
+              "type": "noul",
+              "noul": 0.1
+            },
+            "primary_2": {
+              "type": "noul",
+              "noul": 0.1
+            },
+            "requested_3": {
+              "type": "noul",
+              "noul": 0.1
+            },
+            "primary_3": {
+              "type": "noul",
+              "noul": 0.1
+            },
+            "requested_4": {
+              "type": "noul",
+              "noul": 0.1
+            },
+            "primary_4": {
+              "type": "noul",
+              "noul": 0.1
+            },
+            "requested_5": {
+              "type": "noul",
+              "noul": 0.1
+            },
+            "primary_5": {
+              "type": "noul",
+              "noul": 0.1
+            },
+            "requested_6": {
+              "type": "noul",
+              "noul": 0.1
+            },
+            "primary_6": {
+              "type": "noul",
+              "noul": 0.1
+            },
+            "requested_7": {
+              "type": "noul",
+              "noul": 0.86
+            },
+            "primary_7": {
+              "type": "noul",
+              "noul": 0.84
+            }
+          },
+          "usage": {
+            "input_tokens": 0,
+            "output_tokens": 0
+          }
+        }
+      }
+    }
+  ]
+}
