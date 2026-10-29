@@ -81,7 +81,7 @@ export async function tuningProbabilities({inputs, gold, split, wireFile, observ
     try { response = await AI.run(MODEL, {state: q.state, questions: q.questions}); } catch { return null; } // no recording: not fit
     const parsed = parseWire(response, q.questions);
     if (parsed.invalid) throw Error(`tuning-response-invalid:${caseId}:${parsed.invalid}`);
-    if (!parsed.modelVersion) throw Error(`tuning-model-version-unverified:${caseId}`);
+    if (parsed.identity.status !== 'resolved') throw Error(`tuning-${parsed.identity.reason}:${caseId}`); // never stamped
     versions.add(parsed.modelVersion);
     return parsed.probabilities;
   };

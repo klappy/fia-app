@@ -40,7 +40,7 @@ These reads do **not** prove that the historical AI Gateway or custom route is u
 ## Live-call prerequisites (exact)
 
 1. **A supported, current route for `typesafe/jev`, verified now.** The historical connector route `POST /accounts/{id}/ai/run` (observed 2026-10-06) is unverified today, and the Workers AI catalog cannot establish the model's capability.
-2. **A response that carries `model_version` or `version`.** It must equal the revision the calibration was fit on. The observed wire carried only `model`, which this contract refuses as unverified.
+2. **A response with a resolvable model identity under Terry's rule (cookbook 8ec3901).** That is `model_version`, `version` or an explicitly versioned `model` (for example `jev-1.13.0`). The fields must agree with each other and equal the revision the calibration was fit on. A bare alias such as `typesafe/jev` does not count, and nothing is stamped.
 3. **A verified execution entitlement.** This is either an included plan or a named paid authority, supplied by trusted composition as `{verified: true, route, evidence}`. No included-plan entitlement is claimed.
 4. **The registration set to `registered`, with `authorizedCalls` of at least 36.** That covers one tuning plus one held-out pass at up to 2 calls per case.
 5. **A calibration fit on live tuning responses.** The committed calibration is uncalibrated, and fixtures are not evidence.

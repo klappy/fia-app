@@ -7,7 +7,7 @@ import {readFile, mkdtemp, rm, access} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {buildRequest} from '../../server/fia/preparation/association-question/request.mjs';
-import {buildQuestions, buildFollowUp, composeFollowUp, orderFrom, parseWire, compose, wireOf, createRecordedJevWire, createJevNoulTransport, registrationGaps, registeredPlanCalls, LIMITS, QUESTION_SET, TransportError} from '../../server/fia/preparation/association-question/jev-noul.mjs';
+import {buildQuestions, buildFollowUp, composeFollowUp, orderFrom, parseWire, resolveIdentity, VERSIONED_MODEL, compose, wireOf, createRecordedJevWire, createJevNoulTransport, registrationGaps, registeredPlanCalls, LIMITS, QUESTION_SET, TransportError} from '../../server/fia/preparation/association-question/jev-noul.mjs';
 import {fitCalibration, tuningProbabilities, labelledPairs} from '../../server/fia/preparation/association-question/jev-calibrate.mjs';
 import {runAdapter, main, WIRE_LABEL} from '../../server/fia/preparation/association-question/cli.mjs';
 import {INVALID} from '../../server/fia/preparation/association-question/normalize.mjs';
@@ -51,9 +51,10 @@ test('wire test: questions are built only from the request, deterministically, w
 
 test('wire test: parser accepts the documented shape (bare or under result) and refuses anything else', async () => {
   const q = {asksVisual: {}, requested_0: {}};
-  assert.deepEqual(parseWire({model_version: 'v', answers: {asksVisual: {noul: 0.2}, requested_0: {type: 'noul', noul: 1}}}, q), {probabilities: {asksVisual: 0.2, requested_0: 1}, modelVersion: 'v', observedModel: null});
+  const pw = parseWire({model_version: 'v', answers: {asksVisual: {noul: 0.2}, requested_0: {type: 'noul', noul: 1}}}, q);
+  assert.deepEqual([pw.probabilities, pw.modelVersion, pw.observedModel], [{asksVisual: 0.2, requested_0: 1}, 'v', null]);
   assert.equal(parseWire({result: {version: 'v2', answers: {asksVisual: {noul: 0}, requested_0: {noul: 0}}}}, q).modelVersion, 'v2');
-  assert.equal(parseWire({state: 'Completed', result: {model: 'jev-1.13.0', answers: {asksVisual: {noul: 0}, requested_0: {noul: 0}}}}, q).modelVersion, null, 'model is not a version');
+  assert.equal(parseWire({state: 'Completed', result: {model: 'jev-1.13.0', answers: {asksVisual: {noul: 0}, requested_0: {noul: 0}}}}, q).modelVersion, 'jev-1.13.0', 'a versioned result.model is an identity (Terry 8ec3901)');
   for (const [raw, reason] of [
     [null, 'not-object'], [{}, 'answers-missing'],
     [{answers: {asksVisual: {noul: 0}}}, 'answers-keys-mismatch'],
@@ -125,7 +126,7 @@ test('wire test: end to end, recorded wire → composer → normalizer gives PR2
   assert.ok(!JSON.stringify(doc).includes('source-explicit'));
 });
 
-test('wire test: the observed 2026-10-06 envelope (model, no model_version) is refused as unverified and abstains', async () => {
+test('wire test: the observed 2026-10-06 envelope (versioned model jev-1.13.0) resolves its identity but is refused against the jev-fixture-1 calibration', async () => {
   const calibration = await calibrationFromFixtures();
   const transport = createJevNoulTransport({mode: 'recorded-wire', AI: createRecordedJevWire(observed), calibration});
   const doc = await runAdapter({casesFile: {...inputs, cases: [caseOf('eng.MRK-1-14-20:S02-U008')]}, transport});
@@ -133,7 +134,8 @@ test('wire test: the observed 2026-10-06 envelope (model, no model_version) is r
   assert.equal(d.output.decision, 'abstain');
   assert.equal(d.provenance.jev.reason, 'provider-model-version-unverified');
   assert.equal(d.provenance.jev.observedModel, 'jev-1.13.0');
-  assert.equal(d.provenance.modelVersion, null);
+  assert.equal(d.provenance.modelVersion, 'jev-1.13.0', 'identity recorded from result.model (Terry 8ec3901), never stamped');
+  assert.deepEqual(d.provenance.jev.identity.suppliedBy, ['model']);
 });
 
 test('wire test: the live transport refuses without registration plus verified entitlement; recorded mode refuses a non-recorded AI', async () => {
@@ -285,4 +287,68 @@ test('wire test (v2): per-field measure on adjudicated gold for the fixture case
     'display.relatedAssetIds': {adjudicated: 3, matched: 3, nullByDesign: 1, undecided: 0},
     'display.insertions': {adjudicated: 1, matched: 1, nullByDesign: 3, undecided: 0}
   });
+});
+
+// Terry's model-identity rule (fia-app-cookbook ANSWER-JEV-MODEL-IDENTITY-2026-10-29.md, 8ec3901), on recorded-wire fixtures only.
+async function identityRun(transform, {modelRevision} = {}) {
+  const calibration = {...(await calibrationFromFixtures())};
+  if (modelRevision !== undefined) calibration.modelRevision = modelRevision;
+  const rec = {...wire, records: wire.records.map(r => r.caseId === 'eng.MRK-1-14-20:S02-U008' && r.call === 1 ? {...r, response: transform(structuredClone(r.response))} : r)};
+  const doc = await runAdapter({casesFile: {...inputs, cases: [caseOf('eng.MRK-1-14-20:S02-U008')]}, transport: createJevNoulTransport({mode: 'recorded-wire', AI: createRecordedJevWire(rec), calibration})});
+  return doc.decisions[0];
+}
+const asModel = (model, extra = {}) => r => ({state: 'Completed', result: {model, answers: r.answers, ...extra}});
+
+test('identity rule 1: candidates are non-empty strings; any other present type is invalid', async () => {
+  assert.deepEqual(resolveIdentity({model_version: 5}), {observed: {model_version: 5}, resolved: null, suppliedBy: [], status: 'invalid', reason: 'provider-model-identity-invalid'});
+  assert.equal(resolveIdentity({version: null}).reason, 'provider-model-identity-invalid');
+  assert.equal(resolveIdentity({model: {id: 'jev-1.13.0'}}).reason, 'provider-model-identity-invalid');
+  assert.equal(resolveIdentity({model_version: ''}).reason, 'provider-model-version-unverified', 'an empty string is not an identity');
+  const d = await identityRun(r => ({...r, model_version: 7}));
+  assert.equal(d.output.decision, 'abstain'); assert.equal(d.provenance.jev.reason, 'provider-model-identity-invalid'); assert.equal(d.provenance.jev.status, 'invalid');
+});
+
+test('identity rule 2: a versioned result.model is accepted; bare or aliased model ids are not identities', async () => {
+  // Accepted: the observed envelope shape with a versioned model equal to the calibrated revision (test-only revision override).
+  const ok = await identityRun(asModel('jev-1.13.0'), {modelRevision: 'jev-1.13.0'});
+  assert.equal(ok.output.decision, 'associate'); assert.equal(ok.provenance.modelVersion, 'jev-1.13.0');
+  assert.deepEqual(ok.provenance.jev.calls[0].identity, {observed: {model: 'jev-1.13.0'}, resolved: 'jev-1.13.0', suppliedBy: ['model'], status: 'resolved', reason: null});
+  for (const alias of ['typesafe/jev', 'jev', 'latest', 'jev-fixture-1', 'Jev-1.13.0', 'jev-1.13']) {
+    assert.deepEqual(resolveIdentity({model: alias}), {observed: {model: alias}, resolved: null, suppliedBy: [], status: 'unknown', reason: 'provider-model-version-unverified'}, alias);
+  }
+  const bare = await identityRun(asModel('typesafe/jev'), {modelRevision: 'jev-1.13.0'});
+  assert.equal(bare.output.decision, 'abstain'); assert.equal(bare.provenance.jev.reason, 'provider-model-version-unverified');
+  // An alias beside a real identity field is ignored, not a conflict.
+  assert.equal(resolveIdentity({model: 'typesafe/jev', model_version: 'jev-1.13.0'}).resolved, 'jev-1.13.0');
+  assert.ok(VERSIONED_MODEL.test('jev-1.13.0') && VERSIONED_MODEL.test('jev-2.0.0+build.7') && !VERSIONED_MODEL.test('typesafe/jev'));
+});
+
+test('identity rule 3: several candidates must be exactly equal, with no precedence override', async () => {
+  assert.deepEqual(resolveIdentity({model: 'jev-1.13.0', model_version: 'jev-1.13.0', version: 'jev-1.13.0'}).suppliedBy, ['model_version', 'version', 'model']);
+  assert.equal(resolveIdentity({model: 'jev-1.13.0', model_version: 'jev-1.14.0'}).reason, 'provider-model-identity-conflict');
+  assert.equal(resolveIdentity({model_version: 'a', version: 'b'}).reason, 'provider-model-identity-conflict');
+  const d = await identityRun(asModel('jev-1.13.0', {model_version: 'jev-1.14.0'}), {modelRevision: 'jev-1.14.0'});
+  assert.equal(d.output.decision, 'abstain'); assert.equal(d.provenance.jev.reason, 'provider-model-identity-conflict');
+});
+
+test('identity rule 4: the resolved identity must equal the calibrated revision exactly; a null revision never matches', async () => {
+  const mismatch = await identityRun(asModel('jev-1.13.0'), {modelRevision: 'jev-1.14.0'});
+  assert.equal(mismatch.provenance.jev.reason, 'provider-model-version-unverified'); assert.equal(mismatch.output.decision, 'abstain');
+  const unset = await identityRun(asModel('jev-1.13.0'), {modelRevision: null});
+  assert.equal(unset.provenance.jev.reason, 'provider-model-version-unverified'); assert.equal(unset.output.decision, 'abstain');
+  // The observed recorded envelope (jev-1.13.0) against the fixture calibration (jev-fixture-1) stays unverified.
+  const calibration = await calibrationFromFixtures();
+  const doc = await runAdapter({casesFile: {...inputs, cases: [caseOf('eng.MRK-1-14-20:S02-U008')]}, transport: createJevNoulTransport({mode: 'recorded-wire', AI: createRecordedJevWire(observed), calibration})});
+  assert.equal(doc.decisions[0].provenance.jev.reason, 'provider-model-version-unverified');
+  assert.equal(doc.decisions[0].provenance.modelVersion, 'jev-1.13.0', 'the observed identity is recorded, not replaced');
+});
+
+test('identity rules 5 and 6: a missing identity is never stamped; provenance keeps every observed field', async () => {
+  const none = await identityRun(r => ({answers: r.answers}), {modelRevision: 'jev-fixture-1'});
+  assert.equal(none.output.decision, 'abstain'); assert.equal(none.provenance.jev.reason, 'provider-model-version-unverified');
+  assert.equal(none.provenance.modelVersion, null, 'not stamped from MODEL, configuration or calibration');
+  assert.deepEqual(none.provenance.jev.identity, {observed: {}, resolved: null, suppliedBy: [], status: 'unknown', reason: 'provider-model-version-unverified'});
+  const both = await identityRun(r => ({...r, version: 'jev-fixture-1'}), {modelRevision: 'jev-fixture-1'});
+  assert.equal(both.output.decision, 'associate');
+  assert.deepEqual(both.provenance.jev.calls[0].identity, {observed: {model_version: 'jev-fixture-1', version: 'jev-fixture-1'}, resolved: 'jev-fixture-1', suppliedBy: ['model_version', 'version'], status: 'resolved', reason: null});
 });

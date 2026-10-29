@@ -8,9 +8,17 @@ The wire is the documented one in `server/fia/preparation/jev/adapter.mjs`:
 - named questions of the form `{type: 'noul', instructions, criteria: {true, false}}` (L64-68);
 - the call `AI.run('typesafe/jev', {state, questions})` (L127);
 - answers read from `answers[key].noul`, a number in [0, 1], either bare or under `result` (L138-141);
-- the model version read from `model_version ?? version` (L145-147).
+- model identity normalized by Terry's rule (fia-app-cookbook `ANSWER-JEV-MODEL-IDENTITY-2026-10-29.md`, 8ec3901). The rule applies to the provider response object only: the inner `result` when it has answers.
 
-The wire observed on 2026-10-06 carried only `model` (`scripts/jev-cue-role-pilot/run.test.mjs:32`), and a response like that is refused as `provider-model-version-unverified`. No committed doc shows a question type richer than `noul`, so this contract stays on `noul`.
+The identity rule:
+1. **Candidates.** The candidates are `model_version`, `version` and `model`, counted only when they are non-empty strings. Any other present type, including null, is `invalid` (`provider-model-identity-invalid`).
+2. **`model` must be versioned.** It counts only as an explicit versioned identity: it must match `^[a-z][a-z0-9_-]*-\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$` and must not be `typesafe/jev`. A bare or aliased value is not an identity. With no other candidate, that is `provider-model-version-unverified`.
+3. **No conflicts.** Several candidates must be exactly equal, otherwise the result is `provider-model-identity-conflict`. No precedence overrides a disagreement.
+4. **Exact match.** The resolved identity must equal the calibration's `modelRevision` exactly, or the result is `provider-model-version-unverified`. A null `modelRevision` never matches.
+5. **Never stamp.** A missing identity stays null. It is never filled from `MODEL`, the configuration or the calibration.
+6. **Provenance.** `provenance.jev.calls[].identity` keeps each observed field, the resolved identity and the field or fields that supplied it.
+
+So the observed 2026-10-06 envelope `{result: {model: 'jev-1.13.0', answers}}` (`scripts/jev-cue-role-pilot/run.test.mjs:32`) carries a valid identity. It still matches only a calibration fit on `jev-1.13.0`. No committed doc shows a question type richer than `noul`, so this contract stays on `noul`.
 
 ## Questions
 

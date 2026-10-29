@@ -96,7 +96,7 @@ How it works:
 - **Composition:** deterministic, into the full PR289/PR294 gold shape: requested, optional companions, companion pairs, primary, `relatedAssetIds` in order, and insertions with `fulfills` (the projector rule, `source-action-projector.mjs:93`). The result goes through the normalizer, and authority stays `model-resolved`.
 - **Uncertainty:** an uncertain or contradictory answer leaves the field null or makes the case abstain.
 - **Calibration:** per-language bands, fit on tuning semantic-residue cases only, in two passes so no request depends on gold.
-- **Version check:** the observed 2026-10-06 wire carried no `model_version`, and such a response is refused as unverified.
+- **Model identity:** Terry's rule (cookbook 8ec3901) applies. `model_version`, `version` and an explicitly versioned `model` are candidates. They must agree with each other and equal the calibrated revision exactly. A bare alias is not an identity, and nothing is ever stamped. See `JEV-NOUL-CONTRACT.md`.
 - **Live gate:** `createJevNoulTransport({mode: 'live'})` refuses with `not-activated:<gaps>` unless the registration (`registered-not-funded`, 0 authorized calls) and a verified execution entitlement are present. `authorizedCalls` must also cover the plan, which is 36 calls.
 
 The tests use recorded documented-wire fixtures only. They are **wire tests, not model quality**. `JEV-NOUL-CONTRACT.md` has the per-field rules, and `JEV-NOUL-REGISTRATION.md` has the preflight, the budget and the live-call prerequisites.

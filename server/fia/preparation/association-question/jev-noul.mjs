@@ -1,9 +1,10 @@
 // Q18 resource-association questions on the documented Jev noul wire. NOT ACTIVATED for live use.
 // Wire (server/fia/preparation/jev/adapter.mjs): named questions {type:'noul', instructions, criteria:{true,false}} (L64-68);
 // AI.run(MODEL, {state, questions}) (L127); response.answers[key].noul in [0,1], also under `result` (L138-141);
-// model version = response.model_version ?? response.version (L145-147). The observed 2026-10-06 wire carried only
-// `model`, not model_version (scripts/jev-cue-role-pilot/run.test.mjs:32), so a response without a matching
-// model_version/version is refused as unverified. Nothing is reused from the cue-role questions or calibration.
+// Model identity follows Terry's ruling (fia-app-cookbook ANSWER-JEV-MODEL-IDENTITY-2026-10-29.md, 8ec3901): model_version,
+// version and an explicitly versioned `model` (as on the observed 2026-10-06 wire, run.test.mjs:32) are identity
+// candidates; they must agree and equal the calibrated revision; nothing is ever stamped. See resolveIdentity.
+// Nothing is reused from the cue-role questions or calibration.
 //
 // v2 (this question set): up to two calls per case.
 //   Call 1, every case: asksVisual; requested_<i>, primary_<i> per image/map candidate; companion_<v> per video candidate.
@@ -92,7 +93,35 @@ export function buildFollowUp(request, q1, first) {
 
 export const wireOf = async ({state, questions}) => ({model: MODEL, state, questions, wireRequestSha256: await sha256(canonical({model: MODEL, state, questions}, 262144))});
 
-/** Strict parse of one documented-wire response. Returns {probabilities, modelVersion} or {invalid: reason}. */
+export const VERSIONED_MODEL = /^[a-z][a-z0-9_-]*-\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/;
+const IDENTITY_FIELDS = Object.freeze(['model_version', 'version', 'model']);
+
+/**
+ * Terry's six-rule identity normalization, on the provider response object only (inner `result` when it has answers).
+ * 1 candidates: model_version, version, model, counted only as non-empty strings; any other present type is invalid;
+ * 2 `model` counts only as an explicit versioned identity (VERSIONED_MODEL, never MODEL); a bare alias is not one;
+ * 3 several candidates must be exactly equal, else conflict (no precedence override);
+ * 4 matching against the calibrated revision happens in the transport (a null revision never matches);
+ * 5 nothing is stamped: with no candidate the identity stays null;
+ * 6 provenance keeps each observed field, the resolved identity and the field(s) that supplied it.
+ */
+export function resolveIdentity(response) {
+  const observed = {}, candidates = [];
+  for (const f of IDENTITY_FIELDS) {
+    if (!(f in response) || response[f] === undefined) continue;
+    const v = response[f];
+    observed[f] = v;
+    if (typeof v !== 'string') return {observed, resolved: null, suppliedBy: [], status: 'invalid', reason: 'provider-model-identity-invalid'};
+    if (!v.trim()) continue; // an empty string is not an identity
+    if (f === 'model' && (v === MODEL || !VERSIONED_MODEL.test(v))) continue; // bare or aliased model id: not an identity
+    candidates.push([f, v]);
+  }
+  if (!candidates.length) return {observed, resolved: null, suppliedBy: [], status: 'unknown', reason: 'provider-model-version-unverified'};
+  if (new Set(candidates.map(([, v]) => v)).size > 1) return {observed, resolved: null, suppliedBy: candidates.map(([f]) => f), status: 'unknown', reason: 'provider-model-identity-conflict'};
+  return {observed, resolved: candidates[0][1], suppliedBy: candidates.map(([f]) => f), status: 'resolved', reason: null};
+}
+
+/** Strict parse of one documented-wire response. Returns {probabilities, identity, modelVersion} or {invalid: reason}. */
 export function parseWire(raw, questions) {
   if (!plain(raw)) return {invalid: 'not-object'};
   const response = plain(raw.result) && plain(raw.result.answers) ? raw.result : raw;
@@ -106,8 +135,9 @@ export function parseWire(raw, questions) {
     if (typeof a.noul !== 'number' || !Number.isFinite(a.noul) || a.noul < 0 || a.noul > 1) return {invalid: `noul-range:${k}`};
     probabilities[k] = a.noul;
   }
-  const modelVersion = response.model_version ?? response.version ?? null;
-  return {probabilities, modelVersion: typeof modelVersion === 'string' ? modelVersion : null, observedModel: typeof response.model === 'string' ? response.model : null};
+  const identity = resolveIdentity(response);
+  if (identity.status === 'invalid') return {invalid: identity.reason, identity};
+  return {probabilities, identity, modelVersion: identity.resolved, observedModel: typeof response.model === 'string' ? response.model : null};
 }
 
 const abstain = reason => ({raw: {decision: 'abstain', association: null, display: null}, reason});
@@ -280,8 +310,11 @@ export function createJevNoulTransport({mode, AI, calibration, registration = nu
     const wire = {wireRequestSha256: w.wireRequestSha256, wireResponseSha256: responseSha256, questionCount: Object.keys(q.questions).length};
     if (responseSha256 === null) return {status: 'invalid', reason: 'response-limit', wire};
     const parsed = parseWire(response, q.questions);
-    if (parsed.invalid) return {status: 'invalid', reason: parsed.invalid, wire};
-    if (parsed.modelVersion === null || parsed.modelVersion !== calibration.modelRevision) return {status: 'unknown', reason: 'provider-model-version-unverified', wire, parsed};
+    if (parsed.invalid) return {status: 'invalid', reason: parsed.invalid, wire: {...wire, identity: parsed.identity ?? null}};
+    wire.identity = parsed.identity;
+    if (parsed.identity.status !== 'resolved') return {status: 'unknown', reason: parsed.identity.reason, wire, parsed};
+    // Rule 4: exact match with the calibrated revision; a null modelRevision never matches.
+    if (calibration.modelRevision === null || parsed.identity.resolved !== calibration.modelRevision) return {status: 'unknown', reason: 'provider-model-version-unverified', wire, parsed};
     return {status: 'ok', wire, parsed};
   }
   return {
@@ -296,7 +329,7 @@ export function createJevNoulTransport({mode, AI, calibration, registration = nu
       const c1 = await call(q);
       if (c1.status === 'uncertain') return {...base, ...abstain('provider-outcome-uncertain'), wire: {status: 'uncertain', ...c1.wire, invocations: 1}};
       if (c1.status === 'invalid') return {...base, ...abstain('provider-response-invalid'), wire: {status: 'invalid', reason: c1.reason, ...c1.wire, invocations: 1}};
-      if (c1.status === 'unknown') return {...base, modelVersion: c1.parsed.modelVersion, ...abstain('provider-model-version-unverified'),
+      if (c1.status === 'unknown') return {...base, modelVersion: c1.parsed.modelVersion, ...abstain(c1.reason),
         wire: {status: 'unknown', reason: c1.reason, ...c1.wire, observedModel: c1.parsed.observedModel, probabilities: c1.parsed.probabilities, invocations: 1}};
       const out = {modelId: MODEL, modelVersion: c1.parsed.modelVersion};
       const first = compose(c1.parsed.probabilities, q.keys, bands, q.videoKeys);
