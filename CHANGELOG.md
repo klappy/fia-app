@@ -4,7 +4,7 @@
 
 In text-first or no-recording use, Continue now shows the term's definition on the same step before moving on. The term instruction no longer disappears when recordings are removed for offline Text-only use. The English verified-source headword labels are improved and the Spanish baseline labels are kept (PR265). See the [release scope and limits](release/changes/3.0.0-alpha.20-term-text-first.md).
 
-Known gaps: Spanish localization labels are still a known gap. Resource (image and map) delivery is not part of this release. The hosted term-phase proof on DEV is being completed separately.
+Known gaps: Spanish localization labels are still a known gap. Resource (image and map) delivery is not part of this release. The hosted browser term-flow proof passed on DEV at source merge a82ec1a (PR265); physical-device, audible and whole-corpus acceptance are not part of this release.
 
 ## 3.0.0-alpha.19 — Whole-book saving containment (2026-10-27)
 
