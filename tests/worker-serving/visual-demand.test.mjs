@@ -66,3 +66,23 @@ test('frozen previous runtime: the previous build answers a visual demand with i
  assert.deepEqual(await ops.preparePresentation(demandFor('a1400','image')),{status:'refused',code:'invalid-request'});
  assert.equal(validVisualDemand(demandFor('a1400','image')),true);
 });
+
+// Worker/object deploy overlap (PLAN §3 versions overlap, §7 F4 gate): this Worker forwards an asking
+// pack read to a FiaPreparationJobs object that may still run the previous build, whose read
+// operations (fixture copied from PR283 head 11611967) accept only packId and revision. The Worker
+// retries once without the capability, so HTTP and MCP read_pack get the old shape, never a 400 or 500.
+test('frozen previous object: an asking pack read through this Worker returns the previous build\'s old shape',async()=>{
+ const {createExecutableWorkerOperations}=await import('../../server/fia/preparation/executable-presentation-runtime.mjs');
+ const {createReadOperations:previousReads}=await import('./fixtures/read-operations-previous.mjs');
+ const old=record(),seen=[];
+ const previous=previousReads({readCatalog:async(packId,revision)=>packId===old.packId&&(!revision||revision===old.revision)?structuredClone(old):{status:'unavailable',reason:'not-found'},findArtifact:()=>null});
+ const stub={fetch:async request=>{const operation=new URL(request.url).pathname.split('/').pop(),args=await request.json();seen.push([operation,args]);return Response.json(await previous[operation](args));}};
+ const env={FIA_PREPARATION_JOBS:{idFromName:()=>'root',get:()=>stub},FIA_ORIGINALS:{}};
+ const ops=createExecutableWorkerOperations({env,fallback:null});
+ assert.deepEqual(await ops.readPack({packId,execution:'2'}),old,'the old shape, not a refusal');
+ assert.deepEqual(await ops.readPack({packId,revision:old.revision,execution:'2'}),old);
+ assert.deepEqual(seen.map(([o,a])=>[o,Object.keys(a).sort().join()]),[['readPack','execution,packId'],['readPack','packId'],['readPack','execution,packId,revision'],['readPack','packId,revision']],'one retry without the capability, only after the refusal');
+ assert.deepEqual(await ops.readPack({packId}),old);assert.equal(seen.length,5,'a plain read is sent once');
+ assert.deepEqual(await ops.readPack({packId:'eng.MRK-0-0-0',execution:'2'}),{status:'unavailable',reason:'not-found'},'other answers pass through unchanged');
+ assert.deepEqual(await ops.readPack({packId,execution:'3'}),{status:'refused',code:'invalid-request'},'a malformed capability stays refused');
+});
