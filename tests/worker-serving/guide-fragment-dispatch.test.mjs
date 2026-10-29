@@ -17,11 +17,14 @@ test('worker.mjs carries exactly one guide-fragment dispatch line, after the exe
  assert.equal(lines.filter(l=>l.includes('serveGuideFragmentObject(')).length,1);
  const i=lines.findIndex(l=>l.includes("from './guide-dispatch.mjs'"));assert.match(lines[i+1],/^import \{serveGuideFragmentObject\} from '\.\/guide-fragment\.mjs';$/);
  const e=lines.findIndex(l=>/const execution=await serveExecutableObject\(.*if\(execution\)return execution;/.test(l));
- assert.equal(lines[e+1].trim(),'const fragment=await serveGuideFragmentObject(request,this.ctx,this.env);if(fragment)return fragment;');assert.match(lines[e+2],/const unit=await serveGuideUnitObject\(/);
+ assert.equal(lines[e+1].trim(),'const fragment=await serveGuideFragmentObject(request,this.ctx,this.env,{snapshot:this.presentationExecutionCapabilities()?.snapshot??null});if(fragment)return fragment;');assert.match(lines[e+2],/const unit=await serveGuideUnitObject\(/);
  assert.doesNotMatch(await readFile('server/faces/worker/entry.mjs','utf8'),/guide-fragment/,'no public route or capability');
 });
 // The real release Worker (entry.mjs and FiaPreparationJobs), with its snapshot composed from the exporter so no build is needed.
-const entry=`import worker,{FiaPreparationJobs} from ${JSON.stringify(resolve('server/faces/worker/entry.mjs'))};export {FiaPreparationJobs};export default worker;`;
+// Test-only storage door on its own origin (as executable-transition.test.mjs does), so the test can list the object's rows.
+const entry=`import worker,{FiaPreparationJobs as Jobs} from ${JSON.stringify(resolve('server/faces/worker/entry.mjs'))};
+export class FiaPreparationJobs extends Jobs{async fetch(request){if(new URL(request.url).origin==='https://dispatch.test')return Response.json(Object.fromEntries(await this.ctx.storage.list()));return super.fetch(request);}}
+export default worker;`;
 async function release(t){
  const dir=await mkdtemp(join(tmpdir(),'guide-dispatch-'));t.after(()=>rm(dir,{recursive:true,force:true}));
  const authority=JSON.parse(await readFile('server/fia/publication/trusted-generalized.json')),extension=buildGeneralizedSnapshot(publicRoot,authority),canonicalSources=exportGuideSources({outputRoot:dir,sourceRevision:authority.sourceCommit});
@@ -34,15 +37,14 @@ async function release(t){
   outboundService:()=>{counts.external++;throw Error('External work forbidden');}}),resourcePersistencePath:join(dir,'storage')});
  t.after(()=>mf.dispose());return {mf,counts};
 }
-test('the real FiaPreparationJobs answers the internal guide origin, inert until ticket admission exists; public requests and other objects are untouched',async t=>{
+test('the real FiaPreparationJobs passes only the trusted snapshot: the internal guide origin takes canonical selections only; public requests are untouched',async t=>{
  const {mf,counts}=await release(t),ns=await mf.getDurableObjectNamespace('FIA_PREPARATION_JOBS'),{name}=await guideFragmentIdentity({repo:SOURCE.repo,revision:SOURCE.revision,path:SOURCE.path}),stub=ns.get(ns.idFromName(name)),bucket=await mf.getR2Bucket('FIA_ORIGINALS');
  const call=(path,body,s=stub)=>s.fetch('https://guide-fragment.internal'+path,{method:'POST',body:JSON.stringify(body)}).then(async r=>({status:r.status,body:await r.json()}));
- const demand=await call('/demand',SOURCE);assert.equal(demand.status,200);assert.equal(demand.body.state,'unavailable');assert.equal(demand.body.reason,'guide-ineligible','no ticket admission yet: refused before any write');
- const read=await call('/read',SOURCE);assert.equal(read.body.reason,'guide-not-retained');assert.equal(read.body.bytes,undefined,'metadata only');
- const wrong=await call('/demand',SOURCE,ns.get(ns.idFromName('fia-executable-presentation-authority@1')));assert.equal(wrong.status,403);assert.equal(wrong.body.reason,'guide-object-identity');
- assert.equal((await call('/demand',{...SOURCE,repo:'evil/FIATranslationGuide'})).body.subReason,'guide-source');
+ const caller=await call('/demand',SOURCE);assert.equal(caller.status,400);assert.equal(caller.body.subReason,'guide-caller-authority','a caller URL, revision or sha is never authority');
+ const luke=await call('/demand',{packId:'spa.LUK-1-1-4'});assert.equal(luke.body.subReason,'composer-unknown-pack','Luke is not in this build snapshot yet');
  assert.equal((await stub.fetch('https://guide-fragment.internal/demand')).status,404,'GET is not an operation');
  assert.equal((await (await bucket.list()).objects).length,0);assert.equal(counts.external,0);
+ assert.deepEqual(Object.keys(await (await stub.fetch('https://dispatch.test/dump')).json()),[],'no Durable Object row is written by a refused demand (PR298 review N1)');
  const pub=await mf.dispatchFetch(origin+'/v1/packs/eng.MRK-1-14-20');assert.equal(pub.status,200,'the public read is unchanged');
  const guideViaPublic=await mf.dispatchFetch(origin+'/guide-fragment.internal/demand',{method:'POST',body:JSON.stringify(SOURCE)});assert.notEqual(guideViaPublic.status,200,'no public route reaches the producer');
 });
