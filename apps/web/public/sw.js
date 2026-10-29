@@ -223,6 +223,31 @@ async function historicalApprovedAudio(context,answer){
  const headers=new Headers({'Content-Type':context.file.mime,'Content-Length':String(context.file.bytes),'ETag':'"'+context.file.sha256+'"','Cache-Control':'private, no-store',[offlineServerHeader]:'historical-verified'});
  return new Response(bytes,{status:200,headers});
 }
+// F8 (cross-pericope PLAN §7): the native visual path for server-published originals. Same origin only, no
+// deliveryURL. A response is kept only when its bytes hash to the path's own original SHA-256 with an image
+// MIME; while online it is revalidated with If-None-Match and reused only on 304, offline it is reused as
+// kept; a 404 or 410 deletes it. A corrupted response is refused and never kept or served.
+const VISUALS='fia-v3-original-visuals@1',VISUAL_PATH=/^\/v1\/original-visuals\/[a-f0-9]{64}\/[a-f0-9]{64}\/([a-f0-9]{64})$/;
+async function bytesSha(buffer){return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',buffer)),b=>b.toString(16).padStart(2,'0')).join('');}
+async function keptVisual(response,sha){if(!response||response.status!==200||!['image/jpeg','image/png'].includes((response.headers.get('Content-Type')||'').split(';')[0].trim().toLowerCase()))return null;const bytes=await response.clone().arrayBuffer();return await bytesSha(bytes)===sha?response:null;}
+async function originalVisualRead(request){
+ const url=new URL(request.url),match=VISUAL_PATH.exec(url.pathname);
+ if(!match||url.search||request.headers.has('range'))return fetch(request);
+ const sha=match[1],cache=await caches.open(VISUALS),kept=await keptVisual(await cache.match(url.pathname),sha);
+ if(!kept)await cache.delete(url.pathname);
+ let response;
+ try{response=await fetch(url.pathname,{cache:'no-store',redirect:'error',credentials:'same-origin',headers:kept?{'If-None-Match':`"${sha}"`}:{}});}
+ catch(error){if(kept)return kept;return Response.error();}
+ if(response.status===304&&kept)return kept;
+ if(response.status===404||response.status===410){await cache.delete(url.pathname);return response;}
+ if(response.status===200){
+  // A refused answer never revokes a copy that already verified (OFFLINE L45): the kept copy stays and answers.
+  if(response.redirected||!await keptVisual(response,sha)){if(kept)return kept;return new Response('This image could not be verified.',{status:502,headers:{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store'}});}
+  await cache.put(url.pathname,response.clone());return response;
+ }
+ if(kept&&[408,429,500,502,503,504].includes(response.status))return kept;
+ return response;
+}
 async function approvedAudioRead(request,clientId){
  const context=await approvedAudioAuthority(request,clientId);let response;
  try{response=await fetch(request,{cache:'no-store',redirect:'manual'});}catch(error){if(error?.name==='TypeError'||error?.name==='AbortError')return historicalApprovedAudio(context);await retireApprovedContext(context);return Response.error();}
@@ -290,6 +315,7 @@ self.addEventListener('fetch',event=>{
  // Online destinations retain their own responses/errors, never an installed app shell.
  if(path==='/version.json'||path==='/build-status.html'||inFamily('/build-status')){event.respondWith(fetch(event.request,{cache:'no-store'}));return;}
  if(path.startsWith('/v1/approved-audio/')){event.respondWith(approvedAudioRead(event.request,event.clientId));return;}
+ if(path.startsWith('/v1/original-visuals/')){event.respondWith(originalVisualRead(event.request));return;}
  if(/^\/v1\/(?:packs|artifacts)\//.test(path)){event.respondWith(serverRead(event.request,event.clientId));return;}
  if(['/v1','/mcp','/docs','/content/source'].some(inFamily)){event.respondWith(fetch(event.request));return;}
  if(event.request.mode==='navigate')event.respondWith((async()=>{
