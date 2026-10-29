@@ -114,16 +114,20 @@ async function snapshotComplete(active,{authorityOnly=false}={}){
 }
 // An observed tombstone (a revoked snapshot's marker) is honored before any saved record is served (OFFLINE L61).
 async function savedServerSnapshot(packId,revision){const active=await read(packKey(packId,'active'));if(revision&&active?.serverSnapshot?.record.revision!==revision)return null;if(active?.serverSnapshot&&await read(revokedSnapshotKey(packId,active.serverSnapshot.record.revision)))return null;return await snapshotComplete(active)?active:null;}
-// A refusal is classified by its typed reason, not its HTTP status (Terry b34dadc, 0be2e40). Only reasons the OFFLINE contract
-// decides are classified as selection or currency outcomes that revoke nothing:
+// A refusal is classified by its typed reason, not its HTTP status (Terry b34dadc, 0be2e40, 4851c72). A Saved copy retires only on
+// an applicable denial/tombstone (OFFLINE L45, L60); these typed answers are not authority evidence either way, so they revoke
+// nothing and the copy stays last verified with visible status, claiming no current eligibility (L61):
 //  - publication-generation-ambiguous: the legacy selector met several generations (L37; b34dadc);
 //  - publication-generation-unavailable: the exact generation row is absent (L37, L45, L61; 0be2e40 case a);
-//  - execution-not-current: "A newer shell alone is not revocation" (L43).
-// publication-generation-invalid (a retained row that fails its binding or verification, 0be2e40 case b) is a denial (L60, L43,
-// L57). Any other reason is not decided by the contract today; it keeps the behavior it had before b34dadc (it retires the copy)
-// and is an open item, not a ruling.
+//  - execution-not-current: "A newer shell alone is not revocation" (L43);
+//  - publication-generation-mismatch: the catalog answered a record that is not the exact selector's; that record is never adopted
+//    nor taken as confirming the copy (L37, L43, L45, L61; 4851c72);
+//  - not-found, revision-not-found: the base catalog's absence answers, not a denial or tombstone (L37, L45, L57, L61; 4851c72).
+// publication-generation-invalid (0be2e40 case b), denials and revoked-source reasons retire the copy (L60, L43, L57), as does any
+// other typed reason not listed here; observed tombstones are honored first (L61). An untyped refusal is not decided by existing law (4851c72): it keeps the interim behavior of retiring
+// the copy, and is an open item, not a ruling.
 async function refusalReason(response){try{const body=await response.json();return typeof body?.reason==='string'?body.reason:null;}catch{return null;}}
-const selectionReasons=new Set(['publication-generation-ambiguous','publication-generation-unavailable','execution-not-current']);
+const selectionReasons=new Set(['publication-generation-ambiguous','publication-generation-unavailable','execution-not-current','publication-generation-mismatch','not-found','revision-not-found']);
 const selectionReason=reason=>selectionReasons.has(reason);
 // Each Saved copy is rechecked by its own exact pinned read (?revision=&generation= of the saved record), never a fallback read.
 // Its typed answer decides it: a denial, a changed identity or changed artifacts retire it (the revocation marker is the revision's,
