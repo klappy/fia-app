@@ -56,3 +56,24 @@ test('a publication row records its bound-manifest builder; verification uses it
  for(const manifestBuilder of ['fia-bound-manifest@0',undefined]){const row=t.values.get(key);t.values.set(key,{...row,manifestBuilder});assert.equal((await t.overlay.readCatalog(packId,a.revision,g)).status,'unavailable',String(manifestBuilder));t.values.set(key,row);}
  assert.equal((await t.overlay.readCatalog(packId,a.revision,g)).status,'ready');
 });
+
+// PR296 re-review N-d (OFFLINE L43): a row stored by fia-bound-manifest@1, with @1 mediaManifest bytes, is read
+// exactly under the current overlay; it verifies with its own builder, and relabelling it current is refused.
+test('a stored fia-bound-manifest@1 row with @1 bytes reads exactly under the current overlay',async()=>{
+ const {BOUND_MANIFEST_BUILDERS,CURRENT_BOUND_MANIFEST_BUILDER,boundManifestFor,publicationGeneration}=await import('../../server/fia/publication/publication-generation.mjs');
+ assert.notEqual(CURRENT_BOUND_MANIFEST_BUILDER,'fia-bound-manifest@1');assert.ok(BOUND_MANIFEST_BUILDERS['fia-bound-manifest@1']);
+ const t=await harness();const a=await t.publish({});const current=t.values.get(`executable-generation:${packId}@${a.execution.publication.generation}`);
+ const baseBytes=t.blobs.get(current.baseManifestArtifact.sha256);
+ const v1=await boundManifestFor('fia-bound-manifest@1',baseBytes,{packId,baseRevision:current.binding.baseRevision},{packId,executionRevision:current.revision,baseRevision:current.binding.baseRevision,mediaAssetsSha256:current.mediaAssetsSha256},{boundArtifacts:[]});
+ const d=await sha256(v1.bytes);t.blobs.set(d,new Uint8Array(v1.bytes));
+ const {generation}=await publicationGeneration({packId,executionRevision:current.revision,baseRevision:current.binding.baseRevision,sourceRevision:current.binding.sourceRevision,baseManifest:current.publication.baseManifest,mediaManifest:v1.descriptor,artifacts:[]});
+ const old={...structuredClone(current),manifestBuilder:'fia-bound-manifest@1',mediaManifest:v1.descriptor,mediaManifestArtifact:{reference:'r/'+d,sha256:d,bytes:v1.bytes.length,mime:'application/json'},publication:{...current.publication,generation}};
+ const key=`executable-generation:${packId}@${generation}`;t.values.set(key,old);
+ const read=await t.overlay.readCatalog(packId,a.revision,generation);
+ assert.equal(read.status,'ready');assert.equal(read.execution.publication.generation,generation);assert.deepEqual(read.execution.mediaManifest,v1.descriptor);
+ assert.equal((await t.overlay.findArtifact(d)).content,new TextDecoder().decode(v1.bytes),'the @1 bound manifest is served as stored');
+ // With no bound audio or visuals, @1 and the current builder emit the same bytes, so this @1 row occupies the
+ // same generation key; what is pinned is that the stored @1 label is honoured, not rewritten on read.
+ const cur=await boundManifestFor(CURRENT_BOUND_MANIFEST_BUILDER,baseBytes,{packId,baseRevision:current.binding.baseRevision},{packId,executionRevision:current.revision,baseRevision:current.binding.baseRevision,mediaAssetsSha256:current.mediaAssetsSha256},{boundArtifacts:[],visuals:[]});
+ assert.deepEqual(cur.descriptor,v1.descriptor);assert.equal(t.values.get(key).manifestBuilder,'fia-bound-manifest@1');
+});
