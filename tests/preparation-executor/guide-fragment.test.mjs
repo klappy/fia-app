@@ -165,7 +165,11 @@ test('MIME 6. no other port accepts text/plain, and the profile port admits it o
 });
 
 // N1: the production constructor reads guide records only through the build-pinned canonical guide reader (snapshot.canonicalSources).
-const SNAPSHOT=JSON.parse(readFileSync(new URL('../../server/faces/worker/generated/snapshot.json',import.meta.url)));
+// The canonical sources come deterministically from the build-time exporter itself (as package-worker produces them), never from
+// the gitignored generated/snapshot.json, which exists only after a build.
+const {exportGuideSources}=await import('../../server/fia/compiler/presentation/export-guide-sources.mjs');
+const exportDir=await mkdtemp(join(tmpdir(),'guide-composer-canonical-'));
+const SNAPSHOT={canonicalSources:exportGuideSources({outputRoot:exportDir,sourceRevision:archives[0].revision})};await rm(exportDir,{recursive:true,force:true});
 const MARK='eng.MRK-1-14-20',markGuide=archives.find(x=>x.packs[MARK]).packs[MARK].guide,markBytes=Buffer.from(JSON.stringify(markGuide));
 const markSource=SNAPSHOT.canonicalSources.find(d=>d.packId===MARK);
 function canonical(bytes=markBytes){return {sources:[markSource],assets:{[markSource.staticPath]:bytes.toString('base64')}};}
