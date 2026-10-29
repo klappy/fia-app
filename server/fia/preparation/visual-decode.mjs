@@ -57,7 +57,7 @@ function pngStructure(bytes,limits,clock){
    // maxAncillaryTextBytes (one inflate never produces more than what is left), and the deadline is checked around each inflate.
    if(clock()>limits.decodeMs)refuse('decode-deadline',{final:false});
    const z=data.subarray(k+2),left=limits.maxAncillaryTextBytes-ancillaryText;let out;
-   try{out=inflateSync(z,{info:true,maxOutputLength:left+1});}catch(error){refuse(/maxOutputLength|buffer|larger than|Cannot create a Buffer/i.test(error?.message??'')||error?.code==='ERR_BUFFER_TOO_LARGE'?'png-ancillary-cap':'png-chunk-invalid');}
+   try{out=inflateSync(z,{info:true,maxOutputLength:left+1});}catch(error){if(clock()>limits.decodeMs)refuse('decode-deadline',{final:false});refuse(/maxOutputLength|buffer|larger than|Cannot create a Buffer/i.test(error?.message??'')||error?.code==='ERR_BUFFER_TOO_LARGE'?'png-ancillary-cap':'png-chunk-invalid');}
    if(out.buffer.length>left)refuse('png-ancillary-cap');ancillaryText+=out.buffer.length;
    if(clock()>limits.decodeMs)refuse('decode-deadline',{final:false});
    if(out.engine.bytesWritten!==z.length)refuse('png-chunk-invalid');
