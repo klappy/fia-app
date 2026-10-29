@@ -260,20 +260,35 @@ async function originalVisualRead(request){
  if(!kept)await cache.delete(url.pathname);
  let response;
  try{response=await fetch(url.pathname,{cache:'no-store',redirect:'error',credentials:'same-origin',headers:kept?{'If-None-Match':`"${sha}"`}:{}});}
- catch(error){if(kept)return kept;return await savedVisual(url.pathname,sha)||Response.error();}
+ catch(error){if(await read(visualTombstoneKey(url.pathname)))return Response.error();if(kept)return kept;return await savedVisual(url.pathname,sha)||Response.error();}
  if(response.status===304&&kept)return kept;
- if(response.status===404||response.status===410){await cache.delete(url.pathname);return response;}
+ if(response.status===404||response.status===410){await cache.delete(url.pathname);await write(visualTombstoneKey(url.pathname),{tombstone:true,status:response.status});return response;}
  if(response.status===200){
   if(response.redirected||!await keptVisual(response,sha)){await cache.delete(url.pathname);return new Response('This image could not be verified.',{status:502,headers:{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store'}});}
-  await cache.put(url.pathname,response.clone());return response;
+  await cache.put(url.pathname,response.clone());await(await caches.open(META)).delete('/'+visualTombstoneKey(url.pathname));return response;
  }
- if([408,429,500,502,503,504].includes(response.status))return kept||await savedVisual(url.pathname,sha)||response;
+ if([408,429,500,502,503,504].includes(response.status)){if(await read(visualTombstoneKey(url.pathname)))return response;return kept||await savedVisual(url.pathname,sha)||response;}
  return response;
 }
 // F11: a Saved original (its pack's verified copy under the same path) answers only when the server cannot,
 // and only bytes that hash to the path's own sha with an image type; it is never rebound to another path.
+// PR309 B1 (OFFLINE L43/L45): only an active pack answers — its record complete and not invalidated, its revision
+// not revoked, and its saved files listing exactly this path and sha — from that pack's own cache. Staging caches
+// (pending, -repair) are never active and never answer. An observed 404/410 for the original is its tombstone and
+// is honored before any copy answers, until the server serves it again.
+// Keyed by the full route path (sourceIdentity/consumer/original), as on #312 (c0eee0e, thread 4412859917): the same original
+// bytes on another consumer route are another publication, with their own tombstone.
+const visualTombstoneKey=path=>'visual-tombstone:'+path;
 async function savedVisual(path,sha){
- for(const name of await caches.keys()){if(!name.startsWith(PREFIX))continue;const copy=await keptVisual(await (await caches.open(name)).match(path),sha);if(copy)return copy;}
+ if(await read(visualTombstoneKey(path)))return null;
+ const meta=await caches.open(META);
+ for(const key of await meta.keys()){
+  const name=new URL(typeof key==='string'?key:key.url,self.location.origin).pathname.slice(1);if(name!=='active'&&!/^pack:[^:]+:active$/.test(name))continue;
+  const active=await read(name);if(!active?.cache?.startsWith(PREFIX)||!active.files?.some(f=>f.path===path&&f.sha256===sha))continue;
+  if(active.serverSnapshot&&(active.serverSnapshot.invalid||await read(revokedSnapshotKey(active.packId,active.serverSnapshot.record.revision))))continue;
+  if(!await complete(active))continue;
+  const copy=await keptVisual(await (await caches.open(active.cache)).match(path),sha);if(copy)return copy;
+ }
  return null;
 }
 async function approvedAudioRead(request,clientId){
