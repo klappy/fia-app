@@ -1541,7 +1541,7 @@
     },
     {
       "path": "server/faces/worker/BACKEND-CLOSURE.json",
-      "sha256": "1d39cc8bc199e0e2c5868316680b71e9c9780787d748cadcc2fc186cf7076b20"
+      "sha256": "d5616da0683f98ebc9d26496573b769334638221ea22c292d546b1423a35f367"
     },
     {
       "path": "server/faces/worker/adapter.mjs",
@@ -1649,7 +1649,7 @@
     },
     {
       "path": "server/fia/preparation/executable-presentation-runtime.mjs",
-      "sha256": "eb21962dafa530effd879e8c6abe3006b17e3aecacafa04515ffd6ab97078cd8"
+      "sha256": "196e3b36f66d4877e2d3a1627204316fb5812ee8f7a8e3b1009c2aa166ce2568"
     },
     {
       "path": "server/fia/preparation/executable-presentation-service.mjs",
@@ -2693,7 +2693,7 @@
     },
     {
       "path": "tests/worker-serving/executable-transition.test.mjs",
-      "sha256": "ba970479e882f6958841e3dd23fed9d3af0c6c62ae0f2bb2c7d9789c9c5935eb"
+      "sha256": "15c54e8ee44cb7b4a92ef533bb7334dd33b1a1c33a58d4acef6602c5bac37f9c"
     },
     {
       "path": "tests/worker-serving/execution-registry.test.mjs",
@@ -2815,7 +2815,7 @@
     },
     {
       "path": "server/fia/preparation/trusted-source-actions.mjs",
-      "sha256": "b529c5bcb98990fd80ea2a7545cd0dd012dfa87f2c5433b26b51d3d082dd37d7"
+      "sha256": "658f427f6aedc0d79b2d3be0b474e508eb49e8bf456661797022fdabdcc00206"
     },
     {
       "path": "server/fia/preparation/trusted-source-actions.json",
@@ -2892,6 +2892,18 @@
     {
       "path": "tests/worker-serving/guide-fragment-admission.test.mjs",
       "sha256": "c3b412c3a6db2ed1d7ee5b32d8ff426ae62a669de00308e17a0c53b8e7615001"
+    },
+    {
+      "path": "server/fia/preparation/source-join-decisions.mjs",
+      "sha256": "1dc28fb521db9a18e5675570c412dc4da2aae95314e99cdc5c3b8f65b961518d"
+    },
+    {
+      "path": "tests/worker-serving/source-join-decisions.test.mjs",
+      "sha256": "0527c08955ed2e80e62f3d089e6dc0715f52399187f2ceee008858e784a60046"
+    },
+    {
+      "path": "tests/worker-serving/source-join-transition.test.mjs",
+      "sha256": "45bf192f9174ae7b9452482180d93365b2cbbd436cc29ff56e40a6ce9389d584"
     }
   ],
   "generatedFiles": [

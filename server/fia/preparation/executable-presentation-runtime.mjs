@@ -8,6 +8,7 @@ import {createExecutableOperations} from '../publication/executable-operations.m
 import {createExecutablePresentationService} from './executable-presentation-service.mjs';
 import {createExecutablePresentationResolver,createCanonicalGuideReader} from './executable-presentation-resolver.mjs';
 import {createTrustedSourceActionComposer,trustedExecutionRecipe} from './trusted-source-actions.mjs';
+import {createSourceJoinReader,fragmentPort} from './source-join-decisions.mjs';
 import {SOURCE_ACTION_RECIPE} from '../compiler/presentation/source-action-projector.mjs';
 import guideSources from './guide-sources.json' with {type:'json'};
 import preparationCatalog from './catalog.json' with {type:'json'};
@@ -81,14 +82,22 @@ export async function createExecutableRuntime({ctx,env,snapshot,capabilities={}}
   return {narrationBindings:{...original.narrationBindings,...next.narrationBindings},boundArtifacts:[...original.boundArtifacts,...next.boundArtifacts]};
  });
  const currentPolicy=capabilities.policySha256??policySha256;
- const resolve=capabilities.resolve??createExecutablePresentationResolver({reads:baseReads,resolveCanonicalSource:createCanonicalGuideReader({canonicalSources:snapshot.canonicalSources??[],fetchAsset:path=>env.ASSETS.fetch(new Request(new URL(path,env.FIA_API_ORIGIN),{redirect:'manual'}))}),composeDecisionInputs:capabilities.composeDecisionInputs??createTrustedSourceActionComposer({policySha256:currentPolicy}),resolveBindings});
- const recipeRevision=trustedExecutionRecipe(SOURCE_ACTION_RECIPE);
+ // Cookbook claim 18841a7: the same trusted composer also admits the pinned source-association joins, read from the guide fragment
+ // object's internal read-only /fragment op (PR308) and re-verified here (source-join-decisions.mjs). Without the object namespace or
+ // a trusted snapshot there is no reader, and the composer decides from trusted metadata alone, exactly as before.
+ const assetFetch=path=>env.ASSETS.fetch(new Request(new URL(path,env.FIA_API_ORIGIN),{redirect:'manual'})),readFragment=capabilities.readFragment??fragmentPort(env);
+ const sourceJoins=Array.isArray(snapshot?.canonicalSources)&&readFragment?createSourceJoinReader({snapshot,fetchAsset:assetFetch,readFragment}):null;
+ const resolve=capabilities.resolve??createExecutablePresentationResolver({reads:baseReads,resolveCanonicalSource:createCanonicalGuideReader({canonicalSources:snapshot.canonicalSources??[],fetchAsset:path=>env.ASSETS.fetch(new Request(new URL(path,env.FIA_API_ORIGIN),{redirect:'manual'}))}),composeDecisionInputs:capabilities.composeDecisionInputs??createTrustedSourceActionComposer({policySha256:currentPolicy,sourceJoins}),resolveBindings});
+ const recipeRevision=trustedExecutionRecipe(SOURCE_ACTION_RECIPE,{sourceJoins:!capabilities.composeDecisionInputs&&!!sourceJoins});
  const service=createExecutablePresentationService({storage:ctx.storage,artifacts,resolve,eligible,interpret:capabilities.interpret??null,policySha256:currentPolicy,recipeRevision});
- // The build just before trusted source actions wrote rows under the bare recipe. They
- // still authenticate for exact-revision reads (pinned Active and Saved sessions); the
- // current read treats them as a cache miss below. This service only reads.
- const prior=recipeRevision===SOURCE_ACTION_RECIPE?null:createExecutablePresentationService({storage:ctx.storage,artifacts,resolve,eligible,interpret:capabilities.interpret??null,policySha256:currentPolicy});
- const jobs={read:async args=>{let outcome=null;try{outcome=await service.read(args);}catch(error){if(!prior)throw error;}if(outcome?.status==='ready'||!prior)return outcome;try{const earlier=await prior.read(args);return earlier.status==='ready'?earlier:outcome??earlier;}catch(error){if(outcome)return outcome;throw error;}}};
+ // Earlier builds' rows still authenticate for exact-revision reads (pinned Active and Saved sessions; OFFLINE L96, Terry
+ // 4178e01 point 4); the current read treats them as a cache miss below. Those builds are: the one just before trusted source
+ // actions (the bare recipe), and, once source joins are wired, the trusted build without the join fold. These services only read.
+ const priorRecipes=[...new Set([trustedExecutionRecipe(SOURCE_ACTION_RECIPE),SOURCE_ACTION_RECIPE])].filter(r=>r!==recipeRevision);
+ const priors=priorRecipes.map(r=>createExecutablePresentationService({storage:ctx.storage,artifacts,resolve,eligible,interpret:capabilities.interpret??null,policySha256:currentPolicy,...(r===SOURCE_ACTION_RECIPE?{}:{recipeRevision:r})}));
+ const jobs={read:async args=>{let outcome=null,failure=null;try{outcome=await service.read(args);}catch(error){if(!priors.length)throw error;failure=error;}if(outcome?.status==='ready'||!priors.length)return outcome;
+  for(const prior of priors){try{const earlier=await prior.read(args);if(earlier.status==='ready')return earlier;outcome??=earlier;}catch(error){failure??=error;}}
+  if(outcome)return outcome;throw failure;}};
  if(typeof ctx.storage.list==='function'){
   const retained=await ctx.storage.list({prefix:'executable-presentation:job:'});
   await service.recoverInterrupted({jobIds:[...retained.values()].map(row=>row.jobId)});

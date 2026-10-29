@@ -230,7 +230,7 @@ test('a recipe release (@1 to @2) never strands eng.MRK-1-14-20: the base is ser
   assert.equal(restored.descriptor.revision,base.body.revision);assert.equal(restored.presentation.execution,undefined);
   const opened=await selectServerPresentation(packId,{explicit:true,transport});
   assert.notEqual(opened.descriptor.revision,stored);assert.notEqual(opened.descriptor.revision,base.body.revision);
-  assert.equal(opened.presentation.execution.recipeRevision,trustedExecutionRecipe(SOURCE_ACTION_RECIPE),'today\'s recipe: @2 with the trusted source-action identity');
+  assert.equal(opened.presentation.execution.recipeRevision,trustedExecutionRecipe(SOURCE_ACTION_RECIPE,{sourceJoins:true}),'today\'s recipe: @2 with the trusted source-action identity and, wired to the guide fragment object, the source-join identity (claim 18841a7; Terry 4178e01)');
   assert.ok(opened.presentation.activities.every(a=>a.flow?.schema==='fia-flow-role@1'&&a.flow.role===a.kind),'re-prepared under the current recipe');
   const current=await read('/v1/packs/'+packId);assert.equal(current.status,200);assert.equal(current.body.revision,opened.descriptor.revision);assert.equal(current.body.execution.schema,'fia-executable-catalog@1');
   assert.equal(r.counts.external,0);
@@ -368,7 +368,7 @@ test('a trusted-metadata release re-offers eng.MRK-1-14-20: base plus demand, an
   assert.equal(restored.descriptor.revision,base.body.revision);assert.equal(restored.presentation.execution,undefined);
   const opened=await selectServerPresentation(packId,{explicit:true,transport}),after=opened.presentation;
   assert.notEqual(opened.descriptor.revision,stored);assert.notEqual(opened.descriptor.revision,base.body.revision);
-  assert.equal(after.execution.recipeRevision,trustedExecutionRecipe(SOURCE_ACTION_RECIPE));assert.notEqual(after.execution.recipeRevision,SOURCE_ACTION_RECIPE);
+  assert.equal(after.execution.recipeRevision,trustedExecutionRecipe(SOURCE_ACTION_RECIPE,{sourceJoins:true}));assert.notEqual(after.execution.recipeRevision,SOURCE_ACTION_RECIPE);
   const index=after.activities.findIndex(a=>a.id==='S02-U008'),[primary,derived]=after.activities.slice(index,index+2),prior=before.activities.find(a=>a.id==='S02-U008');
   assert.equal(primary.kind,'discussion');assert.equal(primary.assetId,'a1400');assert.equal(primary.execution.focalAssetId,'a1400');assert.equal(primary.completion,'confirm');assert.deepEqual(primary.execution.completion,{action:'manual-continue'});
   assert.deepEqual(primary.execution.narration,prior.execution.narration,'narration is unchanged');assert.equal(primary.narration,prior.narration);assert.equal(primary.sourceText,prior.sourceText);assert.equal(primary.prompt,prior.prompt);assert.deepEqual(primary.relatedAssetIds,prior.relatedAssetIds,'no legacy relatedIds are imported');
