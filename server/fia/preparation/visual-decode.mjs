@@ -14,7 +14,7 @@ const refuse=(r,o)=>{throw new VisualDecodeRefusal(r,o);};
 // originals carry (c4: pHYs, zTXt; a1400: none), each validated for position, count, length and content.
 const f=Object.freeze;
 export const PNG_ALLOWLIST=f({critical:f(['IHDR','PLTE','IDAT','IEND']),ancillary:f({pHYs:'once, before the first IDAT, length 9, unit 0 or 1',zTXt:'any count between IHDR and IEND; keyword 1-79 Latin-1 bytes with no leading, trailing or double space; compression method 0; exactly one complete zlib stream using every byte; text within 65536 bytes'})});
-export const JPEG_ALLOWLIST=f({markers:f(['SOI','DQT','DHT','SOF0','SOF1','SOF2','SOS','EOI']),dqt:'Pq 0 (8-bit), Tq 0-3, 64 entries of 1-255 each, exact length',dht:'Tc 0-1, Th 0-1 for SOF0 and 0-3 otherwise (re-checked at SOF), at most 256 codes, exact length',sof:'8-bit, 1 or 3 components, distinct ids, H and V 1-4, Tq 0-3 defined before the first scan; an interleaved scan has at most 10 blocks per MCU',sos:'Td and Ta each 0-3 (0-1 for SOF0), tables it uses defined before it; in a sequential frame each component in exactly one scan; no restart markers (no DRI)'});
+export const JPEG_ALLOWLIST=f({markers:f(['SOI','DQT','DHT','SOF0','SOF1','SOF2','SOS','EOI']),dqt:'at least one table; Pq 0 (8-bit), Tq 0-3, 64 entries of 1-255 each, exact length',dht:'at least one table; Tc 0-1, Th 0-1 for SOF0 and 0-3 otherwise (re-checked at SOF), at most 256 codes, exact length',sof:'8-bit, 1 or 3 components, distinct ids, H and V 1-4, Tq 0-3 defined before the first scan; an interleaved scan has at most 10 blocks per MCU',sos:'Td and Ta each 0-3 (0-1 for SOF0), tables it uses defined before it; in a sequential frame each component in exactly one scan; no restart markers (no DRI)'});
 const PNG_SIG=[0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a];
 export function sniffRaster(bytes){
  if(bytes.length>=8&&PNG_SIG.every((v,i)=>bytes[i]===v))return 'image/png';
@@ -125,6 +125,7 @@ function jpegStructure(bytes,limits){
   if(SOF_UNSUPPORTED.has(marker))refuse('jpeg-format-unsupported');
   if(!SOF.has(marker)&&marker!==0xdb&&marker!==0xc4&&marker!==0xda)refuse('jpeg-marker-unsupported');
   // DQT (B.2.4.1): Pq 0, Tq 0-3, 64 entries of 1-255, exact length.
+  if((marker===0xdb||marker===0xc4)&&length===2)refuse('jpeg-table-invalid');// a table segment carries at least one table
   if(marker===0xdb){for(let q=pos+2;q<pos+length;q+=65){const pq=bytes[q]>>4,tq=bytes[q]&15;if(pq!==0||tq>3||q+65>pos+length)refuse('jpeg-table-invalid');for(let i=1;i<=64;i++)if(!bytes[q+i])refuse('jpeg-table-invalid');qt.add(tq);}}
   // DHT (B.2.4.2): Tc 0-1, Th 0-3, and 0-1 for SOF0 (tables defined before the frame are re-checked at SOF); at most 256 codes, exact length.
   if(marker===0xc4){for(let q=pos+2;q<pos+length;){if(q+17>pos+length)refuse('jpeg-table-invalid');const tc=bytes[q]>>4,th=bytes[q]&15;let n=0;for(let i=1;i<=16;i++)n+=bytes[q+i];

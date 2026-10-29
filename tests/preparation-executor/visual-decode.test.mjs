@@ -262,3 +262,6 @@ test('4408717333: zTXt must be exactly one complete zlib stream (no trailing byt
  const {bytes}=png(),tail=bytes.length-12,z=deflateSync(Buffer.from('map')),body=extra=>chunk('zTXt',Buffer.concat([Buffer.from('Comment\0\0','latin1'),z,extra]));
  for(const extra of [Buffer.from([0]),Buffer.from([1,2,3]),z])await refused(decode(Buffer.concat([bytes.subarray(0,tail),body(extra),bytes.subarray(tail)]),'image/png'),'png-chunk-invalid');
 });
+test('4408770646: an empty DQT or DHT segment (no table) is refused',async()=>{
+ for(const m of [0xdb,0xc4])await refused(decode(beforeSof('baseline-37x23.jpg',seg(m,Buffer.alloc(0))),'image/jpeg'),'jpeg-table-invalid');
+});
