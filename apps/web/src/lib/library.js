@@ -95,8 +95,12 @@ export async function prepareVisual(pack,assetId,{signal,transport=executionTran
 // not answered is a missing connection: the restore stops with that answer and R1's fallback says so.
 export const RESTORE_TIMEOUT_MS=15000;
 export const restoreUnreachable=passageUnreachable;
-const displayed=pack=>typeof pack?.displayedGeneration==='string'&&/^[a-f0-9]{64}$/.test(pack.displayedGeneration)?{generation:pack.displayedGeneration}:{};
-export function mediaSelection(pack){return {packId:pack.id,revision:pack.revision,...(pack.mediaIdentity?{mediaIdentity:{...pack.mediaIdentity},mediaAssetsSha256:pack.mediaAssetsSha256}:{})};}
+// The publication generation the page displays for a passage revision (OFFLINE exact selection), set by the page as its declarations
+// change; every worker message about that passage's media names it, so the worker's reads select exactly what is shown.
+const displayedGenerations=new Map(),hex=v=>typeof v==='string'&&/^[a-f0-9]{64}$/.test(v);
+export function setDisplayedGeneration(pack,generation){const key=`${pack?.id}@${pack?.revision}`;if(hex(generation))displayedGenerations.set(key,generation);else displayedGenerations.delete(key);}
+const displayed=pack=>{const g=hex(pack?.displayedGeneration)?pack.displayedGeneration:displayedGenerations.get(`${pack?.id}@${pack?.revision}`);return hex(g)?{generation:g}:{};};
+export function mediaSelection(pack){return {packId:pack.id,revision:pack.revision,...(pack.mediaIdentity?{mediaIdentity:{...pack.mediaIdentity},mediaAssetsSha256:pack.mediaAssetsSha256}:{}),...displayed(pack)};}
 export const libraryAdapter={
  playBoundAudio:(...args)=>executionTransport.playBoundAudio(...args),
  prepareVisual:(pack,assetId,signal)=>prepareVisual(pack,assetId,{signal}),

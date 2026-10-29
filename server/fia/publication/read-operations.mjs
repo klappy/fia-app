@@ -10,7 +10,9 @@ export function createReadOperations({readCatalog,findArtifact}) {
       // execution:'2' is a page's capability to receive visual resources; the read itself is unchanged.
       // generation (F7a1, OFFLINE "Exact selection") needs revision and never falls back.
       if(!keys(args,['packId','revision','execution','generation'])||!validId(args.packId)||('revision'in args&&!validHash(args.revision))||('execution'in args&&args.execution!=='2')||('generation'in args&&(!validHash(args.generation)||!('revision'in args))))return refused();
-      if('generation'in args){const exact=r=>r?.status==='ready'&&r.revision===args.revision&&r.execution?.publication?.generation===args.generation?r:{status:'unavailable',reason:'publication-generation-unavailable'};const r=readCatalog(args.packId,args.revision,args.generation);return r?.then?r.then(exact):exact(r);}
+      // Terry 0be2e40 case (c): a refusal reaches the client with its own typed reason, never merged into one (OFFLINE L43). A ready
+      // record of another revision or generation (a catalog that does not select by generation) is typed apart; no law decides it yet.
+      if('generation'in args){const exact=r=>r?.status&&r.status!=='ready'?r:r?.status==='ready'&&r.revision===args.revision&&r.execution?.publication?.generation===args.generation?r:{status:'unavailable',reason:'publication-generation-mismatch'};const r=readCatalog(args.packId,args.revision,args.generation);return r?.then?r.then(exact):exact(r);}
       return readCatalog(args.packId,args.revision);
     },
     readArtifact(args) {

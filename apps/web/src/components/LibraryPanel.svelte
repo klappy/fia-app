@@ -87,6 +87,8 @@
   <article class="pack-card"><span class="library-eyebrow">{selectedPack.language==='spa'?'Español':'English'} · {selectedPack.title}</span><h3>Save this passage</h3>
    {#if download?.available}
     <p class="library-message" role="status">{download.saved?`Saved · ${labels[download.active.selection]}${savedSizes?` · ${savedSizes}`:''} · ${formatBytes(download.active.bytes)}`:download.active?'Download incomplete or cleared by the device. Download again to repair it.':'Not saved on this device'}</p>
+    <!-- Terry b34dadc: a Saved copy whose own exact recheck is unanswered stays in use, and says so; it claims no remote eligibility. -->
+    {#if download.saved&&download.savedAuthority?.state==='unconfirmed'}<p class="library-message">Using the saved copy. The server could not confirm it just now.</p>{/if}
     {#if downloadFinished}<p>The download is verified. Reload to use the saved version. Your place is kept.</p><button class="secondary full" onclick={()=>window.location.reload()}>Reload saved version</button>{/if}
     {#if download.updateAvailable}<p>A newer download is available. Your saved copy stays usable until the update finishes.</p>{/if}
     {#if download.pending&&!busy}<p>{download.pending.running?'A download is running in another window.':download.pending.status==='timing-pending'?'Files received · timing pending':'Interrupted download'} · {formatBytes(download.pending.received)} of {(download.pending.bytes===null?'total determined during download':formatBytes(download.pending.bytes))} verified. {download.pending.running?'Refresh to check its progress.':'Resume checks and reuses saved files.'}</p>{/if}

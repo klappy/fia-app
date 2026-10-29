@@ -117,3 +117,28 @@ it('a served manifest with native originals can be saved with "all"; their group
  await fireEvent.click(button);await settle();
  expect(download.mock.calls[0][0]).toBe('all');expect(Object.keys(download.mock.calls[0][3])).not.toContain('image');
 });
+
+it('a Saved copy the server could not confirm stays in use and says so',async()=>{
+ const h=c=>c.repeat(64),manifest={revision:h('9'),files:[{path:'/index.html',group:'core',bytes:1024,sha256:h('5')}]};
+ libraryAdapter.downloadStatus.mockResolvedValue({available:true,saved:true,savedAuthority:{state:'unconfirmed',reason:'record-404:publication-generation-ambiguous'},active:{selection:'core',bytes:1024,manifest},manifest,choices:[{id:'core',bytes:1024}]});
+ render(LibraryPanel,{view:'downloads'});await settle();
+ expect(screen.getByText(/^Saved · Text only/)).toBeTruthy();expect(screen.getByText('Using the saved copy. The server could not confirm it just now.')).toBeTruthy();
+});
+// PR311 review B3: only a whole group of verified native originals skips the size choice. A group that mixes a native file with a
+// delivered one, a file with variants, a bad sha or bad bytes is not native: it needs a size choice and the Save stays disabled.
+it('a group that is not wholly verified native needs a size choice and leaves the Save disabled',async()=>{
+ const {preparedDownloadSizes}=await import('../src/lib/media-options.js');
+ const h=c=>c.repeat(64),good={path:`/v1/original-visuals/${h('1')}/${h('2')}/${h('a')}`,group:'image',assetId:'a1400',kind:'image',sha256:h('a'),bytes:5000,mime:'image/jpeg',width:3,height:2};
+ const delivered={...good,path:'/images/b.jpg',sha256:h('b'),deliveryURL:'https://transcode.klappy.dev/image/q=medium/https://example.invalid/b.jpg',sourceSha256:h('d'),sourceBytes:9000};
+ const cases={mixed:[good,delivered],variants:[{...good,variants:{small:{...good}}}],'bad sha':[{...good,sha256:'not-a-sha'}],'bad bytes':[{...good,bytes:0}]};
+ for(const [name,images] of Object.entries(cases)){
+  localStorage.clear();
+  const manifest={revision:h('9'),files:[{path:'/index.html',group:'core',bytes:1024,sha256:h('5')},...images]};
+  expect(preparedDownloadSizes(manifest,'all').groups.image.native,name).toBe(false);
+  libraryAdapter.downloadStatus.mockResolvedValue({available:true,saved:false,manifest,choices:[{id:'core',bytes:1024},{id:'all',bytes:20000}],servedManifest:{state:'used',revision:h('9')}});
+  const {unmount}=render(LibraryPanel,{view:'downloads'});await settle();
+  await fireEvent.click(screen.getByRole('radio',{name:/^Text and all available resources/}));await settle();
+  expect(screen.getByRole('button',{name:'Download selection'}).disabled,name).toBe(true);
+  unmount();
+ }
+});
