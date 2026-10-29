@@ -121,8 +121,8 @@
     },
     {
       "path": "server/fia/preparation/worker.mjs",
-      "sha256": "e9f8ce3579b7857e2b82b6901ea6ba73112e45d804914705a694df708dfbb6c8",
-      "bytes": 15109,
+      "sha256": "0923835ff777aacac74e421f2e875c78624bc8d49cac5188618d15658ce48833",
+      "bytes": 15278,
       "role": "preparation-worker-runtime"
     },
     {
@@ -160,6 +160,12 @@
       "role": "preparation-worker-runtime",
       "sha256": "3e84c8bfe9e0b732a968e9c0dfd9e7df01efb57c591a98cf6bba0289aea73dd7",
       "bytes": 26278
+    },
+    {
+      "path": "server/fia/preparation/guide-fragment.mjs",
+      "role": "preparation-worker-runtime",
+      "sha256": "f8774fc91eede70c48386cc78c004706555824a1c26d9304e39b23213b887d7a",
+      "bytes": 14619
     },
     {
       "path": "server/fia/preparation/executor/acceptance.mjs",
