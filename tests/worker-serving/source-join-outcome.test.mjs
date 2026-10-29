@@ -19,23 +19,23 @@ async function world(){
  const canonicalSources=exportGuideSources({outputRoot:dir,sourceRevision:authority.sourceCommit}),associationSources=exportAssociationSources({outputRoot:dir,sourceRevision:authority.sourceCommit});
  const proof=await buildApprovedAudioProofIndex({publicRoot,authority:{registrySha256:authority.catalog.sha256,sourceRevision:authority.sourceCommit}});
  const snapshot={schema:'fia.worker-read-snapshot.v1',records:extension.records,current:extension.current,staticArtifacts:extension.staticArtifacts,artifacts:[],canonicalSources,associationSources,generalizedAuthority:extension.authority,approvedAudioProofIndex:proof.descriptor};
- const counts={outbound:0};
+ const counts={outbound:0},flags={canonicalReadsLeft:Infinity};
  // answer: the /demand answer for this build. recipeMove: a later build whose source-join policy (and so recipe) moved.
- const runtime=async({answer,recipeMove=false})=>{
+ const runtime=async({answer,recipeMove=false,fragment=null})=>{
   const entry=`import worker,{FiaPreparationJobs as Jobs} from ${JSON.stringify(resolve('server/faces/worker/entry.mjs'))};
 export class FiaPreparationJobs extends Jobs{async fetch(request){const url=new URL(request.url);
  if(url.origin==='https://guide-fragment.internal'&&url.pathname==='/demand'){const n=(await this.ctx.storage.get('test-demands'))||0;await this.ctx.storage.put('test-demands',n+1);return Response.json(${JSON.stringify(answer)});}
- if(url.origin==='https://guide-fragment.internal'&&url.pathname==='/fragment'){const n=(await this.ctx.storage.get('test-fragments'))||0;await this.ctx.storage.put('test-fragments',n+1);}
+ if(url.origin==='https://guide-fragment.internal'&&url.pathname==='/fragment'){const n=(await this.ctx.storage.get('test-fragments'))||0;await this.ctx.storage.put('test-fragments',n+1);if(${JSON.stringify(fragment)}==='transient')return new Response('busy',{status:503});}
  if(url.origin==='https://outcome.test'&&url.pathname==='/forget'){for(const k of (await this.ctx.storage.list({prefix:'source-join-outcome:'})).keys())await this.ctx.storage.delete(k);return Response.json(true);}
  if(url.origin==='https://outcome.test')return Response.json({demands:(await this.ctx.storage.get('test-demands'))||0,fragments:(await this.ctx.storage.get('test-fragments'))||0});
  return super.fetch(request);}}
 export default worker;`;
   const bundled=await build({stdin:{contents:entry,resolveDir:process.cwd(),sourcefile:'source-join-outcome-entry.mjs',loader:'js'},bundle:true,platform:'browser',format:'esm',external:['node:*'],write:false,plugins:[{name:'snapshot',setup(b){b.onResolve({filter:/generated\/snapshot\.json$/},()=>({path:'snapshot',namespace:'so'}));b.onLoad({filter:/.*/,namespace:'so'},()=>({contents:JSON.stringify(snapshot),loader:'json'}));if(recipeMove)b.onLoad({filter:/source-join-decisions\.mjs$/},async args=>({contents:(await readFile(args.path,'utf8')).replace("SOURCE_JOIN_POLICY='fia-source-join@1'","SOURCE_JOIN_POLICY='fia-source-join@2'"),loader:'js',resolveDir:resolve('server/fia/preparation')}));}}]});
   return new Miniflare({...convertV4MiniflareOptions({modules:true,script:bundled.outputFiles[0].text,compatibilityDate:'2026-09-01',compatibilityFlags:['nodejs_compat'],bindings:{FIA_API_ORIGIN:origin},durableObjects:{FIA_PREPARATION_JOBS:{className:'FiaPreparationJobs',useSQLite:true}},r2Buckets:['FIA_ORIGINALS'],
-   serviceBindings:{ASSETS:async request=>{const path=new URL(request.url).pathname;let b;try{b=path===proof.descriptor.path?proof.bytes:await readFile((path.startsWith('/content/source-guides/')?dir:publicRoot)+path);}catch(error){if(error.code!=='ENOENT')throw error;return new Response('Not found',{status:404});}return new Response(b,{headers:{'Content-Type':'application/json','Content-Length':String(b.length)}});}},
+   serviceBindings:{ASSETS:async request=>{const path=new URL(request.url).pathname;if(path.startsWith('/content/source-guides/')&&flags.canonicalReadsLeft--<=0)return new Response('Not found',{status:404});let b;try{b=path===proof.descriptor.path?proof.bytes:await readFile((path.startsWith('/content/source-guides/')?dir:publicRoot)+path);}catch(error){if(error.code!=='ENOENT')throw error;return new Response('Not found',{status:404});}return new Response(b,{headers:{'Content-Type':'application/json','Content-Length':String(b.length)}});}},
    outboundService:()=>{counts.outbound++;throw Error('External work forbidden');}}),resourcePersistencePath:join(dir,'storage')});
  };
- return {dir,counts,runtime};
+ return {dir,counts,flags,runtime};
 }
 async function drive(mf){
  const read=async(path,init)=>{const r=await mf.dispatchFetch(origin+path,init);return {status:r.status,body:await r.json()};};
@@ -70,16 +70,18 @@ test('a non-final miss serves base, and the next explicit Open demands again; re
 test('a final miss stands with no new demand until the recipe moves; then the next explicit Open demands again',async()=>{
  const w=await world();
  try{
-  const final={state:'unavailable',reason:'guide-sha-mismatch',final:true};
+  const final={state:'unavailable',reason:'guide-sha-mismatch',final:true};let oldRevision;
   let mf=await w.runtime({answer:final});
   try{
-   const t=await drive(mf),first=await t.current();const record=await t.open(first.body.preparationDemand);assert.equal(await t.demands(),1);
+   const t=await drive(mf),first=await t.current();const record=await t.open(first.body.preparationDemand);oldRevision=record.revision;assert.equal(await t.demands(),1);
    const after=await t.current();assert.equal(after.body.revision,record.revision,'a final miss stands as the current publication');assert.equal(after.body.preparationDemand,undefined,'no demand is offered');
    assert.equal(await t.demands(),1,'and nothing demands');
   }finally{await mf.dispose();}
   mf=await w.runtime({answer:final,recipeMove:true});
   try{
-   const t=await drive(mf),moved=await t.current();assert.equal(moved.body.execution,undefined,'after the recipe moves the current read is base');assert.ok(moved.body.preparationDemand,'with its demand');
+   const t=await drive(mf),moved=await t.current();assert.equal(moved.body.execution,undefined,'after the recipe moves the current read is base');
+   // Review 5701105621 P2-3 (OFFLINE L96; Terry 4178e01 e): the record written under the released joined recipe still answers its exact read.
+   const exact=await t.read(`/v1/packs/${PACK}?revision=${oldRevision}`);assert.equal(exact.status,200,JSON.stringify(exact.body));assert.ok(moved.body.preparationDemand,'with its demand');
    assert.equal(await t.demands(),1,'the read did not demand');
    await t.open(moved.body.preparationDemand);assert.equal(await t.demands(),2,'the explicit Open demands again');
   }finally{await mf.dispose();}
@@ -114,5 +116,39 @@ test('guide-unsupported/composer-guide-unavailable is non-final: the next explic
    const after=await t.current();assert.equal(after.body.execution,undefined,'not the settled publication');assert.ok(after.body.preparationDemand);
    await t.open(after.body.preparationDemand);assert.equal(await t.demands(),2,'the next explicit Open demands again');
   }finally{await mf.dispose();}
+ }finally{await rm(w.dir,{recursive:true,force:true});}
+});
+
+// Review 5701105621 P2-1: an outcome settles only the record its own Open published. A later Open whose acquisition answers a final
+// miss but whose preparation then fails leaves the previous base record as it was: still unsettled.
+test('a failed preparation after its acquisition does not settle the previous record',async()=>{
+ const w=await world();
+ try{
+  let mf=await w.runtime({answer:{state:'unavailable',reason:'interrupted',final:false}});
+  let demand;try{const t=await drive(mf),first=await t.current();demand=first.body.preparationDemand;await t.open(demand);assert.ok((await t.current()).body.preparationDemand,'non-final: unsettled');}finally{await mf.dispose();}
+  mf=await w.runtime({answer:{state:'unavailable',reason:'guide-sha-mismatch',final:true}});
+  try{
+   // The acquisition reads the canonical guide once; the resolver's own read of it then fails.
+   const t=await drive(mf);w.flags.canonicalReadsLeft=1;
+   const failed=await t.read('/v1/presentation-preparations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(demand)});
+   assert.notEqual(failed.body.status,'ready','the preparation fails after its acquisition');assert.equal(await t.demands(),2);
+   w.flags.canonicalReadsLeft=Infinity;
+   const after=await t.current();assert.equal(after.body.execution,undefined,'the previous record is still not settled');assert.ok(after.body.preparationDemand);
+  }finally{await mf.dispose();}
+ }finally{await rm(w.dir,{recursive:true,force:true});}
+});
+// Review 5701105621 P2-2: retained is not consumed. If the join read then fails transiently, the base publication is not settled: the
+// next explicit Open demands again (a warm demand, no upstream call) and reads the fragment again.
+test('a retained acquisition whose join read fails transiently stays re-offerable, with no refetch',async()=>{
+ const w=await world();
+ try{
+  const mf=await w.runtime({answer:{state:'retained'},fragment:'transient'});
+  try{
+   const t=await drive(mf),first=await t.current();await t.open(first.body.preparationDemand);
+   assert.deepEqual(await t.ops(),{demands:1,fragments:1});
+   const after=await t.current();assert.equal(after.body.execution,undefined,'retained but unconsumed is not settled');assert.ok(after.body.preparationDemand);
+   await t.open(after.body.preparationDemand);assert.deepEqual(await t.ops(),{demands:2,fragments:2},'the next Open demands (warm) and reads the fragment again');
+  }finally{await mf.dispose();}
+  assert.equal(w.counts.outbound,0,'no upstream call at all');
  }finally{await rm(w.dir,{recursive:true,force:true});}
 });

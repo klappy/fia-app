@@ -31,6 +31,13 @@ export const EXECUTION_POLICY='fia-source-to-app/7fa17af806c139cfc353cace39fa6d5
 // The registry is release bookkeeping (execution-registry.test.mjs). Reads no longer
 // authenticate rows by it: a row under a superseded build is a cache miss served from
 // the base, and an explicit Open re-prepares under today's build.
+// The released execution recipes, written out literally (as SUPERSEDED_BUILDS are): rows under any of them keep authenticating for
+// exact-revision reads after a later change to trusted-source-actions.json, SOURCE_JOIN_POLICY, the guide policy or the association
+// recipe. Append a recipe when a build releases one; never edit or drop one.
+export const RELEASED_EXECUTION_RECIPES=Object.freeze([
+ 'fia-server-source-action-projector@2+fia-trusted-source-actions@1:5062a736e063b4f0b7bbba2d4d1fce6dba2288726d09f9850d76d794874cd5f3',
+ 'fia-server-source-action-projector@2+fia-trusted-source-actions@1:5062a736e063b4f0b7bbba2d4d1fce6dba2288726d09f9850d76d794874cd5f3+fia-source-join@1:fia-guide-fragment-read@1:fia-guide-fragment@1:profile:494394679aed913fe95a07418b80846cdd076a3287b1f60e934e45617abb6635:fia-source-association@1',
+]);
 export const SUPERSEDED_BUILDS=Object.freeze([
  {policy:'35e074a65296fbb4743e17bfe28f52b7e0e2b8b558c7a0d4a5fb7ceecad85a47',recipe:'fia-server-source-action-projector@1',approvedAudio:false},
  {policy:'9a7733f5139e9cf7352bfe4018f3164715e69abc9eba3776052bdc324f33295c',recipe:'fia-server-source-action-projector@1',approvedAudio:true},
@@ -93,31 +100,35 @@ export async function createExecutableRuntime({ctx,env,snapshot,capabilities={}}
  const acquireGuide=joinReader&&demandGuide?createGuideAcquisition({snapshot,fetchAsset:assetFetch,demandGuide,...(capabilities.acquisitionDeadlineMs?{deadlineMs:capabilities.acquisitionDeadlineMs}:{}),diagnose:event=>(capabilities.diagnose??(e=>console.warn(JSON.stringify(e))))(event)}):null;
  // Only a retained acquisition lets this Open read the fragment (Otto, 9e3f243): any other outcome is base for this Open, typed.
  const acquired=new Map();
- const sourceJoins=joinReader&&(acquireGuide?Object.freeze({async joinsFor(packId){const a=acquired.get(packId);return a?.state==='retained'?joinReader.joinsFor(packId):{state:'unavailable',reason:'guide-not-acquired',...(a?.reason?{subReason:a.reason}:{})};}}):joinReader);
+ const sourceJoins=joinReader&&(acquireGuide?Object.freeze({async joinsFor(packId){const a=acquired.get(packId);if(a?.state!=='retained')return {state:'unavailable',reason:'guide-not-acquired',...(a?.reason?{subReason:a.reason}:{})};const joined=await joinReader.joinsFor(packId);acquired.set(packId,{...a,join:{state:joined?.state==='ready'?'ready':'unavailable',reason:joined?.reason??null}});return joined;}}):joinReader);
  const resolver=capabilities.resolve??createExecutablePresentationResolver({reads:baseReads,resolveCanonicalSource:createCanonicalGuideReader({canonicalSources:snapshot.canonicalSources??[],fetchAsset:path=>env.ASSETS.fetch(new Request(new URL(path,env.FIA_API_ORIGIN),{redirect:'manual'}))}),composeDecisionInputs:capabilities.composeDecisionInputs??createTrustedSourceActionComposer({policySha256:currentPolicy,sourceJoins}),resolveBindings});
  const resolve=acquireGuide&&!capabilities.resolve?async args=>{if(typeof args?.packId==='string'){const outcome=await acquireGuide(args.packId);acquired.set(args.packId,outcome);
-  // Terry 85eff6a (C1), remedy (ii): the publication may serve base, and the join's outcome is recorded beside it, keyed by the
-  // pack, its base revision, the acquisition's descriptor key and this recipe. The current read re-offers the demand while the miss
-  // is non-final, or once a final miss's descriptor or recipe moved; only an explicit Open demands again. No read demands.
-  if(outcome.state!=='not-applicable'&&typeof args.baseRevision==='string')await ctx.storage.put(joinOutcomeKey(args.packId,args.baseRevision),{...outcome,recipe:recipeRevision});}
-  return resolver(args);}:resolver;
+  // Terry 85eff6a (C1), remedy (ii): the outcome is held for this preparation and committed only beside the record it publishes
+  // (review 5701105621 P2-1); a failed resolve, write or validation settles nothing.
+  }  return resolver(args);}:resolver;
  const recipeRevision=trustedExecutionRecipe(SOURCE_ACTION_RECIPE,{sourceJoins:!capabilities.composeDecisionInputs&&!!sourceJoins});
- const joinOutcomeKey=(packId,baseRevision)=>`source-join-outcome:${packId}@${baseRevision}`;
+ // The outcome is keyed by the published record itself (pack and record revision), so it speaks only for that record.
+ const joinOutcomeKey=(packId,recordRevision)=>`source-join-outcome:${packId}@${recordRevision}`;
+ // Settled (review 5701105621 P2-2): a final acquisition miss, or a retained acquisition whose join read completed (the join was read
+ // and verified, then admitted or dropped by the deterministic composer). Retained but not consumed (the read failed) stays non-final.
+ const outcomeOf=held=>held.state==='retained'?{...held,settled:held.join?.state==='ready'}:{...held,settled:held.state==='unavailable'&&held.final===true};
  const descriptorKey=acquireGuide?createGuideDescriptorKey({snapshot,fetchAsset:assetFetch}):null;
  // A recorded non-final miss, or a final one whose keyed descriptor or recipe moved, does not settle the current publication.
+ // A record whose outcome is missing, unsettled, or final under a descriptor or recipe that has since moved, is not the settled publication.
  const settledJoin=async record=>{
-  if(!acquireGuide||typeof ctx.storage.get!=='function')return true;const base=record.execution?.baseRevision;if(typeof base!=='string')return true;
-  // Review 5700626016 N1: a record with no stored outcome (prepared before outcomes were recorded, e.g. on 4da564b or 1f2c559) is not
-  // settled either: the current read re-offers the demand, and the next explicit Open demands.
-  const outcome=await ctx.storage.get(joinOutcomeKey(record.packId,base));if(!outcome)return false;if(outcome.state==='retained')return true;
-  if(!outcome.final||outcome.recipe!==recipeRevision)return false;
+  if(!acquireGuide||typeof ctx.storage.get!=='function')return true;
+  // Review 5700626016 N1: a record with no stored outcome (prepared before outcomes were recorded, or by a preparation whose outcome was
+  // never committed) is not settled: the current read re-offers the demand, and the next explicit Open demands.
+  const outcome=await ctx.storage.get(joinOutcomeKey(record.packId,record.revision));if(!outcome?.settled||outcome.recipe!==recipeRevision)return false;
+  if(outcome.state==='retained')return true;
   const current=await descriptorKey(record.packId);return !!current&&current.fileSha256===outcome.fileSha256&&current.revision===outcome.revision;
  };
  const service=createExecutablePresentationService({storage:ctx.storage,artifacts,resolve,eligible,interpret:capabilities.interpret??null,policySha256:currentPolicy,recipeRevision});
  // Earlier builds' rows still authenticate for exact-revision reads (pinned Active and Saved sessions; OFFLINE L96, Terry
  // 4178e01 point 4); the current read treats them as a cache miss below. Those builds are: the one just before trusted source
- // actions (the bare recipe), and, once source joins are wired, the trusted build without the join fold. These services only read.
- const priorRecipes=[...new Set([trustedExecutionRecipe(SOURCE_ACTION_RECIPE),SOURCE_ACTION_RECIPE])].filter(r=>r!==recipeRevision);
+ // actions (the bare recipe), and the literal released execution recipes (RELEASED_EXECUTION_RECIPES), so a constant changing later never
+ // strands a pinned row (review 5701105621 P2-3). These services only read.
+ const priorRecipes=[...new Set([...RELEASED_EXECUTION_RECIPES,trustedExecutionRecipe(SOURCE_ACTION_RECIPE),SOURCE_ACTION_RECIPE])].filter(r=>r!==recipeRevision);
  const priors=priorRecipes.map(r=>createExecutablePresentationService({storage:ctx.storage,artifacts,resolve,eligible,interpret:capabilities.interpret??null,policySha256:currentPolicy,...(r===SOURCE_ACTION_RECIPE?{}:{recipeRevision:r})}));
  const jobs={read:async args=>{let outcome=null,failure=null;try{outcome=await service.read(args);}catch(error){if(!priors.length)throw error;failure=error;}if(outcome?.status==='ready'||!priors.length)return outcome;
   for(const prior of priors){try{const earlier=await prior.read(args);if(earlier.status==='ready')return earlier;outcome??=earlier;}catch(error){failure??=error;}}
@@ -150,7 +161,11 @@ export async function createExecutableRuntime({ctx,env,snapshot,capabilities={}}
  // base (cache miss); the base read gains its demand here, and an explicit Open
  // re-prepares under today's build.
  reads.readPack=async args=>{let record=await readPack(args);if(record?.status==='ready'&&record.execution&&!args.revision&&(record.execution.provenance?.recipeRevision!==recipeRevision||!await settledJoin(record)))record=await baseReads.readPack({packId:args.packId});if(record?.status!=='ready'||record.execution)return record;const sourceRevision=record.authority?.rawInventoryCommit;if(record.packId===args.packId&&preparable(record,sourceRevision))return {...record,preparationDemand:{packId:args.packId,baseRevision:record.revision,sourceRevision,capability:'executable-presentation'}};return record;};
- const ops=createExecutableOperations({reads,service,publication,storage:ctx.storage});
+ // The held acquisition outcome is committed beside the record only once that record is published (review 5701105621 P2-1).
+ const publishing=acquireGuide?{...publication,publish:async args=>{const record=await publication.publish(args);const packId=args?.binding?.packId,held=typeof packId==='string'?acquired.get(packId):null;
+  if(record?.status==='ready'&&held&&held.state!=='not-applicable'&&typeof record.revision==='string'){await ctx.storage.put(joinOutcomeKey(record.packId,record.revision),{...outcomeOf(held),recipe:recipeRevision});acquired.delete(packId);}
+  return record;}}:publication;
+ const ops=createExecutableOperations({reads,service,publication:publishing,storage:ctx.storage});
  return {...ops,readApprovedAudio:selected=>retained?retained.read(selected):{status:'unavailable',reason:'approved-audio-unavailable'}};
 }
 export function createExecutableWorkerOperations({env,fallback}){
