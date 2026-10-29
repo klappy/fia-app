@@ -17,11 +17,13 @@ async function harness({authority=()=>true}={}){
  const original={id:packId,activities:[{id:'S02-U008'}],assets:{a1400:{id:'a1400'},c4:{id:'c4'}}},content=JSON.stringify(original),baseRevision=await sha256(new TextEncoder().encode(content));
  const base={readCatalog:async(id,revision)=>id===packId&&(!revision||revision===baseRevision)?{status:'ready',packId,revision:baseRevision}:null,findArtifact:async d=>d===baseRevision?{content}:null};
  const manifest=new TextEncoder().encode(JSON.stringify({schema:1,packId,presentationRevision:baseRevision,revision:'x',files:[{path:'/index.html',bytes:1,sha256:h('9'),group:'core'}]})),manifestSha=await sha256(manifest);
- const calls=[];
- const overlay=createExecutableOverlay({storage,artifacts,base,eligible:async()=>true,validate:async()=>true,baseManifests:{read:async()=>({bytes:manifest,sha256:manifestSha})},visualAuthority:async args=>{calls.push(args.entry.assetId);return authority(args);}});
+ const calls=[],baseManifests={read:async()=>({bytes:manifest,sha256:manifestSha})};
+ // Every port but the authority, so a second overlay can differ from this one in that port alone.
+ const ports={storage,artifacts,base,eligible:async()=>true,validate:async()=>true,baseManifests};
+ const overlay=createExecutableOverlay({...ports,visualAuthority:async args=>{calls.push(args.entry.assetId);return authority(args);}});
  const presentation={...original,execution:{schema:'fia-executable-presentation@1'}};
  const record=await overlay.publish({binding:{packId,baseRevision,sourceRevision:'f'.repeat(40),capability:'executable-presentation'},presentation,boundArtifacts:[],provenance:{jobId:h('0')}});
- return {overlay,record,blobs,calls,values};
+ return {overlay,record,blobs,calls,values,ports};
 }
 const manifestOf=(blobs,record)=>JSON.parse(new TextDecoder().decode(blobs.get(record.execution.mediaManifest.sha256)));
 
@@ -63,12 +65,49 @@ test('stale expectations, conflicting entries and a withdrawn publication are re
  assert.notEqual((await t.overlay.readCatalog(packId))?.execution?.publication?.generation,listed.execution.publication.generation,'the current read falls through to the base');
 });
 
+// PR299 review B2: the same storage, artifacts, base and base manifests, with no authority port, is the
+// only difference; the row that the authorised overlay serves is never served without it.
 test('a row that lists a visual without a publication authority is never served',async()=>{
- const {record,values}=await harness();
- const keys=[...values.keys()].filter(k=>k.startsWith('executable-generation:'));assert.equal(keys.length,1);
- const row=values.get(keys[0]);row.visuals=[a1400];values.set(keys[0],row);
- const plain=createExecutableOverlay({storage:{transaction:async fn=>fn({get:async k=>structuredClone(values.get(k)),put:async()=>{}})},artifacts:{write:async()=>{throw Error('no');},read:async()=>{throw Error('no');}},base:{readCatalog:async()=>null,findArtifact:async()=>null},eligible:async()=>true,validate:async()=>true});
- assert.equal((await plain.readCatalog(packId,record.revision,record.execution.publication.generation)).status,'unavailable');
+ const {overlay,record,ports}=await harness();
+ const listed=await overlay.publishVisuals({packId,revision:record.revision,expectedPublicationGeneration:record.execution.publication.generation,visuals:[a1400]});
+ const g=listed.execution.publication.generation;
+ assert.equal((await overlay.readCatalog(packId,record.revision,g)).status,'ready','served with the authority');
+ const plain=createExecutableOverlay(ports);
+ assert.deepEqual(await plain.readCatalog(packId,record.revision,g),{status:'unavailable',reason:'publication-generation-unavailable'});
+ assert.equal((await plain.readCatalog(packId,record.revision,record.execution.publication.generation)).status,'ready','a row with no visuals needs no authority');
+ assert.equal((await plain.retainedVisual({packId,executionRevision:record.revision,assetId:'a1400',sha256:h('a')})).status,'unavailable');
+});
+
+// PR299 review N3: a new entry the authority does not return is refused; the pointer does not move.
+test('publishVisuals refuses an entry the authority does not return; nothing is adopted',async()=>{
+ const t=await harness({authority:({entry})=>entry.assetId!=='c4'});const g=t.record.execution.publication.generation;
+ await assert.rejects(t.overlay.publishVisuals({packId,revision:t.record.revision,expectedPublicationGeneration:g,visuals:[c4]}),/visual-publication-stale/);
+ assert.equal((await t.overlay.readCatalog(packId)).execution.publication.generation,g);
+ assert.equal([...t.values.keys()].filter(k=>k.startsWith('executable-generation:')).length,1,'no row is stored');
+});
+
+// PR299 review N2: an identical generation already stored is re-pointed to only after it verifies.
+test('publishVisuals never re-points to a stored identical generation that fails verification',async()=>{
+ const t=await harness();const g1=t.record.execution.publication.generation;
+ const r2=await t.overlay.publishVisuals({packId,revision:t.record.revision,expectedPublicationGeneration:g1,visuals:[a1400]});const g2=r2.execution.publication.generation;
+ // Back to g1 as current, with g2's stored row corrupted: the same publication would produce g2 again.
+ const key2=`executable-generation:${packId}@${g2}`,row2=t.values.get(key2);
+ t.values.set(`executable-current:${packId}`,`executable-generation:${packId}@${g1}`);
+ t.values.set(key2,{...row2,mediaManifest:{...row2.mediaManifest,bytes:row2.mediaManifest.bytes+1}});
+ await assert.rejects(t.overlay.publishVisuals({packId,revision:t.record.revision,expectedPublicationGeneration:g1,visuals:[a1400]}),/publication-pin-invalid/);
+ assert.equal(t.values.get(`executable-current:${packId}`),`executable-generation:${packId}@${g1}`,'the pointer stays');
+});
+
+// PR299 review N3: the runtime adapter over Otto's pure published() read.
+test('the runtime visual authority accepts exactly the published entry and nothing else',async()=>{
+ const {visualAuthorityFrom}=await import('../../server/fia/preparation/executable-presentation-runtime.mjs');
+ assert.equal(visualAuthorityFrom(undefined),null);assert.equal(visualAuthorityFrom({}),null);
+ const binding={packId,baseRevision:h('b')},executionRevision=h('e');let answer,seen;
+ const authority=visualAuthorityFrom({published:async q=>{seen=q;return answer;}});
+ answer={manifestEntry:a1400,ready:{path:a1400.path,sha256:a1400.sha256}};
+ assert.equal(await authority({binding,executionRevision,entry:a1400}),true);
+ assert.deepEqual(seen,{packId,baseRevision:h('b'),executionRevision,assetId:'a1400'});
+ for(const bad of [null,{},{manifestEntry:{...a1400,width:1},ready:answer.ready},{manifestEntry:a1400,ready:{...answer.ready,sha256:h('b')}},{manifestEntry:a1400,ready:{...answer.ready,path:'/x'}},{manifestEntry:a1400}]){answer=bad;assert.equal(await authority({binding,executionRevision,entry:a1400}),false,JSON.stringify(bad));}
 });
 
 // F7a / port acceptance condition: historical access is granted only to a retained, verifying generation of

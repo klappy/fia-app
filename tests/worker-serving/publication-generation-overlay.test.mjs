@@ -57,23 +57,30 @@ test('a publication row records its bound-manifest builder; verification uses it
  assert.equal((await t.overlay.readCatalog(packId,a.revision,g)).status,'ready');
 });
 
-// PR296 re-review N-d (OFFLINE L43): a row stored by fia-bound-manifest@1, with @1 mediaManifest bytes, is read
-// exactly under the current overlay; it verifies with its own builder, and relabelling it current is refused.
+// PR296 re-review N-d, PR299 review B1 (OFFLINE L43): a row stored by fia-bound-manifest@1, with @1 mediaManifest
+// bytes, is read exactly under the current overlay. One bound approved recording makes the builders differ
+// (@1 ignores bound audio; the current builder lists it), so only verification with the row's own recorded
+// builder accepts the stored bytes; the same row relabelled with the current builder is refused.
 test('a stored fia-bound-manifest@1 row with @1 bytes reads exactly under the current overlay',async()=>{
- const {BOUND_MANIFEST_BUILDERS,CURRENT_BOUND_MANIFEST_BUILDER,boundManifestFor,publicationGeneration}=await import('../../server/fia/publication/publication-generation.mjs');
- assert.notEqual(CURRENT_BOUND_MANIFEST_BUILDER,'fia-bound-manifest@1');assert.ok(BOUND_MANIFEST_BUILDERS['fia-bound-manifest@1']);
- const t=await harness();const a=await t.publish({});const current=t.values.get(`executable-generation:${packId}@${a.execution.publication.generation}`);
- const baseBytes=t.blobs.get(current.baseManifestArtifact.sha256);
- const v1=await boundManifestFor('fia-bound-manifest@1',baseBytes,{packId,baseRevision:current.binding.baseRevision},{packId,executionRevision:current.revision,baseRevision:current.binding.baseRevision,mediaAssetsSha256:current.mediaAssetsSha256},{boundArtifacts:[]});
+ const {CURRENT_BOUND_MANIFEST_BUILDER,boundManifestFor,publicationGeneration}=await import('../../server/fia/publication/publication-generation.mjs');
+ assert.notEqual(CURRENT_BOUND_MANIFEST_BUILDER,'fia-bound-manifest@1');
+ const url=`/v1/approved-audio/${h('1')}/${h('a')}.ogg`,audioBytes=new TextEncoder().encode(JSON.stringify({schema:'fia-bound-narration-audio@1',id:'approved-audio:1',delivery:{url,sha256:h('a'),bytes:9,mime:'audio/ogg'},playbackRange:null}));
+ const audio={id:'approved-audio:1',sha256:await sha256(audioBytes),bytes:audioBytes};
+ const t=await harness();const a=await t.publish({boundArtifacts:[audio]});const current=t.values.get(`executable-generation:${packId}@${a.execution.publication.generation}`);
+ assert.equal(current.bound.length,1);
+ const baseBytes=t.blobs.get(current.baseManifestArtifact.sha256),ctx={packId,baseRevision:current.binding.baseRevision},identity={packId,executionRevision:current.revision,baseRevision:current.binding.baseRevision,mediaAssetsSha256:current.mediaAssetsSha256},inputs={boundArtifacts:[{id:audio.id,sha256:audio.sha256,bytes:audioBytes}],visuals:[]};
+ const v1=await boundManifestFor('fia-bound-manifest@1',baseBytes,ctx,identity,inputs),cur=await boundManifestFor(CURRENT_BOUND_MANIFEST_BUILDER,baseBytes,ctx,identity,inputs);
+ assert.notEqual(v1.descriptor.sha256,cur.descriptor.sha256,'the builders differ for this row');assert.ok(!v1.manifest.files.some(f=>f.group==='audio'));
  const d=await sha256(v1.bytes);t.blobs.set(d,new Uint8Array(v1.bytes));
- const {generation}=await publicationGeneration({packId,executionRevision:current.revision,baseRevision:current.binding.baseRevision,sourceRevision:current.binding.sourceRevision,baseManifest:current.publication.baseManifest,mediaManifest:v1.descriptor,artifacts:[]});
+ const describe=x=>({id:x.id,sha256:x.sha256,bytes:x.bytes,mime:x.mime});
+ const {generation}=await publicationGeneration({packId,executionRevision:current.revision,baseRevision:current.binding.baseRevision,sourceRevision:current.binding.sourceRevision,baseManifest:current.publication.baseManifest,mediaManifest:v1.descriptor,artifacts:current.bound.map(describe)});
+ assert.notEqual(generation,current.publication.generation);
  const old={...structuredClone(current),manifestBuilder:'fia-bound-manifest@1',mediaManifest:v1.descriptor,mediaManifestArtifact:{reference:'r/'+d,sha256:d,bytes:v1.bytes.length,mime:'application/json'},publication:{...current.publication,generation}};
- const key=`executable-generation:${packId}@${generation}`;t.values.set(key,old);
+ const key=`executable-generation:${packId}@${generation}`;t.values.set(key,old);t.values.set('executable-artifact:'+d,[key]);
  const read=await t.overlay.readCatalog(packId,a.revision,generation);
  assert.equal(read.status,'ready');assert.equal(read.execution.publication.generation,generation);assert.deepEqual(read.execution.mediaManifest,v1.descriptor);
  assert.equal((await t.overlay.findArtifact(d)).content,new TextDecoder().decode(v1.bytes),'the @1 bound manifest is served as stored');
- // With no bound audio or visuals, @1 and the current builder emit the same bytes, so this @1 row occupies the
- // same generation key; what is pinned is that the stored @1 label is honoured, not rewritten on read.
- const cur=await boundManifestFor(CURRENT_BOUND_MANIFEST_BUILDER,baseBytes,{packId,baseRevision:current.binding.baseRevision},{packId,executionRevision:current.revision,baseRevision:current.binding.baseRevision,mediaAssetsSha256:current.mediaAssetsSha256},{boundArtifacts:[],visuals:[]});
- assert.deepEqual(cur.descriptor,v1.descriptor);assert.equal(t.values.get(key).manifestBuilder,'fia-bound-manifest@1');
+ t.values.set(key,{...old,manifestBuilder:CURRENT_BOUND_MANIFEST_BUILDER});
+ assert.equal((await t.overlay.readCatalog(packId,a.revision,generation)).status,'unavailable','relabelled with the current builder, the @1 bytes are refused');
+ assert.equal((await t.overlay.readCatalog(packId,a.revision,a.execution.publication.generation)).status,'ready','the current row is unaffected');
 });

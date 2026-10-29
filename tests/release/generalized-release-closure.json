@@ -1541,7 +1541,7 @@
     },
     {
       "path": "server/faces/worker/BACKEND-CLOSURE.json",
-      "sha256": "25b9259fd0990723d046cce7a1db6727f37143594e4306ba7e1fe0fe904f792c"
+      "sha256": "5a05cc98601eb069fd5467296d2f8c35f96dacc8a54a217608bfcc8514704ba0"
     },
     {
       "path": "server/faces/worker/adapter.mjs",
@@ -1649,7 +1649,7 @@
     },
     {
       "path": "server/fia/preparation/executable-presentation-runtime.mjs",
-      "sha256": "7002eadbff8b1c41931a12e0889e52e640ed3630ae6308ba9957d4444d8ad396"
+      "sha256": "fbd12e20d81631d7b2e9b6033aa238b4d0a3d554223de385c32764f6237ea9a5"
     },
     {
       "path": "server/fia/preparation/executable-presentation-service.mjs",
@@ -2037,7 +2037,7 @@
     },
     {
       "path": "server/fia/publication/executable-overlay.mjs",
-      "sha256": "d36a854e4c1f2eec0ae5385652daca4ba2930c7bab5f76784b70a2e56187e8cb"
+      "sha256": "35b5454573d14fb88906bf2496fa89a90961dcebe7c57d0b3d1d4169657a5c6f"
     },
     {
       "path": "server/fia/publication/full-text.json",
@@ -2851,11 +2851,19 @@
     },
     {
       "path": "tests/worker-serving/publication-generation-overlay.test.mjs",
-      "sha256": "cc5c873287bf25404ae377d277d371134c24a03ed074b176d4118ea01ceb2a93"
+      "sha256": "6ecd0f4a7c9cfa8b462fda995cd7bd718a3b424c161ee6715beaa5e3ce27c3b1"
     },
     {
       "path": "tests/worker-serving/publication-visuals.test.mjs",
-      "sha256": "856ff04a67762be38574eea220c0cc231be37aa1c7c12e20eed72733e63c5811"
+      "sha256": "f3124998ac2e262a8ae28ecd2db96d5a79474b1e0a22fa6665d789a594a7f4ac"
+    },
+    {
+      "path": "tests/worker-serving/fixtures/offline/eng.MRK-1-14-20.json",
+      "sha256": "3d178983502f729c2e646d4df90e4ebe640ead25c29f30f302b3e512ddc0e710"
+    },
+    {
+      "path": "tests/worker-serving/fixtures/offline/eng.MRK-1-21-28.json",
+      "sha256": "02c1c68e9a7d36268f6b61560254f355b57831083d90dd85430dde70dc1c7994"
     }
   ],
   "generatedFiles": [
