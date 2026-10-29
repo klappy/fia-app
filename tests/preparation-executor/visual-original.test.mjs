@@ -68,6 +68,11 @@ test('a kept ready verdict is never returned over corrupted retained bytes: the 
  await call(mf,{op:'corrupt'});const read=await call(mf,{op:'read'});assert.equal(read.gets,1);
  assert.equal(read.result.state,'unavailable');assert.equal(read.result.reason,'retained-evidence-unavailable');assert.equal(read.result.final,false);assert.equal(read.result.custody,'unverified');assert.notEqual(read.result.decode.state,'ready');
 });
+test('two demands at once fetch once and the joiner sees preparing',async t=>{
+ const mf=await fixture(t),first=call(mf,{gate:true});for(let n=0;n<200&&(await call(mf,{op:'counts'})).waiting<1;n++)await new Promise(r=>setTimeout(r,5));
+ const joined=await call(mf,{gate:true});assert.equal(joined.result.state,'preparing');assert.equal(joined.gets,1);
+ await call(mf,{op:'release'});const done=await first;assert.equal(done.result.custody,'retained');assert.equal(done.gets,1);
+});
 for(const [name,args,reason] of [
  ['wrong MIME',{mime:'audio/mpeg'},'fresh-response-refused'],
  ['unlisted image MIME',{mime:'image/webp'},'fresh-response-refused'],

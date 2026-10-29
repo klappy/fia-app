@@ -79,9 +79,14 @@ async function decodePng(bytes,limits,clock){
   inflate.on('error',error=>{if(!failure){failure=error;reject(new VisualDecodeRefusal(/unexpected end/i.test(error.message)?'png-truncated-idat':'png-zlib-invalid'));}});
   inflate.on('end',()=>resolve());
  });
- let written=0;
- for(const data of s.idat){if(failure)break;written+=data.length;if(!inflate.write(data))await new Promise(r=>inflate.once('drain',r));}
- if(!failure)inflate.end();
+ // `settled` handles done from the start (no unhandled rejection) and ends any drain wait once a refusal destroys the inflater.
+ const settled=done.then(()=>{},()=>{});let written=0;
+ for(const data of s.idat){
+  if(failure)break;if(clock()>limits.decodeMs){failure=new VisualDecodeRefusal('decode-deadline',{final:false});inflate.destroy();break;}
+  written+=data.length;if(!inflate.write(data))await Promise.race([new Promise(r=>inflate.once('drain',r)),settled]);
+ }
+ if(failure)throw failure;
+ inflate.end();
  await done;
  if(rows!==s.height||filter>=0||fill)refuse('png-truncated-idat');
  if(inflate.bytesWritten!==written)refuse('png-trailing-data');
@@ -90,7 +95,7 @@ async function decodePng(bytes,limits,clock){
 // Walks every JPEG segment and entropy-coded scan to EOI, so the pinned decoder can never read past the end of the bytes.
 const SOF=new Set([0xc0,0xc1,0xc2]),SOF_UNSUPPORTED=new Set([0xc3,0xc5,0xc6,0xc7,0xc9,0xca,0xcb,0xcd,0xce,0xcf]);
 function jpegStructure(bytes,limits){
- let pos=2,frame=null,scans=0;
+ let pos=2,frame=null,scans=0;const covered=new Set();
  for(;;){
   if(pos+2>bytes.length)refuse('jpeg-truncated');
   if(bytes[pos]!==0xff)refuse('jpeg-structure');
@@ -103,16 +108,26 @@ function jpegStructure(bytes,limits){
   if(SOF_UNSUPPORTED.has(marker))refuse('jpeg-format-unsupported');
   if(SOF.has(marker)){
    if(frame||length<8)refuse('jpeg-structure');
-   frame={sof:marker,precision:bytes[pos+2],height:u16(bytes,pos+3),width:u16(bytes,pos+5),components:bytes[pos+7]};
+   frame={sof:marker,precision:bytes[pos+2],height:u16(bytes,pos+3),width:u16(bytes,pos+5),components:bytes[pos+7],ids:[]};
    if(frame.precision!==8||(frame.components!==1&&frame.components!==3))refuse('jpeg-format-unsupported');
+   if(length!==8+3*frame.components)refuse('jpeg-structure');
+   for(let i=0;i<frame.components;i++){const id=bytes[pos+8+3*i];if(frame.ids.includes(id))refuse('jpeg-structure');frame.ids.push(id);}
    if(!frame.width||!frame.height)refuse('jpeg-header-invalid');
    if(frame.width>limits.maxDimension||frame.height>limits.maxDimension)refuse('dimension-cap');
    if(frame.width*frame.height>limits.maxPixels)refuse('pixel-cap');
    if(frame.width*frame.height>limits.maxJpegPixels)refuse('decode-not-streamable');
   }
+  // SOS: 1-4 components, Ls = 6 + 2*Ns, each selector a distinct frame component, spectral and approximation fields in range.
+  if(marker===0xda){
+   if(!frame)refuse('jpeg-structure');
+   const ns=bytes[pos+2];if(ns<1||ns>4||length!==6+2*ns)refuse('jpeg-scan-invalid');
+   const seen=new Set();for(let i=0;i<ns;i++){const id=bytes[pos+3+2*i];if(!frame.ids.includes(id)||seen.has(id))refuse('jpeg-scan-invalid');seen.add(id);covered.add(id);}
+   const ss=bytes[pos+3+2*ns],se=bytes[pos+4+2*ns],ah=bytes[pos+5+2*ns]>>4,al=bytes[pos+5+2*ns]&15;
+   if(frame.sof===0xc2?(se>63||ss>se||(ss===0&&se!==0)||(ss>0&&ns!==1)||ah>13||al>13):(ss!==0||se!==63||ah||al))refuse('jpeg-scan-invalid');
+   if(++scans>limits.maxJpegScans)refuse('jpeg-scan-cap');
+  }
   pos+=length;
   if(marker===0xda){
-   if(!frame)refuse('jpeg-structure');scans++;
    for(;;){
     if(pos+1>=bytes.length)refuse('jpeg-truncated');
     if(bytes[pos]===0xff){const next=bytes[pos+1];if(next===0x00||(next>=0xd0&&next<=0xd7)){pos+=2;continue;}if(next===0xff){pos++;continue;}break;}
@@ -121,12 +136,15 @@ function jpegStructure(bytes,limits){
   }
  }
  if(!frame||!scans)refuse('jpeg-structure');
+ if(frame.ids.some(id=>!covered.has(id)))refuse('jpeg-scan-invalid');
  return frame;
 }
-function decodeJpegFull(bytes,limits){
+function decodeJpegFull(bytes,limits,clock){
  const frame=jpegStructure(bytes,limits);let image;
  try{image=decodeJpeg(bytes,{useTArray:true,formatAsRGBA:false,tolerantDecoding:false,maxResolutionInMP:limits.maxJpegPixels/1e6,maxMemoryUsageInMB:limits.maxJpegMemoryMB});}
  catch{refuse('jpeg-decode-error');}
+ // jpeg-js decodes synchronously and cannot be pre-empted: maxJpegScans bounds the work, and the deadline is checked on return.
+ if(clock()>limits.decodeMs)refuse('decode-deadline',{final:false});
  if(image.width!==frame.width||image.height!==frame.height||image.data.length!==frame.width*frame.height*3)refuse('dimension-mismatch');
  return {format:'image/jpeg',width:image.width,height:image.height,pixelsSha256:createHash('sha256').update(image.data).digest('hex'),decoder:JPEG_DECODER};
 }
@@ -136,7 +154,7 @@ export async function decodeVisual(bytes,{mime,limits,clock}){
  if(bytes.length>limits.maxBytes)refuse('byte-cap');
  const sniffed=sniffRaster(bytes);if(!sniffed||sniffed!==mime||!limits.formats.includes(mime))refuse('mime-signature-mismatch');
  const start=Date.now(),elapsed=clock??(()=>Date.now()-start);
- const result=mime==='image/png'?await decodePng(bytes,limits,elapsed):decodeJpegFull(bytes,limits);
+ const result=mime==='image/png'?await decodePng(bytes,limits,elapsed):decodeJpegFull(bytes,limits,elapsed);
  if(!Number.isFinite(result.width)||!Number.isFinite(result.height)||result.width<1||result.height<1)refuse('dimension-invalid');
  return result;
 }

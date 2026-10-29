@@ -94,3 +94,51 @@ test('decodeRetained decodes only read-back bytes that match the receipt: size, 
  await assert.rejects(decodeRetained(bucket(bytes),{...original,bytes:0}),/visual-retained-identity/);
  const wrongMime=await decodeRetained(bucket(bytes),{...original,contentType:'image/jpeg'});assert.equal(wrongMime.state,'unavailable');assert.equal(wrongMime.reason,'visual-unsupported');assert.equal(wrongMime.subReason,'mime-signature-mismatch');assert.equal(wrongMime.final,true);assert.equal(wrongMime.width,null);
 });
+// Review fixes on PR285 d459be9: a refusal mid-inflate must settle promptly (no 'drain' wait on a destroyed inflater), with no
+// unhandled rejection; SOS must be valid and cover every frame component; progressive scans are capped; JPEG honours the deadline.
+async function settlesWithin(promise,ms){let timer;const timeout=new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error(`did not settle within ${ms} ms`)),ms);});try{return await Promise.race([promise,timeout]);}finally{clearTimeout(timer);}}
+async function noUnhandled(fn){const seen=[],on=r=>seen.push(r);process.on('unhandledRejection',on);try{await fn();await new Promise(r=>setTimeout(r,50));}finally{process.off('unhandledRejection',on);}assert.deepEqual(seen.map(String),[],'no unhandled rejection');}
+test('probe: a 1024x1024 stored IDAT declared as 1024x10 is refused png-trailing-data promptly, with no unhandled rejection',()=>noUnhandled(async()=>{
+ const rows=filterRows(raw(1024,1024,3),1024,1024,3,[0]),bytes=Buffer.concat([SIG,header(1024,10),chunk('IDAT',deflateSync(rows,{level:0})),chunk('IEND',Buffer.alloc(0))]);
+ const t=Date.now();await refused(settlesWithin(decode(bytes,'image/png'),5000),'png-trailing-data');assert.ok(Date.now()-t<5000);
+}));
+test('probe: corrupt zlib data inside a 4 MiB IDAT is a typed refusal promptly, with no unhandled rejection',()=>noUnhandled(async()=>{
+ const w=1024,h=1366,px=Buffer.alloc(w*h*3);for(let i=0;i<px.length;i+=32)createHash('sha256').update(String(i)).digest().copy(px,i);
+ const z=Buffer.from(deflateSync(filterRows(px,w,h,3,[0]),{level:1}));assert.ok(z.length>4*1024*1024,String(z.length));
+ for(let i=z.length>>1;i<(z.length>>1)+4096;i++)z[i]^=0x5a;
+ const bytes=Buffer.concat([SIG,header(w,h),chunk('IDAT',z),chunk('IEND',Buffer.alloc(0))]);
+ await assert.rejects(settlesWithin(decode(bytes,'image/png'),5000),e=>e instanceof VisualDecodeRefusal&&e.final===true&&/^png-/.test(e.subReason));
+}));
+test('a PNG deadline overrun between IDAT writes is interrupted, not final, and settles',()=>noUnhandled(async()=>{
+ let t=0;const {bytes}=png({w:64,h:64,parts:8});
+ await assert.rejects(settlesWithin(decodeVisual(new Uint8Array(bytes),{mime:'image/png',limits,clock:()=>(t+=limits.decodeMs/4)}),5000),e=>e.subReason==='decode-deadline'&&e.final===false);
+}));
+// SOS surgery on the real baseline fixture: replace the scan header, keep the entropy-coded data.
+function withScanHeader(build){const b=Buffer.from(file('baseline-37x23.jpg')),at=b.indexOf(Buffer.from([0xff,0xda])),ls=b.readUInt16BE(at+2),ns=b[at+4];
+ const comps=[...Array(ns)].map((_,i)=>[b[at+5+2*i],b[at+6+2*i]]),tail=b.subarray(at+2+ls),head=build(comps,b.subarray(at+5+2*ns,at+8+2*ns));
+ const seg=Buffer.alloc(4+head.length);seg[0]=0xff;seg[1]=0xda;seg.writeUInt16BE(2+head.length,2);head.copy(seg,4);return Buffer.concat([b.subarray(0,at),seg,tail]);}
+test('JPEG scan with Ns=0 is refused, never a uniform-grey ready',async()=>{
+ await refused(decode(withScanHeader((c,rest)=>Buffer.concat([Buffer.from([0]),rest])),'image/jpeg'),'jpeg-scan-invalid');
+});
+test('JPEG scans that leave a frame component undecoded are refused',async()=>{
+ await refused(decode(withScanHeader((c,rest)=>Buffer.concat([Buffer.from([1,...c[0]]),rest])),'image/jpeg'),'jpeg-scan-invalid');
+});
+test('JPEG scan selectors must be distinct frame components, with Ls = 6 + 2*Ns',async()=>{
+ await refused(decode(withScanHeader((c,rest)=>Buffer.concat([Buffer.from([3,9,c[1][1],...c[1],...c[2]]),rest])),'image/jpeg'),'jpeg-scan-invalid');
+ await refused(decode(withScanHeader((c,rest)=>Buffer.concat([Buffer.from([3,...c[0],...c[0],...c[2]]),rest])),'image/jpeg'),'jpeg-scan-invalid');
+ await refused(decode(withScanHeader((c,rest)=>Buffer.concat([Buffer.from([3,...c[0],...c[1],...c[2]]),rest,Buffer.from([0])])),'image/jpeg'),'jpeg-scan-invalid');
+ await refused(decode(withScanHeader((c,rest)=>Buffer.concat([Buffer.from([5,...c[0],...c[1],...c[2],...c[0],...c[1]]),rest])),'image/jpeg'),'jpeg-scan-invalid');
+});
+test('baseline JPEG scans must carry Ss=0, Se=63, Ah=Al=0',async()=>{
+ await refused(decode(withScanHeader((c,rest)=>Buffer.concat([Buffer.from([3,...c[0],...c[1],...c[2]]),Buffer.from([0,62,0])])),'image/jpeg'),'jpeg-scan-invalid');
+});
+test('progressive JPEG scans are capped by the recipe (maxJpegScans 32) before decoding',async()=>{
+ const b=Buffer.from(file('progressive-40x30.jpg')),sos=[];for(let i=2;i<b.length-1;i++)if(b[i]===0xff&&b[i+1]===0xda)sos.push(i);
+ assert.ok(sos.length>1&&sos.length<=VISUAL_ORIGINAL_RECIPE.limits.maxJpegScans);
+ const last=b.subarray(sos[sos.length-1],b.length-2),many=Buffer.concat([b.subarray(0,b.length-2),...Array(VISUAL_ORIGINAL_RECIPE.limits.maxJpegScans+1-sos.length).fill(last),Buffer.from([0xff,0xd9])]);
+ await refused(decode(many,'image/jpeg'),'jpeg-scan-cap');
+ assert.equal(VISUAL_ORIGINAL_RECIPE.limits.maxJpegScans,32);
+});
+test('the recipe decode deadline applies to JPEG too, as interrupted (not final)',async()=>{
+ let t=0;await assert.rejects(decodeVisual(file('baseline-37x23.jpg'),{mime:'image/jpeg',limits,clock:()=>(t+=limits.decodeMs+1)}),e=>e.subReason==='decode-deadline'&&e.final===false);
+});
