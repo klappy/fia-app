@@ -1,4 +1,6 @@
 import {createHash} from 'node:crypto';
+import {canonicalJSONString} from '../contract.mjs';
+import {isVerifiedObservationRead} from '../executor/fresh-source-observation.mjs';
 // Producer receipts: the only form raw publisher evidence may take in buildSourceIndex (Terry ANSWER-SOURCE-EXPLICIT-AUTHORITY,
 // cookbook 2771ded, Q1 and Q4). A receipt is a frozen object carrying a module-private brand. It is issued only from a
 // fresh-source-observation read() result (an observed, verified receipt for one class-A guide file) and that file's whole
@@ -34,10 +36,13 @@ export function extractGuideFragments(bytes,{path}){
  }
  return {packs,unmapped};
 }
-// read: the primitive's read() result {state:'observed', observationSha256, observation}; bytes: the retained original's bytes.
+// read: a genuine createFreshSourceObservations read() result; bytes: the retained original's whole bytes. A shaped look-alike is
+// refused: the read must carry the primitive's verified-read mark, contentVerified, the observation schema, an operationId that is
+// the hash of its binding and an observationSha256 that is the hash of the canonical receipt (as the primitive itself checks).
 export function issueProducerReceipt(read,bytes){
  const o=read?.observation,src=o?.binding?.source;
  if(read?.state!=='observed'||!o||!src)throw Error('producer-receipt-unobserved');
+ if(!isVerifiedObservationRead(read)||read.contentVerified!==true||o.schema!=='fia-source-observation@1'||o.operationId!==sha(canonicalJSONString(o.binding))||read.observationSha256!==sha(canonicalJSONString(o)))throw Error('producer-receipt-unverified-read');
  if(src.sourceVersionKind!=='publisher-version'||src.publisherVersion!==src.sourceVersion||!/^[a-f0-9]{40}$/.test(src.sourceVersion??''))throw Error('producer-receipt-version');
  const m=/^https:\/\/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/([a-f0-9]{40})\/(.+)$/.exec(src.url??'');
  if(!m||m[1]!==GUIDE_SOURCE_CLASS.owner||m[3]!==src.sourceVersion||!GUIDE_SOURCE_CLASS.path.test(m[4]))throw Error('producer-receipt-class');

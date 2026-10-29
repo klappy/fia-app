@@ -1541,7 +1541,7 @@
     },
     {
       "path": "server/faces/worker/BACKEND-CLOSURE.json",
-      "sha256": "6d00f9754a00c6838399c2134340526e416917e39da47b2143129e0a788890ab"
+      "sha256": "1c5f21d5684b793a75238b4743c655fb5bac120c3d16db8b757ee84f3368f235"
     },
     {
       "path": "server/faces/worker/adapter.mjs",
@@ -1681,7 +1681,7 @@
     },
     {
       "path": "server/fia/preparation/executor/FRESH-SOURCE-OBSERVATION.md",
-      "sha256": "dd51b65bf850b849f0979eb624d809dc023f3bbbde5400a66eaec03848b034ed"
+      "sha256": "d9d5e9cb3d311b015110cd6020b7ec1a31546c7c2b012beafc2ffba691b90bce"
     },
     {
       "path": "server/fia/preparation/executor/GUIDE-EXECUTOR.md",
@@ -1809,7 +1809,7 @@
     },
     {
       "path": "server/fia/preparation/executor/fresh-source-observation.mjs",
-      "sha256": "80f8c0869030987abd2aecda8df9ec5a459e873dc2a6404ea3800f7fe5dbd420"
+      "sha256": "74f6052c328429150fc6ccd33943add721dde023ef3169dddb4492d6583c5b1d"
     },
     {
       "path": "server/fia/preparation/executor/guide-executor.mjs",
@@ -2831,7 +2831,7 @@
     },
     {
       "path": "tests/preparation/source-associations.test.mjs",
-      "sha256": "7dde20c58e24b6f6f84a29c58f7450e37403479a9710581a094ebfcf96d5a62d"
+      "sha256": "c12918eac94e2f10d1b7dfcd6d24934e5a93203560777b21c86f6fc55a646dd3"
     },
     {
       "path": "tests/worker-serving/source-associations.test.mjs",
@@ -2843,11 +2843,27 @@
     },
     {
       "path": "server/fia/preparation/source-associations/producer-receipt.mjs",
-      "sha256": "2f118873427192edefe56d546a424ec8ddba2ec83cca66f63afa55a15214f6a1"
+      "sha256": "5419a84ab90053851e143c2a77cc233e7570399a5a557fe93ce9264497dc2f55"
     },
     {
       "path": "tests/preparation/support/fake-guide-producer.mjs",
-      "sha256": "cbd000774e82c40c3efef81b829e8a74ac048ea5e3cbd73ac6439fbdde9981fa"
+      "sha256": "6a7fcffdc8a3dd7596d49901855337ff2c7d8d3251faafda0c317f8dd6f38b73"
+    },
+    {
+      "path": "server/fia/preparation/guide-fragment.mjs",
+      "sha256": "48fe58972feefb490a05e49fde39c7c591896eec2b9b8f81b9e9910176413106"
+    },
+    {
+      "path": "server/fia/preparation/source-associations/composer.mjs",
+      "sha256": "bbf61f0dc203d6070fb651516feb42a32f82b0b81d6f5493560eb6017d046d02"
+    },
+    {
+      "path": "tests/preparation-executor/guide-fragment.test.mjs",
+      "sha256": "3065e019426de3222fc85aa66e354bf5c43e6a15919b8dc2cb18333b41de4fe7"
+    },
+    {
+      "path": "tests/worker-serving/guide-fragment.test.mjs",
+      "sha256": "802ecdc1d5dfa614285d5daef61a720253d88ba86dcf9c1927aed85eecaf3038"
     }
   ],
   "generatedFiles": [
