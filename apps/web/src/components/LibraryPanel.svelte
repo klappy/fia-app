@@ -106,16 +106,7 @@
   </article>
   {#if download?.available}
    <article class="pack-card book-card" aria-labelledby="book-download-title"><span class="library-eyebrow">{selectedPack.language==='spa'?'Español':'English'} · {bookName}</span><h3 id="book-download-title">Save the whole book</h3>
-    <p class="fine-print">Saves every passage of {bookName} with the choice above ({labels[selection]}). Passages already saved are kept; an interrupted passage resumes from its verified files.</p>
-    {#if !bookStatusList}<button class="secondary full" disabled={bookChecking||busy} aria-busy={bookChecking?'true':undefined} onclick={checkBook}>{bookChecking?'Checking book size…':'Check book size'}</button>
-    {:else}
-     <ul class="book-sizes" aria-label="Whole book size by package">{#each download.choices as choice}<li class:chosen={selection===choice.id}><strong>{labels[choice.id]}</strong><small>{bookLine(bookTotalsByTier[choice.id])}</small></li>{/each}</ul>
-     {@const chosen=bookTotalsByTier[selection]}
-     <p>{chosen.count?`${formatBytes(chosen.remaining)}${chosen.unknown?` + ${chosen.unknown} passages sized during download`:''} to download · ${chosen.count-chosen.saved} of ${chosen.count} passages`:'Nothing to save for this choice.'}</p>
-     {#if bookProgress}<progress aria-label="Book download progress" value={bookProgress.index} max={bookProgress.total||1}></progress><p role="status">Passage {Math.min(bookProgress.index+1,bookProgress.total)} of {bookProgress.total}{bookProgress.pack?` · ${bookProgress.pack.title}`:''}{bookProgress.transfer?` · ${formatBytes(bookProgress.transfer.received)} verified`:''}</p>{/if}
-     {#if bookResult}<p role="status">{bookResult.stopped?'Book download paused. Saved passages are kept; Download whole book resumes.':'Book download finished.'} {bookResult.saved} saved · {bookResult.skipped} already saved{bookResult.failed.length?` · ${bookResult.failed.length} not saved`:''}.</p>{/if}
-     {#if bookBusy}<button class="secondary full" onclick={pauseBook}><Pause size={18}/>Pause book download</button>{:else}<button class="secondary full" disabled={busy||!chosen.count||chosen.saved===chosen.count||download.pending?.running} onclick={saveBook}><Download size={18}/>Download whole book</button>{/if}
-    {/if}
+    <p class="fine-print">Whole-book saving is temporarily unavailable. Save passages individually using the passage controls above. Existing saved passages are kept.</p>
    </article>
   {/if}
   <p class="fine-print">Sizes are file bytes, not browser storage overhead. Your device may clear downloaded files. Your place in the guide is saved separately. An update keeps the prior usable copy until the replacement is verified.</p>
