@@ -1541,7 +1541,7 @@
     },
     {
       "path": "server/faces/worker/BACKEND-CLOSURE.json",
-      "sha256": "416882e18ffbd463e4bb4be010fa40cc8f6f6b843d063473eea7d80250b994bf"
+      "sha256": "25b9259fd0990723d046cce7a1db6727f37143594e4306ba7e1fe0fe904f792c"
     },
     {
       "path": "server/faces/worker/adapter.mjs",
@@ -1649,7 +1649,7 @@
     },
     {
       "path": "server/fia/preparation/executable-presentation-runtime.mjs",
-      "sha256": "b5e6e6c887f4aa7adb3b1db831043a849149d5f74981099c261c1dbdbe3096e8"
+      "sha256": "7002eadbff8b1c41931a12e0889e52e640ed3630ae6308ba9957d4444d8ad396"
     },
     {
       "path": "server/fia/preparation/executable-presentation-service.mjs",
@@ -2033,11 +2033,11 @@
     },
     {
       "path": "server/fia/publication/executable-operations.mjs",
-      "sha256": "8715f627a26fbcf941afca219a32f72d9ca70c46d9835f49a57ea593a923ba10"
+      "sha256": "1c25e8b96d68bf2c48c793b67afaf91a0cbc7e14dc85694496d9a94cbbb9c30f"
     },
     {
       "path": "server/fia/publication/executable-overlay.mjs",
-      "sha256": "12f90a745b3f54abf9e4e6700f9db04f828dbe00c4d1a57a83535f3feff0d5a1"
+      "sha256": "d36a854e4c1f2eec0ae5385652daca4ba2930c7bab5f76784b70a2e56187e8cb"
     },
     {
       "path": "server/fia/publication/full-text.json",
@@ -2783,7 +2783,7 @@
     },
     {
       "path": "tests/worker-serving/executable-cache-followups.test.mjs",
-      "sha256": "0262db193958ad6c51a8fcbdbd9378dec493cfa656fa1de3684034cab373b1aa"
+      "sha256": "012e4268908a093fdda0b7da2a3497c3b2f6f0177e74fc1b80403e746a409c35"
     },
     {
       "path": "apps/web/tests/download-preflight-progress.test.js",
@@ -2843,11 +2843,19 @@
     },
     {
       "path": "tests/worker-serving/publication-generation.test.mjs",
-      "sha256": "2e0a93fa0f5de4b495acb4004043fbec356535698f27090ee76b50debb18aa7f"
+      "sha256": "c7d421668224b9badd1e76631563f659f9ca60f5ab4d562dceefc934837b36b3"
     },
     {
       "path": "server/fia/publication/publication-generation.mjs",
-      "sha256": "655af1257e00ef2919cb2975933d5b0395a95804c480f93e3935c4a482cf9c4b"
+      "sha256": "2f12af5ed5b7efdf0f36278ed818097818ae35c0ce83217f751da2900e95102f"
+    },
+    {
+      "path": "tests/worker-serving/publication-generation-overlay.test.mjs",
+      "sha256": "cc5c873287bf25404ae377d277d371134c24a03ed074b176d4118ea01ceb2a93"
+    },
+    {
+      "path": "tests/worker-serving/publication-visuals.test.mjs",
+      "sha256": "856ff04a67762be38574eea220c0cc231be37aa1c7c12e20eed72733e63c5811"
     }
   ],
   "generatedFiles": [
