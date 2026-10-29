@@ -148,3 +148,20 @@ it('a swipe forward onto a preparable step asks exactly once',async()=>{
  await step(A);await shown(presentation.assets.a1400.title);await new Promise(r=>setTimeout(r,50));
  expect(posts).toEqual(['a1400']);
 });
+// PR305 review 5699530558 (N2): with automatic narration off, the manual Play control on the step authorizes one visual demand
+// (manualPlay), as Continue, Back, swipe and Try again do. The step is reached by restore, which asks nothing.
+it('in manual mode, the manual Play control on a restored preparable step asks exactly once',async()=>{
+ const ref={id:'server-authoritative-reference',sha256:h('a')};
+ presentation.activities[A].execution={...presentation.activities[A].execution,narration:{action:'play-bound-audio',artifact:ref}};
+ vi.spyOn(libraryAdapter,'playBoundAudio').mockResolvedValue({bytes:new Uint8Array([1,2]),mime:'audio/wav',playback:'whole-file-native-ended'});
+ answers.a1400=()=>record([preparable('a1400','image'),preparable('c4','map')]);
+ await mount();
+ await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Settings',exact:true}));
+ await fireEvent.click(screen.getByRole('checkbox',{name:/Automatic guide narration/}));await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));
+ await toStart();await next();await step(A);await waitFor(()=>expect(posts).toEqual(['a1400']));
+ cleanup();posts.length=0;gets.length=0;render(App);await step(A);await new Promise(r=>setTimeout(r,100));expect(posts).toEqual([],'restore asks nothing');
+ answers.a1400=()=>record([ready('a1400','image'),preparable('c4','map')]);
+ const play=await waitFor(()=>{const b=screen.getByRole('button',{name:'Play',exact:true});expect(b.disabled).toBe(false);return b;});
+ await fireEvent.click(play);await waitFor(()=>expect(posts).toEqual(['a1400']));await new Promise(r=>setTimeout(r,50));
+ expect(posts).toEqual(['a1400'],'one manual Play, one demand');
+});
