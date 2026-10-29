@@ -246,3 +246,22 @@ test('a rejected eligibility promise is ineligible and never an unhandled reject
   const r=await later.read();assert.equal(r.state,'unavailable');
   await new Promise(r=>setTimeout(r,20));assert.deepEqual(unhandled,[]);}finally{process.off('unhandledRejection',on);}
 });
+// 4415573927: an object killed after its fresh ticket is persisted, before the attempt settles, must not strand the source in
+// `preparing`. The restarted object reports the orphaned attempt as a truthful non-final interrupted and fetches nothing on its own;
+// only a deliberate Retry opens the next attempt, which fetches exactly once. A read never fetches.
+test('4415573927: a restart after a kill mid-fetch reports interrupted with 0 fetches; only a deliberate Retry fetches, exactly once',async t=>{
+ const directory=await mkdtemp(join(tmpdir(),'visual-original-restart-'));t.after(()=>rm(directory,{recursive:true,force:true}));
+ const start=()=>new Miniflare({...convertV4MiniflareOptions({name:'visual-original-fixture',modules:true,script:bundle.outputFiles[0].text,compatibilityDate:'2026-09-01',compatibilityFlags:['nodejs_compat'],durableObjects:{JOBS:{className:'Job',useSQLite:true}},r2Buckets:['ORIGINALS']}),resourcePersistencePath:directory});
+ let mf=start();const first=call(mf,{gate:true}).catch(()=>null);
+ for(let n=0;n<400&&(await call(mf,{op:'counts'})).waiting<1;n++)await new Promise(r=>setTimeout(r,5));
+ assert.equal((await call(mf,{op:'counts'})).gets,1,'the first attempt is mid-fetch');
+ await mf.dispose();await first;
+ mf=start();t.after(()=>mf.dispose());
+ const plain=await call(mf,{});
+ assert.equal(plain.result.state,'unavailable',JSON.stringify(plain));assert.equal(plain.result.reason,'interrupted');assert.equal(plain.result.subReason,'fresh-attempt-orphaned');assert.equal(plain.result.final,false);assert.equal(plain.gets,0,'a plain demand never refetches on its own');
+ const read=await call(mf,{op:'read'});assert.equal(read.gets,0,'a read never fetches');assert.notEqual(read.result.state,'ready');
+ assert.equal((await call(mf,{})).result.subReason,'fresh-attempt-orphaned','still interrupted, not preparing');
+ const retried=await call(mf,{retry:true});assert.equal(retried.gets,1,'the deliberate Retry fetches exactly once');assert.equal(retried.result.state,'ready',JSON.stringify(retried.result));assert.equal(retried.result.custody,'retained');
+ const after=await call(mf,{retry:true});assert.equal(after.gets,1,'a Retry after ready keeps the retained original');assert.equal(after.result.state,'ready');
+ const settled=await call(mf,{});assert.equal(settled.result.state,'ready');assert.equal(settled.gets,1);
+});

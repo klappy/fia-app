@@ -69,6 +69,10 @@ export async function decodeRetained(bucket,original,{clock,readbackMs=VISUAL_OR
 }
 // In-flight decodes per Durable Object (its storage object) and per source identity, so coalescing never crosses either.
 const INFLIGHT=new WeakMap();
+// One id per live object instance (keyed by its storage handle, which a restarted object does not share). A demand that may own the
+// current attempt records this id on the job marker before observing; a `preparing` attempt whose marker names another instance (or
+// none) has no live task anywhere, so it is an orphan left by a killed or restarted object (4415573927).
+const INSTANCES=new WeakMap(),instanceOf=storage=>{let id=INSTANCES.get(storage);if(!id)INSTANCES.set(storage,id=crypto.randomUUID());return id;};
 // A kept decode row is accepted only in its exact shape with the invariants of its state; anything else fails closed as corrupt.
 const DECODE_FIELDS='bytes,decoder,final,height,mime,originalSha256,pixelsSha256,reason,recipeSha256,state,subReason,width';
 const dimension=v=>Number.isSafeInteger(v)&&v>=1&&v<=VISUAL_ORIGINAL_RECIPE.limits.maxDimension;
@@ -91,10 +95,15 @@ export function createVisualOriginalJob({storage,bucket,source,eligibility,fetch
  const base=c=>({job:VISUAL_ORIGINAL_JOB,recipe:VISUAL_ORIGINAL_RECIPE,recipeSha256:RECIPE_SHA256,sourceIdentitySha256:c.identity.sourceIdentitySha256,kind:s.kind});
  const attemptOf=marker=>{if(!Number.isSafeInteger(marker?.attempt)||marker.attempt<1)throw Error('visual-identity-corrupt');return marker.attempt;};
  async function bind(c){return storage.transaction(async tx=>{const marker=await tx.get(JOB_KEY);if(marker&&marker.logicalId!==c.identity.logicalId)throw Error('visual-identity-corrupt');if(marker)return attemptOf(marker);await tx.put(JOB_KEY,{schema:'fia-visual-original-job@1',logicalId:c.identity.logicalId,attempt:1});return 1;});}
- // A deliberate Retry opens the next ticket only when the current attempt ended uncertain with a non-final reason; concurrent Retries share it.
+ // An orphaned attempt: the current ticket's row is still `preparing` but no task in this object instance owns it.
+ async function orphaned(c,n,row){if(row?.state!=='preparing')return false;const marker=await storage.get(JOB_KEY);return attemptOf(marker)===n&&marker.instance!==instanceOf(storage);}
+ // Record this instance as the owner of attempt n before observing it, unless a Retry has already moved the marker on.
+ async function own(n){await storage.transaction(async tx=>{const marker=await tx.get(JOB_KEY);if(attemptOf(marker)===n&&marker.instance!==instanceOf(storage))await tx.put(JOB_KEY,{...marker,instance:instanceOf(storage)});});}
+ // A deliberate Retry opens the next ticket only when the current attempt ended uncertain with a non-final reason, or was orphaned
+ // by a restart; concurrent Retries share it.
  async function reopen(c,n){const row=(await observer(c,n).status(ticketFor(n).checkId)).operation;// Reopenable: an uncertain attempt with a non-final reason, or a completed attempt whose observed bytes were refused at head
   // promotion (fresh-ineligible, never promoted), since eligibility is the caller's current state and may since have cleared.
-  const reopenable=row?.state==='uncertain'&&!refusal(row.reason).final||row?.state==='completed'&&row.promoted===false&&row.reason==='fresh-ineligible';if(!reopenable)return n;return storage.transaction(async tx=>{const marker=await tx.get(JOB_KEY),current=attemptOf(marker);if(current!==n)return current;await tx.put(JOB_KEY,{...marker,attempt:n+1});return n+1;});}
+  const reopenable=row?.state==='uncertain'&&!refusal(row.reason).final||row?.state==='completed'&&row.promoted===false&&row.reason==='fresh-ineligible'||await orphaned(c,n,row);if(!reopenable)return n;return storage.transaction(async tx=>{const marker=await tx.get(JOB_KEY),current=attemptOf(marker);if(current!==n)return current;await tx.put(JOB_KEY,{...marker,attempt:n+1});return n+1;});}
  // A final decode verdict is kept per recipe identity and original sha256, so a repeat or a read neither refetches nor re-decodes.
  async function decoded(c,original){
   const key=`visual-original:decode:${RECIPE_SHA256}:${original.sha256}`,prior=await storage.get(key);
@@ -126,6 +135,9 @@ export function createVisualOriginalJob({storage,bucket,source,eligibility,fetch
   let n=await bind(c);
   try{const prior=await retained(c);if(prior)return prior;}catch(error){return {...base(c),state:'unavailable',...custodyRefusal(error),custody:'unverified',decode};}
   if(retry===true)n=await reopen(c,n);
+  // A plain demand never resumes an orphaned attempt: it reports the truthful non-final interruption and fetches nothing.
+  else if(await orphaned(c,n,(await observer(c,n).status(ticketFor(n).checkId)).operation))return {...base(c),state:'unavailable',reason:'interrupted',subReason:'fresh-attempt-orphaned',final:false,custody:'none',decode};
+  await own(n);
   let outcome;try{outcome=await observer(c,n).observe(ticketFor(n).checkId,{signal});}catch(error){return {...base(c),state:'unavailable',...refusal(error.message),custody:'none',decode};}
   if(outcome.state==='preparing')return {...base(c),state:'preparing',custody:'none',decode};
   if(outcome.state==='uncertain')return {...base(c),state:'unavailable',...refusal(outcome.reason),custody:'none',decode};
