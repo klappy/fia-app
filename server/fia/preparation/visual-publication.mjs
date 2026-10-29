@@ -54,6 +54,10 @@ export async function serveVisualOriginalObject(request,ctx,env,{now=()=>Date.no
  }catch(error){return refusal(503,'interrupted',{subReason:error?.message??null,final:false});}
  return refusal(405,'method-not-allowed');
 }
+// R2 (review 5693896865): this operation itself does not compare executionRevision with the pointer; the port fences it
+// before and after the write. A row left for a revision that moved, or written directly through this internal namespace,
+// is inert: the route serves only a consumer of the current pointer, and published() only reports rows to a caller that
+// names that revision. Rows are immutable and small, and are kept rather than deleted.
 async function publish(ctx,entry,job,args){
  const {consumer,consumerSha256}=await visualConsumerIdentity({packId:entry.packId,baseRevision:entry.baseRevision,executionRevision:args.executionRevision,assetId:entry.assetId,kind:entry.kind}).catch(()=>({}));
  if(!consumer)return refusal(400,'invalid-request');
@@ -136,9 +140,12 @@ export async function serveOriginalVisual(request,env,{currentRevision}={}){
  catch{return refusal(503,'interrupted',{final:false});}
  // An object still on the previous code has no visual namespace: its untyped answer becomes a typed, non-final refusal.
  if(response.status===200||response.status===304)return response;
- const body=await response.clone().json().catch(()=>null);
- if(!body||typeof body.reason!=='string')return refusal(503,'interrupted',{subReason:'visual-object-version-skew',final:false});
- return response;
+ // A HEAD answer has no body to classify, so a HEAD refusal asks the object again with GET; refusals read no bytes.
+ // The client still receives no body for HEAD, with the same status and headers as the GET refusal.
+ const typed=request.method==='HEAD'?await (await stubFor(env,entry)).fetch(new Request(`${HOST}/serve?${query}`,{method:'GET',headers})).catch(()=>null):response;
+ const body=typed?await typed.clone().json().catch(()=>null):null;
+ const answer=!body||typeof body.reason!=='string'?refusal(503,'interrupted',{subReason:'visual-object-version-skew',final:false}):typed;
+ return request.method==='HEAD'?new Response(null,{status:answer.status,headers:answer.headers}):answer;
 }
 
 // ---- The capabilities.visuals port for F5a (Auggie's executable operations call demand at most once per admitted demand).

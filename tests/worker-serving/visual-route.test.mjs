@@ -88,6 +88,15 @@ test('English S02-U008 end to end in the real Worker: admitted demand, original,
   const pub=await (await da.stub.fetch('https://visual-original.internal/publish',{method:'POST',body:JSON.stringify({packId:a.packId,baseRevision:a.baseRevision,assetId:a.assetId,executionRevision:forged})})).json();
   assert.equal(pub.status,'ready','the internal operation itself records the row; serving is what the fence decides');
   const refused=await read(pub.ready.path);assert.equal(refused.status,410);assert.equal(refused.body.reason,'visual-publication-stale');assert.equal(refused.body.subReason,'execution-not-current');}
+ // Review 5693896865 R1: HEAD refusals carry the same status as GET (no body to read on HEAD).
+ {const a=VISUAL_FIRST_PROOF.find(e=>e.assetId==='a1400'),src=(await visualOriginalIdentity(a.source)).sourceIdentitySha256,bytes=ORIGINALS.a1400;
+  const forged=(await visualConsumerIdentity({packId,baseRevision:a.baseRevision,executionRevision:'e'.repeat(64),assetId:'a1400',kind:'image'})).consumerSha256;
+  const never=(await visualConsumerIdentity({packId,baseRevision:a.baseRevision,executionRevision:'9'.repeat(64),assetId:'a1400',kind:'image'})).consumerSha256;
+  const current=(await visualConsumerIdentity({packId,baseRevision:a.baseRevision,executionRevision:record.revision,assetId:'a1400',kind:'image'})).consumerSha256;
+  for(const [path,init,status] of [[`/v1/original-visuals/${src}/${forged}/${sha(bytes)}`,{},410],[`/v1/original-visuals/${src}/${never}/${sha(bytes)}`,{},404],[`/v1/original-visuals/${src}/${current}/${sha(bytes)}`,{headers:{Range:'bytes=0-9'}},416]]){
+   const get=await mf.dispatchFetch(origin+path,init),head=await mf.dispatchFetch(origin+path,{...init,method:'HEAD'});await get.arrayBuffer();await head.arrayBuffer();
+   assert.equal(get.status,status,path);assert.equal(head.status,status,'HEAD '+path);assert.equal(head.headers.get('cache-control'),'no-store');
+  }}
  // Stale: a publication row from another recipe is never served. Tampered: changed retained bytes are never served.
  const c4=VISUAL_FIRST_PROOF.find(e=>e.assetId==='c4'),d=await door(mf,c4.source),rows=await d.dump(),key=Object.keys(rows).find(k=>k.startsWith('visual-publication:')),row=rows[key];
  const c4path=row.path;await d.put(key,{...row,recipeSha256:'f'.repeat(64)});
