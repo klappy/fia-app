@@ -94,3 +94,30 @@ it('restoring onto a preparable visual step sends nothing until a deliberate act
  await fireEvent.click(await screen.findByRole('button',{name:'Try again'}));await shown(presentation.assets.a1400.title);
  expect(posts).toEqual(['a1400']);
 });
+
+// PR305 review B1: offline, a step declared unavailable keeps its honest copy; connecting would not help.
+it('offline, an unavailable declaration still says not available, never "not saved on this device"',async()=>{
+ declared=[{assetId:'a1400',kind:'image',status:'unavailable',reason:'decoder-unavailable'},preparable('c4','map')];
+ await mount();await toStart();Object.defineProperty(navigator,'onLine',{configurable:true,get:()=>false});window.dispatchEvent(new Event('offline'));
+ await next();await step(A);
+ await waitFor(()=>expect(screen.getByText('This image is not available online yet. You can continue with the passage text.')).toBeTruthy());
+ expect(screen.queryByText('This image is not saved on this device. Connect to the internet to view it.')).toBeNull();
+ expect(posts).toEqual([]);delete navigator.onLine;
+});
+
+// PR305 review (SOURCE-TO-APP L126): automatic progression is read-only. Narration that advances by itself onto a
+// preparable visual step sends no demand; the step offers Try again, and that tap asks once.
+it('an automatic advance onto a preparable step sends no visual demand',async()=>{
+ const ref={id:'server-authoritative-reference',sha256:h('a')};
+ presentation.activities[A-1].execution={narration:{action:'play-bound-audio',artifact:ref},focalAssetId:null,completion:{action:'advance-after-narration'}};
+ vi.spyOn(libraryAdapter,'playBoundAudio').mockResolvedValue({bytes:new Uint8Array([1,2]),mime:'audio/wav',playback:'whole-file-native-ended'});
+ audio.play.mockImplementation((text,src)=>{audio.active=true;audio.src=src;audio.state({playing:true,src,elapsed:0,duration:2});});
+ audio.stop.mockImplementation(()=>{audio.active=false;audio.state?.({playing:false,src:null,elapsed:0,duration:0});});
+ await mount();await toStart();expect(posts).toEqual([]);
+ // Arriving by the forward control starts the step's narration; its end advances by itself.
+ await waitFor(()=>expect(audio.play).toHaveBeenCalled());
+ audio.active=false;audio.state({playing:false,src:null,elapsed:0,duration:0});audio.end();
+ await step(A);await new Promise(r=>setTimeout(r,100));
+ expect(posts).toEqual([],'the automatic advance is not a deliberate action');
+ await fireEvent.click(await screen.findByRole('button',{name:'Try again'}));await waitFor(()=>expect(posts).toEqual(['a1400']));
+});

@@ -211,7 +211,7 @@
   // A preparable step this view has not asked for (a restore, or automatic progression) offers the explicit
   // Retry row of the navigation table through the existing not-loaded state, never a request of its own.
   const unasked=entry.status==='preparable'&&!url&&!error&&visualState.loading!==slot&&visualDeliberate!==visualIdentity();
-  return {...stage,src:url,visualPrepared:entry.status!=='unavailable'&&!error?.unavailable,visualOffline:!online&&!url,visualLoading:visualState.loading===slot,visualError:error&&!error.unavailable?error.message:null,visualCanceled:stage.visualCanceled||unasked,downloadRequired:!url,downloadPrepared:false};
+  return {...stage,src:url,visualPrepared:entry.status!=='unavailable'&&!error?.unavailable,visualOffline:!online&&!url&&entry.status!=='unavailable'&&!error?.unavailable,visualLoading:visualState.loading===slot,visualError:error&&!error.unavailable?error.message:null,visualCanceled:stage.visualCanceled||unasked,downloadRequired:!url,downloadPrepared:false};
  }
  function mediaForDevice(pack,paths){if(deliveryRevision&&downloadedDeliveryRevision!==deliveryRevision)paths=new Set([...paths].filter(path=>!onlineMedia.has(path)));return {...pack,activities:pack.activities.map(a=>({...a,audioSrc:a.kind==='scripture'&&passageFile(a.assetId)?passageFile(a.assetId).path:paths.has(a.audioSrc)||onlineMedia.has(a.audioSrc)?a.audioSrc:null})),assets:Object.fromEntries(Object.entries(pack.assets).map(([id,a])=>[id,withServerVisual(id,a,{...a,alignment:a.kind==='scripture'&&passageFile(id)?null:a.kind==='scripture'&&a.descriptionAudio===mediaLogicalPath&&mediaAlignment?mediaAlignment:a.alignment,src:(nativeDemoVideo&&nativeDemoVideo.path===a.src?nativeDemoVideo.url:null)||(videoDeliveryState.entry&&videoDeliveryState.entry.path===a.src?videoDeliveryState.entry.url:null)||visualState.entries.get(a.src)?.url||(paths.has(a.src)?a.src:undefined),videoPrepared:a.kind==='video'&&(onlineMedia.has(a.src)||!!demoVideoSource(selectedPack,a)),videoLoading:a.kind==='video'&&videoDeliveryState.loading,videoError:a.kind==='video'?videoDeliveryState.error:null,visualPrepared:['image','map'].includes(a.kind)&&onlineMedia.has(a.src),visualOffline:!online,visualCanceled:visualCanceled===visualIdentity(),visualLoading:visualState.loading===a.src,visualError:visualState.error&&visualState.error.path===a.src?visualState.error.message:null,poster:paths.has(a.poster)?a.poster:undefined,descriptionAudio:a.kind==='scripture'&&passageFile(id)?passageFile(id).path:paths.has(a.descriptionAudio)||onlineMedia.has(a.descriptionAudio)?a.descriptionAudio:undefined,downloadRequired:['image','map','video'].includes(a.kind)&&(!nativeDemoVideo||nativeDemoVideo.path!==a.src)&&!paths.has(a.src)&&!visualState.entries.has(a.src)&&!(videoDeliveryState.entry&&videoDeliveryState.entry.path===a.src),downloadPrepared:typeof a.src==='string'&&a.src.startsWith('/')&&!a.src.startsWith('//')})]))};}
  function verifiedDownloadedDescriptors(active){
@@ -496,13 +496,14 @@
   if(automaticOff||session.detour||finished||inTransition)return;
   started=true;playbackConsent=true;scheduleNext();
  }
- function navigate(event,auto=false){
-  if(deferVideo(()=>navigate(event,auto)))return;
+ // deliberate:false marks a navigation the app makes itself (a detour video ending): it never authorizes a visual demand (L126).
+ function navigate(event,auto=false,{deliberate=true}={}){
+  if(deferVideo(()=>navigate(event,auto,{deliberate})))return;
   // A tap queued while checking belonged to the screen the person just left.
   tapGate.drop();swipeGeneration++;
   const hadPlaybackConsent=playbackConsent,priorIndex=session.index,forward=auto&&event.type==='CONTINUE';revokePlayback();
-  if(inTransition&&event.type==='CONTINUE'){cancel();transitionSection=null;persist();authorizeVisual();if(forward)beginForwardPlayback();return;}
-  cancel();visualHeard=null;dispatch(event);notice='';settleSilent();authorizeVisual();
+  if(inTransition&&event.type==='CONTINUE'){cancel();transitionSection=null;persist();authorizeVisual(deliberate);if(forward)beginForwardPlayback();return;}
+  cancel();visualHeard=null;dispatch(event);notice='';settleSilent();authorizeVisual(deliberate);
   if(event.type==='DETOUR'&&assets[event.assetId]?.kind==='video'&&session.preferences.autoplayVideo&&hadPlaybackConsent){playbackConsent=true;queueVideoPlay();}
   if(forward&&session.index!==priorIndex)beginForwardPlayback();
  }
@@ -532,7 +533,7 @@
  }
  function videoTime(event){const v=event.currentTarget;if(!ownsVideo(v))return;videoState={elapsed:Number.isFinite(v.currentTime)?v.currentTime:0,duration:Number.isFinite(v.duration)?v.duration:0};}
  function videoStarted(event){if(event&&!ownsVideo(event.currentTarget))return;audio?.stop();audioContext=null;videoPlaying=true;videoPlayPending=false;dispatch({type:'PAUSE'});}
- function videoEnded(event){if(event&&!ownsVideo(event.currentTarget))return;if(videoOwner.pending)return;if(deferVideo(()=>videoEnded()))return;if(staleVideo){staleVideo=false;videoDelivery.clear();}videoState={elapsed:0,duration:0};videoPlaying=false;if(inlineVideo){inlineVideo=null;visualHeard=focal.id;if(!session.detour)session={...session,status:'waiting'};persist();return;}if(session.detour){navigate({type:'RETURN'});return;}dispatch({type:'MEDIA_END',activityId:activity.id});scheduleNext();}
+ function videoEnded(event){if(event&&!ownsVideo(event.currentTarget))return;if(videoOwner.pending)return;if(deferVideo(()=>videoEnded()))return;if(staleVideo){staleVideo=false;videoDelivery.clear();}videoState={elapsed:0,duration:0};videoPlaying=false;if(inlineVideo){inlineVideo=null;visualHeard=focal.id;if(!session.detour)session={...session,status:'waiting'};persist();return;}if(session.detour){navigate({type:'RETURN'},false,{deliberate:false});return;}dispatch({type:'MEDIA_END',activityId:activity.id});scheduleNext();}
  function setMode(mode){if(session.mode===mode)return;dispatch({type:'SET_MODE',mode});}
  function runCommand(text=command){
   if(!text.trim())return;const input=text.trim();command='';messages=[...messages.slice(-11),{role:'user',text:input}];
