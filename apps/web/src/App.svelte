@@ -27,7 +27,7 @@
  import {easyFace,queueable,createTapGate} from './lib/easy-button.js';
  import {preparationHash} from './lib/prepared-audio.js';
  import {demoVideoSource} from './lib/video-demo.js';
- import {bundledPack,libraryAdapter,hasUnresolvedInstructions,registerWorker,RESTORE_TIMEOUT_MS,restoreUnreachable} from './lib/library.js';
+ import {bundledPack,libraryAdapter,setDisplayedGeneration,hasUnresolvedInstructions,registerWorker,RESTORE_TIMEOUT_MS,restoreUnreachable} from './lib/library.js';
  import {saveProgress,restoreProgress,resetProgress} from './lib/session-store.js';
  import {noticeScope,noticeEnded} from './lib/notice-scope.js';
  let selectedPack=$state(bundledPack),rawPresentation=$state.raw(bundledPresentation),downloadedPaths=$state(new Set()),downloadedAudioDescriptors=$state(new globalThis.Map());
@@ -47,6 +47,7 @@
  // The Downloads choices and the Save name exactly the generation this page displays: the one its declarations came with, refreshed
  // by a visual's ready answer (OFFLINE exact selection). Without one, the worker fails closed.
  let downloadPack=$derived(executableMode&&declarations().publication?{...selectedPack,displayedGeneration:declarations().publication.generation}:selectedPack);
+ $effect(()=>{setDisplayedGeneration(selectedPack,executableMode?declarations().publication?.generation??null:null);});
  function serverVisual(id){return executableMode?declarations().visualResources?.find(e=>e.assetId===id)??null:null;}
  const visualSlot=id=>`server-visual:${id}`;
  // A deliberate action (a tap, a gesture, a tool call) authorizes at most one visual demand for this view;

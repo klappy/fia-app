@@ -35,4 +35,9 @@ test('U008: Downloads offers the published originals, and Save binds the display
  const sw=context.serviceWorkers()[0];expect(sw).toBeTruthy();
  const saved=await sw.evaluate(async()=>{const a=await read(packKey('eng.MRK-1-14-20','active'));return {generation:a?.serverSnapshot?.record?.execution?.publication?.generation??null,images:(a?.files||[]).filter(f=>f.group==='image').map(f=>f.path)};});
  expect(saved.generation).toBe(displayed);expect(saved.images.length).toBe(2);
+ // QA at c0a837f: about 6 s after Save the Saved state was retired by an ambiguous revision-only read. A normal refreshed
+ // status at least 15 s after Save (no network cut) still reports Saved, with the Saved copy rechecked by its own generation.
+ await page.waitForTimeout(15000);
+ const later=await sw.evaluate(async()=>{const s=await status('eng.MRK-1-14-20');return {saved:s.saved,authority:s.savedAuthority?.state??null,invalid:!!s.active?.serverSnapshot?.invalid};});
+ expect(later,'still Saved 15 s after Save').toEqual({saved:true,authority:'verified',invalid:false});
 });

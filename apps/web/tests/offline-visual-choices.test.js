@@ -79,3 +79,111 @@ test('the served manifest is used only when it verifies and belongs to this exec
  }
  const offline=setup();offline.w.fail(`/v1/packs/${packId}`);const s=await offline.status();assert.equal(s.servedManifest.state,'not-used');assert.ok(s.servedManifest.reason,'an unreachable record names its reason');
 });
+
+// QA at c0a837f (receipt 2ac55f9f) and the live trace: about 6 s after Save, a MEDIA_STATUS with the passage's media identity read
+// /v1/packs/<id>?revision= (no generation), got 404 publication-generation-ambiguous, and retired the fresh Save as if revoked;
+// the refused body was never released. The ambiguous refusal asks for a generation; it revokes nothing.
+const mediaStatus=(t,extra={})=>t.w.message({type:'MEDIA_STATUS',packId,revision:t.f.record.revision,mediaIdentity:t.f.record.execution.mediaIdentity,mediaAssetsSha256:t.f.record.execution.mediaAssetsSha256,...extra});
+test('after Save, a media status without the displayed generation reads the saved generation and keeps the Save',async()=>{
+ const t=setup({ambiguous:true});assert.equal((await t.save('all')).ok,true);
+ const m=await mediaStatus(t);assert.equal(m.ok,true,JSON.stringify(m));
+ assert.ok(t.w.calls.includes(`/v1/packs/${packId}?revision=${t.f.record.revision}&generation=${t.generation}`),'the saved generation is named');
+ const s=await t.status();assert.equal(s.saved,true,'the Save stays valid');assert.notEqual(s.active.serverSnapshot.invalid,true);
+ const named=setup({ambiguous:true});assert.equal((await named.save('all')).ok,true);await mediaStatus(named,{generation:named.generation});
+ assert.ok(named.w.calls.includes(`/v1/packs/${packId}?revision=${named.f.record.revision}&generation=${named.generation}`),'the displayed generation is named');
+});
+test('an ambiguous refusal with no generation known is typed and revokes nothing; a real refusal still retires the Save',async()=>{
+ const t=setup({ambiguous:true});const m=await mediaStatus(t);assert.equal(m.ok,false);assert.equal((await t.status()).active,null,'nothing was saved, nothing is retired');
+ const r=setup({ambiguous:true});assert.equal((await r.save('all')).ok,true);
+ r.w.reply(`/v1/packs/${packId}`,()=>Response.json({status:'unavailable',reason:'not-found'},{status:404}));
+ const after=await mediaStatus(r);assert.equal(after.ok,false);const s=await r.status(null);assert.equal(s.saved,false,'a real refusal still retires the Save');
+});
+test('a refused pack read releases its body',async()=>{
+ const t=setup({ambiguous:true});assert.equal((await t.save('all')).ok,true);const refused=[];
+ t.w.reply(`/v1/packs/${packId}`,()=>{const r=Response.json({status:'unavailable',reason:'publication-generation-ambiguous'},{status:404});refused.push(r);return r;});
+ await mediaStatus(t);await t.status(null);assert.ok(refused.length>0);assert.ok(refused.every(r=>r.bodyUsed),'every refused body is read or cancelled');
+});
+
+test('the page names its displayed generation in every media message about that revision',async()=>{
+ const sent=[];Object.defineProperty(globalThis.navigator,'serviceWorker',{configurable:true,value:{ready:Promise.resolve({active:{postMessage:(data,[port])=>{sent.push(data);port.postMessage({ok:true,files:[],savedFiles:[],deliveryRevision:null,saved:true,choices:[]});}}})}});
+ try{
+  const {libraryAdapter,setDisplayedGeneration}=await import('../src/lib/library.js'),pack={id:packId,revision:h('e'),mediaIdentity:{packId,revision:h('c')},mediaAssetsSha256:h('m')};
+  await libraryAdapter.mediaStatus(pack);setDisplayedGeneration(pack,h('6'));await libraryAdapter.mediaStatus(pack);await libraryAdapter.downloadStatus(pack);setDisplayedGeneration(pack,null);await libraryAdapter.mediaStatus(pack);
+  assert.deepEqual(sent.map(d=>[d.type,d.generation]),[['MEDIA_STATUS',undefined],['MEDIA_STATUS',h('6')],['DOWNLOAD_STATUS',h('6')],['MEDIA_STATUS',undefined]]);
+ }finally{delete globalThis.navigator.serviceWorker;}
+});
+
+// PR311 review B1: a routed page read by revision alone (the page's own /v1/packs/<id>?revision=&execution=2) is refused as
+// publication-generation-ambiguous once a visual has published. That answer reaches the page unchanged, is never taken as the
+// record, and retires nothing; a typed denial on the same read still retires the Save. Classified by typed reason, not status.
+const META='fia-v3-download-metadata@1',activeKey=`/pack:${packId}:active`;
+const savedRecord=async t=>t.w.stores.get(META).get(activeKey).json();
+test('B1: an ambiguous page read passes through and keeps the Save; a typed denial on the same read retires it',async()=>{
+ const t=setup({ambiguous:true});assert.equal((await t.save('all')).ok,true);
+ const r=await t.w.fetch(`/v1/packs/${packId}?revision=${t.f.record.revision}&execution=2`);
+ assert.equal(r.status,404);assert.equal((await r.json()).reason,'publication-generation-ambiguous','the refusal reaches the page, not a record');
+ assert.notEqual((await savedRecord(t)).serverSnapshot.invalid,true,'the ambiguous refusal retires nothing');
+ const s=await t.status();assert.equal(s.saved,true);assert.equal(s.savedAuthority.state,'verified');
+ const d=setup({ambiguous:true});assert.equal((await d.save('all')).ok,true);
+ d.w.reply(`/v1/packs/${packId}`,()=>Response.json({status:'unavailable',reason:'not-found'},{status:404}));
+ assert.equal((await d.w.fetch(`/v1/packs/${packId}?revision=${d.f.record.revision}&execution=2`)).status,404);
+ assert.equal((await savedRecord(d)).serverSnapshot.invalid,true,'a typed denial still retires the Save');
+});
+
+// PR311 review B2: a server that ignores generation= answers 200 with another generation. That is not the displayed record:
+// the choices say so, the Save refuses before any original is fetched, and an invalid generation is refused before any read.
+test('B2: a 200 of another generation is not the displayed record; the Save refuses and fetches no original',async()=>{
+ const t=setup(),other={...t.record,execution:{...t.record.execution,publication:{...t.record.execution.publication,generation:h('5')}}};
+ t.w.reply(`/v1/packs/${packId}`,()=>Response.json(other));
+ const s=await t.status();assert.equal(s.servedManifest.reason,'record-generation-changed');assert.deepEqual(ids(s),['core','audio']);
+ const refused=await t.save('all');assert.equal(refused.ok,false,JSON.stringify(refused));assert.equal(t.w.calls.includes(photoPath),false);
+ assert.equal((await t.status()).saved,false);
+ const bad=setup(),b=await bad.save('all','not-a-generation');assert.equal(b.ok,false);assert.equal(bad.w.calls.some(c=>c.includes('generation=not-a-generation')),false,'an invalid generation is never sent');assert.equal(bad.w.calls.includes(photoPath),false);
+});
+
+// Terry b34dadc (OFFLINE L37/43/45/57/60/61): each Saved copy is rechecked with its own exact pinned read, never a fallback; the
+// displayed generation counts only for the displayed copy, and that copy's typed answer decides it.
+test('the Saved copy is rechecked by its own generation, not the displayed one, and that answer decides it',async()=>{
+ const t=setup({ambiguous:true});assert.equal((await t.save('all')).ok,true);t.w.calls.length=0;
+ const s=await t.status(h('5'));assert.equal(s.saved,true);assert.equal(s.savedAuthority.state,'verified');
+ assert.ok(t.w.calls.includes(`/v1/packs/${packId}?revision=${t.f.record.revision}&generation=${t.generation}&execution=2`),'its own exact read');
+ assert.equal(s.servedManifest.reason,'record-404:publication-generation-unavailable','the displayed generation answers only for the displayed copy');
+ t.w.calls.length=0;assert.equal((await mediaStatus(t,{generation:h('5')})).ok,true);
+ assert.ok(t.w.calls.includes(`/v1/packs/${packId}?revision=${t.f.record.revision}&generation=${t.generation}`),'media authority reads the Saved copy by its own generation');
+ // Its own exact read denied: the copy is retired even though the displayed generation still answers.
+ const d=setup({ambiguous:true});assert.equal((await d.save('all')).ok,true);
+ d.w.reply(`/v1/packs/${packId}`,()=>{const q=new URLSearchParams(d.w.calls.at(-1).split('?')[1]||'');return q.get('generation')===d.generation?Response.json({status:'unavailable',reason:'publication-generation-unavailable'},{status:404}):Response.json({...d.record,execution:{...d.record.execution,publication:{...d.record.execution.publication,generation:h('5')}}});});
+ const ds=await d.status(h('5'));assert.equal(ds.savedAuthority.state,'revoked');assert.equal(ds.saved,false);
+});
+test('no legacy fallback: an ambiguous recheck keeps the last verified copy with visible status and never reads by revision alone',async()=>{
+ const t=setup({ambiguous:true});assert.equal((await t.save('all')).ok,true);
+ t.w.reply(`/v1/packs/${packId}`,()=>Response.json({status:'unavailable',reason:'publication-generation-ambiguous'},{status:404}));t.w.calls.length=0;
+ const s=await t.status();assert.equal(s.saved,true,'the last verified copy is kept');assert.equal(s.savedAuthority.state,'unconfirmed');assert.match(s.savedAuthority.reason,/publication-generation-ambiguous/);
+ assert.equal(t.w.calls.some(c=>/^\/v1\/packs\/[^?]+\?revision=[a-f0-9]{64}(&execution=2)?$/.test(c)),false,'no revision-only read');
+ assert.notEqual((await savedRecord(t)).serverSnapshot.invalid,true);
+ // A server that answers another generation for the copy's exact read has not answered for it either.
+ const o=setup();assert.equal((await o.save('all')).ok,true);o.w.reply(`/v1/packs/${packId}`,()=>Response.json({...o.record,execution:{...o.record.execution,publication:{...o.record.execution.publication,generation:h('5')}}}));
+ const os=await o.status();assert.equal(os.saved,true);assert.deepEqual([os.savedAuthority.state,os.savedAuthority.reason],['unconfirmed','record-generation-changed']);
+});
+test('an offline cold reopen stays usable with visible status and serves the Saved record',async()=>{
+ const t=setup({ambiguous:true});assert.equal((await t.save('all')).ok,true);
+ const cold=worker({...t.f,record:t.record},t.w.stores);cold.offline(true);
+ const s=await cold.message({type:'DOWNLOAD_STATUS',revision:t.f.record.revision});assert.equal(s.saved,true);assert.equal(s.savedAuthority.state,'unconfirmed');
+ const r=await cold.fetch(`/v1/packs/${packId}?revision=${t.f.record.revision}&execution=2`);assert.equal(r.status,200);assert.equal(r.headers.get('X-FIA-Offline-Snapshot'),'historical-verified');
+ assert.equal((await r.json()).execution.publication.generation,t.generation);
+});
+test('a real denial revokes every generation sharing the revoked revision, and the tombstone is honored before serving',async()=>{
+ const t=setup({ambiguous:true});assert.equal((await t.save('all')).ok,true);
+ t.w.reply(`/v1/packs/${packId}`,()=>Response.json({status:'unavailable',reason:'not-found'},{status:404}));
+ const s=await t.status();assert.equal(s.savedAuthority.state,'revoked');assert.equal(s.saved,false);
+ // A copy of another generation of the same revision (same dependency) is not served once the revision's tombstone is observed.
+ const active=await savedRecord(t);active.serverSnapshot.invalid=false;active.serverSnapshot.record.execution.publication.generation=h('5');t.w.stores.get(META).set(activeKey,Response.json(active));
+ t.w.offline(true);const r=await t.w.fetch(`/v1/packs/${packId}?revision=${t.f.record.revision}&execution=2`);assert.notEqual(r.status,200,'the tombstone is honored before any saved JSON');
+});
+test('an observed 404 for a published original is honored before serving any kept or Saved copy of it',async()=>{
+ const t=setup({ambiguous:true});assert.equal((await t.save('all')).ok,true);
+ assert.equal((await t.w.fetch(photoPath)).status,200);
+ t.w.reply(photoPath,()=>new Response('gone',{status:404}));assert.equal((await t.w.fetch(photoPath)).status,404);
+ t.w.offline(true);const r=await t.w.fetch(photoPath);assert.equal(r.type==='error'||r.status!==200,true,'no Saved copy answers for a tombstoned original');
+ t.w.offline(false);t.w.reply(photoPath,()=>new Response('err',{status:503}));assert.equal((await t.w.fetch(photoPath)).status,503,'nor on a transient answer');
+});

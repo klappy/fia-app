@@ -45,7 +45,7 @@ async function fetchLatest(path,options){
   if(error?.name==='TypeError'||error?.name==='AbortError')throw Object.assign(Error('Media status is temporarily unavailable.'),{mediaStatusCode:'media-status-transient'});
   throw error;
  }
- if([408,429,500,502,503,504].includes(response.status))throw Object.assign(Error('Media status is temporarily unavailable.'),{mediaStatusCode:'media-status-transient'});
+ if([408,429,500,502,503,504].includes(response.status)){response.body?.cancel().catch(()=>{});throw Object.assign(Error('Media status is temporarily unavailable.'),{mediaStatusCode:'media-status-transient'});}
  return response;
 }
 async function latest(packId=legacy,media=false,onprogress){
@@ -112,7 +112,29 @@ async function snapshotComplete(active,{authorityOnly=false}={}){
  const snapshot=active?.serverSnapshot;if(!snapshot||(!authorityOnly&&snapshot.invalid))return false;
  try{serverRecord(snapshot.record,active.packId);const expected=serverFiles(snapshot.record);if(JSON.stringify(expected)!==JSON.stringify(snapshot.files))return false;const cache=await caches.open(active.cache);for(const f of expected)await serverJSON(await cache.match(f.path),f,snapshot.record);return true;}catch{return false;}
 }
-async function savedServerSnapshot(packId,revision){const active=await read(packKey(packId,'active'));if(revision&&active?.serverSnapshot?.record.revision!==revision)return null;return await snapshotComplete(active)?active:null;}
+// An observed tombstone (a revoked snapshot's marker) is honored before any saved record is served (OFFLINE L61).
+async function savedServerSnapshot(packId,revision){const active=await read(packKey(packId,'active'));if(revision&&active?.serverSnapshot?.record.revision!==revision)return null;if(active?.serverSnapshot&&await read(revokedSnapshotKey(packId,active.serverSnapshot.record.revision)))return null;return await snapshotComplete(active)?active:null;}
+// A refusal is classified by its typed reason, not its HTTP status (Terry b34dadc). publication-generation-ambiguous asks the
+// reader to name a generation: a selection refusal that revokes nothing. Every other typed refusal is a denial, as before.
+async function refusalReason(response){try{const body=await response.json();return typeof body?.reason==='string'?body.reason:null;}catch{return null;}}
+const ambiguousReason=reason=>reason==='publication-generation-ambiguous';
+// Each Saved copy is rechecked by its own exact pinned read (?revision=&generation= of the saved record), never a fallback read.
+// Its typed answer decides it: a denial, a changed identity or changed artifacts retire it (the revocation marker is the revision's,
+// so every generation sharing it is retired too, OFFLINE L60); the same record keeps it eligible; anything else (ambiguous,
+// transient, a server that answered another revision or generation) leaves the last verified copy served and says so.
+async function recheckSavedCopy(packId,active){
+ const snapshot=active?.serverSnapshot,record=snapshot?.record;if(!record||snapshot.invalid)return null;
+ const generation=record.execution?.publication?.generation??null;if(generation!==null&&!isPassageHash(generation))return {state:'unconfirmed',reason:'generation-invalid'};
+ let r,capability;try{({response:r,capability}=await readExecutionRecord(packId,record.revision,generation));}catch(error){return {state:'unconfirmed',reason:error?.mediaStatusCode??'record-unreachable'};}
+ if([408,429,500,502,503,504].includes(r.status)){r.body?.cancel().catch(()=>{});return {state:'unconfirmed',reason:'record-'+r.status};}
+ if(r.status!==200||r.redirected){const reason=r.redirected?null:await refusalReason(r);if(r.redirected)r.body?.cancel().catch(()=>{});if(ambiguousReason(reason))return {state:'unconfirmed',reason:'record-'+r.status+':'+reason};await invalidateServerSnapshot(packId);return {state:'revoked',reason:'record-'+r.status+(reason?':'+reason:'')};}
+ let fresh;try{fresh=serverRecord(await r.json(),packId);}catch{await invalidateServerSnapshot(packId);return {state:'revoked',reason:'record-invalid'};}
+ // A server that answers another revision or generation has not answered for this copy: it stays, unconfirmed.
+ if(fresh.revision!==record.revision)return {state:'unconfirmed',reason:'record-revision-changed'};
+ if(capability&&!sameGeneration(fresh,generation))return {state:'unconfirmed',reason:'record-generation-changed'};
+ if(JSON.stringify(serverFiles(fresh))!==JSON.stringify(snapshot.files)){await invalidateServerSnapshot(packId);return {state:'revoked',reason:'record-artifacts-changed'};}
+ return {state:'verified'};
+}
 // The server record of exactly what the page shows: its revision and, when the page holds one, the source-issued publication
 // generation it rendered (OFFLINE exact selection, ?revision=&generation=). Once a visual publishes, an execution has several
 // retained generations and a revision-only read is refused as publication-generation-ambiguous; that refusal stands, so without
@@ -122,7 +144,7 @@ async function readExecutionRecord(packId,revision,generation,signal){
  const at=q=>fetchLatest(`/v1/packs/${packId}${q?'?'+q:''}`,{cache:'no-store',redirect:'error',signal});
  const exact=ask=>[revision?'revision='+revision:null,ask&&generation?'generation='+generation:null,ask?'execution=2':null].filter(Boolean).join('&');
  let response=await at(exact(true)),capability='2';
- if(response.status===400){response=await at(exact(false));capability=null;}
+ if(response.status===400){response.body?.cancel().catch(()=>{});response=await at(exact(false));capability=null;}
  return {response,capability};
 }
 // The record answers for exactly the displayed generation, or there was none to name.
@@ -135,7 +157,7 @@ async function retainServerSnapshot(packId,revision,generation,cache,signal,onpr
   // F11: the snapshot is read with the capability the page reads with (execution=2), so an offline reload
   // gets the same shape; an older server that refuses it is read once without it, as the page does.
   checkCanceled();const {response:r,capability}=await readExecutionRecord(packId,revision,generation,signal);checkCanceled();
-  if(r.status!==200||r.redirected)throw Error('Server record unavailable.');record=serverRecord(await r.json(),packId);checkCanceled();if(revision&&record.revision!==revision||capability&&!sameGeneration(record,generation))throw Error('Server revision changed.');
+  if(r.status!==200||r.redirected){r.body?.cancel().catch(()=>{});throw Error('Server record unavailable.');}record=serverRecord(await r.json(),packId);checkCanceled();if(revision&&record.revision!==revision||capability&&!sameGeneration(record,generation))throw Error('Server revision changed.');
   const files=serverFiles(record);onprogress?.({phase:'record-verified',verified:0,total:files.length});
   for(const [index,f] of files.entries()){
    checkCanceled();let response=await cache.match(f.path);try{await serverJSON(response,f,record);}catch{checkCanceled();response=await fetchLatest(f.path,{cache:'no-store',redirect:'error',signal});await serverJSON(response,f,record);checkCanceled();await cache.put(f.path,response);}
@@ -177,7 +199,8 @@ async function serverRead(request,clientId){
  // the pack, so it never retires a saved snapshot; the page retries without the capability.
  if(match&&capability&&response.status===400)return response;
  try{
-  if(match){if(response.status!==200||response.redirected)throw Error('Server record unavailable.');const record=serverRecord(await response.clone().json(),packId);if(revision&&record.revision!==revision)throw Error('Server revision changed.');await rememberServerRead(clientId,record);}
+  // B1 (PR311 review): an ambiguous refusal reaches the page unchanged and is never taken as the record, and it retires nothing.
+  if(match){if(response.status!==200||response.redirected){if(!response.redirected&&ambiguousReason(await refusalReason(response.clone())))return response;throw Error('Server record unavailable.');}const record=serverRecord(await response.clone().json(),packId);if(revision&&record.revision!==revision)throw Error('Server revision changed.');await rememberServerRead(clientId,record);}
   else if(file)await serverJSON(response.clone(),file,active.serverSnapshot.record);
  }catch{if(packId)await invalidateServerSnapshot(packId);}
  return response;
@@ -273,19 +296,22 @@ async function originalVisualRead(request){
  if(!kept)await cache.delete(url.pathname);
  let response;
  try{response=await fetch(url.pathname,{cache:'no-store',redirect:'error',credentials:'same-origin',headers:kept?{'If-None-Match':`"${sha}"`}:{}});}
- catch(error){if(kept)return kept;return await savedVisual(url.pathname,sha)||Response.error();}
+ catch(error){if(await read(visualTombstoneKey(sha)))return Response.error();if(kept)return kept;return await savedVisual(url.pathname,sha)||Response.error();}
  if(response.status===304&&kept)return kept;
- if(response.status===404||response.status===410){await cache.delete(url.pathname);return response;}
+ if(response.status===404||response.status===410){await cache.delete(url.pathname);await write(visualTombstoneKey(sha),{tombstone:true,status:response.status});return response;}
  if(response.status===200){
   if(response.redirected||!await keptVisual(response,sha)){await cache.delete(url.pathname);return new Response('This image could not be verified.',{status:502,headers:{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store'}});}
-  await cache.put(url.pathname,response.clone());return response;
+  await cache.put(url.pathname,response.clone());await(await caches.open(META)).delete('/'+visualTombstoneKey(sha));return response;
  }
- if([408,429,500,502,503,504].includes(response.status))return kept||await savedVisual(url.pathname,sha)||response;
+ if([408,429,500,502,503,504].includes(response.status)){if(await read(visualTombstoneKey(sha)))return response;return kept||await savedVisual(url.pathname,sha)||response;}
  return response;
 }
 // F11: a Saved original (its pack's verified copy under the same path) answers only when the server cannot,
 // and only bytes that hash to the path's own sha with an image type; it is never rebound to another path.
+// An observed 404/410 for an original is its tombstone: no kept or Saved copy answers for it until the server serves it again (L61).
+const visualTombstoneKey=sha=>'visual-tombstone:'+sha;
 async function savedVisual(path,sha){
+ if(await read(visualTombstoneKey(sha)))return null;
  for(const name of await caches.keys()){if(!name.startsWith(PREFIX))continue;const copy=await keptVisual(await (await caches.open(name)).match(path),sha);if(copy)return copy;}
  return null;
 }
@@ -326,13 +352,14 @@ async function status(packId=legacy,revision,generation=null){
  if(!isBuild)return {available:false,saved:false,reason:'Downloads work on the published Site. This local development preview does not store offline content.'};
  const active=await read(packKey(packId,'active')),pending=await read(packKey(packId,'pending'));
  let manifest,error='';try{manifest=await latest(packId,true);}catch(e){error=e.message;if(e.mediaStatusCode!=='media-status-transient'&&active?.serverSnapshot){await invalidateServerSnapshot(packId);active.serverSnapshot.invalid=true;}manifest=active?.manifest||pending?.manifest;}
+ const savedAuthority=await recheckSavedCopy(packId,active);if(savedAuthority?.state==='revoked'&&active?.serverSnapshot)active.serverSnapshot.invalid=true;
  const saved=await complete(active);
  if(active)active.files=permittedRecordings(active.files,generatedRecordingPaths);
  if(manifest)manifest={...manifest,files:permittedRecordings(manifest.files,generatedRecordingPaths)};
  const build=manifest,served=await servedMediaManifest(packId,revision,build,generation);if(served.manifest)manifest={...served.manifest,files:permittedRecordings(served.manifest.files,generatedRecordingPaths)};
  // Why the choices are (or are not) the served execution's: observable, never a silent fallback (PR310 review B1).
  const servedManifest=served.manifest?{state:'used',revision:served.manifest.revision}:{state:'not-used',reason:served.reason};
- return {available:true,servedManifest,mediaNotices:(await read('media-notices'))||[],saved,active:active?{...active,valid:saved}:null,pending:pending?{...pending,running:jobs.has(packId)}:null,manifest,error,updateAvailable:!!(active&&build&&(active.manifest.catalogRevision||active.revision)!==build.revision),choices:manifest?['core',...(manifest.files.some(f=>f.group==='audio')?['audio']:[]),...(manifest.files.some(f=>f.group==='video')&&manifest.files.some(f=>f.group==='image')?['visual']:[]),...(manifest.files.some(f=>f.group==='video'||f.group==='image')?['all']:[])].map(id=>({id,bytes:downloadTransferBytes(selectedFiles(manifest,id))})):[]};
+ return {available:true,servedManifest,savedAuthority,mediaNotices:(await read('media-notices'))||[],saved,active:active?{...active,valid:saved}:null,pending:pending?{...pending,running:jobs.has(packId)}:null,manifest,error,updateAvailable:!!(active&&build&&(active.manifest.catalogRevision||active.revision)!==build.revision),choices:manifest?['core',...(manifest.files.some(f=>f.group==='audio')?['audio']:[]),...(manifest.files.some(f=>f.group==='video')&&manifest.files.some(f=>f.group==='image')?['visual']:[]),...(manifest.files.some(f=>f.group==='video'||f.group==='image')?['all']:[])].map(id=>({id,bytes:downloadTransferBytes(selectedFiles(manifest,id))})):[]};
 }
 self.addEventListener('install',event=>{if(isBuild)event.waitUntil(caches.open(SHELL).then(c=>c.addAll(['/','/index.html','/manifest.webmanifest'])).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));
@@ -503,8 +530,17 @@ async function start(selection,port,packId=legacy,sizes={},revision,generation=n
 async function declaredMediaRevision(data,packId){
  if(data.mediaIdentity===undefined&&data.mediaAssetsSha256===undefined)return data.revision;
  if(data.mediaIdentity?.packId!==packId||!isPassageHash(data.mediaIdentity?.revision)||!isPassageHash(data.mediaAssetsSha256)||!isPassageHash(data.revision))throw Error('Invalid declared media identity.');
- let record;try{const response=await fetchLatest(`/v1/packs/${packId}?revision=${data.revision}`,{cache:'no-store',redirect:'error'});if(response.status!==200||response.redirected)throw Error('Media authority is unavailable.');record=serverRecord(await response.json(),packId);}
- catch(error){if(error.mediaStatusCode!=='media-status-transient'){await invalidateServerSnapshot(packId);throw error;}const active=await savedServerSnapshot(packId,data.revision);if(!active)throw error;record=active.serverSnapshot.record;}
+ // The media identity is the execution's, the same in every generation of it. A Saved copy of this revision is read by its own
+ // generation and that answer decides it; the page's displayed generation names only the displayed copy (Terry b34dadc). Without
+ // either, the read is by revision. A typed publication-generation-ambiguous refusal, like a transient answer, revokes nothing and
+ // leaves the last verified copy; a denial retires the Saved copy only when the read was that copy's own. Refused bodies are read.
+ const saved=await read(packKey(packId,'active')),savedRecord=saved?.serverSnapshot?.record;
+ const savedGeneration=savedRecord?.revision===data.revision&&isPassageHash(savedRecord.execution?.publication?.generation??'')?savedRecord.execution.publication.generation:null;
+ const generation=savedGeneration||(isPassageHash(data.generation??'')?data.generation:null),ownRead=!!savedRecord&&savedRecord.revision===data.revision&&(savedGeneration===null||generation===savedGeneration);
+ let record;try{const response=await fetchLatest(`/v1/packs/${packId}?revision=${data.revision}${generation?'&generation='+generation:''}`,{cache:'no-store',redirect:'error'});
+  if(response.status!==200||response.redirected){const reason=response.redirected?null:await refusalReason(response);if(response.redirected)response.body?.cancel().catch(()=>{});throw Object.assign(Error('Media authority is unavailable.'),ambiguousReason(reason)?{mediaStatusCode:'media-authority-ambiguous'}:{});}
+  record=serverRecord(await response.json(),packId);}
+ catch(error){if(!['media-status-transient','media-authority-ambiguous'].includes(error.mediaStatusCode)){if(ownRead||!savedRecord)await invalidateServerSnapshot(packId);throw error;}const active=await savedServerSnapshot(packId,data.revision);if(!active)throw error;record=active.serverSnapshot.record;}
  if(record.revision!==data.revision||record.execution?.mediaIdentity?.packId!==data.mediaIdentity.packId||record.execution?.mediaIdentity?.revision!==data.mediaIdentity.revision||record.execution?.mediaAssetsSha256!==data.mediaAssetsSha256)throw Error('Media identity is not authorized by the server record.');
  return data.mediaIdentity.revision;
 }
