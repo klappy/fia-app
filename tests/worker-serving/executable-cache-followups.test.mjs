@@ -92,7 +92,7 @@ test('replacing a row prunes owner-index entries for bound artifacts it no longe
 
 test('the overlay exposes no historical authentication; a superseded row is a plain cache miss',()=>{
  // currentGeneration (F7a1) reads which generation the current pointer selects; it authenticates nothing.
- assert.deepEqual(Object.keys(fixture().make()),['publish','publishVisuals','readCatalog','findArtifact','currentGeneration']);
+ assert.deepEqual(Object.keys(fixture().make()),['publish','publishVisuals','readCatalog','findArtifact','currentGeneration','retainedVisual']);
 });
 
 async function runtime(capabilities){

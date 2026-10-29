@@ -418,16 +418,19 @@ test('an asking read declares a1400 then c4 as preparable; a visual demand is ad
  }finally{await mf.dispose();await rm(r.dir,{recursive:true,force:true});}
 });
 
-// F7a1 two-build regression (OFFLINE-EXECUTION L96, "Publication generations"): the same presentation under
-// two byte-different shells. Build A publishes generation A from its pinned base manifest. Build B serves a
+// F7a1 two-shell regression (OFFLINE-EXECUTION "Publication generations"), with SYNTHETIC base manifests:
+// this is partial L96 coverage, not the L96 proof. L96's two actually built shells are owed to the U008
+// integrated QA handoff (HANDOFF-U008-QA, two real builds of one head); the in-process cases (concurrent
+// compare-and-swap, shared-source revocation, identical-generation reuse) are in
+// publication-generation-overlay.test.mjs. The same presentation under two byte-different shells. Build A publishes generation A from its pinned base manifest. Build B serves a
 // different offline manifest at the same path: A stays current and exactly readable from its own retained
 // bytes (a newer shell alone is not revocation) until an explicit demand that names A adopts generation B.
 // Both coexist with the same revision; the legacy revision selector is ambiguous; a stale expectation is
 // typed; an identical generation is reused; and only an asking page sees publication and mediaManifest.
-test('two builds with different shells: generations coexist, exact A stays readable, stale expectations are typed',async()=>{
+test('two synthetic shells: generations coexist, exact A stays readable, B failing first keeps A, corruption and reads are typed',async()=>{
  const r=await releases(),packId='eng.MRK-1-14-20',registry=JSON.parse(await readFile(publicRoot+'/content/registry.json','utf8')),d=registry.packs.find(p=>p.id===packId);
  const {writeFile,mkdir}=await import('node:fs/promises');await mkdir(join(r.dir,'offline'),{recursive:true});
- const shell=async label=>{const manifest={schema:1,packId,presentationRevision:d.revision,deliveryRevision:'b'.repeat(64),revision:label,files:[{path:'/index.html',bytes:label.length,sha256:await sha256(new TextEncoder().encode(label)),group:'core'},{path:d.presentation.url,bytes:d.presentation.bytes,sha256:d.revision,group:'core'}]};const bytes=new TextEncoder().encode(JSON.stringify(manifest));await writeFile(join(r.dir,'offline',packId+'.json'),bytes);return {pins:[{packId,path:`/offline/${packId}.json`,sha256:await sha256(bytes),bytes:bytes.length}],bytes};};
+ const shell=async label=>{const manifest={schema:1,packId,presentationRevision:d.revision,deliveryRevision:'b'.repeat(64),revision:label,files:[{path:'/index.html',bytes:label.length,sha256:await sha256(new TextEncoder().encode(label)),group:'core'},{path:d.presentation.url,bytes:d.presentation.bytes,sha256:d.revision,group:'core'},{path:`/content/delivery/${packId}/${'b'.repeat(64)}.json`,bytes:1,sha256:'c'.repeat(64),group:'core'}]};const bytes=new TextEncoder().encode(JSON.stringify(manifest));await writeFile(join(r.dir,'offline',packId+'.json'),bytes);return {pins:[{packId,path:`/offline/${packId}.json`,sha256:await sha256(bytes),bytes:bytes.length}],bytes};};
  let mf=null;
  try{
   const A=await shell('shell-a');mf=await r.generations(A.pins);await retainApprovedAudio(mf);let read=http(mf);
@@ -445,11 +448,19 @@ test('two builds with different shells: generations coexist, exact A stays reada
   const narration=(await read('/v1/artifacts/'+revision)).body.activities.filter(a=>a.execution?.narration?.action==='play-bound-audio');assert.ok(narration.length>0,'the presentation binds the approved recording');
   const native=bound.files.filter(f=>f.path.startsWith('/v1/approved-audio/'));assert.equal(native.length,1,'once per generation');
   assert.deepEqual(native[0],{path:native[0].path,group:'audio',sha256:APPROVED_MEDIA.sha256,bytes:APPROVED_MEDIA.bytes,mime:APPROVED_MEDIA.mime});assert.match(native[0].path,new RegExp(`^/v1/approved-audio/[a-f0-9]{64}/${APPROVED_MEDIA.sha256}\\.ogg$`));
-  assert.deepEqual(bound.files.slice(0,2),JSON.parse(new TextDecoder().decode(A.bytes)).files,'the base files come first, unchanged');
+  const baseFiles=JSON.parse(new TextDecoder().decode(A.bytes)).files;assert.deepEqual(bound.files.slice(0,baseFiles.length),baseFiles,'the base files come first, unchanged');
   assert.deepEqual((await read('/v1/artifacts/'+A.pins[0].sha256)).body,JSON.parse(new TextDecoder().decode(A.bytes)),'the retained base manifest is readable byte for byte');
   assert.equal((await read(`/v1/packs/${packId}?revision=${revision}`)).body.revision,revision,'one retained generation: the legacy selector answers');
   await mf.dispose();mf=null;
-  const B=await shell('shell-b');mf=await r.generations(B.pins);read=http(mf);const call=mcp(mf);
+  const B=await shell('shell-b');mf=await r.generations(B.pins);read=http(mf);const call=mcp(mf);const s=await store(mf);
+  // B fails before adoption: the served offline manifest does not match B's build pin. A stays current.
+  await writeFile(join(r.dir,'offline',packId+'.json'),A.bytes);
+  const failing=await prepare(read,{packId,baseRevision:d.revision,sourceRevision:plain.body.execution.sourceRevision,capability:'executable-presentation',expectedPublicationGeneration:pinA.generation});
+  assert.equal(failing.status,409,JSON.stringify(failing.body));assert.equal(failing.body.reason,'base-manifest-unavailable');
+  assert.deepEqual((await read('/v1/packs/'+packId+'?execution=2')).body.execution.publication,pinA,'a failed B leaves A current');
+  await writeFile(join(r.dir,'offline',packId+'.json'),B.bytes);
+  // Reads never prepare: no durable row or object changes across current, exact and legacy reads.
+  const quiet=await s.durable();for(const q of ['','?execution=2',`?revision=${revision}`,`?revision=${revision}&generation=${pinA.generation}&execution=2`])await read('/v1/packs/'+packId+q);await read('/v1/artifacts/'+mediaA.sha256);assert.equal(await s.durable(),quiet,'zero read-time preparation');
   const stillA=await read('/v1/packs/'+packId+'?execution=2');assert.equal(stillA.status,200);assert.deepEqual(stillA.body.execution.publication,pinA,'a newer shell alone is not revocation');
   const demand={packId,baseRevision:d.revision,sourceRevision:plain.body.execution.sourceRevision,capability:'executable-presentation'};
   const stale=await prepare(read,{...demand,expectedPublicationGeneration:'f'.repeat(64)});assert.equal(stale.status,409);assert.equal(stale.body.reason,'publication-generation-stale');
@@ -463,6 +474,13 @@ test('two builds with different shells: generations coexist, exact A stays reada
   const missing=await read(`/v1/packs/${packId}?revision=${revision}&generation=${'0'.repeat(64)}`);assert.equal(missing.status,404);assert.equal(missing.body.reason,'publication-generation-unavailable');
   assert.equal((await read(`/v1/packs/${packId}?generation=${pinA.generation}`)).status,400,'generation needs revision');
   const late=await prepare(read,{...demand,expectedPublicationGeneration:pinA.generation});assert.equal(late.status,409);assert.equal(late.body.reason,'publication-generation-stale');
+  // Retained-base corruption: A's own retained base manifest is damaged. Exact A is refused (no fallback to
+  // another generation); B, whose retained base differs, stays current and exact.
+  const baseKey=`preparation/executable/${pinA.baseManifest.sha256}.json`,good=await (await s.bucket.get(baseKey)).arrayBuffer();
+  await s.bucket.put(baseKey,new Uint8Array([123]));
+  const corrupt=await read(`/v1/packs/${packId}?revision=${revision}&generation=${pinA.generation}`);assert.equal(corrupt.status,404);assert.equal(corrupt.body.reason,'publication-generation-unavailable');
+  assert.deepEqual((await read('/v1/packs/'+packId+'?execution=2')).body.execution.publication,pinB);
+  await s.bucket.put(baseKey,new Uint8Array(good));assert.equal((await read(`/v1/packs/${packId}?revision=${revision}&generation=${pinA.generation}`)).status,200);
   const again=await prepare(read,{...demand,expectedPublicationGeneration:pinB.generation});assert.equal(again.status,200);assert.deepEqual(again.body.record.execution.publication,pinB);assert.deepEqual(again.body.record.execution.provenance,readyB.body.record.execution.provenance,'an identical generation is reused with its original provenance');
   assert.equal(r.counts.external,0);
  }finally{if(mf)await mf.dispose();await rm(r.dir,{recursive:true,force:true});}

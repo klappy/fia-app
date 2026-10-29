@@ -1,5 +1,5 @@
 import {canonicalJSONString,sha256} from '../preparation/contract.mjs';
-import {PUBLICATION_PIN_SCHEMA,validateBaseManifest,buildBoundManifest,publicationGeneration,jsonDescriptor,validDescriptor,nativeAudioFiles,nativeVisualFiles} from './publication-generation.mjs';
+import {PUBLICATION_PIN_SCHEMA,publicationGeneration,jsonDescriptor,validDescriptor,boundManifestFor,CURRENT_BOUND_MANIFEST_BUILDER,nativeVisualFiles} from './publication-generation.mjs';
 const hash=x=>typeof x==='string'&&/^[a-f0-9]{64}$/.test(x);
 const object=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
 const copy=x=>structuredClone(x),encode=x=>new TextEncoder().encode(canonicalJSONString(x));
@@ -71,7 +71,7 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
    need(object(pin)&&Object.keys(pin).sort().join()==='baseManifest,generation,schema'&&pin.schema===PUBLICATION_PIN_SCHEMA&&hash(pin.generation)&&validDescriptor(pin.baseManifest,/^base-offline:[a-f0-9]{64}$/)&&pin.baseManifest.id===`base-offline:${pin.baseManifest.sha256}`&&validDescriptor(row.mediaManifest)&&hash(row.mediaAssetsSha256),'publication-pin-invalid');
    need(row.baseManifestArtifact?.sha256===pin.baseManifest.sha256&&row.baseManifestArtifact.bytes===pin.baseManifest.bytes&&row.mediaManifestArtifact?.sha256===row.mediaManifest.sha256&&row.mediaManifestArtifact.bytes===row.mediaManifest.bytes,'publication-pin-invalid');
    const baseBytes=await bytesFor(row.baseManifestArtifact),mediaBytes=await bytesFor(row.mediaManifestArtifact);
-   const bound=await buildBoundManifest(validateBaseManifest(baseBytes,{packId:row.binding.packId,baseRevision:row.binding.baseRevision}),{packId:row.binding.packId,executionRevision:row.revision,baseRevision:row.binding.baseRevision,mediaAssetsSha256:row.mediaAssetsSha256},[...nativeAudioFiles(boundArtifacts),...nativeVisualFiles(row.visuals??[])]);
+   const bound=await boundManifestFor(row.manifestBuilder,baseBytes,{packId:row.binding.packId,baseRevision:row.binding.baseRevision},{packId:row.binding.packId,executionRevision:row.revision,baseRevision:row.binding.baseRevision,mediaAssetsSha256:row.mediaAssetsSha256},{boundArtifacts,visuals:row.visuals??[]});
    need(same(bound.descriptor,row.mediaManifest)&&same(Array.from(bound.bytes),Array.from(mediaBytes)),'publication-manifest-mismatch');
    const {generation}=await publicationGeneration({packId:row.binding.packId,executionRevision:row.revision,baseRevision:row.binding.baseRevision,sourceRevision:row.binding.sourceRevision,baseManifest:pin.baseManifest,mediaManifest:row.mediaManifest,artifacts:row.bound.map(describe)});
    need(generation===pin.generation,'publication-generation-mismatch');
@@ -109,14 +109,17 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
   if(baseManifests&&mediaAssetsSha256){
    const pinned=await baseManifests.read(binding.packId);
    need(pinned?.bytes instanceof Uint8Array&&hash(pinned.sha256)&&await sha256(pinned.bytes)===pinned.sha256,'base-manifest-unavailable');
-   const baseManifest=validateBaseManifest(pinned.bytes,{packId:binding.packId,baseRevision:binding.baseRevision});
+   // Validated (inside boundManifestFor) before anything is retained.
+   const bound=await boundManifestFor(CURRENT_BOUND_MANIFEST_BUILDER,pinned.bytes,{packId:binding.packId,baseRevision:binding.baseRevision},{packId:binding.packId,executionRevision:row.revision,baseRevision:binding.baseRevision,mediaAssetsSha256},{boundArtifacts:copy(boundArtifacts),visuals:[]});
    const baseArtifact=await retain(pinned.bytes),baseDescriptor=jsonDescriptor(`base-offline:${pinned.sha256}`,pinned.bytes,pinned.sha256);
-   const bound=await buildBoundManifest(baseManifest,{packId:binding.packId,executionRevision:row.revision,baseRevision:binding.baseRevision,mediaAssetsSha256},nativeAudioFiles(boundArtifacts));
    const mediaArtifact=await retain(bound.bytes);
    const {generation}=await publicationGeneration({packId:binding.packId,executionRevision:row.revision,baseRevision:binding.baseRevision,sourceRevision:binding.sourceRevision,baseManifest:baseDescriptor,mediaManifest:bound.descriptor,artifacts:row.bound.map(describe)});
-   Object.assign(row,{publication:{schema:PUBLICATION_PIN_SCHEMA,generation,baseManifest:baseDescriptor},mediaManifest:bound.descriptor,baseManifestArtifact:baseArtifact,mediaManifestArtifact:mediaArtifact});
+   Object.assign(row,{manifestBuilder:CURRENT_BOUND_MANIFEST_BUILDER,publication:{schema:PUBLICATION_PIN_SCHEMA,generation,baseManifest:baseDescriptor},mediaManifest:bound.descriptor,baseManifestArtifact:baseArtifact,mediaManifestArtifact:mediaArtifact});
   }
   await verified(row);
+  // An identical generation already retained is reused only after it verifies now (review N2): a corrupt or
+  // revoked stored row is refused, never re-pointed to.
+  if(row.publication){const stored=await tx(t=>t.get(keyFor(row)));if(stored){need(keyFor(stored)===keyFor(row),'executable-owner-binding');await verified(stored);}}
   await tx(async t=>{
    const key=keyFor(row);
    const current=await t.get('executable-current:'+binding.packId);
@@ -158,11 +161,10 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
   const v=await verified(current),merged=[...(current.visuals??[])];
   for(const entry of nativeVisualFiles(visuals)){const prior=merged.find(e=>e.assetId===entry.assetId);if(prior){need(same(prior,entry),'bound-visual-conflict');continue;}merged.push(entry);}
   if(merged.length===(current.visuals??[]).length)return readCatalog(packId,revision,current.publication.generation);
-  const baseManifest=validateBaseManifest(v.manifests.base,{packId,baseRevision:current.binding.baseRevision});
-  const bound=await buildBoundManifest(baseManifest,{packId,executionRevision:revision,baseRevision:current.binding.baseRevision,mediaAssetsSha256:current.mediaAssetsSha256},[...nativeAudioFiles(v.boundArtifacts),...nativeVisualFiles(merged)]);
+  const bound=await boundManifestFor(CURRENT_BOUND_MANIFEST_BUILDER,v.manifests.base,{packId,baseRevision:current.binding.baseRevision},{packId,executionRevision:revision,baseRevision:current.binding.baseRevision,mediaAssetsSha256:current.mediaAssetsSha256},{boundArtifacts:v.boundArtifacts,visuals:merged});
   const mediaArtifact=await retain(bound.bytes);
   const {generation}=await publicationGeneration({packId,executionRevision:revision,baseRevision:current.binding.baseRevision,sourceRevision:current.binding.sourceRevision,baseManifest:current.publication.baseManifest,mediaManifest:bound.descriptor,artifacts:current.bound.map(describe)});
-  const row={...copy(current),visuals:merged,publication:{...copy(current.publication),generation},mediaManifest:bound.descriptor,mediaManifestArtifact:mediaArtifact};
+  const row={...copy(current),manifestBuilder:CURRENT_BOUND_MANIFEST_BUILDER,visuals:merged,publication:{...copy(current.publication),generation},mediaManifest:bound.descriptor,mediaManifestArtifact:mediaArtifact};
   await verified(row);
   await tx(async t=>{
    const key=keyFor(row);need(await t.get('executable-current:'+packId)===pointer,'publication-generation-stale');
@@ -172,6 +174,18 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
    await t.put('executable-current:'+packId,key);
   });
   return readCatalog(packId,revision,generation);
+ }
+ // Historical access for the original-visuals route (F7a / port acceptance condition): ready only when a
+ // retained generation of exactly this execution revision verifies now (bytes, eligibility, current visual
+ // authority) and lists exactly this native entry. Read-only; a forged or revoked revision is unavailable.
+ async function retainedVisual({packId,executionRevision,assetId,sha256:digest}){
+  if(typeof packId!=='string'||!hash(executionRevision)||typeof assetId!=='string'||!hash(digest))return {status:'refused',code:'invalid-request'};
+  let keys;try{keys=await tx(t=>t.get(`executable-generations:${packId}@${executionRevision}`));}catch(error){fault('retainedVisual',{packId},error);return {status:'unavailable',reason:'retained-evidence-unavailable'};}
+  for(const key of Array.isArray(keys)?keys:[]){
+   try{const row=await tx(t=>t.get(key));need(key===keyFor(row)&&row.revision===executionRevision&&row.binding.packId===packId,'executable-owner-binding');const entry=(row.visuals??[]).find(e=>e.assetId===assetId&&e.sha256===digest);if(!entry)continue;await verified(row);return {status:'ready',entry:copy(entry)};}
+   catch(error){fault('retainedVisual',{packId,key},error);}
+  }
+  return {status:'unavailable',reason:'execution-not-current'};
  }
  async function readCatalog(packId,revision,generation){
   let found;
@@ -199,5 +213,5 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
   }
   return base.findArtifact(digest);
  }
- return Object.freeze({publish,publishVisuals,readCatalog,findArtifact,currentGeneration});
+ return Object.freeze({publish,publishVisuals,readCatalog,findArtifact,currentGeneration,retainedVisual});
 }

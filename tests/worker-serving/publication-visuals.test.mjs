@@ -70,3 +70,16 @@ test('a row that lists a visual without a publication authority is never served'
  const plain=createExecutableOverlay({storage:{transaction:async fn=>fn({get:async k=>structuredClone(values.get(k)),put:async()=>{}})},artifacts:{write:async()=>{throw Error('no');},read:async()=>{throw Error('no');}},base:{readCatalog:async()=>null,findArtifact:async()=>null},eligible:async()=>true,validate:async()=>true});
  assert.equal((await plain.readCatalog(packId,record.revision,record.execution.publication.generation)).status,'unavailable');
 });
+
+// F7a / port acceptance condition: historical access is granted only to a retained, verifying generation of
+// exactly that revision that lists exactly that entry; forged, never-current and revoked are unavailable.
+test('retainedVisual: retained eligible generations keep access; forged or revoked authority does not',async()=>{
+ let live=true;const t=await harness({authority:()=>live});const g=t.record.execution.publication.generation;
+ await t.overlay.publishVisuals({packId,revision:t.record.revision,expectedPublicationGeneration:g,visuals:[a1400]});
+ assert.deepEqual(await t.overlay.retainedVisual({packId,executionRevision:t.record.revision,assetId:'a1400',sha256:h('a')}),{status:'ready',entry:a1400});
+ assert.equal((await t.overlay.retainedVisual({packId,executionRevision:t.record.revision,assetId:'c4',sha256:h('c')})).status,'unavailable','not listed');
+ assert.equal((await t.overlay.retainedVisual({packId,executionRevision:h('e'),assetId:'a1400',sha256:h('a')})).reason,'execution-not-current','a forged or never-current revision');
+ assert.equal((await t.overlay.retainedVisual({packId,executionRevision:t.record.revision,assetId:'a1400',sha256:h('b')})).status,'unavailable','another original is never rebound');
+ assert.deepEqual(await t.overlay.retainedVisual({packId,executionRevision:'x',assetId:'a1400',sha256:h('a')}),{status:'refused',code:'invalid-request'});
+ live=false;assert.equal((await t.overlay.retainedVisual({packId,executionRevision:t.record.revision,assetId:'a1400',sha256:h('a')})).status,'unavailable','withdrawn authority');
+});
