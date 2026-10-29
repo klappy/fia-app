@@ -166,6 +166,9 @@ export function createExecutableOverlay({storage,artifacts,base,eligible,validat
   const {generation}=await publicationGeneration({packId,executionRevision:revision,baseRevision:current.binding.baseRevision,sourceRevision:current.binding.sourceRevision,baseManifest:current.publication.baseManifest,mediaManifest:bound.descriptor,artifacts:current.bound.map(describe)});
   const row={...copy(current),manifestBuilder:CURRENT_BOUND_MANIFEST_BUILDER,visuals:merged,publication:{...copy(current.publication),generation},mediaManifest:bound.descriptor,mediaManifestArtifact:mediaArtifact};
   await verified(row);
+  // As in publish() (review N2): an identical generation already stored is re-pointed to only after it
+  // verifies now; a corrupt or revoked stored row is refused, never adopted.
+  {const stored=await tx(t=>t.get(keyFor(row)));if(stored){need(keyFor(stored)===keyFor(row),'executable-owner-binding');await verified(stored);}}
   await tx(async t=>{
    const key=keyFor(row);need(await t.get('executable-current:'+packId)===pointer,'publication-generation-stale');
    need(await eligible(copy(row.binding))===true,'executable-publication-revoked');
