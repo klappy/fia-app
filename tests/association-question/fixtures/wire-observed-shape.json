@@ -4,7 +4,8 @@
   "records": [
     {
       "caseId": "eng.MRK-1-14-20:S02-U008",
-      "wireRequestSha256": "b2a56bbf1aade82b5226ccb0b123c758451e6ab9485f510b0230f6e77bc469f8",
+      "call": 1,
+      "wireRequestSha256": "6ec0ceea994259b092dc50e2cfb9dd84a4907e3366ae5a93210e62cd2ff20801",
       "response": {
         "state": "Completed",
         "result": {
@@ -77,6 +78,14 @@
             "primary_7": {
               "type": "noul",
               "noul": 0.84
+            },
+            "companion_0": {
+              "type": "noul",
+              "noul": 0.85
+            },
+            "companion_1": {
+              "type": "noul",
+              "noul": 0.1
             }
           },
           "usage": {

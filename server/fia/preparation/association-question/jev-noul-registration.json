@@ -1,7 +1,7 @@
 {
   "schema": "fia-association-noul-registration@1",
-  "questionSet": "fia-association-noul-questions@1",
-  "contract": "fia-association-noul@1",
+  "questionSet": "fia-association-noul-questions@2",
+  "contract": "fia-association-noul@2",
   "status": "registered-not-funded",
   "authorizedCalls": 0,
   "route": {
@@ -9,14 +9,42 @@
     "pilotConnectorRoute": "CF-Extras POST /accounts/{id}/ai/run, body {model, input: {state, questions}} (scripts/jev-cue-role-pilot/providers/connector-snippet.js); observed jev-1.13.0 on 2026-10-06 in the model field only",
     "currentStatus": "unverified"
   },
-  "limits": {"maxVisualCandidates": 15, "maxQuestions": 31, "maxStateBytes": 8192, "maxResponseBytes": 16384, "timeoutMs": 10000, "callsPerCase": 1, "retries": 0},
+  "limits": {
+    "maxVisualCandidates": 15,
+    "maxVideoCandidates": 4,
+    "maxQuestions": 35,
+    "maxOrderedRequested": 8,
+    "maxStateBytes": 8192,
+    "maxResponseBytes": 16384,
+    "timeoutMs": 10000,
+    "callsPerCase": 2,
+    "retries": 0
+  },
   "budget": {
-    "unit": "one call answers one case",
-    "heldoutPassSemanticResidue": {"eng": 4, "spa": 4, "total": 8},
-    "tuningPassSemanticResidue": {"eng": 8, "spa": 2, "total": 10},
-    "exactSourceInlineNotSent": {"spa": 6},
+    "unit": "one or two calls per case: call 1 always; call 2 only for an associate case with two or more requested visuals or an accepted companion",
+    "heldoutPassSemanticResidue": {
+      "eng": 8,
+      "spa": 8,
+      "total": 16,
+      "cases": {
+        "eng": 4,
+        "spa": 4
+      }
+    },
+    "tuningPassSemanticResidue": {
+      "eng": 16,
+      "spa": 4,
+      "total": 20,
+      "cases": {
+        "eng": 8,
+        "spa": 2
+      }
+    },
+    "exactSourceInlineNotSent": {
+      "spa": 6
+    },
     "splitSource": "PR289 scripts/association-eval/split.json at e67bb5c",
-    "ceiling": "authorizedCalls; a live transport stops at the ceiling and never retries"
+    "ceiling": "authorizedCalls must cover the plan (tuning total + held-out total = 36); a live transport stops at the ceiling and never retries"
   },
   "entitlement": "none recorded; a live call needs a verified execution entitlement supplied by trusted composition",
   "doc": "server/fia/preparation/association-question/JEV-NOUL-REGISTRATION.md"

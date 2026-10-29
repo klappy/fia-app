@@ -1,24 +1,151 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "fia-association-noul@1",
+  "$id": "fia-association-noul@2",
   "title": "Resource-association noul wire response and calibration",
   "$defs": {
-    "noulAnswer": {"type": "object", "additionalProperties": false, "required": ["noul"],
-      "properties": {"noul": {"type": "number", "minimum": 0, "maximum": 1}, "type": {"const": "noul"}}},
-    "answers": {"type": "object", "minProperties": 1, "maxProperties": 31,
-      "propertyNames": {"pattern": "^(asksVisual|requested_[0-9]{1,2}|primary_[0-9]{1,2})$"},
-      "additionalProperties": {"$ref": "#/$defs/noulAnswer"}},
-    "response": {"type": "object", "required": ["answers"],
-      "properties": {"answers": {"$ref": "#/$defs/answers"}, "model_version": {"type": "string"}, "version": {"type": "string"}, "model": {"type": "string"}, "usage": {}}},
-    "band": {"type": "object", "required": ["status"],
-      "properties": {"status": {"enum": ["calibrated", "not-separable", "insufficient-tuning"]}, "falseMax": {"type": "number", "minimum": 0, "maximum": 1}, "trueMin": {"type": "number", "minimum": 0, "maximum": 1},
-        "tuningCases": {"type": "integer"}, "caseIds": {"type": "array", "items": {"type": "string"}}, "truePairs": {"type": "integer"}, "falsePairs": {"type": "integer"}}}
+    "noulAnswer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "noul"
+      ],
+      "properties": {
+        "noul": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "type": {
+          "const": "noul"
+        }
+      }
+    },
+    "answers": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 35,
+      "propertyNames": {
+        "pattern": "^(asksVisual|requested_[0-9]{1,2}|primary_[0-9]{1,2}|companion_[0-9]|before_[0-9]{1,2}_[0-9]{1,2}|pair_[0-9]_[0-9]{1,2})$"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/noulAnswer"
+      }
+    },
+    "response": {
+      "type": "object",
+      "required": [
+        "answers"
+      ],
+      "properties": {
+        "answers": {
+          "$ref": "#/$defs/answers"
+        },
+        "model_version": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "usage": {}
+      }
+    },
+    "band": {
+      "type": "object",
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "calibrated",
+            "not-separable",
+            "insufficient-tuning"
+          ]
+        },
+        "falseMax": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "trueMin": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "tuningCases": {
+          "type": "integer"
+        },
+        "caseIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "truePairs": {
+          "type": "integer"
+        },
+        "falsePairs": {
+          "type": "integer"
+        }
+      }
+    }
   },
   "oneOf": [
-    {"title": "wire response (bare or under result)", "anyOf": [{"$ref": "#/$defs/response"}, {"type": "object", "required": ["result"], "properties": {"result": {"$ref": "#/$defs/response"}}}]},
-    {"title": "calibration", "type": "object", "required": ["schema", "questionSet", "modelRevision", "fitOn", "languages"],
-      "properties": {"schema": {"const": "fia-association-noul-calibration@1"}, "questionSet": {"const": "fia-association-noul-questions@1"},
-        "modelRevision": {"type": ["string", "null"]}, "fitOn": {"const": "tuning split, semantic-residue stratum only"},
-        "languages": {"type": "object", "additionalProperties": {"$ref": "#/$defs/band"}}}}
+    {
+      "title": "wire response (bare or under result)",
+      "anyOf": [
+        {
+          "$ref": "#/$defs/response"
+        },
+        {
+          "type": "object",
+          "required": [
+            "result"
+          ],
+          "properties": {
+            "result": {
+              "$ref": "#/$defs/response"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "calibration",
+      "type": "object",
+      "required": [
+        "schema",
+        "questionSet",
+        "modelRevision",
+        "fitOn",
+        "languages"
+      ],
+      "properties": {
+        "schema": {
+          "const": "fia-association-noul-calibration@1"
+        },
+        "questionSet": {
+          "const": "fia-association-noul-questions@2"
+        },
+        "modelRevision": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "fitOn": {
+          "const": "tuning split, semantic-residue stratum only"
+        },
+        "languages": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/band"
+          }
+        }
+      }
+    }
   ]
 }
