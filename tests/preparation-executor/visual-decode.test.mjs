@@ -235,3 +235,47 @@ test('JPEG tables: undefined quantization or Huffman tables, bad DQT precision a
 test('an interleaved scan over 10 blocks per MCU is jpeg-sampling-invalid',async()=>{
  await refused(decode(sof('baseline-37x23.jpg',(b,p)=>{b[p+7]=0x44;}),'image/jpeg'),'jpeg-sampling-invalid');
 });
+// Codex round 4 on PR285 7d40ed3 and the one-time spec audit (T.81 Annex B; ISO/IEC 15948) of every field the allowlist accepts.
+function segs(b){const out=[];let p=2;for(;;){const m=b[p+1];if(m===0xd9)break;const len=b.readUInt16BE(p+2);out.push({m,at:p,len});p+=2+len;if(m===0xda){while(!(b[p]===0xff&&b[p+1]!==0&&!(b[p+1]>=0xd0&&b[p+1]<=0xd7)))p++;out[out.length-1].end=p;}}return out;}
+const jpg=name=>Buffer.from(file(name)),insertAt=(b,at,extra)=>Buffer.concat([b.subarray(0,at),extra,b.subarray(at)]);
+const dht=(tc,th,counts,values)=>seg(0xc4,Buffer.from([(tc<<4)|th,...Array.from({length:16},(_,i)=>counts[i]||0),...values]));
+const beforeSof=(name,extra)=>{const b=jpg(name),s=segs(b).find(x=>x.m===0xc0||x.m===0xc2);return insertAt(b,s.at,extra);};
+test('4408717313: a DQT entry of 0 is refused (Qk is 1-255)',async()=>{
+ const b=jpg('baseline-37x23.jpg'),q=segs(b).find(x=>x.m===0xdb);b[q.at+5]=0;await refused(decode(b,'image/jpeg'),'jpeg-table-invalid');
+});
+test('4408717322: a DHT before SOF0 with table id 2 or 3 is refused once the frame is known',async()=>{
+ for(const th of [2,3])await refused(decode(beforeSof('baseline-37x23.jpg',dht(0,th,[0,1],[0])),'image/jpeg'),'jpeg-table-invalid');
+ assert.equal((await decode(beforeSof('progressive-40x30.jpg',dht(0,2,[0,1],[0])),'image/jpeg')).width,40,'ids 2-3 stay legal for SOF2');
+});
+test('4408717328: SOS td and ta are each 0-3 even when the scan does not use that table',async()=>{
+ const b=jpg('progressive-40x30.jpg'),ss=segs(b).filter(x=>x.m===0xda);
+ const dcRef=ss.find(s=>b[s.at+5+2*b[s.at+4]]===0&&(b[s.at+7+2*b[s.at+4]]>>4)>0),ac=ss.find(s=>b[s.at+5+2*b[s.at+4]]>0);
+ const c1=Buffer.from(b);c1[dcRef.at+6]=0x40|(c1[dcRef.at+6]&15);await refused(decode(c1,'image/jpeg'),'jpeg-table-invalid');
+ const c2=Buffer.from(b);c2[ac.at+6]=0x70|(c2[ac.at+6]&15);await refused(decode(c2,'image/jpeg'),'jpeg-table-invalid');
+ const c3=Buffer.from(b);c3[dcRef.at+6]=(c3[dcRef.at+6]&0xf0)|5;await refused(decode(c3,'image/jpeg'),'jpeg-table-invalid');
+});
+test('4408717330: in a sequential frame a component in a later scan again is refused',async()=>{
+ const b=jpg('gray-12x10.jpg'),s=segs(b).find(x=>x.m===0xda),twice=insertAt(b,s.end,b.subarray(s.at,s.end));
+ await refused(decode(twice,'image/jpeg'),'jpeg-scan-invalid');
+});
+test('4408717333: zTXt must be exactly one complete zlib stream (no trailing bytes, no second stream)',async()=>{
+ const {bytes}=png(),tail=bytes.length-12,z=deflateSync(Buffer.from('map')),body=extra=>chunk('zTXt',Buffer.concat([Buffer.from('Comment\0\0','latin1'),z,extra]));
+ for(const extra of [Buffer.from([0]),Buffer.from([1,2,3]),z])await refused(decode(Buffer.concat([bytes.subarray(0,tail),body(extra),bytes.subarray(tail)]),'image/png'),'png-chunk-invalid');
+});
+test('audit: DQT/DHT after the first scan are not redefinitions the decoder applies in order, so DQT after SOS is refused',async()=>{
+ const b=jpg('progressive-40x30.jpg'),ss=segs(b).filter(x=>x.m===0xda),q=segs(b).find(x=>x.m===0xdb);
+ await refused(decode(insertAt(b,ss[1].at,b.subarray(q.at,q.at+2+q.len)),'image/jpeg'),'jpeg-table-invalid');
+});
+test('audit: Huffman tables must form a valid prefix code (no over-subscription, no all-ones code), with legal, distinct symbols',async()=>{
+ for(const [label,seg] of [['over-subscribed',dht(0,0,[3],[0,1,2])],['all-ones code',dht(0,0,[2],[0,1])],['DC symbol over 11',dht(0,0,[1],[12])],
+  ['AC size over 10',dht(1,0,[1],[0x0b])],['duplicate symbol',dht(0,0,[0,2],[1,1])],['AC run with size 0 in a sequential frame',dht(1,0,[1],[0x30])]])
+  await refused(decode(beforeSof('baseline-37x23.jpg',seg),'image/jpeg'),'jpeg-table-invalid');
+ assert.equal((await decode(beforeSof('progressive-40x30.jpg',dht(1,2,[1],[0x30])),'image/jpeg')).width,40,'EOBn (RRRR0000) is legal in a progressive AC table');
+});
+test('audit: scan components follow frame order',async()=>{
+ await refused(decode(withScanHeader((c,rest)=>Buffer.concat([Buffer.from([3,...c[1],...c[0],...c[2]]),rest])),'image/jpeg'),'jpeg-scan-invalid');
+});
+test('audit: pHYs pixels-per-unit stay within 2^31-1, and zTXt text has no NUL',async()=>{
+ await refused(decode(png({extra:[chunk('pHYs',Buffer.from([0x80,0,0,0,0,0,11,19,1]))]}).bytes,'image/png'),'png-chunk-invalid');
+ const {bytes}=png(),tail=bytes.length-12;await refused(decode(Buffer.concat([bytes.subarray(0,tail),zTXt('Comment',0,'a\0b'),bytes.subarray(tail)]),'image/png'),'png-chunk-invalid');
+});
