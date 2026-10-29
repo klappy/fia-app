@@ -184,6 +184,7 @@ test('N1. the production constructor composes the descriptor from the build-pinn
  const t2=createGuideComposer({snapshot:SNAPSHOT,fetchAsset:async p=>new Response(tampered[p],{status:200,headers:{'content-type':'application/json','content-length':String(tampered[p].length)}}),producer:{demand:async()=>({}),retainedGuideFile:async()=>({})}});
  const refused=await t2.descriptorFor(MARK);assert.equal(refused.refused,'composer-guide-unavailable');assert.equal(refused.subReason,'canonical-guide-integrity','asset bytes that differ from the pinned sha are refused');
  assert.throws(()=>createGuideComposer({archives,sourceBindings:BINDINGS,producer:{demand:async()=>({}),retainedGuideFile:async()=>({})}}),/composer-capability/,'archives and bindings are not production parameters');
+ assert.throws(()=>createGuideComposer({snapshot:SNAPSHOT,fetchAsset,producer:{demand:async()=>({}),retainedGuideFile:async()=>({})},archives}),/composer-capability/,'an extra key beside a valid snapshot is refused, not ignored');
 });
 test('N1. through the production constructor, the eb744452 descriptor still fails closed against other bytes',async t=>{
  const mf=await fixture(t),[step]=(await flow(mf,[{packId:MARK,unitId:'S03-U001',compose:{canonical:canonical()},index:{archives:[{revision:archives[0].revision,inventory:[],packs:{[MARK]:archives.find(x=>x.packs[MARK]).packs[MARK]}}]},use:'all'}],{object:'flow-mark'})).steps;

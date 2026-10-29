@@ -21,8 +21,10 @@ import {createCanonicalGuideReader} from '../executable-presentation-resolver.mj
 //
 // snapshot: the Worker's build snapshot (generated/snapshot.json, as entry.mjs and createExecutableRuntime receive it);
 // fetchAsset: the ASSETS fetcher; producer: {demand(source), retainedGuideFile(source)} over the guide-fragment@1 job.
-export function createGuideComposer({snapshot,fetchAsset,producer}){
- const sources=snapshot?.canonicalSources;if(!Array.isArray(sources)||typeof fetchAsset!=='function')throw Error('composer-capability');
+export function createGuideComposer(options){
+ // Exactly these three ports (PR297 review N-c): any other key, such as archives or bindings, is refused, never ignored.
+ if(!options||Object.keys(options).sort().join()!=='fetchAsset,producer,snapshot')throw Error('composer-capability');
+ const {snapshot,fetchAsset,producer}=options,sources=snapshot?.canonicalSources;if(!Array.isArray(sources)||typeof fetchAsset!=='function')throw Error('composer-capability');
  const read=createCanonicalGuideReader({canonicalSources:sources,fetchAsset}),revisions=new Map();
  for(const d of sources){if(!revisions.has(d.packId))revisions.set(d.packId,new Set());revisions.get(d.packId).add(d.sourceRevision);}
  async function guideRecordFor(packId){
