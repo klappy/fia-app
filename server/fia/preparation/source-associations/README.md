@@ -52,9 +52,13 @@ There is no list of revisions or files.
 
 ## Composer (unrouted)
 
-`composer.mjs` builds each pack's descriptor from the retained archive guide record, after checking that record against `source-bindings.json`. It asks the guide-fragment@1 producer for exactly that file and issues a receipt only when the receipt equals the descriptor. The issuer also requires the guide-fragment@1 policy revision, which carries the acquisition-profile hash, and the JSON content kind.
+`composer.mjs` builds each pack's descriptor from the pack's retained guide record. It asks the guide-fragment@1 producer for exactly that file and issues a receipt only when the receipt equals the descriptor. The issuer also requires the guide-fragment@1 policy revision, which carries the acquisition-profile hash, and the JSON content kind.
 
-**Precondition before any wiring (PR293 review N1).** Today the archives and bindings are constructor parameters. A production constructor must load the retained archives and `source-bindings.json` itself, with pinned bytes (as `SOURCE_ARCHIVE_SHA256` pins the Mark archive for `exportGuideSources`). Callers must never pass them in. This is not built yet.
+**Production constructor (PR293 review N1).** `createGuideComposer({snapshot, fetchAsset, producer})` reads guide records only through the existing trusted runtime loader, `createCanonicalGuideReader`, over the build snapshot's `canonicalSources`. This is the same path `executable-presentation-runtime.mjs` uses. Each record's bytes are re-hashed against the build-pinned sha. At build, `export-guide-sources.mjs` checked the archive against `SOURCE_ARCHIVE_SHA256` and each guide against `source-bindings.json`. No caller passes archives or bindings.
+
+The archive-and-bindings composer, `tests/preparation/support/archive-guide-composer.mjs` over `composeWithGuideRecords`, is test-only. The import-boundary test refuses any production use of either.
+
+**Known limit, stated plainly.** `snapshot.canonicalSources` holds only the 136 Mark packs today, because `exportGuideSources` reads only the Mark archive. Through the production constructor, every Luke pack, Spanish Luke included, gets the typed refusal `composer-unknown-pack`. Exporting Luke guide records needs `scripts/package-worker.mjs` and `export-guide-sources.mjs`. Both are held files, and the coordinator sequences that change after PR295.
 
 ## Coverage
 

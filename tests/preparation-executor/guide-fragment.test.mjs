@@ -2,6 +2,7 @@ import test from 'node:test';import assert from 'node:assert/strict';import {cre
 import {createFreshSourceObservations,createProfileJsonPort,JSON_CONTENT,AUDIO_CONTENT,VISUAL_CONTENT} from '../../server/fia/preparation/executor/fresh-source-observation.mjs';
 import {guideFragmentIdentity,GUIDE_FRAGMENT_POLICY,GUIDE_ACQUISITION_PROFILE,GUIDE_REPOSITORY} from '../../server/fia/preparation/guide-fragment.mjs';
 import {createGuideComposer} from '../../server/fia/preparation/source-associations/composer.mjs';
+import {createArchiveGuideComposer} from '../preparation/support/archive-guide-composer.mjs';
 import {buildSourceIndex,associatePack,verifyDecision} from '../../server/fia/preparation/source-associations/index.mjs';
 import {readRetainedArchives} from '../../server/fia/preparation/source-associations/retained.mjs';
 import {canonicalJSONString} from '../../server/fia/preparation/contract.mjs';
@@ -19,8 +20,8 @@ const FILE=fileOf();
 // the given revision, and bindings re-derived for that record. Production uses the retained archive and bindings unchanged.
 function labelledArchive({revision=REV96,fileSha256=sha(FILE)}={}){const a=archives.find(x=>x.packs[LUKE]),pack=structuredClone(a.packs[LUKE]);pack.guide.provenance.revision=revision;pack.guide.sourceFileSha256=fileSha256;
  return {archives:[{revision:a.revision,inventory:a.inventory.filter(f=>f.path.startsWith(`data/packs/${LUKE}/`)),packs:{[LUKE]:pack}}],sourceBindings:{[LUKE]:{guide:sha(Buffer.from(JSON.stringify(pack.guide)))}}};}
-const modulePath=fileURLToPath(new URL('../../server/fia/preparation/guide-fragment.mjs',import.meta.url)),composerPath=fileURLToPath(new URL('../../server/fia/preparation/source-associations/composer.mjs',import.meta.url)),indexPath=fileURLToPath(new URL('../../server/fia/preparation/source-associations/index.mjs',import.meta.url));
-const worker=`import {createGuideFragmentJob} from ${JSON.stringify(modulePath)};import {createGuideComposer} from ${JSON.stringify(composerPath)};import {buildSourceIndex,associatePack,verifyDecision} from ${JSON.stringify(indexPath)};
+const modulePath=fileURLToPath(new URL('../../server/fia/preparation/guide-fragment.mjs',import.meta.url)),composerPath=fileURLToPath(new URL('../preparation/support/archive-guide-composer.mjs',import.meta.url)),productionComposerPath=fileURLToPath(new URL('../../server/fia/preparation/source-associations/composer.mjs',import.meta.url)),indexPath=fileURLToPath(new URL('../../server/fia/preparation/source-associations/index.mjs',import.meta.url));
+const worker=`import {createGuideFragmentJob} from ${JSON.stringify(modulePath)};import {createArchiveGuideComposer} from ${JSON.stringify(composerPath)};import {createGuideComposer} from ${JSON.stringify(productionComposerPath)};import {buildSourceIndex,associatePack,verifyDecision} from ${JSON.stringify(indexPath)};
 const b64=b=>Uint8Array.from(atob(b),c=>c.charCodeAt(0)),enc=u=>{let s='';for(let i=0;i<u.length;i+=32768)s+=String.fromCharCode(...u.subarray(i,i+32768));return btoa(s);};
 export class Job {constructor(ctx,env){this.ctx=ctx;this.env=env;this.gets=0;this.urls=[];this.gates=[];}
  async fetch(request){const args=await request.json();if(args.op==='counts')return Response.json({gets:this.gets,urls:this.urls,waiting:this.gates.length});if(args.op==='release'){for(const r of this.gates.splice(0))r();return Response.json({});}
@@ -30,7 +31,7 @@ export class Job {constructor(ctx,env){this.ctx=ctx;this.env=env;this.gets=0;thi
    const bytes=b64(args.body),headers={'content-length':String(args.length??bytes.length)};if(!args.noType)headers['content-type']=args.mime||'application/json; charset=utf-8';return new Response(bytes,{status:200,headers});}});
   // flow: the composer and index run inside the guide object (as production will), so the producer read() and the receipt are genuine.
   // Each step composes against one archive and indexes the receipts gathered so far against another; decisions are returned as data.
-  if(args.op==='flow'){const out=[],receipts=[];let first=null;for(const step of args.steps){const composer=createGuideComposer({archives:step.compose.archives,sourceBindings:step.compose.sourceBindings,producer:job});const c=await composer.compose(step.packId);if(c.receipt)receipts.push(c.receipt);
+  if(args.op==='flow'){const out=[],receipts=[];let first=null;for(const step of args.steps){const composer=step.compose.canonical?createGuideComposer({snapshot:{canonicalSources:step.compose.canonical.sources},fetchAsset:async path=>{const b=step.compose.canonical.assets[path];if(!b)return new Response('missing',{status:404});const u=b64(b);return new Response(u,{status:200,headers:{'content-type':'application/json','content-length':String(u.length)}});},producer:job}):createArchiveGuideComposer({archives:step.compose.archives,sourceBindings:step.compose.sourceBindings,producer:job});const c=await composer.compose(step.packId);if(c.receipt)receipts.push(c.receipt);
     const use=step.use==='all'?receipts:step.use==='first'?receipts.slice(0,1):step.use==='last'?receipts.slice(-1):[];const ix=buildSourceIndex(step.index.archives,{raw:use}),d=associatePack(ix,step.packId);const at=d.filter(x=>x.unitId===step.unitId);
     out.push({composed:{state:c.state,reason:c.reason??null,descriptor:c.descriptor??null,receipt:c.receipt?{revision:c.receipt.revision,fileSha256:c.receipt.fileSha256,contentType:c.receipt.contentType}:null},decisions:at,s02Explicit:d.some(x=>x.stepId==='S02'&&x.type==='explicit'),rawInvalid:ix.packs[step.packId]?.raw?.invalid??null,verifyFirst:first?verifyDecision(first,ix):null});if(!first&&at[0]?.type==='explicit')first=at[0];}
    return Response.json({steps:out,gets:this.gets});}
@@ -78,14 +79,14 @@ test('(b) the same join against the real retained eb744452 descriptor is refused
  assert.equal(cross.composed.state,'composed');assert.equal(cross.rawInvalid,'raw-descriptor-mismatch');assert.equal(cross.decisions[0].reason,'raw-provenance-invalid','the 96bb receipt against the retained eb744452 / b6de7d69 descriptor');
  assert.deepEqual([direct.composed.descriptor.revision,direct.composed.descriptor.fileSha256],['eb744452eb8d7c852caadde9d3181cddfe571119','b6de7d69975c25a50226122a531148bdad3fdeec3efae4f46bc4b1ef409ec5f7']);
  assert.equal(direct.composed.state,'unavailable');assert.equal(direct.composed.reason,'guide-sha-mismatch','the served bytes do not match the archive sha, so nothing is promoted or branded');assert.equal(direct.decisions[0].reason,'raw-provenance-unavailable');
- const c=createGuideComposer({archives,sourceBindings:BINDINGS,producer:{demand:async()=>({}),retainedGuideFile:async()=>({})}});assert.equal(c.descriptorFor('spa.LUK-0-0-0').refused,'composer-unknown-pack');
- assert.equal(createGuideComposer({archives,sourceBindings:{...BINDINGS,[LUKE]:{guide:'0'.repeat(64)}},producer:{demand:async()=>({}),retainedGuideFile:async()=>({})}}).descriptorFor(LUKE).refused,'composer-binding-mismatch','the archive record must match source-bindings');
+ const c=createArchiveGuideComposer({archives,sourceBindings:BINDINGS,producer:{demand:async()=>({}),retainedGuideFile:async()=>({})}});assert.equal((await c.descriptorFor('spa.LUK-0-0-0')).refused,'composer-unknown-pack');
+ assert.equal((await createArchiveGuideComposer({archives,sourceBindings:{...BINDINGS,[LUKE]:{guide:'0'.repeat(64)}},producer:{demand:async()=>({}),retainedGuideFile:async()=>({})}}).descriptorFor(LUKE)).refused,'composer-binding-mismatch','the archive record must match source-bindings');
 });
 test('(b2) the composer refuses a producer file that differs from its own descriptor (descriptor-mismatch branch, PR293 review N4)',async()=>{
  const {fakeObservedRead}=await import('../preparation/support/fake-guide-producer.mjs');const labelled=labelledArchive();
  // A faulty producer that answers the requested source with a genuine read of another revision.
  const read=await fakeObservedRead({bytes:new Uint8Array(FILE),revision:'8'.repeat(40),path:PATH}),producer={demand:async()=>({state:'retained'}),retainedGuideFile:async()=>({state:'retained',read,bytes:new Uint8Array(FILE)})};
- const out=await createGuideComposer({...labelled,producer}).compose(LUKE);assert.equal(out.state,'unavailable');assert.equal(out.reason,'descriptor-mismatch');assert.equal(out.receipt,undefined);
+ const out=await createArchiveGuideComposer({...labelled,producer}).compose(LUKE);assert.equal(out.state,'unavailable');assert.equal(out.reason,'descriptor-mismatch');assert.equal(out.receipt,undefined);
 });
 test('(c) a source-version change invalidates the prior receipt: stale or refused, never the old explicit',async t=>{
  const REV2='7'.repeat(40),first=labelledArchive(),second=labelledArchive({revision:REV2}),third=labelledArchive({fileSha256:sha(Buffer.from('[]'))});
@@ -100,7 +101,7 @@ test('(d) a shaped look-alike of a producer read() is refused by the issuer, and
  const {issueProducerReceipt}=await import('../../server/fia/preparation/source-associations/producer-receipt.mjs');const bytes=new Uint8Array(Buffer.from(file.bytes,'base64'));
  assert.throws(()=>issueProducerReceipt(file.read,bytes),/producer-receipt-unverified-read/,'a serialized copy of a genuine read is a look-alike');
  assert.throws(()=>issueProducerReceipt({...file.read,observationSha256:'0'.repeat(64)},bytes),/producer-receipt-unverified-read/);
- const composed=await createGuideComposer({...labelledArchive(),producer:producerOver(mf)}).compose(LUKE);assert.equal(composed.state,'unavailable');assert.equal(composed.reason,'composer-receipt-refused');assert.equal(composed.subReason,'producer-receipt-unverified-read');
+ const composed=await createArchiveGuideComposer({...labelledArchive(),producer:producerOver(mf)}).compose(LUKE);assert.equal(composed.state,'unavailable');assert.equal(composed.reason,'composer-receipt-refused');assert.equal(composed.subReason,'producer-receipt-unverified-read');
 });
 test('producer: tampered served bytes are never promoted or exposed; a deliberate Retry with the true bytes retains them',async t=>{
  const mf=await fixture(t),tampered=Buffer.from(FILE.toString().replace('Galilea<','Judea<'));
@@ -157,8 +158,38 @@ test('MIME 6. no other port accepts text/plain, and the profile port admits it o
   try{const task=createFreshSourceObservations({storage,bucket,content,source:{logicalId:'l',url,sourceVersionKind:'discovery-snapshot',sourceVersion:'v',publisherVersion:null},policy:{revision:'p',maxBytes:1024,totalMs:1000,progressMs:100},admissions:[{checkId:'c',sequence:1,expectedPreviousObservationSha256:null,previousSourceSha256:null}],eligibility:()=>true,makeStream:()=>new TransformStream(),fetchSource:async()=>new Response('[1]',{headers:{'content-type':mime,'content-length':'3'}})});await task.observe('c');return 'accepted';}catch(e){return e.message;}}
  assert.equal(await run(JSON_CONTENT,'text/plain'),'fresh-media-refused');assert.equal(await run(VISUAL_CONTENT,'text/plain'),'fresh-response-refused');assert.equal(await run(AUDIO_CONTENT,'text/plain'),'fresh-response-refused');
  assert.throws(()=>createProfileJsonPort({media:['text/plain']}),/fresh-capability/,'text/plain needs a source-URL rule');assert.throws(()=>createProfileJsonPort({media:['text/html']}),/fresh-capability/);
- const ruled=createProfileJsonPort({media:['application/json','text/plain'],sourceUrl:u=>u.startsWith('https://raw.githubusercontent.com/BibleAquifer/')});
+ const ruled=createProfileJsonPort({media:['application/json','text/plain'],sourceUrl:u=>/^https:\/\/raw\.githubusercontent\.com\/BibleAquifer\/FIATranslationGuide\/[a-f0-9]{40}\/(?:eng|spa)\/json\/\d{1,3}\.content\.json$/.test(u)});
  assert.equal(await run(ruled,'text/plain'),'accepted');assert.equal(await run(ruled,'text/plain','https://elsewhere.invalid/x.json'),'fresh-capability','the pair never reaches another origin');
  assert.equal(await run({...ruled},'text/plain'),'fresh-capability','a copy of a profile port is not a port');
  assert.deepEqual(GUIDE_ACQUISITION_PROFILE.media,['application/json','text/plain']);assert.match(GUIDE_ACQUISITION_PROFILE.mediaRule,/^text\/plain admitted only for this profile's composed class-A URL/);
+});
+
+// N1: the production constructor reads guide records only through the build-pinned canonical guide reader (snapshot.canonicalSources).
+const SNAPSHOT=JSON.parse(readFileSync(new URL('../../server/faces/worker/generated/snapshot.json',import.meta.url)));
+const MARK='eng.MRK-1-14-20',markGuide=archives.find(x=>x.packs[MARK]).packs[MARK].guide,markBytes=Buffer.from(JSON.stringify(markGuide));
+const markSource=SNAPSHOT.canonicalSources.find(d=>d.packId===MARK);
+function canonical(bytes=markBytes){return {sources:[markSource],assets:{[markSource.staticPath]:bytes.toString('base64')}};}
+test('N1. the production constructor composes the descriptor from the build-pinned canonical guide record, and takes no archives or bindings',async()=>{
+ assert.equal(SNAPSHOT.canonicalSources.length,136);assert.ok(SNAPSHOT.canonicalSources.every(d=>d.packId.includes('.MRK-')),'Mark only today');
+ assert.equal(sha(markBytes),markSource.sha256);assert.equal(markSource.sha256,BINDINGS[MARK].guide,'the snapshot descriptor is the source-bindings pin');
+ const assets={[markSource.staticPath]:markBytes},fetchAsset=async p=>assets[p]?new Response(assets[p],{status:200,headers:{'content-type':'application/json','content-length':String(assets[p].length)}}):new Response('',{status:404});
+ const c=createGuideComposer({snapshot:SNAPSHOT,fetchAsset,producer:{demand:async()=>({}),retainedGuideFile:async()=>({})}});
+ assert.deepEqual((await c.descriptorFor(MARK)).descriptor,{owner:'BibleAquifer',collection:'FIATranslationGuide',revision:'eb744452eb8d7c852caadde9d3181cddfe571119',path:'eng/json/41.content.json',fileSha256:'7d22f64be2a993c583eef1cb47168be4be2ea8e1de92d4a02d2d93bf7c475a4c'});
+ assert.equal((await c.descriptorFor(LUKE)).refused,'composer-unknown-pack','Luke packs are not in snapshot.canonicalSources yet (held-file export)');
+ const flipped=Buffer.from(markBytes);flipped[flipped.length-5]^=1;const tampered={[markSource.staticPath]:flipped};
+ const t2=createGuideComposer({snapshot:SNAPSHOT,fetchAsset:async p=>new Response(tampered[p],{status:200,headers:{'content-type':'application/json','content-length':String(tampered[p].length)}}),producer:{demand:async()=>({}),retainedGuideFile:async()=>({})}});
+ const refused=await t2.descriptorFor(MARK);assert.equal(refused.refused,'composer-guide-unavailable');assert.equal(refused.subReason,'canonical-guide-integrity','asset bytes that differ from the pinned sha are refused');
+ assert.throws(()=>createGuideComposer({archives,sourceBindings:BINDINGS,producer:{demand:async()=>({}),retainedGuideFile:async()=>({})}}),/composer-capability/,'archives and bindings are not production parameters');
+});
+test('N1. through the production constructor, the eb744452 descriptor still fails closed against other bytes',async t=>{
+ const mf=await fixture(t),[step]=(await flow(mf,[{packId:MARK,unitId:'S03-U001',compose:{canonical:canonical()},index:{archives:[{revision:archives[0].revision,inventory:[],packs:{[MARK]:archives.find(x=>x.packs[MARK]).packs[MARK]}}]},use:'all'}],{object:'flow-mark'})).steps;
+ assert.equal(step.composed.state,'unavailable');assert.equal(step.composed.reason,'guide-sha-mismatch');assert.equal(step.composed.descriptor.revision,'eb744452eb8d7c852caadde9d3181cddfe571119');assert.equal(step.composed.receipt,null);
+});
+test('note (a). createProfileJsonPort refuses a URL rule that accepts foreign URLs, such as u=>true',()=>{
+ assert.throws(()=>createProfileJsonPort({media:['application/json','text/plain'],sourceUrl:()=>true}),/fresh-capability/,'u=>true');
+ assert.throws(()=>createProfileJsonPort({media:['application/json','text/plain'],sourceUrl:u=>u.startsWith('https://raw.githubusercontent.com/')}),/fresh-capability/,'any owner on the host');
+ assert.throws(()=>createProfileJsonPort({media:['application/json','text/plain'],sourceUrl:u=>u.startsWith('https://raw.githubusercontent.com/BibleAquifer/')}),/fresh-capability/,'any collection or path for the owner');
+ assert.throws(()=>createProfileJsonPort({media:['application/json','text/plain'],sourceUrl:u=>/content\.json$/.test(u)}),/fresh-capability/,'path shape only');
+ assert.throws(()=>createProfileJsonPort({media:['application/json','text/plain'],sourceUrl:()=>false}),/fresh-capability/,'a rule that refuses the class-A shape is useless');
+ assert.doesNotThrow(()=>createProfileJsonPort({media:['application/json'],sourceUrl:()=>true}),'without text/plain the rule grants nothing');
 });

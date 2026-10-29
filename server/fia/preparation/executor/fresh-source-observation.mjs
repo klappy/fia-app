@@ -27,6 +27,11 @@ const PROFILE_PORTS=new WeakSet();
 export function createProfileJsonPort({media,sourceUrl}){
  if(!Array.isArray(media)||!media.length||media.some(m=>m!=='application/json'&&m!=='text/plain')||new Set(media).size!==media.length)throw Error('fresh-capability');
  if(media.includes('text/plain')&&typeof sourceUrl!=='function')throw Error('fresh-capability');
+ // PR293 delta review note (a): the supplied rule must itself refuse foreign URLs, so a permissive rule (u=>true, any owner on the
+ // host, any collection or path) cannot carry text/plain. It must still accept the class-A guide shape it exists for.
+ if(media.includes('text/plain')){const rev='0123456789abcdef0123456789abcdef01234567',ok=`https://raw.githubusercontent.com/BibleAquifer/FIATranslationGuide/${rev}/spa/json/42.content.json`;
+  const foreign=[`https://example.invalid/BibleAquifer/FIATranslationGuide/${rev}/spa/json/42.content.json`,`https://raw.githubusercontent.com/evil/FIATranslationGuide/${rev}/spa/json/42.content.json`,`https://raw.githubusercontent.com/BibleAquifer/OtherRepository/${rev}/spa/json/42.content.json`,`http://raw.githubusercontent.com/BibleAquifer/FIATranslationGuide/${rev}/spa/json/42.content.json`,`https://raw.githubusercontent.com/BibleAquifer/FIATranslationGuide/main/spa/json/42.content.json`,`${ok}?x=1`,`${ok}#x`,`${ok}.evil`,`https://raw.githubusercontent.com/BibleAquifer/FIATranslationGuide/${rev}/spa/audio/42.mp3`,`https://raw.githubusercontent.com/BibleAquifer/FIATranslationGuide/${rev}/../secret.json`,`https://raw.githubusercontent.com.evil.invalid/BibleAquifer/FIATranslationGuide/${rev}/spa/json/42.content.json`];
+  let accepts;try{accepts=u=>sourceUrl(u)===true;if(!accepts(ok)||foreign.some(accepts))throw 0;}catch{throw Error('fresh-capability');}}
  const p=Object.freeze({...port('json','originals/json/sha256/','bin',Object.fromEntries(media.map(m=>[m,['json',[0x5b]]]))),buffered:true,sourceUrl:sourceUrl??null});PROFILE_PORTS.add(p);return p;
 }
 export const VISUAL_CONTENT=port('visual','originals/visual/sha256/','bin',{'image/jpeg':['jpg',[0xff,0xd8,0xff]],'image/png':['png',[0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a]]});
