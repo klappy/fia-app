@@ -1,0 +1,144 @@
+{
+  "schema": "fia-association-eval@1",
+  "kind": "coverage",
+  "cases": 24,
+  "bySource": {
+    "approved-presentation": 6,
+    "ledger-inline": 6,
+    "ledger-row": 12
+  },
+  "byLanguage": {
+    "eng": 12,
+    "spa": 12
+  },
+  "candidateCases": 30,
+  "excludedByRawGate": [
+    {
+      "caseId": "eng.MRK-3-7-12:S05-U006",
+      "goldSource": "ledger-inline",
+      "reason": "resource-tag-absent-from-current-raw-source",
+      "currentRevision": "96bb023ab1852ab8bdc3a469fcc820e9f9ea1e30",
+      "absentTags": [
+        "<data class=\"resource-ref\" data-content-id=\"a293\" data-resource-code=\"FIAImages\">"
+      ]
+    },
+    {
+      "caseId": "eng.MRK-4-1-20:S03-U021",
+      "goldSource": "ledger-inline",
+      "reason": "resource-tag-absent-from-current-raw-source",
+      "currentRevision": "96bb023ab1852ab8bdc3a469fcc820e9f9ea1e30",
+      "absentTags": [
+        "<data class=\"resource-ref\" data-content-id=\"a293\" data-resource-code=\"FIAImages\">"
+      ]
+    },
+    {
+      "caseId": "eng.MRK-4-35-41:S03-U017",
+      "goldSource": "ledger-inline",
+      "reason": "resource-tag-absent-from-current-raw-source",
+      "currentRevision": "96bb023ab1852ab8bdc3a469fcc820e9f9ea1e30",
+      "absentTags": [
+        "<data class=\"resource-ref\" data-content-id=\"a293\" data-resource-code=\"FIAImages\">"
+      ]
+    },
+    {
+      "caseId": "eng.MRK-6-45-56:S05-U005",
+      "goldSource": "ledger-inline",
+      "reason": "resource-tag-absent-from-current-raw-source",
+      "currentRevision": "96bb023ab1852ab8bdc3a469fcc820e9f9ea1e30",
+      "absentTags": [
+        "<data class=\"resource-ref\" data-content-id=\"a293\" data-resource-code=\"FIAImages\">"
+      ]
+    },
+    {
+      "caseId": "eng.MRK-8-11-21:S05-U009",
+      "goldSource": "ledger-inline",
+      "reason": "resource-tag-absent-from-current-raw-source",
+      "currentRevision": "96bb023ab1852ab8bdc3a469fcc820e9f9ea1e30",
+      "absentTags": [
+        "<data class=\"resource-ref\" data-content-id=\"a293\" data-resource-code=\"FIAImages\">"
+      ]
+    },
+    {
+      "caseId": "eng.MRK-8-11-21:S05-U013",
+      "goldSource": "ledger-inline",
+      "reason": "resource-tag-absent-from-current-raw-source",
+      "currentRevision": "96bb023ab1852ab8bdc3a469fcc820e9f9ea1e30",
+      "absentTags": [
+        "<data class=\"resource-ref\" data-content-id=\"a280\" data-resource-code=\"FIAImages\">"
+      ]
+    }
+  ],
+  "ledgerUnresolvedNotCases": [
+    {
+      "packId": "eng.MRK-1-14-20",
+      "collection": "FIAImages",
+      "id": "a105",
+      "reason": "typed-guide-association-absent-from-normalized-resource-catalog"
+    },
+    {
+      "packId": "eng.MRK-1-14-20",
+      "collection": "FIAImages",
+      "id": "a106",
+      "reason": "typed-guide-association-absent-from-normalized-resource-catalog"
+    },
+    {
+      "packId": "eng.MRK-1-14-20",
+      "collection": "FIAImages",
+      "id": "a150",
+      "reason": "typed-guide-association-absent-from-normalized-resource-catalog"
+    },
+    {
+      "packId": "spa.MRK-1-14-20",
+      "collection": "FIAImages",
+      "id": "a105",
+      "reason": "typed-guide-association-absent-from-normalized-resource-catalog"
+    },
+    {
+      "packId": "spa.MRK-1-14-20",
+      "collection": "FIAImages",
+      "id": "a106",
+      "reason": "typed-guide-association-absent-from-normalized-resource-catalog"
+    },
+    {
+      "packId": "spa.MRK-1-14-20",
+      "collection": "FIAImages",
+      "id": "a150",
+      "reason": "typed-guide-association-absent-from-normalized-resource-catalog"
+    },
+    {
+      "packId": "eng.MRK-4-35-41",
+      "collection": "VideoBibleDictionary",
+      "id": "a274",
+      "reason": "typed-video-absent-from-normalized-videos; same-bare-id-present-as-FIAImages-must-not-coerce"
+    },
+    {
+      "packId": "spa.MRK-4-35-41",
+      "collection": "VideoBibleDictionary",
+      "id": "a274",
+      "reason": "typed-video-absent-from-normalized-videos; same-bare-id-present-as-FIAImages-must-not-coerce"
+    }
+  ],
+  "spanishLuke": {
+    "packs": 97,
+    "guideUnits": 8691,
+    "catalogRecords": {
+      "images": 381,
+      "maps": 33,
+      "videos": 64
+    },
+    "adjudicatedGoldCases": 0,
+    "cases": [],
+    "finding": "No accepted, independently adjudicated association evidence exists for any Spanish Luke unit: the reviewed ledger covers Mark 1:14-20, 2:1-12 and typed inline Mark rows only, and the approved presentation is English Mark 1:1-13. Historical Spanish Mark gold does not prove Spanish Luke.",
+    "adjudicationNeeded": [
+      "For each spa.LUK pack, a source author identifies, unit by unit, which units request a picture, map or video, binding the exact unit id, unit text sha256, guide revision and guide file sha256 from source-packs-luk.json.gz at the stated source revision.",
+      "For each such unit, the author binds every requested resource by typed identity (collection + contentId) to a candidate in that pack catalog with its source file and file sha256, records the relation evidence (typed inline reference, or reviewed unit instruction plus the typed passage association in the English guide where Spanish relies on shared media), separates optional video companions and explicit companion pairs, and records any curated primary as a display choice.",
+      "An independent reviewer who is not the author checks the exact rows against source and accepts them; only then are they appended to an fia-unit-media-associations@1 ledger with a new pinned sha256 and admitted here as gold.",
+      "No runtime per-item human queue is introduced; adjudication is an offline batch that precedes scoring."
+    ]
+  },
+  "limits": [
+    "The accepted foundation is 24 ledger units in 14 packs (12 semantic rows, 12 typed inline) plus 6 approved first-Mark units. Cases whose typed inline tag is absent from current raw publisher source are excluded and listed in excludedByRawGate. All gold cases are positive associations; no adjudicated no-visual negatives are included yet.",
+    "Historical counts (379 candidate instructions over 114 of 136 packs; 357 outside coverage) are review workload, not acceptance figures for the current 165-pack-per-language set.",
+    "October 6 cue-role pilot outputs are not resource-association gold and are not read."
+  ]
+}
