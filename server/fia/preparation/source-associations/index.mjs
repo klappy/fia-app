@@ -8,6 +8,8 @@ import {isProducerReceipt,GUIDE_SOURCE_CLASS} from './producer-receipt.mjs';
 // compiled relatedIds/primary, titles and ledgers are never joins. Output is association only: no medium, autoplay,
 // pause, order, source selection or admission policy.
 export const SOURCE_ASSOCIATION_RECIPE='fia-source-association@1';
+// The schema of one pack's association-input file (written by export-guide-sources.mjs, read by the guide-fragment object).
+export const ASSOCIATION_SOURCE_SCHEMA='fia-association-source@1';
 export const RAW_DEPENDENCY='class-A guide-text source route and admission (CONTRACT acquisition-profile clause, Q2; reviewed source route and ticket admission, Q3; Otto seat)';
 const sha=x=>createHash('sha256').update(x).digest('hex');
 const NAMESPACES=Object.freeze({FIAKeyTerms:'term',FIAImages:'image',FIAMaps:'map'});
