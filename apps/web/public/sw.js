@@ -126,8 +126,8 @@ async function serverReadContexts(clientId){
  return contexts;
 }
 async function serverRead(request,clientId){
- const url=new URL(request.url),match=/^\/v1\/packs\/([^/]+)$/.exec(url.pathname),digest=/^\/v1\/artifacts\/([a-f0-9]{64})$/.exec(url.pathname)?.[1];let packId,revision,active,file;
- if(match){packId=match[1];if(!validPack(packId)||packId===legacy||[...url.searchParams.keys()].some(k=>k!=='revision')||url.searchParams.getAll('revision').length>1)return fetch(request);revision=url.searchParams.get('revision')||undefined;if(revision&&!isPassageHash(revision))return fetch(request);active=await read(packKey(packId,'active'));}
+ const url=new URL(request.url),match=/^\/v1\/packs\/([^/]+)$/.exec(url.pathname),digest=/^\/v1\/artifacts\/([a-f0-9]{64})$/.exec(url.pathname)?.[1];let packId,revision,active,file,capability=null;
+ if(match){packId=match[1];if(!validPack(packId)||packId===legacy||[...url.searchParams.keys()].some(k=>k!=='revision'&&k!=='execution')||url.searchParams.getAll('revision').length>1||url.searchParams.has('execution')&&(url.searchParams.getAll('execution').length!==1||url.searchParams.get('execution')!=='2'))return fetch(request);capability=url.searchParams.get('execution')||null;revision=url.searchParams.get('revision')||undefined;if(revision&&!isPassageHash(revision))return fetch(request);active=await read(packKey(packId,'active'));}
  else if(digest&&!url.search){const selected=clientId&&await read('client-'+clientId)||await read('selected');for(const candidate of [...await serverReadContexts(clientId),selected]){if(!candidate?.packId)continue;const saved=candidate.serverSnapshot?candidate:await read(packKey(candidate.packId,'active'));if(!candidate.serverSnapshot&&candidate.revision&&saved?.serverSnapshot?.record.revision!==candidate.revision)continue;const match=saved?.serverSnapshot?.files.find(f=>f.sha256===digest);if(match){packId=candidate.packId;revision=saved.serverSnapshot.record.revision;active=saved;file=match;break;}}}
  else return fetch(request);
  // The server's answer is the page's answer: status, type and body pass through.
@@ -136,9 +136,9 @@ async function serverRead(request,clientId){
  let response;
  try{response=await fetch(request,{cache:'no-store',redirect:'error'});}catch(error){
   if(error?.name!=='TypeError'&&error?.name!=='AbortError'){if(packId)await invalidateServerSnapshot(packId);return Response.error();}
-  return historicalServerRead({match,packId,revision,digest,clientId});
+  return historicalServerRead({match,packId,revision,digest,clientId,capability});
  }
- if([408,429,500,502,503,504].includes(response.status))return historicalServerRead({match,packId,revision,digest,clientId,answer:response});
+ if([408,429,500,502,503,504].includes(response.status))return historicalServerRead({match,packId,revision,digest,clientId,capability,answer:response});
  // A live preparation is not a revocation of an already verified saved pack.
  if(match&&response.status===202&&!response.redirected)return response;
  try{
@@ -149,8 +149,10 @@ async function serverRead(request,clientId){
 }
 // A verified saved snapshot answers only when the server could not; otherwise the
 // server's own transient answer (when there is one) reaches the page unchanged.
-async function historicalServerRead({match,packId,revision,digest,clientId,answer}){
- const active=packId&&await savedServerSnapshot(packId,revision);if(!active)return answer||new Response('This server content is not saved for offline use.',{status:503});
+// A saved snapshot answers only a pack read with the capability it was saved under
+// (none today), so a page that asks for execution=2 never gets an older shape from it.
+async function historicalServerRead({match,packId,revision,digest,clientId,capability=null,answer}){
+ const active=packId&&await savedServerSnapshot(packId,revision);if(active&&match&&(active.serverSnapshot.capability??null)!==capability)return answer||new Response('This server content is not saved for offline use.',{status:503});if(!active)return answer||new Response('This server content is not saved for offline use.',{status:503});
  let response;if(match){response=json(active.serverSnapshot.record);await rememberServerRead(clientId,active.serverSnapshot.record);}
  else{const file=active.serverSnapshot.files.find(f=>f.sha256===digest);if(!file)return answer||new Response('This server artifact is not saved.',{status:503});response=await(await caches.open(active.cache)).match(file.path);}
  const headers=new Headers(response.headers);headers.set(offlineServerHeader,'historical-verified');headers.set('Cache-Control','private, no-store');return new Response(await response.arrayBuffer(),{status:200,headers});
