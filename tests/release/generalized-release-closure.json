@@ -1541,7 +1541,7 @@
     },
     {
       "path": "server/faces/worker/BACKEND-CLOSURE.json",
-      "sha256": "6394078fc4a9f6c6f8f9788cb22ff98c0bd1e62b71a3f459b61bcd132235e503"
+      "sha256": "d847b34463d161b15c6d5e01de649a52c89dff2fa953d0bc34986f5231202db7"
     },
     {
       "path": "server/faces/worker/adapter.mjs",
@@ -1649,7 +1649,7 @@
     },
     {
       "path": "server/fia/preparation/executable-presentation-runtime.mjs",
-      "sha256": "4c51e653bdc1f000d419123e20794956716d37a23d2f52361cffd8822ab17cce"
+      "sha256": "962bc5e6f07cfba6815908cdd6cca486511bdf7004c8f51632e0ec5c15dcab9b"
     },
     {
       "path": "server/fia/preparation/executable-presentation-service.mjs",
@@ -2831,11 +2831,15 @@
     },
     {
       "path": "tests/worker-serving/visual-demand.test.mjs",
-      "sha256": "cf1be724594145ff8792bcef4c7053f776b8446ca3e4b59ff982fef7f014e790"
+      "sha256": "9b094ad0fa956571cff40a73ec23132b6b443557ce7c78e97a9fe20ce5978afa"
     },
     {
       "path": "tests/worker-serving/fixtures/executable-operations-previous.mjs",
       "sha256": "2dccc156261720debc6cfa08306805825c6c3a2ee643c8ce920c1b8767c251e2"
+    },
+    {
+      "path": "tests/worker-serving/fixtures/read-operations-previous.mjs",
+      "sha256": "be8bc3f8b41cbce4800e3280bc1be516a4dfacc2fb4835f2b86825e35e1e0ce5"
     }
   ],
   "generatedFiles": [

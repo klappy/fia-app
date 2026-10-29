@@ -130,7 +130,11 @@ export async function createExecutableRuntime({ctx,env,snapshot,capabilities={}}
 export function createExecutableWorkerOperations({env,fallback}){
  if(!env.FIA_PREPARATION_JOBS||!env.FIA_ORIGINALS)return fallback;
  const call=async(operation,args)=>{const stub=env.FIA_PREPARATION_JOBS.get(env.FIA_PREPARATION_JOBS.idFromName(ROOT));const response=await stub.fetch(new Request(`https://preparation.internal${PATH}${operation}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(args)}));if(!response.ok)throw Error('executable-authority-unavailable');return response.json();};
- return Object.fromEntries(['readPack','readArtifact','preparePresentation','readPresentationPreparation'].map(operation=>[operation,args=>call(operation,args)]));
+ const ops=Object.fromEntries(['readPack','readArtifact','preparePresentation','readPresentationPreparation'].map(operation=>[operation,args=>call(operation,args)]));
+ // Worker/object deploy overlap (PLAN §3): the object may still run the previous build, whose reads
+ // refuse the execution capability. Retry once without it, so the caller gets the old shape.
+ ops.readPack=async args=>{const result=await call('readPack',args);if(args&&typeof args==='object'&&args.execution==='2'&&result?.status==='refused'&&result.code==='invalid-request'){const {execution,...plain}=args;return call('readPack',plain);}return result;};
+ return ops;
 }
 export async function serveExecutableObject(request,ctx,env,capabilities,runtime){
  const url=new URL(request.url);
