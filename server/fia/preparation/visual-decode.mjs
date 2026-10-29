@@ -14,7 +14,7 @@ const refuse=(r,o)=>{throw new VisualDecodeRefusal(r,o);};
 // originals carry (c4: pHYs, zTXt; a1400: none), each validated for position, count, length and content.
 const f=Object.freeze;
 export const PNG_ALLOWLIST=f({critical:f(['IHDR','PLTE','IDAT','IEND']),ancillary:f({pHYs:'once, before the first IDAT, length 9, unit 0 or 1',zTXt:'any count between IHDR and IEND; keyword 1-79 Latin-1 bytes with no leading, trailing or double space; compression method 0; exactly one complete zlib stream using every byte; all zTXt text together within maxAncillaryTextBytes'})});
-export const JPEG_ALLOWLIST=f({markers:f(['SOI','DQT','DHT','SOF0','SOF1','SOF2','SOS','EOI']),dqt:'before the first scan; at least one table; Pq 0 (8-bit), Tq 0-3, 64 entries of 1-255 each, exact length',dht:'at least one table; Tc 0-1, Th 0-1 for SOF0 and 0-3 otherwise (re-checked at SOF), at most 256 codes, exact length',sof:'8-bit, 1 or 3 components, distinct ids, H and V 1-4, Tq 0-3 defined before the first scan; an interleaved scan has at most 10 blocks per MCU',sos:'Td and Ta each 0-3 (0-1 for SOF0), tables it uses defined before it; in a sequential frame each component in exactly one scan; no restart markers (no DRI)'});
+export const JPEG_ALLOWLIST=f({markers:f(['SOI','DQT','DHT','SOF0','SOF1','SOF2','SOS','EOI']),dqt:'before the first scan; at least one table; Pq 0 (8-bit), Tq 0-3, 64 entries of 1-255 each, exact length',dht:'at least one table; Tc 0-1, Th 0-1 for SOF0 and 0-3 otherwise (re-checked at SOF), at most 256 codes, exact length',sof:'8-bit, 1 or 3 components, distinct ids, H and V 1-4, Tq 0-3 defined before the first scan; an interleaved scan has at most 10 blocks per MCU',segments:'at most maxJpegSegments marker segments between SOI and EOI',sos:'Td and Ta each 0-3 (0-1 for SOF0), tables it uses defined before it; in a sequential frame each component in exactly one scan; no restart markers (no DRI)'});
 const PNG_SIG=[0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a];
 export function sniffRaster(bytes){
  if(bytes.length>=8&&PNG_SIG.every((v,i)=>bytes[i]===v))return 'image/png';
@@ -116,14 +116,16 @@ async function decodePng(bytes,limits,clock){
 }
 // Walks every JPEG segment and entropy-coded scan to EOI, so the pinned decoder can never read past the end of the bytes.
 const SOF=new Set([0xc0,0xc1,0xc2]),SOF_UNSUPPORTED=new Set([0xc3,0xc5,0xc6,0xc7,0xc9,0xca,0xcb,0xcd,0xce,0xcf]);
-function jpegStructure(bytes,limits){
- let pos=2,frame=null,scans=0;const covered=new Set(),dcAl=new Map(),acAl=new Map(),qt=new Set(),dcT=new Set(),acT=new Set();
+function jpegStructure(bytes,limits,clock){
+ let pos=2,frame=null,scans=0,segments=0;const covered=new Set(),dcAl=new Map(),acAl=new Map(),qt=new Set(),dcT=new Set(),acT=new Set();
  for(;;){
   if(pos+2>bytes.length)refuse('jpeg-truncated');
   if(bytes[pos]!==0xff)refuse('jpeg-structure');
   while(bytes[pos+1]===0xff&&pos+2<bytes.length)pos++;
   const marker=bytes[pos+1];pos+=2;
   if(marker===0xd9){if(pos!==bytes.length)refuse('jpeg-trailing-data');break;}
+  // Bounded walk: the recipe caps marker segments (so tables cannot be redefined without limit), and the deadline is read per segment.
+  if(++segments>limits.maxJpegSegments)refuse('jpeg-segment-cap');if(clock()>limits.decodeMs)refuse('decode-deadline',{final:false});
   if(marker===0x00||marker===0x01||marker===0xd8||(marker>=0xd0&&marker<=0xd7))refuse('jpeg-structure');
   if(pos+2>bytes.length)refuse('jpeg-truncated');
   const length=u16(bytes,pos);if(length<2||pos+length>bytes.length)refuse('jpeg-truncated');
@@ -187,7 +189,7 @@ function jpegStructure(bytes,limits){
  return frame;
 }
 function decodeJpegFull(bytes,limits,clock){
- const frame=jpegStructure(bytes,limits);let image;
+ const frame=jpegStructure(bytes,limits,clock);if(clock()>limits.decodeMs)refuse('decode-deadline',{final:false});let image;
  try{image=decodeJpeg(bytes,{useTArray:true,formatAsRGBA:false,tolerantDecoding:false,maxResolutionInMP:limits.maxJpegPixels/1e6,maxMemoryUsageInMB:limits.maxJpegMemoryMB});}
  catch{if(clock()>limits.decodeMs)refuse('decode-deadline',{final:false});refuse('jpeg-decode-error');}
  // jpeg-js decodes synchronously and cannot be pre-empted: maxJpegScans bounds the work, and the deadline is checked on return.

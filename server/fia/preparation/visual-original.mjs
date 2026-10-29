@@ -18,7 +18,7 @@ export const VISUAL_ORIGINAL_RECIPE=freeze({schema:'fia-visual-original-recipe@2
  signatures:freeze({'image/png':'89504e470d0a1a0a','image/jpeg':'ffd8ff'}),
  subsets:freeze({'image/png':'8-bit samples, colour types 0/2/3/4/6, non-interlaced (interlaced: decode-not-streamable)','image/jpeg':'8-bit baseline, extended or progressive Huffman (SOF0/1/2), 1 or 3 components, at most maxJpegPixels (larger: decode-not-streamable)'}),
  // maxPixels 17 MP fits the largest map c175 (16.0 MP); maxJpegPixels 2 MP fits every 1000 px picture. decodeMs is a wall deadline; the CPU ceiling is the platform's.
- limits:freeze({maxBytes:VISUAL_ORIGINAL_POLICY.maxBytes,totalMs:VISUAL_ORIGINAL_POLICY.totalMs,progressMs:VISUAL_ORIGINAL_POLICY.progressMs,maxDimension:8192,maxPixels:17000000,maxJpegPixels:2000000,maxJpegMemoryMB:64,maxJpegScans:32,maxPngChunks:16384,maxAncillaryTextBytes:4096,decodeMs:20000}),
+ limits:freeze({maxBytes:VISUAL_ORIGINAL_POLICY.maxBytes,totalMs:VISUAL_ORIGINAL_POLICY.totalMs,progressMs:VISUAL_ORIGINAL_POLICY.progressMs,maxDimension:8192,maxPixels:17000000,maxJpegPixels:2000000,maxJpegMemoryMB:64,maxJpegScans:32,maxPngChunks:16384,maxJpegSegments:256,maxAncillaryTextBytes:4096,decodeMs:20000}),
  decoder:freeze({'image/png':PNG_DECODER,'image/jpeg':JPEG_DECODER}),
  allowlist:freeze({'image/png':PNG_ALLOWLIST,'image/jpeg':JPEG_ALLOWLIST})});
 const RECIPE_SHA256=createHash('sha256').update(canonicalJSONString(VISUAL_ORIGINAL_RECIPE)).digest('hex');
@@ -73,8 +73,8 @@ const INFLIGHT=new WeakMap();
 const DECODE_FIELDS='bytes,decoder,final,height,mime,originalSha256,pixelsSha256,reason,recipeSha256,state,subReason,width';
 const dimension=v=>Number.isSafeInteger(v)&&v>=1&&v<=VISUAL_ORIGINAL_RECIPE.limits.maxDimension;
 function keptDecode(r,original){
- const shape=r&&typeof r==='object'&&Object.getPrototypeOf(r)===Object.prototype&&Object.keys(r).sort().join()===DECODE_FIELDS&&r.recipeSha256===RECIPE_SHA256&&r.originalSha256===original.sha256&&r.bytes===original.bytes&&r.mime===original.contentType&&r.final===true;
- const ready=shape&&r.state==='ready'&&r.reason===null&&r.subReason===null&&Object.hasOwn(VISUAL_ORIGINAL_RECIPE.decoder,r.mime)&&canonicalJSONString(r.decoder)===canonicalJSONString(VISUAL_ORIGINAL_RECIPE.decoder[r.mime])&&dimension(r.width)&&dimension(r.height)&&r.width*r.height<=VISUAL_ORIGINAL_RECIPE.limits.maxPixels&&typeof r.pixelsSha256==='string'&&/^[a-f0-9]{64}$/.test(r.pixelsSha256);
+ const shape=r&&typeof r==='object'&&Object.getPrototypeOf(r)===Object.prototype&&Object.keys(r).sort().join()===DECODE_FIELDS&&r.recipeSha256===RECIPE_SHA256&&r.originalSha256===original.sha256&&r.bytes===original.bytes&&Number.isSafeInteger(r.bytes)&&r.bytes>=1&&r.bytes<=VISUAL_ORIGINAL_RECIPE.limits.maxBytes&&r.mime===original.contentType&&r.final===true;
+ const ready=shape&&r.state==='ready'&&r.reason===null&&r.subReason===null&&Object.hasOwn(VISUAL_ORIGINAL_RECIPE.decoder,r.mime)&&canonicalJSONString(r.decoder)===canonicalJSONString(VISUAL_ORIGINAL_RECIPE.decoder[r.mime])&&dimension(r.width)&&dimension(r.height)&&r.width*r.height<=VISUAL_ORIGINAL_RECIPE.limits.maxPixels&&(r.mime!=='image/jpeg'||r.width*r.height<=VISUAL_ORIGINAL_RECIPE.limits.maxJpegPixels)&&typeof r.pixelsSha256==='string'&&/^[a-f0-9]{64}$/.test(r.pixelsSha256);
  const refused=shape&&r.state==='unavailable'&&r.reason==='visual-unsupported'&&typeof r.subReason==='string'&&/^[a-z0-9-]{1,64}$/.test(r.subReason)&&r.decoder===null&&r.width===null&&r.height===null&&r.pixelsSha256===null;
  if(!ready&&!refused)throw Error('visual-decode-record-corrupt');
  return r;

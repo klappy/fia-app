@@ -141,6 +141,11 @@ test('the in-flight decode gate never crosses source identity or Durable Object:
  const outs=await Promise.all(pending);for(const o of outs)assert.equal(o.result.state,'ready',JSON.stringify(o.result));
  assert.notEqual(outs[0].result.sourceIdentitySha256,outs[2].result.sourceIdentitySha256);assert.equal(outs[0].result.original.sha256,outs[2].result.original.sha256);
 });
+test('4408860750: a kept JPEG row is held to the JPEG pixel cap (maxJpegPixels), not only the shared maxPixels',async t=>{
+ const mf=await fixture(t),src={fixture:'jpeg',mime:'image/jpeg',kind:'photo',url:'https://publisher.invalid/a1400/1000.jpg'},first=await call(mf,src);assert.equal(first.result.state,'ready');
+ assert.equal((await call(mf,{op:'corruptDecode',patch:{width:1500,height:1400}})).patched,1);
+ const out=await call(mf,{op:'read',...src});assert.notEqual(out.result.state,'ready',JSON.stringify(out.result));assert.equal(out.result.subReason,'visual-decode-record-corrupt');assert.equal(out.gets,1);
+});
 test('a Retry after a final visual-unsupported decode fetches 0 and decodes 0, and never overrides the verdict',async t=>{
  const mf=await fixture(t),first=await call(mf,{fixture:'interlaced'});assert.equal(first.result.reason,'visual-unsupported');assert.equal(first.result.subReason,'decode-not-streamable');assert.equal(first.result.final,true);assert.equal(first.decodes,1);
  const retried=await call(mf,{fixture:'interlaced',retry:true});assert.equal(retried.gets,1);assert.equal(retried.decodes,1);assert.deepEqual(retried.result,first.result);

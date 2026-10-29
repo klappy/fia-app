@@ -292,3 +292,13 @@ test('a DHT after the scan does not change pixels (jpeg-js builds Huffman tables
  // A different (still valid) DHT after the scan: same pixels, because the scan was already decoded with the table in effect.
  const other=insertAt(b,b.length-2,dht(0,0,[0,1,1,1,1,1,1,1,1,1,1,1],[0,1,2,3,4,5,6,7,8,9,10]));assert.equal((await decode(other,'image/jpeg')).pixelsSha256,base.pixelsSha256);
 });
+// Codex round 7 on PR285 8fdb554, reproduced first.
+test('4408860752: a flood of valid one-symbol DHT redefinitions is refused by the recipe segment cap, quickly',async()=>{
+ const one=dht(0,0,[1],[0]),n=Math.floor((limits.maxBytes-1000)/one.length),flood=beforeSof('baseline-37x23.jpg',Buffer.concat(new Array(n).fill(one)));
+ assert.ok(n>500000&&flood.length<=limits.maxBytes,String(n));
+ const t=Date.now();await refused(settlesWithin(decode(flood,'image/jpeg'),5000),'jpeg-segment-cap');assert.ok(Date.now()-t<1000,`${Date.now()-t} ms`);
+ assert.equal(VISUAL_ORIGINAL_RECIPE.limits.maxJpegSegments,256);
+ // The deadline is also read during the walk, before jpeg-js runs.
+ const few=beforeSof('baseline-37x23.jpg',Buffer.concat(new Array(40).fill(one)));let calls=0;
+ await assert.rejects(decodeVisual(few,{mime:'image/jpeg',limits,clock:()=>++calls>1?limits.decodeMs+1:0}),e=>e.subReason==='decode-deadline'&&e.final===false);
+});
