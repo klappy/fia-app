@@ -21,7 +21,9 @@ export async function serveRead(req,res,url,operations) {
   let decoded;
   try{decoded=decodeURIComponent((pack||artifact)?.[1]||'');}catch{json(res,400,{status:'refused',code:'invalid-request'});return;}
     if(pack){
-      if([...url.searchParams.keys()].some(k=>k!=='revision')||url.searchParams.getAll('revision').length>1)result={status:'refused',code:'invalid-request'};
+      // execution=2 is a page's capability to receive visual resources and its bound manifest.
+      // This build accepts it and emits nothing new: the read is the same read without it.
+      if([...url.searchParams.keys()].some(k=>k!=='revision'&&k!=='execution')||url.searchParams.getAll('revision').length>1||url.searchParams.has('execution')&&(url.searchParams.getAll('execution').length!==1||url.searchParams.get('execution')!=='2'))result={status:'refused',code:'invalid-request'};
       else result=await operations.readPack({packId:decoded,...(url.searchParams.has('revision')?{revision:url.searchParams.get('revision')}:{})});
     }else if(artifact){
       result=url.search?{status:'refused',code:'invalid-request'}:await operations.readArtifact({sha256:decoded});

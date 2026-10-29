@@ -36,3 +36,14 @@ test('preparing response preserves previously saved offline snapshot',async()=>{
  const live=await w.fetch(`/v1/packs/${packId}`);assert.equal(live.status,202);assert.deepEqual(await live.json(),body);
  w.offline(true);const offline=await w.fetch(`/v1/packs/${packId}`);assert.equal(offline.status,200);assert.equal(offline.headers.get('X-FIA-Offline-Snapshot'),'historical-verified');assert.deepEqual(await offline.json(),f.record);
 });
+
+// F4 client half: a page may ask for execution=2. This build forwards that read as it
+// forwards any other, but a saved snapshot answers only a read with the capability it
+// was saved under (none yet), so an asking page never receives an older shape from it.
+test('execution=2 pack reads pass through online and never take a snapshot saved without the capability',async()=>{const f=fixture(),w=worker(f);const online=await w.fetch(`/v1/packs/${packId}?execution=2`);assert.equal(online.status,200);assert.deepEqual(await online.json(),f.record);assert.ok(w.calls.includes(`/v1/packs/${packId}?execution=2`));
+ assert.equal((await save(w,f)).ok,true);w.offline(true);
+ const plain=await w.fetch(`/v1/packs/${packId}`);assert.equal(plain.status,200);assert.equal(plain.headers.get('X-FIA-Offline-Snapshot'),'historical-verified');
+ const asking=await w.fetch(`/v1/packs/${packId}?execution=2`);assert.equal(asking.status,503);assert.equal(asking.headers.get('X-FIA-Offline-Snapshot'),null);
+ w.offline(false);w.reply(`/v1/packs/${packId}`,new Response('unavailable',{status:503}));const transient=await w.fetch(`/v1/packs/${packId}?execution=2`);assert.equal(transient.status,503);assert.equal(transient.headers.get('X-FIA-Offline-Snapshot'),null,'the server answer passes through unchanged');
+ assert.equal((await w.fetch(`/v1/packs/${packId}`)).headers.get('X-FIA-Offline-Snapshot'),'historical-verified','the saved snapshot is kept for reads without the capability');
+});
