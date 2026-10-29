@@ -63,6 +63,16 @@ export function visualAuthorityFrom(visuals){
  if(!visuals||typeof visuals.published!=='function')return null;
  return async({binding,executionRevision,entry})=>{const p=await visuals.published({packId:binding.packId,baseRevision:binding.baseRevision,executionRevision,assetId:entry.assetId});return !!p&&typeof p.manifestEntry==='object'&&p.manifestEntry!==null&&same(p.manifestEntry,entry)&&p.ready?.path===entry.path&&p.ready?.sha256===entry.sha256;};
 }
+// The served bound manifest, parsed, only when it is exactly the record's descriptor for this execution;
+// otherwise null, and nothing is declared ready from it.
+async function servedManifest(readArtifact,d,executionRevision){
+ try{const m=await readArtifact({sha256:d.sha256});if(m?.status!=='ready'||typeof m.content!=='string')return null;const bytes=new TextEncoder().encode(m.content);if(bytes.length!==d.bytes||await sha256(bytes)!==d.sha256)return null;const manifest=JSON.parse(m.content);return manifest?.id===d.id&&manifest.executionRevision===executionRevision?manifest:null;}catch{return null;}
+}
+// F4 server half and the fold: an asking read declares visualResources on the executable record being served,
+// from its verified presentation bytes and, when the publication carries one, its served bound manifest. The
+// manifest is checked here by bytes, sha, id and executionRevision (review N5: integrity does not rest on the
+// store alone); any mismatch declares from the presentation alone, so nothing is declared ready.
+export function visualResourcesFor(readArtifact){return async record=>{try{const artifact=await readArtifact({sha256:record.revision});if(artifact?.status!=='ready'||typeof artifact.content!=='string')return record;const d=record.execution.mediaManifest;const manifest=d?await servedManifest(readArtifact,d,record.revision):null;const visualResources=declareVisualResources({record,presentation:JSON.parse(artifact.content),manifest});return visualResources?{...record,execution:{...record.execution,visualResources}}:record;}catch{return record;}};}
 export async function createExecutableRuntime({ctx,env,snapshot,capabilities={}}){
  const base=snapshotStorage(snapshot,{fetchAsset:path=>env.ASSETS.fetch(new Request(new URL(path,env.FIA_API_ORIGIN),{redirect:'manual'}))}),baseReads=createReadOperations(base),artifacts=artifactPort(env.FIA_ORIGINALS),policySha256=await sha256(snapshot.approvedAudioProofIndex?canonicalJSONString({policy:EXECUTION_POLICY,approvedAudio:snapshot.approvedAudioProofIndex}):EXECUTION_POLICY);
  // A demand binds a base artifact to the canonical source it was compiled from. The
@@ -132,7 +142,7 @@ export async function createExecutableRuntime({ctx,env,snapshot,capabilities={}}
  // F4 server half: visualResources is declared only to a read that asks with execution=2, on the
  // executable record being served, from its verified presentation bytes. Reads never fetch or decode.
  const readArtifact=reads.readArtifact;
- const withVisualResources=async record=>{try{const artifact=await readArtifact({sha256:record.revision});if(artifact?.status!=='ready'||typeof artifact.content!=='string')return record;let manifest=null;const d=record.execution.mediaManifest;if(d){const m=await readArtifact({sha256:d.sha256});if(m?.status!=='ready'||typeof m.content!=='string'||new TextEncoder().encode(m.content).length!==d.bytes)return record;manifest=JSON.parse(m.content);if(manifest?.id!==d.id||manifest.executionRevision!==record.revision)return record;}const visualResources=declareVisualResources({record,presentation:JSON.parse(artifact.content),manifest});return visualResources?{...record,execution:{...record.execution,visualResources}}:record;}catch{return record;}};
+ const withVisualResources=visualResourcesFor(readArtifact);
  // mediaManifest and publication reach only a page that asks (PLAN §3 Skew across builds).
  const withoutGeneration=record=>{if(!record.execution||!Object.hasOwn(record.execution,'publication'))return record;const {publication:_p,mediaManifest:_m,...execution}=record.execution;return {...record,execution};};
  reads.readPack=async args=>{const asking=args?.execution===VISUAL_RESOURCES_CAPABILITY;let record=await readPack(args);if(record?.status==='ready'&&record.execution&&!args.revision&&record.execution.provenance?.recipeRevision!==recipeRevision)record=await baseReads.readPack({packId:args.packId});if(record?.status==='ready'&&record.execution)return asking?withVisualResources(record):withoutGeneration(record);if(record?.status!=='ready')return record;const sourceRevision=record.authority?.rawInventoryCommit;if(record.packId===args.packId&&preparable(record,sourceRevision))return {...record,preparationDemand:{packId:args.packId,baseRevision:record.revision,sourceRevision,capability:'executable-presentation',...(asking&&baseManifests?{expectedPublicationGeneration:await publication.currentGeneration(args.packId)}:{})}};return record;};
