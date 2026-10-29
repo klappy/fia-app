@@ -56,6 +56,13 @@ async function originalBindings(context){
  }
  return {boundArtifacts,narrationBindings};
 }
+// F7a3: a native visual entry in a publication stays served only while Otto's pure published() read
+// still returns exactly that entry for this execution (SOURCE-TO-APP L99: current authority). Without
+// the port there is no authority, and the overlay serves no row that lists a visual.
+export function visualAuthorityFrom(visuals){
+ if(!visuals||typeof visuals.published!=='function')return null;
+ return async({binding,executionRevision,entry})=>{const p=await visuals.published({packId:binding.packId,baseRevision:binding.baseRevision,executionRevision,assetId:entry.assetId});return !!p&&typeof p.manifestEntry==='object'&&p.manifestEntry!==null&&same(p.manifestEntry,entry)&&p.ready?.path===entry.path&&p.ready?.sha256===entry.sha256;};
+}
 export async function createExecutableRuntime({ctx,env,snapshot,capabilities={}}){
  const base=snapshotStorage(snapshot,{fetchAsset:path=>env.ASSETS.fetch(new Request(new URL(path,env.FIA_API_ORIGIN),{redirect:'manual'}))}),baseReads=createReadOperations(base),artifacts=artifactPort(env.FIA_ORIGINALS),policySha256=await sha256(snapshot.approvedAudioProofIndex?canonicalJSONString({policy:EXECUTION_POLICY,approvedAudio:snapshot.approvedAudioProofIndex}):EXECUTION_POLICY);
  // A demand binds a base artifact to the canonical source it was compiled from. The
@@ -116,9 +123,7 @@ export async function createExecutableRuntime({ctx,env,snapshot,capabilities={}}
  // verified bytes as its base manifest (OFFLINE L23). Without a pin, publication stays revision-keyed.
  const offlinePins=new Map((Array.isArray(snapshot.offlineManifests)?snapshot.offlineManifests:[]).map(d=>[d.packId,d]));
  const baseManifests=offlinePins.size?{read:async packId=>{const d=offlinePins.get(packId);need(d&&d.path===`/offline/${packId}.json`&&/^[a-f0-9]{64}$/.test(d.sha256)&&Number.isSafeInteger(d.bytes)&&d.bytes>0&&d.bytes<=1048576,'base-manifest-unpinned');const item=await bounded(()=>readStaticArtifact({staticPath:d.path,descriptor:{sha256:d.sha256,bytes:d.bytes,mime:'application/json'}},path=>env.ASSETS.fetch(new Request(new URL(path,env.FIA_API_ORIGIN),{redirect:'manual'}))));need(typeof item?.content==='string','base-manifest-unavailable');const bytes=new TextEncoder().encode(item.content);need(bytes.length===d.bytes&&await sha256(bytes)===d.sha256,'base-manifest-unavailable');return {bytes,sha256:d.sha256};}}:null;
- // F7a3: a native visual entry in a publication stays served only while Otto's pure published() read
- // still returns exactly that entry for this execution (SOURCE-TO-APP L99: current authority).
- const visualAuthority=capabilities.visuals&&typeof capabilities.visuals.published==='function'?async({binding,executionRevision,entry})=>{const p=await capabilities.visuals.published({packId:binding.packId,baseRevision:binding.baseRevision,executionRevision,assetId:entry.assetId});return !!p&&same(p.manifestEntry,entry)&&p.ready?.path===entry.path&&p.ready?.sha256===entry.sha256;}:null;
+ const visualAuthority=visualAuthorityFrom(capabilities.visuals);
  const publication=createExecutableOverlay({storage:ctx.storage,artifacts,base,eligible,validate:verifier(jobs,true),diagnose,baseManifests,visualAuthority});
  const reads=createReadOperations(publication),readPack=reads.readPack;
  // A row under a superseded build fails its verifier, so the overlay already serves the
