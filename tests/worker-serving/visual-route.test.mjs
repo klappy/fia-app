@@ -94,7 +94,11 @@ test('English S02-U008 end to end in the real Worker: admitted demand, original,
   const never=(await visualConsumerIdentity({packId,baseRevision:a.baseRevision,executionRevision:'9'.repeat(64),assetId:'a1400',kind:'image'})).consumerSha256;
   const current=(await visualConsumerIdentity({packId,baseRevision:a.baseRevision,executionRevision:record.revision,assetId:'a1400',kind:'image'})).consumerSha256;
   for(const [path,init,status] of [[`/v1/original-visuals/${src}/${forged}/${sha(bytes)}`,{},410],[`/v1/original-visuals/${src}/${never}/${sha(bytes)}`,{},404],[`/v1/original-visuals/${src}/${current}/${sha(bytes)}`,{headers:{Range:'bytes=0-9'}},416]]){
-   const get=await mf.dispatchFetch(origin+path,init),head=await mf.dispatchFetch(origin+path,{...init,method:'HEAD'});await get.arrayBuffer();await head.arrayBuffer();
+   // Each response is consumed before the next dispatch. Under this Miniflare (5.20261001.0-alpha, undici 7.29.1), a second
+   // dispatchFetch through a Durable Object can consume an earlier response's still-unread body. Instrumented at a627be2:
+   // bodyUsed false right after the GET, true after the next dispatch, in a few percent of runs, and equally on the existing
+   // /v1/packs route (8 of 180), so it is the harness transport, not this route. Real clients each own their connection.
+   const get=await mf.dispatchFetch(origin+path,init);await get.arrayBuffer();const head=await mf.dispatchFetch(origin+path,{...init,method:'HEAD'});await head.arrayBuffer();
    assert.equal(get.status,status,path);assert.equal(head.status,status,'HEAD '+path);assert.equal(head.headers.get('cache-control'),'no-store');
   }}
  // Stale: a publication row from another recipe is never served. Tampered: changed retained bytes are never served.
