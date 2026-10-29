@@ -276,7 +276,7 @@
  let activity=$derived(currentActivity(session,activities));
  let stage=$derived(presentStage(session,activities));
  let focal=$derived(assets[stage.focal]);
- let termPrompt=$derived(!session.detour&&focal?.kind==='term'&&!!activity?.audioSrc&&termDefinition!==activity.id);
+ let termPrompt=$derived(!session.detour&&focal?.kind==='term'&&termDefinition!==activity.id);
  let guideText=$derived({...readingGroups[activity?.readingGroupId],id:activity?.readingGroupId||activity?.id,kind:'guide',text:readingGroups[activity?.readingGroupId]?.text||activity?.narration||activity?.prompt||'',activeItemId:activity?.id,ordinal:activity?.readingGroupId?undefined:listOrdinals[activity?.id],descriptionAudio:activity?.audioSrc});
  let finished=$derived(session.status==='complete'&&!session.detour);
  // R3: a notice belongs to the passage, screen and sheet that raised it. Its scope is recorded when
@@ -428,11 +428,17 @@
  function cancelStart(){revokePlayback();cancel();dispatch({type:'PAUSE'});}
  // Branches follow the primaryLabel chain, so the handler does what the label says.
  function primaryAction(){
+  if(finished){reset();return;}
+  if(inTransition){navigate({type:'CONTINUE'},true);return;}
+  // Term phases are source content, independent of optional narration availability.
+  if(primaryLabel==='Continue'&&termPrompt){
+   if(automaticOff||!focal.descriptionAudio){cancel();termDefinition=activity.id;persist();}
+   else describe(focal.id,true);
+   return;
+  }
   if(executableMode&&!session.detour){executablePrimary();return;}
   const starts=!['Continue','Return','Begin again','Pause'].includes(primaryLabel);
   if(starts&&!isPlaying&&!playbackPending)authorizeVisual();
-  if(finished){reset();return;}
-  if(inTransition){navigate({type:'CONTINUE'},true);return;}
   if(automaticOff&&!session.detour){navigate({type:'CONTINUE'},true);return;}
   if(isPlaying||playbackPending){revokePlayback();audio?.pause();videoOwner.node?.pause();dispatch({type:'PAUSE'});return;}
   startAction();
@@ -658,7 +664,7 @@
    <div class="sheet-actions"><button class="quiet" onclick={()=>{reset();sheet=null;}}><RotateCcw size={16}/>Restart session</button><button class="quiet" onclick={exportSession}><Download size={16}/>Export test state</button></div>
   {:else if sheet==='resources'}
    <p class="sheet-intro">Explore without losing your place. Back returns to the held guide moment. Videos are optional companions.</p>
-   <div class="outline">{#each ['scripture','image','map','video','term'] as kind}<details><summary>{({scripture:'Scripture translations',image:'Images',map:'Maps',video:'Videos',term:'Word meanings'})[kind]}</summary>{#each Object.values(assets).filter(a=>a.kind===kind) as a}<button onclick={()=>{navigate({type:'DETOUR',assetId:a.id});sheet=null;}}>{a.kind==='scripture'?(a.sourceEvidence?.short||a.subtitle||a.title):(a.subtitle||a.title)}<ChevronRight size={18}/></button>{/each}</details>{/each}</div>
+   <div class="outline">{#each ['scripture','image','map','video','term'] as kind}<details><summary>{({scripture:'Scripture translations',image:'Images',map:'Maps',video:'Videos',term:'Word meanings'})[kind]}</summary>{#each Object.values(assets).filter(a=>a.kind===kind) as a}<button onclick={()=>{navigate({type:'DETOUR',assetId:a.id});sheet=null;}}>{a.kind==='scripture'?(a.sourceEvidence?.short||a.subtitle||a.title):a.kind==='term'&&selectedPack.language==='eng'&&a.sourceEvidence?.text?.sourceId?.startsWith('eng-')?a.title:(a.subtitle||a.title)}<ChevronRight size={18}/></button>{/each}</details>{/each}</div>
    <button class="quiet full" onclick={()=>sheet='example'}><Users size={19}/>Drama example</button>
   {:else if sheet==='example'}
    <p class="sheet-intro">Optional authored example from Embodying the Text. The source provides text here without recordings.</p>{#each examples as unit}<p class="reading-transcript">{unit.text}</p>{/each}
