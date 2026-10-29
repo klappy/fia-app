@@ -2864,6 +2864,62 @@
     {
       "path": "tests/worker-serving/fixtures/offline/eng.MRK-1-21-28.json",
       "sha256": "02c1c68e9a7d36268f6b61560254f355b57831083d90dd85430dde70dc1c7994"
+    },
+    {
+      "path": "server/fia/preparation/visual-decode.mjs",
+      "sha256": "ebd14e02db6a555b26cf78476bff7200f7da6757087cf7a465b5981c3ce0a96f"
+    },
+    {
+      "path": "server/fia/preparation/visual-publication.mjs",
+      "sha256": "fc3bf2d10110d6478d9500f1a3102ed71d8add027b3516dd4258c67c95eabc0f"
+    },
+    {
+      "path": "tests/preparation-executor/fixtures/visual/baseline-37x23.jpg",
+      "sha256": "dedfdd49b618bf0d4f0a4920a6af44d563aea2ebf4a647c802c821d53a6f6d9f"
+    },
+    {
+      "path": "tests/preparation-executor/fixtures/visual/gray-12x10.jpg",
+      "sha256": "ac3d36282a880bce37829fa1c109f0d5303515f59048ff1d48e8aa3512060be6"
+    },
+    {
+      "path": "tests/preparation-executor/fixtures/visual/interlaced-16x16.png",
+      "sha256": "0ced7f5cfd985dac4109464701b0da3f5f4bcebc61ae5b9c7ff4f7495a11d80d"
+    },
+    {
+      "path": "tests/preparation-executor/fixtures/visual/over-2mp-1500x1400.jpg",
+      "sha256": "14a6ed06eb3198d1cc4693353cce241e5fdde20f6a9296bf1c916c43def374ce"
+    },
+    {
+      "path": "tests/preparation-executor/fixtures/visual/palette-20x9.png",
+      "sha256": "6584640a9d1bb7d3938ec4aee9ea7e5967173ea8ebddeaa6a6a27b63297ebc75"
+    },
+    {
+      "path": "tests/preparation-executor/fixtures/visual/palette4bit-20x9.png",
+      "sha256": "2389159dda2490cf68781242ec5be5b578afa302208f7ce0fd5581780a667183"
+    },
+    {
+      "path": "tests/preparation-executor/fixtures/visual/progressive-40x30.jpg",
+      "sha256": "0edd3f153394ffa7aad4c3c7fa97c81183e507be2745bd234dac7311d8609aba"
+    },
+    {
+      "path": "tests/preparation-executor/fixtures/visual/rgb-31x17.png",
+      "sha256": "7e844dd90230a60be03d28c40bce5c178cac04de8edb7e370ec4de79dc27b0b6"
+    },
+    {
+      "path": "tests/preparation-executor/visual-decode.test.mjs",
+      "sha256": "d6c90fef4f7c690de31967315a09a443c0533df99c7b3ee984ff75b1db237b3c"
+    },
+    {
+      "path": "tests/worker-serving/generalized.test.mjs",
+      "sha256": "4b9d8145f6d026bc8017f48896d7ade662d0171292c39c49e84192513ea6ebeb"
+    },
+    {
+      "path": "tests/worker-serving/visual-decode.test.mjs",
+      "sha256": "08dedfc349b0ef5655aa683c3cb8fbb68da24cc0be4550e1bfb1bbdf04497b68"
+    },
+    {
+      "path": "tests/worker-serving/visual-route.test.mjs",
+      "sha256": "8b1b02463618f0b2ac0561e029bddb7181c2407b495441cce7a98766fc3efa1c"
     }
   ],
   "generatedFiles": [
