@@ -44,3 +44,15 @@ test('an identical generation is reused only after the stored row verifies; a co
  const key=`executable-generation:${packId}@${g}`,row=t.values.get(key);t.values.set(key,{...row,mediaManifest:{...row.mediaManifest,bytes:row.mediaManifest.bytes+1}});
  await assert.rejects(t.publish({expectedPublicationGeneration:g}),/publication-pin-invalid/);
 });
+
+// PR295/PR296 review N1 (OFFLINE L43: a newer build alone is not revocation): each row records the
+// bound-manifest builder that published it, and verification rebuilds with exactly that version. An
+// unknown or missing version is never guessed. (F7a2 adds the previous-builder regression once @2 exists.)
+test('a publication row records its bound-manifest builder; verification uses it and never guesses one',async()=>{
+ const {BOUND_MANIFEST_BUILDERS,CURRENT_BOUND_MANIFEST_BUILDER}=await import('../../server/fia/publication/publication-generation.mjs');
+ assert.ok(Object.isFrozen(BOUND_MANIFEST_BUILDERS)&&Object.hasOwn(BOUND_MANIFEST_BUILDERS,'fia-bound-manifest@1'));
+ const t=await harness();const a=await t.publish({});const g=a.execution.publication.generation,key=`executable-generation:${packId}@${g}`;
+ assert.equal(t.values.get(key).manifestBuilder,CURRENT_BOUND_MANIFEST_BUILDER);
+ for(const manifestBuilder of ['fia-bound-manifest@0',undefined]){const row=t.values.get(key);t.values.set(key,{...row,manifestBuilder});assert.equal((await t.overlay.readCatalog(packId,a.revision,g)).status,'unavailable',String(manifestBuilder));t.values.set(key,row);}
+ assert.equal((await t.overlay.readCatalog(packId,a.revision,g)).status,'ready');
+});

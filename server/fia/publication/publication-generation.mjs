@@ -42,6 +42,20 @@ export async function buildBoundManifest(base,{packId,executionRevision,baseRevi
  return {manifest,bytes,descriptor:jsonDescriptor(manifest.id,bytes,await sha256(bytes))};
 }
 
+// The bound-manifest builder is versioned inside each publication row (PR295 review N1; OFFLINE L43: a
+// newer build alone is not revocation). A row is rebuilt for verification with exactly the rules of the
+// builder version that published it; every earlier version stays here as a pure function.
+export const BOUND_MANIFEST_BUILDERS=Object.freeze({
+ // fia-bound-manifest@1 (F7a1): the base files and the identity fields, no native files.
+ 'fia-bound-manifest@1':(base,identity)=>buildBoundManifest(base,identity),
+});
+export const CURRENT_BOUND_MANIFEST_BUILDER='fia-bound-manifest@1';
+export function boundManifestFor(version,base,identity,inputs={}){
+ const build=Object.hasOwn(BOUND_MANIFEST_BUILDERS,version)?BOUND_MANIFEST_BUILDERS[version]:null;
+ need(build,'bound-manifest-builder-unknown');
+ return build(base,identity,inputs);
+}
+
 // generation = SHA256(UTF8(canonicalJSONString(preimage))) over the closed preimage (OFFLINE L25-L31).
 export async function publicationGeneration({packId,executionRevision,baseRevision,sourceRevision,baseManifest,mediaManifest,artifacts}){
  need(validDescriptor(baseManifest,/^base-offline:[a-f0-9]{64}$/)&&baseManifest.id===`base-offline:${baseManifest.sha256}`&&validDescriptor(mediaManifest)&&Array.isArray(artifacts)&&artifacts.length<=1024&&artifacts.every(a=>validDescriptor(a)),'generation-preimage-invalid');
