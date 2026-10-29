@@ -8,8 +8,10 @@ import {issueProducerReceipt,GUIDE_SOURCE_CLASS} from './producer-receipt.mjs';
 // descriptor. Nothing here comes from a request: the archive and bindings are the retained ones, and the producer is the job.
 //
 // Truthfulness: the retained archive pins FIATranslationGuide eb744452 while the publisher is at 96bb023. This composer never
-// re-pins or edits the descriptor, so in production a 96bb receipt is refused as descriptor-mismatch until the existing
-// source/version admission path resolves it. Not routed; a worker.mjs dispatch line is a later, sequenced change.
+// re-pins or edits the descriptor, so in production a 96bb receipt fails closed as descriptor-mismatch, never explicit. The
+// descriptor changes only when a Q14 version-aware refresh adopts a fully validated new snapshot atomically (that seam is not yet
+// built), or until then through the ordinary reviewed change to the retained archive, source-bindings.json and the release
+// closure (draft CONTRACT Q24). Not routed; a worker.mjs dispatch line is a later, sequenced change.
 const sha=x=>createHash('sha256').update(x).digest('hex');
 // archives: [{revision,packs}] (retained source-packs*.json.gz); sourceBindings: retained source-bindings.json;
 // producer: {demand(source), retainedGuideFile(source)} over the guide-fragment@1 job for that source's identity.
