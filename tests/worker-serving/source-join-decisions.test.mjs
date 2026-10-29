@@ -201,3 +201,12 @@ test('the reader never acquires: joinsFor calls only the read-only /fragment por
   assert.equal((await reader.joinsFor(packId)).state,'ready');assert.ok(t.asked.every(q=>Object.keys(q).sort().join()==='name,packId'));}
  finally{await rm(t.dir,{recursive:true,force:true});}
 });
+
+// Review 5701363820 N3: this build's joined execution recipe is the last released literal, so a constant bump cannot leave it unlisted.
+test('the last released execution recipe is this build\'s computed joined recipe',async()=>{
+ const {RELEASED_EXECUTION_RECIPES}=await import('../../server/fia/preparation/executable-presentation-runtime.mjs');
+ const {SOURCE_ACTION_RECIPE}=await import('../../server/fia/compiler/presentation/source-action-projector.mjs');
+ assert.equal(RELEASED_EXECUTION_RECIPES.at(-1),trustedExecutionRecipe(SOURCE_ACTION_RECIPE,{sourceJoins:true}));
+ assert.ok(RELEASED_EXECUTION_RECIPES.includes(trustedExecutionRecipe(SOURCE_ACTION_RECIPE)),'and the trusted build without the join');
+ assert.ok(Object.isFrozen(RELEASED_EXECUTION_RECIPES));
+});

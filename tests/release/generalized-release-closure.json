@@ -1541,7 +1541,7 @@
     },
     {
       "path": "server/faces/worker/BACKEND-CLOSURE.json",
-      "sha256": "612211fa2cf003668863cbf30dc1af6448675d414115bcdaf85ee7635d6845fc"
+      "sha256": "1582088fbe8f85a4cfc7bb5e36a3885f003d51b65e0c520b971bae231221744a"
     },
     {
       "path": "server/faces/worker/adapter.mjs",
@@ -1649,7 +1649,7 @@
     },
     {
       "path": "server/fia/preparation/executable-presentation-runtime.mjs",
-      "sha256": "c50500ed8a2ad306389b7268dd40f381838a7ffc3094abdcad5e1cdb1b290d29"
+      "sha256": "b8e1113417048ba2e7c5e2d24b647070458dc2bba1d325d8aa0f0c5b1799767f"
     },
     {
       "path": "server/fia/preparation/executable-presentation-service.mjs",
@@ -2895,15 +2895,15 @@
     },
     {
       "path": "server/fia/preparation/source-join-decisions.mjs",
-      "sha256": "329e0d5597e23d393977beb16cca6db2f1254d6895a78a61ee2d413b443d51ae"
+      "sha256": "8c101ac79e391e5071d56963bc0852f305e2a27c40a55f6a52a1725e24beeec6"
     },
     {
       "path": "tests/worker-serving/source-join-decisions.test.mjs",
-      "sha256": "ec98b9fa202be402020ec4f70e60ff0a73bfc4801c20c59dae64261674f9b730"
+      "sha256": "06ea867479df9f9740bf8e538b3fd6a927173975303c6d809e86d14e77b61e4f"
     },
     {
       "path": "tests/worker-serving/source-join-transition.test.mjs",
-      "sha256": "e3e08ce2461032634e53bc5fa2b1604dcb4706cf536b877051f072ca8e86d0b4"
+      "sha256": "1c49dcac833847caf4e43c01b48a24de048a2f03beeea910b8ce24833933d141"
     },
     {
       "path": "tests/worker-serving/source-join-acquisition.test.mjs",
@@ -2912,6 +2912,10 @@
     {
       "path": "tests/worker-serving/source-join-outcome.test.mjs",
       "sha256": "ffc95c93b5a5d8e9a173c583882a7bf05cfa884bc214de50137900ed7df230f6"
+    },
+    {
+      "path": "tests/worker-serving/source-join-race.test.mjs",
+      "sha256": "feeb74bba659b241a406ddbe56dbca75e41e931dc1437e21cbf06c767c008ddf"
     }
   ],
   "generatedFiles": [

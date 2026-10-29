@@ -1,3 +1,4 @@
+import {AsyncLocalStorage} from 'node:async_hooks';
 import {canonicalJSONString,sha256} from './contract.mjs';
 import {createCanonicalGuideRecords,descriptorOf} from './source-associations/composer.mjs';
 import {guideFragmentIdentity,guideFragmentObject,GUIDE_FRAGMENT_POLICY,GUIDE_FRAGMENT_JOB,GUIDE_UNSUPPORTED_REASONS} from './guide-fragment.mjs';
@@ -162,4 +163,17 @@ export function createGuideAcquisition({snapshot,fetchAsset,demandGuide,deadline
 export function createGuideDescriptorKey({snapshot,fetchAsset}){
  const records=createCanonicalGuideRecords({snapshot,fetchAsset});
  return async packId=>{try{const loaded=await records.guideRecordFor(packId);if(loaded.refused)return null;const d=descriptorOf(loaded.guide);return d?{fileSha256:d.fileSha256,revision:d.revision}:null;}catch{return null;}};
+}
+
+// Review 5701363820 N1: the acquisition outcome belongs to one explicit preparation, never to the pack. Each preparation runs in its
+// own scope; the acquisition, the join read and the publish of that preparation see only that scope's outcome, so a concurrent Open's
+// outcome can never be committed beside another Open's record.
+export function createPreparationOutcomes(){
+ const scope=new AsyncLocalStorage();
+ return Object.freeze({
+  run:fn=>scope.run({outcome:null},fn),
+  hold(outcome){const s=scope.getStore();if(s)s.outcome=outcome;},
+  joined(join){const s=scope.getStore();if(s?.outcome)s.outcome={...s.outcome,join};},
+  current(){return scope.getStore()?.outcome??null;},
+ });
 }
