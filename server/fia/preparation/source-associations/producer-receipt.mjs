@@ -1,14 +1,19 @@
 import {createHash} from 'node:crypto';
+import {canonicalJSONString} from '../contract.mjs';
+import {isVerifiedObservationRead} from '../executor/fresh-source-observation.mjs';
+import {GUIDE_FRAGMENT_POLICY} from '../guide-fragment.mjs';
 // Producer receipts: the only form raw publisher evidence may take in buildSourceIndex (Terry ANSWER-SOURCE-EXPLICIT-AUTHORITY,
 // cookbook 2771ded, Q1 and Q4). A receipt is a frozen object carrying a module-private brand. It is issued only from a
 // fresh-source-observation read() result (an observed, verified receipt for one class-A guide file) and that file's whole
 // retained bytes. The issuer hashes the bytes itself and extracts every fragment itself; the caller supplies no fragment or sha.
 // The index then checks the receipt against the descriptor that trusted composition builds from the retained compiled archive.
 //
-// Boundary: the issuer is for the trusted production composer, which reads the primitive on retained storage. That composer
-// does not exist yet: it waits on the class-A guide-text source route and admission (Q2 clause and Q3 route, Otto seat). Until
-// then no production module imports issueProducerReceipt, so no explicit result is reachable in production. Isolated tests
-// use it through a test-only fake producer (Q14), and a test enforces that import boundary.
+// Boundary: the issuer is used only by the trusted composer (source-associations/composer.mjs), which reads the guide-fragment@1
+// producer on retained storage; a test enforces that no other production module names it. The composer is not routed or wired:
+// that waits on ticket admission, the Worker dispatch and a production constructor that loads pinned archive bytes (Q24 open
+// items), so no explicit result is reachable in production yet. Isolated tests use a test-only fake producer (Q14).
+// The read must also be under the guide-fragment@1 recipe: its policy revision (which carries the acquisition-profile hash) and
+// the JSON content kind, so a read under another policy or port is refused.
 const BRAND=new WeakSet(),sha=x=>createHash('sha256').update(x).digest('hex');
 // Class-A source rule (Aquifer, ALPHA-CHARTER line 40): owner and URL shape only. The collection, revision, path and file sha
 // are not listed here; each must equal the archive descriptor of the pack it serves.
@@ -34,17 +39,22 @@ export function extractGuideFragments(bytes,{path}){
  }
  return {packs,unmapped};
 }
-// read: the primitive's read() result {state:'observed', observationSha256, observation}; bytes: the retained original's bytes.
+// read: a genuine createFreshSourceObservations read() result; bytes: the retained original's whole bytes. A shaped look-alike is
+// refused: the read must carry the primitive's verified-read mark, contentVerified, the observation schema, an operationId that is
+// the hash of its binding and an observationSha256 that is the hash of the canonical receipt (as the primitive itself checks).
 export function issueProducerReceipt(read,bytes){
  const o=read?.observation,src=o?.binding?.source;
  if(read?.state!=='observed'||!o||!src)throw Error('producer-receipt-unobserved');
+ if(!isVerifiedObservationRead(read)||read.contentVerified!==true||o.schema!=='fia-source-observation@1'||o.operationId!==sha(canonicalJSONString(o.binding))||read.observationSha256!==sha(canonicalJSONString(o)))throw Error('producer-receipt-unverified-read');
+ if(o.binding.policy?.revision!==GUIDE_FRAGMENT_POLICY.revision||o.binding.content!=='json')throw Error('producer-receipt-recipe');
  if(src.sourceVersionKind!=='publisher-version'||src.publisherVersion!==src.sourceVersion||!/^[a-f0-9]{40}$/.test(src.sourceVersion??''))throw Error('producer-receipt-version');
  const m=/^https:\/\/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/([a-f0-9]{40})\/(.+)$/.exec(src.url??'');
  if(!m||m[1]!==GUIDE_SOURCE_CLASS.owner||m[3]!==src.sourceVersion||!GUIDE_SOURCE_CLASS.path.test(m[4]))throw Error('producer-receipt-class');
- if(o.contentType!=='application/json')throw Error('producer-receipt-media');
+ // The class-A host serves its JSON as text/plain (Terry ANSWER-Q24-PUBLISHER-MIME); the observed type is evidence, recorded, never authority.
+ if(o.contentType!=='application/json'&&o.contentType!=='text/plain')throw Error('producer-receipt-media');
  if(!(bytes instanceof Uint8Array)||bytes.length!==o.bytes||sha(bytes)!==o.sha256)throw Error('producer-receipt-bytes');
  const {packs}=extractGuideFragments(bytes,{path:m[4]});
- const receipt=Object.freeze({schema:'fia-guide-producer-receipt@1',owner:m[1],collection:m[2],revision:src.sourceVersion,path:m[4],fileSha256:o.sha256,bytes:o.bytes,observationSha256:read.observationSha256??null,packs:Object.freeze(packs)});
+ const receipt=Object.freeze({schema:'fia-guide-producer-receipt@1',owner:m[1],collection:m[2],revision:src.sourceVersion,path:m[4],fileSha256:o.sha256,bytes:o.bytes,contentType:o.contentType,observationSha256:read.observationSha256??null,packs:Object.freeze(packs)});
  BRAND.add(receipt);return receipt;
 }
 export function isProducerReceipt(x){return typeof x==='object'&&x!==null&&BRAND.has(x);}
