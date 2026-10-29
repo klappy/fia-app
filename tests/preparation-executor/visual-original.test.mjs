@@ -87,7 +87,7 @@ for(const [name,args,reason] of [
 test('a failed fetch is interrupted, not a final verdict, and stores nothing',async t=>{const mf=await fixture(t),out=await call(mf,{fail:true});assert.equal(out.result.state,'unavailable');assert.equal(out.result.reason,'interrupted');assert.equal(out.result.final,false);assert.equal(out.result.custody,'none');assert.ok(!out.objects.some(k=>k.startsWith('originals/visual/sha256/')));});
 test('an ineligible demand writes nothing and does not poison the shared job for a later eligible demand',async t=>{
  const mf=await fixture(t),refused=await call(mf,{ineligible:true});assert.equal(refused.result.reason,'visual-ineligible');assert.equal(refused.result.final,false);assert.equal(refused.gets,0);assert.deepEqual(refused.objects,[]);assert.deepEqual(refused.rows,[]);
- const ok=await call(mf);assert.equal(ok.gets,1,JSON.stringify(ok));assert.equal(ok.result.custody,'retained');assert.equal(ok.result.reason,'decoder-unavailable');
+ const ok=await call(mf);assert.equal(ok.gets,1,JSON.stringify(ok));assert.equal(ok.result.custody,'retained');assert.equal(ok.result.state,'ready');assert.equal(ok.result.decode.width,2);
 });
 test('query-string source is refused before any fetch',async t=>{const mf=await fixture(t),out=await call(mf,{url:'https://publisher.invalid/c4.png?sig=1'});assert.match(out.error,/visual-source/);assert.equal(out.gets,0);});
 test('audio default is unchanged: same keys, no contentType or content binding',async()=>{
