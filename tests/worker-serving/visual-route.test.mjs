@@ -92,6 +92,23 @@ test('English S02-U008 end to end in the real Worker: admitted demand, original,
  assert.equal(counts.other,0,'no other external work');
 });
 
+test('published() is a pure read: a decoded-ready but unpublished original is visual-not-published, and nothing is written',async t=>{
+ const {mf,dir,counts}=await runtime();t.after(async()=>{await mf.dispose();await rm(dir,{recursive:true,force:true});});
+ const a=VISUAL_FIRST_PROOF.find(e=>e.assetId==='a1400'),d=await door(mf,a.source),executionRevision='a'.repeat(64);
+ // Decode-ready through the object's own demand (no publication: only the port's demand publishes).
+ const ready=await (await d.stub.fetch('https://visual-original.internal/demand',{method:'POST',body:JSON.stringify({packId:a.packId,baseRevision:a.baseRevision,assetId:a.assetId,retry:false})})).json();assert.equal(ready.state,'ready');
+ const bucket=await mf.getR2Bucket('FIA_ORIGINALS'),objects=async()=>(await bucket.list()).objects.map(o=>o.key).sort();
+ const rowsBefore=JSON.stringify(await d.dump()),objectsBefore=JSON.stringify(await objects()),fetchesBefore=counts.publisher.a1400;
+ const read=await d.stub.fetch('https://visual-original.internal/published?'+new URLSearchParams({packId:a.packId,baseRevision:a.baseRevision,assetId:a.assetId,executionRevision}));
+ assert.equal(read.status,404);assert.equal((await read.json()).reason,'visual-not-published');
+ assert.equal(JSON.stringify(await d.dump()),rowsBefore,'no Durable Object row written');assert.equal(JSON.stringify(await objects()),objectsBefore,'no R2 object written');assert.equal(counts.publisher.a1400,fetchesBefore,'no fetch');
+ assert.ok(!Object.keys(await d.dump()).some(k=>k.startsWith('visual-publication:')));
+ // After a publish (the demand path), the same pure read returns the descriptor, still writing nothing.
+ const pub=await (await d.stub.fetch('https://visual-original.internal/publish',{method:'POST',body:JSON.stringify({packId:a.packId,baseRevision:a.baseRevision,assetId:a.assetId,executionRevision})})).json();assert.equal(pub.status,'ready');
+ const rowsAfterPublish=JSON.stringify(await d.dump());
+ const again=await (await d.stub.fetch('https://visual-original.internal/published?'+new URLSearchParams({packId:a.packId,baseRevision:a.baseRevision,assetId:a.assetId,executionRevision}))).json();
+ assert.equal(again.status,'ready');assert.deepEqual(again.manifestEntry,pub.manifestEntry);assert.equal(JSON.stringify(await d.dump()),rowsAfterPublish);
+});
 test('Retry is accepted by the port and floored per source; an older object answers typed and non-final',async t=>{
  const {mf,dir,counts}=await runtime();t.after(async()=>{await mf.dispose();await rm(dir,{recursive:true,force:true});});
  const a=VISUAL_FIRST_PROOF.find(e=>e.assetId==='a1400'),d=await door(mf,a.source);

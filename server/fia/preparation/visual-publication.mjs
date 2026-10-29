@@ -49,6 +49,7 @@ export async function serveVisualOriginalObject(request,ctx,env,{now=()=>Date.no
   }
   if(op==='read'&&request.method==='GET')return json(200,await job.read());
   if(op==='publish'&&request.method==='POST')return publish(ctx,entry,job,args);
+  if(op==='published'&&request.method==='GET')return readPublication(ctx,entry,args);
   if(op==='serve'&&['GET','HEAD'].includes(request.method))return serve(ctx,env,entry,job,args,request);
  }catch(error){return refusal(503,'interrupted',{subReason:error?.message??null,final:false});}
  return refusal(405,'method-not-allowed');
@@ -65,6 +66,16 @@ async function publish(ctx,entry,job,args){
  // A consumer publishes one original, immutably; the same publication again is idempotent, a different one is refused.
  if(canonicalJSONString(kept)!==canonicalJSONString(row))return json(409,{status:'refused',reason:'visual-publication-conflict'});
  return json(200,{status:'ready',ready:{path:row.path,sha256:o.sha256},manifestEntry:{path:row.path,group:'image',assetId:entry.assetId,kind:entry.kind,sha256:o.sha256,bytes:o.bytes,mime:o.contentType,width:d.width,height:d.height},publication:row});
+}
+// A pure read of an existing publication row: no write, no fetch, no decode (reads, status and Save never acquire or decode).
+async function readPublication(ctx,entry,args){
+ const id=await visualConsumerIdentity({packId:entry.packId,baseRevision:entry.baseRevision,executionRevision:args.executionRevision,assetId:entry.assetId,kind:entry.kind}).catch(()=>null);
+ if(!id)return refusal(400,'invalid-request');
+ const row=await ctx.storage.get(ROW+id.consumerSha256);
+ if(!row||row.schema!==VISUAL_PUBLICATION_SCHEMA||row.consumerSha256!==id.consumerSha256)return refusal(404,'visual-not-published');
+ if(row.recipeSha256!==VISUAL_ORIGINAL_RECIPE_SHA256)return refusal(410,'visual-publication-stale');
+ const o=row.original;
+ return json(200,{status:'ready',ready:{path:row.path,sha256:o.sha256},manifestEntry:{path:row.path,group:'image',assetId:entry.assetId,kind:entry.kind,sha256:o.sha256,bytes:o.bytes,mime:o.mime,width:o.width,height:o.height}});
 }
 async function serve(ctx,env,entry,job,args,request){
  if(!HEX.test(args.consumer??'')||!HEX.test(args.original??''))return refusal(400,'invalid-request');
@@ -100,6 +111,7 @@ async function internal(env,entry,path,init){
 const post=body=>({method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
 export async function demandVisual(env,{packId,baseRevision,assetId,retry=false}){const entry=firstProofEntry({packId,baseRevision,assetId});if(!entry)return {status:'unavailable',reason:'visual-ineligible',final:false};return internal(env,entry,'/demand',post({packId,baseRevision,assetId,retry:retry===true}));}
 export async function readVisual(env,{packId,baseRevision,assetId}){const entry=firstProofEntry({packId,baseRevision,assetId});if(!entry)return {status:'unavailable',reason:'visual-ineligible',final:false};return internal(env,entry,'/read?'+new URLSearchParams({packId,baseRevision,assetId}),{method:'GET'});}
+export async function readVisualPublication(env,{packId,baseRevision,executionRevision,assetId}){const entry=firstProofEntry({packId,baseRevision,assetId});if(!entry)return {status:'unavailable',reason:'visual-ineligible',final:false};return internal(env,entry,'/published?'+new URLSearchParams({packId,baseRevision,assetId,executionRevision}),{method:'GET'});}
 export async function publishVisual(env,{packId,baseRevision,executionRevision,assetId}){const entry=firstProofEntry({packId,baseRevision,assetId});if(!entry)return {status:'unavailable',reason:'visual-ineligible',final:false};return internal(env,entry,'/publish',post({packId,baseRevision,assetId,executionRevision}));}
 // Public read route: GET/HEAD /v1/original-visuals/<sourceIdentitySha>/<consumerSha>/<originalSha>, nothing else.
 const ROUTE=/^\/v1\/original-visuals\/([a-f0-9]{64})\/([a-f0-9]{64})\/([a-f0-9]{64})$/;
@@ -120,7 +132,8 @@ export async function serveOriginalVisual(request,env){
 // ---- The capabilities.visuals port for F5a (Auggie's executable operations call demand at most once per admitted demand).
 // demand: {packId,baseRevision,sourceRevision,executionRevision,assetId,kind,retry} -> the visual-original@1 outcome shape.
 // When the original is decoded ready, the port also publishes it for that exact executionRevision (the same fence F5a checks
-// before and after), and returns the publication beside the outcome. published: the read side for the visualResources declaration.
+// before and after), and returns the publication beside the outcome. published: the read side for the visualResources declaration,
+// a pure read of an existing publication row (no write, no fetch, no decode); publishing happens only in demand.
 const DEMAND_KEYS='assetId,baseRevision,executionRevision,kind,packId,retry,sourceRevision';
 export function createVisualsPort(env){
  async function demand(request){
@@ -132,9 +145,8 @@ export function createVisualsPort(env){
   return {...outcome,publication:publication?.status==='ready'?{ready:publication.ready,manifestEntry:publication.manifestEntry}:null};
  }
  async function published({packId,baseRevision,executionRevision,assetId}){
-  const entry=firstProofEntry({packId,baseRevision,assetId});if(!entry)return null;
-  const state=await readVisual(env,{packId,baseRevision,assetId});if(state?.state!=='ready')return null;
-  const publication=await publishVisual(env,{packId,baseRevision,executionRevision,assetId});
+  if(!firstProofEntry({packId,baseRevision,assetId})||!HEX.test(executionRevision??''))return null;
+  const publication=await readVisualPublication(env,{packId,baseRevision,executionRevision,assetId});
   return publication?.status==='ready'?{ready:publication.ready,manifestEntry:publication.manifestEntry}:null;
  }
  return Object.freeze({demand,published});
