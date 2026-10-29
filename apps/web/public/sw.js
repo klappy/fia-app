@@ -87,8 +87,8 @@ async function serverJSON(response,file,record){
 const revokedSnapshotKey=(packId,revision)=>packKey(packId,'revoked-server:'+revision);
 const refusedApprovedKey=(packId,revision,dependency)=>packKey(packId,'refused-approved:'+revision+':'+dependency.sha256);
 async function invalidateServerSnapshot(packId){jobs.get(packId)?.abort();const key=packKey(packId,'active'),active=await read(key);if(active?.serverSnapshot){await write(revokedSnapshotKey(packId,active.serverSnapshot.record.revision),{revoked:true});active.serverSnapshot.invalid=true;await write(key,active);}}
-async function snapshotComplete(active){
- const snapshot=active?.serverSnapshot;if(!snapshot||snapshot.invalid)return false;
+async function snapshotComplete(active,{authorityOnly=false}={}){
+ const snapshot=active?.serverSnapshot;if(!snapshot||(!authorityOnly&&snapshot.invalid))return false;
  try{serverRecord(snapshot.record,active.packId);const expected=serverFiles(snapshot.record);if(JSON.stringify(expected)!==JSON.stringify(snapshot.files))return false;const cache=await caches.open(active.cache);for(const f of expected)await serverJSON(await cache.match(f.path),f,snapshot.record);return true;}catch{return false;}
 }
 async function savedServerSnapshot(packId,revision){const active=await read(packKey(packId,'active'));if(revision&&active?.serverSnapshot?.record.revision!==revision)return null;return await snapshotComplete(active)?active:null;}
@@ -176,8 +176,9 @@ async function approvedAudioAuthority(request,clientId){
  if(!route||url.search||request.headers.has('range')||!clientId)return null;
  try{
   const pin=await read('client-'+clientId),packId=pin?.packId;if(!validPack(packId)||packId===legacy)return null;
-  const active=await read(packKey(packId,'active')),record=active?.serverSnapshot?.record;
-  if(!record||pin.serverSnapshot?.invalid||(pin.serverSnapshot?.record.revision||pin.revision)!==record.revision||await read(revokedSnapshotKey(packId,record.revision))||!await snapshotComplete(active))return null;
+  const current=await read(packKey(packId,'active')),active=pin.serverSnapshot&&!(current?.cache===pin.cache&&current.serverSnapshot?.record.revision===pin.serverSnapshot.record.revision)?pin:current,record=active?.serverSnapshot?.record;
+  // Refusals authenticate the pinned binding independently of offline eligibility.
+  if(!record||(pin.serverSnapshot?.record.revision||pin.revision)!==record.revision||!await snapshotComplete(active,{authorityOnly:true}))return null;
   const manifest=validate(active.manifest);if(active.packId!==packId||manifest.packId!==packId||record.execution?.mediaIdentity?.packId!==packId||record.execution.mediaIdentity.revision!==manifest.presentationRevision)return null;
   const dependency=record.execution.artifacts.find(f=>f.id==='approved-audio:'+route[1]);if(!dependency)return null;
   const cache=await caches.open(active.cache),presentationResponse=await cache.match(artifactPath(record.revision));await serverJSON(presentationResponse,serverFiles(record)[0],record);const presentation=await presentationResponse.json();
@@ -188,10 +189,19 @@ async function approvedAudioAuthority(request,clientId){
  }catch{return null;}
 }
 async function approvedContextCurrent(context){
- if(!context)return false;const pin=await read('client-'+context.clientId),current=await read(packKey(context.packId,'active'));
+ if(!context)return false;const pin=await read('client-'+context.clientId);
+ const active=pin?.packId&&await read(packKey(pin.packId,'active')),current=pin?.serverSnapshot&&!(active?.cache===pin.cache&&active.serverSnapshot?.record.revision===pin.serverSnapshot.record.revision)?pin:active;
  return pin?.packId===context.packId&&!pin.serverSnapshot?.invalid&&(pin.serverSnapshot?.record.revision||pin.revision)===context.record.revision&&!!current&&current.cache===context.active.cache&&current.serverSnapshot?.record.revision===context.record.revision&&!current.serverSnapshot.invalid&&!await read(revokedSnapshotKey(context.packId,context.record.revision));
 }
-async function retireApprovedContext(context){if(await approvedContextCurrent(context)){await write(refusedApprovedKey(context.packId,context.record.revision,context.dependency),{refused:true});await invalidateServerSnapshot(context.packId);}}
+async function retireApprovedContext(context){
+ if(!context||!await snapshotComplete(context.active,{authorityOnly:true}))return;
+ // Persist authenticated refusals even after a client moves or another binding
+ // invalidates this revision. Do not invalidate a different active revision.
+ await write(refusedApprovedKey(context.packId,context.record.revision,context.dependency),{refused:true});
+ await write(revokedSnapshotKey(context.packId,context.record.revision),{revoked:true});
+ const active=await read(packKey(context.packId,'active'));
+ if(active?.cache===context.active.cache&&active.serverSnapshot?.record.revision===context.record.revision)await invalidateServerSnapshot(context.packId);
+}
 async function historicalApprovedAudio(context,answer){
  if(!context?.file||!await approvedContextCurrent(context)||await read(refusedApprovedKey(context.packId,context.record.revision,context.dependency))||!await complete(context.active))return answer||new Response('This approved recording is not saved for this presentation.',{status:503});
  const response=await context.cache.match(context.file.path);if(!response?.ok||response.headers.get('Content-Type')!==context.file.mime)return answer||new Response('This saved recording could not be verified.',{status:503});
@@ -203,7 +213,7 @@ async function approvedAudioRead(request,clientId){
  const context=await approvedAudioAuthority(request,clientId);let response;
  try{response=await fetch(request,{cache:'no-store',redirect:'error'});}catch(error){if(error?.name==='TypeError'||error?.name==='AbortError')return historicalApprovedAudio(context);await retireApprovedContext(context);return Response.error();}
  if([408,429,500,502,503,504].includes(response.status))return historicalApprovedAudio(context,response);
- if(context&&!await verifiedApprovedResponse(response,context.delivery))await retireApprovedContext(context);
+ if(context){try{if(!await verifiedApprovedResponse(response,context.delivery))await retireApprovedContext(context);}catch(error){if(error?.name==='TypeError'||error?.name==='AbortError')return historicalApprovedAudio(context);await retireApprovedContext(context);return Response.error();}}
  return response;
 }
 
@@ -375,7 +385,7 @@ async function start(selection,port,packId=legacy,sizes={},revision){
   if(!await complete(pending))throw new Error('Storage changed before verification finished. Retry the download.');
   if(controller.signal.aborted)throw new Error('Download authority changed before activation.');
   // Single metadata write is the commit point. An interrupted update keeps active intact.
-  await write(packKey(packId,'active'),pending);for(const key of verifiedRefusals){if(controller.signal.aborted)break;await(await caches.open(META)).delete('/'+key);}if(serverSnapshot&&!controller.signal.aborted)await(await caches.open(META)).delete('/'+revokedSnapshotKey(packId,serverSnapshot.record.revision));if(controller.signal.aborted){await invalidateServerSnapshot(packId);throw new Error('Download authority changed during activation.');}await(await caches.open(META)).delete('/'+packKey(packId,'pending'));
+  await write(packKey(packId,'active'),pending);for(const key of verifiedRefusals){if(controller.signal.aborted)break;await(await caches.open(META)).delete('/'+key);}if(serverSnapshot&&!controller.signal.aborted)await(await caches.open(META)).delete('/'+revokedSnapshotKey(packId,serverSnapshot.record.revision));await(await caches.open(META)).delete('/'+packKey(packId,'pending'));if(controller.signal.aborted){for(const key of verifiedRefusals)await write(key,{refused:true});await invalidateServerSnapshot(packId);throw new Error('Download authority changed during activation.');}
   // Keep the prior revision for already-open clients. Removal clears every revision.
   // Do not switch an open page's media beneath its loaded text and alignment.
   return {saved:true,selection};
