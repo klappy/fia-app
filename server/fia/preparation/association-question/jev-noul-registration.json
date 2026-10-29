@@ -1,0 +1,23 @@
+{
+  "schema": "fia-association-noul-registration@1",
+  "questionSet": "fia-association-noul-questions@1",
+  "contract": "fia-association-noul@1",
+  "status": "registered-not-funded",
+  "authorizedCalls": 0,
+  "route": {
+    "documentedWire": "AI.run('typesafe/jev', {state, questions}) with named noul questions (server/fia/preparation/jev/adapter.mjs L64-68, L127, L138-147)",
+    "pilotConnectorRoute": "CF-Extras POST /accounts/{id}/ai/run, body {model, input: {state, questions}} (scripts/jev-cue-role-pilot/providers/connector-snippet.js); observed jev-1.13.0 on 2026-10-06 in the model field only",
+    "currentStatus": "unverified"
+  },
+  "limits": {"maxVisualCandidates": 15, "maxQuestions": 31, "maxStateBytes": 8192, "maxResponseBytes": 16384, "timeoutMs": 10000, "callsPerCase": 1, "retries": 0},
+  "budget": {
+    "unit": "one call answers one case",
+    "heldoutPassSemanticResidue": {"eng": 4, "spa": 4, "total": 8},
+    "tuningPassSemanticResidue": {"eng": 8, "spa": 2, "total": 10},
+    "exactSourceInlineNotSent": {"spa": 6},
+    "splitSource": "PR289 scripts/association-eval/split.json at e67bb5c",
+    "ceiling": "authorizedCalls; a live transport stops at the ceiling and never retries"
+  },
+  "entitlement": "none recorded; a live call needs a verified execution entitlement supplied by trusted composition",
+  "doc": "server/fia/preparation/association-question/JEV-NOUL-REGISTRATION.md"
+}
