@@ -1,0 +1,18 @@
+{
+ "schema": "fia-raw-publisher-fragment-fixture@1",
+ "note": "Test data only. One paragraph extracted from verified public publisher bytes; nothing else from the file is committed.",
+ "packId": "spa.LUK-1-1-4",
+ "provenance": {
+  "repo": "BibleAquifer/FIATranslationGuide",
+  "revision": "96bb023ab1852ab8bdc3a469fcc820e9f9ea1e30",
+  "path": "spa/json/42.content.json",
+  "fileSha256": "6d6713a2bfb846d4b7275a9f2c2a76f59e3963fcfbdadc5acf2d5374f789811d",
+  "articleContentId": "spa-luk-p1-v1.1",
+  "articleVersion": "1.0.4",
+  "jsonPath": "$[0].content",
+  "paragraphIndex": 35,
+  "fragmentSha256": "09e8bd748e80c9beb4443193e92cd5cf6bc87a30e88431e09bd50a77009b6e4d",
+  "extraction": "git fetch --depth 1 of the revision; git show <revision>:<path>; verified sha256 of the whole file; parsed JSON; selected the article whose associations.passage is 42001001-42001004; split .content after each </p> (lookbehind, no bytes dropped); took the 0-based paragraph index above, the only paragraph containing data-content-id=spa-t55-v1; sha256 of that exact UTF-8 string"
+ },
+ "fragment": "<p>Lucas cuenta su historia usando los relatos de &quot;<b>testigos oculares y ministros de la palabra</b>&quot;. Esto significa que habló con la gente que estaba con Jesús, los seguidores más cercanos que estaban con él desde <data class=\"resource-ref\" data-content-id=\"spa-t55-v1\" data-resource-code=\"FIAKeyTerms\">Galilea</data> hasta que Jesús se les apareció después de su resurrección.</p>"
+}
