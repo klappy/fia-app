@@ -35,7 +35,8 @@ beforeEach(async()=>{
  vi.spyOn(libraryAdapter,'select').mockImplementation(async()=>({descriptor:{...descriptor,visualResources:declared},presentation}));vi.spyOn(libraryAdapter,'activate').mockResolvedValue({selected:true});vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({files:[],savedFiles:[],deliveryRevision:null});
  let serial=0;URL.createObjectURL=vi.fn(()=>`blob:visual-${++serial}`);URL.revokeObjectURL=vi.fn();
 });
-afterEach(()=>{delete document.modelContext;cleanup();vi.restoreAllMocks();vi.unstubAllGlobals();vi.clearAllMocks();localStorage.clear();});
+// Every spec leaves the browser online, even when it fails mid-way (review 5699134354 N2): an offline spec never leaks into the next.
+afterEach(()=>{delete navigator.onLine;window.dispatchEvent(new Event('online'));delete document.modelContext;cleanup();vi.restoreAllMocks();vi.unstubAllGlobals();vi.clearAllMocks();localStorage.clear();});
 async function mount(){render(App);await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toBe(presentation.activities[0].prompt));await waitFor(()=>expect(document.querySelector('.guide-primary').hasAttribute('aria-busy')).toBe(false));}
 // The session's own read tool names the current activity; a visual step's heading may be the section's.
 const current=async()=>(await tools.get('fia_read_session').execute()).activityId;
@@ -120,4 +121,30 @@ it('an automatic advance onto a preparable step sends no visual demand',async()=
  await step(A);await new Promise(r=>setTimeout(r,100));
  expect(posts).toEqual([],'the automatic advance is not a deliberate action');
  await fireEvent.click(await screen.findByRole('button',{name:'Try again'}));await waitFor(()=>expect(posts).toEqual(['a1400']));
+});
+
+// PR305 review 5699134354 N1 (SOURCE-TO-APP L126): a detour video's natural end returns to the guide on its own; that return is
+// automatic, so it never authorizes a visual demand. The held step is preparable and its first ask has failed; only Try again asks.
+it('a detour video ending returns to a preparable step without a visual demand',async()=>{
+ answers.a1400=()=>record([preparable('a1400','image'),preparable('c4','map')]);
+ presentation.assets.a19={...presentation.assets.a19,src:'/media/a19.mp4'};
+ // The detour video is a Saved file, so the stage renders it (no delivery needed).
+ const video19={path:'/media/a19.mp4',group:'video',bytes:3,sha256:h('d'),mime:'video/mp4'};
+ libraryAdapter.downloadStatus.mockResolvedValue({saved:true,active:{selection:'all',manifest:{presentationRevision:rev,files:[video19]},files:[video19]}});
+ await mount();await toStart();await next();await step(A);await waitFor(()=>expect(posts).toEqual(['a1400']));
+ await tools.get('fia_present_resource').execute({assetId:'a19'});
+ const video=await waitFor(()=>{const v=document.querySelector('video');expect(v).toBeTruthy();return v;});
+ await fireEvent.ended(video);await step(A);await waitFor(async()=>expect((await tools.get('fia_read_session').execute()).detour??null).toBeNull());
+ await new Promise(r=>setTimeout(r,100));
+ expect(posts).toEqual(['a1400'],'the automatic return is not a deliberate action');
+ await fireEvent.click(await screen.findByRole('button',{name:'Try again'}));await waitFor(()=>expect(posts).toEqual(['a1400','a1400']));
+});
+
+// PR305 review 5699134354 N2: a swipe forward asks exactly once, as Continue, Back and Try again do.
+const touch=(target,type,x,y)=>{const e=new Event(type,{bubbles:true});Object.defineProperties(e,{touches:{value:type==='touchend'?[]:[{clientX:x,clientY:y}]},changedTouches:{value:[{clientX:x,clientY:y}]}});target.dispatchEvent(e);};
+it('a swipe forward onto a preparable step asks exactly once',async()=>{
+ await mount();await toStart();expect(posts).toEqual([]);
+ const scene=document.querySelector('.scene');touch(scene,'touchstart',700,350);touch(scene,'touchmove',500,350);touch(scene,'touchend',500,350);
+ await step(A);await shown(presentation.assets.a1400.title);await new Promise(r=>setTimeout(r,50));
+ expect(posts).toEqual(['a1400']);
 });
