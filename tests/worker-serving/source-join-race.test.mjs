@@ -16,7 +16,7 @@ import {buildSourceIndex,associatePack,SOURCE_ASSOCIATION_RECIPE} from '../../se
 import {readRetainedArchives} from '../../server/fia/preparation/source-associations/retained.mjs';
 // Review 5701363820 N1: an acquisition outcome belongs to its own preparation, never to the pack. Two concurrent explicit Opens of one
 // pack are different jobs (the job id carries the resolved context). A test-only resolveBindings gate holds each right after it
-// composes: B (a non-final miss, no join) and A (retained, its join read). B publishes first, then A. B's base record must not carry
+// composes: B (a non-final miss, no join) and A (retained, its join read). B publishes first, then A, in turn. B's base record must not carry
 // A's settled outcome, and A's joined record must carry its own. FIXTURE: a door answers /demand and /fragment; nothing is fetched.
 const require=createRequire(resolve(process.env.FIA_WORKER_DEPENDENCIES||'package.json')),{build}=require('esbuild'),{Miniflare,convertV4MiniflareOptions}=require('miniflare');
 const UNIT='S03-U017',origin='https://dev.fiaguide.app',publicRoot='apps/web/public',PACK='eng.MRK-4-35-41',ROOT='fia-executable-presentation-authority@1';
@@ -63,13 +63,15 @@ export default worker;`;
   const current=await read('/v1/packs/'+PACK),demand=current.body.preparationDemand;assert.ok(demand);
   const post=()=>read('/v1/presentation-preparations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(demand)});
   const ns=await mf.getDurableObjectNamespace('FIA_PREPARATION_JOBS'),root=ns.get(ns.idFromName(ROOT)),release=who=>root.fetch('https://race.test/release/'+who),outcomes=async()=>(await root.fetch('https://race.test/outcomes')).json();
-  // B: a non-final miss, composed without a join, held. A: retained, its join read, composed, held. B publishes first, then A.
-  const B=post();await heldOf('B').p;const A=post();await heldOf('A').p;
+  // B: a non-final miss, composed without a join, held. A is posted while B is held: explicit preparations of one pack take turns,
+  // so A must not compose (nor acquire) until B has published. Then A: retained, its join read, composed, held, published.
+  const B=post();await heldOf('B').p;const A=post();
+  await new Promise(r=>setTimeout(r,500));assert.ok(!log.includes('A held after composing'),'A waits for B\'s turn: '+log.join(' | '));
   await release('B');const Bdone=await B;log.push(`B ${Bdone.body.status} ${Bdone.body.record?.revision}`);
   const afterB=await outcomes(),bOutcome=afterB[`source-join-outcome:${PACK}@${Bdone.body.record.revision}`]??afterB[`source-join-outcome:${PACK}@${Bdone.body.record.execution?.baseRevision}`]??null;
   log.push('outcome beside B: '+JSON.stringify(bOutcome&&{state:bOutcome.state,reason:bOutcome.reason??null,settled:bOutcome.settled??null,join:bOutcome.join?.state??null}));
   const currentB=await read('/v1/packs/'+PACK);log.push(`current after B: ${currentB.body.revision} execution:${!!currentB.body.execution} demand:${!!currentB.body.preparationDemand}`);
-  await release('A');const Adone=await A;log.push(`A ${Adone.body.status} ${Adone.body.record?.revision} ${Adone.body.reason??''}`);
+  await heldOf('A').p;await release('A');const Adone=await A;log.push(`A ${Adone.body.status} ${Adone.body.record?.revision} ${Adone.body.reason??''}`);
   assert.notEqual(Bdone.body.record.revision,Adone.body.record?.revision,'two different jobs (no coalescing)');
   const after={body:(await read('/v1/packs/'+PACK)).body};log.push(`current after A: ${after.body.revision} execution:${!!after.body.execution} demand:${!!after.body.preparationDemand}`);
   assert.deepEqual([bOutcome?.state,bOutcome?.settled],['unavailable',false],'beside B\'s record: B\'s own non-final outcome, never A\'s');
