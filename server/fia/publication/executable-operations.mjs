@@ -60,7 +60,8 @@ export function createExecutableOperations({reads,service,publication,storage,vi
   const entry=(record.execution.visualResources??[]).find(e=>e.assetId===args.visualDemand.assetId&&e.kind===args.visualDemand.kind);
   if(!entry)return {refusal:envelope('blocked',null,'execution-admission-refused')};
   if(entry.status==='unavailable')return {refusal:envelope('unavailable',null,entry.reason)};
-  if(entry.status==='ready')return {refusal:envelope('ready',hash(record.execution.provenance?.jobId)?record.execution.provenance.jobId:null,null,record)};
+  // An already ready asset answers ready only to a demand bound to this execution's own base and source (review N1).
+  if(entry.status==='ready')return args.baseRevision===record.execution.baseRevision&&args.sourceRevision===record.execution.sourceRevision?{refusal:envelope('ready',hash(record.execution.provenance?.jobId)?record.execution.provenance.jobId:null,null,record)}:{refusal:envelope('blocked',null,'execution-admission-refused')};
   if(entry.status!=='preparable'||!sameJSON(args,entry.preparationDemand))return {refusal:envelope('blocked',null,'execution-admission-refused')};
   return {record,entry};
  }
@@ -87,7 +88,8 @@ export function createExecutableOperations({reads,service,publication,storage,vi
     if(!listed.some(e=>e.assetId===args.visualDemand.assetId))return envelope('blocked',null,'visual-publication-unavailable');
     await publication.publishVisuals({packId:args.packId,revision:record.revision,expectedPublicationGeneration:generation,visuals:listed});
     const refreshed=await reads.readPack({packId:args.packId,execution:'2'}),served=(refreshed?.execution?.visualResources??[]).find(e=>e.assetId===args.visualDemand.assetId);
-    if(refreshed?.status!=='ready'||served?.status!=='ready')return envelope('blocked',null,'visual-publication-unavailable');
+    // Another execution adopted after publishVisuals never answers for this demand (review N2).
+    if(refreshed?.status!=='ready'||refreshed.revision!==record.revision||served?.status!=='ready'||served.kind!==args.visualDemand.kind)return envelope('blocked',null,'visual-publication-unavailable');
     return envelope('ready',hash(refreshed.execution.provenance?.jobId)?refreshed.execution.provenance.jobId:null,null,refreshed);
    }
    return envelope('unavailable',null,'interrupted');
