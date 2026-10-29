@@ -1,6 +1,6 @@
 # Whole-book saving: original release and temporary containment
 
-## Proposed containment (PR277; not yet released)
+## Containment (PR277; ships in 3.0.0-alpha.19)
 
 The updated Downloads sheet marks whole-book saving temporarily unavailable and removes its size/check/download controls. Save passages individually using the existing passage controls. The book entry point rejects writes defensively. The original alpha18 behavior below is historical, not an instruction to use controls present in the contained client. Existing old clients/workers require separate lifecycle and worker-boundary verification; the client guard does not retroactively stop old code. This containment does not itself repair or recover a snapshot already replaced.
 
