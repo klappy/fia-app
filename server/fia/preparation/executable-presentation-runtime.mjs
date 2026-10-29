@@ -9,6 +9,7 @@ import {createExecutablePresentationService} from './executable-presentation-ser
 import {createExecutablePresentationResolver,createCanonicalGuideReader} from './executable-presentation-resolver.mjs';
 import {createTrustedSourceActionComposer,trustedExecutionRecipe} from './trusted-source-actions.mjs';
 import {declareVisualResources,VISUAL_RESOURCES_CAPABILITY} from './visual-resources.mjs';
+import {readVisualPublication} from './visual-publication.mjs';
 import {SOURCE_ACTION_RECIPE} from '../compiler/presentation/source-action-projector.mjs';
 import guideSources from './guide-sources.json' with {type:'json'};
 import preparationCatalog from './catalog.json' with {type:'json'};
@@ -59,9 +60,24 @@ async function originalBindings(context){
 // F7a3: a native visual entry in a publication stays served only while Otto's pure published() read
 // still returns exactly that entry for this execution (SOURCE-TO-APP L99: current authority). Without
 // the port there is no authority, and the overlay serves no row that lists a visual.
-export function visualAuthorityFrom(visuals){
+// PR312 review (thread 4412859935; Terry 0be2e40 case b covers non-transient failures only, OFFLINE L45): published() answers null
+// both for a withdrawn publication and for an operational outcome (storage unavailable, object unreachable, version skew). With
+// readPublication (the same object read, typed), an operational outcome (final:false) throws an unnamed error, which the overlay
+// classes as transient, so the exact read is transient and a Saved copy is kept; only the object's own answer (ready, not
+// published, stale) decides the entry.
+const VISUAL_AUTHORITY_UNAVAILABLE='Visual publication authority is temporarily unavailable.';
+export function visualAuthorityFrom(visuals,{readPublication=null}={}){
  if(!visuals||typeof visuals.published!=='function')return null;
- return async({binding,executionRevision,entry})=>{const p=await visuals.published({packId:binding.packId,baseRevision:binding.baseRevision,executionRevision,assetId:entry.assetId});return !!p&&typeof p.manifestEntry==='object'&&p.manifestEntry!==null&&same(p.manifestEntry,entry)&&p.ready?.path===entry.path&&p.ready?.sha256===entry.sha256;};
+ const matches=(p,entry)=>!!p&&typeof p.manifestEntry==='object'&&p.manifestEntry!==null&&same(p.manifestEntry,entry)&&p.ready?.path===entry.path&&p.ready?.sha256===entry.sha256;
+ return async({binding,executionRevision,entry})=>{
+  const args={packId:binding.packId,baseRevision:binding.baseRevision,executionRevision,assetId:entry.assetId};
+  if(typeof readPublication!=='function')return matches(await visuals.published(args),entry);
+  if(!/^[a-f0-9]{64}$/.test(executionRevision??''))return false;
+  const outcome=await readPublication(args);
+  if(outcome?.status==='ready')return matches(outcome,entry);
+  if(outcome?.final===false&&outcome.reason!=='visual-ineligible')throw Error(VISUAL_AUTHORITY_UNAVAILABLE);
+  return false;
+ };
 }
 // The served bound manifest, parsed, only when it is exactly the record's descriptor for this execution;
 // otherwise null, and nothing is declared ready from it.
@@ -133,7 +149,7 @@ export async function createExecutableRuntime({ctx,env,snapshot,capabilities={}}
  // verified bytes as its base manifest (OFFLINE L23). Without a pin, publication stays revision-keyed.
  const offlinePins=new Map((Array.isArray(snapshot.offlineManifests)?snapshot.offlineManifests:[]).map(d=>[d.packId,d]));
  const baseManifests=offlinePins.size?{read:async packId=>{const d=offlinePins.get(packId);need(d&&d.path===`/offline/${packId}.json`&&/^[a-f0-9]{64}$/.test(d.sha256)&&Number.isSafeInteger(d.bytes)&&d.bytes>0&&d.bytes<=1048576,'base-manifest-unpinned');const item=await bounded(()=>readStaticArtifact({staticPath:d.path,descriptor:{sha256:d.sha256,bytes:d.bytes,mime:'application/json'}},path=>env.ASSETS.fetch(new Request(new URL(path,env.FIA_API_ORIGIN),{redirect:'manual'}))));need(typeof item?.content==='string','base-manifest-unavailable');const bytes=new TextEncoder().encode(item.content);need(bytes.length===d.bytes&&await sha256(bytes)===d.sha256,'base-manifest-unavailable');return {bytes,sha256:d.sha256};}}:null;
- const visualAuthority=visualAuthorityFrom(capabilities.visuals);
+ const visualAuthority=visualAuthorityFrom(capabilities.visuals,{readPublication:capabilities.readVisualPublication??(args=>readVisualPublication(env,args))});
  const publication=createExecutableOverlay({storage:ctx.storage,artifacts,base,eligible,validate:verifier(jobs,true),diagnose,baseManifests,visualAuthority});
  const reads=createReadOperations(publication),readPack=reads.readPack;
  // A row under a superseded build fails its verifier, so the overlay already serves the

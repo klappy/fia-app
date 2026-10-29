@@ -248,3 +248,32 @@ test('an untyped refusal of the Saved copy\'s own read keeps the interim behavio
  t.w.reply(`/v1/packs/${packId}`,()=>new Response('nope',{status:404}));
  const s=await t.status();assert.equal(s.savedAuthority.state,'revoked');assert.equal(s.saved,false);
 });
+// PR312 review thread 4412859917: the visual tombstone is the route's (sourceIdentity/consumer/original), not the bytes'. The same
+// original on another consumer route keeps its copy when one route is withdrawn, and a 200 on another route does not clear it.
+test('a tombstone on one consumer route neither hides nor is cleared by the same original on another route',async()=>{
+ const t=setup({ambiguous:true}),other=`/v1/original-visuals/${h('1')}/${h('3')}/${photoSha}`;
+ t.w.reply(other,()=>new Response(photo,{headers:{'Content-Type':'image/jpeg'}}));
+ assert.equal((await t.w.fetch(other)).status,200,'the other route is kept');
+ t.w.reply(photoPath,()=>new Response('gone',{status:404}));assert.equal((await t.w.fetch(photoPath)).status,404,'this route is withdrawn');
+ t.w.offline(true);assert.equal((await t.w.fetch(other)).status,200,'the other route still answers offline');assert.notEqual((await t.w.fetch(photoPath)).status,200);
+ t.w.offline(false);assert.equal((await t.w.fetch(other)).status,200,'a 200 on the other route');
+ t.w.offline(true);const r=await t.w.fetch(photoPath);assert.equal(r.type==='error'||r.status!==200,true,'does not clear this route\'s tombstone');
+});
+// PR312 review thread 4412859925: a denial is about the copy that was checked. If a Save elsewhere activated another copy while the
+// read was out, that copy is not retired.
+test('a recheck denial retires only the checked copy, not one activated while the read was out',async()=>{
+ const t=setup({ambiguous:true});assert.equal((await t.save('all')).ok,true);
+ const meta=t.w.stores.get(META),before=await savedRecord(t),newer=structuredClone(before);newer.serverSnapshot.record.execution.publication.generation=h('5');
+ let swapped=false;t.w.reply(`/v1/packs/${packId}`,()=>{if(!swapped){swapped=true;meta.set(activeKey,Response.json(newer));}return Response.json({status:'unavailable',reason:'publication-generation-invalid'},{status:404});});
+ const s=await t.status();assert.equal(s.savedAuthority.state,'revoked','the checked copy was denied');
+ const now=await savedRecord(t);assert.equal(now.serverSnapshot.record.execution.publication.generation,h('5'));assert.notEqual(now.serverSnapshot.invalid,true,'the newer copy is not retired');
+});
+// PR312 review thread 4412859935, client side: an unavailable visual authority makes the server's exact read transient (it throws,
+// the Worker answers 500); the Saved copy is kept, unconfirmed. A real withdrawal (publication-generation-invalid) still retires it.
+test('a transient exact read (unavailable visual authority) keeps the Saved copy; a withdrawal retires it',async()=>{
+ const t=setup({ambiguous:true});assert.equal((await t.save('all')).ok,true);
+ t.w.reply(`/v1/packs/${packId}`,()=>Response.json({status:'refused',code:'internal-error'},{status:500}));
+ const s=await t.status();assert.equal(s.saved,true);assert.equal(s.savedAuthority.state,'unconfirmed');assert.notEqual((await savedRecord(t)).serverSnapshot.invalid,true);
+ t.w.reply(`/v1/packs/${packId}`,()=>Response.json({status:'unavailable',reason:'publication-generation-invalid'},{status:404}));
+ assert.equal((await t.status()).saved,false);
+});

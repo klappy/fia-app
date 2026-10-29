@@ -122,3 +122,22 @@ test('retainedVisual: retained eligible generations keep access; forged or revok
  assert.deepEqual(await t.overlay.retainedVisual({packId,executionRevision:'x',assetId:'a1400',sha256:h('a')}),{status:'refused',code:'invalid-request'});
  live=false;assert.equal((await t.overlay.retainedVisual({packId,executionRevision:t.record.revision,assetId:'a1400',sha256:h('a')})).status,'unavailable','withdrawn authority');
 });
+
+// PR312 review thread 4412859935 (Terry 0be2e40 case b is non-transient only; OFFLINE L45): published() answers null for a
+// withdrawn publication and for an operational outcome alike. With the typed object read, an unavailable, unreachable or skewed
+// authority makes the exact generation read transient (it throws, so the client keeps its Saved copy); a real withdrawal still
+// types publication-generation-invalid.
+test('an unavailable visual authority makes the exact read transient; only a real withdrawal is publication-generation-invalid',async()=>{
+ const {visualAuthorityFrom}=await import('../../server/fia/preparation/executable-presentation-runtime.mjs');
+ let mode='ready';
+ const ready={status:'ready',ready:{path:a1400.path,sha256:a1400.sha256},manifestEntry:a1400};
+ const answers={ready,unavailable:{status:'unavailable',reason:'preparation-storage-unavailable',final:false},unreachable:{status:'unavailable',reason:'interrupted',subReason:'visual-object-unreachable',final:false},skew:{status:'unavailable',reason:'interrupted',subReason:'visual-object-version-skew',final:false},withdrawn:{status:'unavailable',reason:'visual-not-published'},stale:{status:'unavailable',reason:'visual-publication-stale'}};
+ const port={published:async()=>mode==='ready'?{ready:ready.ready,manifestEntry:a1400}:null};
+ const authority=visualAuthorityFrom(port,{readPublication:async()=>structuredClone(answers[mode])});
+ const t=await harness({authority:args=>authority(args)});
+ const listed=await t.overlay.publishVisuals({packId,revision:t.record.revision,expectedPublicationGeneration:t.record.execution.publication.generation,visuals:[a1400]}),g=listed.execution.publication.generation;
+ assert.equal((await t.overlay.readCatalog(packId,t.record.revision,g)).status,'ready');
+ for(mode of ['unavailable','unreachable','skew'])await assert.rejects(t.overlay.readCatalog(packId,t.record.revision,g),/temporarily unavailable/,`${mode}: transient, never invalid`);
+ for(mode of ['withdrawn','stale'])assert.deepEqual(await t.overlay.readCatalog(packId,t.record.revision,g),{status:'unavailable',reason:'publication-generation-invalid'},mode);
+ mode='ready';assert.equal((await t.overlay.readCatalog(packId,t.record.revision,g)).status,'ready','the row is served again once the authority answers');
+});

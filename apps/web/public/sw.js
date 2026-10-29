@@ -107,7 +107,9 @@ async function approvedRefused(packId,revision,dependency){return await read(ref
 const approvedAuthorityTurns=new Map();
 async function approvedAuthorityTurn(packId,work){const prior=approvedAuthorityTurns.get(packId)||Promise.resolve();let release;const turn=new Promise(r=>release=r);approvedAuthorityTurns.set(packId,turn);await prior;try{return await work();}finally{release();if(approvedAuthorityTurns.get(packId)===turn)approvedAuthorityTurns.delete(packId);}}
 const refusalMarker=()=>({refused:true,generation:crypto.randomUUID()});
-async function invalidateServerSnapshot(packId){jobs.get(packId)?.abort();const key=packKey(packId,'active'),active=await read(key);if(active?.serverSnapshot){await write(revokedSnapshotKey(packId,active.serverSnapshot.record.revision),{revoked:true});active.serverSnapshot.invalid=true;await write(key,active);}}
+// expected ({revision, generation}): the copy a check was about. When given, only that copy is retired: a Save that activated another
+// revision or generation while the read was out is not the copy the answer named (PR312 review thread 4412859925).
+async function invalidateServerSnapshot(packId,expected=null){const key=packKey(packId,'active'),active=await read(key);if(expected&&!(active?.serverSnapshot?.record.revision===expected.revision&&(active.serverSnapshot.record.execution?.publication?.generation??null)===(expected.generation??null)))return;jobs.get(packId)?.abort();if(active?.serverSnapshot){await write(revokedSnapshotKey(packId,active.serverSnapshot.record.revision),{revoked:true});active.serverSnapshot.invalid=true;await write(key,active);}}
 async function snapshotComplete(active,{authorityOnly=false}={}){
  const snapshot=active?.serverSnapshot;if(!snapshot||(!authorityOnly&&snapshot.invalid))return false;
  try{serverRecord(snapshot.record,active.packId);const expected=serverFiles(snapshot.record);if(JSON.stringify(expected)!==JSON.stringify(snapshot.files))return false;const cache=await caches.open(active.cache);for(const f of expected)await serverJSON(await cache.match(f.path),f,snapshot.record);return true;}catch{return false;}
@@ -135,14 +137,14 @@ const selectionReason=reason=>selectionReasons.has(reason);
 // transient, a server that answered another revision or generation) leaves the last verified copy served and says so.
 async function recheckSavedCopy(packId,active){
  const snapshot=active?.serverSnapshot,record=snapshot?.record;if(!record||snapshot.invalid)return null;
- const generation=record.execution?.publication?.generation??null;if(generation!==null&&!isPassageHash(generation))return {state:'unconfirmed',reason:'generation-invalid'};
+ const generation=record.execution?.publication?.generation??null,checked={revision:record.revision,generation};if(generation!==null&&!isPassageHash(generation))return {state:'unconfirmed',reason:'generation-invalid'};
  let r,capability;try{({response:r,capability}=await readExecutionRecord(packId,record.revision,generation));}catch(error){return {state:'unconfirmed',reason:error?.mediaStatusCode??'record-unreachable'};}
- if(r.status!==200||r.redirected){const reason=r.redirected?null:await refusalReason(r);if(r.redirected)r.body?.cancel().catch(()=>{});if(selectionReason(reason))return {state:'unconfirmed',reason:'record-'+r.status+':'+reason};await invalidateServerSnapshot(packId);return {state:'revoked',reason:'record-'+r.status+(reason?':'+reason:'')};}
- let fresh;try{fresh=serverRecord(await r.json(),packId);}catch{await invalidateServerSnapshot(packId);return {state:'revoked',reason:'record-invalid'};}
+ if(r.status!==200||r.redirected){const reason=r.redirected?null:await refusalReason(r);if(r.redirected)r.body?.cancel().catch(()=>{});if(selectionReason(reason))return {state:'unconfirmed',reason:'record-'+r.status+':'+reason};await invalidateServerSnapshot(packId,checked);return {state:'revoked',reason:'record-'+r.status+(reason?':'+reason:'')};}
+ let fresh;try{fresh=serverRecord(await r.json(),packId);}catch{await invalidateServerSnapshot(packId,checked);return {state:'revoked',reason:'record-invalid'};}
  // A server that answers another revision or generation has not answered for this copy: it stays, unconfirmed.
  if(fresh.revision!==record.revision)return {state:'unconfirmed',reason:'record-revision-changed'};
  if(capability&&!sameGeneration(fresh,generation))return {state:'unconfirmed',reason:'record-generation-changed'};
- if(JSON.stringify(serverFiles(fresh))!==JSON.stringify(snapshot.files)){await invalidateServerSnapshot(packId);return {state:'revoked',reason:'record-artifacts-changed'};}
+ if(JSON.stringify(serverFiles(fresh))!==JSON.stringify(snapshot.files)){await invalidateServerSnapshot(packId,checked);return {state:'revoked',reason:'record-artifacts-changed'};}
  return {state:'verified'};
 }
 // The server record of exactly what the page shows: its revision and, when the page holds one, the source-issued publication
@@ -310,22 +312,24 @@ async function originalVisualRead(request){
  if(!kept)await cache.delete(url.pathname);
  let response;
  try{response=await fetch(url.pathname,{cache:'no-store',redirect:'error',credentials:'same-origin',headers:kept?{'If-None-Match':`"${sha}"`}:{}});}
- catch(error){if(await read(visualTombstoneKey(sha)))return Response.error();if(kept)return kept;return await savedVisual(url.pathname,sha)||Response.error();}
+ catch(error){if(await read(visualTombstoneKey(url.pathname)))return Response.error();if(kept)return kept;return await savedVisual(url.pathname,sha)||Response.error();}
  if(response.status===304&&kept)return kept;
- if(response.status===404||response.status===410){await cache.delete(url.pathname);await write(visualTombstoneKey(sha),{tombstone:true,status:response.status});return response;}
+ if(response.status===404||response.status===410){await cache.delete(url.pathname);await write(visualTombstoneKey(url.pathname),{tombstone:true,status:response.status});return response;}
  if(response.status===200){
   if(response.redirected||!await keptVisual(response,sha)){await cache.delete(url.pathname);return new Response('This image could not be verified.',{status:502,headers:{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store'}});}
-  await cache.put(url.pathname,response.clone());await(await caches.open(META)).delete('/'+visualTombstoneKey(sha));return response;
+  await cache.put(url.pathname,response.clone());await(await caches.open(META)).delete('/'+visualTombstoneKey(url.pathname));return response;
  }
- if([408,429,500,502,503,504].includes(response.status)){if(await read(visualTombstoneKey(sha)))return response;const copy=kept||await savedVisual(url.pathname,sha);if(!copy)return response;response.body?.cancel().catch(()=>{});return copy;}
+ if([408,429,500,502,503,504].includes(response.status)){if(await read(visualTombstoneKey(url.pathname)))return response;const copy=kept||await savedVisual(url.pathname,sha);if(!copy)return response;response.body?.cancel().catch(()=>{});return copy;}
  return response;
 }
 // F11: a Saved original (its pack's verified copy under the same path) answers only when the server cannot,
 // and only bytes that hash to the path's own sha with an image type; it is never rebound to another path.
 // An observed 404/410 for an original is its tombstone: no kept or Saved copy answers for it until the server serves it again (L61).
-const visualTombstoneKey=sha=>'visual-tombstone:'+sha;
+// Keyed by the full route path (sourceIdentity/consumer/original): the same original bytes on another consumer route are another
+// publication, with their own tombstone (PR312 review thread 4412859917).
+const visualTombstoneKey=path=>'visual-tombstone:'+path;
 async function savedVisual(path,sha){
- if(await read(visualTombstoneKey(sha)))return null;
+ if(await read(visualTombstoneKey(path)))return null;
  for(const name of await caches.keys()){if(!name.startsWith(PREFIX))continue;const copy=await keptVisual(await (await caches.open(name)).match(path),sha);if(copy)return copy;}
  return null;
 }
@@ -554,7 +558,7 @@ async function declaredMediaRevision(data,packId){
  let record;try{const response=await fetchLatest(`/v1/packs/${packId}?revision=${data.revision}${generation?'&generation='+generation:''}`,{cache:'no-store',redirect:'error'});
   if(response.status!==200||response.redirected){const reason=response.redirected?null:await refusalReason(response);if(response.redirected)response.body?.cancel().catch(()=>{});throw Object.assign(Error('Media authority is unavailable.'),selectionReason(reason)?{mediaStatusCode:'media-authority-unconfirmed'}:{});}
   record=serverRecord(await response.json(),packId);}
- catch(error){if(!['media-status-transient','media-authority-unconfirmed'].includes(error.mediaStatusCode)){if(ownRead||!savedRecord)await invalidateServerSnapshot(packId);throw error;}const active=await savedServerSnapshot(packId,data.revision);if(!active)throw error;record=active.serverSnapshot.record;}
+ catch(error){if(!['media-status-transient','media-authority-unconfirmed'].includes(error.mediaStatusCode)){if(ownRead)await invalidateServerSnapshot(packId,{revision:data.revision,generation:savedGeneration});else if(!savedRecord)await invalidateServerSnapshot(packId);throw error;}const active=await savedServerSnapshot(packId,data.revision);if(!active)throw error;record=active.serverSnapshot.record;}
  if(record.revision!==data.revision||record.execution?.mediaIdentity?.packId!==data.mediaIdentity.packId||record.execution?.mediaIdentity?.revision!==data.mediaIdentity.revision||record.execution?.mediaAssetsSha256!==data.mediaAssetsSha256)throw Error('Media identity is not authorized by the server record.');
  return data.mediaIdentity.revision;
 }
