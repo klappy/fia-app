@@ -20,7 +20,7 @@ import {readRetainedArchives} from '../../server/fia/preparation/source-associat
 // A's settled outcome, and A's joined record must carry its own. FIXTURE: a door answers /demand and /fragment; nothing is fetched.
 const require=createRequire(resolve(process.env.FIA_WORKER_DEPENDENCIES||'package.json')),{build}=require('esbuild'),{Miniflare,convertV4MiniflareOptions}=require('miniflare');
 const UNIT='S03-U017',origin='https://dev.fiaguide.app',publicRoot='apps/web/public',PACK='eng.MRK-4-35-41',ROOT='fia-executable-presentation-authority@1';
-// The packaged Worker's own compatibility date and flags (wrangler.jsonc), so AsyncLocalStorage runs as it does deployed.
+// The packaged Worker's own compatibility date and flags (wrangler.jsonc), so the per-pack turns run as they do deployed.
 const wranglerText=await readFile('wrangler.jsonc','utf8'),wrangler={compatibility_date:/"compatibility_date"\s*:\s*"([^"]+)"/.exec(wranglerText)[1],compatibility_flags:JSON.parse(/"compatibility_flags"\s*:\s*(\[[^\]]*\])/.exec(wranglerText)[1])};
 const archive=JSON.parse(gunzipSync(await readFile('server/fia/compiler/presentation/source-packs.json.gz'),{maxOutputLength:134217728}));
 const FRAGMENT='c2623d42a7dbc3b9c2b95704b7401783db515090e691fa8cd49a08cefdc895eb',JSON_PATH='$[16].content#p26',OBSERVATION='2abf97abb561a7202aae57831fffa794b24ab824c9adcb4cd3bdf53773821f60';
@@ -36,18 +36,18 @@ async function fragmentAnswer(){
   receipt:{schema:'fia-guide-producer-receipt@1',...descriptor,bytes:1684770,contentType:'text/plain',observationSha256:OBSERVATION},paragraphs:[{jsonPath:JSON_PATH,htmlSha256:FRAGMENT}],associations:{state:'composed',reason:null,subReason:null,indexSha256:'7'.repeat(64),decisions:[decision]}};
 }
 
-test('N1 race: a concurrent Open\'s settled outcome is never committed beside another Open\'s base record',async()=>{
+async function harness({turnDeadlineMs=null,firstRetained=false}={}){
  const dir=await mkdtemp(join(tmpdir(),'fia-source-join-race-')),authority=JSON.parse(await readFile('server/fia/publication/trusted-generalized.json')),extension=buildGeneralizedSnapshot(publicRoot,authority);
  const canonicalSources=exportGuideSources({outputRoot:dir,sourceRevision:authority.sourceCommit}),associationSources=exportAssociationSources({outputRoot:dir,sourceRevision:authority.sourceCommit});
  const proof=await buildApprovedAudioProofIndex({publicRoot,authority:{registrySha256:authority.catalog.sha256,sourceRevision:authority.sourceCommit}});
  const snapshot={schema:'fia.worker-read-snapshot.v1',records:extension.records,current:extension.current,staticArtifacts:extension.staticArtifacts,artifacts:[],canonicalSources,associationSources,generalizedAuthority:extension.authority,approvedAudioProofIndex:proof.descriptor};
  const answer=await fragmentAnswer(),log=[],held={};const heldOf=who=>held[who]??=(()=>{let r;const p=new Promise(x=>r=x);return {p,r};})();
  const entry=`import worker,{FiaPreparationJobs as Jobs} from ${JSON.stringify(resolve('server/faces/worker/entry.mjs'))};
-const gates={};const gate=name=>gates[name]??=(()=>{let release;const p=new Promise(r=>release=r);return {p,release};})();let demands=0;
+let arrivals=0;const gates={};const gate=name=>gates[name]??=(()=>{let release;const p=new Promise(r=>release=r);return {p,release};})();let demands=0;
 export class FiaPreparationJobs extends Jobs{
- presentationExecutionCapabilities(){const c=super.presentationExecutionCapabilities();return {...c,capabilities:{resolveBindings:async context=>{const who=context.decisions.length?'A':'B';await this.env.ASSETS.fetch(new Request('https://assets.invalid/__held-'+who));await gate(who).p;return {};}}};}
+ presentationExecutionCapabilities(){const c=super.presentationExecutionCapabilities();return {...c,capabilities:{${turnDeadlineMs?`turnDeadlineMs:${turnDeadlineMs},`:''}resolveBindings:async context=>{const who=++arrivals===1?'B':'A';await this.env.ASSETS.fetch(new Request('https://assets.invalid/__held-'+who+'/'+context.decisions.length));await gate(who).p;return {};}}};}
  async fetch(request){const url=new URL(request.url);
-  if(url.origin==='https://guide-fragment.internal'&&url.pathname==='/demand'){demands++;return Response.json(demands===1?{state:'unavailable',reason:'interrupted',final:false}:{state:'retained'});}
+  if(url.origin==='https://guide-fragment.internal'&&url.pathname==='/demand'){demands++;return Response.json((demands===1)===${firstRetained}?{state:'retained'}:{state:'unavailable',reason:'interrupted',final:false});}
   if(url.origin==='https://guide-fragment.internal'&&url.pathname==='/fragment')return Response.json(${JSON.stringify(answer)});
   if(url.origin==='https://race.test'&&url.pathname.startsWith('/release/')){gate(url.pathname.slice(9)).release();return Response.json(true);}
   if(url.origin==='https://race.test'&&url.pathname==='/outcomes')return Response.json(Object.fromEntries(await this.ctx.storage.list({prefix:'source-join-outcome:'})));
@@ -55,20 +55,30 @@ export class FiaPreparationJobs extends Jobs{
 export default worker;`;
  const bundled=await build({stdin:{contents:entry,resolveDir:process.cwd(),sourcefile:'race-entry.mjs',loader:'js'},bundle:true,platform:'browser',format:'esm',external:['node:*'],write:false,plugins:[{name:'snapshot',setup(b){b.onResolve({filter:/generated\/snapshot\.json$/},()=>({path:'snapshot',namespace:'race'}));b.onLoad({filter:/.*/,namespace:'race'},()=>({contents:JSON.stringify(snapshot),loader:'json'}));}}]});
  const mf=new Miniflare({...convertV4MiniflareOptions({modules:true,script:bundled.outputFiles[0].text,compatibilityDate:wrangler.compatibility_date,compatibilityFlags:wrangler.compatibility_flags,bindings:{FIA_API_ORIGIN:origin},durableObjects:{FIA_PREPARATION_JOBS:{className:'FiaPreparationJobs',useSQLite:true}},r2Buckets:['FIA_ORIGINALS'],
-  serviceBindings:{ASSETS:async request=>{const path=new URL(request.url).pathname;if(path.startsWith('/__held-')){const who=path.slice(8);log.push(who+' held after composing');heldOf(who).r();return new Response('ok');}let b;try{b=path===proof.descriptor.path?proof.bytes:await readFile((path.startsWith('/content/source-guides/')?dir:publicRoot)+path);}catch(error){if(error.code!=='ENOENT')throw error;return new Response('Not found',{status:404});}return new Response(b,{headers:{'Content-Type':'application/json','Content-Length':String(b.length)}});}},
+  serviceBindings:{ASSETS:async request=>{const path=new URL(request.url).pathname;if(path.startsWith('/__held-')){const [who,decisions]=path.slice(8).split('/');log.push(`${who} held after composing (${decisions} decisions)`);heldOf(who).r();return new Response('ok');}let b;try{b=path===proof.descriptor.path?proof.bytes:await readFile((path.startsWith('/content/source-guides/')?dir:publicRoot)+path);}catch(error){if(error.code!=='ENOENT')throw error;return new Response('Not found',{status:404});}return new Response(b,{headers:{'Content-Type':'application/json','Content-Length':String(b.length)}});}},
   outboundService:()=>{throw Error('External work forbidden');}}),resourcePersistencePath:join(dir,'storage')});
  assert.deepEqual([wrangler.compatibility_date,wrangler.compatibility_flags],['2026-09-01',['nodejs_compat']],'the packaged flags this test runs under');
+ const dispose=async()=>{await mf.dispose();await rm(dir,{recursive:true,force:true});};
  try{
   const read=async(path,init)=>{const r=await mf.dispatchFetch(origin+path,init);return {status:r.status,body:await r.json()};};
   const current=await read('/v1/packs/'+PACK),demand=current.body.preparationDemand;assert.ok(demand);
   const post=()=>read('/v1/presentation-preparations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(demand)});
   const ns=await mf.getDurableObjectNamespace('FIA_PREPARATION_JOBS'),root=ns.get(ns.idFromName(ROOT)),release=who=>root.fetch('https://race.test/release/'+who),outcomes=async()=>(await root.fetch('https://race.test/outcomes')).json();
+  return {log,heldOf,read,post,release,outcomes,dispose};
+ }catch(error){await dispose();throw error;}
+}
+const heldLine=(log,who)=>log.some(line=>line.startsWith(who+' held'));
+const outcomeBeside=(all,record)=>all[`source-join-outcome:${PACK}@${record.revision}`]??all[`source-join-outcome:${PACK}@${record.execution?.baseRevision}`]??null;
+
+test('N1 race: a concurrent Open\'s settled outcome is never committed beside another Open\'s base record',async()=>{
+ const {log,heldOf,read,post,release,outcomes,dispose}=await harness();
+ try{
   // B: a non-final miss, composed without a join, held. A is posted while B is held: explicit preparations of one pack take turns,
   // so A must not compose (nor acquire) until B has published. Then A: retained, its join read, composed, held, published.
   const B=post();await heldOf('B').p;const A=post();
-  await new Promise(r=>setTimeout(r,500));assert.ok(!log.includes('A held after composing'),'A waits for B\'s turn: '+log.join(' | '));
+  await new Promise(r=>setTimeout(r,500));assert.ok(!heldLine(log,'A'),'A waits for B\'s turn: '+log.join(' | '));
   await release('B');const Bdone=await B;log.push(`B ${Bdone.body.status} ${Bdone.body.record?.revision}`);
-  const afterB=await outcomes(),bOutcome=afterB[`source-join-outcome:${PACK}@${Bdone.body.record.revision}`]??afterB[`source-join-outcome:${PACK}@${Bdone.body.record.execution?.baseRevision}`]??null;
+  const bOutcome=outcomeBeside(await outcomes(),Bdone.body.record);
   log.push('outcome beside B: '+JSON.stringify(bOutcome&&{state:bOutcome.state,reason:bOutcome.reason??null,settled:bOutcome.settled??null,join:bOutcome.join?.state??null}));
   const currentB=await read('/v1/packs/'+PACK);log.push(`current after B: ${currentB.body.revision} execution:${!!currentB.body.execution} demand:${!!currentB.body.preparationDemand}`);
   await heldOf('A').p;await release('A');const Adone=await A;log.push(`A ${Adone.body.status} ${Adone.body.record?.revision} ${Adone.body.reason??''}`);
@@ -77,6 +87,24 @@ export default worker;`;
   assert.deepEqual([bOutcome?.state,bOutcome?.settled],['unavailable',false],'beside B\'s record: B\'s own non-final outcome, never A\'s');
   assert.ok(currentB.body.preparationDemand,'B\'s base record, current after B publishes, is not settled: '+log.join(' | '));
   assert.equal(Adone.body.status,'ready');assert.equal(after.body.revision,Adone.body.record.revision,'A\'s joined record, current after A publishes, is settled by its own outcome: '+log.join(' | '));
-  assert.equal(after.body.preparationDemand,undefined);
- }finally{await mf.dispose();await rm(dir,{recursive:true,force:true});}
+  assert.equal(after.body.preparationDemand,undefined);assert.ok(log.includes('A held after composing (1 decisions)'),log.join(' | '));
+ }finally{await dispose();}
+});
+
+// Review 5702095473 N1: a stalled turn must not block the pack's later Opens. B (retained, its join read) stalls past the turn
+// deadline (its gate is opened only afterwards); A, posted behind it, runs once the deadline releases the turn, holds no outcome
+// and publishes base, unsettled. B's late joined publish commits nothing: its settled outcome was dropped at the deadline.
+test('N1 stall: a turn past its deadline releases the pack; neither the stalled Open nor the next one settles it',async()=>{
+ const DEADLINE=1500,{log,heldOf,read,post,release,outcomes,dispose}=await harness({turnDeadlineMs:DEADLINE,firstRetained:true});
+ try{
+  await release('A');const B=post();await heldOf('B').p;assert.ok(log.includes('B held after composing (1 decisions)'),log.join(' | '));const started=Date.now();const A=post();
+  const Adone=await Promise.race([A,new Promise(r=>setTimeout(()=>r(null),DEADLINE+15000))]);log.push(`A ${Adone?.body.status} ${Adone?.body.record?.revision} after ${Date.now()-started} ms`);
+  assert.ok(Adone,'A is not blocked past the deadline by the stalled B: '+log.join(' | '));
+  assert.equal(Adone.body.status,'ready');assert.ok(log.includes('A held after composing (0 decisions)'),'A composes base, without the join: '+log.join(' | '));
+  const afterA=await read('/v1/packs/'+PACK);assert.ok(afterA.body.preparationDemand,'base plus demand after A: '+log.join(' | '));
+  assert.equal(outcomeBeside(await outcomes(),Adone.body.record),null,'A holds no outcome while B is still running');
+  await release('B');const Bdone=await B;log.push(`B ${Bdone.body.status} ${Bdone.body.record?.revision}`);
+  assert.equal(outcomeBeside(await outcomes(),Bdone.body.record),null,'B\'s outcome was dropped at the deadline: '+log.join(' | '));
+  const after=await read('/v1/packs/'+PACK);assert.ok(after.body.preparationDemand,'still base plus demand: '+log.join(' | '));
+ }finally{await dispose();}
 });

@@ -99,7 +99,7 @@ export async function createExecutableRuntime({ctx,env,snapshot,capabilities={}}
  const demandGuide=capabilities.demandGuide??guideDemandPort(env);
  const acquireGuide=joinReader&&demandGuide?createGuideAcquisition({snapshot,fetchAsset:assetFetch,demandGuide,...(capabilities.acquisitionDeadlineMs?{deadlineMs:capabilities.acquisitionDeadlineMs}:{}),diagnose:event=>(capabilities.diagnose??(e=>console.warn(JSON.stringify(e))))(event)}):null;
  // Only a retained acquisition lets this Open read the fragment (Otto, 9e3f243): any other outcome is base for this Open, typed.
- const outcomes=createPreparationOutcomes();
+ const outcomes=createPreparationOutcomes(capabilities.turnDeadlineMs?{turnDeadlineMs:capabilities.turnDeadlineMs}:{});
  const sourceJoins=joinReader&&(acquireGuide?Object.freeze({async joinsFor(packId){const a=outcomes.current(packId);if(a?.state!=='retained')return {state:'unavailable',reason:'guide-not-acquired',...(a?.reason?{subReason:a.reason}:{})};const joined=await joinReader.joinsFor(packId);outcomes.joined(packId,{state:joined?.state==='ready'?'ready':'unavailable',reason:joined?.reason??null});return joined;}}):joinReader);
  const resolver=capabilities.resolve??createExecutablePresentationResolver({reads:baseReads,resolveCanonicalSource:createCanonicalGuideReader({canonicalSources:snapshot.canonicalSources??[],fetchAsset:path=>env.ASSETS.fetch(new Request(new URL(path,env.FIA_API_ORIGIN),{redirect:'manual'}))}),composeDecisionInputs:capabilities.composeDecisionInputs??createTrustedSourceActionComposer({policySha256:currentPolicy,sourceJoins}),resolveBindings});
  const resolve=acquireGuide&&!capabilities.resolve?async args=>{if(typeof args?.packId==='string'){outcomes.hold(args.packId,await acquireGuide(args.packId));

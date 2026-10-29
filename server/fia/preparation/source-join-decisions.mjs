@@ -168,13 +168,24 @@ export function createGuideDescriptorKey({snapshot,fetchAsset}){
 // one pack run one at a time inside the executable object (a per-pack turn), and each turn starts with an empty outcome, so the
 // acquisition, join read and publish of a turn see only that turn's outcome. Different packs still run concurrently. No new
 // runtime built-in is needed (the packaged Worker's reviewed node: modules stay buffer, crypto and zlib).
-export function createPreparationOutcomes(){
- const turns=new Map(),held=new Map();
+// Review 5702095473 N1: a turn has one overall deadline (twice the acquisition's total budget: the acquisition, then resolve,
+// decision jobs, artifact writes and publish). A turn past it releases the pack: its outcome is dropped and never committed, and
+// while it is still running every later turn of that pack holds no outcome, so it publishes base, unsettled (base plus demand).
+export const PREPARATION_TURN_DEADLINE_MS=2*GUIDE_FRAGMENT_POLICY.totalMs;
+export function createPreparationOutcomes({turnDeadlineMs=PREPARATION_TURN_DEADLINE_MS}={}){
+ if(!Number.isSafeInteger(turnDeadlineMs)||turnDeadlineMs<1)throw Error('preparation-turn-deadline');
+ const turns=new Map(),held=new Map(),stalled=new Map();
  return Object.freeze({
   run(packId,fn){
-   const prior=turns.get(packId)??Promise.resolve();
-   const turn=prior.then(()=>{held.set(packId,{outcome:null});return fn();}).finally(()=>{held.delete(packId);});
-   const tail=turn.catch(()=>{});turns.set(packId,tail);tail.then(()=>{if(turns.get(packId)===tail)turns.delete(packId);});
+   const prior=turns.get(packId)??Promise.resolve();let release;const released=new Promise(r=>release=r);
+   const turn=prior.then(()=>{
+    const state=stalled.get(packId)?null:{outcome:null};if(state)held.set(packId,state);
+    const work=Promise.resolve().then(fn);let late=false;
+    const timer=setTimeout(()=>{late=true;if(state&&held.get(packId)===state)held.delete(packId);stalled.set(packId,(stalled.get(packId)??0)+1);release();},turnDeadlineMs);
+    work.catch(()=>{}).then(()=>{clearTimeout(timer);if(late){const n=stalled.get(packId)-1;if(n)stalled.set(packId,n);else stalled.delete(packId);}else{if(state&&held.get(packId)===state)held.delete(packId);release();}});
+    return work;
+   });
+   turns.set(packId,released);released.then(()=>{if(turns.get(packId)===released)turns.delete(packId);});
    return turn;
   },
   hold(packId,outcome){const s=held.get(packId);if(s)s.outcome=outcome;},
