@@ -54,6 +54,9 @@ async function latest(packId=legacy,media=false,onprogress){
  if(!response.ok)throw new Error('Could not check the latest download. Connect and try again.');
  const manifest=validate(await response.json());if(manifest.packId!==packId)throw new Error('The download belongs to a different passage.');
  onprogress?.({phase:'manifest-verified',verified:0,total:null});
+ return verifyDelivery(manifest,packId,request,onprogress);
+}
+async function verifyDelivery(manifest,packId,request,onprogress){
  const delivery=manifest.files.find(f=>f.group==='core'&&f.path===`/content/delivery/${packId}/${manifest.deliveryRevision}.json`);
  if(delivery){const r=await request(delivery.path,{cache:'no-store'});if(!await verified(r.clone(),delivery))throw Error('Delivery source metadata changed.');const sidecar=validateDelivery(await r.json(),{packId,presentationRevision:manifest.presentationRevision});for(const f of manifest.files){const e=sidecar.entries.find(e=>e.path===f.path);if(e){if(e.source.sha256!==f.sourceSha256)throw Error('Source identity changed.');f.sourceBytes=e.source.bytes;for(const v of Object.values(f.variants||{}))v.sourceBytes=e.source.bytes;}}}
  if(delivery)onprogress?.({phase:'delivery-verified',verified:0,total:null});
@@ -65,6 +68,19 @@ async function verified(response,file){
  if(bytes.byteLength!==file.bytes)return false;
  const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),x=>x.toString(16).padStart(2,'0')).join('');
  return hash===file.sha256;
+}
+// F11 (OFFLINE; PLAN §3 budget): an executable Save reads only the record's execution.mediaManifest, the
+// server's bound manifest for that exact generation. It lists the base files, bound approved audio and only
+// the visuals already published; a pending visual is not in it, so it is never saved.
+async function boundMediaManifest(record,signal,onprogress){
+ const d=record.execution.mediaManifest;
+ if(!d||!isPassageHash(d.sha256)||!Number.isSafeInteger(d.bytes)||d.bytes<1||d.bytes>1048576||d.mime!=='application/json'||typeof d.id!=='string')throw Error('The saved media manifest is invalid.');
+ const response=await fetchLatest(artifactPath(d.sha256),{cache:'no-store',redirect:'error',signal});
+ if(response.status!==200||response.redirected||!await verified(response.clone(),d))throw Error('The saved media manifest could not be verified.');
+ const value=await response.json(),media=record.execution.mediaIdentity;
+ if(value?.id!==d.id||value.packId!==record.packId||value.executionRevision!==record.revision||value.presentationRevision!==media?.revision||value.mediaIdentity?.packId!==media?.packId||value.mediaIdentity?.revision!==media?.revision||value.mediaAssetsSha256!==record.execution.mediaAssetsSha256)throw Error('The saved media manifest belongs to a different server presentation.');
+ onprogress?.({phase:'bound-manifest-verified',verified:0,total:null});
+ return verifyDelivery(validate(value),record.packId,fetchLatest,onprogress);
 }
 // Explicit downloads may retain a coherent server-read snapshot in the existing
 // pack cache. It is historical offline evidence, never fresh server authority.
@@ -102,14 +118,17 @@ async function retainServerSnapshot(packId,revision,cache,signal,onprogress){
  if(!isPassageHash(revision))throw Error('Invalid server revision.');
  const checkCanceled=()=>{if(signal.aborted)throw Object.assign(Error('Download paused. Verified files are kept for Resume.'),{name:'AbortError'});};
  let record;try{
-  checkCanceled();const r=await fetchLatest(`/v1/packs/${packId}${revision?'?revision='+revision:''}`,{cache:'no-store',redirect:'error',signal});checkCanceled();
+  // F11: the snapshot is read with the capability the page reads with (execution=2), so an offline reload
+  // gets the same shape; an older server that refuses it is read once without it, as the page does.
+  const query=ask=>[revision?'revision='+revision:null,ask?'execution=2':null].filter(Boolean).join('&'),read=ask=>fetchLatest(`/v1/packs/${packId}${query(ask)?'?'+query(ask):''}`,{cache:'no-store',redirect:'error',signal});
+  checkCanceled();let r=await read(true),capability='2';if(r.status===400){r=await read(false);capability=null;}checkCanceled();
   if(r.status!==200||r.redirected)throw Error('Server record unavailable.');record=serverRecord(await r.json(),packId);checkCanceled();if(revision&&record.revision!==revision)throw Error('Server revision changed.');
   const files=serverFiles(record);onprogress?.({phase:'record-verified',verified:0,total:files.length});
   for(const [index,f] of files.entries()){
    checkCanceled();let response=await cache.match(f.path);try{await serverJSON(response,f,record);}catch{checkCanceled();response=await fetchLatest(f.path,{cache:'no-store',redirect:'error',signal});await serverJSON(response,f,record);checkCanceled();await cache.put(f.path,response);}
    checkCanceled();onprogress?.({phase:'artifact-verified',verified:index+1,total:files.length});
   }
-  return {record,files,invalid:false};
+  return {record,files,invalid:false,...(capability?{capability}:{})};
  }
  catch(error){if(!(signal.aborted&&error.name==='AbortError')&&error.mediaStatusCode!=='media-status-transient')await invalidateServerSnapshot(packId);throw error;}
 }
@@ -150,13 +169,17 @@ async function serverRead(request,clientId){
  }catch{if(packId)await invalidateServerSnapshot(packId);}
  return response;
 }
+const plainRecord=record=>{if(!record.execution)return record;const {visualResources:_v,publication:_p,mediaManifest:_m,...execution}=record.execution;return {...record,execution};};
 // A verified saved snapshot answers only when the server could not; otherwise the
 // server's own transient answer (when there is one) reaches the page unchanged.
 // A saved snapshot answers only a pack read with the capability it was saved under
 // (none today), so a page that asks for execution=2 never gets an older shape from it.
 async function historicalServerRead({match,packId,revision,digest,clientId,capability=null,answer}){
- const active=packId&&await savedServerSnapshot(packId,revision);if(active&&match&&(active.serverSnapshot.capability??null)!==capability)return answer||new Response('This server content is not saved for offline use.',{status:503});if(!active)return answer||new Response('This server content is not saved for offline use.',{status:503});
- let response;if(match){response=json(active.serverSnapshot.record);await rememberServerRead(clientId,active.serverSnapshot.record);}
+ // F11: a snapshot saved with execution=2 also answers a plain read, in the plain shape (no visualResources,
+ // publication or mediaManifest), as the server answers a page that does not ask; a snapshot saved without the
+ // capability still never answers an asking read.
+ const active=packId&&await savedServerSnapshot(packId,revision),saved=active?.serverSnapshot.capability??null;if(active&&match&&saved!==capability&&!(saved==='2'&&capability===null))return answer||new Response('This server content is not saved for offline use.',{status:503});if(!active)return answer||new Response('This server content is not saved for offline use.',{status:503});
+ let response;if(match){const record=active.serverSnapshot.record;response=json(saved==='2'&&capability===null?plainRecord(record):record);await rememberServerRead(clientId,record);}
  else{const file=active.serverSnapshot.files.find(f=>f.sha256===digest);if(!file)return answer||new Response('This server artifact is not saved.',{status:503});response=await(await caches.open(active.cache)).match(file.path);}
  const headers=new Headers(response.headers);headers.set(offlineServerHeader,'historical-verified');headers.set('Cache-Control','private, no-store');return new Response(await response.arrayBuffer(),{status:200,headers});
 }
@@ -237,15 +260,21 @@ async function originalVisualRead(request){
  if(!kept)await cache.delete(url.pathname);
  let response;
  try{response=await fetch(url.pathname,{cache:'no-store',redirect:'error',credentials:'same-origin',headers:kept?{'If-None-Match':`"${sha}"`}:{}});}
- catch(error){if(kept)return kept;return Response.error();}
+ catch(error){if(kept)return kept;return await savedVisual(url.pathname,sha)||Response.error();}
  if(response.status===304&&kept)return kept;
  if(response.status===404||response.status===410){await cache.delete(url.pathname);return response;}
  if(response.status===200){
   if(response.redirected||!await keptVisual(response,sha)){await cache.delete(url.pathname);return new Response('This image could not be verified.',{status:502,headers:{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store'}});}
   await cache.put(url.pathname,response.clone());return response;
  }
- if(kept&&[408,429,500,502,503,504].includes(response.status))return kept;
+ if([408,429,500,502,503,504].includes(response.status))return kept||await savedVisual(url.pathname,sha)||response;
  return response;
+}
+// F11: a Saved original (its pack's verified copy under the same path) answers only when the server cannot,
+// and only bytes that hash to the path's own sha with an image type; it is never rebound to another path.
+async function savedVisual(path,sha){
+ for(const name of await caches.keys()){if(!name.startsWith(PREFIX))continue;const copy=await keptVisual(await (await caches.open(name)).match(path),sha);if(copy)return copy;}
+ return null;
 }
 async function approvedAudioRead(request,clientId){
  const context=await approvedAudioAuthority(request,clientId);let response;
@@ -378,14 +407,17 @@ async function start(selection,port,packId=legacy,sizes={},revision){
   let manifest;
   try{manifest=await latest(packId,true,preflight);}catch(error){if(controller.signal.aborted&&error.name==='AbortError')throw error;if(error.mediaStatusCode!=='media-status-transient'){await invalidateServerSnapshot(packId);throw error;}const previous=await read(packKey(packId,'pending'));if(!previous)throw error;manifest=validate(previous.manifest);}
   const priorPending=await read(packKey(packId,'pending'));if(!Object.keys(sizes).length&&priorPending?.selection===selection)sizes=priorPending.manifest.mediaSizes||{};
-  manifest=planProxyDownload(manifest,selection,sizes);
-  const files=selectedFiles(manifest,selection),cacheName=`${PREFIX}${packId===legacy?'':packId+'-'}${manifest.revision}-${selection}`;
+  const cacheName=`${PREFIX}${packId===legacy?'':packId+'-'}${manifest.revision}-${selection}`;
   const active=await read(packKey(packId,'active'));
   // A repair stages separately from the last working copy, even at the same revision.
   const cacheId=active?.cache===cacheName?cacheName+'-repair':cacheName;
   const cache=await caches.open(cacheId);
   const serverSnapshot=await retainServerSnapshot(packId,revision,cache,controller.signal,preflight);
   if(serverSnapshot){const binding=serverSnapshot.record.execution?.mediaIdentity||{packId:serverSnapshot.record.packId,revision:serverSnapshot.record.revision};if(binding.packId!==manifest.packId||binding.revision!==manifest.presentationRevision)throw Error('The saved media belongs to a different server presentation.');}
+  // The build's manifest still names the catalog revision an update is measured against.
+  if(serverSnapshot?.record.execution?.mediaManifest)manifest={...await boundMediaManifest(serverSnapshot.record,controller.signal,preflight),catalogRevision:manifest.catalogRevision||manifest.revision};
+  manifest=planProxyDownload(manifest,selection,sizes);
+  const files=selectedFiles(manifest,selection);
   // Old loaded callers use the same Save protocol. Never downgrade a verified
   // executable Saved snapshot to a static base (or a snapshot-less legacy save).
   if(active?.serverSnapshot?.record.execution&&!serverSnapshot?.record.execution&&await snapshotComplete(active))throw Error('The executable saved passage is preserved. Reload before saving this selection.');
