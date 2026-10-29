@@ -21,9 +21,11 @@ const u32=(b,i)=>((b[i]<<24)>>>0)+(b[i+1]<<16)+(b[i+2]<<8)+b[i+3];
 const u16=(b,i)=>(b[i]<<8)|b[i+1];
 // Supported subset: 8-bit samples, non-interlaced, every standard colour type. Channels per colour type.
 const PNG_CHANNELS=new Map([[0,1],[2,3],[3,1],[4,2],[6,4]]);
-function pngStructure(bytes,limits){
- let pos=8,ihdr=null,plte=0,idat=[],idatDone=false,iend=false,first=true;
+function pngStructure(bytes,limits,clock){
+ let pos=8,ihdr=null,plte=0,idat=[],idatDone=false,iend=false,first=true,chunks=0;
  while(pos<bytes.length){
+  // Bounded parse: the recipe caps the chunk count (so no PNG holds one view per tiny chunk), and the deadline is checked as it goes.
+  if(++chunks>limits.maxPngChunks)refuse('png-chunk-cap');if(!(chunks&1023)&&clock()>limits.decodeMs)refuse('decode-deadline',{final:false});
   if(pos+12>bytes.length)refuse('png-truncated-chunk');
   const length=u32(bytes,pos);if(length>0x7fffffff||pos+12+length>bytes.length)refuse('png-truncated-chunk');
   const type=String.fromCharCode(bytes[pos+4],bytes[pos+5],bytes[pos+6],bytes[pos+7]);if(!/^[A-Za-z]{4}$/.test(type))refuse('png-chunk-invalid');
@@ -38,7 +40,7 @@ function pngStructure(bytes,limits){
    if(depth!==8||!PNG_CHANNELS.has(color))refuse('png-format-unsupported');
    ihdr={width,height,depth,color,channels:PNG_CHANNELS.get(color)};
    if(width>limits.maxDimension||height>limits.maxDimension)refuse('dimension-cap');if(width*height>limits.maxPixels)refuse('pixel-cap');
-  }else if(type==='PLTE'){if(idat.length||!length||length%3||length>768)refuse('png-chunk-invalid');plte=length/3;}
+  }else if(type==='PLTE'){if(plte||ihdr.color===0||ihdr.color===4)refuse('png-plte-invalid');if(idat.length||!length||length%3||length>768)refuse('png-chunk-invalid');plte=length/3;}
   else if(type==='IDAT'){if(idatDone)refuse('png-chunk-order');idat.push(data);}
   else if(type==='IEND'){if(length)refuse('png-chunk-invalid');iend=true;if(pos!==bytes.length)refuse('png-trailing-data');break;}
   else if(type.charCodeAt(0)<97)refuse('png-unknown-critical-chunk');
@@ -60,7 +62,7 @@ function unfilter(filter,cur,prev,bpp){
 }
 // Row-streaming: the zlib stream is inflated incrementally and only two rows are ever held; the pixels are hashed row by row.
 async function decodePng(bytes,limits,clock){
- const s=pngStructure(bytes,limits),rowBytes=s.width*s.channels,hash=createHash('sha256');
+ const s=pngStructure(bytes,limits,clock),rowBytes=s.width*s.channels,hash=createHash('sha256');
  let prev=new Uint8Array(rowBytes),cur=new Uint8Array(rowBytes),filter=-1,fill=0,rows=0,failure=null;
  const inflate=createInflate({chunkSize:65536});
  const done=new Promise((resolve,reject)=>{
@@ -96,7 +98,7 @@ async function decodePng(bytes,limits,clock){
 // Walks every JPEG segment and entropy-coded scan to EOI, so the pinned decoder can never read past the end of the bytes.
 const SOF=new Set([0xc0,0xc1,0xc2]),SOF_UNSUPPORTED=new Set([0xc3,0xc5,0xc6,0xc7,0xc9,0xca,0xcb,0xcd,0xce,0xcf]);
 function jpegStructure(bytes,limits){
- let pos=2,frame=null,scans=0;const covered=new Set();
+ let pos=2,frame=null,scans=0;const covered=new Set(),dcAl=new Map(),acAl=new Map();
  for(;;){
   if(pos+2>bytes.length)refuse('jpeg-truncated');
   if(bytes[pos]!==0xff)refuse('jpeg-structure');
@@ -126,6 +128,12 @@ function jpegStructure(bytes,limits){
    const ss=bytes[pos+3+2*ns],se=bytes[pos+4+2*ns],ah=bytes[pos+5+2*ns]>>4,al=bytes[pos+5+2*ns]&15;
    if(frame.sof===0xc2?(se>63||ss>se||(ss===0&&se!==0)||(ss>0&&ns!==1)||ah>13||al>13):(ss!==0||se!==63||ah||al))refuse('jpeg-scan-invalid');
    if(++scans>limits.maxJpegScans)refuse('jpeg-scan-cap');
+   // Progressive successive approximation (T.81 G.1.1.1): per component, DC and each AC coefficient start with Ah=0 exactly once;
+   // a refinement needs Ah equal to the band's prior Al and Al = Ah-1; AC scans need that component's DC first scan.
+   if(frame.sof===0xc2)for(const id of seen){
+    if(ss===0){const prev=dcAl.get(id);if(ah===0?prev!==undefined:prev!==ah||al!==ah-1)refuse('jpeg-scan-order');dcAl.set(id,al);}
+    else{if(!dcAl.has(id))refuse('jpeg-scan-order');let band=acAl.get(id);if(!band)acAl.set(id,band=new Int8Array(64).fill(-1));for(let k=ss;k<=se;k++){if(ah===0?band[k]!==-1:band[k]!==ah||al!==ah-1)refuse('jpeg-scan-order');band[k]=al;}}
+   }
   }
   pos+=length;
   if(marker===0xda){
@@ -138,6 +146,7 @@ function jpegStructure(bytes,limits){
  }
  if(!frame||!scans)refuse('jpeg-structure');
  if(frame.ids.some(id=>!covered.has(id)))refuse('jpeg-scan-invalid');
+ if(frame.sof===0xc2&&frame.ids.some(id=>!dcAl.has(id)))refuse('jpeg-scan-order');
  return frame;
 }
 function decodeJpegFull(bytes,limits,clock){

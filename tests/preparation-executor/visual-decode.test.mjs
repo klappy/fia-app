@@ -136,7 +136,10 @@ test('progressive JPEG scans are capped by the recipe (maxJpegScans 32) before d
  const b=Buffer.from(file('progressive-40x30.jpg')),sos=[];for(let i=2;i<b.length-1;i++)if(b[i]===0xff&&b[i+1]===0xda)sos.push(i);
  assert.ok(sos.length>1&&sos.length<=VISUAL_ORIGINAL_RECIPE.limits.maxJpegScans);
  const last=b.subarray(sos[sos.length-1],b.length-2),many=Buffer.concat([b.subarray(0,b.length-2),...Array(VISUAL_ORIGINAL_RECIPE.limits.maxJpegScans+1-sos.length).fill(last),Buffer.from([0xff,0xd9])]);
- await refused(decode(many,'image/jpeg'),'jpeg-scan-cap');
+ // Repeating a refinement scan is now refused by the successive-approximation order before the cap is reached.
+ await refused(decode(many,'image/jpeg'),'jpeg-scan-order');
+ // The cap itself: the valid script under a recipe one scan short of it.
+ await refused(decode(b,'image/jpeg',{maxJpegScans:sos.length-1}),'jpeg-scan-cap');assert.equal((await decode(b,'image/jpeg')).width,40);
  assert.equal(VISUAL_ORIGINAL_RECIPE.limits.maxJpegScans,32);
 });
 test('the recipe decode deadline applies to JPEG too, as interrupted (not final)',async()=>{
@@ -157,3 +160,38 @@ for(const [name,args] of [
  const bytes=badZlibPng(args);if(args.w===1024)assert.ok(bytes.length>1024*1024,String(bytes.length));
  await assert.rejects(settlesWithin(decode(bytes,'image/png'),5000),e=>{assert.ok(e instanceof VisualDecodeRefusal,`raw ${e}`);assert.equal(e.subReason,'png-zlib-invalid');assert.equal(e.final,true);return true;});
 }));
+// Codex findings on PR285 b06b031, each reproduced here before the fix.
+test('4408596878: a stalled readback (R2 get or arrayBuffer) is a bounded, non-final interrupted, never a hang',async()=>{
+ const bytes=file('rgb-31x17.png'),original={sha256:sha(bytes),bytes:bytes.length,contentType:'image/png',sourceKey:'k'},never=()=>new Promise(()=>{});
+ for(const bucket of [{get:never},{get:async()=>({size:bytes.length,arrayBuffer:never})}]){
+  const r=await settlesWithin(decodeRetained(bucket,original,{readbackMs:50}),2000);
+  assert.equal(r.state,'unavailable');assert.equal(r.reason,'interrupted');assert.equal(r.subReason,'readback-deadline');assert.equal(r.final,false);assert.equal(r.width,null);
+ }
+});
+test('4408596892: a PNG of a million zero-length IDATs is refused by the recipe chunk cap, quickly',async()=>{
+ const empty=chunk('IDAT',Buffer.alloc(0)),n=1000000,parts=new Array(n).fill(empty),{bytes}=png({extra:[]});
+ const head=bytes.subarray(0,33),rest=bytes.subarray(33),many=Buffer.concat([head,...parts,rest]);assert.ok(many.length<=limits.maxBytes,String(many.length));
+ const t=Date.now();await refused(settlesWithin(decode(many,'image/png'),5000),'png-chunk-cap');assert.ok(Date.now()-t<3000,`${Date.now()-t} ms`);
+ assert.ok(Number.isSafeInteger(VISUAL_ORIGINAL_RECIPE.limits.maxPngChunks)&&VISUAL_ORIGINAL_RECIPE.limits.maxPngChunks<n);
+});
+test('4408596872: a second PLTE, or PLTE in colour type 0 or 4, is refused png-plte-invalid',async()=>{
+ const w=4,h=2,px=Buffer.from([0,1,2,3,0,1,2,3]),plte=chunk('PLTE',Buffer.alloc(12));
+ const two=Buffer.concat([SIG,header(w,h,{color:3}),plte,plte,chunk('IDAT',deflateSync(filterRows(px,w,h,1,[0]))),chunk('IEND',Buffer.alloc(0))]);
+ await refused(decode(two,'image/png'),'png-plte-invalid');
+ for(const [color,ch] of [[0,1],[4,2]]){const p=png({w,h,ch,color,extra:[plte]}).bytes;await refused(decode(p,'image/png'),'png-plte-invalid');}
+ const ok=Buffer.concat([SIG,header(w,h,{color:3}),plte,chunk('IDAT',deflateSync(filterRows(px,w,h,1,[0]))),chunk('IEND',Buffer.alloc(0))]);assert.equal((await decode(ok,'image/png')).width,4);
+ assert.equal((await decode(png({extra:[plte]}).bytes,'image/png')).width,9,'a suggested PLTE in truecolour stays legal');
+});
+// Progressive fixture scan script (ImageMagick): DC first Al1; AC firsts; AC refinements; DC refinement Ah1 Al0.
+function progressive(mutate){const b=Buffer.from(file('progressive-40x30.jpg')),sos=[];for(let i=2;i<b.length-1;i++)if(b[i]===0xff&&b[i+1]===0xda)sos.push(i);
+ const scans=sos.map(at=>{const ns=b[at+4];return {ns,comps:[...Array(ns)].map((_,i)=>b[at+5+2*i]),ss:b[at+5+2*ns],se:b[at+6+2*ns],ah:b[at+7+2*ns]>>4,al:b[at+7+2*ns]&15,set:(ah,al)=>{b[at+7+2*ns]=(ah<<4)|al;}};});mutate(scans);return b;}
+test('4408596885: progressive successive approximation is enforced per component and band',async()=>{
+ assert.equal((await decode(progressive(()=>{}),'image/jpeg')).width,40,'the valid script still decodes');
+ const ref=s=>s.findIndex(x=>x.ah>0),dc=s=>s.findIndex(x=>x.ss===0&&x.ah===0);
+ // A refinement whose Al is not Ah-1.
+ await refused(decode(progressive(s=>{const r=s[ref(s)];r.set(r.ah,r.ah+1);}),'image/jpeg'),'jpeg-scan-order');
+ // A refinement whose Ah does not match the prior scan's Al for that band.
+ await refused(decode(progressive(s=>{const r=s[ref(s)];r.set(r.ah+1,r.ah);}),'image/jpeg'),'jpeg-scan-order');
+ // A DC first scan marked as a refinement (Ah>0 with no prior DC scan).
+ await refused(decode(progressive(s=>{const d=s[dc(s)];d.set(d.al+1,d.al);}),'image/jpeg'),'jpeg-scan-order');
+});

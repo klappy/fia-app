@@ -18,7 +18,7 @@ export const VISUAL_ORIGINAL_RECIPE=freeze({schema:'fia-visual-original-recipe@2
  signatures:freeze({'image/png':'89504e470d0a1a0a','image/jpeg':'ffd8ff'}),
  subsets:freeze({'image/png':'8-bit samples, colour types 0/2/3/4/6, non-interlaced (interlaced: decode-not-streamable)','image/jpeg':'8-bit baseline, extended or progressive Huffman (SOF0/1/2), 1 or 3 components, at most maxJpegPixels (larger: decode-not-streamable)'}),
  // maxPixels 17 MP fits the largest map c175 (16.0 MP); maxJpegPixels 2 MP fits every 1000 px picture. decodeMs is a wall deadline; the CPU ceiling is the platform's.
- limits:freeze({maxBytes:VISUAL_ORIGINAL_POLICY.maxBytes,totalMs:VISUAL_ORIGINAL_POLICY.totalMs,progressMs:VISUAL_ORIGINAL_POLICY.progressMs,maxDimension:8192,maxPixels:17000000,maxJpegPixels:2000000,maxJpegMemoryMB:64,maxJpegScans:32,decodeMs:20000}),
+ limits:freeze({maxBytes:VISUAL_ORIGINAL_POLICY.maxBytes,totalMs:VISUAL_ORIGINAL_POLICY.totalMs,progressMs:VISUAL_ORIGINAL_POLICY.progressMs,maxDimension:8192,maxPixels:17000000,maxJpegPixels:2000000,maxJpegMemoryMB:64,maxJpegScans:32,maxPngChunks:16384,decodeMs:20000}),
  decoder:freeze({'image/png':PNG_DECODER,'image/jpeg':JPEG_DECODER})});
 const RECIPE_SHA256=createHash('sha256').update(canonicalJSONString(VISUAL_ORIGINAL_RECIPE)).digest('hex');
 export const VISUAL_ORIGINAL_RECIPE_SHA256=RECIPE_SHA256;
@@ -49,19 +49,32 @@ function observed(receipt,observationSha256){return {sha256:receipt.sha256,bytes
 const decode=Object.freeze({state:'unavailable',reason:'decoder-unavailable',decoder:null,width:null,height:null,pixelsSha256:null});
 // Read back the retained original and prove it: unchanged nonzero length and sha256, observed MIME agreeing with the raster signature,
 // and a full decode within the recipe. Pixels stay in this function; only dimensions and a pixel hash leave it.
-async function readBack(bucket,original){
+// Both readback awaits share one bound (the recipe's progressMs); expiry is a non-final interruption, never a hang.
+function bounded(promise,deadline){let timer;const expiry=new Promise((_,reject)=>{timer=setTimeout(()=>reject(new VisualDecodeRefusal('readback-deadline',{final:false})),Math.max(0,deadline-Date.now()));});return Promise.race([promise,expiry]).finally(()=>clearTimeout(timer));}
+async function readBack(bucket,original,readbackMs){
  if(!Number.isSafeInteger(original.bytes)||original.bytes<1||!/^[a-f0-9]{64}$/.test(original.sha256)||/^0{64}$/.test(original.sha256))throw Error('visual-retained-identity');
- const object=await bucket.get(original.sourceKey);if(!object||object.size!==original.bytes)throw Error('visual-retained-size');
- const bytes=new Uint8Array(await object.arrayBuffer());if(bytes.length!==original.bytes)throw Error('visual-retained-size');
+ const deadline=Date.now()+readbackMs;
+ const object=await bounded(bucket.get(original.sourceKey),deadline);if(!object||object.size!==original.bytes)throw Error('visual-retained-size');
+ const bytes=new Uint8Array(await bounded(object.arrayBuffer(),deadline));if(bytes.length!==original.bytes)throw Error('visual-retained-size');
  if(createHash('sha256').update(bytes).digest('hex')!==original.sha256)throw Error('visual-retained-hash');
  return bytes;
 }
-export async function decodeRetained(bucket,original,{clock}={}){
- const bytes=await readBack(bucket,original);
- try{const r=await decodeVisual(bytes,{mime:original.contentType,limits:{...VISUAL_ORIGINAL_RECIPE.limits,formats:VISUAL_ORIGINAL_RECIPE.formats},clock});
+export async function decodeRetained(bucket,original,{clock,readbackMs=VISUAL_ORIGINAL_RECIPE.limits.progressMs}={}){
+ try{const bytes=await readBack(bucket,original,readbackMs);
+  const r=await decodeVisual(bytes,{mime:original.contentType,limits:{...VISUAL_ORIGINAL_RECIPE.limits,formats:VISUAL_ORIGINAL_RECIPE.formats},clock});
   return {state:'ready',reason:null,subReason:null,final:true,recipeSha256:RECIPE_SHA256,originalSha256:original.sha256,bytes:original.bytes,mime:r.format,decoder:r.decoder,width:r.width,height:r.height,pixelsSha256:r.pixelsSha256};}
  catch(error){if(!(error instanceof VisualDecodeRefusal))throw error;
   return {state:'unavailable',reason:error.final?'visual-unsupported':'interrupted',subReason:error.subReason,final:error.final,recipeSha256:RECIPE_SHA256,originalSha256:original.sha256,bytes:original.bytes,mime:original.contentType,decoder:null,width:null,height:null,pixelsSha256:null};}
+}
+// A kept decode row is accepted only in its exact shape with the invariants of its state; anything else fails closed as corrupt.
+const DECODE_FIELDS='bytes,decoder,final,height,mime,originalSha256,pixelsSha256,reason,recipeSha256,state,subReason,width';
+const dimension=v=>Number.isSafeInteger(v)&&v>=1&&v<=VISUAL_ORIGINAL_RECIPE.limits.maxDimension;
+function keptDecode(r,original){
+ const shape=r&&typeof r==='object'&&Object.getPrototypeOf(r)===Object.prototype&&Object.keys(r).sort().join()===DECODE_FIELDS&&r.recipeSha256===RECIPE_SHA256&&r.originalSha256===original.sha256&&r.bytes===original.bytes&&r.mime===original.contentType&&r.final===true;
+ const ready=shape&&r.state==='ready'&&r.reason===null&&r.subReason===null&&Object.hasOwn(VISUAL_ORIGINAL_RECIPE.decoder,r.mime)&&canonicalJSONString(r.decoder)===canonicalJSONString(VISUAL_ORIGINAL_RECIPE.decoder[r.mime])&&dimension(r.width)&&dimension(r.height)&&r.width*r.height<=VISUAL_ORIGINAL_RECIPE.limits.maxPixels&&typeof r.pixelsSha256==='string'&&/^[a-f0-9]{64}$/.test(r.pixelsSha256);
+ const refused=shape&&r.state==='unavailable'&&r.reason==='visual-unsupported'&&typeof r.subReason==='string'&&/^[a-z0-9-]{1,64}$/.test(r.subReason)&&r.decoder===null&&r.width===null&&r.height===null&&r.pixelsSha256===null;
+ if(!ready&&!refused)throw Error('visual-decode-record-corrupt');
+ return r;
 }
 // Runs inside the visual object: storage is ctx.storage, bucket is env.FIA_ORIGINALS. eligibility is the caller's current trusted admission check;
 // it receives the primitive's full synchronous context {phase,source,admission,observedContent} (phase 'demand' before any write), so a
@@ -82,7 +95,7 @@ export function createVisualOriginalJob({storage,bucket,source,eligibility,fetch
  // A final decode verdict is kept per recipe identity and original sha256, so a repeat or a read neither refetches nor re-decodes.
  async function decoded(c,original){
   const key=`visual-original:decode:${RECIPE_SHA256}:${original.sha256}`,prior=await storage.get(key);
-  if(prior){if(prior.recipeSha256!==RECIPE_SHA256||prior.originalSha256!==original.sha256||prior.bytes!==original.bytes)throw Error('visual-decode-record-corrupt');return prior;}
+  if(prior)return keptDecode(prior,original);
   const record=await decodeRetained(bucket,original);
   if(record.final)await storage.transaction(async tx=>{if(!await tx.get(key))await tx.put(key,record);});
   return record;
