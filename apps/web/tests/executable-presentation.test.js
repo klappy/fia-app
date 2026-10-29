@@ -32,3 +32,42 @@ test('invalid replacement revokes an older outstanding owner before validation r
  let resolve,signal;const owner=createExecutableNarration({prepareOriginal:(ref,context)=>{signal=context.signal;return new Promise(r=>resolve=r);}}),p=fixture({action:'prepare-original',demand:ref});const pending=owner.run(p,'step-1',{explicit:true});
  await assert.rejects(owner.run({...p,execution:null},'step-1',{explicit:true}));assert.equal(signal.aborted,true);resolve({bytes:'obsolete'});assert.equal(await pending,null);
 });
+
+// F4 client half (cross-pericope PLAN VA1): the closed execution object accepts the
+// server-declared visualResources, mediaManifest and publication, absent or present,
+// in their contract shapes only. Any other key, or a malformed value, still refuses.
+test('execution accepts visualResources, mediaManifest and publication absent or present, closed shapes only',()=>{
+ const d=c=>c.repeat(64),demand={packId:'eng.MRK-1-14-20',baseRevision:d('b'),sourceRevision:'f8776d92b090b5af5b17b17dc1137f25fb059ed0',capability:'executable-presentation',visualDemand:{assetId:'a1400',kind:'image'},expectedExecutionRevision:d('c')};
+ const extensions={visualResources:[{assetId:'a1400',kind:'image',status:'preparable',preparationDemand:demand},{assetId:'c4',kind:'map',status:'ready',ready:{path:`/v1/original-visuals/${d('1')}/${d('2')}/${d('3')}`,sha256:d('3')}},{assetId:'a293',kind:'image',status:'unavailable',reason:'visual-ineligible'}],mediaManifest:{id:'bound-offline:x',sha256:d('4'),bytes:2048,mime:'application/json'},publication:{schema:'fia-executable-publication-pin@1',generation:d('5'),baseManifest:{id:`base-offline:${d('6')}`,sha256:d('6'),bytes:1024,mime:'application/json'}}};
+ for(const keys of [[],['visualResources'],['mediaManifest'],['publication'],['visualResources','mediaManifest','publication']]){const p=fixture();for(const k of keys)p.execution[k]=structuredClone(extensions[k]);assert.equal(validateExecutablePresentation(p),p.execution,keys.join()||'none');}
+ {const p=fixture();p.execution.visualResources=[{...extensions.visualResources[0],preparationDemand:{...demand,expectedPublicationGeneration:null}}];assert.ok(validateExecutablePresentation(p),'the OFFLINE generation fence may ride the demand');}
+ const bad=[
+  e=>e.visualResources=[{...e.visualResources[0]},{...e.visualResources[0]}],
+  e=>e.visualResources[0].kind='video',
+  e=>e.visualResources[0].status='pending',
+  e=>e.visualResources[0].preparationDemand.visualDemand.assetId='c4',
+  e=>e.visualResources[0].preparationDemand.decisionDemand={},
+  e=>delete e.visualResources[0].preparationDemand.expectedExecutionRevision,
+  e=>e.visualResources[0].preparationDemand.url='https://example.invalid/a.jpg',
+  e=>e.visualResources[1].ready.path='https://example.invalid/c4.png',
+  e=>e.visualResources[1].ready.extra=true,
+  e=>e.visualResources[2].reason='pending',
+  e=>e.visualResources={},
+  e=>e.mediaManifest.mime='text/plain',
+  e=>e.mediaManifest.bytes=0,
+  e=>e.mediaManifest.deliveryURL='/x',
+  e=>e.publication.schema='fia-executable-publication-pin@2',
+  e=>e.publication.baseManifest.id='bound-offline:x',
+  e=>e.publication.generation='nothex',
+ ];
+ for(const [n,mutate] of bad.entries()){const p=fixture(),e=structuredClone(extensions);mutate(e);Object.assign(p.execution,e);assert.throws(()=>validateExecutablePresentation(p),String(n));}
+ {const p=fixture();p.execution.visualResource=[];assert.throws(()=>validateExecutablePresentation(p),'an unknown key still refuses');}
+});
+
+// Step-0 amendment (cookbook PR265): visual-unsupported is a typed unavailable reason, accepted by
+// the first build that asks with execution=2.
+test('visualResources accepts the visual-unsupported reason and still refuses unknown reasons',async()=>{
+ const {validateVisualResources}=await import('../src/lib/executable-presentation.js');
+ assert.ok(validateVisualResources([{assetId:'c4',kind:'map',status:'unavailable',reason:'visual-unsupported'}]));
+ assert.throws(()=>validateVisualResources([{assetId:'c4',kind:'map',status:'unavailable',reason:'too-big'}]));
+});

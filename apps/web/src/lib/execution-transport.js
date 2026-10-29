@@ -92,7 +92,8 @@ export function createExecutionTransport({fetch:fetchArtifact=globalThis.fetch}=
   return value;
  }
  transport.preparePresentation=async(demand,{signal}={})=>{
-  if(!shape(demand,['packId','baseRevision','sourceRevision','capability'])||!text(demand.packId)||typeof demand.baseRevision!=='string'||!hashPattern.test(demand.baseRevision)||typeof demand.sourceRevision!=='string'||!/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(demand.sourceRevision)||demand.capability!=='executable-presentation')throw Error('The server presentation demand is invalid.');
+  // expectedPublicationGeneration (OFFLINE, F7a1) rides a server-issued demand unchanged: a SHA-256 or null.
+  if(!shape(demand,['packId','baseRevision','sourceRevision','capability',...(demand&&Object.hasOwn(demand,'expectedPublicationGeneration')?['expectedPublicationGeneration']:[])])||demand&&Object.hasOwn(demand,'expectedPublicationGeneration')&&demand.expectedPublicationGeneration!==null&&!hashPattern.test(demand.expectedPublicationGeneration??'')||!text(demand.packId)||typeof demand.baseRevision!=='string'||!hashPattern.test(demand.baseRevision)||typeof demand.sourceRevision!=='string'||!/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(demand.sourceRevision)||demand.capability!=='executable-presentation')throw Error('The server presentation demand is invalid.');
   signal?.throwIfAborted();
   return presentationStatus('/v1/presentation-preparations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(demand),signal});
  };
@@ -104,9 +105,13 @@ export function createExecutionTransport({fetch:fetchArtifact=globalThis.fetch}=
  transport.readPack=async(packId,{revision,signal}={})=>{
   if(!text(packId)||revision!==undefined&&(typeof revision!=='string'||!hashPattern.test(revision)))throw Error('The server catalog identity is invalid.');
   signal?.throwIfAborted();
-  let response;try{response=await fetchArtifact(`/v1/packs/${encodeURIComponent(packId)}${revision?`?revision=${revision}`:''}`,{method:'GET',cache:'no-store',redirect:'error',signal});}catch(error){signal?.throwIfAborted();if(error?.name==='AbortError')throw error;throw unreachable();}
-  signal?.throwIfAborted();
-  if(transientStatus(response.status))throw unreachable();
+  // The page asks with execution=2 (F4 server half). An older server refuses the capability as
+  // invalid-request, and a saved snapshot answers only the read it was saved under, so either answer
+  // falls back once to the same read without it, which every build accepts.
+  const request=async ask=>{const query=[revision?`revision=${revision}`:null,ask?'execution=2':null].filter(Boolean).join('&');try{return await fetchArtifact(`/v1/packs/${encodeURIComponent(packId)}${query?'?'+query:''}`,{method:'GET',cache:'no-store',redirect:'error',signal});}catch(error){signal?.throwIfAborted();if(error?.name==='AbortError')throw error;return null;}};
+  let response=await request(true);signal?.throwIfAborted();
+  if(!response||transientStatus(response.status)||response.status===400&&await response.clone().json().then(b=>b?.status==='refused'&&b.code==='invalid-request',()=>false)){response=await request(false);signal?.throwIfAborted();}
+  if(!response||transientStatus(response.status))throw unreachable();
   let record;try{record=await response.json();}catch{throw invalidCatalog();}
   signal?.throwIfAborted();
   const codes={ready:200,preparing:202,unavailable:404,refused:400};
