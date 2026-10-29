@@ -28,7 +28,14 @@ test('original source approval stays immutable; changed modules require separate
  for(const f of closure.changedSources)assert.equal(hash(readFileSync(new URL('../../'+f.path,import.meta.url))),f.sha256,f.path);
 });
 test('Worker closure binds 334 records and reviewed lazy artifacts without jobs or browser drift',()=>{
- const expected=closure.workerSnapshot,bytes=readFileSync(new URL('../../'+expected.path,import.meta.url));assert.equal(bytes.length,expected.bytes);assert.equal(hash(bytes),expected.sha256);assert.doesNotMatch(bytes.toString(),/\/Users\/|chatgpt\.site|BEGIN (?:RSA |EC )?PRIVATE KEY|\bsk-[A-Za-z0-9]{20}|synthetic-fixture/);
+ // F7a1: the snapshot pins each passage's offline manifest exactly as served. Those manifests carry the raw,
+ // commit-stamped index.html hash, so each pin is checked against dist and then normalized like the generated
+ // closure (parameterized-closure.js) before the snapshot is compared with its reviewed pin.
+ const expected=closure.workerSnapshot,bytes=readFileSync(new URL('../../'+expected.path,import.meta.url));
+ const pinned=JSON.parse(bytes),params=verifyBuildParameters(new URL('../../dist/',import.meta.url),closure.version);
+ assert.ok(Array.isArray(pinned.offlineManifests)&&pinned.offlineManifests.length===330,'every passage offline manifest is pinned');
+ for(const d of pinned.offlineManifests){const served=readFileSync(new URL('../../dist'+d.path,import.meta.url));assert.equal(d.path,`/offline/${d.packId}.json`);assert.equal(served.length,d.bytes,d.path);assert.equal(hash(served),d.sha256,d.path);const normal=normalizeGenerated(d.path.slice(1),served,params);d.sha256=hash(normal);d.bytes=Buffer.byteLength(normal);}
+ const normalized=Buffer.from(JSON.stringify(pinned)+'\n');assert.equal(normalized.length,expected.bytes);assert.equal(hash(normalized),expected.sha256);assert.doesNotMatch(bytes.toString(),/\/Users\/|chatgpt\.site|BEGIN (?:RSA |EC )?PRIVATE KEY|\bsk-[A-Za-z0-9]{20}|synthetic-fixture/);
  const snapshot=JSON.parse(bytes);assert.equal(snapshot.records.length,334);assert.equal(snapshot.artifacts.length,3);assert.equal(snapshot.staticArtifacts.length,330);
  const catalog=snapshot.records.find(r=>r.packId==='fia-mark-catalog');assert.equal(catalog.revision,hash(readFileSync(new URL('../../dist/content/registry.json',import.meta.url))));
  for(const item of snapshot.staticArtifacts){const b=readFileSync(new URL('../../dist'+item.staticPath,import.meta.url));assert.equal(b.length,item.descriptor.bytes);assert.equal(hash(b),item.descriptor.sha256);}

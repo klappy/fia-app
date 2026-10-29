@@ -13,6 +13,9 @@ snapshot.staticArtifacts=extension.staticArtifacts.filter(item=>!snapshot.artifa
 snapshot.generalizedAuthority=extension.authority;
 const {exportGuideSources}=await import('../server/fia/compiler/presentation/export-guide-sources.mjs');
 snapshot.canonicalSources=exportGuideSources({outputRoot:'dist',sourceRevision:extension.authority.sourceCommit});
+// F7a1 (OFFLINE L23): pin each passage's built offline manifest, so a publication retains exactly these
+// verified bytes as its base manifest rather than whichever static route is newest.
+snapshot.offlineManifests=JSON.parse(readFileSync('dist/content/registry.json')).packs.map(({id})=>{const path=`/offline/${id}.json`,bytes=readFileSync('dist'+path);return {packId:id,path,sha256:createHash('sha256').update(bytes).digest('hex'),bytes:bytes.length};});
 const {buildApprovedAudioProofIndex}=await import('./approved-audio-proof-index.mjs');
 const approved=await buildApprovedAudioProofIndex({publicRoot:'dist',authority:{registrySha256:extension.authority.catalog.sha256,sourceRevision:extension.authority.sourceCommit}});
 mkdirSync('dist/content/approved-audio',{recursive:true});

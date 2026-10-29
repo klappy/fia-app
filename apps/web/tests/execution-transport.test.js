@@ -117,7 +117,7 @@ test('catalog and presentation reads share immutable server bytes without starti
  const calls=[];const transport=createExecutionTransport({fetch:async(url,options)=>{calls.push({url,options});return url.startsWith('/v1/packs/')?Response.json(record):new Response(bytes);}});
  const observed=await transport.readPack(record.packId,{revision:sha256});
  assert.deepEqual(observed,record);assert.deepEqual(await transport.readPresentationRecord(observed),{fixture:'opaque server artifact'});
- assert.equal(calls[0].url,`/v1/packs/${record.packId}?revision=${sha256}`);
+ assert.equal(calls[0].url,`/v1/packs/${record.packId}?revision=${sha256}&execution=2`,'the page asks for visual resources (F4 server half)');
  assert.ok(calls.every(x=>x.options.method==='GET'));
  await assert.rejects(transport.readPresentationRecord({...record,artifact:{...record.artifact,bytes:bytes.length+1}}),/could not be verified/);
  const wrong=createExecutionTransport({fetch:async()=>Response.json({...record,packId:'spa.MRK-1-14-20'})});
@@ -129,4 +129,18 @@ test('historical private snapshots are distinguished from a fresh authority read
  const transport=createExecutionTransport({fetch:async()=>Response.json(record,{headers:historical?{'X-FIA-Offline-Snapshot':'historical-verified'}:{}})});
  assert.equal((await transport.readPack(record.packId)).offlineSnapshot,'historical-verified');
  historical=false;assert.equal((await transport.readPack(record.packId)).offlineSnapshot,undefined);
+});
+
+// F4 server half: the page asks with execution=2 and falls back once, to the same read without it,
+// when an older server refuses the capability or the read is unreachable (a saved snapshot answers
+// only reads saved under the same capability). A newer answer's visualResources passes through.
+test('pack reads ask with execution=2 and fall back once on an older server refusal or an unreachable read',async()=>{
+ const record={status:'ready',packId:'eng.MRK-1-14-20',revision:sha256,artifact:{sha256,bytes:bytes.length,mime:'application/json'}};
+ for(const [name,first] of [['older server',()=>Response.json({status:'refused',code:'invalid-request'},{status:400})],['offline snapshot',()=>new Response('not saved',{status:503})],['network',()=>{throw new TypeError('offline');}]]){
+  const calls=[];const transport=createExecutionTransport({fetch:async url=>{calls.push(url);if(url.includes('execution=2'))return first();return Response.json(record);}});
+  assert.deepEqual(await transport.readPack(record.packId),record,name);assert.deepEqual(calls,[`/v1/packs/${record.packId}?execution=2`,`/v1/packs/${record.packId}`],name);
+ }
+ const calls=[];const asked={...record,execution:{schema:'fia-executable-catalog@1',visualResources:[]}};const transport=createExecutionTransport({fetch:async url=>{calls.push(url);return Response.json(asked);}});
+ assert.deepEqual(await transport.readPack(record.packId),asked);assert.deepEqual(calls,[`/v1/packs/${record.packId}?execution=2`],'a current server answers the asking read once');
+ const refusedCalls=[];const refused=createExecutionTransport({fetch:async url=>{refusedCalls.push(url);return Response.json({status:'refused',code:'invalid-request'},{status:400});}});assert.equal((await refused.readPack(record.packId)).status,'refused','a refusal of the plain read is answered as before');assert.equal(refusedCalls.length,2,'one fallback only');
 });
