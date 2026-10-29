@@ -478,3 +478,46 @@ it('R4: with narration off, a side Play keeps the centre on Continue and offers 
  await fireEvent.click(cancel);bytes.resolve({bytes:new Uint8Array(2),mime:'audio/mpeg',playbackRange:ready.playbackRange});await wait(20);
  expect(audio.play).not.toHaveBeenCalled();expect(readFace().label).toBe('Continue');
 });
+
+// Source-bound term phases remain available when optional narration is disabled.
+const gospelIndex=activities.findIndex(a=>a.id==='S05-U004'),gospelActivity=activities[gospelIndex],gospelTerm=bundledPresentation.assets[gospelActivity.assetId];
+function saveTextFirstTerm(status='ready'){
+ const loaded=pack('eng.MRK-1-1-13');savePack(loaded,{index:gospelIndex,status});
+ const stored=progress(loaded.descriptor.id);localStorage.setItem('fia-v3-progress@1:'+loaded.descriptor.id,JSON.stringify({...stored,muted:true}));return loaded;
+}
+for(const offline of [false,true])for(const status of ['ready','waiting'])it(`text-first term keeps instruction then definition without advancing (${offline?'offline/no recording':'online'}, ${status})`,async()=>{
+ const loaded=saveTextFirstTerm(status);vi.spyOn(libraryAdapter,'select').mockResolvedValue(loaded);
+ libraryAdapter.mediaStatus.mockResolvedValue(offline?{files:[],savedFiles:[],deliveryRevision:null}:{...bundledMedia,files:[{path:gospelActivity.audioSrc,bytes:3,mime:'audio/mpeg'},{path:gospelTerm.descriptionAudio,bytes:3,mime:'audio/mpeg'}]});
+ vi.spyOn(navigator,'onLine','get').mockReturnValue(!offline);
+ render(App);await waitFor(()=>expect(readFace().busy).toBe(false));
+ expect(document.querySelector('[data-kind="term-instruction"]')?.textContent).toContain(gospelActivity.narration||gospelActivity.prompt);
+ await fireEvent.click(primary());await waitFor(()=>expect(progress(loaded.descriptor.id).termDefinition).toBe(gospelActivity.id));
+ expect(progress(loaded.descriptor.id).activityId).toBe(gospelActivity.id);expect(document.querySelector('main').textContent).toContain(gospelTerm.description);
+ expect(audio.play).not.toHaveBeenCalled();expect(libraryAdapter.playMedia).not.toHaveBeenCalled();expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();
+ await fireEvent.click(primary());await waitFor(()=>expect(progress(loaded.descriptor.id).activityId).toBe(activities[gospelIndex+1].id));
+});
+it('text-first revealed term survives reload; Back restores instruction and explicit Skip advances',async()=>{
+ const loaded=saveTextFirstTerm();vi.spyOn(libraryAdapter,'select').mockResolvedValue(loaded);render(App);await waitFor(()=>expect(readFace().busy).toBe(false));
+ await fireEvent.click(primary());await waitFor(()=>expect(progress(loaded.descriptor.id).termDefinition).toBe(gospelActivity.id));
+ cleanup();render(App);await waitFor(()=>expect(readFace().busy).toBe(false));expect(document.querySelector('main').textContent).toContain(gospelTerm.description);expect(document.querySelector('[data-kind="term-instruction"]')).toBeNull();
+ await fireEvent.click(primary());await waitFor(()=>expect(progress(loaded.descriptor.id).activityId).toBe(activities[gospelIndex+1].id));
+ await fireEvent.click(screen.getByRole('button',{name:'Previous activity'}));await waitFor(()=>expect(progress(loaded.descriptor.id).activityId).toBe(gospelActivity.id));expect(document.querySelector('[data-kind="term-instruction"]')?.textContent).toContain(gospelActivity.narration||gospelActivity.prompt);
+ await fireEvent.click(screen.getByRole('button',{name:'Skip to next activity'}));await waitFor(()=>expect(progress(loaded.descriptor.id).activityId).toBe(activities[gospelIndex+1].id));expect(audio.play).not.toHaveBeenCalled();
+});
+for(const revealed of [false,true])it(`text-first term resource detour returns to the held ${revealed?'definition':'instruction'} phase`,async()=>{
+ const loaded=saveTextFirstTerm();vi.spyOn(libraryAdapter,'select').mockResolvedValue(loaded);render(App);await waitFor(()=>expect(readFace().busy).toBe(false));
+ if(revealed){await fireEvent.click(primary());await waitFor(()=>expect(progress(loaded.descriptor.id).termDefinition).toBe(gospelActivity.id));}
+ await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passage resources'}));
+ const summary=screen.getByText('Word meanings',{selector:'summary'});await fireEvent.click(summary);await fireEvent.click(within(summary.parentElement).getByRole('button',{name:gospelTerm.title,exact:true}));
+ await waitFor(()=>expect(progress(loaded.descriptor.id).session.detour).toBeTruthy());expect(progress(loaded.descriptor.id).activityId).toBe(gospelActivity.id);expect(document.querySelector('main').textContent).toContain(gospelTerm.description);
+ await fireEvent.click(screen.getByRole('button',{name:'Return to guide'}));await waitFor(()=>expect(progress(loaded.descriptor.id).session.detour).toBeNull());expect(progress(loaded.descriptor.id).activityId).toBe(gospelActivity.id);
+ expect(!!document.querySelector('[data-kind="term-instruction"]')).toBe(!revealed);expect(progress(loaded.descriptor.id).termDefinition??null).toBe(revealed?gospelActivity.id:null);expect(audio.play).not.toHaveBeenCalled();
+});
+it('the preserved chooser names all ten English source headwords while Spanish keeps its prior labels',async()=>{
+ for(const id of ['eng.MRK-1-14-20','spa.MRK-1-1-13']){
+  const loaded=pack(id);savePack(loaded);libraryAdapter.select?.mockRestore?.();vi.spyOn(libraryAdapter,'select').mockResolvedValue(loaded);render(App);await waitFor(()=>expect(readFace().busy).toBe(false));
+  await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passage resources'}));const summary=screen.getByText('Word meanings',{selector:'summary'});await fireEvent.click(summary);
+  const buttons=within(summary.parentElement).getAllByRole('button'),terms=Object.values(loaded.presentation.assets).filter(a=>a.kind==='term');
+  expect(buttons.map(b=>b.textContent.trim())).toEqual(terms.map(a=>id.startsWith('eng.')?a.title:(a.subtitle||a.title)));if(id.startsWith('eng.'))expect(buttons).toHaveLength(10);cleanup();localStorage.clear();
+ }
+});
