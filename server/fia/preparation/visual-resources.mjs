@@ -40,7 +40,7 @@ export function declareVisualResources({record,presentation,placements=trustedVi
   if(!placements.has(`${record.packId} ${activity.sourceUnitId} ${asset.sourceEvidence?.id??asset.id}`))continue;
   seen.add(assetId);
   entries.push(visualSourceEligible(asset)
-   ?{assetId,kind:asset.kind,status:'preparable',preparationDemand:{packId:record.packId,baseRevision:ex.baseRevision,sourceRevision:ex.sourceRevision,capability:'executable-presentation',visualDemand:{assetId,kind:asset.kind},expectedExecutionRevision:record.revision}}
+   ?{assetId,kind:asset.kind,status:'preparable',preparationDemand:{packId:record.packId,baseRevision:ex.baseRevision,sourceRevision:ex.sourceRevision,capability:'executable-presentation',visualDemand:{assetId,kind:asset.kind},expectedExecutionRevision:record.revision,...(ex.publication?{expectedPublicationGeneration:ex.publication.generation}:{})}}
    :{assetId,kind:asset.kind,status:'unavailable',reason:'visual-ineligible'});
  }
  return entries;

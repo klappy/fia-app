@@ -23,8 +23,8 @@ export async function serveRead(req,res,url,operations) {
     if(pack){
       // execution=2 is a page's capability to receive visual resources (F4 server half): it is
       // passed to the read, which declares them only on an executable record.
-      if([...url.searchParams.keys()].some(k=>k!=='revision'&&k!=='execution')||url.searchParams.getAll('revision').length>1||url.searchParams.has('execution')&&(url.searchParams.getAll('execution').length!==1||url.searchParams.get('execution')!=='2'))result={status:'refused',code:'invalid-request'};
-      else result=await operations.readPack({packId:decoded,...(url.searchParams.has('revision')?{revision:url.searchParams.get('revision')}:{}),...(url.searchParams.has('execution')?{execution:url.searchParams.get('execution')}:{})});
+      if([...url.searchParams.keys()].some(k=>!['revision','execution','generation'].includes(k))||url.searchParams.getAll('revision').length>1||url.searchParams.getAll('generation').length>1||url.searchParams.has('execution')&&(url.searchParams.getAll('execution').length!==1||url.searchParams.get('execution')!=='2'))result={status:'refused',code:'invalid-request'};
+      else result=await operations.readPack({packId:decoded,...(url.searchParams.has('revision')?{revision:url.searchParams.get('revision')}:{}),...(url.searchParams.has('execution')?{execution:url.searchParams.get('execution')}:{}),...(url.searchParams.has('generation')?{generation:url.searchParams.get('generation')}:{})});
     }else if(artifact){
       result=url.search?{status:'refused',code:'invalid-request'}:await operations.readArtifact({sha256:decoded});
       if(result.status==='ready'){res.writeHead(200,{'Content-Type':result.artifact.mime,'Content-Length':result.artifact.bytes,'Cache-Control':result.cacheControl==='private, no-store'?'private, no-store':'public, max-age=31536000, immutable','ETag':`"${result.artifact.sha256}"`,'X-Content-Type-Options':'nosniff'});res.end(result.content);return;}
