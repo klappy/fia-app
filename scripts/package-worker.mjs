@@ -11,8 +11,9 @@ const extension=buildGeneralizedSnapshot('dist',JSON.parse(readFileSync('server/
 for(const record of extension.records){if(snapshot.current[record.packId])throw Error('duplicate-generalized-record');snapshot.records.push(record);snapshot.current[record.packId]=record.revision;}
 snapshot.staticArtifacts=extension.staticArtifacts.filter(item=>!snapshot.artifacts.some(a=>a.descriptor.sha256===item.descriptor.sha256));
 snapshot.generalizedAuthority=extension.authority;
-const {exportGuideSources}=await import('../server/fia/compiler/presentation/export-guide-sources.mjs');
+const {exportGuideSources,exportAssociationSources}=await import('../server/fia/compiler/presentation/export-guide-sources.mjs');
 snapshot.canonicalSources=exportGuideSources({outputRoot:'dist',sourceRevision:extension.authority.sourceCommit});
+snapshot.associationSources=exportAssociationSources({outputRoot:'dist',sourceRevision:extension.authority.sourceCommit});
 const {buildApprovedAudioProofIndex}=await import('./approved-audio-proof-index.mjs');
 const approved=await buildApprovedAudioProofIndex({publicRoot:'dist',authority:{registrySha256:extension.authority.catalog.sha256,sourceRevision:extension.authority.sourceCommit}});
 mkdirSync('dist/content/approved-audio',{recursive:true});
