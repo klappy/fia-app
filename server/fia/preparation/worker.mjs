@@ -6,6 +6,7 @@ import {json,resolveSelection,operationId,indexedCatalog,readBounded,prepareAcce
 import {createReviewedOriginalStore} from './reviewed-original-store.mjs';
 import {reviewedOriginalStatus} from './reviewed-original-status.mjs';
 import {canonicalJSONString,readPreparedAudio} from './contract.mjs';
+import {serveVisualOriginalObject} from './visual-publication.mjs';
 import {acquireOriginal,originalResponse} from './original.mjs';
 import {readSource,storeSource,sourceKey,verifySourceReference} from './source-store.mjs';
 
@@ -85,6 +86,7 @@ export class FiaPreparationJobs{
   presentationExecutionCapabilities(){return null;}
   async fetch(request){
     await this.guideBoot;
+    const visual=await serveVisualOriginalObject(request,this.ctx,this.env);if(visual)return visual;
     const execution=await serveExecutableObject(request,this.ctx,this.env,this.presentationExecutionCapabilities(),()=>this.executionRuntime??=createExecutableRuntime({ctx:this.ctx,env:this.env,...this.presentationExecutionCapabilities()}));if(execution)return execution;
     const unit=await serveGuideUnitObject(request,this.ctx,this.env,catalog,this.guideCapabilities);if(unit)return unit;
     const guide=await serveGuidePreparationObject(request,this.ctx,this.env,catalog,this.guideCapabilities);if(guide)return guide;
