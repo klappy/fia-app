@@ -241,7 +241,8 @@ async function originalVisualRead(request){
  if(response.status===304&&kept)return kept;
  if(response.status===404||response.status===410){await cache.delete(url.pathname);return response;}
  if(response.status===200){
-  if(response.redirected||!await keptVisual(response,sha)){await cache.delete(url.pathname);return new Response('This image could not be verified.',{status:502,headers:{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store'}});}
+  // A refused answer never revokes a copy that already verified (OFFLINE L45): the kept copy stays and answers.
+  if(response.redirected||!await keptVisual(response,sha)){if(kept)return kept;return new Response('This image could not be verified.',{status:502,headers:{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store'}});}
   await cache.put(url.pathname,response.clone());return response;
  }
  if(kept&&[408,429,500,502,503,504].includes(response.status))return kept;

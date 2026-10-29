@@ -28,3 +28,19 @@ test('a transient server failure reuses the kept original; only exact original p
  const w=worker();w.reply(path,()=>image());await w.fetch(path);w.reply(path,()=>new Response('busy',{status:503}));const r=await w.fetch(path);assert.equal(r.status,200);
  const other=worker();assert.equal((await other.fetch(path+'?x=1')).status,404,'a query is passed through, not kept');assert.equal(other.stores.has('fia-v3-original-visuals@1'),false);
 });
+
+// PR304 review B1 (OFFLINE L45): a corrupted or mistyped 200 never revokes a copy that already verified.
+test('a bad 200 over a kept original leaves the kept copy, which answers now and offline',async()=>{
+ for(const bad of [()=>image(new Uint8Array([9,9,9])),()=>new Response('<html>portal</html>',{status:200,headers:{'Content-Type':'text/html'}})]){
+  const w=worker();w.reply(path,()=>image());await w.fetch(path);assert.ok(kept(w));
+  w.reply(path,bad);const now=await w.fetch(path);assert.equal(now.status,200);assert.deepEqual(new Uint8Array(await now.arrayBuffer()),bytes);assert.ok(kept(w),'still kept');
+  w.offline(true);const offline=await w.fetch(path);assert.equal(offline.status,200);assert.deepEqual(new Uint8Array(await offline.arrayBuffer()),bytes);
+ }
+});
+
+// PR304 review B2: only an exact original path, without a range, is handled and kept.
+test('a range request and non-exact shapes pass through and are never kept',async()=>{
+ const shapes=[path+'/x',`/v1/original-visuals/${'1'.repeat(64)}/${'2'.repeat(64)}/${sha.slice(0,63)}`,`/v1/original-visuals/${'1'.repeat(64)}/${sha}`,`/v1/original-visuals/${'1'.repeat(64)}/${'2'.repeat(64)}/${sha}x`];
+ for(const shape of shapes){const w=worker();w.reply(shape,()=>image());const r=await w.fetch(shape);assert.equal(r.status,200,shape);assert.equal(w.stores.get('fia-v3-original-visuals@1')?.size??0,0,shape+' is not kept');}
+ const w=worker();w.reply(path,()=>image());const r=await w.fetch(path,'c',{headers:{Range:'bytes=0-3'}});assert.equal(r.status,200);assert.equal(kept(w),false,'a range request is not kept');
+});
