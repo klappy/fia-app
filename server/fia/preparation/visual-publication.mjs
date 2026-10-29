@@ -79,17 +79,22 @@ async function readPublication(ctx,entry,args){
 }
 async function serve(ctx,env,entry,job,args,request){
  if(!HEX.test(args.consumer??'')||!HEX.test(args.original??''))return refusal(400,'invalid-request');
+ // The Worker supplies the current executable revision of the pack; a consumer of any other revision is never served.
+ if(!HEX.test(args.current??''))return refusal(409,'visual-publication-stale',{subReason:'execution-not-current'});
  const row=await ctx.storage.get(ROW+args.consumer);
  if(!row||row.schema!==VISUAL_PUBLICATION_SCHEMA||row.original?.sha256!==args.original||row.consumerSha256!==args.consumer)return refusal(404,'visual-not-published');
  // Current authority: the consumer must still be a first-proof consumer of this exact base revision, under today's recipe.
  if(row.consumer.packId!==entry.packId||row.consumer.baseRevision!==entry.baseRevision||row.consumer.assetId!==entry.assetId||row.recipeSha256!==VISUAL_ORIGINAL_RECIPE_SHA256)return refusal(410,'visual-publication-stale');
+ if(row.consumer.executionRevision!==args.current)return refusal(410,'visual-publication-stale',{subReason:'execution-not-current'});
  const state=await job.read();
  // The job re-verifies its custody (receipt, head, retained bytes) on read: a failure there is an integrity refusal.
  if(state.reason==='retained-evidence-unavailable')return refusal(409,'visual-original-integrity',{subReason:state.subReason??null});
  if(state.state!=='ready'||state.original?.sha256!==row.original.sha256||state.decode?.pixelsSha256!==row.original.pixelsSha256)return refusal(409,'visual-publication-stale',{subReason:state.subReason??state.reason??null});
  const etag=`"${row.original.sha256}"`,headers={'content-type':row.original.mime,etag,'cache-control':'private, no-cache','x-content-type-options':'nosniff','accept-ranges':'none'};
  if(request.headers.has('range'))return refusal(416,'range-not-supported');
- if(request.headers.get('if-none-match')===etag)return new Response(null,{status:304,headers});
+ // If-None-Match uses the weak comparison (RFC 9110 §13.1.2): '*', or any listed tag equal after dropping W/.
+ const inm=request.headers.get('if-none-match');
+ if(inm&&(inm.trim()==='*'||inm.split(',').some(t=>t.trim().replace(/^W\//,'')===etag)))return new Response(null,{status:304,headers});
  // Serving re-reads and re-hashes the exact retained bytes on every request; a mismatch is a typed refusal, never served.
  const object=await env.FIA_ORIGINALS.get(row.original.sourceKey);
  if(!object||object.size!==row.original.bytes)return refusal(409,'visual-original-integrity');
@@ -116,17 +121,24 @@ export async function publishVisual(env,{packId,baseRevision,executionRevision,a
 // Public read route: GET/HEAD /v1/original-visuals/<sourceIdentitySha>/<consumerSha>/<originalSha>, nothing else.
 const ROUTE=/^\/v1\/original-visuals\/([a-f0-9]{64})\/([a-f0-9]{64})\/([a-f0-9]{64})$/;
 let sourceIndex=null;
-export async function serveOriginalVisual(request,env){
+export async function serveOriginalVisual(request,env,{currentRevision}={}){
  const url=new URL(request.url);if(!url.pathname.startsWith('/v1/original-visuals/')&&url.pathname!=='/v1/original-visuals')return null;
  const m=ROUTE.exec(url.pathname);if(!m||url.search)return refusal(m?400:404,m?'invalid-request':'unknown-visual');
  if(!['GET','HEAD'].includes(request.method))return refusal(405,'method-not-allowed');
  sourceIndex??=new Map(await Promise.all(VISUAL_FIRST_PROOF.map(async e=>[(await visualOriginalIdentity(e.source)).sourceIdentitySha256,e])));
  const entry=sourceIndex.get(m[1]);if(!entry)return refusal(404,'unknown-visual');
  if(!env.FIA_PREPARATION_JOBS||!env.FIA_ORIGINALS)return refusal(503,'preparation-storage-unavailable');
- const query=new URLSearchParams({packId:entry.packId,baseRevision:entry.baseRevision,assetId:entry.assetId,consumer:m[2],original:m[3]});
+ let current=null;try{current=typeof currentRevision==='function'?await currentRevision(entry.packId):null;}catch{current=null;}
+ if(!HEX.test(current??''))return refusal(503,'interrupted',{subReason:'execution-pointer-unavailable',final:false});
+ const query=new URLSearchParams({packId:entry.packId,baseRevision:entry.baseRevision,assetId:entry.assetId,consumer:m[2],original:m[3],current});
  const headers=new Headers();for(const h of ['if-none-match','range'])if(request.headers.has(h))headers.set(h,request.headers.get(h));
- try{return await (await stubFor(env,entry)).fetch(new Request(`${HOST}/serve?${query}`,{method:request.method,headers}));}
+ let response;try{response=await (await stubFor(env,entry)).fetch(new Request(`${HOST}/serve?${query}`,{method:request.method,headers}));}
  catch{return refusal(503,'interrupted',{final:false});}
+ // An object still on the previous code has no visual namespace: its untyped answer becomes a typed, non-final refusal.
+ if(response.status===200||response.status===304)return response;
+ const body=await response.clone().json().catch(()=>null);
+ if(!body||typeof body.reason!=='string')return refusal(503,'interrupted',{subReason:'visual-object-version-skew',final:false});
+ return response;
 }
 
 // ---- The capabilities.visuals port for F5a (Auggie's executable operations call demand at most once per admitted demand).
@@ -135,13 +147,19 @@ export async function serveOriginalVisual(request,env){
 // before and after), and returns the publication beside the outcome. published: the read side for the visualResources declaration,
 // a pure read of an existing publication row (no write, no fetch, no decode); publishing happens only in demand.
 const DEMAND_KEYS='assetId,baseRevision,executionRevision,kind,packId,retry,sourceRevision';
-export function createVisualsPort(env){
+// currentRevision(packId): the current executable record revision, read in-process from the authority's own runtime.
+export function createVisualsPort(env,{currentRevision}={}){
+ const current=async packId=>{try{return typeof currentRevision==='function'?await currentRevision(packId):null;}catch{return null;}};
  async function demand(request){
   if(!request||typeof request!=='object'||Object.keys(request).sort().join()!==DEMAND_KEYS||typeof request.retry!=='boolean'||!HEX.test(request.executionRevision??'')||typeof request.sourceRevision!=='string')return {state:'unavailable',reason:'execution-admission-refused',final:false};
   const entry=firstProofEntry(request);if(!entry||entry.kind!==request.kind)return {state:'unavailable',reason:'visual-ineligible',subReason:'not-first-proof',final:false};
   const outcome=await demandVisual(env,{packId:entry.packId,baseRevision:entry.baseRevision,assetId:entry.assetId,retry:request.retry});
   if(outcome?.state!=='ready')return outcome?.state?outcome:{state:'unavailable',reason:outcome?.reason??'interrupted',subReason:outcome?.subReason??null,final:false};
+  // The fence (CLAIM-VISUAL-RESOURCES-F4-F5A L87): publish only while executionRevision is the current pointer, checked before
+  // and after the write. A row written for a revision that moved is inert: the route serves only the current revision.
+  if(await current(entry.packId)!==request.executionRevision)return {...outcome,publication:null,publicationRefused:'execution-revision-stale'};
   const publication=await publishVisual(env,{packId:entry.packId,baseRevision:entry.baseRevision,executionRevision:request.executionRevision,assetId:entry.assetId});
+  if(await current(entry.packId)!==request.executionRevision)return {...outcome,publication:null,publicationRefused:'execution-revision-stale'};
   return {...outcome,publication:publication?.status==='ready'?{ready:publication.ready,manifestEntry:publication.manifestEntry}:null};
  }
  async function published({packId,baseRevision,executionRevision,assetId}){

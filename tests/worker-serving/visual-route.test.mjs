@@ -9,7 +9,7 @@ import {createHash} from 'node:crypto';
 import {buildGeneralizedSnapshot} from '../../server/fia/publication/generalized.mjs';
 import {exportGuideSources} from '../../server/fia/compiler/presentation/export-guide-sources.mjs';
 import {buildApprovedAudioProofIndex} from '../../scripts/approved-audio-proof-index.mjs';
-import {VISUAL_FIRST_PROOF,VISUAL_RETRY_MIN_MS,visualConsumerIdentity,createVisualsPort} from '../../server/fia/preparation/visual-publication.mjs';
+import {VISUAL_FIRST_PROOF,VISUAL_RETRY_MIN_MS,visualConsumerIdentity,createVisualsPort,serveOriginalVisual} from '../../server/fia/preparation/visual-publication.mjs';
 import {visualOriginalIdentity} from '../../server/fia/preparation/visual-original.mjs';
 // The real packaged Worker (entry.mjs) with FiaPreparationJobs and FIA_ORIGINALS, end to end for English S02-U008:
 // an admitted visualDemand (Auggie's F5a) routes through the capabilities.visuals port into the per-source visual-original@1
@@ -72,6 +72,9 @@ test('English S02-U008 end to end in the real Worker: admitted demand, original,
   const got=await read(path);assert.equal(got.status,200,JSON.stringify(got.body));assert.equal(sha(got.body),sha(bytes));assert.equal(got.body.length,bytes.length);
   assert.equal(got.headers.get('etag'),`"${sha(bytes)}"`);assert.equal(got.headers.get('content-type'),MIME[assetId]);assert.equal(got.headers.get('cache-control'),'private, no-cache');
   assert.equal((await read(path,{headers:{'If-None-Match':`"${sha(bytes)}"`}})).status,304);
+  // Weak comparison (RFC 9110): a weak tag, a list containing the tag, and '*' all revalidate; another tag does not.
+  for(const inm of [`W/"${sha(bytes)}"`,`"x", "${sha(bytes)}"`,'*'])assert.equal((await read(path,{headers:{'If-None-Match':inm}})).status,304,inm);
+  assert.equal((await read(path,{headers:{'If-None-Match':'"other"'}})).status,200);
   const head=await mf.dispatchFetch(origin+path,{method:'HEAD'});assert.equal(head.status,200);assert.equal(head.headers.get('content-length'),String(bytes.length));
   assert.equal((await read(path,{headers:{Range:'bytes=0-9'}})).body.reason,'range-not-supported');
   // Unpublished: another execution revision (or consumer) never published this original.
@@ -80,6 +83,11 @@ test('English S02-U008 end to end in the real Worker: admitted demand, original,
   assert.equal((await read(`/v1/original-visuals/${src}/${consumerSha256}/${'0'.repeat(64)}`)).body.reason,'visual-not-published');
   assert.equal(counts.publisher[assetId],1,'reads fetch nothing');
  }
+ // B1 (review 5693742032): a row for a revision that was never current is never served, even if one is written directly.
+ {const a=VISUAL_FIRST_PROOF.find(e=>e.assetId==='a1400'),da=await door(mf,a.source),forged='e'.repeat(64);
+  const pub=await (await da.stub.fetch('https://visual-original.internal/publish',{method:'POST',body:JSON.stringify({packId:a.packId,baseRevision:a.baseRevision,assetId:a.assetId,executionRevision:forged})})).json();
+  assert.equal(pub.status,'ready','the internal operation itself records the row; serving is what the fence decides');
+  const refused=await read(pub.ready.path);assert.equal(refused.status,410);assert.equal(refused.body.reason,'visual-publication-stale');assert.equal(refused.body.subReason,'execution-not-current');}
  // Stale: a publication row from another recipe is never served. Tampered: changed retained bytes are never served.
  const c4=VISUAL_FIRST_PROOF.find(e=>e.assetId==='c4'),d=await door(mf,c4.source),rows=await d.dump(),key=Object.keys(rows).find(k=>k.startsWith('visual-publication:')),row=rows[key];
  const c4path=row.path;await d.put(key,{...row,recipeSha256:'f'.repeat(64)});
@@ -109,12 +117,32 @@ test('published() is a pure read: a decoded-ready but unpublished original is vi
  const again=await (await d.stub.fetch('https://visual-original.internal/published?'+new URLSearchParams({packId:a.packId,baseRevision:a.baseRevision,assetId:a.assetId,executionRevision}))).json();
  assert.equal(again.status,'ready');assert.deepEqual(again.manifestEntry,pub.manifestEntry);assert.equal(JSON.stringify(await d.dump()),rowsAfterPublish);
 });
+test('the port publishes only while executionRevision is the current pointer (checked before and after); the route types an older object',async()=>{
+ const a=VISUAL_FIRST_PROOF.find(e=>e.assetId==='a1400'),calls=[];
+ const fake=answer=>({FIA_ORIGINALS:{},FIA_PREPARATION_JOBS:{idFromName:n=>n,get:()=>({fetch:async request=>{const path=new URL(request.url).pathname;calls.push(path);return answer(path);}})}});
+ const ok=path=>Response.json(path==='/demand'?{state:'ready'}:{status:'ready',ready:{path:'/p',sha256:'s'},manifestEntry:{path:'/p'}});
+ const request={packId:a.packId,baseRevision:a.baseRevision,sourceRevision:'r',executionRevision:'a'.repeat(64),assetId:'a1400',kind:'image',retry:false};
+ let pointer='b'.repeat(64);const port=createVisualsPort(fake(ok),{currentRevision:async()=>pointer});
+ const stale=await port.demand(request);assert.equal(stale.state,'ready');assert.equal(stale.publication,null);assert.equal(stale.publicationRefused,'execution-revision-stale');assert.deepEqual(calls,['/demand'],'no publish for a non-current revision');
+ calls.length=0;let reads=0;const moving=createVisualsPort(fake(ok),{currentRevision:async()=>++reads===1?request.executionRevision:pointer});
+ const moved=await moving.demand(request);assert.equal(moved.publication,null);assert.equal(moved.publicationRefused,'execution-revision-stale');assert.deepEqual(calls,['/demand','/publish'],'a pointer that moves during the write leaves an inert row');
+ calls.length=0;const current=createVisualsPort(fake(ok),{currentRevision:async()=>request.executionRevision});
+ assert.deepEqual((await current.demand(request)).publication,{ready:{path:'/p',sha256:'s'},manifestEntry:{path:'/p'}});
+ assert.equal(await createVisualsPort(fake(()=>Response.json({status:'unavailable',reason:'visual-not-published'},{status:404}))).published({packId:a.packId,baseRevision:a.baseRevision,executionRevision:'a'.repeat(64),assetId:'a1400'}),null);
+ // The route: an older object's untyped 404 becomes a typed non-final refusal; a missing pointer is typed too.
+ const src=(await visualOriginalIdentity(a.source)).sourceIdentitySha256,url=`https://dev.fiaguide.app/v1/original-visuals/${src}/${'c'.repeat(64)}/${'d'.repeat(64)}`;
+ const old=fake(()=>Response.json({status:'unavailable',code:'unknown-preparation'},{status:404}));
+ const skew=await serveOriginalVisual(new Request(url),old,{currentRevision:async()=>'a'.repeat(64)});assert.equal(skew.status,503);assert.deepEqual(await skew.json(),{status:'unavailable',reason:'interrupted',subReason:'visual-object-version-skew',final:false});
+ const nopointer=await serveOriginalVisual(new Request(url),old,{currentRevision:async()=>null});assert.equal(nopointer.status,503);assert.equal((await nopointer.json()).subReason,'execution-pointer-unavailable');
+});
 test('Retry is accepted by the port and floored per source; an older object answers typed and non-final',async t=>{
  const {mf,dir,counts}=await runtime();t.after(async()=>{await mf.dispose();await rm(dir,{recursive:true,force:true});});
  const a=VISUAL_FIRST_PROOF.find(e=>e.assetId==='a1400'),d=await door(mf,a.source);
  const call=async retry=>(await d.stub.fetch('https://visual-original.internal/demand',{method:'POST',body:JSON.stringify({packId:a.packId,baseRevision:a.baseRevision,assetId:a.assetId,retry})})).json();
  const first=await call(true);assert.equal(first.state,'ready');assert.equal(first.retry,'opened');
  const soon=await call(true);assert.equal(soon.retry,'deferred',`a second Retry inside ${VISUAL_RETRY_MIN_MS} ms is a plain demand`);assert.equal(counts.publisher.a1400,1);
+ // After the floor the next Retry opens again (the retained original still fetches nothing).
+ await d.put('visual-original:last-retry',Date.now()-VISUAL_RETRY_MIN_MS-1000);const later=await call(true);assert.equal(later.retry,'opened');assert.equal(counts.publisher.a1400,1);
  // Custody: the a1400 entry is served only by its own object.
  const ns=await mf.getDurableObjectNamespace('FIA_PREPARATION_JOBS'),wrong=ns.get(ns.idFromName('some-other-object'));
  assert.equal((await (await wrong.fetch('https://visual-original.internal/demand',{method:'POST',body:JSON.stringify({packId:a.packId,baseRevision:a.baseRevision,assetId:a.assetId,retry:false})})).json()).reason,'visual-object-custody');
