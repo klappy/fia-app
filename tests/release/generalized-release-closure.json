@@ -1541,7 +1541,7 @@
     },
     {
       "path": "server/faces/worker/BACKEND-CLOSURE.json",
-      "sha256": "4620789a3045e1934d6114ada040426abba11cdc485f4ed4284c257adf202ea7"
+      "sha256": "6d00f9754a00c6838399c2134340526e416917e39da47b2143129e0a788890ab"
     },
     {
       "path": "server/faces/worker/adapter.mjs",
@@ -1681,7 +1681,7 @@
     },
     {
       "path": "server/fia/preparation/executor/FRESH-SOURCE-OBSERVATION.md",
-      "sha256": "2af6f418e8f3abc2247db749ee6fcc3762ede50310f1cf94f80f2f19aa3add80"
+      "sha256": "dd51b65bf850b849f0979eb624d809dc023f3bbbde5400a66eaec03848b034ed"
     },
     {
       "path": "server/fia/preparation/executor/GUIDE-EXECUTOR.md",
@@ -1809,7 +1809,7 @@
     },
     {
       "path": "server/fia/preparation/executor/fresh-source-observation.mjs",
-      "sha256": "f1ffca82d04538c63f65ad7c89eeddcb97dbeb580f5853f78eb9c4ed06933ec9"
+      "sha256": "80f8c0869030987abd2aecda8df9ec5a459e873dc2a6404ea3800f7fe5dbd420"
     },
     {
       "path": "server/fia/preparation/executor/guide-executor.mjs",
@@ -2800,6 +2800,18 @@
     {
       "path": "apps/web/tests/offline-approved-audio.test.js",
       "sha256": "52a7a8d477a6c588388e1e3a1cb4a9613bd78c99e12ed5582be383a91ef02ef8"
+    },
+    {
+      "path": "server/fia/preparation/visual-original.mjs",
+      "sha256": "722b2138a805f8efe6ebf8d5deee3fe66f6ae00ae914021a87fd099b84efefef"
+    },
+    {
+      "path": "tests/preparation-executor/visual-original.test.mjs",
+      "sha256": "22bcb3ca21cdc21fed75607d0b1f9b983a503c4a7d005b63b9060154ff54800e"
+    },
+    {
+      "path": "tests/worker-serving/visual-original.test.mjs",
+      "sha256": "49774e4d5bfe7cacfab361319fa8a85435b344f2a91a32481e807be398470053"
     }
   ],
   "generatedFiles": [
