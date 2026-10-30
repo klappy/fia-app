@@ -47,3 +47,22 @@ test('execution=2 pack reads pass through online and never take a snapshot saved
  w.offline(false);w.reply(`/v1/packs/${packId}`,new Response('unavailable',{status:503}));const transient=await w.fetch(`/v1/packs/${packId}?execution=2`);assert.equal(transient.status,503);assert.equal(transient.headers.get('X-FIA-Offline-Snapshot'),null,'the server answer passes through unchanged');
  assert.equal((await w.fetch(`/v1/packs/${packId}`)).headers.get('X-FIA-Offline-Snapshot'),'historical-verified','the saved snapshot is kept for reads without the capability');
 });
+
+// Carry-forward of #288 fe806b6 (PR287 native review P1, sw.js:147): an older server refuses the execution=2 read with
+// 400 invalid-request. That refusal is about the capability, not the pack, so the saved snapshot (saved without the
+// capability) survives it, and an offline plain read still answers historical-verified. The read is passed through
+// once; it starts no other fetch.
+test('an older server refusing execution=2 never retires the saved snapshot',async()=>{const f=fixture(),w=worker(f);assert.equal((await save(w,f)).ok,true);
+ w.reply(`/v1/packs/${packId}`,Response.json({status:'refused',code:'invalid-request'},{status:400}));
+ const before=w.calls.length;const refused=await w.fetch(`/v1/packs/${packId}?execution=2`);assert.equal(refused.status,400);assert.deepEqual(await refused.json(),{status:'refused',code:'invalid-request'});
+ assert.deepEqual(w.calls.slice(before),[`/v1/packs/${packId}?execution=2`],'one pass-through read, no other fetch');
+ w.offline(true);const offline=await w.fetch(`/v1/packs/${packId}`);assert.equal(offline.status,200);assert.equal(offline.headers.get('X-FIA-Offline-Snapshot'),'historical-verified');assert.deepEqual(await offline.json(),f.record);
+});
+// The guard is narrow: only a 400 to the execution=2 capability is spared. A plain read's 400, 404 or 410, a malformed
+// plain 200, and any other answer to the capability read (here 404) still retire the saved snapshot as before.
+test('canaries: every other refusal or integrity failure still retires the saved snapshot',async()=>{
+ const cases=[['',400,Response.json({status:'refused',code:'invalid-request'},{status:400})],['',404,Response.json({status:'unavailable',reason:'revoked'},{status:404})],['',410,Response.json({status:'unavailable',reason:'withdrawn'},{status:410})],['',200,Response.json({schema:'wrong'})],['?execution=2',404,Response.json({status:'unavailable',reason:'revoked'},{status:404})]];
+ for(const [query,status,response] of cases){const f=fixture(),w=worker(f);assert.equal((await save(w,f)).ok,true);
+  w.reply(`/v1/packs/${packId}`,response);assert.equal((await w.fetch(`/v1/packs/${packId}${query}`)).status,status);
+  w.offline(true);assert.equal((await w.fetch(`/v1/packs/${packId}`)).status,503,`${query||'plain'} ${status} retires the snapshot`);}
+});

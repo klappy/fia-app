@@ -63,3 +63,15 @@ test('execution accepts visualResources, mediaManifest and publication absent or
  for(const [n,mutate] of bad.entries()){const p=fixture(),e=structuredClone(extensions);mutate(e);Object.assign(p.execution,e);assert.throws(()=>validateExecutablePresentation(p),String(n));}
  {const p=fixture();p.execution.visualResource=[];assert.throws(()=>validateExecutablePresentation(p),'an unknown key still refuses');}
 });
+
+// Carry-forward of #288 fe806b6 (PR287 native review P1, executable-presentation.js:26): visual-unsupported is the
+// canonical typed unavailable reason (cookbook PR265). An entry carrying it is accepted, and the presentation stays
+// valid; an unknown or malformed reason still refuses.
+test('visualResources accepts the visual-unsupported reason and still refuses unknown reasons',async()=>{
+ const {validateVisualResources}=await import('../src/lib/executable-presentation.js');
+ assert.ok(validateVisualResources([{assetId:'c4',kind:'map',status:'unavailable',reason:'visual-unsupported'}]));
+ {const p=fixture();p.execution.visualResources=[{assetId:'c4',kind:'map',status:'unavailable',reason:'visual-unsupported'}];assert.ok(validateExecutablePresentation(p),'the whole presentation stays valid');}
+ {const p=fixture();p.execution.visualResources=[{assetId:'c4',kind:'map',status:'unavailable',reason:'too-big'}];assert.throws(()=>validateExecutablePresentation(p));}
+ for(const reason of ['too-big','Visual-Unsupported','visual-unsupported ','',null,1])assert.throws(()=>validateVisualResources([{assetId:'c4',kind:'map',status:'unavailable',reason}]),String(reason));
+ assert.throws(()=>validateVisualResources([{assetId:'c4',kind:'map',status:'unavailable',reason:'visual-unsupported',subReason:'fresh-byte-limit'}]),'the entry shape stays closed');
+});
