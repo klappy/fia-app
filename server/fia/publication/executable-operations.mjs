@@ -9,7 +9,9 @@ async function typed(run,denied,publicationTimeout=false){try{return await run()
 // F5a: a visual demand is the four-field demand plus visualDemand and expectedExecutionRevision
 // (SOURCE-TO-APP L95, presentation-decision-demand schema). decisionDemand is not admitted here.
 const generationExpectation=x=>!object(x)||!Object.hasOwn(x,'expectedPublicationGeneration')||x.expectedPublicationGeneration===null||hash(x.expectedPublicationGeneration);
-export function validVisualDemand(x){const {visualDemand,expectedExecutionRevision,expectedPublicationGeneration,...rest}=object(x)?x:{};return exact(x,['packId','baseRevision','sourceRevision','capability','visualDemand','expectedExecutionRevision',...(object(x)&&Object.hasOwn(x,'expectedPublicationGeneration')?['expectedPublicationGeneration']:[])])&&generationExpectation(x)&&validPresentationDemand(rest)&&exact(visualDemand,['assetId','kind'])&&typeof visualDemand.assetId==='string'&&/^[A-Za-z0-9_-]{1,256}$/.test(visualDemand.assetId)&&['image','map'].includes(visualDemand.kind)&&hash(expectedExecutionRevision);}
+// Terry 366218f: visualDemand is exactly {assetId,kind}, or {assetId,kind,retry:true} for an explicit user Retry; retry is not
+// part of the declared demand it must match, and only retry===true reaches the port as a retry.
+export function validVisualDemand(x){const {visualDemand,expectedExecutionRevision,expectedPublicationGeneration,...rest}=object(x)?x:{};return exact(x,['packId','baseRevision','sourceRevision','capability','visualDemand','expectedExecutionRevision',...(object(x)&&Object.hasOwn(x,'expectedPublicationGeneration')?['expectedPublicationGeneration']:[])])&&generationExpectation(x)&&validPresentationDemand(rest)&&(exact(visualDemand,['assetId','kind'])||exact(visualDemand,['assetId','kind','retry'])&&visualDemand.retry===true)&&typeof visualDemand.assetId==='string'&&/^[A-Za-z0-9_-]{1,256}$/.test(visualDemand.assetId)&&['image','map'].includes(visualDemand.kind)&&hash(expectedExecutionRevision);}
 const VISUAL_REASONS=new Set(['decoder-unavailable','visual-ineligible','visual-unsupported','retained-evidence-unavailable','execution-admission-refused','execution-uncertain','interrupted']);
 const canonical=v=>Array.isArray(v)?v.map(canonical):object(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,canonical(v[k])])):v,sameJSON=(a,b)=>JSON.stringify(canonical(a))===JSON.stringify(canonical(b));
 export function validPresentationDemand(x){return exact(x,['packId','baseRevision','sourceRevision','capability'])&&typeof x.packId==='string'&&/^(eng|spa)\.(?:MRK|LUK)-[0-9-]+$/.test(x.packId)&&x.packId.length<=80&&hash(x.baseRevision)&&typeof x.sourceRevision==='string'&&/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(x.sourceRevision)&&x.capability==='executable-presentation';}
@@ -62,7 +64,7 @@ export function createExecutableOperations({reads,service,publication,storage,vi
   if(entry.status==='unavailable')return {refusal:envelope('unavailable',null,entry.reason)};
   // An already ready asset answers ready only to a demand bound to this execution's own base and source (review N1).
   if(entry.status==='ready')return args.baseRevision===record.execution.baseRevision&&args.sourceRevision===record.execution.sourceRevision?{refusal:envelope('ready',hash(record.execution.provenance?.jobId)?record.execution.provenance.jobId:null,null,record)}:{refusal:envelope('blocked',null,'execution-admission-refused')};
-  if(entry.status!=='preparable'||!sameJSON(args,entry.preparationDemand))return {refusal:envelope('blocked',null,'execution-admission-refused')};
+  if(entry.status!=='preparable'||!sameJSON({...args,visualDemand:{assetId:args.visualDemand.assetId,kind:args.visualDemand.kind}},entry.preparationDemand))return {refusal:envelope('blocked',null,'execution-admission-refused')};
   return {record,entry};
  }
  async function prepareVisual(raw){
@@ -72,7 +74,7 @@ export function createExecutableOperations({reads,service,publication,storage,vi
    const admitted=await currentVisual(args);if(admitted.refusal)return admitted.refusal;
    if(!visuals||typeof visuals.demand!=='function')return envelope('unavailable',null,'visual-routing-unavailable');
    let outcome;
-   try{outcome=await visuals.demand({packId:args.packId,baseRevision:args.baseRevision,sourceRevision:args.sourceRevision,executionRevision:admitted.record.revision,assetId:args.visualDemand.assetId,kind:args.visualDemand.kind,retry:false});}
+   try{outcome=await visuals.demand({packId:args.packId,baseRevision:args.baseRevision,sourceRevision:args.sourceRevision,executionRevision:admitted.record.revision,assetId:args.visualDemand.assetId,kind:args.visualDemand.kind,retry:args.visualDemand.retry===true});}
    catch(error){return envelope('unavailable',null,code(error)&&VISUAL_REASONS.has(code(error))?code(error):'interrupted');}
    // The fence again: a newer execution may have been adopted while custody ran. Its source
    // evidence stays reusable by the job; this demand cannot speak for the newer execution.
