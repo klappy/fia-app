@@ -28,7 +28,7 @@ export class FiaPreparationJobs extends Jobs{async fetch(request){const url=new 
  if(url.pathname==='/dump')return Response.json(Object.fromEntries(await this.ctx.storage.list()));
  const {key,value}=await request.json();if(value===null)await this.ctx.storage.delete(key);else await this.ctx.storage.put(key,value);return Response.json(true);}}
 export default worker;`;
-async function runtime(){
+async function runtime({plan={}}={}){
  const dir=await mkdtemp(join(tmpdir(),'fia-visual-route-')),authority=JSON.parse(await readFile('server/fia/publication/trusted-generalized.json')),extension=buildGeneralizedSnapshot(publicRoot,authority),canonicalSources=exportGuideSources({outputRoot:dir,sourceRevision:authority.sourceCommit});
  const proof=await buildApprovedAudioProofIndex({publicRoot,authority:{registrySha256:authority.catalog.sha256,sourceRevision:authority.sourceCommit}});
  const snapshot={schema:'fia.worker-read-snapshot.v1',records:extension.records,current:extension.current,staticArtifacts:extension.staticArtifacts,artifacts:[],canonicalSources,generalizedAuthority:extension.authority,approvedAudioProofIndex:proof.descriptor};
@@ -37,7 +37,7 @@ async function runtime(){
  const byUrl=new Map(VISUAL_FIRST_PROOF.map(e=>[e.source.url,e.assetId]));
  const mf=new Miniflare({...convertV4MiniflareOptions({modules:true,script:bundled.outputFiles[0].text,compatibilityDate:'2026-09-01',compatibilityFlags:['nodejs_compat'],bindings:{FIA_API_ORIGIN:origin},durableObjects:{FIA_PREPARATION_JOBS:{className:'FiaPreparationJobs',useSQLite:true}},r2Buckets:['FIA_ORIGINALS'],
   serviceBindings:{ASSETS:async request=>{const path=new URL(request.url).pathname;let bytes;try{bytes=proof.descriptor.path===path?proof.bytes:await readFile((path.startsWith('/content/source-guides/')?dir:publicRoot)+path);}catch(error){if(error.code!=='ENOENT')throw error;return new Response('Not found',{status:404});}return new Response(bytes,{headers:{'Content-Type':'application/json','Content-Length':String(bytes.length)}});}},
-  outboundService:async request=>{const id=byUrl.get(request.url);if(!id){counts.other++;throw Error('External work forbidden');}counts.publisher[id]++;const b=ORIGINALS[id];return new Response(b,{headers:{'content-type':MIME[id],'content-length':String(b.length)}});}}),resourcePersistencePath:join(dir,'storage')});
+  outboundService:async request=>{const id=byUrl.get(request.url);if(!id){counts.other++;throw Error('External work forbidden');}counts.publisher[id]++;const step=plan[id]?.shift();if(step==='throw')throw Error('publisher-timeout');if(step)return new Response('busy',{status:step,headers:{'content-type':'text/plain','content-length':'4'}});const b=ORIGINALS[id];return new Response(b,{headers:{'content-type':MIME[id],'content-length':String(b.length)}});}}),resourcePersistencePath:join(dir,'storage')});
  return {mf,dir,counts};
 }
 const http=mf=>async(path,init)=>{const r=await mf.dispatchFetch(origin+path,init);const type=r.headers.get('content-type')??'';return {status:r.status,headers:r.headers,body:type.includes('json')?await r.json():new Uint8Array(await r.arrayBuffer())};};
@@ -165,4 +165,45 @@ test('Retry is accepted by the port and floored per source; an older object answ
  const skew=await port.demand(request);assert.equal(skew.state,'unavailable');assert.equal(skew.final,false);
  assert.equal((await port.demand({...request,extra:1})).reason,'execution-admission-refused');assert.equal((await port.demand({...request,kind:'map'})).reason,'visual-ineligible');
  assert.equal((await port.demand({...request,assetId:'a293'})).reason,'visual-ineligible');
+});
+// 4426496415: a transient first publisher attempt (503, 408, 429 or a timeout) must not strand the public path in interrupted.
+// Through the public admitted preparation route: plain demands, reads and status make no fetch; an explicit user Retry on the public
+// demand opens one bounded reopen, after which the original is fetched once, decoded ready and reused.
+for(const first of [503,408,429,'throw'])test(`4426496415: after a transient ${first} first attempt, only an explicit public Retry reopens, once, and reaches ready`,async t=>{
+ const {mf,dir,counts}=await runtime({plan:{a1400:[first]}});t.after(async()=>{await mf.dispose();await rm(dir,{recursive:true,force:true});});
+ const read=http(mf),base=await read('/v1/packs/'+packId);assert.equal((await prepare(read,base.body.preparationDemand)).body.status,'ready');
+ const demand=(await read('/v1/packs/'+packId+'?execution=2')).body.execution.visualResources.find(r=>r.assetId==='a1400').preparationDemand;
+ const one=await prepare(read,demand);assert.equal(one.body.reason,'interrupted',JSON.stringify(one.body));assert.equal(counts.publisher.a1400,1);
+ const plain=await prepare(read,demand);assert.equal(plain.body.reason,'interrupted');assert.equal(counts.publisher.a1400,1,'a plain demand never refetches');
+ await read('/v1/packs/'+packId+'?execution=2');assert.equal(counts.publisher.a1400,1,'a read never fetches');
+ const retried=await prepare(read,{...demand,visualDemand:{...demand.visualDemand,retry:true}});
+ assert.equal(retried.body.reason,'visual-publication-unavailable',JSON.stringify(retried.body));assert.equal(counts.publisher.a1400,2,'the explicit Retry fetches exactly once');
+ const reused=await prepare(read,demand);assert.equal(reused.body.reason,'visual-publication-unavailable');assert.equal(counts.publisher.a1400,2,'the retained original is reused');
+ assert.equal(counts.other,0);
+});
+// 4426496415 guards: the explicit public Retry reopens only a non-final outcome, once per source floor, and never a verdict or a ready original.
+const setup=async(t,plan)=>{const {mf,dir,counts}=await runtime({plan});t.after(async()=>{await mf.dispose();await rm(dir,{recursive:true,force:true});});
+ const read=http(mf),base=await read('/v1/packs/'+packId);assert.equal((await prepare(read,base.body.preparationDemand)).body.status,'ready');
+ const demand=(await read('/v1/packs/'+packId+'?execution=2')).body.execution.visualResources.find(r=>r.assetId==='a1400').preparationDemand;
+ return {read,counts,demand,retry:{...demand,visualDemand:{...demand.visualDemand,retry:true}}};};
+test('4426496415 guard: a permanent 404 stays final; an explicit Retry never refetches it',async t=>{
+ const {read,counts,demand,retry}=await setup(t,{a1400:[404]});
+ const one=await prepare(read,demand);assert.equal(one.body.reason,'visual-unsupported',JSON.stringify(one.body));assert.equal(counts.publisher.a1400,1);
+ const again=await prepare(read,retry);assert.equal(again.body.reason,'visual-unsupported');assert.equal(counts.publisher.a1400,1,'a final verdict is never refetched');
+});
+test('4426496415 guard: an explicit Retry inside the per-source 30 s floor is deferred with 0 fetches',async t=>{
+ const {read,counts,demand,retry}=await setup(t,{a1400:[503,503]});
+ assert.equal((await prepare(read,demand)).body.reason,'interrupted');assert.equal(counts.publisher.a1400,1);
+ assert.equal((await prepare(read,retry)).body.reason,'interrupted');assert.equal(counts.publisher.a1400,2,'the first explicit Retry opens one attempt');
+ assert.equal((await prepare(read,retry)).body.reason,'interrupted');assert.equal(counts.publisher.a1400,2,'a second Retry inside the floor is deferred');
+});
+test('4426496415 guard: once ready, an explicit Retry fetches nothing and reuses the retained original',async t=>{
+ const {read,counts,demand,retry}=await setup(t,{});
+ assert.equal((await prepare(read,demand)).body.reason,'visual-publication-unavailable');assert.equal(counts.publisher.a1400,1);
+ assert.equal((await prepare(read,retry)).body.reason,'visual-publication-unavailable');assert.equal(counts.publisher.a1400,1);
+});
+test('4426496415 guard: the public visual demand accepts only {assetId,kind} or {assetId,kind,retry:true}',async t=>{
+ const {read,counts,demand}=await setup(t,{});
+ for(const visualDemand of [{...demand.visualDemand,retry:false},{...demand.visualDemand,retry:'yes'},{...demand.visualDemand,retry:true,extra:1}]){const r=await prepare(read,{...demand,visualDemand});assert.equal(r.body.code,'invalid-request',JSON.stringify(visualDemand));}
+ assert.equal(counts.publisher.a1400,0);
 });
