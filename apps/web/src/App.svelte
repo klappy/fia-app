@@ -49,8 +49,9 @@
  // A deliberate action (a tap, a gesture, a tool call) authorizes at most one visual demand for this view;
  // restore, Save and automatic progression never do (SOURCE-TO-APP navigation, Q22).
  function authorizeVisual(deliberate=true){visualAuthorization=visualIdentity();if(deliberate)visualDeliberate=visualAuthorization;syncVisual();}
- // The stage's Try again is the only explicit user Retry: it alone marks this view's next demand retry:true, once (Terry 366218f).
- function retryVisual(){visualCanceled=null;visualRetry=visualIdentity();visualOwner.retry();authorizeVisual();}
+ // The stage's Try again is the only explicit user Retry (Terry 366218f). Its mark lives only for the sync this tap starts:
+ // if that sync sends nothing (offline, not preparable), no later sync, reconnect or return can send retry:true.
+ function retryVisual(){visualCanceled=null;visualRetry=visualIdentity();visualOwner.retry();try{authorizeVisual();}finally{visualRetry=null;}}
  function cancelVisual(){visualCanceled=visualIdentity();stopVisual();}
  function stopVisual(){visualAuthorization=null;visualOwner.cancel();}
  function syncServerVisual(id,asset){
@@ -58,7 +59,7 @@
   // A ready original is read (the service worker answers it offline); a preparable one is asked for only
   // online and only under this view's deliberate authorization, so one action sends at most one POST.
   if(entry.status==='preparable'&&(!online||visualDeliberate!==visualIdentity()))return;
-  visualAuthorization=visualIdentity();const pack=selectedPack,identity=visualAuthorization,word=asset.kind==='map'?'map':'image',retry=entry.status==='preparable'&&visualRetry===identity;if(visualRetry===identity)visualRetry=null;
+  visualAuthorization=visualIdentity();const pack=selectedPack,identity=visualAuthorization,word=asset.kind==='map'?'map':'image',retry=entry.status==='preparable'&&visualRetry===identity;
   void visualOwner.load({pack,path:visualSlot(id),revision:pack.revision,identity,failure:`This ${word} could not load.`,prepare:async signal=>{
    try{const ready=await libraryAdapter.prepareVisual({...pack,...declarations()},id,signal,{retry});if(ready.served&&pack===selectedPack)servedDeclarations={packId:pack.id,revision:pack.revision,...ready.served};return ready;}
    catch(error){if(error?.served&&pack===selectedPack)servedDeclarations={packId:pack.id,revision:pack.revision,...error.served};throw error;}

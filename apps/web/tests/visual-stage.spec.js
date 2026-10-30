@@ -77,6 +77,34 @@ it('a failed original shows the media-viewer wording with Try again; Try again a
  expect(retried).toEqual(['plain',true],'only the explicit Try again sends retry:true');
 });
 
+// PR305 review 5716731177 N1: the retry mark is one-shot. After Try again sends retry:true and fails again, a deliberate
+// return to the same view (Continue then Back) asks plain; only another Try again sends retry:true.
+it('the retry mark is one-shot: a later ask of the same view sends plain until Try again is tapped again',async()=>{
+ answers.a1400=()=>record([preparable('a1400','image'),preparable('c4','map')]);
+ await mount();await toStart();await next();await step(A);
+ await waitFor(()=>expect(screen.getByText('This image could not load.')).toBeTruthy());
+ await fireEvent.click(screen.getByRole('button',{name:'Try again'}));await waitFor(()=>expect(retried).toEqual(['plain',true]));
+ await waitFor(()=>expect(screen.getByText('This image could not load.')).toBeTruthy());
+ const mine=()=>retried.filter((r,i)=>posts[i]==='a1400');
+ await next();await step(A+1);await back();await step(A);await waitFor(()=>expect(mine().length).toBe(3));
+ await new Promise(r=>setTimeout(r,100));
+ expect(mine()).toEqual(['plain',true,'plain'],'the deliberate return asks plain');
+ await fireEvent.click(await screen.findByRole('button',{name:'Try again'}));await waitFor(()=>expect(mine()).toEqual(['plain',true,'plain',true]));
+});
+
+// PR305 review 5716731177 N2: a Try again whose own sync sends nothing (the connection dropped in the same moment) leaves no
+// retry mark behind; the reconnect that follows asks plain, never retry:true.
+it('a Try again that sends nothing leaves no retry mark; reconnecting never sends retry:true',async()=>{
+ answers.a1400=()=>record([preparable('a1400','image'),preparable('c4','map')]);
+ await mount();await toStart();await next();await step(A);
+ await waitFor(()=>expect(screen.getByText('This image could not load.')).toBeTruthy());expect(retried).toEqual(['plain']);
+ const tryAgain=screen.getByRole('button',{name:'Try again'});
+ Object.defineProperty(navigator,'onLine',{configurable:true,get:()=>false});window.dispatchEvent(new Event('offline'));tryAgain.click();
+ await new Promise(r=>setTimeout(r,100));expect(retried).toEqual(['plain'],'offline, Try again sends nothing');
+ delete navigator.onLine;window.dispatchEvent(new Event('online'));await waitFor(()=>expect(retried.length).toBe(2));
+ expect(retried).toEqual(['plain','plain'],'the reconnect is not a user Retry');
+});
+
 // Terry 366218f: reconnecting is not a user Retry. After a failed ask, going offline and back online never sends retry:true;
 // the one Try again tap sends exactly one POST with retry:true.
 it('reconnecting never sends retry:true; one Try again tap sends exactly one retry:true POST',async()=>{
