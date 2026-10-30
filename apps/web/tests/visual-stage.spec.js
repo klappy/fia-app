@@ -11,7 +11,7 @@ import App from '../src/App.svelte';import {libraryAdapter} from '../src/lib/lib
 const registry=JSON.parse(readFileSync('public/content/registry.json','utf8')),descriptor=registry.packs.find(p=>p.id==='eng.MRK-1-14-20'),base=JSON.parse(readFileSync('public'+descriptor.presentation.url,'utf8'));
 const h=c=>c.repeat(64),rev=descriptor.revision,A=6,C=7;
 const bytes={a1400:new TextEncoder().encode('a1400 original'),c4:new TextEncoder().encode('c4 original')};
-let presentation,sha,posts,gets,answers,declared,tools;
+let presentation,sha,posts,retried,gets,answers,declared,tools;
 const digest=async b=>Array.from(new Uint8Array(await webcrypto.subtle.digest('SHA-256',b)),x=>x.toString(16).padStart(2,'0')).join('');
 const path=id=>`/v1/original-visuals/${h('1')}/${h('2')}/${sha[id]}`;
 const demand=(assetId,kind)=>({packId:descriptor.id,baseRevision:h('b'),sourceRevision:'c'.repeat(40),capability:'executable-presentation',visualDemand:{assetId,kind},expectedExecutionRevision:rev,expectedPublicationGeneration:h('6')});
@@ -19,7 +19,7 @@ const preparable=(id,kind)=>({assetId:id,kind,status:'preparable',preparationDem
 const ready=(id,kind)=>({assetId:id,kind,status:'ready',ready:{path:path(id),sha256:sha[id]}});
 const record=visualResources=>({status:'ready',packId:descriptor.id,revision:rev,artifact:{sha256:rev,bytes:9,mime:'application/json'},execution:{schema:'fia-executable-catalog@1',visualResources}});
 beforeEach(async()=>{
- sha={a1400:await digest(bytes.a1400),c4:await digest(bytes.c4)};posts=[];gets=[];
+ sha={a1400:await digest(bytes.a1400),c4:await digest(bytes.c4)};posts=[];retried=[];gets=[];
  presentation=structuredClone(base);presentation.execution={schema:'fia-executable-presentation@1',sourceRevision:'source-1',decisionEvidenceSha256:h('a'),recipeRevision:'recipe-1'};
  for(const a of presentation.activities)a.execution={narration:{action:'none'},focalAssetId:a.assetId??null,completion:{action:'manual-continue'}};
  presentation.activities[A].execution.focalAssetId='a1400';presentation.activities[C].execution.focalAssetId='c4';
@@ -28,7 +28,7 @@ beforeEach(async()=>{
  HTMLDialogElement.prototype.showModal=function(){this.open=true;};HTMLDialogElement.prototype.close=function(){this.open=false;};HTMLMediaElement.prototype.pause=vi.fn();Element.prototype.scrollTo=vi.fn();
  vi.stubGlobal('crypto',webcrypto);localStorage.setItem('fia-v3-selected-pack',descriptor.id);tools=new Map();Object.defineProperty(document,'modelContext',{configurable:true,value:{registerTool:t=>tools.set(t.name,t)}});
  vi.stubGlobal('fetch',async(url,init={})=>{
-  if(url==='/v1/presentation-preparations'&&init.method==='POST'){const d=JSON.parse(init.body);posts.push(d.visualDemand.assetId);const answer=answers[d.visualDemand.assetId]();return new Response(JSON.stringify({schema:'fia-presentation-preparation@1',status:'ready',jobId:h('3'),reason:null,record:answer}),{status:200});}
+  if(url==='/v1/presentation-preparations'&&init.method==='POST'){const d=JSON.parse(init.body);posts.push(d.visualDemand.assetId);retried.push(Object.hasOwn(d.visualDemand,'retry')?d.visualDemand.retry:'plain');const answer=answers[d.visualDemand.assetId]();return new Response(JSON.stringify({schema:'fia-presentation-preparation@1',status:'ready',jobId:h('3'),reason:null,record:answer}),{status:200});}
   const id=Object.keys(sha).find(k=>url===path(k));if(id){gets.push(id);return new Response(bytes[id],{status:200,headers:{'Content-Type':id==='c4'?'image/png':'image/jpeg'}});}
   throw Error('unexpected fetch '+url);
  });
@@ -74,6 +74,21 @@ it('a failed original shows the media-viewer wording with Try again; Try again a
  answers.a1400=()=>record([ready('a1400','image'),preparable('c4','map')]);
  await fireEvent.click(screen.getByRole('button',{name:'Try again'}));await shown(presentation.assets.a1400.title);
  expect(posts).toEqual(['a1400','a1400']);
+ expect(retried).toEqual(['plain',true],'only the explicit Try again sends retry:true');
+});
+
+// Terry 366218f: reconnecting is not a user Retry. After a failed ask, going offline and back online never sends retry:true;
+// the one Try again tap sends exactly one POST with retry:true.
+it('reconnecting never sends retry:true; one Try again tap sends exactly one retry:true POST',async()=>{
+ answers.a1400=()=>record([preparable('a1400','image'),preparable('c4','map')]);
+ await mount();await toStart();await next();await step(A);
+ await waitFor(()=>expect(screen.getByText('This image could not load.')).toBeTruthy());
+ Object.defineProperty(navigator,'onLine',{configurable:true,get:()=>false});window.dispatchEvent(new Event('offline'));
+ delete navigator.onLine;window.dispatchEvent(new Event('online'));await new Promise(r=>setTimeout(r,100));
+ expect(retried.every(r=>r==='plain')).toBe(true);
+ const before=posts.length;answers.a1400=()=>record([ready('a1400','image'),preparable('c4','map')]);
+ await fireEvent.click(await screen.findByRole('button',{name:'Try again'}));await shown(presentation.assets.a1400.title);
+ expect(posts.length).toBe(before+1);expect(retried.slice(before)).toEqual([true]);expect(retried.filter(r=>r===true).length).toBe(1);
 });
 
 it('offline, a preparable step sends nothing and says it is not saved on this device',async()=>{
@@ -87,13 +102,13 @@ it('offline, a preparable step sends nothing and says it is not saved on this de
 it('restoring onto a preparable visual step sends nothing until a deliberate action asks',async()=>{
  answers.a1400=()=>record([preparable('a1400','image'),preparable('c4','map')]);
  await mount();await toStart();await next();await step(A);await waitFor(()=>expect(posts).toEqual(['a1400']));
- cleanup();posts.length=0;gets.length=0;
+ cleanup();posts.length=0;retried.length=0;gets.length=0;
  render(App);await step(A);await new Promise(r=>setTimeout(r,100));
  expect(posts).toEqual([],'restore is not a deliberate action');
  answers.a1400=()=>record([ready('a1400','image'),preparable('c4','map')]);
  // The explicit Retry row: the existing not-loaded state offers Try again, and that one tap asks once.
  await fireEvent.click(await screen.findByRole('button',{name:'Try again'}));await shown(presentation.assets.a1400.title);
- expect(posts).toEqual(['a1400']);
+ expect(posts).toEqual(['a1400']);expect(retried).toEqual([true],'restore sent nothing; Try again is the explicit Retry');
 });
 
 // PR305 review B1: offline, a step declared unavailable keeps its honest copy; connecting would not help.

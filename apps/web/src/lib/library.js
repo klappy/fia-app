@@ -75,12 +75,14 @@ const visualStale=new Set(['execution-revision-stale','publication-generation-st
 // One deliberate action sends one visual demand, exactly as declared. A ready answer carries the refreshed
 // record of the same execution; its declarations (and generation) replace the page's. A stale answer re-reads
 // the pack once (a GET) so that the next deliberate action sends the current demand; it never re-POSTs.
-export async function prepareVisual(pack,assetId,{signal,transport=executionTransport}={}){
+// retry:true comes only from the stage's explicit Try again; it adds visualDemand.retry to the declared demand.
+export async function prepareVisual(pack,assetId,{signal,retry=false,transport=executionTransport}={}){
  const entry=pack.visualResources?.find(e=>e.assetId===assetId);
  if(!entry)return {status:'unavailable'};
  if(entry.status==='ready')return {status:'ready',path:entry.ready.path,sha256:entry.ready.sha256,served:null};
  if(entry.status!=='preparable')return {status:'unavailable'};
- const answer=await transport.preparePresentation(entry.preparationDemand,{signal});signal?.throwIfAborted();
+ const demand=retry===true?{...entry.preparationDemand,visualDemand:{...entry.preparationDemand.visualDemand,retry:true}}:entry.preparationDemand;
+ const answer=await transport.preparePresentation(demand,{signal});signal?.throwIfAborted();
  const refresh=record=>{if(record?.status!=='ready'||record.packId!==pack.id||record.revision!==pack.revision)return null;if(Object.hasOwn(record.execution||{},'visualResources'))validateVisualResources(record.execution.visualResources);if(record.execution&&Object.hasOwn(record.execution,'publication')!==Object.hasOwn(record.execution,'mediaManifest'))throw Error('The publication is invalid.');if(record.execution?.publication)validatePublicationPin(record.execution.publication);if(record.execution?.mediaManifest)validateJSONDescriptor(record.execution.mediaManifest);return servedExecution(record);};
  if(answer.status==='ready'){const served=refresh(answer.record),now=served?.visualResources?.find(e=>e.assetId===assetId);if(now?.status==='ready')return {status:'ready',path:now.ready.path,sha256:now.ready.sha256,served};throw Error('visual-not-ready');}
  if(answer.status==='unavailable')return {status:'unavailable'};
@@ -94,7 +96,7 @@ export const restoreUnreachable=passageUnreachable;
 export function mediaSelection(pack){return {packId:pack.id,revision:pack.revision,...(pack.mediaIdentity?{mediaIdentity:{...pack.mediaIdentity},mediaAssetsSha256:pack.mediaAssetsSha256}:{})};}
 export const libraryAdapter={
  playBoundAudio:(...args)=>executionTransport.playBoundAudio(...args),
- prepareVisual:(pack,assetId,signal)=>prepareVisual(pack,assetId,{signal}),
+ prepareVisual:(pack,assetId,signal,options)=>prepareVisual(pack,assetId,{signal,retry:options?.retry===true}),
  readOriginalVisual:(ready,signal)=>executionTransport.readOriginalVisual(ready,{signal}),
  prepareOriginal:(...args)=>executionTransport.prepareOriginal(...args),
  prepareRecording:preparationTransport.request,

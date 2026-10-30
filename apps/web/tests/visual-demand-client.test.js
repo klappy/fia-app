@@ -60,6 +60,11 @@ test('the transport sends a declared visual demand unchanged, and verifies an or
  assert.equal((await t.preparePresentation(d)).status,'unavailable');assert.equal(seen[0].url,'/v1/presentation-preparations');assert.deepEqual(JSON.parse(seen[0].init.body),d);
  await assert.rejects(t.preparePresentation({...d,visualDemand:{assetId:'a1400',kind:'video'}}),/demand is invalid/);
  await assert.rejects(t.preparePresentation({...d,extra:1}),/demand is invalid/);
+ // Terry 366218f: an outgoing demand may add exactly retry:true; nothing else.
+ const r=demand('a1400','image');r.visualDemand={...r.visualDemand,retry:true};
+ assert.equal((await t.preparePresentation(r)).status,'unavailable');assert.deepEqual(JSON.parse(seen.at(-1).init.body),r);
+ for(const bad of [false,'true',1,null])await assert.rejects(t.preparePresentation({...d,visualDemand:{assetId:'a1400',kind:'image',retry:bad}}),/demand is invalid/,String(bad));
+ await assert.rejects(t.preparePresentation({...d,visualDemand:{assetId:'a1400',kind:'image',retry:true,again:true}}),/demand is invalid/);
  reply=()=>new Response(bytes,{status:200,headers:{'Content-Type':'image/jpeg'}});
  const out=await t.readOriginalVisual({path:path(sha),sha256:sha});assert.equal(out.mime,'image/jpeg');assert.equal(out.bytes.byteLength,bytes.length);
  await assert.rejects(t.readOriginalVisual({path:path(sha),sha256:h('0')}),/reference is invalid/,'the path names its sha');
@@ -70,4 +75,13 @@ test('the transport sends a declared visual demand unchanged, and verifies an or
  await assert.rejects(t.readOriginalVisual({path:path(sha),sha256:sha}),/could not be read/);
  reply=()=>new Response('gone',{status:410});
  await assert.rejects(t.readOriginalVisual({path:path(sha),sha256:sha}),/could not be read/);
+});
+
+test('prepareVisual adds retry:true only when asked; the declared preparationDemand is never changed',async()=>{
+ const sent=[];const transport={preparePresentation:async d=>{sent.push(structuredClone(d));return {status:'unavailable'};}};
+ const entry={assetId:'a1400',kind:'image',status:'preparable',preparationDemand:demand('a1400','image')},p=pack([entry]);
+ await prepareVisual(p,'a1400',{transport});await prepareVisual(p,'a1400',{transport,retry:true});await prepareVisual(p,'a1400',{transport,retry:'yes'});
+ assert.deepEqual(sent.map(d=>d.visualDemand),[{assetId:'a1400',kind:'image'},{assetId:'a1400',kind:'image',retry:true},{assetId:'a1400',kind:'image'}]);
+ assert.deepEqual(entry.preparationDemand,demand('a1400','image'));
+ assert.deepEqual(await prepareVisual(pack([ready('a1400','image',h('a'))]),'a1400',{transport,retry:true}),{status:'ready',path:path(h('a')),sha256:h('a'),served:null});assert.equal(sent.length,3,'a ready entry sends nothing, even on Retry');
 });

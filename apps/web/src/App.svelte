@@ -38,7 +38,7 @@
  let boundPreparation=$state(null),dismissedExecutionNotice=$state(null);
  let executionNoticeKey=$derived(executableMode?`${selectedPack.revision}:${activity.id}`:null);
  const executableOwner=createExecutableNarration({playBoundAudio:(reference,context)=>libraryAdapter.playBoundAudio(reference,context),prepareOriginal:(reference,context)=>libraryAdapter.prepareOriginal(reference,{...context,prepareNarration:identity=>prepareBoundNarration(identity,context)})});
- let visualState=$state({entries:new globalThis.Map(),loading:null,preparing:null,error:null}),visualAuthorization=$state(null),visualCanceled=$state(null),visualDeliberate=$state(null),servedDeclarations=$state(null);
+ let visualState=$state({entries:new globalThis.Map(),loading:null,preparing:null,error:null}),visualAuthorization=$state(null),visualCanceled=$state(null),visualDeliberate=$state(null),visualRetry=$state(null),servedDeclarations=$state(null);
  const visualOwner=createVisualDelivery({fetch:(request,signal)=>request.source?libraryAdapter.readOriginalVisual({path:request.source,sha256:request.sha256},signal):libraryAdapter.playMedia(request.pack,request.path,request.revision,signal,request.size),create:result=>URL.createObjectURL(new Blob([result.bytes],{type:result.mime})),revoke:url=>tick().then(()=>URL.revokeObjectURL(url)),publish:value=>visualState=value});
  function visualIdentity(){const view=presentStage(session,executionPresentation.activities);return `${selectionGeneration}:${selectedPack.id}:${selectedPack.revision}:${session.index}:${view.focal}:${session.detour?.assetId||''}`;}
  // F9: the declarations served for this exact execution record. A ready answer to a visual demand carries
@@ -49,7 +49,8 @@
  // A deliberate action (a tap, a gesture, a tool call) authorizes at most one visual demand for this view;
  // restore, Save and automatic progression never do (SOURCE-TO-APP navigation, Q22).
  function authorizeVisual(deliberate=true){visualAuthorization=visualIdentity();if(deliberate)visualDeliberate=visualAuthorization;syncVisual();}
- function retryVisual(){visualCanceled=null;visualOwner.retry();authorizeVisual();}
+ // The stage's Try again is the only explicit user Retry: it alone marks this view's next demand retry:true, once (Terry 366218f).
+ function retryVisual(){visualCanceled=null;visualRetry=visualIdentity();visualOwner.retry();authorizeVisual();}
  function cancelVisual(){visualCanceled=visualIdentity();stopVisual();}
  function stopVisual(){visualAuthorization=null;visualOwner.cancel();}
  function syncServerVisual(id,asset){
@@ -57,9 +58,9 @@
   // A ready original is read (the service worker answers it offline); a preparable one is asked for only
   // online and only under this view's deliberate authorization, so one action sends at most one POST.
   if(entry.status==='preparable'&&(!online||visualDeliberate!==visualIdentity()))return;
-  visualAuthorization=visualIdentity();const pack=selectedPack,identity=visualAuthorization,word=asset.kind==='map'?'map':'image';
+  visualAuthorization=visualIdentity();const pack=selectedPack,identity=visualAuthorization,word=asset.kind==='map'?'map':'image',retry=entry.status==='preparable'&&visualRetry===identity;if(visualRetry===identity)visualRetry=null;
   void visualOwner.load({pack,path:visualSlot(id),revision:pack.revision,identity,failure:`This ${word} could not load.`,prepare:async signal=>{
-   try{const ready=await libraryAdapter.prepareVisual({...pack,...declarations()},id,signal);if(ready.served&&pack===selectedPack)servedDeclarations={packId:pack.id,revision:pack.revision,...ready.served};return ready;}
+   try{const ready=await libraryAdapter.prepareVisual({...pack,...declarations()},id,signal,{retry});if(ready.served&&pack===selectedPack)servedDeclarations={packId:pack.id,revision:pack.revision,...ready.served};return ready;}
    catch(error){if(error?.served&&pack===selectedPack)servedDeclarations={packId:pack.id,revision:pack.revision,...error.served};throw error;}
   }});
  }

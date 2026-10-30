@@ -38,7 +38,8 @@ export function validatePublicationPin(value){
  return value;
 }
 // A visual preparation demand on its own (F9 sends it as declared), without the entry it came from.
-export function validateVisualDemand(value){need(plain(value)&&plain(value.visualDemand)&&assetId(value.visualDemand.assetId)&&['image','map'].includes(value.visualDemand.kind));visualDemand(value,value.visualDemand);return value;}
+// An outgoing demand may add exactly retry:true to the declared {assetId,kind} (an explicit user Retry, Terry 366218f).
+export function validateVisualDemand(value){need(plain(value)&&plain(value.visualDemand)&&assetId(value.visualDemand.assetId)&&['image','map'].includes(value.visualDemand.kind));const {retry,...declared}=value.visualDemand;need(!Object.hasOwn(value.visualDemand,'retry')||retry===true);visualDemand({...value,visualDemand:declared},declared);return value;}
 function visualDemand(value,entry){
  need(plain(value));
  const keys=['packId','baseRevision','sourceRevision','capability','visualDemand','expectedExecutionRevision',...(Object.hasOwn(value,'expectedPublicationGeneration')?['expectedPublicationGeneration']:[])];
