@@ -5,3 +5,19 @@ test('visual request publishes verified output once and retains focal/pinned URL
 test('pause aborts pending visual and late response cannot publish or allocate a blob',async()=>{const f=fixture();const pending=f.owner.load(request());f.owner.cancel();assert.equal(f.calls[0].signal.aborted,true);f.calls[0].resolve({mime:'image/webp'});await pending;assert.equal(f.state.entries.size,0);assert.equal(f.state.loading,null);});
 test('obsolete rejection cannot replace a newer view or its error state',async()=>{const f=fixture();const old=f.owner.load(request());const next=f.owner.load(request('/map.webp','view2'));assert.equal(f.calls[0].signal.aborted,true);f.calls[1].resolve({mime:'image/webp'});await next;f.calls[0].reject(Error('old failure'));await old;assert.equal(f.state.error,null);assert.equal(f.state.entries.get('/map.webp').url,'blob:1');});
 test('wrong MIME fails closed, retry and changed delivery revision fetch separately',async()=>{const f=fixture();let p=f.owner.load(request());f.calls[0].resolve({mime:'text/html'});await p;assert.match(f.state.error.message,/invalid media type/);assert.equal(f.state.entries.size,0);await f.owner.load(request());assert.equal(f.calls.length,1);f.owner.retry();p=f.owner.load(request());f.calls[1].resolve({mime:'image/webp'});await p;p=f.owner.load({...request(),revision:'new'});f.calls[2].resolve({mime:'image/webp'});await p;assert.deepEqual(f.revoked,['blob:1']);assert.equal(f.state.entries.get('/image.webp').url,'blob:2');});
+// F9: a server-declared visual is asked for once, then its verified original is read by the same owner.
+function served(){const calls=[],asks=[];let state,serial=0;const owner=createVisualDelivery({fetch:(r,signal)=>new Promise((resolve,reject)=>calls.push({r,signal,resolve,reject})),create:()=>`blob:${++serial}`,revoke:()=>{},publish:s=>state=s});
+ const req=(identity='view1')=>({pack:{id:'eng.MRK-1-14-20',revision:'r'},revision:'r',path:'server-visual:a1400',identity,failure:'This image could not load.',prepare:signal=>new Promise((resolve,reject)=>asks.push({signal,resolve,reject}))});
+ return{owner,calls,asks,req,get state(){return state;}};}
+const sha='f'.repeat(64),path=`/v1/original-visuals/${'1'.repeat(64)}/${'2'.repeat(64)}/${sha}`;
+test('a server visual is preparing, then loading its ready path, then shown; the slot keys the entry',async()=>{
+ const f=served();const p=f.owner.load(f.req());assert.equal(f.state.preparing,'server-visual:a1400');assert.equal(f.state.loading,'server-visual:a1400');assert.equal(f.calls.length,0);
+ f.asks[0].resolve({status:'ready',path,sha256:sha});await new Promise(r=>setTimeout(r));assert.equal(f.state.preparing,null);assert.equal(f.calls[0].r.source,path);assert.equal(f.calls[0].r.sha256,sha);
+ f.calls[0].resolve({mime:'image/jpeg',bytes:new Uint8Array([1])});await p;assert.equal(f.state.entries.get('server-visual:a1400').url,'blob:1');assert.equal(f.state.loading,null);
+ await f.owner.load(f.req());assert.equal(f.asks.length,1,'a shown visual is not asked for again');
+});
+test('an unavailable answer is final for the view; a failure carries the stage wording; cancel stops the ask',async()=>{
+ let f=served();let p=f.owner.load(f.req());f.asks[0].resolve({status:'unavailable'});await p;assert.equal(f.state.error.unavailable,true);assert.equal(f.calls.length,0);await f.owner.load(f.req());assert.equal(f.asks.length,1);
+ f=served();p=f.owner.load(f.req());f.asks[0].reject(Error('visual-not-ready'));await p;assert.equal(f.state.error.message,'This image could not load.');assert.equal(f.state.error.unavailable,undefined);
+ f.owner.retry();p=f.owner.load(f.req());assert.equal(f.asks.length,2,'Try again asks once more');f.owner.cancel();assert.equal(f.asks[1].signal.aborted,true);f.asks[1].resolve({status:'ready',path,sha256:sha});await p;assert.equal(f.calls.length,0);assert.equal(f.state.entries.size,0);
+});

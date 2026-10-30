@@ -38,15 +38,35 @@
  let boundPreparation=$state(null),dismissedExecutionNotice=$state(null);
  let executionNoticeKey=$derived(executableMode?`${selectedPack.revision}:${activity.id}`:null);
  const executableOwner=createExecutableNarration({playBoundAudio:(reference,context)=>libraryAdapter.playBoundAudio(reference,context),prepareOriginal:(reference,context)=>libraryAdapter.prepareOriginal(reference,{...context,prepareNarration:identity=>prepareBoundNarration(identity,context)})});
- let visualState=$state({entries:new globalThis.Map(),loading:null,error:null}),visualAuthorization=$state(null),visualCanceled=$state(null);
- const visualOwner=createVisualDelivery({fetch:(request,signal)=>libraryAdapter.playMedia(request.pack,request.path,request.revision,signal,request.size),create:result=>URL.createObjectURL(new Blob([result.bytes],{type:result.mime})),revoke:url=>tick().then(()=>URL.revokeObjectURL(url)),publish:value=>visualState=value});
+ let visualState=$state({entries:new globalThis.Map(),loading:null,preparing:null,error:null}),visualAuthorization=$state(null),visualCanceled=$state(null),visualDeliberate=$state(null),visualRetry=$state(null),servedDeclarations=$state(null);
+ const visualOwner=createVisualDelivery({fetch:(request,signal)=>request.source?libraryAdapter.readOriginalVisual({path:request.source,sha256:request.sha256},signal):libraryAdapter.playMedia(request.pack,request.path,request.revision,signal,request.size),create:result=>URL.createObjectURL(new Blob([result.bytes],{type:result.mime})),revoke:url=>tick().then(()=>URL.revokeObjectURL(url)),publish:value=>visualState=value});
  function visualIdentity(){const view=presentStage(session,executionPresentation.activities);return `${selectionGeneration}:${selectedPack.id}:${selectedPack.revision}:${session.index}:${view.focal}:${session.detour?.assetId||''}`;}
- function authorizeVisual(){visualAuthorization=visualIdentity();syncVisual();}
- function retryVisual(){visualCanceled=null;visualOwner.retry();authorizeVisual();}
+ // F9: the declarations served for this exact execution record. A ready answer to a visual demand carries
+ // the refreshed record of the same revision; its declarations replace the page's for that revision only.
+ function declarations(){return servedDeclarations&&servedDeclarations.packId===selectedPack.id&&servedDeclarations.revision===selectedPack.revision?servedDeclarations:selectedPack;}
+ function serverVisual(id){return executableMode?declarations().visualResources?.find(e=>e.assetId===id)??null:null;}
+ const visualSlot=id=>`server-visual:${id}`;
+ // A deliberate action (a tap, a gesture, a tool call) authorizes at most one visual demand for this view;
+ // restore, Save and automatic progression never do (SOURCE-TO-APP navigation, Q22).
+ function authorizeVisual(deliberate=true){visualAuthorization=visualIdentity();if(deliberate)visualDeliberate=visualAuthorization;syncVisual();}
+ // The stage's Try again is the only explicit user Retry (Terry 366218f). Its mark lives only for the sync this tap starts:
+ // if that sync sends nothing (offline, not preparable), no later sync, reconnect or return can send retry:true.
+ function retryVisual(){visualCanceled=null;visualRetry=visualIdentity();visualOwner.retry();try{authorizeVisual();}finally{visualRetry=null;}}
  function cancelVisual(){visualCanceled=visualIdentity();stopVisual();}
  function stopVisual(){visualAuthorization=null;visualOwner.cancel();}
- function syncVisual(){const view=presentStage(session,executionPresentation.activities),asset=rawPresentation.assets[view.focal];visualOwner.retain([asset?.src,rawPresentation.assets[view.supporting]?.src].filter(Boolean));if(!online||inTransition||finished||visualCanceled===visualIdentity()||!['image','map'].includes(asset?.kind)||downloadedPaths.has(asset.src)&&(!deliveryRevision||downloadedDeliveryRevision===deliveryRevision)||!onlineMedia.has(asset.src)||!deliveryRevision)return;visualAuthorization=visualIdentity();void visualOwner.load({pack:selectedPack,path:asset.src,revision:deliveryRevision,identity:visualAuthorization});}
- $effect(()=>{session;rawPresentation;selectedPack;deliveryRevision;onlineMedia;online;downloadedPaths;downloadedDeliveryRevision;visualCanceled;untrack(syncVisual);});
+ function syncServerVisual(id,asset){
+  const entry=serverVisual(id);if(!entry||inTransition||finished||visualCanceled===visualIdentity()||entry.status==='unavailable')return;
+  // A ready original is read (the service worker answers it offline); a preparable one is asked for only
+  // online and only under this view's deliberate authorization, so one action sends at most one POST.
+  if(entry.status==='preparable'&&(!online||visualDeliberate!==visualIdentity()))return;
+  visualAuthorization=visualIdentity();const pack=selectedPack,identity=visualAuthorization,word=asset.kind==='map'?'map':'image',retry=entry.status==='preparable'&&visualRetry===identity;
+  void visualOwner.load({pack,path:visualSlot(id),revision:pack.revision,identity,failure:`This ${word} could not load.`,prepare:async signal=>{
+   try{const ready=await libraryAdapter.prepareVisual({...pack,...declarations()},id,signal,{retry});if(ready.served&&pack===selectedPack)servedDeclarations={packId:pack.id,revision:pack.revision,...ready.served};return ready;}
+   catch(error){if(error?.served&&pack===selectedPack)servedDeclarations={packId:pack.id,revision:pack.revision,...error.served};throw error;}
+  }});
+ }
+ function syncVisual(){const view=presentStage(session,executionPresentation.activities),asset=rawPresentation.assets[view.focal];const slot=id=>serverVisual(id)?visualSlot(id):rawPresentation.assets[id]?.src;visualOwner.retain([slot(view.focal),slot(view.supporting)].filter(Boolean));if(['image','map'].includes(asset?.kind)&&serverVisual(view.focal)){syncServerVisual(view.focal,asset);return;}if(!online||inTransition||finished||visualCanceled===visualIdentity()||!['image','map'].includes(asset?.kind)||downloadedPaths.has(asset.src)&&(!deliveryRevision||downloadedDeliveryRevision===deliveryRevision)||!onlineMedia.has(asset.src)||!deliveryRevision)return;visualAuthorization=visualIdentity();void visualOwner.load({pack:selectedPack,path:asset.src,revision:deliveryRevision,identity:visualAuthorization});}
+ $effect(()=>{session;rawPresentation;selectedPack;servedDeclarations;deliveryRevision;onlineMedia;online;downloadedPaths;downloadedDeliveryRevision;visualCanceled;untrack(syncVisual);});
  let content=$derived(presentationContent(mediaForDevice(executionPresentation,downloadedPaths),selectedPack));
  let activities=$derived(content.activities),assets=$derived(content.assets),sections=$derived(content.sections),examples=$derived(content.examples),readingGroups=$derived(content.readingGroups),listOrdinals=$derived(content.listOrdinals),contentContract=$derived(content.contentContract),defaultScriptureId=$derived(content.defaultScriptureId);
  let videoDeliveryState=$state({entry:null,loading:false,error:null});
@@ -184,7 +204,18 @@
   catch(error){if(owner===mediaGeneration){revokePlayback();notice=error.message;dispatch({type:'PAUSE'});}}finally{if(owner===mediaGeneration)mediaLoading=false;}
  }
  function passageFile(assetId){return [...onlineMedia.values(),...downloadedAudioDescriptors.values()].find(f=>f.scripturePlaybackMode==='passage-only'&&f.scriptureAssetId===assetId&&(!deliveryRevision||f.deliveryRevision===deliveryRevision));}
- function mediaForDevice(pack,paths){if(deliveryRevision&&downloadedDeliveryRevision!==deliveryRevision)paths=new Set([...paths].filter(path=>!onlineMedia.has(path)));return {...pack,activities:pack.activities.map(a=>({...a,audioSrc:a.kind==='scripture'&&passageFile(a.assetId)?passageFile(a.assetId).path:paths.has(a.audioSrc)||onlineMedia.has(a.audioSrc)?a.audioSrc:null})),assets:Object.fromEntries(Object.entries(pack.assets).map(([id,a])=>[id,{...a,alignment:a.kind==='scripture'&&passageFile(id)?null:a.kind==='scripture'&&a.descriptionAudio===mediaLogicalPath&&mediaAlignment?mediaAlignment:a.alignment,src:(nativeDemoVideo&&nativeDemoVideo.path===a.src?nativeDemoVideo.url:null)||(videoDeliveryState.entry&&videoDeliveryState.entry.path===a.src?videoDeliveryState.entry.url:null)||visualState.entries.get(a.src)?.url||(paths.has(a.src)?a.src:undefined),videoPrepared:a.kind==='video'&&(onlineMedia.has(a.src)||!!demoVideoSource(selectedPack,a)),videoLoading:a.kind==='video'&&videoDeliveryState.loading,videoError:a.kind==='video'?videoDeliveryState.error:null,visualPrepared:['image','map'].includes(a.kind)&&onlineMedia.has(a.src),visualOffline:!online,visualCanceled:visualCanceled===visualIdentity(),visualLoading:visualState.loading===a.src,visualError:visualState.error&&visualState.error.path===a.src?visualState.error.message:null,poster:paths.has(a.poster)?a.poster:undefined,descriptionAudio:a.kind==='scripture'&&passageFile(id)?passageFile(id).path:paths.has(a.descriptionAudio)||onlineMedia.has(a.descriptionAudio)?a.descriptionAudio:undefined,downloadRequired:['image','map','video'].includes(a.kind)&&(!nativeDemoVideo||nativeDemoVideo.path!==a.src)&&!paths.has(a.src)&&!visualState.entries.has(a.src)&&!(videoDeliveryState.entry&&videoDeliveryState.entry.path===a.src),downloadPrepared:typeof a.src==='string'&&a.src.startsWith('/')&&!a.src.startsWith('//')}]))};}
+ // F9 stage states for a server-declared visual (SOURCE-TO-APP L99): its bytes are the verified original
+ // read for this view, and the existing stage copy names each state: preparing and loading ("Loading this
+ // image…", Cancel loading), could not load (Try again), not available yet, and not saved on this device.
+ function withServerVisual(id,a,stage){
+  const entry=['image','map'].includes(a.kind)?serverVisual(id):null;if(!entry)return stage;
+  const slot=visualSlot(id),url=visualState.entries.get(slot)?.url,error=visualState.error?.path===slot?visualState.error:null;
+  // A preparable step this view has not asked for (a restore, or automatic progression) offers the explicit
+  // Retry row of the navigation table through the existing not-loaded state, never a request of its own.
+  const unasked=entry.status==='preparable'&&!url&&!error&&visualState.loading!==slot&&visualDeliberate!==visualIdentity();
+  return {...stage,src:url,visualPrepared:entry.status!=='unavailable'&&!error?.unavailable,visualOffline:!online&&!url&&entry.status!=='unavailable'&&!error?.unavailable,visualLoading:visualState.loading===slot,visualError:error&&!error.unavailable?error.message:null,visualCanceled:stage.visualCanceled||unasked,downloadRequired:!url,downloadPrepared:false};
+ }
+ function mediaForDevice(pack,paths){if(deliveryRevision&&downloadedDeliveryRevision!==deliveryRevision)paths=new Set([...paths].filter(path=>!onlineMedia.has(path)));return {...pack,activities:pack.activities.map(a=>({...a,audioSrc:a.kind==='scripture'&&passageFile(a.assetId)?passageFile(a.assetId).path:paths.has(a.audioSrc)||onlineMedia.has(a.audioSrc)?a.audioSrc:null})),assets:Object.fromEntries(Object.entries(pack.assets).map(([id,a])=>[id,withServerVisual(id,a,{...a,alignment:a.kind==='scripture'&&passageFile(id)?null:a.kind==='scripture'&&a.descriptionAudio===mediaLogicalPath&&mediaAlignment?mediaAlignment:a.alignment,src:(nativeDemoVideo&&nativeDemoVideo.path===a.src?nativeDemoVideo.url:null)||(videoDeliveryState.entry&&videoDeliveryState.entry.path===a.src?videoDeliveryState.entry.url:null)||visualState.entries.get(a.src)?.url||(paths.has(a.src)?a.src:undefined),videoPrepared:a.kind==='video'&&(onlineMedia.has(a.src)||!!demoVideoSource(selectedPack,a)),videoLoading:a.kind==='video'&&videoDeliveryState.loading,videoError:a.kind==='video'?videoDeliveryState.error:null,visualPrepared:['image','map'].includes(a.kind)&&onlineMedia.has(a.src),visualOffline:!online,visualCanceled:visualCanceled===visualIdentity(),visualLoading:visualState.loading===a.src,visualError:visualState.error&&visualState.error.path===a.src?visualState.error.message:null,poster:paths.has(a.poster)?a.poster:undefined,descriptionAudio:a.kind==='scripture'&&passageFile(id)?passageFile(id).path:paths.has(a.descriptionAudio)||onlineMedia.has(a.descriptionAudio)?a.descriptionAudio:undefined,downloadRequired:['image','map','video'].includes(a.kind)&&(!nativeDemoVideo||nativeDemoVideo.path!==a.src)&&!paths.has(a.src)&&!visualState.entries.has(a.src)&&!(videoDeliveryState.entry&&videoDeliveryState.entry.path===a.src),downloadPrepared:typeof a.src==='string'&&a.src.startsWith('/')&&!a.src.startsWith('//')})]))};}
  function verifiedDownloadedDescriptors(active){
   const keys=['path','sha256','bytes','mime','deliveryURL','deliveryRevision','sourceSha256','sourceBytes','logicalSourceSha256','logicalSourceBytes','scriptureAlignmentSha256','duration',...scripturePassagePins];
   const result=new globalThis.Map();
@@ -251,7 +282,7 @@
  }
  async function loadSelectedPack(id,intent,options){videoDelivery.cancel();stopVisual();visualOwner.clear();const generation=++selectionGeneration;try{const loaded=await libraryAdapter.select(id,options);if(intent!==selectionIntent||generation!==selectionGeneration)return;if(deferVideo(()=>applySelectedPack(loaded,generation,intent)))return;await applySelectedPack(loaded,generation,intent);}catch(error){if(intent===selectionIntent&&generation===selectionGeneration)recheckCurrent();throw error;}}
  // Opening a passage ends the previous passage's notices (R3); the new passage raises its own after this point.
- async function applySelectedPack(loaded,generation,intent){if(intent!==selectionIntent||generation!==selectionGeneration)return;validateExecutablePresentation(loaded.presentation);persist();cancel();notice='';selectedPack=loaded.descriptor;if(selectedPack.offlineSnapshot==='historical-verified')notice=historicalSnapshotNotice;rawPresentation=loaded.presentation;saved=false;downloadedDeliveryRevision=null;downloadedPaths=new Set();downloadedAudioDescriptors=new globalThis.Map();onlineMedia=new globalThis.Map();savedMedia=new globalThis.Map();deliveryRevision=null;revokePlayback();mediaChecked=false;downloadsChecked=false;introduced=new Set();manualStarts=new Set();visualHeard=null;termDefinition=null;transitionSection=null;messages=[];language=selectedPack.language;session=createSession(loaded.presentation.activities);try{applyStored();localStorage.setItem('fia-v3-selected-pack',loaded.descriptor.id);}catch{notice='Your saved place could not be read.';}sheet=null;await libraryAdapter.activate(selectedPack).catch(()=>{});if(intent!==selectionIntent||generation!==selectionGeneration)return;await updateDownloaded();await updateMedia();}
+ async function applySelectedPack(loaded,generation,intent){if(intent!==selectionIntent||generation!==selectionGeneration)return;validateExecutablePresentation(loaded.presentation);persist();cancel();notice='';selectedPack=loaded.descriptor;servedDeclarations=null;visualDeliberate=null;if(selectedPack.offlineSnapshot==='historical-verified')notice=historicalSnapshotNotice;rawPresentation=loaded.presentation;saved=false;downloadedDeliveryRevision=null;downloadedPaths=new Set();downloadedAudioDescriptors=new globalThis.Map();onlineMedia=new globalThis.Map();savedMedia=new globalThis.Map();deliveryRevision=null;revokePlayback();mediaChecked=false;downloadsChecked=false;introduced=new Set();manualStarts=new Set();visualHeard=null;termDefinition=null;transitionSection=null;messages=[];language=selectedPack.language;session=createSession(loaded.presentation.activities);try{applyStored();localStorage.setItem('fia-v3-selected-pack',loaded.descriptor.id);}catch{notice='Your saved place could not be read.';}sheet=null;await libraryAdapter.activate(selectedPack).catch(()=>{});if(intent!==selectionIntent||generation!==selectionGeneration)return;await updateDownloaded();await updateMedia();}
  function restartPack(id){resetProgress(localStorage,{id});if(id===selectedPack.id)reset();}
  let language=$state('eng');
  function selectLanguage(id){language=id;try{localStorage.setItem('fia-v3-library-language',id);}catch{notice='Language choice could not be saved on this device.';}}
@@ -467,13 +498,14 @@
   if(automaticOff||session.detour||finished||inTransition)return;
   started=true;playbackConsent=true;scheduleNext();
  }
- function navigate(event,auto=false){
-  if(deferVideo(()=>navigate(event,auto)))return;
+ // deliberate:false marks a navigation the app makes itself (a detour video ending): it never authorizes a visual demand (L126).
+ function navigate(event,auto=false,{deliberate=true}={}){
+  if(deferVideo(()=>navigate(event,auto,{deliberate})))return;
   // A tap queued while checking belonged to the screen the person just left.
   tapGate.drop();swipeGeneration++;
   const hadPlaybackConsent=playbackConsent,priorIndex=session.index,forward=auto&&event.type==='CONTINUE';revokePlayback();
-  if(inTransition&&event.type==='CONTINUE'){cancel();transitionSection=null;persist();authorizeVisual();if(forward)beginForwardPlayback();return;}
-  cancel();visualHeard=null;dispatch(event);notice='';settleSilent();authorizeVisual();
+  if(inTransition&&event.type==='CONTINUE'){cancel();transitionSection=null;persist();authorizeVisual(deliberate);if(forward)beginForwardPlayback();return;}
+  cancel();visualHeard=null;dispatch(event);notice='';settleSilent();authorizeVisual(deliberate);
   if(event.type==='DETOUR'&&assets[event.assetId]?.kind==='video'&&session.preferences.autoplayVideo&&hadPlaybackConsent){playbackConsent=true;queueVideoPlay();}
   if(forward&&session.index!==priorIndex)beginForwardPlayback();
  }
@@ -503,7 +535,7 @@
  }
  function videoTime(event){const v=event.currentTarget;if(!ownsVideo(v))return;videoState={elapsed:Number.isFinite(v.currentTime)?v.currentTime:0,duration:Number.isFinite(v.duration)?v.duration:0};}
  function videoStarted(event){if(event&&!ownsVideo(event.currentTarget))return;audio?.stop();audioContext=null;videoPlaying=true;videoPlayPending=false;dispatch({type:'PAUSE'});}
- function videoEnded(event){if(event&&!ownsVideo(event.currentTarget))return;if(videoOwner.pending)return;if(deferVideo(()=>videoEnded()))return;if(staleVideo){staleVideo=false;videoDelivery.clear();}videoState={elapsed:0,duration:0};videoPlaying=false;if(inlineVideo){inlineVideo=null;visualHeard=focal.id;if(!session.detour)session={...session,status:'waiting'};persist();return;}if(session.detour){navigate({type:'RETURN'});return;}dispatch({type:'MEDIA_END',activityId:activity.id});scheduleNext();}
+ function videoEnded(event){if(event&&!ownsVideo(event.currentTarget))return;if(videoOwner.pending)return;if(deferVideo(()=>videoEnded()))return;if(staleVideo){staleVideo=false;videoDelivery.clear();}videoState={elapsed:0,duration:0};videoPlaying=false;if(inlineVideo){inlineVideo=null;visualHeard=focal.id;if(!session.detour)session={...session,status:'waiting'};persist();return;}if(session.detour){navigate({type:'RETURN'},false,{deliberate:false});return;}dispatch({type:'MEDIA_END',activityId:activity.id});scheduleNext();}
  function setMode(mode){if(session.mode===mode)return;dispatch({type:'SET_MODE',mode});}
  function runCommand(text=command){
   if(!text.trim())return;const input=text.trim();command='';messages=[...messages.slice(-11),{role:'user',text:input}];

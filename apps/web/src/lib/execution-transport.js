@@ -1,3 +1,4 @@
+import {validateVisualDemand} from './executable-presentation.js';
 // The server supplies the reference and owns artifact eligibility. This reader
 // verifies transport bytes only; it does not interpret source or narration.
 const hashPattern=/^[a-f0-9]{64}$/;
@@ -92,6 +93,13 @@ export function createExecutionTransport({fetch:fetchArtifact=globalThis.fetch}=
   return value;
  }
  transport.preparePresentation=async(demand,{signal}={})=>{
+  // F9: a server-declared visual demand (SOURCE-TO-APP L95) is sent exactly as the server declared it;
+  // its closed shape is checked by the same validator that admitted the catalog record.
+  if(demand&&typeof demand==='object'&&Object.hasOwn(demand,'visualDemand')){
+   try{validateVisualDemand(demand);}catch{throw Error('The server presentation demand is invalid.');}
+   signal?.throwIfAborted();
+   return presentationStatus('/v1/presentation-preparations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(demand),signal});
+  }
   // expectedPublicationGeneration (OFFLINE, F7a1) rides a server-issued demand unchanged: a SHA-256 or null.
   if(!shape(demand,['packId','baseRevision','sourceRevision','capability',...(demand&&Object.hasOwn(demand,'expectedPublicationGeneration')?['expectedPublicationGeneration']:[])])||demand&&Object.hasOwn(demand,'expectedPublicationGeneration')&&demand.expectedPublicationGeneration!==null&&!hashPattern.test(demand.expectedPublicationGeneration??'')||!text(demand.packId)||typeof demand.baseRevision!=='string'||!hashPattern.test(demand.baseRevision)||typeof demand.sourceRevision!=='string'||!/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(demand.sourceRevision)||demand.capability!=='executable-presentation')throw Error('The server presentation demand is invalid.');
   signal?.throwIfAborted();
@@ -101,6 +109,20 @@ export function createExecutionTransport({fetch:fetchArtifact=globalThis.fetch}=
   if(typeof jobId!=='string'||!hashPattern.test(jobId))throw Error('The server presentation job identity is invalid.');
   signal?.throwIfAborted();
   return presentationStatus(`/v1/presentation-preparations/${jobId}`,{method:'GET',signal},jobId);
+ };
+ // F9: a ready original is read from its same-origin native path (the service worker's F8 cache answers
+ // it offline) and verified here by sha and image MIME before it is shown (INTENT-ORIGINAL-QUALITY).
+ transport.readOriginalVisual=async({path,sha256},{signal}={})=>{
+  if(typeof path!=='string'||!/^\/v1\/original-visuals\/[a-f0-9]{64}\/[a-f0-9]{64}\/[a-f0-9]{64}$/.test(path)||!path.endsWith('/'+sha256))throw Error('The original visual reference is invalid.');
+  signal?.throwIfAborted();
+  const response=await fetchArtifact(path,{method:'GET',redirect:'error',signal});
+  signal?.throwIfAborted();
+  const mime=(response.headers.get('Content-Type')||'').split(';')[0].trim();
+  if(response.status!==200||response.redirected||!['image/jpeg','image/png'].includes(mime))throw Error('The original visual could not be read.');
+  const bytes=await response.arrayBuffer();
+  signal?.throwIfAborted();
+  if(await hash(bytes)!==sha256)throw Error('The original visual could not be verified.');
+  return {bytes,mime};
  };
  transport.readPack=async(packId,{revision,signal}={})=>{
   if(!text(packId)||revision!==undefined&&(typeof revision!=='string'||!hashPattern.test(revision)))throw Error('The server catalog identity is invalid.');

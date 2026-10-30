@@ -55,7 +55,7 @@ export async function selectServerPresentation(id,{explicit=false,signal,transpo
  }
  if(record.status!=='ready'||record.packId!==id||record.identity?.packId!==id)throw notOpened(record);
  const identity=record.identity;
- // Declared visual resources ride the catalog record (F4); this build validates them and does not act on them.
+ // Declared visual resources ride the catalog record (F4); the stage acts on them per step (F9).
  if(record.execution&&Object.hasOwn(record.execution,'visualResources'))validateVisualResources(record.execution.visualResources);
  // A generation pin and its bound manifest come together or not at all (OFFLINE L9/L23; review N1).
  if(record.execution&&Object.hasOwn(record.execution,'publication')!==Object.hasOwn(record.execution,'mediaManifest'))throw Error('The publication is invalid.');
@@ -63,10 +63,31 @@ export async function selectServerPresentation(id,{explicit=false,signal,transpo
  if(record.execution&&Object.hasOwn(record.execution,'mediaManifest'))validateJSONDescriptor(record.execution.mediaManifest);
  const media=record.execution?.mediaIdentity;
  if(media!==undefined&&(Object.keys(media||{}).sort().join(',')!=='packId,revision'||media.packId!==id||!/^([a-f0-9]{64})$/.test(media.revision)||!/^([a-f0-9]{64})$/.test(record.execution.mediaAssetsSha256)))throw Error('The media identity is invalid.');
- const descriptor={id:record.packId,revision:record.revision,language:identity.language,pericopeId:identity.pericopeId,title:identity.title,defaultScriptureId:identity.defaultScriptureId,capabilities:record.capabilities,diagnostics:record.diagnostics||[],...(record.offlineSnapshot==='historical-verified'?{offlineSnapshot:record.offlineSnapshot}:{}),...(media?{mediaIdentity:media,mediaAssetsSha256:record.execution.mediaAssetsSha256}:{}),presentation:{sha256:record.artifact.sha256,bytes:record.artifact.bytes}};
+ const descriptor={id:record.packId,revision:record.revision,language:identity.language,pericopeId:identity.pericopeId,title:identity.title,defaultScriptureId:identity.defaultScriptureId,capabilities:record.capabilities,diagnostics:record.diagnostics||[],...(record.offlineSnapshot==='historical-verified'?{offlineSnapshot:record.offlineSnapshot}:{}),...(media?{mediaIdentity:media,mediaAssetsSha256:record.execution.mediaAssetsSha256}:{}),presentation:{sha256:record.artifact.sha256,bytes:record.artifact.bytes},...servedExecution(record)};
  if(!descriptor.title||!descriptor.language||!descriptor.capabilities?.text?.available)throw Error('The passage catalog is not compatible.');
  const presentation=await transport.readPresentationRecord(record,{signal});signal?.throwIfAborted();
  return {descriptor,presentation:validatePresentation(presentation,descriptor)};
+}
+// F9/F11: what the server declared for this exact execution record rides the descriptor unchanged:
+// the visual declarations (acted on per step) and the generation pin with its bound manifest (Save).
+function servedExecution(record){const ex=record.execution||{},out={};for(const key of ['visualResources','publication','mediaManifest'])if(Object.hasOwn(ex,key))out[key]=structuredClone(ex[key]);return out;}
+const visualStale=new Set(['execution-revision-stale','publication-generation-stale']);
+// One deliberate action sends one visual demand, exactly as declared. A ready answer carries the refreshed
+// record of the same execution; its declarations (and generation) replace the page's. A stale answer re-reads
+// the pack once (a GET) so that the next deliberate action sends the current demand; it never re-POSTs.
+// retry:true comes only from the stage's explicit Try again; it adds visualDemand.retry to the declared demand.
+export async function prepareVisual(pack,assetId,{signal,retry=false,transport=executionTransport}={}){
+ const entry=pack.visualResources?.find(e=>e.assetId===assetId);
+ if(!entry)return {status:'unavailable'};
+ if(entry.status==='ready')return {status:'ready',path:entry.ready.path,sha256:entry.ready.sha256,served:null};
+ if(entry.status!=='preparable')return {status:'unavailable'};
+ const demand=retry===true?{...entry.preparationDemand,visualDemand:{...entry.preparationDemand.visualDemand,retry:true}}:entry.preparationDemand;
+ const answer=await transport.preparePresentation(demand,{signal});signal?.throwIfAborted();
+ const refresh=record=>{if(record?.status!=='ready'||record.packId!==pack.id||record.revision!==pack.revision)return null;if(Object.hasOwn(record.execution||{},'visualResources'))validateVisualResources(record.execution.visualResources);if(record.execution&&Object.hasOwn(record.execution,'publication')!==Object.hasOwn(record.execution,'mediaManifest'))throw Error('The publication is invalid.');if(record.execution?.publication)validatePublicationPin(record.execution.publication);if(record.execution?.mediaManifest)validateJSONDescriptor(record.execution.mediaManifest);return servedExecution(record);};
+ if(answer.status==='ready'){const served=refresh(answer.record),now=served?.visualResources?.find(e=>e.assetId===assetId);if(now?.status==='ready')return {status:'ready',path:now.ready.path,sha256:now.ready.sha256,served};throw Error('visual-not-ready');}
+ if(answer.status==='unavailable')return {status:'unavailable'};
+ if(visualStale.has(answer.reason)){const record=await transport.readPack(pack.id,{signal}).catch(()=>null);signal?.throwIfAborted();const served=refresh(record);if(served){const now=served.visualResources?.find(e=>e.assetId===assetId);if(now?.status==='ready')return {status:'ready',path:now.ready.path,sha256:now.ready.sha256,served};throw Object.assign(Error('visual-stale'),{served});}}
+ throw Error('visual-not-ready');
 }
 // A launch-time restore is bounded where it is made (R1, R5). Past this bound a saved passage that has
 // not answered is a missing connection: the restore stops with that answer and R1's fallback says so.
@@ -75,6 +96,8 @@ export const restoreUnreachable=passageUnreachable;
 export function mediaSelection(pack){return {packId:pack.id,revision:pack.revision,...(pack.mediaIdentity?{mediaIdentity:{...pack.mediaIdentity},mediaAssetsSha256:pack.mediaAssetsSha256}:{})};}
 export const libraryAdapter={
  playBoundAudio:(...args)=>executionTransport.playBoundAudio(...args),
+ prepareVisual:(pack,assetId,signal,options)=>prepareVisual(pack,assetId,{signal,retry:options?.retry===true}),
+ readOriginalVisual:(ready,signal)=>executionTransport.readOriginalVisual(ready,{signal}),
  prepareOriginal:(...args)=>executionTransport.prepareOriginal(...args),
  prepareRecording:preparationTransport.request,
  preparationStatus:preparationTransport.status,

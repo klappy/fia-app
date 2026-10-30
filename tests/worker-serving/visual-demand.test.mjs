@@ -54,6 +54,29 @@ test('F5a: an admitted demand calls the routing port once and answers its typed 
  const unrouted=harness();assert.deepEqual(await unrouted.ops.preparePresentation(demandFor('c4','map')),{schema:'fia-presentation-preparation@1',status:'unavailable',jobId:null,reason:'visual-routing-unavailable',record:null});
 });
 
+// Terry 366218f (PR292 public Retry P1): an explicit user Retry is {assetId,kind,retry:true}; anything else is refused before any
+// custody call, and a plain demand still reaches the port with retry:false.
+test('F5a retry: only exactly retry:true is admitted and passed as a retry; a plain demand stays retry:false',async()=>{
+ const retried=(assetId,kind,extra)=>({...demandFor(assetId,kind),visualDemand:{assetId,kind,...extra}});
+ assert.equal(validVisualDemand(retried('a1400','image',{retry:true})),true);
+ for(const extra of [{retry:false},{retry:'true'},{retry:1},{retry:null},{retry:true,force:true},{again:true}])assert.equal(validVisualDemand(retried('a1400','image',extra)),false,JSON.stringify(extra));
+ for(const extra of [{retry:false},{retry:'true'},{retry:true,force:true}]){const t=harness({visuals:async()=>({state:'unavailable',reason:'interrupted'})});const r=await t.ops.preparePresentation(retried('c4','map',extra));assert.equal(r.status,'refused',JSON.stringify(extra));assert.deepEqual(t.port.requests,[]);}
+ const t=harness({visuals:async()=>({state:'unavailable',reason:'interrupted'})});
+ assert.equal((await t.ops.preparePresentation(retried('a1400','image',{retry:true}))).reason,'interrupted');
+ assert.equal((await t.ops.preparePresentation(demandFor('a1400','image'))).reason,'interrupted');
+ assert.deepEqual(t.port.requests.map(r=>[r.assetId,r.kind,r.retry]),[['a1400','image',true],['a1400','image',false]]);
+});
+
+test('F5a retry: the admission fence ignores only visualDemand.retry; every other field of a retry demand stays exact',async()=>{
+ const retry=(over={},assetId='a1400',kind='image')=>({...demandFor(assetId,kind),...over,visualDemand:{assetId,kind,retry:true}});
+ const ok=harness({visuals:async()=>({state:'unavailable',reason:'interrupted'})});
+ assert.equal((await ok.ops.preparePresentation(retry())).reason,'interrupted','a matching retry:true demand is admitted');
+ assert.deepEqual(ok.port.requests.map(r=>r.retry),[true]);
+ for(const [over,assetId,kind] of [[{baseRevision:h('c')}],[{sourceRevision:'0'.repeat(40)}],[{packId:'eng.MRK-1-1-13'}],[{expectedExecutionRevision:h('f')}],[{capability:'presentation'}],[{},'a1400','map'],[{},'zz9','image']]){
+  const t=harness({visuals:async()=>({state:'unavailable',reason:'interrupted'})});const r=await t.ops.preparePresentation(retry(over,assetId,kind));
+  assert.notEqual(r.reason,'interrupted',JSON.stringify([over,assetId,kind]));assert.ok(['refused','blocked','unavailable'].includes(r.status));assert.deepEqual(t.port.requests,[],JSON.stringify([over,assetId,kind]));}
+});
+
 test('F5a: compare-and-swap after custody: a newer execution adopted meanwhile makes the demand stale, typed',async()=>{
  const {ops,port}=harness({visuals:async()=>({state:'unavailable',reason:'decoder-unavailable'}),move:h('9')});
  assert.deepEqual(await ops.preparePresentation(demandFor('a1400','image')),{schema:'fia-presentation-preparation@1',status:'blocked',jobId:null,reason:'execution-revision-stale',record:null});
