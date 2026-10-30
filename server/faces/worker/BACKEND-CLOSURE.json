@@ -4,22 +4,22 @@
   "files": [
     {
       "path": "server/faces/http.mjs",
-      "sha256": "1f110aef72ae4e626a1832e4ba8093ae41f1ebfbf9e5f9161f5762257a036d51",
-      "bytes": 3074,
+      "sha256": "516a521f25f1879018ece66182cf6f555f99efb539cbf81ccdd1e9764716ed73",
+      "bytes": 3481,
       "role": "worker-runtime",
       "originalSha256": "53461b89830354b54b9620343203eae95cfe4c9a0742cbf24a4cf4aadc0a0e67"
     },
     {
       "path": "server/faces/mcp.mjs",
-      "sha256": "04312bf760341bd812f33744f995885fc050bbee64e3e0a35da86aac6f849969",
-      "bytes": 4846,
+      "sha256": "6f279c51d4e47b45f5da33f69b2fcbe5a22ebe7a09cfc5f433242d825f1feafe",
+      "bytes": 5150,
       "role": "worker-runtime",
       "originalSha256": "65af1ff666ac7e1c89219b7c96d4c05c10204f20f5c74c48b2fb8b8bc179e9f3"
     },
     {
       "path": "server/fia/publication/read-operations.mjs",
-      "sha256": "be8bc3f8b41cbce4800e3280bc1be516a4dfacc2fb4835f2b86825e35e1e0ce5",
-      "bytes": 1302,
+      "sha256": "ca49824fdea0a469c12633bd930afb7684cb3492c9ad725ac56709a570ac9467",
+      "bytes": 1463,
       "role": "worker-runtime",
       "originalSha256": "0e1e1479151995958d8171a766524f4ca39dba84fc6c254e2aced64937a6995e"
     },
@@ -367,8 +367,26 @@
     },
     {
       "path": "server/fia/preparation/executable-presentation-runtime.mjs",
-      "sha256": "c969b54de6ba07336c2441c31c2a065e454b606320057f17f7ecb9ca4f8dcef8",
-      "bytes": 16736,
+      "sha256": "962bc5e6f07cfba6815908cdd6cca486511bdf7004c8f51632e0ec5c15dcab9b",
+      "bytes": 19610,
+      "role": "worker-runtime"
+    },
+    {
+      "path": "server/fia/preparation/trusted-source-actions.mjs",
+      "sha256": "b529c5bcb98990fd80ea2a7545cd0dd012dfa87f2c5433b26b51d3d082dd37d7",
+      "bytes": 6432,
+      "role": "worker-runtime"
+    },
+    {
+      "path": "server/fia/preparation/trusted-source-actions.json",
+      "sha256": "6bc865bb74b899ee4388a577cb896331e4f3a17ce8c1db57655b1bcbea8f52e4",
+      "bytes": 2144,
+      "role": "worker-runtime"
+    },
+    {
+      "path": "server/fia/preparation/visual-resources.mjs",
+      "sha256": "80814a4d376b1d96174e07c6a53d0add1a8f6aed95c1383356875a31bd8ffb62",
+      "bytes": 3311,
       "role": "worker-runtime"
     },
     {
@@ -385,8 +403,8 @@
     },
     {
       "path": "server/fia/publication/executable-operations.mjs",
-      "sha256": "2dccc156261720debc6cfa08306805825c6c3a2ee643c8ce920c1b8767c251e2",
-      "bytes": 4217,
+      "sha256": "82b96b11428fd3dd42b4417499ba0cfdd2680d355b7c651ffc928c18c692beb9",
+      "bytes": 8608,
       "role": "worker-runtime"
     },
     {

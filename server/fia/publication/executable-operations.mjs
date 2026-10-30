@@ -6,11 +6,20 @@ const refused=()=>({status:'refused',code:'invalid-request'});
 // conflict and answers typed with its code; unnamed faults still propagate.
 const code=error=>typeof error?.message==='string'&&/^[a-z0-9]+(?:-[a-z0-9]+)+$/.test(error.message)&&error.message.length<=80?error.message:null;
 async function typed(run,denied,publicationTimeout=false){try{return await run();}catch(error){const reason=code(error);if(reason===null||(publicationTimeout&&/-timeout$/.test(reason)))throw error;return denied(reason);}}
+// F5a: a visual demand is the four-field demand plus visualDemand and expectedExecutionRevision
+// (SOURCE-TO-APP L95, presentation-decision-demand schema). decisionDemand is not admitted here.
+// Terry 366218f: visualDemand is exactly {assetId,kind}, or {assetId,kind,retry:true} for an explicit user Retry; retry is not
+// part of the declared demand it must match, and only retry===true reaches the port as a retry.
+export function validVisualDemand(x){const {visualDemand,expectedExecutionRevision,...rest}=object(x)?x:{};return exact(x,['packId','baseRevision','sourceRevision','capability','visualDemand','expectedExecutionRevision'])&&validPresentationDemand(rest)&&(exact(visualDemand,['assetId','kind'])||exact(visualDemand,['assetId','kind','retry'])&&visualDemand.retry===true)&&typeof visualDemand.assetId==='string'&&/^[A-Za-z0-9_-]{1,256}$/.test(visualDemand.assetId)&&['image','map'].includes(visualDemand.kind)&&hash(expectedExecutionRevision);}
+const VISUAL_REASONS=new Set(['decoder-unavailable','visual-ineligible','visual-unsupported','retained-evidence-unavailable','execution-admission-refused','execution-uncertain','interrupted']);
+const canonical=v=>Array.isArray(v)?v.map(canonical):object(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,canonical(v[k])])):v,sameJSON=(a,b)=>JSON.stringify(canonical(a))===JSON.stringify(canonical(b));
 export function validPresentationDemand(x){return exact(x,['packId','baseRevision','sourceRevision','capability'])&&typeof x.packId==='string'&&/^(eng|spa)\.(?:MRK|LUK)-[0-9-]+$/.test(x.packId)&&x.packId.length<=80&&hash(x.baseRevision)&&typeof x.sourceRevision==='string'&&/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(x.sourceRevision)&&x.capability==='executable-presentation';}
-export function createExecutableOperations({reads,service,publication,storage}){
+// visuals: optional visual-original@1 routing port {demand(request)} supplied by the Durable Object owner.
+export function createExecutableOperations({reads,service,publication,storage,visuals=null}){
  const tx=storage.transaction.bind(storage);
  const envelope=(status,jobId,reason=null,record=null)=>({schema:'fia-presentation-preparation@1',status,jobId,reason,record});
  async function preparePresentation(args){
+  if(object(args)&&Object.hasOwn(args,'visualDemand'))return prepareVisual(args);
   if(!validPresentationDemand(args))return refused();
   if(!service)return envelope('unavailable',null,'presentation-preparation-unavailable');
   const result=await typed(()=>service.request(structuredClone(args),{subscriberId:crypto.randomUUID()}),reason=>({status:'blocked',reason}));
@@ -25,6 +34,37 @@ export function createExecutableOperations({reads,service,publication,storage}){
   if(record.status!=='ready')return envelope('blocked',result.jobId,record.reason??'publication-refused');
   await tx(async t=>{const row=await t.get(key);await t.put(key,{...row,revision:record.revision});});
   return envelope('ready',result.jobId,null,record);
+ }
+ // F5a admission. The demand must equal, field for field, the preparable descriptor this server
+ // declares for the current executable publication (the expectedExecutionRevision compare-and-swap
+ // fence). Every outcome is a typed envelope, never an exception: stale, refused, unavailable or not
+ // yet published. Nothing is published here; display readiness waits for F7a/F7b.
+ async function currentVisual(args){
+  const record=await reads.readPack({packId:args.packId,execution:'2'});
+  if(record?.status!=='ready'||record.execution?.schema!=='fia-executable-catalog@1')return {refusal:envelope('blocked',null,'execution-admission-refused')};
+  if(record.revision!==args.expectedExecutionRevision)return {refusal:envelope('blocked',null,'execution-revision-stale')};
+  const entry=(record.execution.visualResources??[]).find(e=>e.assetId===args.visualDemand.assetId&&e.kind===args.visualDemand.kind);
+  if(!entry)return {refusal:envelope('blocked',null,'execution-admission-refused')};
+  if(entry.status==='unavailable')return {refusal:envelope('unavailable',null,entry.reason)};
+  if(entry.status!=='preparable'||!sameJSON({...args,visualDemand:{assetId:args.visualDemand.assetId,kind:args.visualDemand.kind}},entry.preparationDemand))return {refusal:envelope('blocked',null,'execution-admission-refused')};
+  return {record,entry};
+ }
+ async function prepareVisual(raw){
+  if(!validVisualDemand(raw))return refused();
+  const args=structuredClone(raw);
+  try{
+   const admitted=await currentVisual(args);if(admitted.refusal)return admitted.refusal;
+   if(!visuals||typeof visuals.demand!=='function')return envelope('unavailable',null,'visual-routing-unavailable');
+   let outcome;
+   try{outcome=await visuals.demand({packId:args.packId,baseRevision:args.baseRevision,sourceRevision:args.sourceRevision,executionRevision:admitted.record.revision,assetId:args.visualDemand.assetId,kind:args.visualDemand.kind,retry:args.visualDemand.retry===true});}
+   catch(error){return envelope('unavailable',null,code(error)&&VISUAL_REASONS.has(code(error))?code(error):'interrupted');}
+   // The fence again: a newer execution may have been adopted while custody ran. Its source
+   // evidence stays reusable by the job; this demand cannot speak for the newer execution.
+   const after=await currentVisual(args);if(after.refusal)return after.refusal.reason==='execution-revision-stale'?after.refusal:envelope('blocked',null,'execution-revision-stale');
+   if(outcome?.state==='unavailable'&&VISUAL_REASONS.has(outcome.reason))return envelope('unavailable',null,outcome.reason);
+   if(outcome?.state==='ready')return envelope('blocked',null,'visual-publication-unavailable');
+   return envelope('unavailable',null,'interrupted');
+  }catch(error){if(code(error))return envelope('blocked',null,code(error));throw error;}
  }
  async function readPresentationPreparation(args){
   if(!exact(args,['jobId'])||!hash(args.jobId))return refused();
