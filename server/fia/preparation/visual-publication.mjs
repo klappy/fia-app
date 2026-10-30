@@ -20,6 +20,10 @@ export const VISUAL_PUBLICATION_SCHEMA='fia-visual-publication@1';
 // A deliberate Retry reopens an attempt at most once per this interval per source (ahead of F5a's own rate limit).
 export const VISUAL_RETRY_MIN_MS=30000;
 const HOST='https://visual-original.internal',HEX=/^[a-f0-9]{64}$/,ROW='visual-publication:',RETRY='visual-original:last-retry';
+// A publication row is keyed by the recipe identity and the consumer, so a row left by an earlier recipe stays inert and never
+// blocks republishing the same consumer under the current recipe (4427129445).
+const CUSTODY_TIMEOUTS=new Set(['fresh-progress-timeout','fresh-total-timeout','readback-deadline']);
+const rowKey=consumerSha256=>`${ROW}${VISUAL_ORIGINAL_RECIPE_SHA256}:${consumerSha256}`;
 const json=(status,body,headers={})=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store',...headers}});
 const refusal=(status,reason,extra={})=>json(status,{status:'unavailable',reason,...extra});
 export function firstProofEntry({packId,baseRevision,assetId}){return VISUAL_FIRST_PROOF.find(e=>e.packId===packId&&e.baseRevision===baseRevision&&e.assetId===assetId)??null;}
@@ -66,7 +70,7 @@ async function publish(ctx,entry,job,args){
  const o=state.original,d=state.decode,src=state.sourceIdentitySha256;
  const row={schema:VISUAL_PUBLICATION_SCHEMA,consumer,consumerSha256,sourceIdentitySha256:src,recipeSha256:state.recipeSha256,
   original:{sha256:o.sha256,bytes:o.bytes,mime:o.contentType,width:d.width,height:d.height,sourceKey:o.sourceKey,pixelsSha256:d.pixelsSha256},path:pathOf(src,consumerSha256,o.sha256)};
- const kept=await ctx.storage.transaction(async tx=>{const prior=await tx.get(ROW+consumerSha256);if(prior)return prior;await tx.put(ROW+consumerSha256,row);return row;});
+ const kept=await ctx.storage.transaction(async tx=>{const prior=await tx.get(rowKey(consumerSha256));if(prior)return prior;await tx.put(rowKey(consumerSha256),row);return row;});
  // A consumer publishes one original, immutably; the same publication again is idempotent, a different one is refused.
  if(canonicalJSONString(kept)!==canonicalJSONString(row))return json(409,{status:'refused',reason:'visual-publication-conflict'});
  return json(200,{status:'ready',ready:{path:row.path,sha256:o.sha256},manifestEntry:{path:row.path,group:'image',assetId:entry.assetId,kind:entry.kind,sha256:o.sha256,bytes:o.bytes,mime:o.contentType,width:d.width,height:d.height},publication:row});
@@ -75,7 +79,7 @@ async function publish(ctx,entry,job,args){
 async function readPublication(ctx,entry,args){
  const id=await visualConsumerIdentity({packId:entry.packId,baseRevision:entry.baseRevision,executionRevision:args.executionRevision,assetId:entry.assetId,kind:entry.kind}).catch(()=>null);
  if(!id)return refusal(400,'invalid-request');
- const row=await ctx.storage.get(ROW+id.consumerSha256);
+ const row=await ctx.storage.get(rowKey(id.consumerSha256));
  if(!row||row.schema!==VISUAL_PUBLICATION_SCHEMA||row.consumerSha256!==id.consumerSha256)return refusal(404,'visual-not-published');
  if(row.recipeSha256!==VISUAL_ORIGINAL_RECIPE_SHA256)return refusal(410,'visual-publication-stale');
  const o=row.original;
@@ -85,13 +89,16 @@ async function serve(ctx,env,entry,job,args,request){
  if(!HEX.test(args.consumer??'')||!HEX.test(args.original??''))return refusal(400,'invalid-request');
  // The Worker supplies the current executable revision of the pack; a consumer of any other revision is never served.
  if(!HEX.test(args.current??''))return refusal(409,'visual-publication-stale',{subReason:'execution-not-current'});
- const row=await ctx.storage.get(ROW+args.consumer);
+ const row=await ctx.storage.get(rowKey(args.consumer));
  if(!row||row.schema!==VISUAL_PUBLICATION_SCHEMA||row.original?.sha256!==args.original||row.consumerSha256!==args.consumer)return refusal(404,'visual-not-published');
  // Current authority: the consumer must still be a first-proof consumer of this exact base revision, under today's recipe.
  if(row.consumer.packId!==entry.packId||row.consumer.baseRevision!==entry.baseRevision||row.consumer.assetId!==entry.assetId||row.recipeSha256!==VISUAL_ORIGINAL_RECIPE_SHA256)return refusal(410,'visual-publication-stale');
  if(row.consumer.executionRevision!==args.current)return refusal(410,'visual-publication-stale',{subReason:'execution-not-current'});
  const state=await job.read();
  // The job re-verifies its custody (receipt, head, retained bytes) on read: a failure there is an integrity refusal.
+ // A custody read that timed out (the primitive's progress or total bound, or the readback bound) proves nothing about the bytes:
+ // it is a non-final interruption, not an integrity refusal.
+ if(state.reason==='retained-evidence-unavailable'&&CUSTODY_TIMEOUTS.has(state.subReason))return refusal(503,'interrupted',{subReason:state.subReason,final:false});
  if(state.reason==='retained-evidence-unavailable')return refusal(409,'visual-original-integrity',{subReason:state.subReason??null});
  if(state.state!=='ready'||state.original?.sha256!==row.original.sha256||state.decode?.pixelsSha256!==row.original.pixelsSha256)return refusal(409,'visual-publication-stale',{subReason:state.subReason??state.reason??null});
  const etag=`"${row.original.sha256}"`,headers={'content-type':row.original.mime,etag,'cache-control':'private, no-cache','x-content-type-options':'nosniff','accept-ranges':'none'};
@@ -131,6 +138,9 @@ const ROUTE=/^\/v1\/original-visuals\/([a-f0-9]{64})\/([a-f0-9]{64})\/([a-f0-9]{
 let sourceIndex=null;
 export async function serveOriginalVisual(request,env,{currentRevision}={}){
  const url=new URL(request.url);if(!url.pathname.startsWith('/v1/original-visuals/')&&url.pathname!=='/v1/original-visuals')return null;
+ // This route answers ahead of createWorker, so it applies the same trusted-origin check as every reserved /v1 route (adapter.mjs,
+ // servePreparation): a foreign host or Origin header is refused before any Durable Object or R2 work.
+ if(url.origin!==env.FIA_API_ORIGIN||request.headers.has('Origin')&&request.headers.get('Origin')!==env.FIA_API_ORIGIN)return json(403,{status:'refused',code:'untrusted-origin'});
  const m=ROUTE.exec(url.pathname);if(!m||url.search)return refusal(m?400:404,m?'invalid-request':'unknown-visual');
  if(!['GET','HEAD'].includes(request.method))return refusal(405,'method-not-allowed');
  sourceIndex??=new Map(await Promise.all(VISUAL_FIRST_PROOF.map(async e=>[(await visualOriginalIdentity(e.source)).sourceIdentitySha256,e])));

@@ -136,7 +136,7 @@ test('published() is a pure read: a decoded-ready but unpublished original is vi
 });
 test('the port publishes only while executionRevision is the current pointer (checked before and after); the route types an older object',async()=>{
  const a=VISUAL_FIRST_PROOF.find(e=>e.assetId==='a1400'),calls=[];
- const fake=answer=>({FIA_ORIGINALS:{},FIA_PREPARATION_JOBS:{idFromName:n=>n,get:()=>({fetch:async request=>{const path=new URL(request.url).pathname;calls.push(path);return answer(path);}})}});
+ const fake=answer=>({FIA_API_ORIGIN:origin,FIA_ORIGINALS:{},FIA_PREPARATION_JOBS:{idFromName:n=>n,get:()=>({fetch:async request=>{const path=new URL(request.url).pathname;calls.push(path);return answer(path);}})}});
  const ok=path=>Response.json(path==='/demand'?{state:'ready'}:{status:'ready',ready:{path:'/p',sha256:'s'},manifestEntry:{path:'/p'}});
  const request={packId:a.packId,baseRevision:a.baseRevision,sourceRevision:'r',executionRevision:'a'.repeat(64),assetId:'a1400',kind:'image',retry:false};
  let pointer='b'.repeat(64);const port=createVisualsPort(fake(ok),{currentRevision:async()=>pointer});
@@ -232,4 +232,55 @@ for(const kind of ['get','arrayBuffer'])test(`4426825345: a stalled serving ${ki
   await r2({reset:true});
  }
  const after=await read(path);assert.equal(after.status,200);assert.equal(sha(after.body),sha(bytes));
+});
+// Shared setup for the two 09e8a39 findings: a published a1400 and its public path.
+async function publishedA1400(t){
+ const {mf,dir,counts}=await runtime();t.after(async()=>{await mf.dispose();await rm(dir,{recursive:true,force:true});});
+ const read=http(mf),base=await read('/v1/packs/'+packId);assert.equal((await prepare(read,base.body.preparationDemand)).body.status,'ready');
+ const record=(await read('/v1/packs/'+packId+'?execution=2')).body,res=record.execution.visualResources.find(r=>r.assetId==='a1400');
+ const entry=VISUAL_FIRST_PROOF.find(e=>e.assetId==='a1400'),bytes=ORIGINALS.a1400,src=(await visualOriginalIdentity(entry.source)).sourceIdentitySha256;
+ const {consumerSha256}=await visualConsumerIdentity({packId,baseRevision:entry.baseRevision,executionRevision:record.revision,assetId:'a1400',kind:entry.kind});
+ return {mf,read,counts,res,entry,record,bytes,consumerSha256,path:`/v1/original-visuals/${src}/${consumerSha256}/${sha(bytes)}`,door:await door(mf,entry.source)};
+}
+// 4427129436: the original-visuals route sits ahead of createWorker, so it applies the same trusted-origin check every reserved
+// /v1 route gets: a foreign host or a foreign Origin header is a 403 untrusted-origin before any Durable Object or R2 work.
+test('4427129436: a foreign host or Origin is refused untrusted-origin before any object or R2 work, GET and HEAD',async t=>{
+ const {mf,read,res,path,door:{stub}}=await publishedA1400(t);
+ assert.equal((await prepare(read,res.preparationDemand)).body.reason,'visual-publication-unavailable');assert.equal((await read(path)).status,200);
+ const r2=async body=>(await stub.fetch('https://route.test/r2',{method:'POST',body:JSON.stringify(body)})).json();
+ for(const method of ['GET','HEAD'])for(const [url,headers] of [['https://elsewhere.example'+path,{}],[origin+path,{Origin:'https://elsewhere.example'}]]){
+  await r2({reset:true});const r=await mf.dispatchFetch(url,{method,headers});const body=method==='GET'?await r.json():(await r.arrayBuffer(),null);
+  assert.equal(r.status,403,`${method} ${url} ${JSON.stringify(headers)}`);if(body)assert.equal(body.code,'untrusted-origin');
+  assert.deepEqual(await r2({}),{get:0,arrayBuffer:0},'no R2 work for a refused origin');}
+ assert.equal((await read(path,{headers:{Origin:origin}})).status,200,'the trusted Origin is still served');
+});
+// 4427129445: a publication row is keyed by the recipe identity as well as the consumer, so a row left by an earlier recipe never
+// blocks republishing the same consumer under the current recipe; the old row stays inert.
+test('4427129445: a row left by an earlier recipe does not block republishing; the current recipe publishes and serves',async t=>{
+ const {read,res,path,consumerSha256,bytes,door:{put,dump}}=await publishedA1400(t);
+ const earlier='e'.repeat(64);
+ await put('visual-publication:'+consumerSha256,{schema:'fia-visual-publication@1',consumer:{},consumerSha256,recipeSha256:earlier,original:{sha256:sha(bytes)},path});
+ const answer=await prepare(read,res.preparationDemand);assert.equal(answer.body.reason,'visual-publication-unavailable',JSON.stringify(answer.body));
+ const got=await read(path);assert.equal(got.status,200,JSON.stringify(got.body));assert.equal(sha(got.body),sha(bytes));
+ const rows=await dump();assert.equal(rows['visual-publication:'+consumerSha256].recipeSha256,earlier,'the earlier row is left as it was');
+});
+// 4427129445 guard: under the same recipe, a consumer's publication of a different original is still refused (rows stay immutable).
+test('4427129445 guard: a same-recipe row naming a different original still refuses a different publication',async t=>{
+ const {read,res,path,record,entry,consumerSha256,door:{stub,put,dump}}=await publishedA1400(t);
+ assert.equal(Object.keys(await dump()).find(k=>k.startsWith('visual-publication:'))??null,null,'nothing published yet');
+ assert.equal((await prepare(read,res.preparationDemand)).body.reason,'visual-publication-unavailable');
+ const rows=await dump(),current=Object.keys(rows).find(k=>k.startsWith('visual-publication:')&&k.endsWith(':'+consumerSha256));assert.ok(current,'the current row is recipe-keyed');
+ await put(current,{...rows[current],original:{...rows[current].original,sha256:'f'.repeat(64)}});
+ const publish=await stub.fetch('https://visual-original.internal/publish',{method:'POST',body:JSON.stringify({packId,baseRevision:entry.baseRevision,assetId:'a1400',executionRevision:record.revision})});
+ assert.equal(publish.status,409);assert.equal((await publish.json()).reason,'visual-publication-conflict');
+ assert.equal((await read(path)).status,404,'the path no longer names the kept row');
+});
+// Reviewer item on 5716903398: a stall inside job.read()'s custody readback is a non-final interruption at serving, not integrity.
+test('a stalled custody readback inside job.read() answers 503 interrupted at serving, not 409 integrity',async t=>{
+ const {read,res,path,door:{stub}}=await publishedA1400(t);
+ assert.equal((await prepare(read,res.preparationDemand)).body.reason,'visual-publication-unavailable');assert.equal((await read(path)).status,200);
+ const r2=async body=>(await stub.fetch('https://route.test/r2',{method:'POST',body:JSON.stringify(body)})).json();
+ await r2({reset:true,stall:{kind:'get',skip:0}});
+ const r=await Promise.race([read(path),new Promise((_,reject)=>setTimeout(()=>reject(Error('hung')),60000))]);
+ assert.equal(r.status,503,JSON.stringify(r.body));assert.equal(r.body.reason,'interrupted');
 });
