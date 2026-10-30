@@ -1541,7 +1541,7 @@
     },
     {
       "path": "server/faces/worker/BACKEND-CLOSURE.json",
-      "sha256": "d72645885e36642c638d1be6867ccaeb1aebd39ef8cb0a6dbfde1b89c7e9679b"
+      "sha256": "ed4e846c918a0026d84d51580e12699f2d82a767071fa5c4d1ed272318dc6a72"
     },
     {
       "path": "server/faces/worker/adapter.mjs",
@@ -1649,7 +1649,7 @@
     },
     {
       "path": "server/fia/preparation/executable-presentation-runtime.mjs",
-      "sha256": "c969b54de6ba07336c2441c31c2a065e454b606320057f17f7ecb9ca4f8dcef8"
+      "sha256": "eb21962dafa530effd879e8c6abe3006b17e3aecacafa04515ffd6ab97078cd8"
     },
     {
       "path": "server/fia/preparation/executable-presentation-service.mjs",
@@ -2693,7 +2693,7 @@
     },
     {
       "path": "tests/worker-serving/executable-transition.test.mjs",
-      "sha256": "eb851795e95983db5ba3e49c0e9d0c8492eb235367037bca702c3422a091e9cc"
+      "sha256": "ba970479e882f6958841e3dd23fed9d3af0c6c62ae0f2bb2c7d9789c9c5935eb"
     },
     {
       "path": "tests/worker-serving/execution-registry.test.mjs",
@@ -2812,6 +2812,18 @@
     {
       "path": "tests/worker-serving/visual-original.test.mjs",
       "sha256": "49774e4d5bfe7cacfab361319fa8a85435b344f2a91a32481e807be398470053"
+    },
+    {
+      "path": "server/fia/preparation/trusted-source-actions.mjs",
+      "sha256": "b529c5bcb98990fd80ea2a7545cd0dd012dfa87f2c5433b26b51d3d082dd37d7"
+    },
+    {
+      "path": "server/fia/preparation/trusted-source-actions.json",
+      "sha256": "6bc865bb74b899ee4388a577cb896331e4f3a17ce8c1db57655b1bcbea8f52e4"
+    },
+    {
+      "path": "tests/worker-serving/trusted-source-actions.test.mjs",
+      "sha256": "90fbd578306aa1733b55da5452d0bd564c86e7dd55e7873022985a076c8b6193"
     }
   ],
   "generatedFiles": [
