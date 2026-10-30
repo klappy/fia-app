@@ -404,8 +404,11 @@ test('an asking read declares a1400 then c4 as preparable; a visual demand is ad
   assert.deepEqual(visualResources,[{assetId:'a1400',kind:'image',status:'preparable',preparationDemand:demand('a1400','image')},{assetId:'c4',kind:'map',status:'preparable',preparationDemand:demand('c4','map')}]);
   assert.deepEqual(await call('read_pack',{packId,execution:'2'}),asking.body,'HTTP/MCP parity');
   assert.deepEqual((await read(`/v1/packs/${packId}?revision=${plain.body.revision}&execution=2`)).body.execution.visualResources,visualResources,'the exact revision declares the same');
-  const unrouted=await prepare(read,visualResources[0].preparationDemand);
-  assert.equal(unrouted.status,404,JSON.stringify(unrouted.body));assert.deepEqual(unrouted.body,{schema:'fia-presentation-preparation@1',status:'unavailable',jobId:null,reason:'visual-routing-unavailable',record:null});
+  // Routed (Otto's capabilities.visuals port): this harness forbids every outbound fetch, so the one publisher GET the
+  // demand makes fails, and the answer is typed unavailable: interrupted (non-final). visual-route.test.mjs runs the
+  // routed demand against a publisher fixture through ready, publication and the read route.
+  const routed=await prepare(read,visualResources[0].preparationDemand);
+  assert.equal(routed.status,404,JSON.stringify(routed.body));assert.deepEqual(routed.body,{schema:'fia-presentation-preparation@1',status:'unavailable',jobId:null,reason:'interrupted',record:null});
   const stale=await prepare(read,demand('c4','map','f'.repeat(64)));assert.equal(stale.status,409);assert.equal(stale.body.reason,'execution-revision-stale');
   const forged=await prepare(read,demand('a293','image'));assert.equal(forged.status,409);assert.equal(forged.body.reason,'execution-admission-refused');
   const malformed=await prepare(read,{...demand('c4','map'),visualDemand:{assetId:'c4',kind:'video'}});assert.equal(malformed.status,400);
@@ -414,7 +417,7 @@ test('an asking read declares a1400 then c4 as preparable; a visual demand is ad
   const spa=await read('/v1/packs/spa.MRK-1-14-20');const spaReady=await prepare(read,spa.body.preparationDemand);assert.equal(spaReady.body.status,'ready');
   assert.deepEqual((await read('/v1/packs/spa.MRK-1-14-20?execution=2')).body.execution.visualResources,[]);
   const other=await read('/v1/packs/eng.MRK-1-21-28'),otherAsking=await read('/v1/packs/eng.MRK-1-21-28?execution=2');assert.deepEqual(otherAsking.body,other.body);
-  assert.equal(r.counts.external,0,'reads and demands fetch nothing');
+  assert.equal(r.counts.external,1,'reads fetch nothing; the one routed visual demand made one (forbidden) publisher GET');
  }finally{await mf.dispose();await rm(r.dir,{recursive:true,force:true});}
 });
 

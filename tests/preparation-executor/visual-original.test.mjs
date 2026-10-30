@@ -1,30 +1,35 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {createRequire} from 'node:module';import {mkdtemp,rm} from 'node:fs/promises';import {tmpdir} from 'node:os';import {join,resolve} from 'node:path';import {fileURLToPath} from 'node:url';import {deflateSync,crc32} from 'node:zlib';import {createHash} from 'node:crypto';
-import {visualOriginalIdentity,VISUAL_ORIGINAL_POLICY,VISUAL_ORIGINAL_RECIPE} from '../../server/fia/preparation/visual-original.mjs';
+import test from 'node:test';import assert from 'node:assert/strict';import {createRequire} from 'node:module';import {mkdtemp,rm} from 'node:fs/promises';import {readFileSync} from 'node:fs';import {tmpdir} from 'node:os';import {join,resolve} from 'node:path';import {fileURLToPath} from 'node:url';import {deflateSync,crc32} from 'node:zlib';import {createHash} from 'node:crypto';
+import {visualOriginalIdentity,VISUAL_ORIGINAL_POLICY,VISUAL_ORIGINAL_RECIPE,VISUAL_ORIGINAL_RECIPE_SHA256} from '../../server/fia/preparation/visual-original.mjs';
 import {createFreshSourceObservations,AUDIO_CONTENT,VISUAL_CONTENT} from '../../server/fia/preparation/executor/fresh-source-observation.mjs';
 const require=createRequire(resolve(process.env.FIA_WORKER_DEPENDENCIES||'package.json')),{Miniflare,convertV4MiniflareOptions}=require('miniflare'),{build}=require('esbuild');
-// Fixtures: a real 2x2 RGB PNG and a real 1x1 baseline JPEG; no publisher is contacted.
+// Fixtures: a real 2x2 RGB PNG built here, and real JPEG/PNG files made by ImageMagick (fixtures/visual); no publisher is contacted.
 function chunk(type,data){const body=Buffer.concat([Buffer.from(type,'ascii'),data]),out=Buffer.alloc(12+data.length);out.writeUInt32BE(data.length,0);body.copy(out,4);out.writeUInt32BE(crc32(body)>>>0,8+data.length);return out;}
 const ihdr=Buffer.alloc(13);ihdr.writeUInt32BE(2,0);ihdr.writeUInt32BE(2,4);ihdr[8]=8;ihdr[9]=2;
 const PNG=Buffer.concat([Buffer.from([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a]),chunk('IHDR',ihdr),chunk('IDAT',deflateSync(Buffer.from([0,200,30,40,200,30,40,0,10,20,30,10,20,30]))),chunk('IEND',Buffer.alloc(0))]);
-const JPEG=Buffer.from('/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=','base64');
+const fixtureFile=name=>readFileSync(new URL(`./fixtures/visual/${name}`,import.meta.url));
+const JPEG=fixtureFile('baseline-37x23.jpg'),INTERLACED=fixtureFile('interlaced-16x16.png');
+// The 2x2 PNG's unfiltered scanlines, hashed independently of the decoder.
+const PNG_PIXELS='200,30,40,200,30,40,10,20,30,10,20,30';
 const sha=x=>createHash('sha256').update(x).digest('hex');
 const modulePath=fileURLToPath(new URL('../../server/fia/preparation/visual-original.mjs',import.meta.url));
 const worker=`import {createVisualOriginalJob} from ${JSON.stringify(modulePath)};
-const fixtures=${JSON.stringify({png:PNG.toString('base64'),jpeg:JPEG.toString('base64')})};
+const fixtures=${JSON.stringify({png:PNG.toString('base64'),jpeg:JPEG.toString('base64'),interlaced:INTERLACED.toString('base64')})};
 const decode=b=>Uint8Array.from(atob(b),c=>c.charCodeAt(0));
-export class Job {constructor(ctx,env){this.ctx=ctx;this.env=env;this.gets=0;this.gates=[];}
- async fetch(request){const args=await request.json();if(args.op==='counts')return Response.json({gets:this.gets,waiting:this.gates.length});if(args.op==='release'){for(const r of this.gates.splice(0))r();return Response.json({released:true});}
+export class Job {constructor(ctx,env){this.ctx=ctx;this.env=env;this.gets=0;this.decodes=0;this.gates=[];this.readGates=[];
+  // Counts decodes: only the decode readback calls arrayBuffer() on a retained object (custody verifies by streaming the body).
+  const self=this,raw=env.ORIGINALS;this.bucket=new Proxy(raw,{get(t,p){if(p==='get')return async(...a)=>{const o=await t.get(...a);return o&&new Proxy(o,{get(ot,op){if(op==='arrayBuffer')return async()=>{if(self.holdReads)await new Promise(r=>self.readGates.push(r));if(self.failNext){self.failNext=false;self.decodes++;await new Promise(r=>setTimeout(r,50));throw Error('r2-readback-down');}self.decodes++;return ot.arrayBuffer();};const v=ot[op];return typeof v==='function'?v.bind(ot):v;}});};const v=t[p];return typeof v==='function'?v.bind(t):v;}});}
+ async fetch(request){const args=await request.json();if(args.op==='holdReads'){this.holdReads=true;return Response.json({ok:1});}if(args.op==='releaseReads'){this.holdReads=false;for(const r of this.readGates.splice(0))r();return Response.json({ok:1});}if(args.op==='heldReads')return Response.json({held:this.readGates.length});if(args.op==='armFail'){this.failNext=true;return Response.json({armed:true});}if(args.op==='dropDecode'){const rows=await this.ctx.storage.list({prefix:'visual-original:decode:'});for(const k of rows.keys())await this.ctx.storage.delete(k);this.decodes=0;return Response.json({dropped:rows.size});}if(args.op==='corruptDecode'){const rows=await this.ctx.storage.list({prefix:'visual-original:decode:'});for(const [k,v] of rows){const next={...v,...args.patch};for(const d of args.drop||[])delete next[d];await this.ctx.storage.put(k,next);}return Response.json({patched:rows.size});}if(args.op==='corrupt'){for(const o of (await this.env.ORIGINALS.list({prefix:'originals/visual/sha256/'})).objects)await this.env.ORIGINALS.put(o.key,new Uint8Array(o.size).fill(1));return Response.json({corrupted:true});}if(args.op==='counts')return Response.json({gets:this.gets,waiting:this.gates.length});if(args.op==='release'){for(const r of this.gates.splice(0))r();return Response.json({released:true});}
   const source={kind:args.kind||'map',url:args.url||'https://publisher.invalid/maps/c4.png',sourceVersion:'fixture-revision-1'};
-  try{const job=createVisualOriginalJob({storage:this.ctx.storage,bucket:this.env.ORIGINALS,source,eligibility:c=>!args.ineligible&&!(args.badHash&&c.observedContent?.sha256===args.badHash),now:()=>1000,fetchSource:async(url,options)=>{this.gets++;if(args.fail)throw null;if(options.redirect!=='manual')throw Error('wrong-redirect');if(args.gate)await new Promise(r=>this.gates.push(r));
+  try{const job=createVisualOriginalJob({storage:this.ctx.storage,bucket:this.bucket,source,eligibility:c=>!args.ineligible&&!(args.badHash&&c.observedContent?.sha256===args.badHash),now:()=>1000,fetchSource:async(url,options)=>{this.gets++;if(args.fail)throw null;if(options.redirect!=='manual')throw Error('wrong-redirect');if(args.gate)await new Promise(r=>this.gates.push(r));
     if(args.redirect)return new Response(null,{status:302,headers:{location:'https://elsewhere.invalid/x.png'}});if(args.httpStatus)return new Response('no',{status:args.httpStatus,headers:{'content-type':'text/plain','content-length':'2'}});
     const bytes=args.body?decode(args.body):args.size?new Uint8Array(args.size).fill(7).map((v,i)=>i<8?[0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a][i]:v):decode(fixtures[args.fixture||'png']);
     const headers={'content-type':args.mime||'image/png'};if(!args.noLength)headers['content-length']=String(args.length??bytes.length);
     let sent=false;const cuts=args.split?[0,...args.split,bytes.length]:null;return new Response(new ReadableStream({pull(c){if(sent){c.close();return;}sent=true;if(cuts){for(let i=0;i<cuts.length-1;i++)c.enqueue(bytes.slice(cuts[i],cuts[i+1]));return;}for(let n=0;n<bytes.length;n+=65536)c.enqueue(bytes.slice(n,n+65536));}}),{status:200,headers});}});
    const result=args.op==='read'?await job.read():await job.demand({...(args.aborted?{signal:AbortSignal.abort()}:{}),...(args.retry?{retry:true}:{})});
-   const objects=(await this.env.ORIGINALS.list()).objects;return Response.json({result,gets:this.gets,objects:objects.map(o=>o.key),rows:[...(await this.ctx.storage.list()).keys()]});}catch(error){return Response.json({error:error.message,gets:this.gets});}}
+   const objects=(await this.env.ORIGINALS.list()).objects;return Response.json({result,gets:this.gets,decodes:this.decodes,objects:objects.map(o=>o.key),rows:[...(await this.ctx.storage.list()).keys()]});}catch(error){return Response.json({error:error.message,gets:this.gets});}}
 }
 export default {fetch(request,env){const name=new URL(request.url).pathname.slice(1)||'one';return env.JOBS.get(env.JOBS.idFromName(name)).fetch(request);}};`;
-const bundle=await build({stdin:{contents:worker,resolveDir:resolve('.')},bundle:true,format:'esm',platform:'browser',external:['node:crypto'],write:false});
+const bundle=await build({stdin:{contents:worker,resolveDir:resolve('.')},bundle:true,format:'esm',platform:'browser',external:['node:crypto','node:zlib'],write:false});
 async function fixture(t){const directory=await mkdtemp(join(tmpdir(),'visual-original-'));const mf=new Miniflare({...convertV4MiniflareOptions({name:'visual-original-fixture',modules:true,script:bundle.outputFiles[0].text,compatibilityDate:'2026-09-01',compatibilityFlags:['nodejs_compat'],durableObjects:{JOBS:{className:'Job',useSQLite:true}},r2Buckets:['ORIGINALS']}),resourcePersistencePath:directory});t.after(async()=>{await mf.dispose();await rm(directory,{recursive:true,force:true});});return mf;}
 const call=(mf,args={},object='one')=>mf.dispatchFetch(`https://fixture.invalid/${object}`,{method:'POST',body:JSON.stringify(args)}).then(r=>r.json());
 
@@ -39,22 +44,111 @@ test('identity is per source, shared across packs and languages, and refuses que
  assert.notEqual((await visualOriginalIdentity({kind:'map',url:'https://publisher.invalid/maps/c5.png',sourceVersion:'r1'})).name,a.name);
  for(const bad of [{kind:'map',url:'https://publisher.invalid/c4.png?x=1',sourceVersion:'r1'},{kind:'map',url:'http://publisher.invalid/c4.png',sourceVersion:'r1'},{kind:'video',url:'https://publisher.invalid/c4.png',sourceVersion:'r1'},{kind:'map',url:'https://publisher.invalid/c4.png',sourceVersion:'r1',packId:'eng.MRK-1-14-20'}])await assert.rejects(visualOriginalIdentity(bad),/visual-source/);
 });
-test('fixture PNG is fetched once, stored content-addressed with readback, and stays decoder-unavailable',async t=>{
+test('fixture PNG is fetched once, stored content-addressed, read back and fully decoded to ready',async t=>{
  const mf=await fixture(t),first=await call(mf);assert.equal(first.gets,1,JSON.stringify(first));
- const r=first.result;assert.equal(r.state,'unavailable');assert.equal(r.reason,'decoder-unavailable');assert.equal(r.custody,'retained');assert.deepEqual(r.decode,{state:'unavailable',reason:'decoder-unavailable',decoder:null,width:null,height:null,pixelsSha256:null});assert.deepEqual(r.recipe,JSON.parse(JSON.stringify(VISUAL_ORIGINAL_RECIPE)));assert.equal(r.recipe.decoder,null);assert.notEqual(r.state,'ready');
+ const r=first.result;assert.equal(r.state,'ready',JSON.stringify(r));assert.equal(r.custody,'retained');assert.deepEqual(r.recipe,JSON.parse(JSON.stringify(VISUAL_ORIGINAL_RECIPE)));assert.equal(r.recipeSha256,VISUAL_ORIGINAL_RECIPE_SHA256);
+ assert.deepEqual(r.decode,{state:'ready',reason:null,subReason:null,decoder:JSON.parse(JSON.stringify(VISUAL_ORIGINAL_RECIPE.decoder['image/png'])),width:2,height:2,pixelsSha256:sha(Buffer.from(PNG_PIXELS.split(',').map(Number)))});
+ assert.ok(!first.objects.some(k=>/pixel|decoded/.test(k)),'decoded pixels are never stored');
  assert.equal(r.original.sha256,sha(PNG));assert.equal(r.original.bytes,PNG.length);assert.equal(r.original.contentType,'image/png');assert.equal(r.original.sourceKey,`originals/visual/sha256/${sha(PNG)}.png`);
  assert.ok(first.objects.includes(r.original.sourceKey));assert.ok(first.objects.some(k=>/^originals\/quarantine\/checks\/[a-f0-9]{64}\/[-a-f0-9]{36}\.bin$/.test(k)));assert.ok(first.objects.some(k=>k.startsWith('originals/observations/')));assert.ok(!first.objects.some(k=>k.endsWith('.mp3')));
  const again=await call(mf);assert.equal(again.gets,1,'repeat fetches nothing');assert.deepEqual(again.result,r);
  const read=await call(mf,{op:'read'});assert.equal(read.gets,1,'read fetches nothing');assert.deepEqual(read.result,r);
 });
-test('fixture JPEG is stored with a .jpg key and its own MIME',async t=>{
+test('fixture JPEG is stored with a .jpg key and its own MIME, and decodes through EOI to its dimensions',async t=>{
  const mf=await fixture(t),out=await call(mf,{fixture:'jpeg',mime:'image/jpeg',kind:'photo',url:'https://publisher.invalid/a1400/1000.jpg'});
- assert.equal(out.result.custody,'retained',JSON.stringify(out));assert.equal(out.result.original.contentType,'image/jpeg');assert.equal(out.result.original.sourceKey,`originals/visual/sha256/${sha(JPEG)}.jpg`);assert.equal(out.result.reason,'decoder-unavailable');
+ assert.equal(out.result.custody,'retained',JSON.stringify(out));assert.equal(out.result.original.contentType,'image/jpeg');assert.equal(out.result.original.sourceKey,`originals/visual/sha256/${sha(JPEG)}.jpg`);
+ assert.equal(out.result.state,'ready');assert.equal(out.result.decode.width,37);assert.equal(out.result.decode.height,23);assert.equal(out.result.decode.decoder.name,'jpeg-js');assert.equal(out.result.decode.decoder.version,'0.4.4');assert.match(out.result.decode.pixelsSha256,/^[a-f0-9]{64}$/);
+});
+test('a retained interlaced PNG is a final visual-unsupported decode-not-streamable, kept with 0 refetches and 0 re-decodes',async t=>{
+ const mf=await fixture(t),out=await call(mf,{fixture:'interlaced'});
+ assert.equal(out.result.state,'unavailable',JSON.stringify(out));assert.equal(out.result.reason,'visual-unsupported');assert.equal(out.result.subReason,'decode-not-streamable');assert.equal(out.result.final,true);assert.equal(out.result.custody,'retained');assert.equal(out.result.decode.width,null);
+ const again=await call(mf,{fixture:'interlaced'});assert.equal(again.gets,1);assert.deepEqual(again.result,out.result);
+});
+test('a kept ready verdict is never returned over corrupted retained bytes: the read is retained-evidence-unavailable, with no refetch',async t=>{
+ const mf=await fixture(t),first=await call(mf);assert.equal(first.result.state,'ready');
+ const repeat=await call(mf,{op:'read'});assert.deepEqual(repeat.result,first.result,'a repeat read returns the kept verdict');
+ await call(mf,{op:'corrupt'});const read=await call(mf,{op:'read'});assert.equal(read.gets,1);
+ assert.equal(read.result.state,'unavailable');assert.equal(read.result.reason,'retained-evidence-unavailable');assert.equal(read.result.final,false);assert.equal(read.result.custody,'unverified');assert.notEqual(read.result.decode.state,'ready');
 });
 test('two demands at once fetch once and the joiner sees preparing',async t=>{
  const mf=await fixture(t),first=call(mf,{gate:true});for(let n=0;n<200&&(await call(mf,{op:'counts'})).waiting<1;n++)await new Promise(r=>setTimeout(r,5));
  const joined=await call(mf,{gate:true});assert.equal(joined.result.state,'preparing');assert.equal(joined.gets,1);
  await call(mf,{op:'release'});const done=await first;assert.equal(done.result.custody,'retained');assert.equal(done.gets,1);
+});
+test('a Retry after a decoded ready fetches 0 and decodes 0, returning the kept verdict',async t=>{
+ const mf=await fixture(t),first=await call(mf);assert.equal(first.result.state,'ready');assert.equal(first.gets,1);assert.equal(first.decodes,1);
+ const retried=await call(mf,{retry:true});assert.equal(retried.gets,1,'Retry fetches nothing');assert.equal(retried.decodes,1,'Retry decodes nothing');assert.deepEqual(retried.result,first.result);
+ const again=await call(mf,{retry:true});assert.equal(again.gets,1);assert.equal(again.decodes,1);assert.deepEqual(again.result,first.result);
+});
+test('a large PNG with corrupt zlib is a kept final visual-unsupported png-zlib-invalid; read and Retry fetch 0 and decode 0',async t=>{
+ // 1024x1024 noise, one IDAT with a bad zlib header: large enough that the zlib error arrives while the writer waits on 'drain'.
+ const w=1024,h=1024,rows=Buffer.alloc(h*(1+w*3));for(let i=0;i<rows.length;i+=32)createHash('sha256').update('j'+i).digest().copy(rows,i);for(let y=0;y<h;y++)rows[y*(1+w*3)]=0;
+ const z=Buffer.from(deflateSync(rows,{level:1}));z[0]=0x78;z[1]=0x00;
+ const ih=Buffer.alloc(13);ih.writeUInt32BE(w,0);ih.writeUInt32BE(h,4);ih[8]=8;ih[9]=2;
+ const bad=Buffer.concat([Buffer.from([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a]),chunk('IHDR',ih),chunk('IDAT',z),chunk('IEND',Buffer.alloc(0))]).toString('base64');
+ const mf=await fixture(t),first=await call(mf,{body:bad});
+ assert.equal(first.result.state,'unavailable',JSON.stringify(first.result));assert.equal(first.result.reason,'visual-unsupported');assert.equal(first.result.subReason,'png-zlib-invalid');assert.equal(first.result.final,true);assert.equal(first.result.custody,'retained');assert.equal(first.gets,1);assert.equal(first.decodes,1);
+ const read=await call(mf,{op:'read'});assert.equal(read.gets,1);assert.equal(read.decodes,1);assert.deepEqual(read.result,first.result);
+ const retried=await call(mf,{body:bad,retry:true});assert.equal(retried.gets,1,'Retry fetches nothing');assert.equal(retried.decodes,1,'Retry decodes nothing');assert.deepEqual(retried.result,first.result);
+});
+test('4408596866: a kept decode row with valid identity but malformed evidence fails closed, never ready',async t=>{
+ for(const [patch,drop] of [[{width:null},[]],[{},['pixelsSha256']],[{state:'ready',final:false},[]],[{decoder:{name:'other',version:'9'}},[]],[{width:2.5},[]],[{extra:1},[]],[{state:'unavailable',reason:'visual-unsupported',subReason:'x'},[]]]){
+  const mf=await fixture(t),first=await call(mf);assert.equal(first.result.state,'ready');
+  const n=await call(mf,{op:'corruptDecode',patch,drop});assert.equal(n.patched,1);
+  for(const op of ['read',undefined]){const out=await call(mf,op?{op}:{});assert.notEqual(out.result.state,'ready',JSON.stringify({patch,drop,out:out.result}));assert.equal(out.result.reason,'retained-evidence-unavailable');assert.equal(out.result.subReason,'visual-decode-record-corrupt');assert.equal(out.result.final,false);assert.equal(out.gets,1);}
+ }
+});
+test('4408649050: concurrent first decodes coalesce: N callers give exactly 1 readback and 1 decode, and the same verdict',async t=>{
+ // Large enough (1024x1024 noise, about 3 MiB) that a decode spans many awaits, so request interleaving is real.
+ const w=1024,h=1024,rows=Buffer.alloc(h*(1+w*3));for(let i=0;i<rows.length;i+=32)createHash('sha256').update('c'+i).digest().copy(rows,i);for(let y=0;y<h;y++)rows[y*(1+w*3)]=0;
+ const ih=Buffer.alloc(13);ih.writeUInt32BE(w,0);ih.writeUInt32BE(h,4);ih[8]=8;ih[9]=2;const big=(z)=>Buffer.concat([Buffer.from([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a]),chunk('IHDR',ih),chunk('IDAT',z),chunk('IEND',Buffer.alloc(0))]).toString('base64');
+ const good=big(deflateSync(rows,{level:1})),badZ=Buffer.from(deflateSync(rows,{level:1}));badZ[2]|=0x06;const bad=big(badZ);
+ for(const body of [good,bad]){
+  const mf=await fixture(t),first=await call(mf,{body});assert.equal(first.decodes,1);
+  // Custody retained, decode row gone: the state a burst of first demands meets before the first decode row is written.
+  // Every request constructs its own createVisualOriginalJob instance inside the DO handler, so the callers are separate factory
+  // instances sharing one durable source identity; the large decode spans many awaits, so their interleaving is real.
+  assert.equal((await call(mf,{op:'dropDecode'})).dropped,1);
+  // Deterministic interleaving: hold every readback, issue the burst, let every caller reach its decode step, then release.
+  await call(mf,{op:'holdReads'});const pending=[...Array(6)].map((_,i)=>call(mf,i%2?{op:'read'}:{body}));
+  for(let n=0;n<300&&(await call(mf,{op:'heldReads'})).held<1;n++)await new Promise(r=>setTimeout(r,10));
+  await new Promise(r=>setTimeout(r,300));assert.equal((await call(mf,{op:'heldReads'})).held,1,'exactly one readback is in flight; the others joined it');
+  await call(mf,{op:'releaseReads'});const outs=await Promise.all(pending);
+  const counts=await call(mf,{op:'read'});assert.equal(counts.decodes,1,`decodes after the burst: ${counts.decodes}`);assert.equal(counts.gets,1);
+  for(const o of outs)assert.deepEqual(o.result,first.result);
+ }
+});
+test('4408649050: a failed in-flight decode is non-final for every joined caller, and a later demand recovers it',async t=>{
+ const mf=await fixture(t),first=await call(mf);assert.equal(first.result.state,'ready');
+ await call(mf,{op:'dropDecode'});await call(mf,{op:'armFail'});
+ // Each request below constructs its own job instance (the DO handler pattern); all join the one in-flight decode.
+ const outs=await Promise.all([...Array(4)].map(()=>call(mf)));
+ for(const o of outs){assert.equal(o.result.state,'unavailable',JSON.stringify(o.result));assert.equal(o.result.reason,'retained-evidence-unavailable');assert.equal(o.result.final,false);}
+ assert.equal((await call(mf,{op:'counts'})).waiting,0);
+ const later=await call(mf);assert.equal(later.result.state,'ready');assert.deepEqual(later.result,first.result);assert.equal(later.gets,1);assert.equal(later.decodes,2,'one failed attempt, then one recovering decode');
+});
+test('the in-flight decode gate never crosses source identity or Durable Object: identical bytes from two sources each decode once',async t=>{
+ // One DO per source identity (the job marker binds it); two identities with identical bytes, in one isolate.
+ const mf=await fixture(t),a={url:'https://publisher.invalid/maps/a.png'},b={url:'https://publisher.invalid/maps/b.png'};
+ for(const [object,args] of [['one',a],['two',b]]){const r=await call(mf,args,object);assert.equal(r.result.state,'ready',JSON.stringify(r));}
+ for(const object of ['one','two']){await call(mf,{op:'dropDecode'},object);await call(mf,{op:'holdReads'},object);}
+ const pending=[call(mf,a,'one'),call(mf,{op:'read',...a},'one'),call(mf,b,'two'),call(mf,{op:'read',...b},'two')];
+ const held=async o=>(await call(mf,{op:'heldReads'},o)).held;
+ for(let n=0;n<300&&((await held('one'))<1||(await held('two'))<1);n++)await new Promise(r=>setTimeout(r,10));
+ await new Promise(r=>setTimeout(r,200));
+ assert.equal(await held('one'),1,'source a decodes once in its own DO');assert.equal(await held('two'),1,'source b decodes once in its own DO, never joining a');
+ for(const object of ['one','two'])await call(mf,{op:'releaseReads'},object);
+ const outs=await Promise.all(pending);for(const o of outs)assert.equal(o.result.state,'ready',JSON.stringify(o.result));
+ assert.notEqual(outs[0].result.sourceIdentitySha256,outs[2].result.sourceIdentitySha256);assert.equal(outs[0].result.original.sha256,outs[2].result.original.sha256);
+});
+test('4408860750: a kept JPEG row is held to the JPEG pixel cap (maxJpegPixels), not only the shared maxPixels',async t=>{
+ const mf=await fixture(t),src={fixture:'jpeg',mime:'image/jpeg',kind:'photo',url:'https://publisher.invalid/a1400/1000.jpg'},first=await call(mf,src);assert.equal(first.result.state,'ready');
+ assert.equal((await call(mf,{op:'corruptDecode',patch:{width:1500,height:1400}})).patched,1);
+ const out=await call(mf,{op:'read',...src});assert.notEqual(out.result.state,'ready',JSON.stringify(out.result));assert.equal(out.result.subReason,'visual-decode-record-corrupt');assert.equal(out.gets,1);
+});
+test('a Retry after a final visual-unsupported decode fetches 0 and decodes 0, and never overrides the verdict',async t=>{
+ const mf=await fixture(t),first=await call(mf,{fixture:'interlaced'});assert.equal(first.result.reason,'visual-unsupported');assert.equal(first.result.subReason,'decode-not-streamable');assert.equal(first.result.final,true);assert.equal(first.decodes,1);
+ const retried=await call(mf,{fixture:'interlaced',retry:true});assert.equal(retried.gets,1);assert.equal(retried.decodes,1);assert.deepEqual(retried.result,first.result);
 });
 for(const [name,args,reason] of [
  ['wrong MIME',{mime:'audio/mpeg'},'fresh-response-refused'],
@@ -75,7 +169,7 @@ for(const [name,args,reason] of [
 test('a failed fetch is interrupted, not a final verdict, and stores nothing',async t=>{const mf=await fixture(t),out=await call(mf,{fail:true});assert.equal(out.result.state,'unavailable');assert.equal(out.result.reason,'interrupted');assert.equal(out.result.final,false);assert.equal(out.result.custody,'none');assert.ok(!out.objects.some(k=>k.startsWith('originals/visual/sha256/')));});
 test('an ineligible demand writes nothing and does not poison the shared job for a later eligible demand',async t=>{
  const mf=await fixture(t),refused=await call(mf,{ineligible:true});assert.equal(refused.result.reason,'visual-ineligible');assert.equal(refused.result.final,false);assert.equal(refused.gets,0);assert.deepEqual(refused.objects,[]);assert.deepEqual(refused.rows,[]);
- const ok=await call(mf);assert.equal(ok.gets,1,JSON.stringify(ok));assert.equal(ok.result.custody,'retained');assert.equal(ok.result.reason,'decoder-unavailable');
+ const ok=await call(mf);assert.equal(ok.gets,1,JSON.stringify(ok));assert.equal(ok.result.custody,'retained');assert.equal(ok.result.state,'ready');assert.equal(ok.result.decode.width,2);
 });
 test('a known-bad observed hash is refused at head promotion as non-final visual-ineligible',async t=>{
  const mf=await fixture(t),out=await call(mf,{badHash:sha(PNG)});assert.equal(out.gets,1);assert.equal(out.result.state,'unavailable');assert.equal(out.result.reason,'visual-ineligible',JSON.stringify(out.result));assert.equal(out.result.final,false);assert.notEqual(out.result.custody,'retained');
@@ -151,4 +245,23 @@ test('a rejected eligibility promise is ineligible and never an unhandled reject
   const refused=await later.demand();assert.equal(refused.reason,'visual-ineligible');
   const r=await later.read();assert.equal(r.state,'unavailable');
   await new Promise(r=>setTimeout(r,20));assert.deepEqual(unhandled,[]);}finally{process.off('unhandledRejection',on);}
+});
+// 4415573927: an object killed after its fresh ticket is persisted, before the attempt settles, must not strand the source in
+// `preparing`. The restarted object reports the orphaned attempt as a truthful non-final interrupted and fetches nothing on its own;
+// only a deliberate Retry opens the next attempt, which fetches exactly once. A read never fetches.
+test('4415573927: a restart after a kill mid-fetch reports interrupted with 0 fetches; only a deliberate Retry fetches, exactly once',async t=>{
+ const directory=await mkdtemp(join(tmpdir(),'visual-original-restart-'));t.after(()=>rm(directory,{recursive:true,force:true}));
+ const start=()=>new Miniflare({...convertV4MiniflareOptions({name:'visual-original-fixture',modules:true,script:bundle.outputFiles[0].text,compatibilityDate:'2026-09-01',compatibilityFlags:['nodejs_compat'],durableObjects:{JOBS:{className:'Job',useSQLite:true}},r2Buckets:['ORIGINALS']}),resourcePersistencePath:directory});
+ let mf=start();const first=call(mf,{gate:true}).catch(()=>null);
+ for(let n=0;n<400&&(await call(mf,{op:'counts'})).waiting<1;n++)await new Promise(r=>setTimeout(r,5));
+ assert.equal((await call(mf,{op:'counts'})).gets,1,'the first attempt is mid-fetch');
+ await mf.dispose();await first;
+ mf=start();t.after(()=>mf.dispose());
+ const plain=await call(mf,{});
+ assert.equal(plain.result.state,'unavailable',JSON.stringify(plain));assert.equal(plain.result.reason,'interrupted');assert.equal(plain.result.subReason,'fresh-attempt-orphaned');assert.equal(plain.result.final,false);assert.equal(plain.gets,0,'a plain demand never refetches on its own');
+ const read=await call(mf,{op:'read'});assert.equal(read.gets,0,'a read never fetches');assert.notEqual(read.result.state,'ready');
+ assert.equal((await call(mf,{})).result.subReason,'fresh-attempt-orphaned','still interrupted, not preparing');
+ const retried=await call(mf,{retry:true});assert.equal(retried.gets,1,'the deliberate Retry fetches exactly once');assert.equal(retried.result.state,'ready',JSON.stringify(retried.result));assert.equal(retried.result.custody,'retained');
+ const after=await call(mf,{retry:true});assert.equal(after.gets,1,'a Retry after ready keeps the retained original');assert.equal(after.result.state,'ready');
+ const settled=await call(mf,{});assert.equal(settled.result.state,'ready');assert.equal(settled.gets,1);
 });
