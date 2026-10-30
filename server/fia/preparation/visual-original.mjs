@@ -51,7 +51,7 @@ const decode=Object.freeze({state:'unavailable',reason:'decoder-unavailable',dec
 // Read back the retained original and prove it: unchanged nonzero length and sha256, observed MIME agreeing with the raster signature,
 // and a full decode within the recipe. Pixels stay in this function; only dimensions and a pixel hash leave it.
 // Both readback awaits share one bound (the recipe's progressMs); expiry is a non-final interruption, never a hang.
-function bounded(promise,deadline){let timer;const expiry=new Promise((_,reject)=>{timer=setTimeout(()=>reject(new VisualDecodeRefusal('readback-deadline',{final:false})),Math.max(0,deadline-Date.now()));});return Promise.race([promise,expiry]).finally(()=>clearTimeout(timer));}
+export function bounded(promise,deadline){let timer;const expiry=new Promise((_,reject)=>{timer=setTimeout(()=>reject(new VisualDecodeRefusal('readback-deadline',{final:false})),Math.max(0,deadline-Date.now()));});return Promise.race([promise,expiry]).finally(()=>clearTimeout(timer));}
 async function readBack(bucket,original,readbackMs){
  if(!Number.isSafeInteger(original.bytes)||original.bytes<1||!/^[a-f0-9]{64}$/.test(original.sha256)||/^0{64}$/.test(original.sha256))throw Error('visual-retained-identity');
  const deadline=Date.now()+readbackMs;

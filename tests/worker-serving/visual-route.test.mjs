@@ -10,7 +10,7 @@ import {buildGeneralizedSnapshot} from '../../server/fia/publication/generalized
 import {exportGuideSources} from '../../server/fia/compiler/presentation/export-guide-sources.mjs';
 import {buildApprovedAudioProofIndex} from '../../scripts/approved-audio-proof-index.mjs';
 import {VISUAL_FIRST_PROOF,VISUAL_RETRY_MIN_MS,visualConsumerIdentity,createVisualsPort,serveOriginalVisual} from '../../server/fia/preparation/visual-publication.mjs';
-import {visualOriginalIdentity} from '../../server/fia/preparation/visual-original.mjs';
+import {visualOriginalIdentity,VISUAL_ORIGINAL_RECIPE} from '../../server/fia/preparation/visual-original.mjs';
 // The real packaged Worker (entry.mjs) with FiaPreparationJobs and FIA_ORIGINALS, end to end for English S02-U008:
 // an admitted visualDemand (Auggie's F5a) routes through the capabilities.visuals port into the per-source visual-original@1
 // object, which fetches once, decodes, and publishes for the exact execution revision; /v1/original-visuals serves the exact bytes.
@@ -24,7 +24,11 @@ const fixture=n=>readFileSync(resolve('tests/preparation-executor/fixtures/visua
 const ORIGINALS={a1400:REAL?readFileSync(join(REAL,'a1400.jpg')):fixture('baseline-37x23.jpg'),c4:REAL?readFileSync(join(REAL,'c4.png')):fixture('rgb-31x17.png')};
 const MIME={a1400:'image/jpeg',c4:'image/png'};
 const entry=`import worker,{FiaPreparationJobs as Jobs} from ${JSON.stringify(resolve('server/faces/worker/entry.mjs'))};
-export class FiaPreparationJobs extends Jobs{async fetch(request){const url=new URL(request.url);if(url.origin!=='https://route.test')return super.fetch(request);
+// Test-only R2 stall: counts get() and arrayBuffer() calls on retained visual originals only, and can make exactly the call after the first \`skip\` of one kind never settle.
+const R2={get:0,arrayBuffer:0,stall:null},never=()=>new Promise(()=>{}),stalls=kind=>R2.stall?.kind===kind&&R2[kind]===R2.stall.skip+1;
+const stallable=env=>({...env,FIA_ORIGINALS:new Proxy(env.FIA_ORIGINALS,{get(t,p){if(p==='get')return async(...a)=>{const visual=String(a[0]).startsWith('originals/visual/sha256/');if(!visual)return t.get(...a);R2.get++;if(stalls('get'))return never();const o=await t.get(...a);return o&&new Proxy(o,{get(ot,op){if(op==='arrayBuffer')return()=>{R2.arrayBuffer++;return stalls('arrayBuffer')?never():ot.arrayBuffer();};const v=ot[op];return typeof v==='function'?v.bind(ot):v;}});};const v=t[p];return typeof v==='function'?v.bind(t):v;}})});
+export class FiaPreparationJobs extends Jobs{constructor(ctx,env){super(ctx,stallable(env));}async fetch(request){const url=new URL(request.url);if(url.origin!=='https://route.test')return super.fetch(request);
+ if(url.pathname==='/r2'){const b=await request.json();if(b.reset){R2.get=0;R2.arrayBuffer=0;}R2.stall=b.stall??null;return Response.json({get:R2.get,arrayBuffer:R2.arrayBuffer});}
  if(url.pathname==='/dump')return Response.json(Object.fromEntries(await this.ctx.storage.list()));
  const {key,value}=await request.json();if(value===null)await this.ctx.storage.delete(key);else await this.ctx.storage.put(key,value);return Response.json(true);}}
 export default worker;`;
@@ -206,4 +210,26 @@ test('4426496415 guard: the public visual demand accepts only {assetId,kind} or 
  const {read,counts,demand}=await setup(t,{});
  for(const visualDemand of [{...demand.visualDemand,retry:false},{...demand.visualDemand,retry:'yes'},{...demand.visualDemand,retry:true,extra:1}]){const r=await prepare(read,{...demand,visualDemand});assert.equal(r.body.code,'invalid-request',JSON.stringify(visualDemand));}
  assert.equal(counts.publisher.a1400,0);
+});
+// 4426825345: the serving re-read of the retained original (one R2 get() and one arrayBuffer()) is bounded by the recipe's readback
+// policy (progressMs), the same bound the job's own readback uses. A stall in either await answers a typed non-final 503
+// interrupted / readback-deadline within the bound, never a hang (a HEAD refusal is typed by one more GET, so at most two bounds); the
+// stall is the request's last call of its kind.
+for(const kind of ['get','arrayBuffer'])test(`4426825345: a stalled serving ${kind}() answers a typed 503 interrupted within the readback bound, GET and HEAD`,async t=>{
+ const {mf,dir}=await runtime();t.after(async()=>{await mf.dispose();await rm(dir,{recursive:true,force:true});});
+ const read=http(mf),base=await read('/v1/packs/'+packId);assert.equal((await prepare(read,base.body.preparationDemand)).body.status,'ready');
+ const record=(await read('/v1/packs/'+packId+'?execution=2')).body,res=record.execution.visualResources.find(r=>r.assetId==='a1400');
+ assert.equal((await prepare(read,res.preparationDemand)).body.reason,'visual-publication-unavailable');
+ const entry=VISUAL_FIRST_PROOF.find(e=>e.assetId==='a1400'),bytes=ORIGINALS.a1400,src=(await visualOriginalIdentity(entry.source)).sourceIdentitySha256;
+ const {consumerSha256}=await visualConsumerIdentity({packId,baseRevision:entry.baseRevision,executionRevision:record.revision,assetId:'a1400',kind:entry.kind}),path=`/v1/original-visuals/${src}/${consumerSha256}/${sha(bytes)}`;
+ const {stub}=await door(mf,entry.source),r2=async body=>(await stub.fetch('https://route.test/r2',{method:'POST',body:JSON.stringify(body)})).json();
+ const bound=VISUAL_ORIGINAL_RECIPE.limits.progressMs,settles=(p,ms)=>Promise.race([p,new Promise((_,reject)=>setTimeout(()=>reject(Error('hung past the readback bound')),ms))]);
+ for(const method of ['GET','HEAD']){
+  await r2({reset:true});const ok=await mf.dispatchFetch(origin+path,{method});assert.equal(ok.status,200,method);await ok.arrayBuffer();const calls=await r2({});
+  await r2({reset:true,stall:{kind,skip:calls[kind]-1}});
+  const limit=(method==='HEAD'?2:1)*bound+10000,started=Date.now(),r=await settles(mf.dispatchFetch(origin+path,{method}),limit),body=method==='GET'?await r.json():(await r.arrayBuffer(),null);
+  assert.equal(r.status,503,`${method} ${kind}`);if(body){assert.equal(body.reason,'interrupted');assert.equal(body.subReason,'readback-deadline');}assert.ok(Date.now()-started<limit);
+  await r2({reset:true});
+ }
+ const after=await read(path);assert.equal(after.status,200);assert.equal(sha(after.body),sha(bytes));
 });

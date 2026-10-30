@@ -1,6 +1,6 @@
 import {canonicalJSONString,sha256} from './contract.mjs';
 import {createHash} from 'node:crypto';
-import {createVisualOriginalJob,visualOriginalIdentity,VISUAL_ORIGINAL_RECIPE_SHA256} from './visual-original.mjs';
+import {createVisualOriginalJob,visualOriginalIdentity,bounded,VISUAL_ORIGINAL_RECIPE,VISUAL_ORIGINAL_RECIPE_SHA256} from './visual-original.mjs';
 // Routing of visual-original@1 inside FiaPreparationJobs, and the publication/read seam (PLAN §7 F7a3/F7b, server side).
 // First proof only (PLAN §8a item 2): English eng.MRK-1-14-20 S02-U008, a1400 then c4. Sources come only from this
 // registry, keyed by the verified base asset; nothing reaches a job from a caller URL. The URL equals the pinned base pack's
@@ -100,9 +100,13 @@ async function serve(ctx,env,entry,job,args,request){
  const inm=request.headers.get('if-none-match');
  if(inm&&(inm.trim()==='*'||inm.split(',').some(t=>t.trim().replace(/^W\//,'')===etag)))return new Response(null,{status:304,headers});
  // Serving re-reads and re-hashes the exact retained bytes on every request; a mismatch is a typed refusal, never served.
- const object=await env.FIA_ORIGINALS.get(row.original.sourceKey);
- if(!object||object.size!==row.original.bytes)return refusal(409,'visual-original-integrity');
- const bytes=new Uint8Array(await object.arrayBuffer());
+ // Both awaits share the job readback's bound (the recipe's progressMs, 4408596878): a stall is a typed non-final interruption.
+ const deadline=Date.now()+VISUAL_ORIGINAL_RECIPE.limits.progressMs;let bytes;
+ try{
+  const object=await bounded(env.FIA_ORIGINALS.get(row.original.sourceKey),deadline);
+  if(!object||object.size!==row.original.bytes)return refusal(409,'visual-original-integrity');
+  bytes=new Uint8Array(await bounded(object.arrayBuffer(),deadline));
+ }catch(error){if(error?.subReason==='readback-deadline')return refusal(503,'interrupted',{subReason:'readback-deadline',final:false});throw error;}
  if(bytes.length!==row.original.bytes||createHash('sha256').update(bytes).digest('hex')!==row.original.sha256)return refusal(409,'visual-original-integrity');
  return new Response(request.method==='HEAD'?null:bytes,{status:200,headers:{...headers,'content-length':String(bytes.length)}});
 }
