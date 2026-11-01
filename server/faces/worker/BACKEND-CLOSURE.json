@@ -109,14 +109,20 @@
     },
     {
       "path": "server/fia/preparation/original.mjs",
-      "sha256": "5e905b0a78036ba7545daffdaa868c0387e06367c1d60f90db7df541cb9d66e5",
-      "bytes": 3185,
+      "sha256": "34bc1f5b2914479f001e2130f09925e5d7c290befe299cd66d82f19945dc5700",
+      "bytes": 3236,
       "role": "preparation-worker-runtime"
     },
     {
       "path": "server/fia/preparation/source-store.mjs",
-      "sha256": "5a5cce16d439e48d83b691c8ee7fc36710d413047e138416ae8170e8f44540f2",
-      "bytes": 3396,
+      "sha256": "2f2fdd7de291f695d0f7d646a56421262d28b70f3c7607a3cc57f2885697aa05",
+      "bytes": 3440,
+      "role": "preparation-worker-runtime"
+    },
+    {
+      "path": "server/fia/preparation/source-limit.mjs",
+      "sha256": "a3bc6f5579c9a1a8016a5db6bbbabdfc91b179f14c8121bba61f83333a81ab97",
+      "bytes": 976,
       "role": "preparation-worker-runtime"
     },
     {
@@ -206,8 +212,8 @@
     {
       "path": "server/fia/preparation/guide-dispatch.mjs",
       "role": "preparation-worker-runtime",
-      "sha256": "36df849dcf8ed576c519e3d87ea77ddd53ee4d57de555e6303ba33e905bca74c",
-      "bytes": 51981
+      "sha256": "dafbced38ac4a1f67a22d5fb40b223f5d28fe06f6861568718b687c55c123389",
+      "bytes": 52073
     },
     {
       "path": "server/fia/preparation/guide-sources.json",

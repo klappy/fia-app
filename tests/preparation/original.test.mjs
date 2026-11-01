@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {sha256} from '../../server/fia/preparation/contract.mjs';
 import {acquireOriginal,storeOriginal,readOriginal,originalResponse} from '../../server/fia/preparation/original.mjs';
+import {LAZY_ORIGINAL_MAX_BYTES} from '../../server/fia/preparation/source-limit.mjs';
 async function fixture(size=150000){const bytes=Uint8Array.from({length:size},(_,i)=>i%251);return {bytes,source:{url:'https://publisher.example/literal/p2.mp3',sha256:await sha256(bytes),bytes:size,duration:58.2}};}
 function storage(failAt=Infinity){
  const values=new Map();let puts=0;
@@ -15,7 +16,7 @@ test('literal source acquisition uses manual redirects and bounded abort signal 
 test('acquisition refuses redirects status MIME identity length and oversized bodies',async()=>{
  const {source,bytes}=await fixture(20);
  for(const response of [new Response(null,{status:302,headers:{Location:'https://other.example'}}),new Response(bytes,{status:206,headers:{'Content-Type':'audio/mpeg'}}),new Response(bytes,{headers:{'Content-Type':'text/html'}}),new Response(bytes.slice(1),{headers:{'Content-Type':'audio/mpeg'}}),new Response(new Uint8Array(21),{headers:{'Content-Type':'audio/mpeg'}}),new Response(new Uint8Array(20),{headers:{'Content-Type':'audio/mpeg'}})])await assert.rejects(acquireOriginal(source,async()=>response));
- let fetched=false;await assert.rejects(acquireOriginal({...source,bytes:2*1024*1024+1},async()=>{fetched=true;}),/source-limit/);assert.equal(fetched,false);
+ let fetched=false;await assert.rejects(acquireOriginal({...source,bytes:LAZY_ORIGINAL_MAX_BYTES+1},async()=>{fetched=true;}),/source-limit/);assert.equal(fetched,false);
  const failedBody=new ReadableStream({start(controller){controller.error(Error('body-aborted'));}});await assert.rejects(acquireOriginal(source,async()=>new Response(failedBody,{headers:{'Content-Type':'audio/mpeg'}})),/body-aborted/);
 });
 test('atomic 64KiB chunks round trip and simulated midtransaction rollback exposes nothing',async()=>{
@@ -38,4 +39,13 @@ test('unsatisfiable and multi ranges fail; If-Range mismatch serves complete rep
  for(const range of ['bytes=20-','bytes=8-4','bytes=-0','bytes=0-1,4-5','bytes=-','items=0-1']){const response=originalResponse(new Request('https://app.example/audio',{headers:{Range:range}}),source,bytes);assert.equal(response.status,416,range);assert.equal(response.headers.get('Content-Range'),'bytes */20');assert.equal((await response.arrayBuffer()).byteLength,0);}
  for(const [ifRange,status,length] of [[`"${source.sha256}"`,206,2],['"different"',200,20],['Mon, 05 Oct 2026 00:00:00 GMT',200,20]]){const response=originalResponse(new Request('https://app.example/audio',{headers:{Range:'bytes=0-1','If-Range':ifRange}}),source,bytes);assert.equal(response.status,status);assert.equal(response.headers.get('Content-Length'),String(length));assert.equal((await response.arrayBuffer()).byteLength,length);}
  assert.equal(originalResponse(new Request('https://app.example/audio',{method:'POST'}),source,bytes).status,405);
+});
+test('lazy source ceiling is one reasoned 8 MiB bound: at-ceiling and S05-size accepted, ceiling+1 refused before fetch',async()=>{
+ assert.equal(LAZY_ORIGINAL_MAX_BYTES,8388608);
+ // 7,241,950 B is the measured S05 publisher recording, the largest Mark 1:14-20 guide source.
+ for(const size of [LAZY_ORIGINAL_MAX_BYTES,7241950]){const {source,bytes}=await fixture(size);const actual=await acquireOriginal(source,async()=>new Response(bytes,{headers:{'Content-Type':'audio/mpeg'}}));assert.equal(actual.byteLength,size);}
+ const {source,bytes}=await fixture(LAZY_ORIGINAL_MAX_BYTES);let fetched=false;
+ await assert.rejects(acquireOriginal({...source,bytes:LAZY_ORIGINAL_MAX_BYTES+1},async()=>{fetched=true;}),/source-limit/);assert.equal(fetched,false);
+ // A pinned at-ceiling source whose body overruns the pin still fails closed at the bounded read.
+ const over=new Uint8Array(LAZY_ORIGINAL_MAX_BYTES+1);over.set(bytes);await assert.rejects(acquireOriginal(source,async()=>new Response(over,{headers:{'Content-Type':'audio/mpeg'}})),/body-too-large/);
 });
