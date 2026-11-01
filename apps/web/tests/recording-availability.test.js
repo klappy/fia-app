@@ -26,7 +26,7 @@ test('unaccepted, ineligible, alternate quality and wrong edition do not adverti
 
 test('copied selection and malformed identities cannot reuse another acceptance',()=>{
  for(const mutate of [row=>row.selection.presentationRevision='f'.repeat(64),row=>row.identity.language='spa',row=>row.accepted.expected.identity.packId='eng.MRK-2-1-12',row=>{row.selection.language=row.identity.language=row.accepted.expected.identity.language='spa';},row=>{row.selection.presentationRevision=row.identity.presentationRevision=row.accepted.expected.identity.presentationRevision='not-a-hash';}]){
-  const modified=structuredClone(catalog);modified.entries.forEach(mutate);assert.deepEqual(projectPreparationAvailability(modified),[]);
+  const modified=structuredClone(catalog);modified.entries.filter(row=>row.accepted).forEach(mutate);assert.deepEqual(projectPreparationAvailability(modified),[]);
  }
 });
 
