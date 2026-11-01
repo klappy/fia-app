@@ -27,7 +27,7 @@ status URL; browser cancellation does not cancel or recreate the durable job.
 Result completion is not permission to autoplay.
 
 An alarm fetches only the admitted source URL, forbids redirects, bounds the
-request/body to30seconds and the lesser of exact source length or the shared 8 MiB lazy-source ceiling (`source-limit.mjs`), and checks
+request/body to30seconds and the lesser of exact source length or2MiB, and checks
 MIME, bytes and SHA256. Create-only conditional R2 writes store immutable original bytes and a source URL/version provenance reference. Full readback precedes the durable job verification marker. Failure stays blocked; an interrupted persisted attempt is
 uncertain and is not automatically retried. All status claims of verified source
 and audio responses revalidate the full stored bytes. Warm requests do not fetch
@@ -103,6 +103,6 @@ local workerd tests do not establish hosted completion.
 
 The user explicitly authorized deterministic R2 original-source persistence. Demand fills a missing `originals/sha256/<hash>.mp3`; it never speculatively fills the corpus. Immutable source URL/version-to-content references live under `originals/refs/`. Concurrent writers use create-only conditions and verify the winner. Corrupt or conflicting bytes are refused, never overwritten or silently reacquired. A completed R2 write can be reconciled after a coordinator restart without fetching the publisher again.
 
-Freshness checks are a separate future operation: a newly observed source revision creates new immutable content and references; it does not overwrite accepted audio. Current catalog eligibility must permit every request; revoked or known-bad sources are excluded even if bytes remain stored. Derived media require separate namespace and policy. The current known-hash 8 MiB input cap (`source-limit.mjs`, sized to the measured Mark 1:14-20 guide sources) is a bounded slice, not a claim that all future source sizes or first-observation discovery are implemented.
+Freshness checks are a separate future operation: a newly observed source revision creates new immutable content and references; it does not overwrite accepted audio. Current catalog eligibility must permit every request; revoked or known-bad sources are excluded even if bytes remain stored. Derived media require separate namespace and policy. The current known-hash2MiB input cap is a bounded p2 slice, not a claim that all future source sizes or first-observation discovery are implemented.
 
 Checkpoint `dc50c7553c180c0d7a2e46570a90455ea650414d` tested DO chunk storage; that storage implementation is superseded by R2 and retained only as historical proof.
