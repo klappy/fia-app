@@ -1,7 +1,8 @@
 import {sha256} from './contract.mjs';
 import {readBounded,json} from './service.mjs';
+import {LAZY_ORIGINAL_MAX_BYTES as maxBytes} from './source-limit.mjs';
 
-const chunkSize=65536,maxBytes=2*1024*1024;
+const chunkSize=65536;
 export async function acquireOriginal(source,fetchSource=fetch){
   if(!Number.isSafeInteger(source.bytes)||source.bytes<1||source.bytes>maxBytes)throw Error('source-limit');
   const response=await fetchSource(source.url,{redirect:'manual',signal:AbortSignal.timeout(30000)});

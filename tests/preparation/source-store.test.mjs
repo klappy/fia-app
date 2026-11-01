@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {sha256} from '../../server/fia/preparation/contract.mjs';
 import {readSource,storeSource,sourceKey} from '../../server/fia/preparation/source-store.mjs';
+import {LAZY_ORIGINAL_MAX_BYTES} from '../../server/fia/preparation/source-limit.mjs';
 async function fixture(){const bytes=new TextEncoder().encode('retained original fixture');return {bytes,source:{url:'https://publisher.example/p2.mp3',sha256:await sha256(bytes),bytes:bytes.length,duration:2}};}
 function bucket(){const data=new Map(),writes=[];return {data,writes,race:null,async get(key){const value=data.get(key);return value===undefined?null:{body:new Response(value.slice()).body};},async put(key,bytes,options){assert.deepEqual(options.onlyIf,{etagDoesNotMatch:'*'});writes.push(key);if(this.race){const race=this.race;this.race=null;race(key,data);}if(data.has(key))return null;data.set(key,bytes.slice());return {key};}};}
 test('missing source is null; immutable source and provenance warm reuse need no upstream',async()=>{
@@ -19,7 +20,7 @@ test('corrupt retained source or provenance refuses without overwrite',async()=>
  const good=bucket(),receipt=await storeSource(good,source,bytes,'v2');good.data.set(receipt.referenceKey,new TextEncoder().encode('{}'));const count=good.writes.length;await assert.rejects(storeSource(good,source,bytes,'v2'),/conflict/);assert.equal(good.writes.length,count);
 });
 test('source pin, input bytes and bounded R2 bodies fail closed',async()=>{
- const {source,bytes}=await fixture();for(const changed of [{...source,bytes:2097153},{...source,sha256:'bad'},{...source,url:'http://publisher.example'}])assert.throws(()=>sourceKey(changed));
+ const {source,bytes}=await fixture();for(const changed of [{...source,bytes:LAZY_ORIGINAL_MAX_BYTES+1},{...source,sha256:'bad'},{...source,url:'http://publisher.example'}])assert.throws(()=>sourceKey(changed));
  const r2=bucket();await assert.rejects(storeSource(r2,source,bytes.slice(1),'v2'),/corrupt/);assert.equal(r2.writes.length,0);
  r2.data.set(sourceKey(source),new Uint8Array(source.bytes+1));await assert.rejects(readSource(r2,source),/too-large/);assert.equal(r2.writes.length,0);
 });
@@ -29,4 +30,9 @@ test('distinct URL/version references preserve immutable history',async()=>{
 test('conflicting reference appearing during conditional write is never replaced',async()=>{
  const {source,bytes}=await fixture(),r2=bucket();r2.data.set(sourceKey(source),bytes.slice());r2.race=(key,data)=>data.set(key,new TextEncoder().encode('{}'));
  await assert.rejects(storeSource(r2,source,bytes,'v2'),/reference-conflict/);assert.equal(r2.writes.length,1);assert.equal(new TextDecoder().decode(r2.data.get(r2.writes[0])),'{}');
+});
+test('source pin admits at-ceiling and S05-size originals and refuses ceiling+1 without a write',async()=>{
+ for(const size of [LAZY_ORIGINAL_MAX_BYTES,7241950]){const bytes=Uint8Array.from({length:size},(_,i)=>i%251),source={url:'https://publisher.example/p2.mp3',sha256:await sha256(bytes),bytes:size,duration:2},r2=bucket();
+  await storeSource(r2,source,bytes,'v2');assert.deepEqual(await readSource(r2,source),bytes);
+  const over=bucket();await assert.rejects(storeSource(over,{...source,bytes:LAZY_ORIGINAL_MAX_BYTES+1},bytes,'v2'),/invalid-source-pin/);assert.equal(over.writes.length,0);assert.throws(()=>sourceKey({...source,bytes:LAZY_ORIGINAL_MAX_BYTES+1}),/invalid-source-pin/);}
 });

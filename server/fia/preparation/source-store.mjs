@@ -1,6 +1,6 @@
 import {canonicalJSONString,sha256} from './contract.mjs';
 import {readBounded} from './service.mjs';
-const maxBytes=2*1024*1024;
+import {LAZY_ORIGINAL_MAX_BYTES as maxBytes} from './source-limit.mjs';
 function validate(source){
  if(!source||!Number.isSafeInteger(source.bytes)||source.bytes<1||source.bytes>maxBytes||!/^[a-f0-9]{64}$/.test(source.sha256))throw Error('invalid-source-pin');
  const url=new URL(source.url);if(url.protocol!=='https:'||url.username||url.password||url.hash)throw Error('invalid-source-url');
