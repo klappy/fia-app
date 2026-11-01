@@ -15,7 +15,7 @@ const worker=fileURLToPath(new URL('../../server/fia/preparation/worker.mjs',imp
 const template=JSON.parse(await readFile(new URL('../../server/fia/preparation/catalog.json',import.meta.url),'utf8'));
 const origin='https://dev.fiaguide.app',hash=b=>createHash('sha256').update(b).digest('hex');
 const sourceBytes=Buffer.alloc(70003,42); // Bounded synthetic original, not actual publisher media.
-const fixture=()=>{const c=structuredClone(template),r=c.entries[0];r.source={url:'https://source.fixture.invalid/original.mp3',sha256:hash(sourceBytes),bytes:sourceBytes.length,duration:58.2936875};r.accepted=null;r.blockedReason="recording-timing-review-required";return c;};
+const fixture=()=>{const c=structuredClone(template);c.entries=c.entries.filter(row=>row.selection.resource==='guide:S01');const r=c.entries[0];r.source={url:'https://source.fixture.invalid/original.mp3',sha256:hash(sourceBytes),bytes:sourceBytes.length,duration:58.2936875};r.accepted=null;r.blockedReason="recording-timing-review-required";return c;};
 const requestFor=(row,n=0)=>Object.fromEntries([...['packId','presentationRevision','language','edition','quality'].map(k=>[k,row.selection[k]]),...Object.entries(row.activities[n])]);
 // Drain native response bodies before returning, including status-only callers.
 // A detached byte snapshot keeps assertions convenient without retaining streams.

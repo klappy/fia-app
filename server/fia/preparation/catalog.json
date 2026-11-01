@@ -148,6 +148,73 @@
       },
       "blockedReason": null,
       "eligibility": "eligible"
+    },
+    {
+      "selection": {
+        "packId": "eng.MRK-1-14-20",
+        "presentationRevision": "92ad518474f159f6567124052ae12d180a482c949509da0b725593442e62f746",
+        "language": "eng",
+        "edition": "fia-guide",
+        "resource": "guide:S06",
+        "quality": "original"
+      },
+      "identity": {
+        "packId": "eng.MRK-1-14-20",
+        "language": "eng",
+        "edition": "fia-guide",
+        "presentationRevision": "92ad518474f159f6567124052ae12d180a482c949509da0b725593442e62f746",
+        "sourceVersion": "publisher-p2-s6-v2",
+        "recipeRevision": "fia-lazy-original-audio@1",
+        "configSha256": "f1e2b4cafb7cfad08255966f593003ed94a088ffeb9a07b11c92afb8d8d010fb"
+      },
+      "scriptSha256": "8b4323785bed653f6448fa70eee9b5f830d885eee3b89df2b08f6e095cf0e2d3",
+      "unitsSha256": "f377bb64249c457bbdfa8709de7981a287ebf614d3d5c6ae3d4fd1be752d1e0a",
+      "source": {
+        "url": "https://s3.amazonaws.com/cbbt-er.public/pericopes/eng/mrk/p2/s6/v2/vbr0.mp3",
+        "sha256": "8b92f9a6114f6d483e572ff0739877d2c35591d4c43db15b333e7d6671f7699e",
+        "bytes": 1835228,
+        "duration": 96.300375
+      },
+      "activities": [
+        {
+          "activityId": "S06-U001",
+          "sourceUnitId": "S06-U001",
+          "sourceTextSha256": "93b85bf4b7d209191fc1b2aab81af11a43aa2d1770cbfefc6d31a4ea7af57c75"
+        },
+        {
+          "activityId": "S06-U002",
+          "sourceUnitId": "S06-U002",
+          "sourceTextSha256": "f9a68c85da6011813d00235ff269684f4e41b2858ca7c885c662647027a65ac7"
+        },
+        {
+          "activityId": "S06-U003",
+          "sourceUnitId": "S06-U003",
+          "sourceTextSha256": "118886b21590b72ad3c4b0741e745d23b3f371b2a70dc461fd00ca4426f83cf5"
+        },
+        {
+          "activityId": "S06-U004",
+          "sourceUnitId": "S06-U004",
+          "sourceTextSha256": "d86c8a7e75acec750fa3d48526a71be0486d7b95e838cb659f72372675ce0e46"
+        },
+        {
+          "activityId": "S06-U005",
+          "sourceUnitId": "S06-U005",
+          "sourceTextSha256": "22a82e67bada2e55b1ccabb5c574d14ab752beca3078a3ae07fed6dfad5a4820"
+        },
+        {
+          "activityId": "S06-U006",
+          "sourceUnitId": "S06-U006",
+          "sourceTextSha256": "891534f0649e7630d0f0b3dd39a8b2894e3bf46f492fcd54dddc4d64277c8ae4"
+        },
+        {
+          "activityId": "S06-U007",
+          "sourceUnitId": "S06-U007",
+          "sourceTextSha256": "6c59b2b3205c917abe927dc91e5d1b0f96fc2ba542434a0400fbe757bb8c7236"
+        }
+      ],
+      "accepted": null,
+      "blockedReason": "recording-timing-review-required",
+      "eligibility": "eligible"
     }
   ]
 }
