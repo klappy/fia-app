@@ -319,6 +319,7 @@ button:enabled:active { translate: 0 0; scale: var(--press-scale); opacity: .86;
    at the media's aspect, and the glass scene ground shows around it — never a full-height flat panel. */
 .resource-visual.visual-unavailable>.unavailable-words{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;width:100%;max-width:740px;margin:0 auto}
 .resource-visual.visual-unavailable>.unavailable-words .scripture-scroll{flex:1;min-height:0}
+.resource-visual.visual-unavailable>.unavailable-words .scripture-scroll:focus-visible{outline:2px solid var(--focus-ring);outline-offset:-2px;border-radius:var(--r-md)}
 .resource-visual.visual-unavailable>.media-error.media-status{position:relative;inset:auto;flex:none;align-self:center;width:calc(100% - 64px);max-width:676px;aspect-ratio:var(--media-aspect,4 / 3);max-height:min(32dvh,300px);margin:16px auto 8px;padding:20px;border-radius:var(--r-md);background:var(--material-floating);color:var(--ink-700)}
 .resource-visual.visual-unavailable>.media-error.media-status p{margin:0}
 @media(max-width:700px){.resource-visual.visual-unavailable>.media-error.media-status{width:calc(100% - 52px)}}

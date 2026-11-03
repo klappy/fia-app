@@ -904,6 +904,16 @@ it('an unavailable focal picture keeps the step words on the stage with one prim
  await fireEvent.click(screen.getByRole('button',{name:'Previous activity'}));await settle();expect(document.querySelector('.unavailable-words')?.textContent||'').not.toBe(first);
  await fireEvent.click(screen.getByRole('button',{name:'Skip to next activity'}));await settle();expect(words()).toBe(first);
 });
+function statusLog(){const log=[];const read=()=>{const t=[...document.querySelectorAll('[role=status]')].map(n=>n.textContent).join('|');if(log.at(-1)!==t)log.push(t);};const o=new MutationObserver(read);o.observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true});return {log,stop(){read();o.disconnect();}};}
+it('restoring onto a saved picture never announces it unavailable while the device check runs (Codex P2 #321)',async()=>{
+ const watch=statusLog();await startAt('S02-U005');watch.stop();
+ expect(watch.log.filter(t=>/unavailable here/.test(t))).toEqual([]);expect(document.querySelector('.visual-viewport img')).toBeTruthy();
+});
+it('a truly unavailable picture is announced exactly once, after the check settles (Codex P2 #321)',async()=>{
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:null,files:[]});
+ const watch=statusLog();await startAt('S02-U005');await settle();watch.stop();
+ expect(watch.log.filter(t=>/unavailable here/.test(t))).toHaveLength(1);expect(screen.getByRole('status').textContent).toBe('This image is unavailable here. You can continue without it.');
+});
 it('a text-only guide step renders no unavailable-visual region',async()=>{
  const text=activities.find(a=>a.kind==='guide'&&!a.assetId);await startAt(text.id);expect(document.querySelector('.unavailable-words')).toBeNull();expect(document.querySelector('.media-status')).toBeNull();
 });

@@ -49,3 +49,19 @@ it('captions show user-facing collection names in the existing format',()=>{
   expect(screen.getByText(credit)).toBeTruthy();expect(screen.queryByText(/FIAImages|FIAMaps|license/)).toBeNull();unmount();
  }
 });
+// Codex P2 on #321 at 6a61a87: the step words are a keyboard-reachable scroll region (narration tracking does not apply in
+// this state: guide units carry no alignment data and the S02-U008 narration is blocked), and the live status region never
+// announces "unavailable" while the device check is still running.
+it('the step words are a focusable, labelled scroll region',()=>{
+ const {container}=render(MediaStage,{asset:a1400,guide:guideFor('S02-U008'),playback:{src:null,elapsed:0,playing:false}});
+ const region=screen.getByRole('region',{name:'Step text'});expect(region.getAttribute('tabindex')).toBe('0');expect(region.classList.contains('scripture-scroll')).toBe(true);
+ expect(region.textContent).toContain(prompt);expect(container.querySelectorAll('.unavailable-words p')).toHaveLength(1);
+});
+it('while the device check runs the status region is silent, then announces the settled state once',async()=>{
+ const {rerender}=render(MediaStage,{asset:a1400,guide:guideFor('S02-U008'),checking:true,playback:{src:null,elapsed:0,playing:false}});
+ const status=screen.getByRole('status');expect(status.textContent).toBe('Checking availability…');
+ expect(status.querySelector('[aria-hidden="true"]').textContent).toBe('Checking availability…');expect(screen.queryByText(/is unavailable here/)).toBeNull();
+ expect(screen.getByRole('region',{name:'Step text'}).textContent).toContain(prompt);
+ await rerender({asset:a1400,guide:guideFor('S02-U008'),checking:false,playback:{src:null,elapsed:0,playing:false}});
+ expect(screen.getByRole('status').textContent).toBe('This image is unavailable here. You can continue without it.');expect(screen.getByRole('status').querySelector('[aria-hidden="true"]')).toBeNull();
+});
