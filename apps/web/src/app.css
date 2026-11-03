@@ -313,3 +313,13 @@ button:enabled:active { translate: 0 0; scale: var(--press-scale); opacity: .86;
 .library-panel .fine-print,.settings-panel .fine-print{font-size:.8125rem}.library-panel .secondary,.library-panel .quiet,.settings-panel .select-row,.settings-panel .select-row select,.settings-panel .preference strong{font-size:.9375rem}.settings-panel .preference small{font-size:.875rem}.settings-panel h3{font-size:1.125rem;margin:28px 0 2px}.settings-panel .select-row{flex-wrap:wrap}.settings-panel .select-row select{max-width:100%}.sheet-back{justify-content:flex-start;min-height:44px;font-size:.875rem;margin-bottom:10px}.scene-menu button{min-height:52px;font-size:1rem}
 /* Discussion stop (cookbook overview-sheet.md § clarity; mock 28 --stop): AA on the sheet, 5.9:1 on #fff light, 7.1:1 on dark --paper-000. */
 :root:not([data-theme=dark]){--fia-stop:#8a5a00}
+
+/* Unavailable picture/map stage (design-lens HOLD R6/R8 on PR318; design book: media-viewer § Step stage with no visual).
+   The step's own words stay in the content band, the not-available note is a bounded status region in the media slot
+   at the media's aspect, and the glass scene ground shows around it — never a full-height flat panel. */
+.resource-visual.visual-unavailable>.unavailable-words{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;width:100%;max-width:740px;margin:0 auto}
+.resource-visual.visual-unavailable>.unavailable-words .scripture-scroll{flex:1;min-height:0}
+.resource-visual.visual-unavailable>.media-error.media-status{position:relative;inset:auto;flex:none;align-self:center;width:calc(100% - 64px);max-width:676px;aspect-ratio:var(--media-aspect,4 / 3);max-height:min(32dvh,300px);margin:16px auto 8px;padding:20px;border-radius:var(--r-md);background:var(--material-floating);color:var(--ink-700)}
+.resource-visual.visual-unavailable>.media-error.media-status p{margin:0}
+@media(max-width:700px){.resource-visual.visual-unavailable>.media-error.media-status{width:calc(100% - 52px)}}
+.scene.immersive .resource-visual.visual-unavailable>.unavailable-words{padding-top:var(--chrome-top)}
