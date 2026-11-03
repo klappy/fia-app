@@ -890,10 +890,22 @@ it('explicit visual Cancel survives preference changes and offline/reconnect unt
  resolve({bytes:new Uint8Array([2]).buffer,mime:'image/webp'});await settle();expect(request).toHaveBeenCalledTimes(1);expect(document.querySelector('.visual-viewport img')).toBeNull();await fireEvent.click(screen.getByRole('button',{name:'Try again',exact:true}));await settle();expect(request).toHaveBeenCalledTimes(2);expect(document.querySelector('.visual-viewport img')).toBeTruthy();
 });
 it('offline saved focal image remains available without requesting media',async()=>{
- vi.spyOn(navigator,'onLine','get').mockReturnValue(false);const target=activities.find(a=>a.id==='S02-U005'),request=vi.spyOn(libraryAdapter,'playMedia');await startAt(target.id);expect(document.querySelector('.visual-viewport img')).toBeTruthy();expect(request).not.toHaveBeenCalled();
+ vi.spyOn(navigator,'onLine','get').mockReturnValue(false);const target=activities.find(a=>a.id==='S02-U005'),request=vi.spyOn(libraryAdapter,'playMedia');await startAt(target.id);expect(document.querySelector('.visual-viewport img')).toBeTruthy();expect(request).not.toHaveBeenCalled();expect(document.querySelector('.unavailable-words')).toBeNull();expect(document.querySelector('.media-status')).toBeNull();
 });
 it('online unprepared visual does not falsely promise a download can prepare it',async()=>{
- vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:null,files:[]});await startAt('S02-U005');expect(screen.getByText(/not available online yet/)).toBeTruthy();expect(screen.queryByRole('button',{name:'Open Downloads',exact:true})).toBeNull();
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:null,files:[]});await startAt('S02-U005');expect(screen.getByText(/is unavailable here\. You can continue without it\./)).toBeTruthy();expect(screen.queryByRole('button',{name:'Open Downloads',exact:true})).toBeNull();
+});
+it('an unavailable focal picture keeps the step words on the stage with one primary, and Back/return keep them (PR318 HOLD R6/R8)',async()=>{
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:null,files:[]});await startAt('S02-U005');
+ const words=()=>document.querySelector('.unavailable-words')?.textContent||'';expect(words().trim().length).toBeGreaterThan(0);
+ expect(screen.getByRole('status').textContent).toMatch(/is unavailable here\. You can continue without it\./);expect(document.body.textContent).not.toMatch(/online yet|continue with the passage text/);
+ expect(document.querySelectorAll('.guide-primary')).toHaveLength(1);const first=words();
+ expect(document.querySelectorAll('.unavailable-words')).toHaveLength(1);
+ await fireEvent.click(screen.getByRole('button',{name:'Previous activity'}));await settle();expect(document.querySelector('.unavailable-words')?.textContent||'').not.toBe(first);
+ await fireEvent.click(screen.getByRole('button',{name:'Skip to next activity'}));await settle();expect(words()).toBe(first);
+});
+it('a text-only guide step renders no unavailable-visual region',async()=>{
+ const text=activities.find(a=>a.kind==='guide'&&!a.assetId);await startAt(text.id);expect(document.querySelector('.unavailable-words')).toBeNull();expect(document.querySelector('.media-status')).toBeNull();
 });
 // S3 phase 1 (H1): the page's request comes from its last media snapshot; the service worker re-chooses on every play.
 it('C1: video plays the service worker choice when a sized download committed after the snapshot, and refreshes the snapshot',async()=>{
