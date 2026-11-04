@@ -66,3 +66,41 @@ test('canaries: every other refusal or integrity failure still retires the saved
   w.reply(`/v1/packs/${packId}`,response);assert.equal((await w.fetch(`/v1/packs/${packId}${query}`)).status,status);
   w.offline(true);assert.equal((await w.fetch(`/v1/packs/${packId}`)).status,503,`${query||'plain'} ${status} retires the snapshot`);}
 });
+// Owner ruling 2026-11-04 (cookbook 75c725c): Save fetches artifacts with bounded concurrency.
+// Workers record failures and every in-flight artifact settles before the result is decided.
+const concurrentSave=async(old,next,{first,second})=>{
+ const w=worker(old),tick=()=>new Promise(r=>setTimeout(r,2)),paths=[`/v1/artifacts/${next.record.revision}`,`/v1/artifacts/${next.dependency.sha256}`];
+ assert.equal((await save(w,old)).ok,true);w.setFixture(next);
+ const gates=paths.map(()=>{let release;const promise=new Promise(r=>release=r);return {promise,release};});
+ w.reply(paths[0],async()=>{await gates[0].promise;return first();});w.reply(paths[1],async()=>{await gates[1].promise;return second();});
+ let settled=false;const result=save(w,next).then(r=>{settled=true;return r;});
+ const deadline=Date.now()+5000;while(!paths.every(p=>w.calls.includes(p))){if(Date.now()>deadline)throw Error('Both artifact fetches were not in flight together');await tick();}
+ return {w,paths,gates,result,isSettled:()=>settled,tick,entries:()=>[...w.stores.values()].reduce((n,s)=>n+s.size,0)};
+};
+test('a transient artifact failure cannot hide a concurrent integrity failure: Save fails and the old snapshot is invalidated',async()=>{
+ const old=fixture(),next=fixture('next');
+ const h=await concurrentSave(old,next,{first:()=>{throw new TypeError('offline');},second:()=>Response.json({schema:'wrong'})});
+ h.gates[0].release();for(let i=0;i<5;i++)await h.tick();
+ assert.equal(h.isSettled(),false,'Save must wait for the in-flight sibling before deciding');
+ h.gates[1].release();const result=await h.result;
+ assert.equal(result.ok,false);assert.doesNotMatch(result.error,/temporarily unavailable/,'the integrity failure is surfaced, not the transient one');
+ h.w.offline(true);assert.equal((await h.w.fetch(`/v1/packs/${packId}`)).status,503,'the previously verified snapshot is retired');
+ assert.equal((await h.w.message({type:'DOWNLOAD_STATUS'})).saved,false);
+});
+test('integrity failure first, transient sibling later: Save still fails and invalidates',async()=>{
+ const old=fixture(),next=fixture('next');
+ const h=await concurrentSave(old,next,{first:()=>{throw new TypeError('offline');},second:()=>Response.json({schema:'wrong'})});
+ h.gates[1].release();for(let i=0;i<5;i++)await h.tick();h.gates[0].release();
+ const result=await h.result;assert.equal(result.ok,false);
+ h.w.offline(true);assert.equal((await h.w.fetch(`/v1/packs/${packId}`)).status,503);
+});
+test('after a transient failure no sibling cache.put lands once Save has rejected; the prior snapshot is kept',async()=>{
+ const old=fixture(),next=fixture('next');
+ const h=await concurrentSave(old,next,{first:()=>{throw new TypeError('offline');},second:()=>new Response(next.boundBytes,{headers:{'Content-Type':'application/json'}})});
+ h.gates[0].release();for(let i=0;i<5;i++)await h.tick();
+ assert.equal(h.isSettled(),false,'Save must not reject while a sibling artifact is still in flight');
+ h.gates[1].release();const result=await h.result;assert.equal(result.ok,false);
+ const settledEntries=h.entries();for(let i=0;i<10;i++)await h.tick();
+ assert.equal(h.entries(),settledEntries,'nothing is written to any cache after the Save result is decided');
+ h.w.offline(true);assert.equal((await h.w.fetch(`/v1/packs/${packId}`)).headers.get('X-FIA-Offline-Snapshot'),'historical-verified','transient-only failure keeps the prior verified snapshot');
+});
