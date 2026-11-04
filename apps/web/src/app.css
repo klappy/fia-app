@@ -101,6 +101,10 @@ button{min-height:48px}.scene-notice button{min-width:48px;min-height:48px}.kept
 .progress-map-section{display:grid;grid-template-columns:52px 1fr;gap:12px;align-items:start;padding:14px 0}
 .progress-map-section .progress-section-choice{width:52px;min-height:52px;position:sticky;top:0}
 .progress-map-items{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:5px}
+.progress-map-item{min-width:44px;min-height:44px;position:relative;color:var(--text-muted);border-radius:var(--r-md)}
+.progress-map-item.complete{color:var(--text-body)}
+.progress-map-item[aria-current=step]{background:var(--paper-100);color:var(--text-title)}
+.progress-map-item img{width:24px;height:24px;aspect-ratio:1;object-fit:cover;object-position:center;border-radius:50%;display:block;flex:none}
 
 /* Edge-anchored cookbook glass. The content scrolls underneath, with a clear
    reading area measured between the actual frames rather than symmetric gutters. */
@@ -141,6 +145,7 @@ button{min-height:48px}.scene-notice button{min-width:48px;min-height:48px}.kept
 .progress-map-heading{font:var(--type-label);margin:0 0 10px}
 .progress-map-section .progress-section-choice{width:100%;position:static;min-height:52px;justify-content:flex-start;gap:16px;text-align:left}
 .progress-map-heading span{font:var(--fw-semibold) var(--fs-subtitle)/1.35 var(--font-core);color:var(--text-body)}
+.glass-sheet .progress-map-item[aria-current=step]{background:var(--glass-fill-3);box-shadow:var(--shadow-rest),var(--inner-top)}
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.sheet.glass-sheet,.glass-sheet .sheet-header{background:var(--surface)}}
 @media(prefers-reduced-transparency:reduce){.sheet.glass-sheet,.glass-sheet .sheet-header{background:var(--surface);-webkit-backdrop-filter:none;backdrop-filter:none}}
 
