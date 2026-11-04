@@ -110,14 +110,20 @@ async function retainServerSnapshot(packId,revision,cache,signal,onprogress){
   // Owner ruling 2026-11-04 (cookbook 75c725c): fetch artifacts with bounded concurrency.
   // Each artifact is still matched or fetched, identity/hash verified and then cached on its own;
   // Saved is only reported after every artifact has been verified. The first failure fails the whole
-  // save exactly as before: no further artifact is started, and the error reaches the catch below.
+  // save exactly as before: no further artifact is started, in-flight ones settle, and the first
+  // non-transient, non-abort error (else the first error) reaches the catch below.
   let nextFile=0,verifiedCount=0,failed=false;
   const verifyArtifact=async f=>{
    checkCanceled();let response=await cache.match(f.path);try{await serverJSON(response,f,record);}catch{checkCanceled();response=await fetchLatest(f.path,{cache:'no-store',redirect:'error',signal});await serverJSON(response,f,record);checkCanceled();await cache.put(f.path,response);}
-   checkCanceled();verifiedCount+=1;onprogress?.({phase:'artifact-verified',verified:verifiedCount,total:files.length});
+   checkCanceled();if(failed)return;verifiedCount+=1;onprogress?.({phase:'artifact-verified',verified:verifiedCount,total:files.length});
   };
-  const artifactWorker=async()=>{while(!failed&&nextFile<files.length){const f=files[nextFile++];try{await verifyArtifact(f);}catch(error){failed=true;throw error;}}};
+  // Workers record failures instead of rejecting, so every in-flight artifact settles before the
+  // result is decided: no cache.put can land after the save is decided, and a definitive integrity
+  // failure is never hidden behind an earlier transient or abort failure from a sibling.
+  const errors=[];
+  const artifactWorker=async()=>{while(!failed&&nextFile<files.length){const f=files[nextFile++];try{await verifyArtifact(f);}catch(error){failed=true;errors.push(error);}}};
   await Promise.all(Array.from({length:Math.min(ARTIFACT_FETCH_CONCURRENCY,files.length)},artifactWorker));
+  if(errors.length)throw errors.find(e=>!(signal.aborted&&e.name==='AbortError')&&e.mediaStatusCode!=='media-status-transient')||errors[0];
   return {record,files,invalid:false};
  }
  catch(error){if(!(signal.aborted&&error.name==='AbortError')&&error.mediaStatusCode!=='media-status-transient')await invalidateServerSnapshot(packId);throw error;}
