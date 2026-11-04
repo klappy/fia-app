@@ -9,15 +9,19 @@ export function createAudioController(onState, onEnd, onError, { allowSpeechFall
   let source = null, range = null, deadline = null, frame = null, prepareRange = null, boundaryEpoch = 0;
   function clearBoundary() { boundaryEpoch++; clearTimeout(deadline); deadline = null; if (frame !== null && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(frame); frame = null; }
   let audio = null, utterance = null, generation = 0, speaking = false, paused = false;
-  // iOS lets an element start without a tap only once a tap has started that same element, so every
-  // clip plays on one element (its source swapped), which the first tap unlocks (unlock()).
-  let element = null, unlocked = false, startBound = null, attempt = 0;
+  // One persistent element per distinct audio FILE (identity), never more, never recreated while the app lives.
+  // A file needed again is an instant seek on its own loaded element, not a source reload. iOS lets an element
+  // start without a tap only once a tap has started that same element, so every pooled element is unlocked by a tap (unlock()).
+  const pool = new Map();
+  let startBound = null, attempt = 0;
   // The clip has reached sound: its own 'playing' or a resolved play(). A timeupdate alone is not sound, since the
   // element keeps the previous clip and the next source swap queues one before any sound.
   let sounding = false;
-  // The source the element holds: release keeps it, so a replay sets the same value again.
-  let heldSource = null;
-  const mediaElement = () => element || (element = new Audio());
+  function entryFor(identity) {
+    let entry = pool.get(identity);
+    if (!entry) { entry = { element: new Audio(), unlocked: false, heldSource: null }; pool.set(identity, entry); }
+    return entry;
+  }
   function clearStartBound() { clearTimeout(startBound); startBound = null; }
   function boundStart(owner, gen, message) {
     clearStartBound();
@@ -142,7 +146,7 @@ export function createAudioController(onState, onEnd, onError, { allowSpeechFall
       if (gen === generation) fail('The voice stopped. You can replay or continue by reading.');
     }
   }
-  function play(text, src, rate = 1, playbackRange) {
+  function play(text, src, rate = 1, playbackRange, fileIdentity) {
     stop(); pauseVideos();
     const gen = generation;
     if (playbackRange !== undefined) {
@@ -152,9 +156,10 @@ export function createAudioController(onState, onEnd, onError, { allowSpeechFall
       range = {startSeconds:start,endSeconds:end,ready:false};
     }
     if (!src) { speak(text, gen, rate); return; }
-    const owner = mediaElement();
-    const replay = heldSource === src;
-    owner.src = src; heldSource = src;
+    const entry = entryFor(fileIdentity ?? src), owner = entry.element;
+    // The same file already loaded on its own element is reused as is: no src write, no reload, no re-decode.
+    const sameSource = entry.heldSource === src, loaded = sameSource && owner.readyState >= 1;
+    if (!loaded) { owner.src = src; entry.heldSource = src; }
     audio = owner; source = src; owner.playbackRate = rate;
     const current = () => gen === generation && audio === owner;
     const update = () => {
@@ -182,7 +187,7 @@ export function createAudioController(onState, onEnd, onError, { allowSpeechFall
     if (!range) {
       owner.onloadedmetadata = update; owner.onseeked = null;
       // The spec reloads on a same-value source set (Chromium does); a browser that does not would resume mid-file.
-      if (replay) { try { owner.currentTime = 0; } catch {} }
+      if (sameSource) { try { owner.currentTime = 0; } catch {} }
       startAudio(owner, gen, message);
       return;
     }
@@ -219,8 +224,25 @@ export function createAudioController(onState, onEnd, onError, { allowSpeechFall
   // Called from a tap before its action: the idle element is unlocked once. An element holding a
   // clip is left alone; that clip's own Play (resume) starts it inside the tap.
   function unlock() {
-    if (unlocked || audio) return;
-    unlocked = true; startInTap(mediaElement());
+    for (const entry of pool.values()) {
+      if (entry.unlocked || entry.element === audio) continue;
+      entry.unlocked = true; startInTap(entry.element);
+    }
+  }
+  // Create the idle element for a file before it is needed, so the next tap can unlock it.
+  function reserve(identities) { for (const identity of identities) entryFor(identity); }
+  function evict(identity) {
+    const entry = pool.get(identity);
+    if (!entry) return;
+    if (entry.element === audio) stop();
+    entry.element.pause(); pool.delete(identity);
+  }
+  // Seek the active ranged clip to an absolute media time (seconds); never outside its accepted range.
+  function seek(seconds) {
+    if (!audio || !range?.ready || !Number.isFinite(seconds) || seconds < range.startSeconds || seconds >= range.endSeconds) return false;
+    try { audio.currentTime = seconds; } catch { return false; }
+    state(); if (!paused && !audio.paused) armBoundary(audio, generation);
+    return true;
   }
   function resume() {
     if (!audio && !utterance) return false;
@@ -236,5 +258,5 @@ export function createAudioController(onState, onEnd, onError, { allowSpeechFall
     }
     return true;
   }
-  return { play, pause, resume, stop, unlock, get active() { return !!audio || !!utterance; }, get playing() { return speaking; } };
+  return { play, pause, resume, stop, unlock, reserve, evict, seek, get poolSize() { return pool.size; }, get active() { return !!audio || !!utterance; }, get playing() { return speaking; } };
 }
