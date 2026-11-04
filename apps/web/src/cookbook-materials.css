@@ -63,7 +63,6 @@
 
 /* Selected progress markers use the same material as glass utility buttons. */
 .content-progress-bead.current,
-.glass-sheet .progress-map-item[aria-current=step],
 .progress-section-choice[aria-current=step] {
   background: var(--glass-fill-3);
   border: var(--border-glass);
@@ -75,12 +74,10 @@
 }
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
   .content-progress-bead.current,
-  .glass-sheet .progress-map-item[aria-current=step],
   .progress-section-choice[aria-current=step] { background: var(--surface); }
 }
 @media (prefers-reduced-transparency:reduce) {
   .content-progress-bead.current,
-  .glass-sheet .progress-map-item[aria-current=step],
   .progress-section-choice[aria-current=step] {
     background: var(--surface);
     -webkit-backdrop-filter: none; backdrop-filter: none;
