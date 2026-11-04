@@ -9,7 +9,7 @@ const reports = [];
 for (const p of registry.packs) {
   if (p.language !== 'eng') continue;
   const s = byId.get('spa.' + p.pericopeId);
-  reports.push(reportPack(load(p), s ? load(s) : null));
+  reports.push(reportPack(load(p), s ? load(s) : null, s));
 }
 const sum = summarize(reports);
 sum.lackingPericopes = reports.flatMap(r => r.filter(i => i.group === 'pericope' && i.state !== 'present').map(i => ({ id: i.id, missingSteps: i.missingSteps.length })));

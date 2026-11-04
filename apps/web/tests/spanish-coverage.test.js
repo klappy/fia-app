@@ -13,10 +13,11 @@ const spa = { id: 'spa.X', activities: [{ id: 'S01-U001' }, { id: 'S01-U002' }],
   a1: { kind: 'image', title: 'ES-TITLE-1' }, c1: { kind: 'map', title: 'Map title' },
   'term-spa-t4': { id: 'term-spa-t4', kind: 'term', title: 'angel', text: 'ES-TEXT-4' },
   'term-spa-t5': { id: 'term-spa-t5', kind: 'term', title: 'anoint', text: 'ENGLISH TEXT 5' } } };
+const ON = { capabilities: { text: { available: true } } };
 const find = (items, id) => items.find(i => i.id === id);
 
 test('present, english-fallback and missing are told apart per item', () => {
-  const r = reportPack(eng, spa);
+  const r = reportPack(eng, spa, ON);
   assert.equal(find(r, 'a1').state, STATE.PRESENT);
   assert.equal(find(r, 'c1').state, STATE.ENGLISH_FALLBACK);
   assert.equal(find(r, 'a2').state, STATE.MISSING);
@@ -28,14 +29,14 @@ test('present, english-fallback and missing are told apart per item', () => {
 });
 test('a pericope with a missing Spanish step, or no Spanish pack, is missing', () => {
   const short = { ...spa, activities: [{ id: 'S01-U001' }] };
-  assert.deepEqual(reportPack(eng, short)[0], { group: 'pericope', id: 'spa.X', state: STATE.MISSING, missingSteps: ['S01-U002'] });
+  assert.deepEqual(reportPack(eng, short, ON)[0], { group: 'pericope', id: 'spa.X', state: STATE.MISSING, missingSteps: ['S01-U002'] });
   const none = reportPack(eng, null);
   assert.equal(none[0].state, STATE.MISSING); assert.equal(none[0].missingSteps.length, 2);
   assert.ok(none.filter(i => i.group !== 'pericope').every(i => i.state === STATE.MISSING));
 });
 test('empty Spanish text counts as missing', () => {
   const blank = { ...spa, assets: { ...spa.assets, a1: { kind: 'image', title: '  ' } } };
-  assert.equal(find(reportPack(eng, blank), 'a1').state, STATE.MISSING);
+  assert.equal(find(reportPack(eng, blank, ON), 'a1').state, STATE.MISSING);
 });
 test('MT toggle defaults OFF; only an explicit true turns it on', () => {
   for (const c of [undefined, null, {}, { machineTranslation: false }, { machineTranslation: 'true' }, { machineTranslation: 1 }]) assert.equal(mtEnabled(c), false);
@@ -59,6 +60,33 @@ test('present Spanish is shown as is, regardless of the toggle', () => {
   assert.deepEqual(resolveItem(ok, { config: { machineTranslation: true }, machineTranslated: '[MT] x' }), { show: 'spanish', label: null });
 });
 test('summarize counts lacking per group', () => {
-  const s = summarize([reportPack(eng, spa)]);
+  const s = summarize([reportPack(eng, spa, ON)]);
   assert.deepEqual([s.pericope.total, s.pericope.lacking, s.resource.total, s.resource.lacking, s.entity.total, s.entity.lacking], [1, 0, 3, 2, 3, 2]);
+});
+
+// Codex 5775148650 fix 1: compare guide units, not expanded activities.
+test('English-only derived activities do not flag a pericope whose guide units are all in Spanish', () => {
+  const e = { id: 'eng.Y', activities: [{ id: 'S01-U001', sourceUnitId: 'S01-U001' }, { id: 'S01-U001-reading-1', fulfills: 'S01-U001' },
+    { id: 'S01-U002', sourceUnitId: 'S01-U002' }, { id: 'S01-U002-resource-eng-t9-v1', sourceUnitId: 'S01-U002', fulfills: 'S01-U002' }], assets: {} };
+  const s = { id: 'spa.Y', activities: [{ id: 'S01-U001', sourceUnitId: 'S01-U001' }, { id: 'S01-U002', sourceUnitId: 'S01-U002' }], assets: {} };
+  assert.deepEqual(reportPack(e, s, ON)[0], { group: 'pericope', id: 'spa.Y', state: STATE.PRESENT, missingSteps: [] });
+  const s2 = { ...s, activities: [{ id: 'S01-U001-reading-1', fulfills: 'S01-U001' }] };
+  assert.deepEqual(reportPack(e, s2, ON)[0].missingSteps, ['S01-U002']);
+});
+// Codex fix 2: the Spanish text capability must be explicitly available.
+test('Spanish text that is disabled or has no descriptor is reported missing, never present', () => {
+  for (const d of [undefined, null, {}, { capabilities: { text: { available: false } } }, { capabilities: { text: { available: 'true' } } }]) {
+    const r = reportPack(eng, spa, d);
+    assert.equal(r[0].state, STATE.MISSING); assert.equal(r[0].reason, 'text-unavailable');
+    assert.ok(r.every(i => i.state === STATE.MISSING));
+    assert.equal(resolveItem(find(r, 'a1')).show, 'marker');
+  }
+});
+// Codex fix 3: reused resources and terms are counted once.
+test('summarize deduplicates resources by id and entities by term number; lacking in any pack counts as lacking', () => {
+  const e2 = { id: 'eng.Z', activities: [{ id: 'S01-U001' }], assets: { a1: { kind: 'image', title: 'River' }, 'eng-t4-v1': { kind: 'term', text: 'ENGLISH TEXT 4' } } };
+  const s2 = { id: 'spa.Z', activities: [{ id: 'S01-U001' }], assets: { a1: { kind: 'image', title: 'River' }, 'term-spa-t4': { id: 'term-spa-t4', kind: 'term', text: 'ES-TEXT-4' } } };
+  const s = summarize([reportPack(eng, spa, ON), reportPack(e2, s2, ON)]);
+  assert.deepEqual([s.pericope.total, s.resource.total, s.resource.lacking, s.entity.total, s.entity.lacking], [2, 3, 3, 3, 2]);
+  assert.deepEqual(s.occurrences, { resource: { total: 4, lacking: 3 }, entity: { total: 4, lacking: 2 } });
 });

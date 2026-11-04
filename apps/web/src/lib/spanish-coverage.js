@@ -4,7 +4,10 @@
 // nothing, so a later UI can show an absence marker instead of a silent English fallback (captain, Nov 4 2026 3:08 PM ET).
 //
 //   pericope = a pack (one passage). Spanish text exists when a Spanish pack exists, its text capability is available and
-//              every English guide step has a Spanish step (id for id).
+//              every English guide unit has a Spanish counterpart. Guide units are compared, not
+//              expanded activities: an activity's unit is its sourceUnitId, else the unit it fulfills, else its own id.
+//              The text capability comes from the Spanish registry descriptor (capabilities.text.available === true);
+//              presentation JSON does not carry it, so callers must pass the descriptor. Without it, Spanish is absent.
 //   resource = a picture, map or video asset (kind image | map | video). Spanish text exists when the Spanish pack carries the
 //              asset with a non-empty title that is not the English title for the same asset id (title byte-identical to
 //              English means the English title is being shown: 'english-fallback').
@@ -28,12 +31,22 @@ const kindGroup = kind => kind === 'term' ? 'entity' : (kind === 'image' || kind
 const termNumber = id => { const m = /(?:^|-)t(\d+)(?:-|$)/.exec(String(id)); return m ? Number(m[1]) : null; };
 const displayText = a => (a.kind === 'term' ? a.text : a.title);
 
-/** Per-item report for one English pack and its Spanish counterpart (the Spanish pack may be absent). */
-export function reportPack(eng, spa) {
+export const guideUnit = a => a.sourceUnitId || a.fulfills || a.id;
+const units = pack => [...new Set((pack?.activities || []).map(guideUnit))];
+export const textAvailable = descriptor => descriptor?.capabilities?.text?.available === true;
+
+/**
+ * Per-item report for one English pack and its Spanish counterpart (the Spanish pack may be absent).
+ * `spaDescriptor` is the Spanish pack's registry entry; its text capability must be explicitly available,
+ * otherwise the Spanish pack is treated as absent so the marker is never suppressed.
+ */
+export function reportPack(eng, spaPack, spaDescriptor) {
   const items = [];
-  const spaSteps = new Set((spa?.activities || []).map(a => a.id));
-  const missingSteps = (eng.activities || []).filter(a => !spaSteps.has(a.id)).map(a => a.id);
-  items.push({ group: 'pericope', id: spa?.id || eng.id, state: spa && missingSteps.length === 0 ? STATE.PRESENT : STATE.MISSING, missingSteps: spa ? missingSteps : (eng.activities || []).map(a => a.id) });
+  const disabled = !!spaPack && !textAvailable(spaDescriptor);
+  const spa = disabled ? null : spaPack;
+  const spaUnits = new Set(units(spa));
+  const missingSteps = units(eng).filter(u => !spaUnits.has(u));
+  items.push({ group: 'pericope', id: spaPack?.id || eng.id, state: spa && missingSteps.length === 0 ? STATE.PRESENT : STATE.MISSING, missingSteps, ...(disabled ? { reason: 'text-unavailable' } : {}) });
   const spaAssets = spa?.assets || {};
   const spaTerms = new Map(Object.values(spaAssets).filter(a => a.kind === 'term').map(a => [termNumber(a.id), a]));
   for (const [id, e] of Object.entries(eng.assets || {})) {
@@ -43,7 +56,7 @@ export function reportPack(eng, spa) {
     if (!s || !present(displayText(s))) state = STATE.MISSING;
     else if (displayText(s) === displayText(e)) state = STATE.ENGLISH_FALLBACK;
     else state = STATE.PRESENT;
-    items.push({ group, kind: e.kind, id, state });
+    items.push({ group, kind: e.kind, id, key: group === 'entity' ? 't' + termNumber(id) : id, state });
   }
   return items;
 }
@@ -55,13 +68,26 @@ export function resolveItem(item, { config, machineTranslated } = {}) {
   return { show: 'marker', marker: MARKER, label: item.state };
 }
 
-/** Counts of pericopes / resources / entities with and without Spanish text. */
+/**
+ * Counts of pericopes / resources / entities with and without Spanish text. Resources and entities are reused across
+ * packs, so they are deduplicated (resource by asset id, entity by term number): a unique item is lacking if it lacks
+ * Spanish in any pack where it appears, since the marker would show there. Pericopes are one per pack.
+ * `occurrences` keeps the old per-pack counts for reference.
+ */
 export function summarize(reports) {
   const out = { pericope: { total: 0, lacking: 0 }, resource: { total: 0, lacking: 0 }, entity: { total: 0, lacking: 0 } };
+  const occurrences = { resource: { total: 0, lacking: 0 }, entity: { total: 0, lacking: 0 } };
   const byState = {};
+  const uniq = { resource: new Map(), entity: new Map() };
   for (const items of reports) for (const it of items) {
-    out[it.group].total++; byState[it.group + ':' + it.state] = (byState[it.group + ':' + it.state] || 0) + 1;
-    if (it.state !== STATE.PRESENT) out[it.group].lacking++;
+    const lacking = it.state !== STATE.PRESENT;
+    if (it.group === 'pericope') { out.pericope.total++; if (lacking) out.pericope.lacking++; byState['pericope:' + it.state] = (byState['pericope:' + it.state] || 0) + 1; continue; }
+    occurrences[it.group].total++; if (lacking) occurrences[it.group].lacking++;
+    const key = it.key ?? it.id, m = uniq[it.group], prev = m.get(key);
+    if (!prev || (prev === STATE.PRESENT && lacking)) m.set(key, it.state);
   }
-  return { ...out, byState };
+  for (const g of ['resource', 'entity']) for (const st of uniq[g].values()) {
+    out[g].total++; if (st !== STATE.PRESENT) out[g].lacking++; byState[g + ':' + st] = (byState[g + ':' + st] || 0) + 1;
+  }
+  return { ...out, byState, occurrences };
 }
