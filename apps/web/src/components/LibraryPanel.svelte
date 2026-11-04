@@ -77,7 +77,7 @@
    {@const failure=openFailure?.id===pack.id?openFailure:null}
    <article class="pack-card"><span class="library-eyebrow">{pack.language==='spa'?'Español':'English'} · Text available</span><h3>{pack.title}</h3>{#if refusedLabel[failure?.code]}<p>{refusedLabel[failure.code]}</p>{:else}<p>{guideRecordingAvailability(pack)} · Resources download manually</p>{/if}<p>{progress.completed}{progress.total?` of ${progress.total}`:''} activities completed · saved on this device</p>
     {#if progress.total}<progress aria-label="Saved passage progress" value={progress.completed} max={progress.total}></progress>{/if}
-    <button class="secondary full" disabled={opening===pack.id} aria-busy={opening===pack.id?'true':undefined} onclick={()=>selectPack(pack.id)}>{progress.completed?'Resume passage':'Open passage'}<ChevronRight size={18}/></button>
+    <button class="secondary full" disabled={opening===pack.id} aria-busy={opening===pack.id?'true':undefined} aria-label={`${progress.completed?'Resume passage':'Open passage'}: ${pack.title}`} onclick={()=>selectPack(pack.id)}>{progress.completed?'Resume passage':'Open passage'}<ChevronRight size={18}/></button>
     {#if failure}<p class="library-message" role="alert">{failure.message}</p>{/if}
     {#if confirmRestart===pack.id}<p>Start this passage again? Its saved progress will be cleared.</p><div class="library-actions"><button class="secondary" onclick={()=>{onreset(pack.id);confirmRestart=null;passages=[...passages];}}>Start again</button><button class="quiet" onclick={()=>confirmRestart=null}>Keep my place</button></div>{:else}<button class="quiet full" onclick={()=>confirmRestart=pack.id}><RotateCcw size={16}/>Restart passage</button>{/if}
    </article>
