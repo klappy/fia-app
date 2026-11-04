@@ -72,7 +72,7 @@ it('switching passage waits for native release and persists the actual selected 
  vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',nativeName:'English',ready:68}]);vi.spyOn(libraryAdapter,'passages').mockResolvedValue([descriptor]);const select=vi.spyOn(libraryAdapter,'select').mockResolvedValue({descriptor,presentation});
  assets.a112.relatedIds=[];await startAt('S02-U005','waiting');await command('watch the video');const video=document.querySelector('video');
  Object.defineProperty(video,'webkitDisplayingFullscreen',{value:true,writable:true});video.webkitExitFullscreen=vi.fn();await fireEvent(video,new Event('webkitbeginfullscreen'));
- await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));await fireEvent.click(screen.getByRole('button',{name:/^Passages/}));await settle();await fireEvent.click(screen.getByRole('button',{name:'Open passage',exact:true}));await settle();
+ await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));await fireEvent.click(screen.getByRole('button',{name:/^Passages/}));await settle();await fireEvent.click(screen.getByRole('button',{name:/^Open passage: /}));await settle();
  expect(select).not.toHaveBeenCalled();expect(document.querySelector('video')).toBe(video);expect(localStorage.getItem('fia-v3-selected-pack')).not.toBe(descriptor.id);
  video.webkitDisplayingFullscreen=false;await fireEvent(video,new Event('webkitendfullscreen'));
  await waitFor(()=>expect(localStorage.getItem('fia-v3-selected-pack')).toBe(descriptor.id));expect(select).toHaveBeenCalledTimes(1);
@@ -86,9 +86,9 @@ it('newer passage intent survives an older load resolving during native presenta
  vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',nativeName:'English',ready:68}]);vi.spyOn(libraryAdapter,'passages').mockResolvedValue(descriptors);
  assets.a112.relatedIds=[];await startAt('S02-U005','waiting');await command('watch the video');const video=document.querySelector('video');
  await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));await fireEvent.click(screen.getByRole('button',{name:/^Passages/}));await settle();
- await fireEvent.click(screen.getAllByRole('button',{name:'Open passage',exact:true})[0]);await settle();expect(select).toHaveBeenCalledTimes(1);
+ await fireEvent.click(screen.getAllByRole('button',{name:/^Open passage: /})[0]);await settle();expect(select).toHaveBeenCalledTimes(1);
  Object.defineProperty(video,'webkitDisplayingFullscreen',{value:true,writable:true});video.webkitExitFullscreen=vi.fn();await fireEvent(video,new Event('webkitbeginfullscreen'));
- await fireEvent.click(screen.getAllByRole('button',{name:'Open passage',exact:true})[1]);await settle();expect(video.webkitExitFullscreen).toHaveBeenCalledTimes(1);
+ await fireEvent.click(screen.getAllByRole('button',{name:/^Open passage: /})[1]);await settle();expect(video.webkitExitFullscreen).toHaveBeenCalledTimes(1);
  resolveA(loaded[0]);await settle();await settle();expect(document.querySelector('video')).toBe(video);expect(select).toHaveBeenCalledTimes(1);expect(localStorage.getItem('fia-v3-selected-pack')).toBeNull();
  video.webkitDisplayingFullscreen=false;await fireEvent(video,new Event('webkitendfullscreen'));
  await waitFor(()=>expect(localStorage.getItem('fia-v3-selected-pack')).toBe(descriptors[1].id));expect(select.mock.calls.map(([id])=>id)).toEqual(descriptors.map(p=>p.id));expect(document.querySelector('video')).toBeNull();
@@ -98,7 +98,7 @@ it('failed deferred passage load reports the error after native exit and preserv
  vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',nativeName:'English',ready:68}]);vi.spyOn(libraryAdapter,'passages').mockResolvedValue([descriptor]);const select=vi.spyOn(libraryAdapter,'select').mockRejectedValue(Error('Passage verification failed. Try again.'));
  assets.a112.relatedIds=[];await startAt('S02-U005','waiting');await command('watch the video');const video=document.querySelector('video');
  Object.defineProperty(video,'webkitDisplayingFullscreen',{value:true,writable:true});video.webkitExitFullscreen=vi.fn();await fireEvent(video,new Event('webkitbeginfullscreen'));
- await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));await fireEvent.click(screen.getByRole('button',{name:/^Passages/}));await settle();await fireEvent.click(screen.getByRole('button',{name:'Open passage',exact:true}));await settle();expect(select).not.toHaveBeenCalled();
+ await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));await fireEvent.click(screen.getByRole('button',{name:/^Passages/}));await settle();await fireEvent.click(screen.getByRole('button',{name:/^Open passage: /}));await settle();expect(select).not.toHaveBeenCalled();
  video.webkitDisplayingFullscreen=false;await fireEvent(video,new Event('webkitendfullscreen'));
  await waitFor(()=>expect(screen.getByText('Passage verification failed. Try again.')).toBeTruthy());expect(select).toHaveBeenCalledTimes(1);expect(localStorage.getItem('fia-v3-selected-pack')).toBeNull();expect(document.querySelector('video')).toBe(video);
 });
@@ -361,7 +361,7 @@ it('a refused open from the book Passages sheet stays on its card, with no notic
  const registry=JSON.parse(readFileSync('public/content/registry.json','utf8')),descriptor=registry.packs.find(p=>p.id==='eng.MRK-1-14-20');
  vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',nativeName:'English',ready:68}]);vi.spyOn(libraryAdapter,'passages').mockResolvedValue([descriptor]);const select=vi.spyOn(libraryAdapter,'select').mockRejectedValue(Error('Passage verification failed. Try again.'));
  await startAt('S01-U001');await fireEvent.click(screen.getByRole('button',{name:/^Choose passage/}));await settle();
- await fireEvent.click(await screen.findByRole('button',{name:'Open passage',exact:true}));await settle();
+ await fireEvent.click(await screen.findByRole('button',{name:/^Open passage: /}));await settle();
  expect(select).toHaveBeenCalledTimes(1);await waitFor(()=>expect(screen.getAllByText('Passage verification failed. Try again.')).toHaveLength(1));
  expect(screen.getByText('Passage verification failed. Try again.').closest('.pack-card')).toBeTruthy();expect(document.querySelector('.scene-notice')).toBeNull();
 });
