@@ -1,0 +1,54 @@
+{
+  "schema": "fia-listening-persona-summary@1",
+  "commit": "ffefd9fc2eac62dc36340860530edf3c726050e3",
+  "environment": "dev",
+  "runId": "41843787600",
+  "attempt": "1",
+  "workflowUrl": "https://github.com/klappy/fia-app/actions/runs/41843787600",
+  "scope": "Agent-operated observations; not human research or acoustic/device proof. Hosted and controlled protocol scopes are separate.",
+  "scenario": {
+    "key": "ffefd9fc2eac62dc36340860530edf3c726050e3/dev/P2 saved Scripture plays after isolated offline reload",
+    "scenario": "P2 saved Scripture plays after isolated offline reload",
+    "scope": "hosted-rendered-native",
+    "outcome": "failed",
+    "validation": {
+      "validator": "verify",
+      "ok": false,
+      "environment": "dev",
+      "commit": "ffefd9fc2eac62dc36340860530edf3c726050e3",
+      "errors": [
+        "Scenario did not pass once: P2 saved Scripture plays after isolated offline reload"
+      ],
+      "scope": "Live Chromium P2 listening only; no physical-device or audible-output claim"
+    },
+    "failedStep": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText(/Saved · Text and audio/)\nExpected: visible\nTimeout: 60000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 60000ms\u001b[22m\n\u001b[2m  - waiting for getByText(/Saved · Text and audio/)\u001b[22m\n",
+    "observedFriction": {
+      "classification": "observation-only",
+      "notices": [
+        {
+          "kind": "visible-notices",
+          "text": [
+            "Saved · Text and audio · Medium · 4.6 MB",
+            "4.6 MB of 4.6 MB verified · 32 / 32 files"
+          ]
+        }
+      ],
+      "assessment": "Not inferred from pass/fail; review attached observations"
+    },
+    "userFeedback": {
+      "status": "not-collected"
+    },
+    "evidence": {
+      "name": "live-listening-evidence",
+      "sha256": "fb0b4f3d491b30f67b6d27fae3e24f8e1b9bdd9b9bd8ac346f42781ae012e503",
+      "workflowArtifacts": "test-results (trace/video retention is finite)"
+    },
+    "baselineComparison": {
+      "baselineCommit": "1d0331c91387e95933ec1a26d555b47a0dd4b36f",
+      "priorOutcome": "passed",
+      "currentOutcome": "failed",
+      "archivePath": "1d0331c91387e95933ec1a26d555b47a0dd4b36f/dev/40917984048-1/63465f8344206dfe99995dfe5d49b1f2288c11033239ecbad325238f36f93e73.json",
+      "scope": "Outcome comparison only; no sentiment inference"
+    }
+  }
+}
