@@ -114,7 +114,10 @@ button{min-height:48px}.scene-notice button{min-width:48px;min-height:48px}.kept
    reading area measured between the actual frames rather than symmetric gutters. */
 .scene{--chrome-top:calc(92px + env(safe-area-inset-top));--chrome-bottom:calc(120px + max(16px,env(safe-area-inset-bottom)))}
 .scene-glass{position:fixed;left:0;right:0;z-index:11;pointer-events:none;background:var(--glass-fill-2);-webkit-backdrop-filter:blur(var(--blur-medium)) var(--sat-glass);backdrop-filter:blur(var(--blur-medium)) var(--sat-glass)}
-.scene-glass-top{top:0;height:var(--chrome-top)}
+/* The band's own height without a raised notice, exposed as a length the reading surface can read (scroll-margin has no
+   effect on this fixed, never-scrolled frame): guide text decides whether to open centred from this band, so a notice
+   never switches it into reading-centre space (fia-app-cookbook work/active/2026-11-03-narration-blocked-toast-overlap). */
+.scene-glass-top{top:0;height:var(--chrome-top);scroll-margin-top:calc(92px + env(safe-area-inset-top))}
 .scene-glass-bottom{bottom:0;height:var(--chrome-bottom)}
 .session-band{background:transparent}
 .media-stage.reading-stage{padding:0}

@@ -60,6 +60,17 @@ for(const [width,height] of [[390,844],[1280,800]])for(const dark of [false,true
    const seen=await overlaps(page);
    await test.info().attach(label,{body:await page.screenshot(),contentType:'image/png'});
    expect(seen.hits,JSON.stringify(seen)).toEqual([]);
+   // The raised band holds the notice without opening a void: the guide's first line sits just under it (design-lens@1 rule 8).
+   if(activityId==='S02-U009'&&width===390){
+    const gap=await page.evaluate(()=>{
+     const n=document.querySelector('main.scene > .scene-notice').getBoundingClientRect(),body=document.querySelector('main.scene .scripture-scroll .reading-verses');
+     const walker=document.createTreeWalker(body,NodeFilter.SHOW_TEXT,{acceptNode:t=>t.textContent.trim()?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_SKIP});
+     const range=document.createRange();range.selectNodeContents(walker.nextNode());
+     return range.getClientRects()[0].top-n.bottom;
+    });
+    expect(gap,`first guide line ${gap}px below the notice`).toBeGreaterThanOrEqual(0);
+    expect(gap,`first guide line ${gap}px below the notice`).toBeLessThanOrEqual(24);
+   }
    await expect(notice.getByRole('button',{name:'Dismiss notice'})).toBeVisible();
   }finally{await context.close();}
  });
