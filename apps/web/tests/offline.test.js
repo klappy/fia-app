@@ -51,7 +51,7 @@ test('live version bypasses a historic installed cache and never falls back to i
  w.fail(request);await assert.rejects(w.fetch(request),/Network interrupted/);
 });
 
-const onlineRoutes=['/version.json','/build-status','/build-status/','/build-status.html','/build-status/observations.json','/docs','/docs/TEST-GUIDE.html','/content/source','/content/source/audio-manifest.json','/v1','/v1/not-a-route','/mcp','/mcp/unsupported'];
+const onlineRoutes=['/welcome','/welcome/','/welcome/index.html','/welcome/tokens.css','/welcome/assets/fia-lockup.svg','/version.json','/build-status','/build-status/','/build-status.html','/build-status/observations.json','/docs','/docs/TEST-GUIDE.html','/content/source','/content/source/audio-manifest.json','/v1','/v1/not-a-route','/mcp','/mcp/unsupported'];
 test('hosting HTML fallback for deployment config rejects old manifest; corrected explicit retry succeeds without weakening asset integrity',async()=>{
  const w=worker(),control='/*\n X-Test: retained';
  const old=manifest('bad-config');old.files.unshift({path:'/_headers',bytes:Buffer.byteLength(control),sha256:createHash('sha256').update(control).digest('hex'),group:'core'});
@@ -83,7 +83,7 @@ test('online-only network failure never falls back to installed or shell-only HT
 });
 test('root, sessions and near-prefix routes retain installed revision and new-client pin',async()=>{
  const w=worker();await w.message({type:'DOWNLOAD_START',selection:'core'});
- for(const [i,path]of ['/','/session/continuation','/v10/example','/mcp-other','/docs-extra','/content/sources','/build-status-extra'].entries()){
+ for(const [i,path]of ['/','/session/continuation','/v10/example','/mcp-other','/docs-extra','/content/sources','/build-status-extra','/welcome-extra'].entries()){
   w.fail(path);const id='page-'+i,response=await w.fetch({url:'https://fia.test'+path,method:'GET',mode:'navigate'},{resultingClientId:id});
   assert.equal(await response.text(),'app',path);
   const pin=await w.stores.get('fia-v3-download-metadata@1').get('/client-'+id).clone().json();assert.equal(pin.revision,'r1');
