@@ -24,3 +24,9 @@ test('seekWord seeks to the word millisecond, playing its screen first when need
 test('controller survives player stops of other screens and never creates players',()=>{
  const {c}=setup();c.play('a');assert.equal(c.current,'a');assert.equal(c.next('a'),'b');assert.equal(c.next('c'),null);
 });
+test('a Scripture sidecar with only top-level words (no activities map) still drives the highlight',()=>{
+ const hl=[];const top={schema:'fia-word-transcript@1',activities:{},words};
+ const c=createScriptController({player:{play(){},seek:()=>true,stop(){}},script,transcripts:new Map([['F',top]]),onHighlight:(id,w)=>hl.push([id,w]),onAdvance(){}});
+ c.play('a');for(const t of [0.5,1.1,1.6,2.5])c.onPlayerState({src:'blob:F',elapsed:t});
+ assert.deepEqual(hl.map(h=>h[1]),[null,0,1,2]);
+});

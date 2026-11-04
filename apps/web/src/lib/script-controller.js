@@ -14,7 +14,8 @@ export function createScriptController({ player, script, transcripts, rate = () 
   const index = new Map(script.map((span, i) => [span.id, i]));
   let current = null, lastWord = undefined, ended = false;
   const span = id => script[index.get(id)];
-  const words = s => transcripts.get(s.fileKey)?.activities?.[s.id]?.words ?? null;
+  // An activity's own word map wins; a sidecar that carries only top-level `words` (a whole Scripture passage) covers every span of its file.
+  const words = s => { const t = transcripts.get(s.fileKey); return t?.activities?.[s.id]?.words ?? (t?.words?.length ? t.words : null); };
   function play(id) {
     const s = span(id); if (!s) return false;
     current = s; lastWord = null; ended = false; onHighlight(s.id, null);

@@ -1,8 +1,13 @@
 import {validatePlaybackRange} from './media-delivery.js';
 const hash=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
+// CAPTAIN OVERRIDE, Nov 4 2026 (klappy/fia-app #324): word highlighting and word-timed page turns for Scripture passages are ON BY DEFAULT.
+// This lifts the Oct 5 switch-off (60ad56ba, 00c22e8b in #177; 722f040b in #124). DO NOT turn this off, and do not reintroduce a
+// 'disabled' requirement, without asking the captain first. Legacy descriptors that still say 'disabled' stay valid (the field no
+// longer gates anything). The timing source is the reviewed word sidecar only; text sha, source pins and the sidecar's audio sha stay enforced.
+export const SCRIPTURE_WORD_HIGHLIGHT=true;
 export const scripturePassagePins=['scriptureLedgerEntryId','scriptureLedgerSha256','scriptureAssetId','scripturePlaybackMode','scriptureHighlighting','scriptureRangeReviewSha256','scriptureCanonicalTextSha256','scriptureSourceEvidenceSha256','scriptureSourceRangeReviewSha256'];
 export function validateScripturePassageFile(file,packId){
- if(file.scripturePlaybackMode!=='passage-only'||file.scriptureHighlighting!=='disabled'||file.scriptureAlignment!==null||file.scriptureAlignmentSha256!==undefined||file.logicalSourceSha256!==undefined||file.logicalSourceBytes!==undefined||file.recordingLedgerEntryId!==undefined||file.recordingLedgerSha256!==undefined||typeof file.scriptureLedgerEntryId!=='string'||!file.scriptureLedgerEntryId||typeof file.scriptureAssetId!=='string'||!/^[-\w]+$/.test(file.scriptureAssetId)||file.path!==`/audio/scripture/${packId}/${file.scriptureAssetId}.opus`||file.group!=='audio'||file.mime!=='audio/ogg')throw Error('Invalid passage-only Scripture descriptor.');
+ if(file.scripturePlaybackMode!=='passage-only'||!['enabled','disabled'].includes(file.scriptureHighlighting)||file.scriptureAlignment!==null||file.scriptureAlignmentSha256!==undefined||file.logicalSourceSha256!==undefined||file.logicalSourceBytes!==undefined||file.recordingLedgerEntryId!==undefined||file.recordingLedgerSha256!==undefined||typeof file.scriptureLedgerEntryId!=='string'||!file.scriptureLedgerEntryId||typeof file.scriptureAssetId!=='string'||!/^[-\w]+$/.test(file.scriptureAssetId)||file.path!==`/audio/scripture/${packId}/${file.scriptureAssetId}.opus`||file.group!=='audio'||file.mime!=='audio/ogg')throw Error('Invalid passage-only Scripture descriptor.');
  for(const key of ['sha256','sourceSha256','deliveryRevision',...scripturePassagePins.filter(k=>k.endsWith('Sha256'))])if(!hash(file[key]))throw Error('Missing Scripture identity pin.');
  for(const key of ['bytes','sourceBytes'])if(!Number.isSafeInteger(file[key])||file[key]<=0)throw Error('Invalid Scripture byte identity.');
  const url=new URL(file.deliveryURL);if(url.origin!=='https://transcode.klappy.dev'||!url.pathname.startsWith('/audio/')||url.username||url.password||url.hash)throw Error('Invalid Scripture delivery origin.');
