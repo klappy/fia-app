@@ -10,6 +10,7 @@ import { wordIndexAt, seekMsForWord } from './transcript.js';
  * transcripts: Map fileKey -> sidecar (fia-word-transcript@1), the single source of truth for words and milliseconds.
  */
 export function createScriptController({ player, script, transcripts, rate = () => 1, onHighlight = () => {}, onAdvance = () => {} }) {
+  script = [...script];
   const index = new Map(script.map((span, i) => [span.id, i]));
   let current = null, lastWord = undefined, ended = false;
   const span = id => script[index.get(id)];
@@ -17,7 +18,7 @@ export function createScriptController({ player, script, transcripts, rate = () 
   function play(id) {
     const s = span(id); if (!s) return false;
     current = s; lastWord = null; ended = false; onHighlight(s.id, null);
-    player.play(s.text, s.src, rate(), { startSeconds: s.startMs / 1000, endSeconds: s.endMs / 1000 }, s.fileKey);
+    player.play(s.text, s.src, rate(), s.range || { startSeconds: s.startMs / 1000, endSeconds: s.endMs / 1000 }, s.fileKey);
     return true;
   }
   // Player clock -> highlighted word, from the sidecar only. No sidecar means no highlight, never a guess.
@@ -39,5 +40,7 @@ export function createScriptController({ player, script, transcripts, rate = () 
     if (current?.id !== id) play(id);
     return player.seek(ms / 1000);
   }
-  return { play, seekWord, onPlayerState, onPlayerEnd, stop() { current = null; player.stop(); }, get current() { return current?.id ?? null; }, next: id => script[index.get(id) + 1]?.id ?? null };
+  // The script grows as the stage resolves each file's bytes/blob; an id already present is replaced in place (same position).
+  function register(s) { const i = index.get(s.id); if (i === undefined) { index.set(s.id, script.length); script.push(s); } else script[i] = s; return s.id; }
+  return { play, register, seekWord, onPlayerState, onPlayerEnd, stop() { current = null; player.stop(); }, get current() { return current?.id ?? null; }, next: id => script[index.get(id) + 1]?.id ?? null };
 }

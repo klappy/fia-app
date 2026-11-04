@@ -325,3 +325,5 @@ button:enabled:active { translate: 0 0; scale: var(--press-scale); opacity: .86;
 .resource-visual.visual-unavailable>.media-error.media-status p{margin:0}
 @media(max-width:700px){.resource-visual.visual-unavailable>.media-error.media-status{width:calc(100% - 52px)}.resource-visual.visual-unavailable>.unavailable-words{font-size:calc(23px * var(--reading-scale,1))}}
 .scene.immersive .resource-visual.visual-unavailable>.unavailable-words{padding-top:var(--chrome-top)}
+
+.pool-caption{position:fixed;z-index:14;left:50%;transform:translateX(-50%);bottom:110px;max-width:min(760px,calc(100vw - 32px));padding:12px 16px;border-radius:14px;background:var(--material-floating);color:var(--ink-700);backdrop-filter:blur(12px);font-size:15px;line-height:1.5;box-shadow:0 3px 20px #00000014}.pool-caption .pool-spoken{opacity:.55}.pool-caption .pool-active{background:#ffe08a;color:#000;border-radius:4px;box-shadow:0 0 0 2px #ffe08a}.pool-caption small{display:block;margin-top:6px;font-size:10px;opacity:.6}
