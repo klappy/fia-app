@@ -10,6 +10,10 @@ const pinnedPack=registry.packs.find(p=>p.id==='eng.MRK-1-14-20');
 const presentation=JSON.parse(readFileSync(new URL('../../apps/web/public'+pinnedPack.presentation.url,import.meta.url)));
 const sha=value=>createHash('sha256').update(value).digest('hex');
 const packId='eng.MRK-1-14-20';
+// Owner ruling 2026-11-04 (fia-app-cookbook 75c725c): cold DEV saves of "Text and audio" were observed at 45-78 s,
+// so the former 60 s wait was too short. One finite, declared harness deadline, measured from the save action and
+// not extended or restarted by retries. This is a harness bound, not a product SLA; the J1 5 s budget is unchanged.
+const COLD_SAVE_DEADLINE_MS=120000;
 const first='In this step, hear Mark 1:14–20 and put it in your hearts.';
 const progress=page=>page.evaluate(id=>JSON.parse(localStorage.getItem(`fia-v3-progress@1:${id}`)||'null'),packId);
 const controls=page=>page.getByRole('navigation',{name:'Session controls'});
@@ -93,8 +97,10 @@ test('P2 warm Replay restarts the current guide recording',async({page})=>{
  const first=evidence.nativePlayback[0],replay=evidence.nativePlayback[1];expect(replay.binding).toEqual(first.binding);const events=await page.evaluate(cursor=>window.__fiaNativeEvents.slice(cursor),action.cursor);const owner=replay.after.findIndex(a=>!a.paused);replay.restart={actionAt:action.at,seeked:events.find(e=>e.kind==='seeked'&&e.owner===owner),playing:events.find(e=>e.kind==='playing'&&e.owner===owner)};assertReplayRestart(replay);evidence.claims.warmReplay=true;
 });
 test('P2 saved Scripture plays after isolated offline reload',async({page,context})=>{
+ // The config's whole-test timeout would cut the ruled save deadline short; add exactly that deadline, finitely.
+ test.setTimeout(test.info().timeout+COLD_SAVE_DEADLINE_MS);
  const response=await page.request.get(`/offline/${packId}.json`);expect(response.ok()).toBe(true);const bytes=await response.body();expect(sha(bytes)).toBe(sha(readFileSync(new URL(`../../dist/offline/${packId}.json`,import.meta.url))));evidence.scriptureManifest=JSON.parse(bytes);
- await setting(page,'Automatic guide narration',false);await setting(page,'Automatic Scripture reading',true);await menu(page,'Downloads');await page.getByRole('radio',{name:'Text and audio',exact:true}).check();await page.getByRole('button',{name:'Download selection',exact:true}).click();await expect(page.getByText(/Saved · Text and audio/)).toBeVisible({timeout:60000});await page.getByRole('button',{name:'Close',exact:true}).click();
+ await setting(page,'Automatic guide narration',false);await setting(page,'Automatic Scripture reading',true);await menu(page,'Downloads');await page.getByRole('radio',{name:'Text and audio',exact:true}).check();const saveStartedAt=Date.now();await page.getByRole('button',{name:'Download selection',exact:true}).click();await expect(page.getByText(/Saved · Text and audio/)).toBeVisible({timeout:Math.max(1,COLD_SAVE_DEADLINE_MS-(Date.now()-saveStartedAt)),message:`Saved · Text and audio must appear within one ${COLD_SAVE_DEADLINE_MS/1000}s harness deadline measured from the save action`});await page.getByRole('button',{name:'Close',exact:true}).click();
  const before=await progress(page);await context.setOffline(true);try{await restoreSavedScreen(page,before,{offline:true});evidence.offline={savedVerified:true,...await page.evaluate(()=>({navigatorOnline:navigator.onLine,serviceWorkerControlled:!!navigator.serviceWorker.controller,loadedCommit:document.querySelector('meta[name="fia-source-commit"]')?.content})),scope:'Fresh setup; isolated browser offline simulation, not physical network disconnection or cross-release migration'};
  await tapPrimary(page,'Continue');await tapPrimary(page,'Continue');evidence.nativePlayback.push(await playing(page));evidence.claims.offlineScripture=true;
  }finally{await context.setOffline(false);}
