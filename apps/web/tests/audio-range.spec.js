@@ -24,7 +24,7 @@ it('forwards verified online range only after explicit manual Play and holds com
  libraryAdapter.mediaStatus.mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[descriptor]});
  const fetch=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(3),mime:'audio/mpeg',timing,playbackRange:range});
  render(App);await settle();expect(audio.play).not.toHaveBeenCalled();await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();
- expect(fetch).toHaveBeenCalledTimes(1);expect(audio.play).toHaveBeenCalledWith(expect.any(String),'blob:range',1,range);
+ expect(fetch).toHaveBeenCalledTimes(1);expect(audio.play).toHaveBeenCalledWith(expect.any(String),'blob:range',1,range,expect.any(String));
  audio.state({src:'blob:range',elapsed:5.5,duration:20,progressElapsed:2.5,progressDuration:5,playing:true});await settle();
  const circle=document.querySelector('.playback-arc'),circumference=Number(circle.getAttribute('stroke-dasharray'));
  expect(Number(circle.getAttribute('stroke-dashoffset'))/circumference).toBeCloseTo(0.5);
@@ -33,7 +33,7 @@ it('forwards verified online range only after explicit manual Play and holds com
 it('forwards selected verified offline descriptor rather than asynchronous savedMedia',async()=>{
  libraryAdapter.downloadStatus.mockResolvedValue({saved:true,active:{manifest:{presentationRevision:bundledPack.revision,files:[descriptor]},files:[descriptor]}});
  libraryAdapter.mediaStatus.mockResolvedValue({deliveryRevision:null,files:[],savedFiles:[{...descriptor,playbackRange:{startSeconds:12,endSeconds:15}}]});
- render(App);await settle();await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();expect(audio.play).toHaveBeenCalledWith(expect.any(String),path,1,range);
+ render(App);await settle();await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();expect(audio.play).toHaveBeenCalledWith(expect.any(String),path,1,range,expect.any(String));
 });
 it('refuses an offline range not bound to the selected manifest descriptor',async()=>{
  libraryAdapter.downloadStatus.mockResolvedValue({saved:true,active:{manifest:{presentationRevision:bundledPack.revision,files:[descriptor]},files:[{...descriptor,playbackRange:{startSeconds:4,endSeconds:9}}]}});
@@ -54,7 +54,7 @@ for(const offline of [false,true])it(`uses verified ${offline?'offline':'online'
  if(offline){libraryAdapter.downloadStatus.mockResolvedValue({saved:true,active:{manifest:{presentationRevision:bundledPack.revision,files:[file]},files:[file]}});libraryAdapter.mediaStatus.mockResolvedValue({deliveryRevision:null,files:[]});}
  else{libraryAdapter.mediaStatus.mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[file]});vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({...file,bytes:new Uint8Array(3)});}
  await mountScripture();await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();
- expect(audio.play).toHaveBeenCalledWith(expect.any(String),offline?file.path:'blob:range',1,file.playbackRange);
+ expect(audio.play).toHaveBeenCalledWith(expect.any(String),offline?file.path:'blob:range',1,file.playbackRange,expect.any(String));
  audio.state({src:offline?file.path:'blob:range',elapsed:111,duration:400,progressElapsed:11,progressDuration:129,playing:false});await settle();
  const circle=document.querySelector('.playback-arc'),circumference=Number(circle.getAttribute('stroke-dasharray'));
  expect(Number(circle.getAttribute('stroke-dashoffset'))/circumference).toBeCloseTo(1-11/129);
