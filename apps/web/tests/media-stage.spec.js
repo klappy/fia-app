@@ -83,9 +83,9 @@ const rules=selector=>[...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter(m=>m[1].
 it('the unavailable status card can never scroll, and every lh floor has a non-lh fallback before it',()=>{
  const card=rules('.resource-visual.visual-unavailable>.media-error.media-status');expect(card.length).toBeGreaterThan(0);
  for(const body of card)expect(body).not.toMatch(/overflow(-y)?:\s*(auto|scroll)/);
- expect(card[0]).toMatch(/overflow:visible/);expect(card[0]).toMatch(/min-height:auto/);
+ expect(card[0]).toMatch(/overflow:visible/);expect(card[0]).toMatch(/min-height:calc\(3em \+ 40px\);min-height:calc\(2lh \+ 40px\)/);
  const words=rules('.resource-visual.visual-unavailable>.unavailable-words');
  expect(words.some(b=>/min-height:min\(6\.4em,40%\);min-height:min\(4lh,40%\)/.test(b))).toBe(true);
  expect(words.some(b=>/min-height:min\(3\.2em,25%\);min-height:min\(2lh,25%\)/.test(b))).toBe(true);
- for(const body of words)for(const m of body.matchAll(/min-height:[^;}]*lh[^;}]*/g)){const before=body.slice(0,m.index).split(';').filter(Boolean).at(-1)||'';expect(before,`fallback before ${m[0]}`).toMatch(/^min-height:min\([0-9.]+em,/);}
+ for(const body of [...words,...card])for(const m of body.matchAll(/min-height:[^;}]*lh[^;}]*/g)){const before=body.slice(0,m.index).split(';').filter(Boolean).at(-1)||'';expect(before,`fallback before ${m[0]}`).toMatch(/^min-height:(min|calc)\([0-9.]+em[ ,]/);}
 });
