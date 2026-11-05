@@ -31,11 +31,15 @@
 .scripture-scroll{padding-bottom:205px}.scripture-scroll p{font-size:calc(24px * var(--reading-scale))}
 .term-stage{max-width:780px;margin:auto;padding:110px 32px 205px}.term-stage h2{font:var(--type-hero)}.term-stage p{font:400 calc(23px * var(--reading-scale))/1.65 var(--font-core);white-space:pre-line}
 .image-well,.video-well{height:calc(100dvh - 170px);padding-top:82px}.image-well img,.image-well:not(.map) img{object-fit:contain}
-.media-toolbar{top:82px}.asset-caption{bottom:180px}.scene-notice{top:84px;background:var(--material-floating);color:var(--ink-700)}
+.media-toolbar{top:82px}.asset-caption{bottom:180px}.scene-notice{top:var(--notice-top,84px);background:var(--material-floating);color:var(--ink-700)}
 .outline summary{cursor:pointer;min-height:48px;padding:14px 0;font-weight:600}.outline strong{font-size:13px;font-weight:400;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .sheet-body,.sheet-intro,.fine-print,.preference small,.select-row select,.outline small,.outline svg,.outline-number{color:var(--ink-500)}.sheet-body{color:var(--ink-700)}.sheet-header h2{font-family:var(--font-core);font-size:24px}.secondary,.scope-note{background:var(--paper-100);color:var(--ink-700);border-color:var(--paper-100)}
 button{min-height:48px}.scene-notice button{min-width:48px;min-height:48px}.kept-content{bottom:180px}
-@media(max-width:700px){.words-stage{padding:116px 26px 190px}.words-stage h1{font-size:26px}.reading-heading{padding-top:116px}.scene-controls{gap:8px}.scripture-scroll{padding-bottom:205px}.image-well:not(.map) img{object-fit:contain}.asset-caption{bottom:180px}.scene-notice{top:82px}.term-stage{padding-inline:26px}}
+@media(max-width:700px){.words-stage{padding:116px 26px 190px}.words-stage h1{font-size:26px}.reading-heading{padding-top:116px}.scene-controls{gap:8px}.scripture-scroll{padding-bottom:205px}.image-well:not(.map) img{object-fit:contain}.asset-caption{bottom:180px}.term-stage{padding-inline:26px}}
+/* A notice raised over the stage grows the top band to hold it, so stage titles, credits and guide words start below it
+   (fia-app-cookbook work/active/2026-11-03-narration-blocked-toast-overlap). The height is measured (App.svelte --notice-height). */
+.scene{--notice-top:84px}@media(max-width:700px){.scene{--notice-top:82px}}
+.scene.notice-raised{--chrome-top:max(calc(92px + env(safe-area-inset-top)),calc(var(--notice-top) + var(--notice-height,0px) + 8px))}
 /* R3: a notice raised while a sheet is open sits in the sheet's sticky header, under its title row, never behind the modal. */
 .sheet-header:has(.sheet-notice){flex-wrap:wrap}.sheet-header .scene-notice.sheet-notice{position:static;transform:none;z-index:auto;order:1;flex:1 0 100%;width:auto;max-width:none;justify-content:space-between}
 
@@ -110,7 +114,10 @@ button{min-height:48px}.scene-notice button{min-width:48px;min-height:48px}.kept
    reading area measured between the actual frames rather than symmetric gutters. */
 .scene{--chrome-top:calc(92px + env(safe-area-inset-top));--chrome-bottom:calc(120px + max(16px,env(safe-area-inset-bottom)))}
 .scene-glass{position:fixed;left:0;right:0;z-index:11;pointer-events:none;background:var(--glass-fill-2);-webkit-backdrop-filter:blur(var(--blur-medium)) var(--sat-glass);backdrop-filter:blur(var(--blur-medium)) var(--sat-glass)}
-.scene-glass-top{top:0;height:var(--chrome-top)}
+/* The band's own height without a raised notice, exposed as a length the reading surface can read (scroll-margin has no
+   effect on this fixed, never-scrolled frame): guide text decides whether to open centred from this band, so a notice
+   never switches it into reading-centre space (fia-app-cookbook work/active/2026-11-03-narration-blocked-toast-overlap). */
+.scene-glass-top{top:0;height:var(--chrome-top);scroll-margin-top:calc(92px + env(safe-area-inset-top))}
 .scene-glass-bottom{bottom:0;height:var(--chrome-bottom)}
 .session-band{background:transparent}
 .media-stage.reading-stage{padding:0}
