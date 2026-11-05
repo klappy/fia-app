@@ -5,10 +5,15 @@ import App from '../src/App.svelte';
 import {libraryAdapter,bundledPack} from '../src/lib/library.js';
 import {activities,assets} from '../src/lib/content.js';
 import {createSession} from '../src/lib/engine.js';
+import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {resolve} from 'node:path';
+import {guideSpeech} from '../src/lib/guide-speech.js';
 const audio=vi.hoisted(()=>({play:vi.fn(),pause:vi.fn(),resume:vi.fn(),stop:vi.fn(),active:false,playing:false,end:null,state:null}));
 vi.mock('../src/lib/audio.js',()=>({createAudioController:(state,end)=>{audio.state=state;audio.end=end;return audio;}}));
 const range={startSeconds:3,endSeconds:8},timing={mapping:{scale:1,offsetSeconds:0}};
 const path=activities[0].audioSrc,descriptor={path,sha256:'a'.repeat(64),bytes:3,mime:'audio/mpeg',playbackRange:range,timing};
+const later=()=>new Promise(r=>setTimeout(r,60));
 const settle=async()=>{for(let i=0;i<5;i++){await tick();await Promise.resolve();}};
 beforeEach(()=>{
  localStorage.clear();vi.clearAllMocks();audio.active=false;audio.playing=false;
@@ -30,10 +35,32 @@ it('forwards verified online range only after explicit manual Play and holds com
  expect(Number(circle.getAttribute('stroke-dashoffset'))/circumference).toBeCloseTo(0.5);
  audio.end();await settle();expect(audio.play).toHaveBeenCalledTimes(1);expect(screen.getByRole('button',{name:'Continue',exact:true})).toBeTruthy();
 });
+it('plays a recorded guide clip a bounded tail past its stored end without touching the verified range',async()=>{
+ const guide={...descriptor,logicalSourceSha256:'b'.repeat(64),sourceSha256:Object.entries(guideSpeech.sources).find(([,v])=>v[path])[0],deliveryURL:'https://transcode.klappy.dev/audio/x',duration:20};
+ libraryAdapter.mediaStatus.mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[guide,{...guide,path:'/audio/source/next.mp3',playbackRange:{startSeconds:8.2,endSeconds:12}}]});
+ const fetch=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(3),mime:'audio/mpeg',timing,playbackRange:range});
+ render(App);await settle();await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();
+ expect(fetch).toHaveBeenCalledTimes(1);expect(audio.play).toHaveBeenCalledWith(expect.any(String),'blob:range',1,{startSeconds:3,endSeconds:8.18});
+ expect(range).toEqual({startSeconds:3,endSeconds:8});
+});
 it('forwards selected verified offline descriptor rather than asynchronous savedMedia',async()=>{
  libraryAdapter.downloadStatus.mockResolvedValue({saved:true,active:{manifest:{presentationRevision:bundledPack.revision,files:[descriptor]},files:[descriptor]}});
  libraryAdapter.mediaStatus.mockResolvedValue({deliveryRevision:null,files:[],savedFiles:[{...descriptor,playbackRange:{startSeconds:12,endSeconds:15}}]});
  render(App);await settle();await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();expect(audio.play).toHaveBeenCalledWith(expect.any(String),path,1,range,expect.any(String));
+});
+it('plays a verified saved Ogg Opus clip as WebM, and by its saved path when the bytes are not the manifest\'s',async()=>{
+ const ogg=new Uint8Array(readFileSync(resolve(process.cwd(),'../../tests/web-shell/fixtures/guide-clip-10s.ogg')));
+ const saved={...descriptor,mime:'audio/ogg',bytes:ogg.length,sha256:createHash('sha256').update(ogg).digest('hex')};
+ const blobs=[];vi.stubGlobal('URL',class extends URL{static createObjectURL(b){blobs.push(b);return 'blob:saved';}static revokeObjectURL(){}});
+ vi.spyOn(HTMLMediaElement.prototype,'canPlayType').mockReturnValue('maybe');
+ const serve=bytes=>vi.stubGlobal('fetch',vi.fn(async()=>({ok:true,arrayBuffer:async()=>bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength)})));
+ libraryAdapter.downloadStatus.mockResolvedValue({saved:true,active:{manifest:{presentationRevision:bundledPack.revision,files:[saved]},files:[saved]}});
+ libraryAdapter.mediaStatus.mockResolvedValue({deliveryRevision:null,files:[],savedFiles:[saved]});
+ serve(ogg);render(App);await settle();await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();await later();
+ expect(audio.play).toHaveBeenCalledWith(expect.any(String),'blob:saved',1,range);expect(blobs.at(-1).type).toBe('audio/webm');
+ audio.play.mockClear();blobs.length=0;const other=ogg.slice();other[other.length-1]^=1;serve(other);
+ await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();await later();
+ expect(audio.play).toHaveBeenCalledWith(expect.any(String),path,1,range);expect(blobs).toHaveLength(0);
 });
 it('refuses an offline range not bound to the selected manifest descriptor',async()=>{
  libraryAdapter.downloadStatus.mockResolvedValue({saved:true,active:{manifest:{presentationRevision:bundledPack.revision,files:[descriptor]},files:[{...descriptor,playbackRange:{startSeconds:4,endSeconds:9}}]}});
