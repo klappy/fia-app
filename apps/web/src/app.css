@@ -332,3 +332,6 @@ button:enabled:active { translate: 0 0; scale: var(--press-scale); opacity: .86;
 .resource-visual.visual-unavailable>.media-error.media-status p{margin:0}
 @media(max-width:700px){.resource-visual.visual-unavailable>.media-error.media-status{width:min(100% - 52px,calc(min(32dvh,300px) * var(--media-aspect-w,4) / var(--media-aspect-h,3)))}.resource-visual.visual-unavailable>.unavailable-words{font-size:calc(23px * var(--reading-scale,1))}}
 .scene.immersive .resource-visual.visual-unavailable>.unavailable-words{padding-top:var(--chrome-top)}
+/* Short stages (landscape phones, 390x560): the card drops its placeholder aspect and shrinks to its text, full width,
+   so it never runs under the bottom controls and never scrolls; the step words keep their floor. */
+@media(max-height:680px){.resource-visual.visual-unavailable>.media-error.media-status{aspect-ratio:auto;width:min(100% - 52px,676px);padding:10px 14px;margin:8px auto 4px}}

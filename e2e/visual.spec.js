@@ -156,6 +156,8 @@ for(const width of [390,1280])for(const dark of [false,true])test('approved refe
   // The card never becomes a scroll container (so never an unnamed keyboard stop) and its text stays whole.
   const card=await page.evaluate(()=>{const c=document.querySelector('.media-status');return {scroll:c.scrollHeight-c.clientHeight,overflow:getComputedStyle(c).overflowY};});
   expect(card.scroll,`status card does not scroll at ${viewport.width}x${height} scale ${scale}`).toBeLessThanOrEqual(1);expect(card.overflow).toBe('visible');
+  const fit=await page.evaluate(()=>{const stage=document.querySelector('.media-stage.visual-unavailable'),cs=getComputedStyle(stage),r=stage.getBoundingClientRect(),c=stage.querySelector('.media-status').getBoundingClientRect(),bar=document.querySelector('.scene-controls')?.getBoundingClientRect();return {cardBottom:c.bottom,stageBottom:r.bottom-parseFloat(cs.paddingBottom),controlsTop:bar?bar.top:Infinity};});
+  expect(fit.cardBottom,`status card stays inside the stage at ${viewport.width}x${height} scale ${scale}`).toBeLessThanOrEqual(Math.min(fit.stageBottom,fit.controlsTop)+1);
  }}expect(await candidate.page.locator('img[src],video[src],audio[src]').count()).toBe(0);}
    if(state.name==='prepared-online-visual'){await expect.poll(()=>candidate.page.locator('.visual-viewport img').first().evaluate(img=>img.complete&&img.naturalWidth>0)).toBe(true);expect(await candidate.page.evaluate(()=>window.__visualFixtureRequests)).toEqual([pack.assets[pack.activities[state.index].assetId].src]);expect(await candidate.page.locator('video[src],audio[src]').count()).toBe(0);}
    if(state.name==='online-available-initial')await expect(candidate.page.getByRole('button',{name:'Begin',exact:true})).toBeVisible();
