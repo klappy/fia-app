@@ -2,6 +2,7 @@
 // A start that has not reached sound by this bound is handed back to a tap: iOS can leave a start
 // it does not allow pending forever, with neither sound nor a rejection.
 export const START_BOUND_MS = 1500;
+const CLOCK_REPORT_MS = 50;
 export function createAudioController(onState, onEnd, onError, { allowSpeechFallback = true } = {}) {
   // Native media clocks can round a completed seek just below the requested start.
   const seekToleranceSeconds = 0.001;
@@ -162,9 +163,19 @@ export function createAudioController(onState, onEnd, onError, { allowSpeechFall
     if (!loaded) { owner.src = src; entry.heldSource = src; }
     audio = owner; source = src; owner.playbackRate = rate;
     const current = () => gen === generation && audio === owner;
+    // 'timeupdate' fires about four times a second (less when Safari throttles it), so a word highlight driven by it
+    // trails the voice by up to a quarter second. While sound plays, also report the media clock every animation frame (20 Hz).
+    let reporter = null, lastReport = 0;
+    const report = now => {
+      reporter = null;
+      if (!current() || !speaking) return;
+      if (now - lastReport >= CLOCK_REPORT_MS) { lastReport = now; state(); }
+      reporter = requestAnimationFrame(report);
+    };
     const update = () => {
       if (!current()) return;
       speaking = sounding && !paused && !owner.paused; state();
+      if (speaking && reporter === null && typeof requestAnimationFrame === 'function') reporter = requestAnimationFrame(report);
       if (range?.ready) armBoundary(owner, gen);
     };
     owner.ontimeupdate = update;

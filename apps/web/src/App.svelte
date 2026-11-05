@@ -7,7 +7,8 @@
  import { parseCommand } from './lib/commands.js';
  import { createAudioController } from './lib/audio.js';
  import { createScriptController } from './lib/script-controller.js';
- import { validateTranscript, highlightSegments } from './lib/transcript.js';
+ import { validateTranscript } from './lib/transcript.js';
+ import { activityAlignment } from './lib/alignment.js';
  import { alignmentFromSidecar } from './lib/passage-timing.js';
  import {swipeNavigation,createSelectionTracker} from './lib/swipe.js';
  import {createVideoPresentation} from './lib/video-presentation.js';
@@ -195,7 +196,8 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  let ctlKey=null;
  async function loadSidecar(key,sha){if(!key||!sha||sidecars.has(key))return;sidecars.set(key,null);try{const r=await fetch('/transcripts/'+sha+'.words.json');if(!r.ok)throw Error('none');const t=validateTranscript(await r.json());if(t.audioSha256!==sha)throw Error('sha');sidecars.set(key,t);sidecarTick++;}catch{sidecars.delete(key);}}
  function ctlStart(id,voices,text,src,rateNow,range,key,sha){if(!range){playClip(voices,text,src,rateNow,range,key);return;}ctlVoices=voices;ctlKey=key||null;loadSidecar(key,sha);ctl.register({id,text,fileKey:key||undefined,src,range,startMs:Math.round(range.startSeconds*1000),endMs:Math.round(range.endSeconds*1000)});ctl.play(id);}
- let hlParts=$derived.by(()=>{sidecarTick;if(hl.word==null||hl.id!==activity?.id)return null;const w=sidecars.get(hl.key)?.activities?.[hl.id]?.words;return w&&activity.narration?highlightSegments(activity.narration,w,w[hl.word].startMs):null;});
+ // Guide and instruction cards highlight through the same inline gel as scripture, from the sidecar's words for this card.
+ let cardAlignment=$derived.by(()=>{sidecarTick;if(!activity||hl.id!==activity.id)return null;const sc=sidecars.get(hl.key);const shown=activity.readingGroupId?activity.sourceText:activity.narration;return activityAlignment(shown,sc?.activities?.[activity.id]?.words,sc?.activities?.[activity.id]?.endMs);});
  // Safari mis-times Ogg Opus (WebKit 293310); a ranged clip plays as the same packets in WebM.
  const clipBlob=result=>{const media=result.playbackRange?playableAudio(result.bytes,result.mime):result;return new Blob([media.bytes],{type:media.mime});};
  const tailRange=(file,range)=>tailExtendedRange(range,file,[...onlineMedia.values(),...savedMedia.values(),...downloadedAudioDescriptors.values()]);
@@ -310,7 +312,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  let stage=$derived(presentStage(session,activities));
  let focal=$derived(assets[stage.focal]);
  let termPrompt=$derived(!session.detour&&focal?.kind==='term'&&termDefinition!==activity.id);
- let guideText=$derived({...readingGroups[activity?.readingGroupId],id:activity?.readingGroupId||activity?.id,kind:'guide',text:readingGroups[activity?.readingGroupId]?.text||activity?.narration||activity?.prompt||'',activeItemId:activity?.id,ordinal:activity?.readingGroupId?undefined:listOrdinals[activity?.id],descriptionAudio:activity?.audioSrc});
+ let guideText=$derived({...readingGroups[activity?.readingGroupId],id:activity?.readingGroupId||activity?.id,kind:'guide',text:readingGroups[activity?.readingGroupId]?.text||activity?.narration||activity?.prompt||'',activeItemId:activity?.id,ordinal:activity?.readingGroupId?undefined:listOrdinals[activity?.id],descriptionAudio:activity?.audioSrc,...(cardAlignment?(activity.readingGroupId?{alignments:{[activity.id]:cardAlignment}}:{alignment:cardAlignment}):{})});
  let finished=$derived(session.status==='complete'&&!session.detour);
  // R3: a notice belongs to the passage, screen and sheet that raised it. Its scope is recorded when
  // it is raised, and it ends with that scope before the next screen renders (lib/notice-scope.js).
@@ -624,7 +626,6 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
 
  {#if noticeText&&!noticeInSheet}{@render noticeBar()}{/if}
  {#if listeningHint&&muted}<div class="scene-notice" role="status"><span>Prefer automatic narration?</span><button onclick={()=>{listeningHint=false;sheet='settings';}}>Settings</button><button aria-label="Dismiss narration suggestion" onclick={()=>listeningHint=false}><X size={15}/></button></div>{/if}
- {#if hlParts}<div class="pool-caption" role="status" aria-live="off">{#each hlParts as part}<span class:pool-active={part.active} class:pool-spoken={part.spoken}>{part.text}</span>{/each}</div>{/if}
  <nav class="scene-controls" aria-label="Session controls">
   <button class="menu-control" aria-label="More options" bind:this={moreButton} onclick={()=>sheet='menu'}><FiaMark/></button>
   <button class="step-control" aria-label={session.detour?'Return to guide':'Previous activity'} disabled={!session.detour&&session.index===0&&!finished} onclick={()=>navigate({type:'BACK'})}><ChevronLeft size={26}/></button>

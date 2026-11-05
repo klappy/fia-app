@@ -3,7 +3,7 @@
  import ResourceIdentification from './ResourceIdentification.svelte';
  import {createSmoothFollow} from '../lib/smooth-follow.js';
  import {SCRIPTURE_WORD_HIGHLIGHT} from '../lib/scripture-passage.js';
- import {alignmentPosition, alignedSegments, followScrollTop, durationScrollTop, readingEdgeSpace, clearReadingRect} from '../lib/alignment.js';
+ import {leadingPosition, wordPair, alignedSegments, followScrollTop, durationScrollTop, readingEdgeSpace, clearReadingRect} from '../lib/alignment.js';
  let {asset, playback={src:null,elapsed:0,playing:false}, suspended=false,identification=null}=$props();
  let viewport=$state(), following=$state(true), reducedMotion=$state(false), revision=$state(0), ready=$state(false), edgeSpace=$state({leading:0,trailing:0});
  let lastScrollTarget=null,scroller;
@@ -11,7 +11,11 @@
  // R2: the clip names the reading it voices; a URL comparison misses server passages that play from a blob.
  let active=$derived(!!playback.assetId&&playback.assetId===asset.id);
  let blocks=$derived(asset.verses||[{text:asset.text||asset.description||''}]);
- let position=$derived(active?alignmentPosition(asset.alignment,playback.elapsed):null);
+ // A together-list voices one item at a time: the alignment is the one for the item being read.
+ let alignment=$derived(asset.list?asset.alignments?.[asset.activeItemId]:asset.alignment);
+ let position=$derived(active?leadingPosition(alignment,playback.elapsed):null);
+ // The two words the gel covers: the spoken word and its partner (words 0-1, 2-3, ... of a verse).
+ let pair=$derived(position&&position.wordIndex>=0?wordPair(position.wordIndex,alignment.verses[position.verseIndex].words.length):null);
  const scrollKeys=new Set(['ArrowUp','ArrowDown','PageUp','PageDown','Home','End',' ']);
  function explore(){scroller?.stop();if(viewport?.scrollHeight>viewport?.clientHeight){if(following&&active)viewport.scrollTo({top:viewport.scrollTop,behavior:'instant'});lastScrollTarget=null;following=false;}}
  function clearViewport(){
@@ -38,7 +42,7 @@
     if(top!==null&&(lastScrollTarget===null||Math.abs(top-lastScrollTarget)>=1)){lastScrollTarget=top;scroller?.to(top,reducedMotion);}}
    return;
   }
-  if(!asset.alignment){
+  if(!alignment){
    const top=durationScrollTop(playback,viewport.clientHeight,viewport.scrollHeight);
    if(top!==null&&Math.abs(top-viewport.scrollTop)>=1)scroller?.to(top,reducedMotion);
    return;
@@ -58,9 +62,13 @@
  }
  function placeGel(){
   if(!gel||!gelLayer)return;
-  const word=SCRIPTURE_WORD_HIGHLIGHT&&active&&position&&position.wordIndex>=0?viewport?.querySelector(`[data-align-word="${position.verseIndex}-${position.wordIndex}"]`):null;
+  const at=i=>viewport?.querySelector(`[data-align-word="${position.verseIndex}-${i}"]`);
+  const word=SCRIPTURE_WORD_HIGHLIGHT&&active&&position&&position.wordIndex>=0&&pair?at(position.wordIndex):null;
   if(!word){gel.hidden=true;gelY=null;return;}
-  const r=wordRect(word),b=gelLayer.getBoundingClientRect(),x=r.left-b.left-4,y=r.top-b.top-1,w=r.width+8,h=r.height+2;
+  // Two words at a time; a pair that wraps keeps the gel on the line of the word being spoken.
+  const one=wordRect(word),a=wordRect(at(pair.first)||word),z=wordRect(at(pair.last)||word);
+  const r=Math.abs(a.top-z.top)<=2?{left:a.left,top:a.top,width:z.right-a.left,height:a.height}:{left:one.left,top:one.top,width:one.width,height:one.height};
+  const b=gelLayer.getBoundingClientRect(),x=r.left-b.left-4,y=r.top-b.top-1,w=r.width+8,h=r.height+2;
   const put=(left,width)=>{gel.style.left=`${left}px`;gel.style.top=`${y}px`;gel.style.width=`${width}px`;gel.style.height=`${h}px`;};
   const jump=gel.hidden||gelY===null||Math.abs(y-gelY)>2;
   if(jump){
@@ -70,7 +78,7 @@
   }else gel.classList.remove('cut-l');
   put(x,w);gelY=y;
  }
- $effect(()=>{position;revision;ready;active;if(ready)untrack(placeGel);});
+ $effect(()=>{position;pair;revision;ready;active;if(ready)untrack(placeGel);});
  $effect(()=>{resourceId;scroller?.stop();lastScrollTarget=null;following=true;if(viewport)viewport.scrollTop=0;});
  $effect(()=>{
   // Recheck on clock ticks, layout/text-size changes and pause/resume. Reading progress
@@ -101,6 +109,7 @@
   return()=>{scroller.stop();media?.removeEventListener('change',update);observer?.disconnect();};
  });
 </script>
+{#snippet spoken(text)}{#each alignedSegments(text,alignment?.verses[0]?.words) as segment}{#if segment.wordIndex!==undefined}<span data-align-word={`0-${segment.wordIndex}`} data-active={SCRIPTURE_WORD_HIGHLIGHT&&pair&&position.verseIndex===0&&segment.wordIndex>=pair.first&&segment.wordIndex<=pair.last?'true':undefined}>{segment.text}</span>{:else}{segment.text}{/if}{/each}{/snippet}
 <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions (This focusable reading region listens for native scrolling intent; it does not intercept keys or act as a button.) -->
 <div bind:this={viewport} class="scripture-scroll" style:padding-top={`calc(var(--chrome-top, 0px) + ${edgeSpace.leading}px)`} style:padding-bottom={`calc(var(--chrome-bottom, 0px) + ${edgeSpace.trailing}px)`} role="region" tabindex="0" aria-label={asset.kind==='scripture'?'Scripture passage':'Guide text'} onwheel={explore} onpointerdown={explore} ontouchstart={explore} onkeydown={e=>{if(scrollKeys.has(e.key))explore();}}>
  <div class="reading-verses">
@@ -108,11 +117,11 @@
   <ResourceIdentification asset={identification||asset}/>
  {/if}
  {#if asset.list}
- <p data-reading-item aria-current={asset.activeItemId===asset.id?'true':undefined}>{asset.text}</p>
- <svelte:element this={asset.marker==='numbered'?'ol':'ul'} class="reading-list" class:numbered={asset.marker==='numbered'} class:bulleted={asset.marker==='bulleted'}>{#each asset.list as item}<li data-reading-item aria-current={asset.activeItemId===item.id?'true':undefined}>{item.text}</li>{/each}</svelte:element>
+ <p data-reading-item aria-current={asset.activeItemId===asset.id?'true':undefined}>{#if asset.activeItemId===asset.id}{@render spoken(asset.text)}{:else}{asset.text}{/if}</p>
+ <svelte:element this={asset.marker==='numbered'?'ol':'ul'} class="reading-list" class:numbered={asset.marker==='numbered'} class:bulleted={asset.marker==='bulleted'}>{#each asset.list as item}<li data-reading-item aria-current={asset.activeItemId===item.id?'true':undefined}>{#if asset.activeItemId===item.id}{@render spoken(item.text)}{:else}{item.text}{/if}</li>{/each}</svelte:element>
  {:else}
  {#each blocks as verse,i}
-  <p aria-current={position?.verseIndex===i?'true':undefined}>{#if i===0&&asset.ordinal}<span class="list-ordinal">{asset.ordinal}.</span>{" "}{/if}{#if verse.number}<sup>{verse.number}</sup>{/if}{#each alignedSegments(verse.text,asset.alignment?.verses[i]?.words) as segment}{#if segment.wordIndex!==undefined}<span data-align-word={`${i}-${segment.wordIndex}`} data-active={SCRIPTURE_WORD_HIGHLIGHT&&position?.verseIndex===i&&position.wordIndex===segment.wordIndex?'true':undefined}>{segment.text}</span>{:else}{segment.text}{/if}{/each}</p>
+  <p aria-current={position?.verseIndex===i?'true':undefined}>{#if i===0&&asset.ordinal}<span class="list-ordinal">{asset.ordinal}.</span>{" "}{/if}{#if verse.number}<sup>{verse.number}</sup>{/if}{#each alignedSegments(verse.text,alignment?.verses[i]?.words) as segment}{#if segment.wordIndex!==undefined}<span data-align-word={`${i}-${segment.wordIndex}`} data-active={SCRIPTURE_WORD_HIGHLIGHT&&pair&&position.verseIndex===i&&segment.wordIndex>=pair.first&&segment.wordIndex<=pair.last?'true':undefined}>{segment.text}</span>{:else}{segment.text}{/if}{/each}</p>
  {/each}
  {/if}
  <div class="gel-layer" aria-hidden="true" bind:this={gelLayer}><div class="gel" bind:this={gel} hidden><i class="gel-tint"></i><i class="gel-chrome"></i></div></div>

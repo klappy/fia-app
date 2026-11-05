@@ -73,3 +73,30 @@ export function clearReadingRect(viewport,topEdge=viewport.top,bottomEdge=viewpo
  const bottom=Math.max(top,Math.min(viewport.bottom,bottomEdge));
  return {...viewport,top,bottom,height:bottom-top};
 }
+
+/** The highlight leads the voice: word times from speech recognition start a little after the sound does, and the clock reaches the
+ * screen a frame or two late, so a highlight that waits for the exact word start always reads behind (captain, Nov 5 2026). */
+export const HIGHLIGHT_LEAD_SECONDS = 0.25;
+/** Highlight position at a media time, leading the voice. Past the end of the timed words it falls back to the plain clock. */
+export function leadingPosition(alignment, elapsed, lead = HIGHLIGHT_LEAD_SECONDS) {
+  return alignmentPosition(alignment, elapsed + lead) ?? alignmentPosition(alignment, elapsed);
+}
+/** The gel marks two words at a time (smoother than one): words 0-1, 2-3, ... of a verse. Returns the pair's first and last word index. */
+export function wordPair(wordIndex, wordCount) {
+  const first = wordIndex - (wordIndex % 2);
+  return { first, last: Math.min(wordCount - 1, first + 1) };
+}
+
+/** A guide or instruction card's alignment from its sidecar words ({startMs,endMs,from,to}, offsets into the narration), so the card
+ * highlights through the same gel as scripture. Returns null unless every word sits inside the narration text it is shown with. */
+export function activityAlignment(text, words, durationMs) {
+  if (!text || !Array.isArray(words) || !words.length) return null;
+  let end = 0;
+  for (const w of words) {
+    if (!Number.isFinite(w.from) || !Number.isFinite(w.to) || w.from < end || w.to <= w.from || w.to > text.length || !Number.isFinite(w.startMs) || !Number.isFinite(w.endMs)) return null;
+    end = w.to;
+  }
+  const timed = words.map(w => ({ from: w.from, to: w.to, start: w.startMs / 1000, end: w.endMs / 1000 }));
+  const last = timed[timed.length - 1].end;
+  return { schemaVersion: 2, clockDomain: 'delivery-media-seconds', duration: Math.max(last, (durationMs || 0) / 1000), verses: [{ start: timed[0].start, end: last, highlightMode: 'word', words: timed }] };
+}

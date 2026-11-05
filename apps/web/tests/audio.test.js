@@ -132,3 +132,19 @@ run('synchronous gesture denial is retryable but a subsequent codec rejection re
  Audio.prototype.play=function(){return Promise.reject(Object.assign(Error('codec'),{name:'NotSupportedError'}));};
  e.controller.resume();await tick();assert.equal(e.controller.active,false);assert.equal(e.states.at(-1).src,null);
 });
+
+run('the media clock is reported every animation frame while sound plays, not only on timeupdate, and stops with the clip', async e => {
+  const frames = []; const raf = Object.getOwnPropertyDescriptor(globalThis, 'requestAnimationFrame');
+  globalThis.requestAnimationFrame = fn => { frames.push(fn); return frames.length; };
+  try {
+    e.controller.play('hello', '/audio.mp3'); await tick(); const a = e.audio[0];
+    a.onplaying(); const before = e.states.length;
+    assert.equal(frames.length, 1, 'a frame is requested once sound plays');
+    a.currentTime = 4; frames.shift()(1000); await tick();
+    assert.ok(e.states.length > before && e.states.at(-1).elapsed === 4, 'the frame reports the live clock');
+    a.currentTime = 4.02; frames.shift()(1020); assert.equal(e.states.at(-1).elapsed, 4, 'at most every 50 ms');
+    a.currentTime = 4.08; frames.shift()(1080); assert.equal(e.states.at(-1).elapsed, 4.08);
+    e.controller.stop(); const n = e.states.length; const next = frames.shift(); if (next) next(1200);
+    assert.equal(e.states.length, n, 'a stopped clip is not reported again');
+  } finally { if (raf) Object.defineProperty(globalThis, 'requestAnimationFrame', raf); else delete globalThis.requestAnimationFrame; }
+});
