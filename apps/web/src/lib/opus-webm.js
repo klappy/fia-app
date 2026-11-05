@@ -79,3 +79,21 @@ export function playableAudio(bytes, mime, { canPlay = type => typeof document =
   if (!/ogg/i.test(mime || '') || !canPlay('audio/webm; codecs=opus')) return { bytes, mime };
   try { return { bytes: oggOpusToWebm(bytes), mime: 'audio/webm' }; } catch { return { bytes, mime }; }
 }
+
+// A verified saved Ogg Opus clip plays through the same WebM remux as an online one. The saved file is read
+// through the page's own request, so the worker's verified response is the source; its length and sha256 must
+// still match the manifest descriptor. Anything else (no fetch, a refusal, other bytes, not Ogg Opus) returns
+// null and the caller plays the saved path exactly as before.
+export async function downloadedWebm(path, descriptor, { signal, fetchImpl = globalThis.fetch, canPlay } = {}) {
+  try {
+    if (!descriptor?.playbackRange || !/ogg/i.test(descriptor.mime || '') || typeof fetchImpl !== 'function' || !globalThis.crypto?.subtle) return null;
+    const response = await fetchImpl(path, { signal });
+    if (!response?.ok) return null;
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    if (bytes.length !== descriptor.bytes) return null;
+    const sha = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), v => v.toString(16).padStart(2, '0')).join('');
+    if (sha !== descriptor.sha256) return null;
+    const media = playableAudio(bytes, descriptor.mime, canPlay ? { canPlay } : undefined);
+    return media.mime === 'audio/webm' ? media : null;
+  } catch { return null; }
+}

@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {oggOpusToWebm,playableAudio} from '../../apps/web/src/lib/opus-webm.js';
+import {createHash} from 'node:crypto';
+import {oggOpusToWebm,playableAudio,downloadedWebm} from '../../apps/web/src/lib/opus-webm.js';
 // Safari estimates the timeline of Opus in Ogg from file size and bit rate (WebKit 293310), so its currentTime drifts
 // from the audio by an amount that grows with position. The same packets in WebM keep the timeline. This test reads
 // the WebM back with its own parser and requires every packet to be byte-identical and on its exact time.
@@ -46,4 +47,19 @@ test('checking for WebM support never constructs an Audio element (the verified-
  globalThis.document={createElement:tag=>({canPlayType:type=>{probed.push([tag,type]);return 'maybe';}})};
  try{const out=playableAudio(ogg,'audio/ogg');assert.equal(out.mime,'audio/webm');}finally{globalThis.Audio=NativeAudio;if(doc===undefined)delete globalThis.document;else globalThis.document=doc;}
  assert.equal(built,0);assert.deepEqual(probed,[['audio','audio/webm; codecs=opus']]);
+});
+test('a verified saved Ogg Opus clip plays as the same remux, and anything unverified plays by its saved path',async()=>{
+ const can=()=>'maybe',sha=createHash('sha256').update(ogg).digest('hex');
+ const descriptor={path:'/audio/source/x.mp3',mime:'audio/ogg',bytes:ogg.length,sha256:sha,playbackRange:{startSeconds:1,endSeconds:2}};
+ const serve=(bytes,ok=true)=>async()=>({ok,arrayBuffer:async()=>bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength)});
+ const got=await downloadedWebm(descriptor.path,descriptor,{fetchImpl:serve(ogg),canPlay:can});
+ assert.equal(got.mime,'audio/webm');assert.deepEqual(Buffer.from(got.bytes),Buffer.from(oggOpusToWebm(ogg)));
+ const other=ogg.slice();other[other.length-1]^=1;
+ assert.equal(await downloadedWebm(descriptor.path,descriptor,{fetchImpl:serve(other),canPlay:can}),null,'same length, other bytes');
+ assert.equal(await downloadedWebm(descriptor.path,descriptor,{fetchImpl:serve(ogg.slice(0,-3)),canPlay:can}),null,'other length');
+ assert.equal(await downloadedWebm(descriptor.path,descriptor,{fetchImpl:serve(ogg,false),canPlay:can}),null,'refused');
+ assert.equal(await downloadedWebm(descriptor.path,descriptor,{fetchImpl:async()=>{throw Error('offline');},canPlay:can}),null,'rejected');
+ assert.equal(await downloadedWebm(descriptor.path,descriptor,{fetchImpl:serve(ogg),canPlay:()=>''}),null,'browser cannot play WebM');
+ assert.equal(await downloadedWebm(descriptor.path,{...descriptor,mime:'audio/mpeg'},{fetchImpl:serve(ogg),canPlay:can}),null,'not Ogg');
+ assert.equal(await downloadedWebm(descriptor.path,{...descriptor,playbackRange:undefined},{fetchImpl:serve(ogg),canPlay:can}),null,'whole-file clip is not ranged');
 });
