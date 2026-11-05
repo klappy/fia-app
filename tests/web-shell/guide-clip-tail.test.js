@@ -76,3 +76,16 @@ test('scripture clips, unmeasured clips and files that are not recorded guide cl
  assert.deepEqual(run(late),{startSeconds:8,endSeconds:9.9});
  assert.equal(tailRoomFor(f,speech),0.4);assert.equal(tailRoomFor({...f,path:'x'},speech),0);
 });
+// The stored data does not accumulate an offset: the gap between a stored end and the last word it must reach does not
+// trend with position in the recording. A drift that grows with position can then only come from the playing side
+// (see opus-webm.test.js), and the slack that is there is the margin any clock error eats.
+test('the gap between each stored end and its last word does not grow along the recording',()=>{
+ const fit=pts=>{const n=pts.length,mx=pts.reduce((a,p)=>a+p[0],0)/n,my=pts.reduce((a,p)=>a+p[1],0)/n;let sxy=0,sxx=0;for(const [x,y] of pts){sxy+=(x-mx)*(y-my);sxx+=(x-mx)**2;}return sxy/sxx;};
+ const bySource=Map.groupBy(rows,r=>r.source);
+ for(const [source,list] of bySource){
+  const slope=fit(list.map(r=>[r.f.playbackRange.endSeconds,r.f.playbackRange.endSeconds-r.m.speechEndSeconds]));
+  assert.ok(Math.abs(slope)<=(source==='9834ac98'?0.005:0.02),`${source}: the end gap trends ${slope.toFixed(4)} s per s along the recording`);
+ }
+ const s1=rows.filter(r=>r.source==='9834ac98').map(r=>r.f.playbackRange.endSeconds-r.m.speechEndSeconds);
+ assert.ok(Math.min(...s1)>=0.2&&Math.max(...s1)<=0.55,`S01 end gaps: ${s1.map(g=>g.toFixed(2))}`);
+});
