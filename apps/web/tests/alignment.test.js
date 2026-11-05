@@ -125,9 +125,11 @@ test('the highlight leads the voice by a quarter second and keeps the last word 
  const last=a.verses.at(-1);assert.deepEqual(leadingPosition(a,last.end-0.1),alignmentPosition(a,last.end-0.1+0.25)??alignmentPosition(a,last.end-0.1));
  assert.notEqual(leadingPosition(a,last.end-0.1),null);
 });
-test('the gel pairs words 0-1, 2-3 and keeps an odd last word alone',()=>{
- assert.deepEqual(wordPair(0,5),{first:0,last:1});assert.deepEqual(wordPair(1,5),{first:0,last:1});
- assert.deepEqual(wordPair(2,5),{first:2,last:3});assert.deepEqual(wordPair(4,5),{first:4,last:4});
+test('the gel is two words wide and slides one word at a time, never past the verse',()=>{
+ assert.deepEqual(wordPair(0,5),{first:0,last:1});assert.deepEqual(wordPair(1,5),{first:1,last:2});
+ assert.deepEqual(wordPair(2,5),{first:2,last:3});assert.deepEqual(wordPair(3,5),{first:3,last:4});
+ assert.deepEqual(wordPair(4,5),{first:3,last:4});assert.deepEqual(wordPair(0,1),{first:0,last:0});
+ for(let n=2;n<8;n++)for(let i=0;i<n;i++){const p=wordPair(i,n);assert.equal(p.last-p.first,1);assert.ok(p.first<=i&&i<=p.last);}
 });
 test('a card alignment from sidecar words drives the same media-time lookup as scripture',()=>{
  const text='Hear this, and put it in your hearts.';

@@ -53,7 +53,7 @@ button{min-height:48px}.scene-notice button{min-width:48px;min-height:48px}.kept
 .reading-stage .reading-verses{position:relative}
 .reading-stage .gel-layer{--gel-ink:#1E6B5E;--gel-tint:#E3F4EF;position:absolute;inset:0;pointer-events:none}
 :root[data-theme=dark] .reading-stage .gel-layer{--gel-ink:#7FD3C2;--gel-tint:#123A33}
-.reading-stage .gel{position:absolute;left:0;top:0;transition:left var(--dur-base) var(--ease-liquid),top var(--dur-fast) var(--ease-liquid),width var(--dur-base) var(--ease-liquid),height var(--dur-base) var(--ease-liquid)}
+.reading-stage .gel{position:absolute;left:0;top:0;transition:left var(--dur-fast) var(--ease-flow),top var(--dur-fast) var(--ease-liquid),width var(--dur-fast) var(--ease-flow),height var(--dur-base) var(--ease-liquid)}
 .reading-stage .gel[hidden]{display:none}
 .reading-stage .gel.freeze{transition:none}
 .reading-stage .gel>*{position:absolute;inset:0;border-radius:var(--r-xs)}

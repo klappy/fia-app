@@ -48,3 +48,19 @@ test('real Berean Mark 1:1-13 sidecar: 13 verses, timed ones word-level, untimed
  // the old duration scroll puts 60 s of a 320 s file at ~19% of the page; the timing puts it at the verse actually being read
  const p=alignmentPosition(a,60);assert(p.verseIndex>=5&&p.verseIndex<=7);
 });
+
+test('every verse of Mark 1:1–13 (Berean) is word-timed: no verse is left without a word highlight', async () => {
+  const {readFileSync} = await import('node:fs');
+  const {assets} = await import('../src/lib/content.js');
+  const side = JSON.parse(readFileSync(new URL('../public/transcripts/0599996af6b15cf55853cfee33d2b4405e5ee95bd9068f297c5b4b4c24284235.words.json', import.meta.url), 'utf8'));
+  const asset = assets['scripture-BereanStandardBible'];
+  const out = alignmentFromSidecar(asset.verses, side, { range: { startSeconds: 4.4, endSeconds: 97.1 }, mapping: { scale: 1, offsetSeconds: 0 } });
+  assert.equal(out.verses.length, 13);
+  const tokens = t => (t.match(/[\p{L}\p{N}]+(?:[’'\-][\p{L}\p{N}]+)*/gu) || []).length;
+  out.verses.forEach((v, i) => {
+    assert.equal(v.highlightMode, 'word', `verse ${asset.verses[i].number} is word-timed`);
+    assert.equal(v.words.length, tokens(asset.verses[i].text), `verse ${asset.verses[i].number} times every word`);
+    v.words.forEach((w, k) => { assert.ok(w.end >= w.start); if (k) assert.ok(w.start >= v.words[k - 1].start); });
+    if (i) assert.ok(v.start >= out.verses[i - 1].end - 0.5, `verse ${asset.verses[i].number} follows ${asset.verses[i - 1].number}`);
+  });
+});

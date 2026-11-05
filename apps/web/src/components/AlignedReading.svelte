@@ -14,7 +14,7 @@
  // A together-list voices one item at a time: the alignment is the one for the item being read.
  let alignment=$derived(asset.list?asset.alignments?.[asset.activeItemId]:asset.alignment);
  let position=$derived(active?leadingPosition(alignment,playback.elapsed):null);
- // The two words the gel covers: the spoken word and its partner (words 0-1, 2-3, ... of a verse).
+ // The two words the gel covers: the spoken word and its partner (n and n+1, sliding one word at a time).
  let pair=$derived(position&&position.wordIndex>=0?wordPair(position.wordIndex,alignment.verses[position.verseIndex].words.length):null);
  const scrollKeys=new Set(['ArrowUp','ArrowDown','PageUp','PageDown','Home','End',' ']);
  function explore(){scroller?.stop();if(viewport?.scrollHeight>viewport?.clientHeight){if(following&&active)viewport.scrollTo({top:viewport.scrollTop,behavior:'instant'});lastScrollTarget=null;following=false;}}
@@ -65,7 +65,7 @@
   const at=i=>viewport?.querySelector(`[data-align-word="${position.verseIndex}-${i}"]`);
   const word=SCRIPTURE_WORD_HIGHLIGHT&&active&&position&&position.wordIndex>=0&&pair?at(position.wordIndex):null;
   if(!word){gel.hidden=true;gelY=null;return;}
-  // Two words at a time; a pair that wraps keeps the gel on the line of the word being spoken.
+  // Two words wide, sliding one word at a time; a pair that wraps keeps the gel on the line of the word being spoken.
   const one=wordRect(word),a=wordRect(at(pair.first)||word),z=wordRect(at(pair.last)||word);
   const r=Math.abs(a.top-z.top)<=2?{left:a.left,top:a.top,width:z.right-a.left,height:a.height}:{left:one.left,top:one.top,width:one.width,height:one.height};
   const b=gelLayer.getBoundingClientRect(),x=r.left-b.left-4,y=r.top-b.top-1,w=r.width+8,h=r.height+2;

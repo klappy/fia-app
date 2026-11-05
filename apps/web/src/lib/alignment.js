@@ -81,9 +81,10 @@ export const HIGHLIGHT_LEAD_SECONDS = 0.25;
 export function leadingPosition(alignment, elapsed, lead = HIGHLIGHT_LEAD_SECONDS) {
   return alignmentPosition(alignment, elapsed + lead) ?? alignmentPosition(alignment, elapsed);
 }
-/** The gel marks two words at a time (smoother than one): words 0-1, 2-3, ... of a verse. Returns the pair's first and last word index. */
+/** The gel is two words wide and slides one word at a time: the spoken word and the next (n+n+1, then n+1+n+2). On a verse's last word it
+ * keeps the final two words instead of reaching past the verse. Returns the window's first and last word index. */
 export function wordPair(wordIndex, wordCount) {
-  const first = wordIndex - (wordIndex % 2);
+  const first = Math.max(0, Math.min(wordIndex, wordCount - 2));
   return { first, last: Math.min(wordCount - 1, first + 1) };
 }
 

@@ -139,7 +139,7 @@ it('a separate list item shows its ordinal before its text',async()=>{
  expect(document.querySelector('.list-ordinal').textContent).toBe('2.');expect(screen.getByRole('region').textContent).toContain('2. What do you like?');
 });
 const marked=()=>[...document.querySelectorAll('[data-align-word][data-active="true"]')].map(n=>n.getAttribute('data-align-word'));
-it('marks two words at a time and leads the voice by a quarter second',async()=>{
+it('marks a two-word window and leads the voice by a quarter second',async()=>{
  const word=asset.alignment.verses[4].words[12];
  // Word 12 begins at `time`; a quarter second early the gel is already on it, together with its partner word 13.
  render(AlignedReading,{asset,playback:playback(time-0.24)});await tick();
@@ -147,10 +147,10 @@ it('marks two words at a time and leads the voice by a quarter second',async()=>
  cleanup();render(AlignedReading,{asset,playback:playback(time-0.24+Math.max(0,asset.alignment.verses[4].words[13].end-word.start))});await tick();
  expect(marked().length).toBeLessThanOrEqual(2);
 });
-it('an odd word pairs with the word before it, not the next pair',async()=>{
- const word=asset.alignment.verses[4].words[13];
- render(AlignedReading,{asset,playback:playback(word.start-0.24)});await tick();
- expect(marked()).toEqual(['4-12','4-13']);
+it('the window slides one word at a time: n+n+1, then n+1+n+2',async()=>{
+ const w=asset.alignment.verses[4].words;
+ render(AlignedReading,{asset,playback:playback(w[13].start-0.24)});await tick();
+ expect(marked()).toEqual(['4-13','4-14']);
 });
 it('a guide card with an alignment gets the same inline gel and no separate popup',async()=>{
  const text='Hear this, and put it in your hearts.';
