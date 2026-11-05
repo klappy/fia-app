@@ -20,6 +20,14 @@
   const bottom=scene?.querySelector('.scene-glass-bottom')?.getBoundingClientRect().top;
   return clearReadingRect(rect,top??rect.top,bottom??rect.bottom);
  }
+ // The clear area as the band leaves it without a raised notice; a dismissible notice must not open a reading-centre void.
+ function bandViewport(){
+  const rect=viewport.getBoundingClientRect(),scene=viewport.closest('.scene'),glass=scene?.querySelector('.scene-glass-top');
+  const band=glass?parseFloat(getComputedStyle(glass).scrollMarginTop):NaN;
+  if(!glass||!Number.isFinite(band)||band<=0)return clearViewport();
+  const bottom=scene.querySelector('.scene-glass-bottom')?.getBoundingClientRect().top;
+  return clearReadingRect(rect,glass.getBoundingClientRect().top+band,bottom??rect.bottom);
+ }
  function follow(){following=true;lastScrollTarget=null;scrollToReading();}
  function scrollToReading(){
   if(!viewport)return;
@@ -60,7 +68,7 @@
     const style=paragraph?getComputedStyle(paragraph):null;
     const lineHeight=parseFloat(style?.lineHeight)||((parseFloat(style?.fontSize)||24)*1.6);
     const headingHeight=paragraph?Math.max(0,paragraph.getBoundingClientRect().top-body.getBoundingClientRect().top):0;
-    edgeSpace=readingEdgeSpace(clearViewport().height||viewport.clientHeight,body.scrollHeight,lineHeight,headingHeight);
+    edgeSpace=readingEdgeSpace(bandViewport().height||viewport.clientHeight,body.scrollHeight,lineHeight,headingHeight);
    }
    lastScrollTarget=null;revision++;
   };

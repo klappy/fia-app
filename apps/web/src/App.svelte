@@ -312,6 +312,9 @@
  // Recording runs first, so a notice raised in the same update as a passage or screen change belongs to the new one.
  let noticeText=$derived(notice||(!online?(saved?'Offline · session saved':'You’re offline'):preparationNotice||(updateNotice?'Update available. This video still plays.':''))),raisedNotice=$state.raw(null);
  let noticeInSheet=$derived(!!sheet&&!!raisedNotice?.sheet);
+ // A notice over the stage grows the top band by its measured height, so it never covers the stage's words (app.css .notice-raised).
+ let noticeHeight=$state(0),noticeOnStage=$derived(!!noticeText&&!noticeInSheet&&noticeHeight>0);
+ function measureNotice(node){const read=()=>{noticeHeight=node.offsetHeight;};read();const observer=typeof ResizeObserver==='function'?new ResizeObserver(read):null;observer?.observe(node);return{destroy(){observer?.disconnect();}};}
  $effect.pre(()=>{notice;const text=noticeText;untrack(()=>{raisedNotice=text?noticeScope(text,{pack:selectedPack,activityId:activity?.id,sheet,playing:isPlaying||!!videoSizeNotice&&text===videoSizeNotice}):null;});});
  $effect.pre(()=>{const now={pack:selectedPack,activityId:activity?.id,sheet,playing:isPlaying};untrack(()=>{if(!raisedNotice||!noticeEnded(raisedNotice,now))return;if(notice&&raisedNotice.text===notice)notice='';else raisedNotice=noticeScope(raisedNotice.text,now);});});
  
@@ -587,9 +590,9 @@
 
 <svelte:head><title>FIA Guide</title></svelte:head>
 
-{#snippet noticeBar()}<div class="scene-notice" class:sheet-notice={noticeInSheet} role="status" data-kind={raisedNotice?.kind}><span>{noticeText}</span>{#if !notice&&online&&!preparationNotice&&updateNotice}<button class="quiet" onclick={()=>{persist();location.reload();}}>Reload</button>{/if}<button aria-label="Dismiss notice" onclick={()=>{if(!notice&&online&&!preparationNotice&&updateNotice){updateNotice=false;updateDismissed=true;}notice='';preparationDismissed=currentPreparation?.event??null;dismissedExecutionNotice=executionNoticeKey;}}><X size={15}/></button></div>{/snippet}
+{#snippet noticeBar()}<div class="scene-notice" class:sheet-notice={noticeInSheet} use:measureNotice role="status" data-kind={raisedNotice?.kind}><span>{noticeText}</span>{#if !notice&&online&&!preparationNotice&&updateNotice}<button class="quiet" onclick={()=>{persist();location.reload();}}>Reload</button>{/if}<button aria-label="Dismiss notice" onclick={()=>{if(!notice&&online&&!preparationNotice&&updateNotice){updateNotice=false;updateDismissed=true;}notice='';preparationDismissed=currentPreparation?.event??null;dismissedExecutionNotice=executionNoticeKey;}}><X size={15}/></button></div>{/snippet}
 
-<main class="scene" class:immersive style={`--reading-scale:${scale}`} use:swipeNavigation={()=>({identity:`${swipeGeneration}:${selectionGeneration}:${selectedPack.id}:${activity.id}:${inTransition}:${JSON.stringify(session.detour)}`,blocked:!!sheet||immersive||selectionPending,next:!finished&&!session.detour,back:!!session.detour||session.index!==0||finished,navigate:direction=>navigate({type:direction==='next'?'CONTINUE':'BACK'},direction==='next')})}>
+<main class="scene" class:immersive class:notice-raised={noticeOnStage} style={`--reading-scale:${scale}${noticeOnStage?`;--notice-height:${noticeHeight}px`:''}`} use:swipeNavigation={()=>({identity:`${swipeGeneration}:${selectionGeneration}:${selectedPack.id}:${activity.id}:${inTransition}:${JSON.stringify(session.detour)}`,blocked:!!sheet||immersive||selectionPending,next:!finished&&!session.detour,back:!!session.detour||session.index!==0||finished,navigate:direction=>navigate({type:direction==='next'?'CONTINUE':'BACK'},direction==='next')})}>
  <div class="scene-glass scene-glass-top" aria-hidden="true"></div>
  <div class="scene-glass scene-glass-bottom" aria-hidden="true"></div>
  {#if finished}
