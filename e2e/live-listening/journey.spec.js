@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import {verifyPreparedRecording} from '../../apps/web/src/lib/prepared-audio.js';
 import {preparationIdentity} from '../../apps/web/src/lib/preparation-intent.js';
 import {scriptureBinding} from '../../scripts/live-listening/scripture-binding.mjs';
+import {oggOpusToWebm} from '../../apps/web/src/lib/opus-webm.js';
 import {assertPlayback,assertReplayRestart} from '../../scripts/live-listening/assert-observation.mjs';
 const registry=JSON.parse(readFileSync(new URL('../../apps/web/public/content/registry.json',import.meta.url)));
 const pinnedPack=registry.packs.find(p=>p.id==='eng.MRK-1-14-20');
@@ -20,13 +21,17 @@ const controls=page=>page.getByRole('navigation',{name:'Session controls'});
 // Language and Passages live in the overview sheet, opened from the bar (fb-03 S3); the rest stay in the menu.
 async function menu(page,name){if(name==='Language'||name==='Passages'){await page.getByRole('button',{name:'Session progress: open section overview',exact:true}).click();await page.getByRole('button',{name:new RegExp('^'+name)}).click();return;}await page.getByRole('button',{name:'More options',exact:true}).click();await page.getByRole('button',{name,exact:true}).click();}
 async function setting(page,name,value){await menu(page,'Settings');await page.getByRole('checkbox',{name:new RegExp(name)}).setChecked(value);await page.getByRole('button',{name:'Close',exact:true}).click();}
+// The app plays a ranged Ogg Opus clip as the same packets in WebM (#333). While online, fetch each reviewed passage-only Scripture file
+// from the delivery the service worker itself uses (sw.js accepts only https://transcode.klappy.dev/audio/...), require its manifest
+// length and sha256, and record the sha256 of its exact remux for the binding.
+async function scriptureRemux(page,manifest){const out={};for(const root of manifest.files.filter(f=>f.scriptureAssetId==='scripture-BereanStandardBible'&&f.scripturePlaybackMode==='passage-only'))for(const f of [root,...Object.values(root.variants||{})]){if(out[f.sha256])continue;const url=new URL(f.deliveryURL);expect(url.origin==='https://transcode.klappy.dev'&&url.pathname.startsWith('/audio/')&&!url.username&&!url.password&&!url.hash,`reviewed Scripture delivery ${f.deliveryURL}`).toBe(true);const r=await page.request.get(url.href);expect(r.ok(),`reviewed Scripture file ${f.path}`).toBe(true);const bytes=new Uint8Array(await r.body());expect({bytes:bytes.length,sha256:sha(bytes)}).toEqual({bytes:f.bytes,sha256:f.sha256});out[f.sha256]=/ogg/i.test(f.mime||'')?sha(oggOpusToWebm(bytes)):f.sha256;}return out;}
 async function audioSnapshot(page){return page.evaluate(()=>window.__fiaNativeAudio.map(a=>({src:a.currentSrc,time:a.currentTime,paused:a.paused,readyState:a.readyState})));}
 async function playing(page){await expect.poll(async()=>{const a=await audioSnapshot(page);return a.some(x=>!x.paused&&x.readyState>=2);},{timeout:45000,message:'Listening outcome requires actual native playback; unavailable is a failure'}).toBe(true);const before=await audioSnapshot(page);await expect.poll(async()=>{const after=await audioSnapshot(page);return after.some((a,i)=>!a.paused&&a.src===before[i]?.src&&a.time-before[i].time>=0.25);},{timeout:10000}).toBe(true);const after=await audioSnapshot(page),current=await progress(page),unit=presentation.activities.find(a=>a.id===current.activityId);
  const blobs=await page.evaluate(async()=>{await Promise.all(window.__fiaBlobPromises);return window.__fiaBlobHashes;});
  let expected,binding;
  if(unit.kind==='scripture'){
   const active=after.filter(a=>!a.paused);expect(active).toHaveLength(1);
-  expected=scriptureBinding({manifest:evidence.scriptureManifest,pack:presentation,descriptor:pinnedPack,activityId:unit.id,blobSha256:blobs[active[0].src]});binding=expected;
+  expected=scriptureBinding({manifest:evidence.scriptureManifest,pack:presentation,descriptor:pinnedPack,activityId:unit.id,blobSha256:blobs[active[0].src],remuxSha256:evidence.scriptureRemux});binding=expected;
  }else{
   const status=evidence.ready.findLast(s=>s.result?.presentationRevision===pinnedPack.revision&&s.result?.packId===packId&&s.result?.activities?.some(a=>a.activityId===unit.id&&a.sourceTextSha256===sha(unit.sourceText)));
   expect(status,'No authoritative current-unit media binding; cannot certify listening').toBeTruthy();
@@ -81,7 +86,7 @@ test('P2 automatic Begin and Next preserve first unit and advance native audio',
  await next(page);expect((await progress(page)).activityId).toBe('S01-U002');evidence.nativePlayback.push(await playing(page));evidence.claims.nextPlayed=true;
 });
 test('P2 Scripture ON must deliver actual BSB playback',async({page})=>{
- const response=await page.request.get(`/offline/${packId}.json`);expect(response.ok()).toBe(true);const bytes=await response.body();const local=readFileSync(new URL(`../../dist/offline/${packId}.json`,import.meta.url));expect(sha(bytes)).toBe(sha(local));evidence.scriptureManifest=JSON.parse(bytes);
+ const response=await page.request.get(`/offline/${packId}.json`);expect(response.ok()).toBe(true);const bytes=await response.body();const local=readFileSync(new URL(`../../dist/offline/${packId}.json`,import.meta.url));expect(sha(bytes)).toBe(sha(local));evidence.scriptureManifest=JSON.parse(bytes);evidence.scriptureRemux=await scriptureRemux(page,evidence.scriptureManifest);
  await setting(page,'Automatic guide narration',false);await setting(page,'Automatic Scripture reading',true);
  await tapPrimary(page,'Continue');await tapPrimary(page,'Continue');await expect(page.locator('.reading-verses')).toContainText('After the arrest of John');expect((await progress(page)).activityId).toBe('S01-U002-reading-1');evidence.nativePlayback.push(await playing(page));evidence.claims.scripturePlayed=true;
 });
@@ -99,7 +104,7 @@ test('P2 warm Replay restarts the current guide recording',async({page})=>{
 test('P2 saved Scripture plays after isolated offline reload',async({page,context})=>{
  // The config's whole-test timeout would cut the ruled save deadline short; add exactly that deadline, finitely.
  test.setTimeout(test.info().timeout+COLD_SAVE_DEADLINE_MS);
- const response=await page.request.get(`/offline/${packId}.json`);expect(response.ok()).toBe(true);const bytes=await response.body();expect(sha(bytes)).toBe(sha(readFileSync(new URL(`../../dist/offline/${packId}.json`,import.meta.url))));evidence.scriptureManifest=JSON.parse(bytes);
+ const response=await page.request.get(`/offline/${packId}.json`);expect(response.ok()).toBe(true);const bytes=await response.body();expect(sha(bytes)).toBe(sha(readFileSync(new URL(`../../dist/offline/${packId}.json`,import.meta.url))));evidence.scriptureManifest=JSON.parse(bytes);evidence.scriptureRemux=await scriptureRemux(page,evidence.scriptureManifest);
  await setting(page,'Automatic guide narration',false);await setting(page,'Automatic Scripture reading',true);await menu(page,'Downloads');await page.getByRole('radio',{name:'Text and audio',exact:true}).check();const saveStartedAt=Date.now();await page.getByRole('button',{name:'Download selection',exact:true}).click();await expect(page.getByText(/Saved · Text and audio/)).toBeVisible({timeout:Math.max(1,COLD_SAVE_DEADLINE_MS-(Date.now()-saveStartedAt)),message:`Saved · Text and audio must appear within one ${COLD_SAVE_DEADLINE_MS/1000}s harness deadline measured from the save action`});await page.getByRole('button',{name:'Close',exact:true}).click();
  const before=await progress(page);await context.setOffline(true);try{await restoreSavedScreen(page,before,{offline:true});evidence.offline={savedVerified:true,...await page.evaluate(()=>({navigatorOnline:navigator.onLine,serviceWorkerControlled:!!navigator.serviceWorker.controller,loadedCommit:document.querySelector('meta[name="fia-source-commit"]')?.content})),scope:'Fresh setup; isolated browser offline simulation, not physical network disconnection or cross-release migration'};
  await tapPrimary(page,'Continue');await tapPrimary(page,'Continue');evidence.nativePlayback.push(await playing(page));evidence.claims.offlineScripture=true;
