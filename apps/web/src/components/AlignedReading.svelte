@@ -49,6 +49,28 @@
   const top=followScrollTop(clearViewport(),target.getBoundingClientRect(),viewport.scrollTop,viewport.scrollHeight);
   if(top!==null&&(lastScrollTarget===null||Math.abs(top-lastScrollTarget)>=1)){lastScrollTarget=top;scroller?.to(top,reducedMotion);}
  }
+ // Gel highlight (cookbook PR #276, S29): an aria-hidden overlay positioned from the active word's Range rect. The text is never touched.
+ let gel,gelLayer,gelY=null;
+ function wordRect(word){
+  const range=typeof document.createRange==='function'?document.createRange():null;
+  if(range){range.selectNodeContents(word);const rect=range.getClientRects?.()[0];if(rect)return rect;}
+  return word.getBoundingClientRect();
+ }
+ function placeGel(){
+  if(!gel||!gelLayer)return;
+  const word=SCRIPTURE_WORD_HIGHLIGHT&&active&&position&&position.wordIndex>=0?viewport?.querySelector(`[data-align-word="${position.verseIndex}-${position.wordIndex}"]`):null;
+  if(!word){gel.hidden=true;gelY=null;return;}
+  const r=wordRect(word),b=gelLayer.getBoundingClientRect(),x=r.left-b.left-4,y=r.top-b.top-1,w=r.width+8,h=r.height+2;
+  const put=(left,width)=>{gel.style.left=`${left}px`;gel.style.top=`${y}px`;gel.style.width=`${width}px`;gel.style.height=`${h}px`;};
+  const jump=gel.hidden||gelY===null||Math.abs(y-gelY)>2;
+  if(jump){
+   // First word or a line change: collapse and re-grow from the line start, no vertical slide through the text.
+   gel.classList.add('freeze');gel.hidden=false;put(x,0);void gel.offsetWidth;gel.classList.remove('freeze');
+   gel.classList.toggle('cut-l',gelY!==null);
+  }else gel.classList.remove('cut-l');
+  put(x,w);gelY=y;
+ }
+ $effect(()=>{position;revision;ready;active;if(ready)untrack(placeGel);});
  $effect(()=>{resourceId;scroller?.stop();lastScrollTarget=null;following=true;if(viewport)viewport.scrollTop=0;});
  $effect(()=>{
   // Recheck on clock ticks, layout/text-size changes and pause/resume. Reading progress
@@ -72,7 +94,7 @@
    }
    lastScrollTarget=null;revision++;
   };
-  measure();
+  measure();document.fonts?.ready?.then(()=>revision++);
   const observer=typeof ResizeObserver!=='undefined'?new ResizeObserver(measure):null;
   if(viewport)observer?.observe(viewport);if(body)observer?.observe(body);
   viewport.closest('.scene')?.querySelectorAll('.scene-glass').forEach(frame=>observer?.observe(frame));
@@ -93,6 +115,7 @@
   <p aria-current={position?.verseIndex===i?'true':undefined}>{#if i===0&&asset.ordinal}<span class="list-ordinal">{asset.ordinal}.</span>{" "}{/if}{#if verse.number}<sup>{verse.number}</sup>{/if}{#each alignedSegments(verse.text,asset.alignment?.verses[i]?.words) as segment}{#if segment.wordIndex!==undefined}<span data-align-word={`${i}-${segment.wordIndex}`} data-active={SCRIPTURE_WORD_HIGHLIGHT&&position?.verseIndex===i&&position.wordIndex===segment.wordIndex?'true':undefined}>{segment.text}</span>{:else}{segment.text}{/if}{/each}</p>
  {/each}
  {/if}
+ <div class="gel-layer" aria-hidden="true" bind:this={gelLayer}><div class="gel" bind:this={gel} hidden><i class="gel-tint"></i><i class="gel-chrome"></i></div></div>
  </div>
 </div>
 {#if active&&!following}<button class="follow-reading" onclick={follow}>Follow reading</button>{/if}
