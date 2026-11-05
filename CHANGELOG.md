@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.0.0-alpha.21 — Unavailable pictures keep their words; guide audio and notice repairs (2026-11-05)
+
+At a picture or map that cannot be shown, the step's own guide words stay on the stage and a short card says the picture or map is unavailable and that you can continue (PR318 train N, with PR321). Mark 1:14–20 S02-U008 receives the reviewed trusted placement, and the client accepts the closed visual contract while keeping Saved state when an older server refuses it (PR283, PR287). A stage notice now grows the top band instead of covering the stage title, credit or first guide line (PR330). Each Passages card's button carries its passage name for assistive technology (PR326). Ranged guide clips play their Ogg Opus packets as WebM, with a measured tail of up to 0.5 s, so the last word is not cut off (PR333). Saved-snapshot artifacts are fetched with bounded concurrency (PR323). See the [release scope and limits](release/changes/3.0.0-alpha.21-summit-candidate.md).
+
+Known gaps: no visual bytes are delivered (images and maps still show the unavailable state). The Spanish `[ES needed]` label and the opt-in machine-translation control are not in the UI; PR328 and PR329 add only the data layer, default OFF, with nothing importing it at runtime. The PR333 tail fix is not verified on an iPhone. Physical-device, audible and whole-corpus acceptance are not part of this release.
+
 ## 3.0.0-alpha.20 — Text-first word meanings (2026-10-29)
 
 In text-first or no-recording use, Continue now shows the term's definition on the same step before moving on. The term instruction no longer disappears when recordings are removed for offline Text-only use. The English verified-source headword labels are improved and the Spanish baseline labels are kept (PR265). This release also carries the server-side visual-original fetch-and-store already on main (PR284): it is custody-only, the decoder is unavailable, and no image or map is shown or delivered. See the [release scope and limits](release/changes/3.0.0-alpha.20-term-text-first.md).
