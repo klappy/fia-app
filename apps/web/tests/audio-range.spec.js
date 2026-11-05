@@ -87,6 +87,23 @@ for(const offline of [false,true])it(`uses verified ${offline?'offline':'online'
  expect(Number(circle.getAttribute('stroke-dashoffset'))/circumference).toBeCloseTo(1-11/129);
  expect(currentVerse()).toBe(1);expect(document.querySelectorAll('[data-align-word]').length).toBe(0);
 });
+it('tracks a downloaded WebM clip as the playing blob (offline mediaBlob): overlay follows it and release keeps the saved URL',async()=>{
+ const ogg=new Uint8Array(readFileSync(resolve(process.cwd(),'../../tests/web-shell/fixtures/guide-clip-10s.ogg'))),sha=createHash('sha256').update(ogg).digest('hex');
+ const file={...officialFixture(),mime:'audio/ogg',bytes:ogg.length,sha256:sha};file.scriptureAlignment.audioSha256=sha;
+ const revoked=[];vi.stubGlobal('URL',class extends URL{static createObjectURL(){return 'blob:saved';}static revokeObjectURL(u){revoked.push(u);}});
+ vi.spyOn(HTMLMediaElement.prototype,'canPlayType').mockReturnValue('maybe');
+ vi.stubGlobal('fetch',vi.fn(async()=>({ok:true,arrayBuffer:async()=>ogg.buffer.slice(ogg.byteOffset,ogg.byteOffset+ogg.byteLength)})));
+ libraryAdapter.downloadStatus.mockResolvedValue({saved:true,active:{manifest:{presentationRevision:bundledPack.revision,files:[file]},files:[file]}});libraryAdapter.mediaStatus.mockResolvedValue({deliveryRevision:null,files:[]});
+ await mountScripture();await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();await later();
+ expect(audio.play).toHaveBeenCalledWith(expect.any(String),'blob:saved',1,file.playbackRange,expect.any(String));
+ audio.state({src:'blob:saved',elapsed:111,duration:400,progressElapsed:11,progressDuration:129,playing:true});await settle();
+ // The controller reports the blob URL (mediaBlob === dSrc maps it to the logical path); the overlay and arc follow it.
+ expect(currentVerse()).toBe(1);
+ const circle=document.querySelector('.playback-arc'),circumference=Number(circle.getAttribute('stroke-dasharray'));
+ expect(Number(circle.getAttribute('stroke-dashoffset'))/circumference).toBeCloseTo(1-11/129);
+ // Leaving the clip releases the held playback URL, but a saved blob stays reusable for Replay.
+ await fireEvent.click(screen.getByRole('button',{name:'Skip to next activity'}));await settle();expect(revoked).not.toContain('blob:saved');
+});
 it('clears Scripture overlay on navigation before returning to the same recording',async()=>{
  const file=officialFixture();libraryAdapter.mediaStatus.mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[file]});vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({...file,bytes:new Uint8Array(3)});
  await mountScripture();await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();
