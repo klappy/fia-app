@@ -41,7 +41,7 @@ export function validateScriptureAlignment(a,{audioSha256,duration,assetId}={}){
 }
 export function validateScriptureRangeOnlyEntry(entry){
  videoKeys(entry.scriptureRangeOnly,'ledgerEntryId,assetId');const r=entry.scriptureRangeOnly;
- if(typeof r.ledgerEntryId!=='string'||!r.ledgerEntryId||typeof r.assetId!=='string'||!/^[A-Za-z0-9_-]+$/.test(r.assetId)||entry.scriptureReplacement||entry.scriptureAlignment||entry.audioReplacement||entry.logicalSource||entry.scripturePlaybackMode!=='passage-only'||entry.scriptureHighlighting!=='disabled'||entry.delivery?.kind!=='audio')throw Error('Invalid range-only Scripture admission.');
+ if(typeof r.ledgerEntryId!=='string'||!r.ledgerEntryId||typeof r.assetId!=='string'||!/^[A-Za-z0-9_-]+$/.test(r.assetId)||entry.scriptureReplacement||entry.scriptureAlignment||entry.audioReplacement||entry.logicalSource||entry.scripturePlaybackMode!=='passage-only'||!['disabled','enabled'].includes(entry.scriptureHighlighting)||entry.delivery?.kind!=='audio')throw Error('Invalid range-only Scripture admission.');
  const check=e=>{validatePlaybackRange(e.playbackRange,e.delivery.duration);if(!sha.test(e.rangeReviewSha256)||e.timing?.status!=='verified'||e.timing.sourceAudioSha256!==entry.source.sha256||e.timing.deliveryAudioSha256!==e.delivery.sha256||!e.timing.mapping||!Number.isFinite(e.timing.mapping.scale)||e.timing.mapping.scale<=0||!Number.isFinite(e.timing.mapping.offsetSeconds)||!sha.test(e.timing.mappingEvidenceSha256)||e.scriptureAlignment||e.timing.alignmentSha256!==undefined||e.timing.alignment!==undefined)throw Error('Invalid range-only Scripture clock or review.');};check(entry);for(const v of Object.values(entry.variants||{}))check(v);
 }
 export function validateScriptureAudioEntry(entry){
@@ -122,7 +122,8 @@ export function validateDelivery(sidecar,identity){
   if(t.status==='verified'){
    if(t.sourceAudioSha256!==s.sha256||t.deliveryAudioSha256!==d.sha256||(t.alignmentSha256!==undefined&&!sha.test(t.alignmentSha256))||!t.method||!t.evidence)throw Error('Media timing identity does not match.');
    if(t.mapping&&(!Number.isFinite(t.mapping.scale)||t.mapping.scale<=0||!Number.isFinite(t.mapping.offsetSeconds)))throw Error('Invalid media time mapping.');
-   if(t.alignment)throw Error('Calibrated alignment delivery is not supported by this adapter yet.');
+   // Captain override Nov 4 2026 (#324): a declared alignment is no longer rejected outright. It must be pinned (alignmentSha256); the word sidecar stays the canonical timing source.
+   if(t.alignment&&(typeof t.alignment!=='object'||!sha.test(t.alignmentSha256)))throw Error('Declared media alignment must be pinned by alignmentSha256.');
   }
   seen.add(e.path);
  }return sidecar;
