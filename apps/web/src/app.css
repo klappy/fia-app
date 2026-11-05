@@ -353,5 +353,9 @@ button:enabled:active { translate: 0 0; scale: var(--press-scale); opacity: .86;
 @media(max-height:680px){.resource-visual.visual-unavailable>.media-error.media-status{aspect-ratio:auto;width:min(100% - 52px,676px);padding:10px 14px;margin:8px auto 4px}}
 /* Very short stages (a landscape phone with the chrome showing, 844x390): the words' floor drops to about two lines or a quarter
    of the stage (they still scroll by keyboard) and the card tightens to one compact line, so both fit above the controls. */
-@media(max-height:480px){.resource-visual.visual-unavailable>.unavailable-words{min-height:min(3.2em,25%);min-height:min(2lh,25%)}.resource-visual.visual-unavailable>.media-error.media-status{padding:6px 12px;margin:4px auto 2px;font-size:14px;line-height:1.35}}
+@media(max-height:480px){.resource-visual.visual-unavailable>.unavailable-words{min-height:min(3.2em,25%);min-height:min(2lh,25%)}.resource-visual.visual-unavailable>.media-error.media-status{padding:6px 12px;margin:4px auto 2px;font-size:14px;line-height:1.35}
+ /* A raised stage notice (#330) takes about 70px more of an already very short stage: the words give up their floor (they still
+    scroll by keyboard) so the card stays above the controls. Disclosed for design acceptance. */
+ .scene.notice-raised .resource-visual.visual-unavailable>.unavailable-words{min-height:0}
+ .scene.notice-raised .resource-visual.visual-unavailable>.media-error.media-status{margin:2px auto 0}}
 
