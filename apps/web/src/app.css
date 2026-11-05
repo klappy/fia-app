@@ -335,3 +335,6 @@ button:enabled:active { translate: 0 0; scale: var(--press-scale); opacity: .86;
 /* Short stages (landscape phones, 390x560): the card drops its placeholder aspect and shrinks to its text, full width,
    so it never runs under the bottom controls and never scrolls; the step words keep their floor. */
 @media(max-height:680px){.resource-visual.visual-unavailable>.media-error.media-status{aspect-ratio:auto;width:min(100% - 52px,676px);padding:10px 14px;margin:8px auto 4px}}
+/* Very short stages (a landscape phone with the chrome showing, 844x390): the words' floor drops to about two lines or a quarter
+   of the stage (they still scroll by keyboard) and the card tightens to one compact line, so both fit above the controls. */
+@media(max-height:480px){.resource-visual.visual-unavailable>.unavailable-words{min-height:min(2lh,25%)}.resource-visual.visual-unavailable>.media-error.media-status{padding:6px 12px;margin:4px auto 2px;font-size:14px;line-height:1.35}}

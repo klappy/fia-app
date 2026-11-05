@@ -147,17 +147,18 @@ for(const width of [390,1280])for(const dark of [false,true])test('approved refe
  expect(g.bg,'glass scene ground shows through').toBe('rgba(0, 0, 0, 0)');expect(Math.abs(g.ratio-4/3),'4:3 placeholder aspect').toBeLessThan(0.03);
  expect(g.cardH,'bounded status, no void').toBeLessThanOrEqual(Math.min(g.vh*0.32,300)+1);expect(g.cardTop,'words above the card').toBeGreaterThanOrEqual(g.wordsBottom-1);
  await page.getByRole('region',{name:'Step text'}).focus();await page.keyboard.press('Tab');expect(await page.evaluate(()=>!!document.activeElement?.closest('.media-status')),'Tab skips the status region').toBe(false);}if(viewport.width<700){const page=candidate.page;await page.reload();await expect(page.getByRole('region',{name:'Step text'})).toBeVisible();
- // Short phones and large text: the step words keep a floor (about four lines, or 40% of the stage when smaller); the status card shrinks first.
- for(const [height,scale] of [[640,1],[560,1],[640,1.5]]){await page.setViewportSize({width:viewport.width,height});await page.evaluate(s=>document.querySelector('main.scene').style.setProperty('--reading-scale',String(s)),scale);await page.waitForTimeout(50);
+ // Short phones, landscape (844x390 with the chrome showing) and large text: the step words keep a floor (about four lines or 40% of the stage;
+ // about two lines or 25% on stages 480px tall or less); the status card shrinks first and always ends above the controls.
+ for(const [width,height,scale] of [[viewport.width,640,1],[viewport.width,560,1],[viewport.width,640,1.5],[844,390,1],[844,390,1.5]]){await page.setViewportSize({width,height});await page.evaluate(s=>document.querySelector('main.scene').style.setProperty('--reading-scale',String(s)),scale);await page.waitForTimeout(50);
   const m=await page.evaluate(()=>{const stage=document.querySelector('.media-stage.visual-unavailable'),words=stage.querySelector('.unavailable-words'),scroll=words.querySelector('.scripture-scroll'),card=stage.querySelector('.media-status'),cs=getComputedStyle(stage),avail=stage.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom),line=parseFloat(getComputedStyle(words.querySelector('p')).lineHeight);return {avail,words:scroll.getBoundingClientRect().height,content:scroll.scrollHeight,card:card.getBoundingClientRect().height,line};});
-  const floor=Math.min(4*m.line,0.4*m.avail,m.content);
-  expect(m.words,`words keep their floor at ${viewport.width}x${height} scale ${scale}`).toBeGreaterThanOrEqual(floor-2);
-  expect(m.card,`status card stays within its share at ${viewport.width}x${height} scale ${scale}`).toBeLessThanOrEqual(Math.max(0,m.avail-m.words)+1);
+  const floor=height<=480?Math.min(2*m.line,0.25*m.avail,m.content):Math.min(4*m.line,0.4*m.avail,m.content);
+  expect(m.words,`words keep their floor at ${width}x${height} scale ${scale}`).toBeGreaterThanOrEqual(floor-2);
+  expect(m.card,`status card stays within its share at ${width}x${height} scale ${scale}`).toBeLessThanOrEqual(Math.max(0,m.avail-m.words)+1);
   // The card never becomes a scroll container (so never an unnamed keyboard stop) and its text stays whole.
   const card=await page.evaluate(()=>{const c=document.querySelector('.media-status');return {scroll:c.scrollHeight-c.clientHeight,overflow:getComputedStyle(c).overflowY};});
-  expect(card.scroll,`status card does not scroll at ${viewport.width}x${height} scale ${scale}`).toBeLessThanOrEqual(1);expect(card.overflow).toBe('visible');
+  expect(card.scroll,`status card does not scroll at ${width}x${height} scale ${scale}`).toBeLessThanOrEqual(1);expect(card.overflow).toBe('visible');
   const fit=await page.evaluate(()=>{const stage=document.querySelector('.media-stage.visual-unavailable'),cs=getComputedStyle(stage),r=stage.getBoundingClientRect(),c=stage.querySelector('.media-status').getBoundingClientRect(),bar=document.querySelector('.scene-controls')?.getBoundingClientRect();return {cardBottom:c.bottom,stageBottom:r.bottom-parseFloat(cs.paddingBottom),controlsTop:bar?bar.top:Infinity};});
-  expect(fit.cardBottom,`status card stays inside the stage at ${viewport.width}x${height} scale ${scale}`).toBeLessThanOrEqual(Math.min(fit.stageBottom,fit.controlsTop)+1);
+  expect(fit.cardBottom,`status card stays inside the stage at ${width}x${height} scale ${scale}`).toBeLessThanOrEqual(Math.min(fit.stageBottom,fit.controlsTop)+1);
  }}expect(await candidate.page.locator('img[src],video[src],audio[src]').count()).toBe(0);}
    if(state.name==='prepared-online-visual'){await expect.poll(()=>candidate.page.locator('.visual-viewport img').first().evaluate(img=>img.complete&&img.naturalWidth>0)).toBe(true);expect(await candidate.page.evaluate(()=>window.__visualFixtureRequests)).toEqual([pack.assets[pack.activities[state.index].assetId].src]);expect(await candidate.page.locator('video[src],audio[src]').count()).toBe(0);}
    if(state.name==='online-available-initial')await expect(candidate.page.getByRole('button',{name:'Begin',exact:true})).toBeVisible();
