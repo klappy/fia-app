@@ -148,3 +148,11 @@ run('the media clock is reported every animation frame while sound plays, not on
     assert.equal(e.states.length, n, 'a stopped clip is not reported again');
   } finally { if (raf) Object.defineProperty(globalThis, 'requestAnimationFrame', raf); else delete globalThis.requestAnimationFrame; }
 });
+
+run('retain drops idle players of a passed revision and keeps current and kept identities', async e => {
+  e.controller.reserve(['r1|a', 'r1|b', 'saved|x']);
+  assert.equal(e.controller.poolSize, 3);
+  e.controller.reserve(['r2|a']);
+  e.controller.retain(['r2|a'], id => id.startsWith('saved|'));
+  assert.equal(e.controller.poolSize, 2);
+});

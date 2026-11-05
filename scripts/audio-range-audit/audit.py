@@ -28,7 +28,8 @@ for e in man['entries']:
     if not r or e['path'] not in acts or e['delivery']['url'] not in urls: continue
     i = urls.index(e['delivery']['url'])
     try: W = json.load(open(f'{a.words}/{i:02d}.words.json'))['words']
-    except FileNotFoundError: continue
+    except FileNotFoundError:
+        print(f"MISSING ASR evidence {a.words}/{i:02d}.words.json for {e['path']}", file=sys.stderr); bad += 1; continue
     s, t = r['startSeconds'], r['endSeconds']
     exp = norm(acts[e['path']].get('narration') or acts[e['path']].get('sourceText') or '')
     inr = [x for w in W if w['e'] > s + .05 and w['s'] < t - .05 for x in norm(w['w'])]

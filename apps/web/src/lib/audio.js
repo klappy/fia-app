@@ -242,6 +242,15 @@ export function createAudioController(onState, onEnd, onError, { allowSpeechFall
   }
   // Create the idle element for a file before it is needed, so the next tap can unlock it.
   function reserve(identities) { for (const identity of identities) entryFor(identity); }
+  // Drop idle players whose identity is no longer current (a new passage or delivery revision). The playing one and any
+  // identity that keep() accepts are left alone, so a refresh never stops narration that is already running.
+  function retain(identities, keep = () => false) {
+    const current = new Set(identities);
+    for (const [identity, entry] of [...pool]) {
+      if (current.has(identity) || keep(identity) || entry.element === audio) continue;
+      entry.element.pause(); pool.delete(identity);
+    }
+  }
   function evict(identity) {
     const entry = pool.get(identity);
     if (!entry) return;
@@ -269,5 +278,5 @@ export function createAudioController(onState, onEnd, onError, { allowSpeechFall
     }
     return true;
   }
-  return { play, pause, resume, stop, unlock, reserve, evict, seek, get poolSize() { return pool.size; }, get active() { return !!audio || !!utterance; }, get playing() { return speaking; } };
+  return { play, pause, resume, stop, unlock, reserve, retain, evict, seek, get poolSize() { return pool.size; }, get active() { return !!audio || !!utterance; }, get playing() { return speaking; } };
 }
