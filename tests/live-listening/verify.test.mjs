@@ -24,3 +24,11 @@ test('offline and replay receipts require their distinct actual observations',()
 test('every receipt records the elapsed setup switch ms; absent or malformed fails closed',()=>{for(const fn of [e=>delete e.setupSwitch,e=>e.setupSwitch.elapsedMs=null,e=>e.setupSwitch.elapsedMs='3200',e=>e.setupSwitch.elapsedMs=-1,e=>e.setupSwitch.elapsedMs=Infinity]){for(const index of [0,4]){const r=report(),a=r.suites[0].specs[index].tests[0].results[0].attachments[0],e=JSON.parse(Buffer.from(a.body,'base64'));fn(e);a.body=Buffer.from(JSON.stringify(e)).toString('base64');assert.equal(verify(r,opts).ok,false);}}});
 
 test('setup switch over J1 5 s is recorded, not judged by this harness wait',()=>{const r=report();mutate(r,e=>e.setupSwitch.elapsedMs=5400);assert.equal(verify(r,opts).ok,true);});
+// #333: a Scripture sample played as the exact WebM remux must name the remux recorded for that reviewed file.
+test('a remux-played Scripture sample verifies only against the recorded remux of its reviewed file',()=>{
+ const remux='c'.repeat(64);
+ const edit=(r,f)=>{const spec=r.suites[0].specs.find(s=>s.title==='P2 Scripture ON must deliver actual BSB playback'),a=spec.tests[0].results[0].attachments[0],e=JSON.parse(Buffer.from(a.body,'base64'));f(e);a.body=Buffer.from(JSON.stringify(e)).toString('base64');return r;};
+ const played=e=>{for(const s of e.nativePlayback){s.binding={...s.binding,playedSha256:remux,played:'webm-remux'};s.media[0].sha256=remux;}};
+ assert.equal(verify(edit(report(),e=>{played(e);e.scriptureRemux={['a'.repeat(64)]:remux};}),opts).ok,true);
+ for(const remuxMap of [undefined,{},{['a'.repeat(64)]:'d'.repeat(64)}])assert.equal(verify(edit(report(),e=>{played(e);e.scriptureRemux=remuxMap;}),opts).ok,false);
+});
