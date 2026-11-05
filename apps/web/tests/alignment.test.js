@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
-import {alignmentPosition,alignedSegments,followScrollTop} from '../src/lib/alignment.js';
-import {assets} from '../src/lib/content.js';
+import {readFileSync,readdirSync} from 'node:fs';
+import {alignmentPosition,alignedSegments,followScrollTop,leadingPosition,wordPair,activityAlignment,HIGHLIGHT_LEAD_SECONDS} from '../src/lib/alignment.js';
+import {assets,activities} from '../src/lib/content.js';
 const manifest=JSON.parse(readFileSync('public/content/source/audio-manifest.json'));
 const editions=JSON.parse(readFileSync('public/content/source/scripture.json'));
 test('all three imported alignments bind the exact recording, source text and verse offsets',()=>{
@@ -93,7 +93,19 @@ test('glass reading area excludes asymmetric chrome while preserving its clear c
  assert.equal(alignmentPosition(a,69.99),null);
  });
 // Delivered BSB Mark 1:1-13 alignment (schema 2, delivery-media seconds).
-const bsb=JSON.parse(readFileSync('public/content/scripture-alignments/8a69afa1133b2cad7f90cfcd64fdb29bfaba2d84752d0552c896b4c7a651db01.json'));
+const bsb=JSON.parse(readFileSync('public/content/scripture-alignments/c29fc710c84775459d8091aefcb87b7f06cfb3b8fceb05835730b9f639126b7c.json'));
+test('the delivered BSB alignment word-times EVERY verse of Mark 1:1-13 (v4/6/7/8/10 were blank verse-only before)',()=>{
+ assert.deepEqual(bsb.verses.map(v=>v.verse),[1,2,3,4,5,6,7,8,9,10,11,12,13]);
+ for(const v of bsb.verses){
+  assert.equal(v.highlightMode,'word',`verse ${v.verse} is word-timed`);
+  assert.ok(v.words.length>0,`verse ${v.verse} has words`);
+  assert.equal(v.start,v.words[0].start);assert.equal(v.end,v.words.at(-1).end);
+ }
+ // the runtime position walks into verse 4's words (it used to return the verse alone, then nothing)
+ const v4=bsb.verses[3];
+ assert.deepEqual(alignmentPosition(bsb,v4.words[0].start+.01),{verseIndex:3,wordIndex:0});
+ assert.deepEqual(alignmentPosition(bsb,v4.words.at(-1).start+.01),{verseIndex:3,wordIndex:v4.words.length-1});
+});
 test('inside a word gap the last spoken word keeps the line instead of the verse centre',()=>{
  // The four gaps measured to pull the view back: 11.66-12.32, 12.66-12.9, 19.46-19.86, 21.28-21.7 s.
  for(const [from,to] of [[11.66,12.32],[12.66,12.9],[19.46,19.86],[21.28,21.7]]){
@@ -115,4 +127,46 @@ test('reading order never steps back and the current verse stays marked between 
   if(previous)assert.ok(p.verseIndex>previous.verseIndex||p.verseIndex===previous.verseIndex&&p.wordIndex>=previous.wordIndex,`no backward target at ${t.toFixed(2)} s`);
   previous=p;
  }
+});
+
+test('the highlight leads the voice by a quarter second and keeps the last word at the end',()=>{
+ const a=assets['scripture-unfoldingWordSimplified'].alignment;const w=a.verses[4].words[12];
+ assert.equal(HIGHLIGHT_LEAD_SECONDS,0.25);
+ assert.deepEqual(leadingPosition(a,w.start-0.25+0.001),{verseIndex:4,wordIndex:12});
+ assert.deepEqual(leadingPosition(a,w.start-0.25-0.02),alignmentPosition(a,w.start-0.02));
+ const last=a.verses.at(-1);assert.deepEqual(leadingPosition(a,last.end-0.1),alignmentPosition(a,last.end-0.1+0.25)??alignmentPosition(a,last.end-0.1));
+ assert.notEqual(leadingPosition(a,last.end-0.1),null);
+});
+test('the gel is two words wide and slides one word at a time, never past the verse',()=>{
+ assert.deepEqual(wordPair(0,5),{first:0,last:1});assert.deepEqual(wordPair(1,5),{first:1,last:2});
+ assert.deepEqual(wordPair(2,5),{first:2,last:3});assert.deepEqual(wordPair(3,5),{first:3,last:4});
+ assert.deepEqual(wordPair(4,5),{first:3,last:4});assert.deepEqual(wordPair(0,1),{first:0,last:0});
+ for(let n=2;n<8;n++)for(let i=0;i<n;i++){const p=wordPair(i,n);assert.equal(p.last-p.first,1);assert.ok(p.first<=i&&i<=p.last);}
+});
+test('a card alignment from sidecar words drives the same media-time lookup as scripture',()=>{
+ const text='Hear this, and put it in your hearts.';
+ const words=[{from:0,to:4,startMs:1000,endMs:1200},{from:5,to:9,startMs:1300,endMs:1500},{from:11,to:14,startMs:1900,endMs:2000}];
+ const a=activityAlignment(text,words,3000);
+ assert.equal(a.clockDomain,'delivery-media-seconds');assert.equal(a.verses.length,1);
+ assert.equal(alignmentPosition(a,0.5),null);
+ assert.deepEqual(alignmentPosition(a,1.4),{verseIndex:0,wordIndex:1});
+ assert.deepEqual(alignmentPosition(a,1.7),{verseIndex:0,wordIndex:1});
+ assert.deepEqual(alignmentPosition(a,1.95),{verseIndex:0,wordIndex:2});
+ assert.equal(activityAlignment(text,[{from:0,to:99,startMs:0,endMs:1}],1),null,'offsets outside the shown text are refused');
+ assert.equal(activityAlignment(text,[{from:5,to:9,startMs:0,endMs:1},{from:0,to:4,startMs:2,endMs:3}],1),null,'overlapping offsets are refused');
+ assert.equal(activityAlignment('',words,1),null);
+});
+test('every guide activity in the sidecars aligns to its own narration with times that only move forward',()=>{
+ const dir='public/transcripts/';let checked=0;
+ for(const f of readdirSync(dir).filter(n=>n.endsWith('.words.json'))){
+  const t=JSON.parse(readFileSync(dir+f));
+  for(const [id,act] of Object.entries(t.activities||{})){
+   const activity=activities.find(x=>x.id===id);if(!activity?.narration||!act.words?.length)continue;
+   const a=activityAlignment(activity.narration,act.words,act.endMs);
+   assert.ok(a,f+' '+id+' offsets fit the narration');let prev=-1;
+   for(const w of a.verses[0].words){assert.ok(w.start>=prev-1e-9,f+' '+id+' moves forward');prev=w.start;}
+   checked++;
+  }
+ }
+ assert.ok(checked>=6,'checked '+checked);
 });

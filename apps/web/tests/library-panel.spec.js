@@ -101,3 +101,18 @@ it('withholds whole-book writes while retaining explicit per-passage saving and 
  expect(download).toHaveBeenCalledOnce();expect(download.mock.calls[0][2].id).toBe('eng.MRK-1-1-13');
  expect(active.selection).toBe('audio');
 });
+
+it('names each passage card button by its passage so the sheet has no duplicate button names',async()=>{
+ const registry=JSON.parse(readFileSync('public/content/registry.json','utf8'));
+ const packs=['eng.MRK-1-1-13','eng.MRK-1-14-20','eng.MRK-1-21-28'].map(id=>registry.packs.find(p=>p.id===id));
+ vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'eng',nativeName:'English'}]);
+ vi.spyOn(libraryAdapter,'passages').mockResolvedValue(packs);
+ render(LibraryPanel,{view:'passages',selectedPack:packs[0],completed:2,total:5});await settle();await settle();
+ const buttons=screen.getAllByRole('button',{name:/^(Open|Resume) passage: /});
+ const names=buttons.map(b=>b.getAttribute('aria-label'));
+ expect(names).toEqual([`Resume passage: ${packs[0].title}`,`Open passage: ${packs[1].title}`,`Open passage: ${packs[2].title}`]);
+ expect(new Set(names).size).toBe(packs.length);
+ // Visible label is unchanged; the accessible name begins with it (label in name).
+ expect(buttons.map(b=>b.textContent.trim())).toEqual(['Resume passage','Open passage','Open passage']);
+ for(const b of buttons)expect(b.getAttribute('aria-label').startsWith(b.textContent.trim())).toBe(true);
+});

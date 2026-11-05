@@ -1,5 +1,7 @@
 import {test,expect} from '@playwright/test';
 import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {oggOpusToWebm} from '../apps/web/src/lib/opus-webm.js';
 import {activities} from '../apps/web/src/lib/content.js';
 import {seedPassage,saved,downloadSelected} from './helpers.js';
 test('approved manual journey preserves grouped readings and explicit holds through completion',async({page})=>{
@@ -17,11 +19,16 @@ test('explicit Play uses cached verified recording while automatic narration sta
  test.setTimeout(120000);await seedPassage(page,'S01-U002');await downloadSelected(page,'audio');const index=(await saved(page)).index;
  const media=[];context.on('request',r=>{if((new URL(r.url()).origin==='https://transcode.klappy.dev'||/\.(mp3|m4a|wav|ogg|mp4|webm|jpe?g|png|webp)(?:$|\?)/.test(r.url()))&&!r.url().includes('/assets/fia-'))media.push(r.url());});
  await context.setOffline(true);await page.getByRole('button',{name:'Play',exact:true}).click();
- await expect.poll(()=>page.evaluate(()=>window.__verifiedPlayers.at(-1)?.currentTime||0)).toBeGreaterThan(.1);
- const first=await page.evaluate(()=>window.__verifiedPlayers.at(-1).currentTime);await expect.poll(()=>page.evaluate(()=>window.__verifiedPlayers.at(-1).currentTime)).toBeGreaterThan(first);
+ await expect.poll(()=>page.evaluate(()=>(window.__verifiedPlayers.find(p=>!p.paused&&p.src.startsWith("blob:"))||window.__verifiedPlayers.at(-1))?.currentTime||0)).toBeGreaterThan(.1);
+ const first=await page.evaluate(()=>(window.__verifiedPlayers.find(p=>!p.paused&&p.src.startsWith("blob:"))||window.__verifiedPlayers.at(-1)).currentTime);await expect.poll(()=>page.evaluate(()=>(window.__verifiedPlayers.find(p=>!p.paused&&p.src.startsWith("blob:"))||window.__verifiedPlayers.at(-1)).currentTime)).toBeGreaterThan(first);
  const expected=JSON.parse(readFileSync('dist/offline/eng.MRK-1-1-13.json')).files.find(f=>f.path==='/audio/source/S01-U002.mp3');
- const actual=await page.evaluate(async()=>{const src=window.__verifiedPlayers.at(-1).src;if(!src.startsWith('blob:'))throw Error('Expected verified playback blob');const b=await(await fetch(src)).arrayBuffer();return {bytes:b.byteLength,sha256:Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',b)),x=>x.toString(16).padStart(2,'0')).join('')};});
- expect(actual).toEqual({bytes:expected.bytes,sha256:expected.sha256});expect(activities[(await saved(page)).index].id).toBe('S01-U002');expect(media).toEqual([]);
+ const played=await page.evaluate(async()=>{const src=(window.__verifiedPlayers.find(p=>!p.paused&&p.src.startsWith("blob:"))||window.__verifiedPlayers.at(-1)).src;if(!src.startsWith('blob:'))throw Error('Expected verified playback blob');return Array.from(new Uint8Array(await(await fetch(src)).arrayBuffer()));});
+ // The recording on the device is the verified file. Ogg Opus is played as the same packets in WebM (Safari mis-times Ogg Opus), so the played blob is either the verified bytes or exactly that remux of them.
+ const verifiedBytes=new Uint8Array(await(await fetch(expected.deliveryURL)).arrayBuffer());
+ expect({bytes:verifiedBytes.byteLength,sha256:createHash('sha256').update(verifiedBytes).digest('hex')}).toEqual({bytes:expected.bytes,sha256:expected.sha256});
+ const actual=createHash('sha256').update(Buffer.from(played)).digest('hex');
+ const remuxed=createHash('sha256').update(oggOpusToWebm(verifiedBytes)).digest('hex');
+ expect([expected.sha256,remuxed]).toContain(actual);expect(activities[(await saved(page)).index].id).toBe('S01-U002');expect(media).toEqual([]);
  await expect(page.getByRole('button',{name:'Pause',exact:true})).toBeVisible();
  await page.getByRole('button',{name:'Pause',exact:true}).click();await expect(page.getByRole('button',{name:'Resume',exact:true})).toBeVisible();expect((await saved(page)).index).toBe(index);
 });
