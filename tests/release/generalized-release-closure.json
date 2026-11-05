@@ -946,7 +946,7 @@
     },
     {
       "path": "apps/web/public/sw.js",
-      "sha256": "496ea8cc0ee53b7c436a1425a463939593f244696f9de498542902637a5c02df"
+      "sha256": "a52ba592a8552dadd266432e41043a20fd32c7b6a8e055dba9744328b647b951"
     },
     {
       "path": "apps/web/src/App.svelte",
@@ -1161,7 +1161,7 @@
     },
     {
       "path": "apps/web/tests/offline.test.js",
-      "sha256": "3842e6246b15ab50618e2cab6de73c5a5e8d3f5ef146e20e168bde83aa3dc077"
+      "sha256": "258f31ad9ebe3eb00382dbda21eee0b90b9c76fd79b8e8eb93a2db1db7127fc6"
     },
     {
       "path": "apps/web/tests/preparation-app.spec.js",
@@ -1445,7 +1445,7 @@
     },
     {
       "path": "scripts/finalize-build.mjs",
-      "sha256": "f9c5064dc5efe1ca153f4ba429a0079a7550fa4218480ca2b2bf634aae470e79"
+      "sha256": "943f451ac777e2cf9b88a52c4e316b17dc1c99a06d466c26084ae2ac1f35d6ba"
     },
     {
       "path": "scripts/live-listening/README.md",
@@ -2545,7 +2545,7 @@
     },
     {
       "path": "tests/web-shell/download-build.test.js",
-      "sha256": "5754f10fbf183b7c196ea2d7bd463944f412edbfee127e42707ff69adfee19b9"
+      "sha256": "7c67405756414f7bc5a4f528d235df5668a96b4e5f00aa8db6c34b652ce66019"
     },
     {
       "path": "tests/web-shell/recorded-guide-publication.test.js",
@@ -2877,6 +2877,30 @@
     {
       "path": "apps/web/src/lib/video-demo.js",
       "sha256": "7e01cd411746e6fd00ca87dd7d1227be5648a3448518ae32eae758da7d9c4186"
+    },
+    {
+      "path": "release/changes/fia-welcome-entry.md",
+      "sha256": "fcddd54bdc5bfcae7b7e02a5b71f9f38027a527fea4e74bce8eb273b404a185c"
+    },
+    {
+      "path": "apps/web/public/welcome/index.html",
+      "sha256": "f8a04b2d30a93b8e3d15f052ca4c7b4f421e509da938f80d2f3374f8af363771"
+    },
+    {
+      "path": "apps/web/public/welcome/tokens.css",
+      "sha256": "01b66a2e27d709fe50ae2f5d8f3466bdb7f65e799ab4120d052182103dd0e71e"
+    },
+    {
+      "path": "apps/web/public/welcome/assets/Figtree.woff2",
+      "sha256": "8330490a01c60c196eae00b823de8102275aaa5862e7b76a7af21b8745338928"
+    },
+    {
+      "path": "apps/web/public/welcome/assets/fia-lockup.svg",
+      "sha256": "e7b228d742cb1260a0c0aedecc69e21de7afbd713dad9419ac42b2e5694e7716"
+    },
+    {
+      "path": "apps/web/public/welcome/assets/resource-portrait.jpg",
+      "sha256": "325b182b392e7b125f440ce03386097e377b7773a3d5fca4a8208f1f34ce364a"
     }
   ],
   "generatedFiles": [
@@ -6082,8 +6106,8 @@
     },
     {
       "path": "sw.js",
-      "sha256": "375faa9d0041e400d3b6f55d318aa23261e666c277bde0ae42fc6113de32af79",
-      "bytes": 99040
+      "sha256": "5dec8d7787f1049276b27d4a5e3bda10ffc73510bb8b402e60b7aece622f22a0",
+      "bytes": 99051
     },
     {
       "path": "content/approved-audio/7140879c9b324a068e48dc83eaff85669022528977f104c02434332b58415c56.json",
@@ -8229,6 +8253,31 @@
       "path": "assets/index-B3rGSnHa.js",
       "sha256": "dae98ceeb3eb1090c19844441d8393936ac265c86b804117390ffdf542b7a245",
       "bytes": 642014
+    },
+    {
+      "path": "welcome/index.html",
+      "sha256": "f8a04b2d30a93b8e3d15f052ca4c7b4f421e509da938f80d2f3374f8af363771",
+      "bytes": 1755
+    },
+    {
+      "path": "welcome/tokens.css",
+      "sha256": "01b66a2e27d709fe50ae2f5d8f3466bdb7f65e799ab4120d052182103dd0e71e",
+      "bytes": 7621
+    },
+    {
+      "path": "welcome/assets/Figtree.woff2",
+      "sha256": "8330490a01c60c196eae00b823de8102275aaa5862e7b76a7af21b8745338928",
+      "bytes": 20184
+    },
+    {
+      "path": "welcome/assets/fia-lockup.svg",
+      "sha256": "e7b228d742cb1260a0c0aedecc69e21de7afbd713dad9419ac42b2e5694e7716",
+      "bytes": 1911
+    },
+    {
+      "path": "welcome/assets/resource-portrait.jpg",
+      "sha256": "325b182b392e7b125f440ce03386097e377b7773a3d5fca4a8208f1f34ce364a",
+      "bytes": 33931
     }
   ],
   "evidenceLimits": [

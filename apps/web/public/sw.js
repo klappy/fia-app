@@ -306,7 +306,7 @@ self.addEventListener('fetch',event=>{
  if(path==='/version.json'||path==='/build-status.html'||inFamily('/build-status')){event.respondWith(fetch(event.request,{cache:'no-store'}));return;}
  if(path.startsWith('/v1/approved-audio/')){event.respondWith(approvedAudioRead(event.request,event.clientId));return;}
  if(/^\/v1\/(?:packs|artifacts)\//.test(path)){event.respondWith(serverRead(event.request,event.clientId));return;}
- if(['/v1','/mcp','/docs','/content/source'].some(inFamily)){event.respondWith(fetch(event.request));return;}
+ if(['/v1','/mcp','/docs','/content/source','/welcome'].some(inFamily)){event.respondWith(fetch(event.request));return;}
  if(event.request.mode==='navigate')event.respondWith((async()=>{
   let live;
   try{
