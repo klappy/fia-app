@@ -3,5 +3,8 @@
 Follow-up to `unavailable-visual-stage.md` (#321).
 - The bounded status card takes the record's own aspect when the record carries width and height, and keeps the 4:3 placeholder otherwise. Under the height cap it keeps that aspect instead of stretching wide.
 - On short phones and at large text the card is floored at its own text, so it never becomes a small scrolling region or an unnamed keyboard stop. The step words keep their floor and stay first.
+- On short stages (680px tall or less) the card drops the placeholder aspect (`aspect-ratio: auto`) and takes the full width, so it stays a single short band above the bottom controls.
+- **Disclosed for design acceptance:** on very short stages (480px tall or less, for example a landscape phone at 844×390 with the chrome showing) the step words' floor (design-lens rule R8) relaxes from `min(4lh, 40%)` to `min(2lh, 25%)`. At 844×390 that is about 46px, roughly 1.3 lines; the words still scroll and take keyboard focus. The card tightens to one compact line. Each `lh` floor has a non-`lh` fallback before it (`min(6.4em, 40%)`, `min(3.2em, 25%)`).
+- On a coarse-pointer landscape phone, a picture or map step still opens the existing immersive view (chrome and controls hidden) until it is dismissed; the 844×390 rule covers the dismissed and desktop-window cases.
 
-Tests: `apps/web/tests/media-stage.spec.js`, `e2e/visual.spec.js` (`manual-download-required`: glass ground, aspect, bounded height, Tab order, no scrolling card at 390×640, 390×560 and reading scale 1.5).
+Tests: `apps/web/tests/media-stage.spec.js` (record aspect, no tabindex, the shipped card rule can never scroll, `lh` fallbacks present), `e2e/visual.spec.js` (`manual-download-required`: glass ground, aspect, bounded height, words floor, card inside the stage above the controls, no scrolling card and Tab skipping the card at 390×640, 390×560, 390×640 at reading scale 1.5, and 844×390 at reading scale 1 and 1.5).
