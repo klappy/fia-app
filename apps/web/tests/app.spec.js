@@ -4,6 +4,7 @@ import {describe,it,expect,beforeEach,afterEach,vi} from 'vitest';
 import {render,fireEvent,screen,cleanup,within,waitFor} from '@testing-library/svelte';
 import {tick} from 'svelte';
 import App from '../src/App.svelte';
+import {HIGHLIGHT_LEAD_SECONDS} from '../src/lib/alignment.js';
 import * as videoDemo from '../src/lib/video-demo.js';
 import {createSession} from '../src/lib/engine.js';
 import {activities,assets,sections} from '../src/lib/content.js';
@@ -171,8 +172,8 @@ it('verified proxy Scripture keeps logical recording identity and maps codec del
  vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array([1]).buffer,mime:'audio/ogg',timing:{status:'verified',mapping:{scale:1,offsetSeconds:.012}}});
  vi.stubGlobal('URL',class extends URL{static createObjectURL(){return 'blob:verified-scripture';}static revokeObjectURL(){}});
  await startAt('S01-U002-reading-1');await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();await settle();
- const player=players.at(-1);expect(player.src).toBe('blob:verified-scripture');const boundary=assets['scripture-BereanStandardBible'].alignment.verses[1].start;player.currentTime=boundary+.006;player.ontimeupdate();await settle();expect(document.querySelectorAll('.scripture-scroll p')[0].getAttribute('aria-current')).toBe('true');
- player.currentTime=boundary+.020;player.ontimeupdate();await settle();expect(document.querySelectorAll('.scripture-scroll p')[1].getAttribute('aria-current')).toBe('true');
+ const player=players.at(-1);expect(player.src).toBe('blob:verified-scripture');const boundary=assets['scripture-BereanStandardBible'].alignment.verses[1].start;player.currentTime=boundary-HIGHLIGHT_LEAD_SECONDS+.006;player.ontimeupdate();await settle();expect(document.querySelectorAll('.scripture-scroll p')[0].getAttribute('aria-current')).toBe('true');
+ player.currentTime=boundary-HIGHLIGHT_LEAD_SECONDS+.020;player.ontimeupdate();await settle();expect(document.querySelectorAll('.scripture-scroll p')[1].getAttribute('aria-current')).toBe('true');
 });
 const settle=async()=>{await Promise.resolve();await tick();};
 // A stage's `.ov-items`: the circles shown plus the counts on `‹ n earlier` and `n more ›`, which together cover the whole stage.
