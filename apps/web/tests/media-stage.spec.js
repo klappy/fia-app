@@ -1,4 +1,5 @@
 import {it,expect,afterEach} from 'vitest';
+import {readFileSync} from 'node:fs';
 import {render,screen,cleanup} from '@testing-library/svelte';
 import MediaStage from '../src/components/MediaStage.svelte';
 afterEach(cleanup);
@@ -64,4 +65,27 @@ it('while the device check runs the status region is silent, then announces the 
  expect(screen.getByRole('region',{name:'Step text'}).textContent).toContain(prompt);
  await rerender({asset:a1400,guide:guideFor('S02-U008'),checking:false,playback:{src:null,elapsed:0,playing:false}});
  expect(screen.getByRole('status').textContent).toBe('This image is unavailable here. You can continue without it.');expect(screen.getByRole('status').querySelector('[aria-hidden="true"]')).toBeNull();
+});
+// Follow-up to #321 (independent delta review findings 1 and 7): the status region takes the record's own aspect when
+// the record carries dimensions, and keeps the 4:3 placeholder otherwise.
+it('the status region takes the record aspect when it carries dimensions, else the 4:3 placeholder',()=>{
+ const sized=render(MediaStage,{asset:{...c4,width:1600,height:900},guide:guideFor('S02-U008-resource-c4'),playback:{src:null,elapsed:0,playing:false}});
+ const status=sized.container.querySelector('.media-status');expect(status.style.getPropertyValue('--media-aspect-w')).toBe('1600');expect(status.style.getPropertyValue('--media-aspect-h')).toBe('900');sized.unmount();
+ const plain=render(MediaStage,{asset:a1400,guide:guideFor('S02-U008'),playback:{src:null,elapsed:0,playing:false}});
+ const fallback=plain.container.querySelector('.media-status');expect(fallback.style.getPropertyValue('--media-aspect-w')).toBe('');expect(fallback.style.getPropertyValue('--media-aspect-h')).toBe('');
+ expect(fallback.hasAttribute('tabindex')).toBe(false);
+});
+// jsdom has no layout, so a missing tabindex alone cannot show the card is never a keyboard stop: a scrolling container is
+// focusable in Chromium without one. This reads the shipped stylesheet so it fails if the card can scroll again, and it
+// requires the non-lh fallback before each lh floor (older engines drop a declaration with an unknown unit).
+const css=readFileSync('src/app.css','utf8');
+const rules=selector=>[...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter(m=>m[1].trim().endsWith(selector)).map(m=>m[2]);
+it('the unavailable status card can never scroll, and every lh floor has a non-lh fallback before it',()=>{
+ const card=rules('.resource-visual.visual-unavailable>.media-error.media-status');expect(card.length).toBeGreaterThan(0);
+ for(const body of card)expect(body).not.toMatch(/overflow(-y)?:\s*(auto|scroll)/);
+ expect(card[0]).toMatch(/overflow:visible/);expect(card[0]).toMatch(/min-height:auto/);
+ const words=rules('.resource-visual.visual-unavailable>.unavailable-words');
+ expect(words.some(b=>/min-height:min\(6\.4em,40%\);min-height:min\(4lh,40%\)/.test(b))).toBe(true);
+ expect(words.some(b=>/min-height:min\(3\.2em,25%\);min-height:min\(2lh,25%\)/.test(b))).toBe(true);
+ for(const body of words)for(const m of body.matchAll(/min-height:[^;}]*lh[^;}]*/g)){const before=body.slice(0,m.index).split(';').filter(Boolean).at(-1)||'';expect(before,`fallback before ${m[0]}`).toMatch(/^min-height:min\([0-9.]+em,/);}
 });
