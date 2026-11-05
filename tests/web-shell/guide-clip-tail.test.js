@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readdirSync,readFileSync} from 'node:fs';
-import {tailExtendedRange,tailRoomFor,TAIL_GRACE_SECONDS,NEXT_CLIP_GUARD_SECONDS} from '../../apps/web/src/lib/range-tail.js';
+import {tailExtendedRange,tailRoomFor,TAIL_GRACE_SECONDS,NEXT_CLIP_GUARD_SECONDS,NEXT_SOUND_STOP_SECONDS} from '../../apps/web/src/lib/range-tail.js';
 import {guideSpeech} from '../../apps/web/src/lib/guide-speech.js';
 // Every recorded guide clip must keep playing through the end of its last spoken word, and must never play
 // into other speech. Speech ends in guide-speech.js were measured from the delivered audio by
@@ -34,7 +34,8 @@ test('the tail is a plain two-key range that never enters the next clip, other s
   const o=r.f.playbackRange,x=r.range;
   assert.equal(Object.getPrototypeOf(x),Object.prototype);assert.deepEqual(Object.keys(x).sort(),['endSeconds','startSeconds']);
   assert.equal(x.startSeconds,o.startSeconds);
-  assert.ok(x.endSeconds>=o.endSeconds,`${r.id} shrank`);
+  // A range only ever shrinks to stop before the next sound that its own stored end already reached into.
+  if(x.endSeconds<o.endSeconds)assert.ok(r.m.nextSoundSeconds!==null&&o.endSeconds>r.m.nextSoundSeconds-NEXT_SOUND_STOP_SECONDS,`${r.id} shrank without reaching the next sound`);
   assert.ok(x.endSeconds<=o.endSeconds+TAIL_GRACE_SECONDS+1e-9,`${r.id} extended too far`);
   assert.ok(x.endSeconds<=r.f.duration,`${r.id} past audio end`);
   if(x.endSeconds>o.endSeconds){
@@ -43,6 +44,19 @@ test('the tail is a plain two-key range that never enters the next clip, other s
   }
  }
 });
+test('no clip, stored end included, plays into the next sound, and every clip still plays its last word',()=>{
+ const clamped=[];
+ for(const r of rows){
+  if(r.m.nextSoundSeconds!==null){
+   assert.ok(r.range.endSeconds<=r.m.nextSoundSeconds-NEXT_SOUND_STOP_SECONDS+1e-9,`${r.source}/${r.id} ends ${r.range.endSeconds} but the next sound starts ${r.m.nextSoundSeconds}`);
+   if(r.range.endSeconds<r.f.playbackRange.endSeconds)clamped.push(`${r.source}/${r.id}`);
+  }
+  assert.ok(r.range.endSeconds>=r.m.speechEndSeconds,`${r.source}/${r.id} stops before its last word`);
+ }
+ // The stored (reviewed) ends that reach into the next question number; they are stopped before it at run time.
+ assert.deepEqual(clamped.sort(),KNOWN_CLAMPED);
+});
+const KNOWN_CLAMPED=['6ac21bee/S03-U005','6ac21bee/S03-U025','76a956c8/S05-U024','80caf8ea/S02-U004','826f6f1e/S04-U003','826f6f1e/S04-U013'];
 test('every clip plays at least 0.3 s past its last word unless the recording leaves no silence there',()=>{
  const tight=[];
  for(const r of rows){
@@ -55,7 +69,7 @@ test('every clip plays at least 0.3 s past its last word unless the recording le
  }
  assert.deepEqual(tight.sort(),KNOWN_TIGHT);
 });
-const KNOWN_TIGHT=['6ac21bee/S03-U002','6ac21bee/S03-U005','6ac21bee/S03-U010','6ac21bee/S03-U023','76a956c8/S05-U023','76a956c8/S05-U024','76a956c8/S05-U026','76a956c8/S05-U027'];
+const KNOWN_TIGHT=['6ac21bee/S03-U002','6ac21bee/S03-U005','6ac21bee/S03-U010','6ac21bee/S03-U023','6ac21bee/S03-U025','76a956c8/S05-U023','76a956c8/S05-U024','76a956c8/S05-U026','76a956c8/S05-U027','80caf8ea/S02-U004','826f6f1e/S04-U003','826f6f1e/S04-U013'];
 test('Mark 1:1-13 Hear and Heart plays every slide to the end of its last word, question 3 included',()=>{
  const s1=rows.filter(r=>r.id.startsWith('S01-U'));
  assert.deepEqual(s1.map(r=>r.id),['S01-U001','S01-U002','S01-U003','S01-U004','S01-U005','S01-U006','S01-U007','S01-U008']);
