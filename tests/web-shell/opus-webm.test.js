@@ -40,3 +40,10 @@ test('only Ogg Opus is converted, and anything it cannot read is returned unchan
  const vorbis=ogg.slice();vorbis.set(new TextEncoder().encode('vorbis  '),ogg.indexOf(0x4f,60)); // not an OpusHead
  assert.equal(playableAudio(vorbis,'audio/ogg',{canPlay:can}).mime,'audio/ogg');
 });
+test('checking for WebM support never constructs an Audio element (the verified-player hooks track those)',()=>{
+ const NativeAudio=globalThis.Audio,doc=globalThis.document;let built=0,probed=[];
+ globalThis.Audio=class{constructor(){built++;}};
+ globalThis.document={createElement:tag=>({canPlayType:type=>{probed.push([tag,type]);return 'maybe';}})};
+ try{const out=playableAudio(ogg,'audio/ogg');assert.equal(out.mime,'audio/webm');}finally{globalThis.Audio=NativeAudio;if(doc===undefined)delete globalThis.document;else globalThis.document=doc;}
+ assert.equal(built,0);assert.deepEqual(probed,[['audio','audio/webm; codecs=opus']]);
+});

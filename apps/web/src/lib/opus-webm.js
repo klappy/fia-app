@@ -75,7 +75,7 @@ export function oggOpusToWebm(input) {
   return cat([header, el([0x18, 0x53, 0x80, 0x67], seekHead, info, track, ...clusterBytes, cues)]);
 }
 // What to hand the media element: a WebM copy of an Ogg Opus recording, otherwise exactly what came in.
-export function playableAudio(bytes, mime, { canPlay = type => typeof Audio === 'function' && new Audio().canPlayType(type) } = {}) {
+export function playableAudio(bytes, mime, { canPlay = type => typeof document === 'object' && document.createElement('audio').canPlayType(type) } = {}) {
   if (!/ogg/i.test(mime || '') || !canPlay('audio/webm; codecs=opus')) return { bytes, mime };
   try { return { bytes: oggOpusToWebm(bytes), mime: 'audio/webm' }; } catch { return { bytes, mime }; }
 }
