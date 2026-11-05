@@ -65,3 +65,12 @@ it('while the device check runs the status region is silent, then announces the 
  await rerender({asset:a1400,guide:guideFor('S02-U008'),checking:false,playback:{src:null,elapsed:0,playing:false}});
  expect(screen.getByRole('status').textContent).toBe('This image is unavailable here. You can continue without it.');expect(screen.getByRole('status').querySelector('[aria-hidden="true"]')).toBeNull();
 });
+// Follow-up to #321 (independent delta review findings 1 and 7): the status region takes the record's own aspect when
+// the record carries dimensions, and keeps the 4:3 placeholder otherwise.
+it('the status region takes the record aspect when it carries dimensions, else the 4:3 placeholder',()=>{
+ const sized=render(MediaStage,{asset:{...c4,width:1600,height:900},guide:guideFor('S02-U008-resource-c4'),playback:{src:null,elapsed:0,playing:false}});
+ const status=sized.container.querySelector('.media-status');expect(status.style.getPropertyValue('--media-aspect-w')).toBe('1600');expect(status.style.getPropertyValue('--media-aspect-h')).toBe('900');sized.unmount();
+ const plain=render(MediaStage,{asset:a1400,guide:guideFor('S02-U008'),playback:{src:null,elapsed:0,playing:false}});
+ const fallback=plain.container.querySelector('.media-status');expect(fallback.style.getPropertyValue('--media-aspect-w')).toBe('');expect(fallback.style.getPropertyValue('--media-aspect-h')).toBe('');
+ expect(fallback.hasAttribute('tabindex')).toBe(false);
+});
