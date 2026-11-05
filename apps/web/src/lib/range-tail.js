@@ -2,10 +2,10 @@ import {guideSpeech} from './guide-speech.js';
 // A recorded guide clip is a range of a longer recording. Its end comes from recognised word times and
 // stops the instant the media clock reaches it, so a clock that runs a little ahead of the decoded audio
 // (a different decoder, a seek that lands early) cuts the last word. This keeps the clip playing for a
-// bounded tail of the recording's own silence after the stored end. How much silence there really is
+// bounded tail (at most 0.25 s) of the recording's own silence after the stored end. How much silence there really is
 // comes from guide-speech.js, measured from the delivered audio; with no measurement there is no tail.
 // The tail never enters the next clip's range and never passes the end of the audio.
-export const TAIL_GRACE_SECONDS = 0.5;
+export const TAIL_GRACE_SECONDS = 0.25;
 export const NEXT_CLIP_GUARD_SECONDS = 0.02;
 const finite = n => typeof n === 'number' && Number.isFinite(n);
 // Only recorded-guide clips (a ledger-bound logical source); Scripture passage audio keeps its aligned range.

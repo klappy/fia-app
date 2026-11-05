@@ -8,6 +8,8 @@ import {guideSpeech} from '../../apps/web/src/lib/guide-speech.js';
 // scripts/measure-guide-speech.py (10 ms RMS frames), so this test checks every clip of the passage.
 const root=new URL('../../apps/web/public/content/delivery/',import.meta.url);
 const MIN_TAIL=0.3;
+// #333 played 0.5 s past the stored end and left 0.04-0.6 s before the next question number; DEV reported the number starting.
+const NEXT_SOUND_MARGIN=0.25;
 const deliveries=readdirSync(root).flatMap(dir=>readdirSync(new URL(dir+'/',root)).map(f=>({dir,doc:JSON.parse(readFileSync(new URL(dir+'/'+f,root)))})));
 const clips=doc=>doc.entries.filter(e=>e.path.startsWith('/audio/source/')&&e.playbackRange&&e.audioReplacement).map(e=>({path:e.path,group:'audio',logicalSourceSha256:e.audioReplacement.logicalSource.sha256,sourceSha256:e.source.sha256,deliveryURL:e.delivery.url,duration:e.delivery.duration,playbackRange:e.playbackRange}));
 const passages=deliveries.map(d=>({...d,files:clips(d.doc)})).filter(d=>d.files.length);
@@ -37,7 +39,7 @@ test('the tail is a plain two-key range that never enters the next clip, other s
   assert.ok(x.endSeconds<=r.f.duration,`${r.id} past audio end`);
   if(x.endSeconds>o.endSeconds){
    assert.ok(x.endSeconds<=r.next-NEXT_CLIP_GUARD_SECONDS+1e-9,`${r.source}/${r.id} runs into the next clip`);
-   if(r.m.nextSpeechStartSeconds!==null)assert.ok(x.endSeconds<=r.m.nextSpeechStartSeconds-0.05,`${r.source}/${r.id} plays into the next speech`);
+   if(r.m.nextSoundSeconds!==null)assert.ok(x.endSeconds<=r.m.nextSoundSeconds-NEXT_SOUND_MARGIN+1e-9,`${r.source}/${r.id} plays into the next sound (the next question number)`);
   }
  }
 });
@@ -48,7 +50,7 @@ test('every clip plays at least 0.3 s past its last word unless the recording le
   if(tail>=MIN_TAIL-1e-9)continue;
   tight.push(`${r.source}/${r.id}`);
   // The only allowed reasons: the next clip or the next speech starts right after the stored end.
-  const limit=Math.min(r.next-NEXT_CLIP_GUARD_SECONDS,(r.m.nextSpeechStartSeconds??Infinity)-0.06);
+  const limit=Math.min(r.next-NEXT_CLIP_GUARD_SECONDS,(r.m.nextSoundSeconds??Infinity)-NEXT_SOUND_MARGIN);
   assert.ok(limit-r.m.speechEndSeconds<MIN_TAIL+0.011,`${r.source}/${r.id} stops ${tail.toFixed(2)} s after its last word although the audio has room`);
  }
  assert.deepEqual(tight.sort(),KNOWN_TIGHT);
@@ -61,6 +63,15 @@ test('Mark 1:1-13 Hear and Heart plays every slide to the end of its last word, 
  const q3=s1.find(r=>r.id==='S01-U005');
  assert.ok(q3.m.speechEndSeconds>40.9&&q3.range.endSeconds>=q3.m.speechEndSeconds+0.45);
 });
+test('Mark 1:1-13 Hear and Heart stops well before each next question number and does not run long past the last word',()=>{
+ // #333 left 0.04 s (U002) to 0.61 s before the next number's onset and played 0.74-1.0 s past the last word.
+ const s1=rows.filter(r=>r.id.startsWith('S01-U'));
+ for(const r of s1){
+  assert.ok(r.m.nextSoundSeconds-r.range.endSeconds>=NEXT_SOUND_MARGIN-1e-9,`${r.id} stops only ${(r.m.nextSoundSeconds-r.range.endSeconds).toFixed(2)} s before the next sound`);
+  assert.ok(r.range.endSeconds-r.m.speechEndSeconds<=0.76,`${r.id} runs ${(r.range.endSeconds-r.m.speechEndSeconds).toFixed(2)} s past its last word`);
+  assert.ok(r.range.endSeconds-r.f.playbackRange.endSeconds<=0.25+1e-9);
+ }
+});
 test('scripture clips, unmeasured clips and files that are not recorded guide clips are left alone',()=>{
  const speech={sources:{a:{'/audio/source/S01-U001.mp3':{tailRoomSeconds:0.4}}}};
  const f={path:'/audio/source/S01-U001.mp3',logicalSourceSha256:'l',sourceSha256:'a',deliveryURL:'u',duration:10,playbackRange:{startSeconds:1,endSeconds:2}};
@@ -69,12 +80,12 @@ test('scripture clips, unmeasured clips and files that are not recorded guide cl
  assert.deepEqual(run({...f,scripturePlaybackMode:'passage-only'}),f.playbackRange);
  assert.deepEqual(run({...f,sourceSha256:'unmeasured'}),f.playbackRange);
  assert.equal(run(f,[],null),null);
- assert.deepEqual(run(f,[f]),{startSeconds:1,endSeconds:2.4});
+ assert.deepEqual(run(f,[f]),{startSeconds:1,endSeconds:2.25});
  assert.deepEqual(run(f,[f,{...f,playbackRange:{startSeconds:2.1,endSeconds:3}}]),{startSeconds:1,endSeconds:2.08});
  assert.deepEqual(run(f,[f,{...f,playbackRange:{startSeconds:2,endSeconds:3}}]),f.playbackRange);
  const late={...f,duration:9.95,playbackRange:{startSeconds:8,endSeconds:9.8}};
  assert.deepEqual(run(late),{startSeconds:8,endSeconds:9.9});
- assert.equal(tailRoomFor(f,speech),0.4);assert.equal(tailRoomFor({...f,path:'x'},speech),0);
+ assert.equal(tailRoomFor(f,speech),0.25);assert.equal(tailRoomFor({...f,path:'x'},speech),0);
 });
 // The stored data does not accumulate an offset: the gap between a stored end and the last word it must reach does not
 // trend with position in the recording. A drift that grows with position can then only come from the playing side
