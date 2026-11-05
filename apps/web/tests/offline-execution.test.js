@@ -36,3 +36,71 @@ test('preparing response preserves previously saved offline snapshot',async()=>{
  const live=await w.fetch(`/v1/packs/${packId}`);assert.equal(live.status,202);assert.deepEqual(await live.json(),body);
  w.offline(true);const offline=await w.fetch(`/v1/packs/${packId}`);assert.equal(offline.status,200);assert.equal(offline.headers.get('X-FIA-Offline-Snapshot'),'historical-verified');assert.deepEqual(await offline.json(),f.record);
 });
+
+// F4 client half: a page may ask for execution=2. This build forwards that read as it
+// forwards any other, but a saved snapshot answers only a read with the capability it
+// was saved under (none yet), so an asking page never receives an older shape from it.
+test('execution=2 pack reads pass through online and never take a snapshot saved without the capability',async()=>{const f=fixture(),w=worker(f);const online=await w.fetch(`/v1/packs/${packId}?execution=2`);assert.equal(online.status,200);assert.deepEqual(await online.json(),f.record);assert.ok(w.calls.includes(`/v1/packs/${packId}?execution=2`));
+ assert.equal((await save(w,f)).ok,true);w.offline(true);
+ const plain=await w.fetch(`/v1/packs/${packId}`);assert.equal(plain.status,200);assert.equal(plain.headers.get('X-FIA-Offline-Snapshot'),'historical-verified');
+ const asking=await w.fetch(`/v1/packs/${packId}?execution=2`);assert.equal(asking.status,503);assert.equal(asking.headers.get('X-FIA-Offline-Snapshot'),null);
+ w.offline(false);w.reply(`/v1/packs/${packId}`,new Response('unavailable',{status:503}));const transient=await w.fetch(`/v1/packs/${packId}?execution=2`);assert.equal(transient.status,503);assert.equal(transient.headers.get('X-FIA-Offline-Snapshot'),null,'the server answer passes through unchanged');
+ assert.equal((await w.fetch(`/v1/packs/${packId}`)).headers.get('X-FIA-Offline-Snapshot'),'historical-verified','the saved snapshot is kept for reads without the capability');
+});
+
+// Carry-forward of #288 fe806b6 (PR287 native review P1, sw.js:147): an older server refuses the execution=2 read with
+// 400 invalid-request. That refusal is about the capability, not the pack, so the saved snapshot (saved without the
+// capability) survives it, and an offline plain read still answers historical-verified. The read is passed through
+// once; it starts no other fetch.
+test('an older server refusing execution=2 never retires the saved snapshot',async()=>{const f=fixture(),w=worker(f);assert.equal((await save(w,f)).ok,true);
+ w.reply(`/v1/packs/${packId}`,Response.json({status:'refused',code:'invalid-request'},{status:400}));
+ const before=w.calls.length;const refused=await w.fetch(`/v1/packs/${packId}?execution=2`);assert.equal(refused.status,400);assert.deepEqual(await refused.json(),{status:'refused',code:'invalid-request'});
+ assert.deepEqual(w.calls.slice(before),[`/v1/packs/${packId}?execution=2`],'one pass-through read, no other fetch');
+ w.offline(true);const offline=await w.fetch(`/v1/packs/${packId}`);assert.equal(offline.status,200);assert.equal(offline.headers.get('X-FIA-Offline-Snapshot'),'historical-verified');assert.deepEqual(await offline.json(),f.record);
+});
+// The guard is narrow: only a 400 to the execution=2 capability is spared. A plain read's 400, 404 or 410, a malformed
+// plain 200, and any other answer to the capability read (here 404) still retire the saved snapshot as before.
+test('canaries: every other refusal or integrity failure still retires the saved snapshot',async()=>{
+ const cases=[['',400,Response.json({status:'refused',code:'invalid-request'},{status:400})],['',404,Response.json({status:'unavailable',reason:'revoked'},{status:404})],['',410,Response.json({status:'unavailable',reason:'withdrawn'},{status:410})],['',200,Response.json({schema:'wrong'})],['?execution=2',404,Response.json({status:'unavailable',reason:'revoked'},{status:404})]];
+ for(const [query,status,response] of cases){const f=fixture(),w=worker(f);assert.equal((await save(w,f)).ok,true);
+  w.reply(`/v1/packs/${packId}`,response);assert.equal((await w.fetch(`/v1/packs/${packId}${query}`)).status,status);
+  w.offline(true);assert.equal((await w.fetch(`/v1/packs/${packId}`)).status,503,`${query||'plain'} ${status} retires the snapshot`);}
+});
+// Owner ruling 2026-11-04 (cookbook 75c725c): Save fetches artifacts with bounded concurrency.
+// Workers record failures and every in-flight artifact settles before the result is decided.
+const concurrentSave=async(old,next,{first,second})=>{
+ const w=worker(old),tick=()=>new Promise(r=>setTimeout(r,2)),paths=[`/v1/artifacts/${next.record.revision}`,`/v1/artifacts/${next.dependency.sha256}`];
+ assert.equal((await save(w,old)).ok,true);w.setFixture(next);
+ const gates=paths.map(()=>{let release;const promise=new Promise(r=>release=r);return {promise,release};});
+ w.reply(paths[0],async()=>{await gates[0].promise;return first();});w.reply(paths[1],async()=>{await gates[1].promise;return second();});
+ let settled=false;const result=save(w,next).then(r=>{settled=true;return r;});
+ const deadline=Date.now()+5000;while(!paths.every(p=>w.calls.includes(p))){if(Date.now()>deadline)throw Error('Both artifact fetches were not in flight together');await tick();}
+ return {w,paths,gates,result,isSettled:()=>settled,tick,entries:()=>[...w.stores.values()].reduce((n,s)=>n+s.size,0)};
+};
+test('a transient artifact failure cannot hide a concurrent integrity failure: Save fails and the old snapshot is invalidated',async()=>{
+ const old=fixture(),next=fixture('next');
+ const h=await concurrentSave(old,next,{first:()=>{throw new TypeError('offline');},second:()=>Response.json({schema:'wrong'})});
+ h.gates[0].release();for(let i=0;i<5;i++)await h.tick();
+ assert.equal(h.isSettled(),false,'Save must wait for the in-flight sibling before deciding');
+ h.gates[1].release();const result=await h.result;
+ assert.equal(result.ok,false);assert.doesNotMatch(result.error,/temporarily unavailable/,'the integrity failure is surfaced, not the transient one');
+ h.w.offline(true);assert.equal((await h.w.fetch(`/v1/packs/${packId}`)).status,503,'the previously verified snapshot is retired');
+ assert.equal((await h.w.message({type:'DOWNLOAD_STATUS'})).saved,false);
+});
+test('integrity failure first, transient sibling later: Save still fails and invalidates',async()=>{
+ const old=fixture(),next=fixture('next');
+ const h=await concurrentSave(old,next,{first:()=>{throw new TypeError('offline');},second:()=>Response.json({schema:'wrong'})});
+ h.gates[1].release();for(let i=0;i<5;i++)await h.tick();h.gates[0].release();
+ const result=await h.result;assert.equal(result.ok,false);
+ h.w.offline(true);assert.equal((await h.w.fetch(`/v1/packs/${packId}`)).status,503);
+});
+test('after a transient failure no sibling cache.put lands once Save has rejected; the prior snapshot is kept',async()=>{
+ const old=fixture(),next=fixture('next');
+ const h=await concurrentSave(old,next,{first:()=>{throw new TypeError('offline');},second:()=>new Response(next.boundBytes,{headers:{'Content-Type':'application/json'}})});
+ h.gates[0].release();for(let i=0;i<5;i++)await h.tick();
+ assert.equal(h.isSettled(),false,'Save must not reject while a sibling artifact is still in flight');
+ h.gates[1].release();const result=await h.result;assert.equal(result.ok,false);
+ const settledEntries=h.entries();for(let i=0;i<10;i++)await h.tick();
+ assert.equal(h.entries(),settledEntries,'nothing is written to any cache after the Save result is decided');
+ h.w.offline(true);assert.equal((await h.w.fetch(`/v1/packs/${packId}`)).headers.get('X-FIA-Offline-Snapshot'),'historical-verified','transient-only failure keeps the prior verified snapshot');
+});

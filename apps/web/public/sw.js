@@ -12,7 +12,7 @@ async function write(key,value){await (await caches.open(META)).put('/'+key,json
 const isPassageHash=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
 const scripturePassagePins=['scriptureLedgerEntryId','scriptureLedgerSha256','scriptureAssetId','scripturePlaybackMode','scriptureHighlighting','scriptureRangeReviewSha256','scriptureCanonicalTextSha256','scriptureSourceEvidenceSha256','scriptureSourceRangeReviewSha256'];
 function validateScripturePassageFile(file,packId){
- if(file.scripturePlaybackMode!=='passage-only'||file.scriptureHighlighting!=='disabled'||file.scriptureAlignment!==null||file.scriptureAlignmentSha256!==undefined||file.logicalSourceSha256!==undefined||file.logicalSourceBytes!==undefined||file.recordingLedgerEntryId!==undefined||file.recordingLedgerSha256!==undefined||typeof file.scriptureLedgerEntryId!=='string'||!file.scriptureLedgerEntryId||typeof file.scriptureAssetId!=='string'||!/^[-\w]+$/.test(file.scriptureAssetId)||file.path!==`/audio/scripture/${packId}/${file.scriptureAssetId}.opus`||file.group!=='audio'||file.mime!=='audio/ogg')throw Error('Invalid passage-only Scripture descriptor.');
+ if(file.scripturePlaybackMode!=='passage-only'||!['enabled','disabled'].includes(file.scriptureHighlighting)||file.scriptureAlignment!==null||file.scriptureAlignmentSha256!==undefined||file.logicalSourceSha256!==undefined||file.logicalSourceBytes!==undefined||file.recordingLedgerEntryId!==undefined||file.recordingLedgerSha256!==undefined||typeof file.scriptureLedgerEntryId!=='string'||!file.scriptureLedgerEntryId||typeof file.scriptureAssetId!=='string'||!/^[-\w]+$/.test(file.scriptureAssetId)||file.path!==`/audio/scripture/${packId}/${file.scriptureAssetId}.opus`||file.group!=='audio'||file.mime!=='audio/ogg')throw Error('Invalid passage-only Scripture descriptor.');
  for(const key of ['sha256','sourceSha256','deliveryRevision',...scripturePassagePins.filter(k=>k.endsWith('Sha256'))])if(!isPassageHash(file[key]))throw Error('Missing Scripture identity pin.');
  for(const key of ['bytes','sourceBytes'])if(!Number.isSafeInteger(file[key])||file[key]<=0)throw Error('Invalid Scripture byte identity.');
  const url=new URL(file.deliveryURL);if(url.origin!=='https://transcode.klappy.dev'||!url.pathname.startsWith('/audio/')||url.username||url.password||url.hash)throw Error('Invalid Scripture delivery origin.');
@@ -97,6 +97,8 @@ async function snapshotComplete(active,{authorityOnly=false}={}){
  try{serverRecord(snapshot.record,active.packId);const expected=serverFiles(snapshot.record);if(JSON.stringify(expected)!==JSON.stringify(snapshot.files))return false;const cache=await caches.open(active.cache);for(const f of expected)await serverJSON(await cache.match(f.path),f,snapshot.record);return true;}catch{return false;}
 }
 async function savedServerSnapshot(packId,revision){const active=await read(packKey(packId,'active'));if(revision&&active?.serverSnapshot?.record.revision!==revision)return null;return await snapshotComplete(active)?active:null;}
+// Bounded per-artifact fetch concurrency for a Saved snapshot (small fixed limit; not a product SLA).
+const ARTIFACT_FETCH_CONCURRENCY=4;
 async function retainServerSnapshot(packId,revision,cache,signal,onprogress){
  if(packId===legacy||revision===undefined)return null;
  if(!isPassageHash(revision))throw Error('Invalid server revision.');
@@ -105,10 +107,23 @@ async function retainServerSnapshot(packId,revision,cache,signal,onprogress){
   checkCanceled();const r=await fetchLatest(`/v1/packs/${packId}${revision?'?revision='+revision:''}`,{cache:'no-store',redirect:'error',signal});checkCanceled();
   if(r.status!==200||r.redirected)throw Error('Server record unavailable.');record=serverRecord(await r.json(),packId);checkCanceled();if(revision&&record.revision!==revision)throw Error('Server revision changed.');
   const files=serverFiles(record);onprogress?.({phase:'record-verified',verified:0,total:files.length});
-  for(const [index,f] of files.entries()){
+  // Owner ruling 2026-11-04 (cookbook 75c725c): fetch artifacts with bounded concurrency.
+  // Each artifact is still matched or fetched, identity/hash verified and then cached on its own;
+  // Saved is only reported after every artifact has been verified. The first failure fails the whole
+  // save exactly as before: no further artifact is started, in-flight ones settle, and the first
+  // non-transient, non-abort error (else the first error) reaches the catch below.
+  let nextFile=0,verifiedCount=0,failed=false;
+  const verifyArtifact=async f=>{
    checkCanceled();let response=await cache.match(f.path);try{await serverJSON(response,f,record);}catch{checkCanceled();response=await fetchLatest(f.path,{cache:'no-store',redirect:'error',signal});await serverJSON(response,f,record);checkCanceled();await cache.put(f.path,response);}
-   checkCanceled();onprogress?.({phase:'artifact-verified',verified:index+1,total:files.length});
-  }
+   checkCanceled();if(failed)return;verifiedCount+=1;onprogress?.({phase:'artifact-verified',verified:verifiedCount,total:files.length});
+  };
+  // Workers record failures instead of rejecting, so every in-flight artifact settles before the
+  // result is decided: no cache.put can land after the save is decided, and a definitive integrity
+  // failure is never hidden behind an earlier transient or abort failure from a sibling.
+  const errors=[];
+  const artifactWorker=async()=>{while(!failed&&nextFile<files.length){const f=files[nextFile++];try{await verifyArtifact(f);}catch(error){failed=true;errors.push(error);}}};
+  await Promise.all(Array.from({length:Math.min(ARTIFACT_FETCH_CONCURRENCY,files.length)},artifactWorker));
+  if(errors.length)throw errors.find(e=>!(signal.aborted&&e.name==='AbortError')&&e.mediaStatusCode!=='media-status-transient')||errors[0];
   return {record,files,invalid:false};
  }
  catch(error){if(!(signal.aborted&&error.name==='AbortError')&&error.mediaStatusCode!=='media-status-transient')await invalidateServerSnapshot(packId);throw error;}
@@ -126,8 +141,8 @@ async function serverReadContexts(clientId){
  return contexts;
 }
 async function serverRead(request,clientId){
- const url=new URL(request.url),match=/^\/v1\/packs\/([^/]+)$/.exec(url.pathname),digest=/^\/v1\/artifacts\/([a-f0-9]{64})$/.exec(url.pathname)?.[1];let packId,revision,active,file;
- if(match){packId=match[1];if(!validPack(packId)||packId===legacy||[...url.searchParams.keys()].some(k=>k!=='revision')||url.searchParams.getAll('revision').length>1)return fetch(request);revision=url.searchParams.get('revision')||undefined;if(revision&&!isPassageHash(revision))return fetch(request);active=await read(packKey(packId,'active'));}
+ const url=new URL(request.url),match=/^\/v1\/packs\/([^/]+)$/.exec(url.pathname),digest=/^\/v1\/artifacts\/([a-f0-9]{64})$/.exec(url.pathname)?.[1];let packId,revision,active,file,capability=null;
+ if(match){packId=match[1];if(!validPack(packId)||packId===legacy||[...url.searchParams.keys()].some(k=>k!=='revision'&&k!=='execution')||url.searchParams.getAll('revision').length>1||url.searchParams.has('execution')&&(url.searchParams.getAll('execution').length!==1||url.searchParams.get('execution')!=='2'))return fetch(request);capability=url.searchParams.get('execution')||null;revision=url.searchParams.get('revision')||undefined;if(revision&&!isPassageHash(revision))return fetch(request);active=await read(packKey(packId,'active'));}
  else if(digest&&!url.search){const selected=clientId&&await read('client-'+clientId)||await read('selected');for(const candidate of [...await serverReadContexts(clientId),selected]){if(!candidate?.packId)continue;const saved=candidate.serverSnapshot?candidate:await read(packKey(candidate.packId,'active'));if(!candidate.serverSnapshot&&candidate.revision&&saved?.serverSnapshot?.record.revision!==candidate.revision)continue;const match=saved?.serverSnapshot?.files.find(f=>f.sha256===digest);if(match){packId=candidate.packId;revision=saved.serverSnapshot.record.revision;active=saved;file=match;break;}}}
  else return fetch(request);
  // The server's answer is the page's answer: status, type and body pass through.
@@ -136,11 +151,14 @@ async function serverRead(request,clientId){
  let response;
  try{response=await fetch(request,{cache:'no-store',redirect:'error'});}catch(error){
   if(error?.name!=='TypeError'&&error?.name!=='AbortError'){if(packId)await invalidateServerSnapshot(packId);return Response.error();}
-  return historicalServerRead({match,packId,revision,digest,clientId});
+  return historicalServerRead({match,packId,revision,digest,clientId,capability});
  }
- if([408,429,500,502,503,504].includes(response.status))return historicalServerRead({match,packId,revision,digest,clientId,answer:response});
+ if([408,429,500,502,503,504].includes(response.status))return historicalServerRead({match,packId,revision,digest,clientId,capability,answer:response});
  // A live preparation is not a revocation of an already verified saved pack.
  if(match&&response.status===202&&!response.redirected)return response;
+ // An older server refuses the execution=2 capability as a malformed read. That says nothing about
+ // the pack, so it never retires a saved snapshot; the page retries without the capability.
+ if(match&&capability&&response.status===400)return response;
  try{
   if(match){if(response.status!==200||response.redirected)throw Error('Server record unavailable.');const record=serverRecord(await response.clone().json(),packId);if(revision&&record.revision!==revision)throw Error('Server revision changed.');await rememberServerRead(clientId,record);}
   else if(file)await serverJSON(response.clone(),file,active.serverSnapshot.record);
@@ -149,8 +167,10 @@ async function serverRead(request,clientId){
 }
 // A verified saved snapshot answers only when the server could not; otherwise the
 // server's own transient answer (when there is one) reaches the page unchanged.
-async function historicalServerRead({match,packId,revision,digest,clientId,answer}){
- const active=packId&&await savedServerSnapshot(packId,revision);if(!active)return answer||new Response('This server content is not saved for offline use.',{status:503});
+// A saved snapshot answers only a pack read with the capability it was saved under
+// (none today), so a page that asks for execution=2 never gets an older shape from it.
+async function historicalServerRead({match,packId,revision,digest,clientId,capability=null,answer}){
+ const active=packId&&await savedServerSnapshot(packId,revision);if(active&&match&&(active.serverSnapshot.capability??null)!==capability)return answer||new Response('This server content is not saved for offline use.',{status:503});if(!active)return answer||new Response('This server content is not saved for offline use.',{status:503});
  let response;if(match){response=json(active.serverSnapshot.record);await rememberServerRead(clientId,active.serverSnapshot.record);}
  else{const file=active.serverSnapshot.files.find(f=>f.sha256===digest);if(!file)return answer||new Response('This server artifact is not saved.',{status:503});response=await(await caches.open(active.cache)).match(file.path);}
  const headers=new Headers(response.headers);headers.set(offlineServerHeader,'historical-verified');headers.set('Cache-Control','private, no-store');return new Response(await response.arrayBuffer(),{status:200,headers});
@@ -439,7 +459,7 @@ self.addEventListener('message',event=>{
       if(!bytes){response=await fetch(file.deliveryURL,{cache:'no-store',signal:controller.signal,...(video?{redirect:'error'}:{})});
        if(video){const read=await readPlayableVideo(response,file,{signal:controller.signal});bytes=read.bytes;served=read.served;if(read.drift)notes.push({kind:'content-drift',expected:{sha256:file.sha256,bytes:file.bytes},served});}
        else bytes=await readVerifiedMedia(response,file,{signal:controller.signal});}
-      if(controller.signal.aborted)throw Error('Playback canceled.');result={bytes:bytes.buffer,mime:file.mime,timing:file.timing,...(file.playbackRange?{playbackRange:file.playbackRange}:{}),...(file.scriptureAlignment?{scriptureAlignment:file.scriptureAlignment,scriptureAlignmentSha256:file.scriptureAlignmentSha256}:{}),...(file.scripturePlaybackMode==='passage-only'?{scriptureAlignment:null,scripturePlaybackMode:'passage-only',scriptureHighlighting:'disabled'}:{}),file:file.scripturePlaybackMode==='passage-only'?file:{path:file.path,sha256:served.sha256,bytes:served.bytes,deliveryURL:file.deliveryURL},...(notes.length?{notes}:{})};
+      if(controller.signal.aborted)throw Error('Playback canceled.');result={bytes:bytes.buffer,mime:file.mime,timing:file.timing,...(file.playbackRange?{playbackRange:file.playbackRange}:{}),...(file.scriptureAlignment?{scriptureAlignment:file.scriptureAlignment,scriptureAlignmentSha256:file.scriptureAlignmentSha256}:{}),...(file.scripturePlaybackMode==='passage-only'?{scriptureAlignment:null,scripturePlaybackMode:'passage-only',scriptureHighlighting:file.scriptureHighlighting}:{}),file:file.scripturePlaybackMode==='passage-only'?file:{path:file.path,sha256:served.sha256,bytes:served.bytes,deliveryURL:file.deliveryURL},...(notes.length?{notes}:{})};
       if(notes.length)noticeLog={packId,path:file.path,notes};
      }finally{playbackJobs.delete(key);canceledPlayback.delete(key);}
     }

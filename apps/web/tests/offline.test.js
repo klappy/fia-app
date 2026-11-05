@@ -189,6 +189,7 @@ test('passage-only Scripture without legacy audio validates pins, reuses saved b
  assert.equal((await w.message({type:'DOWNLOAD_START',packId:id,selection:'audio'})).ok,true);w.calls.length=0;const saved=await w.message({...args,requestId:'saved'});assert.equal(saved.ok,true,saved.error);assert(!w.calls.includes(url));assert.equal(saved.scriptureHighlighting,'disabled');
  const store=w.stores.get('fia-v3-download-metadata@1');for(const [k,r]of store){if(k.includes('active')){const a=await r.clone().json();a.files.find(x=>x.path===f.path).scriptureRangeReviewSha256='9'.repeat(64);store.set(k,Response.json(a));}}
  assert.equal((await w.message({type:'MEDIA_STATUS',packId:id,revision})).savedFiles.length,0);
+ {const on=structuredClone(m);Object.assign(on.files.find(x=>x.group==='audio'),{scriptureHighlighting:'enabled'});const enabled=worker();enabled.reply(`/offline/${id}.json`,Response.json(on));enabled.reply(new URL(url).pathname,new Response('abc',{headers:{'Content-Type':'audio/ogg'}}));const got=await enabled.message(args);assert.equal(got.ok,true,got.error);assert.equal(got.scriptureHighlighting,'enabled');}
  for(const change of [{scriptureCanonicalTextSha256:null},{scriptureAlignment:{}},{logicalSourceSha256:'4'.repeat(64)},{scriptureHighlighting:'word'},{path:'/audio/scripture/eng.MRK-2-1-12/BSB.opus'}]){const bad=structuredClone(m);Object.assign(bad.files.find(x=>x.group==='audio'),change);const isolated=worker();isolated.reply(`/offline/${id}.json`,Response.json(bad));assert.equal((await isolated.message(args)).ok,false);}
 });
 
