@@ -4,6 +4,7 @@ test('same predicates reject incident mutations, not outcome booleans',()=>{asse
 test('late completed operation cannot resurrect sound; elapsed wait alone is not completion',()=>{const x={operationId:'job',completion:{operationId:'job',state:'ready'},mediaAfterCompletion:[{paused:true,advanced:false}]};assertCancellation(x);assert.throws(()=>assertCancellation({...x,completion:null}));assert.throws(()=>assertCancellation({...x,mediaAfterCompletion:[{paused:false,advanced:true}]}));});
 
 test('reject missing/nonfinite clocks and empty cancellation evidence',()=>{for(const value of [undefined,NaN,Infinity]){const x=observed();x.media[0].before=value;assert.throws(()=>assertPlayback(x));}assert.throws(()=>assertCancellation({operationId:'job',completion:{operationId:'job',state:'ready'},mediaAfterCompletion:[]}));});
-test('a binding that names its played bytes is compared to them, and only a valid digest is accepted',()=>{const x=observed();x.expected={...x.expected,playedSha256:'e'.repeat(64)};x.media[0].sha256='e'.repeat(64);assertPlayback(x);
- const y=observed();y.expected={...y.expected,playedSha256:'e'.repeat(64)};assert.throws(()=>assertPlayback(y));
- const z=observed();z.expected={...z.expected,playedSha256:'nope'};z.media[0].sha256='nope';assert.throws(()=>assertPlayback(z));});
+test('a binding that names its played bytes is compared to them, and only a valid digest is accepted',()=>{const x=observed();x.expected={...x.expected,playedSha256:'e'.repeat(64),played:'webm-remux'};x.media[0].sha256='e'.repeat(64);assertPlayback(x);
+ for(const played of [undefined,'reviewed-bytes','other']){const w=observed();w.expected={...w.expected,playedSha256:'e'.repeat(64)};if(played)w.expected.played=played;w.media[0].sha256='e'.repeat(64);assert.throws(()=>assertPlayback(w));}
+ const y=observed();y.expected={...y.expected,playedSha256:'e'.repeat(64),played:'webm-remux'};assert.throws(()=>assertPlayback(y));
+ const z=observed();z.expected={...z.expected,playedSha256:'nope',played:'webm-remux'};z.media[0].sha256='nope';assert.throws(()=>assertPlayback(z));});

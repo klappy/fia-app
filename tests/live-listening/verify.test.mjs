@@ -32,3 +32,10 @@ test('a remux-played Scripture sample verifies only against the recorded remux o
  assert.equal(verify(edit(report(),e=>{played(e);e.scriptureRemux={['a'.repeat(64)]:remux};}),opts).ok,true);
  for(const remuxMap of [undefined,{},{['a'.repeat(64)]:'d'.repeat(64)}])assert.equal(verify(edit(report(),e=>{played(e);e.scriptureRemux=remuxMap;}),opts).ok,false);
 });
+// Codex P1 on #338: playedSha256 is trusted only under a closed classification; dropping or changing it cannot bypass the remux check.
+test('a played digest without a valid classification, or reviewed-bytes that are not the reviewed bytes, fails',()=>{
+ const remux='c'.repeat(64);
+ const edit=(r,f)=>{const spec=r.suites[0].specs.find(s=>s.title==='P2 Scripture ON must deliver actual BSB playback'),a=spec.tests[0].results[0].attachments[0],e=JSON.parse(Buffer.from(a.body,'base64'));f(e);a.body=Buffer.from(JSON.stringify(e)).toString('base64');return r;};
+ for(const played of [undefined,'webm_remux','reviewed-bytes','',null])assert.equal(verify(edit(report(),e=>{for(const s of e.nativePlayback){s.binding={...s.binding,playedSha256:remux};if(played===undefined)delete s.binding.played;else s.binding.played=played;s.media[0].sha256=remux;}e.scriptureRemux={};}),opts).ok,false,String(played));
+ assert.equal(verify(edit(report(),e=>{for(const s of e.nativePlayback)s.binding={...s.binding,playedSha256:'a'.repeat(64),played:'reviewed-bytes'};}),opts).ok,true);
+});
