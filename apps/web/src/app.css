@@ -356,6 +356,10 @@ button:enabled:active { translate: 0 0; scale: var(--press-scale); opacity: .86;
 @media(max-height:480px){.resource-visual.visual-unavailable>.unavailable-words{min-height:min(3.2em,25%);min-height:min(2lh,25%)}.resource-visual.visual-unavailable>.media-error.media-status{padding:6px 12px;margin:4px auto 2px;font-size:14px;line-height:1.35}
  /* A raised stage notice (#330) takes about 70px more of an already very short stage: the words give up their floor (they still
     scroll by keyboard) so the card stays above the controls. Disclosed for design acceptance. */
+ /* Loading, canceled and failed pictures carry a Cancel or Try again button: it sits beside the text, not under it, and keeps a
+    44px target, so the interactive card stays one row above the controls (Codex P2 on #335). */
+ .resource-visual.visual-unavailable>.media-error.media-status{flex-direction:row;flex-wrap:nowrap;gap:12px}
+ .resource-visual.visual-unavailable>.media-error.media-status button{min-height:44px;margin:0;padding-block:0;flex:none}
  .scene.notice-raised .resource-visual.visual-unavailable>.unavailable-words{min-height:0}
  .scene.notice-raised .resource-visual.visual-unavailable>.media-error.media-status{margin:2px auto 0}
  /* The title and credit drop their 52px minimum and spacing here, which gives the step words back about 30px. */
