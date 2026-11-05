@@ -93,7 +93,19 @@ test('glass reading area excludes asymmetric chrome while preserving its clear c
  assert.equal(alignmentPosition(a,69.99),null);
  });
 // Delivered BSB Mark 1:1-13 alignment (schema 2, delivery-media seconds).
-const bsb=JSON.parse(readFileSync('public/content/scripture-alignments/8a69afa1133b2cad7f90cfcd64fdb29bfaba2d84752d0552c896b4c7a651db01.json'));
+const bsb=JSON.parse(readFileSync('public/content/scripture-alignments/c29fc710c84775459d8091aefcb87b7f06cfb3b8fceb05835730b9f639126b7c.json'));
+test('the delivered BSB alignment word-times EVERY verse of Mark 1:1-13 (v4/6/7/8/10 were blank verse-only before)',()=>{
+ assert.deepEqual(bsb.verses.map(v=>v.verse),[1,2,3,4,5,6,7,8,9,10,11,12,13]);
+ for(const v of bsb.verses){
+  assert.equal(v.highlightMode,'word',`verse ${v.verse} is word-timed`);
+  assert.ok(v.words.length>0,`verse ${v.verse} has words`);
+  assert.equal(v.start,v.words[0].start);assert.equal(v.end,v.words.at(-1).end);
+ }
+ // the runtime position walks into verse 4's words (it used to return the verse alone, then nothing)
+ const v4=bsb.verses[3];
+ assert.deepEqual(alignmentPosition(bsb,v4.words[0].start+.01),{verseIndex:3,wordIndex:0});
+ assert.deepEqual(alignmentPosition(bsb,v4.words.at(-1).start+.01),{verseIndex:3,wordIndex:v4.words.length-1});
+});
 test('inside a word gap the last spoken word keeps the line instead of the verse centre',()=>{
  // The four gaps measured to pull the view back: 11.66-12.32, 12.66-12.9, 19.46-19.86, 21.28-21.7 s.
  for(const [from,to] of [[11.66,12.32],[12.66,12.9],[19.46,19.86],[21.28,21.7]]){

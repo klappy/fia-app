@@ -16,7 +16,7 @@ Now: `lib/passage-timing.js` maps the sidecar's top-level words onto the display
 
 ## Two timing sources (known duplication)
 
-`public/content/scripture-alignments/8a69afa1….json` (13 verses, same audio sha, declared in the delivery manifest) is still shipped and still validated, but it never reaches the reader for passage-only files. **The sidecar is canonical** (captain's ruling); the alignment file is a cross-check only and should be retired or generated from the sidecar.
+`public/content/scripture-alignments/c29fc710….json` (13 verses, same audio sha, declared in the delivery manifest) is still shipped and still validated, but it never reaches the reader for passage-only files. **The sidecar is canonical** (captain's ruling); the alignment file is a cross-check only and should be retired or generated from the sidecar.
 
 ## State of the visual
 
@@ -25,3 +25,7 @@ Logic and the active-word state (`data-active="true"` on the word span) ship. Th
 ## Limits
 
 `sw.js` does not cache `/transcripts/`, so word timing is online-only (offline falls back to the duration scroll). Not required today. Also removed: the developer line "player pool: N file player(s) · controller-driven highlight from sidecar" from the caption pill.
+
+## Update Nov 5 2026 (#324, captain iPhone feedback)
+
+BSB Mark 1:1–13 is NOT passage-only: its runtime highlight source is the pinned delivery-manifest alignment (not the sidecar). That artifact had verse-only entries for v4/6/7/8/10 (the reviewed words differ from the text), so those verses never highlighted. The artifact (`c29fc710….json`), its evidence record and the delivery manifest are regenerated with word timings for those five verses from an automatic recognition pass (+140 ms onto the reviewed clock). **Those five verses' timings are not human-reviewed**; the evidence scope says so. The reviewed verses are unchanged. The gel is a sliding two-word window advancing one word at a time.

@@ -109,7 +109,10 @@
   return()=>{scroller.stop();media?.removeEventListener('change',update);observer?.disconnect();};
  });
 </script>
-{#snippet spoken(text)}{#each alignedSegments(text,alignment?.verses[0]?.words) as segment}{#if segment.wordIndex!==undefined}<span data-align-word={`0-${segment.wordIndex}`} data-active={SCRIPTURE_WORD_HIGHLIGHT&&pair&&position.verseIndex===0&&segment.wordIndex>=pair.first&&segment.wordIndex<=pair.last?'true':undefined}>{segment.text}</span>{:else}{segment.text}{/if}{/each}{/snippet}
+<!-- One card, one gel system: every reading (verse paragraph, guide text, list item) renders its words through this one snippet; scripture-only parts (verse number, ordinal, identification) are optional sub-components of the same card. -->
+{#snippet words(text,i)}{#each alignedSegments(text,alignment?.verses[i]?.words) as segment}{#if segment.wordIndex!==undefined}<span data-align-word={`${i}-${segment.wordIndex}`} data-active={SCRIPTURE_WORD_HIGHLIGHT&&pair&&position.verseIndex===i&&segment.wordIndex>=pair.first&&segment.wordIndex<=pair.last?'true':undefined}>{segment.text}</span>{:else}{segment.text}{/if}{/each}{/snippet}
+{#snippet verseNumber(number)}{#if number}<sup>{number}</sup>{/if}{/snippet}
+{#snippet ordinalMark(ordinal)}{#if ordinal}<span class="list-ordinal">{ordinal}.</span>{" "}{/if}{/snippet}
 <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions (This focusable reading region listens for native scrolling intent; it does not intercept keys or act as a button.) -->
 <div bind:this={viewport} class="scripture-scroll" style:padding-top={`calc(var(--chrome-top, 0px) + ${edgeSpace.leading}px)`} style:padding-bottom={`calc(var(--chrome-bottom, 0px) + ${edgeSpace.trailing}px)`} role="region" tabindex="0" aria-label={asset.kind==='scripture'?'Scripture passage':'Guide text'} onwheel={explore} onpointerdown={explore} ontouchstart={explore} onkeydown={e=>{if(scrollKeys.has(e.key))explore();}}>
  <div class="reading-verses">
@@ -117,11 +120,11 @@
   <ResourceIdentification asset={identification||asset}/>
  {/if}
  {#if asset.list}
- <p data-reading-item aria-current={asset.activeItemId===asset.id?'true':undefined}>{#if asset.activeItemId===asset.id}{@render spoken(asset.text)}{:else}{asset.text}{/if}</p>
- <svelte:element this={asset.marker==='numbered'?'ol':'ul'} class="reading-list" class:numbered={asset.marker==='numbered'} class:bulleted={asset.marker==='bulleted'}>{#each asset.list as item}<li data-reading-item aria-current={asset.activeItemId===item.id?'true':undefined}>{#if asset.activeItemId===item.id}{@render spoken(item.text)}{:else}{item.text}{/if}</li>{/each}</svelte:element>
+ <p data-reading-item aria-current={asset.activeItemId===asset.id?'true':undefined}>{#if asset.activeItemId===asset.id}{@render words(asset.text,0)}{:else}{asset.text}{/if}</p>
+ <svelte:element this={asset.marker==='numbered'?'ol':'ul'} class="reading-list" class:numbered={asset.marker==='numbered'} class:bulleted={asset.marker==='bulleted'}>{#each asset.list as item}<li data-reading-item aria-current={asset.activeItemId===item.id?'true':undefined}>{#if asset.activeItemId===item.id}{@render words(item.text,0)}{:else}{item.text}{/if}</li>{/each}</svelte:element>
  {:else}
  {#each blocks as verse,i}
-  <p aria-current={position?.verseIndex===i?'true':undefined}>{#if i===0&&asset.ordinal}<span class="list-ordinal">{asset.ordinal}.</span>{" "}{/if}{#if verse.number}<sup>{verse.number}</sup>{/if}{#each alignedSegments(verse.text,alignment?.verses[i]?.words) as segment}{#if segment.wordIndex!==undefined}<span data-align-word={`${i}-${segment.wordIndex}`} data-active={SCRIPTURE_WORD_HIGHLIGHT&&pair&&position.verseIndex===i&&segment.wordIndex>=pair.first&&segment.wordIndex<=pair.last?'true':undefined}>{segment.text}</span>{:else}{segment.text}{/if}{/each}</p>
+ <p aria-current={position?.verseIndex===i?'true':undefined}>{#if i===0}{@render ordinalMark(asset.ordinal)}{/if}{@render verseNumber(verse.number)}{@render words(verse.text,i)}</p>
  {/each}
  {/if}
  <div class="gel-layer" aria-hidden="true" bind:this={gelLayer}><div class="gel" bind:this={gel} hidden><i class="gel-tint"></i><i class="gel-chrome"></i></div></div>
