@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createScriptController} from '../src/lib/script-controller.js';
 const words=[{startMs:1000,endMs:1500,text:'In'},{startMs:1500,endMs:2000,text:'the'},{startMs:2200,endMs:3000,text:'beginning'}];
-const sidecar={schema:'fia-word-transcript@1',activities:{a:{words},b:{words}}};
+const sidecar={schema:'fia-word-transcript@1',activities:{a:{words,matched:3,total:3,startMs:1000,endMs:3000},b:{words:words.map(w=>({...w,startMs:w.startMs+4000,endMs:w.endMs+4000})),matched:3,total:3,startMs:5000,endMs:7000}}};
 const script=[{id:'a',text:'In the beginning',fileKey:'F',src:'blob:F',startMs:1000,endMs:3000},{id:'b',text:'In the beginning',fileKey:'F',src:'blob:F',startMs:5000,endMs:7000},{id:'c',text:'x',fileKey:'G',src:'blob:G',startMs:0,endMs:900}];
 function setup(){const calls=[],hl=[],adv=[];const player={play:(...a)=>calls.push(['play',...a]),seek:s=>{calls.push(['seek',s]);return true;},stop:()=>calls.push(['stop'])};
  const c=createScriptController({player,script,transcripts:new Map([['F',sidecar]]),onHighlight:(id,w)=>hl.push([id,w]),onAdvance:(n,from)=>adv.push([n,from])});return {c,calls,hl,adv};}
@@ -18,7 +18,7 @@ test('end of audio auto-advances exactly once to the next span; last span advanc
  const {c,adv}=setup();c.play('a');c.onPlayerEnd();c.onPlayerEnd();assert.deepEqual(adv,[['b','a']]);c.play('c');c.onPlayerEnd();assert.deepEqual(adv.at(-1),[null,'c']);
 });
 test('seekWord seeks to the word millisecond, playing its screen first when needed; no sidecar means no seek',()=>{
- const {c,calls}=setup();assert.equal(c.seekWord('b',2),true);assert.equal(calls[0][0],'play');assert.deepEqual(calls.at(-1),['seek',2.2]);
+ const {c,calls}=setup();assert.equal(c.seekWord('b',2),true);assert.equal(calls[0][0],'play');assert.deepEqual(calls.at(-1),['seek',6.2]);
  assert.equal(c.seekWord('c',0),false);assert.equal(c.seekWord('zz',0),false);
 });
 test('controller survives player stops of other screens and never creates players',()=>{

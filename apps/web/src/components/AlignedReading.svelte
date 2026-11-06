@@ -4,7 +4,7 @@
  import {createSmoothFollow} from '../lib/smooth-follow.js';
  import {SCRIPTURE_WORD_HIGHLIGHT} from '../lib/scripture-passage.js';
  import {leadingPosition, wordPair, alignedSegments, followScrollTop, durationScrollTop, readingEdgeSpace, clearReadingRect} from '../lib/alignment.js';
- let {asset, playback={src:null,elapsed:0,playing:false}, suspended=false,identification=null}=$props();
+ let {asset, playback={src:null,elapsed:0,playing:false}, suspended=false,identification=null,regionLabel=null}=$props();
  let viewport=$state(), following=$state(true), reducedMotion=$state(false), revision=$state(0), ready=$state(false), edgeSpace=$state({leading:0,trailing:0});
  let lastScrollTarget=null,scroller;
  let resourceId=$derived(asset.id);
@@ -114,7 +114,7 @@
 {#snippet verseNumber(number)}{#if number}<sup>{number}</sup>{/if}{/snippet}
 {#snippet ordinalMark(ordinal)}{#if ordinal}<span class="list-ordinal">{ordinal}.</span>{" "}{/if}{/snippet}
 <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions (This focusable reading region listens for native scrolling intent; it does not intercept keys or act as a button.) -->
-<div bind:this={viewport} class="scripture-scroll" style:padding-top={`calc(var(--chrome-top, 0px) + ${edgeSpace.leading}px)`} style:padding-bottom={`calc(var(--chrome-bottom, 0px) + ${edgeSpace.trailing}px)`} role="region" tabindex="0" aria-label={asset.kind==='scripture'?'Scripture passage':'Guide text'} onwheel={explore} onpointerdown={explore} ontouchstart={explore} onkeydown={e=>{if(scrollKeys.has(e.key))explore();}}>
+<div bind:this={viewport} class="scripture-scroll" style:padding-top={`calc(var(--chrome-top, 0px) + ${edgeSpace.leading}px)`} style:padding-bottom={`calc(var(--chrome-bottom, 0px) + ${edgeSpace.trailing}px)`} role="region" tabindex="0" aria-label={regionLabel||(asset.kind==='scripture'?'Scripture passage':'Guide text')} onwheel={explore} onpointerdown={explore} ontouchstart={explore} onkeydown={e=>{if(scrollKeys.has(e.key))explore();}}>
  <div class="reading-verses">
  {#if identification||['scripture','term'].includes(asset.kind)}
   <ResourceIdentification asset={identification||asset}/>

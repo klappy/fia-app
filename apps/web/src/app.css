@@ -342,7 +342,7 @@ button:enabled:active { translate: 0 0; scale: var(--press-scale); opacity: .86;
    at the media's aspect, and the glass scene ground shows around it — never a full-height flat panel. The words keep a floor of about four lines (or 40 % of the stage when that is smaller)
    and the status card shrinks first on short screens and at large text. */
 .resource-visual.visual-unavailable>.unavailable-words{flex:1 1 auto;display:flex;flex-direction:column;width:100%;max-width:740px;margin:0 auto;font:400 calc(24px * var(--reading-scale,1))/1.6 var(--font-scripture-latin);min-height:min(6.4em,40%);min-height:min(4lh,40%)}
-.resource-visual.visual-unavailable>.unavailable-words .scripture-scroll{flex:1;min-height:0}
+.resource-visual.visual-unavailable>.unavailable-words .scripture-scroll{--chrome-top:0px;--chrome-bottom:0px;flex:1;min-height:0}
 .resource-visual.visual-unavailable>.unavailable-words .scripture-scroll:focus-visible{outline:2px solid var(--focus-ring);outline-offset:-2px;border-radius:var(--r-md)}
 .resource-visual.visual-unavailable>.media-error.media-status{position:relative;inset:auto;flex:0 1 auto;min-height:calc(3em + 40px);min-height:calc(2lh + 40px);overflow:visible;align-self:center;width:min(100% - 64px,676px,calc(min(32dvh,300px) * var(--media-aspect-w,4) / var(--media-aspect-h,3)));aspect-ratio:var(--media-aspect-w,4) / var(--media-aspect-h,3);margin:16px auto 8px;padding:20px;border-radius:var(--r-md);background:var(--material-floating);color:var(--ink-700)}
 .resource-visual.visual-unavailable>.media-error.media-status p{margin:0}

@@ -190,3 +190,10 @@ run('one fallback handles consecutive future identities without another tap and 
  e.controller.evict('third');assert.equal(e.controller.active,false);assert.equal(fallback.paused,true);
  e.controller.play('next','blob:next',1,undefined,'next');await tick();assert.equal(e.audio.length,2);assert.equal(e.controller.playing,true);e.controller.stop();
 });
+
+run('saved players survive refresh only while current or paused active, then are released',async e=>{
+ e.controller.reserve(['saved|old','saved|current']);
+ e.controller.play('','blob:old',1,undefined,'saved|old');await tick();e.controller.pause();
+ e.controller.retain(['saved|current']);assert.equal(e.controller.poolSize,2);assert.equal(e.controller.src,'blob:old');
+ e.controller.stop();e.controller.retain(['saved|current']);assert.equal(e.controller.poolSize,1);
+});
