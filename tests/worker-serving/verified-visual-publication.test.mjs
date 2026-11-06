@@ -38,7 +38,7 @@ for(const classic of [true,false])test(`actual SW MEDIA_STATUS and MEDIA_PLAY tr
  const context=sw(),manifest={schema:1,packId,presentationRevision:revision,deliveryRevision:delivery,revision:'build',files:[{path:'/index.html',group:'core',bytes:1,sha256:'d'.repeat(64)}]};
  if(!classic)delete manifest.deliveryRevision;
  context.caches={open:async()=>({match:async()=>null})};
- context.fetch=async path=>path===`/offline/${packId}.json`?Response.json(manifest):request(path);
+ context.fetch=async path=>path.startsWith('/v1/bundled-visuals/')?new Response('not admitted',{status:404}):path===`/offline/${packId}.json`?Response.json(manifest):request(path);
  async function message(type,extra={}){let result,pending;context.handlers.message({data:{type,packId,revision,deliveryRevision:delivery,...extra},source:{id:'fixture'},ports:[{postMessage(value){result=value;}}],waitUntil(promise){pending=promise;}});await pending;return result;}
  const status=await message('MEDIA_STATUS');assert.equal(status.ok,true,JSON.stringify(status));assert.equal(status.files[0].path,entry.path);
  const play=await message('MEDIA_PLAY',{path:entry.path,requestId:'exact-image'});assert.equal(play.ok,true,JSON.stringify(play));assert.equal(play.mime,'image/png');assert.equal(createHash('sha256').update(new Uint8Array(play.bytes)).digest('hex'),sha);

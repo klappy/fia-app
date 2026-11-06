@@ -24,9 +24,10 @@ const mediaPath=path=>/\.(mp3|m4a|wav|ogg|mp4|webm|jpe?g|png|webp)$/.test(path)&
 const shell=allFiles.filter(path=>!mediaPath(path)).map(digest);
 const buildId=createHash('sha256').update(JSON.stringify(shell)).digest('hex').slice(0,12);
 const deliveryHelpers=readFileSync(new URL('../apps/web/src/lib/media-delivery.js',import.meta.url),'utf8').replace(/export (?=(?:async )?function)/g,'');
+const bundledVisualHelpers=readFileSync(new URL('../apps/web/src/lib/bundled-visuals.js',import.meta.url),'utf8').replace(/export /g,'');
 const proxyHelpers=readFileSync(new URL('../apps/web/src/lib/proxy-request.js',import.meta.url),'utf8').replace(/export (?=(?:async )?function)/g,'');
 const recordingPolicy=readFileSync(new URL('../apps/web/src/lib/recording-policy.js',import.meta.url),'utf8').replace(/export function/g,'function');
-writeFileSync('dist/sw.js',recordingPolicy+'\nconst generatedRecordingPaths=new Set('+JSON.stringify([...generatedRecordingPaths])+');\n'+deliveryHelpers+'\n'+proxyHelpers+'\n'+readFileSync('apps/web/public/sw.js','utf8').replace('__BUILD_ID__',buildId));
+writeFileSync('dist/sw.js',recordingPolicy+'\nconst generatedRecordingPaths=new Set('+JSON.stringify([...generatedRecordingPaths])+');\n'+deliveryHelpers+'\n'+proxyHelpers+'\n'+bundledVisualHelpers+'\n'+readFileSync('apps/web/public/sw.js','utf8').replace('__BUILD_ID__',buildId));
 const registryPath='dist/content/registry.json';
 let registry;
 try{registry=JSON.parse(readFileSync(registryPath,'utf8'));}catch(error){if(error.code!=='ENOENT')throw error;}
