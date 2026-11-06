@@ -10,8 +10,8 @@ test('exact resources never expands passage-wide available allowlist', () => {
 test('together screen includes intro and displayed item relationships; separate items stay independent', () => {
   const pack={activities:[{id:'intro',relatedAssetIds:['map']},{id:'item',assetId:'image'},{id:'other',assetId:'term'}],
     listContracts:[{introId:'intro',itemIds:['item'],layout:'together'}]};
-  assert.deepEqual(displayedScreens(pack), [{id:'intro',activityIds:['intro','item'],resources:['map','image']},
-    {id:'other',activityIds:['other'],resources:['term']}]);
+  assert.deepEqual(displayedScreens(pack), [{id:'intro',activityIds:['intro','item'],directResources:['map','image'],fulfillmentResources:[],resources:['map','image']},
+    {id:'other',activityIds:['other'],directResources:['term'],fulfillmentResources:[],resources:['term']}]);
   pack.listContracts[0].layout='separate';
   assert.equal(displayedScreens(pack).length,3);
 });
@@ -60,4 +60,20 @@ test('reviewed compressed logical bytes are not mistaken for original or deliver
   assert.deepEqual(localPayloadBindings(bytes,[entry]),{source:false,logical:true,derivative:false});
   entry.variants={small:{delivery:logicalSource}};
   assert.deepEqual(localPayloadBindings(bytes,[entry]),{source:false,logical:true,derivative:true});
+});
+
+test('explicit authored fulfillment contributes resources of displayed together items without broad allowlist', () => {
+  const pack={activities:[{id:'intro',assetId:'direct',availableAssetIds:['unrelated']},
+    {id:'item'},{id:'bible',fulfills:'intro',assetId:'translation'},
+    {id:'gloss',fulfills:'item',relatedAssetIds:['term','direct']},
+    {id:'elsewhere',fulfills:'not-displayed',assetId:'unrelated'}],
+    listContracts:[{introId:'intro',itemIds:['item'],layout:'together'}]};
+  const screen=displayedScreens(pack).find(s=>s.id==='intro');
+  assert.deepEqual(screen.directResources,['direct']);
+  assert.deepEqual(screen.fulfillmentResources,['translation','term']);
+  assert.deepEqual(screen.resources,['direct','translation','term']);
+  const assets=Object.fromEntries(['direct','translation','term','unrelated'].map(id=>[id,{kind:'term',text:id}]));
+  const report=auditPack({...pack,assets},{id:'test',revision:'revision'});
+  assert.equal(report.resources.term.directLinked,4); // expansion activities also have their own screens
+  assert.equal(report.resources.term.fulfillmentLinked,2);
 });

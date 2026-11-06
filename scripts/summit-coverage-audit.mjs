@@ -20,7 +20,13 @@ export function displayedScreens(pack) {
     const contract = together.find(c => c.introId === a.id);
     const ids = unique([a.id, ...(contract?.itemIds || [])]);
     const displayed = activities.filter(item => ids.includes(item.id));
-    return { id: a.id, activityIds: ids, resources: unique(displayed.flatMap(exactResources)) };
+    // Expansion activities explicitly name the displayed source unit they fulfill.
+    // This relationship is authored; the whole-pack available allowlist is not.
+    const fulfilling = activities.filter(item => item.fulfills && ids.includes(item.fulfills));
+    const directResources = unique(displayed.flatMap(exactResources));
+    const fulfillmentResources = unique(fulfilling.flatMap(exactResources)).filter(id => !directResources.includes(id));
+    return { id: a.id, activityIds: ids, directResources, fulfillmentResources,
+      resources: unique([...directResources, ...fulfillmentResources]) };
   });
 }
 export function mediaDeclaration(asset, descriptor, deliveries = []) {
@@ -46,11 +52,15 @@ export function auditPack(pack, descriptor, deliveries = []) {
   const assets = pack.assets || {};
   const screens = displayedScreens(pack);
   const linked = new Set(screens.flatMap(s => s.resources));
+  const direct = new Set(screens.flatMap(s => s.directResources));
+  const fulfillment = new Set(screens.flatMap(s => s.fulfillmentResources));
   const unknownReferences = screens.flatMap(s => s.resources.filter(id => !assets[id]).map(id => ({ screen: s.id, asset: id })));
   const resources = Object.fromEntries(kinds.map(kind => {
     const all = Object.entries(assets).filter(([, a]) => a.kind === kind);
     const media = all.map(([, a]) => mediaDeclaration(a, descriptor, deliveries));
     return [kind, { catalogued: all.length, exactLinked: all.filter(([id]) => linked.has(id)).length,
+      directLinked: all.filter(([id]) => direct.has(id)).length,
+      fulfillmentLinked: all.filter(([id]) => fulfillment.has(id)).length,
       readableInline: all.filter(([, a]) => readableText(a)).length,
       withSrc: media.filter(a => a.hasSrc).length, declaredDeliveryBound: media.filter(a => a.declaredDeliveryBound).length,
       publisherURLMetadata: media.filter(a => a.publisherURLMetadata).length,
