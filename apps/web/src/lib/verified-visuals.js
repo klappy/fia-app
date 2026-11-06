@@ -14,7 +14,7 @@ export async function bindVerifiedVisuals(files,pack,assets,deliveryRevision){
   if(p.schema==='fia-bundled-visual@1'){
    validateBundledVisual(file,{packId:identity.packId,presentationRevision:identity.revision,deliveryRevision});
    if(!a||await preparationHash(canonicalPreparationJSON(a))!==p.assetSha256||p.bindingKind==='canonical-source'&&(!a.sourceEvidence||await preparationHash(canonicalPreparationJSON(a.sourceEvidence))!==p.sourceEvidenceSha256))throw Error('The bundled visual authored asset changed.');
-   const previous=result.get(p.assetId);if(previous&&canonicalPreparationJSON(previous)!==canonicalPreparationJSON(file))throw Error('Conflicting verified visual bindings.');
+   const previous=result.get(p.assetId);if(previous&&bindingIdentity(previous)!==bindingIdentity(file))throw Error('Conflicting verified visual bindings.');
    result.set(p.assetId,file);continue;
   }
   const ext=file.mime==='image/png'?'png':file.mime==='image/jpeg'?'jpg':null;
