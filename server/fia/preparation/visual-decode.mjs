@@ -4,7 +4,7 @@ import decodeJpeg from 'jpeg-js/lib/decoder.js';
 // Full decode proof for visual-original (F6, T5 YES with conditions at cookbook d922aa5). It runs on read-back bytes only and
 // returns evidence, never pixels: dimensions and a SHA256 of the decoded samples. Every refusal is a VisualDecodeRefusal whose
 // subReason is a recipe sub-reason; header inspection alone never returns a result.
-export const PNG_DECODER=Object.freeze({name:'fia-png-row-stream',version:'3',inflate:'node:zlib',pixels:'unfiltered-scanlines'});
+export const PNG_DECODER=Object.freeze({name:'fia-png-row-stream',version:'4',inflate:'node:zlib',pixels:'unfiltered-samples; indexed-rgb8'});
 // Pinned exactly in package.json; sha256 of node_modules/jpeg-js/lib/decoder.js, the only file bundled (tests check it).
 export const JPEG_DECODER=Object.freeze({name:'jpeg-js',version:'0.4.4',entry:'jpeg-js/lib/decoder.js',sha256:'a3f175fd6f62d142aad94d3bd90f3a30be4e076baf9b6a6fa31c8e84d9d4aa9f',pixels:'rgb8'});
 export class VisualDecodeRefusal extends Error{constructor(subReason,{final=true}={}){super(subReason);this.subReason=subReason;this.final=final;}}
@@ -28,7 +28,7 @@ const u16=(b,i)=>(b[i]<<8)|b[i+1];
 // Supported subset: 8-bit samples, non-interlaced, every standard colour type. Channels per colour type.
 const PNG_CHANNELS=new Map([[0,1],[2,3],[3,1],[4,2],[6,4]]);
 function pngStructure(bytes,limits,clock){
- let pos=8,ihdr=null,plte=0,idat=[],idatDone=false,iend=false,first=true,chunks=0,phys=false,ancillaryText=0;
+ let pos=8,ihdr=null,plte=0,paletteColors=null,idat=[],idatDone=false,iend=false,first=true,chunks=0,phys=false,ancillaryText=0;
  while(pos<bytes.length){
   // Bounded parse: the recipe caps the chunk count (so no PNG holds one view per tiny chunk), and the deadline is checked as it goes.
   if(++chunks>limits.maxPngChunks)refuse('png-chunk-cap');if(!(chunks&1023)&&clock()>limits.decodeMs)refuse('decode-deadline',{final:false});
@@ -46,7 +46,7 @@ function pngStructure(bytes,limits,clock){
    if(depth!==8||!PNG_CHANNELS.has(color))refuse('png-format-unsupported');
    ihdr={width,height,depth,color,channels:PNG_CHANNELS.get(color)};
    if(width>limits.maxDimension||height>limits.maxDimension)refuse('dimension-cap');if(width*height>limits.maxPixels)refuse('pixel-cap');
-  }else if(type==='PLTE'){if(plte||ihdr.color===0||ihdr.color===4)refuse('png-plte-invalid');if(idat.length||!length||length%3||length>768)refuse('png-chunk-invalid');plte=length/3;}
+  }else if(type==='PLTE'){if(plte||ihdr.color===0||ihdr.color===4)refuse('png-plte-invalid');if(idat.length||!length||length%3||length>768)refuse('png-chunk-invalid');plte=length/3;paletteColors=data;}
   else if(type==='IDAT'){if(idatDone)refuse('png-chunk-order');idat.push(data);}
   else if(type==='IEND'){if(length)refuse('png-chunk-invalid');iend=true;if(pos!==bytes.length)refuse('png-trailing-data');break;}
   else if(type==='pHYs'){if(phys||idat.length||length!==9||data[8]>1)refuse('png-chunk-invalid');phys=true;}
@@ -68,7 +68,7 @@ function pngStructure(bytes,limits,clock){
  if(!iend)refuse('png-missing-iend');
  if(!idat.length)refuse('png-truncated-idat');
  if(ihdr.color===3&&!plte)refuse('png-chunk-invalid');
- return {...ihdr,palette:plte,idat};
+ return {...ihdr,palette:plte,paletteColors,idat};
 }
 function unfilter(filter,cur,prev,bpp){
  const n=cur.length;
@@ -79,9 +79,9 @@ function unfilter(filter,cur,prev,bpp){
  if(filter===4){for(let i=0;i<n;i++){const a=i>=bpp?cur[i-bpp]:0,b=prev[i],c=i>=bpp?prev[i-bpp]:0,p=a+b-c,pa=Math.abs(p-a),pb=Math.abs(p-b),pc=Math.abs(p-c);cur[i]+=pa<=pb&&pa<=pc?a:pb<=pc?b:c;}return;}
  refuse('png-filter-invalid');
 }
-// Row-streaming: the zlib stream is inflated incrementally and only two rows are ever held; the pixels are hashed row by row.
+// Row-streaming: two input rows plus, for indexed PNG, one bounded RGB row. Hash actual color samples, never palette indices.
 async function decodePng(bytes,limits,clock){
- const s=pngStructure(bytes,limits,clock),rowBytes=s.width*s.channels,hash=createHash('sha256');
+ const s=pngStructure(bytes,limits,clock),rowBytes=s.width*s.channels,hash=createHash('sha256'),rgb=s.color===3?new Uint8Array(s.width*3):null;
  let prev=new Uint8Array(rowBytes),cur=new Uint8Array(rowBytes),filter=-1,fill=0,rows=0,failure=null;
  const inflate=createInflate({chunkSize:65536});
  const done=new Promise((resolve,reject)=>{
@@ -92,7 +92,7 @@ async function decodePng(bytes,limits,clock){
      if(rows>=s.height)refuse('png-trailing-data');
      if(filter<0){filter=chunk[i++];continue;}
      const take=Math.min(rowBytes-fill,chunk.length-i);cur.set(chunk.subarray(i,i+take),fill);fill+=take;i+=take;
-     if(fill===rowBytes){unfilter(filter,cur,prev,s.channels);if(s.color===3)for(let x=0;x<rowBytes;x++)if(cur[x]>=s.palette)refuse('png-palette-index');hash.update(cur);[prev,cur]=[cur,prev];filter=-1;fill=0;rows++;}
+     if(fill===rowBytes){unfilter(filter,cur,prev,s.channels);if(s.color===3){for(let x=0;x<rowBytes;x++){if(cur[x]>=s.palette)refuse('png-palette-index');const index=cur[x]*3;const offset=x*3;rgb[offset]=s.paletteColors[index];rgb[offset+1]=s.paletteColors[index+1];rgb[offset+2]=s.paletteColors[index+2];}hash.update(rgb);}else hash.update(cur);[prev,cur]=[cur,prev];filter=-1;fill=0;rows++;}
     }
     if(clock()>limits.decodeMs)refuse('decode-deadline',{final:false});
    }catch(error){failure=error;inflate.destroy();reject(error);}

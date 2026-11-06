@@ -40,6 +40,15 @@ test('every PNG filter type, a split IDAT and an ancillary chunk decode back to 
  for(const filters of [[0],[1],[2],[3],[4],[0,1,2,3,4]]){const {bytes,pixels}=png({filters,extra:[chunk('pHYs',Buffer.from([0,0,11,19,0,0,11,19,1]))]});const r=await decode(bytes,'image/png');assert.equal(r.pixelsSha256,sha(pixels),String(filters));}
  const rgba=png({w:5,h:4,ch:4,color:6});const r=await decode(rgba.bytes,'image/png');assert.equal(r.width,5);assert.equal(r.pixelsSha256,sha(rgba.pixels));
 });
+test('indexed PNG hashes the decoded PLTE colors: identical indices with different palettes have distinct pixel evidence',async()=>{
+ const make=palette=>Buffer.concat([SIG,header(2,1,{color:3}),chunk('PLTE',Buffer.from(palette)),chunk('IDAT',deflateSync(Buffer.from([0,0,1]))),chunk('IEND',Buffer.alloc(0))]);
+ const redBlue=[255,0,0,0,0,255],greenWhite=[0,255,0,255,255,255];
+ const a=await decode(make(redBlue),'image/png'),b=await decode(make(greenWhite),'image/png');
+ assert.equal(a.pixelsSha256,sha(Buffer.from(redBlue)),'two rendered RGB pixels, not two palette indices');
+ assert.equal(b.pixelsSha256,sha(Buffer.from(greenWhite)));assert.notEqual(a.pixelsSha256,b.pixelsSha256);
+ const transparent=Buffer.concat([SIG,header(2,1,{color:3}),chunk('PLTE',Buffer.from(redBlue)),chunk('tRNS',Buffer.from([0,255])),chunk('IDAT',deflateSync(Buffer.from([0,0,1]))),chunk('IEND',Buffer.alloc(0))]);
+ await refused(decode(transparent,'image/png'),'png-chunk-unsupported');
+});
 test('8-bit palette PNG decodes; a 4-bit palette is an unsupported subset, never decoded',async()=>{
  const r=await decode(file('palette-20x9.png'),'image/png');assert.equal(r.width,20);assert.equal(r.height,9);
  await refused(decode(file('palette4bit-20x9.png'),'image/png'),'png-format-unsupported');
