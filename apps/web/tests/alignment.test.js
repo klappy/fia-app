@@ -145,7 +145,7 @@ test('the gel is two words wide and slides one word at a time, never past the ve
 });
 test('a card alignment from sidecar words drives the same media-time lookup as scripture',()=>{
  const text='Hear this, and put it in your hearts.';
- const words=[{from:0,to:4,startMs:1000,endMs:1200},{from:5,to:9,startMs:1300,endMs:1500},{from:11,to:14,startMs:1900,endMs:2000}];
+ const words=[{text:"Hear",from:0,to:4,startMs:1000,endMs:1200},{text:"this",from:5,to:9,startMs:1300,endMs:1500},{text:"and",from:11,to:14,startMs:1900,endMs:2000}];
  const a=activityAlignment(text,words,3000);
  assert.equal(a.clockDomain,'delivery-media-seconds');assert.equal(a.verses.length,1);
  assert.equal(alignmentPosition(a,0.5),null);
@@ -169,4 +169,17 @@ test('every guide activity in the sidecars aligns to its own narration with time
   }
  }
  assert.ok(checked>=6,'checked '+checked);
+});
+
+test('activity alignment refuses stale words and normalizes both sides consistently',()=>{
+ const word=(text,from,to)=>({text,from,to,startMs:0,endMs:100});
+ assert.equal(activityAlignment('Read now',[word('Hear',0,4)],100),null);
+ for(const [shown,spoken] of [['“Hello,”','hello'],['CAFÉ','cafe\u0301'],['Dios','DIOS'],["don’t","don't"],['爱','爱'],['שלום','שלום'],['123','123']])
+   assert.ok(activityAlignment(shown,[word(spoken,0,shown.length)],100),shown);
+ for(const spoken of [undefined,'','!!!','other','cafe'])
+   assert.equal(activityAlignment('café',[word(spoken,0,4)],100),null,String(spoken));
+ assert.equal(activityAlignment('hello',[word('hell',0,4)],100),null,'partial words refuse');
+ assert.equal(activityAlignment('go now',[word('gonow',0,6)],100),null,'word separators cannot disappear');
+ assert.equal(activityAlignment('Read now',[word('Read',0.5,4)],100),null,'fractional offsets refuse');
+ assert.equal(activityAlignment('Read now',[word(undefined,0,4)],100),null,'missing word text refuses');
 });

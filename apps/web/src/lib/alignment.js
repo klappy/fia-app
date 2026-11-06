@@ -88,13 +88,24 @@ export function wordPair(wordIndex, wordCount) {
   return { first, last: Math.min(wordCount - 1, first + 1) };
 }
 
+// Keep accents and non-Latin words; normalize casing, canonical forms and punctuation alike.
+const activityWordKey = text => text.normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}\p{M}\s]/gu, '').trim();
+const wordCharacter = char => /[\p{L}\p{N}\p{M}]/u.test(char);
+
 /** A guide or instruction card's alignment from its sidecar words ({startMs,endMs,from,to}, offsets into the narration), so the card
  * highlights through the same gel as scripture. Returns null unless every word sits inside the narration text it is shown with. */
 export function activityAlignment(text, words, durationMs) {
-  if (!text || !Array.isArray(words) || !words.length) return null;
+  if (typeof text !== 'string' || !text || !Array.isArray(words) || !words.length) return null;
   let end = 0;
   for (const w of words) {
-    if (!Number.isFinite(w.from) || !Number.isFinite(w.to) || w.from < end || w.to <= w.from || w.to > text.length || !Number.isFinite(w.startMs) || !Number.isFinite(w.endMs)) return null;
+    if (!w || !Number.isInteger(w.from) || !Number.isInteger(w.to) || w.from < end || w.to <= w.from || w.to > text.length || !Number.isFinite(w.startMs) || !Number.isFinite(w.endMs)) return null;
+    if (typeof w.text !== 'string') return null;
+    const key = activityWordKey(w.text);
+    if (!key || /\s/u.test(key) || key !== activityWordKey(text.slice(w.from, w.to))) return null;
+    // A matching substring inside a different word is still stale.
+    const before = Array.from(text.slice(0, w.from)).at(-1) ?? '';
+    const after = Array.from(text.slice(w.to))[0] ?? '';
+    if (wordCharacter(before) || wordCharacter(after)) return null;
     end = w.to;
   }
   const timed = words.map(w => ({ from: w.from, to: w.to, start: w.startMs / 1000, end: w.endMs / 1000 }));
