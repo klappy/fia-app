@@ -1148,3 +1148,23 @@ it('cold offline launch restores the saved verified visual binding before render
  await startAt(activities.find(a=>a.assetId===id).id);await waitFor(()=>expect(document.querySelector('.visual-explorer img')?.getAttribute('src')).toBe(file.path));expect(request).not.toHaveBeenCalled();
  }finally{assets[id].src=original;if(originalEvidence===undefined)delete assets[id].sourceEvidence;else assets[id].sourceEvidence=originalEvidence;}
 });
+
+it('opening a step resource moves focus to Return and restores its originating button',async()=>{
+ const original=activities[0],id=Object.values(assets).find(a=>a.kind==='image').id;activities[0]={...original,relatedAssetIds:[id]};
+ try{
+  await startAt(original.id,'waiting');
+  const shelf=screen.getByRole('navigation',{name:'Resources for this step'}),trigger=within(shelf).getAllByRole('button').find(button=>button.dataset.resourceId===id);
+  trigger.focus();await fireEvent.click(trigger);
+  const back=screen.getByRole('button',{name:'Return to guide'});await waitFor(()=>expect(document.activeElement).toBe(back));
+  await fireEvent.click(back);
+  await waitFor(()=>expect(document.activeElement?.dataset.resourceId).toBe(id));expect(state().index).toBe(0);
+ }finally{cleanup();activities[0]=original;}
+});
+
+it('step resources show Checking while media verification is pending',async()=>{
+ const original=activities[0],id=Object.values(assets).find(a=>a.kind==='image').id;activities[0]={...original,relatedAssetIds:[id]};
+ vi.spyOn(libraryAdapter,'mediaStatus').mockImplementation(()=>new Promise(()=>{}));
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});
+ try{await startAt(original.id,'waiting');const shelf=screen.getByRole('navigation',{name:'Resources for this step'}),trigger=within(shelf).getAllByRole('button').find(button=>button.dataset.resourceId===id);expect(trigger.textContent).toContain('Checking');expect(trigger.textContent).not.toContain('Unavailable');expect(trigger.disabled).toBe(false);}
+ finally{cleanup();activities[0]=original;}
+});

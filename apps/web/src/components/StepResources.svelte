@@ -1,14 +1,14 @@
 <script>
- let {items=[],onopen=()=>{},onheight=()=>{}}=$props();
+ let {items=[],verifying=false,onopen=()=>{},onheight=()=>{}}=$props();
  function measure(node){const report=()=>{const height=node.getBoundingClientRect().height;if(height>0)onheight(height);};report();const observer=typeof ResizeObserver==='function'?new ResizeObserver(report):null;observer?.observe(node);return {destroy(){observer?.disconnect();}};}
  const names={scripture:'Scripture',term:'Word meaning',image:'Image',map:'Map',video:'Video'};
 </script>
 {#if items.length}
  <nav use:measure class="step-resources" aria-label="Resources for this step">
   {#each items as item (item.id)}
-   <button onclick={()=>onopen(item.id)} aria-label={`${names[item.kind]}: ${item.title}`}>
+   <button data-resource-id={item.id} onclick={()=>onopen(item.id)} aria-label={`${names[item.kind]}: ${item.title}`}>
     <span>{names[item.kind]}</span><strong>{item.title}</strong>
-    {#if item.availability==='unavailable'}<small>Unavailable</small>{:else if item.availability==='online'}<small>Online</small>{/if}
+    {#if item.availability==='checking'||(verifying&&item.availability==='unavailable')}<small>Checking…</small>{:else if item.availability==='unavailable'}<small>Unavailable</small>{:else if item.availability==='online'}<small>Online</small>{/if}
    </button>
   {/each}
  </nav>

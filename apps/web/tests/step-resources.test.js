@@ -30,3 +30,15 @@ test('authored fulfillment resources appear at their source instruction, without
  const activities=[{id:'intro'},{id:'reading',fulfills:'intro',assetId:'t'},{id:'later',assetId:'v'}];
  assert.deepEqual(stepResources(activities[0],assets,{activities}).map(r=>r.id),['t']);
 });
+
+
+test('pending media checks do not prematurely label src-stripped resources unavailable',()=>{
+ const activity={relatedAssetIds:['t','m','v','x']};
+ const pending=stepResources(activity,assets,{verifying:true});
+ assert.deepEqual(pending.map(r=>[r.id,r.availability]),[['t','available'],['m','checking'],['v','online'],['x','checking']]);
+ const complete=stepResources(activity,assets,{verifying:false});
+ assert.equal(complete.find(r=>r.id==='m').availability,'unavailable');
+ const verified=stepResources(activity,{...assets,m:{...assets.m,src:'/verified-map.webp'}},{verifying:true});
+ assert.equal(verified.find(r=>r.id==='m').availability,'available');
+ assert.deepEqual(pending.map(r=>r.id),complete.map(r=>r.id),'checking never removes selectable resources');
+});

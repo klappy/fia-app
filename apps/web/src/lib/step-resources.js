@@ -7,7 +7,7 @@ export function displayedStepActivities(activity, activities = [], listContracts
   const byId=new Map(activities.map(a=>[a.id,a]));
   return [...new Set([group.introId,...group.itemIds])].map(id=>byId.get(id)).filter(Boolean);
 }
-export function stepResources(activity, assets = {}, {activities = [], listContracts = []} = {}) {
+export function stepResources(activity, assets = {}, {activities = [], listContracts = [], verifying = false} = {}) {
   const displayed=displayedStepActivities(activity,activities,listContracts);
   // Authored expansion activities explicitly fulfill the displayed source unit.
   const displayedIds=new Set(displayed.map(a=>a.id));
@@ -18,6 +18,6 @@ export function stepResources(activity, assets = {}, {activities = [], listContr
     if(!asset||!['scripture','term','image','map','video'].includes(asset.kind))return [];
     const readable=['scripture','term'].includes(asset.kind)&&!!(asset.text||asset.verses?.some(v=>v.text));
     const available=readable||!!asset.src,online=!!(asset.visualPrepared||asset.videoPrepared);
-    return [{...asset,availability:available?'available':online?'online':'unavailable'}];
+    return [{...asset,availability:available?'available':online?'online':verifying?'checking':'unavailable'}];
   });
 }
