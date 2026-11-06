@@ -6,7 +6,7 @@ import {serveBundledVisual,BUNDLED_VISUAL_REVIEW_SHA256} from '../../server/fia/
 const root=new URL('../../apps/web/public/',import.meta.url),read=p=>readFileSync(new URL(p.replace(/^\//,''),root));
 const review=JSON.parse(readFileSync(new URL('../../server/fia/preparation/bundled-visual-review.json',import.meta.url)));
 const origin='https://dev.fiaguide.app';
-function setup({corrupt=false,mismatch=false,stale=false}={}){let reads=0;const env={FIA_API_ORIGIN:origin,FIA_ORIGINALS:new Proxy({},{get(){throw Error('R2 forbidden');}}),ASSETS:{async fetch(request){reads++;assert.equal(new URL(request.url).origin,origin);assert.ok(new URL(request.url).pathname.startsWith('/assets/mark-1-1-13/'));let bytes=read(new URL(request.url).pathname);if(corrupt)bytes=Buffer.from(bytes).fill(0);return new Response(bytes,{headers:{'Content-Type':request.url.endsWith('.png')?'image/png':'image/jpeg','Content-Length':String(bytes.length)}});}}};return {env,reads:()=>reads,options:{currentRevision:id=>stale?'0'.repeat(64):review.rows.find(r=>r.packId===id)?.revision,currentPresentation:async id=>{const rows=review.rows.filter(r=>r.packId===id);return {revision:rows[0]?.revision,assets:Object.fromEntries(rows.map(r=>[r.assetId,mismatch?{...r.asset,title:'wrong'}:r.asset]))};}}};}
+function setup({corrupt=false,mismatch=false,stale=false,length=undefined,bodyChange=null}={}){let reads=0;const env={FIA_API_ORIGIN:origin,FIA_ORIGINALS:new Proxy({},{get(){throw Error('R2 forbidden');}}),ASSETS:{async fetch(request){reads++;assert.equal(new URL(request.url).origin,origin);assert.ok(new URL(request.url).pathname.startsWith('/assets/mark-1-1-13/'));let bytes=read(new URL(request.url).pathname);if(corrupt)bytes=Buffer.from(bytes).fill(0);if(bodyChange==='short')bytes=bytes.subarray(0,-1);if(bodyChange==='long')bytes=Buffer.concat([bytes,Buffer.from([0])]);return new Response(bytes,{headers:{'Content-Type':request.url.endsWith('.png')?'image/png':'image/jpeg',...(length===null?{}:{'Content-Length':String(length===undefined?bytes.length:length)})}});}}};return {env,reads:()=>reads,options:{currentRevision:id=>stale?'0'.repeat(64):review.rows.find(r=>r.packId===id)?.revision,currentPresentation:async id=>{const rows=review.rows.filter(r=>r.packId===id);return {revision:rows[0]?.revision,assets:Object.fromEntries(rows.map(r=>[r.assetId,mismatch?{...r.asset,title:'wrong'}:r.asset]))};}}};}
 const url=(row,suffix='manifest')=>`${origin}/v1/bundled-visuals/${row.packId}/${row.revision}/${suffix}`;
 test('reviewed table is exact independently supplied pin and all46 authored bindings serve manifests',async()=>{
  assert.equal(createHash('sha256').update(readFileSync(new URL('../../server/fia/preparation/bundled-visual-review.json',import.meta.url))).digest('hex'),BUNDLED_VISUAL_REVIEW_SHA256);
@@ -25,4 +25,13 @@ test('stale revision, authored mismatch and unqualified binding never read stati
 test('corrupt static bytes fail; foreign origin, query, Range and write methods refuse',async()=>{
  const row=review.rows[0],s=setup({corrupt:true});assert.equal((await serveBundledVisual(new Request(url(row)),s.env,s.options)).status,503);
  for(const [request,status] of [[new Request(url(row),{headers:{Origin:'https://evil.example'}}),403],[new Request(url(row)+'?src=https://evil.example'),400],[new Request(url(row),{headers:{Range:'bytes=0-10'}}),416],[new Request(url(row),{method:'POST'}),405]]){const f=setup();assert.equal((await serveBundledVisual(request,f.env,f.options)).status,status);assert.equal(f.reads(),0);}
+});
+
+test('ASSETS may omit transport length while exact retained size and hash remain required',async()=>{
+ const row=review.rows.find(r=>r.packId==='eng.LUK-3-1-14');
+ const valid=setup({length:null});assert.equal((await serveBundledVisual(new Request(url(row)),valid.env,valid.options)).status,200);
+ for(const patch of [{corrupt:true},{bodyChange:'short'},{bodyChange:'long'}]){const f=setup({length:null,...patch});assert.equal((await serveBundledVisual(new Request(url(row)),f.env,f.options)).status,503);}
+});
+test('a present malformed or mismatched transport length still refuses the static payload',async()=>{
+ const row=review.rows[0];for(const length of ['not-a-number','-1','1e5','1, 1','',0,1]){const f=setup({length});assert.equal((await serveBundledVisual(new Request(url(row)),f.env,f.options)).status,503);}
 });
