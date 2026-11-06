@@ -28,15 +28,17 @@ function validateVerifiedVisual(file,manifest){
  return file;
 }
 async function mergeVerifiedVisuals(manifest,request){
- if(!isPassageHash(manifest.presentationRevision)||!isPassageHash(manifest.deliveryRevision))return manifest;
- const response=await request(`/v1/verified-visuals/${manifest.packId}/${manifest.presentationRevision}/${manifest.deliveryRevision}/manifest`,{cache:'no-store',redirect:'error'});
+ if(!isPassageHash(manifest.presentationRevision))return manifest;
+ const discover=manifest.deliveryRevision===undefined||manifest.deliveryRevision===null;
+ if(!discover&&!isPassageHash(manifest.deliveryRevision)||discover&&manifest.files.some(f=>f.deliveryURL))throw Error('Invalid visual delivery generation.');
+ const response=await request(`/v1/verified-visuals/${manifest.packId}/${manifest.presentationRevision}/${discover?'':manifest.deliveryRevision+'/'}manifest`,{cache:'no-store',redirect:'error'});
  if(response.status===404)return manifest;
  if(response.status!==200||response.redirected)throw Error('Verified visuals are unavailable.');
  const value=await response.json();
- if(value?.schema!=='fia-verified-visual-manifest@1'||value.packId!==manifest.packId||value.presentationRevision!==manifest.presentationRevision||value.deliveryRevision!==manifest.deliveryRevision||!Array.isArray(value.files)||value.files.length>64)throw Error('Invalid verified visual manifest.');
- const files=manifest.files.slice(),paths=new Set(files.map(f=>f.path));
- for(const file of value.files){validateVerifiedVisual(file,manifest);if(paths.has(file.path))throw Error('Conflicting verified visual path.');paths.add(file.path);files.push(file);}
- return validate({...manifest,files});
+ if(value?.schema!=='fia-verified-visual-manifest@1'||value.packId!==manifest.packId||value.presentationRevision!==manifest.presentationRevision||(!discover&&value.deliveryRevision!==manifest.deliveryRevision)||!isPassageHash(value.deliveryRevision)||/^0{64}$/.test(value.deliveryRevision)||!Array.isArray(value.files)||!value.files.length||value.files.length>64)throw Error('Invalid verified visual manifest.');
+ const bound=discover?{...manifest,deliveryRevision:value.deliveryRevision}:manifest,files=manifest.files.slice(),paths=new Set(files.map(f=>f.path));
+ for(const file of value.files){validateVerifiedVisual(file,bound);if(paths.has(file.path))throw Error('Conflicting verified visual path.');paths.add(file.path);files.push(file);}
+ return validate({...bound,files});
 }
 function validate(manifest){
  if(manifest?.schema!==1||!validPack(manifest.packId)||!/^\w[\w-]*$/.test(manifest.revision)||!Array.isArray(manifest.files)||!manifest.files.length)throw new Error('This download manifest is not supported.');

@@ -30,11 +30,18 @@ async function serve(request,env,{entries=admissions,bucket=env.FIA_ORIGINALS,cu
  if(url.origin!==env.FIA_API_ORIGIN||request.headers.has('Origin')&&request.headers.get('Origin')!==env.FIA_API_ORIGIN)return refuse(403,'untrusted-origin');
  if(!['GET','HEAD'].includes(request.method))return refuse(405,'method-not-allowed');
  if(url.search||url.hash)return refuse(400,'invalid-request');
- const parts=url.pathname.slice(ROOT.length).split('/'),[packId,presentationRevision,deliveryRevision,id,digest]=parts;
- if(!pack(packId)||!HASH.test(presentationRevision??'')||!HASH.test(deliveryRevision??'')||!(parts.length===4&&id==='manifest'||parts.length===5&&asset(id)&&HASH.test(digest??'')))return refuse(404,'unknown-visual');
+ const parts=url.pathname.slice(ROOT.length).split('/'),[packId,presentationRevision]=parts,discovery=parts.length===3&&parts[2]==='manifest';
+ let [, ,deliveryRevision,id,digest]=parts;
+ if(!pack(packId)||!HASH.test(presentationRevision??'')||!discovery&&(!HASH.test(deliveryRevision??'')||!(parts.length===4&&id==='manifest'||parts.length===5&&asset(id)&&HASH.test(digest??''))))return refuse(404,'unknown-visual');
  if(request.headers.has('Range'))return new Response(null,{status:416,headers:{'Cache-Control':'no-store','Accept-Ranges':'none'}});
  if(typeof currentRevision!=='function'||await currentRevision(packId)!==presentationRevision)return refuse(409,'visual-revision-stale');
  if(!Array.isArray(entries)||entries.length>4096)return refuse(503,'visual-admissions-invalid');
+ if(discovery){
+  const candidates=entries.filter(e=>e?.packId===packId&&e.presentationRevision===presentationRevision);
+  if(!candidates.length)return refuse(404,'visual-not-published');
+  if(candidates.some(e=>!validVerifiedVisualAdmission(e))||new Set(candidates.map(e=>e.deliveryRevision)).size!==1)return refuse(503,'visual-generation-ambiguous');
+  deliveryRevision=candidates[0].deliveryRevision;id='manifest';
+ }
  const selected=entries.filter(e=>e?.packId===packId&&e.presentationRevision===presentationRevision&&e.deliveryRevision===deliveryRevision);
  if(selected.length>64||selected.some(e=>!validVerifiedVisualAdmission(e))||new Set(selected.map(e=>e.assetId)).size!==selected.length||new Set(selected.map(e=>e.path)).size!==selected.length)return refuse(503,'visual-admissions-invalid');
  const matches=id==='manifest'?selected:selected.filter(e=>e.assetId===id&&e.sha256===digest);

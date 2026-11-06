@@ -32,11 +32,31 @@ test('actual SW merges only exact verified descriptors and rejects forged route/
  context.combined=result;const planned=vm.runInContext("planVerifiedVisualDownload(combined,'visual',{})",context);assert.equal(planned.files[1].deliveryURL,file.deliveryURL);assert.throws(()=>vm.runInContext("planVerifiedVisualDownload(combined,'visual',{image:'small'})",context));
 });
 
-test('actual SW MEDIA_STATUS and MEDIA_PLAY traverse admitted manifest route and verify image payload',async()=>{
+for(const classic of [true,false])test(`actual SW MEDIA_STATUS and MEDIA_PLAY traverse verified visuals ${classic?'with':'without'} classic delivery sidecar`,async()=>{
  const context=sw(),manifest={schema:1,packId,presentationRevision:revision,deliveryRevision:delivery,revision:'build',files:[{path:'/index.html',group:'core',bytes:1,sha256:'d'.repeat(64)}]};
+ if(!classic)delete manifest.deliveryRevision;
  context.caches={open:async()=>({match:async()=>null})};
  context.fetch=async path=>path===`/offline/${packId}.json`?Response.json(manifest):request(path);
  async function message(type,extra={}){let result,pending;context.handlers.message({data:{type,packId,revision,deliveryRevision:delivery,...extra},source:{id:'fixture'},ports:[{postMessage(value){result=value;}}],waitUntil(promise){pending=promise;}});await pending;return result;}
  const status=await message('MEDIA_STATUS');assert.equal(status.ok,true,JSON.stringify(status));assert.equal(status.files[0].path,entry.path);
  const play=await message('MEDIA_PLAY',{path:entry.path,requestId:'exact-image'});assert.equal(play.ok,true,JSON.stringify(play));assert.equal(play.mime,'image/png');assert.equal(createHash('sha256').update(new Uint8Array(play.bytes)).digest('hex'),sha);
+});
+
+test('discovery is read-only and fails closed for empty/default, stale, cross-pack and mixed generations',async()=>{
+ const discover=`/v1/verified-visuals/${packId}/${revision}/manifest`;
+ const response=await request(discover);assert.equal(response.status,200);assert.equal((await response.json()).deliveryRevision,delivery);
+ const before=gets;
+ for(const opts of [{...options,entries:[]},{...options,entries:[{...entry,packId:'eng.MRK-1-1-13'}]}])assert.equal((await request(discover,{},opts)).status,404);
+ assert.equal((await request(discover,{}, {...options,currentRevision:()=> 'e'.repeat(64)})).status,409);
+ assert.equal((await request(discover,{}, {...options,entries:[entry,{...entry,deliveryRevision:'c'.repeat(64)}]})).status,503);
+ assert.equal((await request(discover,{method:'POST'})).status,405);assert.equal(gets,before,'refusals perform no source or bucket acquisition');
+ assert.equal((await serveVerifiedVisual(new Request(origin+discover),env,{currentRevision:()=>revision})).status,404,'shipped empty registry never implies readiness');
+});
+test('SW discovery preserves classic generation, rejects empty/foreign/refused results and never mixes delivery families',async()=>{
+ const context=sw(),manifest={schema:1,packId,presentationRevision:revision,revision:'build',files:[{path:'/index.html',group:'core',bytes:1,sha256:'d'.repeat(64)}]};context.manifest=manifest;
+ context.request=async()=>new Response(null,{status:404});assert.equal((await vm.runInContext('mergeVerifiedVisuals(manifest,request)',context)).deliveryRevision,undefined);
+ for(const body of [{schema:'fia-verified-visual-manifest@1',packId,presentationRevision:revision,deliveryRevision:delivery,files:[]},{schema:'fia-verified-visual-manifest@1',packId:'eng.MRK-1-1-13',presentationRevision:revision,deliveryRevision:delivery,files:[verifiedVisualDescriptor(entry)]}]){context.request=async()=>Response.json(body);await assert.rejects(vm.runInContext('mergeVerifiedVisuals(manifest,request)',context));}
+ context.request=async()=>new Response(null,{status:403});await assert.rejects(vm.runInContext('mergeVerifiedVisuals(manifest,request)',context));
+ context.manifest={...manifest,files:[...manifest.files,{...verifiedVisualDescriptor(entry),visualPublication:undefined}]};await assert.rejects(vm.runInContext('mergeVerifiedVisuals(manifest,request)',context));
+ context.manifest={...manifest,deliveryRevision:'c'.repeat(64)};context.request=async()=>Response.json({schema:'fia-verified-visual-manifest@1',packId,presentationRevision:revision,deliveryRevision:delivery,files:[verifiedVisualDescriptor(entry)]});await assert.rejects(vm.runInContext('mergeVerifiedVisuals(manifest,request)',context));
 });
