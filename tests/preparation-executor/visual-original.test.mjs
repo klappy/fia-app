@@ -92,7 +92,7 @@ test('a large PNG with corrupt zlib is a kept final visual-unsupported png-zlib-
  const retried=await call(mf,{body:bad,retry:true});assert.equal(retried.gets,1,'Retry fetches nothing');assert.equal(retried.decodes,1,'Retry decodes nothing');assert.deepEqual(retried.result,first.result);
 });
 test('4408596866: a kept decode row with valid identity but malformed evidence fails closed, never ready',async t=>{
- for(const [patch,drop] of [[{width:null},[]],[{},['pixelsSha256']],[{state:'ready',final:false},[]],[{decoder:{name:'other',version:'9'}},[]],[{width:2.5},[]],[{extra:1},[]],[{state:'unavailable',reason:'visual-unsupported',subReason:'x'},[]]]){
+ for(const [patch,drop] of [[{pixelsSha256:'0'.repeat(64)},[]],[{width:null},[]],[{},['pixelsSha256']],[{state:'ready',final:false},[]],[{decoder:{name:'other',version:'9'}},[]],[{width:2.5},[]],[{extra:1},[]],[{state:'unavailable',reason:'visual-unsupported',subReason:'x'},[]]]){
   const mf=await fixture(t),first=await call(mf);assert.equal(first.result.state,'ready');
   const n=await call(mf,{op:'corruptDecode',patch,drop});assert.equal(n.patched,1);
   for(const op of ['read',undefined]){const out=await call(mf,op?{op}:{});assert.notEqual(out.result.state,'ready',JSON.stringify({patch,drop,out:out.result}));assert.equal(out.result.reason,'retained-evidence-unavailable');assert.equal(out.result.subReason,'visual-decode-record-corrupt');assert.equal(out.result.final,false);assert.equal(out.gets,1);}
