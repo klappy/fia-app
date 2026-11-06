@@ -121,8 +121,8 @@
     },
     {
       "path": "server/fia/preparation/worker.mjs",
-      "sha256": "e9f8ce3579b7857e2b82b6901ea6ba73112e45d804914705a694df708dfbb6c8",
-      "bytes": 15109,
+      "sha256": "4a5ecc289f7de914780d795c94446c2f7ee02f9bb5b061888942e900ceeb5486",
+      "bytes": 15940,
       "role": "preparation-worker-runtime"
     },
     {
@@ -436,6 +436,30 @@
       "sha256": "d4a1c2abe4fc505660d2479a040819e43e064e9f3349d9bb2d408921b957e10b",
       "bytes": 3455,
       "role": "worker-build-input"
+    },
+    {
+      "path": "server/fia/preparation/visual-original.mjs",
+      "sha256": "1d2ea5f5fc364c333f37f2df932e1937cea72594cd3ba183b75365d74c820b08",
+      "bytes": 17273,
+      "role": "worker-runtime"
+    },
+    {
+      "path": "server/fia/preparation/visual-decode.mjs",
+      "sha256": "ebd14e02db6a555b26cf78476bff7200f7da6757087cf7a465b5981c3ce0a96f",
+      "bytes": 17874,
+      "role": "worker-runtime"
+    },
+    {
+      "path": "server/fia/preparation/verified-visual-publication.mjs",
+      "sha256": "faa71a0a2296e3e949b9c80ceb91acadbaa84c6dbdc45fbd252b55ec25b21e1f",
+      "bytes": 7580,
+      "role": "worker-runtime"
+    },
+    {
+      "path": "server/fia/preparation/verified-visuals.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "bytes": 3,
+      "role": "worker-runtime"
     }
   ],
   "generalizedRecipeCommit": "60cc73ef68845d7750d34281503ab4543078e1ac",
