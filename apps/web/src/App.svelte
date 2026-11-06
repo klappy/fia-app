@@ -15,6 +15,7 @@
  import {createVideoPresentation} from './lib/video-presentation.js';
  import {createVisualDelivery} from './lib/visual-delivery.js';
  import MediaStage from './components/MediaStage.svelte';
+ import StepResources from './components/StepResources.svelte';
  import AlignedReading from './components/AlignedReading.svelte';
  import Sheet from './components/Sheet.svelte';
  import SessionProgress from './components/SessionProgress.svelte';
@@ -627,6 +628,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  <SessionProgress groups={progress} passage={passageName(selectedPack)} onopen={()=>sheet='progress'} onpassages={()=>{passagesView='passages';sheet='passages';}}/>
  {#if stage.supporting}<button class="kept-content" aria-label={`Open kept ${assets[stage.supporting].title}`} onclick={()=>navigate({type:'DETOUR',assetId:stage.supporting})}>{#if assets[stage.supporting].src&&assets[stage.supporting].kind!=='video'}<img src={assets[stage.supporting].src} alt={assets[stage.supporting].title}/>{:else}<BookOpen size={22}/>{/if}</button>{/if}
 
+ {#if !finished&&!inTransition&&!immersive&&!session.detour}<StepResources {activity} {activities} {assets} onopen={id=>navigate({type:'DETOUR',assetId:id})}/>{/if}
  {#if noticeText&&!noticeInSheet}{@render noticeBar()}{/if}
  {#if listeningHint&&muted}<div class="scene-notice" role="status"><span>Prefer automatic narration?</span><button onclick={()=>{listeningHint=false;sheet='settings';}}>Settings</button><button aria-label="Dismiss narration suggestion" onclick={()=>listeningHint=false}><X size={15}/></button></div>{/if}
  <nav class="scene-controls" aria-label="Session controls">
