@@ -167,11 +167,11 @@ run('a pause or a stop before the bound hands nothing back',async e=>{
  assert.deepEqual(e.errors,[]);assert.equal(e.controller.active,false);
 });
 run('every clip plays on one element, which a tap unlocks once while it is idle',async e=>{
- e.controller.reserve(['file']);e.controller.unlock();const element=e.owners[0];assert.equal(e.owners.length,1);assert.equal(element.calls,1);assert.equal(element.paused,true);
+ e.controller.reserve(['file']);e.controller.unlock();const element=e.owners[0];assert.equal(e.owners.length,2);assert.equal(element.calls,1);assert.equal(element.paused,true);
  e.controller.unlock();assert.equal(element.calls,1);
- const first=await e.start(undefined,'file');first._time=8;[...e.frames.values()][0]();assert.equal(e.ends,1);
- const second=await e.start({startSeconds:10,endSeconds:12},'file');
- assert.equal(first,element);assert.equal(second,element);assert.equal(e.owners.length,1);assert.equal(element.src,'blob:verified');assert.equal(e.controller.playing,true);
+ e.controller.play('source','blob:verified',1,{startSeconds:3,endSeconds:8},'file');element.metadata();element.seeked();await tick();const first=element;first._time=8;[...e.frames.values()][0]();assert.equal(e.ends,1);
+ e.controller.play('source','blob:verified',1,{startSeconds:10,endSeconds:12},'file');element.seeked();await tick();const second=element;
+ assert.equal(first,element);assert.equal(second,element);assert.equal(e.owners.length,2);assert.equal(element.src,'blob:verified');assert.equal(e.controller.playing,true);
 });
 // Review of #208: the element keeps a finished clip, so the next clip's source swap resets the playhead and the
 // browser queues a timeupdate that reaches the new clip's handlers after play() has cleared paused, before any sound.
@@ -203,4 +203,17 @@ run('seek() moves within the accepted range only and evict() drops one file',asy
  assert.equal(e.controller.seek(5.5),true);assert.equal(owner.currentTime,5.5);
  assert.equal(e.controller.seek(2),false);assert.equal(e.controller.seek(8),false);assert.equal(owner.currentTime,5.5);
  e.controller.evict('fileA');assert.equal(e.controller.poolSize,0);assert.equal(e.controller.active,false);
+});
+
+run('a future ranged file uses the element unlocked before asynchronous preparation',async e=>{
+ let gesture=true;
+ Audio.prototype.play=function(){this.calls++;if(gesture)this.unlockedByGesture=true;if(!this.unlockedByGesture)throw Object.assign(Error('locked'),{name:'NotAllowedError'});this.paused=false;return Promise.resolve();};
+ e.controller.unlock();gesture=false;await tick();
+ const owner=e.owners[0];
+ e.controller.play('prepared','blob:prepared',1,{startSeconds:3,endSeconds:8},'prepared');
+ owner.metadata();owner.seeked();await tick();
+ assert.equal(e.owners.length,1);assert.equal(owner.currentTime,3);assert.equal(e.controller.playing,true);
+ owner._time=8;[...e.frames.values()][0]();assert.equal(e.ends,1);assert.equal(owner.paused,true);
+ e.controller.play('next','blob:next',1,{startSeconds:10,endSeconds:12},'next');owner.metadata();owner.seeked();await tick();
+ assert.equal(e.owners.length,1);assert.equal(owner.currentTime,10);assert.equal(e.controller.playing,true);assert.deepEqual(e.errors,[]);
 });
