@@ -2,7 +2,7 @@
 // controlled original-preparation route may be replaced; catalog/plan bytes are real.
 import {createRequire} from 'node:module';
 import {readFile} from 'node:fs/promises';
-import {resolve,join} from 'node:path';
+import {resolve,join,extname} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
 const sha256=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -25,7 +25,7 @@ export async function createControlledAuthority(repo,origin,{approvedAudio=null}
  const snapshot=await readFile(join(repo,'server/faces/worker/generated/snapshot.json'));
  const bundled=await build({entryPoints:[join(repo,'server/faces/worker/entry.mjs')],bundle:true,platform:'browser',format:'esm',external:['node:*'],write:false});
  const observations=[];
- const runtime=new Miniflare({...convertV4MiniflareOptions({modules:true,script:bundled.outputFiles[0].text,compatibilityDate:'2026-09-01',compatibilityFlags:['nodejs_compat'],bindings:{FIA_API_ORIGIN:origin},durableObjects:{FIA_PREPARATION_JOBS:{className:'FiaPreparationJobs',useSQLite:true}},r2Buckets:['FIA_ORIGINALS'],serviceBindings:{ASSETS:async request=>{const path=new URL(request.url).pathname,file=resolve(repo,'dist','.'+path);if(!file.startsWith(join(repo,'dist')+'/'))return new Response('Invalid asset',{status:403});try{return new Response(await readFile(file),{headers:{'Content-Type':'application/json'}});}catch(error){if(error.code==='ENOENT')return new Response('Not found',{status:404});throw error;}}},outboundService:()=>{throw Error('Controlled pending test forbids outbound requests');}})});
+ const runtime=new Miniflare({...convertV4MiniflareOptions({modules:true,script:bundled.outputFiles[0].text,compatibilityDate:'2026-09-01',compatibilityFlags:['nodejs_compat'],bindings:{FIA_API_ORIGIN:origin},durableObjects:{FIA_PREPARATION_JOBS:{className:'FiaPreparationJobs',useSQLite:true}},r2Buckets:['FIA_ORIGINALS'],serviceBindings:{ASSETS:async request=>{const path=new URL(request.url).pathname,file=resolve(repo,'dist','.'+path);if(!file.startsWith(join(repo,'dist')+'/'))return new Response('Invalid asset',{status:403});try{return new Response(await readFile(file),{headers:{'Content-Type':({'.json':'application/json','.jpg':'image/jpeg','.jpeg':'image/jpeg','.png':'image/png','.webp':'image/webp','.mp3':'audio/mpeg','.ogg':'audio/ogg','.opus':'audio/ogg','.mp4':'video/mp4','.webm':'video/webm','.html':'text/html','.js':'text/javascript','.css':'text/css','.svg':'image/svg+xml','.woff2':'font/woff2'})[extname(file).toLowerCase()]||'application/octet-stream'}});}catch(error){if(error.code==='ENOENT')return new Response('Not found',{status:404});throw error;}}},outboundService:()=>{throw Error('Controlled pending test forbids outbound requests');}})});
  await runtime.ready;
  let retained=[];
  try{if(approvedAudio)retained=await retainApprovedAudio(repo,runtime,snapshot,approvedAudio);}catch(error){await runtime.dispose();throw error;}
