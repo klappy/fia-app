@@ -138,3 +138,31 @@ it('a separate list item shows its ordinal before its text',async()=>{
  render(AlignedReading,{asset:{id:'q',kind:'guide',text:'What do you like?',ordinal:2},playback:playback(0,false)});await tick();
  expect(document.querySelector('.list-ordinal').textContent).toBe('2.');expect(screen.getByRole('region').textContent).toContain('2. What do you like?');
 });
+const marked=()=>[...document.querySelectorAll('[data-align-word][data-active="true"]')].map(n=>n.getAttribute('data-align-word'));
+it('marks a two-word window and leads the voice by a quarter second',async()=>{
+ const word=asset.alignment.verses[4].words[12];
+ // Word 12 begins at `time`; a quarter second early the gel is already on it, together with its partner word 13.
+ render(AlignedReading,{asset,playback:playback(time-0.24)});await tick();
+ expect(marked()).toEqual(['4-12','4-13']);
+ cleanup();render(AlignedReading,{asset,playback:playback(time-0.24+Math.max(0,asset.alignment.verses[4].words[13].end-word.start))});await tick();
+ expect(marked().length).toBeLessThanOrEqual(2);
+});
+it('the window slides one word at a time: n+n+1, then n+1+n+2',async()=>{
+ const w=asset.alignment.verses[4].words;
+ render(AlignedReading,{asset,playback:playback(w[13].start-0.24)});await tick();
+ expect(marked()).toEqual(['4-13','4-14']);
+});
+it('a guide card with an alignment gets the same inline gel and no separate popup',async()=>{
+ const text='Hear this, and put it in your hearts.';
+ const words=[{from:0,to:4,start:1,end:1.2},{from:5,to:9,start:1.3,end:1.5},{from:11,to:14,start:1.9,end:2},{from:15,to:18,start:2.1,end:2.3}];
+ const card={id:'S01-U001',kind:'guide',text,activeItemId:'S01-U001',alignment:{schemaVersion:2,clockDomain:'delivery-media-seconds',duration:3,verses:[{start:1,end:2.3,highlightMode:'word',words}]}};
+ render(AlignedReading,{asset:card,playback:{src:'x',assetId:'S01-U001',elapsed:1.9-0.24,playing:true}});await tick();
+ expect(marked()).toEqual(['0-2','0-3']);
+ expect(document.querySelector('.gel')).not.toBeNull();expect(document.querySelector('.pool-caption')).toBeNull();
+});
+it('a together-list highlights the words of the item being read', async()=>{
+ const words=[{from:0,to:3,start:1,end:1.2},{from:4,to:8,start:1.3,end:1.5}];
+ const list={id:'G1',kind:'guide',text:'Intro text',list:[{id:'S01-U005',text:'One two'},{id:'S01-U006',text:'Three'}],activeItemId:'S01-U005',alignments:{'S01-U005':{schemaVersion:2,clockDomain:'delivery-media-seconds',duration:3,verses:[{start:1,end:1.5,highlightMode:'word',words}]}}};
+ render(AlignedReading,{asset:list,playback:{src:'x',assetId:'G1',elapsed:1.1,playing:true}});await tick();
+ expect(marked()).toEqual(['0-0','0-1']);expect(document.querySelector('li[aria-current=true]').textContent).toBe('One two');
+});

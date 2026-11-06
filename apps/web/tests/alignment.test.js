@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
-import {alignmentPosition,alignedSegments,followScrollTop} from '../src/lib/alignment.js';
-import {assets} from '../src/lib/content.js';
+import {readFileSync,readdirSync} from 'node:fs';
+import {alignmentPosition,alignedSegments,followScrollTop,leadingPosition,wordPair,activityAlignment,HIGHLIGHT_LEAD_SECONDS} from '../src/lib/alignment.js';
+import {assets,activities} from '../src/lib/content.js';
 const manifest=JSON.parse(readFileSync('public/content/source/audio-manifest.json'));
 const editions=JSON.parse(readFileSync('public/content/source/scripture.json'));
 test('all three imported alignments bind the exact recording, source text and verse offsets',()=>{
@@ -93,7 +93,19 @@ test('glass reading area excludes asymmetric chrome while preserving its clear c
  assert.equal(alignmentPosition(a,69.99),null);
  });
 // Delivered BSB Mark 1:1-13 alignment (schema 2, delivery-media seconds).
-const bsb=JSON.parse(readFileSync('public/content/scripture-alignments/8a69afa1133b2cad7f90cfcd64fdb29bfaba2d84752d0552c896b4c7a651db01.json'));
+const bsb=JSON.parse(readFileSync('public/content/scripture-alignments/c29fc710c84775459d8091aefcb87b7f06cfb3b8fceb05835730b9f639126b7c.json'));
+test('the delivered BSB alignment word-times EVERY verse of Mark 1:1-13 (v4/6/7/8/10 were blank verse-only before)',()=>{
+ assert.deepEqual(bsb.verses.map(v=>v.verse),[1,2,3,4,5,6,7,8,9,10,11,12,13]);
+ for(const v of bsb.verses){
+  assert.equal(v.highlightMode,'word',`verse ${v.verse} is word-timed`);
+  assert.ok(v.words.length>0,`verse ${v.verse} has words`);
+  assert.equal(v.start,v.words[0].start);assert.equal(v.end,v.words.at(-1).end);
+ }
+ // the runtime position walks into verse 4's words (it used to return the verse alone, then nothing)
+ const v4=bsb.verses[3];
+ assert.deepEqual(alignmentPosition(bsb,v4.words[0].start+.01),{verseIndex:3,wordIndex:0});
+ assert.deepEqual(alignmentPosition(bsb,v4.words.at(-1).start+.01),{verseIndex:3,wordIndex:v4.words.length-1});
+});
 test('inside a word gap the last spoken word keeps the line instead of the verse centre',()=>{
  // The four gaps measured to pull the view back: 11.66-12.32, 12.66-12.9, 19.46-19.86, 21.28-21.7 s.
  for(const [from,to] of [[11.66,12.32],[12.66,12.9],[19.46,19.86],[21.28,21.7]]){
@@ -114,5 +126,96 @@ test('reading order never steps back and the current verse stays marked between 
   else assert.equal(p.wordIndex,-1);
   if(previous)assert.ok(p.verseIndex>previous.verseIndex||p.verseIndex===previous.verseIndex&&p.wordIndex>=previous.wordIndex,`no backward target at ${t.toFixed(2)} s`);
   previous=p;
+ }
+});
+
+test('the highlight leads the voice by a quarter second and keeps the last word at the end',()=>{
+ const a=assets['scripture-unfoldingWordSimplified'].alignment;const w=a.verses[4].words[12];
+ assert.equal(HIGHLIGHT_LEAD_SECONDS,0.25);
+ assert.deepEqual(leadingPosition(a,w.start-0.25+0.001),{verseIndex:4,wordIndex:12});
+ assert.deepEqual(leadingPosition(a,w.start-0.25-0.02),alignmentPosition(a,w.start-0.02));
+ const last=a.verses.at(-1);assert.deepEqual(leadingPosition(a,last.end-0.1),alignmentPosition(a,last.end-0.1+0.25)??alignmentPosition(a,last.end-0.1));
+ assert.notEqual(leadingPosition(a,last.end-0.1),null);
+});
+test('the gel is two words wide and slides one word at a time, never past the verse',()=>{
+ assert.deepEqual(wordPair(0,5),{first:0,last:1});assert.deepEqual(wordPair(1,5),{first:1,last:2});
+ assert.deepEqual(wordPair(2,5),{first:2,last:3});assert.deepEqual(wordPair(3,5),{first:3,last:4});
+ assert.deepEqual(wordPair(4,5),{first:3,last:4});assert.deepEqual(wordPair(0,1),{first:0,last:0});
+ for(let n=2;n<8;n++)for(let i=0;i<n;i++){const p=wordPair(i,n);assert.equal(p.last-p.first,1);assert.ok(p.first<=i&&i<=p.last);}
+});
+test('a card alignment from sidecar words drives the same media-time lookup as scripture',()=>{
+ const text='Hear this, and put it in your hearts.';
+ const words=[{text:"Hear",from:0,to:4,startMs:1000,endMs:1200},{text:"this",from:5,to:9,startMs:1300,endMs:1500},{text:"and",from:11,to:14,startMs:1900,endMs:2000}];
+ const a=activityAlignment(text,words,3000);
+ assert.equal(a.clockDomain,'delivery-media-seconds');assert.equal(a.verses.length,1);
+ assert.equal(alignmentPosition(a,0.5),null);
+ assert.deepEqual(alignmentPosition(a,1.4),{verseIndex:0,wordIndex:1});
+ assert.deepEqual(alignmentPosition(a,1.7),{verseIndex:0,wordIndex:1});
+ assert.deepEqual(alignmentPosition(a,1.95),{verseIndex:0,wordIndex:2});
+ assert.equal(activityAlignment(text,[{from:0,to:99,startMs:0,endMs:1}],1),null,'offsets outside the shown text are refused');
+ assert.equal(activityAlignment(text,[{from:5,to:9,startMs:0,endMs:1},{from:0,to:4,startMs:2,endMs:3}],1),null,'overlapping offsets are refused');
+ assert.equal(activityAlignment('',words,1),null);
+});
+test('every guide activity in the sidecars aligns to its own narration with times that only move forward',()=>{
+ const dir='public/transcripts/';let checked=0;
+ for(const f of readdirSync(dir).filter(n=>n.endsWith('.words.json'))){
+  const t=JSON.parse(readFileSync(dir+f));
+  for(const [id,act] of Object.entries(t.activities||{})){
+   const activity=activities.find(x=>x.id===id);if(!activity?.narration||!act.words?.length)continue;
+   const a=activityAlignment(activity.narration,act.words,act.endMs);
+   assert.ok(a,f+' '+id+' offsets fit the narration');let prev=-1;
+   for(const w of a.verses[0].words){assert.ok(w.start>=prev-1e-9,f+' '+id+' moves forward');prev=w.start;}
+   checked++;
+  }
+ }
+ assert.ok(checked>=6,'checked '+checked);
+});
+
+test('activity alignment refuses stale words and normalizes both sides consistently',()=>{
+ const word=(text,from,to)=>({text,from,to,startMs:0,endMs:100});
+ assert.equal(activityAlignment('Read now',[word('Hear',0,4)],100),null);
+ for(const [shown,spoken] of [['“Hello,”','hello'],['CAFÉ','cafe\u0301'],['Dios','DIOS'],["don’t","don't"],['爱','爱'],['שלום','שלום'],['123','123']])
+   assert.ok(activityAlignment(shown,[word(spoken,0,shown.length)],100),shown);
+ for(const spoken of [undefined,'','!!!','other','cafe'])
+   assert.equal(activityAlignment('café',[word(spoken,0,4)],100),null,String(spoken));
+ assert.equal(activityAlignment('hello',[word('hell',0,4)],100),null,'partial words refuse');
+ assert.equal(activityAlignment('go now',[word('gonow',0,6)],100),null,'word separators cannot disappear');
+ assert.equal(activityAlignment('Read now',[word('Read',0.5,4)],100),null,'fractional offsets refuse');
+ assert.equal(activityAlignment('Read now',[word(undefined,0,4)],100),null,'missing word text refuses');
+});
+
+test('activity timing accepts adjacent tokens in scripts written without spaces',()=>{
+ const words=parts=>{let from=0;return parts.map((text,i)=>{const word={text,from,to:from+text.length,startMs:i*100,endMs:(i+1)*100};from=word.to;return word;});};
+ for(const parts of [['爱','人'],['読む','人'],['カタカナ','です'],['ภาษา','ไทย'],['ພາສາ','ລາວ'],['读','Bible']]){
+  const shown=parts.join(''),alignment=activityAlignment(shown,words(parts),1000);
+  assert.ok(alignment,shown);assert.equal(alignment.verses[0].words.length,parts.length);
+  assert.equal(alignedSegments(shown,alignment.verses[0].words).map(p=>p.text).join(''),shown);
+ }
+});
+
+test('activity timing rejects partial words at joining apostrophes and hyphens',()=>{
+ const word=(text,from,to)=>({text,from,to,startMs:0,endMs:100});
+ for(const [shown,spoken,from,to] of [["can't",'can',0,3],["can't",'t',4,5],['don’t','don',0,3],['co-operate','co',0,2],['co-operate','operate',3,10],['co-operate','co-',0,3],['co‐operate','co',0,2],['co‑operate','operate',3,10]])
+  assert.equal(activityAlignment(shown,[word(spoken,from,to)],100),null,shown+' / '+spoken);
+ for(const [shown,spoken] of [["can't",'cant'],['co-operate','cooperate'],['co‐operate','cooperate'],['co‑operate','cooperate'],['“hello”','hello']])
+  assert.ok(activityAlignment(shown,[word(spoken,0,shown.length)],100),shown);
+});
+
+test('unspaced activity tokens cannot split combining marks or surrogate pairs',()=>{
+ const word=(text,from,to)=>({text,from,to,startMs:0,endMs:100});
+ assert.ok(activityAlignment('किताब',[word('किताब',0,5)],100));
+ assert.ok(activityAlignment('กิคน',[word('กิ',0,2),{...word('คน',2,4),startMs:100,endMs:200}],200));
+ assert.equal(activityAlignment('กิคน',[word('ก',0,1)],100),null,'Thai base and vowel stay together');
+ assert.equal(activityAlignment('cafe\u0301',[word('cafe',0,4)],100),null,'decomposed accent stays with its letter');
+ assert.equal(activityAlignment('爱𠮷',[word('爱',0,2)],100),null,'a span cannot end inside a surrogate pair');
+});
+
+test('joining punctuation uses the same compatibility normalization as activity words',()=>{
+ const word=(text,from,to)=>({text,from,to,startMs:0,endMs:100});
+ for(const joiner of ['-','‐','‑','－','﹣',"'",'‘','’','＇','\u00ad','\u200c','\u200d','\u2060']){
+  const shown='co'+joiner+'operate';
+  assert.equal(activityAlignment(shown,[word('co',0,2)],100),null,joiner+' prefix');
+  assert.equal(activityAlignment(shown,[word('operate',3,10)],100),null,joiner+' suffix');
+  assert.ok(activityAlignment(shown,[word('cooperate',0,shown.length)],100),joiner+' full token');
  }
 });

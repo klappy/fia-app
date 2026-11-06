@@ -121,9 +121,9 @@ run('a replay of the same whole-file source starts from the beginning', async e 
 run('stale gesture rejection cannot resurrect an owner after navigation or replace a newer owner', async e => {
  let reject;
  Audio.prototype.play=function(){return new Promise((_,fail)=>{reject=fail;});};
- e.controller.play('old','blob:old');const staleReject=reject;e.controller.stop();
+ e.controller.play('old','blob:old',1,undefined,'f');const staleReject=reject;e.controller.stop();
  Audio.prototype.play=function(){this.paused=false;return Promise.resolve();};
- e.controller.play('new','blob:new');await tick();staleReject(Object.assign(Error('gesture'),{name:'NotAllowedError'}));await tick();
+ e.controller.play('new','blob:new',1,undefined,'f');await tick();staleReject(Object.assign(Error('gesture'),{name:'NotAllowedError'}));await tick();
  assert.equal(e.errors.length,0);assert.equal(e.controller.playing,true);assert.equal(e.states.at(-1).src,'blob:new');assert.equal(e.audio.length,1);assert.equal(e.audio[0].src,'blob:new');
 });
 run('synchronous gesture denial is retryable but a subsequent codec rejection releases the owner', async e => {
@@ -131,4 +131,69 @@ run('synchronous gesture denial is retryable but a subsequent codec rejection re
  e.controller.play('verified','blob:verified');assert.equal(e.controller.active,true);
  Audio.prototype.play=function(){return Promise.reject(Object.assign(Error('codec'),{name:'NotSupportedError'}));};
  e.controller.resume();await tick();assert.equal(e.controller.active,false);assert.equal(e.states.at(-1).src,null);
+});
+
+run('the media clock is reported every animation frame while sound plays, not only on timeupdate, and stops with the clip', async e => {
+  const frames = []; const raf = Object.getOwnPropertyDescriptor(globalThis, 'requestAnimationFrame');
+  globalThis.requestAnimationFrame = fn => { frames.push(fn); return frames.length; };
+  try {
+    e.controller.play('hello', '/audio.mp3'); await tick(); const a = e.audio[0];
+    a.onplaying(); const before = e.states.length;
+    assert.equal(frames.length, 1, 'a frame is requested once sound plays');
+    a.currentTime = 4; frames.shift()(1000); await tick();
+    assert.ok(e.states.length > before && e.states.at(-1).elapsed === 4, 'the frame reports the live clock');
+    a.currentTime = 4.02; frames.shift()(1020); assert.equal(e.states.at(-1).elapsed, 4, 'at most every 50 ms');
+    a.currentTime = 4.08; frames.shift()(1080); assert.equal(e.states.at(-1).elapsed, 4.08);
+    e.controller.stop(); const n = e.states.length; const next = frames.shift(); if (next) next(1200);
+    assert.equal(e.states.length, n, 'a stopped clip is not reported again');
+  } finally { if (raf) Object.defineProperty(globalThis, 'requestAnimationFrame', raf); else delete globalThis.requestAnimationFrame; }
+});
+
+run('retain drops idle players of a passed revision and keeps current and kept identities', async e => {
+  e.controller.reserve(['r1|a', 'r1|b', 'saved|x']);
+  assert.equal(e.controller.poolSize, 3);
+  e.controller.reserve(['r2|a']);
+  e.controller.retain(['r2|a'], id => id.startsWith('saved|'));
+  assert.equal(e.controller.poolSize, 2);
+});
+
+run('an empty-pool tap unlocks a future prepared owner across await', async e => {
+ let gesture = false;
+ Audio.prototype.play = function () {
+   if (gesture) this.gestureUnlocked = true;
+   if (!this.gestureUnlocked) return Promise.reject(Object.assign(Error('gesture required'), {name:'NotAllowedError'}));
+   this.paused = false; return Promise.resolve();
+ };
+ gesture = true; e.controller.unlock(); gesture = false;
+ await tick();
+ e.controller.play('prepared', 'blob:future', 1, undefined, 'future'); await tick();
+ assert.equal(e.controller.playing, true);
+ assert.deepEqual(e.errors, []);
+ assert.equal(e.audio.length, 1);
+ e.controller.stop(); e.controller.retain([]);
+ assert.equal(e.controller.poolSize, 0);
+ e.controller.stop();
+});
+
+run('one fallback handles consecutive future identities without another tap and stays bounded', async e => {
+ e.controller.reserve(['known']); e.controller.unlock(); await tick();
+ const fallback=e.audio[1];
+ for(let i=0;i<5;i++)e.controller.unlock();
+ assert.equal(e.audio.length,2);
+ for(const id of ['first','second','third']) {
+   e.controller.play(id,'blob:'+id,1,undefined,id);await tick();
+   assert.equal(fallback.src,'blob:'+id);assert.equal(fallback.paused,false);
+   assert.equal(e.audio[0].paused,true);assert.equal(e.audio.length,2);
+ }
+ e.controller.unlock();await tick();assert.equal(fallback.paused,false,'unlock leaves active owner alone');
+ e.controller.retain([]);assert.equal(e.controller.poolSize,0);assert.equal(e.controller.playing,true);
+ e.controller.evict('third');assert.equal(e.controller.active,false);assert.equal(fallback.paused,true);
+ e.controller.play('next','blob:next',1,undefined,'next');await tick();assert.equal(e.audio.length,2);assert.equal(e.controller.playing,true);e.controller.stop();
+});
+
+run('saved players survive refresh only while current or paused active, then are released',async e=>{
+ e.controller.reserve(['saved|old','saved|current']);
+ e.controller.play('','blob:old',1,undefined,'saved|old');await tick();e.controller.pause();
+ e.controller.retain(['saved|current']);assert.equal(e.controller.poolSize,2);assert.equal(e.controller.src,'blob:old');
+ e.controller.stop();e.controller.retain(['saved|current']);assert.equal(e.controller.poolSize,1);
 });

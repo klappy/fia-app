@@ -31,11 +31,15 @@
 .scripture-scroll{padding-bottom:205px}.scripture-scroll p{font-size:calc(24px * var(--reading-scale))}
 .term-stage{max-width:780px;margin:auto;padding:110px 32px 205px}.term-stage h2{font:var(--type-hero)}.term-stage p{font:400 calc(23px * var(--reading-scale))/1.65 var(--font-core);white-space:pre-line}
 .image-well,.video-well{height:calc(100dvh - 170px);padding-top:82px}.image-well img,.image-well:not(.map) img{object-fit:contain}
-.media-toolbar{top:82px}.asset-caption{bottom:180px}.scene-notice{top:84px;background:var(--material-floating);color:var(--ink-700)}
+.media-toolbar{top:82px}.asset-caption{bottom:180px}.scene-notice{top:var(--notice-top,84px);background:var(--material-floating);color:var(--ink-700)}
 .outline summary{cursor:pointer;min-height:48px;padding:14px 0;font-weight:600}.outline strong{font-size:13px;font-weight:400;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .sheet-body,.sheet-intro,.fine-print,.preference small,.select-row select,.outline small,.outline svg,.outline-number{color:var(--ink-500)}.sheet-body{color:var(--ink-700)}.sheet-header h2{font-family:var(--font-core);font-size:24px}.secondary,.scope-note{background:var(--paper-100);color:var(--ink-700);border-color:var(--paper-100)}
 button{min-height:48px}.scene-notice button{min-width:48px;min-height:48px}.kept-content{bottom:180px}
-@media(max-width:700px){.words-stage{padding:116px 26px 190px}.words-stage h1{font-size:26px}.reading-heading{padding-top:116px}.scene-controls{gap:8px}.scripture-scroll{padding-bottom:205px}.image-well:not(.map) img{object-fit:contain}.asset-caption{bottom:180px}.scene-notice{top:82px}.term-stage{padding-inline:26px}}
+@media(max-width:700px){.words-stage{padding:116px 26px 190px}.words-stage h1{font-size:26px}.reading-heading{padding-top:116px}.scene-controls{gap:8px}.scripture-scroll{padding-bottom:205px}.image-well:not(.map) img{object-fit:contain}.asset-caption{bottom:180px}.term-stage{padding-inline:26px}}
+/* A notice raised over the stage grows the top band to hold it, so stage titles, credits and guide words start below it
+   (fia-app-cookbook work/active/2026-11-03-narration-blocked-toast-overlap). The height is measured (App.svelte --notice-height). */
+.scene{--notice-top:84px}@media(max-width:700px){.scene{--notice-top:82px}}
+.scene.notice-raised{--chrome-top:max(calc(92px + env(safe-area-inset-top)),calc(var(--notice-top) + var(--notice-height,0px) + 8px))}
 /* R3: a notice raised while a sheet is open sits in the sheet's sticky header, under its title row, never behind the modal. */
 .sheet-header:has(.sheet-notice){flex-wrap:wrap}.sheet-header .scene-notice.sheet-notice{position:static;transform:none;z-index:auto;order:1;flex:1 0 100%;width:auto;max-width:none;justify-content:space-between}
 
@@ -45,6 +49,22 @@ button{min-height:48px}.scene-notice button{min-width:48px;min-height:48px}.kept
 .reading-stage .scripture-scroll p{font:400 calc(24px * var(--reading-scale,1))/1.6 var(--font-scripture-latin);letter-spacing:0;text-align:left;margin:0 0 20px;white-space:pre-line;overflow-wrap:break-word}
 .reading-stage .scripture-scroll p:last-child{margin-bottom:0}
 .reading-stage .scripture-scroll p[aria-current=true] sup{color:var(--text-title)}
+/* Active-word gel (cookbook PR #276, S29): a state of the glass material, laid over the word as an overlay; no backdrop blur, the word is never moved or recoloured. Provenance hues are tokens.md 1.3 verbatim. */
+.reading-stage .reading-verses{position:relative}
+.reading-stage .gel-layer{--gel-ink:#1E6B5E;--gel-tint:#E3F4EF;position:absolute;inset:0;pointer-events:none}
+:root[data-theme=dark] .reading-stage .gel-layer{--gel-ink:#7FD3C2;--gel-tint:#123A33}
+.reading-stage .gel{position:absolute;left:0;top:0;transition:left var(--dur-fast) var(--ease-flow),top var(--dur-fast) var(--ease-liquid),width var(--dur-fast) var(--ease-flow),height var(--dur-base) var(--ease-liquid)}
+.reading-stage .gel[hidden]{display:none}
+.reading-stage .gel.freeze{transition:none}
+.reading-stage .gel>*{position:absolute;inset:0;border-radius:var(--r-xs)}
+.reading-stage .gel.cut-l>*{border-top-left-radius:0;border-bottom-left-radius:0}
+.reading-stage .gel-tint{background:color-mix(in srgb,var(--gel-ink) 24%,var(--gel-tint));mix-blend-mode:multiply}
+:root[data-theme=dark] .reading-stage .gel-tint{background:color-mix(in srgb,var(--gel-ink) 34%,transparent);mix-blend-mode:screen}
+.reading-stage .gel-chrome{border:var(--border-glass);box-shadow:var(--shadow-rest),var(--inner-top),var(--inner-edge),var(--inner-bottom);overflow:hidden}
+:root[data-theme=dark] .reading-stage .gel-chrome{box-shadow:var(--shadow-rest),var(--inner-top),var(--inner-edge),var(--inner-bottom),var(--glow-active)}
+.reading-stage .gel-chrome::before{content:"";position:absolute;inset:0;background:var(--refraction);opacity:.18}
+.reading-stage .gel-chrome::after{content:"";position:absolute;inset:auto 6px 0;height:2px;border-radius:1px;background:var(--gel-ink)}
+@media(prefers-reduced-motion:reduce){.reading-stage .gel{transition:none}}
 .follow-reading{position:fixed;z-index:13;left:50%;transform:translateX(-50%);bottom:calc(140px + env(safe-area-inset-bottom));min-height:48px;padding:10px 18px;border-radius:var(--r-pill);font:var(--type-label);background:var(--material-floating);color:var(--text-body);box-shadow:var(--shadow-rest)}
 @media(max-width:700px){.reading-stage .scripture-scroll{padding-inline:26px}.reading-stage .scripture-scroll p{font-size:calc(23px * var(--reading-scale,1))}}
 
@@ -110,7 +130,10 @@ button{min-height:48px}.scene-notice button{min-width:48px;min-height:48px}.kept
    reading area measured between the actual frames rather than symmetric gutters. */
 .scene{--chrome-top:calc(92px + env(safe-area-inset-top));--chrome-bottom:calc(120px + max(16px,env(safe-area-inset-bottom)))}
 .scene-glass{position:fixed;left:0;right:0;z-index:11;pointer-events:none;background:var(--glass-fill-2);-webkit-backdrop-filter:blur(var(--blur-medium)) var(--sat-glass);backdrop-filter:blur(var(--blur-medium)) var(--sat-glass)}
-.scene-glass-top{top:0;height:var(--chrome-top)}
+/* The band's own height without a raised notice, exposed as a length the reading surface can read (scroll-margin has no
+   effect on this fixed, never-scrolled frame): guide text decides whether to open centred from this band, so a notice
+   never switches it into reading-centre space (fia-app-cookbook work/active/2026-11-03-narration-blocked-toast-overlap). */
+.scene-glass-top{top:0;height:var(--chrome-top);scroll-margin-top:calc(92px + env(safe-area-inset-top))}
 .scene-glass-bottom{bottom:0;height:var(--chrome-bottom)}
 .session-band{background:transparent}
 .media-stage.reading-stage{padding:0}
@@ -313,3 +336,35 @@ button:enabled:active { translate: 0 0; scale: var(--press-scale); opacity: .86;
 .library-panel .fine-print,.settings-panel .fine-print{font-size:.8125rem}.library-panel .secondary,.library-panel .quiet,.settings-panel .select-row,.settings-panel .select-row select,.settings-panel .preference strong{font-size:.9375rem}.settings-panel .preference small{font-size:.875rem}.settings-panel h3{font-size:1.125rem;margin:28px 0 2px}.settings-panel .select-row{flex-wrap:wrap}.settings-panel .select-row select{max-width:100%}.sheet-back{justify-content:flex-start;min-height:44px;font-size:.875rem;margin-bottom:10px}.scene-menu button{min-height:52px;font-size:1rem}
 /* Discussion stop (cookbook overview-sheet.md § clarity; mock 28 --stop): AA on the sheet, 5.9:1 on #fff light, 7.1:1 on dark --paper-000. */
 :root:not([data-theme=dark]){--fia-stop:#8a5a00}
+
+/* Unavailable picture/map stage (design-lens HOLD R6/R8 on PR318; design book: media-viewer § Step stage with no visual).
+   The step's own words stay in the content band, the not-available note is a bounded status region in the media slot
+   at the media's aspect, and the glass scene ground shows around it — never a full-height flat panel. The words keep a floor of about four lines (or 40 % of the stage when that is smaller)
+   and the status card shrinks first on short screens and at large text. */
+.resource-visual.visual-unavailable>.unavailable-words{flex:1 1 auto;display:flex;flex-direction:column;width:100%;max-width:740px;margin:0 auto;font:400 calc(24px * var(--reading-scale,1))/1.6 var(--font-scripture-latin);min-height:min(6.4em,40%);min-height:min(4lh,40%)}
+.resource-visual.visual-unavailable>.unavailable-words .scripture-scroll{--chrome-top:0px;--chrome-bottom:0px;flex:1;min-height:0}
+.resource-visual.visual-unavailable>.unavailable-words .scripture-scroll:focus-visible{outline:2px solid var(--focus-ring);outline-offset:-2px;border-radius:var(--r-md)}
+.resource-visual.visual-unavailable>.media-error.media-status{position:relative;inset:auto;flex:0 1 auto;min-height:calc(3em + 40px);min-height:calc(2lh + 40px);overflow:visible;align-self:center;width:min(100% - 64px,676px,calc(min(32dvh,300px) * var(--media-aspect-w,4) / var(--media-aspect-h,3)));aspect-ratio:var(--media-aspect-w,4) / var(--media-aspect-h,3);margin:16px auto 8px;padding:20px;border-radius:var(--r-md);background:var(--material-floating);color:var(--ink-700)}
+.resource-visual.visual-unavailable>.media-error.media-status p{margin:0}
+@media(max-width:700px){.resource-visual.visual-unavailable>.media-error.media-status{width:min(100% - 52px,calc(min(32dvh,300px) * var(--media-aspect-w,4) / var(--media-aspect-h,3)))}.resource-visual.visual-unavailable>.unavailable-words{font-size:calc(23px * var(--reading-scale,1))}}
+.scene.immersive .resource-visual.visual-unavailable>.unavailable-words{padding-top:var(--chrome-top)}
+/* Short stages (landscape phones, 390x560): the card drops its placeholder aspect and shrinks to its text, full width,
+   so it never runs under the bottom controls and never scrolls; the step words keep their floor. */
+@media(max-height:680px){.resource-visual.visual-unavailable>.media-error.media-status{aspect-ratio:auto;min-height:min-content;width:min(100% - 52px,676px);padding:10px 14px;margin:8px auto 4px}
+ /* Loading, canceled and failed pictures carry a Cancel or Try again button: on every short stage it sits beside the text, not
+    under it, and keeps a 44px target, so the interactive card stays one row above the controls (Codex P2 and buddy review on #335). */
+ .resource-visual.visual-unavailable>.media-error.media-status{flex-direction:row;flex-wrap:nowrap;gap:12px}
+ .resource-visual.visual-unavailable>.media-error.media-status button{min-height:44px;margin:0;padding-block:0;flex:none}
+ .scene.notice-raised .resource-visual.visual-unavailable>.media-error.media-status{margin:4px auto 2px}}
+/* Very short stages (a landscape phone with the chrome showing, 844x390): the words' floor drops to about two lines or a quarter
+   of the stage (they still scroll by keyboard) and the card tightens to one compact line, so both fit above the controls. */
+@media(max-height:480px){.resource-visual.visual-unavailable>.unavailable-words{min-height:min(3.2em,25%);min-height:min(2lh,25%)}.resource-visual.visual-unavailable>.media-error.media-status{padding:6px 12px;margin:4px auto 2px;font-size:14px;line-height:1.35}
+ /* A raised stage notice (#330) takes about 70px more of an already very short stage: the words give up their floor (they still
+    scroll by keyboard) so the card stays above the controls. Disclosed for design acceptance. */
+ /* Loading, canceled and failed pictures carry a Cancel or Try again button: it sits beside the text, not under it, and keeps a
+    44px target, so the interactive card stays one row above the controls (Codex P2 on #335). */
+ .scene.notice-raised .resource-visual.visual-unavailable>.unavailable-words{min-height:0}
+ .scene.notice-raised .resource-visual.visual-unavailable>.media-error.media-status{margin:2px auto 0}
+ /* The title and credit drop their 52px minimum and spacing here, which gives the step words back about 30px. */
+ .resource-visual.visual-unavailable>.visual-identification{padding-top:8px}.resource-visual.visual-unavailable>.visual-identification .reading-identification{min-height:0;margin-bottom:4px}}
+
