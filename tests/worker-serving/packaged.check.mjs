@@ -20,6 +20,15 @@ test('real app assets and Worker API coexist using actual reviewed build/configu
   }
   for(const path of ['/v1','/v1/unknown','/mcp/unknown','/.well-known/oauth-authorization-server','/.well-known/oauth-authorization-server/mcp','/.well-known/oauth-protected-resource','/.well-known/oauth-protected-resource/mcp','/.well-known/openid-configuration']){const r=await mf.dispatchFetch(origin+path,{headers:{'Sec-Fetch-Mode':'navigate'}});assert.equal(r.status,404,path);assert.match(r.headers.get('content-type'),/json/);}
   const visualPack='eng.MRK-1-1-13',visual=await mf.dispatchFetch(`${origin}/v1/verified-visuals/${visualPack}/${snapshot.current[visualPack]}/manifest`);assert.equal(visual.status,404);assert.equal((await visual.json()).reason,'visual-not-published');
+  const bundledReview=JSON.parse(readFileSync('server/fia/preparation/bundled-visual-review.json')),bundledPacks=new Set(bundledReview.rows.map(row=>row.packId));let bundledCount=0;
+  assert.equal(bundledPacks.size,24);
+  for(const packId of bundledPacks){
+   const revision=snapshot.current[packId],res=await mf.dispatchFetch(`${origin}/v1/bundled-visuals/${packId}/${revision}/manifest`);assert.equal(res.status,200,await res.clone().text());const manifest=await res.json();assert.equal(manifest.custody,'bundled-static');
+   const expected=bundledReview.rows.filter(row=>row.packId===packId);assert.equal(manifest.files.length,expected.length);
+   for(const file of manifest.files){const pin=expected.find(row=>row.assetId===file.visualPublication.assetId);assert.ok(pin);assert.equal(file.sha256,pin.sha256);assert.equal(file.visualPublication.custody,'bundled-static');const response=await mf.dispatchFetch(origin+file.deliveryURL);assert.equal(response.status,200);const bytes=Buffer.from(await response.arrayBuffer());assert.equal(bytes.length,pin.bytes);assert.equal(hash(bytes),pin.sha256);bundledCount++;}
+  }
+  assert.equal(bundledCount,46);
+  const unqualified=Object.keys(snapshot.current).find(id=>/^(eng|spa)\.(MRK|LUK)-/.test(id)&&!bundledPacks.has(id));assert.ok(unqualified);assert.equal((await mf.dispatchFetch(`${origin}/v1/bundled-visuals/${unqualified}/${snapshot.current[unqualified]}/manifest`)).status,404);
   const shell=await mf.dispatchFetch(origin+'/session/continuation',{headers:{'Sec-Fetch-Mode':'navigate'}});assert.equal(await shell.text(),readFileSync('dist/index.html','utf8'));
   for(const path of ['/version.json','/sw.js','/docs/V3-BLUEPRINT.html']){
    // The existing bundle determines exact paths; no API routing may change their bytes.

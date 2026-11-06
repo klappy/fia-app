@@ -127,8 +127,8 @@
     },
     {
       "path": "server/faces/worker/entry.mjs",
-      "sha256": "e45d027f4588c1801c551dc2c65d8d125540162ca1c66f46ed13ea3f6d51fe53",
-      "bytes": 1269,
+      "sha256": "af19e8eae3621be2a1a1c14e801bd1d89f5b1a71917b57d2bd7362acda579e72",
+      "bytes": 1919,
       "role": "preparation-worker-runtime"
     },
     {
@@ -459,6 +459,24 @@
       "path": "server/fia/preparation/verified-visuals.json",
       "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
       "bytes": 3,
+      "role": "worker-runtime"
+    },
+    {
+      "path": "server/fia/preparation/bundled-visual-publication.mjs",
+      "sha256": "4c5237602202796e738bd54f6c4619740060691626b63d32fc2279c4a5a55ced",
+      "bytes": 6744,
+      "role": "worker-runtime"
+    },
+    {
+      "path": "server/fia/preparation/bundled-visual-review.json",
+      "sha256": "2c121c2a18c6736967c272b4a3e91cfa9c62699d0ad97ca30e80ea8e6d87a988",
+      "bytes": 195461,
+      "role": "worker-runtime"
+    },
+    {
+      "path": "server/fia/preparation/bundled-visual-payloads.json",
+      "sha256": "5901b1159a441223ab3de0ad047412ff5e3d4fc0f5e521130238eebf88e5f72e",
+      "bytes": 2693,
       "role": "worker-runtime"
     }
   ],

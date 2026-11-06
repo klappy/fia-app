@@ -22,6 +22,7 @@ function validateScripturePassageFile(file,packId){
 // A separate, fixed same-origin family for build-admitted, fully decoded originals.
 // This is not a general same-origin delivery exception.
 function validateVerifiedVisual(file,manifest){
+ if(file.visualPublication?.schema==='fia-bundled-visual@1')return validateBundledVisual(file,manifest);
  const p=file.visualPublication,hash=v=>isPassageHash(v)&&!/^0{64}$/.test(v),ext=file.mime==='image/png'?'png':file.mime==='image/jpeg'?'jpg':null;
  if(!p||p.schema!=='fia-verified-visual@1'||p.packId!==manifest.packId||p.presentationRevision!==manifest.presentationRevision||!hash(p.presentationRevision)||!hash(p.recipeSha256)||!hash(p.pixelsSha256)||!hash(p.sourceEvidenceSha256)||!['image','map'].includes(p.kind)||typeof p.assetId!=='string'||!/^[-\w]{1,128}$/.test(p.assetId)||!ext||file.group!=='image'||file.variants||!hash(file.sha256)||file.sha256!==file.sourceSha256||!Number.isSafeInteger(file.bytes)||file.bytes<1||file.bytes>12582912||file.sourceBytes!==file.bytes||file.deliveryRevision!==manifest.deliveryRevision||!hash(file.deliveryRevision)||file.path!==`/packs/${manifest.packId}/visuals/${p.assetId}.${ext}`||!Number.isSafeInteger(p.width)||!Number.isSafeInteger(p.height)||p.width<1||p.height<1||p.width>8192||p.height>8192||p.width*p.height>(ext==='jpg'?2000000:17000000))throw Error('Invalid verified visual descriptor.');
  if(file.deliveryURL!==`/v1/verified-visuals/${manifest.packId}/${p.presentationRevision}/${file.deliveryRevision}/${p.assetId}/${file.sha256}`)throw Error('Invalid verified visual route.');
@@ -38,6 +39,21 @@ async function mergeVerifiedVisuals(manifest,request){
  if(value?.schema!=='fia-verified-visual-manifest@1'||value.packId!==manifest.packId||value.presentationRevision!==manifest.presentationRevision||(!discover&&value.deliveryRevision!==manifest.deliveryRevision)||!isPassageHash(value.deliveryRevision)||/^0{64}$/.test(value.deliveryRevision)||!Array.isArray(value.files)||!value.files.length||value.files.length>64)throw Error('Invalid verified visual manifest.');
  const bound=discover?{...manifest,deliveryRevision:value.deliveryRevision}:manifest,files=manifest.files.slice(),paths=new Set(files.map(f=>f.path));
  for(const file of value.files){validateVerifiedVisual(file,bound);if(paths.has(file.path))throw Error('Conflicting verified visual path.');paths.add(file.path);files.push(file);}
+ return validate({...bound,files});
+}
+async function mergeBundledVisuals(manifest,request){
+ if(!isPassageHash(manifest.presentationRevision))return manifest;
+ const response=await request(`/v1/bundled-visuals/${manifest.packId}/${manifest.presentationRevision}/manifest`,{cache:'no-store',redirect:'error'});
+ if(response.status===404)return manifest;
+ if(response.status!==200||response.redirected)throw Error('Bundled visuals are unavailable.');
+ const value=await response.json();
+ if(value?.schema!=='fia-bundled-visual-manifest@1'||value.custody!=='bundled-static'||value.packId!==manifest.packId||value.presentationRevision!==manifest.presentationRevision||value.deliveryRevision!==bundledVisualReviewSha256||!Array.isArray(value.files)||!value.files.length||value.files.length>46)throw Error('Invalid bundled visual manifest.');
+ // Validate the immutable reviewed descriptor before rebinding its context generation.
+ const base={packId:manifest.packId,presentationRevision:manifest.presentationRevision,deliveryRevision:bundledVisualReviewSha256};
+ const generation=manifest.deliveryRevision??bundledVisualReviewSha256;
+ if(!/^(?!0{64}$)[a-f0-9]{64}$/.test(generation))throw Error('Invalid bundled visual generation.');
+ const bound={...manifest,deliveryRevision:generation},files=manifest.files.slice(),paths=new Set(files.map(f=>f.path));
+ for(const file of value.files){validateBundledVisual(file,base);if(paths.has(file.path))throw Error('Conflicting bundled visual path.');paths.add(file.path);files.push({...file,deliveryRevision:generation});}
  return validate({...bound,files});
 }
 function validate(manifest){
@@ -87,7 +103,7 @@ async function latest(packId=legacy,media=false,onprogress){
  const delivery=manifest.files.find(f=>f.group==='core'&&f.path===`/content/delivery/${packId}/${manifest.deliveryRevision}.json`);
  if(delivery){const r=await request(delivery.path,{cache:'no-store'});if(!await verified(r.clone(),delivery))throw Error('Delivery source metadata changed.');const sidecar=validateDelivery(await r.json(),{packId,presentationRevision:manifest.presentationRevision});for(const f of manifest.files){const e=sidecar.entries.find(e=>e.path===f.path);if(e){if(e.source.sha256!==f.sourceSha256)throw Error('Source identity changed.');f.sourceBytes=e.source.bytes;for(const v of Object.values(f.variants||{}))v.sourceBytes=e.source.bytes;}}}
  if(delivery)onprogress?.({phase:'delivery-verified',verified:0,total:null});
- return mergeVerifiedVisuals(manifest,request);
+ return mergeBundledVisuals(await mergeVerifiedVisuals(manifest,request),request);
 }
 async function verified(response,file){
  if(!response?.ok)return false;
