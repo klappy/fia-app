@@ -294,5 +294,5 @@ export function createAudioController(onState, onEnd, onError, { allowSpeechFall
     }
     return true;
   }
-  return { play, pause, resume, stop, unlock, reserve, retain, evict, seek, get poolSize() { return pool.size; }, get active() { return !!audio || !!utterance; }, get playing() { return speaking; } };
+  return { play, pause, resume, stop, unlock, reserve, retain, evict, seek, get src() { return source; }, get poolSize() { return pool.size; }, get active() { return !!audio || !!utterance; }, get playing() { return speaking; } };
 }
