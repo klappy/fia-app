@@ -19,6 +19,7 @@ test('real app assets and Worker API coexist using actual reviewed build/configu
    const result=(await artifactRpc.json()).result.structuredContent;assert.equal(result.status,'ready');assert.equal(hash(Buffer.from(result.content)),record.revision);assert.equal(Buffer.byteLength(result.content),record.artifact.bytes);
   }
   for(const path of ['/v1','/v1/unknown','/mcp/unknown','/.well-known/oauth-authorization-server','/.well-known/oauth-authorization-server/mcp','/.well-known/oauth-protected-resource','/.well-known/oauth-protected-resource/mcp','/.well-known/openid-configuration']){const r=await mf.dispatchFetch(origin+path,{headers:{'Sec-Fetch-Mode':'navigate'}});assert.equal(r.status,404,path);assert.match(r.headers.get('content-type'),/json/);}
+  const visualPack='eng.MRK-1-1-13',visual=await mf.dispatchFetch(`${origin}/v1/verified-visuals/${visualPack}/${snapshot.current[visualPack]}/manifest`);assert.equal(visual.status,404);assert.equal((await visual.json()).reason,'visual-not-published');
   const shell=await mf.dispatchFetch(origin+'/session/continuation',{headers:{'Sec-Fetch-Mode':'navigate'}});assert.equal(await shell.text(),readFileSync('dist/index.html','utf8'));
   for(const path of ['/version.json','/sw.js','/docs/V3-BLUEPRINT.html']){
    // The existing bundle determines exact paths; no API routing may change their bytes.

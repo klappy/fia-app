@@ -1,5 +1,4 @@
 import {snapshotStorage as visualSnapshotStorage} from '../../faces/worker/snapshot.mjs';
-import visualSnapshot from '../../faces/worker/generated/snapshot.json' with {type:'json'};
 import {serveVerifiedVisual} from './verified-visual-publication.mjs';
 import catalog from './catalog.json';
 import {createExecutableRuntime,serveExecutableObject} from './executable-presentation-runtime.mjs';
@@ -40,8 +39,9 @@ async function reviewedStore(ctx,env){
 const prefix='/v1/preparations';
 const statusBody=(record,reused)=>({schema:'fia-preparation-status@1',jobId:record.jobId,state:record.state,reason:record.reason,sourceState:record.sourceState??'queued',selection:record.selection,result:record.result??null,resultSha256:record.resultSha256??null,statusUrl:`${prefix}/${record.jobId}`,reused});
 
-export async function servePreparation(request,env,{guideExecutionProfile=null,guideExecutionEligibility=null,guideUnitDependencySha256=null}={}){
-  const visual=await serveVerifiedVisual(request,env,{currentRevision:packId=>visualSnapshot.current[packId],currentPresentation:async packId=>{const authority=visualSnapshotStorage(visualSnapshot,{fetchAsset:path=>env.ASSETS.fetch(new Request(new URL(path,env.FIA_API_ORIGIN),{redirect:'manual'}))}),record=authority.readCatalog(packId);if(record.status!=='ready')return null;const artifact=await authority.findArtifact(record.revision);if(!artifact?.content)return null;return {revision:record.revision,assets:JSON.parse(artifact.content).assets};}});if(visual)return visual;
+// Generated presentation authority is supplied only by the production composition root after build.
+export async function servePreparation(request,env,{guideExecutionProfile=null,guideExecutionEligibility=null,guideUnitDependencySha256=null,visualSnapshot=null}={}){
+  const visual=await serveVerifiedVisual(request,env,{currentRevision:packId=>visualSnapshot?.current?.[packId],currentPresentation:async packId=>{const authority=visualSnapshotStorage(visualSnapshot,{fetchAsset:path=>env.ASSETS.fetch(new Request(new URL(path,env.FIA_API_ORIGIN),{redirect:'manual'}))}),record=authority.readCatalog(packId);if(record.status!=='ready')return null;const artifact=await authority.findArtifact(record.revision);if(!artifact?.content)return null;return {revision:record.revision,assets:JSON.parse(artifact.content).assets};}});if(visual)return visual;
   const unit=await serveGuideUnitPreparation(request,env,catalog,guideExecutionProfile,guideExecutionEligibility,guideUnitDependencySha256);if(unit)return unit;
   const guide=await serveGuidePreparation(request,env,catalog,guideExecutionProfile,guideExecutionEligibility);if(guide)return guide;
   const url=new URL(request.url);
