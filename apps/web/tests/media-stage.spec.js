@@ -89,3 +89,11 @@ it('the unavailable status card can never scroll, and every lh floor has a non-l
  expect(words.some(b=>/min-height:min\(3\.2em,25%\);min-height:min\(2lh,25%\)/.test(b))).toBe(true);
  for(const body of [...words,...card])for(const m of body.matchAll(/min-height:[^;}]*lh[^;}]*/g)){const before=body.slice(0,m.index).split(';').filter(Boolean).at(-1)||'';expect(before,`fallback before ${m[0]}`).toMatch(/^min-height:(min|calc)\([0-9.]+em[ ,]/);}
 });
+
+it('unavailable visuals use the shared aligned reader with the current narration clock',()=>{
+ const alignment={schemaVersion:2,duration:2,verses:[{start:0,end:2,words:[{from:0,to:5,start:0,end:1},{from:6,to:11,start:1,end:2}]}]};
+ const {container}=render(MediaStage,{asset:a1400,guide:{id:'g',kind:'guide',text:'Hello world',alignment},playback:{assetId:'g',elapsed:1.2,playing:true}});
+ expect(container.querySelector('.unavailable-words .gel-layer')).toBeTruthy();
+ expect(container.querySelectorAll('.unavailable-words [data-align-word]')).toHaveLength(2);
+ expect(screen.getByRole('status').textContent).toContain('unavailable here');
+});

@@ -712,7 +712,7 @@ it('video clock drives the ring through pause, seek, replay, and completion',asy
 
 it('phone rotation makes visuals immersive without remounting the playing video',async()=>{
  let rotate;const query={matches:false,addEventListener:(_,fn)=>rotate=fn,removeEventListener:vi.fn()};
- const prior=window.matchMedia;window.matchMedia=vi.fn(()=>query);
+ const prior=window.matchMedia;window.matchMedia=vi.fn(condition=>condition.includes('orientation: landscape')?query:{matches:false,addEventListener:vi.fn(),removeEventListener:vi.fn()});
  try{
  await startAt('S02-U005');await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();
  const video=document.querySelector('video');video.currentTime=15;await easyIdle();

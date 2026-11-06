@@ -50,3 +50,21 @@ export function highlightSegments(text, words, ms) {
   if (end < text.length) parts.push({ text: text.slice(end) });
   return parts;
 }
+
+/** ASR activity maps may contain interpolated words. Below 70% matched tokens (the
+ * existing passage-timing spoken-match floor), or outside the accepted clip, use
+ * untimed text. Never extend playback to accommodate suspect word timings. */
+export function activityWords(activity, range = null) {
+  if (!activity || !Array.isArray(activity.words) || !activity.words.length) return null;
+  const {words, matched, total, startMs, endMs} = activity;
+  if (!Number.isInteger(total) || total !== words.length || !Number.isInteger(matched) || matched > total || matched < Math.ceil(total * 0.7)) return null;
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || startMs < 0 || endMs <= startMs) return null;
+  const lo = range ? range.startSeconds * 1000 : startMs, hi = range ? range.endSeconds * 1000 : endMs;
+  if (!Number.isFinite(lo) || !Number.isFinite(hi) || lo > startMs || hi < endMs) return null;
+  let previous = startMs;
+  for (const w of words) {
+    if (!Number.isInteger(w.startMs) || !Number.isInteger(w.endMs) || w.startMs < previous || w.startMs < startMs || w.endMs <= w.startMs || w.endMs > endMs) return null;
+    previous = w.startMs;
+  }
+  return words;
+}
