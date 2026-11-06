@@ -16,6 +16,7 @@
  import {createVisualDelivery} from './lib/visual-delivery.js';
  import MediaStage from './components/MediaStage.svelte';
  import StepResources from './components/StepResources.svelte';
+ import {stepResources} from './lib/step-resources.js';
  import AlignedReading from './components/AlignedReading.svelte';
  import Sheet from './components/Sheet.svelte';
  import SessionProgress from './components/SessionProgress.svelte';
@@ -317,6 +318,9 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  let focal=$derived(assets[stage.focal]);
  let termPrompt=$derived(!session.detour&&focal?.kind==='term'&&termDefinition!==activity.id);
  let guideText=$derived({...readingGroups[activity?.readingGroupId],id:activity?.readingGroupId||activity?.id,kind:'guide',text:readingGroups[activity?.readingGroupId]?.text||activity?.narration||activity?.prompt||'',activeItemId:activity?.id,ordinal:activity?.readingGroupId?undefined:listOrdinals[activity?.id],descriptionAudio:activity?.audioSrc,...(cardAlignment?(activity.readingGroupId?{alignments:{[activity.id]:cardAlignment}}:{alignment:cardAlignment}):{})});
+ let stepResourceItems=$derived(stepResources(activity,assets,{activities,listContracts:content.listContracts}));
+ let showStepResources=$derived(stepResourceItems.length>0&&!finished&&!inTransition&&!immersive&&!session.detour);
+ let stepResourcesHeight=$state(72);
  let finished=$derived(session.status==='complete'&&!session.detour);
  // R3: a notice belongs to the passage, screen and sheet that raised it. Its scope is recorded when
  // it is raised, and it ends with that scope before the next screen renders (lib/notice-scope.js).
@@ -603,7 +607,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
 
 {#snippet noticeBar()}<div class="scene-notice" class:sheet-notice={noticeInSheet} use:measureNotice role="status" data-kind={raisedNotice?.kind}><span>{noticeText}</span>{#if !notice&&online&&!preparationNotice&&updateNotice}<button class="quiet" onclick={()=>{persist();location.reload();}}>Reload</button>{/if}<button aria-label="Dismiss notice" onclick={()=>{if(!notice&&online&&!preparationNotice&&updateNotice){updateNotice=false;updateDismissed=true;}notice='';preparationDismissed=currentPreparation?.event??null;dismissedExecutionNotice=executionNoticeKey;}}><X size={15}/></button></div>{/snippet}
 
-<main class="scene" class:immersive class:notice-raised={noticeOnStage} style={`--reading-scale:${scale}${noticeOnStage?`;--notice-height:${noticeHeight}px`:''}`} use:swipeNavigation={()=>({identity:`${swipeGeneration}:${selectionGeneration}:${selectedPack.id}:${activity.id}:${inTransition}:${JSON.stringify(session.detour)}`,blocked:!!sheet||immersive||selectionPending,next:!finished&&!session.detour,back:!!session.detour||session.index!==0||finished,navigate:direction=>navigate({type:direction==='next'?'CONTINUE':'BACK'},direction==='next')})}>
+<main class="scene" class:immersive class:has-step-resources={showStepResources} class:notice-raised={noticeOnStage} style={`--step-resources-height:${stepResourcesHeight}px;--reading-scale:${scale}${noticeOnStage?`;--notice-height:${noticeHeight}px`:''}`} use:swipeNavigation={()=>({identity:`${swipeGeneration}:${selectionGeneration}:${selectedPack.id}:${activity.id}:${inTransition}:${JSON.stringify(session.detour)}`,blocked:!!sheet||immersive||selectionPending,next:!finished&&!session.detour,back:!!session.detour||session.index!==0||finished,navigate:direction=>navigate({type:direction==='next'?'CONTINUE':'BACK'},direction==='next')})}>
  <div class="scene-glass scene-glass-top" aria-hidden="true"></div>
  <div class="scene-glass scene-glass-bottom" aria-hidden="true"></div>
  {#if finished}
@@ -628,7 +632,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  <SessionProgress groups={progress} passage={passageName(selectedPack)} onopen={()=>sheet='progress'} onpassages={()=>{passagesView='passages';sheet='passages';}}/>
  {#if stage.supporting}<button class="kept-content" aria-label={`Open kept ${assets[stage.supporting].title}`} onclick={()=>navigate({type:'DETOUR',assetId:stage.supporting})}>{#if assets[stage.supporting].src&&assets[stage.supporting].kind!=='video'}<img src={assets[stage.supporting].src} alt={assets[stage.supporting].title}/>{:else}<BookOpen size={22}/>{/if}</button>{/if}
 
- {#if !finished&&!inTransition&&!immersive&&!session.detour}<StepResources {activity} {activities} {assets} onopen={id=>navigate({type:'DETOUR',assetId:id})}/>{/if}
+ {#if showStepResources}<StepResources items={stepResourceItems} onheight={height=>stepResourcesHeight=height} onopen={id=>navigate({type:'DETOUR',assetId:id})}/>{/if}
  {#if noticeText&&!noticeInSheet}{@render noticeBar()}{/if}
  {#if listeningHint&&muted}<div class="scene-notice" role="status"><span>Prefer automatic narration?</span><button onclick={()=>{listeningHint=false;sheet='settings';}}>Settings</button><button aria-label="Dismiss narration suggestion" onclick={()=>listeningHint=false}><X size={15}/></button></div>{/if}
  <nav class="scene-controls" aria-label="Session controls">

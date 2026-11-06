@@ -368,3 +368,7 @@ button:enabled:active { translate: 0 0; scale: var(--press-scale); opacity: .86;
  /* The title and credit drop their 52px minimum and spacing here, which gives the step words back about 30px. */
  .resource-visual.visual-unavailable>.visual-identification{padding-top:8px}.resource-visual.visual-unavailable>.visual-identification .reading-identification{min-height:0;margin-bottom:4px}}
 
+
+/* The reading/follow clear band ends above the measured step-resource row. */
+.scene.has-step-resources{--chrome-bottom:calc(max(24px,env(safe-area-inset-bottom)) + 66px + var(--step-resources-height,72px) + 8px)}
+.scene.has-step-resources .scene-controls{height:calc(112px + env(safe-area-inset-bottom))}
