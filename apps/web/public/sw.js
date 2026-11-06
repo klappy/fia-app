@@ -53,9 +53,11 @@ function validate(manifest){
 function planVerifiedVisualDownload(manifest,selection,sizes={}){
  const visuals=manifest.files.filter(f=>f.visualPublication);
  for(const f of visuals)validateVerifiedVisual(f,manifest);
- if(visuals.length&&downloadSelectionIncludes(selection,'image')&&sizes.image&&sizes.image!=='prepared')throw Error('This original visual has no prepared size variant.');
- const planned=planProxyDownload({...manifest,files:manifest.files.filter(f=>!f.visualPublication)},selection,sizes),byPath=new Map(planned.files.map(f=>[f.path,f]));
- return {...planned,files:manifest.files.map(f=>f.visualPublication?f:byPath.get(f.path))};
+ if(visuals.length&&downloadSelectionIncludes(selection,'image')&&sizes.image!=null&&sizes.image!=='prepared')throw Error('This original visual has no prepared size variant.');
+ const proxySizes={...sizes};if(visuals.length&&proxySizes.image==null)delete proxySizes.image;
+ if(visuals.length&&!manifest.files.some(f=>f.group==='image'&&!f.visualPublication))delete proxySizes.image;
+ const planned=planProxyDownload({...manifest,files:manifest.files.filter(f=>!f.visualPublication)},selection,proxySizes),byPath=new Map(planned.files.map(f=>[f.path,f]));
+ return {...planned,...(visuals.length&&downloadSelectionIncludes(selection,'image')?{mediaSizes:{...planned.mediaSizes,image:'prepared'}}:{}),files:manifest.files.map(f=>f.visualPublication?{...f,selectedSize:'prepared'}:byPath.get(f.path))};
 }
 const selectedFiles=(manifest,selection)=>manifest.files.filter(f=>downloadSelectionIncludes(selection,f.group));
 function matchingSavedFile(file,active,manifest){

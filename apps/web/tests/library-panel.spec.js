@@ -116,3 +116,18 @@ it('names each passage card button by its passage so the sheet has no duplicate 
  expect(buttons.map(b=>b.textContent.trim())).toEqual(['Resume passage','Open passage','Open passage']);
  for(const b of buttons)expect(b.getAttribute('aria-label').startsWith(b.textContent.trim())).toBe(true);
 });
+
+for(const [selection,preference] of [['visual',null],['all',null],['all','small']])it(`verified original ${selection} selection with ${preference||'no'} preference reaches the real SW planner`,async()=>{
+ const {default:vm}=await import('node:vm'),proxy=await import('../src/lib/proxy-request.js');localStorage.removeItem('fia-download-media-sizes');
+ if(preference)localStorage.setItem('fia-download-media-sizes',JSON.stringify({image:preference}));
+ const packId='spa.LUK-1-1-4',revision='a'.repeat(64),deliveryRevision='b'.repeat(64),sha='e'.repeat(64);
+ const image={path:`/packs/${packId}/visuals/c211.png`,group:'image',mime:'image/png',sha256:sha,sourceSha256:sha,bytes:10,sourceBytes:10,deliveryRevision,deliveryURL:`/v1/verified-visuals/${packId}/${revision}/${deliveryRevision}/c211/${sha}`,visualPublication:{schema:'fia-verified-visual@1',packId,presentationRevision:revision,assetId:'c211',kind:'map',sourceEvidenceSha256:'c'.repeat(64),recipeSha256:'d'.repeat(64),pixelsSha256:'f'.repeat(64),width:1,height:1}};
+ const manifest={packId,presentationRevision:revision,deliveryRevision,files:[{path:'/index.html',group:'core',bytes:1},image]};
+ libraryAdapter.downloadStatus.mockResolvedValue({...available,manifest,choices:[{id:'core'},{id:'visual'},{id:'all'}]});
+ const context=vm.createContext({self:{addEventListener(){}},URL,Response,Headers,AbortController,console,...proxy});vm.runInContext(readFileSync('public/sw.js','utf8'),context);context.manifest=manifest;
+ const download=vi.spyOn(libraryAdapter,'download').mockImplementation(async(choice,progress,pack,sizes)=>{context.choice=choice;context.sizes=sizes;const planned=vm.runInContext('planVerifiedVisualDownload(manifest,choice,sizes)',context);expect(planned.files.find(f=>f.visualPublication).deliveryURL).toBe(image.deliveryURL);expect(planned.mediaSizes.image).toBe('prepared');return {saved:true};});
+ render(LibraryPanel,{view:'downloads'});await settle();await fireEvent.click(screen.getByRole('radio',{name:selection==='visual'?/Text, audio, images and maps/:/Text and all available resources/}));const chooser=screen.getByRole('combobox',{name:'Images and maps download size'});expect([...chooser.options].find(o=>o.value==='small').disabled).toBe(true);if(preference){expect(screen.getByRole('button',{name:'Download selection',exact:true}).disabled).toBe(true);await fireEvent.change(chooser,{target:{value:'prepared'}});}expect(chooser.value).toBe('prepared');
+ await fireEvent.click(screen.getByRole('button',{name:'Download selection',exact:true}));await settle();expect(download).toHaveBeenCalledOnce();expect(download.mock.calls[0][3]).toEqual({image:'prepared'});expect(screen.queryByRole('alert')).toBeNull();
+ context.choice=selection;context.sizes={image:null};expect(vm.runInContext('planVerifiedVisualDownload(manifest,choice,sizes)',context).files.find(f=>f.visualPublication).sha256).toBe(sha);
+ for(const size of ['small','medium','large',false,'invalid']){context.sizes={image:size};expect(()=>vm.runInContext('planVerifiedVisualDownload(manifest,choice,sizes)',context)).toThrow();}
+});
