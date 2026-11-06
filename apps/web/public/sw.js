@@ -19,15 +19,41 @@ function validateScripturePassageFile(file,packId){
  validatePlaybackRange(file.playbackRange,file.duration);const t=file.timing;
  if(t?.status!=='verified'||t.sourceAudioSha256!==file.sourceSha256||t.deliveryAudioSha256!==file.sha256||!isPassageHash(t.mappingEvidenceSha256)||!Number.isFinite(t.mapping?.scale)||t.mapping.scale<=0||!Number.isFinite(t.mapping?.offsetSeconds)||t.alignment!==undefined||t.alignmentSha256!==undefined)throw Error('Invalid passage-only Scripture clock.');return file;
 }
+// A separate, fixed same-origin family for build-admitted, fully decoded originals.
+// This is not a general same-origin delivery exception.
+function validateVerifiedVisual(file,manifest){
+ const p=file.visualPublication,hash=v=>isPassageHash(v)&&!/^0{64}$/.test(v),ext=file.mime==='image/png'?'png':file.mime==='image/jpeg'?'jpg':null;
+ if(!p||p.schema!=='fia-verified-visual@1'||p.packId!==manifest.packId||p.presentationRevision!==manifest.presentationRevision||!hash(p.presentationRevision)||!hash(p.recipeSha256)||!hash(p.pixelsSha256)||!hash(p.sourceEvidenceSha256)||!['image','map'].includes(p.kind)||typeof p.assetId!=='string'||!/^[-\w]{1,128}$/.test(p.assetId)||!ext||file.group!=='image'||file.variants||!hash(file.sha256)||file.sha256!==file.sourceSha256||!Number.isSafeInteger(file.bytes)||file.bytes<1||file.bytes>12582912||file.sourceBytes!==file.bytes||file.deliveryRevision!==manifest.deliveryRevision||!hash(file.deliveryRevision)||file.path!==`/packs/${manifest.packId}/visuals/${p.assetId}.${ext}`||!Number.isSafeInteger(p.width)||!Number.isSafeInteger(p.height)||p.width<1||p.height<1||p.width>8192||p.height>8192||p.width*p.height>(ext==='jpg'?2000000:17000000))throw Error('Invalid verified visual descriptor.');
+ if(file.deliveryURL!==`/v1/verified-visuals/${manifest.packId}/${p.presentationRevision}/${file.deliveryRevision}/${p.assetId}/${file.sha256}`)throw Error('Invalid verified visual route.');
+ return file;
+}
+async function mergeVerifiedVisuals(manifest,request){
+ if(!isPassageHash(manifest.presentationRevision)||!isPassageHash(manifest.deliveryRevision))return manifest;
+ const response=await request(`/v1/verified-visuals/${manifest.packId}/${manifest.presentationRevision}/${manifest.deliveryRevision}/manifest`,{cache:'no-store',redirect:'error'});
+ if(response.status===404)return manifest;
+ if(response.status!==200||response.redirected)throw Error('Verified visuals are unavailable.');
+ const value=await response.json();
+ if(value?.schema!=='fia-verified-visual-manifest@1'||value.packId!==manifest.packId||value.presentationRevision!==manifest.presentationRevision||value.deliveryRevision!==manifest.deliveryRevision||!Array.isArray(value.files)||value.files.length>64)throw Error('Invalid verified visual manifest.');
+ const files=manifest.files.slice(),paths=new Set(files.map(f=>f.path));
+ for(const file of value.files){validateVerifiedVisual(file,manifest);if(paths.has(file.path))throw Error('Conflicting verified visual path.');paths.add(file.path);files.push(file);}
+ return validate({...manifest,files});
+}
 function validate(manifest){
  if(manifest?.schema!==1||!validPack(manifest.packId)||!/^\w[\w-]*$/.test(manifest.revision)||!Array.isArray(manifest.files)||!manifest.files.length)throw new Error('This download manifest is not supported.');
  const paths=new Set();
- for(const f of manifest.files){if(!/^\/(?!\/|.*(?:\.\.|[?#]))/.test(f.path)||paths.has(f.path)||!['core','audio','video','image'].includes(f.group)||!Number.isSafeInteger(f.bytes)||f.bytes<0||!/^[a-f0-9]{64}$/.test(f.sha256))throw new Error('Invalid download file.');if(f.deliveryURL){const u=new URL(f.deliveryURL);if(u.origin!=='https://transcode.klappy.dev'||!/^\/(audio|image|video)\//.test(u.pathname)||!['audio','image','video'].includes(f.group)||!f.mime||!/^[a-f0-9]{64}$/.test(f.sourceSha256)||f.deliveryRevision!==manifest.deliveryRevision)throw Error('Invalid delivery descriptor.');}if(f.deliveryURL&&f.group==='video'){validateVideoSize(f);if(!/^[a-f0-9]{64}$/.test(f.logicalSourceSha256)||!Number.isSafeInteger(f.logicalSourceBytes)||f.logicalSourceBytes<=0||!Number.isSafeInteger(f.sourceBytes)||f.sourceBytes<=0||f.mime!=='video/mp4')throw Error('Invalid video source binding.');}if((f.playbackRange&&!f.scriptureLedgerEntryId)||f.recordingLedgerEntryId||f.recordingLedgerSha256){if(f.group!=='audio'||!f.deliveryURL||!f.recordingLedgerEntryId||!/^[a-f0-9]{64}$/.test(f.recordingLedgerSha256)||!/^[a-f0-9]{64}$/.test(f.logicalSourceSha256)||!Number.isSafeInteger(f.logicalSourceBytes)||f.logicalSourceBytes<=0)throw Error('Invalid recorded guide binding.');validatePlaybackRange(f.playbackRange,f.duration); }if(f.scripturePlaybackMode==='passage-only'){validateScripturePassageFile(f,manifest.packId);}else if(f.scriptureLedgerEntryId||f.scriptureAlignment){if(f.group!=='audio'||!f.deliveryURL||!f.scriptureLedgerEntryId||!f.scriptureAssetId||!/^[a-f0-9]{64}$/.test(f.scriptureLedgerSha256)||!/^[a-f0-9]{64}$/.test(f.scriptureAlignmentSha256)||!/^[a-f0-9]{64}$/.test(f.logicalSourceSha256)||!Number.isSafeInteger(f.logicalSourceBytes)||f.logicalSourceBytes<=0)throw Error('Invalid Scripture binding.');validatePlaybackRange(f.playbackRange,f.duration);validateScriptureAlignment(f.scriptureAlignment,{audioSha256:f.sha256,duration:f.duration,assetId:f.scriptureAssetId});}if(f.variants){
+ for(const f of manifest.files){if(!/^\/(?!\/|.*(?:\.\.|[?#]))/.test(f.path)||paths.has(f.path)||!['core','audio','video','image'].includes(f.group)||!Number.isSafeInteger(f.bytes)||f.bytes<0||!/^[a-f0-9]{64}$/.test(f.sha256))throw new Error('Invalid download file.');if(f.visualPublication)validateVerifiedVisual(f,manifest);if(f.deliveryURL&&!f.visualPublication){const u=new URL(f.deliveryURL);if(u.origin!=='https://transcode.klappy.dev'||!/^\/(audio|image|video)\//.test(u.pathname)||!['audio','image','video'].includes(f.group)||!f.mime||!/^[a-f0-9]{64}$/.test(f.sourceSha256)||f.deliveryRevision!==manifest.deliveryRevision)throw Error('Invalid delivery descriptor.');}if(f.deliveryURL&&f.group==='video'){validateVideoSize(f);if(!/^[a-f0-9]{64}$/.test(f.logicalSourceSha256)||!Number.isSafeInteger(f.logicalSourceBytes)||f.logicalSourceBytes<=0||!Number.isSafeInteger(f.sourceBytes)||f.sourceBytes<=0||f.mime!=='video/mp4')throw Error('Invalid video source binding.');}if((f.playbackRange&&!f.scriptureLedgerEntryId)||f.recordingLedgerEntryId||f.recordingLedgerSha256){if(f.group!=='audio'||!f.deliveryURL||!f.recordingLedgerEntryId||!/^[a-f0-9]{64}$/.test(f.recordingLedgerSha256)||!/^[a-f0-9]{64}$/.test(f.logicalSourceSha256)||!Number.isSafeInteger(f.logicalSourceBytes)||f.logicalSourceBytes<=0)throw Error('Invalid recorded guide binding.');validatePlaybackRange(f.playbackRange,f.duration); }if(f.scripturePlaybackMode==='passage-only'){validateScripturePassageFile(f,manifest.packId);}else if(f.scriptureLedgerEntryId||f.scriptureAlignment){if(f.group!=='audio'||!f.deliveryURL||!f.scriptureLedgerEntryId||!f.scriptureAssetId||!/^[a-f0-9]{64}$/.test(f.scriptureLedgerSha256)||!/^[a-f0-9]{64}$/.test(f.scriptureAlignmentSha256)||!/^[a-f0-9]{64}$/.test(f.logicalSourceSha256)||!Number.isSafeInteger(f.logicalSourceBytes)||f.logicalSourceBytes<=0)throw Error('Invalid Scripture binding.');validatePlaybackRange(f.playbackRange,f.duration);validateScriptureAlignment(f.scriptureAlignment,{audioSha256:f.sha256,duration:f.duration,assetId:f.scriptureAssetId});}if(f.variants){
   if(!['small','medium','large'].includes(f.defaultSize)||!f.variants[f.defaultSize]||Object.keys(f.variants).some(k=>!['small','medium','large'].includes(k)))throw Error('Invalid media variants.');
   for(const key of ['sha256','bytes','mime','deliveryURL'])if(f.variants[f.defaultSize][key]!==f[key])throw Error('Default variant changed.');
   for(const v of Object.values(f.variants)){if(v.variants||v.path!==f.path||v.group!==f.group||v.sourceSha256!==f.sourceSha256||v.logicalSourceSha256!==f.logicalSourceSha256)throw Error('Variant source identity changed.');validate({...manifest,files:[v]});}
  }paths.add(f.path);}
  return {...manifest,files:permittedRecordings(manifest.files,generatedRecordingPaths)};
+}
+function planVerifiedVisualDownload(manifest,selection,sizes={}){
+ const visuals=manifest.files.filter(f=>f.visualPublication);
+ for(const f of visuals)validateVerifiedVisual(f,manifest);
+ if(visuals.length&&downloadSelectionIncludes(selection,'image')&&sizes.image&&sizes.image!=='prepared')throw Error('This original visual has no prepared size variant.');
+ const planned=planProxyDownload({...manifest,files:manifest.files.filter(f=>!f.visualPublication)},selection,sizes),byPath=new Map(planned.files.map(f=>[f.path,f]));
+ return {...planned,files:manifest.files.map(f=>f.visualPublication?f:byPath.get(f.path))};
 }
 const selectedFiles=(manifest,selection)=>manifest.files.filter(f=>downloadSelectionIncludes(selection,f.group));
 function matchingSavedFile(file,active,manifest){
@@ -57,7 +83,7 @@ async function latest(packId=legacy,media=false,onprogress){
  const delivery=manifest.files.find(f=>f.group==='core'&&f.path===`/content/delivery/${packId}/${manifest.deliveryRevision}.json`);
  if(delivery){const r=await request(delivery.path,{cache:'no-store'});if(!await verified(r.clone(),delivery))throw Error('Delivery source metadata changed.');const sidecar=validateDelivery(await r.json(),{packId,presentationRevision:manifest.presentationRevision});for(const f of manifest.files){const e=sidecar.entries.find(e=>e.path===f.path);if(e){if(e.source.sha256!==f.sourceSha256)throw Error('Source identity changed.');f.sourceBytes=e.source.bytes;for(const v of Object.values(f.variants||{}))v.sourceBytes=e.source.bytes;}}}
  if(delivery)onprogress?.({phase:'delivery-verified',verified:0,total:null});
- return manifest;
+ return mergeVerifiedVisuals(manifest,request);
 }
 async function verified(response,file){
  if(!response?.ok)return false;
@@ -368,7 +394,7 @@ async function start(selection,port,packId=legacy,sizes={},revision){
   let manifest;
   try{manifest=await latest(packId,true,preflight);}catch(error){if(controller.signal.aborted&&error.name==='AbortError')throw error;if(error.mediaStatusCode!=='media-status-transient'){await invalidateServerSnapshot(packId);throw error;}const previous=await read(packKey(packId,'pending'));if(!previous)throw error;manifest=validate(previous.manifest);}
   const priorPending=await read(packKey(packId,'pending'));if(!Object.keys(sizes).length&&priorPending?.selection===selection)sizes=priorPending.manifest.mediaSizes||{};
-  manifest=planProxyDownload(manifest,selection,sizes);
+  manifest=planVerifiedVisualDownload(manifest,selection,sizes);
   const files=selectedFiles(manifest,selection),cacheName=`${PREFIX}${packId===legacy?'':packId+'-'}${manifest.revision}-${selection}`;
   const active=await read(packKey(packId,'active'));
   // A repair stages separately from the last working copy, even at the same revision.
@@ -403,7 +429,7 @@ async function start(selection,port,packId=legacy,sizes={},revision){
    if(!await verified(response?.clone(),file)){const elsewhere=await savedElsewhere(file,packId,controller.signal);if(elsewhere){await cache.put(file.path,new Response(await elsewhere.arrayBuffer(),{headers:elsewhere.headers}));response=await cache.match(file.path);}}
    if(!await verified(response?.clone(),file)){
     const timeout=setTimeout(()=>controller.abort(),30000);
-    try{response=await fetch(file.deliveryURL||file.path,{cache:'no-store',signal:controller.signal});if(file.deliveryURL){const bytes=await readVerifiedMedia(response,file,{signal:controller.signal});response=new Response(bytes,{headers:{'Content-Type':file.mime}});}else if(!await verified(response.clone(),file))throw new Error('A file could not be verified. Retry to keep the files already downloaded.');
+    try{response=await fetch(file.deliveryURL||file.path,{cache:'no-store',signal:controller.signal,...(file.visualPublication?{redirect:'error'}:{})});if(file.deliveryURL){const bytes=await readVerifiedMedia(response,file,{signal:controller.signal});response=new Response(bytes,{headers:{'Content-Type':file.mime}});}else if(!await verified(response.clone(),file))throw new Error('A file could not be verified. Retry to keep the files already downloaded.');
      const headers=new Headers(response.headers);headers.set('Content-Length',String(file.bytes));await cache.put(file.path,new Response(await response.arrayBuffer(),{headers}));
     }finally{clearTimeout(timeout);}
    }
@@ -456,7 +482,7 @@ self.addEventListener('message',event=>{
      if(file.scripturePlaybackMode==='passage-only')validateScripturePassageFile(file,packId);validateVideoSize(file);const controller=new AbortController();playbackJobs.set(key,controller);
      try{let response=active?.cache&&await(await caches.open(active.cache)).match(file.path),bytes=null,served={sha256:file.sha256,bytes:file.bytes};
       if(response){try{bytes=await readVerifiedMedia(response,file,{signal:controller.signal});}catch(error){if(controller.signal.aborted)throw error;if(video&&saved)notes.push({kind:'saved-copy-unreadable'});}}
-      if(!bytes){response=await fetch(file.deliveryURL,{cache:'no-store',signal:controller.signal,...(video?{redirect:'error'}:{})});
+      if(!bytes){response=await fetch(file.deliveryURL,{cache:'no-store',signal:controller.signal,...(video||file.visualPublication?{redirect:'error'}:{})});
        if(video){const read=await readPlayableVideo(response,file,{signal:controller.signal});bytes=read.bytes;served=read.served;if(read.drift)notes.push({kind:'content-drift',expected:{sha256:file.sha256,bytes:file.bytes},served});}
        else bytes=await readVerifiedMedia(response,file,{signal:controller.signal});}
       if(controller.signal.aborted)throw Error('Playback canceled.');result={bytes:bytes.buffer,mime:file.mime,timing:file.timing,...(file.playbackRange?{playbackRange:file.playbackRange}:{}),...(file.scriptureAlignment?{scriptureAlignment:file.scriptureAlignment,scriptureAlignmentSha256:file.scriptureAlignmentSha256}:{}),...(file.scripturePlaybackMode==='passage-only'?{scriptureAlignment:null,scripturePlaybackMode:'passage-only',scriptureHighlighting:file.scriptureHighlighting}:{}),file:file.scripturePlaybackMode==='passage-only'?file:{path:file.path,sha256:served.sha256,bytes:served.bytes,deliveryURL:file.deliveryURL},...(notes.length?{notes}:{})};
