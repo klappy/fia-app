@@ -1134,3 +1134,10 @@ it('opening a step resource moves focus to Return and restores its originating b
   await waitFor(()=>expect(document.activeElement?.dataset.resourceId).toBe(id));expect(state().index).toBe(0);
  }finally{cleanup();activities[0]=original;}
 });
+
+it('step resources show Checking while media verification is pending',async()=>{
+ const original=activities[0],id=Object.values(assets).find(a=>a.kind==='image').id;activities[0]={...original,relatedAssetIds:[id]};
+ vi.spyOn(libraryAdapter,'mediaStatus').mockImplementation(()=>new Promise(()=>{}));
+ try{await startAt(original.id,'waiting');const shelf=screen.getByRole('navigation',{name:'Resources for this step'}),trigger=within(shelf).getAllByRole('button').find(button=>button.dataset.resourceId===id);expect(trigger.textContent).toContain('Checking');expect(trigger.textContent).not.toContain('Unavailable');expect(trigger.disabled).toBe(false);}
+ finally{cleanup();activities[0]=original;}
+});
