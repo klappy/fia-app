@@ -3,7 +3,7 @@ import {planProxyDownload,downloadSelectionIncludes} from '../../apps/web/src/li
 import {readVerifiedMedia,validateVideoSize} from '../../apps/web/src/lib/media-delivery.js';
 import {sha256 as hash,canonicalJSONString} from '../../server/fia/preparation/contract.mjs';
 import {decodeRetained,VISUAL_ORIGINAL_RECIPE_SHA256} from '../../server/fia/preparation/visual-original.mjs';
-import {serveVerifiedVisual,verifiedVisualDescriptor,validVerifiedVisualAdmission} from '../../server/fia/preparation/verified-visual-publication.mjs';
+import {serveVerifiedVisual,verifiedVisualDescriptor,validVerifiedVisualAdmission,createVerifiedVisualVerifier,VISUAL_REQUEST_MS} from '../../server/fia/preparation/verified-visual-publication.mjs';
 const bytes=new Uint8Array(readFileSync(new URL('../preparation-executor/fixtures/visual/rgb-31x17.png',import.meta.url))),sha=createHash('sha256').update(bytes).digest('hex'),revision='a'.repeat(64),delivery='b'.repeat(64),packId='spa.LUK-1-1-4',origin='https://fiaguide.app';
 let gets=0;const bucket={get:async()=>{gets++;return {size:bytes.length,arrayBuffer:async()=>bytes.slice().buffer};}};
 const decoded=await decodeRetained(bucket,{sha256:sha,bytes:bytes.length,contentType:'image/png',sourceKey:'fixture'});
@@ -61,4 +61,59 @@ test('SW discovery preserves classic generation, rejects empty/foreign/refused r
  context.request=async()=>new Response(null,{status:403});await assert.rejects(vm.runInContext('mergeVerifiedVisuals(manifest,request)',context));
  context.manifest={...manifest,files:[...manifest.files,{...verifiedVisualDescriptor(entry),visualPublication:undefined}]};await assert.rejects(vm.runInContext('mergeVerifiedVisuals(manifest,request)',context));
  context.manifest={...manifest,deliveryRevision:'c'.repeat(64)};context.request=async()=>Response.json({schema:'fia-verified-visual-manifest@1',packId,presentationRevision:revision,deliveryRevision:delivery,files:[verifiedVisualDescriptor(entry)]});await assert.rejects(vm.runInContext('mergeVerifiedVisuals(manifest,request)',context));
+});
+
+test('one admitted original may spend14s reading and19s decoding without exceeding the SW45s inactivity budget',async()=>{
+ const originalNow=Date.now;let elapsed=0;Date.now=()=>originalNow()+elapsed;
+ try{
+  const slow={get:async()=>{elapsed+=14000;return {size:bytes.length,arrayBuffer:async()=>bytes.slice().buffer};}};
+  const verifier=createVerifiedVisualVerifier({bucket:slow,decode:async(...args)=>{const result=await decodeRetained(...args);elapsed+=19000;return result;}});
+  const result=await request(base+'/manifest',{}, {...options,bucket:slow,verifier});assert.equal(result.status,200,JSON.stringify(await result.clone().json()));assert.equal(elapsed,33000);
+  assert.ok(VISUAL_REQUEST_MS>=35000&&VISUAL_REQUEST_MS<45000);
+ }finally{Date.now=originalNow;}
+});
+async function corpus(){
+ const files=[['c211','rgb-31x17.png','image/png'],['c212','palette-20x9.png','image/png'],['a1400','baseline-37x23.jpg','image/jpeg']],store=new Map(),entries=[],assets={};
+ for(const [assetId,name,mime]of files){
+  const content=new Uint8Array(readFileSync(new URL('../preparation-executor/fixtures/visual/'+name,import.meta.url))),sha256=await hash(content),ext=mime==='image/png'?'png':'jpg',sourceKey=`originals/visual/sha256/${sha256}.${ext}`;
+  const d=await decodeRetained({get:async()=>({size:content.length,arrayBuffer:async()=>content.slice().buffer})},{sha256,bytes:content.length,contentType:mime,sourceKey});
+  const evidence={id:assetId,kind:'map',url:'https://publisher.invalid/'+assetId+'.'+ext};assets[assetId]={kind:'map',sourceEvidence:evidence};store.set(sourceKey,content);
+  entries.push({...entry,assetId,mime,sourceKey,sha256,bytes:content.length,width:d.width,height:d.height,pixelsSha256:d.pixelsSha256,sourceEvidenceSha256:await hash(canonicalJSONString(evidence)),path:`/packs/${packId}/visuals/${assetId}.${ext}`});
+ }
+ return {entries,store,currentPresentation:async()=>({revision,assets})};
+}
+test('parallel requests bound live reads to2 and codecs to1, reuse only byte-checked proof, and retain no source payloads',async()=>{
+ const fixture=await corpus();let liveReads=0,maxReads=0,liveDecodes=0,maxDecodes=0,decodeCalls=0,gets=0;
+ const bucket={get:async key=>{gets++;liveReads++;maxReads=Math.max(maxReads,liveReads);const content=fixture.store.get(key);return {size:content.length,arrayBuffer:async()=>{await new Promise(resolve=>setTimeout(resolve,3));liveReads--;return content.slice().buffer;}};}};
+ const verifier=createVerifiedVisualVerifier({bucket,decode:async(...args)=>{decodeCalls++;liveDecodes++;maxDecodes=Math.max(maxDecodes,liveDecodes);try{return await decodeRetained(...args);}finally{liveDecodes--;}}}),opts={...options,...fixture,bucket,verifier};
+ const responses=await Promise.all([request(base+'/manifest',{},opts),request(base+'/manifest',{},opts)]);assert.ok(responses.every(r=>r.status===200));assert.equal(maxReads,2);assert.equal(maxDecodes,1);assert.equal(decodeCalls,3);
+ const before=gets;assert.equal((await request(base+'/manifest',{},opts)).status,200);assert.equal(gets,before+3,'every warm proof still re-reads the retained bytes');assert.equal(decodeCalls,3,'verified identical source/recipe avoids repeated codec work');
+ const first=fixture.entries[0],original=fixture.store.get(first.sourceKey);fixture.store.set(first.sourceKey,new Uint8Array(original.length));assert.equal((await request(base+'/manifest',{},opts)).status,503,'cached proof cannot hide corruption');fixture.store.set(first.sourceKey,original);
+ assert.equal((await request(base+'/manifest',{}, {...opts,entries:[{...first,pixelsSha256:'c'.repeat(64)}]})).status,409,'cached proof cannot bless different declared pixels');
+});
+test('bounded attempts keep only completed decode proofs, resume a cold collection, and fence revocation after IO',async()=>{
+ const fixture=await corpus(),originalNow=Date.now;let elapsed=0,calls=0;Date.now=()=>originalNow()+elapsed;
+ try{
+  const bucket={get:async key=>{const content=fixture.store.get(key);return {size:content.length,arrayBuffer:async()=>content.slice().buffer};}};
+  const verifier=createVerifiedVisualVerifier({bucket,decode:async(...args)=>{calls++;const d=await decodeRetained(...args);elapsed+=19000;return d;}}),opts={...options,...fixture,bucket,verifier};
+  assert.equal((await request(base+'/manifest',{},opts)).status,503,'three cold19s decodes cannot fit within a40s request');assert.equal(calls,2,'do not start a codec without its full20s budget');
+  assert.equal((await request(base+'/manifest',{},opts)).status,200,'completed proofs survive; remaining source is decoded in the next bounded attempt');assert.equal(calls,3);
+  let reads=0;assert.equal((await request(base+'/manifest',{}, {...opts,currentRevision:()=>++reads===1?revision:'d'.repeat(64)})).status,409,'a pointer revoked during byte verification cannot serve');
+ }finally{Date.now=originalNow;}
+});
+
+test('an unexpectedly late codec result never enters the verified proof cache',async()=>{
+ const originalNow=Date.now;let elapsed=0,calls=0;Date.now=()=>originalNow()+elapsed;
+ try{
+  const verifier=createVerifiedVisualVerifier({bucket,decode:async(...args)=>{calls++;const d=await decodeRetained(...args);if(calls===1)elapsed+=41000;return d;}}),opts={...options,verifier};
+  assert.equal((await request(base+'/manifest',{},opts)).status,503);assert.equal((await request(base+'/manifest',{},opts)).status,200);assert.equal(calls,2,'late result is not reusable evidence');
+ }finally{Date.now=originalNow;}
+});
+
+test('streamed retained readback is bounded, verifies all bytes and cancels an oversized body',async()=>{
+ let canceled=0;
+ const streamed={get:async()=>({size:bytes.length,body:new ReadableStream({start(controller){for(let i=0;i<bytes.length;i+=17)controller.enqueue(bytes.slice(i,i+17));controller.close();}})})};
+ assert.equal((await request(base+'/manifest',{}, {...options,bucket:streamed})).status,200);
+ const excess={get:async()=>({size:bytes.length,body:new ReadableStream({start(controller){controller.enqueue(new Uint8Array(bytes.length+1));},cancel(){canceled++;}})})};
+ assert.equal((await request(base+'/manifest',{}, {...options,bucket:excess})).status,503);assert.equal(canceled,1);
 });
