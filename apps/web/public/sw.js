@@ -306,7 +306,7 @@ async function status(packId=legacy){
  const saved=await complete(active);
  if(active)active.files=permittedRecordings(active.files,generatedRecordingPaths);
  if(manifest)manifest={...manifest,files:permittedRecordings(manifest.files,generatedRecordingPaths)};
- return {available:true,mediaNotices:(await read('media-notices'))||[],saved,active:active?{...active,valid:saved}:null,pending:pending?{...pending,running:jobs.has(packId)}:null,manifest,error,updateAvailable:!!(active&&manifest&&(active.manifest.catalogRevision||active.revision)!==manifest.revision),choices:manifest?['core',...(manifest.files.some(f=>f.group==='audio')?['audio']:[]),...(manifest.files.some(f=>f.group==='video')&&manifest.files.some(f=>f.group==='image')?['visual']:[]),...(manifest.files.some(f=>f.group==='video'||f.group==='image')?['all']:[])].map(id=>({id,bytes:downloadTransferBytes(selectedFiles(manifest,id))})):[]};
+ return {available:true,mediaNotices:(await read('media-notices'))||[],saved,active:active?{...active,valid:saved}:null,pending:pending?{...pending,running:jobs.has(packId)}:null,manifest,error,updateAvailable:!!(active&&manifest&&((active.manifest.catalogRevision||active.revision)!==manifest.revision||(active.manifest.deliveryRevision||null)!==(manifest.deliveryRevision||null))),choices:manifest?['core',...(manifest.files.some(f=>f.group==='audio')?['audio']:[]),...(manifest.files.some(f=>f.group==='video')&&manifest.files.some(f=>f.group==='image')?['visual']:[]),...(manifest.files.some(f=>f.group==='video'||f.group==='image')?['all']:[])].map(id=>({id,bytes:downloadTransferBytes(selectedFiles(manifest,id))})):[]};
 }
 self.addEventListener('install',event=>{if(isBuild)event.waitUntil(caches.open(SHELL).then(c=>c.addAll(['/','/index.html','/manifest.webmanifest'])).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));
@@ -448,7 +448,8 @@ async function start(selection,port,packId=legacy,sizes={},revision){
    // A file another passage already saved and verified (the app, the catalog, a shared clip) is copied, not fetched again.
    if(!await verified(response?.clone(),file)){const elsewhere=await savedElsewhere(file,packId,controller.signal);if(elsewhere){await cache.put(file.path,new Response(await elsewhere.arrayBuffer(),{headers:elsewhere.headers}));response=await cache.match(file.path);}}
    if(!await verified(response?.clone(),file)){
-    const timeout=setTimeout(()=>controller.abort(),30000);
+    // Visual verification may spend40s at the endpoint; stay below the UI45s inactivity guard.
+    const timeout=setTimeout(()=>controller.abort(),file.visualPublication?42000:30000);
     try{response=await fetch(file.deliveryURL||file.path,{cache:'no-store',signal:controller.signal,...(file.visualPublication?{redirect:'error'}:{})});if(file.deliveryURL){const bytes=await readVerifiedMedia(response,file,{signal:controller.signal});response=new Response(bytes,{headers:{'Content-Type':file.mime}});}else if(!await verified(response.clone(),file))throw new Error('A file could not be verified. Retry to keep the files already downloaded.');
      const headers=new Headers(response.headers);headers.set('Content-Length',String(file.bytes));await cache.put(file.path,new Response(await response.arrayBuffer(),{headers}));
     }finally{clearTimeout(timeout);}
@@ -500,7 +501,7 @@ self.addEventListener('message',event=>{
      if(manifest.deliveryRevision!==event.data.deliveryRevision){if(!video)throw Error('This resource is not prepared for online playback.');notes.push({kind:'revision-changed',page:/^[a-f0-9]{64}$/.test(event.data.deliveryRevision)?event.data.deliveryRevision:null,worker:manifest.deliveryRevision||null});}
      const key=(event.source?.id||'')+':'+event.data.requestId;if(canceledPlayback.delete(key))throw Error('Playback canceled.');if(!event.data.requestId||playbackJobs.has(key))throw Error('Invalid playback request.');
      if(file.scripturePlaybackMode==='passage-only')validateScripturePassageFile(file,packId);validateVideoSize(file);const controller=new AbortController();playbackJobs.set(key,controller);
-     try{let response=active?.cache&&await(await caches.open(active.cache)).match(file.path),bytes=null,served={sha256:file.sha256,bytes:file.bytes};
+     try{let response=(!file.visualPublication||saved)&&active?.cache&&await(await caches.open(active.cache)).match(file.path),bytes=null,served={sha256:file.sha256,bytes:file.bytes};
       if(response){try{bytes=await readVerifiedMedia(response,file,{signal:controller.signal});}catch(error){if(controller.signal.aborted)throw error;if(video&&saved)notes.push({kind:'saved-copy-unreadable'});}}
       if(!bytes){response=await fetch(file.deliveryURL,{cache:'no-store',signal:controller.signal,...(video||file.visualPublication?{redirect:'error'}:{})});
        if(video){const read=await readPlayableVideo(response,file,{signal:controller.signal});bytes=read.bytes;served=read.served;if(read.drift)notes.push({kind:'content-drift',expected:{sha256:file.sha256,bytes:file.bytes},served});}
