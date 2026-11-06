@@ -10,3 +10,10 @@ test('saved blobs stay bounded, evict before revoke, and protect the paused owne
  cache.clear();assert.equal(cache.size,0);
  for(let i=0;i<events.length;i+=2){assert.equal(events[i][0],'evict');assert.equal(events[i+1][0],'revoke');}
 });
+
+test('a retired active identity can become current again before releasing its owner',()=>{
+ let active='blob:a';const revoked=[];const cache=createPlaybackCache(3,{activeUrl:()=>active,evict(){},revoke:u=>revoked.push(u)});
+ cache.set('saved|a','blob:a');cache.retain([]);cache.retain(['saved|a']);active=null;cache.trim();
+ assert.equal(cache.get('saved|a'),'blob:a');assert.deepEqual(revoked,[]);
+ cache.clear();assert.deepEqual(revoked,['blob:a']);
+});

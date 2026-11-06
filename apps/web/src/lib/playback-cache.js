@@ -13,14 +13,14 @@ export function createPlaybackCache(cap, {activeUrl, evict, revoke}) {
     }
   }
   return {
-    get(key) { const value=entries.get(key); if(value!==undefined){entries.delete(key);entries.set(key,value);} return value; },
+    get(key) { const value=entries.get(key); if(value!==undefined){retired.delete(key);entries.delete(key);entries.set(key,value);} return value; },
     set(key,value) {
       const old=entries.get(key);
       if(old!==undefined && url(old)!==url(value)) throw Error('Audio identity changed without release');
       entries.set(key,value); retired.delete(key); trim();
     },
     values:()=>entries.values(), get size(){return entries.size;},
-    retain(keys) { const keep=new Set(keys); for(const key of entries.keys())if(!keep.has(key))retired.add(key);trim(); },
+    retain(keys) { const keep=new Set(keys); for(const key of entries.keys()){if(!keep.has(key))retired.add(key);else retired.delete(key);}trim(); },
     clear() { for(const key of entries.keys())retired.add(key);trim(); }, trim
   };
 }
