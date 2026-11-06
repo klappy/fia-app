@@ -156,3 +156,37 @@ run('retain drops idle players of a passed revision and keeps current and kept i
   e.controller.retain(['r2|a'], id => id.startsWith('saved|'));
   assert.equal(e.controller.poolSize, 2);
 });
+
+run('an empty-pool tap unlocks a future prepared owner across await', async e => {
+ let gesture = false;
+ Audio.prototype.play = function () {
+   if (gesture) this.gestureUnlocked = true;
+   if (!this.gestureUnlocked) return Promise.reject(Object.assign(Error('gesture required'), {name:'NotAllowedError'}));
+   this.paused = false; return Promise.resolve();
+ };
+ gesture = true; e.controller.unlock(); gesture = false;
+ await tick();
+ e.controller.play('prepared', 'blob:future', 1, undefined, 'future'); await tick();
+ assert.equal(e.controller.playing, true);
+ assert.deepEqual(e.errors, []);
+ assert.equal(e.audio.length, 1);
+ e.controller.stop(); e.controller.retain([]);
+ assert.equal(e.controller.poolSize, 0);
+ e.controller.stop();
+});
+
+run('one fallback handles consecutive future identities without another tap and stays bounded', async e => {
+ e.controller.reserve(['known']); e.controller.unlock(); await tick();
+ const fallback=e.audio[1];
+ for(let i=0;i<5;i++)e.controller.unlock();
+ assert.equal(e.audio.length,2);
+ for(const id of ['first','second','third']) {
+   e.controller.play(id,'blob:'+id,1,undefined,id);await tick();
+   assert.equal(fallback.src,'blob:'+id);assert.equal(fallback.paused,false);
+   assert.equal(e.audio[0].paused,true);assert.equal(e.audio.length,2);
+ }
+ e.controller.unlock();await tick();assert.equal(fallback.paused,false,'unlock leaves active owner alone');
+ e.controller.retain([]);assert.equal(e.controller.poolSize,0);assert.equal(e.controller.playing,true);
+ e.controller.evict('third');assert.equal(e.controller.active,false);assert.equal(fallback.paused,true);
+ e.controller.play('next','blob:next',1,undefined,'next');await tick();assert.equal(e.audio.length,2);assert.equal(e.controller.playing,true);e.controller.stop();
+});
