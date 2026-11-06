@@ -209,3 +209,13 @@ test('unspaced activity tokens cannot split combining marks or surrogate pairs',
  assert.equal(activityAlignment('cafe\u0301',[word('cafe',0,4)],100),null,'decomposed accent stays with its letter');
  assert.equal(activityAlignment('爱𠮷',[word('爱',0,2)],100),null,'a span cannot end inside a surrogate pair');
 });
+
+test('joining punctuation uses the same compatibility normalization as activity words',()=>{
+ const word=(text,from,to)=>({text,from,to,startMs:0,endMs:100});
+ for(const joiner of ['-','‐','‑','－','﹣',"'",'‘','’','＇','\u00ad','\u200c','\u200d','\u2060']){
+  const shown='co'+joiner+'operate';
+  assert.equal(activityAlignment(shown,[word('co',0,2)],100),null,joiner+' prefix');
+  assert.equal(activityAlignment(shown,[word('operate',3,10)],100),null,joiner+' suffix');
+  assert.ok(activityAlignment(shown,[word('cooperate',0,shown.length)],100),joiner+' full token');
+ }
+});

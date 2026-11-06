@@ -91,7 +91,7 @@ export function wordPair(wordIndex, wordCount) {
 // Keep accents and non-Latin words; normalize casing, canonical forms and punctuation alike.
 const activityWordKey = text => text.normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}\p{M}\s]/gu, '').trim();
 const wordCharacter = char => /[\p{L}\p{N}\p{M}]/u.test(char);
-const wordJoiner = char => /['’\u2010\u2011\u00ad-]/u.test(char);
+const wordJoiner = char => /['‘’\u2010\u2011\u00ad\u200c\u200d\u2060-]/u.test(char.normalize('NFKC'));
 // These scripts allow adjacent sidecar tokens without written word separators. Their
 // supplied spans still have to match exactly and stop at complete graphemes.
 const unspacedCharacter = char => /[\p{Script_Extensions=Han}\p{Script_Extensions=Hiragana}\p{Script_Extensions=Katakana}\p{Script_Extensions=Thai}\p{Script_Extensions=Lao}\p{Script_Extensions=Khmer}\p{Script_Extensions=Myanmar}\p{Script_Extensions=Tibetan}]/u.test(char);
