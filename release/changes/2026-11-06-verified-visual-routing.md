@@ -7,3 +7,7 @@ The reviewed publication registry remains empty. This change admits no new publi
 An offline video helper verifies actual prebuilt bytes against existing rights/review/replacement ledgers and requires explicit selection between bundled logical bytes and the qualified derivative. The helper does not change a selected delivery or grant publisher acquisition.
 
 Validation uses bounded fixture bytes, real worker/SW custody paths and App online/offline regressions. Physical-device, human Spanish and audible whole-corpus acceptance remain separate gates. The previously accepted passage-switch disposition is unchanged.
+
+Fixed originals are offered as Prepared version for Visual/All saves, including an unset image preference; unsupported resized choices remain unavailable. Manifest verification uses a 40-second request budget below the service-worker inactivity limit, globally bounded reads/codecs and a bounded decode-proof cache; warm use still rereads and hashes retained bytes and rechecks current authority. Generated snapshot authority is supplied by the production entry after build, so preparation tests and imports work on a clean checkout.
+
+Two read-only all-330 audits separately report recording discovery, selected-unit admission/local-byte evidence and exact local-media reuse candidates. Candidate joins do not grant acquisition, admission or playback readiness.
