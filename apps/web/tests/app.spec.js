@@ -1122,3 +1122,15 @@ it('missing selected video size plays the default and explains the fallback',asy
  await startAt('S02-U005','waiting');await fireEvent.click(screen.getByRole('button',{name:'Play video',exact:true}));await settle();await settle();await settle();
  expect(document.querySelector('video')?.getAttribute('src')).toBe('blob:default-video');expect(screen.getByText('Small isn’t ready for this video yet. Playing Large instead.')).toBeTruthy();expect(request.mock.calls[0][4]).toBe('large');
 });
+
+it('opening a step resource moves focus to Return and restores its originating button',async()=>{
+ const original=activities[0],id=Object.values(assets).find(a=>a.kind==='image').id;activities[0]={...original,relatedAssetIds:[id]};
+ try{
+  await startAt(original.id,'waiting');
+  const shelf=screen.getByRole('navigation',{name:'Resources for this step'}),trigger=within(shelf).getAllByRole('button').find(button=>button.dataset.resourceId===id);
+  trigger.focus();await fireEvent.click(trigger);
+  const back=screen.getByRole('button',{name:'Return to guide'});await waitFor(()=>expect(document.activeElement).toBe(back));
+  await fireEvent.click(back);
+  await waitFor(()=>expect(document.activeElement?.dataset.resourceId).toBe(id));expect(state().index).toBe(0);
+ }finally{cleanup();activities[0]=original;}
+});

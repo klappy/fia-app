@@ -318,9 +318,11 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  let focal=$derived(assets[stage.focal]);
  let termPrompt=$derived(!session.detour&&focal?.kind==='term'&&termDefinition!==activity.id);
  let guideText=$derived({...readingGroups[activity?.readingGroupId],id:activity?.readingGroupId||activity?.id,kind:'guide',text:readingGroups[activity?.readingGroupId]?.text||activity?.narration||activity?.prompt||'',activeItemId:activity?.id,ordinal:activity?.readingGroupId?undefined:listOrdinals[activity?.id],descriptionAudio:activity?.audioSrc,...(cardAlignment?(activity.readingGroupId?{alignments:{[activity.id]:cardAlignment}}:{alignment:cardAlignment}):{})});
- let stepResourceItems=$derived(stepResources(activity,assets,{activities,listContracts:content.listContracts}));
+ let stepResourceItems=$derived(stepResources(activity,assets,{activities,listContracts:content.listContracts,verifying}));
  let showStepResources=$derived(stepResourceItems.length>0&&!finished&&!inTransition&&!immersive&&!session.detour);
- let stepResourcesHeight=$state(72);
+ let stepResourcesHeight=$state(72),stepReturnButton=$state();
+ let stepResourceOrigin=null;
+ function openStepResource(id){stepResourceOrigin={id,generation:selectionGeneration,activityId:activity.id};navigate({type:'DETOUR',assetId:id});}
  let finished=$derived(session.status==='complete'&&!session.detour);
  // R3: a notice belongs to the passage, screen and sheet that raised it. Its scope is recorded when
  // it is raised, and it ends with that scope before the next screen renders (lib/notice-scope.js).
@@ -517,9 +519,15 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
   if(deferVideo(()=>navigate(event,auto)))return;
   // A tap queued while checking belonged to the screen the person just left.
   tapGate.drop();swipeGeneration++;
+  const priorDetour=session.detour;
   const hadPlaybackConsent=playbackConsent,priorIndex=session.index,forward=auto&&event.type==='CONTINUE';revokePlayback();
   if(inTransition&&event.type==='CONTINUE'){cancel();transitionSection=null;persist();authorizeVisual();if(forward)beginForwardPlayback();return;}
   cancel();visualHeard=null;dispatch(event);notice='';settleSilent();authorizeVisual();
+  const origin=stepResourceOrigin;
+  if(origin&&origin.generation===selectionGeneration&&origin.activityId===activity.id){
+   if(event.type==='DETOUR'&&session.detour===origin.id)tick().then(()=>{if(stepResourceOrigin===origin&&session.detour===origin.id&&!sheet)stepReturnButton?.focus();});
+   else if(priorDetour&&!session.detour){stepResourceOrigin=null;tick().then(()=>{if(origin.generation===selectionGeneration&&origin.activityId===activity.id&&!session.detour&&!sheet)[...document.querySelectorAll('.step-resources button')].find(button=>button.dataset.resourceId===origin.id)?.focus();});}
+  }else stepResourceOrigin=null;
   if(event.type==='DETOUR'&&assets[event.assetId]?.kind==='video'&&session.preferences.autoplayVideo&&hadPlaybackConsent){playbackConsent=true;queueVideoPlay();}
   if(forward&&session.index!==priorIndex)beginForwardPlayback();
  }
@@ -632,12 +640,12 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  <SessionProgress groups={progress} passage={passageName(selectedPack)} onopen={()=>sheet='progress'} onpassages={()=>{passagesView='passages';sheet='passages';}}/>
  {#if stage.supporting}<button class="kept-content" aria-label={`Open kept ${assets[stage.supporting].title}`} onclick={()=>navigate({type:'DETOUR',assetId:stage.supporting})}>{#if assets[stage.supporting].src&&assets[stage.supporting].kind!=='video'}<img src={assets[stage.supporting].src} alt={assets[stage.supporting].title}/>{:else}<BookOpen size={22}/>{/if}</button>{/if}
 
- {#if showStepResources}<StepResources items={stepResourceItems} onheight={height=>stepResourcesHeight=height} onopen={id=>navigate({type:'DETOUR',assetId:id})}/>{/if}
+ {#if showStepResources}<StepResources {verifying} items={stepResourceItems} onheight={height=>stepResourcesHeight=height} onopen={openStepResource}/>{/if}
  {#if noticeText&&!noticeInSheet}{@render noticeBar()}{/if}
  {#if listeningHint&&muted}<div class="scene-notice" role="status"><span>Prefer automatic narration?</span><button onclick={()=>{listeningHint=false;sheet='settings';}}>Settings</button><button aria-label="Dismiss narration suggestion" onclick={()=>listeningHint=false}><X size={15}/></button></div>{/if}
  <nav class="scene-controls" aria-label="Session controls">
   <button class="menu-control" aria-label="More options" bind:this={moreButton} onclick={()=>sheet='menu'}><FiaMark/></button>
-  <button class="step-control" aria-label={session.detour?'Return to guide':'Previous activity'} disabled={!session.detour&&session.index===0&&!finished} onclick={()=>navigate({type:'BACK'})}><ChevronLeft size={26}/></button>
+  <button bind:this={stepReturnButton} class="step-control" aria-label={session.detour?'Return to guide':'Previous activity'} disabled={!session.detour&&session.index===0&&!finished} onclick={()=>navigate({type:'BACK'})}><ChevronLeft size={26}/></button>
   <GuidePrimary playback={inlineVideo||focal?.kind==='video'?videoState:audioState} label={primaryFace.label} face={primaryFace.kind} playing={(isPlaying||playbackPending)&&!automaticOff} continuing={primaryLabel==='Continue'||primaryLabel==='Return'} onclick={primary} onpointerdown={()=>tapGate.press(primaryFace.kind)}/>
   <!-- The fourth slot: manual Play in manual mode; with narration on, only a labelled Cancel while preparing (R4.2), else Next.
        R6: it holds a Play only where a recording exists or can be prepared, whatever the settings; elsewhere Next.
