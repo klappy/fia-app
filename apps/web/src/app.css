@@ -372,3 +372,5 @@ button:enabled:active { translate: 0 0; scale: var(--press-scale); opacity: .86;
 /* The reading/follow clear band ends above the measured step-resource row. */
 .scene.has-step-resources{--chrome-bottom:calc(max(24px,env(safe-area-inset-bottom)) + 66px + var(--step-resources-height,72px) + 8px)}
 .scene.has-step-resources .scene-controls{height:calc(112px + env(safe-area-inset-bottom))}
+/* Unavailable visuals have words/status, not a centered picture requiring a mirrored credit spacer. */
+.scene.has-step-resources .resource-visual.visual-unavailable::after{display:none}
