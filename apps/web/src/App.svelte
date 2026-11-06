@@ -525,7 +525,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
   cancel();visualHeard=null;dispatch(event);notice='';settleSilent();authorizeVisual();
   const origin=stepResourceOrigin;
   if(origin&&origin.generation===selectionGeneration&&origin.activityId===activity.id){
-   if(event.type==='DETOUR'&&session.detour===origin.id)tick().then(()=>{if(stepResourceOrigin===origin&&session.detour===origin.id&&!sheet)stepReturnButton?.focus();});
+   if(event.type==='DETOUR'&&session.detour===origin.id)tick().then(()=>{if(stepResourceOrigin===origin&&origin.generation===selectionGeneration&&origin.activityId===activity.id&&session.detour===origin.id&&!sheet)stepReturnButton?.focus();});
    else if(priorDetour&&!session.detour){stepResourceOrigin=null;tick().then(()=>{if(origin.generation===selectionGeneration&&origin.activityId===activity.id&&!session.detour&&!sheet)[...document.querySelectorAll('.step-resources button')].find(button=>button.dataset.resourceId===origin.id)?.focus();});}
   }else stepResourceOrigin=null;
   if(event.type==='DETOUR'&&assets[event.assetId]?.kind==='video'&&session.preferences.autoplayVideo&&hadPlaybackConsent){playbackConsent=true;queueVideoPlay();}
