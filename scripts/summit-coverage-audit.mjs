@@ -33,6 +33,15 @@ export function mediaDeclaration(asset, descriptor, deliveries = []) {
   return { hasSrc: Boolean(asset.src), declaredDeliveryBound: bound, pending, zeroHash,
     publisherURLMetadata: Boolean(asset.sourceEvidence?.url) };
 }
+export function localPayloadBindings(bytes, entries) {
+  const digest = createHash('sha256').update(bytes).digest('hex');
+  const matches = record => record?.sha256 === digest && record?.bytes === bytes.length;
+  return {
+    source: entries.some(e => matches(e.source)),
+    logical: entries.some(e => matches(e.logicalSource)),
+    derivative: entries.some(e => [e.delivery, ...Object.values(e.variants || {}).map(v => v.delivery)].some(matches)),
+  };
+}
 export function auditPack(pack, descriptor, deliveries = []) {
   const assets = pack.assets || {};
   const screens = displayedScreens(pack);
@@ -70,15 +79,20 @@ export function auditCorpus(root) {
       const stats = result.resources[kind];
       stats.localPayloadNonempty = 0;
       stats.localPayloadSourceHashMatched = 0;
+      stats.localPayloadLogicalHashMatched = 0;
+      stats.localPayloadDerivativeHashMatched = 0;
       for (const asset of Object.values(presentation.assets).filter(a => a.kind === kind && a.src?.startsWith('/'))) {
         const filename = path.resolve(root, `apps/web/public${asset.src}`);
         if (!filename.startsWith(path.resolve(root, 'apps/web/public') + path.sep) || !fs.existsSync(filename)) continue;
         const bytes = fs.readFileSync(filename);
         if (!bytes.length) continue;
         stats.localPayloadNonempty++;
-        const digest = createHash('sha256').update(bytes).digest('hex');
-        if (deliveries.filter(m => m.packId === d.id && m.presentationRevision === d.revision)
-          .some(m => m.entries.some(e => e.path === asset.src && e.source?.sha256 === digest && e.source?.bytes === bytes.length))) stats.localPayloadSourceHashMatched++;
+        const entries = deliveries.filter(m => m.packId === d.id && m.presentationRevision === d.revision)
+          .flatMap(m => m.entries).filter(e => e.path === asset.src);
+        const bindings = localPayloadBindings(bytes, entries);
+        if (bindings.source) stats.localPayloadSourceHashMatched++;
+        if (bindings.logical) stats.localPayloadLogicalHashMatched++;
+        if (bindings.derivative) stats.localPayloadDerivativeHashMatched++;
       }
     }
     return result;
@@ -101,7 +115,7 @@ export function auditCorpus(root) {
   }
   return { schema: 'fia-summit-source-coverage@1', scope: 'All registered Mark/Luke English/Spanish presentations',
     limitations: ['Counts are per-pack occurrences, not unique media.', 'Exact links describe authored screen relationships, not observed rendering.',
-      'No catalogued resource is not proof an editorial resource is required.', 'Delivery bindings are declarations; localPayloadSourceHashMatched verifies local source bytes only, not transformed delivery bytes, decoding, audible or device acceptance.',
+      'No catalogued resource is not proof an editorial resource is required.', 'Delivery bindings are declarations; localPayload hash counts separately verify publisher-source, logical-source and delivery/variant bytes. A logical-source derivative need not match publisher original; none proves decoding, audible or device acceptance.',
       'Source URL absence does not prove publisher audio absence; packaged metadata does not exhaust runtime preparation.',
       'No network acquisition, translation, corpus mutation or acceptance performed.'],
     totalPacks: packs.length, totalActivities: packs.reduce((n,p) => n+p.activities,0), groups, packs };

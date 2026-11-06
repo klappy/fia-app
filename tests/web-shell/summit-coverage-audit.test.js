@@ -1,7 +1,8 @@
 import test from 'node:test';
+import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
-import { auditCorpus, auditPack, displayedScreens, exactResources, mediaDeclaration, readableText } from '../../scripts/summit-coverage-audit.mjs';
+import { auditCorpus, auditPack, displayedScreens, exactResources, mediaDeclaration, readableText, localPayloadBindings } from '../../scripts/summit-coverage-audit.mjs';
 
 test('exact resources never expands passage-wide available allowlist', () => {
   assert.deepEqual(exactResources({assetId:'focal',relatedAssetIds:['linked','focal'],availableAssetIds:['unrelated']}), ['focal','linked']);
@@ -50,4 +51,13 @@ test('all published segmentation remains auditable without claiming missing cont
   assert.equal(audit.groups['eng.MRK'].admittedPreparationActivities,8);
   assert.equal(audit.groups['eng.MRK'].guideNarrationPackagedMetadata,111);
   for(const group of Object.values(audit.groups)) assert.equal(group.resources.scripture.readableInline,group.resources.scripture.catalogued);
+});
+
+test('reviewed compressed logical bytes are not mistaken for original or delivered derivative bytes', () => {
+  const bytes=Buffer.from('reviewed compressed video');
+  const logicalSource={sha256:createHash('sha256').update(bytes).digest('hex'),bytes:bytes.length};
+  const entry={logicalSource,source:{sha256:'a'.repeat(64),bytes:1000},delivery:{sha256:'b'.repeat(64),bytes:500}};
+  assert.deepEqual(localPayloadBindings(bytes,[entry]),{source:false,logical:true,derivative:false});
+  entry.variants={small:{delivery:logicalSource}};
+  assert.deepEqual(localPayloadBindings(bytes,[entry]),{source:false,logical:true,derivative:true});
 });
