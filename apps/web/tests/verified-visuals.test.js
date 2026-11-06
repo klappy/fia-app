@@ -16,3 +16,14 @@ test('wrong asset, source evidence, generation, zero hash, route or conflicting 
 test('prepared presentations keep their explicit canonical media identity',async()=>{
  const f=await fixture(),prepared={id:pack.id,revision:'f'.repeat(64),mediaIdentity:{packId:pack.id,revision:pack.revision}};assert.equal((await bindVerifiedVisuals([f],prepared,{c211:asset},rev)).size,1);
 });
+test('online and saved prepared descriptors share one binding despite planner annotation',async()=>{
+ const online=await fixture(),saved={...online,selectedSize:'prepared'};
+ for(const files of [[online,saved],[saved,online]]){
+  const bound=await bindVerifiedVisuals(files,pack,{c211:asset},rev);
+  assert.equal(bound.size,1);assert.equal(visualSourcePath('c211',asset,bound),online.path);
+ }
+});
+test('planner annotation cannot conceal changed bytes, routes or publication proofs',async()=>{
+ const online=await fixture(),saved={...online,selectedSize:'prepared'};
+ for(const patch of [{sha256:'f'.repeat(64),sourceSha256:'f'.repeat(64)},{bytes:11,sourceBytes:11},{deliveryURL:online.deliveryURL+'x'},{visualPublication:{...online.visualPublication,pixelsSha256:'f'.repeat(64)}},{visualPublication:{...online.visualPublication,recipeSha256:'f'.repeat(64)}}])await assert.rejects(bindVerifiedVisuals([online,{...saved,...patch}],pack,{c211:asset},rev));
+});
