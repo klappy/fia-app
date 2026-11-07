@@ -1,0 +1,1737 @@
+{
+  "schema": "fia-local-five-map-integration@1",
+  "base": "ca613216dce621f6d8a9562322d6eb555a57ee9c",
+  "batchReview": "97f3fc7f2b7fb306cd3166a63c41942451b58ffb",
+  "topReview": "ed31b6ba0494314b3977558b965a3d897ff3c275",
+  "status": "LOCAL-INTEGRATION-CANDIDATE-NO-NATIVE-ACCEPTANCE",
+  "cases": [
+    {
+      "id": "S01-U008",
+      "screenId": "S01-U008",
+      "text": "Who do you know who needs to hear this passage?",
+      "pins": {
+        "ledger": "66cfb3cb236e2e1072f16c78b5de895c5bff8d058a1526c667d78a9c063e34dd",
+        "clock": "d631c18f5082f8e972752a09f631586faa6b5cfefaf947238c768b2aa66427a7",
+        "raw": "315fde5baad926aa5b8ababe858ee4819054832fc788d107e4847a77e7db700f",
+        "recognition": "4a5b4cadb3bf939a0953c2da93399eda77ee85a7cac0780fc2ef6e1afd9d6f91",
+        "clockAnalysis": "c9efafab6d22a93d21529db4738921308a0c37ade5955b36800ae7682365a619",
+        "acceptance": "849462351f31dc641e8bbad96d0e7ba5b9fee6e4d76c1b6fa7ea69d7c0d48935",
+        "drift": "9fdcc3ed0bedb5647c2f1bf04e78f5a4fb71504bac295a6826141308c0dd00c2",
+        "review": "d0337fc86f68d1d93bdf8ae3347aea33c3036d639a9524dec34243d11274a242"
+      },
+      "sourceAudioSha256": "9834ac98fdc57c34e4cc2cb5f813fc5bf050a2283ffc4ce994963bbfa9649d25",
+      "deliveryAudioSha256": "b963c67e04af8849c52ff262b521bf32432f2a695b3618ebccf2bcfb5318d2f7",
+      "baseRange": {
+        "startSeconds": 54.32,
+        "endSeconds": 57.64
+      },
+      "runtimeRange": {
+        "startSeconds": 54.32,
+        "endSeconds": 57.89
+      },
+      "wordSpan": {
+        "first": 99,
+        "lastExclusive": 109
+      },
+      "before": {
+        "startMs": 54320,
+        "endMs": 57640,
+        "matched": 10,
+        "total": 10,
+        "words": [
+          {
+            "startMs": 54060,
+            "endMs": 54580,
+            "text": "Who",
+            "from": 0,
+            "to": 3
+          },
+          {
+            "startMs": 54580,
+            "endMs": 54760,
+            "text": "do",
+            "from": 4,
+            "to": 6
+          },
+          {
+            "startMs": 54760,
+            "endMs": 54940,
+            "text": "you",
+            "from": 7,
+            "to": 10
+          },
+          {
+            "startMs": 54940,
+            "endMs": 55180,
+            "text": "know",
+            "from": 11,
+            "to": 15
+          },
+          {
+            "startMs": 55180,
+            "endMs": 55860,
+            "text": "who",
+            "from": 16,
+            "to": 19
+          },
+          {
+            "startMs": 55860,
+            "endMs": 56080,
+            "text": "needs",
+            "from": 20,
+            "to": 25
+          },
+          {
+            "startMs": 56080,
+            "endMs": 56340,
+            "text": "to",
+            "from": 26,
+            "to": 28
+          },
+          {
+            "startMs": 56340,
+            "endMs": 56600,
+            "text": "hear",
+            "from": 29,
+            "to": 33
+          },
+          {
+            "startMs": 56600,
+            "endMs": 56820,
+            "text": "this",
+            "from": 34,
+            "to": 38
+          },
+          {
+            "startMs": 56820,
+            "endMs": 57260,
+            "text": "passage?",
+            "from": 39,
+            "to": 47
+          }
+        ]
+      },
+      "after": {
+        "startMs": 54320,
+        "endMs": 57640,
+        "matched": 10,
+        "total": 10,
+        "words": [
+          {
+            "startMs": 54520,
+            "endMs": 54720,
+            "text": "Who",
+            "from": 0,
+            "to": 3
+          },
+          {
+            "startMs": 54720,
+            "endMs": 54840,
+            "text": "do",
+            "from": 4,
+            "to": 6
+          },
+          {
+            "startMs": 54840,
+            "endMs": 55020,
+            "text": "you",
+            "from": 7,
+            "to": 10
+          },
+          {
+            "startMs": 55020,
+            "endMs": 55540,
+            "text": "know",
+            "from": 11,
+            "to": 15
+          },
+          {
+            "startMs": 55540,
+            "endMs": 55980,
+            "text": "who",
+            "from": 16,
+            "to": 19
+          },
+          {
+            "startMs": 55980,
+            "endMs": 56220,
+            "text": "needs",
+            "from": 20,
+            "to": 25
+          },
+          {
+            "startMs": 56220,
+            "endMs": 56480,
+            "text": "to",
+            "from": 26,
+            "to": 28
+          },
+          {
+            "startMs": 56480,
+            "endMs": 56700,
+            "text": "hear",
+            "from": 29,
+            "to": 33
+          },
+          {
+            "startMs": 56700,
+            "endMs": 56980,
+            "text": "this",
+            "from": 34,
+            "to": 38
+          },
+          {
+            "startMs": 56980,
+            "endMs": 57440,
+            "text": "passage?",
+            "from": 39,
+            "to": 47
+          }
+        ]
+      },
+      "deltas": [
+        {
+          "index": 0,
+          "rawWordIndex": 99,
+          "rawText": " Who",
+          "canonical": {
+            "text": "Who",
+            "from": 0,
+            "to": 3
+          },
+          "before": {
+            "startMs": 54060,
+            "endMs": 54580
+          },
+          "after": {
+            "startMs": 54520,
+            "endMs": 54720
+          }
+        },
+        {
+          "index": 1,
+          "rawWordIndex": 100,
+          "rawText": " do",
+          "canonical": {
+            "text": "do",
+            "from": 4,
+            "to": 6
+          },
+          "before": {
+            "startMs": 54580,
+            "endMs": 54760
+          },
+          "after": {
+            "startMs": 54720,
+            "endMs": 54840
+          }
+        },
+        {
+          "index": 2,
+          "rawWordIndex": 101,
+          "rawText": " you",
+          "canonical": {
+            "text": "you",
+            "from": 7,
+            "to": 10
+          },
+          "before": {
+            "startMs": 54760,
+            "endMs": 54940
+          },
+          "after": {
+            "startMs": 54840,
+            "endMs": 55020
+          }
+        },
+        {
+          "index": 3,
+          "rawWordIndex": 102,
+          "rawText": " know",
+          "canonical": {
+            "text": "know",
+            "from": 11,
+            "to": 15
+          },
+          "before": {
+            "startMs": 54940,
+            "endMs": 55180
+          },
+          "after": {
+            "startMs": 55020,
+            "endMs": 55540
+          }
+        },
+        {
+          "index": 4,
+          "rawWordIndex": 103,
+          "rawText": " who",
+          "canonical": {
+            "text": "who",
+            "from": 16,
+            "to": 19
+          },
+          "before": {
+            "startMs": 55180,
+            "endMs": 55860
+          },
+          "after": {
+            "startMs": 55540,
+            "endMs": 55980
+          }
+        },
+        {
+          "index": 5,
+          "rawWordIndex": 104,
+          "rawText": " needs",
+          "canonical": {
+            "text": "needs",
+            "from": 20,
+            "to": 25
+          },
+          "before": {
+            "startMs": 55860,
+            "endMs": 56080
+          },
+          "after": {
+            "startMs": 55980,
+            "endMs": 56220
+          }
+        },
+        {
+          "index": 6,
+          "rawWordIndex": 105,
+          "rawText": " to",
+          "canonical": {
+            "text": "to",
+            "from": 26,
+            "to": 28
+          },
+          "before": {
+            "startMs": 56080,
+            "endMs": 56340
+          },
+          "after": {
+            "startMs": 56220,
+            "endMs": 56480
+          }
+        },
+        {
+          "index": 7,
+          "rawWordIndex": 106,
+          "rawText": " hear",
+          "canonical": {
+            "text": "hear",
+            "from": 29,
+            "to": 33
+          },
+          "before": {
+            "startMs": 56340,
+            "endMs": 56600
+          },
+          "after": {
+            "startMs": 56480,
+            "endMs": 56700
+          }
+        },
+        {
+          "index": 8,
+          "rawWordIndex": 107,
+          "rawText": " this",
+          "canonical": {
+            "text": "this",
+            "from": 34,
+            "to": 38
+          },
+          "before": {
+            "startMs": 56600,
+            "endMs": 56820
+          },
+          "after": {
+            "startMs": 56700,
+            "endMs": 56980
+          }
+        },
+        {
+          "index": 9,
+          "rawWordIndex": 108,
+          "rawText": " passage?",
+          "canonical": {
+            "text": "passage?",
+            "from": 39,
+            "to": 47
+          },
+          "before": {
+            "startMs": 56820,
+            "endMs": 57260
+          },
+          "after": {
+            "startMs": 56980,
+            "endMs": 57440
+          }
+        }
+      ],
+      "guardOutcomes": {
+        "activityWords": true,
+        "activityAlignment": true
+      },
+      "recognitionStatus": "raw-asr-unreviewed-not-verbatim-certified",
+      "sourceReviewScope": "Retain recording; preserve possible homophone/number recognition uncertainty and explicit extra title/question numbering/outro. Text inequality alone does not block usable range mapping.",
+      "uncertainWordIndexes": [],
+      "retainedRecognitionUncertainty": [],
+      "qualificationBasis": "clean-batch selection; explicit empty retained-uncertainty list; no acoustic acceptance"
+    },
+    {
+      "id": "S04-U010",
+      "screenId": "S04-U004",
+      "text": "Satan",
+      "pins": {
+        "ledger": "ab9f7149f271004d0df133aea91bfe06968c8d79ff9d44b1c0afe2ac9b63d55e",
+        "clock": "960670da82585274a8fb1c1f01e2aedb1b2a32bc7df9f55714167b219d9689c9",
+        "raw": "44293f3a0fc66e1af24028fd5a0ac165cd49d70725fc8b20f1a19ce1502d3668",
+        "recognition": "f0ed785ba649fc9017185c3ba95e509f8378493b6ba0818590089be0c1a0aeaa",
+        "clockAnalysis": "4e4a088aeec1eca9d91e042434a09539d2a67f500d22f9136643bed4c009f54c",
+        "acceptance": "7a5d360e47d9dc649f1dd480af918faf2842555ef4adc6961f3a43b6926dad05",
+        "drift": "e76096bc64100885f44637228df08807e6d3ba0095418707d0557c190f1467ae",
+        "review": "a7fcee3fbade1d90a2b0e92a37552b3b6ce08f537b6ea13ae354263c2e78bad1"
+      },
+      "sourceAudioSha256": "826f6f1efb3c71277c68ee2fca2b49c4d0f929e9232f2cc2f8e74eb63222dd0f",
+      "deliveryAudioSha256": "3c287fb6786c7be22b9daf8dc0a82d266f72797a9b2f4f14590975bf14d9059f",
+      "baseRange": {
+        "startSeconds": 35.08,
+        "endSeconds": 36.14
+      },
+      "runtimeRange": {
+        "startSeconds": 35.08,
+        "endSeconds": 36.39
+      },
+      "wordSpan": {
+        "first": 56,
+        "lastExclusive": 57
+      },
+      "before": {
+        "startMs": 35080,
+        "endMs": 36140,
+        "matched": 1,
+        "total": 1,
+        "words": [
+          {
+            "startMs": 35730,
+            "endMs": 35730,
+            "text": "Satan",
+            "from": 0,
+            "to": 5
+          }
+        ]
+      },
+      "after": {
+        "startMs": 35080,
+        "endMs": 36140,
+        "matched": 1,
+        "total": 1,
+        "words": [
+          {
+            "startMs": 35380,
+            "endMs": 35800,
+            "text": "Satan",
+            "from": 0,
+            "to": 5
+          }
+        ]
+      },
+      "deltas": [
+        {
+          "index": 0,
+          "rawWordIndex": 56,
+          "rawText": " Satan,",
+          "canonical": {
+            "text": "Satan",
+            "from": 0,
+            "to": 5
+          },
+          "before": {
+            "startMs": 35730,
+            "endMs": 35730
+          },
+          "after": {
+            "startMs": 35380,
+            "endMs": 35800
+          }
+        }
+      ],
+      "guardOutcomes": {
+        "activityWords": true,
+        "activityAlignment": true
+      },
+      "recognitionStatus": "raw-asr-unreviewed-not-verbatim-certified",
+      "sourceReviewScope": "Source-level contextual ASR/acoustic evidence; no human listening or browser acceptance claimed.",
+      "uncertainWordIndexes": [],
+      "retainedRecognitionUncertainty": [],
+      "qualificationBasis": "clean-batch selection; explicit empty retained-uncertainty list; no acoustic acceptance"
+    },
+    {
+      "id": "S04-U012",
+      "screenId": "S04-U012",
+      "text": "As a group, act out the passage twice. You should act out the passage in your own language.",
+      "pins": {
+        "ledger": "ab9f7149f271004d0df133aea91bfe06968c8d79ff9d44b1c0afe2ac9b63d55e",
+        "clock": "960670da82585274a8fb1c1f01e2aedb1b2a32bc7df9f55714167b219d9689c9",
+        "raw": "44293f3a0fc66e1af24028fd5a0ac165cd49d70725fc8b20f1a19ce1502d3668",
+        "recognition": "f0ed785ba649fc9017185c3ba95e509f8378493b6ba0818590089be0c1a0aeaa",
+        "clockAnalysis": "4e4a088aeec1eca9d91e042434a09539d2a67f500d22f9136643bed4c009f54c",
+        "acceptance": "abc2aa2899685101970af7c9ae3cc9abca893c44825fb72b80811391c4856f86",
+        "drift": "e76096bc64100885f44637228df08807e6d3ba0095418707d0557c190f1467ae",
+        "review": "a7fcee3fbade1d90a2b0e92a37552b3b6ce08f537b6ea13ae354263c2e78bad1"
+      },
+      "sourceAudioSha256": "826f6f1efb3c71277c68ee2fca2b49c4d0f929e9232f2cc2f8e74eb63222dd0f",
+      "deliveryAudioSha256": "3c287fb6786c7be22b9daf8dc0a82d266f72797a9b2f4f14590975bf14d9059f",
+      "baseRange": {
+        "startSeconds": 39.11,
+        "endSeconds": 45.75
+      },
+      "runtimeRange": {
+        "startSeconds": 39.11,
+        "endSeconds": 46
+      },
+      "wordSpan": {
+        "first": 58,
+        "lastExclusive": 76
+      },
+      "before": {
+        "startMs": 39110,
+        "endMs": 45750,
+        "matched": 18,
+        "total": 18,
+        "words": [
+          {
+            "startMs": 39090,
+            "endMs": 39330,
+            "text": "As",
+            "from": 0,
+            "to": 2
+          },
+          {
+            "startMs": 39330,
+            "endMs": 39510,
+            "text": "a",
+            "from": 3,
+            "to": 4
+          },
+          {
+            "startMs": 39510,
+            "endMs": 39770,
+            "text": "group,",
+            "from": 5,
+            "to": 11
+          },
+          {
+            "startMs": 40350,
+            "endMs": 40430,
+            "text": "act",
+            "from": 12,
+            "to": 15
+          },
+          {
+            "startMs": 40430,
+            "endMs": 40670,
+            "text": "out",
+            "from": 16,
+            "to": 19
+          },
+          {
+            "startMs": 40670,
+            "endMs": 40830,
+            "text": "the",
+            "from": 20,
+            "to": 23
+          },
+          {
+            "startMs": 40830,
+            "endMs": 41150,
+            "text": "passage",
+            "from": 24,
+            "to": 31
+          },
+          {
+            "startMs": 41150,
+            "endMs": 41570,
+            "text": "twice.",
+            "from": 32,
+            "to": 38
+          },
+          {
+            "startMs": 42750,
+            "endMs": 42870,
+            "text": "You",
+            "from": 39,
+            "to": 42
+          },
+          {
+            "startMs": 42870,
+            "endMs": 43010,
+            "text": "should",
+            "from": 43,
+            "to": 49
+          },
+          {
+            "startMs": 43010,
+            "endMs": 43190,
+            "text": "act",
+            "from": 50,
+            "to": 53
+          },
+          {
+            "startMs": 43190,
+            "endMs": 43410,
+            "text": "out",
+            "from": 54,
+            "to": 57
+          },
+          {
+            "startMs": 43410,
+            "endMs": 43570,
+            "text": "the",
+            "from": 58,
+            "to": 61
+          },
+          {
+            "startMs": 43570,
+            "endMs": 43930,
+            "text": "passage",
+            "from": 62,
+            "to": 69
+          },
+          {
+            "startMs": 43930,
+            "endMs": 44210,
+            "text": "in",
+            "from": 70,
+            "to": 72
+          },
+          {
+            "startMs": 44210,
+            "endMs": 44370,
+            "text": "your",
+            "from": 73,
+            "to": 77
+          },
+          {
+            "startMs": 44370,
+            "endMs": 44710,
+            "text": "own",
+            "from": 78,
+            "to": 81
+          },
+          {
+            "startMs": 44710,
+            "endMs": 45330,
+            "text": "language.",
+            "from": 82,
+            "to": 91
+          }
+        ]
+      },
+      "after": {
+        "startMs": 39110,
+        "endMs": 45750,
+        "matched": 18,
+        "total": 18,
+        "words": [
+          {
+            "startMs": 39200,
+            "endMs": 39460,
+            "text": "As",
+            "from": 0,
+            "to": 2
+          },
+          {
+            "startMs": 39460,
+            "endMs": 39640,
+            "text": "a",
+            "from": 3,
+            "to": 4
+          },
+          {
+            "startMs": 39640,
+            "endMs": 40080,
+            "text": "group,",
+            "from": 5,
+            "to": 11
+          },
+          {
+            "startMs": 40480,
+            "endMs": 40560,
+            "text": "act",
+            "from": 12,
+            "to": 15
+          },
+          {
+            "startMs": 40560,
+            "endMs": 40800,
+            "text": "out",
+            "from": 16,
+            "to": 19
+          },
+          {
+            "startMs": 40800,
+            "endMs": 41300,
+            "text": "the",
+            "from": 20,
+            "to": 23
+          },
+          {
+            "startMs": 41300,
+            "endMs": 41320,
+            "text": "passage",
+            "from": 24,
+            "to": 31
+          },
+          {
+            "startMs": 41320,
+            "endMs": 41960,
+            "text": "twice.",
+            "from": 32,
+            "to": 38
+          },
+          {
+            "startMs": 42860,
+            "endMs": 42940,
+            "text": "You",
+            "from": 39,
+            "to": 42
+          },
+          {
+            "startMs": 42940,
+            "endMs": 43120,
+            "text": "should",
+            "from": 43,
+            "to": 49
+          },
+          {
+            "startMs": 43120,
+            "endMs": 43320,
+            "text": "act",
+            "from": 50,
+            "to": 53
+          },
+          {
+            "startMs": 43320,
+            "endMs": 43520,
+            "text": "out",
+            "from": 54,
+            "to": 57
+          },
+          {
+            "startMs": 43520,
+            "endMs": 43780,
+            "text": "the",
+            "from": 58,
+            "to": 61
+          },
+          {
+            "startMs": 43780,
+            "endMs": 44080,
+            "text": "passage",
+            "from": 62,
+            "to": 69
+          },
+          {
+            "startMs": 44080,
+            "endMs": 44300,
+            "text": "in",
+            "from": 70,
+            "to": 72
+          },
+          {
+            "startMs": 44300,
+            "endMs": 44600,
+            "text": "your",
+            "from": 73,
+            "to": 77
+          },
+          {
+            "startMs": 44600,
+            "endMs": 44980,
+            "text": "own",
+            "from": 78,
+            "to": 81
+          },
+          {
+            "startMs": 44980,
+            "endMs": 45600,
+            "text": "language.",
+            "from": 82,
+            "to": 91
+          }
+        ]
+      },
+      "deltas": [
+        {
+          "index": 0,
+          "rawWordIndex": 58,
+          "rawText": " As",
+          "canonical": {
+            "text": "As",
+            "from": 0,
+            "to": 2
+          },
+          "before": {
+            "startMs": 39090,
+            "endMs": 39330
+          },
+          "after": {
+            "startMs": 39200,
+            "endMs": 39460
+          }
+        },
+        {
+          "index": 1,
+          "rawWordIndex": 59,
+          "rawText": " a",
+          "canonical": {
+            "text": "a",
+            "from": 3,
+            "to": 4
+          },
+          "before": {
+            "startMs": 39330,
+            "endMs": 39510
+          },
+          "after": {
+            "startMs": 39460,
+            "endMs": 39640
+          }
+        },
+        {
+          "index": 2,
+          "rawWordIndex": 60,
+          "rawText": " group,",
+          "canonical": {
+            "text": "group,",
+            "from": 5,
+            "to": 11
+          },
+          "before": {
+            "startMs": 39510,
+            "endMs": 39770
+          },
+          "after": {
+            "startMs": 39640,
+            "endMs": 40080
+          }
+        },
+        {
+          "index": 3,
+          "rawWordIndex": 61,
+          "rawText": " act",
+          "canonical": {
+            "text": "act",
+            "from": 12,
+            "to": 15
+          },
+          "before": {
+            "startMs": 40350,
+            "endMs": 40430
+          },
+          "after": {
+            "startMs": 40480,
+            "endMs": 40560
+          }
+        },
+        {
+          "index": 4,
+          "rawWordIndex": 62,
+          "rawText": " out",
+          "canonical": {
+            "text": "out",
+            "from": 16,
+            "to": 19
+          },
+          "before": {
+            "startMs": 40430,
+            "endMs": 40670
+          },
+          "after": {
+            "startMs": 40560,
+            "endMs": 40800
+          }
+        },
+        {
+          "index": 5,
+          "rawWordIndex": 63,
+          "rawText": " the",
+          "canonical": {
+            "text": "the",
+            "from": 20,
+            "to": 23
+          },
+          "before": {
+            "startMs": 40670,
+            "endMs": 40830
+          },
+          "after": {
+            "startMs": 40800,
+            "endMs": 41300
+          }
+        },
+        {
+          "index": 6,
+          "rawWordIndex": 64,
+          "rawText": " passage",
+          "canonical": {
+            "text": "passage",
+            "from": 24,
+            "to": 31
+          },
+          "before": {
+            "startMs": 40830,
+            "endMs": 41150
+          },
+          "after": {
+            "startMs": 41300,
+            "endMs": 41320
+          }
+        },
+        {
+          "index": 7,
+          "rawWordIndex": 65,
+          "rawText": " twice.",
+          "canonical": {
+            "text": "twice.",
+            "from": 32,
+            "to": 38
+          },
+          "before": {
+            "startMs": 41150,
+            "endMs": 41570
+          },
+          "after": {
+            "startMs": 41320,
+            "endMs": 41960
+          }
+        },
+        {
+          "index": 8,
+          "rawWordIndex": 66,
+          "rawText": " You",
+          "canonical": {
+            "text": "You",
+            "from": 39,
+            "to": 42
+          },
+          "before": {
+            "startMs": 42750,
+            "endMs": 42870
+          },
+          "after": {
+            "startMs": 42860,
+            "endMs": 42940
+          }
+        },
+        {
+          "index": 9,
+          "rawWordIndex": 67,
+          "rawText": " should",
+          "canonical": {
+            "text": "should",
+            "from": 43,
+            "to": 49
+          },
+          "before": {
+            "startMs": 42870,
+            "endMs": 43010
+          },
+          "after": {
+            "startMs": 42940,
+            "endMs": 43120
+          }
+        },
+        {
+          "index": 10,
+          "rawWordIndex": 68,
+          "rawText": " act",
+          "canonical": {
+            "text": "act",
+            "from": 50,
+            "to": 53
+          },
+          "before": {
+            "startMs": 43010,
+            "endMs": 43190
+          },
+          "after": {
+            "startMs": 43120,
+            "endMs": 43320
+          }
+        },
+        {
+          "index": 11,
+          "rawWordIndex": 69,
+          "rawText": " out",
+          "canonical": {
+            "text": "out",
+            "from": 54,
+            "to": 57
+          },
+          "before": {
+            "startMs": 43190,
+            "endMs": 43410
+          },
+          "after": {
+            "startMs": 43320,
+            "endMs": 43520
+          }
+        },
+        {
+          "index": 12,
+          "rawWordIndex": 70,
+          "rawText": " the",
+          "canonical": {
+            "text": "the",
+            "from": 58,
+            "to": 61
+          },
+          "before": {
+            "startMs": 43410,
+            "endMs": 43570
+          },
+          "after": {
+            "startMs": 43520,
+            "endMs": 43780
+          }
+        },
+        {
+          "index": 13,
+          "rawWordIndex": 71,
+          "rawText": " passage",
+          "canonical": {
+            "text": "passage",
+            "from": 62,
+            "to": 69
+          },
+          "before": {
+            "startMs": 43570,
+            "endMs": 43930
+          },
+          "after": {
+            "startMs": 43780,
+            "endMs": 44080
+          }
+        },
+        {
+          "index": 14,
+          "rawWordIndex": 72,
+          "rawText": " in",
+          "canonical": {
+            "text": "in",
+            "from": 70,
+            "to": 72
+          },
+          "before": {
+            "startMs": 43930,
+            "endMs": 44210
+          },
+          "after": {
+            "startMs": 44080,
+            "endMs": 44300
+          }
+        },
+        {
+          "index": 15,
+          "rawWordIndex": 73,
+          "rawText": " your",
+          "canonical": {
+            "text": "your",
+            "from": 73,
+            "to": 77
+          },
+          "before": {
+            "startMs": 44210,
+            "endMs": 44370
+          },
+          "after": {
+            "startMs": 44300,
+            "endMs": 44600
+          }
+        },
+        {
+          "index": 16,
+          "rawWordIndex": 74,
+          "rawText": " own",
+          "canonical": {
+            "text": "own",
+            "from": 78,
+            "to": 81
+          },
+          "before": {
+            "startMs": 44370,
+            "endMs": 44710
+          },
+          "after": {
+            "startMs": 44600,
+            "endMs": 44980
+          }
+        },
+        {
+          "index": 17,
+          "rawWordIndex": 75,
+          "rawText": " language.",
+          "canonical": {
+            "text": "language.",
+            "from": 82,
+            "to": 91
+          },
+          "before": {
+            "startMs": 44710,
+            "endMs": 45330
+          },
+          "after": {
+            "startMs": 44980,
+            "endMs": 45600
+          }
+        }
+      ],
+      "guardOutcomes": {
+        "activityWords": true,
+        "activityAlignment": true
+      },
+      "recognitionStatus": "raw-asr-unreviewed-not-verbatim-certified",
+      "sourceReviewScope": "Source-level contextual ASR/acoustic evidence; no human listening or browser acceptance claimed.",
+      "uncertainWordIndexes": [],
+      "retainedRecognitionUncertainty": [],
+      "qualificationBasis": "clean-batch selection; explicit empty retained-uncertainty list; no acoustic acceptance"
+    },
+    {
+      "id": "S05-U002",
+      "screenId": "S05-U002",
+      "text": "In this step, the group will discuss key terms and words in this passage.",
+      "pins": {
+        "ledger": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+        "clock": "9e170bc0962023e2a175a451783e1a6a2567324747398d817a6b5c8bf63fc94b",
+        "raw": "8db9d54acb5600150b1b7001764ff5f29c12056e4204a435ebd527ad0d4ce01c",
+        "recognition": "ed47f3216a5e912866b3f79a1fdbe769e5ec80d70079e3c728a03bfec6ed4096",
+        "clockAnalysis": "9b5b02d8398fb1daaae22eb372157cb88033bdd43d2a29391805fd30cd4dc6d3",
+        "acceptance": "a08358e7baf68fa884769b0c42cc2cd8bfca696d7193c9a88ee9f0450c0bcc4f",
+        "drift": "feaa789bc5d8fedd358d25ac51d714ed08e2c705628ed9bd99a256354ff80bec",
+        "review": "7ed94c32be08190748fd29977189f7a0d7cf7a4a80b11c5131b66dab5b5727df"
+      },
+      "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+      "deliveryAudioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+      "baseRange": {
+        "startSeconds": 13.79,
+        "endSeconds": 18.79
+      },
+      "runtimeRange": {
+        "startSeconds": 13.79,
+        "endSeconds": 19.04
+      },
+      "wordSpan": {
+        "first": 26,
+        "lastExclusive": 40
+      },
+      "before": {
+        "startMs": 13790,
+        "endMs": 18790,
+        "matched": 14,
+        "total": 14,
+        "words": [
+          {
+            "startMs": 13740,
+            "endMs": 14080,
+            "text": "In",
+            "from": 0,
+            "to": 2
+          },
+          {
+            "startMs": 14080,
+            "endMs": 14260,
+            "text": "this",
+            "from": 3,
+            "to": 7
+          },
+          {
+            "startMs": 14260,
+            "endMs": 14560,
+            "text": "step,",
+            "from": 8,
+            "to": 13
+          },
+          {
+            "startMs": 14780,
+            "endMs": 14860,
+            "text": "the",
+            "from": 14,
+            "to": 17
+          },
+          {
+            "startMs": 14860,
+            "endMs": 15080,
+            "text": "group",
+            "from": 18,
+            "to": 23
+          },
+          {
+            "startMs": 15080,
+            "endMs": 15320,
+            "text": "will",
+            "from": 24,
+            "to": 28
+          },
+          {
+            "startMs": 15320,
+            "endMs": 15720,
+            "text": "discuss",
+            "from": 29,
+            "to": 36
+          },
+          {
+            "startMs": 15720,
+            "endMs": 16140,
+            "text": "key",
+            "from": 37,
+            "to": 40
+          },
+          {
+            "startMs": 16140,
+            "endMs": 16560,
+            "text": "terms",
+            "from": 41,
+            "to": 46
+          },
+          {
+            "startMs": 16560,
+            "endMs": 16900,
+            "text": "and",
+            "from": 47,
+            "to": 50
+          },
+          {
+            "startMs": 16900,
+            "endMs": 17280,
+            "text": "words",
+            "from": 51,
+            "to": 56
+          },
+          {
+            "startMs": 17280,
+            "endMs": 17740,
+            "text": "in",
+            "from": 57,
+            "to": 59
+          },
+          {
+            "startMs": 17740,
+            "endMs": 17940,
+            "text": "this",
+            "from": 60,
+            "to": 64
+          },
+          {
+            "startMs": 17940,
+            "endMs": 18360,
+            "text": "passage.",
+            "from": 65,
+            "to": 73
+          }
+        ]
+      },
+      "after": {
+        "startMs": 13790,
+        "endMs": 18790,
+        "matched": 14,
+        "total": 14,
+        "words": [
+          {
+            "startMs": 14120,
+            "endMs": 14160,
+            "text": "In",
+            "from": 0,
+            "to": 2
+          },
+          {
+            "startMs": 14160,
+            "endMs": 14420,
+            "text": "this",
+            "from": 3,
+            "to": 7
+          },
+          {
+            "startMs": 14420,
+            "endMs": 14760,
+            "text": "step,",
+            "from": 8,
+            "to": 13
+          },
+          {
+            "startMs": 14900,
+            "endMs": 15020,
+            "text": "the",
+            "from": 14,
+            "to": 17
+          },
+          {
+            "startMs": 15020,
+            "endMs": 15240,
+            "text": "group",
+            "from": 18,
+            "to": 23
+          },
+          {
+            "startMs": 15240,
+            "endMs": 15420,
+            "text": "will",
+            "from": 24,
+            "to": 28
+          },
+          {
+            "startMs": 15420,
+            "endMs": 15880,
+            "text": "discuss",
+            "from": 29,
+            "to": 36
+          },
+          {
+            "startMs": 15880,
+            "endMs": 16380,
+            "text": "key",
+            "from": 37,
+            "to": 40
+          },
+          {
+            "startMs": 16380,
+            "endMs": 16760,
+            "text": "terms",
+            "from": 41,
+            "to": 46
+          },
+          {
+            "startMs": 16760,
+            "endMs": 17100,
+            "text": "and",
+            "from": 47,
+            "to": 50
+          },
+          {
+            "startMs": 17100,
+            "endMs": 17540,
+            "text": "words",
+            "from": 51,
+            "to": 56
+          },
+          {
+            "startMs": 17540,
+            "endMs": 17840,
+            "text": "in",
+            "from": 57,
+            "to": 59
+          },
+          {
+            "startMs": 17840,
+            "endMs": 18120,
+            "text": "this",
+            "from": 60,
+            "to": 64
+          },
+          {
+            "startMs": 18120,
+            "endMs": 18640,
+            "text": "passage.",
+            "from": 65,
+            "to": 73
+          }
+        ]
+      },
+      "deltas": [
+        {
+          "index": 0,
+          "rawWordIndex": 26,
+          "rawText": " In",
+          "canonical": {
+            "text": "In",
+            "from": 0,
+            "to": 2
+          },
+          "before": {
+            "startMs": 13740,
+            "endMs": 14080
+          },
+          "after": {
+            "startMs": 14120,
+            "endMs": 14160
+          }
+        },
+        {
+          "index": 1,
+          "rawWordIndex": 27,
+          "rawText": " this",
+          "canonical": {
+            "text": "this",
+            "from": 3,
+            "to": 7
+          },
+          "before": {
+            "startMs": 14080,
+            "endMs": 14260
+          },
+          "after": {
+            "startMs": 14160,
+            "endMs": 14420
+          }
+        },
+        {
+          "index": 2,
+          "rawWordIndex": 28,
+          "rawText": " step,",
+          "canonical": {
+            "text": "step,",
+            "from": 8,
+            "to": 13
+          },
+          "before": {
+            "startMs": 14260,
+            "endMs": 14560
+          },
+          "after": {
+            "startMs": 14420,
+            "endMs": 14760
+          }
+        },
+        {
+          "index": 3,
+          "rawWordIndex": 29,
+          "rawText": " the",
+          "canonical": {
+            "text": "the",
+            "from": 14,
+            "to": 17
+          },
+          "before": {
+            "startMs": 14780,
+            "endMs": 14860
+          },
+          "after": {
+            "startMs": 14900,
+            "endMs": 15020
+          }
+        },
+        {
+          "index": 4,
+          "rawWordIndex": 30,
+          "rawText": " group",
+          "canonical": {
+            "text": "group",
+            "from": 18,
+            "to": 23
+          },
+          "before": {
+            "startMs": 14860,
+            "endMs": 15080
+          },
+          "after": {
+            "startMs": 15020,
+            "endMs": 15240
+          }
+        },
+        {
+          "index": 5,
+          "rawWordIndex": 31,
+          "rawText": " will",
+          "canonical": {
+            "text": "will",
+            "from": 24,
+            "to": 28
+          },
+          "before": {
+            "startMs": 15080,
+            "endMs": 15320
+          },
+          "after": {
+            "startMs": 15240,
+            "endMs": 15420
+          }
+        },
+        {
+          "index": 6,
+          "rawWordIndex": 32,
+          "rawText": " discuss",
+          "canonical": {
+            "text": "discuss",
+            "from": 29,
+            "to": 36
+          },
+          "before": {
+            "startMs": 15320,
+            "endMs": 15720
+          },
+          "after": {
+            "startMs": 15420,
+            "endMs": 15880
+          }
+        },
+        {
+          "index": 7,
+          "rawWordIndex": 33,
+          "rawText": " key",
+          "canonical": {
+            "text": "key",
+            "from": 37,
+            "to": 40
+          },
+          "before": {
+            "startMs": 15720,
+            "endMs": 16140
+          },
+          "after": {
+            "startMs": 15880,
+            "endMs": 16380
+          }
+        },
+        {
+          "index": 8,
+          "rawWordIndex": 34,
+          "rawText": " terms",
+          "canonical": {
+            "text": "terms",
+            "from": 41,
+            "to": 46
+          },
+          "before": {
+            "startMs": 16140,
+            "endMs": 16560
+          },
+          "after": {
+            "startMs": 16380,
+            "endMs": 16760
+          }
+        },
+        {
+          "index": 9,
+          "rawWordIndex": 35,
+          "rawText": " and",
+          "canonical": {
+            "text": "and",
+            "from": 47,
+            "to": 50
+          },
+          "before": {
+            "startMs": 16560,
+            "endMs": 16900
+          },
+          "after": {
+            "startMs": 16760,
+            "endMs": 17100
+          }
+        },
+        {
+          "index": 10,
+          "rawWordIndex": 36,
+          "rawText": " words",
+          "canonical": {
+            "text": "words",
+            "from": 51,
+            "to": 56
+          },
+          "before": {
+            "startMs": 16900,
+            "endMs": 17280
+          },
+          "after": {
+            "startMs": 17100,
+            "endMs": 17540
+          }
+        },
+        {
+          "index": 11,
+          "rawWordIndex": 37,
+          "rawText": " in",
+          "canonical": {
+            "text": "in",
+            "from": 57,
+            "to": 59
+          },
+          "before": {
+            "startMs": 17280,
+            "endMs": 17740
+          },
+          "after": {
+            "startMs": 17540,
+            "endMs": 17840
+          }
+        },
+        {
+          "index": 12,
+          "rawWordIndex": 38,
+          "rawText": " this",
+          "canonical": {
+            "text": "this",
+            "from": 60,
+            "to": 64
+          },
+          "before": {
+            "startMs": 17740,
+            "endMs": 17940
+          },
+          "after": {
+            "startMs": 17840,
+            "endMs": 18120
+          }
+        },
+        {
+          "index": 13,
+          "rawWordIndex": 39,
+          "rawText": " passage.",
+          "canonical": {
+            "text": "passage.",
+            "from": 65,
+            "to": 73
+          },
+          "before": {
+            "startMs": 17940,
+            "endMs": 18360
+          },
+          "after": {
+            "startMs": 18120,
+            "endMs": 18640
+          }
+        }
+      ],
+      "guardOutcomes": {
+        "activityWords": true,
+        "activityAlignment": true
+      },
+      "recognitionStatus": "raw-asr-unreviewed-not-verbatim-certified",
+      "sourceReviewScope": "Source-level contextual ASR/acoustic evidence; no human listening or browser acceptance claimed.",
+      "uncertainWordIndexes": [],
+      "retainedRecognitionUncertainty": [],
+      "qualificationBasis": "clean-batch selection; explicit empty retained-uncertainty list; no acoustic acceptance"
+    },
+    {
+      "id": "S04-U005",
+      "screenId": "S04-U004",
+      "text": "John the Baptist",
+      "pins": {
+        "ledger": "ab9f7149f271004d0df133aea91bfe06968c8d79ff9d44b1c0afe2ac9b63d55e",
+        "clock": "960670da82585274a8fb1c1f01e2aedb1b2a32bc7df9f55714167b219d9689c9",
+        "raw": "44293f3a0fc66e1af24028fd5a0ac165cd49d70725fc8b20f1a19ce1502d3668",
+        "recognition": "f0ed785ba649fc9017185c3ba95e509f8378493b6ba0818590089be0c1a0aeaa",
+        "clockAnalysis": "4e4a088aeec1eca9d91e042434a09539d2a67f500d22f9136643bed4c009f54c",
+        "acceptance": "c0308fcce5641efdac2f99a414560cf1389621388d194132096d850d5371350e",
+        "drift": "e76096bc64100885f44637228df08807e6d3ba0095418707d0557c190f1467ae",
+        "review": "a7fcee3fbade1d90a2b0e92a37552b3b6ce08f537b6ea13ae354263c2e78bad1"
+      },
+      "sourceAudioSha256": "826f6f1efb3c71277c68ee2fca2b49c4d0f929e9232f2cc2f8e74eb63222dd0f",
+      "deliveryAudioSha256": "3c287fb6786c7be22b9daf8dc0a82d266f72797a9b2f4f14590975bf14d9059f",
+      "baseRange": {
+        "startSeconds": 26.25,
+        "endSeconds": 27.71
+      },
+      "runtimeRange": {
+        "startSeconds": 26.25,
+        "endSeconds": 27.79
+      },
+      "wordSpan": {
+        "first": 45,
+        "lastExclusive": 48
+      },
+      "before": {
+        "startMs": 26250,
+        "endMs": 27710,
+        "matched": 3,
+        "total": 3,
+        "words": [
+          {
+            "startMs": 25550,
+            "endMs": 26530,
+            "text": "John",
+            "from": 0,
+            "to": 4
+          },
+          {
+            "startMs": 26530,
+            "endMs": 27230,
+            "text": "the",
+            "from": 5,
+            "to": 8
+          },
+          {
+            "startMs": 27230,
+            "endMs": 27230,
+            "text": "Baptist",
+            "from": 9,
+            "to": 16
+          }
+        ]
+      },
+      "after": {
+        "startMs": 26250,
+        "endMs": 27710,
+        "matched": 3,
+        "total": 3,
+        "words": [
+          {
+            "text": "John",
+            "from": 0,
+            "to": 4,
+            "startMs": 26440,
+            "endMs": 26660
+          },
+          {
+            "text": "the",
+            "from": 5,
+            "to": 8,
+            "startMs": 26660,
+            "endMs": 26860
+          },
+          {
+            "text": "Baptist",
+            "from": 9,
+            "to": 16,
+            "startMs": 26860,
+            "endMs": 27380
+          }
+        ]
+      },
+      "retainedRecognitionUncertainty": [
+        45
+      ],
+      "qualificationBasis": "separately-reviewed source projection; retained word uncertainty; no acoustic acceptance"
+    }
+  ],
+  "files": {
+    "b963c67e04af8849c52ff262b521bf32432f2a695b3618ebccf2bcfb5318d2f7": {
+      "path": "apps/web/public/transcripts/b963c67e04af8849c52ff262b521bf32432f2a695b3618ebccf2bcfb5318d2f7.words.json",
+      "beforeByteSha256": "970822dd409603fd314ef6e77efb00243c99811c8d54c459cbd3105c74d77e3e",
+      "beforeCanonicalSha256": "c6f31d563729dcbf8b7f788add6bd7062c00d587d12b7876a79193c4304e2e5f"
+    },
+    "3c287fb6786c7be22b9daf8dc0a82d266f72797a9b2f4f14590975bf14d9059f": {
+      "path": "apps/web/public/transcripts/3c287fb6786c7be22b9daf8dc0a82d266f72797a9b2f4f14590975bf14d9059f.words.json",
+      "beforeByteSha256": "99788f2278508f33139ccd7d1170c187c836d0429c989148703e62f8dab0687e",
+      "beforeCanonicalSha256": "9d7ae3c96ffb3f194d972f564730a9e5f8cd628b658c1a8488f04265efee50ba"
+    },
+    "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a": {
+      "path": "apps/web/public/transcripts/f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a.words.json",
+      "beforeByteSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+      "beforeCanonicalSha256": "a9d02920f8e521104b1e7ebbef213affa1b975c395009e3d1b18530b65401ed2"
+    }
+  },
+  "excludedMetadata": [
+    "S03-U005",
+    "S04-U003",
+    "S04-U013",
+    "S05-U024"
+  ],
+  "excludedUncertainty": [
+    "S03-U018",
+    "S04-U002",
+    "S05-U029",
+    "S05-U030",
+    "S05-U033",
+    "S05-U040"
+  ],
+  "protectedUnchangedFiles": {
+    "apps/web/src/App.svelte": "1c7ae42920ae43d56e17a71a69e132f5b89639eacdc0e6e6499db7c200bbbcf8",
+    "apps/web/src/lib/script-controller.js": "ca50e35e6a411c7e4a4ff195dc0c36eae2b7022d99eab0aa5b12c5f3cff19b40",
+    "apps/web/src/lib/continuous-reading.js": "09d081d9dde6dec838d55b1b13f7729d55e3464ee9b4bc7fd760df4a7e3091b0",
+    "apps/web/public/transcripts/4396f92c538c1292ccff0c9026f6608686006970df9f1b7028892edbfede05b9.words.json": "dee8ee6b9d66a7b9021e952e725e259cfd83ce024bfac388fc2042ec8fadd598"
+  }
+}
