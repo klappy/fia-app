@@ -111,3 +111,14 @@ it('UNAPPROVED source-bound overlay: all eight S03 rows highlight in one synthet
  }
  expect(audio.play).toHaveBeenCalledTimes(1);expect(proposal.counts.recordingAdmissions).toBe(0);expect(proposal.unchangedU024).toBe(true);
 });
+
+it('synthetic paused native seek changes row custody while preserving pause and the one session',async()=>{
+ await begin('S03-U009');await waitFor(()=>expect(document.querySelector('.guide-primary').hasAttribute('aria-busy')).toBe(false),{timeout:2000});
+ await fireEvent.click(screen.getByRole('button',{name:'Pause',exact:true}));
+ const stored=()=>JSON.parse(localStorage.getItem(`fia-v3-progress@1:${bundledPack.id}`));
+ emit(95.0,false);await tick();expect(stored().activityId).toBe('S03-U010');expect(stored().session.status).toBe('paused');
+ expect(audio.play).toHaveBeenCalledTimes(1);expect(audio.resume).not.toHaveBeenCalled();
+ await fireEvent.click(screen.getByRole('button',{name:'Resume',exact:true}));expect(audio.resume).toHaveBeenCalledTimes(1);expect(stored().session.status).toBe('playing');
+ await waitFor(()=>expect(document.querySelector('.guide-primary').hasAttribute('aria-busy')).toBe(false),{timeout:2000});await fireEvent.click(screen.getByRole('button',{name:'Pause',exact:true}));
+ emit(92.8,false);await tick();expect(stored().activityId).toBe('S03-U009');expect(stored().session.status).toBe('paused');expect(audio.play).toHaveBeenCalledTimes(1);expect(audio.resume).toHaveBeenCalledTimes(1);
+});

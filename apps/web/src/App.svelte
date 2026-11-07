@@ -214,8 +214,11 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
   const prior=activities.find(a=>a.id===priorId),next=activities.find(a=>a.id===nextId);
   if(!prior?.readingGroupId||prior.readingGroupId!==next?.readingGroupId)return false;
   const from=activities.findIndex(a=>a.id===priorId),to=activities.findIndex(a=>a.id===nextId);
-  if(audioContext.type==='manual'){
-   dispatch({type:'SEEK_ACTIVITY',activityId:nextId});audioContext={type:'manual',id:nextId};persist();return true;
+  const wasPaused=session.status==='paused';
+  if(audioContext.type==='manual'||wasPaused){
+   const type=audioContext.type;dispatch({type:'SEEK_ACTIVITY',activityId:nextId});
+   if(wasPaused)session={...session,status:'paused'};
+   audioContext={type,id:nextId};persist();return true;
   }
   if(to>from){
    for(let i=from;i<to;i++){
