@@ -210,10 +210,13 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  // A qualified list changes only internal progress at source-clock boundaries.
  // Navigation/interruptions still own cancellation; no per-row scheduler is entered.
  function advanceContinuousRow(nextId,priorId){
-  if(session.detour||audioContext?.type!=='narration'||audioContext.id!==priorId)return false;
+  if(session.detour||!['narration','manual'].includes(audioContext?.type)||audioContext.id!==priorId)return false;
   const prior=activities.find(a=>a.id===priorId),next=activities.find(a=>a.id===nextId);
   if(!prior?.readingGroupId||prior.readingGroupId!==next?.readingGroupId)return false;
   const from=activities.findIndex(a=>a.id===priorId),to=activities.findIndex(a=>a.id===nextId);
+  if(audioContext.type==='manual'){
+   dispatch({type:'SEEK_ACTIVITY',activityId:nextId});audioContext={type:'manual',id:nextId};persist();return true;
+  }
   if(to>from){
    for(let i=from;i<to;i++){
     if(currentActivity(session,activities)?.id!==activities[i].id||session.detour)return false;
@@ -231,7 +234,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
   if(!range){playClip(voices,text,src,rateNow,range,key);return;}
   ctlVoices=voices;ctlKey=key||null;loadSidecar(key,sha);
   const descriptorFor=path=>savedMedia.get(path)||onlineMedia.get(path)||downloadedAudioDescriptors.get(path);
-  const group=!executableMode&&audioContext?.type==='narration'?planContinuousReading({activities,listContracts:rawPresentation.listContracts,currentId:id,descriptorFor,src,fileKey:key,audioSha256:sha}):null;
+  const group=!executableMode&&!session.detour&&['narration','manual'].includes(audioContext?.type)?planContinuousReading({activities,listContracts:rawPresentation.listContracts,currentId:id,descriptorFor,src,fileKey:key,audioSha256:sha}):null;
   if(group){
    const last=group.spans.at(-1),lastActivity=activities.find(a=>a.id===last.id);
    last.range=tailRange(descriptorFor(lastActivity.audioSrc),last.range);

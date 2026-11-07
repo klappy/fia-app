@@ -30,9 +30,9 @@ beforeEach(()=>{
  URL.createObjectURL=vi.fn(()=> 'blob:one-verified-recording');URL.revokeObjectURL=vi.fn();
 });
 afterEach(()=>{cleanup();vi.restoreAllMocks();vi.unstubAllGlobals();vi.clearAllMocks();localStorage.clear();});
-async function begin(id){
+async function begin(id,{manual=false}={}){
  const session=createSession(pack.activities);session.index=pack.activities.findIndex(a=>a.id===id);
- saveProgress(localStorage,bundledPack,pack.activities,{session,transitionSection:null,scale:1,rate:1,muted:false});
+ saveProgress(localStorage,bundledPack,pack.activities,{session,transitionSection:null,scale:1,rate:1,muted:manual});
  render(App);await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toBe(pack.activities[session.index].prompt));
  await waitFor(()=>expect(document.querySelector('.guide-primary').hasAttribute('aria-busy')).toBe(false));
  await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));
@@ -59,4 +59,29 @@ it('synthetic clock: pause/resume, replay and skip preserve screen ownership',as
  await fireEvent.click(screen.getByRole('button',{name:'Skip to next activity',exact:true}));
  await tick();const after=JSON.parse(localStorage.getItem(`fia-v3-progress@1:${bundledPack.id}`)).activityId;expect(after).toBe('S03-U017');
  const plays=audio.play.mock.calls.length;emit(102.5);await tick();expect(JSON.parse(localStorage.getItem(`fia-v3-progress@1:${bundledPack.id}`)).activityId).toBe(after);expect(audio.play).toHaveBeenCalledTimes(plays);
+});
+
+it('synthetic clock: manual narration also uses one together-screen session and waits at its end',async()=>{
+ await begin('S03-U009',{manual:true});const rows=pack.activities.filter(a=>a.readingGroupId==='S03-U009');
+ for(const row of rows){const f=files.find(f=>f.path===row.audioSrc);emit(f.playbackRange.startSeconds+0.02);await tick();}
+ expect(audio.play).toHaveBeenCalledTimes(1);expect(audio.play.mock.calls[0][3]).toEqual({startSeconds:92.17,endSeconds:103.38});
+ audio.state({src:null,playing:false,elapsed:0,duration:0});audio.end();await tick();
+ const stored=JSON.parse(localStorage.getItem(`fia-v3-progress@1:${bundledPack.id}`));expect(stored.activityId).toBe('S03-U016');expect(stored.session.status).toBe('waiting');
+});
+it('synthetic clock: a together-screen ends once while separate questions remain confirmation stops',async()=>{
+ await begin('S01-U003');expect(audio.play.mock.calls[0][3]).toEqual({startSeconds:27.08,endSeconds:29.63});
+ audio.end();audio.end();await tick();const stored=JSON.parse(localStorage.getItem(`fia-v3-progress@1:${bundledPack.id}`));
+ expect(stored.activityId).toBe('S01-U003');expect(stored.session.status).toBe('waiting');expect(audio.play).toHaveBeenCalledTimes(1);
+});
+it('synthetic clock with shipped sidecar: valid rows highlight on the shared clock; three invalid rows stay untimed',async()=>{
+ await begin('S03-U009');const sc=JSON.parse(readFileSync('public/transcripts/4396f92c538c1292ccff0c9026f6608686006970df9f1b7028892edbfede05b9.words.json'));
+ await waitFor(()=>expect(fetch.mock.calls.some(([url])=>String(url).includes('/transcripts/4396'))).toBe(true));await new Promise(r=>setTimeout(r,0));
+ const valid=['S03-U011','S03-U012','S03-U013','S03-U014','S03-U016'];
+ for(const row of pack.activities.filter(a=>a.readingGroupId==='S03-U009')){
+  const map=sc.activities[row.id],f=files.find(f=>f.path===row.audioSrc);emit(valid.includes(row.id)?(map.words[0].startMs+map.words[0].endMs)/2000:f.playbackRange.startSeconds+0.02);await tick();
+  await waitFor(()=>expect(document.querySelector('[data-reading-item][aria-current="true"]').textContent).toBe(row.sourceText));
+  if(valid.includes(row.id))await waitFor(()=>expect(document.querySelectorAll('[data-align-word][data-active="true"]').length).toBeGreaterThan(0));
+  else expect(document.querySelectorAll('[data-align-word]')).toHaveLength(0);
+ }
+ expect(audio.play).toHaveBeenCalledTimes(1);
 });

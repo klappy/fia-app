@@ -51,3 +51,8 @@ test('continuous transport rejects mixed identity, overlap and invalid bounds',(
  for(const mutate of [s=>s[1].fileKey='other',s=>s[1].src='blob:other',s=>s[1].range.startSeconds=2,s=>s[1].range.endSeconds=NaN]){const x=structuredClone(spans);mutate(x);assert.equal(c.playContinuous(x),false);}
  assert.equal(calls.length,0);
 });
+test('rejected row custody stops a continuous session without final advance',()=>{
+ const calls=[],adv=[];const c=createScriptController({player:{play(){},stop:()=>calls.push('stop')},script:[],transcripts:new Map(),onSpan:()=>false,onAdvance:()=>adv.push('advance')});
+ c.playContinuous(script.slice(0,2).map(s=>({...s,range:{startSeconds:s.startMs/1000,endSeconds:s.endMs/1000}})));
+ c.onPlayerState({src:'blob:F',elapsed:5.1});c.onPlayerEnd();assert.equal(c.current,null);assert.deepEqual(calls,['stop']);assert.deepEqual(adv,[]);
+});
