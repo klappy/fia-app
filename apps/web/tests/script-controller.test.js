@@ -30,3 +30,24 @@ test('a Scripture sidecar with only top-level words (no activities map) still dr
  c.play('a');for(const t of [0.5,1.1,1.6,2.5])c.onPlayerState({src:'blob:F',elapsed:t});
  assert.deepEqual(hl.map(h=>h[1]),[null,0,1,2]);
 });
+test('qualified continuous rows use one play and one clock through pause, forward and backward seeks',()=>{
+ const calls=[],changes=[],highlights=[],adv=[];
+ const c=createScriptController({player:{play:(...a)=>calls.push(['play',...a]),seek:s=>calls.push(['seek',s]),stop:()=>calls.push(['stop'])},script:[],transcripts:new Map([['F',sidecar]]),onSpan:(id,from)=>changes.push([id,from]),onHighlight:(id,w)=>highlights.push([id,w]),onAdvance:(n,id)=>adv.push(id)});
+ const spans=script.slice(0,2).map(s=>({...s,range:{startSeconds:s.startMs/1000,endSeconds:s.endMs/1000}}));
+ assert.equal(c.playContinuous(spans),true);
+ c.onPlayerState({src:'blob:F',playing:true,elapsed:1.6});
+ c.onPlayerState({src:'blob:F',playing:false,elapsed:1.6});
+ c.onPlayerState({src:'blob:F',playing:true,elapsed:5.6});
+ assert.equal(c.current,'b');assert.deepEqual(c.currentRange,spans[1].range);
+ c.onPlayerState({src:'blob:F',playing:false,elapsed:1.6});
+ assert.equal(c.current,'a');assert.deepEqual(changes,[['b','a'],['a','b']]);
+ assert.equal(calls.length,1);assert.deepEqual(calls[0][4],{startSeconds:1,endSeconds:7});
+ c.onPlayerState({src:null,playing:false,elapsed:0});assert.equal(c.current,'a');
+ c.onPlayerEnd();c.onPlayerEnd();assert.deepEqual(adv,['b']);assert.equal(calls.length,1);
+ c.stop();c.onPlayerState({src:'blob:F',elapsed:5.6});assert.equal(c.current,null);
+});
+test('continuous transport rejects mixed identity, overlap and invalid bounds',()=>{
+ const {c,calls}=setup();const spans=script.slice(0,2).map(s=>({...s,range:{startSeconds:s.startMs/1000,endSeconds:s.endMs/1000}}));
+ for(const mutate of [s=>s[1].fileKey='other',s=>s[1].src='blob:other',s=>s[1].range.startSeconds=2,s=>s[1].range.endSeconds=NaN]){const x=structuredClone(spans);mutate(x);assert.equal(c.playContinuous(x),false);}
+ assert.equal(calls.length,0);
+});

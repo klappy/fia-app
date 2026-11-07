@@ -37,6 +37,7 @@
  import {saveProgress,restoreProgress,resetProgress} from './lib/session-store.js';
  import {noticeScope,noticeEnded} from './lib/notice-scope.js';
  import {tailExtendedRange} from './lib/range-tail.js';
+ import {planContinuousReading} from './lib/continuous-reading.js';
 import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  let selectedPack=$state(bundledPack),rawPresentation=$state.raw(bundledPresentation),downloadedPaths=$state(new Set()),downloadedAudioDescriptors=$state(new globalThis.Map());
  let executionPresentation=$derived(executablePresentationView(rawPresentation));
@@ -205,10 +206,40 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
 // CONTROLLER (script-controller.js): created once, above the screens. It owns the script spans + each file's sidecar and drives the
  // word highlight and the end-of-audio advance; the PLAYER (audio.js pool) only plays what it is told.
  const sidecars=new globalThis.Map();let sidecarTick=$state(0),hl=$state({id:null,word:null,key:null}),viaCtl=false,ctlVoices=null;
- const ctl=createScriptController({player:{play:(...a)=>{playClip(ctlVoices,...a);viaCtl=true;},seek:s=>audio?.seek?.(s),stop:()=>audio?.stop()},script:[],transcripts:sidecars,rate:()=>rate,onHighlight:(id,word)=>{hl={id,word,key:ctlKey};},onAdvance:()=>{viaCtl=false;finishAudio();}});
+ const ctl=createScriptController({player:{play:(...a)=>{playClip(ctlVoices,...a);viaCtl=true;},seek:s=>audio?.seek?.(s),stop:()=>audio?.stop()},script:[],transcripts:sidecars,rate:()=>rate,onHighlight:(id,word)=>{hl={id,word,key:ctlKey};},onAdvance:()=>{viaCtl=false;finishAudio();},onSpan:advanceContinuousRow});
+ // A qualified list changes only internal progress at source-clock boundaries.
+ // Navigation/interruptions still own cancellation; no per-row scheduler is entered.
+ function advanceContinuousRow(nextId,priorId){
+  if(session.detour||audioContext?.type!=='narration'||audioContext.id!==priorId)return false;
+  const prior=activities.find(a=>a.id===priorId),next=activities.find(a=>a.id===nextId);
+  if(!prior?.readingGroupId||prior.readingGroupId!==next?.readingGroupId)return false;
+  const from=activities.findIndex(a=>a.id===priorId),to=activities.findIndex(a=>a.id===nextId);
+  if(to>from){
+   for(let i=from;i<to;i++){
+    if(currentActivity(session,activities)?.id!==activities[i].id||session.detour)return false;
+    introduced=new Set([...introduced,activities[i].id]);
+    dispatch({type:'NARRATION_END',activityId:activities[i].id});
+    if(session.detour)return false;
+    dispatch({type:'PLAY'});
+   }
+  }else{dispatch({type:'SEEK_ACTIVITY',activityId:nextId});dispatch({type:'PLAY'});}
+  audioContext={type:'narration',id:nextId};persist();return true;
+ }
  let ctlKey=null;
  async function loadSidecar(key,sha){if(!key||!sha||sidecars.has(key))return;sidecars.set(key,null);try{const r=await fetch('/transcripts/'+sha+'.words.json');if(!r.ok)throw Error('none');const t=validateTranscript(await r.json());if(t.audioSha256!==sha)throw Error('sha');sidecars.set(key,t);sidecarTick++;}catch{sidecars.delete(key);}}
- function ctlStart(id,voices,text,src,rateNow,range,key,sha){if(!range){playClip(voices,text,src,rateNow,range,key);return;}ctlVoices=voices;ctlKey=key||null;loadSidecar(key,sha);ctl.register({id,text,fileKey:key||undefined,src,range,startMs:Math.round(range.startSeconds*1000),endMs:Math.round(range.endSeconds*1000)});ctl.play(id);}
+ function ctlStart(id,voices,text,src,rateNow,range,key,sha){
+  if(!range){playClip(voices,text,src,rateNow,range,key);return;}
+  ctlVoices=voices;ctlKey=key||null;loadSidecar(key,sha);
+  const descriptorFor=path=>savedMedia.get(path)||onlineMedia.get(path)||downloadedAudioDescriptors.get(path);
+  const group=!executableMode&&audioContext?.type==='narration'?planContinuousReading({activities,listContracts:rawPresentation.listContracts,currentId:id,descriptorFor,src,fileKey:key,audioSha256:sha}):null;
+  if(group){
+   const last=group.spans.at(-1),lastActivity=activities.find(a=>a.id===last.id);
+   last.range=tailRange(descriptorFor(lastActivity.audioSrc),last.range);
+   if(group.spans[0].id!==id&&!advanceContinuousRow(group.spans[0].id,id))return;
+   ctl.playContinuous(group.spans);return;
+  }
+  ctl.register({id,text,fileKey:key||undefined,src,range,startMs:Math.round(range.startSeconds*1000),endMs:Math.round(range.endSeconds*1000)});ctl.play(id);
+ }
  // Guide and instruction cards highlight through the same inline gel as scripture, from the sidecar's words for this card.
  let cardAlignment=$derived.by(()=>{sidecarTick;if(!activity||hl.id!==activity.id)return null;const sc=sidecars.get(hl.key);const shown=activity.readingGroupId?activity.sourceText:activity.narration;return activityAlignment(shown,activityWords(sc?.activities?.[activity.id],ctl.currentRange),sc?.activities?.[activity.id]?.endMs);});
  // Safari mis-times Ogg Opus (WebKit 293310); a ranged clip plays as the same packets in WebM.
