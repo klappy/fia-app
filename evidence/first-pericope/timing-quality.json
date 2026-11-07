@@ -1,0 +1,4132 @@
+{
+  "schema": "fia-first-pericope-timing-quality@1",
+  "packId": "eng.MRK-1-1-13",
+  "presentationSha256": "ccd72f23c23f932651b500b730b285f32fabd37e50037b5af91d8881f1403975",
+  "approvedPresentationSha256": "ccd72f23c23f932651b500b730b285f32fabd37e50037b5af91d8881f1403975",
+  "registrySha256": "f5ce2e2475e4198a927ad4daa07b3285053070f4a3a308141e55e54ab13f33b3",
+  "deliverySha256": "b749c9c8246fd178a6c70604ef1037a1bed0e2804ba618750a2aec1de4d9a10e",
+  "guideRoutes": 111,
+  "accepted": 60,
+  "untimed": 51,
+  "byReason": {
+    "insufficient-asr-match": 12,
+    "runtime-predicate-accepted": 60,
+    "outside-playback-range": 17,
+    "invalid-activity-word-times": 22
+  },
+  "routingScope": {
+    "classification": "static-canonical-OGG-delivery-predicates-only",
+    "executedOriginalNativeMp3PlaybackPasses": 0,
+    "originalNativeMp3Routes": [
+      {
+        "sourceLedgerSha256": "66cfb3cb236e2e1072f16c78b5de895c5bff8d058a1526c667d78a9c063e34dd",
+        "audioSha256": "9834ac98fdc57c34e4cc2cb5f813fc5bf050a2283ffc4ce994963bbfa9649d25",
+        "matchingRepositorySidecar": false,
+        "wordTimingQualified": false,
+        "reason": "Canonical OGG sidecars bind a different delivery SHA. Decoded-PCM source mapping does not qualify the native MP3 media clock."
+      },
+      {
+        "sourceLedgerSha256": "5c8742a1b746c917564156bb9f970e4a468bd7075aefeb63f754c2ee94ca2ca6",
+        "audioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+        "matchingRepositorySidecar": false,
+        "wordTimingQualified": false,
+        "reason": "Canonical OGG sidecars bind a different delivery SHA. Decoded-PCM source mapping does not qualify the native MP3 media clock."
+      },
+      {
+        "sourceLedgerSha256": "32ca00e8dfa927e27233aea31a0abdd3768d700654d53d2d93b252b2645629eb",
+        "audioSha256": "6ac21beefbcc42b721de90e499b842c07f6a63f0e6a8f91391ce511613412538",
+        "matchingRepositorySidecar": false,
+        "wordTimingQualified": false,
+        "reason": "Canonical OGG sidecars bind a different delivery SHA. Decoded-PCM source mapping does not qualify the native MP3 media clock."
+      },
+      {
+        "sourceLedgerSha256": "ab9f7149f271004d0df133aea91bfe06968c8d79ff9d44b1c0afe2ac9b63d55e",
+        "audioSha256": "826f6f1efb3c71277c68ee2fca2b49c4d0f929e9232f2cc2f8e74eb63222dd0f",
+        "matchingRepositorySidecar": false,
+        "wordTimingQualified": false,
+        "reason": "Canonical OGG sidecars bind a different delivery SHA. Decoded-PCM source mapping does not qualify the native MP3 media clock."
+      },
+      {
+        "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+        "audioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+        "matchingRepositorySidecar": false,
+        "wordTimingQualified": false,
+        "reason": "Canonical OGG sidecars bind a different delivery SHA. Decoded-PCM source mapping does not qualify the native MP3 media clock."
+      },
+      {
+        "sourceLedgerSha256": "2717564c90060d62aded9a142bc2646cb8ff12aeddf1aa9254d7e951a205beff",
+        "audioSha256": "d0f0c608fb2c8b59aaf16ce72047978d0056a109354997ae982e81bb32451ef6",
+        "matchingRepositorySidecar": false,
+        "wordTimingQualified": false,
+        "reason": "Canonical OGG sidecars bind a different delivery SHA. Decoded-PCM source mapping does not qualify the native MP3 media clock."
+      }
+    ],
+    "firstMappingEvidence": {
+      "sha256": "d631c18f5082f8e972752a09f631586faa6b5cfefaf947238c768b2aa66427a7",
+      "sourceAudioSha256": "9834ac98fdc57c34e4cc2cb5f813fc5bf050a2283ffc4ce994963bbfa9649d25",
+      "deliveryAudioSha256": "b963c67e04af8849c52ff262b521bf32432f2a695b3618ebccf2bcfb5318d2f7",
+      "sourceClockDomain": "decoded-pcm",
+      "method": "236 waveform anchors,233strong, median correlation0.99243 and actualChrome start/end; MP3 native clock excluded"
+    },
+    "wholeFileNativeEnded": {
+      "wordTimingQualified": false,
+      "reason": "Qualified whole-file playback does not qualify word timings or permit reuse of another audio clock."
+    },
+    "resourceDescriptionsAndTerms": {
+      "audited": false,
+      "reason": "These111 guide/discussion timing maps do not establish resource-description or term alignment."
+    }
+  },
+  "excludedDerivedResourceRoutes": [
+    "S02-U005-resource-c197",
+    "S02-U008-resource-a204",
+    "S03-U019-resource-a111",
+    "S03-U021-resource-c202",
+    "S05-U006-resource-eng-t23-v1",
+    "S05-U015-resource-eng-t38-v1",
+    "S05-U015-resource-eng-t145-v1",
+    "S05-U017-resource-eng-t88-v1",
+    "S05-U019-resource-eng-t109-v1"
+  ],
+  "rows": [
+    {
+      "activityId": "S01-U001",
+      "kind": "guide",
+      "screenId": "S01-U001",
+      "shownTextField": "narration",
+      "shownTextSha256": "affdc8e569fa818aab90d16b1fc2f88f95efe409a4ef711e03a028420334d818",
+      "sourceTextSha256": "affdc8e569fa818aab90d16b1fc2f88f95efe409a4ef711e03a028420334d818",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "insufficient-asr-match",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "b963c67e04af8849c52ff262b521bf32432f2a695b3618ebccf2bcfb5318d2f7",
+          "sourceAudioSha256": "9834ac98fdc57c34e4cc2cb5f813fc5bf050a2283ffc4ce994963bbfa9649d25",
+          "sourceLedgerSha256": "66cfb3cb236e2e1072f16c78b5de895c5bff8d058a1526c667d78a9c063e34dd",
+          "sidecarSha256": "970822dd409603fd314ef6e77efb00243c99811c8d54c459cbd3105c74d77e3e",
+          "baseRange": {
+            "startSeconds": 6.2,
+            "endSeconds": 11.75
+          },
+          "runtimeRange": {
+            "startSeconds": 6.2,
+            "endSeconds": 12
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "insufficient-asr-match",
+          "schemaValid": true,
+          "matched": 0,
+          "total": 12
+        }
+      ]
+    },
+    {
+      "activityId": "S01-U002",
+      "kind": "guide",
+      "screenId": "S01-U002",
+      "shownTextField": "narration",
+      "shownTextSha256": "b30844ce00feb22d0c8bf5d0a92ed99a43d0de1311b21ca3833785dd5911dee7",
+      "sourceTextSha256": "b30844ce00feb22d0c8bf5d0a92ed99a43d0de1311b21ca3833785dd5911dee7",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "insufficient-asr-match",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "b963c67e04af8849c52ff262b521bf32432f2a695b3618ebccf2bcfb5318d2f7",
+          "sourceAudioSha256": "9834ac98fdc57c34e4cc2cb5f813fc5bf050a2283ffc4ce994963bbfa9649d25",
+          "sourceLedgerSha256": "66cfb3cb236e2e1072f16c78b5de895c5bff8d058a1526c667d78a9c063e34dd",
+          "sidecarSha256": "970822dd409603fd314ef6e77efb00243c99811c8d54c459cbd3105c74d77e3e",
+          "baseRange": {
+            "startSeconds": 13.15,
+            "endSeconds": 25.5
+          },
+          "runtimeRange": {
+            "startSeconds": 13.15,
+            "endSeconds": 25.75
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "insufficient-asr-match",
+          "schemaValid": true,
+          "matched": 7,
+          "total": 24
+        }
+      ]
+    },
+    {
+      "activityId": "S01-U003",
+      "kind": "discussion",
+      "screenId": "S01-U003",
+      "shownTextField": "narration",
+      "shownTextSha256": "c6ef6ed4d31b97cf4a0d03a8228505d052a8a780a5fe0413ebc441860df97b5d",
+      "sourceTextSha256": "c6ef6ed4d31b97cf4a0d03a8228505d052a8a780a5fe0413ebc441860df97b5d",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "b963c67e04af8849c52ff262b521bf32432f2a695b3618ebccf2bcfb5318d2f7",
+          "sourceAudioSha256": "9834ac98fdc57c34e4cc2cb5f813fc5bf050a2283ffc4ce994963bbfa9649d25",
+          "sourceLedgerSha256": "66cfb3cb236e2e1072f16c78b5de895c5bff8d058a1526c667d78a9c063e34dd",
+          "sidecarSha256": "970822dd409603fd314ef6e77efb00243c99811c8d54c459cbd3105c74d77e3e",
+          "baseRange": {
+            "startSeconds": 27.08,
+            "endSeconds": 29.38
+          },
+          "runtimeRange": {
+            "startSeconds": 27.08,
+            "endSeconds": 29.63
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 7,
+          "matched": 7,
+          "total": 7,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S01-U004",
+      "kind": "discussion",
+      "screenId": "S01-U004",
+      "shownTextField": "narration",
+      "shownTextSha256": "e8a93c2c61fe1a0f6f81fa58997b305e6fc98309b710e3a31ff8334e8644a3eb",
+      "sourceTextSha256": "e8a93c2c61fe1a0f6f81fa58997b305e6fc98309b710e3a31ff8334e8644a3eb",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "b963c67e04af8849c52ff262b521bf32432f2a695b3618ebccf2bcfb5318d2f7",
+          "sourceAudioSha256": "9834ac98fdc57c34e4cc2cb5f813fc5bf050a2283ffc4ce994963bbfa9649d25",
+          "sourceLedgerSha256": "66cfb3cb236e2e1072f16c78b5de895c5bff8d058a1526c667d78a9c063e34dd",
+          "sidecarSha256": "970822dd409603fd314ef6e77efb00243c99811c8d54c459cbd3105c74d77e3e",
+          "baseRange": {
+            "startSeconds": 31.26,
+            "endSeconds": 36.06
+          },
+          "runtimeRange": {
+            "startSeconds": 31.26,
+            "endSeconds": 36.31
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 11,
+          "matched": 11,
+          "total": 11,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S01-U005",
+      "kind": "discussion",
+      "screenId": "S01-U005",
+      "shownTextField": "narration",
+      "shownTextSha256": "5df74ebc5c4225c3d54e1629cff92f39a1cc058f2ac30b59d75d68d496d1d0f5",
+      "sourceTextSha256": "5df74ebc5c4225c3d54e1629cff92f39a1cc058f2ac30b59d75d68d496d1d0f5",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "b963c67e04af8849c52ff262b521bf32432f2a695b3618ebccf2bcfb5318d2f7",
+          "sourceAudioSha256": "9834ac98fdc57c34e4cc2cb5f813fc5bf050a2283ffc4ce994963bbfa9649d25",
+          "sourceLedgerSha256": "66cfb3cb236e2e1072f16c78b5de895c5bff8d058a1526c667d78a9c063e34dd",
+          "sidecarSha256": "970822dd409603fd314ef6e77efb00243c99811c8d54c459cbd3105c74d77e3e",
+          "baseRange": {
+            "startSeconds": 38.06,
+            "endSeconds": 41.3
+          },
+          "runtimeRange": {
+            "startSeconds": 38.06,
+            "endSeconds": 41.55
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 8,
+          "matched": 8,
+          "total": 8,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S01-U006",
+      "kind": "discussion",
+      "screenId": "S01-U006",
+      "shownTextField": "narration",
+      "shownTextSha256": "5ec46dee57eb35404b2cea3f9aaa67f2973ac8781088fa05d8073f9e72fdf4c3",
+      "sourceTextSha256": "5ec46dee57eb35404b2cea3f9aaa67f2973ac8781088fa05d8073f9e72fdf4c3",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "b963c67e04af8849c52ff262b521bf32432f2a695b3618ebccf2bcfb5318d2f7",
+          "sourceAudioSha256": "9834ac98fdc57c34e4cc2cb5f813fc5bf050a2283ffc4ce994963bbfa9649d25",
+          "sourceLedgerSha256": "66cfb3cb236e2e1072f16c78b5de895c5bff8d058a1526c667d78a9c063e34dd",
+          "sidecarSha256": "970822dd409603fd314ef6e77efb00243c99811c8d54c459cbd3105c74d77e3e",
+          "baseRange": {
+            "startSeconds": 43.42,
+            "endSeconds": 46.85
+          },
+          "runtimeRange": {
+            "startSeconds": 43.42,
+            "endSeconds": 47.1
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 8,
+          "matched": 8,
+          "total": 8,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S01-U007",
+      "kind": "discussion",
+      "screenId": "S01-U007",
+      "shownTextField": "narration",
+      "shownTextSha256": "97dd8ff3c182bdac8fd7e57ffe1bf62350452bd66178db6560b7909eb5237842",
+      "sourceTextSha256": "97dd8ff3c182bdac8fd7e57ffe1bf62350452bd66178db6560b7909eb5237842",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "b963c67e04af8849c52ff262b521bf32432f2a695b3618ebccf2bcfb5318d2f7",
+          "sourceAudioSha256": "9834ac98fdc57c34e4cc2cb5f813fc5bf050a2283ffc4ce994963bbfa9649d25",
+          "sourceLedgerSha256": "66cfb3cb236e2e1072f16c78b5de895c5bff8d058a1526c667d78a9c063e34dd",
+          "sidecarSha256": "970822dd409603fd314ef6e77efb00243c99811c8d54c459cbd3105c74d77e3e",
+          "baseRange": {
+            "startSeconds": 48.74,
+            "endSeconds": 52.14
+          },
+          "runtimeRange": {
+            "startSeconds": 48.74,
+            "endSeconds": 52.39
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 8,
+          "matched": 8,
+          "total": 8,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S01-U008",
+      "kind": "discussion",
+      "screenId": "S01-U008",
+      "shownTextField": "narration",
+      "shownTextSha256": "d7a5f7f06349c901d886647055b1f48f7251a9fbfe2b37e509b26e0538704e46",
+      "sourceTextSha256": "d7a5f7f06349c901d886647055b1f48f7251a9fbfe2b37e509b26e0538704e46",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "outside-playback-range",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "b963c67e04af8849c52ff262b521bf32432f2a695b3618ebccf2bcfb5318d2f7",
+          "sourceAudioSha256": "9834ac98fdc57c34e4cc2cb5f813fc5bf050a2283ffc4ce994963bbfa9649d25",
+          "sourceLedgerSha256": "66cfb3cb236e2e1072f16c78b5de895c5bff8d058a1526c667d78a9c063e34dd",
+          "sidecarSha256": "970822dd409603fd314ef6e77efb00243c99811c8d54c459cbd3105c74d77e3e",
+          "baseRange": {
+            "startSeconds": 54.32,
+            "endSeconds": 57.64
+          },
+          "runtimeRange": {
+            "startSeconds": 54.32,
+            "endSeconds": 57.89
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "outside-playback-range",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S02-U001",
+      "kind": "guide",
+      "screenId": "S02-U001",
+      "shownTextField": "narration",
+      "shownTextSha256": "40915459d3070b081f6298ca4a7a52a1f5a10ce875b7de37380cf051b9438494",
+      "sourceTextSha256": "40915459d3070b081f6298ca4a7a52a1f5a10ce875b7de37380cf051b9438494",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+          "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+          "sourceLedgerSha256": "5c8742a1b746c917564156bb9f970e4a468bd7075aefeb63f754c2ee94ca2ca6",
+          "sidecarSha256": "2589cb1ffd0f7439acf6ffc0aed8193953283a16d19082b73e789cd759efcbb6",
+          "baseRange": {
+            "startSeconds": 6.21,
+            "endSeconds": 14.2
+          },
+          "runtimeRange": {
+            "startSeconds": 6.21,
+            "endSeconds": 14.45
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 12,
+          "matched": 10,
+          "total": 12,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S02-U002",
+      "kind": "guide",
+      "screenId": "S02-U002",
+      "shownTextField": "narration",
+      "shownTextSha256": "8a8fb60f61f85a55bf45f5a52d58ff1da8fcab369bce6adb74e8e4433334a361",
+      "sourceTextSha256": "8a8fb60f61f85a55bf45f5a52d58ff1da8fcab369bce6adb74e8e4433334a361",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "outside-playback-range",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+          "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+          "sourceLedgerSha256": "5c8742a1b746c917564156bb9f970e4a468bd7075aefeb63f754c2ee94ca2ca6",
+          "sidecarSha256": "2589cb1ffd0f7439acf6ffc0aed8193953283a16d19082b73e789cd759efcbb6",
+          "baseRange": {
+            "startSeconds": 15.09,
+            "endSeconds": 25.5
+          },
+          "runtimeRange": {
+            "startSeconds": 15.09,
+            "endSeconds": 25.75
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "outside-playback-range",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S02-U003",
+      "kind": "guide",
+      "screenId": "S02-U003",
+      "shownTextField": "narration",
+      "shownTextSha256": "a360a3105e69cf2a20bc47b04a38511cfee6e41c1eb7fb6055a846fb6e1064c5",
+      "sourceTextSha256": "a360a3105e69cf2a20bc47b04a38511cfee6e41c1eb7fb6055a846fb6e1064c5",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "insufficient-asr-match",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+          "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+          "sourceLedgerSha256": "5c8742a1b746c917564156bb9f970e4a468bd7075aefeb63f754c2ee94ca2ca6",
+          "sidecarSha256": "2589cb1ffd0f7439acf6ffc0aed8193953283a16d19082b73e789cd759efcbb6",
+          "baseRange": {
+            "startSeconds": 25.84,
+            "endSeconds": 58.1
+          },
+          "runtimeRange": {
+            "startSeconds": 25.84,
+            "endSeconds": 58.1
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "insufficient-asr-match",
+          "schemaValid": true,
+          "matched": 39,
+          "total": 86
+        }
+      ]
+    },
+    {
+      "activityId": "S02-U004",
+      "kind": "guide",
+      "screenId": "S02-U004",
+      "shownTextField": "narration",
+      "shownTextSha256": "e6cec1b6bfa8786fa41efb3a55d2534655426c3571121ef9a7f49ffa470f8a24",
+      "sourceTextSha256": "e6cec1b6bfa8786fa41efb3a55d2534655426c3571121ef9a7f49ffa470f8a24",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "insufficient-asr-match",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+          "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+          "sourceLedgerSha256": "5c8742a1b746c917564156bb9f970e4a468bd7075aefeb63f754c2ee94ca2ca6",
+          "sidecarSha256": "2589cb1ffd0f7439acf6ffc0aed8193953283a16d19082b73e789cd759efcbb6",
+          "baseRange": {
+            "startSeconds": 58.19,
+            "endSeconds": 83.84
+          },
+          "runtimeRange": {
+            "startSeconds": 58.19,
+            "endSeconds": 82.79
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "insufficient-asr-match",
+          "schemaValid": true,
+          "matched": 0,
+          "total": 64
+        }
+      ]
+    },
+    {
+      "activityId": "S02-U005",
+      "kind": "discussion",
+      "screenId": "S02-U005",
+      "shownTextField": "narration",
+      "shownTextSha256": "f7fbe6ae09b69336cb5b1218ac3bd1b636ff2dd142ff5d93e2024b36788f5744",
+      "sourceTextSha256": "bcd0b87371b477506053d64c8d8b257bca25c314ada0742fc001b7e3f6620fd4",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "insufficient-asr-match",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+          "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+          "sourceLedgerSha256": "5c8742a1b746c917564156bb9f970e4a468bd7075aefeb63f754c2ee94ca2ca6",
+          "sidecarSha256": "2589cb1ffd0f7439acf6ffc0aed8193953283a16d19082b73e789cd759efcbb6",
+          "baseRange": {
+            "startSeconds": 84.45,
+            "endSeconds": 95.18
+          },
+          "runtimeRange": {
+            "startSeconds": 84.45,
+            "endSeconds": 95.43
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "insufficient-asr-match",
+          "schemaValid": true,
+          "matched": 10,
+          "total": 22
+        }
+      ]
+    },
+    {
+      "activityId": "S02-U006",
+      "kind": "guide",
+      "screenId": "S02-U006",
+      "shownTextField": "narration",
+      "shownTextSha256": "6e97ed700aed65bc49795e0c47193e32f3520a13c4b8c2ba6f247023061dce04",
+      "sourceTextSha256": "6e97ed700aed65bc49795e0c47193e32f3520a13c4b8c2ba6f247023061dce04",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "invalid-activity-word-times",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+          "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+          "sourceLedgerSha256": "5c8742a1b746c917564156bb9f970e4a468bd7075aefeb63f754c2ee94ca2ca6",
+          "sidecarSha256": "2589cb1ffd0f7439acf6ffc0aed8193953283a16d19082b73e789cd759efcbb6",
+          "baseRange": {
+            "startSeconds": 98.23,
+            "endSeconds": 165.05
+          },
+          "runtimeRange": {
+            "startSeconds": 98.23,
+            "endSeconds": 165.3
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "invalid-activity-word-times",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S02-U007",
+      "kind": "guide",
+      "screenId": "S02-U007",
+      "shownTextField": "narration",
+      "shownTextSha256": "f85875ff9de414c07038a7ce68af8dfe132a3c1cc134cc7cc93ec671fe906e0e",
+      "sourceTextSha256": "f85875ff9de414c07038a7ce68af8dfe132a3c1cc134cc7cc93ec671fe906e0e",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "invalid-activity-word-times",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+          "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+          "sourceLedgerSha256": "5c8742a1b746c917564156bb9f970e4a468bd7075aefeb63f754c2ee94ca2ca6",
+          "sidecarSha256": "2589cb1ffd0f7439acf6ffc0aed8193953283a16d19082b73e789cd759efcbb6",
+          "baseRange": {
+            "startSeconds": 166.23,
+            "endSeconds": 259.01
+          },
+          "runtimeRange": {
+            "startSeconds": 166.23,
+            "endSeconds": 259.26
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "invalid-activity-word-times",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S02-U008",
+      "kind": "discussion",
+      "screenId": "S02-U008",
+      "shownTextField": "narration",
+      "shownTextSha256": "8a16857a8fbe662a4935fc77fb47dd577f199f76027acb7c4d7b2d6f9e20b488",
+      "sourceTextSha256": "7d4cf4f969f14f97aaf3a855220cf6f46db606c8b4cec00eb8f4cca95cf23115",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "outside-playback-range",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+          "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+          "sourceLedgerSha256": "5c8742a1b746c917564156bb9f970e4a468bd7075aefeb63f754c2ee94ca2ca6",
+          "sidecarSha256": "2589cb1ffd0f7439acf6ffc0aed8193953283a16d19082b73e789cd759efcbb6",
+          "baseRange": {
+            "startSeconds": 259.95,
+            "endSeconds": 267.85
+          },
+          "runtimeRange": {
+            "startSeconds": 259.95,
+            "endSeconds": 268.1
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "outside-playback-range",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S02-U009",
+      "kind": "guide",
+      "screenId": "S02-U009",
+      "shownTextField": "narration",
+      "shownTextSha256": "7994327e489022485b55ced0ffae3cb8d4e8d73463c6238431d15a181920cf82",
+      "sourceTextSha256": "7994327e489022485b55ced0ffae3cb8d4e8d73463c6238431d15a181920cf82",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "insufficient-asr-match",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+          "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+          "sourceLedgerSha256": "5c8742a1b746c917564156bb9f970e4a468bd7075aefeb63f754c2ee94ca2ca6",
+          "sidecarSha256": "2589cb1ffd0f7439acf6ffc0aed8193953283a16d19082b73e789cd759efcbb6",
+          "baseRange": {
+            "startSeconds": 272.31,
+            "endSeconds": 304.5
+          },
+          "runtimeRange": {
+            "startSeconds": 272.31,
+            "endSeconds": 304.5
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "insufficient-asr-match",
+          "schemaValid": true,
+          "matched": 39,
+          "total": 74
+        }
+      ]
+    },
+    {
+      "activityId": "S02-U010",
+      "kind": "guide",
+      "screenId": "S02-U010",
+      "shownTextField": "narration",
+      "shownTextSha256": "acb1792ea1d42d56298b93fd9f694e0a89a2188848543685cad7fdfa6d664388",
+      "sourceTextSha256": "acb1792ea1d42d56298b93fd9f694e0a89a2188848543685cad7fdfa6d664388",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "insufficient-asr-match",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+          "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+          "sourceLedgerSha256": "5c8742a1b746c917564156bb9f970e4a468bd7075aefeb63f754c2ee94ca2ca6",
+          "sidecarSha256": "2589cb1ffd0f7439acf6ffc0aed8193953283a16d19082b73e789cd759efcbb6",
+          "baseRange": {
+            "startSeconds": 304.51,
+            "endSeconds": 403.61
+          },
+          "runtimeRange": {
+            "startSeconds": 304.51,
+            "endSeconds": 403.86
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "insufficient-asr-match",
+          "schemaValid": true,
+          "matched": 157,
+          "total": 257
+        }
+      ]
+    },
+    {
+      "activityId": "S02-U011",
+      "kind": "discussion",
+      "screenId": "S02-U011",
+      "shownTextField": "narration",
+      "shownTextSha256": "bc0991741465296028c2130d29f0f57eb138dde14b48b447bce02da03d8d5350",
+      "sourceTextSha256": "4c6baa6d4173ad386b53b1d680c976984bf56679f29b37c8bb5beb2ae1c0a858",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "invalid-activity-word-times",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+          "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+          "sourceLedgerSha256": "5c8742a1b746c917564156bb9f970e4a468bd7075aefeb63f754c2ee94ca2ca6",
+          "sidecarSha256": "2589cb1ffd0f7439acf6ffc0aed8193953283a16d19082b73e789cd759efcbb6",
+          "baseRange": {
+            "startSeconds": 404.37,
+            "endSeconds": 422.27
+          },
+          "runtimeRange": {
+            "startSeconds": 404.37,
+            "endSeconds": 422.52
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "invalid-activity-word-times",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S02-U013",
+      "kind": "guide",
+      "screenId": "S02-U013",
+      "shownTextField": "narration",
+      "shownTextSha256": "3de5a3bf58f30f1306f4a27d0e3c8e241c5daed21a27de40e674ae72b944bde9",
+      "sourceTextSha256": "3de5a3bf58f30f1306f4a27d0e3c8e241c5daed21a27de40e674ae72b944bde9",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "a21d416b185082d4ecf61f101fccb4c8c7ea194ed7e0ea1089ae5546ff90fdf1",
+          "sourceAudioSha256": "80caf8ea6128568075c71f0e1724d65d2dc877083969df7310ee1a1dd71ebafc",
+          "sourceLedgerSha256": "5c8742a1b746c917564156bb9f970e4a468bd7075aefeb63f754c2ee94ca2ca6",
+          "sidecarSha256": "2589cb1ffd0f7439acf6ffc0aed8193953283a16d19082b73e789cd759efcbb6",
+          "baseRange": {
+            "startSeconds": 429.48,
+            "endSeconds": 495.5
+          },
+          "runtimeRange": {
+            "startSeconds": 429.48,
+            "endSeconds": 495.75
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 161,
+          "matched": 159,
+          "total": 161,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S03-U001",
+      "kind": "guide",
+      "screenId": "S03-U001",
+      "shownTextField": "narration",
+      "shownTextSha256": "40915459d3070b081f6298ca4a7a52a1f5a10ce875b7de37380cf051b9438494",
+      "sourceTextSha256": "40915459d3070b081f6298ca4a7a52a1f5a10ce875b7de37380cf051b9438494",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "4396f92c538c1292ccff0c9026f6608686006970df9f1b7028892edbfede05b9",
+          "sourceAudioSha256": "6ac21beefbcc42b721de90e499b842c07f6a63f0e6a8f91391ce511613412538",
+          "sourceLedgerSha256": "32ca00e8dfa927e27233aea31a0abdd3768d700654d53d2d93b252b2645629eb",
+          "sidecarSha256": "fb74cf179534a1f1a897e74766ea6ceb8067ab215dde8caa4df930e238503858",
+          "baseRange": {
+            "startSeconds": 4.67,
+            "endSeconds": 11.04
+          },
+          "runtimeRange": {
+            "startSeconds": 4.67,
+            "endSeconds": 11.23
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 12,
+          "matched": 10,
+          "total": 12,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S03-U002",
+      "kind": "guide",
+      "screenId": "S03-U002",
+      "shownTextField": "narration",
+      "shownTextSha256": "a61b9e3354ad33e5fa08433737e96e7439154607a4ec97a2a555911bb35f83e7",
+      "sourceTextSha256": "a61b9e3354ad33e5fa08433737e96e7439154607a4ec97a2a555911bb35f83e7",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "4396f92c538c1292ccff0c9026f6608686006970df9f1b7028892edbfede05b9",
+          "sourceAudioSha256": "6ac21beefbcc42b721de90e499b842c07f6a63f0e6a8f91391ce511613412538",
+          "sourceLedgerSha256": "32ca00e8dfa927e27233aea31a0abdd3768d700654d53d2d93b252b2645629eb",
+          "sidecarSha256": "fb74cf179534a1f1a897e74766ea6ceb8067ab215dde8caa4df930e238503858",
+          "baseRange": {
+            "startSeconds": 11.31,
+            "endSeconds": 18.11
+          },
+          "runtimeRange": {
+            "startSeconds": 11.31,
+            "endSeconds": 18.19
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 22,
+          "matched": 21,
+          "total": 22,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S03-U003",
+      "kind": "guide",
+      "screenId": "S03-U003",
+      "shownTextField": "narration",
+      "shownTextSha256": "71a746201a0ba153e32fc1be0737ddb3c9e11691715f63485a9aa14445e4f1ba",
+      "sourceTextSha256": "71a746201a0ba153e32fc1be0737ddb3c9e11691715f63485a9aa14445e4f1ba",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "4396f92c538c1292ccff0c9026f6608686006970df9f1b7028892edbfede05b9",
+          "sourceAudioSha256": "6ac21beefbcc42b721de90e499b842c07f6a63f0e6a8f91391ce511613412538",
+          "sourceLedgerSha256": "32ca00e8dfa927e27233aea31a0abdd3768d700654d53d2d93b252b2645629eb",
+          "sidecarSha256": "fb74cf179534a1f1a897e74766ea6ceb8067ab215dde8caa4df930e238503858",
+          "baseRange": {
+            "startSeconds": 18.21,
+            "endSeconds": 20.24
+          },
+          "runtimeRange": {
+            "startSeconds": 18.21,
+            "endSeconds": 20.49
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 5,
+          "matched": 4,
+          "total": 5,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S03-U004",
+      "kind": "guide",
+      "screenId": "S03-U004",
+      "shownTextField": "narration",
+      "shownTextSha256": "7b523bfca29e22f7b0339e59c4b4281b9761a965ed6f20db5811063b88605791",
+      "sourceTextSha256": "7b523bfca29e22f7b0339e59c4b4281b9761a965ed6f20db5811063b88605791",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "4396f92c538c1292ccff0c9026f6608686006970df9f1b7028892edbfede05b9",
+          "sourceAudioSha256": "6ac21beefbcc42b721de90e499b842c07f6a63f0e6a8f91391ce511613412538",
+          "sourceLedgerSha256": "32ca00e8dfa927e27233aea31a0abdd3768d700654d53d2d93b252b2645629eb",
+          "sidecarSha256": "fb74cf179534a1f1a897e74766ea6ceb8067ab215dde8caa4df930e238503858",
+          "baseRange": {
+            "startSeconds": 20.59,
+            "endSeconds": 39.59
+          },
+          "runtimeRange": {
+            "startSeconds": 20.59,
+            "endSeconds": 39.84
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 59,
+          "matched": 57,
+          "total": 59,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S03-U005",
+      "kind": "guide",
+      "screenId": "S03-U005",
+      "shownTextField": "narration",
+      "shownTextSha256": "ad07e3462b3d5f7f1f32b8af389c2411998b5282126d24dee10a51f1cecb5e12",
+      "sourceTextSha256": "ad07e3462b3d5f7f1f32b8af389c2411998b5282126d24dee10a51f1cecb5e12",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "outside-playback-range",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "4396f92c538c1292ccff0c9026f6608686006970df9f1b7028892edbfede05b9",
+          "sourceAudioSha256": "6ac21beefbcc42b721de90e499b842c07f6a63f0e6a8f91391ce511613412538",
+          "sourceLedgerSha256": "32ca00e8dfa927e27233aea31a0abdd3768d700654d53d2d93b252b2645629eb",
+          "sidecarSha256": "fb74cf179534a1f1a897e74766ea6ceb8067ab215dde8caa4df930e238503858",
+          "baseRange": {
+            "startSeconds": 39.98,
+            "endSeconds": 53.7
+          },
+          "runtimeRange": {
+            "startSeconds": 39.98,
+            "endSeconds": 53.59
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "outside-playback-range",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S03-U006",
+      "kind": "guide",
+      "screenId": "S03-U006",
+      "shownTextField": "narration",
+      "shownTextSha256": "5300ade473d596e84f857c89e73a93aa3ad39c64162ae211edbac4c1a31b8ad4",
+      "sourceTextSha256": "5300ade473d596e84f857c89e73a93aa3ad39c64162ae211edbac4c1a31b8ad4",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "4396f92c538c1292ccff0c9026f6608686006970df9f1b7028892edbfede05b9",
+          "sourceAudioSha256": "6ac21beefbcc42b721de90e499b842c07f6a63f0e6a8f91391ce511613412538",
+          "sourceLedgerSha256": "32ca00e8dfa927e27233aea31a0abdd3768d700654d53d2d93b252b2645629eb",
+          "sidecarSha256": "fb74cf179534a1f1a897e74766ea6ceb8067ab215dde8caa4df930e238503858",
+          "baseRange": {
+            "startSeconds": 53.7,
+            "endSeconds": 68.16
+          },
+          "runtimeRange": {
+            "startSeconds": 53.7,
+            "endSeconds": 68.41
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 34,
+          "matched": 34,
+          "total": 34,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S03-U007",
+      "kind": "discussion",
+      "screenId": "S03-U007",
+      "shownTextField": "narration",
+      "shownTextSha256": "9873b21f2acd2d1ae6d1af78629c462eeb60e27d3f904fb87ec398d2c8704a42",
+      "sourceTextSha256": "b20ae2038847bcb26a2cd941f7a836befdddb740bb6cfc69fd02e54c225035be",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "4396f92c538c1292ccff0c9026f6608686006970df9f1b7028892edbfede05b9",
+          "sourceAudioSha256": "6ac21beefbcc42b721de90e499b842c07f6a63f0e6a8f91391ce511613412538",
+          "sourceLedgerSha256": "32ca00e8dfa927e27233aea31a0abdd3768d700654d53d2d93b252b2645629eb",
+          "sidecarSha256": "fb74cf179534a1f1a897e74766ea6ceb8067ab215dde8caa4df930e238503858",
+          "baseRange": {
+            "startSeconds": 68.69,
+            "endSeconds": 76.56
+          },
+          "runtimeRange": {
+            "startSeconds": 68.69,
+            "endSeconds": 76.81
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 27,
+          "matched": 23,
+          "total": 27,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S03-U008",
+      "kind": "guide",
+      "screenId": "S03-U008",
+      "shownTextField": "narration",
+      "shownTextSha256": "f47355b104297c74e46370c8e03d556bcc1c33cf7440b92f123d50efd9152064",
+      "sourceTextSha256": "f47355b104297c74e46370c8e03d556bcc1c33cf7440b92f123d50efd9152064",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "invalid-activity-word-times",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "4396f92c538c1292ccff0c9026f6608686006970df9f1b7028892edbfede05b9",
+          "sourceAudioSha256": "6ac21beefbcc42b721de90e499b842c07f6a63f0e6a8f91391ce511613412538",
+          "sourceLedgerSha256": "32ca00e8dfa927e27233aea31a0abdd3768d700654d53d2d93b252b2645629eb",
+          "sidecarSha256": "fb74cf179534a1f1a897e74766ea6ceb8067ab215dde8caa4df930e238503858",
+          "baseRange": {
+            "startSeconds": 77.51,
+            "endSeconds": 92.09
+          },
+          "runtimeRange": {
+            "startSeconds": 77.51,
+            "endSeconds": 92.15
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "invalid-activity-word-times",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S03-U009",
+      "kind": "guide",
+      "screenId": "S03-U009",
+      "shownTextField": "sourceText",
+      "shownTextSha256": "fbbf57c5c98a0646849fbb07a7c2a3e082e2843e68cdf2caf14c5ec01273f693",
+      "sourceTextSha256": "fbbf57c5c98a0646849fbb07a7c2a3e082e2843e68cdf2caf14c5ec01273f693",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "invalid-activity-word-times",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "4396f92c538c1292ccff0c9026f6608686006970df9f1b7028892edbfede05b9",
+          "sourceAudioSha256": "6ac21beefbcc42b721de90e499b842c07f6a63f0e6a8f91391ce511613412538",
+          "sourceLedgerSha256": "32ca00e8dfa927e27233aea31a0abdd3768d700654d53d2d93b252b2645629eb",
+          "sidecarSha256": "fb74cf179534a1f1a897e74766ea6ceb8067ab215dde8caa4df930e238503858",
+          "baseRange": {
+            "startSeconds": 92.17,
+            "endSeconds": 94.34
+          },
+          "runtimeRange": {
+            "startSeconds": 92.17,
+            "endSeconds": 94.34
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "invalid-activity-word-times",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S03-U010",
+      "kind": "guide",
+      "screenId": "S03-U009",
+      "shownTextField": "sourceText",
+      "shownTextSha256": "3210be4a83fcb7c3537a69105d10900aede1d43c29858ca4f238cd7d897cb2ba",
+      "sourceTextSha256": "3210be4a83fcb7c3537a69105d10900aede1d43c29858ca4f238cd7d897cb2ba",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "outside-playback-range",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "4396f92c538c1292ccff0c9026f6608686006970df9f1b7028892edbfede05b9",
+          "sourceAudioSha256": "6ac21beefbcc42b721de90e499b842c07f6a63f0e6a8f91391ce511613412538",
+          "sourceLedgerSha256": "32ca00e8dfa927e27233aea31a0abdd3768d700654d53d2d93b252b2645629eb",
+          "sidecarSha256": "fb74cf179534a1f1a897e74766ea6ceb8067ab215dde8caa4df930e238503858",
+          "baseRange": {
+            "startSeconds": 94.34,
+            "endSeconds": 95.74
+          },
+          "runtimeRange": {
+            "startSeconds": 94.34,
+            "endSeconds": 95.74
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "outside-playback-range",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S03-U011",
+      "kind": "guide",
+      "screenId": "S03-U009",
+      "shownTextField": "sourceText",
+      "shownTextSha256": "af7179dc3a21918f422d1bb678b9b5f7ae18deb8c8e8fa6f5c6ee90a11b86944",
+      "sourceTextSha256": "af7179dc3a21918f422d1bb678b9b5f7ae18deb8c8e8fa6f5c6ee90a11b86944",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "4396f92c538c1292ccff0c9026f6608686006970df9f1b7028892edbfede05b9",
+          "sourceAudioSha256": "6ac21beefbcc42b721de90e499b842c07f6a63f0e6a8f91391ce511613412538",
+          "sourceLedgerSha256": "32ca00e8dfa927e27233aea31a0abdd3768d700654d53d2d93b252b2645629eb",
+          "sidecarSha256": "fb74cf179534a1f1a897e74766ea6ceb8067ab215dde8caa4df930e238503858",
+          "baseRange": {
+            "startSeconds": 95.74,
+            "endSeconds": 97.31
+          },
+          "runtimeRange": {
+            "startSeconds": 95.74,
+            "endSeconds": 97.31
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 3,
+          "matched": 3,
+          "total": 3,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S03-U012",
+      "kind": "guide",
+      "screenId": "S03-U009",
+      "shownTextField": "sourceText",
+      "shownTextSha256": "62fe4843ff9d2d79c52749cb0073c8490e7e490f03b98911d3acd4661ea69b5b",
+      "sourceTextSha256": "62fe4843ff9d2d79c52749cb0073c8490e7e490f03b98911d3acd4661ea69b5b",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "4396f92c538c1292ccff0c9026f6608686006970df9f1b7028892edbfede05b9",
+          "sourceAudioSha256": "6ac21beefbcc42b721de90e499b842c07f6a63f0e6a8f91391ce511613412538",
+          "sourceLedgerSha256": "32ca00e8dfa927e27233aea31a0abdd3768d700654d53d2d93b252b2645629eb",
+          "sidecarSha256": "fb74cf179534a1f1a897e74766ea6ceb8067ab215dde8caa4df930e238503858",
+          "baseRange": {
+            "startSeconds": 97.31,
+            "endSeconds": 98.29
+          },
+          "runtimeRange": {
+            "startSeconds": 97.31,
+            "endSeconds": 98.43
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 1,
+          "matched": 1,
+          "total": 1,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S03-U013",
+      "kind": "guide",
+      "screenId": "S03-U009",
+      "shownTextField": "sourceText",
+      "shownTextSha256": "c8f425825c9b066be4a1f9794957e55b243a9445eefc657daff3586b2e9ead86",
+      "sourceTextSha256": "c8f425825c9b066be4a1f9794957e55b243a9445eefc657daff3586b2e9ead86",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "4396f92c538c1292ccff0c9026f6608686006970df9f1b7028892edbfede05b9",
+          "sourceAudioSha256": "6ac21beefbcc42b721de90e499b842c07f6a63f0e6a8f91391ce511613412538",
+          "sourceLedgerSha256": "32ca00e8dfa927e27233aea31a0abdd3768d700654d53d2d93b252b2645629eb",
+          "sidecarSha256": "fb74cf179534a1f1a897e74766ea6ceb8067ab215dde8caa4df930e238503858",
+          "baseRange": {
+            "startSeconds": 98.45,
+            "endSeconds": 100.03
+          },
+          "runtimeRange": {
+            "startSeconds": 98.45,
+            "endSeconds": 100.03
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 3,
+          "matched": 3,
+          "total": 3,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S03-U014",
+      "kind": "guide",
+      "screenId": "S03-U009",
+      "shownTextField": "sourceText",
+      "shownTextSha256": "9c544d96b0c84c52ace0ae1c9ea1414c153ad9e8ec7dd0c5bd12e828fc74317b",
+      "sourceTextSha256": "9c544d96b0c84c52ace0ae1c9ea1414c153ad9e8ec7dd0c5bd12e828fc74317b",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "4396f92c538c1292ccff0c9026f6608686006970df9f1b7028892edbfede05b9",
+          "sourceAudioSha256": "6ac21beefbcc42b721de90e499b842c07f6a63f0e6a8f91391ce511613412538",
+          "sourceLedgerSha256": "32ca00e8dfa927e27233aea31a0abdd3768d700654d53d2d93b252b2645629eb",
+          "sidecarSha256": "fb74cf179534a1f1a897e74766ea6ceb8067ab215dde8caa4df930e238503858",
+          "baseRange": {
+            "startSeconds": 100.03,
+            "endSeconds": 100.85
+          },
+          "runtimeRange": {
+            "startSeconds": 100.03,
+            "endSeconds": 100.85
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 1,
+          "matched": 1,
+          "total": 1,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S03-U015",
+      "kind": "guide",
+      "screenId": "S03-U009",
+      "shownTextField": "sourceText",
+      "shownTextSha256": "c50d310cc268c44b1f99bf0dd61ad8d575f225e52f27847b08b2433bd9b97ee8",
+      "sourceTextSha256": "c50d310cc268c44b1f99bf0dd61ad8d575f225e52f27847b08b2433bd9b97ee8",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "invalid-activity-word-times",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "4396f92c538c1292ccff0c9026f6608686006970df9f1b7028892edbfede05b9",
+          "sourceAudioSha256": "6ac21beefbcc42b721de90e499b842c07f6a63f0e6a8f91391ce511613412538",
+          "sourceLedgerSha256": "32ca00e8dfa927e27233aea31a0abdd3768d700654d53d2d93b252b2645629eb",
+          "sidecarSha256": "fb74cf179534a1f1a897e74766ea6ceb8067ab215dde8caa4df930e238503858",
+          "baseRange": {
+            "startSeconds": 100.9,
+            "endSeconds": 102.04
+          },
+          "runtimeRange": {
+            "startSeconds": 100.9,
+            "endSeconds": 102.04
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "invalid-activity-word-times",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S03-U016",
+      "kind": "guide",
+      "screenId": "S03-U009",
+      "shownTextField": "sourceText",
+      "shownTextSha256": "36b1476682f7077fd01742ab6c1f8f2d276053df9fac5a2ee56e804130177216",
+      "sourceTextSha256": "36b1476682f7077fd01742ab6c1f8f2d276053df9fac5a2ee56e804130177216",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "4396f92c538c1292ccff0c9026f6608686006970df9f1b7028892edbfede05b9",
+          "sourceAudioSha256": "6ac21beefbcc42b721de90e499b842c07f6a63f0e6a8f91391ce511613412538",
+          "sourceLedgerSha256": "32ca00e8dfa927e27233aea31a0abdd3768d700654d53d2d93b252b2645629eb",
+          "sidecarSha256": "fb74cf179534a1f1a897e74766ea6ceb8067ab215dde8caa4df930e238503858",
+          "baseRange": {
+            "startSeconds": 102.07,
+            "endSeconds": 103.13
+          },
+          "runtimeRange": {
+            "startSeconds": 102.07,
+            "endSeconds": 103.38
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 1,
+          "matched": 1,
+          "total": 1,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S03-U017",
+      "kind": "guide",
+      "screenId": "S03-U017",
+      "shownTextField": "narration",
+      "shownTextSha256": "a908f9e33277ed8e48a81473a63156422261b854494e695602d4779b94a64824",
+      "sourceTextSha256": "a908f9e33277ed8e48a81473a63156422261b854494e695602d4779b94a64824",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "4396f92c538c1292ccff0c9026f6608686006970df9f1b7028892edbfede05b9",
+          "sourceAudioSha256": "6ac21beefbcc42b721de90e499b842c07f6a63f0e6a8f91391ce511613412538",
+          "sourceLedgerSha256": "32ca00e8dfa927e27233aea31a0abdd3768d700654d53d2d93b252b2645629eb",
+          "sidecarSha256": "fb74cf179534a1f1a897e74766ea6ceb8067ab215dde8caa4df930e238503858",
+          "baseRange": {
+            "startSeconds": 103.58,
+            "endSeconds": 107.93
+          },
+          "runtimeRange": {
+            "startSeconds": 103.58,
+            "endSeconds": 108.18
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 12,
+          "matched": 12,
+          "total": 12,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S03-U018",
+      "kind": "guide",
+      "screenId": "S03-U018",
+      "shownTextField": "narration",
+      "shownTextSha256": "7ef580b8a590e5654b4a82a4f034971397041c6a38a35ea5caa47cc011c31b68",
+      "sourceTextSha256": "7ef580b8a590e5654b4a82a4f034971397041c6a38a35ea5caa47cc011c31b68",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "outside-playback-range",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "4396f92c538c1292ccff0c9026f6608686006970df9f1b7028892edbfede05b9",
+          "sourceAudioSha256": "6ac21beefbcc42b721de90e499b842c07f6a63f0e6a8f91391ce511613412538",
+          "sourceLedgerSha256": "32ca00e8dfa927e27233aea31a0abdd3768d700654d53d2d93b252b2645629eb",
+          "sidecarSha256": "fb74cf179534a1f1a897e74766ea6ceb8067ab215dde8caa4df930e238503858",
+          "baseRange": {
+            "startSeconds": 108.51,
+            "endSeconds": 125.53
+          },
+          "runtimeRange": {
+            "startSeconds": 108.51,
+            "endSeconds": 125.76
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "outside-playback-range",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S03-U019",
+      "kind": "discussion",
+      "screenId": "S03-U019",
+      "shownTextField": "narration",
+      "shownTextSha256": "361cddcf1775560efe493fa28de39e45d1246f7cd2abd199223d700ec27eb8c7",
+      "sourceTextSha256": "d0fd48782f2bdfed479cd29f71cc00f1f5ee8103beaa85033846d227a2f855ee",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "4396f92c538c1292ccff0c9026f6608686006970df9f1b7028892edbfede05b9",
+          "sourceAudioSha256": "6ac21beefbcc42b721de90e499b842c07f6a63f0e6a8f91391ce511613412538",
+          "sourceLedgerSha256": "32ca00e8dfa927e27233aea31a0abdd3768d700654d53d2d93b252b2645629eb",
+          "sidecarSha256": "fb74cf179534a1f1a897e74766ea6ceb8067ab215dde8caa4df930e238503858",
+          "baseRange": {
+            "startSeconds": 126.15,
+            "endSeconds": 132.17
+          },
+          "runtimeRange": {
+            "startSeconds": 126.15,
+            "endSeconds": 132.42
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 23,
+          "matched": 19,
+          "total": 23,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S03-U020",
+      "kind": "guide",
+      "screenId": "S03-U020",
+      "shownTextField": "narration",
+      "shownTextSha256": "7c9d8cb68e4b3d73a5643265397d222e0877fe02c558bddaa10e43d88b7dd2ec",
+      "sourceTextSha256": "7c9d8cb68e4b3d73a5643265397d222e0877fe02c558bddaa10e43d88b7dd2ec",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "invalid-activity-word-times",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "4396f92c538c1292ccff0c9026f6608686006970df9f1b7028892edbfede05b9",
+          "sourceAudioSha256": "6ac21beefbcc42b721de90e499b842c07f6a63f0e6a8f91391ce511613412538",
+          "sourceLedgerSha256": "32ca00e8dfa927e27233aea31a0abdd3768d700654d53d2d93b252b2645629eb",
+          "sidecarSha256": "fb74cf179534a1f1a897e74766ea6ceb8067ab215dde8caa4df930e238503858",
+          "baseRange": {
+            "startSeconds": 133.66,
+            "endSeconds": 172.88
+          },
+          "runtimeRange": {
+            "startSeconds": 133.66,
+            "endSeconds": 173.13
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "invalid-activity-word-times",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S03-U021",
+      "kind": "discussion",
+      "screenId": "S03-U021",
+      "shownTextField": "narration",
+      "shownTextSha256": "2da79eef5f4e87fe50efd4d0a0dc7de5a7e6b6f7e0b45ff3ac3b0400d9a3bc47",
+      "sourceTextSha256": "0ac2d39638e0d6f2d3c32e018be548237acd81f8f89171924ed6f869e9a8e3dc",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "4396f92c538c1292ccff0c9026f6608686006970df9f1b7028892edbfede05b9",
+          "sourceAudioSha256": "6ac21beefbcc42b721de90e499b842c07f6a63f0e6a8f91391ce511613412538",
+          "sourceLedgerSha256": "32ca00e8dfa927e27233aea31a0abdd3768d700654d53d2d93b252b2645629eb",
+          "sidecarSha256": "fb74cf179534a1f1a897e74766ea6ceb8067ab215dde8caa4df930e238503858",
+          "baseRange": {
+            "startSeconds": 173.29,
+            "endSeconds": 178.59
+          },
+          "runtimeRange": {
+            "startSeconds": 173.29,
+            "endSeconds": 178.73
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 17,
+          "matched": 13,
+          "total": 17,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S03-U022",
+      "kind": "guide",
+      "screenId": "S03-U022",
+      "shownTextField": "narration",
+      "shownTextSha256": "8094616fb19936cfadeb6d8b048cad551d9594f3d0d9c28f197130d8328547d2",
+      "sourceTextSha256": "8094616fb19936cfadeb6d8b048cad551d9594f3d0d9c28f197130d8328547d2",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "invalid-activity-word-times",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "4396f92c538c1292ccff0c9026f6608686006970df9f1b7028892edbfede05b9",
+          "sourceAudioSha256": "6ac21beefbcc42b721de90e499b842c07f6a63f0e6a8f91391ce511613412538",
+          "sourceLedgerSha256": "32ca00e8dfa927e27233aea31a0abdd3768d700654d53d2d93b252b2645629eb",
+          "sidecarSha256": "fb74cf179534a1f1a897e74766ea6ceb8067ab215dde8caa4df930e238503858",
+          "baseRange": {
+            "startSeconds": 179.85,
+            "endSeconds": 269.58
+          },
+          "runtimeRange": {
+            "startSeconds": 179.85,
+            "endSeconds": 269.83
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "invalid-activity-word-times",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S03-U023",
+      "kind": "guide",
+      "screenId": "S03-U023",
+      "shownTextField": "narration",
+      "shownTextSha256": "c2208ead0dd6b1671c6f78cc99e279463a372489d19106caabbca71324b1cc9c",
+      "sourceTextSha256": "c2208ead0dd6b1671c6f78cc99e279463a372489d19106caabbca71324b1cc9c",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "4396f92c538c1292ccff0c9026f6608686006970df9f1b7028892edbfede05b9",
+          "sourceAudioSha256": "6ac21beefbcc42b721de90e499b842c07f6a63f0e6a8f91391ce511613412538",
+          "sourceLedgerSha256": "32ca00e8dfa927e27233aea31a0abdd3768d700654d53d2d93b252b2645629eb",
+          "sidecarSha256": "fb74cf179534a1f1a897e74766ea6ceb8067ab215dde8caa4df930e238503858",
+          "baseRange": {
+            "startSeconds": 270.3,
+            "endSeconds": 287.98
+          },
+          "runtimeRange": {
+            "startSeconds": 270.3,
+            "endSeconds": 287.98
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 51,
+          "matched": 50,
+          "total": 51,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S03-U024",
+      "kind": "guide",
+      "screenId": "S03-U024",
+      "shownTextField": "narration",
+      "shownTextSha256": "0cd16fe6e894203273ebe12c251c1cce11d080d734354b6c007ced78081ec5ad",
+      "sourceTextSha256": "0cd16fe6e894203273ebe12c251c1cce11d080d734354b6c007ced78081ec5ad",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "invalid-activity-word-times",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "4396f92c538c1292ccff0c9026f6608686006970df9f1b7028892edbfede05b9",
+          "sourceAudioSha256": "6ac21beefbcc42b721de90e499b842c07f6a63f0e6a8f91391ce511613412538",
+          "sourceLedgerSha256": "32ca00e8dfa927e27233aea31a0abdd3768d700654d53d2d93b252b2645629eb",
+          "sidecarSha256": "fb74cf179534a1f1a897e74766ea6ceb8067ab215dde8caa4df930e238503858",
+          "baseRange": {
+            "startSeconds": 287.98,
+            "endSeconds": 319.67
+          },
+          "runtimeRange": {
+            "startSeconds": 287.98,
+            "endSeconds": 319.92
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "invalid-activity-word-times",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S03-U025",
+      "kind": "discussion",
+      "screenId": "S03-U025",
+      "shownTextField": "narration",
+      "shownTextSha256": "b7266b611527910b5407eb63cf64130dfb09d6a31dadfe22523f17d433ce8278",
+      "sourceTextSha256": "b7266b611527910b5407eb63cf64130dfb09d6a31dadfe22523f17d433ce8278",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "outside-playback-range",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "4396f92c538c1292ccff0c9026f6608686006970df9f1b7028892edbfede05b9",
+          "sourceAudioSha256": "6ac21beefbcc42b721de90e499b842c07f6a63f0e6a8f91391ce511613412538",
+          "sourceLedgerSha256": "32ca00e8dfa927e27233aea31a0abdd3768d700654d53d2d93b252b2645629eb",
+          "sidecarSha256": "fb74cf179534a1f1a897e74766ea6ceb8067ab215dde8caa4df930e238503858",
+          "baseRange": {
+            "startSeconds": 320.01,
+            "endSeconds": 327.1
+          },
+          "runtimeRange": {
+            "startSeconds": 320.01,
+            "endSeconds": 326.35
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "outside-playback-range",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S04-U001",
+      "kind": "guide",
+      "screenId": "S04-U001",
+      "shownTextField": "narration",
+      "shownTextSha256": "40915459d3070b081f6298ca4a7a52a1f5a10ce875b7de37380cf051b9438494",
+      "sourceTextSha256": "40915459d3070b081f6298ca4a7a52a1f5a10ce875b7de37380cf051b9438494",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "3c287fb6786c7be22b9daf8dc0a82d266f72797a9b2f4f14590975bf14d9059f",
+          "sourceAudioSha256": "826f6f1efb3c71277c68ee2fca2b49c4d0f929e9232f2cc2f8e74eb63222dd0f",
+          "sourceLedgerSha256": "ab9f7149f271004d0df133aea91bfe06968c8d79ff9d44b1c0afe2ac9b63d55e",
+          "sidecarSha256": "99788f2278508f33139ccd7d1170c187c836d0429c989148703e62f8dab0687e",
+          "baseRange": {
+            "startSeconds": 8.16,
+            "endSeconds": 15.6
+          },
+          "runtimeRange": {
+            "startSeconds": 8.16,
+            "endSeconds": 15.85
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 12,
+          "matched": 10,
+          "total": 12,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S04-U002",
+      "kind": "guide",
+      "screenId": "S04-U002",
+      "shownTextField": "narration",
+      "shownTextSha256": "2fd7c0db6cfe4e027441daa2ae31223b2a3868244e364e4424e06154b777aca5",
+      "sourceTextSha256": "2fd7c0db6cfe4e027441daa2ae31223b2a3868244e364e4424e06154b777aca5",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "outside-playback-range",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "3c287fb6786c7be22b9daf8dc0a82d266f72797a9b2f4f14590975bf14d9059f",
+          "sourceAudioSha256": "826f6f1efb3c71277c68ee2fca2b49c4d0f929e9232f2cc2f8e74eb63222dd0f",
+          "sourceLedgerSha256": "ab9f7149f271004d0df133aea91bfe06968c8d79ff9d44b1c0afe2ac9b63d55e",
+          "sidecarSha256": "99788f2278508f33139ccd7d1170c187c836d0429c989148703e62f8dab0687e",
+          "baseRange": {
+            "startSeconds": 16.34,
+            "endSeconds": 19.3
+          },
+          "runtimeRange": {
+            "startSeconds": 16.34,
+            "endSeconds": 19.55
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "outside-playback-range",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S04-U003",
+      "kind": "guide",
+      "screenId": "S04-U003",
+      "shownTextField": "narration",
+      "shownTextSha256": "0768ac8577dc54ab734ff27899b86d605a9f8917fe37cf82be0822c2a6981c39",
+      "sourceTextSha256": "0768ac8577dc54ab734ff27899b86d605a9f8917fe37cf82be0822c2a6981c39",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "outside-playback-range",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "3c287fb6786c7be22b9daf8dc0a82d266f72797a9b2f4f14590975bf14d9059f",
+          "sourceAudioSha256": "826f6f1efb3c71277c68ee2fca2b49c4d0f929e9232f2cc2f8e74eb63222dd0f",
+          "sourceLedgerSha256": "ab9f7149f271004d0df133aea91bfe06968c8d79ff9d44b1c0afe2ac9b63d55e",
+          "sidecarSha256": "99788f2278508f33139ccd7d1170c187c836d0429c989148703e62f8dab0687e",
+          "baseRange": {
+            "startSeconds": 20.14,
+            "endSeconds": 22.9
+          },
+          "runtimeRange": {
+            "startSeconds": 20.14,
+            "endSeconds": 22.41
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "outside-playback-range",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S04-U004",
+      "kind": "guide",
+      "screenId": "S04-U004",
+      "shownTextField": "sourceText",
+      "shownTextSha256": "fbbf57c5c98a0646849fbb07a7c2a3e082e2843e68cdf2caf14c5ec01273f693",
+      "sourceTextSha256": "fbbf57c5c98a0646849fbb07a7c2a3e082e2843e68cdf2caf14c5ec01273f693",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "outside-playback-range",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "3c287fb6786c7be22b9daf8dc0a82d266f72797a9b2f4f14590975bf14d9059f",
+          "sourceAudioSha256": "826f6f1efb3c71277c68ee2fca2b49c4d0f929e9232f2cc2f8e74eb63222dd0f",
+          "sourceLedgerSha256": "ab9f7149f271004d0df133aea91bfe06968c8d79ff9d44b1c0afe2ac9b63d55e",
+          "sidecarSha256": "99788f2278508f33139ccd7d1170c187c836d0429c989148703e62f8dab0687e",
+          "baseRange": {
+            "startSeconds": 23.37,
+            "endSeconds": 26.25
+          },
+          "runtimeRange": {
+            "startSeconds": 23.37,
+            "endSeconds": 26.25
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "outside-playback-range",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S04-U005",
+      "kind": "guide",
+      "screenId": "S04-U004",
+      "shownTextField": "sourceText",
+      "shownTextSha256": "3210be4a83fcb7c3537a69105d10900aede1d43c29858ca4f238cd7d897cb2ba",
+      "sourceTextSha256": "3210be4a83fcb7c3537a69105d10900aede1d43c29858ca4f238cd7d897cb2ba",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "outside-playback-range",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "3c287fb6786c7be22b9daf8dc0a82d266f72797a9b2f4f14590975bf14d9059f",
+          "sourceAudioSha256": "826f6f1efb3c71277c68ee2fca2b49c4d0f929e9232f2cc2f8e74eb63222dd0f",
+          "sourceLedgerSha256": "ab9f7149f271004d0df133aea91bfe06968c8d79ff9d44b1c0afe2ac9b63d55e",
+          "sidecarSha256": "99788f2278508f33139ccd7d1170c187c836d0429c989148703e62f8dab0687e",
+          "baseRange": {
+            "startSeconds": 26.25,
+            "endSeconds": 27.71
+          },
+          "runtimeRange": {
+            "startSeconds": 26.25,
+            "endSeconds": 27.79
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "outside-playback-range",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S04-U006",
+      "kind": "guide",
+      "screenId": "S04-U004",
+      "shownTextField": "sourceText",
+      "shownTextSha256": "af7179dc3a21918f422d1bb678b9b5f7ae18deb8c8e8fa6f5c6ee90a11b86944",
+      "sourceTextSha256": "af7179dc3a21918f422d1bb678b9b5f7ae18deb8c8e8fa6f5c6ee90a11b86944",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "3c287fb6786c7be22b9daf8dc0a82d266f72797a9b2f4f14590975bf14d9059f",
+          "sourceAudioSha256": "826f6f1efb3c71277c68ee2fca2b49c4d0f929e9232f2cc2f8e74eb63222dd0f",
+          "sourceLedgerSha256": "ab9f7149f271004d0df133aea91bfe06968c8d79ff9d44b1c0afe2ac9b63d55e",
+          "sidecarSha256": "99788f2278508f33139ccd7d1170c187c836d0429c989148703e62f8dab0687e",
+          "baseRange": {
+            "startSeconds": 27.91,
+            "endSeconds": 29.84
+          },
+          "runtimeRange": {
+            "startSeconds": 27.91,
+            "endSeconds": 30.07
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 3,
+          "matched": 3,
+          "total": 3,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S04-U007",
+      "kind": "guide",
+      "screenId": "S04-U004",
+      "shownTextField": "sourceText",
+      "shownTextSha256": "62fe4843ff9d2d79c52749cb0073c8490e7e490f03b98911d3acd4661ea69b5b",
+      "sourceTextSha256": "62fe4843ff9d2d79c52749cb0073c8490e7e490f03b98911d3acd4661ea69b5b",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "3c287fb6786c7be22b9daf8dc0a82d266f72797a9b2f4f14590975bf14d9059f",
+          "sourceAudioSha256": "826f6f1efb3c71277c68ee2fca2b49c4d0f929e9232f2cc2f8e74eb63222dd0f",
+          "sourceLedgerSha256": "ab9f7149f271004d0df133aea91bfe06968c8d79ff9d44b1c0afe2ac9b63d55e",
+          "sidecarSha256": "99788f2278508f33139ccd7d1170c187c836d0429c989148703e62f8dab0687e",
+          "baseRange": {
+            "startSeconds": 30.09,
+            "endSeconds": 31.11
+          },
+          "runtimeRange": {
+            "startSeconds": 30.09,
+            "endSeconds": 31.36
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 1,
+          "matched": 1,
+          "total": 1,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S04-U008",
+      "kind": "guide",
+      "screenId": "S04-U004",
+      "shownTextField": "sourceText",
+      "shownTextSha256": "c8f425825c9b066be4a1f9794957e55b243a9445eefc657daff3586b2e9ead86",
+      "sourceTextSha256": "c8f425825c9b066be4a1f9794957e55b243a9445eefc657daff3586b2e9ead86",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "3c287fb6786c7be22b9daf8dc0a82d266f72797a9b2f4f14590975bf14d9059f",
+          "sourceAudioSha256": "826f6f1efb3c71277c68ee2fca2b49c4d0f929e9232f2cc2f8e74eb63222dd0f",
+          "sourceLedgerSha256": "ab9f7149f271004d0df133aea91bfe06968c8d79ff9d44b1c0afe2ac9b63d55e",
+          "sidecarSha256": "99788f2278508f33139ccd7d1170c187c836d0429c989148703e62f8dab0687e",
+          "baseRange": {
+            "startSeconds": 31.7,
+            "endSeconds": 33.36
+          },
+          "runtimeRange": {
+            "startSeconds": 31.7,
+            "endSeconds": 33.59
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 3,
+          "matched": 3,
+          "total": 3,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S04-U009",
+      "kind": "guide",
+      "screenId": "S04-U004",
+      "shownTextField": "sourceText",
+      "shownTextSha256": "9c544d96b0c84c52ace0ae1c9ea1414c153ad9e8ec7dd0c5bd12e828fc74317b",
+      "sourceTextSha256": "9c544d96b0c84c52ace0ae1c9ea1414c153ad9e8ec7dd0c5bd12e828fc74317b",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "3c287fb6786c7be22b9daf8dc0a82d266f72797a9b2f4f14590975bf14d9059f",
+          "sourceAudioSha256": "826f6f1efb3c71277c68ee2fca2b49c4d0f929e9232f2cc2f8e74eb63222dd0f",
+          "sourceLedgerSha256": "ab9f7149f271004d0df133aea91bfe06968c8d79ff9d44b1c0afe2ac9b63d55e",
+          "sidecarSha256": "99788f2278508f33139ccd7d1170c187c836d0429c989148703e62f8dab0687e",
+          "baseRange": {
+            "startSeconds": 33.64,
+            "endSeconds": 34.86
+          },
+          "runtimeRange": {
+            "startSeconds": 33.64,
+            "endSeconds": 34.91
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 1,
+          "matched": 1,
+          "total": 1,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S04-U010",
+      "kind": "guide",
+      "screenId": "S04-U004",
+      "shownTextField": "sourceText",
+      "shownTextSha256": "c50d310cc268c44b1f99bf0dd61ad8d575f225e52f27847b08b2433bd9b97ee8",
+      "sourceTextSha256": "c50d310cc268c44b1f99bf0dd61ad8d575f225e52f27847b08b2433bd9b97ee8",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "invalid-activity-word-times",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "3c287fb6786c7be22b9daf8dc0a82d266f72797a9b2f4f14590975bf14d9059f",
+          "sourceAudioSha256": "826f6f1efb3c71277c68ee2fca2b49c4d0f929e9232f2cc2f8e74eb63222dd0f",
+          "sourceLedgerSha256": "ab9f7149f271004d0df133aea91bfe06968c8d79ff9d44b1c0afe2ac9b63d55e",
+          "sidecarSha256": "99788f2278508f33139ccd7d1170c187c836d0429c989148703e62f8dab0687e",
+          "baseRange": {
+            "startSeconds": 35.08,
+            "endSeconds": 36.14
+          },
+          "runtimeRange": {
+            "startSeconds": 35.08,
+            "endSeconds": 36.39
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "invalid-activity-word-times",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S04-U011",
+      "kind": "guide",
+      "screenId": "S04-U004",
+      "shownTextField": "sourceText",
+      "shownTextSha256": "36b1476682f7077fd01742ab6c1f8f2d276053df9fac5a2ee56e804130177216",
+      "sourceTextSha256": "36b1476682f7077fd01742ab6c1f8f2d276053df9fac5a2ee56e804130177216",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "3c287fb6786c7be22b9daf8dc0a82d266f72797a9b2f4f14590975bf14d9059f",
+          "sourceAudioSha256": "826f6f1efb3c71277c68ee2fca2b49c4d0f929e9232f2cc2f8e74eb63222dd0f",
+          "sourceLedgerSha256": "ab9f7149f271004d0df133aea91bfe06968c8d79ff9d44b1c0afe2ac9b63d55e",
+          "sidecarSha256": "99788f2278508f33139ccd7d1170c187c836d0429c989148703e62f8dab0687e",
+          "baseRange": {
+            "startSeconds": 36.67,
+            "endSeconds": 37.84
+          },
+          "runtimeRange": {
+            "startSeconds": 36.67,
+            "endSeconds": 38.09
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 1,
+          "matched": 1,
+          "total": 1,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S04-U012",
+      "kind": "guide",
+      "screenId": "S04-U012",
+      "shownTextField": "narration",
+      "shownTextSha256": "7573595555c3d9a146babfe97d649789dc91b59b2f30464a47fe0b1df653c2df",
+      "sourceTextSha256": "7573595555c3d9a146babfe97d649789dc91b59b2f30464a47fe0b1df653c2df",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "outside-playback-range",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "3c287fb6786c7be22b9daf8dc0a82d266f72797a9b2f4f14590975bf14d9059f",
+          "sourceAudioSha256": "826f6f1efb3c71277c68ee2fca2b49c4d0f929e9232f2cc2f8e74eb63222dd0f",
+          "sourceLedgerSha256": "ab9f7149f271004d0df133aea91bfe06968c8d79ff9d44b1c0afe2ac9b63d55e",
+          "sidecarSha256": "99788f2278508f33139ccd7d1170c187c836d0429c989148703e62f8dab0687e",
+          "baseRange": {
+            "startSeconds": 39.11,
+            "endSeconds": 45.75
+          },
+          "runtimeRange": {
+            "startSeconds": 39.11,
+            "endSeconds": 46
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "outside-playback-range",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S04-U013",
+      "kind": "guide",
+      "screenId": "S04-U013",
+      "shownTextField": "narration",
+      "shownTextSha256": "a947f01f636ae97da69da57c29f04c5c75a41c5cfeda65b9790ae72dbf3bfc03",
+      "sourceTextSha256": "a947f01f636ae97da69da57c29f04c5c75a41c5cfeda65b9790ae72dbf3bfc03",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "outside-playback-range",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "3c287fb6786c7be22b9daf8dc0a82d266f72797a9b2f4f14590975bf14d9059f",
+          "sourceAudioSha256": "826f6f1efb3c71277c68ee2fca2b49c4d0f929e9232f2cc2f8e74eb63222dd0f",
+          "sourceLedgerSha256": "ab9f7149f271004d0df133aea91bfe06968c8d79ff9d44b1c0afe2ac9b63d55e",
+          "sidecarSha256": "99788f2278508f33139ccd7d1170c187c836d0429c989148703e62f8dab0687e",
+          "baseRange": {
+            "startSeconds": 46.55,
+            "endSeconds": 66.68
+          },
+          "runtimeRange": {
+            "startSeconds": 46.55,
+            "endSeconds": 66.08
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "outside-playback-range",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S04-U014",
+      "kind": "discussion",
+      "screenId": "S04-U014",
+      "shownTextField": "narration",
+      "shownTextSha256": "f44adcb3209fcb81eee55292305b69a6d4fe61e75410a474a3db4e964330e7b4",
+      "sourceTextSha256": "966faa38a0db72824fcf7681804def536b6550e7587d3c45cc70646d6008d598",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "insufficient-asr-match",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "3c287fb6786c7be22b9daf8dc0a82d266f72797a9b2f4f14590975bf14d9059f",
+          "sourceAudioSha256": "826f6f1efb3c71277c68ee2fca2b49c4d0f929e9232f2cc2f8e74eb63222dd0f",
+          "sourceLedgerSha256": "ab9f7149f271004d0df133aea91bfe06968c8d79ff9d44b1c0afe2ac9b63d55e",
+          "sidecarSha256": "99788f2278508f33139ccd7d1170c187c836d0429c989148703e62f8dab0687e",
+          "baseRange": {
+            "startSeconds": 67.25,
+            "endSeconds": 71.45
+          },
+          "runtimeRange": {
+            "startSeconds": 67.25,
+            "endSeconds": 71.7
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "insufficient-asr-match",
+          "schemaValid": true,
+          "matched": 7,
+          "total": 12
+        }
+      ]
+    },
+    {
+      "activityId": "S04-U015",
+      "kind": "guide",
+      "screenId": "S04-U015",
+      "shownTextField": "narration",
+      "shownTextSha256": "d1e4eafbd6c5622d600d72387e9c79110870cd0494002fc26625848b12179c1d",
+      "sourceTextSha256": "d1e4eafbd6c5622d600d72387e9c79110870cd0494002fc26625848b12179c1d",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "invalid-activity-word-times",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "3c287fb6786c7be22b9daf8dc0a82d266f72797a9b2f4f14590975bf14d9059f",
+          "sourceAudioSha256": "826f6f1efb3c71277c68ee2fca2b49c4d0f929e9232f2cc2f8e74eb63222dd0f",
+          "sourceLedgerSha256": "ab9f7149f271004d0df133aea91bfe06968c8d79ff9d44b1c0afe2ac9b63d55e",
+          "sidecarSha256": "99788f2278508f33139ccd7d1170c187c836d0429c989148703e62f8dab0687e",
+          "baseRange": {
+            "startSeconds": 76.23,
+            "endSeconds": 98.1
+          },
+          "runtimeRange": {
+            "startSeconds": 76.23,
+            "endSeconds": 98.1
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "invalid-activity-word-times",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S04-U016",
+      "kind": "discussion",
+      "screenId": "S04-U016",
+      "shownTextField": "narration",
+      "shownTextSha256": "10bce4a6096f1a77506595b71c7af6df37baed97392fd3a1c501a62454e7f704",
+      "sourceTextSha256": "f87e85b2e1245e9c147233d6faa94b15e20b9ffde9c4b18348274fb3afb6ec70",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "insufficient-asr-match",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "3c287fb6786c7be22b9daf8dc0a82d266f72797a9b2f4f14590975bf14d9059f",
+          "sourceAudioSha256": "826f6f1efb3c71277c68ee2fca2b49c4d0f929e9232f2cc2f8e74eb63222dd0f",
+          "sourceLedgerSha256": "ab9f7149f271004d0df133aea91bfe06968c8d79ff9d44b1c0afe2ac9b63d55e",
+          "sidecarSha256": "99788f2278508f33139ccd7d1170c187c836d0429c989148703e62f8dab0687e",
+          "baseRange": {
+            "startSeconds": 98.1,
+            "endSeconds": 105.65
+          },
+          "runtimeRange": {
+            "startSeconds": 98.1,
+            "endSeconds": 105.9
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "insufficient-asr-match",
+          "schemaValid": true,
+          "matched": 10,
+          "total": 15
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U001",
+      "kind": "guide",
+      "screenId": "S05-U001",
+      "shownTextField": "narration",
+      "shownTextSha256": "40915459d3070b081f6298ca4a7a52a1f5a10ce875b7de37380cf051b9438494",
+      "sourceTextSha256": "40915459d3070b081f6298ca4a7a52a1f5a10ce875b7de37380cf051b9438494",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "outside-playback-range",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 6.6,
+            "endSeconds": 12.91
+          },
+          "runtimeRange": {
+            "startSeconds": 6.6,
+            "endSeconds": 13.16
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "outside-playback-range",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U002",
+      "kind": "guide",
+      "screenId": "S05-U002",
+      "shownTextField": "narration",
+      "shownTextSha256": "4aaa74202fbcc82bd2279b539e7e73cdbff83bdaf1cd2545339d44e80e5f7a2e",
+      "sourceTextSha256": "4aaa74202fbcc82bd2279b539e7e73cdbff83bdaf1cd2545339d44e80e5f7a2e",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "outside-playback-range",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 13.79,
+            "endSeconds": 18.79
+          },
+          "runtimeRange": {
+            "startSeconds": 13.79,
+            "endSeconds": 19.04
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "outside-playback-range",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U003",
+      "kind": "guide",
+      "screenId": "S05-U003",
+      "shownTextField": "narration",
+      "shownTextSha256": "8854a1c421960ed3035a668d1b742ebdeffd7902bbc5ecc6c50f0ed318d124db",
+      "sourceTextSha256": "8854a1c421960ed3035a668d1b742ebdeffd7902bbc5ecc6c50f0ed318d124db",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "invalid-activity-word-times",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 19.4,
+            "endSeconds": 37.4
+          },
+          "runtimeRange": {
+            "startSeconds": 19.4,
+            "endSeconds": 37.62
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "invalid-activity-word-times",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U004",
+      "kind": "discussion",
+      "screenId": "S05-U004",
+      "shownTextField": "narration",
+      "shownTextSha256": "22283afcd81d143179cf3ef57223105b42f99cb5fd73aaf8e27dbcbd0ddc32e0",
+      "sourceTextSha256": "29490817bc381de9d953a409f7b972afa925b99429535cead9c96efefb8161c5",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "invalid-activity-word-times",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 38.37,
+            "endSeconds": 55.89
+          },
+          "runtimeRange": {
+            "startSeconds": 38.37,
+            "endSeconds": 56.14
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "invalid-activity-word-times",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U005",
+      "kind": "guide",
+      "screenId": "S05-U005",
+      "shownTextField": "narration",
+      "shownTextSha256": "039b724dfcf54296b24f100c874b80a53ca4d1a7d95da38d6f2601cca4b4bab7",
+      "sourceTextSha256": "039b724dfcf54296b24f100c874b80a53ca4d1a7d95da38d6f2601cca4b4bab7",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 58.58,
+            "endSeconds": 97.1
+          },
+          "runtimeRange": {
+            "startSeconds": 58.58,
+            "endSeconds": 97.35
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 83,
+          "matched": 82,
+          "total": 83,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U006",
+      "kind": "discussion",
+      "screenId": "S05-U006",
+      "shownTextField": "narration",
+      "shownTextSha256": "87e671c34ba1f6349b7c7e2babd480b96cd430a040e70a2a24f8abdcc8ea1522",
+      "sourceTextSha256": "d4bf7769ca076999e7dffb20147f5d60b2211429bf16b64713cf04be4c1841f6",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 98.2,
+            "endSeconds": 117.09
+          },
+          "runtimeRange": {
+            "startSeconds": 98.2,
+            "endSeconds": 117.34
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 36,
+          "matched": 33,
+          "total": 36,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U007",
+      "kind": "guide",
+      "screenId": "S05-U007",
+      "shownTextField": "narration",
+      "shownTextSha256": "59fc37f91c8d8e725539d6c4484177eb6f81cf09a55c25e8429aa496b8e8e8a4",
+      "sourceTextSha256": "59fc37f91c8d8e725539d6c4484177eb6f81cf09a55c25e8429aa496b8e8e8a4",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "invalid-activity-word-times",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 120.54,
+            "endSeconds": 156.6
+          },
+          "runtimeRange": {
+            "startSeconds": 120.54,
+            "endSeconds": 156.85
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "invalid-activity-word-times",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U008",
+      "kind": "discussion",
+      "screenId": "S05-U008",
+      "shownTextField": "narration",
+      "shownTextSha256": "31dc8b744310287dafb84457c919f37c151a79d9ad6e478889c28a25f8a5cbca",
+      "sourceTextSha256": "750d8069726098b9f40c7e843ece6a19e3b1c2addf603d9c3ba0923b347619d7",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 157.42,
+            "endSeconds": 174.45
+          },
+          "runtimeRange": {
+            "startSeconds": 157.42,
+            "endSeconds": 174.45
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 34,
+          "matched": 31,
+          "total": 34,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U009",
+      "kind": "guide",
+      "screenId": "S05-U009",
+      "shownTextField": "sourceText",
+      "shownTextSha256": "e7f36b59157f751a102614386adfbf645c9ee5192b7fe9a22a0377f025054f28",
+      "sourceTextSha256": "e7f36b59157f751a102614386adfbf645c9ee5192b7fe9a22a0377f025054f28",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 177.56,
+            "endSeconds": 189.6
+          },
+          "runtimeRange": {
+            "startSeconds": 177.56,
+            "endSeconds": 189.71
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 25,
+          "matched": 25,
+          "total": 25,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U010",
+      "kind": "guide",
+      "screenId": "S05-U009",
+      "shownTextField": "sourceText",
+      "shownTextSha256": "786388b8d24c7fddaa0ec43cce0be55263201dfd8904ee93de771020082e7a42",
+      "sourceTextSha256": "786388b8d24c7fddaa0ec43cce0be55263201dfd8904ee93de771020082e7a42",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 190.78,
+            "endSeconds": 193.47
+          },
+          "runtimeRange": {
+            "startSeconds": 190.78,
+            "endSeconds": 193.7
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 7,
+          "matched": 7,
+          "total": 7,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U011",
+      "kind": "guide",
+      "screenId": "S05-U009",
+      "shownTextField": "sourceText",
+      "shownTextSha256": "0163102ec7340a8aa513ccb4a912481b73d99906e03d6e28f47d33002c9b1f57",
+      "sourceTextSha256": "0163102ec7340a8aa513ccb4a912481b73d99906e03d6e28f47d33002c9b1f57",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 194.86,
+            "endSeconds": 197.23
+          },
+          "runtimeRange": {
+            "startSeconds": 194.86,
+            "endSeconds": 197.48
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 5,
+          "matched": 5,
+          "total": 5,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U012",
+      "kind": "guide",
+      "screenId": "S05-U009",
+      "shownTextField": "sourceText",
+      "shownTextSha256": "0fa82a8d5c49646352f7fae7611b31d11d8a1a2ad00f4eaae0a859f289a810a9",
+      "sourceTextSha256": "0fa82a8d5c49646352f7fae7611b31d11d8a1a2ad00f4eaae0a859f289a810a9",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 198.5,
+            "endSeconds": 205.53
+          },
+          "runtimeRange": {
+            "startSeconds": 198.5,
+            "endSeconds": 205.78
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 17,
+          "matched": 17,
+          "total": 17,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U013",
+      "kind": "discussion",
+      "screenId": "S05-U013",
+      "shownTextField": "narration",
+      "shownTextSha256": "f9712ca1fc94c778c9eb574924f9092bc5a6560f60776c2d60346367057861e5",
+      "sourceTextSha256": "76e052294d16f36c0e5976a63ae06263c41fd521564f2f5d67863e0d919f0cc5",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 205.94,
+            "endSeconds": 218.25
+          },
+          "runtimeRange": {
+            "startSeconds": 205.94,
+            "endSeconds": 218.5
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 30,
+          "matched": 25,
+          "total": 30,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U014",
+      "kind": "guide",
+      "screenId": "S05-U014",
+      "shownTextField": "narration",
+      "shownTextSha256": "d84295ec51c2e17b7deec22a9ced29f64af516203735a4173ad1723a906dc195",
+      "sourceTextSha256": "d84295ec51c2e17b7deec22a9ced29f64af516203735a4173ad1723a906dc195",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 224.11,
+            "endSeconds": 253.42
+          },
+          "runtimeRange": {
+            "startSeconds": 224.11,
+            "endSeconds": 253.67
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 81,
+          "matched": 80,
+          "total": 81,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U015",
+      "kind": "discussion",
+      "screenId": "S05-U015",
+      "shownTextField": "narration",
+      "shownTextSha256": "7206ddd5a1aa8cdcde6723ef46c482b4168e8ec0c543d5d02b9d5325db96003f",
+      "sourceTextSha256": "66d6d7381ad3e1d6354b0080ad9df455e8ad9af8e7fd5d45e59a488fb1f65cff",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "outside-playback-range",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 254.33,
+            "endSeconds": 272.92
+          },
+          "runtimeRange": {
+            "startSeconds": 254.33,
+            "endSeconds": 273.17
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "outside-playback-range",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U016",
+      "kind": "guide",
+      "screenId": "S05-U016",
+      "shownTextField": "narration",
+      "shownTextSha256": "32454b88612b0c55c8ca5d32c94cc66279f9de3aeb6a552c0882471bd65369eb",
+      "sourceTextSha256": "32454b88612b0c55c8ca5d32c94cc66279f9de3aeb6a552c0882471bd65369eb",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 275.85,
+            "endSeconds": 287.95
+          },
+          "runtimeRange": {
+            "startSeconds": 275.85,
+            "endSeconds": 288.2
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 30,
+          "matched": 30,
+          "total": 30,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U017",
+      "kind": "discussion",
+      "screenId": "S05-U017",
+      "shownTextField": "narration",
+      "shownTextSha256": "35ee148710ecb6e27af721db86ea8f53c801c58a13af724b669030dfc67338b8",
+      "sourceTextSha256": "d912af0d0f4541a47925c44e5549cbf9a9429d9cb89249c93b35207f81302839",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 288.88,
+            "endSeconds": 302.31
+          },
+          "runtimeRange": {
+            "startSeconds": 288.88,
+            "endSeconds": 302.56
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 30,
+          "matched": 27,
+          "total": 30,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U018",
+      "kind": "guide",
+      "screenId": "S05-U018",
+      "shownTextField": "narration",
+      "shownTextSha256": "2bf3bc8db8555a2e8ffe4bb29f54310e35de2aee9a2738a903c090b734b2c041",
+      "sourceTextSha256": "2bf3bc8db8555a2e8ffe4bb29f54310e35de2aee9a2738a903c090b734b2c041",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "invalid-activity-word-times",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 307.35,
+            "endSeconds": 351.08
+          },
+          "runtimeRange": {
+            "startSeconds": 307.35,
+            "endSeconds": 351.33
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "invalid-activity-word-times",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U019",
+      "kind": "discussion",
+      "screenId": "S05-U019",
+      "shownTextField": "narration",
+      "shownTextSha256": "72256b01b543161b97815ca8441ae4b58b7da97d89eabe4855b40cf83caf5972",
+      "sourceTextSha256": "4e5864583ca1e8e3933e0101d5a73482379e8d79a82760ad82dc8464c72efa23",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "insufficient-asr-match",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 351.77,
+            "endSeconds": 368.73
+          },
+          "runtimeRange": {
+            "startSeconds": 351.77,
+            "endSeconds": 368.98
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "insufficient-asr-match",
+          "schemaValid": true,
+          "matched": 24,
+          "total": 36
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U020",
+      "kind": "guide",
+      "screenId": "S05-U020",
+      "shownTextField": "narration",
+      "shownTextSha256": "ab6d8f78ca7cd550112526a568ae72326367f3124cccf8de70cae2815549273b",
+      "sourceTextSha256": "ab6d8f78ca7cd550112526a568ae72326367f3124cccf8de70cae2815549273b",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "invalid-activity-word-times",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 370.24,
+            "endSeconds": 425.49
+          },
+          "runtimeRange": {
+            "startSeconds": 370.24,
+            "endSeconds": 425.74
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "invalid-activity-word-times",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U021",
+      "kind": "guide",
+      "screenId": "S05-U021",
+      "shownTextField": "narration",
+      "shownTextSha256": "b601a45d21f19855a4a5fd55e9d7d23766b249a04075c00aa75f51e075a7abab",
+      "sourceTextSha256": "b601a45d21f19855a4a5fd55e9d7d23766b249a04075c00aa75f51e075a7abab",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 426.57,
+            "endSeconds": 429.15
+          },
+          "runtimeRange": {
+            "startSeconds": 426.57,
+            "endSeconds": 429.15
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 7,
+          "matched": 7,
+          "total": 7,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U022",
+      "kind": "guide",
+      "screenId": "S05-U022",
+      "shownTextField": "narration",
+      "shownTextSha256": "4b5a59147eb2990b414fbb359e0ec0eb692ce8182032b7ab29b5e8beec772562",
+      "sourceTextSha256": "4b5a59147eb2990b414fbb359e0ec0eb692ce8182032b7ab29b5e8beec772562",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 429.15,
+            "endSeconds": 431.7
+          },
+          "runtimeRange": {
+            "startSeconds": 429.15,
+            "endSeconds": 431.7
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 7,
+          "matched": 7,
+          "total": 7,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U023",
+      "kind": "guide",
+      "screenId": "S05-U023",
+      "shownTextField": "narration",
+      "shownTextSha256": "8f2f9d7281a70895660cfc0a487264f0e7e332dbb88411f43d9ed9e64923826e",
+      "sourceTextSha256": "8f2f9d7281a70895660cfc0a487264f0e7e332dbb88411f43d9ed9e64923826e",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 431.7,
+            "endSeconds": 433.71
+          },
+          "runtimeRange": {
+            "startSeconds": 431.7,
+            "endSeconds": 433.71
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 3,
+          "matched": 3,
+          "total": 3,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U024",
+      "kind": "guide",
+      "screenId": "S05-U024",
+      "shownTextField": "narration",
+      "shownTextSha256": "1d4edc695517dc6fe9ca8ab9bbc7e96761c27e36bc5bcd7e59dc0258b9476085",
+      "sourceTextSha256": "1d4edc695517dc6fe9ca8ab9bbc7e96761c27e36bc5bcd7e59dc0258b9476085",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "outside-playback-range",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 433.71,
+            "endSeconds": 435.2
+          },
+          "runtimeRange": {
+            "startSeconds": 433.71,
+            "endSeconds": 435.18
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "outside-playback-range",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U025",
+      "kind": "guide",
+      "screenId": "S05-U025",
+      "shownTextField": "narration",
+      "shownTextSha256": "a2c4c221120e2921afeccd0ce1752219a30834cdf11a33183da9931b8febc3aa",
+      "sourceTextSha256": "a2c4c221120e2921afeccd0ce1752219a30834cdf11a33183da9931b8febc3aa",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 435.2,
+            "endSeconds": 436.56
+          },
+          "runtimeRange": {
+            "startSeconds": 435.2,
+            "endSeconds": 436.56
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 3,
+          "matched": 3,
+          "total": 3,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U026",
+      "kind": "guide",
+      "screenId": "S05-U026",
+      "shownTextField": "narration",
+      "shownTextSha256": "1ddb5c2b9b6047991cd19ecbb21e7d465d64141f57b949f4f9fcf0a7b8c15107",
+      "sourceTextSha256": "1ddb5c2b9b6047991cd19ecbb21e7d465d64141f57b949f4f9fcf0a7b8c15107",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 436.57,
+            "endSeconds": 438.1
+          },
+          "runtimeRange": {
+            "startSeconds": 436.57,
+            "endSeconds": 438.1
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 3,
+          "matched": 3,
+          "total": 3,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U027",
+      "kind": "guide",
+      "screenId": "S05-U027",
+      "shownTextField": "narration",
+      "shownTextSha256": "05e569172a190cbb6d8d2c5709ebaaa42301cec7dd7ed90e1ef8d4f473f25176",
+      "sourceTextSha256": "05e569172a190cbb6d8d2c5709ebaaa42301cec7dd7ed90e1ef8d4f473f25176",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 438.1,
+            "endSeconds": 439.49
+          },
+          "runtimeRange": {
+            "startSeconds": 438.1,
+            "endSeconds": 439.49
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 3,
+          "matched": 3,
+          "total": 3,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U028",
+      "kind": "guide",
+      "screenId": "S05-U028",
+      "shownTextField": "narration",
+      "shownTextSha256": "92a14ec9adf0ddaf64d22c77bfb7caa0a85304c0814c285a8433e6df2938c34d",
+      "sourceTextSha256": "92a14ec9adf0ddaf64d22c77bfb7caa0a85304c0814c285a8433e6df2938c34d",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 439.49,
+            "endSeconds": 441.79
+          },
+          "runtimeRange": {
+            "startSeconds": 439.49,
+            "endSeconds": 442.04
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 5,
+          "matched": 4,
+          "total": 5,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U029",
+      "kind": "discussion",
+      "screenId": "S05-U029",
+      "shownTextField": "narration",
+      "shownTextSha256": "e9fba10b3565aa6a86591be3d907b9aeacee35b48a30d595e865b3f4db31043e",
+      "sourceTextSha256": "e9fba10b3565aa6a86591be3d907b9aeacee35b48a30d595e865b3f4db31043e",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "invalid-activity-word-times",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 443.45,
+            "endSeconds": 471.07
+          },
+          "runtimeRange": {
+            "startSeconds": 443.45,
+            "endSeconds": 471.32
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "invalid-activity-word-times",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U030",
+      "kind": "guide",
+      "screenId": "S05-U030",
+      "shownTextField": "narration",
+      "shownTextSha256": "31421e07b0bf6f07e12f0bf88ebf75e7f4f8ec713f2ad84671689f0c2d84ba32",
+      "sourceTextSha256": "31421e07b0bf6f07e12f0bf88ebf75e7f4f8ec713f2ad84671689f0c2d84ba32",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "invalid-activity-word-times",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 472.21,
+            "endSeconds": 485.97
+          },
+          "runtimeRange": {
+            "startSeconds": 472.21,
+            "endSeconds": 486.22
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "invalid-activity-word-times",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U031",
+      "kind": "discussion",
+      "screenId": "S05-U031",
+      "shownTextField": "narration",
+      "shownTextSha256": "823b88d7156ced45b8359386bac8b108ea6b73f7a9916b4b86f74f562fe5ea2e",
+      "sourceTextSha256": "1b05943c2ebd0e4e872a0583e1dd4bc854179e19f97d53f6c0194d4d7a3c428d",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 486.57,
+            "endSeconds": 500.73
+          },
+          "runtimeRange": {
+            "startSeconds": 486.57,
+            "endSeconds": 500.98
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 32,
+          "matched": 30,
+          "total": 32,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U032",
+      "kind": "guide",
+      "screenId": "S05-U032",
+      "shownTextField": "narration",
+      "shownTextSha256": "039a980368ab3a5f94b8eb747ee898160f6292eac8820b830d5a75e90a46ab10",
+      "sourceTextSha256": "039a980368ab3a5f94b8eb747ee898160f6292eac8820b830d5a75e90a46ab10",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 501.89,
+            "endSeconds": 553.19
+          },
+          "runtimeRange": {
+            "startSeconds": 501.89,
+            "endSeconds": 553.44
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 131,
+          "matched": 125,
+          "total": 131,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U033",
+      "kind": "guide",
+      "screenId": "S05-U033",
+      "shownTextField": "narration",
+      "shownTextSha256": "4520ee5390c426d7a7afa0008aab573566a90ca6a703583ac012446acfa9190c",
+      "sourceTextSha256": "4520ee5390c426d7a7afa0008aab573566a90ca6a703583ac012446acfa9190c",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "invalid-activity-word-times",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 553.81,
+            "endSeconds": 563.38
+          },
+          "runtimeRange": {
+            "startSeconds": 553.81,
+            "endSeconds": 563.63
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "invalid-activity-word-times",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U034",
+      "kind": "guide",
+      "screenId": "S05-U034",
+      "shownTextField": "narration",
+      "shownTextSha256": "fdf76e10bda9745f4b4ff4b51c05e29c521518454e42bcece5717ac8bd97f7a0",
+      "sourceTextSha256": "fdf76e10bda9745f4b4ff4b51c05e29c521518454e42bcece5717ac8bd97f7a0",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 564.21,
+            "endSeconds": 583.31
+          },
+          "runtimeRange": {
+            "startSeconds": 564.21,
+            "endSeconds": 583.56
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 56,
+          "matched": 56,
+          "total": 56,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U035",
+      "kind": "discussion",
+      "screenId": "S05-U035",
+      "shownTextField": "narration",
+      "shownTextSha256": "f6126454740a6085e6505885e4b1d5be9ef3be21b69bc0f60c778ac804b14eb9",
+      "sourceTextSha256": "1cc6863506ee09682719a3747264a4d2550902ecc58267b360961934fa573acd",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "invalid-activity-word-times",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 583.8,
+            "endSeconds": 596.65
+          },
+          "runtimeRange": {
+            "startSeconds": 583.8,
+            "endSeconds": 596.9
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "invalid-activity-word-times",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U036",
+      "kind": "guide",
+      "screenId": "S05-U036",
+      "shownTextField": "narration",
+      "shownTextSha256": "2922f9849ba2a2ba71d8673d78da7bb18c0e677a7ac0edabc557cb3c43404a8a",
+      "sourceTextSha256": "2922f9849ba2a2ba71d8673d78da7bb18c0e677a7ac0edabc557cb3c43404a8a",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 600.06,
+            "endSeconds": 624.23
+          },
+          "runtimeRange": {
+            "startSeconds": 600.06,
+            "endSeconds": 624.48
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 69,
+          "matched": 69,
+          "total": 69,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U037",
+      "kind": "guide",
+      "screenId": "S05-U037",
+      "shownTextField": "narration",
+      "shownTextSha256": "6f062520ed332b5943042d32a4fff7572bdf96432b58626e0c717f29e5b339c7",
+      "sourceTextSha256": "6f062520ed332b5943042d32a4fff7572bdf96432b58626e0c717f29e5b339c7",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 624.73,
+            "endSeconds": 638.98
+          },
+          "runtimeRange": {
+            "startSeconds": 624.73,
+            "endSeconds": 639.23
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 31,
+          "matched": 28,
+          "total": 31,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U038",
+      "kind": "discussion",
+      "screenId": "S05-U038",
+      "shownTextField": "narration",
+      "shownTextSha256": "ded6af18f9c8ef1473bd665a95d0d5fdd74bd06dd3b2607d07bd7ee0a83db44e",
+      "sourceTextSha256": "14301f97a98f76438909cc98a2c23edbb166b3c45f424a8287931ab9c72da3a9",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 639.64,
+            "endSeconds": 651.71
+          },
+          "runtimeRange": {
+            "startSeconds": 639.64,
+            "endSeconds": 651.96
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 32,
+          "matched": 29,
+          "total": 32,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U039",
+      "kind": "guide",
+      "screenId": "S05-U039",
+      "shownTextField": "narration",
+      "shownTextSha256": "f1440ad39d62619c439173dd86cb3702da5ebd030c5e7a9732c11ec7983fd40f",
+      "sourceTextSha256": "f1440ad39d62619c439173dd86cb3702da5ebd030c5e7a9732c11ec7983fd40f",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 653.51,
+            "endSeconds": 659.05
+          },
+          "runtimeRange": {
+            "startSeconds": 653.51,
+            "endSeconds": 659.06
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 8,
+          "matched": 7,
+          "total": 8,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U040",
+      "kind": "guide",
+      "screenId": "S05-U040",
+      "shownTextField": "narration",
+      "shownTextSha256": "78184a33bfe4e9d056df07c2c6d82c5546c37d682bb7542afeee06b3276cf725",
+      "sourceTextSha256": "78184a33bfe4e9d056df07c2c6d82c5546c37d682bb7542afeee06b3276cf725",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "invalid-activity-word-times",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 659.66,
+            "endSeconds": 676.74
+          },
+          "runtimeRange": {
+            "startSeconds": 659.66,
+            "endSeconds": 676.87
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "invalid-activity-word-times",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U041",
+      "kind": "discussion",
+      "screenId": "S05-U041",
+      "shownTextField": "narration",
+      "shownTextSha256": "893834bfae36d2538852468bcc69bb6a0dcb59b0069c1b5655f2cba59c62f763",
+      "sourceTextSha256": "88ac3f70bced86a8f240d4d3019a6bb0172c6c572c18d91752d779031ef0ecb2",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 676.89,
+            "endSeconds": 690.84
+          },
+          "runtimeRange": {
+            "startSeconds": 676.89,
+            "endSeconds": 691.09
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 32,
+          "matched": 29,
+          "total": 32,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U042",
+      "kind": "guide",
+      "screenId": "S05-U042",
+      "shownTextField": "narration",
+      "shownTextSha256": "71ec6b8881bb4156e393d94fcb6103cc48bdd2d861913ac904f6cc64dbae5521",
+      "sourceTextSha256": "71ec6b8881bb4156e393d94fcb6103cc48bdd2d861913ac904f6cc64dbae5521",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "invalid-activity-word-times",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 691.73,
+            "endSeconds": 731.1
+          },
+          "runtimeRange": {
+            "startSeconds": 691.73,
+            "endSeconds": 731.35
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "invalid-activity-word-times",
+          "schemaValid": true
+        }
+      ]
+    },
+    {
+      "activityId": "S05-U043",
+      "kind": "discussion",
+      "screenId": "S05-U043",
+      "shownTextField": "narration",
+      "shownTextSha256": "ebaff8d1798d3ef3a098e43ceab27b10e0825aaeea14b715a69717df461aba93",
+      "sourceTextSha256": "f244f5eaca5a8e2249591c38e3c24c7791a54621d82a6c45284df916f17985f9",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "f90ebff9f73845071095d908ffcb8b49eafb63b4db984f205cefe318a027fa3a",
+          "sourceAudioSha256": "76a956c8860d602246356b06b6d289617edbab7c82eef2e91e77974f2e33eb14",
+          "sourceLedgerSha256": "c6fdd758ba7cd8d73cd3f61b300913da7f518390a074769a2261660ce0758050",
+          "sidecarSha256": "8ba898a562bb7118f484a9759759f476d00b784d3ff9c34b3bb445a6493cb3bd",
+          "baseRange": {
+            "startSeconds": 731.93,
+            "endSeconds": 744.72
+          },
+          "runtimeRange": {
+            "startSeconds": 731.93,
+            "endSeconds": 744.97
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 32,
+          "matched": 29,
+          "total": 32,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S06-U001",
+      "kind": "guide",
+      "screenId": "S06-U001",
+      "shownTextField": "narration",
+      "shownTextSha256": "93b85bf4b7d209191fc1b2aab81af11a43aa2d1770cbfefc6d31a4ea7af57c75",
+      "sourceTextSha256": "93b85bf4b7d209191fc1b2aab81af11a43aa2d1770cbfefc6d31a4ea7af57c75",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "e91a75ce6ea2eed4c252676d4f99a413905374cec33c2970d77b96cba6c5fc2a",
+          "sourceAudioSha256": "d0f0c608fb2c8b59aaf16ce72047978d0056a109354997ae982e81bb32451ef6",
+          "sourceLedgerSha256": "2717564c90060d62aded9a142bc2646cb8ff12aeddf1aa9254d7e951a205beff",
+          "sidecarSha256": "fe63e77fdb900658b892967e729a3345c0ccf324a8ae3bff8220ef6bde6c3b96",
+          "baseRange": {
+            "startSeconds": 8.27,
+            "endSeconds": 13.21
+          },
+          "runtimeRange": {
+            "startSeconds": 8.27,
+            "endSeconds": 13.46
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 12,
+          "matched": 11,
+          "total": 12,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S06-U002",
+      "kind": "guide",
+      "screenId": "S06-U002",
+      "shownTextField": "narration",
+      "shownTextSha256": "f9a68c85da6011813d00235ff269684f4e41b2858ca7c885c662647027a65ac7",
+      "sourceTextSha256": "f9a68c85da6011813d00235ff269684f4e41b2858ca7c885c662647027a65ac7",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "e91a75ce6ea2eed4c252676d4f99a413905374cec33c2970d77b96cba6c5fc2a",
+          "sourceAudioSha256": "d0f0c608fb2c8b59aaf16ce72047978d0056a109354997ae982e81bb32451ef6",
+          "sourceLedgerSha256": "2717564c90060d62aded9a142bc2646cb8ff12aeddf1aa9254d7e951a205beff",
+          "sidecarSha256": "fe63e77fdb900658b892967e729a3345c0ccf324a8ae3bff8220ef6bde6c3b96",
+          "baseRange": {
+            "startSeconds": 13.55,
+            "endSeconds": 18.21
+          },
+          "runtimeRange": {
+            "startSeconds": 13.55,
+            "endSeconds": 18.46
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 13,
+          "matched": 13,
+          "total": 13,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S06-U003",
+      "kind": "guide",
+      "screenId": "S06-U003",
+      "shownTextField": "narration",
+      "shownTextSha256": "118886b21590b72ad3c4b0741e745d23b3f371b2a70dc461fd00ca4426f83cf5",
+      "sourceTextSha256": "118886b21590b72ad3c4b0741e745d23b3f371b2a70dc461fd00ca4426f83cf5",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "e91a75ce6ea2eed4c252676d4f99a413905374cec33c2970d77b96cba6c5fc2a",
+          "sourceAudioSha256": "d0f0c608fb2c8b59aaf16ce72047978d0056a109354997ae982e81bb32451ef6",
+          "sourceLedgerSha256": "2717564c90060d62aded9a142bc2646cb8ff12aeddf1aa9254d7e951a205beff",
+          "sidecarSha256": "fe63e77fdb900658b892967e729a3345c0ccf324a8ae3bff8220ef6bde6c3b96",
+          "baseRange": {
+            "startSeconds": 18.75,
+            "endSeconds": 33.24
+          },
+          "runtimeRange": {
+            "startSeconds": 18.75,
+            "endSeconds": 33.49
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 33,
+          "matched": 33,
+          "total": 33,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S06-U004",
+      "kind": "discussion",
+      "screenId": "S06-U004",
+      "shownTextField": "narration",
+      "shownTextSha256": "d24135716d01d62e30c742c11d98f643035456f9b9559eed52791c5257303fc1",
+      "sourceTextSha256": "cded91bffe9ced4e0136ec69f976de43e0099c882cd030cd653c7604eb3243df",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "e91a75ce6ea2eed4c252676d4f99a413905374cec33c2970d77b96cba6c5fc2a",
+          "sourceAudioSha256": "d0f0c608fb2c8b59aaf16ce72047978d0056a109354997ae982e81bb32451ef6",
+          "sourceLedgerSha256": "2717564c90060d62aded9a142bc2646cb8ff12aeddf1aa9254d7e951a205beff",
+          "sidecarSha256": "fe63e77fdb900658b892967e729a3345c0ccf324a8ae3bff8220ef6bde6c3b96",
+          "baseRange": {
+            "startSeconds": 34.27,
+            "endSeconds": 49.5
+          },
+          "runtimeRange": {
+            "startSeconds": 34.27,
+            "endSeconds": 49.75
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 60,
+          "matched": 46,
+          "total": 60,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    },
+    {
+      "activityId": "S06-U006",
+      "kind": "discussion",
+      "screenId": "S06-U006",
+      "shownTextField": "narration",
+      "shownTextSha256": "8bfbc7346124fdba8c2f5b3608add2caf56538a353a7f2f01c9a7d7abe9bdca3",
+      "sourceTextSha256": "f4ba80959043420736fb3866c4025abe767548564dce936e333f4afd7c1eb15b",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "insufficient-asr-match",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "e91a75ce6ea2eed4c252676d4f99a413905374cec33c2970d77b96cba6c5fc2a",
+          "sourceAudioSha256": "d0f0c608fb2c8b59aaf16ce72047978d0056a109354997ae982e81bb32451ef6",
+          "sourceLedgerSha256": "2717564c90060d62aded9a142bc2646cb8ff12aeddf1aa9254d7e951a205beff",
+          "sidecarSha256": "fe63e77fdb900658b892967e729a3345c0ccf324a8ae3bff8220ef6bde6c3b96",
+          "baseRange": {
+            "startSeconds": 54.26,
+            "endSeconds": 67.95
+          },
+          "runtimeRange": {
+            "startSeconds": 54.26,
+            "endSeconds": 68.2
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "insufficient-asr-match",
+          "schemaValid": true,
+          "matched": 34,
+          "total": 49
+        }
+      ]
+    },
+    {
+      "activityId": "S06-U008",
+      "kind": "discussion",
+      "screenId": "S06-U008",
+      "shownTextField": "narration",
+      "shownTextSha256": "8723353d0625376a7a479bfb78eae61f4eb05d09d326e172edeb53b51a003d85",
+      "sourceTextSha256": "756d288e53b9577b559b2cc7fed8916f6d7894741a4f4175741af4c573a5c560",
+      "selectedQuality": "medium",
+      "accepted": false,
+      "status": "untimed",
+      "reason": "insufficient-asr-match",
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "e91a75ce6ea2eed4c252676d4f99a413905374cec33c2970d77b96cba6c5fc2a",
+          "sourceAudioSha256": "d0f0c608fb2c8b59aaf16ce72047978d0056a109354997ae982e81bb32451ef6",
+          "sourceLedgerSha256": "2717564c90060d62aded9a142bc2646cb8ff12aeddf1aa9254d7e951a205beff",
+          "sidecarSha256": "fe63e77fdb900658b892967e729a3345c0ccf324a8ae3bff8220ef6bde6c3b96",
+          "baseRange": {
+            "startSeconds": 72.25,
+            "endSeconds": 84.45
+          },
+          "runtimeRange": {
+            "startSeconds": 72.25,
+            "endSeconds": 84.46
+          },
+          "sourceBindingVerified": true,
+          "accepted": false,
+          "status": "untimed",
+          "reason": "insufficient-asr-match",
+          "schemaValid": true,
+          "matched": 38,
+          "total": 60
+        }
+      ]
+    },
+    {
+      "activityId": "S06-U010",
+      "kind": "discussion",
+      "screenId": "S06-U010",
+      "shownTextField": "narration",
+      "shownTextSha256": "6c59b2b3205c917abe927dc91e5d1b0f96fc2ba542434a0400fbe757bb8c7236",
+      "sourceTextSha256": "6c59b2b3205c917abe927dc91e5d1b0f96fc2ba542434a0400fbe757bb8c7236",
+      "selectedQuality": "medium",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "variants": [
+        {
+          "quality": "medium",
+          "audioSha256": "e91a75ce6ea2eed4c252676d4f99a413905374cec33c2970d77b96cba6c5fc2a",
+          "sourceAudioSha256": "d0f0c608fb2c8b59aaf16ce72047978d0056a109354997ae982e81bb32451ef6",
+          "sourceLedgerSha256": "2717564c90060d62aded9a142bc2646cb8ff12aeddf1aa9254d7e951a205beff",
+          "sidecarSha256": "fe63e77fdb900658b892967e729a3345c0ccf324a8ae3bff8220ef6bde6c3b96",
+          "baseRange": {
+            "startSeconds": 88.01,
+            "endSeconds": 98.55
+          },
+          "runtimeRange": {
+            "startSeconds": 88.01,
+            "endSeconds": 98.8
+          },
+          "sourceBindingVerified": true,
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "words": 28,
+          "matched": 27,
+          "total": 28,
+          "clockDomain": "delivery-media-seconds"
+        }
+      ]
+    }
+  ],
+  "scope": "The111 source-ledger-bound guide/discussion routes, evaluated against canonical delivered OGG descriptors and their delivery-media-seconds sidecars. The60 accepted predicates are NOT executable-original/native-MP3 playback or highlight passes. In particular the d631 mapping explicitly excludes the native MP3 clock. Native MP3 source words are not qualified by copying/renaming delivery sidecars. Derived resource subroutes are separate; whole-file native derivatives and term descriptions gain no word qualification here. No media fetch, native playback, acoustic accuracy, physical-device acceptance or current production storage query; repository sidecar absence does not establish publisher absence. Known untimed routes remain explicit; not an all111-pass claim."
+}
