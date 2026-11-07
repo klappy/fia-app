@@ -183,7 +183,7 @@ it('an admitted guide with a requested image description honors its visual Play 
  libraryAdapter.select.mockResolvedValue({descriptor,presentation:visual});libraryAdapter.mediaStatus.mockResolvedValue({deliveryRevision:'d'.repeat(64),files:[{path:'/test-description.mp3',bytes:3,group:'audio'}]});
  const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(3),mime:'audio/mpeg'});
  render(App);await waitFor(()=>expect(document.querySelector('.resource-visual')).toBeTruthy());await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Settings',exact:true}));await fireEvent.click(screen.getByRole('checkbox',{name:/Describe images and maps/}));await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));
- await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await waitFor(()=>expect(request).toHaveBeenCalled());expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();expect(audio.play.mock.calls[0][0]).toBe('Describe this image');
+ await fireEvent.click(await screen.findByRole('button',{name:'Play',exact:true}));await waitFor(()=>expect(request).toHaveBeenCalled());expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();expect(audio.play.mock.calls[0][0]).toBe('Describe this image');
 });
 
 it('qualified original whole-file playback uses native EOF at 1x with no range argument',async()=>{

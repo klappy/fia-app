@@ -1122,3 +1122,49 @@ it('missing selected video size plays the default and explains the fallback',asy
  await startAt('S02-U005','waiting');await fireEvent.click(screen.getByRole('button',{name:'Play video',exact:true}));await settle();await settle();await settle();
  expect(document.querySelector('video')?.getAttribute('src')).toBe('blob:default-video');expect(screen.getByText('Small isn’t ready for this video yet. Playing Large instead.')).toBeTruthy();expect(request.mock.calls[0][4]).toBe('large');
 });
+
+async function verifiedVisualFixture(id){
+ const {createHash,webcrypto}=await import('node:crypto');vi.stubGlobal('crypto',webcrypto);
+ const {canonicalPreparationJSON}=await import('../src/lib/prepared-audio.js');
+ const asset=assets[id],generation='b'.repeat(64),sha256='e'.repeat(64),path=`/packs/${bundledPack.id}/visuals/${id}.png`;
+ return {path,group:'image',mime:'image/png',sha256,sourceSha256:sha256,bytes:3,sourceBytes:3,deliveryRevision:generation,
+ deliveryURL:`/v1/verified-visuals/${bundledPack.id}/${bundledPack.revision}/${generation}/${id}/${sha256}`,
+ visualPublication:{schema:'fia-verified-visual@1',packId:bundledPack.id,presentationRevision:bundledPack.revision,assetId:id,kind:asset.kind,
+ sourceEvidenceSha256:createHash('sha256').update(canonicalPreparationJSON(asset.sourceEvidence)).digest('hex'),recipeSha256:'c'.repeat(64),pixelsSha256:'d'.repeat(64),width:1,height:1}};
+}
+it('current verified visual logical path renders even when the authored asset has no src',async()=>{
+ const id=activities.find(a=>assets[a.assetId]?.kind==='image').assetId,original=assets[id].src,originalEvidence=assets[id].sourceEvidence;assets[id].sourceEvidence=originalEvidence||{id,fixture:'reviewed source binding'};const file=await verifiedVisualFixture(id);delete assets[id].src;
+ try{vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:file.deliveryRevision,files:[file]});
+ const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(3).buffer,mime:'image/png'});
+ vi.stubGlobal('URL',class extends URL{static createObjectURL(){return 'blob:verified-logical-visual';}static revokeObjectURL(){}});
+ await startAt(activities.find(a=>a.assetId===id).id);await waitFor(()=>expect(document.querySelector('.visual-explorer img')?.getAttribute('src')).toBe('blob:verified-logical-visual'));
+ expect(request.mock.calls[0][1]).toBe(file.path);expect(assets[id].src).toBeUndefined();
+ }finally{assets[id].src=original;if(originalEvidence===undefined)delete assets[id].sourceEvidence;else assets[id].sourceEvidence=originalEvidence;}
+});
+it('cold offline launch restores the saved verified visual binding before rendering cached bytes',async()=>{
+ const id=activities.find(a=>assets[a.assetId]?.kind==='image').assetId,original=assets[id].src,originalEvidence=assets[id].sourceEvidence;assets[id].sourceEvidence=originalEvidence||{id,fixture:'reviewed source binding'};const file=await verifiedVisualFixture(id);delete assets[id].src;
+ try{vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:true,active:{manifest:{packId:bundledPack.id,presentationRevision:bundledPack.revision,deliveryRevision:file.deliveryRevision,files:[file]},files:[file]}});
+ vi.spyOn(libraryAdapter,'mediaStatus').mockRejectedValue(Object.assign(Error('offline'),{code:'media-status-transient'}));const request=vi.spyOn(libraryAdapter,'playMedia');
+ await startAt(activities.find(a=>a.assetId===id).id);await waitFor(()=>expect(document.querySelector('.visual-explorer img')?.getAttribute('src')).toBe(file.path));expect(request).not.toHaveBeenCalled();
+ }finally{assets[id].src=original;if(originalEvidence===undefined)delete assets[id].sourceEvidence;else assets[id].sourceEvidence=originalEvidence;}
+});
+
+it('opening a step resource moves focus to Return and restores its originating button',async()=>{
+ const original=activities[0],id=Object.values(assets).find(a=>a.kind==='image').id;activities[0]={...original,relatedAssetIds:[id]};
+ try{
+  await startAt(original.id,'waiting');
+  const shelf=screen.getByRole('navigation',{name:'Resources for this step'}),trigger=within(shelf).getAllByRole('button').find(button=>button.dataset.resourceId===id);
+  trigger.focus();await fireEvent.click(trigger);
+  const back=screen.getByRole('button',{name:'Return to guide'});await waitFor(()=>expect(document.activeElement).toBe(back));
+  await fireEvent.click(back);
+  await waitFor(()=>expect(document.activeElement?.dataset.resourceId).toBe(id));expect(state().index).toBe(0);
+ }finally{cleanup();activities[0]=original;}
+});
+
+it('step resources show Checking while media verification is pending',async()=>{
+ const original=activities[0],id=Object.values(assets).find(a=>a.kind==='image').id;activities[0]={...original,relatedAssetIds:[id]};
+ vi.spyOn(libraryAdapter,'mediaStatus').mockImplementation(()=>new Promise(()=>{}));
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});
+ try{await startAt(original.id,'waiting');const shelf=screen.getByRole('navigation',{name:'Resources for this step'}),trigger=within(shelf).getAllByRole('button').find(button=>button.dataset.resourceId===id);expect(trigger.textContent).toContain('Checking');expect(trigger.textContent).not.toContain('Unavailable');expect(trigger.disabled).toBe(false);}
+ finally{cleanup();activities[0]=original;}
+});

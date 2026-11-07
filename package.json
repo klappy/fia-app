@@ -16,6 +16,7 @@
     "test:worker": "node --test tests/worker-serving/*.test.mjs"
   },
   "dependencies": {
+    "jpeg-js": "0.4.4",
     "svelte": "5.57.1",
     "lucide-svelte": "0.468.0"
   },
