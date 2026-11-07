@@ -13,7 +13,7 @@ This is a separate diagnostic proposal on the frozen 55db9ba8 continuous-screen 
 - Accepted source-level drift/range review: `3b87cde1e8731a426d58bdd60ae98e26b336e33aa484ae8bc9d7a64528287e33`, explicitly excluding human listening/browser acceptance.
 - Accepted PCM mapping: `e133b61474be6c6bde51045d8a4d3401ac463e71e1741f46d8be7d21da3edce4`, scale1/offset0, source clock `decoded-pcm`; analysis `a3204d55e4dbba1fedf6aeceb2daecd2a9c4e1f160053ceabc1540f79c0bac04` retains measured-unaccepted/publicationReady:false and browser-pending status. Source decoded PTS0.0230208333 is retained; ASR uses concatenated sample-zero time, not native MP3 presentation time. No MP3/Apple-native binding is proposed.
 
-All input filenames are SHA256-verified and identity joins checked. No RMS values are hard-coded or used as new qualification. The earlier per-item boundary holds from `3bce23b761fabf14b9099d585f31ec03e2e4c3ee2e3bd16a67b4bea983ec8f16` remain in the report; continuous playback avoids those internal cuts, but this does not erase the holds for separate-cut use.
+All input filenames are SHA256-verified and identity joins checked. The report derives and asserts both outer RMS values from exact pinned boundaries, and all54 retained list-interval correlation anchors from the pinned PCM analysis: zero lag, minimum correlation0.8341548816. These remain source measurements, not new native/acoustic qualification. No RMS value is hard-coded. The earlier per-item boundary holds from `3bce23b761fabf14b9099d585f31ec03e2e4c3ee2e3bd16a67b4bea983ec8f16` remain in the report; continuous playback avoids those internal cuts, but this does not erase the holds for separate-cut use.
 
 ## Decision and remaining gates
 

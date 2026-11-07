@@ -13,3 +13,11 @@ test('every proposed interval is an unchanged complete raw-word estimate project
  const input=loadInputs(),p=buildS03Proposal(input);
  for(const row of p.rows)for(const d of row.deltas){const w=input.raw.words[d.sourceWordIndex];assert.equal(d.proposal.startMs,Math.round(w.startSeconds*1000));assert.equal(d.proposal.endMs,Math.round(w.endSeconds*1000));assert.equal(d.rawText,w.text);}
 });
+
+test('outer RMS and list correlation values derive from exact pinned boundaries rather than annotations',()=>{
+ const input=loadInputs(),p=buildS03Proposal(input),g=p.continuousGroupEvidence;
+ assert.deepEqual(g.range,{startSeconds:92.17,endSeconds:103.13});
+ for(const [kind,id] of [['start','S03-U009'],['end','S03-U016']]){const edge=input.boundaries.rows.find(r=>r.activityId===id).edges.find(e=>e.edge===kind&&e.candidateSeconds===g.outerEdges[kind].seconds);assert.equal(g.outerEdges[kind].max10msRmsIn100msDbFS,edge.max10msRmsIn100msDbFS);}
+ const anchors=input.clockAnalysis.anchors.filter(a=>a.time>=g.range.startSeconds&&a.time<=g.range.endSeconds);assert.deepEqual(g.anchors,anchors);assert.equal(g.anchorSummary.count,54);assert.equal(g.anchorSummary.maximumAbsoluteLagSeconds,0);assert.equal(g.anchorSummary.minimumCorrelation,Math.min(...anchors.map(a=>a.correlation)));
+ input.boundaries.rows.find(r=>r.activityId==='S03-U009').edges.find(e=>e.edge==='start').candidateSeconds+=0.01;assert.throws(()=>buildS03Proposal(input),/exact pinned outer-edge/);
+});

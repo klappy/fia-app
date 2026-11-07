@@ -41,6 +41,16 @@ export function buildS03Proposal(input=loadInputs()){
  }
  validateTranscript(sidecar);
  const group=pack.activities.filter(a=>a.readingGroupId==='S03-U009');
+ const outerStart=ledger.mappings.find(m=>m.activityId===group[0].id).sourceRange.startSeconds;
+ const outerEnd=ledger.mappings.find(m=>m.activityId===group.at(-1).id).sourceRange.endSeconds;
+ const outerEdge=(id,edge,seconds)=>{
+  const value=boundaries.rows.find(r=>r.activityId===id)?.edges.find(e=>e.edge===edge&&e.candidateSeconds===seconds);
+  if(!value||!Number.isFinite(value.max10msRmsIn100msDbFS))throw Error('Missing exact pinned outer-edge evidence');
+  return {evidenceSha256:pins.historicalBoundaryReview,activityId:id,edge,seconds,max10msRmsIn100msDbFS:value.max10msRmsIn100msDbFS};
+ };
+ const anchors=clockAnalysis.anchors.filter(a=>a.time>=outerStart&&a.time<=outerEnd);
+ if(!anchors.length||anchors.some(a=>!Number.isFinite(a.lagSeconds)||!Number.isFinite(a.correlation)))throw Error('Invalid retained list anchors');
+ const continuousGroupEvidence={range:{startSeconds:outerStart,endSeconds:outerEnd},outerEdges:{start:outerEdge(group[0].id,'start',outerStart),end:outerEdge(group.at(-1).id,'end',outerEnd)},correlationEvidenceSha256:pins.clockAnalysis,anchors,anchorSummary:{count:anchors.length,minimumCorrelation:Math.min(...anchors.map(a=>a.correlation)),maximumAbsoluteLagSeconds:Math.max(...anchors.map(a=>Math.abs(a.lagSeconds)))},status:'retained-source-evidence-not-native-or-acoustic-acceptance'};
  const count=t=>group.filter(a=>activityAlignment(a.sourceText,activityWords(t.activities[a.id],{startSeconds:t.activities[a.id].startMs/1000,endSeconds:t.activities[a.id].endMs/1000}),t.activities[a.id].endMs)).length;
- return {status:'UNAPPROVED-LOCAL-PROPOSAL',pins,beforeSha256:input.beforeSha256,recognitionStatus:recognition.status,sourceReview,clockProof:{descriptor:clock,analysisStatus:clockAnalysis.status,analysisPublicationReady:clockAnalysis.publicationReady,clockExplanation:clockAnalysis.clock},rows,counts:{beforeStaticAlignedRows:count(before),proposalStaticAlignedRows:count(sidecar),groupRows:group.length,recordingAdmissions:0,acousticValidation:false},unchangedU024:JSON.stringify(sidecar.activities['S03-U024'])===JSON.stringify(before.activities['S03-U024']),sidecar};
+ return {status:'UNAPPROVED-LOCAL-PROPOSAL',pins,beforeSha256:input.beforeSha256,recognitionStatus:recognition.status,sourceReview,continuousGroupEvidence,clockProof:{descriptor:clock,analysisStatus:clockAnalysis.status,analysisPublicationReady:clockAnalysis.publicationReady,clockExplanation:clockAnalysis.clock},rows,counts:{beforeStaticAlignedRows:count(before),proposalStaticAlignedRows:count(sidecar),groupRows:group.length,recordingAdmissions:0,acousticValidation:false},unchangedU024:JSON.stringify(sidecar.activities['S03-U024'])===JSON.stringify(before.activities['S03-U024']),sidecar};
 }
