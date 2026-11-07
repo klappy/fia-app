@@ -10,7 +10,8 @@ const digest=b=>createHash('sha256').update(b).digest('hex');
 export function loadInputs(){
  const content=root+'apps/web/public/content/';
  const pin=(folder,hash)=>{const bytes=readFileSync(content+folder+'/'+hash+'.json');if(digest(bytes)!==hash)throw Error('Evidence hash mismatch');return JSON.parse(bytes);};
- const beforeBytes=readFileSync(root+`apps/web/public/transcripts/${pins.delivery}.words.json`);
+ const beforeBytes=readFileSync(root+'analysis/s03-highlight/original-sidecar.json');
+ if(digest(beforeBytes)!=='fb74cf179534a1f1a897e74766ea6ceb8067ab215dde8caa4df930e238503858')throw Error('Original sidecar fixture hash mismatch');
  return {raw:pin('recording-evidence',pins.rawWords),recognition:pin('recording-evidence',pins.recognition),ledger:pin('recording-sources',pins.ledger),clock:pin('recording-evidence',pins.clock),clockAnalysis:pin('recording-evidence',pins.clockAnalysis),boundaries:pin('recording-evidence',pins.historicalBoundaryReview),sourceReview:pin('recording-evidence',pins.sourceReview),pack:pin('packs/eng.MRK-1-1-13',pins.presentation),before:JSON.parse(beforeBytes),beforeSha256:digest(beforeBytes)};
 }
 const key=s=>s.normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}\p{M}]/gu,'');

@@ -21,3 +21,8 @@ test('outer RMS and list correlation values derive from exact pinned boundaries 
  const anchors=input.clockAnalysis.anchors.filter(a=>a.time>=g.range.startSeconds&&a.time<=g.range.endSeconds);assert.deepEqual(g.anchors,anchors);assert.equal(g.anchorSummary.count,54);assert.equal(g.anchorSummary.maximumAbsoluteLagSeconds,0);assert.equal(g.anchorSummary.minimumCorrelation,Math.min(...anchors.map(a=>a.correlation)));
  input.boundaries.rows.find(r=>r.activityId==='S03-U009').edges.find(e=>e.edge==='start').candidateSeconds+=0.01;assert.throws(()=>buildS03Proposal(input),/exact pinned outer-edge/);
 });
+test('local integrated sidecar equals the reviewed three-map proposal with every other map and file clock preserved',async()=>{
+ const {readFileSync}=await import('node:fs');const input=loadInputs(),p=buildS03Proposal(input);
+ const actual=JSON.parse(readFileSync(new URL('../../apps/web/public/transcripts/'+p.pins.delivery+'.words.json',import.meta.url)));
+ assert.deepEqual(actual,p.sidecar);assert.equal(p.beforeSha256,'fb74cf179534a1f1a897e74766ea6ceb8067ab215dde8caa4df930e238503858');
+});
