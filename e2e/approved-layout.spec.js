@@ -87,8 +87,8 @@ async function returnToGuide(page){
 }
 
 // These independent non-media cases remain executable when any image is unavailable.
-for(const size of ['Standard','Largest'])test(`guide and all Scripture editions preserve approved layout at ${size}`,async(args,info)=>runCase(args,info,async receipt=>{
- const {page}=args;await readingSize(page,size);await observeLayout(page,'guide',size,receipt);
+for(const size of ['Standard','Largest'])test(`guide and all Scripture editions preserve approved layout at ${size}`,async({page,request,context,browser},info)=>runCase({page,request,context,browser},info,async receipt=>{
+ await readingSize(page,size);await observeLayout(page,'guide',size,receipt);
  for(const id of ['scripture-BereanStandardBible','scripture-unfoldingWordLiteral','scripture-unfoldingWordSimplified']){
   await explore(page,id);const row=await observeLayout(page,id,size,receipt),actual=await page.locator('.reading-verses > p').allTextContents();
   for(let i=0;i<pack.assets[id].verses.length;i++)expect(actual[i]).toContain(pack.assets[id].verses[i].text);
@@ -96,10 +96,10 @@ for(const size of ['Standard','Largest'])test(`guide and all Scripture editions 
  }
 }));
 
-for(const id of ['a112','c197','a203'])for(const size of ['Standard','Largest'])test(`image ${id} ${size} approved layout and delivery identity`,async(args,info)=>{
+for(const id of ['a112','c197','a203'])for(const size of ['Standard','Largest'])test(`image ${id} ${size} approved layout and delivery identity`,async({page,request,context,browser},info)=>{
  test.skip(!['controlled-unavailable','verified-local-delivery'].includes(imageMode),'Actual WebP decode is unexecuted without verified local delivery; no remote acquisition. Use controlled-unavailable only for denial/layout proof.');
- await runCase(args,info,async receipt=>{
-  const {page}=args,oracle=deliveryOracle(id);receipt.deliveryOracle=oracle;await readingSize(page,size);await explore(page,id);
+ await runCase({page,request,context,browser},info,async receipt=>{
+  const oracle=deliveryOracle(id);receipt.deliveryOracle=oracle;await readingSize(page,size);await explore(page,id);
   const row=await observeLayout(page,id,size,receipt);
   if(imageMode==='controlled-unavailable'){
    await expect(page.locator('.media-error')).toContainText(/Failed to fetch|unavailable|not saved|not prepared/i);await expect(page.locator('.visual-viewport img')).toHaveCount(0);
@@ -118,12 +118,12 @@ for(const id of ['a112','c197','a203'])for(const size of ['Standard','Largest'])
 
 // Direct authored focal states are distinct from menu detours, which hide the old footer.
 // Install the SW guard on the safe first guide before controlled progress adoption/reload.
-for(const activityId of ['S01-U002','S01-U002-reading-1','S02-U005','S02-U005-resource-c197','S02-U008','S02-U008-resource-a204'])for(const size of ['Standard','Largest'])test(`direct authored ${activityId} ${size} has no resource footer`,async(args,info)=>{
+for(const activityId of ['S01-U002','S01-U002-reading-1','S02-U005','S02-U005-resource-c197','S02-U008','S02-U008-resource-a204'])for(const size of ['Standard','Largest'])test(`direct authored ${activityId} ${size} has no resource footer`,async({page,request,context,browser},info)=>{
  const activity=pack.activities.find(a=>a.id===activityId);expect(activity).toBeTruthy();
  const asset=pack.assets[activity.assetId],visual=asset&&['image','map'].includes(asset.kind);
  test.skip(visual&&imageMode!=='controlled-unavailable','Direct visual layout requires explicit pretransport controlled-unavailable mode; real decode remains separate and unexecuted.');
- await runCase(args,info,async receipt=>{
-  const {page}=args,session=createSession(pack.activities);session.index=pack.activities.indexOf(activity);session.preferences.narrateGuide=false;session.preferences.readScripture=false;
+ await runCase({page,request,context,browser},info,async receipt=>{
+  const session=createSession(pack.activities);session.index=pack.activities.indexOf(activity);session.preferences.narrateGuide=false;session.preferences.readScripture=false;
   const descriptor=JSON.parse(readFileSync('apps/web/public/content/registry.json')).packs.find(p=>p.id==='eng.MRK-1-1-13');
   receipt.controlledSourceProgress={activityId,index:session.index,detour:null,scope:'Explicit controlled authored-progress seed after SW guard; not a natural progression journey'};
   await page.evaluate(({session,activityId,revision,total,size})=>{
