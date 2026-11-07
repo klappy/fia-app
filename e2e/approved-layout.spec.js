@@ -135,7 +135,11 @@ for(const activityId of ['S01-U002','S01-U002-reading-1','S02-U005','S02-U005-re
   await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('fia-v3-session@2')).session.index)).toBe(session.index);
   await expect(page.getByRole('button',{name:/^Choose passage:/})).toContainText('Mark 1:1–13');
   const actual=await page.evaluate(()=>JSON.parse(localStorage.getItem('fia-v3-session@2')).session);expect(actual.index).toBe(session.index);expect(actual.detour).toBeNull();
-  const row=await observeLayout(page,activityId,size,receipt);
+  const heldInstruction=activity.narration||activity.prompt;
+  if(visual)await expect(page.locator('.unavailable-words .reading-verses')).toContainText(heldInstruction);
+  else if(asset?.kind==='scripture')await expect(page.locator('.reading-verses')).toContainText(asset.verses[0].text);
+  else await expect(page.locator('.reading-verses')).toContainText(heldInstruction);
+  const row=await observeLayout(page,activityId,size,receipt);row.heldInstruction=heldInstruction;
   if(visual){
    const oracle=deliveryOracle(asset.id);receipt.deliveryOracle=oracle;
    await expect(page.locator('.media-error')).toContainText(/Failed to fetch|unavailable|not saved|not prepared/i);await expect(page.locator('.visual-viewport img')).toHaveCount(0);
