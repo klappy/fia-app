@@ -85,3 +85,18 @@ it('synthetic clock with shipped sidecar: valid rows highlight on the shared clo
  }
  expect(audio.play).toHaveBeenCalledTimes(1);
 });
+it('UNAPPROVED source-bound overlay: all eight S03 rows highlight in one synthetic-clock session',async()=>{
+ const {execFileSync}=await import('node:child_process');
+ const proposal=JSON.parse(execFileSync(process.execPath,['--input-type=module','-e',"import {buildS03Proposal} from './analysis/s03-highlight/build.mjs';console.log(JSON.stringify(buildS03Proposal()));"],{cwd:'../..',encoding:'utf8'}));
+ vi.mocked(fetch).mockImplementation(async url=>{
+  if(String(url)===`/transcripts/${proposal.pins.delivery}.words.json`)return new Response(JSON.stringify(proposal.sidecar),{headers:{'Content-Type':'application/json'}});
+  try{return new Response(readFileSync('public'+url),{headers:{'Content-Type':'application/json'}});}catch{return new Response('',{status:404});}
+ });
+ await begin('S03-U009');await waitFor(()=>expect(fetch.mock.calls.some(([url])=>String(url).includes('/transcripts/4396'))).toBe(true));await new Promise(r=>setTimeout(r,0));
+ for(const row of pack.activities.filter(a=>a.readingGroupId==='S03-U009')){
+  const map=proposal.sidecar.activities[row.id];emit((map.words[0].startMs+map.words[0].endMs)/2000);await tick();
+  await waitFor(()=>expect(document.querySelector('[data-reading-item][aria-current="true"]').textContent).toBe(row.sourceText));
+  await waitFor(()=>expect(document.querySelectorAll('[data-align-word][data-active="true"]').length).toBeGreaterThan(0));
+ }
+ expect(audio.play).toHaveBeenCalledTimes(1);expect(proposal.counts.recordingAdmissions).toBe(0);expect(proposal.unchangedU024).toBe(true);
+});
