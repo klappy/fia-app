@@ -98,5 +98,15 @@ it('UNAPPROVED source-bound overlay: all eight S03 rows highlight in one synthet
   await waitFor(()=>expect(document.querySelector('[data-reading-item][aria-current="true"]').textContent).toBe(row.sourceText));
   await waitFor(()=>expect(document.querySelectorAll('[data-align-word][data-active="true"]').length).toBeGreaterThan(0));
  }
+ // Every repaired word is checked against the actual DOM's two-word lead window.
+ // These are deliberate synthetic clock samples, not measured acoustic offsets.
+ for(const row of proposal.rows){
+  for(let i=0;i<row.deltas.length;i++){
+   const d=row.deltas[i],elapsed=Math.max(row.unchangedRange.startSeconds+0.001,(d.proposal.startMs+d.proposal.endMs)/2000-0.25);
+   emit(elapsed);await tick();
+   const first=Math.max(0,Math.min(i,row.deltas.length-2)),last=Math.min(row.deltas.length-1,first+1);
+   await waitFor(()=>expect([...document.querySelectorAll('[data-align-word][data-active="true"]')].map(n=>n.getAttribute('data-align-word'))).toEqual(Array.from({length:last-first+1},(_,j)=>`0-${first+j}`)));
+  }
+ }
  expect(audio.play).toHaveBeenCalledTimes(1);expect(proposal.counts.recordingAdmissions).toBe(0);expect(proposal.unchangedU024).toBe(true);
 });
