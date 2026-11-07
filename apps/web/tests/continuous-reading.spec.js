@@ -122,3 +122,14 @@ it('synthetic paused native seek changes row custody while preserving pause and 
  await waitFor(()=>expect(document.querySelector('.guide-primary').hasAttribute('aria-busy')).toBe(false),{timeout:2000});await fireEvent.click(screen.getByRole('button',{name:'Pause',exact:true}));
  emit(92.8,false);await tick();expect(stored().activityId).toBe('S03-U009');expect(stored().session.status).toBe('paused');expect(audio.play).toHaveBeenCalledTimes(1);expect(audio.resume).toHaveBeenCalledTimes(1);
 });
+it('synthetic integrated S04 screen keeps one session with John/Satan highlights and an explicitly untimed intro',async()=>{
+ await begin('S04-U004');const stops=audio.stop.mock.calls.length;emit(23.5);await tick();expect(document.querySelectorAll('[data-align-word]')).toHaveLength(0);
+ for(const [id,time]of [['S04-U005',26.5],['S04-U010',35.55]]){emit(time);await tick();await waitFor(()=>expect(JSON.parse(localStorage.getItem(`fia-v3-progress@1:${bundledPack.id}`)).activityId).toBe(id));await waitFor(()=>expect(document.querySelectorAll('[data-align-word][data-active="true"]').length).toBeGreaterThan(0));}
+ expect(audio.play).toHaveBeenCalledTimes(1);expect(audio.stop).toHaveBeenCalledTimes(stops);expect(audio.pause).not.toHaveBeenCalled();expect(audio.play.mock.calls[0][3]).toEqual({startSeconds:23.37,endSeconds:38.09});
+});
+for(const id of ['S01-U008','S04-U012','S05-U002'])it(`synthetic integrated whole map ${id} follows its verified sidecar without changing confirmation policy`,async()=>{
+ await begin(id);const a=pack.activities.find(a=>a.id===id),f=files.find(f=>f.path===a.audioSrc),sc=JSON.parse(readFileSync(`public/transcripts/${f.sha256}.words.json`)),map=sc.activities[id];
+ expect(sc.audioSha256).toBe(f.sha256);expect(sc.sourceAudioSha256).toBe(f.sourceSha256);expect(sc.timingMapping).toEqual(f.timing.mapping);
+ await waitFor(()=>expect(fetch.mock.calls.some(([url])=>String(url).includes(`/transcripts/${f.sha256}`))).toBe(true));await new Promise(r=>setTimeout(r,0));emit((map.words[0].startMs+map.words[0].endMs)/2000);await tick();await waitFor(()=>expect(document.querySelectorAll('[data-align-word][data-active="true"]').length).toBeGreaterThan(0));expect(audio.play).toHaveBeenCalledTimes(1);
+ if(a.completion==='confirm'){audio.state({src:null,playing:false,elapsed:0,duration:0});audio.end();await tick();const saved=JSON.parse(localStorage.getItem(`fia-v3-progress@1:${bundledPack.id}`));expect(saved.activityId).toBe(id);expect(saved.session.status).toBe('waiting');}
+});

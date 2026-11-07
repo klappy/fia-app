@@ -9,8 +9,8 @@ const read=p=>JSON.parse(fs.readFileSync(root+'/'+p));
 const recorded=read('evidence/first-pericope/timing-quality.json');
 const knownUntimed={
  'insufficient-asr-match':['S01-U001','S01-U002','S02-U003','S02-U004','S02-U005','S02-U009','S02-U010','S04-U014','S04-U016','S05-U019','S06-U006','S06-U008'],
- 'outside-playback-range':['S01-U008','S02-U002','S02-U008','S03-U005','S03-U018','S03-U025','S04-U002','S04-U003','S04-U004','S04-U005','S04-U012','S04-U013','S05-U001','S05-U002','S05-U015','S05-U024'],
- 'invalid-activity-word-times':['S02-U006','S02-U007','S02-U011','S03-U008','S03-U020','S03-U022','S03-U024','S04-U010','S04-U015','S05-U003','S05-U004','S05-U007','S05-U018','S05-U020','S05-U029','S05-U030','S05-U033','S05-U035','S05-U040','S05-U042']
+ 'outside-playback-range':['S02-U002','S02-U008','S03-U005','S03-U018','S03-U025','S04-U002','S04-U003','S04-U004','S04-U013','S05-U001','S05-U015','S05-U024'],
+ 'invalid-activity-word-times':['S02-U006','S02-U007','S02-U011','S03-U008','S03-U020','S03-U022','S03-U024','S04-U015','S05-U003','S05-U004','S05-U007','S05-U018','S05-U020','S05-U029','S05-U030','S05-U033','S05-U035','S05-U040','S05-U042']
 };
 function acceptedInput(){
  const row=recorded.rows.find(r=>r.activityId==='S01-U003'),v=row.variants.find(v=>v.quality===row.selectedQuality);
@@ -20,7 +20,7 @@ function acceptedInput(){
 test('committed111-route timing gate binds approved content and actual runtime predicates, preserving every explicit known untimed ID',()=>{
  const current=auditFirstPericopeTiming(root);
  assert.deepEqual(current,recorded,'Changing committed content requires explicit per-ID timing disposition, not schema-only acceptance');
- assert.equal(current.guideRoutes,111);assert.equal(current.accepted,63);assert.equal(current.untimed,48);
+ assert.equal(current.guideRoutes,111);assert.equal(current.accepted,68);assert.equal(current.untimed,43);
  assert.equal(new Set(current.rows.map(r=>r.activityId)).size,111);
  for(const [reason,ids] of Object.entries(knownUntimed))assert.deepEqual(current.rows.filter(r=>r.reason===reason).map(r=>r.activityId).sort(),[...ids].sort());
  for(const row of current.rows){
