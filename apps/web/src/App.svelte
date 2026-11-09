@@ -37,7 +37,7 @@
  import {saveProgress,restoreProgress,resetProgress} from './lib/session-store.js';
  import {noticeScope,noticeEnded} from './lib/notice-scope.js';
  import {tailExtendedRange} from './lib/range-tail.js';
- import {planContinuousReading} from './lib/continuous-reading.js';
+ import {planRun} from './lib/continuous-reading.js';
 import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  let selectedPack=$state(bundledPack),rawPresentation=$state.raw(bundledPresentation),downloadedPaths=$state(new Set()),downloadedAudioDescriptors=$state(new globalThis.Map());
  let executionPresentation=$derived(executablePresentationView(rawPresentation));
@@ -207,29 +207,48 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  // word highlight and the end-of-audio advance; the PLAYER (audio.js pool) only plays what it is told.
  const sidecars=new globalThis.Map();let sidecarTick=$state(0),hl=$state({id:null,word:null,key:null}),viaCtl=false,ctlVoices=null;
  const ctl=createScriptController({player:{play:(...a)=>{playClip(ctlVoices,...a);viaCtl=true;},seek:s=>audio?.seek?.(s),stop:()=>audio?.stop()},script:[],transcripts:sidecars,rate:()=>rate,onHighlight:(id,word)=>{hl={id,word,key:ctlKey};},onAdvance:()=>{viaCtl=false;finishAudio();},onSpan:advanceContinuousRow});
- // A qualified list changes only internal progress at source-clock boundaries.
- // Navigation/interruptions still own cancellation; no per-row scheduler is entered.
+ // The page turns to the audio (captain, 2026-11-09): a run or qualified list changes internal progress at
+ // source-clock boundaries. The controller only reports spans of the active session, so membership is its.
+ // Navigation/interruptions still own cancellation; no per-row scheduler is entered. A natural forward crossing
+ // completes every crossed row (NARRATION_END, then PLAY), also in manual mode and while paused, so progress
+ // totals stay right with automatic narration off (the undisposed Codex P2 on #351); a backwards clock seek is
+ // SEEK_ACTIVITY and completes nothing. The play/pause state the person had is restored afterwards.
  function advanceContinuousRow(nextId,priorId){
   if(session.detour||!['narration','manual'].includes(audioContext?.type)||audioContext.id!==priorId)return false;
   const prior=activities.find(a=>a.id===priorId),next=activities.find(a=>a.id===nextId);
-  if(!prior?.readingGroupId||prior.readingGroupId!==next?.readingGroupId)return false;
+  if(!prior||!next)return false;
   const from=activities.findIndex(a=>a.id===priorId),to=activities.findIndex(a=>a.id===nextId);
-  const wasPaused=session.status==='paused';
-  if(audioContext.type==='manual'||wasPaused){
-   const type=audioContext.type;dispatch({type:'SEEK_ACTIVITY',activityId:nextId});
-   if(wasPaused)session={...session,status:'paused'};
-   audioContext={type,id:nextId};persist();return true;
-  }
+  const type=audioContext.type,wasPaused=session.status==='paused',playing=type==='narration'&&!wasPaused;
   if(to>from){
    for(let i=from;i<to;i++){
     if(currentActivity(session,activities)?.id!==activities[i].id||session.detour)return false;
     introduced=new Set([...introduced,activities[i].id]);
+    if(!playing)dispatch({type:'PLAY'});
     dispatch({type:'NARRATION_END',activityId:activities[i].id});
     if(session.detour)return false;
-    dispatch({type:'PLAY'});
+    if(playing)dispatch({type:'PLAY'});
    }
-  }else{dispatch({type:'SEEK_ACTIVITY',activityId:nextId});dispatch({type:'PLAY'});}
-  audioContext={type:'narration',id:nextId};persist();return true;
+  }else{dispatch({type:'SEEK_ACTIVITY',activityId:nextId});if(playing)dispatch({type:'PLAY'});}
+  if(wasPaused)session={...session,status:'paused'};
+  audioContext={type,id:nextId};persist();return true;
+ }
+ // A pause cue on a visual step is spoken only when nothing else plays there (playActivity): a run stops before such a step.
+ function describedPauseCue(a){
+  const f=assets[a.assetId];if(!f||!['image','map'].includes(f.kind)||muted||!/I will pause the audio here/i.test(a.narration||''))return false;
+  const video=(f.relatedIds||[]).map(id=>assets[id]).find(v=>v?.kind==='video'&&(v.src||v.videoPrepared));
+  return !!(video&&session.preferences.autoplayVideo||session.preferences.describeImages&&f.descriptionAudio);
+ }
+ // A page jump inside the active run seeks the running session instead of stopping it and replaying the next clip;
+ // the audio keeps the play/pause state the person had (captain, 2026-11-09). Next completes the row it leaves (CONTINUE,
+ // the person's own decision); Back and the Overview complete nothing. Anything the controller cannot seek falls back.
+ function jumpWithinRun(event){
+  if(inTransition||session.detour||finished||!viaCtl||!['CONTINUE','BACK','SEEK_ACTIVITY'].includes(event.type)||!['narration','manual'].includes(audioContext?.type)||audioContext.id!==activity?.id)return false;
+  const after=reduceSession(session,event,activities),target=activities[after.index]?.id;
+  if(after.detour||after.status==='complete'||!target||!ctl.inRun(target)||!ctl.jumpTo(target))return false;
+  const type=audioContext.type,wasPaused=session.status==='paused',playing=session.status==='playing';
+  visualHeard=null;dispatch(event);notice='';authorizeVisual();
+  if(wasPaused)session={...session,status:'paused'};else if(playing)dispatch({type:'PLAY'});
+  audioContext={type,id:target};persist();return true;
  }
  let ctlKey=null;
  async function loadSidecar(key,sha){if(!key||!sha||sidecars.has(key))return;sidecars.set(key,null);try{const r=await fetch('/transcripts/'+sha+'.words.json');if(!r.ok)throw Error('none');const t=validateTranscript(await r.json());if(t.audioSha256!==sha)throw Error('sha');sidecars.set(key,t);sidecarTick++;}catch{sidecars.delete(key);}}
@@ -237,12 +256,16 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
   if(!range){playClip(voices,text,src,rateNow,range,key);return;}
   ctlVoices=voices;ctlKey=key||null;loadSidecar(key,sha);
   const descriptorFor=path=>savedMedia.get(path)||onlineMedia.get(path)||downloadedAudioDescriptors.get(path);
-  const group=!executableMode&&!session.detour&&['narration','manual'].includes(audioContext?.type)?planContinuousReading({activities,listContracts:rawPresentation.listContracts,currentId:id,descriptorFor,src,fileKey:key,audioSha256:sha}):null;
+  // Audio is the player: narration and manual play open one session for the run from this clip (planRun), or for
+  // the authored together-list when this clip opens one. Only the run's last span carries the clip tail; every
+  // inner boundary is the authored end, where the controller seeks over the gap. A run that cannot be planned
+  // plays this clip alone, as before (the safety gate).
+  const group=!executableMode&&!session.detour&&['narration','manual'].includes(audioContext?.type)?planRun({activities,listContracts:rawPresentation.listContracts,currentId:id,descriptorFor,src,fileKey:key,audioSha256:sha,stopBefore:describedPauseCue}):null;
   if(group){
    const last=group.spans.at(-1),lastActivity=activities.find(a=>a.id===last.id);
    last.range=tailRange(descriptorFor(lastActivity.audioSrc),last.range);
    if(group.spans[0].id!==id&&!advanceContinuousRow(group.spans[0].id,id))return;
-   ctl.playContinuous(group.spans);return;
+   if(group.kind==='run'?ctl.playRun(group.spans):ctl.playContinuous(group.spans))return;
   }
   ctl.register({id,text,fileKey:key||undefined,src,range,startMs:Math.round(range.startSeconds*1000),endMs:Math.round(range.endSeconds*1000)});ctl.play(id);
  }
@@ -358,6 +381,18 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  async function swapPassages(view){passagesView=view;await tick();(view==='languages'?(passagesHost?.querySelector('.library-list button.chosen')||passagesHost?.querySelector('.library-list button')):passagesHost?.querySelector('.library-panel>button.quiet'))?.focus();}
  let sheet=$state(null), command=$state(''), messages=$state([]), notice=$state(''), online=$state(true), started=$state(false), scale=$state(1), rate=$state(1), muted=$state(false), saved=$state(false);
  let audio, timer; let audioContext=$state(null); let chatInput=$state(), chatLog=$state();
+ // While narrating, the screen stays awake where the platform allows it (behaviour only, no chrome): a dimmed screen
+ // stops the timers and frames that turn the page and end a clip. The lock is released when playback stops and
+ // taken again when the page returns (resync). A platform without the API, or one that refuses, changes nothing.
+ let wake=null;
+ async function holdWake(){
+  if(wake||typeof navigator==='undefined'||!navigator.wakeLock?.request||document.visibilityState==='hidden')return;
+  const pending=wake=navigator.wakeLock.request('screen');
+  try{const lock=await pending;if(wake!==pending){lock?.release?.().catch?.(()=>{});return;}wake=lock;lock?.addEventListener?.('release',()=>{if(wake===lock)wake=null;});}
+  catch{if(wake===pending)wake=null;}
+ }
+ async function releaseWake(){const held=wake;wake=null;try{const lock=await held;await lock?.release?.();}catch{}}
+ $effect(()=>{const narrating=isPlaying&&!!audioContext;untrack(()=>{if(narrating)void holdWake();else if(wake)void releaseWake();});});
  let activity=$derived(currentActivity(session,activities));
  let stage=$derived(presentStage(session,activities));
  let focal=$derived(assets[stage.focal]);
@@ -559,6 +594,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
   if(deferVideo(()=>navigate(event,auto)))return;
   // A tap queued while checking belonged to the screen the person just left.
   tapGate.drop();swipeGeneration++;
+  if(jumpWithinRun(event))return;
   const hadPlaybackConsent=playbackConsent,priorIndex=session.index,forward=auto&&event.type==='CONTINUE';revokePlayback();
   if(inTransition&&event.type==='CONTINUE'){cancel();transitionSection=null;persist();authorizeVisual();if(forward)beginForwardPlayback();return;}
   cancel();visualHeard=null;dispatch(event);notice='';settleSilent();authorizeVisual();
@@ -631,6 +667,10 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
   audio=createAudioController(s=>{fileCache.trim();savedSrc.trim();if(viaCtl)ctl.onPlayerState(s);const m=mediaAlignment?.clockDomain==='delivery-media-seconds'?null:mediaTiming?.mapping;const logical={...s,src:s.src&&s.src===mediaBlob?mediaLogicalPath:s.src,assetId:s.src&&s.src===clipSrc?clipVoices:null};audioState=m?{...logical,elapsed:Math.max(0,(s.elapsed-m.offsetSeconds)/m.scale),duration:Math.max(0,(s.duration-m.offsetSeconds)/m.scale)}:logical;if(s.playing&&s.src===mediaBlob&&audioContext?.type==='narration'&&audioContext.id===(executableMode?boundPreparation?.activityId:currentPreparation?.identity.activityId)&&currentPreparation?.status==='ready')preparationDismissed=currentPreparation.event;if(s.playing&&s.src===clipSrc||!s.src&&!audio?.active)clipPending=false;},()=>{if(viaCtl)ctl.onPlayerEnd();else finishAudio();},text=>{revokePlayback();notice=text;dispatch({type:'PAUSE'});},{allowSpeechFallback:false});
   // R4 on iOS: a later screen starts without a tap only on the element a tap once started, so a tap unlocks it before its action runs.
   const unlockAudio=event=>{if(event.isTrusted)audio.unlock();};window.addEventListener('click',unlockAudio,true);
+  // A dimmed or backgrounded page keeps the element playing while timers and frames stop. On return the screen and the
+  // highlight re-sync to the player clock (one fresh report through the controller), and a clip past its end stops.
+  const resync=()=>{if(document.visibilityState==='hidden')return;audio?.sync?.();if(isPlaying)void holdWake();};
+  document.addEventListener('visibilitychange',resync);window.addEventListener('pageshow',resync);
   const net=()=>{const wasOnline=online;online=navigator.onLine;if(!online)visualOwner.cancel();else if(!wasOnline){void updateMedia(true);if(visualCanceled!==visualIdentity()){visualOwner.retry();syncVisual();}}};net();window.addEventListener('online',net);window.addEventListener('offline',net);
   if('serviceWorker'in navigator)registerWorker('/sw.js').then(()=>{updateDownloaded();updateMedia();}).catch(()=>{serviceWorkerError='Offline storage is unavailable here. Try the published HTTPS version.';});
   // A returning visit stays verifying until the saved passage itself is checked (R5).
@@ -641,7 +681,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
   register({name:'fia_present_resource',annotations:{readOnlyHint:false},description:'Open an approved resource as a detour, preserving the current guide position.',inputSchema:{type:'object',properties:{assetId:{type:'string'}},required:['assetId'],additionalProperties:false},execute:async input=>{if(!input||!Object.hasOwn(assets,input.assetId)||Object.keys(input).some(k=>k!=='assetId'))throw new Error('Unknown resource');navigate({type:'DETOUR',assetId:input.assetId});await tick();return {assetId:stage.focal,activityId:activity.id};}});
   register({name:'fia_return_to_guide',description:'Close resource exploration and restore the held guide activity without advancing.',annotations:{readOnlyHint:false},inputSchema:{type:'object',properties:{},additionalProperties:false},execute:async input=>{if(input&&Object.keys(input).length)throw new Error('No arguments expected');navigate({type:'RETURN'});await tick();return {activityId:activity.id,status:session.status,stage:presentStage(session,activities)};}});
   register({name:'fia_complete_activity',annotations:{readOnlyHint:false},description:'Explicitly finish or skip the current activity and advance; this is a user decision, never a read.',inputSchema:{type:'object',properties:{activityId:{type:'string'}},required:['activityId'],additionalProperties:false},execute:async input=>{if(!input||input.activityId!==activity.id||session.detour||Object.keys(input).some(k=>k!=='activityId'))throw new Error('Activity changed or exploration is open');navigate({type:'CONTINUE'},true);await tick();return {activityId:activity.id,status:session.status};}});
-  return()=>{tapGate.dispose();selectionAbort?.abort();videoOwner.dispose();videoDelivery.clear();stopVisual();visualOwner.clear();landscape?.removeEventListener('change',rotate);clearTimeout(noticeTimer);cancel();fileCache.clear();savedSrc.clear();audio?.retain?.([]);lifecycle.abort();window.removeEventListener('online',net);window.removeEventListener('offline',net);window.removeEventListener('click',unlockAudio,true);};
+  return()=>{tapGate.dispose();selectionAbort?.abort();videoOwner.dispose();videoDelivery.clear();stopVisual();visualOwner.clear();landscape?.removeEventListener('change',rotate);clearTimeout(noticeTimer);cancel();fileCache.clear();savedSrc.clear();audio?.retain?.([]);lifecycle.abort();window.removeEventListener('online',net);window.removeEventListener('offline',net);window.removeEventListener('click',unlockAudio,true);document.removeEventListener('visibilitychange',resync);window.removeEventListener('pageshow',resync);void releaseWake();};
  });
 </script>
 
