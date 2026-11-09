@@ -10,7 +10,7 @@ import {createPresentationGuideUnitsResolver} from './executor/presentation-guid
 import {verifySourceReference} from './source-store.mjs';
 import {createGuideExecutor} from './executor/guide-executor.mjs';
 const PREFIX='/v1/guide-preparations',INTERNAL='/_guide-preparation/',DEV='https://dev.fiaguide.app';
-const METADATA_SHA='23218bd64df0e319bbe74101b0ec114031e569dabf88d542d1174b3b990fbd0e',REGISTRY_SHA='b27731a3d19ec27187ef6e8d2804515339169987c87562a83a00bca225d14ad7';
+const METADATA_SHA='de34aab4b6e414186b3c94bee047c815131affe1a3c0189428d1ac0004f86860',REGISTRY_SHA='39eed39e540eab2dfd1254b54a852af03773501ebd299677970e380b9feece77';
 const MODEL=Object.freeze({modelId:'Systran/faster-whisper-tiny.en',modelRevision:'60a1e73109aa75058f81191da437d3fa4ea57f1127bef81d4500e242988ad16d',configSha256:'dcc8d5382c56cf886dd548a687002dd6f1020598880b096b5b3dedb75e5b9ce6'});
 const POLICY='fia-dev-guide-dispatch-inactive@1',same=(a,b)=>canonicalJSONString(a)===canonicalJSONString(b),encode=x=>new TextEncoder().encode(canonicalJSONString(x));
 

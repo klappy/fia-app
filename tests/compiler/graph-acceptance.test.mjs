@@ -30,7 +30,7 @@ const byId=pack=>new Map(pack.activities.map(a=>[a.id,a]));
 
 test('versioned canonical byte vectors: compiled bytes equal the accepted registry revision for the pinned recipe/source',()=>{
  assert.equal(registry.recipeRevision,RECIPE);assert.equal(registry.sourceRevision,SOURCE);
- const vectors={[ENG]:['92ad518474f159f6567124052ae12d180a482c949509da0b725593442e62f746',395855],[SPA]:['e8490b9977c3fe731d49e99a2c168868aa6e4210fe2b4571befc9461466a2fce',345649]};
+ const vectors={[ENG]:['92ad518474f159f6567124052ae12d180a482c949509da0b725593442e62f746',395855],[SPA]:['7a50edf85698d81c3825b1c3dec01074cc7eab33d0cdef9c636b65a6d26b7517',345865]};
  for(const [id,[sha256,bytes]] of Object.entries(vectors)){
   const a=build(id),b=build(id);
   assert.ok(a.bytes.equals(b.bytes),'deterministic bytes');
