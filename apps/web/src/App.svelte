@@ -2,6 +2,7 @@
  import {createPlaybackCache} from './lib/playback-cache.js';
  import { onMount, tick, untrack } from 'svelte';
  import {validateExecutablePresentation,executionFor,executablePresentationView,createExecutableNarration} from './lib/executable-presentation.js';
+ import {guideRecordingAvailability} from './lib/recording-availability.js';
  import { MoreHorizontal, Speech, Play, Pause, ChevronRight, ChevronLeft, Send, Settings2, List, BookOpen, Image, Map, Film, Users, RotateCcw, ArrowLeft, PinOff, Info, Download, X, CircleHelp, ExternalLink } from 'lucide-svelte';
  import {bundledPresentation,presentationContent} from './lib/content.js';
  import { createSession, reduceSession, currentActivity, presentStage } from './lib/engine.js';
@@ -86,7 +87,15 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  let observedPreparationRequest=$derived(executableMode?(boundPreparation?.activityId===activity.id?boundPreparation.identity:null):preparationRequest);
  let currentPreparation=$derived(observedPreparationRequest&&preparationState?.key===preparationKey(observedPreparationRequest)?preparationState:null);
  let preparationBusy=$derived(currentPreparation?.status==='preparing');
- let preparationNotice=$derived(!verifying&&executableAction?.narration.action==='blocked'&&dismissedExecutionNotice!==executionNoticeKey?'This recording is unavailable. You can continue.':currentPreparation?.event!==preparationDismissed&&!(currentPreparation?.status==='ready'&&carrying)?currentPreparation?.message:'');
+ // E8 (captain's Summit order, 2026-11-09; plan § 6): a pack whose catalog says no guide recording exists anywhere raises the
+ // narration-blocked notice on one screen per session at most; the Passages card already says "Guide recordings unavailable",
+ // so repeating it on every page of a workshop is noise. A pack with partial recordings (eng.MRK-1-14-20) keeps the per-screen
+ // notice and the preparationNotice path unchanged.
+ let packWithoutGuideRecordings=$derived(executableMode&&guideRecordingAvailability(selectedPack)==='Guide recordings unavailable');
+ let blockedNoticeShown=$state(null);
+ $effect(()=>{if(!verifying&&packWithoutGuideRecordings&&executableAction?.narration.action==='blocked'&&blockedNoticeShown?.revision!==selectedPack.revision)blockedNoticeShown={revision:selectedPack.revision,activityId:activity.id};});
+ let blockedNoticeSpent=$derived(packWithoutGuideRecordings&&blockedNoticeShown?.revision===selectedPack.revision&&blockedNoticeShown.activityId!==activity.id);
+ let preparationNotice=$derived(!verifying&&executableAction?.narration.action==='blocked'&&dismissedExecutionNotice!==executionNoticeKey&&!blockedNoticeSpent?'This recording is unavailable. You can continue.':currentPreparation?.event!==preparationDismissed&&!(currentPreparation?.status==='ready'&&carrying)?currentPreparation?.message:'');
  async function prepareBoundNarration(identity,context){
   if(context.signal.aborted)return null;
   boundPreparation={activityId:context.activityId,identity};
