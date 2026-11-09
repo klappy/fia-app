@@ -1,6 +1,6 @@
 import test from 'node:test';import {inflateSync} from 'node:zlib';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {createHash} from 'node:crypto';import {JSDOM} from 'jsdom';
 const root=new URL('../../apps/web/',import.meta.url),doc=new JSDOM(readFileSync(new URL('index.html',root),'utf8')).window.document,manifest=JSON.parse(readFileSync(new URL('public/manifest.webmanifest',root)));
-const description='Explore all 68 passages of Mark in English and Spanish with FIA guides, Scripture text, and resources.';
+const description='Explore all 68 passages of Mark and 97 passages of Luke in English and Spanish with FIA guides, Scripture text, and resources.';
 function one(selector,attr,expected){const all=doc.querySelectorAll(selector);assert.equal(all.length,1,selector);assert.equal(attr?all[0].getAttribute(attr):all[0].textContent,expected,selector);}
 test('initial metadata names FIA Guide and binds one production social preview',()=>{
  one('title',null,'FIA Guide');for(const key of ['application-name','apple-mobile-web-app-title','twitter:title'])one(`meta[name="${key}"]`,'content','FIA Guide');one('meta[property="og:title"]','content','FIA Guide');
