@@ -16,9 +16,12 @@ const examples=JSON.parse(readFileSync(new URL('examples.json',C)));
 const registry=JSON.parse(readFileSync(new URL('../../apps/web/public/content/registry.json',import.meta.url)));
 const ENG='eng.MRK-1-14-20',SPA='spa.MRK-1-14-20';
 const sourceFiles=id=>bundled.inventory.filter(f=>f.path.startsWith(`data/packs/${id}/`)).sort((a,b)=>a.path<b.path?-1:a.path>b.path?1:0);
-// Same call shape as build.mjs so bytes are comparable with the accepted registry.
+// Same call shape as build.mjs so bytes are comparable with the accepted registry: English Mark compiles frozen
+// (byte-identical to the audio-bound revisions), a Spanish pack compiles beside its compiled English twin.
+const FROZEN=/^eng\.MRK-/;
 function build(id,{data=structuredClone(bundled.packs[id]),list=structuredClone(lists.packs.find(p=>p.packId===id))}={}){
- const result=compilePresentation(data,{listEvidence:list,exampleEvidence:examples.packs.find(p=>p.packId===id),sourceFiles:sourceFiles(id)});
+ const sibling=id.startsWith('spa.')?JSON.parse(build('eng.'+id.slice(4)).bytes):null;
+ const result=compilePresentation(data,{listEvidence:list,exampleEvidence:examples.packs.find(p=>p.packId===id),sourceFiles:sourceFiles(id),frozen:FROZEN.test(id),sibling});
  const bytes=Buffer.from(JSON.stringify(result.pack,null,2)+'\n');
  return {result,bytes,descriptor:describe(data.manifest,bytes,result)};
 }
@@ -27,7 +30,7 @@ const byId=pack=>new Map(pack.activities.map(a=>[a.id,a]));
 
 test('versioned canonical byte vectors: compiled bytes equal the accepted registry revision for the pinned recipe/source',()=>{
  assert.equal(registry.recipeRevision,RECIPE);assert.equal(registry.sourceRevision,SOURCE);
- const vectors={[ENG]:['92ad518474f159f6567124052ae12d180a482c949509da0b725593442e62f746',395855],[SPA]:['037c43b636186066ae9e3b6cf23334db740ac3a9038041380a249fa186fc2bc4',343669]};
+ const vectors={[ENG]:['92ad518474f159f6567124052ae12d180a482c949509da0b725593442e62f746',395855],[SPA]:['e8490b9977c3fe731d49e99a2c168868aa6e4210fe2b4571befc9461466a2fce',345649]};
  for(const [id,[sha256,bytes]] of Object.entries(vectors)){
   const a=build(id),b=build(id);
   assert.ok(a.bytes.equals(b.bytes),'deterministic bytes');

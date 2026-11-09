@@ -27,6 +27,8 @@ export const EXECUTION_POLICY='fia-source-to-app/7fa17af806c139cfc353cace39fa6d5
 // 3. The builds from 45a3248 (the #197 promotion): the same policy under @2.
 // 4. The builds from #249 (Luke text published, catalog f5ce2e24): proof index 7140879c
 //    (its authority names the new catalog), the same EXECUTION_POLICY, under @2.
+// 5. The builds from the Spanish Luke honest-text content release (catalog b27731a3, English
+//    Mark byte-identical): proof index 0e652ebc, the same EXECUTION_POLICY, under @2.
 // The registry is release bookkeeping (execution-registry.test.mjs). Reads no longer
 // authenticate rows by it: a row under a superseded build is a cache miss served from
 // the base, and an explicit Open re-prepares under today's build.
@@ -35,6 +37,7 @@ export const SUPERSEDED_BUILDS=Object.freeze([
  {policy:'9a7733f5139e9cf7352bfe4018f3164715e69abc9eba3776052bdc324f33295c',recipe:'fia-server-source-action-projector@1',approvedAudio:true},
  {policy:'9a7733f5139e9cf7352bfe4018f3164715e69abc9eba3776052bdc324f33295c',recipe:'fia-server-source-action-projector@2',approvedAudio:true},
  {policy:'85233c7eae23efb5ad52150a1232600ad4376e8a865173bc8a62208cc6fe6a9d',recipe:'fia-server-source-action-projector@2',approvedAudio:true},
+ {policy:'38963c2b8330d78981b903145eb59043d43e7dc6ae5f574324d360a20fdbe4a6',recipe:'fia-server-source-action-projector@2',approvedAudio:true},
 ].map(build=>Object.freeze(build)));
 const need=(x,r)=>{if(!x)throw Error(r);};
 async function bounded(run,ms=15000){let timer;try{return await Promise.race([Promise.resolve().then(run),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('execution-storage-timeout')),ms);})]);}finally{clearTimeout(timer);}}
