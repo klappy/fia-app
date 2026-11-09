@@ -153,7 +153,7 @@ test('the first bold phrase is a headword only when the definition opens as a no
  assert.equal(spa('heaven','<p>La palabra <b>cielo</b> a veces…</p>').title,'Cielo','an article and one word before the phrase');
  assert.equal(spa('satan','<p>El nombre <b>Satanás</b> significa…</p>').title,'Satanás');
  assert.equal(spa('pharisees','<p>Los <b>fariseos</b> eran…</p>').title,'Fariseos');
- assert.equal(spa('law','<p>En la Biblia, la <b>ley</b> es…</p>').titleProvenance.withheld,'not-a-headword-phrase','a prepositional opening is not a noun phrase');
+ assert.equal(spa('law','<p>En la Biblia, <b>ley</b> es…</p>').titleProvenance.withheld,'not-a-headword-phrase','a prepositional opening is not a noun phrase');
  assert.equal(spa('temple','<p>El muy grande <b>templo</b>…</p>').titleProvenance.withheld,'not-a-headword-phrase','more than one word after the article');
  assert.equal(spa('gospel','<p>La palabra “<b>evangelio</b>” es…</p>').title,'Evangelio','quotes around the phrase do not count as words');
 });
