@@ -16,7 +16,7 @@ const plain=html=>String(html||'').replace(/<\/(?:p|li|div)>/gi,'\n').replace(/<
 // text: titles come from the FIAKeyTerms body's own headword or the source key, never from a translator.
 const TERM_LINK=/^(eng|spa)-t(\d+)-v\d+$/;// raw FIAKeyTerms content id as the guide HTML links it
 export const resolveResourceLink=(id,assets)=>{if(assets[id])return id;const m=TERM_LINK.exec(String(id));const term=m&&`term-${m[1]}-t${m[2]}`;return term&&assets[term]?term:null;};
-const TITLE_KEY=/^[a-z0-9]+(?:-[a-z0-9]+)*$/,HEADWORD=/^\s*<p>\s*(?:[^<.]{0,16})?<b>([^<]+)<\/b>/,SMALL_WORDS=new Set(['of','the','and','or','in','a','an','to','for']);
+const TITLE_KEY=/^[a-z0-9]+(?:-[a-z0-9]+)*$/,HEADWORD=/^\s*<p>\s*([^<.]{0,16})?<b>([^<]+)<\/b>/,NOUN_PHRASE_OPENING=/^(?:(?:un|una|unos|unas|el|la|los|las)(?:\s+[\p{L}\p{N}-]+)?)?$/iu,SMALL_WORDS=new Set(['of','the','and','or','in','a','an','to','for']);
 const sourceTitle=a=>a?.sourceEvidence?.title??a?.sourceRecord?.title??a?.title;
 // The English twin of a Spanish term, by term number. A compiled English pack carries term-eng-tN; the approved
 // eng.MRK-1-1-13 presentation (the twin of spa.MRK-1-1-13) carries the legacy FIAKeyTerms content id eng-tN-vN.
@@ -36,9 +36,14 @@ export function termTitle(t,{language,sibling}={}){
  if(!isKey)return {title,titleProvenance:{status:'source'}};
  if(language==='eng')return {title:title.split('-').map((w,i)=>i&&SMALL_WORDS.has(w)?w:w[0].toUpperCase()+w.slice(1)).join(' '),titleProvenance:{status:'source',from:'FIAKeyTerms key',derivedFrom:t.title}};
  if(head){
-  // The headword is the term's own text, never a word count compared across languages (fig-tree is one word, higuera):
-  // it is used only when it occurs in that text, and a pack-level pass withholds it when another term's title collides.
-  const word=plain(head[1]);
+  // The headword is the term's own text, never a word count compared across languages (fig-tree is one word, higuera).
+  // The bold phrase is a headword only when the definition opens as a noun phrase: nothing before it, or an article
+  // (Un, Una, El, La, Los, Las, Unos, Unas) with at most one more word (<p>Una <b>higuera</b> es…, <p>La palabra
+  // <b>cielo</b>…). A clause such as <p>Cuando <b>perdonan</b>… bolds a conjugated verb, not the term, so the marker shows;
+  // the noun is never looked for elsewhere in the body. The phrase must also occur in that text, and a pack-level pass
+  // withholds it when another term's title collides.
+  const lead=plain(head[1]||'').replace(/[“”"«»'‘’(),:;]+/g,' ').trim(),word=plain(head[2]);
+  if(!NOUN_PHRASE_OPENING.test(lead))return fallback(title,'not-a-headword-phrase');
   if(!word||!plain(t.text?.html).toLowerCase().includes(word.toLowerCase()))return fallback(title,'not-in-text');
   return {title:word.charAt(0).toLocaleUpperCase('es')+word.slice(1),titleProvenance:{status:'source',from:'FIAKeyTerms headword',derivedFrom:t.title}};
  }

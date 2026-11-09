@@ -101,11 +101,13 @@ test('spa.MRK-1-1-13 beside the approved presentation: legacy eng-tN-vN twins ma
  assert.equal(siblingTerm({assets:{'term-eng-t4':{id:'term-eng-t4',kind:'term'}}},'4').id,'term-eng-t4');
  const {pack,diagnostics}=compile(input('spa.MRK-1-1-13'),{sibling:approved});
  assert.deepEqual([4,5,9,23,38,63,76,118].map(n=>pack.assets['term-spa-t'+n].title),['Ángel','Ungir','Bautizar','Cristo','Desierto','Cielo','Jerusalén','Satanás'],'headwords from the Spanish text, first letter capitalised');
+ for(const n of [53,109]){const a=pack.assets['term-spa-t'+n];assert.match(a.sourceHtml,/^<p>Cuando /);assert.deepEqual(a.titleProvenance,{status:'missing',badge:'not-yet-in-language',fallback:'eng',withheld:'not-a-headword-phrase'},a.id+': a clause that bolds a conjugated verb is not a headword');assert.equal(a.title,a.sourceEvidence.title);assert.equal(a.spanishText,'english-fallback');}
  for(const n of [4,5,9])assert.deepEqual(pack.assets['term-spa-t'+n].titleProvenance,{status:'source',from:'FIAKeyTerms headword',derivedFrom:pack.assets['term-spa-t'+n].sourceEvidence.title});
  for(const n of [92,145]){const a=pack.assets['term-spa-t'+n];assert.deepEqual(a.titleProvenance,{status:'missing',badge:'not-yet-in-language',fallback:'eng'},a.id+' has no headword: the key stays, marked');assert.equal(a.spanishText,'english-fallback',a.id+' shows [ES needed]');}
  assert.equal(pack.assets['term-spa-t4'].spanishText,'present');assert.equal(pack.assets['term-spa-t88'].title,'Señor');assert.deepEqual(pack.assets['term-spa-t88'].titleProvenance,{status:'source'});
  for(const a of Object.values(pack.assets).filter(a=>a.kind==='term')){const twin=siblingTerm(approved,a.sourceEvidence.termNumber);if(twin&&a.titleProvenance.status==='source'&&!a.titleProvenance.from)assert.notEqual(a.title.toLowerCase(),String(twin.title).toLowerCase(),a.id+': an English key published as a Spanish title');}
- assert.ok(!diagnostics.some(d=>d.code==='term-headword-withheld'),'nothing in this pack collides');
+ assert.ok(!diagnostics.some(d=>d.code==='term-headword-withheld'&&d.reason==='collision'),'nothing in this pack collides');
+ assert.deepEqual(diagnostics.filter(d=>d.code==='term-headword-withheld').map(d=>d.assetId+':'+d.reason),['term-spa-t53:not-a-headword-phrase','term-spa-t109:not-a-headword-phrase']);
 });
 test('an executable candidate composes on a retitled term: the derived title is bound to the evidence title it came from',async()=>{
  const eng=compile(input('eng.LUK-1-26-38')).pack,spa=compile(input('spa.LUK-1-26-38'),{sibling:eng}).pack,term=spa.assets['term-spa-t68'];
@@ -139,4 +141,19 @@ test('an opening bold phrase is not promoted to the headword when it collides wi
  assert.deepEqual(withholdCollidingHeadwords(two),['y']);assert.equal(two.x.title,'Sinagoga');assert.equal(two.y.title,'synagogue-ruler','the base concept keeps the shared phrase; its compound is withheld');
  const tie={x:mk('x','Maestro','teacher','FIAKeyTerms headword'),y:mk('y','Maestro','rabbi','FIAKeyTerms headword')};
  assert.deepEqual(withholdCollidingHeadwords(tie).sort(),['x','y'],'no base among colliding headwords: all withheld, never a guess');
+});
+
+test('the first bold phrase is a headword only when the definition opens as a noun phrase; a clause that bolds a verb is withheld, never replaced by a noun found elsewhere',()=>{
+ const spa=(title,html,termNumber='1')=>termTitle({title,termNumber,text:{html}},{language:'spa',sibling:{assets:{['term-eng-t'+termNumber]:{sourceEvidence:{title}}}}});// the English twin marks the title as the key
+ assert.deepEqual(spa('forgiveness','<p>Cuando <b>perdonan</b> a alguien, dejan de estar enojados. El perdón es…</p>'),{title:'forgiveness',titleProvenance:{status:'missing',badge:'not-yet-in-language',fallback:'eng',withheld:'not-a-headword-phrase'}});
+ assert.equal(spa('repentance','<p>Cuando se <b>arrepienten</b>, se sienten mal…</p>').titleProvenance.withheld,'not-a-headword-phrase');
+ assert.equal(spa('pray','<p>Jesús <b>oraba</b> a menudo…</p>').titleProvenance.withheld,'not-a-headword-phrase');
+ assert.equal(spa('fig-tree','<p>Una <b>higuera</b> es un árbol…</p>').title,'Higuera');
+ assert.equal(spa('angel','<p><b>Ángel</b> es un ser…</p>').title,'Ángel','nothing before the phrase');
+ assert.equal(spa('heaven','<p>La palabra <b>cielo</b> a veces…</p>').title,'Cielo','an article and one word before the phrase');
+ assert.equal(spa('satan','<p>El nombre <b>Satanás</b> significa…</p>').title,'Satanás');
+ assert.equal(spa('pharisees','<p>Los <b>fariseos</b> eran…</p>').title,'Fariseos');
+ assert.equal(spa('law','<p>En la Biblia, la <b>ley</b> es…</p>').titleProvenance.withheld,'not-a-headword-phrase','a prepositional opening is not a noun phrase');
+ assert.equal(spa('temple','<p>El muy grande <b>templo</b>…</p>').titleProvenance.withheld,'not-a-headword-phrase','more than one word after the article');
+ assert.equal(spa('gospel','<p>La palabra “<b>evangelio</b>” es…</p>').title,'Evangelio','quotes around the phrase do not count as words');
 });
