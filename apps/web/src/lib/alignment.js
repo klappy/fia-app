@@ -106,7 +106,9 @@ function activityWordBoundary(text, at) {
 }
 
 /** A guide or instruction card's alignment from its sidecar words ({startMs,endMs,from,to}, offsets into the narration), so the card
- * highlights through the same gel as scripture. Returns null unless every word sits inside the narration text it is shown with. */
+ * highlights through the same gel as scripture. Returns null unless every word sits inside the narration text it is shown with:
+ * that text-offset check is the only hard refusal (captain, 2026-11-09). The timing tier the words carry (activityTiming:
+ * exact | clamped | approximate) rides along as `timing` for tests and audits; the gel looks the same at every tier. */
 export function activityAlignment(text, words, durationMs) {
   if (typeof text !== 'string' || !text || !Array.isArray(words) || !words.length || !activityGraphemes) return null;
   const boundaries = new Set(Array.from(activityGraphemes.segment(text), part => part.index));
@@ -122,5 +124,6 @@ export function activityAlignment(text, words, durationMs) {
   }
   const timed = words.map(w => ({ from: w.from, to: w.to, start: w.startMs / 1000, end: w.endMs / 1000 }));
   const last = timed[timed.length - 1].end;
-  return { schemaVersion: 2, clockDomain: 'delivery-media-seconds', duration: Math.max(last, (durationMs || 0) / 1000), verses: [{ start: timed[0].start, end: last, highlightMode: 'word', words: timed }] };
+  const timing = ['exact', 'clamped', 'approximate'].includes(words.tier) ? words.tier : 'exact';
+  return { schemaVersion: 2, clockDomain: 'delivery-media-seconds', timing, duration: Math.max(last, (durationMs || 0) / 1000), verses: [{ start: timed[0].start, end: last, highlightMode: 'word', words: timed }] };
 }

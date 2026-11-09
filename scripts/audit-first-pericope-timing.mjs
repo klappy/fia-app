@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
-import {validateTranscript,activityWords} from '../apps/web/src/lib/transcript.js';
+import {validateTranscript,activityTiming,TIMING_TIERS} from '../apps/web/src/lib/transcript.js';
 import {activityAlignment} from '../apps/web/src/lib/alignment.js';
 import {tailExtendedRange} from '../apps/web/src/lib/range-tail.js';
 import {validateDelivery,deliveryVariant} from '../apps/web/src/lib/media-delivery.js';
@@ -20,16 +20,16 @@ export function evaluateFirstGuideTiming({text,activityId,transcript,range,audio
  if(JSON.stringify(transcript.timingMapping)!==JSON.stringify(mapping))return untimed('sidecar-clock-mapping-identity',common);
  const a=transcript.activities?.[activityId];
  if(!a)return untimed('missing-activity-map',common);
- const words=activityWords(a,range);
- if(!words){
-  const count=Array.isArray(a.words)?a.words.length:0;
-  if(!Number.isInteger(a.total)||a.total!==count||!Number.isInteger(a.matched)||a.matched>a.total||a.matched<Math.ceil(a.total*.7))return untimed('insufficient-asr-match',{...common,matched:a.matched??null,total:a.total??null});
-  const outside=range&&(range.startSeconds*1000>a.startMs||range.endSeconds*1000<a.endMs||a.words.some(w=>w.startMs<range.startSeconds*1000||w.endMs>range.endSeconds*1000));
-  return untimed(outside?'outside-playback-range':'invalid-activity-word-times',common);
- }
- const alignment=activityAlignment(text,words,a.endMs);
+ // Captain, 2026-11-09: highlight the closest match on every screen. A malformed map is still untimed; a map under the 70 %
+ // floor, outside the runtime clip or with zero-duration words is fitted and reported by tier (exact | clamped | approximate).
+ const timing=activityTiming(a,range);
+ if(!timing)return untimed('malformed-activity-map',{...common,matched:a.matched??null,total:a.total??null});
+ const alignment=activityAlignment(text,timing.words,a.endMs);
  if(!alignment)return untimed('displayed-text-token-or-offset-mismatch',common);
- return {accepted:true,status:'runtime-predicate-accepted',reason:null,...common,words:words.length,matched:a.matched,total:a.total,clockDomain:alignment.clockDomain};
+ if(!TIMING_TIERS.includes(alignment.timing)||alignment.timing!==timing.tier)throw Error('Timing tier disagreement: '+activityId);
+ const outside=range&&(range.startSeconds*1000>a.startMs||range.endSeconds*1000<a.endMs||a.words.some(w=>w.startMs<range.startSeconds*1000||w.endMs>range.endSeconds*1000));
+ const fitted={underMatchFloor:a.matched<Math.ceil(a.total*.7),outsidePlaybackRange:!!outside,clampedWords:timing.clamped,respacedZeroDurationWords:timing.respaced};
+ return {accepted:true,status:'runtime-predicate-accepted',reason:null,...common,tier:timing.tier,fitted,words:timing.words.length,matched:a.matched,total:a.total,clockDomain:alignment.clockDomain};
 }
 export function auditFirstPericopeTiming(root){
  const base=path.resolve(root,'apps/web/public');
@@ -82,9 +82,10 @@ export function auditFirstPericopeTiming(root){
   }
   const selected=variants.find(v=>v.quality===entry.defaultSize);
   if(!selected)throw Error('Default guide delivery variant missing: '+a.id);
-  rows.push({...common,selectedQuality:selected.quality,accepted:selected.accepted,status:selected.status,reason:selected.reason,variants});
+  rows.push({...common,selectedQuality:selected.quality,accepted:selected.accepted,status:selected.status,reason:selected.reason,tier:selected.tier??null,variants});
  }
  const byReason=rows.reduce((out,r)=>(out[r.reason||'runtime-predicate-accepted']=(out[r.reason||'runtime-predicate-accepted']||0)+1,out),{});
- return {schema:'fia-first-pericope-timing-quality@1',packId:FIRST_PACK,presentationSha256:descriptor.revision,approvedPresentationSha256:hash(approvedBytes),registrySha256:hash(registryBytes),deliverySha256:hash(deliveryBytes),guideRoutes:rows.length,accepted:rows.filter(r=>r.accepted).length,untimed:rows.filter(r=>!r.accepted).length,byReason,routingScope,excludedDerivedResourceRoutes,rows,scope:'The111 source-ledger-bound guide/discussion routes, evaluated against canonical delivered OGG descriptors and their delivery-media-seconds sidecars. Accepted canonical predicates are NOT executable-original/native-MP3 playback or highlight passes. In particular the d631 mapping explicitly excludes the native MP3 clock. Native MP3 source words are not qualified by copying/renaming delivery sidecars. Derived resource subroutes are separate; whole-file native derivatives and term descriptions gain no word qualification here. No media fetch, native playback, acoustic accuracy, physical-device acceptance or current production storage query; repository sidecar absence does not establish publisher absence. Known untimed routes remain explicit; not an all111-pass claim.'};
+ const byTier=Object.fromEntries(TIMING_TIERS.map(t=>[t,rows.filter(r=>r.tier===t).length]));
+ return {schema:'fia-first-pericope-timing-quality@1',packId:FIRST_PACK,presentationSha256:descriptor.revision,approvedPresentationSha256:hash(approvedBytes),registrySha256:hash(registryBytes),deliverySha256:hash(deliveryBytes),guideRoutes:rows.length,accepted:rows.filter(r=>r.accepted).length,untimed:rows.filter(r=>!r.accepted).length,byReason,byTier,routingScope,excludedDerivedResourceRoutes,rows,scope:'The111 source-ledger-bound guide/discussion routes, evaluated against canonical delivered OGG descriptors and their delivery-media-seconds sidecars. Accepted canonical predicates are NOT executable-original/native-MP3 playback or highlight passes. In particular the d631 mapping explicitly excludes the native MP3 clock. Native MP3 source words are not qualified by copying/renaming delivery sidecars. Derived resource subroutes are separate; whole-file native derivatives and term descriptions gain no word qualification here. No media fetch, native playback, acoustic accuracy, physical-device acceptance or current production storage query; repository sidecar absence does not establish publisher absence. Since 2026-11-09 (captain: highlight the closest match everywhere) an accepted route carries its timing tier: exact (map unchanged), clamped (words fitted to the runtime clip or zero-duration words re-spaced) or approximate (under the 70 % heard-token floor; layout between heard anchors is interpolated). A tier is a disposition, not an acoustic acceptance.'};
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url))process.stdout.write(JSON.stringify(auditFirstPericopeTiming(path.resolve(process.argv[2]||'.')),null,2)+'\n');
