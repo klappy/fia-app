@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.0.0 — Stable release preparation (2026-11-07)
+
+Graduates the existing 3.0.0 prerelease series to the stable version requested for the next release. Includes the previously integrated English/Spanish Mark and Luke text and resource work, verified visual delivery support, audio identity and timing validation repairs, and the restored guide layout with resources available through the passage menu. This candidate also prepares continuous reading across adjacent guide cards; its implementation, review and exact-build checks must finish before promotion.
+
+See [stable release scope and limits](release/changes/3.0.0-stable.md). Stable versioning does not establish complete media or audio coverage, all-screen synchronized highlighting, human Spanish acceptance, physical-device acceptance or deployment. Missing or invalid recording timings remain unavailable rather than invented. First-step timing and the accepted passage-switch issue remain explicit follow-up limits. Each environment still requires independent review, required checks and exact-commit post-deploy evidence.
+
 ## 3.0.0-alpha.21 — Persistent audio, word highlights and Summit interface repairs (2026-11-05)
 
 Adds the persistent audio pool and script controller, one-card presentation, and word-highlight captions from timing sidecars for Mark 1:1–13 (PR324). Ranged guide clips keep the reviewed Opus packets in a WebM container; the tail extension is now bounded to 0.25 s without reaching the next clip's speech (PR333, PR324). At unavailable pictures and maps, the step's guide words remain visible with a bounded, non-scrolling status card that preserves the reviewed aspect ratio when space allows (PR318, PR321, PR335). This release also carries trusted Mark 1:14–20 placement and the visual-capable client (PR283, PR287), stage notices that do not cover content (PR330), accessible passage button names (PR326), and bounded Saved-snapshot fetches (PR323). The listening harness verifies the exact deterministic WebM remux rather than expecting the original Ogg container (PR338). See the [release scope and limits](release/changes/3.0.0-alpha.21-summit-candidate.md).
