@@ -92,7 +92,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  // so repeating it on every page of a workshop is noise. A pack with partial recordings (eng.MRK-1-14-20) keeps the per-screen
  // notice and the preparationNotice path unchanged.
  let packWithoutGuideRecordings=$derived(executableMode&&guideRecordingAvailability(selectedPack)==='Guide recordings unavailable');
- let blockedNoticeShown=$state(null); // once per session: reset() clears it, so a restarted session gets its one notice again (Codex P2 on #354)
+ let blockedNoticeShown=$state(null); // once per session: reset() clears it (and the dismissal key), so a restarted session gets its one notice again (Codex P2 on #354)
  $effect(()=>{if(!verifying&&packWithoutGuideRecordings&&executableAction?.narration.action==='blocked'&&blockedNoticeShown?.revision!==selectedPack.revision)blockedNoticeShown={revision:selectedPack.revision,activityId:activity.id};});
  let blockedNoticeSpent=$derived(packWithoutGuideRecordings&&blockedNoticeShown?.revision===selectedPack.revision&&blockedNoticeShown.activityId!==activity.id);
  let preparationNotice=$derived(!verifying&&executableAction?.narration.action==='blocked'&&dismissedExecutionNotice!==executionNoticeKey&&!blockedNoticeSpent?'This recording is unavailable. You can continue.':currentPreparation?.event!==preparationDismissed&&!(currentPreparation?.status==='ready'&&carrying)?currentPreparation?.message:'');
@@ -574,7 +574,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
   if(event.type==='DETOUR'&&assets[event.assetId]?.kind==='video'&&session.preferences.autoplayVideo&&hadPlaybackConsent){playbackConsent=true;queueVideoPlay();}
   if(forward&&session.index!==priorIndex)beginForwardPlayback();
  }
- function reset(){if(deferVideo(reset))return;stopVisual();visualOwner.clear();cancel();const preferences={...session.preferences};const mode=session.mode;dispatch({type:'RESET'});session={...session,preferences,mode};introduced=new Set();started=false;messages=[];blockedNoticeShown=null;persist();}
+ function reset(){if(deferVideo(reset))return;stopVisual();visualOwner.clear();cancel();const preferences={...session.preferences};const mode=session.mode;dispatch({type:'RESET'});session={...session,preferences,mode};introduced=new Set();started=false;messages=[];blockedNoticeShown=null;dismissedExecutionNotice=null;persist();}
  function describe(id,explicit=false){if(deferVideo(()=>describe(id,explicit)))return;const a=assets[id];if(!a)return;if(['image','map'].includes(a.kind)&&matchingVideo&&focal.id===id&&(explicit||session.preferences.autoplayVideo)){openMatchingVideo();return;}if(!session.detour&&a.kind==='term'&&activity.assetId===id){termDefinition=activity.id;persist();}cancel();dispatch({type:'PAUSE'});message(a.description);if(!a.descriptionAudio){notice='No source recording is available for this resource.';return;}audioContext={type:'description',id};startRecording(id,a.description,a.descriptionAudio,explicit);}
  function queueVideoPlay(explicit=false){if(!explicit&&!playbackConsent)return;const pack=selectedPack,generation=selectionGeneration,activityId=activity.id,focalId=focal.id,playbackGeneration=mediaGeneration;tick().then(()=>{if(pack===selectedPack&&generation===selectionGeneration&&activityId===activity.id&&focalId===focal.id&&playbackGeneration===mediaGeneration)playVideo();});}
  async function playVideo(){

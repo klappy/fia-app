@@ -49,6 +49,18 @@ test('verses before the only anchor still get time: an unanchored edge run takes
  const whole=alignmentFromSidecar(verses,sidecar(spoken));assert.equal(whole.verses[0].start,0);assert.equal(whole.verses[2].end,20,'without a range the file is the range');
  const m=alignmentFromSidecar(verses,sidecar(spoken),{range:{startSeconds:2,endSeconds:20},mapping:{scale:1,offsetSeconds:2}});assert.equal(m.verses[0].start,0,'the boundary goes through the clock mapping like every other time');
 });
+test('a retained word in the 250 ms slack outside the range never widens an unmatched edge run past the playback boundary (Codex P2 on #354)',()=>{
+ // Verse 2 is spoken inside the range; a stray word 200 ms before it starts and one 100 ms after it ends are retained by the
+ // slack; verses 1 and 3 are unmatched edge runs. Every timestamp they get must lie inside the range, not at the stray words.
+ const range={startSeconds:2,endSeconds:10};
+ const spoken=[{startMs:1800,endMs:1900,text:'mumble'},...mk('Then there was light',5000),{startMs:10100,endMs:10200,text:'mumble'}];
+ const a=alignmentFromSidecar(verses,sidecar(spoken),{range});
+ assert.deepEqual(a.verses.map(v=>v.highlightMode),['verse','word','verse']);
+ assert.equal(a.verses[0].start,2);assert.equal(a.verses[0].end,a.verses[1].start);assert.equal(a.verses[2].start,a.verses[1].end);assert.equal(a.verses[2].end,10);
+ for(const v of a.verses){for(const t of [v.start,v.end,...v.words.flatMap(w=>[w.start,w.end])])assert.ok(t>=2&&t<=10,'inside the range: '+t);}
+ assert.deepEqual(alignmentPosition(a,2.5),{verseIndex:0,wordIndex:-1});assert.deepEqual(alignmentPosition(a,9.9),{verseIndex:2,wordIndex:-1});
+ const m=alignmentFromSidecar(verses,sidecar(spoken),{range,mapping:{scale:1,offsetSeconds:2}});assert.equal(m.verses[0].start,0);assert.equal(m.verses[2].end,8);
+});
 test('playbackRange trims the sidecar and the timing mapping converts to the player clock',()=>{
  const sc=sidecar([...mk('Stray words before',0),...mk('In the beginning God made',5000),...mk('Then there was light',9000),...mk('And God saw it was good',13000)]);
  const a=alignmentFromSidecar(verses,sc,{range:{startSeconds:5,endSeconds:20}});
