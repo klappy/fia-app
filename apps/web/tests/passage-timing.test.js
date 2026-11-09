@@ -26,17 +26,28 @@ test('words the recording left out are interpolated between matched neighbours; 
  const sc=sidecar([...mk('In the God made',1000),...mk('Then there was light',6000),...mk('And God saw it was good',10000)]);
  const a=alignmentFromSidecar(verses,sc);const w=a.verses[0].words;assert.equal(w.length,5);assert.equal(a.timing,'exact');
  assert(w[2].start>=w[1].end&&w[2].end<=w[3].start+1e-9);
- // Captain 2026-11-09: never refuse for an imperfect alignment. Below the floors every verse is verse-timed across the spoken
- // span by text length (page turns on time, no word highlighted on a guess), and the result says so for tests and audits.
+ // Captain 2026-11-09: never refuse for an imperfect alignment. Below the floors every verse is verse-timed across the playback
+ // range (the whole file without one) by text length (page turns on time, no word highlighted on a guess), and the result says so.
  const spoken=mk('completely unrelated spoken words appear here instead of it',0),low=alignmentFromSidecar(verses,sidecar(spoken));
  assert.equal(low.timing,'approximate');assert.equal(low.verses.length,3);assert.deepEqual(low.verses.map(v=>v.highlightMode),['verse','verse','verse']);
- assert.equal(low.verses[0].start,spoken[0].startMs/1000);assert.equal(+low.verses[2].end.toFixed(6),spoken.at(-1).endMs/1000);
+ assert.equal(low.verses[0].start,0);assert.equal(+low.verses[2].end.toFixed(6),20,'no range: the file is the span');
  for(let i=1;i<3;i++)assert(low.verses[i].start>=low.verses[i-1].end-1e-9,'verse order');
  assert.deepEqual(alignmentPosition(low,0.2),{verseIndex:0,wordIndex:-1});
  // A verse that still reaches its own floor keeps word timing even when the passage as a whole is under the spoken floor.
  const partial=alignmentFromSidecar(verses,sidecar([...mk('In the beginning God made',1000),...mk('nothing of this is in the text at all nor this nor that',6000)]));
  assert.equal(partial.timing,'approximate');assert.equal(partial.verses[0].highlightMode,'word');assert.equal(partial.verses[0].words.length,5);assert.equal(partial.verses[1].highlightMode,'verse');
  assert.equal(alignmentFromSidecar(verses,null),null);assert.equal(alignmentFromSidecar([],sc),null);
+});
+test('verses before the only anchor still get time: an unanchored edge run takes the playback range, not the first spoken word (Codex P2 on #354)',()=>{
+ // The only usable anchor is verse 2 and the unmatched speech follows it, so the first spoken word IS verse 2's start.
+ const spoken=[...mk('Then there was light',6000),...mk('mumble mumble mumble mumble mumble mumble mumble mumble mumble mumble',8000)];
+ const a=alignmentFromSidecar(verses,sidecar(spoken),{range:{startSeconds:2,endSeconds:20}});
+ assert.equal(a.timing,'approximate');assert.deepEqual(a.verses.map(v=>v.highlightMode),['verse','word','verse']);
+ assert.equal(a.verses[0].start,2);assert.equal(a.verses[0].end,a.verses[1].start);assert.ok(a.verses[0].end>a.verses[0].start,'verse 1 is no longer a zero-length span');
+ assert.deepEqual(alignmentPosition(a,3),{verseIndex:0,wordIndex:-1});assert.equal(alignmentPosition(a,6.1).verseIndex,1);
+ assert.equal(a.verses[2].start,a.verses[1].end);assert.equal(a.verses[2].end,20);assert.deepEqual(alignmentPosition(a,15),{verseIndex:2,wordIndex:-1});
+ const whole=alignmentFromSidecar(verses,sidecar(spoken));assert.equal(whole.verses[0].start,0);assert.equal(whole.verses[2].end,20,'without a range the file is the range');
+ const m=alignmentFromSidecar(verses,sidecar(spoken),{range:{startSeconds:2,endSeconds:20},mapping:{scale:1,offsetSeconds:2}});assert.equal(m.verses[0].start,0,'the boundary goes through the clock mapping like every other time');
 });
 test('playbackRange trims the sidecar and the timing mapping converts to the player clock',()=>{
  const sc=sidecar([...mk('Stray words before',0),...mk('In the beginning God made',5000),...mk('Then there was light',9000),...mk('And God saw it was good',13000)]);

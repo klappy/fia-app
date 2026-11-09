@@ -13,8 +13,10 @@ const read=p=>JSON.parse(fs.readFileSync(root+'/'+p));
 const recorded=read('evidence/first-pericope/timing-quality.json');
 const knownTiers={
  // The 12 range cases (first recognised word 30–440 ms before the authored clip start, or the stop-before-the-next-sound tail
- // ending the runtime range below the map's endMs) and the 19 zero-duration cases, minus the ten that fitted without moving a word.
- clamped:['S02-U002','S02-U007','S02-U008','S03-U005','S03-U008','S03-U018','S03-U020','S03-U022','S03-U024','S03-U025','S04-U002','S04-U003','S04-U004','S04-U013','S05-U001','S05-U003','S05-U007','S05-U015','S05-U018','S05-U020','S05-U024','S05-U029','S05-U033','S05-U040','S05-U042'],
+ // ending the runtime range below the map's endMs) and the zero-duration cases. Codex P2 on #354: a zero-duration run with no
+ // gap between its neighbours now borrows time from them instead of keeping a zero-length stamp, so the six routes that used
+ // to "fit without moving a word" (S02-U006, S02-U011, S04-U015, S05-U004, S05-U030, S05-U035) moved exact → clamped.
+ clamped:['S02-U002','S02-U006','S02-U007','S02-U008','S02-U011','S03-U005','S03-U008','S03-U018','S03-U020','S03-U022','S03-U024','S03-U025','S04-U002','S04-U003','S04-U004','S04-U013','S04-U015','S05-U001','S05-U003','S05-U004','S05-U007','S05-U015','S05-U018','S05-U020','S05-U024','S05-U029','S05-U030','S05-U033','S05-U035','S05-U040','S05-U042'],
  // Under the 70 % heard-token floor: the generator's interpolation between heard anchors is the closest match the evidence allows.
  // S01-U001 and S01-U002 left this list on 2026-11-09 (I1b: maps regenerated from the recognised words of the source evidence).
  approximate:['S02-U003','S02-U004','S02-U005','S02-U009','S02-U010','S04-U014','S04-U016','S05-U019','S06-U006','S06-U008']
@@ -30,11 +32,11 @@ test('committed111-route timing gate binds approved content and actual runtime p
  assert.deepEqual(current,recorded,'Changing committed content requires explicit per-ID timing disposition, not schema-only acceptance');
  assert.equal(current.guideRoutes,111);assert.equal(current.accepted,111);assert.equal(current.untimed,0);
  assert.deepEqual(current.byReason,{'runtime-predicate-accepted':111});
- assert.deepEqual(current.byTier,{exact:76,clamped:25,approximate:10});
+ assert.deepEqual(current.byTier,{exact:70,clamped:31,approximate:10});
  assert.equal(new Set(current.rows.map(r=>r.activityId)).size,111);
  for(const [tier,ids] of Object.entries(knownTiers))assert.deepEqual(current.rows.filter(r=>r.tier===tier).map(r=>r.activityId).sort(),[...ids].sort(),tier);
  const exact=current.rows.filter(r=>r.tier==='exact').map(r=>r.activityId);
- assert.equal(exact.length,76);for(const id of ['S01-U001','S01-U002','S01-U003','S01-U008'])assert.ok(exact.includes(id),id+' is exact');
+ assert.equal(exact.length,70);for(const id of ['S01-U001','S01-U002','S01-U003','S01-U008'])assert.ok(exact.includes(id),id+' is exact');
  for(const row of current.rows){
   assert.ok(row.variants.length,'every original recorded route has a checked delivery');
   for(const v of row.variants)assert.equal(v.sourceBindingVerified,true,'source rights/range/recording/mapping publication checks run');

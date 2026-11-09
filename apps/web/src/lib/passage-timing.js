@@ -63,8 +63,11 @@ export function alignmentFromSidecar(verses, sidecar, { range = null, mapping = 
     out[v] = { highlightMode: 'word', words: p.own.map(([s], k) => ({ from: s.from, to: s.to, start: clock(starts[k]), end: clock(Math.max(ends[k], starts[k])) })) };
     out[v].start = out[v].words[0].start; out[v].end = out[v].words.at(-1).end;
   });
-  // Verse-timed verses take the silence around them. Runs of them split the gap by text length.
-  const edge = { start: clock(spoken[0].startMs), end: clock(spoken.at(-1).endMs) };
+  // Verse-timed verses take the silence around them. Runs of them split the gap by text length. A run at either edge takes
+  // the playback range's boundary (the file's when there is no range), not the first or last spoken word: when the only
+  // anchor is in a later verse and the unmatched speech follows it, the first spoken word IS that verse's start, and the
+  // verses before it would get a zero-length span alignmentPosition never returns (Codex P2 on #354).
+  const edge = { start: clock(Math.min(spoken[0].startMs, range ? range.startSeconds * 1000 : 0)), end: clock(Math.max(spoken.at(-1).endMs, range ? range.endSeconds * 1000 : sidecar.durationMs)) };
   for (let v = 0; v < out.length;) {
     if (per[v].timed) { v++; continue; }
     let w = v; while (w < out.length && !per[w].timed) w++;

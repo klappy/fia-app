@@ -77,22 +77,32 @@ function activityShape(activity) {
   return {words, matched, total, startMs, endMs};
 }
 /** Zero-duration words share the gap between their timed neighbours by text length (the passage-timing gap-split rule),
- * so every word owns a moment of the clock. Returns the number of words it re-spaced. */
+ * so every word owns a moment of the clock. When the neighbours leave no gap (the generator's common case: S02-U002 has
+ * "or" and "gospel" at 18360 ms with the next word starting at 18360 ms) the run borrows from each timed neighbour the run's
+ * text-length share of that neighbour's span, never more than half of it. Every word in the run then holds a strictly
+ * positive, distinguishable interval (one millisecond at least, wherever the span has one to give), monotonic,
+ * non-overlapping and inside the clip, so wordIndexAt reaches each of them instead of only the last word sharing a start
+ * (Codex P2 on #354). Returns the number of zero-duration words it re-timed; a neighbour that lent time is not counted. */
 function respaceZeroDuration(words, lo, hi) {
-  const starts = words.map(w => w.endMs > w.startMs ? w.startMs : null), ends = words.map(w => w.endMs > w.startMs ? w.endMs : null);
+  const timed = w => w.endMs > w.startMs, weight = w => Math.max(1, (w.to ?? 0) - (w.from ?? 0));
+  const retime = (x, startMs, endMs) => { if (startMs === words[x].startMs && endMs === words[x].endMs) return 0; words[x] = {...words[x], startMs, endMs}; return 1; };
   let changed = 0;
-  for (let a = 0; a < starts.length;) {
-    if (starts[a] !== null) { a++; continue; }
-    let b = a; while (b < starts.length && starts[b] === null) b++;
-    const from = a > 0 ? ends[a - 1] : lo, to = b < starts.length ? starts[b] : hi;
-    const weights = words.slice(a, b).map(w => Math.max(1, (w.to ?? 0) - (w.from ?? 0))), total = weights.reduce((x, y) => x + y, 0) || 1;
-    let at = from;
-    for (let x = a; x < b; x++) {
-      const next = at + (Math.max(to, from) - from) * weights[x - a] / total;
-      const startMs = Math.round(at), endMs = Math.max(startMs, Math.round(next));
-      if (startMs !== words[x].startMs || endMs !== words[x].endMs) { words[x] = {...words[x], startMs, endMs}; changed++; }
-      at = next;
+  for (let a = 0; a < words.length;) {
+    if (timed(words[a])) { a++; continue; }
+    let b = a; while (b < words.length && !timed(words[b])) b++;
+    const weights = words.slice(a, b).map(weight), need = weights.reduce((x, y) => x + y, 0), k = b - a;
+    let from = a > 0 ? words[a - 1].endMs : lo, to = b < words.length ? words[b].startMs : hi;
+    if (to - from < k) {
+      const lend = n => Math.min(Math.floor((n.endMs - n.startMs) / 2), Math.round((n.endMs - n.startMs) * need / (need + weight(n))));
+      if (a > 0) { from -= lend(words[a - 1]); retime(a - 1, words[a - 1].startMs, from); }
+      if (b < words.length) { to += lend(words[b]); retime(b, to, words[b].endMs); }
     }
+    const start = Math.round(from), end = Math.max(start, Math.round(to)), edges = [start];
+    let acc = 0; for (const w of weights) edges.push(start + Math.round((end - start) * (acc += w) / need));
+    // Forward: distinct starts. Backward: the run still ends at `end` and never starts before `start`.
+    for (let i = 1; i < k; i++) edges[i] = Math.max(edges[i], edges[i - 1] + 1);
+    for (let i = k - 1; i > 0; i--) edges[i] = Math.max(start, Math.min(edges[i], edges[i + 1] - 1));
+    for (let x = a; x < b; x++) changed += retime(x, edges[x - a], edges[x - a + 1]);
     a = b;
   }
   return changed;

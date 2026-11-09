@@ -41,6 +41,20 @@ it('a pack with no guide recordings at all raises the blocked notice once, then 
  expect(statusText()).not.toContain(notice);
  expect(screen.getByRole('button',{name:'Replay',exact:true}).disabled).toBe(true);
 });
+it('Restart passage starts a new session, so the once-per-session notice is raised again on its first screen (Codex P2 on #354)',async()=>{
+ load(packs.none);vi.spyOn(libraryAdapter,'languages').mockResolvedValue([{id:'spa',nativeName:'Español',ready:1}]);vi.spyOn(libraryAdapter,'passages').mockResolvedValue([descriptor]);
+ await mount();expect(statusText()).toContain(notice);
+ const first=screen.getByRole('heading',{level:1}).textContent;
+ await next();await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).not.toBe(first));
+ expect(statusText()).not.toContain(notice);
+ await fireEvent.click(screen.getByRole('button',{name:'Session progress: open section overview'}));await fireEvent.click(screen.getByRole('button',{name:/^Passages/}));
+ await fireEvent.click(await screen.findByRole('button',{name:'Restart passage'}));await fireEvent.click(screen.getByRole('button',{name:'Start again'}));
+ await fireEvent.click(screen.getAllByRole('button',{name:'Close'})[0]);
+ await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).toBe(first));
+ expect(statusText()).toContain(notice);
+ await next();await waitFor(()=>expect(screen.getByRole('heading',{level:1}).textContent).not.toBe(first));
+ expect(statusText()).not.toContain(notice);
+});
 it('a pack with partial recordings keeps the per-screen blocked notice',async()=>{
  load(packs.partial);expect(guideRecordingAvailability(descriptor)).toBe('Some guide recordings available on request');
  await mount();expect(statusText()).toContain(notice);

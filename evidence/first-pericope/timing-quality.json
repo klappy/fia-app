@@ -12,8 +12,8 @@
     "runtime-predicate-accepted": 111
   },
   "byTier": {
-    "exact": 76,
-    "clamped": 25,
+    "exact": 70,
+    "clamped": 31,
     "approximate": 10
   },
   "routingScope": {
@@ -542,7 +542,7 @@
             "underMatchFloor": false,
             "outsidePlaybackRange": true,
             "clampedWords": 1,
-            "respacedZeroDurationWords": 0
+            "respacedZeroDurationWords": 2
           },
           "words": 31,
           "matched": 27,
@@ -588,7 +588,7 @@
             "underMatchFloor": true,
             "outsidePlaybackRange": false,
             "clampedWords": 0,
-            "respacedZeroDurationWords": 5
+            "respacedZeroDurationWords": 10
           },
           "words": 86,
           "matched": 39,
@@ -634,7 +634,7 @@
             "underMatchFloor": true,
             "outsidePlaybackRange": true,
             "clampedWords": 3,
-            "respacedZeroDurationWords": 0
+            "respacedZeroDurationWords": 2
           },
           "words": 64,
           "matched": 0,
@@ -680,7 +680,7 @@
             "underMatchFloor": true,
             "outsidePlaybackRange": false,
             "clampedWords": 0,
-            "respacedZeroDurationWords": 0
+            "respacedZeroDurationWords": 2
           },
           "words": 22,
           "matched": 10,
@@ -700,7 +700,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
-      "tier": "exact",
+      "tier": "clamped",
       "variants": [
         {
           "quality": "medium",
@@ -721,12 +721,12 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
-          "tier": "exact",
+          "tier": "clamped",
           "fitted": {
             "underMatchFloor": false,
             "outsidePlaybackRange": false,
             "clampedWords": 0,
-            "respacedZeroDurationWords": 0
+            "respacedZeroDurationWords": 11
           },
           "words": 164,
           "matched": 139,
@@ -772,7 +772,7 @@
             "underMatchFloor": false,
             "outsidePlaybackRange": false,
             "clampedWords": 0,
-            "respacedZeroDurationWords": 5
+            "respacedZeroDurationWords": 11
           },
           "words": 234,
           "matched": 223,
@@ -818,7 +818,7 @@
             "underMatchFloor": false,
             "outsidePlaybackRange": true,
             "clampedWords": 1,
-            "respacedZeroDurationWords": 0
+            "respacedZeroDurationWords": 1
           },
           "words": 17,
           "matched": 12,
@@ -910,7 +910,7 @@
             "underMatchFloor": true,
             "outsidePlaybackRange": false,
             "clampedWords": 0,
-            "respacedZeroDurationWords": 2
+            "respacedZeroDurationWords": 87
           },
           "words": 257,
           "matched": 157,
@@ -930,7 +930,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
-      "tier": "exact",
+      "tier": "clamped",
       "variants": [
         {
           "quality": "medium",
@@ -951,12 +951,12 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
-          "tier": "exact",
+          "tier": "clamped",
           "fitted": {
             "underMatchFloor": false,
             "outsidePlaybackRange": false,
             "clampedWords": 0,
-            "respacedZeroDurationWords": 0
+            "respacedZeroDurationWords": 1
           },
           "words": 59,
           "matched": 43,
@@ -1370,7 +1370,7 @@
             "underMatchFloor": false,
             "outsidePlaybackRange": false,
             "clampedWords": 0,
-            "respacedZeroDurationWords": 2
+            "respacedZeroDurationWords": 3
           },
           "words": 29,
           "matched": 27,
@@ -1830,7 +1830,7 @@
             "underMatchFloor": false,
             "outsidePlaybackRange": true,
             "clampedWords": 1,
-            "respacedZeroDurationWords": 0
+            "respacedZeroDurationWords": 14
           },
           "words": 51,
           "matched": 37,
@@ -2014,7 +2014,7 @@
             "underMatchFloor": false,
             "outsidePlaybackRange": false,
             "clampedWords": 0,
-            "respacedZeroDurationWords": 1
+            "respacedZeroDurationWords": 2
           },
           "words": 260,
           "matched": 254,
@@ -2816,7 +2816,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
-      "tier": "exact",
+      "tier": "clamped",
       "variants": [
         {
           "quality": "medium",
@@ -2837,12 +2837,12 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
-          "tier": "exact",
+          "tier": "clamped",
           "fitted": {
             "underMatchFloor": false,
             "outsidePlaybackRange": false,
             "clampedWords": 0,
-            "respacedZeroDurationWords": 0
+            "respacedZeroDurationWords": 1
           },
           "words": 55,
           "matched": 54,
@@ -3046,7 +3046,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
-      "tier": "exact",
+      "tier": "clamped",
       "variants": [
         {
           "quality": "medium",
@@ -3067,12 +3067,12 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
-          "tier": "exact",
+          "tier": "clamped",
           "fitted": {
             "underMatchFloor": false,
             "outsidePlaybackRange": false,
             "clampedWords": 0,
-            "respacedZeroDurationWords": 0
+            "respacedZeroDurationWords": 1
           },
           "words": 32,
           "matched": 28,
@@ -3762,7 +3762,7 @@
             "underMatchFloor": true,
             "outsidePlaybackRange": true,
             "clampedWords": 13,
-            "respacedZeroDurationWords": 0
+            "respacedZeroDurationWords": 12
           },
           "words": 36,
           "matched": 24,
@@ -4242,7 +4242,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
-      "tier": "exact",
+      "tier": "clamped",
       "variants": [
         {
           "quality": "medium",
@@ -4263,12 +4263,12 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
-          "tier": "exact",
+          "tier": "clamped",
           "fitted": {
             "underMatchFloor": false,
             "outsidePlaybackRange": false,
             "clampedWords": 0,
-            "respacedZeroDurationWords": 0
+            "respacedZeroDurationWords": 1
           },
           "words": 37,
           "matched": 36,
@@ -4472,7 +4472,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
-      "tier": "exact",
+      "tier": "clamped",
       "variants": [
         {
           "quality": "medium",
@@ -4493,12 +4493,12 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
-          "tier": "exact",
+          "tier": "clamped",
           "fitted": {
             "underMatchFloor": false,
             "outsidePlaybackRange": false,
             "clampedWords": 0,
-            "respacedZeroDurationWords": 0
+            "respacedZeroDurationWords": 2
           },
           "words": 34,
           "matched": 29,
