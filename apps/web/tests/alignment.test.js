@@ -147,7 +147,9 @@ test('a card alignment from sidecar words drives the same media-time lookup as s
  const text='Hear this, and put it in your hearts.';
  const words=[{text:"Hear",from:0,to:4,startMs:1000,endMs:1200},{text:"this",from:5,to:9,startMs:1300,endMs:1500},{text:"and",from:11,to:14,startMs:1900,endMs:2000}];
  const a=activityAlignment(text,words,3000);
- assert.equal(a.clockDomain,'delivery-media-seconds');assert.equal(a.verses.length,1);
+ assert.equal(a.clockDomain,'delivery-media-seconds');assert.equal(a.verses.length,1);assert.equal(a.timing,'exact','plain words are exact');
+ for(const tier of ['clamped','approximate']){const tagged=[...words];Object.defineProperty(tagged,'tier',{value:tier});assert.equal(activityAlignment(text,tagged,3000).timing,tier,'the words’ tier rides along');}
+ {const odd=[...words];Object.defineProperty(odd,'tier',{value:'guess'});assert.equal(activityAlignment(text,odd,3000).timing,'exact','an unknown tier name is not invented');}
  assert.equal(alignmentPosition(a,0.5),null);
  assert.deepEqual(alignmentPosition(a,1.4),{verseIndex:0,wordIndex:1});
  assert.deepEqual(alignmentPosition(a,1.7),{verseIndex:0,wordIndex:1});
