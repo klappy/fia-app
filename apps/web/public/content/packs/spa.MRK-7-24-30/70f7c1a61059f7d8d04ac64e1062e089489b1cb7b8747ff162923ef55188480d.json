@@ -1096,12 +1096,11 @@
     "term-spa-t135": {
       "id": "term-spa-t135",
       "kind": "term",
-      "title": "syrian-phoenicia",
+      "title": "Fenicia",
       "titleProvenance": {
-        "status": "missing",
-        "badge": "not-yet-in-language",
-        "fallback": "eng",
-        "withheld": "compound-key"
+        "status": "source",
+        "from": "FIAKeyTerms headword",
+        "derivedFrom": "syrian-phoenicia"
       },
       "subtitle": "FIA Key Terms",
       "text": "Fenicia es el nombre de un área al norte de Israel. Fenicia era una franja estrecha que consistía en cinco ciudades en la costa del mar Mediterráneo.\nEn la época del Nuevo Testamento, esta área pertenecía al país llamado Siria. Por esa razón, alguien que venía de esa área podía ser llamado “sirio fenicio”. Muchas otras personas que vivían en esta área habían venido de otros países, especialmente Grecia. Muchas personas en esta área estaban involucradas en el comercio: la compra y venta de mercancías, especialmente por medio de barcos.\nHoy en día, esta área es parte del país que ahora conocemos como Líbano.",
@@ -1155,7 +1154,7 @@
         ]
       },
       "relatedIds": [],
-      "spanishText": "english-fallback"
+      "spanishText": "present"
     },
     "term-spa-t141": {
       "id": "term-spa-t141",
@@ -4475,11 +4474,6 @@
     }
   ],
   "diagnostics": [
-    {
-      "code": "term-headword-withheld",
-      "assetId": "term-spa-t135",
-      "reason": "compound-key"
-    },
     {
       "code": "conservative-continuation",
       "unitId": "S01-U001"

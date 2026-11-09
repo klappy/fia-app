@@ -448,3 +448,20 @@ test('the Codex P2 build of the Spanish Luke honest-text release (catalog 39eed3
  assert.deepEqual(SUPERSEDED_BUILDS[5],{policy:C39EED39E_POLICY,recipe:'fia-server-source-action-projector@2',approvedAudio:true});
  const prior=SUPERSEDED_BUILDS.slice(0,5).map(b=>b.policy);assert.ok(!prior.includes(C39EED39E_POLICY),'entry 6 is a new build beside entries 1-5, which stay');
 });
+
+// Registry entry 7: the builds from the second Codex P2 round on the Spanish Luke honest-text release serve
+// proof index bb73cf96, whose authority names catalog 234a362f (English Mark byte-identical, the same one
+// Mark 1:14-20 binding). Entries 5 and 6 stay as the builds they were. Replayed from stored bytes.
+const C234A362F_POLICY='e99551de06cc3689e0a656cb8d1211c55eec9f90a125161f8509c42b8b3f0e6f';
+const PBB73CF96={id:'approved-audio-proof-index',path:'/content/approved-audio/bb73cf9645626aa47fc28a9e0268c92e59d33845b112629e1612781d9b20862f.json',sha256:'bb73cf9645626aa47fc28a9e0268c92e59d33845b112629e1612781d9b20862f',bytes:4311,mime:'application/json'};
+test('the second Codex P2 build of the Spanish Luke honest-text release (catalog 234a362f, proof index bb73cf96, @2) replays to registry entry 7 and its rows stay registered',async()=>{
+ const storedBytes=new Uint8Array(await readFile(APPROVED+PBB73CF96.sha256+'.json')),stored=JSON.parse(new TextDecoder().decode(storedBytes));
+ assert.equal(storedBytes.length,PBB73CF96.bytes);assert.equal(await sha256(storedBytes),PBB73CF96.sha256,'the stored bb73cf96 proof index is byte-exact');
+ assert.deepEqual(stored.authority,{registrySha256:'234a362f46acb530d624c759177462f0a67332adc1934d00983592014e1c4434',sourceRevision:'f8776d92b090b5af5b17b17dc1137f25fb059ed0'});
+ assert.deepEqual(stored.bindings.map(b=>b.packId+'/'+b.assetId),JSON.parse(new TextDecoder().decode(await readFile(APPROVED+PC6D3BF9F.sha256+'.json'))).bindings.map(b=>b.packId+'/'+b.assetId),'the same Mark 1:14-20 binding as entry 6');
+ const policy=await sha256(canonicalJSONString({policy:'fia-source-to-app/7fa17af806c139cfc353cace39fa6d50ed9e061b',approvedAudio:PBB73CF96}));
+ assert.equal(policy,C234A362F_POLICY,'the replayed build must write registry entry 7\'s literal policy. Never edit entry 7 or C234A362F_POLICY: a moved policy is a new build, appended as its own literal entry');
+ const {SUPERSEDED_BUILDS}=await import('../../server/fia/preparation/executable-presentation-runtime.mjs');
+ assert.deepEqual(SUPERSEDED_BUILDS[6],{policy:C234A362F_POLICY,recipe:'fia-server-source-action-projector@2',approvedAudio:true});
+ const prior=SUPERSEDED_BUILDS.slice(0,6).map(b=>b.policy);assert.ok(!prior.includes(C234A362F_POLICY),'entry 7 is a new build beside entries 1-6, which stay');
+});

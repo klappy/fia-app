@@ -538,12 +538,11 @@
     "term-spa-t51": {
       "id": "term-spa-t51",
       "kind": "term",
-      "title": "fig-tree",
+      "title": "Higuera",
       "titleProvenance": {
-        "status": "missing",
-        "badge": "not-yet-in-language",
-        "fallback": "eng",
-        "withheld": "compound-key"
+        "status": "source",
+        "from": "FIAKeyTerms headword",
+        "derivedFrom": "fig-tree"
       },
       "subtitle": "FIA Key Terms",
       "text": "Una higuera es un tipo de árbol frutal que crece en Israel. Puede crecer hasta unos 10 metros de altura. Cuando una higuera tiene aproximadamente 3 a 5 años de edad, comienza a dar fruto. El fruto de la higuera es amarillo o púrpura, y tiene un sabor dulce. Una higuera puede dar fruto dos veces al año, y a veces incluso tres veces al año.",
@@ -603,7 +602,7 @@
         ]
       },
       "relatedIds": [],
-      "spanishText": "english-fallback"
+      "spanishText": "present"
     },
     "term-spa-t173": {
       "id": "term-spa-t173",
@@ -4671,11 +4670,6 @@
     }
   ],
   "diagnostics": [
-    {
-      "code": "term-headword-withheld",
-      "assetId": "term-spa-t51",
-      "reason": "compound-key"
-    },
     {
       "code": "conservative-continuation",
       "unitId": "S01-U001"

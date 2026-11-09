@@ -2219,12 +2219,11 @@
     "term-spa-t163": {
       "id": "term-spa-t163",
       "kind": "term",
-      "title": "purification-offering-or-ceremony",
+      "title": "Ceremonia de purificación",
       "titleProvenance": {
-        "status": "missing",
-        "badge": "not-yet-in-language",
-        "fallback": "eng",
-        "withheld": "compound-key"
+        "status": "source",
+        "from": "FIAKeyTerms headword",
+        "derivedFrom": "purification-offering-or-ceremony"
       },
       "subtitle": "FIA Key Terms",
       "text": "Una ceremonia de purificación es un ritual que hace a una persona limpia, lo que significa apta para el servicio a Dios. Las palabras “limpio” e “impuro” en la Biblia no están hablando de si algo es limpio o sucio por fuera. En la Biblia, una persona limpia significa una persona que está apta para el servicio a Dios, que es aceptable para participar en la adoración a Dios. Una persona que es impura no es apta para el servicio a Dios, y no puede participar en la adoración pública. Los animales e incluso los objetos también pueden ser limpios o impuros.\nSi una mujer era impura porque había estado sangrando durante su ciclo mensual o había dado a luz a un niño, o si alguien había tenido relaciones sexuales, había tocado un cuerpo muerto, o se había recuperado de una enfermedad de la piel, eran impuros. Necesitaban esperar una cierta cantidad de tiempo y luego tomar un baño especial. En algunos casos, también tenían que ofrecer un sacrificio animal a Dios. Estas actividades juntas se llamaban la ceremonia de purificación. Después de esto, estas personas estaban limpias nuevamente y podían participar en todas las actividades de adoración.",
@@ -2288,7 +2287,7 @@
         ]
       },
       "relatedIds": [],
-      "spanishText": "english-fallback"
+      "spanishText": "present"
     },
     "term-spa-t111": {
       "id": "term-spa-t111",
@@ -8083,11 +8082,6 @@
     }
   ],
   "diagnostics": [
-    {
-      "code": "term-headword-withheld",
-      "assetId": "term-spa-t163",
-      "reason": "compound-key"
-    },
     {
       "code": "conservative-continuation",
       "unitId": "S02-U001"
