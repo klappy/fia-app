@@ -64,7 +64,7 @@ test('approved bound audio verifies its descriptor and delivered bytes before pl
  const fixture=bind({schema:'fia-bound-narration-audio@1',id:'approved-audio',delivery:{url:'/verified/audio',sha256:audioHash,bytes:4,mime:'audio/mpeg'},playbackRange:{startSeconds:1,endSeconds:2}});
  const calls=[];const transport=createExecutionTransport({fetch:async(url,options)=>{calls.push({url,options});return new Response(url.startsWith('/v1/artifacts/')?fixture.body:audio);}});
  const result=await transport.playBoundAudio(fixture.reference);
- assert.deepEqual(new Uint8Array(result.bytes),audio);assert.equal(result.mime,'audio/mpeg');assert.deepEqual(result.playbackRange,{startSeconds:1,endSeconds:2});
+ assert.deepEqual(new Uint8Array(result.bytes),audio);assert.equal(result.mime,'audio/mpeg');assert.equal(result.audioSha256,audioHash);assert.deepEqual(result.playbackRange,{startSeconds:1,endSeconds:2});
  assert.deepEqual(calls.map(x=>x.url),[`/v1/artifacts/${fixture.reference.sha256}`,'/verified/audio']);
  const corrupt=createExecutionTransport({fetch:async url=>new Response(url.startsWith('/v1/artifacts/')?fixture.body:'corrupt')});
  await assert.rejects(corrupt.playBoundAudio(fixture.reference),/could not be verified/);

@@ -1149,22 +1149,22 @@ it('cold offline launch restores the saved verified visual binding before render
  }finally{assets[id].src=original;if(originalEvidence===undefined)delete assets[id].sourceEvidence;else assets[id].sourceEvidence=originalEvidence;}
 });
 
-it('opening a step resource moves focus to Return and restores its originating button',async()=>{
- const original=activities[0],id=Object.values(assets).find(a=>a.kind==='image').id;activities[0]={...original,relatedAssetIds:[id]};
- try{
-  await startAt(original.id,'waiting');
-  const shelf=screen.getByRole('navigation',{name:'Resources for this step'}),trigger=within(shelf).getAllByRole('button').find(button=>button.dataset.resourceId===id);
-  trigger.focus();await fireEvent.click(trigger);
-  const back=screen.getByRole('button',{name:'Return to guide'});await waitFor(()=>expect(document.activeElement).toBe(back));
-  await fireEvent.click(back);
-  await waitFor(()=>expect(document.activeElement?.dataset.resourceId).toBe(id));expect(state().index).toBe(0);
- }finally{cleanup();activities[0]=original;}
+it('approved layout keeps guide image and map free of a fixed resource footer while the menu retains every Scripture edition',async()=>{
+ const source=activities[0];await startAt(source.id,'waiting');
+ const assertLayout=()=>{const scene=document.querySelector('main.scene');expect(screen.queryByRole('navigation',{name:'Resources for this step'})).toBeNull();expect(document.querySelector('.step-resources')).toBeNull();expect(scene.classList.contains('has-step-resources')).toBe(false);expect(scene.style.getPropertyValue('--step-resources-height')).toBe('');};
+ const explore=async(kind,id)=>{await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passage resources'}));const summary=screen.getByText(kind,{selector:'summary'});await fireEvent.click(summary);await fireEvent.click(within(summary.parentElement).getByRole('button',{name:assets[id].sourceEvidence?.short||assets[id].subtitle||assets[id].title,exact:true}));await settle();};
+ assertLayout();expect(document.querySelector('.media-stage').dataset.kind).toBe('guide');
+ for(const kind of ['image','map']){
+  const asset=Object.values(assets).find(a=>a.kind===kind);await explore(kind==='image'?'Images':'Maps',asset.id);assertLayout();expect(document.querySelector('.media-stage').dataset.kind).toBe(kind);expect(state().detour).toBe(asset.id);expect(activities[state().index].id).toBe(source.id);await fireEvent.click(screen.getByRole('button',{name:'Return to guide'}));await settle();expect(state().detour).toBeNull();expect(activities[state().index].id).toBe(source.id);assertLayout();
+ }
+ for(const id of ['scripture-BereanStandardBible','scripture-unfoldingWordLiteral','scripture-unfoldingWordSimplified']){
+  await explore('Scripture translations',id);expect(state().detour).toBe(id);expect(activities[state().index].id).toBe(source.id);expect(document.querySelector('.media-stage').dataset.kind).toBe('scripture');assertLayout();await fireEvent.click(screen.getByRole('button',{name:'Return to guide'}));await settle();expect(state().detour).toBeNull();expect(activities[state().index].id).toBe(source.id);
+ }
 });
 
-it('step resources show Checking while media verification is pending',async()=>{
- const original=activities[0],id=Object.values(assets).find(a=>a.kind==='image').id;activities[0]={...original,relatedAssetIds:[id]};
- vi.spyOn(libraryAdapter,'mediaStatus').mockImplementation(()=>new Promise(()=>{}));
- vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});
- try{await startAt(original.id,'waiting');const shelf=screen.getByRole('navigation',{name:'Resources for this step'}),trigger=within(shelf).getAllByRole('button').find(button=>button.dataset.resourceId===id);expect(trigger.textContent).toContain('Checking');expect(trigger.textContent).not.toContain('Unavailable');expect(trigger.disabled).toBe(false);}
- finally{cleanup();activities[0]=original;}
+it('approved resource menu remains available while media checks are pending and never declares an unverified image ready',async()=>{
+ const pending=[];vi.spyOn(libraryAdapter,'mediaStatus').mockImplementation(()=>new Promise(resolve=>pending.push(resolve)));vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});
+ const source=activities[0],image=Object.values(assets).find(a=>a.kind==='image');await startAt(source.id,'waiting');expect(document.querySelector('.guide-primary').getAttribute('aria-busy')).toBe('true');expect(screen.getByRole('button',{name:'Checking availability',exact:true})).toBeTruthy();expect(screen.queryByRole('navigation',{name:'Resources for this step'})).toBeNull();
+ await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passage resources'}));const summary=screen.getByText('Images',{selector:'summary'});await fireEvent.click(summary);const trigger=within(summary.parentElement).getByRole('button',{name:image.subtitle||image.title,exact:true});expect(trigger.disabled).toBe(false);await fireEvent.click(trigger);await settle();expect(state().detour).toBe(image.id);expect(document.querySelector('.visual-viewport img')).toBeNull();expect(document.querySelector('.guide-primary').getAttribute('aria-busy')).toBe('true');
+ for(const resolve of pending)resolve({files:[]});await settle();await settle();await waitFor(()=>expect(document.querySelector('.guide-primary').getAttribute('aria-busy')).not.toBe('true'));expect(document.querySelector('.visual-viewport img')).toBeNull();expect(document.querySelector('.media-error').textContent).toContain('unavailable');await fireEvent.click(screen.getByRole('button',{name:'Return to guide'}));await settle();expect(state().detour).toBeNull();expect(activities[state().index].id).toBe(source.id);
 });
