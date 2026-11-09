@@ -34,6 +34,8 @@ export const EXECUTION_POLICY='fia-source-to-app/7fa17af806c139cfc353cace39fa6d5
 //    EXECUTION_POLICY, under @2.
 // 7. The builds from the second Codex P2 round on that release (catalog 234a362f, English Mark
 //    byte-identical, entries 5 and 6 kept): proof index bb73cf96, the same EXECUTION_POLICY, under @2.
+// 8. The builds from the third Codex P2 round on that release (catalog 87209ae0, English Mark
+//    byte-identical, entries 5 to 7 kept): proof index fdc0aa27, the same EXECUTION_POLICY, under @2.
 // The registry is release bookkeeping (execution-registry.test.mjs). Reads no longer
 // authenticate rows by it: a row under a superseded build is a cache miss served from
 // the base, and an explicit Open re-prepares under today's build.
@@ -45,6 +47,7 @@ export const SUPERSEDED_BUILDS=Object.freeze([
  {policy:'38963c2b8330d78981b903145eb59043d43e7dc6ae5f574324d360a20fdbe4a6',recipe:'fia-server-source-action-projector@2',approvedAudio:true},
  {policy:'1b2b99c1441b4ba09e8a15bc9b9aaf536f3af47dc87eb596baeda01355817d71',recipe:'fia-server-source-action-projector@2',approvedAudio:true},
  {policy:'e99551de06cc3689e0a656cb8d1211c55eec9f90a125161f8509c42b8b3f0e6f',recipe:'fia-server-source-action-projector@2',approvedAudio:true},
+ {policy:'c07475f0477330e6ca87b2ee16698c173db3fc33e547add59376656f92c3cccc',recipe:'fia-server-source-action-projector@2',approvedAudio:true},
 ].map(build=>Object.freeze(build)));
 const need=(x,r)=>{if(!x)throw Error(r);};
 async function bounded(run,ms=15000){let timer;try{return await Promise.race([Promise.resolve().then(run),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('execution-storage-timeout')),ms);})]);}finally{clearTimeout(timer);}}
