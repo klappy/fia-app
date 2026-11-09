@@ -66,6 +66,12 @@ export function reportPack(eng, spaPack, spaDescriptor) {
   return items;
 }
 
+/** The plain-text marker for an asset the compiler marked (asset.spanishText, compile.mjs): '' when Spanish text is shown or
+ *  the pack is English (no state). Every surface that prints an asset or key-term title goes through this or displayTitle. */
+export function titleMarker(asset) { const state = asset?.spanishText; return state && state !== STATE.PRESENT ? resolveItem({ state }).marker : ''; }
+/** The title a surface prints for an asset: the title, then the marker in the same text position when English is shown. */
+export function displayTitle(asset) { const title = String(asset?.title || ''), marker = titleMarker(asset); return marker ? (title ? `${title} ${marker}` : marker) : title; }
+
 /** What the UI should show for an item, given the config. Absence is never silent. */
 export function resolveItem(item, { config, machineTranslated } = {}) {
   if (item.state === STATE.PRESENT) return { show: 'spanish', label: null };

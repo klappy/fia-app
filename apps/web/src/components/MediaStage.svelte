@@ -5,7 +5,7 @@
   import ResourceIdentification from './ResourceIdentification.svelte';
   import { Pin, PinOff, Volume2, VolumeX, Play, X } from 'lucide-svelte';
   import {CHECKING_LABEL} from '../lib/easy-button.js';
-  import {resolveItem} from '../lib/spanish-coverage.js';
+  import {titleMarker,displayTitle} from '../lib/spanish-coverage.js';
   let { asset, playback, onplayvideo=()=>{},oncancelvideo=()=>{},onvideonode=()=>()=>{}, videoIdentity='', inlineVideo=null, immersive=false, matchingVideo=null, onvideo=()=>{}, descriptionsEnabled=false, ontoggledescription=()=>{}, suspended=false, toolsVisible=false, pinned=false, onpin=()=>{}, ondescribe=()=>{}, ontime=()=>{}, onplay=()=>{}, onpause=()=>{}, onend=()=>{}, onerror=()=>{}, onview=()=>{}, oncancelvisual=()=>{}, ondownload=()=>{}, guide=null, checking=false } = $props();
   // An unavailable picture or map keeps the step's own words on the stage (design-lens HOLD R6/R8, PR318):
   // the guide text sits in the content band and the not-available note is a bounded status region in the media slot.
@@ -25,7 +25,7 @@
   let expanded=$state(false), failed=$state(false), video=$state(), dialog=$state(), expandButton;
   // Caption title for a Spanish pack asset whose title is the English fallback: the same plain-text marker as the
   // identification heading (ResourceIdentification), no new control or chrome.
-  let captionMarker=$derived(asset.spanishText&&asset.spanishText!=='present'?resolveItem({state:asset.spanishText}).marker:'');
+  let captionMarker=$derived(titleMarker(asset));
   function balanceCredit(node){
     const frame=node.parentElement;
     const measure=()=>frame.style.setProperty('--resource-credit-height',node.getBoundingClientRect().height+'px');
@@ -57,7 +57,7 @@
   {:else}
     <ZoomableVisual {asset} fullscreen={immersive} onexpand={expand}/>
     {#if expanded}
-     <dialog bind:this={dialog} class="visual-dialog" aria-label={`${asset.title} full screen`} oncancel={e=>{e.preventDefault();close();}} onclose={()=>expanded=false}>
+     <dialog bind:this={dialog} class="visual-dialog" aria-label={`${displayTitle(asset)} full screen`} oncancel={e=>{e.preventDefault();close();}} onclose={()=>expanded=false}>
       <div class="sr-only"><ResourceIdentification {asset}/></div>
       <ZoomableVisual {asset} fullscreen/>
       <button class="glass-icon visual-close" aria-label="Close full screen" title="Close full screen" onclick={close}><X size={24}/></button>

@@ -5,6 +5,9 @@
  import {guideRecordingAvailability} from './lib/recording-availability.js';
  import { MoreHorizontal, Speech, Play, Pause, ChevronRight, ChevronLeft, Send, Settings2, List, BookOpen, Image, Map, Film, Users, RotateCcw, ArrowLeft, PinOff, Info, Download, X, CircleHelp, ExternalLink } from 'lucide-svelte';
  import {bundledPresentation,presentationContent} from './lib/content.js';
+ // Every surface that prints an asset or key-term title in a Spanish pack carries the '[ES needed]' marker the compiler
+ // recorded (asset.spanishText): plain text in the existing position, no control, badge or colour.
+ import {displayTitle} from './lib/spanish-coverage.js';
  import { createSession, reduceSession, currentActivity, presentStage } from './lib/engine.js';
  import { parseCommand } from './lib/commands.js';
  import { createAudioController } from './lib/audio.js';
@@ -666,9 +669,9 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  {:else if inTransition}
   <SectionTransition section={sections.find(s=>s.id===activity.sectionId)} index={sections.findIndex(s=>s.id===activity.sectionId)}/>
  {:else if termPrompt}
-  <section class="media-stage reading-stage" data-kind="term-instruction"><h1 class="sr-only">{focal.title}</h1>{#key activity.id}<AlignedReading asset={guideText} identification={focal} playback={audioState} suspended={!!sheet}/>{/key}</section>
+  <section class="media-stage reading-stage" data-kind="term-instruction"><h1 class="sr-only">{displayTitle(focal)}</h1>{#key activity.id}<AlignedReading asset={guideText} identification={focal} playback={audioState} suspended={!!sheet}/>{/key}</section>
  {:else if focal}
-  <h1 class="sr-only">{session.detour?focal.title:activity.title}</h1>
+  <h1 class="sr-only">{session.detour?displayTitle(focal):activity.title}</h1>
   {#key focal.id}<MediaStage onvideonode={registerVideo} videoIdentity={videoIdentity()} asset={focal} guide={!session.detour&&['image','map'].includes(focal.kind)?guideText:null} checking={verifying} {inlineVideo} {immersive} {matchingVideo} onvideo={openMatchingVideo} descriptionsEnabled={session.preferences.describeImages} ontoggledescription={()=>dispatch({type:'SET_PREFERENCE',key:'describeImages',value:!session.preferences.describeImages})} playback={audioState} suspended={!!sheet||mediaTools} toolsVisible={mediaTools} pinned={session.pinned===focal.id} onpin={()=>dispatch({type:session.pinned===focal.id?'UNPIN':'PIN',assetId:focal.id})} ondescribe={()=>describe(focal.id,true)} ontime={videoTime} onplay={videoStarted} onpause={event=>{if(ownsVideo(event.currentTarget)){videoPlaying=false;videoPlayPending=false;}}} onend={videoEnded} onplayvideo={playVideo} oncancelvideo={()=>videoDelivery.cancel()} onview={retryVisual} oncancelvisual={cancelVisual} ondownload={()=>sheet='downloads'} onerror={()=>{videoPlayPending=false;notice='Video unavailable. Try again or continue without it.';}}/>{/key}
  {:else}
   <section class="media-stage reading-stage" data-kind="guide"><h1 class="sr-only">{activity.prompt}</h1>{#key guideText.id}<AlignedReading asset={guideText} playback={audioState} suspended={!!sheet}/>{/key}</section>
@@ -681,7 +684,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  {/if}
  <!-- The book control opens passage selection directly (cookbook progress-rail.md § Top band passage control, ticket ④). -->
  <SessionProgress groups={progress} passage={passageName(selectedPack)} onopen={()=>sheet='progress'} onpassages={()=>{passagesView='passages';sheet='passages';}}/>
- {#if stage.supporting}<button class="kept-content" aria-label={`Open kept ${assets[stage.supporting].title}`} onclick={()=>navigate({type:'DETOUR',assetId:stage.supporting})}>{#if assets[stage.supporting].src&&assets[stage.supporting].kind!=='video'}<img src={assets[stage.supporting].src} alt={assets[stage.supporting].title}/>{:else}<BookOpen size={22}/>{/if}</button>{/if}
+ {#if stage.supporting}<button class="kept-content" aria-label={`Open kept ${displayTitle(assets[stage.supporting])}`} onclick={()=>navigate({type:'DETOUR',assetId:stage.supporting})}>{#if assets[stage.supporting].src&&assets[stage.supporting].kind!=='video'}<img src={assets[stage.supporting].src} alt={displayTitle(assets[stage.supporting])}/>{:else}<BookOpen size={22}/>{/if}</button>{/if}
 
  {#if noticeText&&!noticeInSheet}{@render noticeBar()}{/if}
  {#if listeningHint&&muted}<div class="scene-notice" role="status"><span>Prefer automatic narration?</span><button onclick={()=>{listeningHint=false;sheet='settings';}}>Settings</button><button aria-label="Dismiss narration suggestion" onclick={()=>listeningHint=false}><X size={15}/></button></div>{/if}
@@ -724,7 +727,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
    {#if messages.length}<details class="conversation-history"><summary>Recent conversation</summary><div class="chat-log" bind:this={chatLog}>{#each messages as m}<p><small>{m.role==='user'?'You':'Guide'}</small>{m.text}</p>{/each}</div></details>{/if}
   {:else if sheet==='words'}
    <p class="reading-transcript">{session.detour||focal?.kind==='term'&&!termPrompt?focal.description:activity.narration||activity.prompt}</p>
-   {#if focal}<p class="fine-print">{focal.title} · {focal.source}</p>{/if}
+   {#if focal}<p class="fine-print">{displayTitle(focal)} · {focal.source}</p>{/if}
   {:else if sheet==='progress'}
    {#if immersive}
   <div class="immersive-controls">
@@ -746,7 +749,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
     {#each [{key:'readScripture',title:'Automatic Scripture reading',detail:'Read Scripture aloud when a passage opens, independently of guide narration.'},{key:'describeImages',title:'Describe images and maps',detail:'Automatically play available descriptions after the guide instruction. Only available original recordings are used.'}] as pref}<label class="preference"><span><strong>{pref.title}</strong><small>{pref.detail}</small></span><input type="checkbox" checked={session.preferences[pref.key]} onchange={e=>{if(!e.currentTarget.checked&&pref.key==='readScripture'&&activity.kind==='scripture'){cancel();}if(!e.currentTarget.checked&&pref.key==='autoplayVideo'&&videoPlaying){videoOwner.node?.pause();}dispatch({type:'SET_PREFERENCE',key:pref.key,value:e.currentTarget.checked});}}/></label>{/each}
     <label class="select-row">Playback speed<select bind:value={rate} onchange={()=>persist()}><option value={.85}>Unhurried · 0.85×</option><option value={1}>Natural · 1×</option><option value={1.15}>Quicker · 1.15×</option></select></label>
     <h3>Media</h3><h4>Video</h4>
-    {#if matchingVideo}<button class="secondary full" onclick={()=>{sheet=null;openMatchingVideo();}}><Play size={19}/>Play video: {matchingVideo.title}</button>{/if}
+    {#if matchingVideo}<button class="secondary full" onclick={()=>{sheet=null;openMatchingVideo();}}><Play size={19}/>Play video: {displayTitle(matchingVideo)}</button>{/if}
     <label class="preference"><span><strong>Automatic video playback</strong><small>Play companion videos as the guide continues.</small></span><input type="checkbox" checked={session.preferences.autoplayVideo} onchange={e=>{if(!e.currentTarget.checked&&videoPlaying)videoOwner.node?.pause();dispatch({type:'SET_PREFERENCE',key:'autoplayVideo',value:e.currentTarget.checked});}}/></label>
     {#if Object.values(rawPresentation.assets).some(a=>demoVideoSource(selectedPack,a))}<p><strong>Streaming: Demo source</strong></p><p class="fine-print">This demo plays the original video. Downloads use optimized files. Saved verified videos use their downloaded size.</p>
     {:else}<label class="select-row">Streaming size<select aria-label="Streaming size" bind:value={streamingSize} onchange={()=>localStorage.setItem('fia-streaming-video-size',streamingSize)}>{#each ['small','medium','large'] as size}<option value={size} disabled={!videoSizes.includes(size)}>{({small:'Small · 480p',medium:'Medium · 540p',large:'Large · 720p'}[size])}{videoSizes.includes(size)?'':' — not available yet'}</option>{/each}</select></label><p class="fine-print">Applies the next time a video starts. Saved videos use their downloaded size. {videoSizes.length<3?'Some sizes are not prepared for this passage yet.':''}</p>{/if}
@@ -761,7 +764,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
    <div class="sheet-actions"><button class="quiet" onclick={()=>{reset();sheet=null;}}><RotateCcw size={16}/>Restart session</button><button class="quiet" onclick={exportSession}><Download size={16}/>Export test state</button></div>
   {:else if sheet==='resources'}
    <p class="sheet-intro">Explore without losing your place. Back returns to the held guide moment. Videos are optional companions.</p>
-   <div class="outline">{#each ['scripture','image','map','video','term'] as kind}<details><summary>{({scripture:'Scripture translations',image:'Images',map:'Maps',video:'Videos',term:'Word meanings'})[kind]}</summary>{#each Object.values(assets).filter(a=>a.kind===kind) as a}<button onclick={()=>{navigate({type:'DETOUR',assetId:a.id});sheet=null;}}>{a.kind==='scripture'?(a.sourceEvidence?.short||a.subtitle||a.title):a.kind==='term'&&selectedPack.language==='eng'&&a.sourceEvidence?.text?.sourceId?.startsWith('eng-')?a.title:(a.subtitle||a.title)}<ChevronRight size={18}/></button>{/each}</details>{/each}</div>
+   <div class="outline">{#each ['scripture','image','map','video','term'] as kind}<details><summary>{({scripture:'Scripture translations',image:'Images',map:'Maps',video:'Videos',term:'Word meanings'})[kind]}</summary>{#each Object.values(assets).filter(a=>a.kind===kind) as a}<button onclick={()=>{navigate({type:'DETOUR',assetId:a.id});sheet=null;}}>{a.kind==='scripture'?(a.sourceEvidence?.short||a.subtitle||a.title):displayTitle(a)}<ChevronRight size={18}/></button>{/each}</details>{/each}</div>
    <button class="quiet full" onclick={()=>sheet='example'}><Users size={19}/>Drama example</button>
   {:else if sheet==='example'}
    <p class="sheet-intro">Optional authored example from Embodying the Text. The source provides text here without recordings.</p>{#each examples as unit}<p class="reading-transcript">{unit.text}</p>{/each}

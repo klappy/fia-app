@@ -117,19 +117,26 @@ test('an executable candidate composes on a retitled term: the derived title is 
  const frozen=compile(input('eng.MRK-1-14-20'),{frozen:true}).pack,frozenTerm=Object.values(frozen.assets).find(a=>a.kind==='term');assert.ok(!frozenTerm.titleProvenance);assert.equal((await canonicalSourceActionCandidate(frozenTerm,'eng')).title,frozenTerm.sourceEvidence.title,'frozen English Mark is unchanged');
  for(const bad of [{...term,title:'Spirit'},{...term,title:'Espíritu Malo'},{...term,titleProvenance:{status:'source',from:'FIAKeyTerms headword'}},{...term,titleProvenance:{...term.titleProvenance,derivedFrom:'spirit'}},{...term,titleProvenance:{...term.titleProvenance,status:'missing'}},{...term,titleProvenance:{...term.titleProvenance,from:'translator'}},{...written,title:'Holy Ghost'}])await assert.rejects(()=>canonicalSourceActionCandidate(bad,bad.id.startsWith('term-eng')?'eng':'spa'),/execution-canonical-candidate/,'a title the evidence does not derive is refused: '+bad.title+' '+JSON.stringify(bad.titleProvenance));
 });
-test('an opening bold phrase is not promoted to the headword when it would collide or covers only part of a compound key',()=>{
+test('an opening bold phrase is not promoted to the headword when it collides with another term in the pack; word counts are never compared across languages',()=>{
  for(const id of ['spa.MRK-5-21-34','spa.MRK-5-35-43']){
   const {pack,diagnostics}=compile(input(id),{sibling:compile(input('eng.'+id.slice(4))).pack}),t133=pack.assets['term-spa-t133'],t134=pack.assets['term-spa-t134'];
   assert.equal(t133.title,'Sinagoga');assert.equal(t133.titleProvenance.from,'FIAKeyTerms headword');
-  assert.equal(t134.title,'synagogue-ruler');assert.deepEqual(t134.titleProvenance,{status:'missing',badge:'not-yet-in-language',fallback:'eng',withheld:'compound-key'});
-  assert.deepEqual(diagnostics.filter(d=>d.code==='term-headword-withheld'),[{code:'term-headword-withheld',assetId:'term-spa-t134',reason:'compound-key'}]);
+  assert.equal(t134.title,'synagogue-ruler');assert.deepEqual(t134.titleProvenance,{status:'missing',badge:'not-yet-in-language',fallback:'eng',withheld:'collision'});
+  assert.deepEqual(diagnostics.filter(d=>d.code==='term-headword-withheld'),[{code:'term-headword-withheld',assetId:'term-spa-t134',reason:'collision'}]);
   const titles=Object.values(pack.assets).filter(a=>a.kind==='term').map(a=>a.title.toLowerCase());assert.equal(new Set(titles).size,titles.length,id+': every term title is distinct');
  }
- assert.deepEqual(termTitle({title:'synagogue-ruler',termNumber:'134',text:{html:'<p>Una <b>sinagoga</b> es…</p>'}},{language:'spa'}),{title:'synagogue-ruler',titleProvenance:{status:'missing',badge:'not-yet-in-language',fallback:'eng',withheld:'compound-key'}});
- assert.equal(termTitle({title:'son-of-god',termNumber:'129',text:{html:'<p>El <b>Hijo de Dios</b> es…</p>'}},{language:'spa'}).title,'Hijo de Dios','a phrase that covers the whole compound is kept');
- assert.equal(termTitle({title:'kingdom-of-god',termNumber:'82',text:{html:'<p>El <b>reino de Dios</b> es…</p>'}},{language:'spa'}).title,'Reino de Dios');
- const assets={a:{id:'a',kind:'term',title:'Sinagoga',titleProvenance:{status:'source',from:'FIAKeyTerms headword',derivedFrom:'synagogue'},sourceEvidence:{title:'synagogue'}},b:{id:'b',kind:'term',title:'sinagoga',titleProvenance:{status:'source'},sourceEvidence:{title:'sinagoga'}},c:{id:'c',kind:'term',title:'Fe',titleProvenance:{status:'source',from:'FIAKeyTerms headword',derivedFrom:'faith'},sourceEvidence:{title:'faith'}},s:{id:'s',kind:'scripture',title:'Fe'}};
+ assert.equal(termTitle({title:'synagogue-ruler',termNumber:'134',text:{html:'<p>Una <b>sinagoga</b> es…</p>'}},{language:'spa'}).title,'Sinagoga','alone, the headword stands: only a collision in the pack withholds it');
+ assert.equal(termTitle({title:'fig-tree',termNumber:'51',text:{html:'<p>Una <b>higuera</b> es…</p>'}},{language:'spa'}).title,'Higuera','one Spanish word for a two-word key is not a reason to withhold');
+ for(const id of ['spa.MRK-11-12-26','spa.MRK-13-24-31','spa.LUK-6-43-49','spa.LUK-13-1-9']){const {pack}=compile(input(id),{sibling:compile(input('eng.'+id.slice(4))).pack});assert.equal(pack.assets['term-spa-t51'].title,'Higuera',id);assert.equal(pack.assets['term-spa-t51'].titleProvenance.from,'FIAKeyTerms headword');}
+ assert.equal(termTitle({title:'son-of-god',termNumber:'129',text:{html:'<p>El <b>Hijo de Dios</b> es…</p>'}},{language:'spa'}).title,'Hijo de Dios');
+ assert.deepEqual(termTitle({title:'kingdom-of-god',termNumber:'82',text:{html:'<p>El <b>reino</b></p>'}},{language:'spa'}).titleProvenance.withheld,undefined);
+ const mk=(id,title,key,from)=>({id,kind:'term',title,titleProvenance:from?{status:'source',from,derivedFrom:key}:{status:'source'},sourceEvidence:{title:key}});
+ const assets={a:mk('a','Sinagoga','synagogue','FIAKeyTerms headword'),b:mk('b','sinagoga','sinagoga'),c:mk('c','Fe','faith','FIAKeyTerms headword'),s:{id:'s',kind:'scripture',title:'Fe'}};
  assert.deepEqual(withholdCollidingHeadwords(assets),['a']);
- assert.deepEqual(assets.a,{id:'a',kind:'term',title:'synagogue',titleProvenance:{status:'missing',badge:'not-yet-in-language',fallback:'eng',withheld:'collision'},sourceEvidence:{title:'synagogue'}},'the headword that collides with another term\'s source title falls back to the marker');
+ assert.deepEqual(assets.a,{id:'a',kind:'term',title:'synagogue',titleProvenance:{status:'missing',badge:'not-yet-in-language',fallback:'eng',withheld:'collision'},sourceEvidence:{title:'synagogue'}},'a headword that collides with another term\'s source title falls back to the marker');
  assert.equal(assets.b.title,'sinagoga');assert.equal(assets.c.title,'Fe','no collision, no change (scripture titles are not terms)');
+ const two={x:mk('x','Sinagoga','synagogue','FIAKeyTerms headword'),y:mk('y','Sinagoga','synagogue-ruler','FIAKeyTerms headword')};
+ assert.deepEqual(withholdCollidingHeadwords(two),['y']);assert.equal(two.x.title,'Sinagoga');assert.equal(two.y.title,'synagogue-ruler','the base concept keeps the shared phrase; its compound is withheld');
+ const tie={x:mk('x','Maestro','teacher','FIAKeyTerms headword'),y:mk('y','Maestro','rabbi','FIAKeyTerms headword')};
+ assert.deepEqual(withholdCollidingHeadwords(tie).sort(),['x','y'],'no base among colliding headwords: all withheld, never a guess');
 });

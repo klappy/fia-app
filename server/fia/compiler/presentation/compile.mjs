@@ -16,7 +16,7 @@ const plain=html=>String(html||'').replace(/<\/(?:p|li|div)>/gi,'\n').replace(/<
 // text: titles come from the FIAKeyTerms body's own headword or the source key, never from a translator.
 const TERM_LINK=/^(eng|spa)-t(\d+)-v\d+$/;// raw FIAKeyTerms content id as the guide HTML links it
 export const resolveResourceLink=(id,assets)=>{if(assets[id])return id;const m=TERM_LINK.exec(String(id));const term=m&&`term-${m[1]}-t${m[2]}`;return term&&assets[term]?term:null;};
-const TITLE_KEY=/^[a-z0-9]+(?:-[a-z0-9]+)*$/,HEADWORD=/^\s*<p>\s*(?:[^<.]{0,16})?<b>([^<]+)<\/b>/,SMALL_WORDS=new Set(['of','the','and','or','in','a','an','to','for']),SPANISH_SMALL_WORDS=new Set(['de','del','la','el','los','las','y','o','en','al','un','una','lo','a']);
+const TITLE_KEY=/^[a-z0-9]+(?:-[a-z0-9]+)*$/,HEADWORD=/^\s*<p>\s*(?:[^<.]{0,16})?<b>([^<]+)<\/b>/,SMALL_WORDS=new Set(['of','the','and','or','in','a','an','to','for']);
 const sourceTitle=a=>a?.sourceEvidence?.title??a?.sourceRecord?.title??a?.title;
 // The English twin of a Spanish term, by term number. A compiled English pack carries term-eng-tN; the approved
 // eng.MRK-1-1-13 presentation (the twin of spa.MRK-1-1-13) carries the legacy FIAKeyTerms content id eng-tN-vN.
@@ -30,30 +30,38 @@ const keyOf=s=>String(s||'').trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').rep
 // so the executable candidate contract (source-action-candidates.mjs) can bind the asset to its evidence by that title.
 // The marker form keeps the key itself as the title; withheld says why a headword that exists was not used.
 const fallback=(title,withheld)=>({title,titleProvenance:{status:'missing',badge:'not-yet-in-language',fallback:'eng',...(withheld?{withheld}:{})}});
-const contentWords=(words,small)=>words.filter(w=>w&&!small.has(w.toLowerCase())).length;
 export function termTitle(t,{language,sibling}={}){
  const title=String(t.title||'').trim(),head=HEADWORD.exec(t.text?.html||'');
  const twin=siblingTerm(sibling,t.termNumber),isKey=TITLE_KEY.test(title)&&(twin?keyOf(sourceTitle(twin))===title:language==='eng'||title.includes('-'));
  if(!isKey)return {title,titleProvenance:{status:'source'}};
  if(language==='eng')return {title:title.split('-').map((w,i)=>i&&SMALL_WORDS.has(w)?w:w[0].toUpperCase()+w.slice(1)).join(' '),titleProvenance:{status:'source',from:'FIAKeyTerms key',derivedFrom:t.title}};
  if(head){
+  // The headword is the term's own text, never a word count compared across languages (fig-tree is one word, higuera):
+  // it is used only when it occurs in that text, and a pack-level pass withholds it when another term's title collides.
   const word=plain(head[1]);
-  // A compound key (synagogue-ruler) needs a phrase with as many content words as the key: a shorter phrase names only part
-  // of the compound (t134's Spanish text opens by defining a <b>sinagoga</b>), so the marker shows rather than a guess.
-  if(contentWords(word.split(/\s+/),SPANISH_SMALL_WORDS)<contentWords(title.split('-'),SMALL_WORDS))return fallback(title,'compound-key');
+  if(!word||!plain(t.text?.html).toLowerCase().includes(word.toLowerCase()))return fallback(title,'not-in-text');
   return {title:word.charAt(0).toLocaleUpperCase('es')+word.slice(1),titleProvenance:{status:'source',from:'FIAKeyTerms headword',derivedFrom:t.title}};
  }
  return fallback(title);
 }
 const squash=s=>String(s||'').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,'');
 // Two terms in one pack must not share a title: in spa.MRK-5-21-34 t133 synagogue and t134 synagogue-ruler both open with
-// <b>sinagoga</b>. A headword that another term's title (headword or source) already uses is withheld for the marker; a
-// collision is never resolved by guessing which term the phrase names. Returns the ids of the terms withheld.
+// <b>sinagoga</b>. A headword that a source title already uses is withheld. Where only headwords collide, the one whose
+// key is a component of every other colliding key keeps it (synagogue is the base concept; synagogue-ruler is its
+// compound, and the shared phrase defines the base), otherwise all are withheld: a collision is never resolved by guessing
+// which term the phrase names. Returns the ids of the terms withheld.
 export function withholdCollidingHeadwords(assets){
- const terms=Object.values(assets).filter(a=>a.kind==='term'),count=new Map();
- for(const a of terms)count.set(squash(a.title),(count.get(squash(a.title))||0)+1);
+ const terms=Object.values(assets).filter(a=>a.kind==='term'),groups=new Map();
+ for(const a of terms){const k=squash(a.title);groups.set(k,[...(groups.get(k)||[]),a]);}
+ const derived=a=>a.titleProvenance?.from==='FIAKeyTerms headword',key=a=>String(a.sourceEvidence?.title??a.titleProvenance?.derivedFrom??'').trim(),words=a=>new Set(key(a).split('-'));
  const withheld=[];
- for(const a of terms)if(a.titleProvenance?.from==='FIAKeyTerms headword'&&count.get(squash(a.title))>1){Object.assign(a,fallback(String(a.sourceEvidence?.title??a.titleProvenance.derivedFrom).trim(),'collision'));withheld.push(a.id);}
+ for(const group of groups.values()){
+  if(group.length<2)continue;
+  const headwords=group.filter(derived);
+  let keep=null;
+  if(headwords.length===group.length){const base=headwords.filter(a=>headwords.every(b=>b===a||[...words(a)].every(w=>words(b).has(w))));if(base.length===1)keep=base[0];}
+  for(const a of headwords)if(a!==keep){Object.assign(a,fallback(key(a),'collision'));withheld.push(a.id);}
+ }
  return withheld;
 }
 // A unit whose whole text is the stage title, the passage reference, or the two run together is a layout header that
