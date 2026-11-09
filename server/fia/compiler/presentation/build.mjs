@@ -17,6 +17,10 @@ const BOOKS=['MRK','LUK'];// canonical book order: Mark keeps its place, Luke fo
 // trusted-generalized.json catalog + envelopes, guide-dispatch REGISTRY_SHA).
 const PUBLISHED=new Set((process.env.FIA_PUBLISH_BOOKS||'MRK,LUK').split(','));
 const ids=(input?readdirSync(join(input,'data/packs')):Object.keys(bundled.packs)).filter(id=>/^(eng|spa)\.(?:MRK|LUK)-/.test(id)).sort((a,b)=>a.slice(0,3).localeCompare(b.slice(0,3))||BOOKS.indexOf(a.slice(4,7))-BOOKS.indexOf(b.slice(4,7))||a.localeCompare(b,'en',{numeric:true})).filter(id=>!sample||/MRK-1-(1-13|14-20)$/.test(id));
+// English Mark presentations stay byte-identical (compiled frozen): their revisions are bound into guide-sources metadata
+// (guide-dispatch METADATA_SHA) and the Mark 1:14-20 prepared-audio delivery. Every other pack compiles under the
+// honest-text rules; a Spanish pack is compiled beside its English twin so it can record where English text is shown.
+const FROZEN=/^eng\.MRK-/,compiledEnglish=new Map();
 const registry={schemaVersion:1,sourceRevision:SOURCE,recipeRevision:RECIPE,packs:[]},receipt=[];
 for(const id of ids){
  const dir=input?join(input,'data/packs',id):null,files=['manifest','guide','guide-units','scripture','resources','rights','narration'];
@@ -34,9 +38,10 @@ for(const id of ids){
   const resources=Object.values(pack.assets);
   result={defaultScriptureId:'scripture-BereanStandardBible',capabilities:{text:{available:true},guideNarration:cap(new Set(pack.activities.filter(a=>a.kind!=='scripture'&&a.audioSrc).map(a=>a.audioSrc)).size),scriptureAudio:cap(new Set(pack.activities.filter(a=>a.kind==='scripture'&&a.audioSrc).map(a=>a.audioSrc)).size),resourceAudio:cap(resources.filter(a=>a.kind!=='scripture'&&(a.audioSrc||a.descriptionAudio)).length),generatedAudio:cap(entries.filter(e=>e.recordingSource==='generated').length),images:cap(resources.filter(a=>['image','map'].includes(a.kind)&&a.src).length),video:cap(resources.filter(a=>a.kind==='video'&&a.src).length)},diagnostics:[{code:'approved-presentation-lineage',sourceRevision:pack.source.commit,rawInventoryRevision:SOURCE}]};
  }else{
-  result=compilePresentation(data,{listEvidence:list.packs.find(p=>p.packId===id),exampleEvidence:examples.packs.find(p=>p.packId===id),sourceFiles});
+  result=compilePresentation(data,{listEvidence:list.packs.find(p=>p.packId===id),exampleEvidence:examples.packs.find(p=>p.packId===id),sourceFiles,frozen:FROZEN.test(id),sibling:id.startsWith('spa.')?compiledEnglish.get('eng.'+id.slice(4))||null:null});
   bytes=Buffer.from(JSON.stringify(result.pack,null,2)+'\n');
  }
+ if(id.startsWith('eng.'))compiledEnglish.set(id,JSON.parse(bytes));
  const descriptor=describe(data.manifest,bytes,result);const dest=join(output,'packs',id);mkdirSync(dest,{recursive:true});writeFileSync(join(dest,descriptor.revision+'.json'),bytes);if(PUBLISHED.has(id.slice(4,7)))registry.packs.push(descriptor);
  receipt.push({id,sha256:descriptor.revision,bytes:bytes.length,sourceUnits:data.guide.steps.flatMap(s=>s.units).length,activities:JSON.parse(bytes).activities.length,diagnostics:result.diagnostics.length});
 }
