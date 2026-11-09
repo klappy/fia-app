@@ -49,11 +49,27 @@ for(const kind of ['bound','prepared'])it(`synthetic ${kind} ranged narration us
  await fireEvent.click(screen.getByRole('button',{name:'Replay',exact:true}));await waitFor(()=>expect(audio.play).toHaveBeenCalledTimes(2));emit(4.31);await waitFor(()=>expect(active()).toEqual(['0-1','0-2']));
  expect(audio.play.mock.calls.at(-1)[3]).toEqual(range);
 });
-for(const kind of ['bound','prepared'])for(const failure of ['wrong-recording-sha','missing-sidecar','low-asr-coverage','outside-clip','stale-text','unverified-recording','whole-file-native-ended'])it(`synthetic ${kind} ${failure} remains readable and untimed`,async()=>{
- if(failure==='wrong-recording-sha')sidecar.audioSha256='e'.repeat(64);
- if(failure==='missing-sidecar')sidecar=null;
+// Re-cut 2026-11-09 (captain: "Highlighting should be antifragile and always highlight the closest matches to create the best UX,
+// previous releases refused highlight features on sections there is no perfect alignment"): a map under the 70 % floor or past
+// the runtime clip now highlights at a named tier (data-timing on the reading region, no visible difference); identity, missing
+// sidecar, stale text and unqualified playback stay untimed.
+for(const kind of ['bound','prepared'])for(const [failure,tier] of [['low-asr-coverage','approximate'],['outside-clip','clamped']])it(`synthetic ${kind} ${failure} still highlights the closest match, marked ${tier}`,async()=>{
  if(failure==='low-asr-coverage')sidecar.activities[presentation.activities[0].id].matched=0;
  if(failure==='outside-clip')sidecar.activities[presentation.activities[0].id].endMs=9500;
+ await begin(kind);await waitFor(()=>expect(requests).toContain(`/transcripts/${hash}.words.json`));
+ emit(4.31);await waitFor(()=>expect(active()).toEqual(['0-1','0-2']));
+ expect(document.querySelector('.scripture-scroll').getAttribute('data-timing')).toBe(tier);
+ expect(document.querySelector('.gel').hidden).toBe(false);
+ expect(document.querySelectorAll('.scene-notice, .timing-marker, [data-timing-label]')).toHaveLength(0); // no marker, no new chrome
+ expect([...document.querySelectorAll('[data-align-word]')].map(n=>n.textContent)).toEqual(sidecar.activities[presentation.activities[0].id].words.map(w=>w.text));
+});
+for(const kind of ['bound','prepared'])it(`synthetic ${kind} exact map carries data-timing="exact" and nothing else`,async()=>{
+ await begin(kind);await waitFor(()=>expect(requests).toContain(`/transcripts/${hash}.words.json`));emit(4.31);await waitFor(()=>expect(active()).toEqual(['0-1','0-2']));
+ expect(document.querySelector('.scripture-scroll').getAttribute('data-timing')).toBe('exact');
+});
+for(const kind of ['bound','prepared'])for(const failure of ['wrong-recording-sha','missing-sidecar','stale-text','unverified-recording','whole-file-native-ended'])it(`synthetic ${kind} ${failure} remains readable and untimed`,async()=>{
+ if(failure==='wrong-recording-sha')sidecar.audioSha256='e'.repeat(64);
+ if(failure==='missing-sidecar')sidecar=null;
  if(failure==='stale-text')sidecar.activities[presentation.activities[0].id].words[1].text='WRONG';
  if(failure==='unverified-recording')delete result.audioSha256;
  if(failure==='whole-file-native-ended'){result.playback='whole-file-native-ended';delete result.playbackRange;}
