@@ -6,13 +6,15 @@
   "registrySha256": "f5ce2e2475e4198a927ad4daa07b3285053070f4a3a308141e55e54ab13f33b3",
   "deliverySha256": "b749c9c8246fd178a6c70604ef1037a1bed0e2804ba618750a2aec1de4d9a10e",
   "guideRoutes": 111,
-  "accepted": 68,
-  "untimed": 43,
+  "accepted": 111,
+  "untimed": 0,
   "byReason": {
-    "insufficient-asr-match": 12,
-    "runtime-predicate-accepted": 68,
-    "outside-playback-range": 12,
-    "invalid-activity-word-times": 19
+    "runtime-predicate-accepted": 111
+  },
+  "byTier": {
+    "exact": 76,
+    "clamped": 25,
+    "approximate": 10
   },
   "routingScope": {
     "classification": "static-canonical-OGG-delivery-predicates-only",
@@ -97,16 +99,17 @@
       "shownTextSha256": "affdc8e569fa818aab90d16b1fc2f88f95efe409a4ef711e03a028420334d818",
       "sourceTextSha256": "affdc8e569fa818aab90d16b1fc2f88f95efe409a4ef711e03a028420334d818",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "insufficient-asr-match",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
           "audioSha256": "b963c67e04af8849c52ff262b521bf32432f2a695b3618ebccf2bcfb5318d2f7",
           "sourceAudioSha256": "9834ac98fdc57c34e4cc2cb5f813fc5bf050a2283ffc4ce994963bbfa9649d25",
           "sourceLedgerSha256": "66cfb3cb236e2e1072f16c78b5de895c5bff8d058a1526c667d78a9c063e34dd",
-          "sidecarSha256": "6bbc51cc4fe0fe89a3256dfef568aadb7f0bf6af76a6459a3611deb676fe930b",
+          "sidecarSha256": "99a82dedb0522cca185f30dcc6f1c1bc4587dbaa429b51c70d1284ee8e164383",
           "baseRange": {
             "startSeconds": 6.2,
             "endSeconds": 11.75
@@ -116,12 +119,21 @@
             "endSeconds": 12
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "insufficient-asr-match",
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
           "schemaValid": true,
-          "matched": 0,
-          "total": 12
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
+          "words": 12,
+          "matched": 10,
+          "total": 12,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -133,16 +145,17 @@
       "shownTextSha256": "b30844ce00feb22d0c8bf5d0a92ed99a43d0de1311b21ca3833785dd5911dee7",
       "sourceTextSha256": "b30844ce00feb22d0c8bf5d0a92ed99a43d0de1311b21ca3833785dd5911dee7",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "insufficient-asr-match",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
           "audioSha256": "b963c67e04af8849c52ff262b521bf32432f2a695b3618ebccf2bcfb5318d2f7",
           "sourceAudioSha256": "9834ac98fdc57c34e4cc2cb5f813fc5bf050a2283ffc4ce994963bbfa9649d25",
           "sourceLedgerSha256": "66cfb3cb236e2e1072f16c78b5de895c5bff8d058a1526c667d78a9c063e34dd",
-          "sidecarSha256": "6bbc51cc4fe0fe89a3256dfef568aadb7f0bf6af76a6459a3611deb676fe930b",
+          "sidecarSha256": "99a82dedb0522cca185f30dcc6f1c1bc4587dbaa429b51c70d1284ee8e164383",
           "baseRange": {
             "startSeconds": 13.15,
             "endSeconds": 25.5
@@ -152,12 +165,21 @@
             "endSeconds": 25.75
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "insufficient-asr-match",
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
           "schemaValid": true,
-          "matched": 7,
-          "total": 24
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
+          "words": 24,
+          "matched": 23,
+          "total": 24,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -172,13 +194,14 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
           "audioSha256": "b963c67e04af8849c52ff262b521bf32432f2a695b3618ebccf2bcfb5318d2f7",
           "sourceAudioSha256": "9834ac98fdc57c34e4cc2cb5f813fc5bf050a2283ffc4ce994963bbfa9649d25",
           "sourceLedgerSha256": "66cfb3cb236e2e1072f16c78b5de895c5bff8d058a1526c667d78a9c063e34dd",
-          "sidecarSha256": "6bbc51cc4fe0fe89a3256dfef568aadb7f0bf6af76a6459a3611deb676fe930b",
+          "sidecarSha256": "99a82dedb0522cca185f30dcc6f1c1bc4587dbaa429b51c70d1284ee8e164383",
           "baseRange": {
             "startSeconds": 27.08,
             "endSeconds": 29.38
@@ -192,6 +215,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 7,
           "matched": 7,
           "total": 7,
@@ -210,13 +240,14 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
           "audioSha256": "b963c67e04af8849c52ff262b521bf32432f2a695b3618ebccf2bcfb5318d2f7",
           "sourceAudioSha256": "9834ac98fdc57c34e4cc2cb5f813fc5bf050a2283ffc4ce994963bbfa9649d25",
           "sourceLedgerSha256": "66cfb3cb236e2e1072f16c78b5de895c5bff8d058a1526c667d78a9c063e34dd",
-          "sidecarSha256": "6bbc51cc4fe0fe89a3256dfef568aadb7f0bf6af76a6459a3611deb676fe930b",
+          "sidecarSha256": "99a82dedb0522cca185f30dcc6f1c1bc4587dbaa429b51c70d1284ee8e164383",
           "baseRange": {
             "startSeconds": 31.26,
             "endSeconds": 36.06
@@ -230,6 +261,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 11,
           "matched": 11,
           "total": 11,
@@ -248,13 +286,14 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
           "audioSha256": "b963c67e04af8849c52ff262b521bf32432f2a695b3618ebccf2bcfb5318d2f7",
           "sourceAudioSha256": "9834ac98fdc57c34e4cc2cb5f813fc5bf050a2283ffc4ce994963bbfa9649d25",
           "sourceLedgerSha256": "66cfb3cb236e2e1072f16c78b5de895c5bff8d058a1526c667d78a9c063e34dd",
-          "sidecarSha256": "6bbc51cc4fe0fe89a3256dfef568aadb7f0bf6af76a6459a3611deb676fe930b",
+          "sidecarSha256": "99a82dedb0522cca185f30dcc6f1c1bc4587dbaa429b51c70d1284ee8e164383",
           "baseRange": {
             "startSeconds": 38.06,
             "endSeconds": 41.3
@@ -268,6 +307,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 8,
           "matched": 8,
           "total": 8,
@@ -286,13 +332,14 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
           "audioSha256": "b963c67e04af8849c52ff262b521bf32432f2a695b3618ebccf2bcfb5318d2f7",
           "sourceAudioSha256": "9834ac98fdc57c34e4cc2cb5f813fc5bf050a2283ffc4ce994963bbfa9649d25",
           "sourceLedgerSha256": "66cfb3cb236e2e1072f16c78b5de895c5bff8d058a1526c667d78a9c063e34dd",
-          "sidecarSha256": "6bbc51cc4fe0fe89a3256dfef568aadb7f0bf6af76a6459a3611deb676fe930b",
+          "sidecarSha256": "99a82dedb0522cca185f30dcc6f1c1bc4587dbaa429b51c70d1284ee8e164383",
           "baseRange": {
             "startSeconds": 43.42,
             "endSeconds": 46.85
@@ -306,6 +353,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 8,
           "matched": 8,
           "total": 8,
@@ -324,13 +378,14 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
           "audioSha256": "b963c67e04af8849c52ff262b521bf32432f2a695b3618ebccf2bcfb5318d2f7",
           "sourceAudioSha256": "9834ac98fdc57c34e4cc2cb5f813fc5bf050a2283ffc4ce994963bbfa9649d25",
           "sourceLedgerSha256": "66cfb3cb236e2e1072f16c78b5de895c5bff8d058a1526c667d78a9c063e34dd",
-          "sidecarSha256": "6bbc51cc4fe0fe89a3256dfef568aadb7f0bf6af76a6459a3611deb676fe930b",
+          "sidecarSha256": "99a82dedb0522cca185f30dcc6f1c1bc4587dbaa429b51c70d1284ee8e164383",
           "baseRange": {
             "startSeconds": 48.74,
             "endSeconds": 52.14
@@ -344,6 +399,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 8,
           "matched": 8,
           "total": 8,
@@ -362,13 +424,14 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
           "audioSha256": "b963c67e04af8849c52ff262b521bf32432f2a695b3618ebccf2bcfb5318d2f7",
           "sourceAudioSha256": "9834ac98fdc57c34e4cc2cb5f813fc5bf050a2283ffc4ce994963bbfa9649d25",
           "sourceLedgerSha256": "66cfb3cb236e2e1072f16c78b5de895c5bff8d058a1526c667d78a9c063e34dd",
-          "sidecarSha256": "6bbc51cc4fe0fe89a3256dfef568aadb7f0bf6af76a6459a3611deb676fe930b",
+          "sidecarSha256": "99a82dedb0522cca185f30dcc6f1c1bc4587dbaa429b51c70d1284ee8e164383",
           "baseRange": {
             "startSeconds": 54.32,
             "endSeconds": 57.64
@@ -382,6 +445,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 10,
           "matched": 10,
           "total": 10,
@@ -400,6 +470,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -420,6 +491,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 12,
           "matched": 10,
           "total": 12,
@@ -435,9 +513,10 @@
       "shownTextSha256": "8a8fb60f61f85a55bf45f5a52d58ff1da8fcab369bce6adb74e8e4433334a361",
       "sourceTextSha256": "8a8fb60f61f85a55bf45f5a52d58ff1da8fcab369bce6adb74e8e4433334a361",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "outside-playback-range",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "clamped",
       "variants": [
         {
           "quality": "medium",
@@ -454,10 +533,21 @@
             "endSeconds": 25.75
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "outside-playback-range",
-          "schemaValid": true
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "tier": "clamped",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": true,
+            "clampedWords": 1,
+            "respacedZeroDurationWords": 0
+          },
+          "words": 31,
+          "matched": 27,
+          "total": 31,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -469,9 +559,10 @@
       "shownTextSha256": "a360a3105e69cf2a20bc47b04a38511cfee6e41c1eb7fb6055a846fb6e1064c5",
       "sourceTextSha256": "a360a3105e69cf2a20bc47b04a38511cfee6e41c1eb7fb6055a846fb6e1064c5",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "insufficient-asr-match",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "approximate",
       "variants": [
         {
           "quality": "medium",
@@ -488,12 +579,21 @@
             "endSeconds": 58.1
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "insufficient-asr-match",
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
           "schemaValid": true,
+          "tier": "approximate",
+          "fitted": {
+            "underMatchFloor": true,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 5
+          },
+          "words": 86,
           "matched": 39,
-          "total": 86
+          "total": 86,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -505,9 +605,10 @@
       "shownTextSha256": "e6cec1b6bfa8786fa41efb3a55d2534655426c3571121ef9a7f49ffa470f8a24",
       "sourceTextSha256": "e6cec1b6bfa8786fa41efb3a55d2534655426c3571121ef9a7f49ffa470f8a24",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "insufficient-asr-match",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "approximate",
       "variants": [
         {
           "quality": "medium",
@@ -524,12 +625,21 @@
             "endSeconds": 82.79
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "insufficient-asr-match",
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
           "schemaValid": true,
+          "tier": "approximate",
+          "fitted": {
+            "underMatchFloor": true,
+            "outsidePlaybackRange": true,
+            "clampedWords": 3,
+            "respacedZeroDurationWords": 0
+          },
+          "words": 64,
           "matched": 0,
-          "total": 64
+          "total": 64,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -541,9 +651,10 @@
       "shownTextSha256": "f7fbe6ae09b69336cb5b1218ac3bd1b636ff2dd142ff5d93e2024b36788f5744",
       "sourceTextSha256": "bcd0b87371b477506053d64c8d8b257bca25c314ada0742fc001b7e3f6620fd4",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "insufficient-asr-match",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "approximate",
       "variants": [
         {
           "quality": "medium",
@@ -560,12 +671,21 @@
             "endSeconds": 95.43
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "insufficient-asr-match",
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
           "schemaValid": true,
+          "tier": "approximate",
+          "fitted": {
+            "underMatchFloor": true,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
+          "words": 22,
           "matched": 10,
-          "total": 22
+          "total": 22,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -577,9 +697,10 @@
       "shownTextSha256": "6e97ed700aed65bc49795e0c47193e32f3520a13c4b8c2ba6f247023061dce04",
       "sourceTextSha256": "6e97ed700aed65bc49795e0c47193e32f3520a13c4b8c2ba6f247023061dce04",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "invalid-activity-word-times",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -596,10 +717,21 @@
             "endSeconds": 165.3
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "invalid-activity-word-times",
-          "schemaValid": true
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
+          "words": 164,
+          "matched": 139,
+          "total": 164,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -611,9 +743,10 @@
       "shownTextSha256": "f85875ff9de414c07038a7ce68af8dfe132a3c1cc134cc7cc93ec671fe906e0e",
       "sourceTextSha256": "f85875ff9de414c07038a7ce68af8dfe132a3c1cc134cc7cc93ec671fe906e0e",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "invalid-activity-word-times",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "clamped",
       "variants": [
         {
           "quality": "medium",
@@ -630,10 +763,21 @@
             "endSeconds": 259.26
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "invalid-activity-word-times",
-          "schemaValid": true
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "tier": "clamped",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 5
+          },
+          "words": 234,
+          "matched": 223,
+          "total": 234,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -645,9 +789,10 @@
       "shownTextSha256": "8a16857a8fbe662a4935fc77fb47dd577f199f76027acb7c4d7b2d6f9e20b488",
       "sourceTextSha256": "7d4cf4f969f14f97aaf3a855220cf6f46db606c8b4cec00eb8f4cca95cf23115",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "outside-playback-range",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "clamped",
       "variants": [
         {
           "quality": "medium",
@@ -664,10 +809,21 @@
             "endSeconds": 268.1
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "outside-playback-range",
-          "schemaValid": true
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "tier": "clamped",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": true,
+            "clampedWords": 1,
+            "respacedZeroDurationWords": 0
+          },
+          "words": 17,
+          "matched": 12,
+          "total": 17,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -679,9 +835,10 @@
       "shownTextSha256": "7994327e489022485b55ced0ffae3cb8d4e8d73463c6238431d15a181920cf82",
       "sourceTextSha256": "7994327e489022485b55ced0ffae3cb8d4e8d73463c6238431d15a181920cf82",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "insufficient-asr-match",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "approximate",
       "variants": [
         {
           "quality": "medium",
@@ -698,12 +855,21 @@
             "endSeconds": 304.5
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "insufficient-asr-match",
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
           "schemaValid": true,
+          "tier": "approximate",
+          "fitted": {
+            "underMatchFloor": true,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
+          "words": 74,
           "matched": 39,
-          "total": 74
+          "total": 74,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -715,9 +881,10 @@
       "shownTextSha256": "acb1792ea1d42d56298b93fd9f694e0a89a2188848543685cad7fdfa6d664388",
       "sourceTextSha256": "acb1792ea1d42d56298b93fd9f694e0a89a2188848543685cad7fdfa6d664388",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "insufficient-asr-match",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "approximate",
       "variants": [
         {
           "quality": "medium",
@@ -734,12 +901,21 @@
             "endSeconds": 403.86
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "insufficient-asr-match",
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
           "schemaValid": true,
+          "tier": "approximate",
+          "fitted": {
+            "underMatchFloor": true,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 2
+          },
+          "words": 257,
           "matched": 157,
-          "total": 257
+          "total": 257,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -751,9 +927,10 @@
       "shownTextSha256": "bc0991741465296028c2130d29f0f57eb138dde14b48b447bce02da03d8d5350",
       "sourceTextSha256": "4c6baa6d4173ad386b53b1d680c976984bf56679f29b37c8bb5beb2ae1c0a858",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "invalid-activity-word-times",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -770,10 +947,21 @@
             "endSeconds": 422.52
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "invalid-activity-word-times",
-          "schemaValid": true
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
+          "words": 59,
+          "matched": 43,
+          "total": 59,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -788,6 +976,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -808,6 +997,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 161,
           "matched": 159,
           "total": 161,
@@ -826,6 +1022,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -846,6 +1043,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 12,
           "matched": 10,
           "total": 12,
@@ -864,6 +1068,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -884,6 +1089,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 22,
           "matched": 21,
           "total": 22,
@@ -902,6 +1114,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -922,6 +1135,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 5,
           "matched": 4,
           "total": 5,
@@ -940,6 +1160,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -960,6 +1181,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 59,
           "matched": 57,
           "total": 59,
@@ -975,9 +1203,10 @@
       "shownTextSha256": "ad07e3462b3d5f7f1f32b8af389c2411998b5282126d24dee10a51f1cecb5e12",
       "sourceTextSha256": "ad07e3462b3d5f7f1f32b8af389c2411998b5282126d24dee10a51f1cecb5e12",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "outside-playback-range",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "clamped",
       "variants": [
         {
           "quality": "medium",
@@ -994,10 +1223,21 @@
             "endSeconds": 53.59
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "outside-playback-range",
-          "schemaValid": true
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "tier": "clamped",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": true,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
+          "words": 41,
+          "matched": 38,
+          "total": 41,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -1012,6 +1252,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -1032,6 +1273,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 34,
           "matched": 34,
           "total": 34,
@@ -1050,6 +1298,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -1070,6 +1319,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 27,
           "matched": 23,
           "total": 27,
@@ -1085,9 +1341,10 @@
       "shownTextSha256": "f47355b104297c74e46370c8e03d556bcc1c33cf7440b92f123d50efd9152064",
       "sourceTextSha256": "f47355b104297c74e46370c8e03d556bcc1c33cf7440b92f123d50efd9152064",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "invalid-activity-word-times",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "clamped",
       "variants": [
         {
           "quality": "medium",
@@ -1104,10 +1361,21 @@
             "endSeconds": 92.15
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "invalid-activity-word-times",
-          "schemaValid": true
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "tier": "clamped",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 2
+          },
+          "words": 29,
+          "matched": 27,
+          "total": 29,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -1122,6 +1390,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -1142,6 +1411,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 6,
           "matched": 6,
           "total": 6,
@@ -1160,6 +1436,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -1180,6 +1457,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 3,
           "matched": 3,
           "total": 3,
@@ -1198,6 +1482,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -1218,6 +1503,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 3,
           "matched": 3,
           "total": 3,
@@ -1236,6 +1528,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -1256,6 +1549,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 1,
           "matched": 1,
           "total": 1,
@@ -1274,6 +1574,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -1294,6 +1595,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 3,
           "matched": 3,
           "total": 3,
@@ -1312,6 +1620,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -1332,6 +1641,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 1,
           "matched": 1,
           "total": 1,
@@ -1350,6 +1666,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -1370,6 +1687,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 1,
           "matched": 1,
           "total": 1,
@@ -1388,6 +1712,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -1408,6 +1733,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 1,
           "matched": 1,
           "total": 1,
@@ -1426,6 +1758,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -1446,6 +1779,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 12,
           "matched": 12,
           "total": 12,
@@ -1461,9 +1801,10 @@
       "shownTextSha256": "7ef580b8a590e5654b4a82a4f034971397041c6a38a35ea5caa47cc011c31b68",
       "sourceTextSha256": "7ef580b8a590e5654b4a82a4f034971397041c6a38a35ea5caa47cc011c31b68",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "outside-playback-range",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "clamped",
       "variants": [
         {
           "quality": "medium",
@@ -1480,10 +1821,21 @@
             "endSeconds": 125.76
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "outside-playback-range",
-          "schemaValid": true
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "tier": "clamped",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": true,
+            "clampedWords": 1,
+            "respacedZeroDurationWords": 0
+          },
+          "words": 51,
+          "matched": 37,
+          "total": 51,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -1498,6 +1850,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -1518,6 +1871,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 23,
           "matched": 19,
           "total": 23,
@@ -1533,9 +1893,10 @@
       "shownTextSha256": "7c9d8cb68e4b3d73a5643265397d222e0877fe02c558bddaa10e43d88b7dd2ec",
       "sourceTextSha256": "7c9d8cb68e4b3d73a5643265397d222e0877fe02c558bddaa10e43d88b7dd2ec",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "invalid-activity-word-times",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "clamped",
       "variants": [
         {
           "quality": "medium",
@@ -1552,10 +1913,21 @@
             "endSeconds": 173.13
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "invalid-activity-word-times",
-          "schemaValid": true
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "tier": "clamped",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 1
+          },
+          "words": 117,
+          "matched": 114,
+          "total": 117,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -1570,6 +1942,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -1590,6 +1963,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 17,
           "matched": 13,
           "total": 17,
@@ -1605,9 +1985,10 @@
       "shownTextSha256": "8094616fb19936cfadeb6d8b048cad551d9594f3d0d9c28f197130d8328547d2",
       "sourceTextSha256": "8094616fb19936cfadeb6d8b048cad551d9594f3d0d9c28f197130d8328547d2",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "invalid-activity-word-times",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "clamped",
       "variants": [
         {
           "quality": "medium",
@@ -1624,10 +2005,21 @@
             "endSeconds": 269.83
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "invalid-activity-word-times",
-          "schemaValid": true
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "tier": "clamped",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 1
+          },
+          "words": 260,
+          "matched": 254,
+          "total": 260,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -1642,6 +2034,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -1662,6 +2055,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 51,
           "matched": 50,
           "total": 51,
@@ -1677,9 +2077,10 @@
       "shownTextSha256": "0cd16fe6e894203273ebe12c251c1cce11d080d734354b6c007ced78081ec5ad",
       "sourceTextSha256": "0cd16fe6e894203273ebe12c251c1cce11d080d734354b6c007ced78081ec5ad",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "invalid-activity-word-times",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "clamped",
       "variants": [
         {
           "quality": "medium",
@@ -1696,10 +2097,21 @@
             "endSeconds": 319.92
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "invalid-activity-word-times",
-          "schemaValid": true
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "tier": "clamped",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 3
+          },
+          "words": 83,
+          "matched": 83,
+          "total": 83,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -1711,9 +2123,10 @@
       "shownTextSha256": "b7266b611527910b5407eb63cf64130dfb09d6a31dadfe22523f17d433ce8278",
       "sourceTextSha256": "b7266b611527910b5407eb63cf64130dfb09d6a31dadfe22523f17d433ce8278",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "outside-playback-range",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "clamped",
       "variants": [
         {
           "quality": "medium",
@@ -1730,10 +2143,21 @@
             "endSeconds": 326.35
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "outside-playback-range",
-          "schemaValid": true
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "tier": "clamped",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": true,
+            "clampedWords": 1,
+            "respacedZeroDurationWords": 0
+          },
+          "words": 18,
+          "matched": 17,
+          "total": 18,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -1748,6 +2172,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -1768,6 +2193,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 12,
           "matched": 10,
           "total": 12,
@@ -1783,9 +2215,10 @@
       "shownTextSha256": "2fd7c0db6cfe4e027441daa2ae31223b2a3868244e364e4424e06154b777aca5",
       "sourceTextSha256": "2fd7c0db6cfe4e027441daa2ae31223b2a3868244e364e4424e06154b777aca5",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "outside-playback-range",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "clamped",
       "variants": [
         {
           "quality": "medium",
@@ -1802,10 +2235,21 @@
             "endSeconds": 19.55
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "outside-playback-range",
-          "schemaValid": true
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "tier": "clamped",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": true,
+            "clampedWords": 1,
+            "respacedZeroDurationWords": 0
+          },
+          "words": 9,
+          "matched": 8,
+          "total": 9,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -1817,9 +2261,10 @@
       "shownTextSha256": "0768ac8577dc54ab734ff27899b86d605a9f8917fe37cf82be0822c2a6981c39",
       "sourceTextSha256": "0768ac8577dc54ab734ff27899b86d605a9f8917fe37cf82be0822c2a6981c39",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "outside-playback-range",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "clamped",
       "variants": [
         {
           "quality": "medium",
@@ -1836,10 +2281,21 @@
             "endSeconds": 22.41
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "outside-playback-range",
-          "schemaValid": true
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "tier": "clamped",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": true,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
+          "words": 5,
+          "matched": 4,
+          "total": 5,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -1851,9 +2307,10 @@
       "shownTextSha256": "fbbf57c5c98a0646849fbb07a7c2a3e082e2843e68cdf2caf14c5ec01273f693",
       "sourceTextSha256": "fbbf57c5c98a0646849fbb07a7c2a3e082e2843e68cdf2caf14c5ec01273f693",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "outside-playback-range",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "clamped",
       "variants": [
         {
           "quality": "medium",
@@ -1870,10 +2327,21 @@
             "endSeconds": 26.25
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "outside-playback-range",
-          "schemaValid": true
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "tier": "clamped",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": true,
+            "clampedWords": 1,
+            "respacedZeroDurationWords": 0
+          },
+          "words": 6,
+          "matched": 6,
+          "total": 6,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -1888,6 +2356,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -1908,6 +2377,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 3,
           "matched": 3,
           "total": 3,
@@ -1926,6 +2402,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -1946,6 +2423,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 3,
           "matched": 3,
           "total": 3,
@@ -1964,6 +2448,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -1984,6 +2469,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 1,
           "matched": 1,
           "total": 1,
@@ -2002,6 +2494,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -2022,6 +2515,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 3,
           "matched": 3,
           "total": 3,
@@ -2040,6 +2540,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -2060,6 +2561,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 1,
           "matched": 1,
           "total": 1,
@@ -2078,6 +2586,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -2098,6 +2607,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 1,
           "matched": 1,
           "total": 1,
@@ -2116,6 +2632,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -2136,6 +2653,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 1,
           "matched": 1,
           "total": 1,
@@ -2154,6 +2678,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -2174,6 +2699,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 18,
           "matched": 18,
           "total": 18,
@@ -2189,9 +2721,10 @@
       "shownTextSha256": "a947f01f636ae97da69da57c29f04c5c75a41c5cfeda65b9790ae72dbf3bfc03",
       "sourceTextSha256": "a947f01f636ae97da69da57c29f04c5c75a41c5cfeda65b9790ae72dbf3bfc03",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "outside-playback-range",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "clamped",
       "variants": [
         {
           "quality": "medium",
@@ -2208,10 +2741,21 @@
             "endSeconds": 66.08
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "outside-playback-range",
-          "schemaValid": true
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "tier": "clamped",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": true,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
+          "words": 44,
+          "matched": 43,
+          "total": 44,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -2223,9 +2767,10 @@
       "shownTextSha256": "f44adcb3209fcb81eee55292305b69a6d4fe61e75410a474a3db4e964330e7b4",
       "sourceTextSha256": "966faa38a0db72824fcf7681804def536b6550e7587d3c45cc70646d6008d598",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "insufficient-asr-match",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "approximate",
       "variants": [
         {
           "quality": "medium",
@@ -2242,12 +2787,21 @@
             "endSeconds": 71.7
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "insufficient-asr-match",
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
           "schemaValid": true,
+          "tier": "approximate",
+          "fitted": {
+            "underMatchFloor": true,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
+          "words": 12,
           "matched": 7,
-          "total": 12
+          "total": 12,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -2259,9 +2813,10 @@
       "shownTextSha256": "d1e4eafbd6c5622d600d72387e9c79110870cd0494002fc26625848b12179c1d",
       "sourceTextSha256": "d1e4eafbd6c5622d600d72387e9c79110870cd0494002fc26625848b12179c1d",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "invalid-activity-word-times",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -2278,10 +2833,21 @@
             "endSeconds": 98.1
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "invalid-activity-word-times",
-          "schemaValid": true
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
+          "words": 55,
+          "matched": 54,
+          "total": 55,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -2293,9 +2859,10 @@
       "shownTextSha256": "10bce4a6096f1a77506595b71c7af6df37baed97392fd3a1c501a62454e7f704",
       "sourceTextSha256": "f87e85b2e1245e9c147233d6faa94b15e20b9ffde9c4b18348274fb3afb6ec70",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "insufficient-asr-match",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "approximate",
       "variants": [
         {
           "quality": "medium",
@@ -2312,12 +2879,21 @@
             "endSeconds": 105.9
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "insufficient-asr-match",
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
           "schemaValid": true,
+          "tier": "approximate",
+          "fitted": {
+            "underMatchFloor": true,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
+          "words": 15,
           "matched": 10,
-          "total": 15
+          "total": 15,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -2329,9 +2905,10 @@
       "shownTextSha256": "40915459d3070b081f6298ca4a7a52a1f5a10ce875b7de37380cf051b9438494",
       "sourceTextSha256": "40915459d3070b081f6298ca4a7a52a1f5a10ce875b7de37380cf051b9438494",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "outside-playback-range",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "clamped",
       "variants": [
         {
           "quality": "medium",
@@ -2348,10 +2925,21 @@
             "endSeconds": 13.16
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "outside-playback-range",
-          "schemaValid": true
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "tier": "clamped",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": true,
+            "clampedWords": 1,
+            "respacedZeroDurationWords": 0
+          },
+          "words": 12,
+          "matched": 10,
+          "total": 12,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -2366,6 +2954,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -2386,6 +2975,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 14,
           "matched": 14,
           "total": 14,
@@ -2401,9 +2997,10 @@
       "shownTextSha256": "8854a1c421960ed3035a668d1b742ebdeffd7902bbc5ecc6c50f0ed318d124db",
       "sourceTextSha256": "8854a1c421960ed3035a668d1b742ebdeffd7902bbc5ecc6c50f0ed318d124db",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "invalid-activity-word-times",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "clamped",
       "variants": [
         {
           "quality": "medium",
@@ -2420,10 +3017,21 @@
             "endSeconds": 37.62
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "invalid-activity-word-times",
-          "schemaValid": true
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "tier": "clamped",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 1
+          },
+          "words": 48,
+          "matched": 48,
+          "total": 48,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -2435,9 +3043,10 @@
       "shownTextSha256": "22283afcd81d143179cf3ef57223105b42f99cb5fd73aaf8e27dbcbd0ddc32e0",
       "sourceTextSha256": "29490817bc381de9d953a409f7b972afa925b99429535cead9c96efefb8161c5",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "invalid-activity-word-times",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -2454,10 +3063,21 @@
             "endSeconds": 56.14
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "invalid-activity-word-times",
-          "schemaValid": true
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
+          "words": 32,
+          "matched": 28,
+          "total": 32,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -2472,6 +3092,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -2492,6 +3113,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 83,
           "matched": 82,
           "total": 83,
@@ -2510,6 +3138,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -2530,6 +3159,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 36,
           "matched": 33,
           "total": 36,
@@ -2545,9 +3181,10 @@
       "shownTextSha256": "59fc37f91c8d8e725539d6c4484177eb6f81cf09a55c25e8429aa496b8e8e8a4",
       "sourceTextSha256": "59fc37f91c8d8e725539d6c4484177eb6f81cf09a55c25e8429aa496b8e8e8a4",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "invalid-activity-word-times",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "clamped",
       "variants": [
         {
           "quality": "medium",
@@ -2564,10 +3201,21 @@
             "endSeconds": 156.85
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "invalid-activity-word-times",
-          "schemaValid": true
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "tier": "clamped",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 1
+          },
+          "words": 84,
+          "matched": 83,
+          "total": 84,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -2582,6 +3230,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -2602,6 +3251,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 34,
           "matched": 31,
           "total": 34,
@@ -2620,6 +3276,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -2640,6 +3297,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 25,
           "matched": 25,
           "total": 25,
@@ -2658,6 +3322,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -2678,6 +3343,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 7,
           "matched": 7,
           "total": 7,
@@ -2696,6 +3368,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -2716,6 +3389,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 5,
           "matched": 5,
           "total": 5,
@@ -2734,6 +3414,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -2754,6 +3435,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 17,
           "matched": 17,
           "total": 17,
@@ -2772,6 +3460,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -2792,6 +3481,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 30,
           "matched": 25,
           "total": 30,
@@ -2810,6 +3506,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -2830,6 +3527,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 81,
           "matched": 80,
           "total": 81,
@@ -2845,9 +3549,10 @@
       "shownTextSha256": "7206ddd5a1aa8cdcde6723ef46c482b4168e8ec0c543d5d02b9d5325db96003f",
       "sourceTextSha256": "66d6d7381ad3e1d6354b0080ad9df455e8ad9af8e7fd5d45e59a488fb1f65cff",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "outside-playback-range",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "clamped",
       "variants": [
         {
           "quality": "medium",
@@ -2864,10 +3569,21 @@
             "endSeconds": 273.17
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "outside-playback-range",
-          "schemaValid": true
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "tier": "clamped",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": true,
+            "clampedWords": 1,
+            "respacedZeroDurationWords": 0
+          },
+          "words": 38,
+          "matched": 35,
+          "total": 38,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -2882,6 +3598,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -2902,6 +3619,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 30,
           "matched": 30,
           "total": 30,
@@ -2920,6 +3644,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -2940,6 +3665,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 30,
           "matched": 27,
           "total": 30,
@@ -2955,9 +3687,10 @@
       "shownTextSha256": "2bf3bc8db8555a2e8ffe4bb29f54310e35de2aee9a2738a903c090b734b2c041",
       "sourceTextSha256": "2bf3bc8db8555a2e8ffe4bb29f54310e35de2aee9a2738a903c090b734b2c041",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "invalid-activity-word-times",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "clamped",
       "variants": [
         {
           "quality": "medium",
@@ -2974,10 +3707,21 @@
             "endSeconds": 351.33
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "invalid-activity-word-times",
-          "schemaValid": true
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "tier": "clamped",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 2
+          },
+          "words": 109,
+          "matched": 108,
+          "total": 109,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -2989,9 +3733,10 @@
       "shownTextSha256": "72256b01b543161b97815ca8441ae4b58b7da97d89eabe4855b40cf83caf5972",
       "sourceTextSha256": "4e5864583ca1e8e3933e0101d5a73482379e8d79a82760ad82dc8464c72efa23",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "insufficient-asr-match",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "approximate",
       "variants": [
         {
           "quality": "medium",
@@ -3008,12 +3753,21 @@
             "endSeconds": 368.98
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "insufficient-asr-match",
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
           "schemaValid": true,
+          "tier": "approximate",
+          "fitted": {
+            "underMatchFloor": true,
+            "outsidePlaybackRange": true,
+            "clampedWords": 13,
+            "respacedZeroDurationWords": 0
+          },
+          "words": 36,
           "matched": 24,
-          "total": 36
+          "total": 36,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -3025,9 +3779,10 @@
       "shownTextSha256": "ab6d8f78ca7cd550112526a568ae72326367f3124cccf8de70cae2815549273b",
       "sourceTextSha256": "ab6d8f78ca7cd550112526a568ae72326367f3124cccf8de70cae2815549273b",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "invalid-activity-word-times",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "clamped",
       "variants": [
         {
           "quality": "medium",
@@ -3044,10 +3799,21 @@
             "endSeconds": 425.74
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "invalid-activity-word-times",
-          "schemaValid": true
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "tier": "clamped",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 1
+          },
+          "words": 127,
+          "matched": 122,
+          "total": 127,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -3062,6 +3828,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -3082,6 +3849,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 7,
           "matched": 7,
           "total": 7,
@@ -3100,6 +3874,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -3120,6 +3895,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 7,
           "matched": 7,
           "total": 7,
@@ -3138,6 +3920,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -3158,6 +3941,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 3,
           "matched": 3,
           "total": 3,
@@ -3173,9 +3963,10 @@
       "shownTextSha256": "1d4edc695517dc6fe9ca8ab9bbc7e96761c27e36bc5bcd7e59dc0258b9476085",
       "sourceTextSha256": "1d4edc695517dc6fe9ca8ab9bbc7e96761c27e36bc5bcd7e59dc0258b9476085",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "outside-playback-range",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "clamped",
       "variants": [
         {
           "quality": "medium",
@@ -3192,10 +3983,21 @@
             "endSeconds": 435.18
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "outside-playback-range",
-          "schemaValid": true
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "tier": "clamped",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": true,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
+          "words": 3,
+          "matched": 3,
+          "total": 3,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -3210,6 +4012,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -3230,6 +4033,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 3,
           "matched": 3,
           "total": 3,
@@ -3248,6 +4058,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -3268,6 +4079,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 3,
           "matched": 3,
           "total": 3,
@@ -3286,6 +4104,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -3306,6 +4125,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 3,
           "matched": 3,
           "total": 3,
@@ -3324,6 +4150,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -3344,6 +4171,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 5,
           "matched": 4,
           "total": 5,
@@ -3359,9 +4193,10 @@
       "shownTextSha256": "e9fba10b3565aa6a86591be3d907b9aeacee35b48a30d595e865b3f4db31043e",
       "sourceTextSha256": "e9fba10b3565aa6a86591be3d907b9aeacee35b48a30d595e865b3f4db31043e",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "invalid-activity-word-times",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "clamped",
       "variants": [
         {
           "quality": "medium",
@@ -3378,10 +4213,21 @@
             "endSeconds": 471.32
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "invalid-activity-word-times",
-          "schemaValid": true
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "tier": "clamped",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 1
+          },
+          "words": 64,
+          "matched": 64,
+          "total": 64,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -3393,9 +4239,10 @@
       "shownTextSha256": "31421e07b0bf6f07e12f0bf88ebf75e7f4f8ec713f2ad84671689f0c2d84ba32",
       "sourceTextSha256": "31421e07b0bf6f07e12f0bf88ebf75e7f4f8ec713f2ad84671689f0c2d84ba32",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "invalid-activity-word-times",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -3412,10 +4259,21 @@
             "endSeconds": 486.22
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "invalid-activity-word-times",
-          "schemaValid": true
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
+          "words": 37,
+          "matched": 36,
+          "total": 37,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -3430,6 +4288,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -3450,6 +4309,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 32,
           "matched": 30,
           "total": 32,
@@ -3468,6 +4334,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -3488,6 +4355,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 131,
           "matched": 125,
           "total": 131,
@@ -3503,9 +4377,10 @@
       "shownTextSha256": "4520ee5390c426d7a7afa0008aab573566a90ca6a703583ac012446acfa9190c",
       "sourceTextSha256": "4520ee5390c426d7a7afa0008aab573566a90ca6a703583ac012446acfa9190c",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "invalid-activity-word-times",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "clamped",
       "variants": [
         {
           "quality": "medium",
@@ -3522,10 +4397,21 @@
             "endSeconds": 563.63
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "invalid-activity-word-times",
-          "schemaValid": true
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "tier": "clamped",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 1
+          },
+          "words": 25,
+          "matched": 25,
+          "total": 25,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -3540,6 +4426,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -3560,6 +4447,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 56,
           "matched": 56,
           "total": 56,
@@ -3575,9 +4469,10 @@
       "shownTextSha256": "f6126454740a6085e6505885e4b1d5be9ef3be21b69bc0f60c778ac804b14eb9",
       "sourceTextSha256": "1cc6863506ee09682719a3747264a4d2550902ecc58267b360961934fa573acd",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "invalid-activity-word-times",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -3594,10 +4489,21 @@
             "endSeconds": 596.9
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "invalid-activity-word-times",
-          "schemaValid": true
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
+          "words": 34,
+          "matched": 29,
+          "total": 34,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -3612,6 +4518,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -3632,6 +4539,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 69,
           "matched": 69,
           "total": 69,
@@ -3650,6 +4564,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -3670,6 +4585,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 31,
           "matched": 28,
           "total": 31,
@@ -3688,6 +4610,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -3708,6 +4631,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 32,
           "matched": 29,
           "total": 32,
@@ -3726,6 +4656,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -3746,6 +4677,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 8,
           "matched": 7,
           "total": 8,
@@ -3761,9 +4699,10 @@
       "shownTextSha256": "78184a33bfe4e9d056df07c2c6d82c5546c37d682bb7542afeee06b3276cf725",
       "sourceTextSha256": "78184a33bfe4e9d056df07c2c6d82c5546c37d682bb7542afeee06b3276cf725",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "invalid-activity-word-times",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "clamped",
       "variants": [
         {
           "quality": "medium",
@@ -3780,10 +4719,21 @@
             "endSeconds": 676.87
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "invalid-activity-word-times",
-          "schemaValid": true
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "tier": "clamped",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 1
+          },
+          "words": 45,
+          "matched": 45,
+          "total": 45,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -3798,6 +4748,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -3818,6 +4769,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 32,
           "matched": 29,
           "total": 32,
@@ -3833,9 +4791,10 @@
       "shownTextSha256": "71ec6b8881bb4156e393d94fcb6103cc48bdd2d861913ac904f6cc64dbae5521",
       "sourceTextSha256": "71ec6b8881bb4156e393d94fcb6103cc48bdd2d861913ac904f6cc64dbae5521",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "invalid-activity-word-times",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "clamped",
       "variants": [
         {
           "quality": "medium",
@@ -3852,10 +4811,21 @@
             "endSeconds": 731.35
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "invalid-activity-word-times",
-          "schemaValid": true
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
+          "schemaValid": true,
+          "tier": "clamped",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 1
+          },
+          "words": 94,
+          "matched": 92,
+          "total": 94,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -3870,6 +4840,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -3890,6 +4861,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 32,
           "matched": 29,
           "total": 32,
@@ -3908,6 +4886,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -3928,6 +4907,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 12,
           "matched": 11,
           "total": 12,
@@ -3946,6 +4932,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -3966,6 +4953,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 13,
           "matched": 13,
           "total": 13,
@@ -3984,6 +4978,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -4004,6 +4999,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 33,
           "matched": 33,
           "total": 33,
@@ -4022,6 +5024,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -4042,6 +5045,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 60,
           "matched": 46,
           "total": 60,
@@ -4057,9 +5067,10 @@
       "shownTextSha256": "8bfbc7346124fdba8c2f5b3608add2caf56538a353a7f2f01c9a7d7abe9bdca3",
       "sourceTextSha256": "f4ba80959043420736fb3866c4025abe767548564dce936e333f4afd7c1eb15b",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "insufficient-asr-match",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "approximate",
       "variants": [
         {
           "quality": "medium",
@@ -4076,12 +5087,21 @@
             "endSeconds": 68.2
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "insufficient-asr-match",
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
           "schemaValid": true,
+          "tier": "approximate",
+          "fitted": {
+            "underMatchFloor": true,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
+          "words": 49,
           "matched": 34,
-          "total": 49
+          "total": 49,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -4093,9 +5113,10 @@
       "shownTextSha256": "8723353d0625376a7a479bfb78eae61f4eb05d09d326e172edeb53b51a003d85",
       "sourceTextSha256": "756d288e53b9577b559b2cc7fed8916f6d7894741a4f4175741af4c573a5c560",
       "selectedQuality": "medium",
-      "accepted": false,
-      "status": "untimed",
-      "reason": "insufficient-asr-match",
+      "accepted": true,
+      "status": "runtime-predicate-accepted",
+      "reason": null,
+      "tier": "approximate",
       "variants": [
         {
           "quality": "medium",
@@ -4112,12 +5133,21 @@
             "endSeconds": 84.46
           },
           "sourceBindingVerified": true,
-          "accepted": false,
-          "status": "untimed",
-          "reason": "insufficient-asr-match",
+          "accepted": true,
+          "status": "runtime-predicate-accepted",
+          "reason": null,
           "schemaValid": true,
+          "tier": "approximate",
+          "fitted": {
+            "underMatchFloor": true,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
+          "words": 60,
           "matched": 38,
-          "total": 60
+          "total": 60,
+          "clockDomain": "delivery-media-seconds"
         }
       ]
     },
@@ -4132,6 +5162,7 @@
       "accepted": true,
       "status": "runtime-predicate-accepted",
       "reason": null,
+      "tier": "exact",
       "variants": [
         {
           "quality": "medium",
@@ -4152,6 +5183,13 @@
           "status": "runtime-predicate-accepted",
           "reason": null,
           "schemaValid": true,
+          "tier": "exact",
+          "fitted": {
+            "underMatchFloor": false,
+            "outsidePlaybackRange": false,
+            "clampedWords": 0,
+            "respacedZeroDurationWords": 0
+          },
           "words": 28,
           "matched": 27,
           "total": 28,
@@ -4160,5 +5198,5 @@
       ]
     }
   ],
-  "scope": "The111 source-ledger-bound guide/discussion routes, evaluated against canonical delivered OGG descriptors and their delivery-media-seconds sidecars. Accepted canonical predicates are NOT executable-original/native-MP3 playback or highlight passes. In particular the d631 mapping explicitly excludes the native MP3 clock. Native MP3 source words are not qualified by copying/renaming delivery sidecars. Derived resource subroutes are separate; whole-file native derivatives and term descriptions gain no word qualification here. No media fetch, native playback, acoustic accuracy, physical-device acceptance or current production storage query; repository sidecar absence does not establish publisher absence. Known untimed routes remain explicit; not an all111-pass claim."
+  "scope": "The111 source-ledger-bound guide/discussion routes, evaluated against canonical delivered OGG descriptors and their delivery-media-seconds sidecars. Accepted canonical predicates are NOT executable-original/native-MP3 playback or highlight passes. In particular the d631 mapping explicitly excludes the native MP3 clock. Native MP3 source words are not qualified by copying/renaming delivery sidecars. Derived resource subroutes are separate; whole-file native derivatives and term descriptions gain no word qualification here. No media fetch, native playback, acoustic accuracy, physical-device acceptance or current production storage query; repository sidecar absence does not establish publisher absence. Since 2026-11-09 (captain: highlight the closest match everywhere) an accepted route carries its timing tier: exact (map unchanged), clamped (words fitted to the runtime clip or zero-duration words re-spaced) or approximate (under the 70 % heard-token floor; layout between heard anchors is interpolated). A tier is a disposition, not an acoustic acceptance."
 }
