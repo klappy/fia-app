@@ -55,6 +55,18 @@ test('a zero-duration run with no gap between its neighbours borrows from them, 
  const skew=activityTiming({words:[{text:'x',from:0,to:1,startMs:2000,endMs:2000},{text:'y',from:2,to:3,startMs:2000,endMs:2000},{text:'z'.repeat(50),from:4,to:54,startMs:2000,endMs:2000},{text:'end',from:55,to:58,startMs:2003,endMs:2500}],matched:4,total:4,startMs:2000,endMs:2500});
  assert.deepEqual(skew.words.map(w=>[w.startMs,w.endMs]),[[2000,2001],[2001,2002],[2002,2003],[2003,2500]]);
 });
+test('when capped lending cannot give every word a millisecond, the run and its neighbours are laid out together across their combined span (Codex P2 on #354)',()=>{
+ // Two zero-duration words between a 1 ms and a 2 ms neighbour: half of each neighbour is 0 and 1 ms, not the 2 ms the run needs.
+ const tight=endMs=>({words:[{text:'a',from:0,to:1,startMs:1000,endMs:1001},{text:'x',from:2,to:3,startMs:1001,endMs:1001},{text:'y',from:4,to:5,startMs:1001,endMs:1001},{text:'bb',from:6,to:8,startMs:1001,endMs:1003}],matched:4,total:4,startMs:1000,endMs});
+ const t=activityTiming(tight(1010));
+ assert.deepEqual(t.words.map(w=>[w.startMs,w.endMs]),[[1000,1002],[1002,1004],[1004,1006],[1006,1010]],'the group widens to the clip and is laid out by text length');
+ assert.equal(t.respaced,2,'the two zero-duration words; the neighbours that joined the layout are not counted');assert.equal(t.tier,'clamped');
+ t.words.forEach((w,i)=>{assert.ok(w.endMs>w.startMs);assert.equal(wordIndexAt(t.words,w.startMs),i);});
+ // A clip with fewer milliseconds than words cannot hold a millisecond per word: as many words as it has, monotonic, inside the clip, no throw.
+ const short=activityTiming(tight(1003));let previous=1000,positive=0;
+ for(const w of short.words){assert.ok(w.startMs>=previous&&w.endMs>=w.startMs&&w.endMs<=1003,JSON.stringify(w));previous=w.endMs;if(w.endMs>w.startMs)positive++;}
+ assert.equal(positive,3,'three milliseconds hold three words');
+});
 test('every shipped activity map in the corpus is timed at a named tier; the three #343 examples and the regenerated first screens have their known tiers',()=>{
  const dir=new URL('../../../product/audio-transcripts/',import.meta.url),found=new Map();let maps=0;
  for(const pack of readdirSync(dir,{withFileTypes:true}).filter(d=>d.isDirectory()))for(const name of readdirSync(new URL(pack.name+'/',dir)).filter(n=>n.endsWith('.words.json'))){

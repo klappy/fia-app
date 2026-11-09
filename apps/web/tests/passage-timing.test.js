@@ -61,6 +61,19 @@ test('a retained word in the 250 ms slack outside the range never widens an unma
  assert.deepEqual(alignmentPosition(a,2.5),{verseIndex:0,wordIndex:-1});assert.deepEqual(alignmentPosition(a,9.9),{verseIndex:2,wordIndex:-1});
  const m=alignmentFromSidecar(verses,sidecar(spoken),{range,mapping:{scale:1,offsetSeconds:2}});assert.equal(m.verses[0].start,0);assert.equal(m.verses[2].end,8);
 });
+test('a matched word kept by the slack but crossing the playback boundary is clamped to it before edge verses are allocated (Codex P2 on #354)',()=>{
+ const range={startSeconds:2,endSeconds:10};
+ // "In" starts 200 ms before the range and "light" ends 200 ms after it; verse 3 is unmatched and trails.
+ const spoken=[{startMs:1800,endMs:2100,text:'In'},...mk('the beginning God made',2200),...mk('Then there was',8000),{startMs:9900,endMs:10200,text:'light'}];
+ const a=alignmentFromSidecar(verses,sidecar(spoken),{range});
+ assert.deepEqual(a.verses.map(v=>v.highlightMode),['word','word','verse']);
+ assert.equal(a.verses[0].words[0].start,2);assert.equal(a.verses[0].words[0].end,2.1);assert.equal(a.verses[0].start,2);
+ assert.equal(a.verses[1].words.at(-1).start,9.9);assert.equal(a.verses[1].words.at(-1).end,10);assert.equal(a.verses[1].end,10);
+ assert.deepEqual([a.verses[2].start,a.verses[2].end],[10,10],'no playback is left for the trailing verse: it sits at the boundary, never after it');
+ for(const v of a.verses){for(const t of [v.start,v.end,...v.words.flatMap(w=>[w.start,w.end])])assert.ok(t>=2&&t<=10,'inside the range: '+t);}
+ for(let i=1;i<3;i++)assert.ok(a.verses[i].start>=a.verses[i-1].end-1e-9,'never inverts');
+ assert.deepEqual(alignmentPosition(a,9.95),{verseIndex:1,wordIndex:3});assert.equal(alignmentPosition(a,2.05).verseIndex,0);
+});
 test('playbackRange trims the sidecar and the timing mapping converts to the player clock',()=>{
  const sc=sidecar([...mk('Stray words before',0),...mk('In the beginning God made',5000),...mk('Then there was light',9000),...mk('And God saw it was good',13000)]);
  const a=alignmentFromSidecar(verses,sc,{range:{startSeconds:5,endSeconds:20}});

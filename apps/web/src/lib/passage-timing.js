@@ -41,6 +41,10 @@ export function alignmentFromSidecar(verses, sidecar, { range = null, mapping = 
   const belowSpokenFloor = pairs.length < MIN_SPOKEN_MATCH * spoken.length;
   const hit = shown.map(() => null); for (const [i, j] of pairs) hit[i] = spoken[j];
   const clock = ms => { const s = ms / 1000; return mapping ? (s - mapping.offsetSeconds) / mapping.scale : s; };
+  // A matched word the 250 ms slack retains may cross the playback boundary; its time is clamped into the range (the file's
+  // 0…durationMs without one) before anything is allocated from it, so no run starts after playback ends or inverts
+  // (Codex P2 on #354).
+  const lo = range ? range.startSeconds * 1000 : 0, hi = range ? range.endSeconds * 1000 : sidecar.durationMs, inRange = ms => Math.min(hi, Math.max(lo, ms));
   const per = verses.map((verse, v) => {
     const own = shown.map((s, i) => [s, i]).filter(([s]) => s.v === v), matched = own.filter(([, i]) => hit[i]);
     return { own, timed: own.length > 0 && matched.length >= MIN_VERSE_MATCH * own.length };
@@ -49,7 +53,7 @@ export function alignmentFromSidecar(verses, sidecar, { range = null, mapping = 
   const out = verses.map(() => ({ words: [], highlightMode: 'verse', reason: 'Not carried by the word sidecar; scrolled by verse.' }));
   per.forEach((p, v) => {
     if (!p.timed) return;
-    const starts = p.own.map(([, i]) => hit[i]?.startMs ?? null), ends = p.own.map(([, i]) => hit[i]?.endMs ?? null);
+    const starts = p.own.map(([, i]) => hit[i] ? inRange(hit[i].startMs) : null), ends = p.own.map(([, i]) => hit[i] ? inRange(hit[i].endMs) : null);
     // Words the recording did not say (or said differently) share the gap between their matched neighbours, by length.
     for (let a = 0; a < starts.length;) {
       if (starts[a] !== null) { a++; continue; }
@@ -68,7 +72,7 @@ export function alignmentFromSidecar(verses, sidecar, { range = null, mapping = 
   // word: when the only anchor is in a later verse and the unmatched speech follows it, the first spoken word IS that
   // verse's start and the verses before it would get a zero-length span alignmentPosition never returns; and a retained
   // word in the 250 ms slack outside the range must not push an unmatched run past the end of playback (Codex P2 on #354).
-  const edge = range ? { start: clock(range.startSeconds * 1000), end: clock(range.endSeconds * 1000) } : { start: clock(0), end: clock(sidecar.durationMs) };
+  const edge = { start: clock(lo), end: clock(hi) };
   for (let v = 0; v < out.length;) {
     if (per[v].timed) { v++; continue; }
     let w = v; while (w < out.length && !per[w].timed) w++;
