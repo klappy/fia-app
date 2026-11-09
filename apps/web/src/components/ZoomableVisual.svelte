@@ -1,4 +1,5 @@
 <script>
+ import {displayTitle} from '../lib/spanish-coverage.js';
  import {onMount} from 'svelte';
  import {limitView,zoomAt} from '../lib/visual-view.js';
  let {asset,fullscreen=false,onexpand=()=>{}}=$props();
@@ -28,8 +29,8 @@
 </script>
 <div class="visual-explorer" class:fullscreen>
  <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions (Focusable image region provides keyboard zoom/pan equivalents to pointer gestures.) -->
- <div bind:this={viewport} class="visual-viewport" class:dragging role={fullscreen?'region':'button'} aria-label={fullscreen?`Explore ${asset.title}`:`Open ${asset.title} full screen`} tabindex="0" onpointerdown={down} onpointermove={move} onpointerup={up} onpointercancel={up} onlostpointercapture={up} onkeydown={key} onclick={open} style:cursor={view.zoom>1?(dragging?'grabbing':'grab'):'zoom-in'}>
-  <img bind:this={picture} src={asset.src} alt={asset.description||asset.title} draggable="false" onload={measure} onerror={()=>failed=true} style:transform={`translate(${view.x}px,${view.y}px) scale(${view.zoom})`}/>
+ <div bind:this={viewport} class="visual-viewport" class:dragging role={fullscreen?'region':'button'} aria-label={fullscreen?`Explore ${displayTitle(asset)}`:`Open ${displayTitle(asset)} full screen`} tabindex="0" onpointerdown={down} onpointermove={move} onpointerup={up} onpointercancel={up} onlostpointercapture={up} onkeydown={key} onclick={open} style:cursor={view.zoom>1?(dragging?'grabbing':'grab'):'zoom-in'}>
+  <img bind:this={picture} src={asset.src} alt={asset.description||displayTitle(asset)} draggable="false" onload={measure} onerror={()=>failed=true} style:transform={`translate(${view.x}px,${view.y}px) scale(${view.zoom})`}/>
   {#if failed}<div class="media-error">This visual couldn’t load.<button onclick={()=>{failed=false;picture.src=asset.src;}}>Try again</button></div>{/if}
  </div>
  <span class="sr-only" aria-live="polite">{Math.round(view.zoom*100)}% zoom</span>
