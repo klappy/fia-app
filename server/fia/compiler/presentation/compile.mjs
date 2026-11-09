@@ -16,22 +16,46 @@ const plain=html=>String(html||'').replace(/<\/(?:p|li|div)>/gi,'\n').replace(/<
 // text: titles come from the FIAKeyTerms body's own headword or the source key, never from a translator.
 const TERM_LINK=/^(eng|spa)-t(\d+)-v\d+$/;// raw FIAKeyTerms content id as the guide HTML links it
 export const resolveResourceLink=(id,assets)=>{if(assets[id])return id;const m=TERM_LINK.exec(String(id));const term=m&&`term-${m[1]}-t${m[2]}`;return term&&assets[term]?term:null;};
-const TITLE_KEY=/^[a-z0-9]+(?:-[a-z0-9]+)*$/,HEADWORD=/^\s*<p>\s*(?:[^<.]{0,16})?<b>([^<]+)<\/b>/,SMALL_WORDS=new Set(['of','the','and','or','in','a','an','to','for']);
+const TITLE_KEY=/^[a-z0-9]+(?:-[a-z0-9]+)*$/,HEADWORD=/^\s*<p>\s*(?:[^<.]{0,16})?<b>([^<]+)<\/b>/,SMALL_WORDS=new Set(['of','the','and','or','in','a','an','to','for']),SPANISH_SMALL_WORDS=new Set(['de','del','la','el','los','las','y','o','en','al','un','una','lo','a']);
 const sourceTitle=a=>a?.sourceEvidence?.title??a?.sourceRecord?.title??a?.title;
+// The English twin of a Spanish term, by term number. A compiled English pack carries term-eng-tN; the approved
+// eng.MRK-1-1-13 presentation (the twin of spa.MRK-1-1-13) carries the legacy FIAKeyTerms content id eng-tN-vN.
+export const siblingTerm=(sibling,n)=>{const assets=sibling?.assets;if(!assets)return null;return assets[`term-eng-t${n}`]||Object.values(assets).find(a=>a.kind==='term'&&TERM_LINK.exec(String(a.id))?.[2]===String(n))||null;};
 // The card title for a key term: the source title unless it is the FIAKeyTerms key (holy-spirit, or the English title in
 // key form); then for English the key written out, for Spanish the headword the term's own Spanish text opens with
 // (<p>El <b>Espíritu Santo</b> …, first letter capitalised), else the key as it is, marked as the English fallback so the
 // render path can say '[ES needed]' beside it.
 const keyOf=s=>String(s||'').trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+// A derived title (the key written out, or the headword) names the source title it came from in titleProvenance.derivedFrom,
+// so the executable candidate contract (source-action-candidates.mjs) can bind the asset to its evidence by that title.
+// The marker form keeps the key itself as the title; withheld says why a headword that exists was not used.
+const fallback=(title,withheld)=>({title,titleProvenance:{status:'missing',badge:'not-yet-in-language',fallback:'eng',...(withheld?{withheld}:{})}});
+const contentWords=(words,small)=>words.filter(w=>w&&!small.has(w.toLowerCase())).length;
 export function termTitle(t,{language,sibling}={}){
  const title=String(t.title||'').trim(),head=HEADWORD.exec(t.text?.html||'');
- const twin=sibling?.assets?.[`term-eng-t${t.termNumber}`],isKey=TITLE_KEY.test(title)&&(twin?keyOf(sourceTitle(twin))===title:language==='eng'||title.includes('-'));
+ const twin=siblingTerm(sibling,t.termNumber),isKey=TITLE_KEY.test(title)&&(twin?keyOf(sourceTitle(twin))===title:language==='eng'||title.includes('-'));
  if(!isKey)return {title,titleProvenance:{status:'source'}};
- if(language==='eng')return {title:title.split('-').map((w,i)=>i&&SMALL_WORDS.has(w)?w:w[0].toUpperCase()+w.slice(1)).join(' '),titleProvenance:{status:'source',from:'FIAKeyTerms key'}};
- if(head){const word=plain(head[1]);return {title:word.charAt(0).toLocaleUpperCase('es')+word.slice(1),titleProvenance:{status:'source',from:'FIAKeyTerms headword'}};}
- return {title,titleProvenance:{status:'missing',badge:'not-yet-in-language',fallback:'eng'}};
+ if(language==='eng')return {title:title.split('-').map((w,i)=>i&&SMALL_WORDS.has(w)?w:w[0].toUpperCase()+w.slice(1)).join(' '),titleProvenance:{status:'source',from:'FIAKeyTerms key',derivedFrom:t.title}};
+ if(head){
+  const word=plain(head[1]);
+  // A compound key (synagogue-ruler) needs a phrase with as many content words as the key: a shorter phrase names only part
+  // of the compound (t134's Spanish text opens by defining a <b>sinagoga</b>), so the marker shows rather than a guess.
+  if(contentWords(word.split(/\s+/),SPANISH_SMALL_WORDS)<contentWords(title.split('-'),SMALL_WORDS))return fallback(title,'compound-key');
+  return {title:word.charAt(0).toLocaleUpperCase('es')+word.slice(1),titleProvenance:{status:'source',from:'FIAKeyTerms headword',derivedFrom:t.title}};
+ }
+ return fallback(title);
 }
 const squash=s=>String(s||'').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,'');
+// Two terms in one pack must not share a title: in spa.MRK-5-21-34 t133 synagogue and t134 synagogue-ruler both open with
+// <b>sinagoga</b>. A headword that another term's title (headword or source) already uses is withheld for the marker; a
+// collision is never resolved by guessing which term the phrase names. Returns the ids of the terms withheld.
+export function withholdCollidingHeadwords(assets){
+ const terms=Object.values(assets).filter(a=>a.kind==='term'),count=new Map();
+ for(const a of terms)count.set(squash(a.title),(count.get(squash(a.title))||0)+1);
+ const withheld=[];
+ for(const a of terms)if(a.titleProvenance?.from==='FIAKeyTerms headword'&&count.get(squash(a.title))>1){Object.assign(a,fallback(String(a.sourceEvidence?.title??a.titleProvenance.derivedFrom).trim(),'collision'));withheld.push(a.id);}
+ return withheld;
+}
 // A unit whose whole text is the stage title, the passage reference, or the two run together is a layout header that
 // leaked into the guide as a step (eng.LUK-5-12-16 S05-U001/U002, eng.LUK-7-36-8-3 S02-U001/U002, eng.MRK-2-23-3-6 S02-U001).
 export const stageHeaderUnit=(u,section,{passage,title})=>{const t=squash(u.text);if(!t)return false;const st=squash(section.title),refs=[squash(passage),squash(title)].filter(Boolean);return t===st||refs.includes(t)||refs.some(r=>t===st+r);};
@@ -60,6 +84,7 @@ export function compilePresentation(input,{listEvidence,exampleEvidence,sourceFi
   const titled=frozen?{title:t.title}:termTitle(t,{language:manifest.language,sibling});
   assets[id]={id,kind:'term',...titled,subtitle:'FIA Key Terms',text,sourceHtml:t.text?.html||'',source:`FIA Key Terms · ${rightsFor('FIAKeyTerms')?.licence?.name||''}`,sourceEvidence:t,rights:rightsFor('FIAKeyTerms'),relatedIds:[],...(t.audio?.status==='source'&&t.audio.url?{remoteAudioSrc:t.audio.url}:{} )};
  }
+ if(!frozen){withholdCollidingHeadwords(assets);for(const a of Object.values(assets))if(a.kind==='term'&&a.titleProvenance?.withheld)diagnostics.push({code:'term-headword-withheld',assetId:a.id,reason:a.titleProvenance.withheld});}
  for(const key of ['images','maps','videos'])for(const r of resources[key]||[]){
   const collection={images:'FIAImages',maps:'FIAMaps',videos:'VideoBibleDictionary'}[key];
   assets[r.id]={id:r.id,kind:r.kind,title:r.title,...(!frozen&&r.titleProvenance?{titleProvenance:r.titleProvenance}:{}),description:'',relatedIds:[],source:`${collection} · ${rightsFor(collection)?.licence?.name||''}`,sourceEvidence:r,rights:rightsFor(collection),...(r.url?{remoteSrc:r.url}:{} )};
