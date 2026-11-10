@@ -197,14 +197,3 @@ run('saved players survive refresh only while current or paused active, then are
  e.controller.retain(['saved|current']);assert.equal(e.controller.poolSize,2);assert.equal(e.controller.src,'blob:old');
  e.controller.stop();e.controller.retain(['saved|current']);assert.equal(e.controller.poolSize,1);
 });
-
-run('setRate changes the pace of the sounding element without a new play()', async env => {
-  env.controller.play('', '/a.mp3', 1, { startSeconds: 1, endSeconds: 30 });
-  const owner = env.audio.at(-1);
-  assert.equal(owner.playbackRate, 1);
-  assert.equal(env.controller.setRate(1.15), true);
-  assert.equal(owner.playbackRate, 1.15);
-  assert.equal(env.controller.setRate(0), false);
-  env.controller.stop();
-  assert.equal(env.controller.setRate(1), false);
-});

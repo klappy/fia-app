@@ -5,26 +5,19 @@ import {START_BOUND_MS} from '../apps/web/src/lib/audio.js';
 // Captain on DEV (iPhone, 2026-10-07): "The spinner springs forever on each page that isn't the first."
 // iOS lets a later screen start without a tap only on an element a tap already started, and a start it
 // does not allow can stay pending with neither sound nor a rejection. Mark 1:1–13's first three screens
-// carry recordings. Since 2026-11-09 (audio is the player) screens 1 and 2 are one media session on one element: the
-// page turns to screen 2 by the clock with no second start, and screen 3 (the Scripture reading, another file) starts
-// on its own. Sound on screen 3 therefore still means screens 1–2 played to their end and screen 3 started untapped.
+// carry recordings.
 const PAUSED_AUTOMATIC='Tap Play to hear the narration. Your browser paused automatic audio.';
 const MARGIN_MS=1500;
 function dockProbe(){
  const log=window.__dock=[];let last='';
  const sample=()=>{
   const centre=document.querySelector('nav[aria-label="Session controls"] .guide-primary');if(!centre)return;
-  // The session bar's progress words name the screen: "… · unit n of m · …" (SessionProgress stageWords).
-  const words=document.querySelector('[role="progressbar"][aria-label="Session progress"]');
-  const position=/unit (\d+) of \d+/.exec(words?.getAttribute('aria-valuetext')||words?.textContent||'');
+  const position=[...document.querySelectorAll('.sr-only')].map(n=>/^(\d+) of \d+ screens$/.exec(n.textContent.trim())).find(Boolean);
   const entry={screen:position?Number(position[1]):0,label:centre.getAttribute('aria-label'),busy:centre.getAttribute('aria-busy')==='true',notice:[...document.querySelectorAll('.scene-notice')].map(n=>n.textContent.trim()).join(' / ')};
   const key=JSON.stringify(entry);if(key!==last){last=key;log.push({t:Math.round(performance.now()),...entry});}
  };
- new MutationObserver(sample).observe(document,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['aria-label','aria-busy','class','aria-valuetext']});
+ new MutationObserver(sample).observe(document,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['aria-label','aria-busy','class']});
 }
-// The run model's evidence: which screens had sound start on them, and which screens the page showed at all.
-const reached=(log,playing)=>({heard:heardOn(log,playing),shown:[...new Set(log.map(e=>e.screen))]});
-const untapped=r=>r.heard.includes(1)&&r.shown.includes(2)&&r.heard.includes(3);
 const dock=page=>page.evaluate(()=>window.__dock);
 const clock=page=>page.evaluate(()=>Math.round(performance.now()));
 // Spinner spans after `from` that outlast the start bound: each busy span is measured from the first clip
@@ -61,8 +54,8 @@ test('iOS: one tap on Begin; every later screen starts on its own and the spinne
  await page.addInitScript(iosPlayback,{start:'hang'});await page.addInitScript(dockProbe);
  const {at}=await begin(page);
  try{
-  // Sound on screen 3 means screens 1 and 2 played to their end (one session, the page turned to 2) and screen 3 started with no further tap.
-  await expect.poll(async()=>{const r=reached(await dock(page),(await playbackLog(page)).playing);return untapped(r)||r;},{timeout:75000,message:'screen 2 is turned to and screen 3 starts on its own'}).toBe(true);
+  // Sound on screen 3 means screens 1 and 2 played to their end and screens 2 and 3 started with no further tap.
+  await expect.poll(async()=>heardOn(await dock(page),(await playbackLog(page)).playing),{timeout:75000,message:'screens 2 and 3 start on their own'}).toEqual(expect.arrayContaining([1,2,3]));
  }finally{
   const {log,playback,now}=await evidence(page);
   expect(pastBound(log,playback,at,now),`no spinner lasts past the ${START_BOUND_MS} ms start bound: ${JSON.stringify(log)}`).toEqual([]);
@@ -86,7 +79,7 @@ test('iOS: a start the browser leaves pending ends as Resume at the bound with i
  }
  expect((await playbackLog(page)).playing,'nothing played before the tap').toEqual([]);
  const tap=await clock(page);await centre.click();
- await expect.poll(async()=>{const r=reached(await dock(page),(await playbackLog(page)).playing);return untapped(r)||r;},{timeout:60000,message:'after one tap, screen 2 is turned to and screen 3 starts on its own'}).toBe(true);
+ await expect.poll(async()=>heardOn(await dock(page),(await playbackLog(page)).playing),{timeout:60000,message:'after one tap, screens 2 and 3 start on their own'}).toEqual(expect.arrayContaining([1,2,3]));
  const {log,playback,now}=await evidence(page);
  expect(pastBound(log,playback,tap,now),JSON.stringify(log)).toEqual([]);
  // One tap on Begin and one on Resume: the gate saw no other gesture, so later screens started untapped.
