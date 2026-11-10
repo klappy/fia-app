@@ -9,6 +9,13 @@ const validPack=id=>id===legacy||/^(eng|spa)\.(?:MRK|LUK)-\d+(?:-\d+)+$/.test(id
 const json=value=>new Response(JSON.stringify(value),{headers:{'Content-Type':'application/json'}});
 async function read(key){return (await (await caches.open(META)).match('/'+key))?.json()||null;}
 async function write(key,value){await (await caches.open(META)).put('/'+key,json(value));}
+// Serialize the first-Save default with explicit passage choices in this worker.
+let selectionTurn=Promise.resolve();
+async function selectForOffline(packId,onlyIfAbsent=false){
+ const turn=selectionTurn.then(async()=>{if(!onlyIfAbsent||!await read('selected'))await write('selected',{packId});});
+ selectionTurn=turn.catch(()=>{});
+ await turn;
+}
 const isPassageHash=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
 const scripturePassagePins=['scriptureLedgerEntryId','scriptureLedgerSha256','scriptureAssetId','scripturePlaybackMode','scriptureHighlighting','scriptureRangeReviewSha256','scriptureCanonicalTextSha256','scriptureSourceEvidenceSha256','scriptureSourceRangeReviewSha256'];
 function validateScripturePassageFile(file,packId){
@@ -447,6 +454,10 @@ async function start(selection,port,packId=legacy,sizes={},revision){
   if(controller.signal.aborted)throw new Error('Download authority changed before activation.');
   // Single metadata write is the commit point. An interrupted update keeps active intact.
   await approvedAuthorityTurn(packId,async()=>{for(const {key,marker} of verifiedRefusals)if(JSON.stringify(await read(key)||null)!==marker)throw Error('Recording authority changed after verification. Retry the Save.');await write(packKey(packId,'active'),pending);for(const {key} of verifiedRefusals){if(controller.signal.aborted)break;await(await caches.open(META)).delete('/'+key);}if(serverSnapshot&&!controller.signal.aborted)await(await caches.open(META)).delete('/'+revokedSnapshotKey(packId,serverSnapshot.record.revision));await(await caches.open(META)).delete('/'+packKey(packId,'pending'));if(controller.signal.aborted){for(const {key} of verifiedRefusals)await write(key,refusalMarker());await invalidateServerSnapshot(packId);throw new Error('Download authority changed during activation.');}});
+  // Establish an offline start before acknowledging the first verified Save.
+  // Preserve an existing passage choice and never change an open client's pin here.
+  await selectForOffline(packId,true);
+  if(controller.signal.aborted)throw new Error('Download authority changed before the saved acknowledgement.');
   // Keep the prior revision for already-open clients. Removal clears every revision.
   // Do not switch an open page's media beneath its loaded text and alignment.
   return {saved:true,selection};
@@ -498,7 +509,7 @@ self.addEventListener('message',event=>{
     const active=await read(packKey(packId,'active'));
     const matches=active&&(active.manifest?.presentationRevision===event.data.revision||!active.serverSnapshot?.invalid&&active.serverSnapshot?.record.revision===event.data.revision);
     if(event.source?.id){const prior=await read('client-'+event.source.id);await write('client-'+event.source.id,{...(matches?active:{packId,revision:event.data.revision}),...(prior?.shell==='network'?{shell:'network'}:{})});}
-    await write('selected',{packId});result={selected:true};
+    await selectForOffline(packId);result={selected:true};
    }else if(type==='DOWNLOAD_STATUS'||type==='CACHE_STATUS')result=await status(packId);
    else if(type==='DOWNLOAD_START'){const active=await read(packKey(packId,'active'));if(active&&event.source?.id&&!await read('client-'+event.source.id))await write('client-'+event.source.id,active);result=await start(event.data.selection,port,packId,event.data.sizes||{},event.data.revision);}
    else if(type==='DOWNLOAD_PAUSE'){jobs.get(packId)?.abort();result={paused:true};}

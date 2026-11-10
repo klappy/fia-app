@@ -946,7 +946,7 @@
     },
     {
       "path": "apps/web/public/sw.js",
-      "sha256": "aa80bcc13e84af7451777d7ac42c0d9d84c2fe0b6b3ed67dd6c51d716e4094b0"
+      "sha256": "0a1dc40ee01cd005c41ee0c057c8e7ab61198323da81e16251c7e08510513ebd"
     },
     {
       "path": "apps/web/src/App.svelte",
@@ -1129,7 +1129,7 @@
     },
     {
       "path": "apps/web/tests/helpers/offline-execution.js",
-      "sha256": "77b6a882e3e3e44f9cb3604ad1af2acd74e5ef0d0a5a7549f7399027bfd0e938"
+      "sha256": "295eab1dbe96e9c92428b7c0ec84a38dbe2bbb53a7cf677b00f2422ad5d99b2c"
     },
     {
       "path": "apps/web/tests/library-panel.spec.js",
@@ -3316,6 +3316,21 @@
       "path": "release/changes/3.0.3-audio-master-alone.md",
       "sha256": "bd76b406887d64061536478be8b6b879ccab24436700a0ebad3e38ff78dce360",
       "bytes": 4241
+    },
+    {
+      "path": "apps/web/tests/fixtures/sw-offline-selection-baseline-29421a8.js",
+      "sha256": "aa80bcc13e84af7451777d7ac42c0d9d84c2fe0b6b3ed67dd6c51d716e4094b0",
+      "bytes": 61773
+    },
+    {
+      "path": "apps/web/tests/offline-selection-race.test.js",
+      "sha256": "1d2c4026b974d08401385765163b4d9dd193230465e19877a490b63833bee515",
+      "bytes": 5969
+    },
+    {
+      "path": "release/changes/offline-first-save-selection.md",
+      "sha256": "d92a25682373a9bd07dac55b31f3ffe76ee289e649f59e7606d02a1989b747c7",
+      "bytes": 1745
     }
   ],
   "generatedFiles": [
@@ -5841,8 +5856,8 @@
     },
     {
       "path": "sw.js",
-      "sha256": "7a4eb83c9fb5ee03e479f809305b16e0090bfc26908297f4328b0d53eb5ddcff",
-      "bytes": 103439
+      "sha256": "5e98d9d6364b72dab02bd9d6eea0eba6e596e4272978ca0f4b9503ae0d3a8e0e",
+      "bytes": 104100
     },
     {
       "path": "content/packs/eng.LUK-1-1-4/d660c0bba61889f4037b1cc28c8be44200479dbd7e13a551e57ffa222e72e0e1.json",
