@@ -16,6 +16,7 @@
     "test:worker": "node --test tests/worker-serving/*.test.mjs"
   },
   "dependencies": {
+    "jpeg-js": "0.4.4",
     "svelte": "5.57.1",
     "lucide-svelte": "0.468.0"
   },
@@ -30,7 +31,7 @@
     "jsdom": "26.1.0",
     "vitest": "4.1.11"
   },
-  "version": "3.0.0-alpha.21",
+  "version": "3.0.1",
   "description": "FIA Mark text in English and Spanish with verified on-demand audio and optional offline downloads.",
   "engines": {
     "node": ">=22"

@@ -1,17 +1,20 @@
 <script>
+ import {createPlaybackCache} from './lib/playback-cache.js';
  import { onMount, tick, untrack } from 'svelte';
  import {validateExecutablePresentation,executionFor,executablePresentationView,createExecutableNarration} from './lib/executable-presentation.js';
+ import {guideRecordingAvailability} from './lib/recording-availability.js';
  import { MoreHorizontal, Speech, Play, Pause, ChevronRight, ChevronLeft, Send, Settings2, List, BookOpen, Image, Map, Film, Users, RotateCcw, ArrowLeft, PinOff, Info, Download, X, CircleHelp, ExternalLink } from 'lucide-svelte';
  import {bundledPresentation,presentationContent} from './lib/content.js';
  import { createSession, reduceSession, currentActivity, presentStage } from './lib/engine.js';
  import { parseCommand } from './lib/commands.js';
  import { createAudioController } from './lib/audio.js';
  import { createScriptController } from './lib/script-controller.js';
- import { validateTranscript } from './lib/transcript.js';
+ import { validateTranscript, activityWords } from './lib/transcript.js';
  import { activityAlignment } from './lib/alignment.js';
  import { alignmentFromSidecar } from './lib/passage-timing.js';
  import {swipeNavigation,createSelectionTracker} from './lib/swipe.js';
  import {createVideoPresentation} from './lib/video-presentation.js';
+ import {bindVerifiedVisuals,visualSourcePath} from './lib/verified-visuals.js';
  import {createVisualDelivery} from './lib/visual-delivery.js';
  import MediaStage from './components/MediaStage.svelte';
  import AlignedReading from './components/AlignedReading.svelte';
@@ -35,6 +38,7 @@
  import {saveProgress,restoreProgress,resetProgress} from './lib/session-store.js';
  import {noticeScope,noticeEnded} from './lib/notice-scope.js';
  import {tailExtendedRange} from './lib/range-tail.js';
+ import {planContinuousReading} from './lib/continuous-reading.js';
 import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  let selectedPack=$state(bundledPack),rawPresentation=$state.raw(bundledPresentation),downloadedPaths=$state(new Set()),downloadedAudioDescriptors=$state(new globalThis.Map());
  let executionPresentation=$derived(executablePresentationView(rawPresentation));
@@ -44,6 +48,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  let boundPreparation=$state(null),dismissedExecutionNotice=$state(null);
  let executionNoticeKey=$derived(executableMode?`${selectedPack.revision}:${activity.id}`:null);
  const executableOwner=createExecutableNarration({playBoundAudio:(reference,context)=>libraryAdapter.playBoundAudio(reference,context),prepareOriginal:(reference,context)=>libraryAdapter.prepareOriginal(reference,{...context,prepareNarration:identity=>prepareBoundNarration(identity,context)})});
+ let visualFiles=$state(new globalThis.Map());
  let visualState=$state({entries:new globalThis.Map(),loading:null,error:null}),visualAuthorization=$state(null),visualCanceled=$state(null);
  const visualOwner=createVisualDelivery({fetch:(request,signal)=>libraryAdapter.playMedia(request.pack,request.path,request.revision,signal,request.size),create:result=>URL.createObjectURL(new Blob([result.bytes],{type:result.mime})),revoke:url=>tick().then(()=>URL.revokeObjectURL(url)),publish:value=>visualState=value});
  function visualIdentity(){const view=presentStage(session,executionPresentation.activities);return `${selectionGeneration}:${selectedPack.id}:${selectedPack.revision}:${session.index}:${view.focal}:${session.detour?.assetId||''}`;}
@@ -51,8 +56,8 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  function retryVisual(){visualCanceled=null;visualOwner.retry();authorizeVisual();}
  function cancelVisual(){visualCanceled=visualIdentity();stopVisual();}
  function stopVisual(){visualAuthorization=null;visualOwner.cancel();}
- function syncVisual(){const view=presentStage(session,executionPresentation.activities),asset=rawPresentation.assets[view.focal];visualOwner.retain([asset?.src,rawPresentation.assets[view.supporting]?.src].filter(Boolean));if(!online||inTransition||finished||visualCanceled===visualIdentity()||!['image','map'].includes(asset?.kind)||downloadedPaths.has(asset.src)&&(!deliveryRevision||downloadedDeliveryRevision===deliveryRevision)||!onlineMedia.has(asset.src)||!deliveryRevision)return;visualAuthorization=visualIdentity();void visualOwner.load({pack:selectedPack,path:asset.src,revision:deliveryRevision,identity:visualAuthorization});}
- $effect(()=>{session;rawPresentation;selectedPack;deliveryRevision;onlineMedia;online;downloadedPaths;downloadedDeliveryRevision;visualCanceled;untrack(syncVisual);});
+ function syncVisual(){const view=presentStage(session,executionPresentation.activities),asset=rawPresentation.assets[view.focal],path=visualSourcePath(view.focal,asset,visualFiles),supporting=visualSourcePath(view.supporting,rawPresentation.assets[view.supporting],visualFiles);visualOwner.retain([path,supporting].filter(Boolean));if(!online||inTransition||finished||visualCanceled===visualIdentity()||!['image','map'].includes(asset?.kind)||downloadedPaths.has(path)&&(!deliveryRevision||downloadedDeliveryRevision===deliveryRevision)||!onlineMedia.has(path)||!deliveryRevision)return;visualAuthorization=visualIdentity();void visualOwner.load({pack:selectedPack,path,revision:deliveryRevision,identity:visualAuthorization});}
+ $effect(()=>{session;rawPresentation;selectedPack;deliveryRevision;onlineMedia;visualFiles;online;downloadedPaths;downloadedDeliveryRevision;visualCanceled;untrack(syncVisual);});
  let content=$derived(presentationContent(mediaForDevice(executionPresentation,downloadedPaths),selectedPack));
  let activities=$derived(content.activities),assets=$derived(content.assets),sections=$derived(content.sections),examples=$derived(content.examples),readingGroups=$derived(content.readingGroups),listOrdinals=$derived(content.listOrdinals),contentContract=$derived(content.contentContract),defaultScriptureId=$derived(content.defaultScriptureId);
  let videoDeliveryState=$state({entry:null,loading:false,error:null});
@@ -82,7 +87,15 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  let observedPreparationRequest=$derived(executableMode?(boundPreparation?.activityId===activity.id?boundPreparation.identity:null):preparationRequest);
  let currentPreparation=$derived(observedPreparationRequest&&preparationState?.key===preparationKey(observedPreparationRequest)?preparationState:null);
  let preparationBusy=$derived(currentPreparation?.status==='preparing');
- let preparationNotice=$derived(!verifying&&executableAction?.narration.action==='blocked'&&dismissedExecutionNotice!==executionNoticeKey?'This recording is unavailable. You can continue.':currentPreparation?.event!==preparationDismissed&&!(currentPreparation?.status==='ready'&&carrying)?currentPreparation?.message:'');
+ // E8 (captain's Summit order, 2026-11-09; plan § 6): a pack whose catalog says no guide recording exists anywhere raises the
+ // narration-blocked notice on one screen per session at most; the Passages card already says "Guide recordings unavailable",
+ // so repeating it on every page of a workshop is noise. A pack with partial recordings (eng.MRK-1-14-20) keeps the per-screen
+ // notice and the preparationNotice path unchanged.
+ let packWithoutGuideRecordings=$derived(executableMode&&guideRecordingAvailability(selectedPack)==='Guide recordings unavailable');
+ let blockedNoticeShown=$state(null); // once per session: reset() clears it (and the dismissal key), so a restarted session gets its one notice again (Codex P2 on #354)
+ $effect(()=>{if(!verifying&&packWithoutGuideRecordings&&executableAction?.narration.action==='blocked'&&blockedNoticeShown?.revision!==selectedPack.revision)blockedNoticeShown={revision:selectedPack.revision,activityId:activity.id};});
+ let blockedNoticeSpent=$derived(packWithoutGuideRecordings&&blockedNoticeShown?.revision===selectedPack.revision&&blockedNoticeShown.activityId!==activity.id);
+ let preparationNotice=$derived(!verifying&&executableAction?.narration.action==='blocked'&&dismissedExecutionNotice!==executionNoticeKey&&!blockedNoticeSpent?'This recording is unavailable. You can continue.':currentPreparation?.event!==preparationDismissed&&!(currentPreparation?.status==='ready'&&carrying)?currentPreparation?.message:'');
  async function prepareBoundNarration(identity,context){
   if(context.signal.aborted)return null;
   boundPreparation={activityId:context.activityId,identity};
@@ -102,9 +115,17 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
    if(!result?.bytes)return;
    mediaBlob=URL.createObjectURL(clipBlob(result));mediaTiming=null;mediaAlignment=null;mediaLogicalPath=null;
    audioContext={type:'narration',id};playbackConsent=true;dispatch({type:'PLAY'});
-   const voices=narrationVoice(id);if(result.playback==='whole-file-native-ended')playClip(voices,'',mediaBlob,1);else playClip(voices,'',mediaBlob,rate,result.playbackRange??undefined);persist();
+   playNarrationClip(result,id,narrationVoice(id),'',pack);persist();
   }catch(error){if(owner===mediaGeneration){revokePlayback();notice=error.message;dispatch({type:'PAUSE'});}}
   finally{if(owner===mediaGeneration)mediaLoading=false;}
+ }
+ // Only a hash retained by the verified transport may select a delivered-file sidecar.
+ // Qualified whole-file derivatives explicitly have no word-timing qualification.
+ function playNarrationClip(result,id,voices,text,pack){
+  if(result.playback!=='whole-file-native-ended'&&result.playbackRange&&/^[a-f0-9]{64}$/.test(result.audioSha256||'')){
+   const key='narration|'+pack.id+'|'+pack.revision+'|'+result.audioSha256;
+   ctlStart(id,voices,text,mediaBlob,rate,result.playbackRange,key,result.audioSha256);
+  }else playClip(voices,text,mediaBlob,result.playback==='whole-file-native-ended'?1:rate,result.playbackRange??undefined);
  }
  function executablePrimaryLabel(){return finished?'Begin again':inTransition||session.detour||automaticOff||session.status==='waiting'||!executablePlayable?'Continue':isPlaying||playbackPending?'Pause':audio?.active&&audioContext?'Resume':!started?'Begin':'Play';}
  function executablePrimary(){
@@ -145,7 +166,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
    const result=await libraryAdapter.playPreparedRecording(descriptor,signal);
    if(owner!==mediaGeneration||signal.aborted||generation!==selectionGeneration||pack!==selectedPack||id!==activity.id||automatic&&(!playbackConsent||automaticOff))return;
    mediaBlob=URL.createObjectURL(clipBlob(result));mediaTiming=null;mediaAlignment=null;mediaLogicalPath=null;
-   audioContext={type:'narration',id};playbackConsent=true;dispatch({type:'PLAY'});if(result.playback==='whole-file-native-ended')playClip(narrationVoice(id),raw.narration||raw.sourceText,mediaBlob,1);else playClip(narrationVoice(id),raw.narration||raw.sourceText,mediaBlob,rate,result.playbackRange);persist();
+   audioContext={type:'narration',id};playbackConsent=true;dispatch({type:'PLAY'});playNarrationClip(result,id,narrationVoice(id),raw.narration||raw.sourceText,pack);persist();
   }catch(error){if(owner===mediaGeneration){preparedRecordings=new globalThis.Map(preparedRecordings);preparedRecordings.delete(key);revokePlayback();notice=error.message;dispatch({type:'PAUSE'});}}
   finally{if(owner===mediaGeneration)mediaLoading=false;}
  }
@@ -180,24 +201,62 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  // updateMedia(keep): the mid-session refreshes (served identity, Downloads status, reconnect) keep the last good
  // snapshot on any failure, so a refresh never makes a playable video unplayable; mount, worker and passage refreshes
  // keep it only on a typed transient failure.
- async function updateMedia(keep=false){const refresh=++mediaRefreshGeneration,generation=selectionGeneration,pack=selectedPack;try{const status=await libraryAdapter.mediaStatus(pack);for(const file of [...status.files,...(status.savedFiles||[])])if(file.scripturePlaybackMode==='passage-only')await verifyScripturePassageFile(file,pack.id,rawPresentation.assets);if(generation!==selectionGeneration||refresh!==mediaRefreshGeneration||pack!==selectedPack)return;if(deliveryRevision&&deliveryRevision!==status.deliveryRevision){if(videoDeliveryState.loading||videoOwner.node&&!videoOwner.node.ended)staleVideo=true;else{if(deferVideo(()=>updateMedia(keep)))return;videoDelivery.clear();}stopVisual();visualOwner.clear();}if(deliveryRevision!==status.deliveryRevision)clearFileCache();deliveryRevision=status.deliveryRevision;onlineMedia=new globalThis.Map(status.files.map(f=>[f.path,f]));{const isAudio=f=>/^audio\//.test(f.mime||'')||/\.(mp3|opus|ogg)$/.test(f.path),ids=[...new Set([...status.files.filter(isAudio).map(f=>fileKey(f)),...(status.savedFiles||[]).filter(isAudio).map(f=>f.sha256&&'saved|'+f.sha256)].filter(Boolean))];audio?.reserve?.(ids);audio?.retain?.(ids,id=>id.startsWith('saved|'));}savedMedia=new globalThis.Map((status.savedFiles||[]).map(f=>[f.path,f]));mediaChecked=true;checked();}catch(error){if(generation===selectionGeneration&&refresh===mediaRefreshGeneration&&pack===selectedPack){if(!keep&&error?.code!=='media-status-transient'){onlineMedia=new globalThis.Map();savedMedia=new globalThis.Map();deliveryRevision=null;}mediaChecked=true;checked();}}}
+ async function updateMedia(keep=false){const refresh=++mediaRefreshGeneration,generation=selectionGeneration,pack=selectedPack;try{const status=await libraryAdapter.mediaStatus(pack),boundVisuals=await bindVerifiedVisuals([...status.files,...(status.savedFiles||[])],pack,rawPresentation.assets,status.deliveryRevision);for(const file of [...status.files,...(status.savedFiles||[])])if(file.scripturePlaybackMode==='passage-only')await verifyScripturePassageFile(file,pack.id,rawPresentation.assets);if(generation!==selectionGeneration||refresh!==mediaRefreshGeneration||pack!==selectedPack)return;if(deliveryRevision&&deliveryRevision!==status.deliveryRevision){if(videoDeliveryState.loading||videoOwner.node&&!videoOwner.node.ended)staleVideo=true;else{if(deferVideo(()=>updateMedia(keep)))return;videoDelivery.clear();}stopVisual();visualOwner.clear();}if(deliveryRevision!==status.deliveryRevision)clearFileCache();deliveryRevision=status.deliveryRevision;visualFiles=boundVisuals;onlineMedia=new globalThis.Map(status.files.map(f=>[f.path,f]));{const isAudio=f=>/^audio\//.test(f.mime||'')||/\.(mp3|opus|ogg)$/.test(f.path),ids=[...new Set([...status.files.filter(isAudio).map(f=>fileKey(f)),...(status.savedFiles||[]).filter(isAudio).map(f=>f.sha256&&'saved|'+f.sha256)].filter(Boolean))];audio?.reserve?.(ids);audio?.retain?.(ids);savedSrc.retain(ids);}savedMedia=new globalThis.Map((status.savedFiles||[]).map(f=>[f.path,f]));mediaChecked=true;checked();}catch(error){if(generation===selectionGeneration&&refresh===mediaRefreshGeneration&&pack===selectedPack){if(!keep&&error?.code!=='media-status-transient'){onlineMedia=new globalThis.Map();savedMedia=new globalThis.Map();visualFiles=new globalThis.Map();deliveryRevision=null;}mediaChecked=true;checked();}}}
  function revokePlayback(){executableOwner.cancel();preparationOwner.cancel();videoDelivery.cancel();stopVisual();playbackConsent=false;playbackPending=false;clearTimeout(timer);timer=null;mediaGeneration++;mediaAbort?.abort();mediaAbort=null;mediaLoading=false;clipPending=false;videoPlayPending=false;}
  // One verified blob URL per distinct audio file (its sha256 within a delivery revision), kept across screens so a file needed again is an
  // instant seek on its own persistent player, never a refetch, re-decode or reload. Entries are released only on a delivery change or the cap.
- const fileCache=new globalThis.Map(),savedSrc=new globalThis.Map(),FILE_CACHE_CAP=24;
+ const FILE_CACHE_CAP=24;
+ const cacheOptions={activeUrl:()=>audio?.src,evict:key=>audio?.evict?.(key),revoke:url=>URL.revokeObjectURL(url)};
+ const fileCache=createPlaybackCache(FILE_CACHE_CAP,cacheOptions),savedSrc=createPlaybackCache(FILE_CACHE_CAP,cacheOptions);
  function fileKey(file){return file&&file.sha256&&deliveryRevision?deliveryRevision+'|'+file.sha256:null;}
- function rememberFile(key,entry){if(!key)return;fileCache.set(key,entry);while(fileCache.size>FILE_CACHE_CAP){const [oldKey,old]=fileCache.entries().next().value;fileCache.delete(oldKey);audio?.evict?.(oldKey);URL.revokeObjectURL(old.url);}}
- function clearFileCache(){for(const [key,entry] of fileCache){if(entry.url===mediaBlob&&audio?.playing)continue;audio?.evict?.(key);URL.revokeObjectURL(entry.url);}fileCache.clear();}
+ function rememberFile(key,entry){if(key)fileCache.set(key,entry);}
+ function clearFileCache(){fileCache.clear();}
  function releaseBlob(){if(mediaBlob&&![...fileCache.values()].some(e=>e.url===mediaBlob)&&![...savedSrc.values()].includes(mediaBlob))URL.revokeObjectURL(mediaBlob);mediaBlob=null;}
 // CONTROLLER (script-controller.js): created once, above the screens. It owns the script spans + each file's sidecar and drives the
  // word highlight and the end-of-audio advance; the PLAYER (audio.js pool) only plays what it is told.
  const sidecars=new globalThis.Map();let sidecarTick=$state(0),hl=$state({id:null,word:null,key:null}),viaCtl=false,ctlVoices=null;
- const ctl=createScriptController({player:{play:(...a)=>{playClip(ctlVoices,...a);viaCtl=true;},seek:s=>audio?.seek?.(s),stop:()=>audio?.stop()},script:[],transcripts:sidecars,rate:()=>rate,onHighlight:(id,word)=>{hl={id,word,key:ctlKey};},onAdvance:()=>{viaCtl=false;finishAudio();}});
+ const ctl=createScriptController({player:{play:(...a)=>{playClip(ctlVoices,...a);viaCtl=true;},seek:s=>audio?.seek?.(s),stop:()=>audio?.stop()},script:[],transcripts:sidecars,rate:()=>rate,onHighlight:(id,word)=>{hl={id,word,key:ctlKey};},onAdvance:()=>{viaCtl=false;finishAudio();},onSpan:advanceContinuousRow});
+ // A qualified list changes only internal progress at source-clock boundaries.
+ // Navigation/interruptions still own cancellation; no per-row scheduler is entered.
+ function advanceContinuousRow(nextId,priorId){
+  if(session.detour||!['narration','manual'].includes(audioContext?.type)||audioContext.id!==priorId)return false;
+  const prior=activities.find(a=>a.id===priorId),next=activities.find(a=>a.id===nextId);
+  if(!prior?.readingGroupId||prior.readingGroupId!==next?.readingGroupId)return false;
+  const from=activities.findIndex(a=>a.id===priorId),to=activities.findIndex(a=>a.id===nextId);
+  const wasPaused=session.status==='paused';
+  if(audioContext.type==='manual'||wasPaused){
+   const type=audioContext.type;dispatch({type:'SEEK_ACTIVITY',activityId:nextId});
+   if(wasPaused)session={...session,status:'paused'};
+   audioContext={type,id:nextId};persist();return true;
+  }
+  if(to>from){
+   for(let i=from;i<to;i++){
+    if(currentActivity(session,activities)?.id!==activities[i].id||session.detour)return false;
+    introduced=new Set([...introduced,activities[i].id]);
+    dispatch({type:'NARRATION_END',activityId:activities[i].id});
+    if(session.detour)return false;
+    dispatch({type:'PLAY'});
+   }
+  }else{dispatch({type:'SEEK_ACTIVITY',activityId:nextId});dispatch({type:'PLAY'});}
+  audioContext={type:'narration',id:nextId};persist();return true;
+ }
  let ctlKey=null;
  async function loadSidecar(key,sha){if(!key||!sha||sidecars.has(key))return;sidecars.set(key,null);try{const r=await fetch('/transcripts/'+sha+'.words.json');if(!r.ok)throw Error('none');const t=validateTranscript(await r.json());if(t.audioSha256!==sha)throw Error('sha');sidecars.set(key,t);sidecarTick++;}catch{sidecars.delete(key);}}
- function ctlStart(id,voices,text,src,rateNow,range,key,sha){if(!range){playClip(voices,text,src,rateNow,range,key);return;}ctlVoices=voices;ctlKey=key||null;loadSidecar(key,sha);ctl.register({id,text,fileKey:key||undefined,src,range,startMs:Math.round(range.startSeconds*1000),endMs:Math.round(range.endSeconds*1000)});ctl.play(id);}
+ function ctlStart(id,voices,text,src,rateNow,range,key,sha){
+  if(!range){playClip(voices,text,src,rateNow,range,key);return;}
+  ctlVoices=voices;ctlKey=key||null;loadSidecar(key,sha);
+  const descriptorFor=path=>savedMedia.get(path)||onlineMedia.get(path)||downloadedAudioDescriptors.get(path);
+  const group=!executableMode&&!session.detour&&['narration','manual'].includes(audioContext?.type)?planContinuousReading({activities,listContracts:rawPresentation.listContracts,currentId:id,descriptorFor,src,fileKey:key,audioSha256:sha}):null;
+  if(group){
+   const last=group.spans.at(-1),lastActivity=activities.find(a=>a.id===last.id);
+   last.range=tailRange(descriptorFor(lastActivity.audioSrc),last.range);
+   if(group.spans[0].id!==id&&!advanceContinuousRow(group.spans[0].id,id))return;
+   ctl.playContinuous(group.spans);return;
+  }
+  ctl.register({id,text,fileKey:key||undefined,src,range,startMs:Math.round(range.startSeconds*1000),endMs:Math.round(range.endSeconds*1000)});ctl.play(id);
+ }
  // Guide and instruction cards highlight through the same inline gel as scripture, from the sidecar's words for this card.
- let cardAlignment=$derived.by(()=>{sidecarTick;if(!activity||hl.id!==activity.id)return null;const sc=sidecars.get(hl.key);const shown=activity.readingGroupId?activity.sourceText:activity.narration;return activityAlignment(shown,sc?.activities?.[activity.id]?.words,sc?.activities?.[activity.id]?.endMs);});
+ let cardAlignment=$derived.by(()=>{sidecarTick;if(!activity||hl.id!==activity.id)return null;const sc=sidecars.get(hl.key);const shown=activity.readingGroupId?activity.sourceText:activity.narration;return activityAlignment(shown,activityWords(sc?.activities?.[activity.id],ctl.currentRange),sc?.activities?.[activity.id]?.endMs);});
  // Safari mis-times Ogg Opus (WebKit 293310); a ranged clip plays as the same packets in WebM.
  const clipBlob=result=>{const media=result.playbackRange?playableAudio(result.bytes,result.mime):result;return new Blob([media.bytes],{type:media.mime});};
  const tailRange=(file,range)=>tailExtendedRange(range,file,[...onlineMedia.values(),...savedMedia.values(),...downloadedAudioDescriptors.values()]);
@@ -219,14 +278,14 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
   return hit.value;
  }
  function passageFile(assetId){return [...onlineMedia.values(),...downloadedAudioDescriptors.values()].find(f=>f.scripturePlaybackMode==='passage-only'&&f.scriptureAssetId===assetId&&(!deliveryRevision||f.deliveryRevision===deliveryRevision));}
- function mediaForDevice(pack,paths){if(deliveryRevision&&downloadedDeliveryRevision!==deliveryRevision)paths=new Set([...paths].filter(path=>!onlineMedia.has(path)));return {...pack,activities:pack.activities.map(a=>({...a,audioSrc:a.kind==='scripture'&&passageFile(a.assetId)?passageFile(a.assetId).path:paths.has(a.audioSrc)||onlineMedia.has(a.audioSrc)?a.audioSrc:null})),assets:Object.fromEntries(Object.entries(pack.assets).map(([id,a])=>[id,{...a,alignment:a.kind==='scripture'&&passageFile(id)?passageAlignment(id,a):a.kind==='scripture'&&a.descriptionAudio===mediaLogicalPath&&mediaAlignment?mediaAlignment:a.alignment,src:(nativeDemoVideo&&nativeDemoVideo.path===a.src?nativeDemoVideo.url:null)||(videoDeliveryState.entry&&videoDeliveryState.entry.path===a.src?videoDeliveryState.entry.url:null)||visualState.entries.get(a.src)?.url||(paths.has(a.src)?a.src:undefined),videoPrepared:a.kind==='video'&&(onlineMedia.has(a.src)||!!demoVideoSource(selectedPack,a)),videoLoading:a.kind==='video'&&videoDeliveryState.loading,videoError:a.kind==='video'?videoDeliveryState.error:null,visualPrepared:['image','map'].includes(a.kind)&&onlineMedia.has(a.src),visualOffline:!online,visualCanceled:visualCanceled===visualIdentity(),visualLoading:visualState.loading===a.src,visualError:visualState.error&&visualState.error.path===a.src?visualState.error.message:null,poster:paths.has(a.poster)?a.poster:undefined,descriptionAudio:a.kind==='scripture'&&passageFile(id)?passageFile(id).path:paths.has(a.descriptionAudio)||onlineMedia.has(a.descriptionAudio)?a.descriptionAudio:undefined,downloadRequired:['image','map','video'].includes(a.kind)&&(!nativeDemoVideo||nativeDemoVideo.path!==a.src)&&!paths.has(a.src)&&!visualState.entries.has(a.src)&&!(videoDeliveryState.entry&&videoDeliveryState.entry.path===a.src),downloadPrepared:typeof a.src==='string'&&a.src.startsWith('/')&&!a.src.startsWith('//')}]))};}
+ function mediaForDevice(pack,paths){if(deliveryRevision&&downloadedDeliveryRevision!==deliveryRevision)paths=new Set([...paths].filter(path=>!onlineMedia.has(path)));return {...pack,activities:pack.activities.map(a=>({...a,audioSrc:a.kind==='scripture'&&passageFile(a.assetId)?passageFile(a.assetId).path:paths.has(a.audioSrc)||onlineMedia.has(a.audioSrc)?a.audioSrc:null})),assets:Object.fromEntries(Object.entries(pack.assets).map(([id,a])=>{const sourcePath=visualSourcePath(id,a,visualFiles);return [id,{...a,alignment:a.kind==='scripture'&&passageFile(id)?passageAlignment(id,a):a.kind==='scripture'&&a.descriptionAudio===mediaLogicalPath&&mediaAlignment?mediaAlignment:a.alignment,src:(nativeDemoVideo&&nativeDemoVideo.path===sourcePath?nativeDemoVideo.url:null)||(videoDeliveryState.entry&&videoDeliveryState.entry.path===sourcePath?videoDeliveryState.entry.url:null)||visualState.entries.get(sourcePath)?.url||(paths.has(sourcePath)?sourcePath:undefined),videoPrepared:a.kind==='video'&&(onlineMedia.has(sourcePath)||!!demoVideoSource(selectedPack,a)),videoLoading:a.kind==='video'&&videoDeliveryState.loading,videoError:a.kind==='video'?videoDeliveryState.error:null,visualPrepared:['image','map'].includes(a.kind)&&onlineMedia.has(sourcePath),visualOffline:!online,visualCanceled:visualCanceled===visualIdentity(),visualLoading:visualState.loading===sourcePath,visualError:visualState.error&&visualState.error.path===sourcePath?visualState.error.message:null,poster:paths.has(a.poster)?a.poster:undefined,descriptionAudio:a.kind==='scripture'&&passageFile(id)?passageFile(id).path:paths.has(a.descriptionAudio)||onlineMedia.has(a.descriptionAudio)?a.descriptionAudio:undefined,downloadRequired:['image','map','video'].includes(a.kind)&&(!nativeDemoVideo||nativeDemoVideo.path!==sourcePath)&&!paths.has(sourcePath)&&!visualState.entries.has(sourcePath)&&!(videoDeliveryState.entry&&videoDeliveryState.entry.path===sourcePath),downloadPrepared:typeof sourcePath==='string'&&sourcePath.startsWith('/')&&!sourcePath.startsWith('//')}];}))};}
  function verifiedDownloadedDescriptors(active){
   const keys=['path','sha256','bytes','mime','deliveryURL','deliveryRevision','sourceSha256','sourceBytes','logicalSourceSha256','logicalSourceBytes','scriptureAlignmentSha256','duration',...scripturePassagePins];
   const result=new globalThis.Map();
   for(const file of active.files){
    const declared=active.manifest.files.find(f=>f.path===file.path);
    const candidates=declared?[declared,...Object.values(declared.variants||{})]:[];
-   if(!candidates.some(candidate=>keys.every(key=>candidate[key]===file[key])&&JSON.stringify(candidate.timing)===JSON.stringify(file.timing)&&JSON.stringify(candidate.playbackRange)===JSON.stringify(file.playbackRange)&&JSON.stringify(candidate.scriptureAlignment)===JSON.stringify(file.scriptureAlignment)))throw Error('The saved recording descriptor changed.');
+   if(!candidates.some(candidate=>keys.every(key=>candidate[key]===file[key])&&JSON.stringify(candidate.timing)===JSON.stringify(file.timing)&&JSON.stringify(candidate.playbackRange)===JSON.stringify(file.playbackRange)&&JSON.stringify(candidate.scriptureAlignment)===JSON.stringify(file.scriptureAlignment)&&JSON.stringify(candidate.visualPublication)===JSON.stringify(file.visualPublication)))throw Error('The saved recording descriptor changed.');
    result.set(file.path,file);
   }
   return result;
@@ -239,9 +298,9 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
    const snapshot=status.active?.serverSnapshot,media=pack.mediaIdentity;
    const mediaMatches=media?status.active?.manifest?.packId===media.packId&&status.active.manifest.presentationRevision===media.revision&&snapshot?.record.execution?.mediaIdentity?.packId===media.packId&&snapshot.record.execution.mediaIdentity.revision===media.revision&&snapshot.record.execution.mediaAssetsSha256===pack.mediaAssetsSha256:status.active?.manifest?.presentationRevision===pack.revision;
    const verified=!!status.saved&&mediaMatches&&(!media||!snapshot?.invalid&&snapshot?.record.revision===pack.revision);
-   const descriptors=verified?verifiedDownloadedDescriptors(status.active):new globalThis.Map();for(const file of descriptors.values())if(file.scripturePlaybackMode==='passage-only')await verifyScripturePassageFile(file,pack.id,rawPresentation.assets);if(generation!==selectionGeneration||refresh!==downloadRefreshGeneration||pack!==selectedPack)return;
+   const savedVisuals=verified?await bindVerifiedVisuals(status.active.files,pack,rawPresentation.assets,status.active.manifest.deliveryRevision):new globalThis.Map();const descriptors=verified?verifiedDownloadedDescriptors(status.active):new globalThis.Map();for(const file of descriptors.values())if(file.scripturePlaybackMode==='passage-only')await verifyScripturePassageFile(file,pack.id,rawPresentation.assets);if(generation!==selectionGeneration||refresh!==downloadRefreshGeneration||pack!==selectedPack)return;
    if(verified){await libraryAdapter.activate(pack);if(generation!==selectionGeneration||refresh!==downloadRefreshGeneration||pack!==selectedPack)return;}
-   downloadedAudioDescriptors=descriptors;saved=verified;downloadedDeliveryRevision=verified?status.active.manifest?.deliveryRevision||null:null;downloadedPaths=new Set(verified?status.active.files.map(f=>f.path):[]);downloadsChecked=true;checked();
+   if(verified&&(!deliveryRevision||deliveryRevision===status.active.manifest.deliveryRevision))visualFiles=new globalThis.Map([...visualFiles,...savedVisuals]);downloadedAudioDescriptors=descriptors;saved=verified;downloadedDeliveryRevision=verified?status.active.manifest?.deliveryRevision||null:null;downloadedPaths=new Set(verified?status.active.files.map(f=>f.path):[]);downloadsChecked=true;checked();
   }catch{if(generation===selectionGeneration&&refresh===downloadRefreshGeneration&&pack===selectedPack){saved=false;downloadedPaths=new Set();downloadedAudioDescriptors=new globalThis.Map();downloadedDeliveryRevision=null;downloadsChecked=true;checked();}}
  }
 
@@ -286,7 +345,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  }
  async function loadSelectedPack(id,intent,options){videoDelivery.cancel();stopVisual();visualOwner.clear();const generation=++selectionGeneration;try{const loaded=await libraryAdapter.select(id,options);if(intent!==selectionIntent||generation!==selectionGeneration)return;if(deferVideo(()=>applySelectedPack(loaded,generation,intent)))return;await applySelectedPack(loaded,generation,intent);}catch(error){if(intent===selectionIntent&&generation===selectionGeneration)recheckCurrent();throw error;}}
  // Opening a passage ends the previous passage's notices (R3); the new passage raises its own after this point.
- async function applySelectedPack(loaded,generation,intent){if(intent!==selectionIntent||generation!==selectionGeneration)return;validateExecutablePresentation(loaded.presentation);persist();cancel();notice='';selectedPack=loaded.descriptor;if(selectedPack.offlineSnapshot==='historical-verified')notice=historicalSnapshotNotice;rawPresentation=loaded.presentation;saved=false;downloadedDeliveryRevision=null;downloadedPaths=new Set();downloadedAudioDescriptors=new globalThis.Map();onlineMedia=new globalThis.Map();savedMedia=new globalThis.Map();deliveryRevision=null;revokePlayback();mediaChecked=false;downloadsChecked=false;introduced=new Set();manualStarts=new Set();visualHeard=null;termDefinition=null;transitionSection=null;messages=[];language=selectedPack.language;session=createSession(loaded.presentation.activities);try{applyStored();localStorage.setItem('fia-v3-selected-pack',loaded.descriptor.id);}catch{notice='Your saved place could not be read.';}sheet=null;await libraryAdapter.activate(selectedPack).catch(()=>{});if(intent!==selectionIntent||generation!==selectionGeneration)return;await updateDownloaded();await updateMedia();}
+ async function applySelectedPack(loaded,generation,intent){if(intent!==selectionIntent||generation!==selectionGeneration)return;validateExecutablePresentation(loaded.presentation);persist();cancel();notice='';selectedPack=loaded.descriptor;if(selectedPack.offlineSnapshot==='historical-verified')notice=historicalSnapshotNotice;rawPresentation=loaded.presentation;saved=false;downloadedDeliveryRevision=null;downloadedPaths=new Set();downloadedAudioDescriptors=new globalThis.Map();onlineMedia=new globalThis.Map();savedMedia=new globalThis.Map();visualFiles=new globalThis.Map();deliveryRevision=null;revokePlayback();mediaChecked=false;downloadsChecked=false;introduced=new Set();manualStarts=new Set();visualHeard=null;termDefinition=null;transitionSection=null;messages=[];language=selectedPack.language;session=createSession(loaded.presentation.activities);try{applyStored();localStorage.setItem('fia-v3-selected-pack',loaded.descriptor.id);}catch{notice='Your saved place could not be read.';}sheet=null;await libraryAdapter.activate(selectedPack).catch(()=>{});if(intent!==selectionIntent||generation!==selectionGeneration)return;await updateDownloaded();await updateMedia();}
  function restartPack(id){resetProgress(localStorage,{id});if(id===selectedPack.id)reset();}
  let language=$state('eng');
  function selectLanguage(id){language=id;try{localStorage.setItem('fia-v3-library-language',id);}catch{notice='Language choice could not be saved on this device.';}}
@@ -408,7 +467,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  // marks only a screen known to have no possible recording, so an admitted screen enters it only when its
  // own media ends. While availability is still being checked nothing is known, so nothing is settled (k0006).
  function settleSilent(){if(!verifying&&!inTransition&&!session.detour&&!finished&&!activity.audioSrc&&!(executableMode?executablePlayable:preparationRequest)){session={...session,status:'waiting'};persist();}}
- function cancel(){if(deferVideo(cancel))return;executableOwner.cancel();preparationOwner.cancel();nativeDemoVideo=null;staleVideo=false;videoDelivery.clear();playbackPending=false;mediaGeneration++;mediaAbort?.abort();mediaAbort=null;mediaLoading=false;releaseBlob();mediaTiming=null;mediaAlignment=null;mediaLogicalPath=null;videoState={elapsed:0,duration:0};inlineVideo=null;videoPlaying=false;clearTimeout(timer);timer=null;audio?.stop();videoOwner.node?.pause();audioContext=null;clipPending=false;videoPlayPending=false;tapGate.end();}
+ function cancel(){if(deferVideo(cancel))return;executableOwner.cancel();preparationOwner.cancel();nativeDemoVideo=null;staleVideo=false;videoDelivery.clear();playbackPending=false;mediaGeneration++;mediaAbort?.abort();mediaAbort=null;mediaLoading=false;releaseBlob();mediaTiming=null;mediaAlignment=null;mediaLogicalPath=null;videoState={elapsed:0,duration:0};inlineVideo=null;videoPlaying=false;clearTimeout(timer);timer=null;ctl.stop();viaCtl=false;ctlKey=null;hl={id:null,word:null,key:null};videoOwner.node?.pause();audioContext=null;clipPending=false;videoPlayPending=false;tapGate.end();}
  function message(text){messages=[...messages.slice(-11),{role:'assistant',text}];tick().then(()=>chatLog?.scrollTo({top:chatLog.scrollHeight,behavior:'smooth'}));}
  function finishAudio(){
   const context=audioContext;audioContext=null;tapGate.end();if(!context)return;
@@ -515,7 +574,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
   if(event.type==='DETOUR'&&assets[event.assetId]?.kind==='video'&&session.preferences.autoplayVideo&&hadPlaybackConsent){playbackConsent=true;queueVideoPlay();}
   if(forward&&session.index!==priorIndex)beginForwardPlayback();
  }
- function reset(){if(deferVideo(reset))return;stopVisual();visualOwner.clear();cancel();const preferences={...session.preferences};const mode=session.mode;dispatch({type:'RESET'});session={...session,preferences,mode};introduced=new Set();started=false;messages=[];persist();}
+ function reset(){if(deferVideo(reset))return;stopVisual();visualOwner.clear();cancel();const preferences={...session.preferences};const mode=session.mode;dispatch({type:'RESET'});session={...session,preferences,mode};introduced=new Set();started=false;messages=[];blockedNoticeShown=null;dismissedExecutionNotice=null;persist();}
  function describe(id,explicit=false){if(deferVideo(()=>describe(id,explicit)))return;const a=assets[id];if(!a)return;if(['image','map'].includes(a.kind)&&matchingVideo&&focal.id===id&&(explicit||session.preferences.autoplayVideo)){openMatchingVideo();return;}if(!session.detour&&a.kind==='term'&&activity.assetId===id){termDefinition=activity.id;persist();}cancel();dispatch({type:'PAUSE'});message(a.description);if(!a.descriptionAudio){notice='No source recording is available for this resource.';return;}audioContext={type:'description',id};startRecording(id,a.description,a.descriptionAudio,explicit);}
  function queueVideoPlay(explicit=false){if(!explicit&&!playbackConsent)return;const pack=selectedPack,generation=selectionGeneration,activityId=activity.id,focalId=focal.id,playbackGeneration=mediaGeneration;tick().then(()=>{if(pack===selectedPack&&generation===selectionGeneration&&activityId===activity.id&&focalId===focal.id&&playbackGeneration===mediaGeneration)playVideo();});}
  async function playVideo(){
@@ -578,7 +637,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
   rotate();landscape?.addEventListener('change',rotate);
   try{applyStored();}catch{}
   updateDownloaded();updateMedia();
-  audio=createAudioController(s=>{if(viaCtl)ctl.onPlayerState(s);const m=mediaAlignment?.clockDomain==='delivery-media-seconds'?null:mediaTiming?.mapping;const logical={...s,src:s.src&&s.src===mediaBlob?mediaLogicalPath:s.src,assetId:s.src&&s.src===clipSrc?clipVoices:null};audioState=m?{...logical,elapsed:Math.max(0,(s.elapsed-m.offsetSeconds)/m.scale),duration:Math.max(0,(s.duration-m.offsetSeconds)/m.scale)}:logical;if(s.playing&&s.src===mediaBlob&&audioContext?.type==='narration'&&audioContext.id===(executableMode?boundPreparation?.activityId:currentPreparation?.identity.activityId)&&currentPreparation?.status==='ready')preparationDismissed=currentPreparation.event;if(s.playing&&s.src===clipSrc||!s.src&&!audio?.active)clipPending=false;},()=>{if(viaCtl)ctl.onPlayerEnd();else finishAudio();},text=>{revokePlayback();notice=text;dispatch({type:'PAUSE'});},{allowSpeechFallback:false});
+  audio=createAudioController(s=>{fileCache.trim();savedSrc.trim();if(viaCtl)ctl.onPlayerState(s);const m=mediaAlignment?.clockDomain==='delivery-media-seconds'?null:mediaTiming?.mapping;const logical={...s,src:s.src&&s.src===mediaBlob?mediaLogicalPath:s.src,assetId:s.src&&s.src===clipSrc?clipVoices:null};audioState=m?{...logical,elapsed:Math.max(0,(s.elapsed-m.offsetSeconds)/m.scale),duration:Math.max(0,(s.duration-m.offsetSeconds)/m.scale)}:logical;if(s.playing&&s.src===mediaBlob&&audioContext?.type==='narration'&&audioContext.id===(executableMode?boundPreparation?.activityId:currentPreparation?.identity.activityId)&&currentPreparation?.status==='ready')preparationDismissed=currentPreparation.event;if(s.playing&&s.src===clipSrc||!s.src&&!audio?.active)clipPending=false;},()=>{if(viaCtl)ctl.onPlayerEnd();else finishAudio();},text=>{revokePlayback();notice=text;dispatch({type:'PAUSE'});},{allowSpeechFallback:false});
   // R4 on iOS: a later screen starts without a tap only on the element a tap once started, so a tap unlocks it before its action runs.
   const unlockAudio=event=>{if(event.isTrusted)audio.unlock();};window.addEventListener('click',unlockAudio,true);
   const net=()=>{const wasOnline=online;online=navigator.onLine;if(!online)visualOwner.cancel();else if(!wasOnline){void updateMedia(true);if(visualCanceled!==visualIdentity()){visualOwner.retry();syncVisual();}}};net();window.addEventListener('online',net);window.addEventListener('offline',net);
@@ -591,7 +650,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
   register({name:'fia_present_resource',annotations:{readOnlyHint:false},description:'Open an approved resource as a detour, preserving the current guide position.',inputSchema:{type:'object',properties:{assetId:{type:'string'}},required:['assetId'],additionalProperties:false},execute:async input=>{if(!input||!Object.hasOwn(assets,input.assetId)||Object.keys(input).some(k=>k!=='assetId'))throw new Error('Unknown resource');navigate({type:'DETOUR',assetId:input.assetId});await tick();return {assetId:stage.focal,activityId:activity.id};}});
   register({name:'fia_return_to_guide',description:'Close resource exploration and restore the held guide activity without advancing.',annotations:{readOnlyHint:false},inputSchema:{type:'object',properties:{},additionalProperties:false},execute:async input=>{if(input&&Object.keys(input).length)throw new Error('No arguments expected');navigate({type:'RETURN'});await tick();return {activityId:activity.id,status:session.status,stage:presentStage(session,activities)};}});
   register({name:'fia_complete_activity',annotations:{readOnlyHint:false},description:'Explicitly finish or skip the current activity and advance; this is a user decision, never a read.',inputSchema:{type:'object',properties:{activityId:{type:'string'}},required:['activityId'],additionalProperties:false},execute:async input=>{if(!input||input.activityId!==activity.id||session.detour||Object.keys(input).some(k=>k!=='activityId'))throw new Error('Activity changed or exploration is open');navigate({type:'CONTINUE'},true);await tick();return {activityId:activity.id,status:session.status};}});
-  return()=>{tapGate.dispose();selectionAbort?.abort();videoOwner.dispose();videoDelivery.clear();stopVisual();visualOwner.clear();landscape?.removeEventListener('change',rotate);clearTimeout(noticeTimer);cancel();lifecycle.abort();window.removeEventListener('online',net);window.removeEventListener('offline',net);window.removeEventListener('click',unlockAudio,true);};
+  return()=>{tapGate.dispose();selectionAbort?.abort();videoOwner.dispose();videoDelivery.clear();stopVisual();visualOwner.clear();landscape?.removeEventListener('change',rotate);clearTimeout(noticeTimer);cancel();fileCache.clear();savedSrc.clear();audio?.retain?.([]);lifecycle.abort();window.removeEventListener('online',net);window.removeEventListener('offline',net);window.removeEventListener('click',unlockAudio,true);};
  });
 </script>
 

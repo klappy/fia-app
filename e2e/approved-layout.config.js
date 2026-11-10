@@ -1,0 +1,2 @@
+import {defineConfig} from '@playwright/test';
+export default defineConfig({testDir:'.',testMatch:'approved-layout.spec.js',timeout:120000,retries:0,workers:1,reporter:'list',outputDir:process.env.FIA_LAYOUT_OUTPUT||'/tmp/fia-approved-layout-corrected-results',use:{baseURL:'http://127.0.0.1:4197',viewport:{width:390,height:844},launchOptions:{executablePath:'/usr/bin/chromium'},trace:'on',screenshot:'only-on-failure'},webServer:{command:'FIA_PREVIEW_PORT=4197 node scripts/worker-preview.mjs',url:'http://127.0.0.1:4197',reuseExistingServer:false,cwd:process.cwd()}});

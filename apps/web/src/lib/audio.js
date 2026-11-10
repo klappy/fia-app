@@ -10,17 +10,20 @@ export function createAudioController(onState, onEnd, onError, { allowSpeechFall
   let source = null, range = null, deadline = null, frame = null, prepareRange = null, boundaryEpoch = 0;
   function clearBoundary() { boundaryEpoch++; clearTimeout(deadline); deadline = null; if (frame !== null && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(frame); frame = null; }
   let audio = null, utterance = null, generation = 0, speaking = false, paused = false;
-  // One persistent element per distinct audio FILE (identity), never more, never recreated while the app lives.
+  // One persistent element per reserved audio FILE (identity); late-discovered files use one shared fallback.
   // A file needed again is an instant seek on its own loaded element, not a source reload. iOS lets an element
   // start without a tap only once a tap has started that same element, so every pooled element is unlocked by a tap (unlock()).
   const pool = new Map();
+  // One additional reusable owner for identities discovered after the last gesture.
+  let fallback = null, fallbackIdentity = null;
+  const newEntry = () => ({ element: new Audio(), unlocked: false, heldSource: null });
   let startBound = null, attempt = 0;
   // The clip has reached sound: its own 'playing' or a resolved play(). A timeupdate alone is not sound, since the
   // element keeps the previous clip and the next source swap queues one before any sound.
   let sounding = false;
   function entryFor(identity) {
     let entry = pool.get(identity);
-    if (!entry) { entry = { element: new Audio(), unlocked: false, heldSource: null }; pool.set(identity, entry); }
+    if (!entry) { entry = newEntry(); pool.set(identity, entry); }
     return entry;
   }
   function clearStartBound() { clearTimeout(startBound); startBound = null; }
@@ -157,7 +160,12 @@ export function createAudioController(onState, onEnd, onError, { allowSpeechFall
       range = {startSeconds:start,endSeconds:end,ready:false};
     }
     if (!src) { speak(text, gen, rate); return; }
-    const entry = entryFor(fileIdentity ?? src), owner = entry.element;
+    const identity = fileIdentity ?? src;
+    // Reserved files retain their own unlocked players. Unknown files share the gesture-started
+    // fallback, including consecutive prepared clips that arrive without another tap.
+    const pooled = pool.get(identity);
+    const entry = fallback && !pooled?.unlocked ? fallback : entryFor(identity), owner = entry.element;
+    if (entry === fallback) fallbackIdentity = identity;
     // The same file already loaded on its own element is reused as is: no src write, no reload, no re-decode.
     const sameSource = entry.heldSource === src, loaded = sameSource && owner.readyState >= 1;
     if (!loaded) { owner.src = src; entry.heldSource = src; }
@@ -235,6 +243,10 @@ export function createAudioController(onState, onEnd, onError, { allowSpeechFall
   // Called from a tap before its action: the idle element is unlocked once. An element holding a
   // clip is left alone; that clip's own Play (resume) starts it inside the tap.
   function unlock() {
+    // Preparation may discover multiple files after this gesture. Keep the same fallback
+    // across those source swaps; creating a fresh spare later would lose the permission.
+    fallback ??= newEntry();
+    if (!fallback.unlocked && fallback.element !== audio) { fallback.unlocked = true; startInTap(fallback.element); }
     for (const entry of pool.values()) {
       if (entry.unlocked || entry.element === audio) continue;
       entry.unlocked = true; startInTap(entry.element);
@@ -252,6 +264,10 @@ export function createAudioController(onState, onEnd, onError, { allowSpeechFall
     }
   }
   function evict(identity) {
+    if (fallbackIdentity === identity) {
+      if (fallback.element === audio) stop();
+      fallback.element.pause(); fallbackIdentity = null; fallback.heldSource = null;
+    }
     const entry = pool.get(identity);
     if (!entry) return;
     if (entry.element === audio) stop();
@@ -278,5 +294,5 @@ export function createAudioController(onState, onEnd, onError, { allowSpeechFall
     }
     return true;
   }
-  return { play, pause, resume, stop, unlock, reserve, retain, evict, seek, get poolSize() { return pool.size; }, get active() { return !!audio || !!utterance; }, get playing() { return speaking; } };
+  return { play, pause, resume, stop, unlock, reserve, retain, evict, seek, get src() { return source; }, get poolSize() { return pool.size; }, get active() { return !!audio || !!utterance; }, get playing() { return speaking; } };
 }

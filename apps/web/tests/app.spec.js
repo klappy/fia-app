@@ -712,7 +712,7 @@ it('video clock drives the ring through pause, seek, replay, and completion',asy
 
 it('phone rotation makes visuals immersive without remounting the playing video',async()=>{
  let rotate;const query={matches:false,addEventListener:(_,fn)=>rotate=fn,removeEventListener:vi.fn()};
- const prior=window.matchMedia;window.matchMedia=vi.fn(()=>query);
+ const prior=window.matchMedia;window.matchMedia=vi.fn(condition=>condition.includes('orientation: landscape')?query:{matches:false,addEventListener:vi.fn(),removeEventListener:vi.fn()});
  try{
  await startAt('S02-U005');await fireEvent.click(screen.getByRole('button',{name:'Play',exact:true}));await settle();
  const video=document.querySelector('video');video.currentTime=15;await easyIdle();
@@ -1121,4 +1121,50 @@ it('missing selected video size plays the default and explains the fallback',asy
  const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(3).buffer,mime:'video/mp4'});vi.stubGlobal('URL',class extends URL{static createObjectURL(){return 'blob:default-video';}static revokeObjectURL(){}});
  await startAt('S02-U005','waiting');await fireEvent.click(screen.getByRole('button',{name:'Play video',exact:true}));await settle();await settle();await settle();
  expect(document.querySelector('video')?.getAttribute('src')).toBe('blob:default-video');expect(screen.getByText('Small isn’t ready for this video yet. Playing Large instead.')).toBeTruthy();expect(request.mock.calls[0][4]).toBe('large');
+});
+
+async function verifiedVisualFixture(id){
+ const {createHash,webcrypto}=await import('node:crypto');vi.stubGlobal('crypto',webcrypto);
+ const {canonicalPreparationJSON}=await import('../src/lib/prepared-audio.js');
+ const asset=assets[id],generation='b'.repeat(64),sha256='e'.repeat(64),path=`/packs/${bundledPack.id}/visuals/${id}.png`;
+ return {path,group:'image',mime:'image/png',sha256,sourceSha256:sha256,bytes:3,sourceBytes:3,deliveryRevision:generation,
+ deliveryURL:`/v1/verified-visuals/${bundledPack.id}/${bundledPack.revision}/${generation}/${id}/${sha256}`,
+ visualPublication:{schema:'fia-verified-visual@1',packId:bundledPack.id,presentationRevision:bundledPack.revision,assetId:id,kind:asset.kind,
+ sourceEvidenceSha256:createHash('sha256').update(canonicalPreparationJSON(asset.sourceEvidence)).digest('hex'),recipeSha256:'c'.repeat(64),pixelsSha256:'d'.repeat(64),width:1,height:1}};
+}
+it('current verified visual logical path renders even when the authored asset has no src',async()=>{
+ const id=activities.find(a=>assets[a.assetId]?.kind==='image').assetId,original=assets[id].src,originalEvidence=assets[id].sourceEvidence;assets[id].sourceEvidence=originalEvidence||{id,fixture:'reviewed source binding'};const file=await verifiedVisualFixture(id);delete assets[id].src;
+ try{vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({deliveryRevision:file.deliveryRevision,files:[file]});
+ const request=vi.spyOn(libraryAdapter,'playMedia').mockResolvedValue({bytes:new Uint8Array(3).buffer,mime:'image/png'});
+ vi.stubGlobal('URL',class extends URL{static createObjectURL(){return 'blob:verified-logical-visual';}static revokeObjectURL(){}});
+ await startAt(activities.find(a=>a.assetId===id).id);await waitFor(()=>expect(document.querySelector('.visual-explorer img')?.getAttribute('src')).toBe('blob:verified-logical-visual'));
+ expect(request.mock.calls[0][1]).toBe(file.path);expect(assets[id].src).toBeUndefined();
+ }finally{assets[id].src=original;if(originalEvidence===undefined)delete assets[id].sourceEvidence;else assets[id].sourceEvidence=originalEvidence;}
+});
+it('cold offline launch restores the saved verified visual binding before rendering cached bytes',async()=>{
+ const id=activities.find(a=>assets[a.assetId]?.kind==='image').assetId,original=assets[id].src,originalEvidence=assets[id].sourceEvidence;assets[id].sourceEvidence=originalEvidence||{id,fixture:'reviewed source binding'};const file=await verifiedVisualFixture(id);delete assets[id].src;
+ try{vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:true,active:{manifest:{packId:bundledPack.id,presentationRevision:bundledPack.revision,deliveryRevision:file.deliveryRevision,files:[file]},files:[file]}});
+ vi.spyOn(libraryAdapter,'mediaStatus').mockRejectedValue(Object.assign(Error('offline'),{code:'media-status-transient'}));const request=vi.spyOn(libraryAdapter,'playMedia');
+ await startAt(activities.find(a=>a.assetId===id).id);await waitFor(()=>expect(document.querySelector('.visual-explorer img')?.getAttribute('src')).toBe(file.path));expect(request).not.toHaveBeenCalled();
+ }finally{assets[id].src=original;if(originalEvidence===undefined)delete assets[id].sourceEvidence;else assets[id].sourceEvidence=originalEvidence;}
+});
+
+it('approved layout keeps guide image and map free of a fixed resource footer while the menu retains every Scripture edition',async()=>{
+ const source=activities[0];await startAt(source.id,'waiting');
+ const assertLayout=()=>{const scene=document.querySelector('main.scene');expect(screen.queryByRole('navigation',{name:'Resources for this step'})).toBeNull();expect(document.querySelector('.step-resources')).toBeNull();expect(scene.classList.contains('has-step-resources')).toBe(false);expect(scene.style.getPropertyValue('--step-resources-height')).toBe('');};
+ const explore=async(kind,id)=>{await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passage resources'}));const summary=screen.getByText(kind,{selector:'summary'});await fireEvent.click(summary);await fireEvent.click(within(summary.parentElement).getByRole('button',{name:assets[id].sourceEvidence?.short||assets[id].subtitle||assets[id].title,exact:true}));await settle();};
+ assertLayout();expect(document.querySelector('.media-stage').dataset.kind).toBe('guide');
+ for(const kind of ['image','map']){
+  const asset=Object.values(assets).find(a=>a.kind===kind);await explore(kind==='image'?'Images':'Maps',asset.id);assertLayout();expect(document.querySelector('.media-stage').dataset.kind).toBe(kind);expect(state().detour).toBe(asset.id);expect(activities[state().index].id).toBe(source.id);await fireEvent.click(screen.getByRole('button',{name:'Return to guide'}));await settle();expect(state().detour).toBeNull();expect(activities[state().index].id).toBe(source.id);assertLayout();
+ }
+ for(const id of ['scripture-BereanStandardBible','scripture-unfoldingWordLiteral','scripture-unfoldingWordSimplified']){
+  await explore('Scripture translations',id);expect(state().detour).toBe(id);expect(activities[state().index].id).toBe(source.id);expect(document.querySelector('.media-stage').dataset.kind).toBe('scripture');assertLayout();await fireEvent.click(screen.getByRole('button',{name:'Return to guide'}));await settle();expect(state().detour).toBeNull();expect(activities[state().index].id).toBe(source.id);
+ }
+});
+
+it('approved resource menu remains available while media checks are pending and never declares an unverified image ready',async()=>{
+ const pending=[];vi.spyOn(libraryAdapter,'mediaStatus').mockImplementation(()=>new Promise(resolve=>pending.push(resolve)));vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});
+ const source=activities[0],image=Object.values(assets).find(a=>a.kind==='image');await startAt(source.id,'waiting');expect(document.querySelector('.guide-primary').getAttribute('aria-busy')).toBe('true');expect(screen.getByRole('button',{name:'Checking availability',exact:true})).toBeTruthy();expect(screen.queryByRole('navigation',{name:'Resources for this step'})).toBeNull();
+ await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passage resources'}));const summary=screen.getByText('Images',{selector:'summary'});await fireEvent.click(summary);const trigger=within(summary.parentElement).getByRole('button',{name:image.subtitle||image.title,exact:true});expect(trigger.disabled).toBe(false);await fireEvent.click(trigger);await settle();expect(state().detour).toBe(image.id);expect(document.querySelector('.visual-viewport img')).toBeNull();expect(document.querySelector('.guide-primary').getAttribute('aria-busy')).toBe('true');
+ for(const resolve of pending)resolve({files:[]});await settle();await settle();await waitFor(()=>expect(document.querySelector('.guide-primary').getAttribute('aria-busy')).not.toBe('true'));expect(document.querySelector('.visual-viewport img')).toBeNull();expect(document.querySelector('.media-error').textContent).toContain('unavailable');await fireEvent.click(screen.getByRole('button',{name:'Return to guide'}));await settle();expect(state().detour).toBeNull();expect(activities[state().index].id).toBe(source.id);
 });
