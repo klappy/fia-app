@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.1.1 — Reverted work restored on main (2026-11-10)
+
+Restores on `main` the work that was reverted for the 3.0.1 highlight-only release (PR362): the Spanish Luke honest-text recompile with its folded 3.1.0 prep (PR356), the saved-pack worker change (PR360) and the audio-master inversion (PR361), by reverting the reverts `5fd88de`, `466cdcf` and `f74daec` in that order. Nothing else changes; the 3.0.1 and 3.1.0 entries below are kept as written. Defect D1 (a saved copy whose revision the server no longer holds is revoked when PR356 replaces 262 passage revisions) is not fixed by this version, so any promotion carrying it needs a real D1 fix or the captain's acceptance. See the [3.1.1 release note](release/changes/3.1.1-restore-reverted.md).
+
 ## 3.0.1 — Highlight only (2026-11-10)
 
 Production 3.0.0 plus the highlight change alone (PR354, merge `14bf935`): word highlighting appears on every guide and discussion card that has a recording, at the closest match the evidence allows, with each reading region naming its timing tier (`exact`, `clamped` or `approximate`) as a data attribute only; the first pericope's S01 activity maps are regenerated from the committed source-recording evidence; the "recording is unavailable" notice is raised once per session for packs with no guide recording anywhere; the dead step-resources footer code is deleted; and the manifest text counts the 68 Mark and 97 Luke passages. No content pack, server or service worker file differs from production. See the [highlight-only release note](release/changes/3.0.1-highlight-only.md) and the [highlight change note](release/changes/2026-11-09-highlight-always.md).
