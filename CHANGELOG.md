@@ -1,10 +1,10 @@
 # Changelog
 
-## 3.0.2 — Audio-master alone (2026-11-10)
+## 3.0.3 — Audio-master alone (2026-11-10)
 
-Production 3.0.1 plus the audio-master inversion alone (PR361, merge `9068ad3`), restored on `main` by reverting `f74daec`: a recorded guide stage opens one media session for a run of consecutive same-file clips, the pages turn by the player clock, both pause when the audio pauses, and Next, Back, swipes and the Overview seek the running session to the chosen screen. No content pack, server or service worker file differs from production, so no published passage revision is replaced. See the [audio-master-alone release note](release/changes/3.0.2-audio-master-alone.md) and the [audio-master change note](release/changes/2026-11-09-audio-master.md).
+Version 3.0.2 (`main` at `c05e511`, which is 3.0.1 plus the welcome page) plus the audio-master inversion alone (PR361, merge `9068ad3`), restored on `main` by reverting `f74daec`: a recorded guide stage opens one media session for a run of consecutive same-file clips, the pages turn by the player clock, both pause when the audio pauses, and Next, Back, swipes and the Overview seek the running session to the chosen screen. No content pack, server or service worker file differs from 3.0.2, and no content pack or server file differs from production, so no published passage revision is replaced. See the [audio-master-alone release note](release/changes/3.0.3-audio-master-alone.md) and the [audio-master change note](release/changes/2026-11-09-audio-master.md).
 
-Not in this version: the Spanish Luke honest-text recompile (PR356) and the saved-pack worker change (PR360) stay reverted on `main`, and the saved-copy defect (D1) is not fixed. This version is held from production until a physical iPhone pass: the evidence so far is synthetic-clock tests and one desktop Chromium run, which do not certify acoustic synchronization on a device. Each environment still requires independent review, required checks and exact-commit post-deploy evidence.
+Not in this version: the Spanish Luke honest-text recompile (PR356) and the saved-pack worker change (PR360) stay reverted on `main`, and the saved-copy defect (D1) is not fixed. This version is held from production until a physical iPhone pass: the evidence so far is synthetic-clock tests and one desktop Chromium run, which do not certify acoustic synchronization on a device. When this entry was written, production served 3.0.1 and 3.0.2 had not been promoted to production. Each environment still requires independent review, required checks and exact-commit post-deploy evidence.
 
 ## 3.0.2 — Welcome page (2026-11-10)
 
