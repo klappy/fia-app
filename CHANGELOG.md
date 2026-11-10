@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.0.2 — Audio-master alone (2026-11-10)
+
+Production 3.0.1 plus the audio-master inversion alone (PR361, merge `9068ad3`), restored on `main` by reverting `f74daec`: a recorded guide stage opens one media session for a run of consecutive same-file clips, the pages turn by the player clock, both pause when the audio pauses, and Next, Back, swipes and the Overview seek the running session to the chosen screen. No content pack, server or service worker file differs from production, so no published passage revision is replaced. See the [audio-master-alone release note](release/changes/3.0.2-audio-master-alone.md) and the [audio-master change note](release/changes/2026-11-09-audio-master.md).
+
+Not in this version: the Spanish Luke honest-text recompile (PR356) and the saved-pack worker change (PR360) stay reverted on `main`, and the saved-copy defect (D1) is not fixed. This version is held from production until a physical iPhone pass: the evidence so far is synthetic-clock tests and one desktop Chromium run, which do not certify acoustic synchronization on a device. Each environment still requires independent review, required checks and exact-commit post-deploy evidence.
+
 ## 3.0.1 — Highlight only (2026-11-10)
 
 Production 3.0.0 plus the highlight change alone (PR354, merge `14bf935`): word highlighting appears on every guide and discussion card that has a recording, at the closest match the evidence allows, with each reading region naming its timing tier (`exact`, `clamped` or `approximate`) as a data attribute only; the first pericope's S01 activity maps are regenerated from the committed source-recording evidence; the "recording is unavailable" notice is raised once per session for packs with no guide recording anywhere; the dead step-resources footer code is deleted; and the manifest text counts the 68 Mark and 97 Luke passages. No content pack, server or service worker file differs from production. See the [highlight-only release note](release/changes/3.0.1-highlight-only.md) and the [highlight change note](release/changes/2026-11-09-highlight-always.md).
