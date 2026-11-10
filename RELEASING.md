@@ -39,6 +39,14 @@ Wrong media, lost progress, unusable controls, or misleading ready state block f
 - **Preferred:** a revert PR on the env branch (`git revert -m 1 <merge>` for a promotion merge), merged, then post-deploy green. Then bring it down the same way a hotfix flows: merge `production → staging` and `staging → main` (merge commits), so no branch re-ships the bad change. To re-land the change later, revert the revert on `main` and promote as usual.
 - **Fast path (infra, Otto):** `npx wrangler rollback --env <env>` restores the previous Worker version without a build. Git still needs the revert afterwards, or the next push redeploys the bad commit. `version.json` will show the rolled-back commit, so post-deploy for that sha will not match until git is fixed.
 
+## Superseded reads
+
+- Removing a passage revision from a build no longer withdraws saved copies: from 3.1.1 the server answers a read pinned to a revision it does not hold, and a read of an artifact digest it does not hold, with 503 and the unchanged JSON body, and an installed service worker keeps its saved copy on 503.
+- The installed worker still revokes a saved copy on 404, but no pinned pack read answers 404 after this release (a corrupt or revoked prepared record falls to the same 503), so a deliberate withdrawal needs a later, explicit mechanism; none exists yet.
+- After this release production is never rolled back to an earlier build: an earlier build answers 404 to copies saved under the newer revisions and the worker revokes them. Fix forward; the Rollback paths above do not go below 3.1.1, and the same holds for DEV and staging once they have served it.
+- Before a promotion, record the revisions production currently serves for a sample of passages; after the staging deploy and again after the production deploy, read those revisions pinned (`/v1/packs/<id>?revision=<recorded>`) and expect 503 with `"reason":"revision-not-found"`, never 404, an unpinned read 200 and an unknown passage unpinned 404.
+- The 503 is a compatibility answer for workers already installed on devices, not a statement that the server is temporarily down; it is to be replaced once a worker that understands an explicit superseded answer is the oldest one in use.
+
 ## Hotfix
 
 Branch from `production`, PR → `production` (CI green, fresh review, merge commit), post-deploy green. Then flow it back down: merge `production → staging` and `staging → main` (merge commits) so no env branch is ever ahead of the one below it.

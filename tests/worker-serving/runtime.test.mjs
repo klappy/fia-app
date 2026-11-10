@@ -25,7 +25,7 @@ test('actual packaged Workers runtime serves accepted bytes through unchanged HT
   const mcp=await mf.dispatchFetch(origin+'/mcp',{method:'POST',headers,body:JSON.stringify(rpc('read_pack',{packId}))});assert.deepEqual((await mcp.json()).result.structuredContent,record);
   const artifact=await mf.dispatchFetch(origin+record.artifact.path);assert.equal(artifact.headers.get('etag'),'"'+sha256+'"');assert.equal(hash(Buffer.from(await artifact.arrayBuffer())),sha256);
   const mr=await mf.dispatchFetch(origin+'/mcp',{method:'POST',headers,body:JSON.stringify(rpc('read_artifact',{sha256}))});assert.equal(hash((await mr.json()).result.structuredContent.content),sha256);
-  for(const [path,status]of [['/v1/unknown',404],['/v1/packs/missing',404],['/v1/packs/'+packId+'?extra=x',400],['/v1/packs/'+packId+'?revision='+ '0'.repeat(64),404],['/mcp/x',404]]){const r=await mf.dispatchFetch(origin+path,{headers:{'Sec-Fetch-Mode':'navigate'}});assert.equal(r.status,status,path);assert.match(r.headers.get('content-type'),/json/);}
+  for(const [path,status]of [['/v1/unknown',404],['/v1/packs/missing',404],['/v1/packs/'+packId+'?extra=x',400],['/v1/packs/'+packId+'?revision='+ '0'.repeat(64),503],['/mcp/x',404]]){const r=await mf.dispatchFetch(origin+path,{headers:{'Sec-Fetch-Mode':'navigate'}});assert.equal(r.status,status,path);assert.match(r.headers.get('content-type'),/json/);}
   assert.equal((await mf.dispatchFetch(origin+'/v1/packs/'+packId,{method:'POST'})).status,405);
   assert.equal((await mf.dispatchFetch(origin+'/mcp',{method:'POST',headers:{...headers,origin:'null'},body:'{}'})).status,403);
   assert.equal((await mf.dispatchFetch(origin+'/mcp',{method:'POST',headers,body:'x'.repeat(16385)})).status,413);
