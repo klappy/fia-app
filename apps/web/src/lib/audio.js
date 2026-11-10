@@ -280,6 +280,14 @@ export function createAudioController(onState, onEnd, onError, { allowSpeechFall
     state(); if (!paused && !audio.paused) armBoundary(audio, generation);
     return true;
   }
+  // Re-read the active clip's clock after the page was hidden (timers and frames stop while the element plays on):
+  // one fresh state report, and the range boundary re-armed, so a clip past its end stops now.
+  function sync() {
+    if (!audio) return false;
+    if (range?.ready && !paused && !audio.paused) armBoundary(audio, generation);
+    state();
+    return true;
+  }
   function resume() {
     if (!audio && !utterance) return false;
     pauseVideos(); paused = false;
@@ -294,5 +302,11 @@ export function createAudioController(onState, onEnd, onError, { allowSpeechFall
     }
     return true;
   }
-  return { play, pause, resume, stop, unlock, reserve, retain, evict, seek, get src() { return source; }, get poolSize() { return pool.size; }, get active() { return !!audio || !!utterance; }, get playing() { return speaking; } };
+  // A pace change applies to the sounding element at once: one play() may voice a whole run of pages (#361 review).
+  function setRate(rate) {
+    if (!audio || !Number.isFinite(rate) || rate <= 0) return false;
+    try { audio.playbackRate = rate; } catch { return false; }
+    return true;
+  }
+  return { play, pause, resume, stop, unlock, reserve, retain, evict, seek, sync, setRate, get src() { return source; }, get poolSize() { return pool.size; }, get active() { return !!audio || !!utterance; }, get playing() { return speaking; } };
 }
