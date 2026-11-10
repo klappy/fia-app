@@ -1,10 +1,13 @@
 /** Refresh local release byte pins after an exact-HEAD build. Not review or publication. */
-import{readFileSync,writeFileSync,readdirSync,statSync}from'node:fs';import{execFileSync}from'node:child_process';import{createHash}from'node:crypto';import{pathToFileURL}from'node:url';
+import{readFileSync,writeFileSync,readdirSync,statSync,existsSync}from'node:fs';import{execFileSync}from'node:child_process';import{createHash}from'node:crypto';import{pathToFileURL}from'node:url';
 import{verifyBuildParameters,normalizeGenerated}from'../tests/release/parameterized-closure.js';
 const hash=b=>createHash('sha256').update(b).digest('hex'),file='tests/release/generalized-release-closure.json',closure=JSON.parse(readFileSync(file));
 const parameters=verifyBuildParameters(pathToFileURL(process.cwd()+'/dist/'),closure.version);
 const sources=execFileSync('git',['diff','--name-only','d7f17f461eec5a357752b056c9e074e77ea085a7'],{encoding:'utf8'}).trim().split('\n').filter(p=>p&&p!==file);
-for(const path of sources){const bytes=readFileSync(path),old=closure.changedSources.find(f=>f.path===path);if(old){old.sha256=hash(bytes);if('bytes'in old)old.bytes=bytes.length;}else closure.changedSources.push({path,sha256:hash(bytes),bytes:bytes.length});}
+// A pin for a path that no longer exists is dropped even when git no longer lists it as changed (a file added after the approved
+// manifest and removed since, such as a superseded presentation revision): the closure pins what is on disk.
+closure.changedSources=closure.changedSources.filter(f=>existsSync(f.path));
+for(const path of sources){if(!existsSync(path)){closure.changedSources=closure.changedSources.filter(f=>f.path!==path);continue;}const bytes=readFileSync(path),old=closure.changedSources.find(f=>f.path===path);if(old){old.sha256=hash(bytes);if('bytes'in old)old.bytes=bytes.length;}else closure.changedSources.push({path,sha256:hash(bytes),bytes:bytes.length});}
 const allow=new Set(JSON.parse(readFileSync('tests/release/runtime-allowlist.json')).files.map(f=>f.path));
 const files=readdirSync('dist',{recursive:true}).filter(p=>statSync('dist/'+p).isFile()&&p!=='version.json'&&!allow.has(p));
 const next=files.map(path=>{const bytes=Buffer.from(normalizeGenerated(path,readFileSync('dist/'+path),parameters));return{path,sha256:hash(bytes),bytes:bytes.length};}).sort((a,b)=>a.path.localeCompare(b.path));

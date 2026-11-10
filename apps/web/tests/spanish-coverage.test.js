@@ -34,6 +34,16 @@ test('a pericope with a missing Spanish step, or no Spanish pack, is missing', (
   assert.equal(none[0].state, STATE.MISSING); assert.equal(none[0].missingSteps.length, 2);
   assert.ok(none.filter(i => i.group !== 'pericope').every(i => i.state === STATE.MISSING));
 });
+test('a title the source marks as the English fallback is english-fallback, with or without Spanish text', () => {
+  const marked = { ...spa, assets: { ...spa.assets,
+    a1: { kind: 'image', title: 'ES-TITLE-1', titleProvenance: { status: 'missing', badge: 'not-yet-in-language', fallback: 'eng' } },
+    'term-spa-t4': { id: 'term-spa-t4', kind: 'term', title: 'angel', text: 'ES-TEXT-4', titleProvenance: { status: 'missing', fallback: 'eng' } } } };
+  const r = reportPack(eng, marked, ON);
+  assert.equal(find(r, 'a1').state, STATE.ENGLISH_FALLBACK);
+  assert.equal(find(r, 'eng-t4-v1').state, STATE.ENGLISH_FALLBACK);
+  const sourced = { ...spa, assets: { ...spa.assets, 'term-spa-t4': { ...spa.assets['term-spa-t4'], titleProvenance: { status: 'source' } } } };
+  assert.equal(find(reportPack(eng, sourced, ON), 'eng-t4-v1').state, STATE.PRESENT);
+});
 test('empty Spanish text counts as missing', () => {
   const blank = { ...spa, assets: { ...spa.assets, a1: { kind: 'image', title: '  ' } } };
   assert.equal(find(reportPack(eng, blank, ON), 'a1').state, STATE.MISSING);

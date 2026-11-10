@@ -114,6 +114,10 @@ async function serverJSON(response,file,record){
  else if(value?.id!==file.id||!['fia-bound-narration-demand@1','fia-bound-narration-audio@1'].includes(value.schema))throw Error('Invalid bound artifact schema.');
  return response;
 }
+// D1: a valid server record at a different revision means a newer revision exists. That is an
+// update to offer, never a revocation of the saved revision; only a failed integrity check of the
+// saved revision's own record or artifacts, or an authoritative refusal, may retire it.
+const revisionChanged=()=>Object.assign(Error('Server revision changed.'),{revisionChanged:true});
 const revokedSnapshotKey=(packId,revision)=>packKey(packId,'revoked-server:'+revision);
 const legacyRefusedApprovedKey=(packId,revision,dependency)=>packKey(packId,'refused-approved:'+revision+':'+dependency.sha256);
 const refusedApprovedKey=(packId,revision,dependency)=>packKey(packId,'refused-approved:'+dependency.sha256);
@@ -135,7 +139,7 @@ async function retainServerSnapshot(packId,revision,cache,signal,onprogress){
  const checkCanceled=()=>{if(signal.aborted)throw Object.assign(Error('Download paused. Verified files are kept for Resume.'),{name:'AbortError'});};
  let record;try{
   checkCanceled();const r=await fetchLatest(`/v1/packs/${packId}${revision?'?revision='+revision:''}`,{cache:'no-store',redirect:'error',signal});checkCanceled();
-  if(r.status!==200||r.redirected)throw Error('Server record unavailable.');record=serverRecord(await r.json(),packId);checkCanceled();if(revision&&record.revision!==revision)throw Error('Server revision changed.');
+  if(r.status!==200||r.redirected)throw Error('Server record unavailable.');record=serverRecord(await r.json(),packId);checkCanceled();if(revision&&record.revision!==revision)throw revisionChanged();
   const files=serverFiles(record);onprogress?.({phase:'record-verified',verified:0,total:files.length});
   // Owner ruling 2026-11-04 (cookbook 75c725c): fetch artifacts with bounded concurrency.
   // Each artifact is still matched or fetched, identity/hash verified and then cached on its own;
@@ -156,7 +160,7 @@ async function retainServerSnapshot(packId,revision,cache,signal,onprogress){
   if(errors.length)throw errors.find(e=>!(signal.aborted&&e.name==='AbortError')&&e.mediaStatusCode!=='media-status-transient')||errors[0];
   return {record,files,invalid:false};
  }
- catch(error){if(!(signal.aborted&&error.name==='AbortError')&&error.mediaStatusCode!=='media-status-transient')await invalidateServerSnapshot(packId);throw error;}
+ catch(error){if(!(signal.aborted&&error.name==='AbortError')&&error.mediaStatusCode!=='media-status-transient'&&!error.revisionChanged)await invalidateServerSnapshot(packId);throw error;}
 }
 // Catalog retrieval may precede UI cancellation/activation. Keep its artifact
 // lookup context separate from PACK_SELECT's native-media custody.
@@ -190,9 +194,9 @@ async function serverRead(request,clientId){
  // the pack, so it never retires a saved snapshot; the page retries without the capability.
  if(match&&capability&&response.status===400)return response;
  try{
-  if(match){if(response.status!==200||response.redirected)throw Error('Server record unavailable.');const record=serverRecord(await response.clone().json(),packId);if(revision&&record.revision!==revision)throw Error('Server revision changed.');await rememberServerRead(clientId,record);}
+  if(match){if(response.status!==200||response.redirected)throw Error('Server record unavailable.');const record=serverRecord(await response.clone().json(),packId);if(revision&&record.revision!==revision)throw revisionChanged();await rememberServerRead(clientId,record);}
   else if(file)await serverJSON(response.clone(),file,active.serverSnapshot.record);
- }catch{if(packId)await invalidateServerSnapshot(packId);}
+ }catch(error){if(packId&&!error?.revisionChanged)await invalidateServerSnapshot(packId);}
  return response;
 }
 // A verified saved snapshot answers only when the server could not; otherwise the
