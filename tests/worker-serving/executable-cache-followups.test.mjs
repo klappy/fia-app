@@ -19,7 +19,7 @@ function fixture(){
  const kv=new Map(),blobs=new Map(),state={storageFault:null,readFault:null};
  const storage={transaction:async fn=>{if(state.storageFault)throw state.storageFault;const staged=new Map(kv);const out=await fn({get:async k=>staged.has(k)?structuredClone(staged.get(k)):undefined,put:async(k,v)=>{staged.set(k,structuredClone(v));},delete:async k=>{staged.delete(k);}});kv.clear();for(const [k,v] of staged)kv.set(k,v);return out;}};
  const artifacts={async write(b){const sha=await sha256(b);blobs.set(sha,new Uint8Array(b));return {reference:sha,sha256:sha};},async read(d){if(state.readFault)throw state.readFault;return new Uint8Array(blobs.get(d.reference));}};
- const base={readCatalog:async(id,revision)=>id===packId&&(!revision||revision===binding.baseRevision)?{status:'ready',packId:id,revision:binding.baseRevision,artifact:{sha256:binding.baseRevision,bytes:2,mime:'application/json'}}:{status:'unavailable',reason:'not-found'},findArtifact:async()=>null};
+ const base={readCatalog:async(id,revision)=>id===packId&&(!revision||revision===binding.baseRevision)?{status:'ready',packId:id,revision:binding.baseRevision,artifact:{sha256:binding.baseRevision,bytes:2,mime:'application/json'}}:{status:'unavailable',packId:id,reason:revision?'revision-not-found':'not-found'},findArtifact:async()=>null};
  const make=(extra={})=>createExecutableOverlay({storage,artifacts,base,eligible:()=>true,validate:async c=>c.presentation.execution.schema==='fixture',...extra});
  return {kv,blobs,state,make,storage};
 }
@@ -121,11 +121,11 @@ test('verification-phase exact R2 and timeout faults propagate while pointer fal
   f.state.readFault=null;assert.equal((await overlay.readCatalog(packId,record.revision)).revision,record.revision);
  }
 });
-test('exact HTTP verification fault is transient500 not authority404; corruption and revocation still fail closed',async()=>{
+test('exact HTTP verification fault is transient500; a corrupt prepared record read pinned answers 503 as a superseded read, and a revoked one is unavailable',async()=>{
  const f=fixture(),record=await f.make().publish(candidate),overlay=f.make(),worker=createWorker({origin:'https://dev.fiaguide.app',operations:createReadOperations(overlay),serveRead,serveMcp}),request=()=>new Request('https://dev.fiaguide.app/v1/packs/'+packId+'?revision='+record.revision);
  f.state.readFault=Error('R2 GET failed: connection reset');assert.equal((await worker.fetch(request(),{})).status,500);
  f.state.readFault=null;assert.equal((await worker.fetch(request(),{})).status,200);
- const bytes=f.blobs.get(record.revision);f.blobs.set(record.revision,new TextEncoder().encode('corrupt'));assert.equal((await worker.fetch(request(),{})).status,404);
+ const bytes=f.blobs.get(record.revision);f.blobs.set(record.revision,new TextEncoder().encode('corrupt'));{const corrupt=await worker.fetch(request(),{});assert.equal(corrupt.status,503);assert.equal((await corrupt.json()).reason,'revision-not-found');}
  f.blobs.set(record.revision,bytes);const revoked=f.make({eligible:()=>false});assert.equal((await revoked.readCatalog(packId,record.revision)).status,'unavailable');assert.equal((await revoked.readCatalog(packId)).revision,binding.baseRevision);
 });
 test('post-commit artifact readback failure rejects rather than misreporting committed publication unavailable',async()=>{
