@@ -1,6 +1,4 @@
-// Spanish coverage: the data layer behind the '[ES needed]' marker. The compiler (server/fia/compiler/presentation/
-// compile.mjs) runs reportPack over each Spanish pack and its English twin and writes the per-asset state as
-// `asset.spanishText`; the render path (ResourceIdentification, the MediaStage caption) calls resolveItem on that state.
+// Spanish coverage: DATA LAYER ONLY. No UI, no visible behaviour change, nothing imports this at runtime yet.
 //
 // Per item (pericope, resource, entity) it reports whether Spanish text EXISTS or the item would fall back to English /
 // nothing, so a later UI can show an absence marker instead of a silent English fallback (captain, Nov 4 2026 3:08 PM ET).
@@ -12,11 +10,9 @@
 //              presentation JSON does not carry it, so callers must pass the descriptor. Without it, Spanish is absent.
 //   resource = a picture, map or video asset (kind image | map | video). Spanish text exists when the Spanish pack carries the
 //              asset with a non-empty title that is not the English title for the same asset id (title byte-identical to
-//              English means the English title is being shown: 'english-fallback'). The source's own titleProvenance
-//              ({status:'missing', fallback:'eng'}) says the same thing and is honoured when the pack carries it.
+//              English means the English title is being shown: 'english-fallback').
 //   entity   = a key term (kind term), matched across languages by its term number (t<N>). Spanish text exists when the
-//              Spanish pack has that term with non-empty text that is not the English text; a term whose card title is
-//              still the English source key (titleProvenance fallback 'eng') is 'english-fallback' even with Spanish text.
+//              Spanish pack has that term with non-empty text that is not the English text.
 //
 // Machine translation (MT) toggle, plumbing only. Default OFF. Only the captain turns it on, never automatically; the
 // switch is an injected config value (no flag mechanism exists in fia-app today, so this adds none to the UI and reads
@@ -34,7 +30,6 @@ const present = v => typeof v === 'string' && v.trim().length > 0;
 const kindGroup = kind => kind === 'term' ? 'entity' : (kind === 'image' || kind === 'map' || kind === 'video') ? 'resource' : null;
 const termNumber = id => { const m = /(?:^|-)t(\d+)(?:-|$)/.exec(String(id)); return m ? Number(m[1]) : null; };
 const displayText = a => (a.kind === 'term' ? a.text : a.title);
-const englishTitle = a => a.titleProvenance?.status === 'missing' && a.titleProvenance?.fallback === 'eng';
 
 export const guideUnit = a => a.sourceUnitId || a.fulfills || a.id;
 const units = pack => [...new Set((pack?.activities || []).map(guideUnit))];
@@ -59,18 +54,12 @@ export function reportPack(eng, spaPack, spaDescriptor) {
     const s = group === 'entity' ? spaTerms.get(termNumber(id)) : spaAssets[id];
     let state;
     if (!s || !present(displayText(s))) state = STATE.MISSING;
-    else if (displayText(s) === displayText(e) || englishTitle(s)) state = STATE.ENGLISH_FALLBACK;
+    else if (displayText(s) === displayText(e)) state = STATE.ENGLISH_FALLBACK;
     else state = STATE.PRESENT;
     items.push({ group, kind: e.kind, id, key: group === 'entity' ? 't' + termNumber(id) : id, state });
   }
   return items;
 }
-
-/** The plain-text marker for an asset the compiler marked (asset.spanishText, compile.mjs): '' when Spanish text is shown or
- *  the pack is English (no state). Every surface that prints an asset or key-term title goes through this or displayTitle. */
-export function titleMarker(asset) { const state = asset?.spanishText; return state && state !== STATE.PRESENT ? resolveItem({ state }).marker : ''; }
-/** The title a surface prints for an asset: the title, then the marker in the same text position when English is shown. */
-export function displayTitle(asset) { const title = String(asset?.title || ''), marker = titleMarker(asset); return marker ? (title ? `${title} ${marker}` : marker) : title; }
 
 /** What the UI should show for an item, given the config. Absence is never silent. */
 export function resolveItem(item, { config, machineTranslated } = {}) {
