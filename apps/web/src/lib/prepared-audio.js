@@ -88,7 +88,7 @@ export function createPreparationTransport({fetch:fetcher=(...args)=>fetch(...ar
    const fresh=await verifyPreparedRecording(current.value,descriptor.identity);
    if(fresh.resultSha256!==descriptor.resultSha256)throw Error('The prepared recording changed. Press Play to check again.');
    return withPreparationTimeout(signal,async signal=>{const file={...fresh.delivery,group:'audio'},response=await fetcher(file.url,{cache:'no-store',credentials:file.quality==='original'?'same-origin':'omit',redirect:'error',signal});
-    const bytes=await readVerifiedMedia(response,file,{signal});return {bytes,mime:file.mime,playbackRange:fresh.playbackRange};});
+    const bytes=await readVerifiedMedia(response,file,{signal});return {bytes,mime:file.mime,playbackRange:fresh.playbackRange,audioSha256:file.sha256};});
   },
  };
 }

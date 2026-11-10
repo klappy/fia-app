@@ -13,9 +13,9 @@ if(bytes.length!==record.delivery.bytes||createHash('sha256').update(bytes).dige
 const entries=JSON.parse(bytes).entries;
 const clip=path=>{const range=entries.find(e=>e.path===path)?.playbackRange;if(!range)throw Error('Missing clip range '+path);return range;};
 const screens=[
- {id:'S02-U010',label:'Setting the Stage, 13: Mark tells us',audio:'/audio/source/S02-U010.mp3',timing:'untimed'},
- {id:'S02-U013',label:'Setting the Stage, 15: The Holy Spirit',audio:'/audio/source/S02-U013.mp3',timing:'untimed'},
- {id:'BSB',label:'Hear and Heart, 3: Berean Standard Bible',audio:'/audio/source/scripture-BereanStandardBible.mp3',timing:'word-aligned'},
+ {id:'S02-U010',item:{section:'Setting the Stage',position:13,prompt:'Mark tells us'},audio:'/audio/source/S02-U010.mp3',timing:'untimed'},
+ {id:'S02-U013',item:{section:'Setting the Stage',position:15,prompt:'The Holy Spirit'},audio:'/audio/source/S02-U013.mp3',timing:'untimed'},
+ {id:'BSB',item:{section:'Hear and Heart',position:3,prompt:'Berean Standard Bible'},audio:'/audio/source/scripture-BereanStandardBible.mp3',timing:'word-aligned'},
 ];
 // Each frame records the reading's scroll position, the playing element's clock and the easy
 // button's ring (the clip's own progress, as the person sees it). The trace runs 10.5 s, and
@@ -38,14 +38,28 @@ async function trace(page){
   };
  });
 }
-async function openScreen(page,label){
+// Opens a screen through the overview, as a person does: the session bar opens the overview dialog, the stage's row
+// shows its items, and each item is a button named "<kind>, <n> of <m>[, done][, stop to discuss]: <prompt>". A long
+// stage shows a window of items; "n more" / "n earlier" page it until the item is in view.
+const escape=text=>text.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+async function openScreen(page,{section,position,prompt}){
  await page.getByRole('button',{name:'Session progress: open section overview'}).click();
- const item=page.locator(`.progress-map-item[aria-label^="${label}"]`).first();await item.scrollIntoViewIfNeeded();await item.click();
+ const dialog=page.getByRole('dialog');
+ const stage=dialog.getByRole('button',{name:new RegExp(`^${escape(section)}(, done)?, \\d+ items$`)});
+ if(await stage.getAttribute('aria-expanded')!=='true')await stage.click();
+ const items=dialog.getByRole('group',{name:`${section} items`});await expect(items).toBeVisible();
+ const item=items.getByRole('button',{name:new RegExp(`, ${position} of \\d+[^:]*: ${escape(prompt)}`)});
+ const block=items.locator('xpath=..');
+ for(let step=0;step<20&&!await item.count();step++){
+  const first=Number((await items.getByRole('button').first().textContent()).match(/, (\d+) of /)[1]);
+  await block.getByRole('button',{name:position<first?/earlier$/:/more$/}).click();
+ }
+ await item.scrollIntoViewIfNeeded();await item.click();
 }
 for(const screen of screens)test(`J4 ${screen.id} (${screen.timing}): reading starts in view and follows the clip`,async({page})=>{
  test.setTimeout(150000);
  await trace(page);await page.goto('/');await expect(page.getByRole('navigation',{name:'Session controls'})).toBeVisible();
- await openScreen(page,screen.label);await follows(page,screen.id,clip(screen.audio),'Begin');
+ await openScreen(page,screen.item);await follows(page,screen.id,clip(screen.audio),'Begin');
 });
 
 // The served rows (RECIPE R2 B2; SCRIPTED-JOURNEYS J4) are opened from Passages, as a person does: the
@@ -76,9 +90,9 @@ async function servedScreen(page,packId,find,actions){
  const record=pack.json,artifact=await servedJSON(page,`/v1/artifacts/${record.artifact.sha256}`);if(!artifact.ok)return {served:false,evidence:artifact.evidence};
  const presentation=artifact.json,activity=presentation.activities.find(find),narration=activity?.execution?.narration;
  if(!actions.includes(narration?.action))return {served:false,evidence:`${packId}@${record.revision} ${activity?.id||'no such screen'}: ${narration?`${narration.action} ${narration.reason||''}`.trim():'not executable'}`};
- // Each server screen is its own progress item: "<section>, <n>: <prompt>".
+ // Each server screen is its own overview item: its section's stage, its position there and its prompt.
  const section=presentation.sections.find(s=>s.id===activity.sectionId),position=presentation.activities.filter(a=>a.sectionId===activity.sectionId).findIndex(a=>a.id===activity.id);
- return {served:true,record,activity,narration,label:`${section.title}, ${position+1}: ${activity.prompt||activity.title}`};
+ return {served:true,record,activity,narration,item:{section:section.title,position:position+1,prompt:activity.prompt||activity.title}};
 }
 function notServed(id,evidence){
  test.info().annotations.push({type:'J4',description:`not-served: ${environment} (${evidence})`});console.log(`J4 ${id} not-served: ${environment} (${evidence})`);
@@ -96,7 +110,7 @@ test(`J4 ${passageOnly.id} ${passageOnly.defaultScriptureId} (passage-only, unti
  if(!served.served)return notServed(id,served.evidence);
  const descriptor=served.record.execution.artifacts.find(a=>a.id===served.narration.artifact.id),bound=await servedJSON(page,`/v1/artifacts/${descriptor.sha256}`);
  if(!bound.ok)return notServed(id,bound.evidence);
- await openScreen(page,served.label);await follows(page,`${passageOnly.id} ${served.activity.id}`,bound.json.playbackRange,/^(Begin|Play)$/);
+ await openScreen(page,served.item);await follows(page,`${passageOnly.id} ${served.activity.id}`,bound.json.playbackRange,/^(Begin|Play)$/);
 });
 
 // An admitted guide screen voiced by its served recording (S1, review of #201): Mark 1:14–20 S01-U002
@@ -113,7 +127,7 @@ test(`J4 ${passageOnly.id} S01-U002 (admitted guide, prepared, untimed): served 
  if(!served.served)return notServed(id,served.evidence);
  await page.getByRole('button',{name:'More options'}).click();await page.getByRole('button',{name:'Settings',exact:true}).click();
  await page.getByLabel('Reading size').selectOption('1.5');await page.getByRole('button',{name:'Close',exact:true}).click();
- await openScreen(page,served.label);
+ await openScreen(page,served.item);
  await follows(page,`${id} (${served.narration.action})`,null,/^(Begin|Play)$/,{playTimeout:90000,unplayable:evidence=>notServed(id,evidence)});
 });
 

@@ -52,6 +52,7 @@ export async function bookStatuses(packs,adapter,{concurrency=4}={}){
 /** Downloads each passage in turn. Passages already saved at the tier are skipped
  * without a fetch; a stop request ends after the current passage pauses. */
 export async function downloadBook(packs,selection,adapter,{onprogress=()=>{},shouldStop=()=>false}={}){
+ throw new Error('Whole-book saving is temporarily unavailable. Save passages individually.');
  const result={saved:0,skipped:0,failed:[],stopped:false};
  for(let i=0;i<packs.length;i++){
   if(shouldStop()){result.stopped=true;break;}

@@ -1,5 +1,55 @@
 # Changelog
 
+## 3.0.3 — Audio-master alone (2026-11-10)
+
+Version 3.0.2 (`main` at `c05e511`, which is 3.0.1 plus the welcome page) plus the audio-master inversion alone (PR361, merge `9068ad3`), restored on `main` by reverting `f74daec`: a recorded guide stage opens one media session for a run of consecutive same-file clips, the pages turn by the player clock, both pause when the audio pauses, and Next, Back, swipes and the Overview seek the running session to the chosen screen. No content pack, server or service worker file differs from 3.0.2, and no content pack or server file differs from production, so no published passage revision is replaced. See the [audio-master-alone release note](release/changes/3.0.3-audio-master-alone.md) and the [audio-master change note](release/changes/2026-11-09-audio-master.md).
+
+Not in this version: the Spanish Luke honest-text recompile (PR356) and the saved-pack worker change (PR360) stay reverted on `main`, and the saved-copy defect (D1) is not fixed. This version is held from production until a physical iPhone pass: the evidence so far is synthetic-clock tests and one desktop Chromium run, which do not certify acoustic synchronization on a device. When this entry was written, production served 3.0.1 and 3.0.2 had not been promoted to production. Each environment still requires independent review, required checks and exact-commit post-deploy evidence.
+
+## 3.0.2 — Welcome page (2026-11-10)
+
+Production 3.0.1 plus the welcome page alone (PR322): a separate static page at `/welcome/` that explains FIA, shows one portrait preview of the guide and offers one primary Open FIA action. The app root, the installed-app entry, deep links and the QR target are unchanged, and no process video is included. The service worker gains one entry: `/welcome` joins the path families it hands straight to the network, so the page is an online destination and is not part of the offline app. The build finalizer leaves everything under `/welcome/` out of the downloadable manifests, so the page is in no saved passage or legacy pack and a change to it does not change them. No content pack, server or app source file differs from production. See the [welcome release note](release/changes/3.0.2-welcome-entry.md) and the [welcome entry note](release/changes/fia-welcome-entry.md).
+
+Not in this version: the Spanish Luke honest-text recompile (PR356), the saved-pack worker change (PR360) and the audio-master inversion (PR361) stay reverted on `main`, and the saved-copy defect (D1) is not fixed. Not shown: the page on a phone, in iOS Safari or from an installed home-screen app, and the first visit to `/welcome/` on a device that already runs the app's earlier service worker; such a device can update from the app root and then reopen the page, and automatic recovery of that first visit is not promised. Each environment still requires independent review, required checks and exact-commit post-deploy evidence.
+
+## 3.0.1 — Highlight only (2026-11-10)
+
+Production 3.0.0 plus the highlight change alone (PR354, merge `14bf935`): word highlighting appears on every guide and discussion card that has a recording, at the closest match the evidence allows, with each reading region naming its timing tier (`exact`, `clamped` or `approximate`) as a data attribute only; the first pericope's S01 activity maps are regenerated from the committed source-recording evidence; the "recording is unavailable" notice is raised once per session for packs with no guide recording anywhere; the dead step-resources footer code is deleted; and the manifest text counts the 68 Mark and 97 Luke passages. No content pack, server or service worker file differs from production. See the [highlight-only release note](release/changes/3.0.1-highlight-only.md) and the [highlight change note](release/changes/2026-11-09-highlight-always.md).
+
+Not in this version: the Spanish Luke honest-text recompile (PR356), the saved-pack worker change (PR360) and the audio-master inversion (PR361) are reverted on `main` for this release, because the Spanish Luke recompile replaces the published revision of 262 of 330 passages and a saved copy whose revision the server no longer holds is revoked by the service worker (defect D1, which PR360 does not stop). That work returns to `main` by reverting the reverts after the staging leg; DEV runs without audio-master in between. Human review of the regenerated S01 timings and a device pass of the gel at the approximate tier are still owed. Each environment still requires independent review, required checks and exact-commit post-deploy evidence.
+
+## 3.0.0 — Stable release preparation (2026-11-07)
+
+Graduates the existing 3.0.0 prerelease series to the stable version requested for the next release. Includes the previously integrated English/Spanish Mark and Luke text and resource work, verified visual delivery support, audio identity and timing validation repairs, and the restored guide layout with resources available through the passage menu. This candidate also prepares continuous reading across adjacent guide cards; its implementation, review and exact-build checks must finish before promotion.
+
+See [stable release scope and limits](release/changes/3.0.0-stable.md). Stable versioning does not establish complete media or audio coverage, all-screen synchronized highlighting, human Spanish acceptance, physical-device acceptance or deployment. Missing or invalid recording timings remain unavailable rather than invented. First-step timing and the accepted passage-switch issue remain explicit follow-up limits. Each environment still requires independent review, required checks and exact-commit post-deploy evidence.
+
+## 3.0.0-alpha.21 — Persistent audio, word highlights and Summit interface repairs (2026-11-05)
+
+Adds the persistent audio pool and script controller, one-card presentation, and word-highlight captions from timing sidecars for Mark 1:1–13 (PR324). Ranged guide clips keep the reviewed Opus packets in a WebM container; the tail extension is now bounded to 0.25 s without reaching the next clip's speech (PR333, PR324). At unavailable pictures and maps, the step's guide words remain visible with a bounded, non-scrolling status card that preserves the reviewed aspect ratio when space allows (PR318, PR321, PR335). This release also carries trusted Mark 1:14–20 placement and the visual-capable client (PR283, PR287), stage notices that do not cover content (PR330), accessible passage button names (PR326), and bounded Saved-snapshot fetches (PR323). The listening harness verifies the exact deterministic WebM remux rather than expecting the original Ogg container (PR338). See the [release scope and limits](release/changes/3.0.0-alpha.21-summit-candidate.md).
+
+Known gaps: Mark 1:1–13 verses 4, 6, 7, 8 and 10 use automatically derived word timings that are not human-reviewed; the other reviewed verses are unchanged. Images and maps still have no delivered visual bytes. On short landscape stages a raised notice can leave no visible step words until dismissal (PR335). Mark 1:14–20 lacks the gel/timed-turn sidecar and uses the fallback. Timing ranges, zero-match highlighting, playback-clock mapping, reserved-pool growth, saved identity/passage-file handling and blob-cache bounds remain follow-up work. Spanish coverage labels and machine-translation controls are data-layer only, default OFF. Physical-device, audible and whole-corpus acceptance are not claimed. These limits are recorded for follow-up, not represented as passing tests.
+
+## 3.0.0-alpha.20 — Text-first word meanings (2026-10-29)
+
+In text-first or no-recording use, Continue now shows the term's definition on the same step before moving on. The term instruction no longer disappears when recordings are removed for offline Text-only use. The English verified-source headword labels are improved and the Spanish baseline labels are kept (PR265). This release also carries the server-side visual-original fetch-and-store already on main (PR284): it is custody-only, the decoder is unavailable, and no image or map is shown or delivered. See the [release scope and limits](release/changes/3.0.0-alpha.20-term-text-first.md).
+
+Known gaps: Spanish localization labels are still a known gap. Resource (image and map) delivery is not part of this release. The hosted browser term-flow proof passed on DEV at source merge a82ec1a (PR265); physical-device, audible and whole-corpus acceptance are not part of this release.
+
+## 3.0.0-alpha.19 — Whole-book saving containment (2026-10-27)
+
+Whole-book saving is temporarily unavailable in the updated client while its executable Saved-snapshot restoration boundary is corrected. Per-passage saving remains available. Alpha18 originally shipped whole-book save/resume as recorded below; this subsequent containment does not rewrite that release history. Already-loaded old clients and workers are a separate update-lifecycle limitation; the client guard alone does not disable their book loop.
+
+The worker now refuses to replace a verified executable Saved snapshot with a base or snapshot-less save (PR277). See the [release scope and limits](release/changes/3.0.0-alpha.19-wholebook-containment.md). First saves without a prior executable Saved snapshot are outside this guard; old offline workers must update; already-replaced snapshots are not recovered; and a rejected old-client save can leave an unreferenced `-repair` artifact cache, a known storage overhead with a follow-up queued.
+
+Verified Saved approved audio now plays offline; canonical refusals fail closed (PR279). Known PR279 limits: 501/505/52x/530 responses can retire Saved instead of being treated as transient; a pause during activation can leave the passage unsaved until another Save succeeds; offline approved audio needs verified core files; and each audio Save downloads the audio twice.
+
+## 3.0.0-alpha.18 — Luke, passage controls and downloads (2026-10-26)
+
+Adds Luke text in English and Spanish beside Mark, with publisher audio admitted for Luke 1:1–4. The session bar identifies the passage, disables Replay without playable audio, and provides a book control for passage selection. Downloads offer a no-video package, stable accessible package names, size previews and resumable whole-book saving. Executable preparation uses a verified cache that falls back to preparation on a cache miss.
+
+Includes the client-flow, shell and compiler-graph acceptance proofs already merged on DEV. See the [release scope and limits](release/changes/3.0.0-alpha.18-existing-dev.md). This metadata preparation does not establish a new environment deployment, all-passage audio coverage, full QA matrix or physical-device acceptance. Exact-candidate review, checks and DEV → staging → production proofs remain required.
+
 ## 3.0.0-alpha.17 — MCP connector compatibility (2026-10-15)
 
 Legacy MCP initialization negotiates the supported protocol version. Unused OAuth discovery returns explicit 404 responses instead of app HTML. Origin restrictions and tool authority remain unchanged.

@@ -1,0 +1,91 @@
+// Page-turn / highlight timing for a Scripture passage, from the reviewed word sidecar (fia-word-transcript@1).
+// The sidecar is the single canonical timing source (captain, Nov 4 2026). Its top-level `words` are in the delivery file's
+// media seconds, so they already include the passage's offset inside the file; `range` (playbackRange) only trims the words
+// to the passage, and `mapping` (timing.mapping) converts the delivery clock to the clock the player reports to the screens.
+// The result has the shape AlignedReading already consumes (schemaVersion 2: verses[].words[{from,to,start,end}]), so
+// alignmentPosition / alignedSegments / the data-align-word spans and scroll-follow are reused unchanged.
+// Only a missing input returns null. Below the match floors the reading is still timed from whatever anchors the
+// sidecar gives (captain, 2026-11-09: highlight the closest match, never refuse for an imperfect alignment); the result then
+// carries timing:'approximate' so tests and audits can tell, while the screen looks the same. Above the floors, a reading
+// whose word-timed verses kept a matched word the playback-range clamp moved is timing:'clamped'; otherwise 'exact'.
+const norm = s => s.toLowerCase().normalize('NFKD').replace(/[^\p{L}\p{N}]/gu, '');
+const TOKEN = /[\p{L}\p{N}]+(?:[’'\-][\p{L}\p{N}]+)*/gu;
+export const MIN_SPOKEN_MATCH = 0.7, MIN_VERSE_MATCH = 0.6;
+/** Longest-common-subsequence match of displayed words to spoken words; returns [[displayIndex, spokenIndex], ...]. */
+function lcs(a, b) {
+  const n = a.length, m = b.length, w = m + 1, t = new Uint16Array((n + 1) * w);
+  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--)
+    t[i * w + j] = a[i] === b[j] ? t[(i + 1) * w + j + 1] + 1 : Math.max(t[(i + 1) * w + j], t[i * w + j + 1]);
+  const pairs = []; let i = 0, j = 0;
+  while (i < n && j < m) {
+    if (a[i] === b[j]) { pairs.push([i++, j++]); } else if (t[(i + 1) * w + j] >= t[i * w + j + 1]) i++; else j++;
+  }
+  return pairs;
+}
+/**
+ * verses: [{text}] as displayed. sidecar: validated transcript. range: {startSeconds,endSeconds}|null. mapping: {scale,offsetSeconds}|null.
+ * Returns an alignment for AlignedReading, or null only without verses or sidecar words. A sidecar may time only some
+ * verses (the reviewed Berean one omits five of Mark 1:1-13): a verse whose words are matched is word-timed; a verse the
+ * sidecar does not carry is verse-timed, placed in the silence between its timed neighbours (split by text length), so the
+ * page still turns on time. Below the spoken-match floor, or when no verse reaches the verse floor, the same rule still
+ * runs on the LCS anchors there are (every verse verse-timed across the spoken span when there are none) and the result
+ * is marked timing:'approximate' instead of being refused. Otherwise, when a matched word in a word-timed verse had its start
+ * or end moved by the range clamp (a word the 250 ms slack retained across the playback boundary), the result is marked
+ * timing:'clamped'; 'exact' means every matched word kept its sidecar times. 'approximate' wins over 'clamped'. The tier
+ * names the evidence only: the spans, and so the screen, are the same at every tier (Codex P2 #2 on #365).
+ */
+export function alignmentFromSidecar(verses, sidecar, { range = null, mapping = null } = {}) {
+  if (!Array.isArray(verses) || !verses.length || !Array.isArray(sidecar?.words) || !sidecar.words.length) return null;
+  const slack = 250;
+  const spoken = sidecar.words.filter(w => !range || w.startMs >= range.startSeconds * 1000 - slack && w.endMs <= range.endSeconds * 1000 + slack);
+  const shown = [];
+  verses.forEach((verse, v) => { for (const m of String(verse.text ?? '').matchAll(TOKEN)) shown.push({ v, from: m.index, to: m.index + m[0].length, key: norm(m[0]) }); });
+  if (!spoken.length || !shown.length) return null;
+  const pairs = lcs(shown.map(s => s.key), spoken.map(s => norm(s.text)));
+  const belowSpokenFloor = pairs.length < MIN_SPOKEN_MATCH * spoken.length;
+  const hit = shown.map(() => null); for (const [i, j] of pairs) hit[i] = spoken[j];
+  const clock = ms => { const s = ms / 1000; return mapping ? (s - mapping.offsetSeconds) / mapping.scale : s; };
+  // A matched word the 250 ms slack retains may cross the playback boundary; its time is clamped into the range (the file's
+  // 0…durationMs without one) before anything is allocated from it, so no run starts after playback ends or inverts
+  // (Codex P2 on #354).
+  const lo = range ? range.startSeconds * 1000 : 0, hi = range ? range.endSeconds * 1000 : sidecar.durationMs, inRange = ms => Math.min(hi, Math.max(lo, ms));
+  const per = verses.map((verse, v) => {
+    const own = shown.map((s, i) => [s, i]).filter(([s]) => s.v === v), matched = own.filter(([, i]) => hit[i]);
+    return { own, timed: own.length > 0 && matched.length >= MIN_VERSE_MATCH * own.length };
+  });
+  const out = verses.map(() => ({ words: [], highlightMode: 'verse', reason: 'Not carried by the word sidecar; scrolled by verse.' }));
+  let clamped = false;
+  per.forEach((p, v) => {
+    if (!p.timed) return;
+    if (p.own.some(([, i]) => hit[i] && (inRange(hit[i].startMs) !== hit[i].startMs || inRange(hit[i].endMs) !== hit[i].endMs))) clamped = true;
+    const starts = p.own.map(([, i]) => hit[i] ? inRange(hit[i].startMs) : null), ends = p.own.map(([, i]) => hit[i] ? inRange(hit[i].endMs) : null);
+    // Words the recording did not say (or said differently) share the gap between their matched neighbours, by length.
+    for (let a = 0; a < starts.length;) {
+      if (starts[a] !== null) { a++; continue; }
+      let b = a; while (b < starts.length && starts[b] === null) b++;
+      const first = starts.find(x => x !== null), last = [...ends].reverse().find(x => x !== null);
+      const from = a > 0 ? ends[a - 1] : first, to = b < starts.length ? starts[b] : last;
+      const weights = p.own.slice(a, b).map(([s]) => s.to - s.from), total = weights.reduce((x, y) => x + y, 0) || 1;
+      let at = from; for (let x = a; x < b; x++) { const next = at + (Math.max(to, from) - from) * weights[x - a] / total; starts[x] = Math.round(at); ends[x] = Math.round(next); at = next; }
+      a = b;
+    }
+    out[v] = { highlightMode: 'word', words: p.own.map(([s], k) => ({ from: s.from, to: s.to, start: clock(starts[k]), end: clock(Math.max(ends[k], starts[k])) })) };
+    out[v].start = out[v].words[0].start; out[v].end = out[v].words.at(-1).end;
+  });
+  // Verse-timed verses take the silence around them. Runs of them split the gap by text length. A run at either edge takes
+  // the playback range's boundary exactly (the file's 0…durationMs when there is no range), never the first or last spoken
+  // word: when the only anchor is in a later verse and the unmatched speech follows it, the first spoken word IS that
+  // verse's start and the verses before it would get a zero-length span alignmentPosition never returns; and a retained
+  // word in the 250 ms slack outside the range must not push an unmatched run past the end of playback (Codex P2 on #354).
+  const edge = { start: clock(lo), end: clock(hi) };
+  for (let v = 0; v < out.length;) {
+    if (per[v].timed) { v++; continue; }
+    let w = v; while (w < out.length && !per[w].timed) w++;
+    const from = v > 0 ? out[v - 1].end : edge.start, to = w < out.length ? out[w].start : edge.end;
+    const weights = verses.slice(v, w).map(x => String(x.text ?? '').length || 1), total = weights.reduce((x, y) => x + y, 0);
+    let at = from; for (let x = v; x < w; x++) { const next = at + (Math.max(to, from) - from) * weights[x - v] / total; out[x].start = at; out[x].end = next; at = next; }
+    v = w;
+  }
+  const timing = belowSpokenFloor || !per.some(p => p.timed) ? 'approximate' : clamped ? 'clamped' : 'exact';
+  return { schemaVersion: 2, clockDomain: 'delivery-media-seconds', source: 'sidecar', timing, duration: clock(sidecar.durationMs), verses: out };
+}

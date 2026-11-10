@@ -65,7 +65,7 @@ export function createExecutionTransport({fetch:fetchArtifact=globalThis.fetch}=
   context.signal?.throwIfAborted();
   if(bytes.byteLength!==delivery.bytes||await hash(bytes)!==delivery.sha256)throw Error('The bound narration audio could not be verified.');
   context.signal?.throwIfAborted();
-  return{bytes,mime:delivery.mime,playbackRange:value.playbackRange};
+  return{bytes,mime:delivery.mime,playbackRange:value.playbackRange,audioSha256:delivery.sha256};
  };
  transport.prepareOriginal=async(reference,context={})=>{
   const value=await readBoundJSON(reference,context);
