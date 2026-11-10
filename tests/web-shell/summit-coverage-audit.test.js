@@ -41,7 +41,9 @@ test('all published segmentation remains auditable without claiming missing cont
   const root=fileURLToPath(new URL('../..',import.meta.url));
   const audit=auditCorpus(root);
   assert.equal(audit.totalPacks,330);
-  assert.equal(audit.totalActivities,29097);
+  // 29097 before release/changes/2026-11-09-spanish-luke-honest-text.md: 165 Spanish packs read two editions, not three
+  // (-165), and four English Luke header leaks compile to coverage, not steps (-4).
+  assert.equal(audit.totalActivities,28928);
   assert.deepEqual(Object.fromEntries(Object.entries(audit.groups).map(([key,g])=>[key,g.packs])),
     {'eng.MRK':68,'eng.LUK':97,'spa.MRK':68,'spa.LUK':97});
   assert.equal(audit.packs.reduce((n,p)=>n+p.unknownReferences.length,0),0);
