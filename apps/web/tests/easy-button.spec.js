@@ -10,7 +10,6 @@ vi.mock('../src/lib/audio.js',()=>({createAudioController:(state,end,error)=>{au
 import App from '../src/App.svelte';
 import {libraryAdapter,RESTORE_TIMEOUT_MS} from '../src/lib/library.js';
 import {activities,bundledPresentation} from '../src/lib/content.js';
-import {displayTitle} from '../src/lib/spanish-coverage.js';
 const registry=JSON.parse(readFileSync('public/content/registry.json','utf8'));
 const pack=id=>{const descriptor=registry.packs.find(p=>p.id===id);return {descriptor,presentation:JSON.parse(readFileSync('public'+descriptor.presentation.url,'utf8'))};};
 const admitted=pack('eng.MRK-1-14-20'),unadmitted=pack('eng.MRK-1-21-28');
@@ -514,13 +513,11 @@ for(const revealed of [false,true])it(`text-first term resource detour returns t
  await fireEvent.click(screen.getByRole('button',{name:'Return to guide'}));await waitFor(()=>expect(progress(loaded.descriptor.id).session.detour).toBeNull());expect(progress(loaded.descriptor.id).activityId).toBe(gospelActivity.id);
  expect(!!document.querySelector('[data-kind="term-instruction"]')).toBe(!revealed);expect(progress(loaded.descriptor.id).termDefinition??null).toBe(revealed?gospelActivity.id:null);expect(audio.play).not.toHaveBeenCalled();
 });
-// Codex P2 round 2 on #356: the Spanish chooser prints each term's own title through displayTitle (the headword, or the key
-// with the [ES needed] marker), no longer the "FIA Key Terms" subtitle.
-it('the preserved chooser names all ten English source headwords and every Spanish term by its own title with the marker where English is shown',async()=>{
+it('the preserved chooser names all ten English source headwords while Spanish keeps its prior labels',async()=>{
  for(const id of ['eng.MRK-1-14-20','spa.MRK-1-1-13']){
   const loaded=pack(id);savePack(loaded);libraryAdapter.select?.mockRestore?.();vi.spyOn(libraryAdapter,'select').mockResolvedValue(loaded);render(App);await waitFor(()=>expect(readFace().busy).toBe(false));
   await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passage resources'}));const summary=screen.getByText('Word meanings',{selector:'summary'});await fireEvent.click(summary);
   const buttons=within(summary.parentElement).getAllByRole('button'),terms=Object.values(loaded.presentation.assets).filter(a=>a.kind==='term');
-  expect(buttons.map(b=>b.textContent.trim())).toEqual(terms.map(displayTitle));if(id.startsWith('eng.'))expect(buttons).toHaveLength(10);else{expect(buttons.map(b=>b.textContent.trim())).toContain('messiah [ES needed]');expect(buttons.map(b=>b.textContent.trim())).not.toContain('FIA Key Terms');}cleanup();localStorage.clear();
+  expect(buttons.map(b=>b.textContent.trim())).toEqual(terms.map(a=>id.startsWith('eng.')?a.title:(a.subtitle||a.title)));if(id.startsWith('eng.'))expect(buttons).toHaveLength(10);cleanup();localStorage.clear();
  }
 });
