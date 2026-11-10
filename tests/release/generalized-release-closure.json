@@ -946,7 +946,7 @@
     },
     {
       "path": "apps/web/public/sw.js",
-      "sha256": "8b27e2fafebd85d4a8df13b057ff980eac2f7c528c3285a27cc13abcd8e2f72d"
+      "sha256": "aa80bcc13e84af7451777d7ac42c0d9d84c2fe0b6b3ed67dd6c51d716e4094b0"
     },
     {
       "path": "apps/web/src/App.svelte",
@@ -1161,7 +1161,7 @@
     },
     {
       "path": "apps/web/tests/offline.test.js",
-      "sha256": "03203d57f850e637f835b4ccd4410dba2418763cc8ca8fd3104e65b4a590957a"
+      "sha256": "2b6dd0eeaf8ef83d8bd14b53ba9d2cae8f248da3f02e3e469f956305054e0fac"
     },
     {
       "path": "apps/web/tests/preparation-app.spec.js",
@@ -1445,7 +1445,7 @@
     },
     {
       "path": "scripts/finalize-build.mjs",
-      "sha256": "f9c5064dc5efe1ca153f4ba429a0079a7550fa4218480ca2b2bf634aae470e79"
+      "sha256": "943f451ac777e2cf9b88a52c4e316b17dc1c99a06d466c26084ae2ac1f35d6ba"
     },
     {
       "path": "scripts/live-listening/README.md",
@@ -2545,7 +2545,7 @@
     },
     {
       "path": "tests/web-shell/download-build.test.js",
-      "sha256": "5754f10fbf183b7c196ea2d7bd463944f412edbfee127e42707ff69adfee19b9"
+      "sha256": "7c67405756414f7bc5a4f528d235df5668a96b4e5f00aa8db6c34b652ce66019"
     },
     {
       "path": "tests/web-shell/recorded-guide-publication.test.js",
@@ -3155,8 +3155,8 @@
     },
     {
       "path": "apps/web/tests/continuous-reading.spec.js",
-      "sha256": "28fd3161a55f8942c6f777a00eff34517a6824d7fc0d1487e88f4f4b3f79adb1",
-      "bytes": 14772
+      "sha256": "0b05f5f961f7b7dcd9e21b4418b2e69ce96c5b582fb99b9f9e0308a63400d920",
+      "bytes": 15145
     },
     {
       "path": "apps/web/tests/continuous-reading.test.js",
@@ -3277,6 +3277,30 @@
       "path": "release/changes/3.0.1-highlight-only.md",
       "sha256": "eb4c6dc37ef52a7230dc17ccafac6dc9a69616a094f4eb0b0b309108bec0462d",
       "bytes": 2034
+    },
+    {
+      "path": "release/changes/fia-welcome-entry.md",
+      "sha256": "fcddd54bdc5bfcae7b7e02a5b71f9f38027a527fea4e74bce8eb273b404a185c"
+    },
+    {
+      "path": "apps/web/public/welcome/index.html",
+      "sha256": "f8a04b2d30a93b8e3d15f052ca4c7b4f421e509da938f80d2f3374f8af363771"
+    },
+    {
+      "path": "apps/web/public/welcome/tokens.css",
+      "sha256": "01b66a2e27d709fe50ae2f5d8f3466bdb7f65e799ab4120d052182103dd0e71e"
+    },
+    {
+      "path": "apps/web/public/welcome/assets/Figtree.woff2",
+      "sha256": "8330490a01c60c196eae00b823de8102275aaa5862e7b76a7af21b8745338928"
+    },
+    {
+      "path": "apps/web/public/welcome/assets/fia-lockup.svg",
+      "sha256": "e7b228d742cb1260a0c0aedecc69e21de7afbd713dad9419ac42b2e5694e7716"
+    },
+    {
+      "path": "apps/web/public/welcome/assets/resource-portrait.jpg",
+      "sha256": "325b182b392e7b125f440ce03386097e377b7773a3d5fca4a8208f1f34ce364a"
     }
   ],
   "generatedFiles": [
@@ -5802,8 +5826,8 @@
     },
     {
       "path": "sw.js",
-      "sha256": "f24d6575a0e779a92f6a9ca6ee173a43a548756905b6d939ec1cd3268e1dd242",
-      "bytes": 103428
+      "sha256": "7a4eb83c9fb5ee03e479f809305b16e0090bfc26908297f4328b0d53eb5ddcff",
+      "bytes": 103439
     },
     {
       "path": "content/packs/eng.LUK-1-1-4/d660c0bba61889f4037b1cc28c8be44200479dbd7e13a551e57ffa222e72e0e1.json",
@@ -9599,6 +9623,31 @@
       "path": "content/source-guides/fe64e4688d1f6e7450a35f0c61b3d360858ab4fcc6186676ca1bd5beccb66474.json",
       "sha256": "fe64e4688d1f6e7450a35f0c61b3d360858ab4fcc6186676ca1bd5beccb66474",
       "bytes": 48675
+    },
+    {
+      "path": "welcome/assets/fia-lockup.svg",
+      "sha256": "e7b228d742cb1260a0c0aedecc69e21de7afbd713dad9419ac42b2e5694e7716",
+      "bytes": 1911
+    },
+    {
+      "path": "welcome/assets/Figtree.woff2",
+      "sha256": "8330490a01c60c196eae00b823de8102275aaa5862e7b76a7af21b8745338928",
+      "bytes": 20184
+    },
+    {
+      "path": "welcome/assets/resource-portrait.jpg",
+      "sha256": "325b182b392e7b125f440ce03386097e377b7773a3d5fca4a8208f1f34ce364a",
+      "bytes": 33931
+    },
+    {
+      "path": "welcome/index.html",
+      "sha256": "f8a04b2d30a93b8e3d15f052ca4c7b4f421e509da938f80d2f3374f8af363771",
+      "bytes": 1755
+    },
+    {
+      "path": "welcome/tokens.css",
+      "sha256": "01b66a2e27d709fe50ae2f5d8f3466bdb7f65e799ab4120d052182103dd0e71e",
+      "bytes": 7621
     }
   ],
   "evidenceLimits": [

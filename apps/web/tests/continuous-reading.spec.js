@@ -122,8 +122,12 @@ it('synthetic paused native seek changes row custody while preserving pause and 
  await waitFor(()=>expect(document.querySelector('.guide-primary').hasAttribute('aria-busy')).toBe(false),{timeout:2000});await fireEvent.click(screen.getByRole('button',{name:'Pause',exact:true}));
  emit(92.8,false);await tick();expect(stored().activityId).toBe('S03-U009');expect(stored().session.status).toBe('paused');expect(audio.play).toHaveBeenCalledTimes(1);expect(audio.resume).toHaveBeenCalledTimes(1);
 });
-it('synthetic integrated S04 screen keeps one session with John/Satan highlights and an explicitly untimed intro',async()=>{
- await begin('S04-U004');const stops=audio.stop.mock.calls.length;emit(23.5);await tick();expect(document.querySelectorAll('[data-align-word]')).toHaveLength(0);
+it('synthetic integrated S04 screen keeps one session with John/Satan highlights and clamped intro highlighting',async()=>{
+ await begin('S04-U004');const stops=audio.stop.mock.calls.length;emit(23.5);await tick();
+ // The November 9 highlight-always policy accepts this source-bound intro's clamped timing.
+ await waitFor(()=>expect(document.querySelector('[data-timing="clamped"]')).not.toBeNull());
+ await waitFor(()=>expect(document.querySelectorAll('[data-align-word]')).toHaveLength(6));
+ await waitFor(()=>expect([...document.querySelectorAll('[data-align-word][data-active="true"]')].map(n=>n.getAttribute('data-align-word'))).toEqual(['0-1','0-2']));
  for(const [id,time]of [['S04-U005',26.5],['S04-U010',35.55]]){emit(time);await tick();await waitFor(()=>expect(JSON.parse(localStorage.getItem(`fia-v3-progress@1:${bundledPack.id}`)).activityId).toBe(id));await waitFor(()=>expect(document.querySelectorAll('[data-align-word][data-active="true"]').length).toBeGreaterThan(0));}
  expect(audio.play).toHaveBeenCalledTimes(1);expect(audio.stop).toHaveBeenCalledTimes(stops);expect(audio.pause).not.toHaveBeenCalled();expect(audio.play.mock.calls[0][3]).toEqual({startSeconds:23.37,endSeconds:38.09});
 });
