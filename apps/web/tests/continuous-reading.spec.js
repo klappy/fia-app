@@ -240,3 +240,20 @@ for(const id of ['S01-U008','S04-U012','S05-U002'])it(`synthetic integrated whol
  await waitFor(()=>expect(fetch.mock.calls.some(([url])=>String(url).includes(`/transcripts/${f.sha256}`))).toBe(true));await new Promise(r=>setTimeout(r,0));emit((map.words[0].startMs+map.words[0].endMs)/2000);await tick();await waitFor(()=>expect(document.querySelectorAll('[data-align-word][data-active="true"]').length).toBeGreaterThan(0));expect(audio.play).toHaveBeenCalledTimes(1);
  if(a.completion==='confirm'){audio.state({src:null,playing:false,elapsed:0,duration:0});audio.end();await tick();const saved=JSON.parse(localStorage.getItem(`fia-v3-progress@1:${bundledPack.id}`));expect(saved.activityId).toBe(id);expect(saved.session.status).toBe('waiting');}
 });
+
+// T2 verify P1 (2026-11-09): the highlight followed only the run's first row, because the clip's voiced reading
+// (playback.assetId, AlignedReading) was set once per run and never turned with the page. Each step must highlight.
+const activeWords=()=>document.querySelectorAll('[data-align-word][data-active="true"]').length;
+async function sidecarFor(path){const f=files.find(f=>f.path===path),sc=JSON.parse(readFileSync(`public/transcripts/${f.sha256}.words.json`));await waitFor(()=>expect(fetch.mock.calls.some(([url])=>String(url).includes(`/transcripts/${f.sha256}`))).toBe(true));await new Promise(r=>setTimeout(r,0));return sc;}
+const midWord=(sc,id,i=0)=>(sc.activities[id].words[i].startMs+sc.activities[id].words[i].endMs)/2000;
+for(const [first,next,path]of [['S01-U001','S01-U002','/audio/source/S01-U002.mp3'],['S02-U002','S02-U003','/audio/source/S02-U003.mp3']])it(`run P1: the highlight follows the page the clock turns to (${first} → ${next})`,async()=>{
+ await begin(first);const sc=await sidecarFor(path);
+ emit(midWord(sc,first));await tick();await waitFor(()=>expect(activeWords()).toBeGreaterThan(0));
+ emit(midWord(sc,next));await tick();await waitFor(()=>expect(stored().activityId).toBe(next));
+ await waitFor(()=>expect(activeWords()).toBeGreaterThan(0));expect(audio.play).toHaveBeenCalledTimes(1);
+});
+for(const [label,act]of [['Next',()=>fireEvent.click(screen.getByRole('button',{name:'Skip to next activity',exact:true}))],['Overview',()=>overviewJump('Setting the Stage','S02-U003')]])it(`run P1: the highlight follows a ${label} jump inside the run`,async()=>{
+ await begin('S02-U002');await waitFor(()=>expect(document.querySelector('.guide-primary').hasAttribute('aria-busy')).toBe(false),{timeout:2000});
+ const sc=await sidecarFor('/audio/source/S02-U003.mp3');await act();await tick();expect(stored().activityId).toBe('S02-U003');
+ emit(midWord(sc,'S02-U003'));await tick();await waitFor(()=>expect(activeWords()).toBeGreaterThan(0));expect(audio.play).toHaveBeenCalledTimes(1);
+});

@@ -187,6 +187,9 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  function playClip(voices,...args){viaCtl=false;clipSrc=args[1];clipVoices=voices;while(args.length&&(args.at(-1)===undefined||args.at(-1)===null))args.pop();audio.play(...args);clipPending=!!audio.active;}
  // An activity's own narration voices its Scripture passage, or else the guide text it belongs to.
  function narrationVoice(id){const a=activities.find(item=>item.id===id);return a?.kind==='scripture'?a.assetId:a?.readingGroupId||a?.id;}
+ // A run voices one row at a time: when the page turns inside the running session, the reading the clip voices
+ // turns with it, so AlignedReading (playback.assetId===asset.id) keeps its highlight on every step, not only the first.
+ function voiceRow(id){const voice=narrationVoice(id);ctlVoices=voice;if(!viaCtl||!clipSrc||audio?.src!==clipSrc)return;clipVoices=voice;if(audioState.assetId)audioState={...audioState,assetId:voice};}
  // Verifying lasts until the answers arrive; nothing is guessed meanwhile (k0006). Each check is
  // bounded where it is made: a service-worker request ends by the 10 s ready and 45 s answer timeouts
  // (lib/library.js), and the launch restore by RESTORE_TIMEOUT_MS, after which R1's fallback says the
@@ -242,7 +245,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
    }
   }else{dispatch({type:'SEEK_ACTIVITY',activityId:nextId});if(playing)dispatch({type:'PLAY'});}
   if(wasPaused)session={...session,status:'paused'};
-  audioContext={type,id:nextId};persist();return true;
+  audioContext={type,id:nextId};voiceRow(nextId);persist();return true;
  }
  // A pause cue on a visual step is spoken only when nothing else plays there (playActivity): a run stops before such a step.
  function describedPauseCue(a){
@@ -260,7 +263,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
   const type=audioContext.type,wasPaused=session.status==='paused',playing=session.status==='playing';
   visualHeard=null;dispatch(event);notice='';authorizeVisual();
   if(wasPaused)session={...session,status:'paused'};else if(playing)dispatch({type:'PLAY'});
-  audioContext={type,id:target};persist();return true;
+  audioContext={type,id:target};voiceRow(target);persist();return true;
  }
  let ctlKey=null;
  async function loadSidecar(key,sha){if(!key||!sha||sidecars.has(key))return;sidecars.set(key,null);try{const r=await fetch('/transcripts/'+sha+'.words.json');if(!r.ok)throw Error('none');const t=validateTranscript(await r.json());if(t.audioSha256!==sha)throw Error('sha');sidecars.set(key,t);sidecarTick++;}catch{sidecars.delete(key);}}
