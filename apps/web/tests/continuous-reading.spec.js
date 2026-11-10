@@ -5,7 +5,7 @@ import {render,screen,fireEvent,cleanup,waitFor,within} from '@testing-library/s
 import {readFileSync} from 'node:fs';
 import {webcrypto} from 'node:crypto';
 import {tick} from 'svelte';
-const audio=vi.hoisted(()=>({play:vi.fn(),pause:vi.fn(),resume:vi.fn(),stop:vi.fn(),seek:vi.fn(),sync:vi.fn(),active:false}));
+const audio=vi.hoisted(()=>({play:vi.fn(),pause:vi.fn(),resume:vi.fn(),stop:vi.fn(),seek:vi.fn(),sync:vi.fn(),setRate:vi.fn(),active:false}));
 vi.mock('../src/lib/audio.js',()=>({createAudioController:(state,end)=>{audio.state=state;audio.end=end;return audio;}}));
 import App from '../src/App.svelte';
 import {libraryAdapter,bundledPack} from '../src/lib/library.js';
@@ -256,4 +256,24 @@ for(const [label,act]of [['Next',()=>fireEvent.click(screen.getByRole('button',{
  await begin('S02-U002');await waitFor(()=>expect(document.querySelector('.guide-primary').hasAttribute('aria-busy')).toBe(false),{timeout:2000});
  const sc=await sidecarFor('/audio/source/S02-U003.mp3');await act();await tick();expect(stored().activityId).toBe('S02-U003');
  emit(midWord(sc,'S02-U003'));await tick();await waitFor(()=>expect(activeWords()).toBeGreaterThan(0));expect(audio.play).toHaveBeenCalledTimes(1);
+});
+
+// #361 review: one play() voices a whole run, so a pace change must reach the sounding player at once.
+it('run review: a Playback speed change mid-run applies to the active player, not only at the next play()',async()=>{
+ await begin('S02-U002');emit(25.9);await tick();expect(stored().activityId).toBe('S02-U003');
+ await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Settings',exact:true}));
+ await fireEvent.change(screen.getByRole('combobox',{name:/Playback speed/}),{target:{value:'1.15'}});
+ expect(audio.setRate).toHaveBeenLastCalledWith(1.15);expect(audio.play).toHaveBeenCalledTimes(1);
+});
+// #361 review: a run plans its pause-cue stops at start; turning on image descriptions mid-run ends the run before the
+// row that now carries a described pause cue (S02-U005), as playActivity would stop there.
+it('run review: turning on image descriptions mid-run ends the run before the pause-cue row',async()=>{
+ await begin('S02-U002');emit(25.9);await tick();expect(stored().activityId).toBe('S02-U003');
+ await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Settings',exact:true}));
+ await fireEvent.click(screen.getByRole('checkbox',{name:/Describe images and maps/}));await fireEvent.click(screen.getByRole('button',{name:'Close',exact:true}));await tick();
+ const before=audio.stop.mock.calls.length;
+ emit(58.3);await tick();expect(stored().activityId).toBe('S02-U004');expect(audio.stop).toHaveBeenCalledTimes(before);
+ emit(84.5);await tick();
+ expect(audio.stop.mock.calls.length).toBeGreaterThan(before);
+ await waitFor(()=>expect(stored().activityId).toBe('S02-U005'));expect(stored().session.completed).toEqual(['S02-U002','S02-U003','S02-U004']);
 });

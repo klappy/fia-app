@@ -16,13 +16,13 @@ export const REANCHOR_SECONDS = 0.25;
 export function createScriptController({ player, script, transcripts, rate = () => 1, onHighlight = () => {}, onAdvance = () => {}, onSpan = () => {} }) {
   script = [...script];
   const index = new Map(script.map((span, i) => [span.id, i]));
-  let current = null, lastWord = undefined, ended = false, continuous = null, gaps = 'play', seeking = false;
+  let current = null, lastWord = undefined, ended = false, continuous = null, gaps = 'play', seeking = false, stopAt = null;
   const span = id => script[index.get(id)];
   // An activity's own word map wins; a sidecar that carries only top-level `words` (a whole Scripture passage) covers every span of its file.
   const words = s => { const t = transcripts.get(s.fileKey); return t?.activities && Object.hasOwn(t.activities, s.id) ? activityWords(t.activities[s.id], s.range || {startSeconds:s.startMs/1000,endSeconds:s.endMs/1000}) : (t?.words?.length ? t.words : null); };
   function play(id) {
     const s = span(id); if (!s) return false;
-    continuous = null; current = s; lastWord = null; ended = false; onHighlight(s.id, null);
+    continuous = null; stopAt = null; current = s; lastWord = null; ended = false; onHighlight(s.id, null);
     player.play(s.text, s.src, rate(), s.range || { startSeconds: s.startMs / 1000, endSeconds: s.endMs / 1000 }, s.fileKey);
     return true;
   }
@@ -33,7 +33,7 @@ export function createScriptController({ player, script, transcripts, rate = () 
     if (!Array.isArray(spans) || spans.length < 2) return false;
     const first = spans[0], last = spans.at(-1);
     if (!first.src || !first.fileKey || spans.some((s,i) => !s.id || s.src !== first.src || s.fileKey !== first.fileKey || !Number.isFinite(s.range?.startSeconds) || !Number.isFinite(s.range?.endSeconds) || s.range.startSeconds >= s.range.endSeconds || i && s.range.startSeconds < spans[i-1].range.endSeconds)) return false;
-    spans.forEach(register); continuous = [...spans]; gaps = mode === 'seek' ? 'seek' : 'play'; current = first; lastWord = null; ended = false;
+    spans.forEach(register); continuous = [...spans]; stopAt = null; gaps = mode === 'seek' ? 'seek' : 'play'; current = first; lastWord = null; ended = false;
     onHighlight(first.id, null);
     player.play(first.text, first.src, rate(), {startSeconds:first.range.startSeconds,endSeconds:last.range.endSeconds}, first.fileKey);
     return true;
@@ -66,6 +66,7 @@ export function createScriptController({ player, script, transcripts, rate = () 
         }
       }
       if (next !== current && !cross(next)) return;
+      if (stopAt !== null && current === continuous.at(-1) && state.elapsed >= stopAt) { stopAt = null; player.stop(); onPlayerEnd(); return; }
     }
     const w = words(current); if (!w || !Number.isFinite(state.elapsed)) return;
     const word = wordIndexAt(w, Math.round(state.elapsed * 1000));
@@ -94,6 +95,15 @@ export function createScriptController({ player, script, transcripts, rate = () 
     return true;
   }
   const inRun = id => !!continuous && !ended && continuous.some(s => s.id === id);
+  // Replanning a running session: the run now ends before `id` (a stop the app's rules added mid-run). The span before
+  // it becomes the last one; at its authored end the player is stopped and the run ends as at a planned stop.
+  function endBefore(id) {
+    if (!continuous || !current || ended) return false;
+    const k = continuous.findIndex(s => s.id === id);
+    if (k <= continuous.indexOf(current)) return false;
+    continuous = continuous.slice(0, k); stopAt = continuous.at(-1).range.endSeconds;
+    return true;
+  }
   function seekWord(id, wordIndex) {
     const s = span(id), w = s && words(s), ms = w ? seekMsForWord(w, wordIndex) : null;
     if (ms === null) return false;
@@ -102,5 +112,5 @@ export function createScriptController({ player, script, transcripts, rate = () 
   }
   // The script grows as the stage resolves each file's bytes/blob; an id already present is replaced in place (same position).
   function register(s) { const i = index.get(s.id); if (i === undefined) { index.set(s.id, script.length); script.push(s); } else script[i] = s; return s.id; }
-  return { play, playContinuous, playRun, jumpTo, inRun, register, seekWord, onPlayerState, onPlayerEnd, stop() { continuous = null; current = null; player.stop(); }, get currentRange() { return current?.range || (current && {startSeconds:current.startMs/1000,endSeconds:current.endMs/1000}); }, get current() { return current?.id ?? null; }, get run() { return continuous && !ended ? continuous.map(s => s.id) : null; }, next: id => script[index.get(id) + 1]?.id ?? null };
+  return { play, playContinuous, playRun, jumpTo, inRun, endBefore, register, seekWord, onPlayerState, onPlayerEnd, stop() { continuous = null; current = null; player.stop(); }, get currentRange() { return current?.range || (current && {startSeconds:current.startMs/1000,endSeconds:current.endMs/1000}); }, get current() { return current?.id ?? null; }, get run() { return continuous && !ended ? continuous.map(s => s.id) : null; }, next: id => script[index.get(id) + 1]?.id ?? null };
 }

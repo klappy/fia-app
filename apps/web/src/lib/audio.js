@@ -302,5 +302,11 @@ export function createAudioController(onState, onEnd, onError, { allowSpeechFall
     }
     return true;
   }
-  return { play, pause, resume, stop, unlock, reserve, retain, evict, seek, sync, get src() { return source; }, get poolSize() { return pool.size; }, get active() { return !!audio || !!utterance; }, get playing() { return speaking; } };
+  // A pace change applies to the sounding element at once: one play() may voice a whole run of pages (#361 review).
+  function setRate(rate) {
+    if (!audio || !Number.isFinite(rate) || rate <= 0) return false;
+    try { audio.playbackRate = rate; } catch { return false; }
+    return true;
+  }
+  return { play, pause, resume, stop, unlock, reserve, retain, evict, seek, sync, setRate, get src() { return source; }, get poolSize() { return pool.size; }, get active() { return !!audio || !!utterance; }, get playing() { return speaking; } };
 }

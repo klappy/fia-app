@@ -501,6 +501,9 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
    if(!session.preferences.describeImages&&audioContext?.type==='description'&&audioContext.id===focal.id)cancel();
    // Enabling a preference does not grant a new playback action.
   }
+  // A run plans its stops (describedPauseCue) when it starts; a preference that adds a pause cue mid-run ends the run
+  // before that row, so the row then plays on its own as playActivity would (#361 review).
+  if(event.type==='SET_PREFERENCE'&&['describeImages','autoplayVideo'].includes(event.key)&&viaCtl&&ctl.run){const run=ctl.run,from=run.indexOf(ctl.current),stop=run.slice(from+1).find(id=>{const a=activities.find(x=>x.id===id);return a&&describedPauseCue(a);});if(stop)ctl.endBefore(stop);}
   if(queued&&!session.queued&&session.detour===queued){timer=setTimeout(()=>{if(session.detour===queued&&!muted)describe(queued);},350);}
  }
  function resolveAsset(id){if(assets[id])return id;return (activity.relatedAssetIds||[]).find(key=>assets[key]?.kind===id)||(focal?.kind===id?focal.id:null)||(id==='scripture'?defaultScriptureId:Object.values(assets).find(a=>a.kind===id)?.id)||id;}
@@ -790,7 +793,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
     <h3>Listening</h3>
     <label class="preference"><span><strong>Automatic guide narration</strong><small>Listen as you move through the guide. When off, Continue stays in the center, with Play beside it where a recording exists.</small></span><input type="checkbox" checked={!muted} onchange={e=>{muted=!e.currentTarget.checked;revokePlayback();cancel();dispatch({type:'PAUSE'});persist();}}/></label>
     {#each [{key:'readScripture',title:'Automatic Scripture reading',detail:'Read Scripture aloud when a passage opens, independently of guide narration.'},{key:'describeImages',title:'Describe images and maps',detail:'Automatically play available descriptions after the guide instruction. Only available original recordings are used.'}] as pref}<label class="preference"><span><strong>{pref.title}</strong><small>{pref.detail}</small></span><input type="checkbox" checked={session.preferences[pref.key]} onchange={e=>{if(!e.currentTarget.checked&&pref.key==='readScripture'&&activity.kind==='scripture'){cancel();}if(!e.currentTarget.checked&&pref.key==='autoplayVideo'&&videoPlaying){videoOwner.node?.pause();}dispatch({type:'SET_PREFERENCE',key:pref.key,value:e.currentTarget.checked});}}/></label>{/each}
-    <label class="select-row">Playback speed<select bind:value={rate} onchange={()=>persist()}><option value={.85}>Unhurried · 0.85×</option><option value={1}>Natural · 1×</option><option value={1.15}>Quicker · 1.15×</option></select></label>
+    <label class="select-row">Playback speed<select bind:value={rate} onchange={()=>{audio?.setRate?.(rate);persist();}}><option value={.85}>Unhurried · 0.85×</option><option value={1}>Natural · 1×</option><option value={1.15}>Quicker · 1.15×</option></select></label>
     <h3>Media</h3><h4>Video</h4>
     {#if matchingVideo}<button class="secondary full" onclick={()=>{sheet=null;openMatchingVideo();}}><Play size={19}/>Play video: {displayTitle(matchingVideo)}</button>{/if}
     <label class="preference"><span><strong>Automatic video playback</strong><small>Play companion videos as the guide continues.</small></span><input type="checkbox" checked={session.preferences.autoplayVideo} onchange={e=>{if(!e.currentTarget.checked&&videoPlaying)videoOwner.node?.pause();dispatch({type:'SET_PREFERENCE',key:'autoplayVideo',value:e.currentTarget.checked});}}/></label>
