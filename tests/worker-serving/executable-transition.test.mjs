@@ -130,7 +130,7 @@ test('a historical publication, and every forged, unregistered or corrupt row or
    assert.deepEqual(viaMcp,viaHttp.body,label+': HTTP/MCP parity');assert.equal(await s.durable(),before,label+': the read writes nothing');
   };
   await authentic('authentic historical publication');
-  assert.equal((await read(`/v1/packs/${packId}?revision=${prior.revision}`)).status,404,'the exact historical revision is a miss: the base holds no such revision');
+  assert.equal((await read(`/v1/packs/${packId}?revision=${prior.revision}`)).status,503,'the exact historical revision is a miss: the base holds no such revision, answered as a superseded read');
   const status=await read('/v1/presentation-preparations/'+jobId);assert.equal(status.status,409,JSON.stringify(status.body));assert.equal(status.body.status,'blocked','the old job-status read stays denied');
   const unregistered=await sha256('fia-source-to-app/unregistered'),recomputed=await sha256(encode({schema:'fia-executable-presentation-job@1',args:job.args,context:job.context.sha256,policySha256:unregistered,providerSha256:job.providerSha256,recipeRevision:job.recipeRevision}));
   // A registered policy under a recipe it never shipped with is an unregistered build.
@@ -184,7 +184,7 @@ test('an explicit Open under the new policy publishes: new bytes advance the poi
    if(!identical.includes(packId)){
     assert.notEqual(again.body.record.revision,prior.revision,'the approved-audio policy or the @2 recipe changes these bytes');
     assert.equal(canonicalJSONString(after[key]),canonicalJSONString(historical),`${packId}: a different key leaves the historical row in place`);
-    assert.equal((await read(`/v1/packs/${packId}?revision=${prior.revision}`)).status,404,'the exact historical revision is a miss');
+    assert.equal((await read(`/v1/packs/${packId}?revision=${prior.revision}`)).status,503,'the exact historical revision is a miss, answered as a superseded read');
    }else{
     // The same presentation bytes under a newer job: the content key already exists,
     // so the row is replaced (new provenance) and the pointer advances to it.
@@ -221,7 +221,7 @@ test('a recipe release (@1 to @2) never strands eng.MRK-1-14-20: the base is ser
   assert.equal(reopened.status,200,JSON.stringify(reopened.body));assert.equal(reopened.body.status,'ready');
   assert.equal(reopened.body.revision,base.body.revision,'the base record is served, not the @1 publication');
   assert.equal(reopened.body.execution,undefined);assert.deepEqual(reopened.body.preparationDemand,base.body.preparationDemand);
-  const exact=await read(`/v1/packs/${packId}?revision=${stored}`);assert.equal(exact.status,404,'the @1 revision is a cache miss and the base holds no such revision');
+  const exact=await read(`/v1/packs/${packId}?revision=${stored}`);assert.equal(exact.status,503,'the @1 revision is a cache miss and the base holds no such revision, answered as a superseded read');
   // The client, over the same Worker: a launch-time restore opens the base quietly;
   // the explicit Open prepares and opens the @2 publication. A rejection here is what
   // the sheet or the reading screen would show as an error.
@@ -277,7 +277,7 @@ test('a content release that moves today\'s policy strands no released build: {9
    };
    for(const [packId,prior] of Object.entries(published)){
     try{await yields(packId,prior);outcomes.push([packId,prior.build,'authenticated']);}catch(error){outcomes.push([packId,prior.build,error.message.split('\n')[0]]);}
-    assert.equal((await drifted(`/v1/packs/${packId}?revision=${prior.revision}`)).status,404,'the exact historical revision stays denied');
+    assert.equal((await drifted(`/v1/packs/${packId}?revision=${prior.revision}`)).status,503,'the exact historical revision stays denied, answered as a superseded read');
    }
    assert.deepEqual(outcomes,Object.entries(published).map(([packId,prior])=>[packId,prior.build,'authenticated']),`${state}: no released build is stranded by the policy move`);
    // Corrupt retained approved-audio bytes are a cache miss, never a usage gate: the

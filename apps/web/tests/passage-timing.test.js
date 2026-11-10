@@ -74,6 +74,23 @@ test('a matched word kept by the slack but crossing the playback boundary is cla
  for(let i=1;i<3;i++)assert.ok(a.verses[i].start>=a.verses[i-1].end-1e-9,'never inverts');
  assert.deepEqual(alignmentPosition(a,9.95),{verseIndex:1,wordIndex:3});assert.equal(alignmentPosition(a,2.05).verseIndex,0);
 });
+test('a matched word the range clamp moves marks the reading clamped, not exact; the spans are unchanged (Codex P2 #2 on #365)',()=>{
+ const range={startSeconds:0.5,endSeconds:15};
+ const words=[...mk('In the beginning God made',1000),...mk('Then there was light',6000),...mk('And God saw it was',10000)];
+ // "good" starts inside the range and ends 100 ms past its end: the 250 ms slack keeps it, the clamp moves its end to 15 s.
+ const crossing=alignmentFromSidecar(verses,sidecar([...words,{startMs:14800,endMs:15100,text:'good'}]),{range});
+ assert.equal(crossing.timing,'clamped');assert.deepEqual(crossing.verses.map(v=>v.highlightMode),['word','word','word']);
+ assert.equal(crossing.verses[2].words.at(-1).start,14.8);assert.equal(crossing.verses[2].words.at(-1).end,15,'the clamped end is what the screen uses');
+ // The same reading with "good" fully inside the range is untouched: exact, and every other span is identical.
+ const inside=alignmentFromSidecar(verses,sidecar([...words,{startMs:14800,endMs:14950,text:'good'}]),{range});
+ assert.equal(inside.timing,'exact');
+ assert.deepEqual(crossing.verses.slice(0,2),inside.verses.slice(0,2));assert.deepEqual(crossing.verses[2].words.slice(0,-1),inside.verses[2].words.slice(0,-1));
+ // The existing exact case (no range) stays exact; below the floors approximate still wins over clamped.
+ assert.equal(alignmentFromSidecar(verses,sidecar([...mk('In the beginning God made',1000),...mk('Then there was light',6000),...mk('And God saw it was good',10000)])).timing,'exact');
+ // Here "In" starts 200 ms before the range (kept by the slack, clamped) in a word-timed verse, but the passage is under the spoken floor.
+ const low=alignmentFromSidecar(verses,sidecar([{startMs:300,endMs:700,text:'In'},...mk('the beginning God made',1000),...mk('nothing of this is in the text at all nor this nor that nor any',4000)]),{range});
+ assert.equal(low.verses[0].highlightMode,'word');assert.equal(low.verses[0].words[0].start,0.5);assert.equal(low.timing,'approximate');
+});
 test('playbackRange trims the sidecar and the timing mapping converts to the player clock',()=>{
  const sc=sidecar([...mk('Stray words before',0),...mk('In the beginning God made',5000),...mk('Then there was light',9000),...mk('And God saw it was good',13000)]);
  const a=alignmentFromSidecar(verses,sc,{range:{startSeconds:5,endSeconds:20}});

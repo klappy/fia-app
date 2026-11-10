@@ -6,7 +6,8 @@
 // alignmentPosition / alignedSegments / the data-align-word spans and scroll-follow are reused unchanged.
 // Only a missing input returns null. Below the match floors the reading is still timed from whatever anchors the
 // sidecar gives (captain, 2026-11-09: highlight the closest match, never refuse for an imperfect alignment); the result then
-// carries timing:'approximate' so tests and audits can tell, while the screen looks the same.
+// carries timing:'approximate' so tests and audits can tell, while the screen looks the same. Above the floors, a reading
+// whose word-timed verses kept a matched word the playback-range clamp moved is timing:'clamped'; otherwise 'exact'.
 const norm = s => s.toLowerCase().normalize('NFKD').replace(/[^\p{L}\p{N}]/gu, '');
 const TOKEN = /[\p{L}\p{N}]+(?:[’'\-][\p{L}\p{N}]+)*/gu;
 export const MIN_SPOKEN_MATCH = 0.7, MIN_VERSE_MATCH = 0.6;
@@ -28,7 +29,10 @@ function lcs(a, b) {
  * sidecar does not carry is verse-timed, placed in the silence between its timed neighbours (split by text length), so the
  * page still turns on time. Below the spoken-match floor, or when no verse reaches the verse floor, the same rule still
  * runs on the LCS anchors there are (every verse verse-timed across the spoken span when there are none) and the result
- * is marked timing:'approximate' instead of being refused.
+ * is marked timing:'approximate' instead of being refused. Otherwise, when a matched word in a word-timed verse had its start
+ * or end moved by the range clamp (a word the 250 ms slack retained across the playback boundary), the result is marked
+ * timing:'clamped'; 'exact' means every matched word kept its sidecar times. 'approximate' wins over 'clamped'. The tier
+ * names the evidence only: the spans, and so the screen, are the same at every tier (Codex P2 #2 on #365).
  */
 export function alignmentFromSidecar(verses, sidecar, { range = null, mapping = null } = {}) {
   if (!Array.isArray(verses) || !verses.length || !Array.isArray(sidecar?.words) || !sidecar.words.length) return null;
@@ -49,10 +53,11 @@ export function alignmentFromSidecar(verses, sidecar, { range = null, mapping = 
     const own = shown.map((s, i) => [s, i]).filter(([s]) => s.v === v), matched = own.filter(([, i]) => hit[i]);
     return { own, timed: own.length > 0 && matched.length >= MIN_VERSE_MATCH * own.length };
   });
-  const timing = belowSpokenFloor || !per.some(p => p.timed) ? 'approximate' : 'exact';
   const out = verses.map(() => ({ words: [], highlightMode: 'verse', reason: 'Not carried by the word sidecar; scrolled by verse.' }));
+  let clamped = false;
   per.forEach((p, v) => {
     if (!p.timed) return;
+    if (p.own.some(([, i]) => hit[i] && (inRange(hit[i].startMs) !== hit[i].startMs || inRange(hit[i].endMs) !== hit[i].endMs))) clamped = true;
     const starts = p.own.map(([, i]) => hit[i] ? inRange(hit[i].startMs) : null), ends = p.own.map(([, i]) => hit[i] ? inRange(hit[i].endMs) : null);
     // Words the recording did not say (or said differently) share the gap between their matched neighbours, by length.
     for (let a = 0; a < starts.length;) {
@@ -81,5 +86,6 @@ export function alignmentFromSidecar(verses, sidecar, { range = null, mapping = 
     let at = from; for (let x = v; x < w; x++) { const next = at + (Math.max(to, from) - from) * weights[x - v] / total; out[x].start = at; out[x].end = next; at = next; }
     v = w;
   }
+  const timing = belowSpokenFloor || !per.some(p => p.timed) ? 'approximate' : clamped ? 'clamped' : 'exact';
   return { schemaVersion: 2, clockDomain: 'delivery-media-seconds', source: 'sidecar', timing, duration: clock(sidecar.durationMs), verses: out };
 }
