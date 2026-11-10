@@ -1,5 +1,5 @@
 // The whole fixed top band (book, dot, gaps, side margins) is chrome, not the stage: a swipe that starts on it never turns the page (fia-app#250 review).
-const interactive = 'button,a,input,select,textarea,summary,[contenteditable],.session-band,.session-progress,.scene-controls,.step-resources,.sheet,dialog,audio,.visual-dialog';
+const interactive = 'button,a,input,select,textarea,summary,[contenteditable],.session-band,.session-progress,.scene-controls,.sheet,dialog,audio,.visual-dialog';
 
 // Passive touch observation leaves scrolling, selection and media gestures native.
 export function createSwipeRecognizer() {
