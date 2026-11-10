@@ -56,13 +56,16 @@ export function createScriptController({ player, script, transcripts, rate = () 
       const after = continuous[continuous.indexOf(current) + 1];
       let next = spanAt(state.elapsed);
       if (gaps === 'seek' && after && state.elapsed >= current.range.endSeconds) {
-        if (state.elapsed < after.range.startSeconds) {
+        // The clock may have crossed several spans at once (a backgrounded page, then a visibility sync): every rule
+        // below applies to the span the clock is in, not only to the one right after the current span.
+        const k = continuous.indexOf(next), following = continuous[k + 1];
+        if (state.elapsed >= next.range.endSeconds && following) {
           // The gap between two clips (a spoken question number, a pause cue) is never voiced. A refused seek
           // (the range not yet ready) leaves the clock rule in charge until the next report.
-          if (seekTo(after.range.startSeconds)) next = after;
-        } else if (next === after && state.elapsed - after.range.startSeconds > REANCHOR_SECONDS) {
+          if (seekTo(following.range.startSeconds)) next = following;
+        } else if (next !== current && state.elapsed - next.range.startSeconds > REANCHOR_SECONDS) {
           // A late boundary (a stalled timer, a throttled clock) re-anchors the audio at the span's start.
-          seekTo(after.range.startSeconds);
+          seekTo(next.range.startSeconds);
         }
       }
       if (next !== current && !cross(next)) return;

@@ -277,3 +277,8 @@ it('run review: turning on image descriptions mid-run ends the run before the pa
  expect(audio.stop.mock.calls.length).toBeGreaterThan(before);
  await waitFor(()=>expect(stored().activityId).toBe('S02-U005'));expect(stored().session.completed).toEqual(['S02-U002','S02-U003','S02-U004']);
 });
+it('run review: a hidden page that returns two rows later re-anchors the audio at the row it shows (shipped S02 timings)',async()=>{
+ await begin('S02-U002');time=60;
+ document.dispatchEvent(new Event('visibilitychange'));await tick();
+ await waitFor(()=>expect(stored().activityId).toBe('S02-U004'));expect(audio.seek).toHaveBeenLastCalledWith(58.19);expect(stored().session.completed).toEqual(['S02-U002','S02-U003']);expect(audio.play).toHaveBeenCalledTimes(1);
+});

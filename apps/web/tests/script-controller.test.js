@@ -119,3 +119,13 @@ test('rejected row custody stops a continuous session without final advance',()=
  c.playContinuous(script.slice(0,2).map(s=>({...s,range:{startSeconds:s.startMs/1000,endSeconds:s.endMs/1000}})));
  c.onPlayerState({src:'blob:F',elapsed:5.1});c.onPlayerEnd();assert.equal(c.current,null);assert.deepEqual(calls,['stop']);assert.deepEqual(adv,[]);
 });
+// #361 review: a clock that crossed several spans at once (a backgrounded page, then a visibility sync) gets the same
+// rules as a single crossing: a late landing re-anchors at the span the clock is in, and a landing in a later gap is seeked over.
+test('a clock that skips past more than one span re-anchors at the span it lands in, or seeks over the gap it lands in',()=>{
+ {const {c,calls,changes}=runSetup();c.playRun(runSpans);
+  c.onPlayerState({src:'blob:F',playing:true,elapsed:8.6});assert.equal(c.current,'q');assert.deepEqual(changes,[['q','a']]);assert.deepEqual(calls[1],['seek',8]);}
+ {const {c,calls,changes}=runSetup();c.playRun(runSpans);
+  c.onPlayerState({src:'blob:F',playing:true,elapsed:7.05});assert.equal(c.current,'q');assert.deepEqual(changes,[['q','a']]);assert.deepEqual(calls[1],['seek',8]);}
+ {const {c,calls}=runSetup();c.playRun(runSpans);
+  c.onPlayerState({src:'blob:F',playing:true,elapsed:8.1});assert.equal(c.current,'q');assert.equal(calls.length,1);}
+});
