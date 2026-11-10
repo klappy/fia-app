@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.0.1 — Highlight only (2026-11-10)
+
+Production 3.0.0 plus the highlight change alone (PR354, merge `14bf935`): word highlighting appears on every guide and discussion card that has a recording, at the closest match the evidence allows, with each reading region naming its timing tier (`exact`, `clamped` or `approximate`) as a data attribute only; the first pericope's S01 activity maps are regenerated from the committed source-recording evidence; the "recording is unavailable" notice is raised once per session for packs with no guide recording anywhere; the dead step-resources footer code is deleted; and the manifest text counts the 68 Mark and 97 Luke passages. No content pack, server or service worker file differs from production. See the [highlight-only release note](release/changes/3.0.1-highlight-only.md) and the [highlight change note](release/changes/2026-11-09-highlight-always.md).
+
+Not in this version: the Spanish Luke honest-text recompile (PR356), the saved-pack worker change (PR360) and the audio-master inversion (PR361) are reverted on `main` for this release, because the Spanish Luke recompile replaces the published revision of 262 of 330 passages and a saved copy whose revision the server no longer holds is revoked by the service worker (defect D1, which PR360 does not stop). That work returns to `main` by reverting the reverts after the staging leg; DEV runs without audio-master in between. Human review of the regenerated S01 timings and a device pass of the gel at the approximate tier are still owed. Each environment still requires independent review, required checks and exact-commit post-deploy evidence.
+
 ## 3.0.0 — Stable release preparation (2026-11-07)
 
 Graduates the existing 3.0.0 prerelease series to the stable version requested for the next release. Includes the previously integrated English/Spanish Mark and Luke text and resource work, verified visual delivery support, audio identity and timing validation repairs, and the restored guide layout with resources available through the passage menu. This candidate also prepares continuous reading across adjacent guide cards; its implementation, review and exact-build checks must finish before promotion.
