@@ -946,7 +946,7 @@
     },
     {
       "path": "apps/web/public/sw.js",
-      "sha256": "aa80bcc13e84af7451777d7ac42c0d9d84c2fe0b6b3ed67dd6c51d716e4094b0"
+      "sha256": "0a1dc40ee01cd005c41ee0c057c8e7ab61198323da81e16251c7e08510513ebd"
     },
     {
       "path": "apps/web/src/App.svelte",
@@ -1129,7 +1129,7 @@
     },
     {
       "path": "apps/web/tests/helpers/offline-execution.js",
-      "sha256": "2193d80b274767e728cc01daffa732a0e2e1e720eaa76a90deacccc2dc31a43e"
+      "sha256": "1e8c94173d2ebf156df673e4c1a8cb59457d7b6187f997e4c9710342d3ce4816"
     },
     {
       "path": "apps/web/tests/library-panel.spec.js",
@@ -4742,6 +4742,21 @@
       "path": "apps/web/tests/worker-handover.test.js",
       "sha256": "7fc89502eaa6510c25dd1f05f694570ade551b43a86dfa81565546cbeeb73749",
       "bytes": 6673
+    },
+    {
+      "path": "apps/web/tests/fixtures/sw-offline-selection-baseline-29421a8.js",
+      "sha256": "aa80bcc13e84af7451777d7ac42c0d9d84c2fe0b6b3ed67dd6c51d716e4094b0",
+      "bytes": 61773
+    },
+    {
+      "path": "apps/web/tests/offline-selection-race.test.js",
+      "sha256": "61b5a617cd1b4629cbe42717e3ce3f03940ef212a2f497533bd4ab05f4ba0590",
+      "bytes": 5950
+    },
+    {
+      "path": "release/changes/offline-first-save-selection.md",
+      "sha256": "d92a25682373a9bd07dac55b31f3ffe76ee289e649f59e7606d02a1989b747c7",
+      "bytes": 1745
     }
   ],
   "generatedFiles": [
@@ -6927,8 +6942,8 @@
     },
     {
       "path": "sw.js",
-      "sha256": "7a4eb83c9fb5ee03e479f809305b16e0090bfc26908297f4328b0d53eb5ddcff",
-      "bytes": 103439
+      "sha256": "5e98d9d6364b72dab02bd9d6eea0eba6e596e4272978ca0f4b9503ae0d3a8e0e",
+      "bytes": 104100
     },
     {
       "path": "offline/eng.LUK-1-1-4.json",
