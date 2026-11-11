@@ -1,4 +1,5 @@
 import {projectExecutablePresentation} from './source-action-projector.mjs';
+import {reportPack} from '../../../../apps/web/src/lib/spanish-coverage.js';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 const SOURCE_BINDINGS=JSON.parse(readFileSync(new URL('./source-bindings.json',import.meta.url)));
@@ -9,12 +10,74 @@ const requireThat=(ok,message)=>{if(!ok)throw Error(message);};
 const capability=(count,status='source-referenced')=>({status:count?status:'unavailable',count});
 // Text is extracted only for resource display; exact source HTML remains attached.
 const plain=html=>String(html||'').replace(/<\/(?:p|li|div)>/gi,'\n').replace(/<[^>]*>/g,'').replace(/&#(x[\da-f]+|\d+);/gi,(_,v)=>String.fromCodePoint(v[0].toLowerCase()==='x'?parseInt(v.slice(1),16):Number(v))).replace(/&(amp|lt|gt|quot|apos|nbsp);/g,(_,v)=>({amp:'&',lt:'<',gt:'>',quot:'"',apos:"'",nbsp:' '})[v]).trim();
+// Honest-text rules (release/changes/2026-11-09-spanish-luke-honest-text.md). build.mjs compiles English Mark with
+// {frozen:true}: those presentation revisions are bound into guide-sources metadata (guide-dispatch METADATA_SHA) and the
+// Mark 1:14-20 prepared-audio delivery, so they stay byte-identical until that chain is re-pinned. Nothing here invents
+// text: titles come from the FIAKeyTerms body's own headword or the source key, never from a translator.
+const TERM_LINK=/^(eng|spa)-t(\d+)-v\d+$/;// raw FIAKeyTerms content id as the guide HTML links it
+export const resolveResourceLink=(id,assets)=>{if(assets[id])return id;const m=TERM_LINK.exec(String(id));const term=m&&`term-${m[1]}-t${m[2]}`;return term&&assets[term]?term:null;};
+const TITLE_KEY=/^[a-z0-9]+(?:-[a-z0-9]+)*$/,HEADWORD=/^\s*<p>\s*([^<.]{0,16})?<b>([^<]+)<\/b>/,NOUN_PHRASE_OPENING=/^(?:(?:un|una|unos|unas|el|la|los|las)(?:\s+[\p{L}\p{N}-]+)?)?$/iu,SMALL_WORDS=new Set(['of','the','and','or','in','a','an','to','for']);
+const sourceTitle=a=>a?.sourceEvidence?.title??a?.sourceRecord?.title??a?.title;
+// The English twin of a Spanish term, by term number. A compiled English pack carries term-eng-tN; the approved
+// eng.MRK-1-1-13 presentation (the twin of spa.MRK-1-1-13) carries the legacy FIAKeyTerms content id eng-tN-vN.
+export const siblingTerm=(sibling,n)=>{const assets=sibling?.assets;if(!assets)return null;return assets[`term-eng-t${n}`]||Object.values(assets).find(a=>a.kind==='term'&&TERM_LINK.exec(String(a.id))?.[2]===String(n))||null;};
+// The card title for a key term: the source title unless it is the FIAKeyTerms key (holy-spirit, or the English title in
+// key form); then for English the key written out, for Spanish the headword the term's own Spanish text opens with
+// (<p>El <b>Espíritu Santo</b> …, first letter capitalised), else the key as it is, marked as the English fallback so the
+// render path can say '[ES needed]' beside it.
+const keyOf=s=>String(s||'').trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+// A derived title (the key written out, or the headword) names the source title it came from in titleProvenance.derivedFrom,
+// so the executable candidate contract (source-action-candidates.mjs) can bind the asset to its evidence by that title.
+// The marker form keeps the key itself as the title; withheld says why a headword that exists was not used.
+const fallback=(title,withheld)=>({title,titleProvenance:{status:'missing',badge:'not-yet-in-language',fallback:'eng',...(withheld?{withheld}:{})}});
+export function termTitle(t,{language,sibling}={}){
+ const title=String(t.title||'').trim(),head=HEADWORD.exec(t.text?.html||'');
+ const twin=siblingTerm(sibling,t.termNumber),isKey=TITLE_KEY.test(title)&&(twin?keyOf(sourceTitle(twin))===title:language==='eng'||title.includes('-'));
+ if(!isKey)return {title,titleProvenance:{status:'source'}};
+ if(language==='eng')return {title:title.split('-').map((w,i)=>i&&SMALL_WORDS.has(w)?w:w[0].toUpperCase()+w.slice(1)).join(' '),titleProvenance:{status:'source',from:'FIAKeyTerms key',derivedFrom:t.title}};
+ if(head){
+  // The headword is the term's own text, never a word count compared across languages (fig-tree is one word, higuera).
+  // The bold phrase is a headword only when the definition opens as a noun phrase: nothing before it, or an article
+  // (Un, Una, El, La, Los, Las, Unos, Unas) with at most one more word (<p>Una <b>higuera</b> es…, <p>La palabra
+  // <b>cielo</b>…). A clause such as <p>Cuando <b>perdonan</b>… bolds a conjugated verb, not the term, so the marker shows;
+  // the noun is never looked for elsewhere in the body. The phrase must also occur in that text, and a pack-level pass
+  // withholds it when another term's title collides.
+  const lead=plain(head[1]||'').replace(/[“”"«»'‘’(),:;]+/g,' ').trim(),word=plain(head[2]);
+  if(!NOUN_PHRASE_OPENING.test(lead))return fallback(title,'not-a-headword-phrase');
+  if(!word||!plain(t.text?.html).toLowerCase().includes(word.toLowerCase()))return fallback(title,'not-in-text');
+  return {title:word.charAt(0).toLocaleUpperCase('es')+word.slice(1),titleProvenance:{status:'source',from:'FIAKeyTerms headword',derivedFrom:t.title}};
+ }
+ return fallback(title);
+}
+const squash=s=>String(s||'').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,'');
+// Two terms in one pack must not share a title: in spa.MRK-5-21-34 t133 synagogue and t134 synagogue-ruler both open with
+// <b>sinagoga</b>. A headword that a source title already uses is withheld. Where only headwords collide, the one whose
+// key is a component of every other colliding key keeps it (synagogue is the base concept; synagogue-ruler is its
+// compound, and the shared phrase defines the base), otherwise all are withheld: a collision is never resolved by guessing
+// which term the phrase names. Returns the ids of the terms withheld.
+export function withholdCollidingHeadwords(assets){
+ const terms=Object.values(assets).filter(a=>a.kind==='term'),groups=new Map();
+ for(const a of terms){const k=squash(a.title);groups.set(k,[...(groups.get(k)||[]),a]);}
+ const derived=a=>a.titleProvenance?.from==='FIAKeyTerms headword',key=a=>String(a.sourceEvidence?.title??a.titleProvenance?.derivedFrom??'').trim(),words=a=>new Set(key(a).split('-'));
+ const withheld=[];
+ for(const group of groups.values()){
+  if(group.length<2)continue;
+  const headwords=group.filter(derived);
+  let keep=null;
+  if(headwords.length===group.length){const base=headwords.filter(a=>headwords.every(b=>b===a||[...words(a)].every(w=>words(b).has(w))));if(base.length===1)keep=base[0];}
+  for(const a of headwords)if(a!==keep){Object.assign(a,fallback(key(a),'collision'));withheld.push(a.id);}
+ }
+ return withheld;
+}
+// A unit whose whole text is the stage title, the passage reference, or the two run together is a layout header that
+// leaked into the guide as a step (eng.LUK-5-12-16 S05-U001/U002, eng.LUK-7-36-8-3 S02-U001/U002, eng.MRK-2-23-3-6 S02-U001).
+export const stageHeaderUnit=(u,section,{passage,title})=>{const t=squash(u.text);if(!t)return false;const st=squash(section.title),refs=[squash(passage),squash(title)].filter(Boolean);return t===st||refs.includes(t)||refs.some(r=>t===st+r);};
 function verifyEvidence(guide,evidence){
  requireThat(evidence?.packId===guide.packId&&evidence.guideContentSha256===guide.contentSha256,'semantic guide binding mismatch');
  const units=new Map(guide.steps.flatMap(s=>s.units).map(u=>[u.id,u]));
  for(const u of evidence.units||evidence.groups.flatMap(g=>[g.intro,...g.items])) requireThat(units.get(u.id)?.text===u.text&&units.get(u.id)?.textSha256===u.textSha256,'semantic unit binding mismatch');
 }
-export function compilePresentation(input,{listEvidence,exampleEvidence,sourceFiles=[]}={}){
+export function compilePresentation(input,{listEvidence,exampleEvidence,sourceFiles=[],frozen=false,sibling=null}={}){
  const {manifest,guide,scripture,resources,rights,narration}=input;
  for(const [name,hash] of Object.entries(SOURCE_BINDINGS[manifest.packId]||{}))requireThat(digest(JSON.stringify(input[name]))===hash,`pinned source identity mismatch: ${name}`);
  requireThat(SOURCE_BINDINGS[manifest.packId],'unknown source identity');
@@ -31,11 +94,13 @@ export function compilePresentation(input,{listEvidence,exampleEvidence,sourceFi
  }
  for(const t of resources.terms){
   const text=plain(t.text?.html),id=t.id;
-  assets[id]={id,kind:'term',title:t.title,subtitle:'FIA Key Terms',text,sourceHtml:t.text?.html||'',source:`FIA Key Terms · ${rightsFor('FIAKeyTerms')?.licence?.name||''}`,sourceEvidence:t,rights:rightsFor('FIAKeyTerms'),relatedIds:[],...(t.audio?.status==='source'&&t.audio.url?{remoteAudioSrc:t.audio.url}:{} )};
+  const titled=frozen?{title:t.title}:termTitle(t,{language:manifest.language,sibling});
+  assets[id]={id,kind:'term',...titled,subtitle:'FIA Key Terms',text,sourceHtml:t.text?.html||'',source:`FIA Key Terms · ${rightsFor('FIAKeyTerms')?.licence?.name||''}`,sourceEvidence:t,rights:rightsFor('FIAKeyTerms'),relatedIds:[],...(t.audio?.status==='source'&&t.audio.url?{remoteAudioSrc:t.audio.url}:{} )};
  }
+ if(!frozen){withholdCollidingHeadwords(assets);for(const a of Object.values(assets))if(a.kind==='term'&&a.titleProvenance?.withheld)diagnostics.push({code:'term-headword-withheld',assetId:a.id,reason:a.titleProvenance.withheld});}
  for(const key of ['images','maps','videos'])for(const r of resources[key]||[]){
   const collection={images:'FIAImages',maps:'FIAMaps',videos:'VideoBibleDictionary'}[key];
-  assets[r.id]={id:r.id,kind:r.kind,title:r.title,description:'',relatedIds:[],source:`${collection} · ${rightsFor(collection)?.licence?.name||''}`,sourceEvidence:r,rights:rightsFor(collection),...(r.url?{remoteSrc:r.url}:{} )};
+  assets[r.id]={id:r.id,kind:r.kind,title:r.title,...(!frozen&&r.titleProvenance?{titleProvenance:r.titleProvenance}:{}),description:'',relatedIds:[],source:`${collection} · ${rightsFor(collection)?.licence?.name||''}`,sourceEvidence:r,rights:rightsFor(collection),...(r.url?{remoteSrc:r.url}:{} )};
  }
  const exampleIds=new Set(exampleEvidence.units.map(u=>u.id)),listMembership=new Map();
  for(const g of listEvidence.groups)for(const u of [g.intro,...g.items])listMembership.set(u.id,g);
@@ -43,9 +108,11 @@ export function compilePresentation(input,{listEvidence,exampleEvidence,sourceFi
  const activities=[],coverage=[],examples=[],readingSequence=[];
  for(const section of guide.steps)for(const u of section.units){
   if(exampleIds.has(u.id)){examples.push({id:u.id,tag:u.kind==='list-item'?'li':'p',html:u.html,text:u.text,sha256:u.textSha256});coverage.push({id:u.id,treatment:'optional-example',textSha256:u.textSha256});continue;}
+  if(!frozen&&stageHeaderUnit(u,section,{passage:manifest.passage,title:guide.title})){diagnostics.push({code:'stage-header-unit',unitId:u.id});coverage.push({id:u.id,treatment:'stage-header',textSha256:u.textSha256});continue;}
   const group=listMembership.get(u.id),discussion=group?.purpose==='discussion'&&group.intro.id!==u.id;
-  const links=(u.resources||[]).filter(id=>assets[id]);
-  for(const id of u.resources||[])if(!assets[id])diagnostics.push({code:'unresolved-resource-link',unitId:u.id,resourceId:id});
+  const resolve=frozen?id=>assets[id]?id:null:id=>resolveResourceLink(id,assets);
+  const links=[...new Set((u.resources||[]).map(resolve).filter(Boolean))];
+  for(const id of u.resources||[])if(!resolve(id))diagnostics.push({code:'unresolved-resource-link',unitId:u.id,resourceId:id});
   // Unclassified meaning stays readable and user-paced. Neither v2 pause nor hidden is consulted.
   const semantic=group?group.purpose:'unresolved-instruction';
   if(!group)diagnostics.push({code:'conservative-continuation',unitId:u.id});
@@ -53,10 +120,15 @@ export function compilePresentation(input,{listEvidence,exampleEvidence,sourceFi
   if(group?.layout==='together')a.readingGroupId=group.intro.id;
   activities.push(a);coverage.push({id:u.id,treatment:'text',activityId:u.id,textSha256:u.textSha256});
   if(group?.purpose==='discussion'&&group.intro.id===u.id){
-   const sequence=[0,1,2].map(i=>scriptureIds[i%scriptureIds.length]);readingSequence.push({sourceUnitId:u.id,editionIds:sequence});
+   // Three readings in three translations; a pack with fewer editions reads each once instead of repeating one.
+   const sequence=frozen?[0,1,2].map(i=>scriptureIds[i%scriptureIds.length]):scriptureIds.slice(0,3);readingSequence.push({sourceUnitId:u.id,editionIds:sequence});
    sequence.forEach((id,i)=>{const e=assets[id];activities.push({id:`${u.id}-reading-${i+1}`,sectionId:section.id,sectionTitle:section.title,kind:'scripture',title:guide.title,eyebrow:e.title,assetId:id,narration:e.text,prompt:e.title,completion:'confirm',duration:'',fulfills:u.id});});
   }
  }
+ // A Spanish pack compiled beside its English twin records, per resource and key term, whether Spanish text is shown or
+ // the English fallback is (reportPack is the same reader scripts/spanish-coverage-audit.mjs runs); the render path turns
+ // 'english-fallback' into the '[ES needed]' marker. English packs never carry the field.
+ if(sibling&&manifest.language==='spa')for(const item of reportPack(sibling,{id:manifest.packId,activities,assets},{capabilities:{text:{available:true}}})){if(item.group==='pericope')continue;const target=item.group==='entity'?assets[`term-spa-${item.key}`]:assets[item.id];if(target)target.spanishText=item.state;}
  const listContracts=listEvidence.groups.map(g=>({id:g.intro.id,purpose:g.purpose,layout:g.layout,progression:g.purpose==='discussion'?'confirm':'auto',introId:g.intro.id,itemIds:g.items.map(u=>u.id),reason:'Reviewed source-bound list semantics; text without audio waits for explicit continuation.',narration:[]}));
  const pack={id:manifest.packId,title:guide.title,assets,listContracts,activities,sections:guide.steps.map(({id,title})=>({id,title})),examples,source:{repository:'klappy/fia-app',commit:SOURCE,guide:{...guide,steps:undefined},rights,sourceFiles,recipeRevision:RECIPE},coverage,scriptureReadingSequence:readingSequence,diagnostics};
  const capabilities={text:{available:true},guideNarration:capability(0),scriptureAudio:capability(0),resourceAudio:capability(Object.values(assets).filter(a=>a.remoteAudioSrc).length),generatedAudio:capability(0),images:capability(Object.values(assets).filter(a=>['image','map'].includes(a.kind)&&a.remoteSrc).length),video:capability(Object.values(assets).filter(a=>a.kind==='video'&&a.remoteSrc).length)};
