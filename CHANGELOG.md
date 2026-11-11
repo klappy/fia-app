@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.1.3 — Video control label carries the missing-Spanish marker (2026-11-11)
+
+Version 3.1.2 plus one change on the media stage: the video control's accessible label (`aria-label` on the `<video>` element in `apps/web/src/components/MediaStage.svelte`) now goes through `displayTitle`, the same helper the full-screen dialog label in that file already uses. In a Spanish pack, a video whose title is the English fallback (state `english-fallback` or `missing`) now gives its control the label `<title> [ES needed]`, matching the heading and caption above it; English packs and Spanish titles that are present keep the bare title. The gap was found by reading code (an automated code review comment on pull request 368 and the traced reply under it) and has not been checked with any screen reader. No Spanish text is added or changed. No content pack, server or service worker file changes. See the [3.1.3 release note](release/changes/3.1.3-video-label-marker.md).
+
+Not changed: the caption's spacing before the marker, and which asset the label names while a video plays in place over a picture. Not shown: the control with any screen reader or browser. Each environment still requires independent review, required checks and exact-commit post-deploy evidence.
+
 ## 3.1.2 — Playing flag after the page returns (2026-11-11)
 
 Version 3.1.1 plus one change in the audio controller: when the page becomes visible again, `sync()` recomputes the playing flag from the media element (the clip has reached sound, the controller has not paused it, and the element is not paused) before it reports. Before, if the element was paused from outside while the page was hidden and no event reached the page afterwards, the page came back with the main button reading Pause and the screen wake lock taken again although nothing played; now the report says not playing, the button reads Resume, the wake lock is released and one tap resumes. The defect was found by reading code and has not been observed on a device. No content pack, server, service worker, audio-master planner, script controller or page file changes. See the [3.1.2 release note](release/changes/3.1.2-sync-playing-flag.md).
