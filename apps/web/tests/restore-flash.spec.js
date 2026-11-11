@@ -51,12 +51,14 @@ it('a reload onto saved Mark 1:14–20 S02-U008 never renders Mark 1:1–13 befo
  expect(bundledProgress()).toEqual(before);expect(localStorage.getItem('fia-v3-progress@1:'+descriptor.id)).toBe(savedBefore);
  expect(document.querySelector('.kept-content')).toBeNull();
  const asset=Object.keys(presentation.assets)[0];
- for(const [name,input] of [['fia_present_resource',{assetId:asset}],['fia_return_to_guide',{}],['fia_complete_activity',{activityId:'S02-U008'}]])
-  await expect(tools.get(name).execute(input),name).rejects.toThrow('The saved passage is still opening. Try again.');
+ // fia_read_session must not report the hidden bundled passage's activity or stage (Codex review 4542189818 on #385).
+ for(const [name,input] of [['fia_read_session',{}],['fia_present_resource',{assetId:asset}],['fia_return_to_guide',{}],['fia_complete_activity',{activityId:'S02-U008'}]])
+  await expect((async()=>tools.get(name).execute(input))(),name).rejects.toThrow('The saved passage is still opening. Try again.');
  expect(localStorage.getItem('fia-v3-progress@1:'+descriptor.id)).toBe(savedBefore);
  answer({descriptor,presentation});
  await waitFor(()=>expect(document.querySelector('main.scene [data-kind="restoring"]')).toBeNull());
  const saved=presentation.activities[session.index];expect([saved.title,saved.prompt]).toContain(screen.getByRole('heading',{level:1}).textContent);
+ expect(tools.get('fia_read_session').execute({}).activityId).toBe('S02-U008');
  observer.disconnect();
  expect(seen).toEqual([]);
 });
