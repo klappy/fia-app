@@ -178,7 +178,10 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  let onlineMedia=$state(new globalThis.Map()),deliveryRevision=$state(null),downloadedDeliveryRevision=$state(null),mediaLoading=$state(false),playbackPending=$state(false);
  // Easy button (R4-R6): availability is verified once per passage before any action shows;
  // a start is one span from the accepted tap until sound, whatever owns it at the moment.
- let restorePending=$state(false),mediaChecked=$state(false),downloadsChecked=$state(false);
+ // A launch with a different saved passage starts restoring from the first paint, so the bundled default's step never shows
+ // before the saved passage answers (fia-app-cookbook work/active/2026-11-03-restore-flash-default-passage).
+ const savedOnLaunch=(()=>{try{const id=localStorage.getItem('fia-v3-selected-pack');return !!id&&id!==bundledPack.id;}catch{return false;}})();
+ let restorePending=$state(false),restoreShown=$state(savedOnLaunch),mediaChecked=$state(false),downloadsChecked=$state(false);
  let requestStarting=$state(false),clipPending=$state(false),videoPlayPending=$state(false),startBurst=$state(false);let requestCarry=0;
  const tapGate=createTapGate({onburst:value=>startBurst=value});
  let verifying=$derived(restorePending||!mediaChecked||!downloadsChecked);
@@ -375,7 +378,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  }
  async function loadSelectedPack(id,intent,options){videoDelivery.cancel();stopVisual();visualOwner.clear();const generation=++selectionGeneration;try{const loaded=await libraryAdapter.select(id,options);if(intent!==selectionIntent||generation!==selectionGeneration)return;if(deferVideo(()=>applySelectedPack(loaded,generation,intent)))return;await applySelectedPack(loaded,generation,intent);}catch(error){if(intent===selectionIntent&&generation===selectionGeneration)recheckCurrent();throw error;}}
  // Opening a passage ends the previous passage's notices (R3); the new passage raises its own after this point.
- async function applySelectedPack(loaded,generation,intent){if(intent!==selectionIntent||generation!==selectionGeneration)return;validateExecutablePresentation(loaded.presentation);persist();cancel();notice='';selectedPack=loaded.descriptor;if(selectedPack.offlineSnapshot==='historical-verified')notice=historicalSnapshotNotice;rawPresentation=loaded.presentation;saved=false;downloadedDeliveryRevision=null;downloadedPaths=new Set();downloadedAudioDescriptors=new globalThis.Map();onlineMedia=new globalThis.Map();savedMedia=new globalThis.Map();visualFiles=new globalThis.Map();deliveryRevision=null;revokePlayback();mediaChecked=false;downloadsChecked=false;introduced=new Set();manualStarts=new Set();visualHeard=null;termDefinition=null;transitionSection=null;messages=[];language=selectedPack.language;session=createSession(loaded.presentation.activities);try{applyStored();localStorage.setItem('fia-v3-selected-pack',loaded.descriptor.id);}catch{notice='Your saved place could not be read.';}sheet=null;await libraryAdapter.activate(selectedPack).catch(()=>{});if(intent!==selectionIntent||generation!==selectionGeneration)return;await updateDownloaded();await updateMedia();}
+ async function applySelectedPack(loaded,generation,intent){if(intent!==selectionIntent||generation!==selectionGeneration)return;validateExecutablePresentation(loaded.presentation);persist();cancel();notice='';selectedPack=loaded.descriptor;if(selectedPack.offlineSnapshot==='historical-verified')notice=historicalSnapshotNotice;rawPresentation=loaded.presentation;saved=false;downloadedDeliveryRevision=null;downloadedPaths=new Set();downloadedAudioDescriptors=new globalThis.Map();onlineMedia=new globalThis.Map();savedMedia=new globalThis.Map();visualFiles=new globalThis.Map();deliveryRevision=null;revokePlayback();mediaChecked=false;downloadsChecked=false;introduced=new Set();manualStarts=new Set();visualHeard=null;termDefinition=null;transitionSection=null;messages=[];language=selectedPack.language;session=createSession(loaded.presentation.activities);try{applyStored();localStorage.setItem('fia-v3-selected-pack',loaded.descriptor.id);}catch{notice='Your saved place could not be read.';}restoreShown=false;sheet=null;await libraryAdapter.activate(selectedPack).catch(()=>{});if(intent!==selectionIntent||generation!==selectionGeneration)return;await updateDownloaded();await updateMedia();}
  function restartPack(id){resetProgress(localStorage,{id});if(id===selectedPack.id)reset();}
  let language=$state('eng');
  function selectLanguage(id){language=id;try{localStorage.setItem('fia-v3-library-language',id);}catch{notice='Language choice could not be saved on this device.';}}
@@ -693,7 +696,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
   const net=()=>{const wasOnline=online;online=navigator.onLine;if(!online)visualOwner.cancel();else if(!wasOnline){void updateMedia(true);if(visualCanceled!==visualIdentity()){visualOwner.retry();syncVisual();}}};net();window.addEventListener('online',net);window.addEventListener('offline',net);
   if('serviceWorker'in navigator)registerWorker('/sw.js').then(()=>{updateDownloaded();updateMedia();}).catch(()=>{serviceWorkerError='Offline storage is unavailable here. Try the published HTTPS version.';});
   // A returning visit stays verifying until the saved passage itself is checked (R5).
-  try{const id=localStorage.getItem('fia-v3-selected-pack');if(id&&id!==selectedPack.id){restorePending=true;restoreSavedPack(id).finally(()=>{restorePending=false;checked();});}}catch{}
+  try{const id=localStorage.getItem('fia-v3-selected-pack');if(id&&id!==selectedPack.id){restorePending=true;restoreSavedPack(id).finally(()=>{restorePending=false;restoreShown=false;checked();});}else restoreShown=false;}catch{restoreShown=false;}
   const context=document.modelContext;const lifecycle=new AbortController();
   const register=tool=>{try{Promise.resolve(context?.registerTool(tool,{signal:lifecycle.signal})).catch(()=>{});}catch{}};
   register({name:'fia_read_session',description:'Read the current FIA activity and stage without changing it.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true},execute:()=>({activityId:activity.id,status:session.status,mode:session.mode,stage:presentStage(session,activities)})});
@@ -711,7 +714,9 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
 <main class="scene" class:immersive class:notice-raised={noticeOnStage} style={`--reading-scale:${scale}${noticeOnStage?`;--notice-height:${noticeHeight}px`:''}`} use:swipeNavigation={()=>({identity:`${swipeGeneration}:${selectionGeneration}:${selectedPack.id}:${activity.id}:${inTransition}:${JSON.stringify(session.detour)}`,blocked:!!sheet||immersive||selectionPending,next:!finished&&!session.detour,back:!!session.detour||session.index!==0||finished,navigate:direction=>navigate({type:direction==='next'?'CONTINUE':'BACK'},direction==='next')})}>
  <div class="scene-glass scene-glass-top" aria-hidden="true"></div>
  <div class="scene-glass scene-glass-bottom" aria-hidden="true"></div>
- {#if finished}
+ {#if restoreShown}
+  <section class="words-stage" data-kind="restoring" aria-busy="true"><h1>Opening your last passage…</h1></section>
+ {:else if finished}
   <section class="words-stage"><h1>Carry the story with you.</h1></section>
  {:else if inTransition}
   <SectionTransition section={sections.find(s=>s.id===activity.sectionId)} index={sections.findIndex(s=>s.id===activity.sectionId)}/>
@@ -730,7 +735,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
   </div>
  {/if}
  <!-- The book control opens passage selection directly (cookbook progress-rail.md § Top band passage control, ticket ④). -->
- <SessionProgress groups={progress} passage={passageName(selectedPack)} onopen={()=>sheet='progress'} onpassages={()=>{passagesView='passages';sheet='passages';}}/>
+ {#if !restoreShown}<SessionProgress groups={progress} passage={passageName(selectedPack)} onopen={()=>sheet='progress'} onpassages={()=>{passagesView='passages';sheet='passages';}}/>{/if}
  {#if stage.supporting}<button class="kept-content" aria-label={`Open kept ${displayTitle(assets[stage.supporting])}`} onclick={()=>navigate({type:'DETOUR',assetId:stage.supporting})}>{#if assets[stage.supporting].src&&assets[stage.supporting].kind!=='video'}<img src={assets[stage.supporting].src} alt={displayTitle(assets[stage.supporting])}/>{:else}<BookOpen size={22}/>{/if}</button>{/if}
 
  {#if noticeText&&!noticeInSheet}{@render noticeBar()}{/if}
