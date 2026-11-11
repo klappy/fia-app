@@ -18,7 +18,7 @@ function harness({installing=null,waiting=null}={}){
  const rpc={navigator:{serviceWorker:container},workerAbsent:new Promise(()=>{}),notReady:()=>Error('not ready'),MessageChannel:Channel,setTimeout:setTimer,clearTimeout:clearTimer};
  vm.runInNewContext(fn+'\nglobalThis.request=workerRequest;',rpc);
  const activate=w=>{registration.installing=null;registration.waiting=null;registration.active=w;w.state='activating';w.fire('statechange');};
- return {old,registration,container,advance,timers,activate,request:(type='PACK_SELECT')=>rpc.request(type,{packId:'p'})};
+ return {old,registration,container,advance,timers,activate,rpc,request:(type='PACK_SELECT')=>rpc.request(type,{packId:'p'})};
 }
 test('no worker on its way: posts to the active worker at once',async()=>{
  const h=harness(),result=await h.request();assert.equal(result.by,'old');assert.deepEqual(h.old.posts,['PACK_SELECT']);assert.equal(h.timers.size,0);
@@ -59,4 +59,14 @@ test('a worker that replaces the watched installing worker is watched too: its f
  h.registration.installing=null;second.state='redundant';second.fire('statechange');await tick();await tick();
  assert.equal(settled,true,'replacement worker was not watched');assert.equal((await p).by,'old');
  assert.equal(second.listeners.statechange.size,0);assert.equal(h.registration.listeners.updatefound.size,0);
+});
+test('a cancel issued during the hold stops its held job: the held start/play is never posted to either worker',async()=>{
+ const fresh=worker('new','installed'),h=harness({waiting:fresh});
+ const start=h.rpc.request('DOWNLOAD_START',{packId:'p'}),play=h.rpc.request('MEDIA_PLAY',{packId:'p',requestId:'r1'}),other=h.rpc.request('MEDIA_PLAY',{packId:'p',requestId:'r2'});
+ const startOutcome=start.then(()=>'resolved',e=>e.message),playOutcome=play.then(()=>'resolved',e=>e.message);
+ await tick();await tick();
+ assert.equal((await h.rpc.request('DOWNLOAD_PAUSE',{packId:'p'})).by,'old');assert.equal((await h.rpc.request('MEDIA_CANCEL',{packId:'p',requestId:'r1'})).by,'old');
+ assert.match(await startOutcome,/Download paused/);assert.match(await playOutcome,/Playback canceled/);
+ h.activate(fresh);assert.equal((await other).by,'new');
+ assert.deepEqual(h.old.posts,['DOWNLOAD_PAUSE','MEDIA_CANCEL']);assert.deepEqual(fresh.posts,['MEDIA_PLAY']);
 });
