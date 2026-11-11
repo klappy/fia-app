@@ -743,7 +743,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  <!-- While the saved passage is restoring, no control acts on the hidden bundled passage (Codex review on #385); the primary
       only queues its tap for the restored passage (R5 E4), as verifying already holds it. -->
  <nav class="scene-controls" aria-label="Session controls">
-  <button class="menu-control" aria-label="More options" bind:this={moreButton} disabled={restoreShown} onclick={()=>sheet='menu'}><FiaMark/></button>
+  <button class="menu-control" aria-label="More options" bind:this={moreButton} disabled={restoreShown} onclick={()=>{if(!restoreShown)sheet='menu';}}><FiaMark/></button>
   <button class="step-control" aria-label={session.detour?'Return to guide':'Previous activity'} disabled={restoreShown||!session.detour&&session.index===0&&!finished} onclick={()=>navigate({type:'BACK'})}><ChevronLeft size={26}/></button>
   <GuidePrimary playback={inlineVideo||focal?.kind==='video'?videoState:audioState} label={primaryFace.label} face={primaryFace.kind} playing={(isPlaying||playbackPending)&&!automaticOff} continuing={primaryLabel==='Continue'||primaryLabel==='Return'} onclick={primary} onpointerdown={()=>tapGate.press(primaryFace.kind)}/>
   <!-- The fourth slot: manual Play in manual mode; with narration on, only a labelled Cancel while preparing (R4.2), else Next.

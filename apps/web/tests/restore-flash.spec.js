@@ -20,6 +20,7 @@ it('a reload onto saved Mark 1:14–20 S02-U008 never renders Mark 1:1–13 befo
  let answer;vi.spyOn(libraryAdapter,'select').mockImplementation(()=>new Promise(resolve=>answer=resolve));
  vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});vi.spyOn(libraryAdapter,'activate').mockResolvedValue({selected:true});
  vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({files:[],savedFiles:[],deliveryRevision:null});
+ HTMLDialogElement.prototype.showModal=function(){this.open=true;};HTMLDialogElement.prototype.close=function(){this.open=false;};
  vi.stubGlobal('Audio',vi.fn());HTMLMediaElement.prototype.pause=vi.fn();Element.prototype.scrollTo=vi.fn();
  // Every paint is watched from before the first one: any frame carrying the default passage is a flash.
  const seen=[];const observer=new MutationObserver(()=>{const text=document.body.textContent;if(defaultPassage.test(text))seen.push(text.slice(0,120));});
