@@ -1,6 +1,6 @@
 <script>
  import {createPlaybackCache} from './lib/playback-cache.js';
- import { onMount, tick, untrack } from 'svelte';
+ import { onMount, tick, untrack, setContext } from 'svelte';
  import {validateExecutablePresentation,executionFor,executablePresentationView,createExecutableNarration} from './lib/executable-presentation.js';
  import {guideRecordingAvailability} from './lib/recording-availability.js';
  import { MoreHorizontal, Speech, Play, Pause, ChevronRight, ChevronLeft, Send, Settings2, List, BookOpen, Image, Map, Film, Users, RotateCcw, ArrowLeft, PinOff, Info, Download, X, CircleHelp, ExternalLink } from 'lucide-svelte';
@@ -37,13 +37,15 @@
  import {easyFace,queueable,createTapGate} from './lib/easy-button.js';
  import {preparationHash} from './lib/prepared-audio.js';
  import {demoVideoSource} from './lib/video-demo.js';
- import {bundledPack,libraryAdapter,hasUnresolvedInstructions,registerWorker,RESTORE_TIMEOUT_MS,restoreUnreachable} from './lib/library.js';
+ import {bundledPack,libraryAdapter,hasUnresolvedInstructions,registerWorker,RESTORE_TIMEOUT_MS,restoreUnreachable,contentLang,assetLang} from './lib/library.js';
  import {saveProgress,restoreProgress,resetProgress} from './lib/session-store.js';
  import {noticeScope,noticeEnded} from './lib/notice-scope.js';
  import {tailExtendedRange} from './lib/range-tail.js';
  import {planRun} from './lib/continuous-reading.js';
 import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  let selectedPack=$state(bundledPack),rawPresentation=$state.raw(bundledPresentation),downloadedPaths=$state(new Set()),downloadedAudioDescriptors=$state(new globalThis.Map());
+ // Passage content carries the passage language's tag (AlignedReading reads it); interface chrome keeps <html lang>.
+ let passageLang=$derived(contentLang(selectedPack.language));setContext('fia-content-lang',()=>passageLang);
  let executionPresentation=$derived(executablePresentationView(rawPresentation));
  let executableMode=$derived(!!rawPresentation.execution);
  let executableAction=$derived(executableMode?executionFor(rawPresentation,activity.id):null);
@@ -716,12 +718,12 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  {:else if inTransition}
   <SectionTransition section={sections.find(s=>s.id===activity.sectionId)} index={sections.findIndex(s=>s.id===activity.sectionId)}/>
  {:else if termPrompt}
-  <section class="media-stage reading-stage" data-kind="term-instruction"><h1 class="sr-only">{displayTitle(focal)}</h1>{#key activity.id}<AlignedReading asset={guideText} identification={focal} playback={audioState} suspended={!!sheet}/>{/key}</section>
+  <section class="media-stage reading-stage" data-kind="term-instruction"><h1 class="sr-only" lang={assetLang(focal,passageLang)}>{displayTitle(focal)}</h1>{#key activity.id}<AlignedReading asset={guideText} identification={focal} playback={audioState} suspended={!!sheet}/>{/key}</section>
  {:else if focal}
-  <h1 class="sr-only">{session.detour?displayTitle(focal):activity.title}</h1>
+  <h1 class="sr-only" lang={session.detour?assetLang(focal,passageLang):passageLang}>{session.detour?displayTitle(focal):activity.title}</h1>
   {#key focal.id}<MediaStage onvideonode={registerVideo} videoIdentity={videoIdentity()} asset={focal} guide={!session.detour&&['image','map'].includes(focal.kind)?guideText:null} checking={verifying} {inlineVideo} {immersive} {matchingVideo} onvideo={openMatchingVideo} descriptionsEnabled={session.preferences.describeImages} ontoggledescription={()=>dispatch({type:'SET_PREFERENCE',key:'describeImages',value:!session.preferences.describeImages})} playback={audioState} suspended={!!sheet||mediaTools} toolsVisible={mediaTools} pinned={session.pinned===focal.id} onpin={()=>dispatch({type:session.pinned===focal.id?'UNPIN':'PIN',assetId:focal.id})} ondescribe={()=>describe(focal.id,true)} ontime={videoTime} onplay={videoStarted} onpause={event=>{if(ownsVideo(event.currentTarget)){videoPlaying=false;videoPlayPending=false;}}} onend={videoEnded} onplayvideo={playVideo} oncancelvideo={()=>videoDelivery.cancel()} onview={retryVisual} oncancelvisual={cancelVisual} ondownload={()=>sheet='downloads'} onerror={()=>{videoPlayPending=false;notice='Video unavailable. Try again or continue without it.';}}/>{/key}
  {:else}
-  <section class="media-stage reading-stage" data-kind="guide"><h1 class="sr-only">{activity.prompt}</h1>{#key guideText.id}<AlignedReading asset={guideText} playback={audioState} suspended={!!sheet}/>{/key}</section>
+  <section class="media-stage reading-stage" data-kind="guide"><h1 class="sr-only" lang={passageLang}>{activity.prompt}</h1>{#key guideText.id}<AlignedReading asset={guideText} playback={audioState} suspended={!!sheet}/>{/key}</section>
  {/if}
  {#if immersive}
   <div class="immersive-controls">
