@@ -64,6 +64,11 @@ export async function selectServerPresentation(id,{explicit=false,signal,transpo
 }
 // A launch-time restore is bounded where it is made (R1, R5). Past this bound a saved passage that has
 // not answered is a missing connection: the restore stops with that answer and R1's fallback says so.
+// The passage languages the catalog offers. `id` is the catalog's ISO 639-3 code (pack.language); `tag` is the BCP 47
+// tag passage content carries as its `lang` attribute, so a screen reader reads Spanish text with Spanish rules while the
+// interface chrome keeps the page's own language (fia-app-cookbook work/active/2026-11-11-fia-content-lang-attribute).
+export const passageLanguages=Object.freeze([{id:'eng',name:'English',nativeName:'English',tag:'en'},{id:'spa',name:'Spanish',nativeName:'Español',tag:'es'}]);
+export const contentLang=language=>passageLanguages.find(l=>l.id===language)?.tag;
 export const RESTORE_TIMEOUT_MS=15000;
 export const restoreUnreachable=passageUnreachable;
 export function mediaSelection(pack){return {packId:pack.id,revision:pack.revision,...(pack.mediaIdentity?{mediaIdentity:{...pack.mediaIdentity},mediaAssetsSha256:pack.mediaAssetsSha256}:{})};}
@@ -74,7 +79,7 @@ export const libraryAdapter={
  preparationStatus:preparationTransport.status,
  verifyPreparedRecording:preparationTransport.verify,
  playPreparedRecording:preparationTransport.play,
- async languages(){const c=await fetchCatalog();return [{id:'eng',name:'English',nativeName:'English'},{id:'spa',name:'Spanish',nativeName:'Español'}].map(l=>({...l,ready:c.packs.filter(p=>p.language===l.id).length}));},
+ async languages(){const c=await fetchCatalog();return passageLanguages.map(l=>({...l,ready:c.packs.filter(p=>p.language===l.id).length}));},
  async passages(language){return (await fetchCatalog()).packs.filter(p=>p.language===language);},
  select:selectServerPresentation,
  async mediaStatus(pack=bundledPack){return workerRequest('MEDIA_STATUS',mediaSelection(pack));},

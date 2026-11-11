@@ -1,10 +1,12 @@
 <script>
- import {onMount, untrack} from 'svelte';
+ import {onMount, untrack, getContext} from 'svelte';
  import ResourceIdentification from './ResourceIdentification.svelte';
  import {createSmoothFollow} from '../lib/smooth-follow.js';
  import {SCRIPTURE_WORD_HIGHLIGHT} from '../lib/scripture-passage.js';
  import {leadingPosition, wordPair, alignedSegments, followScrollTop, durationScrollTop, readingEdgeSpace, clearReadingRect} from '../lib/alignment.js';
  let {asset, playback={src:null,elapsed:0,playing:false}, suspended=false,identification=null,regionLabel=null}=$props();
+ // The passage language's tag goes on the content container only; the region's own label is interface chrome.
+ const passageLang=getContext('fia-content-lang');
  let viewport=$state(), following=$state(true), reducedMotion=$state(false), revision=$state(0), ready=$state(false), edgeSpace=$state({leading:0,trailing:0});
  let lastScrollTarget=null,scroller;
  let resourceId=$derived(asset.id);
@@ -116,7 +118,7 @@
 <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions (This focusable reading region listens for native scrolling intent; it does not intercept keys or act as a button.) -->
 <!-- data-timing names the tier of the timing in use (exact | clamped | approximate) for tests and audits only: no style, marker or control keys on it, the gel is identical at every tier (captain, 2026-11-09; no new design is approved). -->
 <div bind:this={viewport} class="scripture-scroll" data-timing={alignment?alignment.timing||'exact':undefined} style:padding-top={`calc(var(--chrome-top, 0px) + ${edgeSpace.leading}px)`} style:padding-bottom={`calc(var(--chrome-bottom, 0px) + ${edgeSpace.trailing}px)`} role="region" tabindex="0" aria-label={regionLabel||(asset.kind==='scripture'?'Scripture passage':'Guide text')} onwheel={explore} onpointerdown={explore} ontouchstart={explore} onkeydown={e=>{if(scrollKeys.has(e.key))explore();}}>
- <div class="reading-verses">
+ <div class="reading-verses" lang={passageLang?.()}>
  {#if identification||['scripture','term'].includes(asset.kind)}
   <ResourceIdentification asset={identification||asset}/>
  {/if}
