@@ -109,13 +109,38 @@ async function workerRequest(type,data={},onprogress){
  let readyTimer;
  const registration=await Promise.race([navigator.serviceWorker.ready,workerAbsent,new Promise((_,reject)=>{readyTimer=setTimeout(()=>reject(notReady()),10000);})]).finally(()=>clearTimeout(readyTimer));
  if(!registration.active)throw new Error('Download storage is not ready. Reload and try again.');
+ // A post that reaches the old worker after its hand-over has begun restarts it and holds the new
+ // worker at 'installed' until the next navigation. While a worker is installing or waiting, wait
+ // (bounded) for the hand-over and post to the worker that is then active; on timeout, post as before.
+ // Cancel commands (CANCEL_TARGETS) are not held: the old worker owns the in-flight job they stop, and a
+ // cancel first drops any job it targets that is still held, so the job never starts on the new worker.
+ // A newer worker that replaces a watched one (updatefound) is watched too, as registerWorker does.
+ const pendingWorkers=()=>[registration.installing,registration.waiting].filter(w=>w&&!['activating','activated','redundant'].includes(w.state));
+ if(type in CANCEL_TARGETS)for(const held of heldRequests)if(CANCEL_TARGETS[type].matches(held,data))held.cancel(CANCEL_TARGETS[type].message);
+ if(!(type in CANCEL_TARGETS)&&pendingWorkers().length)await new Promise((resolve,reject)=>{
+  const container=navigator.serviceWorker,watched=new Set(),held={type,data,cancel:message=>{done();reject(new Error(message));}};let handoverTimer,released=false;heldRequests.add(held);
+  const watch=w=>{if(w&&!watched.has(w)){watched.add(w);w.addEventListener?.('statechange',check);}};
+  const found=()=>{watch(registration.installing);check();};
+  const done=()=>{if(released)return;released=true;heldRequests.delete(held);clearTimeout(handoverTimer);container.removeEventListener?.('controllerchange',check);registration.removeEventListener?.('updatefound',found);watched.forEach(w=>w.removeEventListener?.('statechange',check));};
+  const check=()=>{if(!pendingWorkers().length&&!released){done();resolve();}};
+  handoverTimer=setTimeout(()=>{done();resolve();},10000);container.addEventListener?.('controllerchange',check);registration.addEventListener?.('updatefound',found);pendingWorkers().forEach(watch);
+ });
+ const target=registration.active;
+ if(!target)throw new Error('Download storage is not ready. Reload and try again.');
  return new Promise((resolve,reject)=>{
   const channel=new MessageChannel();let timer;
   const close=()=>{clearTimeout(timer);channel.port1.close();};
   const arm=()=>{clearTimeout(timer);timer=setTimeout(()=>{close();reject(new Error('Download stopped responding. Reopen Downloads to check and resume.'));},45000);};
   channel.port1.onmessage=({data:result})=>{arm();if(result.progress){onprogress?.(result.progress);return;}close();if(result.ok)resolve(result);else{const error=new Error(result.error||'Download could not finish. Retry to keep verified files.');if(type==='MEDIA_STATUS')error.code=['media-status-transient','media-status-invalid'].includes(result.code)?result.code:'media-status-invalid';reject(error);}};
-  arm();try{registration.active.postMessage({type,...data},[channel.port2]);}catch(error){close();channel.port2.close();reject(error);}
+  arm();try{target.postMessage({type,...data},[channel.port2]);}catch(error){close();channel.port2.close();reject(error);}
  });
 }
+// Every page→worker cancel command, with the held job type it stops (sw.js DOWNLOAD_PAUSE / MEDIA_CANCEL
+// handlers). A new cancel-type message must join this list, or the hand-over hold will delay it.
+const CANCEL_TARGETS={
+ DOWNLOAD_PAUSE:{matches:(held,cancel)=>held.type==='DOWNLOAD_START'&&held.data.packId===cancel.packId,message:'Download paused. Verified files are kept for Resume.'},
+ MEDIA_CANCEL:{matches:(held,cancel)=>held.type==='MEDIA_PLAY'&&held.data.requestId===cancel.requestId,message:'Playback canceled.'},
+};
+const heldRequests=new Set();
 
 export const hasUnresolvedInstructions=pack=>(pack.diagnostics||[]).some(d=>['conservative-continuation','unresolved-resource-link'].includes(d.code));
