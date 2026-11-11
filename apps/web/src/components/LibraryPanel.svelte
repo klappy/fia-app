@@ -36,11 +36,14 @@
  async function refresh(){
   loading=true;error='';
   try{
-   if(view==='downloads'){download=await libraryAdapter.downloadStatus(selectedPack);onstatus(download.saved);if(!download.choices?.some(c=>c.id===selection))selection=download.choices?.[0]?.id||'core';}
+   if(view==='downloads'){download=await libraryAdapter.downloadStatus(selectedPack);onstatus(download.saved);if(download.choices?.length&&!download.choices.some(c=>c.id===selection))selection=download.choices[0].id;}
    else {languages=await libraryAdapter.languages();passages=await libraryAdapter.passages(language);}
   }catch(e){if(alive)error=e.message;}finally{if(alive)loading=false;}
  }
  onMount(()=>{refresh();return()=>alive=false;});
+ // A status read made while the network is down (for example the one right after an interrupted Save)
+ // has no manifest, which leaves Save disabled. Re-check until the manifest is back so the Save can be retried.
+ $effect(()=>{if(view!=='downloads'||!download?.available||download.manifest||busy||bookBusy)return;const retry=()=>{if(!loading)refresh();},timer=setInterval(retry,5000);window.addEventListener('online',retry);return()=>{clearInterval(timer);window.removeEventListener('online',retry);};});
  const labels={core:'Text only',audio:'Text and audio',visual:'Text, audio, images and maps',all:'Text and all available resources'};
  const packageNames={core:'Small · default',visual:'No video',all:'Full'};
  const packageNotes={core:'Scripture, guide and app.',audio:'Adds recordings.',visual:'Leaves out video, which uses the most space.',all:'Everything, including video.'};
@@ -50,7 +53,7 @@
  let opening=$state(null),openFailure=$state(null);let openToken=0;
  async function selectPack(id){if(opening===id)return;const token=++openToken;opening=id;openFailure=null;try{await onselect(id);}catch(e){if(token===openToken)openFailure={id,message:e?.message||'This passage could not be opened. Your current passage stays open.',code:e?.code};}finally{if(token===openToken)opening=null;}}
  const refusedLabel={'passage-unavailable':'Not available yet','passage-refused':'Cannot be opened'};
- async function save(){busy=true;error='';transfer=null;try{const result=await libraryAdapter.download(selection,value=>transfer=value,selectedPack,requestSizes);downloadFinished=result.saved!==false;if(result.timingPending)error='Files received. Recording timing is pending before offline playback.';}catch(e){error=e.message;}finally{busy=false;const failure=error;await refresh();error=failure||error;}}
+ async function save(){busy=true;error='';transfer=null;try{const result=await libraryAdapter.download(selection,value=>transfer=value,selectedPack,requestSizes);downloadFinished=result.saved!==false;if(result.timingPending)error='Files received. Recording timing is pending before offline playback.';}catch(e){error=e.message;transfer=null;}finally{busy=false;const failure=error;await refresh();error=failure||error;}}
  async function pause(){try{await libraryAdapter.pauseDownload(selectedPack);}catch(e){error=e.message;}}
  // Whole book: the same tier as the passage choice above, run passage by passage through the worker.
  let bookPacks=$state([]),bookStatusList=$state(null),bookChecking=$state(false),bookBusy=$state(false),bookProgress=$state(null),bookResult=$state(null);let bookStop=false;
