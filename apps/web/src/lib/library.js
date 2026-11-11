@@ -112,12 +112,16 @@ async function workerRequest(type,data={},onprogress){
  // A post that reaches the old worker after its hand-over has begun restarts it and holds the new
  // worker at 'installed' until the next navigation. While a worker is installing or waiting, wait
  // (bounded) for the hand-over and post to the worker that is then active; on timeout, post as before.
+ // Cancel commands are not held: the old worker owns the in-flight job they stop. A newer worker that
+ // replaces a watched one (updatefound) is watched too, as registerWorker does.
  const pendingWorkers=()=>[registration.installing,registration.waiting].filter(w=>w&&!['activating','activated','redundant'].includes(w.state));
- if(pendingWorkers().length)await new Promise(resolve=>{
-  const container=navigator.serviceWorker,watched=pendingWorkers();let handoverTimer;
-  const done=()=>{clearTimeout(handoverTimer);container.removeEventListener?.('controllerchange',check);watched.forEach(w=>w.removeEventListener?.('statechange',check));resolve();};
+ if(!['DOWNLOAD_PAUSE','MEDIA_CANCEL'].includes(type)&&pendingWorkers().length)await new Promise(resolve=>{
+  const container=navigator.serviceWorker,watched=new Set();let handoverTimer;
+  const watch=w=>{if(w&&!watched.has(w)){watched.add(w);w.addEventListener?.('statechange',check);}};
+  const found=()=>{watch(registration.installing);check();};
+  const done=()=>{clearTimeout(handoverTimer);container.removeEventListener?.('controllerchange',check);registration.removeEventListener?.('updatefound',found);watched.forEach(w=>w.removeEventListener?.('statechange',check));resolve();};
   const check=()=>{if(!pendingWorkers().length)done();};
-  handoverTimer=setTimeout(done,10000);container.addEventListener?.('controllerchange',check);watched.forEach(w=>w.addEventListener?.('statechange',check));
+  handoverTimer=setTimeout(done,10000);container.addEventListener?.('controllerchange',check);registration.addEventListener?.('updatefound',found);pendingWorkers().forEach(watch);
  });
  const target=registration.active;
  if(!target)throw new Error('Download storage is not ready. Reload and try again.');
