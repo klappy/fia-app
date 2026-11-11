@@ -62,3 +62,32 @@ it('a reload onto saved Mark 1:14–20 S02-U008 never renders Mark 1:1–13 befo
  observer.disconnect();
  expect(seen).toEqual([]);
 });
+// Codex review 4542373447 on #385: in phone landscape the immersive controls (Exit immersive view, Play video) must not render
+// over the restoring state and act on the hidden bundled passage, whose stored place here is an image activity.
+it('phone landscape shows no immersive controls while the saved passage is restoring',async()=>{
+ const descriptor=registry.packs.find(p=>p.id==='eng.MRK-1-14-20'),presentation=JSON.parse(readFileSync('public'+descriptor.presentation.url,'utf8'));
+ const session=createSession(presentation.activities);session.index=presentation.activities.findIndex(a=>a.id==='S02-U008');session.status='waiting';
+ saveProgress(localStorage,descriptor,presentation.activities,{session,muted:true});localStorage.setItem('fia-v3-selected-pack',descriptor.id);
+ const bundled=registry.packs.find(p=>p.id==='eng.MRK-1-1-13'),bundledPresentation=JSON.parse(readFileSync('public'+bundled.presentation.url,'utf8'));
+ const bundledSession=createSession(bundledPresentation.activities);bundledSession.index=bundledPresentation.activities.findIndex(a=>a.id==='S02-U005');bundledSession.status='waiting';
+ expect(bundledPresentation.assets[bundledPresentation.activities[bundledSession.index].assetId].kind).toBe('image');
+ saveProgress(localStorage,bundled,bundledPresentation.activities,{session:bundledSession,muted:true});
+ vi.stubGlobal('matchMedia',q=>({matches:q.includes('orientation: landscape'),media:q,addEventListener(){},removeEventListener(){},addListener(){},removeListener(){}}));
+ let answer;vi.spyOn(libraryAdapter,'select').mockImplementation(()=>new Promise(resolve=>answer=resolve));
+ vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});vi.spyOn(libraryAdapter,'activate').mockResolvedValue({selected:true});
+ vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({files:[],savedFiles:[],deliveryRevision:null});
+ HTMLDialogElement.prototype.showModal=function(){this.open=true;};HTMLDialogElement.prototype.close=function(){this.open=false;};
+ vi.stubGlobal('Audio',vi.fn());HTMLMediaElement.prototype.pause=vi.fn();Element.prototype.scrollTo=vi.fn();
+ // Control: with no other saved passage, the bundled image activity is immersive in this landscape, so the guard is what hides it.
+ localStorage.removeItem('fia-v3-selected-pack');render(App);
+ await waitFor(()=>expect(screen.getByRole('button',{name:'Exit immersive view'})).toBeTruthy());cleanup();
+ localStorage.setItem('fia-v3-selected-pack',descriptor.id);
+ render(App);
+ await waitFor(()=>expect(answer).toBeTypeOf('function'));for(let i=0;i<4;i++){await Promise.resolve();await tick();}
+ expect(document.querySelector('main.scene [data-kind="restoring"]')).toBeTruthy();
+ expect(document.querySelector('main.scene').classList.contains('immersive')).toBe(false);
+ expect(document.querySelector('.immersive-controls')).toBeNull();
+ expect(screen.queryByRole('button',{name:'Exit immersive view'})).toBeNull();expect(screen.queryByRole('button',{name:/Play video|Pause video/})).toBeNull();
+ answer({descriptor,presentation});
+ await waitFor(()=>expect(document.querySelector('main.scene [data-kind="restoring"]')).toBeNull());
+});
