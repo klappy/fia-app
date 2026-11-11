@@ -97,7 +97,8 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  let packWithoutGuideRecordings=$derived(executableMode&&guideRecordingAvailability(selectedPack)==='Guide recordings unavailable');
  let blockedNoticeShown=$state(null); // once per session: reset() clears it (and the dismissal key), so a restarted session gets its one notice again (Codex P2 on #354)
  $effect(()=>{if(!verifying&&packWithoutGuideRecordings&&executableAction?.narration.action==='blocked'&&blockedNoticeShown?.revision!==selectedPack.revision)blockedNoticeShown={revision:selectedPack.revision,activityId:activity.id};});
- let blockedNoticeSpent=$derived(packWithoutGuideRecordings&&blockedNoticeShown?.revision===selectedPack.revision&&blockedNoticeShown.activityId!==activity.id);
+ $effect(()=>{if(blockedNoticeShown&&!blockedNoticeShown.left&&blockedNoticeShown.activityId!==activity?.id)blockedNoticeShown={...blockedNoticeShown,left:true};}); // once its first card is left, the notice stays spent for this revision, even back on that card (Codex P2 on #365)
+ let blockedNoticeSpent=$derived(packWithoutGuideRecordings&&blockedNoticeShown?.revision===selectedPack.revision&&(blockedNoticeShown.left||blockedNoticeShown.activityId!==activity.id));
  let preparationNotice=$derived(!verifying&&executableAction?.narration.action==='blocked'&&dismissedExecutionNotice!==executionNoticeKey&&!blockedNoticeSpent?'This recording is unavailable. You can continue.':currentPreparation?.event!==preparationDismissed&&!(currentPreparation?.status==='ready'&&carrying)?currentPreparation?.message:'');
  async function prepareBoundNarration(identity,context){
   if(context.signal.aborted)return null;
