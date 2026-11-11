@@ -109,12 +109,24 @@ async function workerRequest(type,data={},onprogress){
  let readyTimer;
  const registration=await Promise.race([navigator.serviceWorker.ready,workerAbsent,new Promise((_,reject)=>{readyTimer=setTimeout(()=>reject(notReady()),10000);})]).finally(()=>clearTimeout(readyTimer));
  if(!registration.active)throw new Error('Download storage is not ready. Reload and try again.');
+ // A post that reaches the old worker after its hand-over has begun restarts it and holds the new
+ // worker at 'installed' until the next navigation. While a worker is installing or waiting, wait
+ // (bounded) for the hand-over and post to the worker that is then active; on timeout, post as before.
+ const pendingWorkers=()=>[registration.installing,registration.waiting].filter(w=>w&&!['activating','activated','redundant'].includes(w.state));
+ if(pendingWorkers().length)await new Promise(resolve=>{
+  const container=navigator.serviceWorker,watched=pendingWorkers();let handoverTimer;
+  const done=()=>{clearTimeout(handoverTimer);container.removeEventListener?.('controllerchange',check);watched.forEach(w=>w.removeEventListener?.('statechange',check));resolve();};
+  const check=()=>{if(!pendingWorkers().length)done();};
+  handoverTimer=setTimeout(done,10000);container.addEventListener?.('controllerchange',check);watched.forEach(w=>w.addEventListener?.('statechange',check));
+ });
+ const target=registration.active;
+ if(!target)throw new Error('Download storage is not ready. Reload and try again.');
  return new Promise((resolve,reject)=>{
   const channel=new MessageChannel();let timer;
   const close=()=>{clearTimeout(timer);channel.port1.close();};
   const arm=()=>{clearTimeout(timer);timer=setTimeout(()=>{close();reject(new Error('Download stopped responding. Reopen Downloads to check and resume.'));},45000);};
   channel.port1.onmessage=({data:result})=>{arm();if(result.progress){onprogress?.(result.progress);return;}close();if(result.ok)resolve(result);else{const error=new Error(result.error||'Download could not finish. Retry to keep verified files.');if(type==='MEDIA_STATUS')error.code=['media-status-transient','media-status-invalid'].includes(result.code)?result.code:'media-status-invalid';reject(error);}};
-  arm();try{registration.active.postMessage({type,...data},[channel.port2]);}catch(error){close();channel.port2.close();reject(error);}
+  arm();try{target.postMessage({type,...data},[channel.port2]);}catch(error){close();channel.port2.close();reject(error);}
  });
 }
 
