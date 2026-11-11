@@ -97,3 +97,12 @@ it('unavailable visuals use the shared aligned reader with the current narration
  expect(container.querySelectorAll('.unavailable-words [data-align-word]')).toHaveLength(2);
  expect(screen.getByRole('status').textContent).toContain('unavailable here');
 });
+
+it('instruction phase cannot be replaced by asynchronous image readiness',async()=>{
+ const props={asset:{...a1400,visualLoading:true},guide:guideFor('g'),sequence:{position:0,total:2},instructionOnly:true};
+ const {container,rerender}=render(MediaStage,props);const words=container.querySelector('.unavailable-words');
+ await rerender({...props,asset:{...a1400,downloadRequired:false,src:'/image.jpg'}});
+ expect(container.querySelector('.unavailable-words')).toBe(words);expect(container.querySelector('.visual-viewport')).toBeNull();
+ await rerender({...props,instructionOnly:false,asset:{...a1400,downloadRequired:false,src:'/image.jpg'}});expect(container.querySelector('.visual-viewport')).toBeTruthy();expect(container.querySelector('.unavailable-words')).toBeNull();
+ expect(container.querySelector('.visual-sequence-controls')).toBeNull();
+});

@@ -19,6 +19,7 @@
  import {createVideoPresentation} from './lib/video-presentation.js';
  import {bindVerifiedVisuals,visualSourcePath} from './lib/verified-visuals.js';
  import {createVisualDelivery} from './lib/visual-delivery.js';
+ import {visualSequence} from './lib/visual-sequence.js';
  import MediaStage from './components/MediaStage.svelte';
  import AlignedReading from './components/AlignedReading.svelte';
  import Sheet from './components/Sheet.svelte';
@@ -59,8 +60,8 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  function retryVisual(){visualCanceled=null;visualOwner.retry();authorizeVisual();}
  function cancelVisual(){visualCanceled=visualIdentity();stopVisual();}
  function stopVisual(){visualAuthorization=null;visualOwner.cancel();}
- function syncVisual(){const view=presentStage(session,executionPresentation.activities),asset=rawPresentation.assets[view.focal],path=visualSourcePath(view.focal,asset,visualFiles),supporting=visualSourcePath(view.supporting,rawPresentation.assets[view.supporting],visualFiles);visualOwner.retain([path,supporting].filter(Boolean));if(!online||inTransition||finished||visualCanceled===visualIdentity()||!['image','map'].includes(asset?.kind)||downloadedPaths.has(path)&&(!deliveryRevision||downloadedDeliveryRevision===deliveryRevision)||!onlineMedia.has(path)||!deliveryRevision)return;visualAuthorization=visualIdentity();void visualOwner.load({pack:selectedPack,path,revision:deliveryRevision,identity:visualAuthorization});}
- $effect(()=>{session;rawPresentation;selectedPack;deliveryRevision;onlineMedia;visualFiles;online;downloadedPaths;downloadedDeliveryRevision;visualCanceled;untrack(syncVisual);});
+ function syncVisual(){const view=presentStage(session,executionPresentation.activities),asset=rawPresentation.assets[view.focal],path=visualSourcePath(view.focal,asset,visualFiles),supporting=visualSourcePath(view.supporting,rawPresentation.assets[view.supporting],visualFiles);visualOwner.retain([path,supporting].filter(Boolean));if(visualText||!online||inTransition||finished||visualCanceled===visualIdentity()||!['image','map'].includes(asset?.kind)||downloadedPaths.has(path)&&(!deliveryRevision||downloadedDeliveryRevision===deliveryRevision)||!onlineMedia.has(path)||!deliveryRevision)return;visualAuthorization=visualIdentity();void visualOwner.load({pack:selectedPack,path,revision:deliveryRevision,identity:visualAuthorization});}
+ $effect(()=>{session;rawPresentation;selectedPack;deliveryRevision;onlineMedia;visualFiles;online;downloadedPaths;downloadedDeliveryRevision;visualCanceled;visualText;untrack(syncVisual);});
  let content=$derived(presentationContent(mediaForDevice(executionPresentation,downloadedPaths),selectedPack));
  let activities=$derived(content.activities),assets=$derived(content.assets),sections=$derived(content.sections),examples=$derived(content.examples),readingGroups=$derived(content.readingGroups),listOrdinals=$derived(content.listOrdinals),contentContract=$derived(content.contentContract),defaultScriptureId=$derived(content.defaultScriptureId);
  let videoDeliveryState=$state({entry:null,loading:false,error:null});
@@ -430,7 +431,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  
  let phoneLandscape=$state(false),landscapeDismissed=$state(false);
  let immersive=$derived(phoneLandscape&&!landscapeDismissed&&!sheet&&!inTransition&&!finished&&['image','map','video'].includes(focal?.kind));
- let inlineVideo=$state(null);
+ let inlineVideo=$state(null),inlineVideoStarted=$state(false);
  $effect.pre(()=>{const context=videoNoticeContext();untrack(()=>{if(updateNotice&&updateNoticeContext!==context){updateNotice=false;updateNoticeContext=null;}});});
  const videoOwner=createVideoPresentation({quiesce:()=>{revokePlayback();audio?.pause();videoPlaying=false;},notice:text=>notice=text});
  function videoIdentity(){return `${selectionGeneration}:${selectedPack.id}:${selectedPack.revision}:${swipeGeneration}:${activity.id}:${inlineVideo?.id||focal.id}`;}
@@ -440,13 +441,29 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  function exitImmersive(){if(deferVideo(exitImmersive,true))return;landscapeDismissed=true;}
  let matchingVideo=$derived((executableMode&&!session.detour?[]:focal?.relatedIds||[]).map(id=>assets[id]).find(a=>a?.kind==='video'&&(a.src||a.videoPrepared)));
  let visualHeard=$state(null);
+ let shownVisualInstructions=$state(new Set());
+ let playedVisualOverviews=$state(new Set());
+ let visualGroup=$derived(!session.detour&&!finished&&!inTransition?visualSequence(activities,assets,session.index):null);
+ let visualGroupKey=$derived(visualGroup?`${selectionGeneration}:${selectedPack.id}:${visualGroup.key}`:null);
+ let visualText=$derived(!!visualGroup&&!shownVisualInstructions.has(visualGroupKey)&&visualGroup.position===0);
+ let groupOverviews=$derived(visualGroup&&!executableMode?[...new Set(activities.slice(visualGroup.start,visualGroup.end+1).flatMap(a=>assets[a.assetId]?.relatedIds||[]))].map(id=>assets[id]).filter(a=>a?.kind==='video'&&(a.src||a.videoPrepared)):[]);
+ let nextGroupOverview=$derived(groupOverviews.find(a=>!playedVisualOverviews.has(`${visualGroupKey}:${a.id}`)));
+ let visualVideoKey=$derived(visualGroupKey&&matchingVideo?`${visualGroupKey}:${matchingVideo.id}`:null);
+ function inspectStills(){if(deferVideo(inspectStills))return;cancel();shownVisualInstructions=new Set([...shownVisualInstructions,visualGroupKey]);visualHeard=focal.id;session={...session,status:'waiting'};persist();authorizeVisual();if(!automaticOff&&session.preferences.describeImages&&!matchingVideo&&focal.descriptionAudio)describe(focal.id);}
+ function advanceVisualText(){
+  if(deferVideo(advanceVisualText))return;
+  shownVisualInstructions=new Set([...shownVisualInstructions,visualGroupKey]);
+  if(nextGroupOverview){openMatchingVideo(nextGroupOverview);return;}
+  inspectStills();
+ }
+
  let visual=$derived(['image','map'].includes(focal?.kind));
- let videoPending=$derived(visual&&!!matchingVideo&&visualHeard!==focal.id);
+ let videoPending=$derived(visual&&!!matchingVideo&&(visualGroup?false:visualHeard!==focal.id));
  let visualPending=$derived(visual&&!matchingVideo&&session.preferences.describeImages&&!muted&&!!focal.descriptionAudio&&visualHeard!==focal.id);
  // Preparation is primary only when no higher-priority playback or visual action owns the control.
  // requestableNarration already excludes transitions, detours and completed sessions.
  let primaryStartsPreparation=$derived(!executableMode&&!isPlaying&&!playbackPending&&!inlineVideo&&!videoDeliveryState.loading&&!videoPending&&!visualPending&&!!preparationRequest&&hasGuidePreparation(selectedPack,preparationRequest)&&!automaticOff&&!audioContext&&!preparationBusy&&!mediaLoading&&!requestStarting&&['ready','paused'].includes(session.status));
- let primaryLabel=$derived(executableMode&&!session.detour?executablePrimaryLabel():finished?'Begin again':inTransition?'Continue':automaticOff&&!session.detour?'Continue':isPlaying||playbackPending?'Pause':inlineVideo?'Resume':audio?.active&&audioContext?'Resume':videoPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)?'Play video':visualPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)?'Play':session.detour?(visual?'Return':focal?.kind==='video'?'Play video':focal?.descriptionAudio?'Listen':'Return'):primaryStartsPreparation?(!started?'Begin':'Play'):session.status==='waiting'||automaticOff||!activity?.audioSrc?'Continue':session.status==='paused'?'Resume':!started?'Begin':'Play');
+ let primaryLabel=$derived(visualGroup&&inlineVideo?(isPlaying||playbackPending?'Pause':inlineVideoStarted?'Resume':'Play video'):visualGroup&&!visualText&&!inlineVideo&&!isPlaying&&!playbackPending?'Continue':visualText&&(automaticOff||session.status==='waiting')?'Continue':executableMode&&!session.detour?executablePrimaryLabel():finished?'Begin again':inTransition?'Continue':automaticOff&&!session.detour?'Continue':isPlaying||playbackPending?'Pause':inlineVideo?'Resume':audio?.active&&audioContext?'Resume':videoPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)?'Play video':visualPending&&(!activity.audioSrc||session.status==='waiting'||session.detour)?'Play':session.detour?(visual?'Return':focal?.kind==='video'?'Play video':focal?.descriptionAudio?'Listen':'Return'):primaryStartsPreparation?(!started?'Begin':'Play'):session.status==='waiting'||automaticOff||!activity?.audioSrc?'Continue':session.status==='paused'?'Resume':!started?'Begin':'Play');
  // In manual mode the centre stays Continue; elsewhere an accepted start owns the face until sound.
  let startPending=$derived(!isPlaying&&(mediaLoading||preparationBusy||requestStarting||clipPending||videoDeliveryState.loading||videoPlayPending));
  let carrying=$derived(requestStarting||mediaLoading||clipPending);
@@ -477,13 +494,13 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
   if(preparationRequest){void playRequestedNarration();return;}
   manualStarts.add(activity.id);
   if(manualStarts.size>=3&&!hintShown){listeningHint=true;hintShown=true;}
-  if(visual&&matchingVideo){openMatchingVideo();return;}
+  if(visual&&!visualText&&matchingVideo){openMatchingVideo();return;}
   if(focal?.kind==='video'){cancel();const v=videoOwner.node;if(v)v.currentTime=0;playVideo();return;}
-  const src=focal?.descriptionAudio||activity.audioSrc;
+  const src=visualText?activity.audioSrc:focal?.descriptionAudio||activity.audioSrc;
   if(!src)return;
   cancel();started=true;
   if(focal?.kind==='term')termDefinition=activity.id;
-  audioContext={type:'manual',id:activity.id};startRecording(focal?.descriptionAudio?focal.id:narrationVoice(activity.id),focal?.description||activity.narration,src,true);persist();
+  audioContext={type:'manual',id:activity.id};startRecording(!visualText&&focal?.descriptionAudio?focal.id:narrationVoice(activity.id),visualText?activity.narration:focal?.description||activity.narration,src,true);persist();
  }
  let introduced=$state(new Set());
  let mediaTools=$state(false); let noticeTimer;
@@ -517,21 +534,24 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  function finishAudio(){
   const context=audioContext;audioContext=null;tapGate.end();if(!context)return;
   if(context.type==='description'){if(['image','map'].includes(assets[context.id]?.kind)){visualHeard=context.id;if(!session.detour)session={...session,status:'waiting'};}return;}
+  if(context.type==='manual'&&visualText&&!automaticOff){advanceVisualText();return;}
   if(context.type==='manual'){session={...session,status:'waiting'};persist();return;}
   if(context.type==='response')return;
   introduced=new Set([...introduced,context.id]);
   const before=session.index;dispatch({type:'NARRATION_END',activityId:context.id});
   if(session.index!==before){scheduleNext();}
-  else if(!executableMode&&!session.detour&&visual&&(session.preferences.describeImages&&focal?.descriptionAudio||session.preferences.autoplayVideo&&matchingVideo)){describe(focal.id);}
+  else if(visualText&&!automaticOff){advanceVisualText();}
+  else if(!visualGroup&&!executableMode&&!session.detour&&visual&&(session.preferences.describeImages&&focal?.descriptionAudio||session.preferences.autoplayVideo&&matchingVideo&&!visualGroup)){describe(focal.id);}
   else if(!executableMode&&!session.detour&&activity?.kind==='video'&&session.preferences.autoplayVideo){timer=setTimeout(()=>{if(session.preferences.autoplayVideo)playVideo();},350);}
  }
  function scheduleNext(){
   if(!playbackConsent)return;
   if(session.status==='complete'||session.detour||inTransition)return;
   authorizeVisual(false);
+  if(visualGroup&&!visualText){session={...session,status:'waiting'};if(!automaticOff&&session.preferences.describeImages&&!matchingVideo&&focal.descriptionAudio)describe(focal.id);return;}
   if(executableMode){if(executablePlayable&&!automaticOff)void playExecutableNarration({automatic:true});else settleSilent();return;}
-  if(!activity.audioSrc){if(preparationRequest&&hasGuidePreparation(selectedPack,preparationRequest)&&!automaticOff){void playRequestedNarration({automatic:true});return;}settleSilent();if(activity.kind==='scripture'&&session.preferences.readScripture)notice='No recording is available for this Scripture passage. You can read it and continue.';if(visual&&(session.preferences.autoplayVideo&&matchingVideo||session.preferences.describeImages&&focal?.descriptionAudio)||focal?.kind==='term'&&!muted&&focal.descriptionAudio)describe(focal.id);return;}
-  if(automaticOff&&visual&&(session.preferences.autoplayVideo&&matchingVideo||session.preferences.describeImages&&focal?.descriptionAudio)){describe(focal.id);return;}
+  if(!activity.audioSrc){if(preparationRequest&&hasGuidePreparation(selectedPack,preparationRequest)&&!automaticOff){void playRequestedNarration({automatic:true});return;}settleSilent();if(activity.kind==='scripture'&&session.preferences.readScripture)notice='No recording is available for this Scripture passage. You can read it and continue.';if(visual&&(session.preferences.autoplayVideo&&matchingVideo&&!visualGroup||session.preferences.describeImages&&focal?.descriptionAudio)||focal?.kind==='term'&&!muted&&focal.descriptionAudio)describe(focal.id);return;}
+  if(automaticOff&&visual&&(session.preferences.autoplayVideo&&matchingVideo&&!visualGroup||session.preferences.describeImages&&focal?.descriptionAudio)){describe(focal.id);return;}
   const id=activity.id,generation=selectionGeneration;
   if(activity.kind==='scripture'&&!session.preferences.readScripture){notice='The passage is ready for you to read. Continue when you’re ready.';return;}
   if(!automaticOff){playbackPending=true;timer=setTimeout(()=>{playbackPending=false;if(playbackConsent&&generation===selectionGeneration&&activity.id===id&&!session.detour)playActivity(false,true);},650);}
@@ -545,7 +565,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
   if(executableMode){if(executablePlayable&&(!automatic||!automaticOff))void playExecutableNarration({automatic});else settleSilent();return;}
   started=true;notice='';
   // A viewing-pause cue is only appropriate when there is nothing to play.
-  if(visual&&!muted&&/I will pause the audio here/i.test(activity.narration||'')&&((matchingVideo&&(!automatic||session.preferences.autoplayVideo))||(session.preferences.describeImages&&focal.descriptionAudio))){
+  if(!visualGroup&&visual&&!muted&&/I will pause the audio here/i.test(activity.narration||'')&&((matchingVideo&&(!automatic||(!visualGroup&&session.preferences.autoplayVideo)))||(session.preferences.describeImages&&focal.descriptionAudio))){
    cancel();introduced=new Set([...introduced,activity.id]);
    session={...session,status:'waiting'};persist();describe(focal.id,!automatic);return;
   }
@@ -578,6 +598,11 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
    else describe(focal.id,true);
    return;
   }
+  if(visualGroup&&inlineVideo){if(isPlaying){revokePlayback();videoOwner.node?.pause();}else playVideo();return;}
+  if(visualGroup&&!isPlaying&&!playbackPending&&!inlineVideo){
+   if(visualText&&(automaticOff||session.status==='waiting'||!activity.audioSrc&&!executablePlayable)){if(!automaticOff)playbackConsent=true;advanceVisualText();return;}
+   if(!visualText){navigate({type:'CONTINUE'},true);return;}
+  }
   if(executableMode&&!session.detour){executablePrimary();return;}
   const starts=!['Continue','Return','Begin again','Pause'].includes(primaryLabel);
   if(starts&&!isPlaying&&!playbackPending)authorizeVisual();
@@ -598,12 +623,13 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
   if(session.status==='paused'&&audio?.active){dispatch({type:'PLAY'});if(audio.resume())return;}
   playActivity();
  }
- async function openMatchingVideo(){
-  if(deferVideo(openMatchingVideo))return;
-  if(!matchingVideo)return;
-  const target=matchingVideo,pack=selectedPack,generation=selectionGeneration,activityId=activity.id;
-  cancel();inlineVideo=target;videoPlayPending=true;
-  await tick();if(pack===selectedPack&&generation===selectionGeneration&&activityId===activity.id&&inlineVideo?.id===target.id)playVideo();else videoPlayPending=false;
+ async function openMatchingVideo(requested=null,start=true){
+  if(deferVideo(()=>openMatchingVideo(requested,start)))return;
+  const target=requested?.kind==='video'?requested:matchingVideo;if(!target)return;
+  const pack=selectedPack,generation=selectionGeneration,activityId=activity.id;
+  if(visualGroupKey){shownVisualInstructions=new Set([...shownVisualInstructions,visualGroupKey]);playedVisualOverviews=new Set([...playedVisualOverviews,`${visualGroupKey}:${target.id}`]);}
+  cancel();inlineVideo=target;inlineVideoStarted=false;videoPlayPending=start;
+  await tick();if(start&&pack===selectedPack&&generation===selectionGeneration&&activityId===activity.id&&inlineVideo?.id===target.id)playVideo();else videoPlayPending=false;
  }
  function beginForwardPlayback(){
   if(automaticOff||session.detour||finished||inTransition)return;
@@ -611,17 +637,19 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  }
  function navigate(event,auto=false){
   if(deferVideo(()=>navigate(event,auto)))return;
+  if(event.type==='BACK'&&visualGroup&&!visualText&&visualGroup.position===0){revokePlayback();cancel();stopVisual();const next=new Set(shownVisualInstructions);next.delete(visualGroupKey);shownVisualInstructions=next;session={...session,status:'waiting'};persist();return;}
+  if(event.type==='CONTINUE'&&visualGroup&&inlineVideo){if(nextGroupOverview)openMatchingVideo(nextGroupOverview,!automaticOff);else inspectStills();return;}
   // A tap queued while checking belonged to the screen the person just left.
   tapGate.drop();swipeGeneration++;
   if(jumpWithinRun(event))return;
   const hadPlaybackConsent=playbackConsent,priorIndex=session.index,forward=auto&&event.type==='CONTINUE';revokePlayback();
   if(inTransition&&event.type==='CONTINUE'){cancel();transitionSection=null;persist();authorizeVisual();if(forward)beginForwardPlayback();return;}
-  cancel();visualHeard=null;dispatch(event);notice='';settleSilent();authorizeVisual();
+  cancel();visualHeard=null;dispatch(event);if(event.type==='SEEK_ACTIVITY'){const group=visualSequence(activities,assets,session.index);if(group)shownVisualInstructions=new Set([...shownVisualInstructions,`${selectionGeneration}:${selectedPack.id}:${group.key}`]);}notice='';settleSilent();authorizeVisual();
   if(event.type==='DETOUR'&&assets[event.assetId]?.kind==='video'&&session.preferences.autoplayVideo&&hadPlaybackConsent){playbackConsent=true;queueVideoPlay();}
   if(forward&&session.index!==priorIndex)beginForwardPlayback();
  }
- function reset(){if(deferVideo(reset))return;stopVisual();visualOwner.clear();cancel();const preferences={...session.preferences};const mode=session.mode;dispatch({type:'RESET'});session={...session,preferences,mode};introduced=new Set();started=false;messages=[];blockedNoticeShown=null;dismissedExecutionNotice=null;persist();}
- function describe(id,explicit=false){if(deferVideo(()=>describe(id,explicit)))return;const a=assets[id];if(!a)return;if(['image','map'].includes(a.kind)&&matchingVideo&&focal.id===id&&(explicit||session.preferences.autoplayVideo)){openMatchingVideo();return;}if(!session.detour&&a.kind==='term'&&activity.assetId===id){termDefinition=activity.id;persist();}cancel();dispatch({type:'PAUSE'});message(a.description);if(!a.descriptionAudio){notice='No source recording is available for this resource.';return;}audioContext={type:'description',id};startRecording(id,a.description,a.descriptionAudio,explicit);}
+ function reset(){if(deferVideo(reset))return;shownVisualInstructions=new Set();playedVisualOverviews=new Set();stopVisual();visualOwner.clear();cancel();const preferences={...session.preferences};const mode=session.mode;dispatch({type:'RESET'});session={...session,preferences,mode};introduced=new Set();started=false;messages=[];blockedNoticeShown=null;dismissedExecutionNotice=null;persist();}
+ function describe(id,explicit=false){if(visualText&&!explicit)return;if(deferVideo(()=>describe(id,explicit)))return;const a=assets[id];if(!a)return;if(['image','map'].includes(a.kind)&&matchingVideo&&focal.id===id&&(explicit||!visualGroup&&session.preferences.autoplayVideo)){openMatchingVideo();return;}if(!session.detour&&a.kind==='term'&&activity.assetId===id){termDefinition=activity.id;persist();}cancel();dispatch({type:'PAUSE'});message(a.description);if(!a.descriptionAudio){notice='No source recording is available for this resource.';return;}audioContext={type:'description',id};startRecording(id,a.description,a.descriptionAudio,explicit);}
  function queueVideoPlay(explicit=false){if(!explicit&&!playbackConsent)return;const pack=selectedPack,generation=selectionGeneration,activityId=activity.id,focalId=focal.id,playbackGeneration=mediaGeneration;tick().then(()=>{if(pack===selectedPack&&generation===selectionGeneration&&activityId===activity.id&&focalId===focal.id&&playbackGeneration===mediaGeneration)playVideo();});}
  async function playVideo(){
   // The start span lasts until the element's play event (videoStarted) or a truthful failure.
@@ -645,8 +673,8 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
   return false;
  }
  function videoTime(event){const v=event.currentTarget;if(!ownsVideo(v))return;videoState={elapsed:Number.isFinite(v.currentTime)?v.currentTime:0,duration:Number.isFinite(v.duration)?v.duration:0};}
- function videoStarted(event){if(event&&!ownsVideo(event.currentTarget))return;audio?.stop();audioContext=null;videoPlaying=true;videoPlayPending=false;dispatch({type:'PAUSE'});}
- function videoEnded(event){if(event&&!ownsVideo(event.currentTarget))return;if(videoOwner.pending)return;if(deferVideo(()=>videoEnded()))return;if(staleVideo){staleVideo=false;videoDelivery.clear();}videoState={elapsed:0,duration:0};videoPlaying=false;if(inlineVideo){inlineVideo=null;visualHeard=focal.id;if(!session.detour)session={...session,status:'waiting'};persist();return;}if(session.detour){navigate({type:'RETURN'});return;}dispatch({type:'MEDIA_END',activityId:activity.id});scheduleNext();}
+ function videoStarted(event){if(event&&!ownsVideo(event.currentTarget))return;audio?.stop();audioContext=null;inlineVideoStarted=true;videoPlaying=true;videoPlayPending=false;dispatch({type:'PAUSE'});}
+ function videoEnded(event){if(event&&!ownsVideo(event.currentTarget))return;if(videoOwner.pending)return;if(deferVideo(()=>videoEnded()))return;if(staleVideo){staleVideo=false;videoDelivery.clear();}videoState={elapsed:0,duration:0};videoPlaying=false;if(inlineVideo){if(visualGroup&&nextGroupOverview){openMatchingVideo(nextGroupOverview,!automaticOff);return;}inlineVideo=null;visualHeard=focal.id;if(!session.detour)session={...session,status:'waiting'};persist();return;}if(session.detour){navigate({type:'RETURN'});return;}dispatch({type:'MEDIA_END',activityId:activity.id});scheduleNext();}
  function setMode(mode){if(session.mode===mode)return;dispatch({type:'SET_MODE',mode});}
  function runCommand(text=command){
   if(!text.trim())return;const input=text.trim();command='';messages=[...messages.slice(-11),{role:'user',text:input}];
@@ -719,7 +747,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
   <section class="media-stage reading-stage" data-kind="term-instruction"><h1 class="sr-only">{displayTitle(focal)}</h1>{#key activity.id}<AlignedReading asset={guideText} identification={focal} playback={audioState} suspended={!!sheet}/>{/key}</section>
  {:else if focal}
   <h1 class="sr-only">{session.detour?displayTitle(focal):activity.title}</h1>
-  {#key focal.id}<MediaStage onvideonode={registerVideo} videoIdentity={videoIdentity()} asset={focal} guide={!session.detour&&['image','map'].includes(focal.kind)?guideText:null} checking={verifying} {inlineVideo} {immersive} {matchingVideo} onvideo={openMatchingVideo} descriptionsEnabled={session.preferences.describeImages} ontoggledescription={()=>dispatch({type:'SET_PREFERENCE',key:'describeImages',value:!session.preferences.describeImages})} playback={audioState} suspended={!!sheet||mediaTools} toolsVisible={mediaTools} pinned={session.pinned===focal.id} onpin={()=>dispatch({type:session.pinned===focal.id?'UNPIN':'PIN',assetId:focal.id})} ondescribe={()=>describe(focal.id,true)} ontime={videoTime} onplay={videoStarted} onpause={event=>{if(ownsVideo(event.currentTarget)){videoPlaying=false;videoPlayPending=false;}}} onend={videoEnded} onplayvideo={playVideo} oncancelvideo={()=>videoDelivery.cancel()} onview={retryVisual} oncancelvisual={cancelVisual} ondownload={()=>sheet='downloads'} onerror={()=>{videoPlayPending=false;notice='Video unavailable. Try again or continue without it.';}}/>{/key}
+  {#key focal.id}<MediaStage onvideonode={registerVideo} videoIdentity={videoIdentity()} asset={focal} sequence={visualGroup} instructionOnly={visualText} onstills={inspectStills} guide={!session.detour&&['image','map'].includes(focal.kind)?guideText:null} checking={verifying} {inlineVideo} {immersive} {matchingVideo} onvideo={openMatchingVideo} descriptionsEnabled={session.preferences.describeImages} ontoggledescription={()=>dispatch({type:'SET_PREFERENCE',key:'describeImages',value:!session.preferences.describeImages})} playback={audioState} suspended={!!sheet||mediaTools} toolsVisible={mediaTools} pinned={session.pinned===focal.id} onpin={()=>dispatch({type:session.pinned===focal.id?'UNPIN':'PIN',assetId:focal.id})} ondescribe={()=>describe(focal.id,true)} ontime={videoTime} onplay={videoStarted} onpause={event=>{if(ownsVideo(event.currentTarget)){videoPlaying=false;videoPlayPending=false;}}} onend={videoEnded} onplayvideo={playVideo} oncancelvideo={()=>videoDelivery.cancel()} onview={retryVisual} oncancelvisual={cancelVisual} ondownload={()=>sheet='downloads'} onerror={()=>{videoPlayPending=false;notice='Video unavailable. Try again or continue without it.';}}/>{/key}
  {:else}
   <section class="media-stage reading-stage" data-kind="guide"><h1 class="sr-only">{activity.prompt}</h1>{#key guideText.id}<AlignedReading asset={guideText} playback={audioState} suspended={!!sheet}/>{/key}</section>
  {/if}

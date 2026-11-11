@@ -6,13 +6,13 @@
   import { Pin, PinOff, Volume2, VolumeX, Play, X } from 'lucide-svelte';
   import {CHECKING_LABEL} from '../lib/easy-button.js';
   import {titleMarker,displayTitle} from '../lib/spanish-coverage.js';
-  let { asset, playback, onplayvideo=()=>{},oncancelvideo=()=>{},onvideonode=()=>()=>{}, videoIdentity='', inlineVideo=null, immersive=false, matchingVideo=null, onvideo=()=>{}, descriptionsEnabled=false, ontoggledescription=()=>{}, suspended=false, toolsVisible=false, pinned=false, onpin=()=>{}, ondescribe=()=>{}, ontime=()=>{}, onplay=()=>{}, onpause=()=>{}, onend=()=>{}, onerror=()=>{}, onview=()=>{}, oncancelvisual=()=>{}, ondownload=()=>{}, guide=null, checking=false } = $props();
+  let { asset, playback, sequence=null, instructionOnly=false, onstills=()=>{}, onplayvideo=()=>{},oncancelvideo=()=>{},onvideonode=()=>()=>{}, videoIdentity='', inlineVideo=null, immersive=false, matchingVideo=null, onvideo=()=>{}, descriptionsEnabled=false, ontoggledescription=()=>{}, suspended=false, toolsVisible=false, pinned=false, onpin=()=>{}, ondescribe=()=>{}, ontime=()=>{}, onplay=()=>{}, onpause=()=>{}, onend=()=>{}, onerror=()=>{}, onview=()=>{}, oncancelvisual=()=>{}, ondownload=()=>{}, guide=null, checking=false } = $props();
   // An unavailable picture or map keeps the step's own words on the stage (design-lens HOLD R6/R8, PR318):
   // the guide text sits in the content band and the not-available note is a bounded status region in the media slot.
-  let wordsFirst=$derived(!!guide?.text&&['image','map'].includes(asset.kind)&&!!asset.downloadRequired&&!inlineVideo?.src);
+  let wordsFirst=$derived(!!guide?.text&&['image','map'].includes(asset.kind)&&(instructionOnly||!!asset.downloadRequired&&!inlineVideo?.src));
   function ownVideo(node,identity){let clean=onvideonode(node,identity);return {update(next){if(next!==identity){clean?.();identity=next;clean=onvideonode(node,next);}},destroy(){clean?.();}};}
   let frameReady=$state(false);
-  let poster=$derived(inlineVideo?asset.src:asset.poster);
+  let poster=$derived(inlineVideo?null:asset.poster);
   function awaitFrame(node){
     frameReady=false;
     let alive=true;
@@ -38,9 +38,12 @@
   function close(){dialog?.close();expanded=false;tick().then(()=>expandButton?.focus());}
 </script>
 
-<div class:reading-stage={asset.kind==='scripture'||asset.kind==='term'} class:resource-visual={['image','map','video'].includes(asset.kind)} class:visual-unavailable={wordsFirst} class="media-stage" data-kind={asset.kind}>
-  {#if ['image','map','video'].includes(asset.kind)}<div class="visual-identification" use:balanceCredit><ResourceIdentification asset={inlineVideo&&frameReady?inlineVideo:asset}/></div>{/if}
-  {#if asset.downloadRequired&&!inlineVideo?.src}{#if wordsFirst}<div class="reading-stage unavailable-words"><AlignedReading asset={guide} {playback} {suspended} regionLabel="Step text"/></div>{/if}<div class="media-error" class:media-status={wordsFirst} role={wordsFirst?'status':undefined} style:--media-aspect-w={wordsFirst&&asset.width>0&&asset.height>0?asset.width:null} style:--media-aspect-h={wordsFirst&&asset.width>0&&asset.height>0?asset.height:null}>{#if wordsFirst&&checking}<p class="media-status-checking" aria-hidden="true">{CHECKING_LABEL}…</p>{:else}{#if asset.kind==='video'&&asset.visualOffline&&!asset.videoLoading&&!asset.videoError}<p>This video is not saved on this device. Continue with the passage, or connect to the internet to watch it.</p>{:else if asset.videoPrepared}<p>{asset.videoLoading?'Loading this video…':asset.videoError||'This video is available to play online.'}</p>{#if asset.videoLoading||asset.videoError}<button class="quiet" onclick={asset.videoLoading?oncancelvideo:onplayvideo}>{asset.videoLoading?'Cancel loading':'Try again'}</button>{/if}{:else if ['image','map'].includes(asset.kind)&&asset.visualOffline}<p>This {asset.kind==='map'?'map':'image'} is not saved on this device. Connect to the internet to view it.</p>{:else if asset.visualPrepared}{#if asset.visualLoading}<p>Loading this {asset.kind==='map'?'map':'image'}…</p><button class="quiet" onclick={oncancelvisual}>Cancel loading</button>{:else}<p>{asset.visualError||(asset.visualCanceled?'Loading canceled.':`Loading this ${asset.kind==='map'?'map':'image'}…`)}</p>{#if asset.visualError||asset.visualCanceled}<button class="quiet" onclick={onview}>Try again</button>{/if}{/if}{:else if ['image','map'].includes(asset.kind)}<p>This {asset.kind==='map'?'map':'image'} is unavailable here. You can continue without it.</p>{:else if asset.downloadPrepared}<p>This resource has not been downloaded. You can continue with the passage text.</p><button class="quiet" onclick={ondownload}>Open Downloads</button>{:else}<p>This source resource is not prepared for download yet. You can continue with the passage text.</p>{/if}{/if}</div>
+<div class:reading-stage={asset.kind==='scripture'||asset.kind==='term'} class:resource-visual={['image','map','video'].includes(asset.kind)} class:visual-unavailable={wordsFirst} class:visual-sequence={!!sequence} class="media-stage" data-kind={asset.kind}>
+  {#if !instructionOnly&&['image','map','video'].includes(asset.kind)}<div class="visual-identification" use:balanceCredit><ResourceIdentification asset={inlineVideo||asset}/></div>{/if}
+  {#if wordsFirst}<div class="reading-stage unavailable-words"><AlignedReading asset={guide} {playback} {suspended} regionLabel="Step text"/></div>{/if}
+  {#if instructionOnly}
+    <!-- Source instruction remains unchanged until narration ends or the person continues. -->
+  {:else if asset.downloadRequired&&!inlineVideo?.src}<div class="media-error" class:media-status={wordsFirst} role={wordsFirst?'status':undefined} style:--media-aspect-w={wordsFirst&&asset.width>0&&asset.height>0?asset.width:null} style:--media-aspect-h={wordsFirst&&asset.width>0&&asset.height>0?asset.height:null}>{#if wordsFirst&&checking}<p class="media-status-checking" aria-hidden="true">{CHECKING_LABEL}…</p>{:else}{#if asset.kind==='video'&&asset.visualOffline&&!asset.videoLoading&&!asset.videoError}<p>This video is not saved on this device. Continue with the passage, or connect to the internet to watch it.</p>{:else if asset.videoPrepared}<p>{asset.videoLoading?'Loading this video…':asset.videoError||'This video is available to play online.'}</p>{#if asset.videoLoading||asset.videoError}<button class="quiet" onclick={asset.videoLoading?oncancelvideo:onplayvideo}>{asset.videoLoading?'Cancel loading':'Try again'}</button>{/if}{:else if ['image','map'].includes(asset.kind)&&asset.visualOffline}<p>This {asset.kind==='map'?'map':'image'} is not saved on this device. Connect to the internet to view it.</p>{:else if asset.visualPrepared}{#if asset.visualLoading}<p>Loading this {asset.kind==='map'?'map':'image'}…</p><button class="quiet" onclick={oncancelvisual}>Cancel loading</button>{:else}<p>{asset.visualError||(asset.visualCanceled?'Loading canceled.':`Loading this ${asset.kind==='map'?'map':'image'}…`)}</p>{#if asset.visualError||asset.visualCanceled}<button class="quiet" onclick={onview}>Try again</button>{/if}{/if}{:else if ['image','map'].includes(asset.kind)}<p>This {asset.kind==='map'?'map':'image'} is unavailable here. You can continue without it.</p>{:else if asset.downloadPrepared}<p>This resource has not been downloaded. You can continue with the passage text.</p><button class="quiet" onclick={ondownload}>Open Downloads</button>{:else}<p>This source resource is not prepared for download yet. You can continue with the passage text.</p>{/if}{/if}</div>
   {:else if asset.kind==='scripture'}
     <AlignedReading {asset} {playback} {suspended}/>
   {:else if asset.kind==='term'}
@@ -48,7 +51,7 @@
   {:else if asset.kind==='video'||inlineVideo}
     <div class="video-well">
       <!-- svelte-ignore a11y_media_has_caption (Source videos lack captions; documented as an accessibility gap, not disguised with a placeholder track.) -->
-      <video use:ownVideo={videoIdentity} use:awaitFrame bind:this={video} src={(inlineVideo||asset).src} poster={poster} controls={toolsVisible} playsinline preload="none" ontimeupdate={ontime} onloadedmetadata={ontime} ondurationchange={ontime} onseeked={ontime} onplay={onplay} onpause={onpause} onended={onend} onerror={()=>{failed=true;onerror();}} aria-label={displayTitle(asset)}>
+      <video use:ownVideo={videoIdentity} use:awaitFrame bind:this={video} src={(inlineVideo||asset).src} poster={poster} controls={toolsVisible} playsinline preload="none" ontimeupdate={ontime} onloadedmetadata={ontime} ondurationchange={ontime} onseeked={ontime} onplay={onplay} onpause={onpause} onended={onend} onerror={()=>{failed=true;onerror();}} aria-label={displayTitle(inlineVideo||asset)}>
         <!-- Source videos do not supply caption tracks. -->
       </video>
       {#if poster&&!frameReady}<img class="video-loading-poster" src={poster} alt="" aria-hidden="true"/>{/if}
@@ -68,6 +71,8 @@
 </div>
 
 <style>
+ .visual-sequence :global(.unavailable-words){flex:1!important;min-height:0!important;}
+ .visual-sequence :global(.visual-viewport),.visual-sequence .video-well{flex:1;min-height:0;}
  .video-well{position:relative;}
  .video-loading-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;}
 </style>
