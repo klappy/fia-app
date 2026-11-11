@@ -292,7 +292,10 @@ async function status(packId=legacy){
  if(manifest)manifest={...manifest,files:permittedRecordings(manifest.files,generatedRecordingPaths)};
  return {available:true,mediaNotices:(await read('media-notices'))||[],saved,active:active?{...active,valid:saved}:null,pending:pending?{...pending,running:jobs.has(packId)}:null,manifest,error,updateAvailable:!!(active&&manifest&&((active.manifest.catalogRevision||active.revision)!==manifest.revision||(active.manifest.deliveryRevision||null)!==(manifest.deliveryRevision||null))),choices:manifest?['core',...(manifest.files.some(f=>f.group==='audio')?['audio']:[]),...(manifest.files.some(f=>f.group==='video')&&manifest.files.some(f=>f.group==='image')?['visual']:[]),...(manifest.files.some(f=>f.group==='video'||f.group==='image')?['all']:[])].map(id=>({id,bytes:downloadTransferBytes(selectedFiles(manifest,id))})):[]};
 }
-self.addEventListener('install',event=>{if(isBuild)event.waitUntil(caches.open(SHELL).then(c=>c.addAll(['/','/index.html','/manifest.webmanifest'])).then(()=>self.skipWaiting()));});
+// A host may answer /index.html with a redirect (fiaguide.app: 307 -> /). A redirected response cannot answer a
+// navigation (Chromium: ERR_FAILED), so the shell keeps an unredirected copy of the same bytes.
+const shellCopy=r=>r&&r.redirected?new Response(r.body,{status:r.status,statusText:r.statusText,headers:r.headers}):r;
+self.addEventListener('install',event=>{if(isBuild)event.waitUntil(caches.open(SHELL).then(c=>Promise.all(['/','/index.html','/manifest.webmanifest'].map(async path=>{const r=await fetch(path);if(!r.ok)throw TypeError('Shell file unavailable: '+path);await c.put(path,shellCopy(r));}))).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));
 async function cachedResponse(request,clientId){
  const url=new URL(request.url);let active=clientId&&await read('client-'+clientId)||await read('active');
@@ -328,6 +331,13 @@ async function cachedResponse(request,clientId){
  if(/\.(mp3|m4a|wav|ogg|mp4|webm|jpe?g|png|webp)$/i.test(url.pathname)&&!url.pathname.startsWith('/assets/fia-'))return new Response('Download this resource before playback.',{status:409});
  return fetch(request);
 }
+// Cold open with no selection recorded (observed after a first-visit save: only pack:<id>:active exists): use a saved pack
+// whose cache holds the shell, so the shell and its assets come from the same saved copy instead of a blank or error page.
+async function savedShellPack(){
+ for(const request of await (await caches.open(META)).keys()){const key=new URL(request.url).pathname.slice(1);if(!/^pack:[^:]+:active$/.test(key))continue;
+  const active=await read(key);if(active?.cache&&await(await caches.open(active.cache)).match('/index.html'))return active;}
+ return null;
+}
 self.addEventListener('fetch',event=>{
  if(!isBuild||event.request.method!=='GET'||new URL(event.request.url).origin!==self.location.origin)return;
  const path=new URL(event.request.url).pathname;
@@ -349,10 +359,10 @@ self.addEventListener('fetch',event=>{
     }
    }
   }catch{}
-  const preferred=await read('selected');const active=preferred&&await read(packKey(preferred.packId,'active'))||await read('active');
+  const preferred=await read('selected');const active=preferred&&await read(packKey(preferred.packId,'active'))||await read('active')||await savedShellPack();
   const cached=active&&await(await caches.open(active.cache)).match('/index.html');
-  if(cached){if(event.resultingClientId)await write('client-'+event.resultingClientId,active);return cached;}
-  return await(await caches.open(SHELL)).match('/index.html')||live||Response.error();
+  if(cached){if(event.resultingClientId)await write('client-'+event.resultingClientId,active);return shellCopy(cached);}
+  return shellCopy(await(await caches.open(SHELL)).match('/index.html'))||live||Response.error();
  })());
  else event.respondWith(cachedResponse(event.request,event.clientId));
 });
