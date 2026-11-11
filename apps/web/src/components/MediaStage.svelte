@@ -5,6 +5,7 @@
   import ResourceIdentification from './ResourceIdentification.svelte';
   import { Pin, PinOff, Volume2, VolumeX, Play, X } from 'lucide-svelte';
   import {CHECKING_LABEL} from '../lib/easy-button.js';
+  import {titleMarker,displayTitle} from '../lib/spanish-coverage.js';
   let { asset, playback, onplayvideo=()=>{},oncancelvideo=()=>{},onvideonode=()=>()=>{}, videoIdentity='', inlineVideo=null, immersive=false, matchingVideo=null, onvideo=()=>{}, descriptionsEnabled=false, ontoggledescription=()=>{}, suspended=false, toolsVisible=false, pinned=false, onpin=()=>{}, ondescribe=()=>{}, ontime=()=>{}, onplay=()=>{}, onpause=()=>{}, onend=()=>{}, onerror=()=>{}, onview=()=>{}, oncancelvisual=()=>{}, ondownload=()=>{}, guide=null, checking=false } = $props();
   // An unavailable picture or map keeps the step's own words on the stage (design-lens HOLD R6/R8, PR318):
   // the guide text sits in the content band and the not-available note is a bounded status region in the media slot.
@@ -22,6 +23,9 @@
     return {destroy(){alive=false;if(callback!==undefined)node.cancelVideoFrameCallback?.(callback);node.removeEventListener("loadeddata",fallback);}};
   }
   let expanded=$state(false), failed=$state(false), video=$state(), dialog=$state(), expandButton;
+  // Caption title for a Spanish pack asset whose title is the English fallback: the same plain-text marker as the
+  // identification heading (ResourceIdentification), no new control or chrome.
+  let captionMarker=$derived(titleMarker(asset));
   function balanceCredit(node){
     const frame=node.parentElement;
     const measure=()=>frame.style.setProperty('--resource-credit-height',node.getBoundingClientRect().height+'px');
@@ -44,7 +48,7 @@
   {:else if asset.kind==='video'||inlineVideo}
     <div class="video-well">
       <!-- svelte-ignore a11y_media_has_caption (Source videos lack captions; documented as an accessibility gap, not disguised with a placeholder track.) -->
-      <video use:ownVideo={videoIdentity} use:awaitFrame bind:this={video} src={(inlineVideo||asset).src} poster={poster} controls={toolsVisible} playsinline preload="none" ontimeupdate={ontime} onloadedmetadata={ontime} ondurationchange={ontime} onseeked={ontime} onplay={onplay} onpause={onpause} onended={onend} onerror={()=>{failed=true;onerror();}} aria-label={asset.title}>
+      <video use:ownVideo={videoIdentity} use:awaitFrame bind:this={video} src={(inlineVideo||asset).src} poster={poster} controls={toolsVisible} playsinline preload="none" ontimeupdate={ontime} onloadedmetadata={ontime} ondurationchange={ontime} onseeked={ontime} onplay={onplay} onpause={onpause} onended={onend} onerror={()=>{failed=true;onerror();}} aria-label={displayTitle(asset)}>
         <!-- Source videos do not supply caption tracks. -->
       </video>
       {#if poster&&!frameReady}<img class="video-loading-poster" src={poster} alt="" aria-hidden="true"/>{/if}
@@ -53,14 +57,14 @@
   {:else}
     <ZoomableVisual {asset} fullscreen={immersive} onexpand={expand}/>
     {#if expanded}
-     <dialog bind:this={dialog} class="visual-dialog" aria-label={`${asset.title} full screen`} oncancel={e=>{e.preventDefault();close();}} onclose={()=>expanded=false}>
+     <dialog bind:this={dialog} class="visual-dialog" aria-label={`${displayTitle(asset)} full screen`} oncancel={e=>{e.preventDefault();close();}} onclose={()=>expanded=false}>
       <div class="sr-only"><ResourceIdentification {asset}/></div>
       <ZoomableVisual {asset} fullscreen/>
       <button class="glass-icon visual-close" aria-label="Close full screen" title="Close full screen" onclick={close}><X size={24}/></button>
      </dialog>
     {/if}
   {/if}
-  {#if toolsVisible}<div class="asset-caption"><div><strong>{asset.subtitle||asset.title}</strong><span>{asset.source}</span></div><div class="asset-actions"><button class="icon-button" aria-label={pinned?'Unpin visual':'Keep visual on stage'} title={pinned?'Unpin':'Keep visible'} onclick={onpin}>{#if pinned}<PinOff size={17}/>{:else}<Pin size={17}/>{/if}</button>{#if asset.kind!=='scripture'&&asset.kind!=='video'}<button class="icon-button" title="Hear description" aria-label="Hear description" onclick={ondescribe}><Volume2 size={18}/></button>{/if}</div></div>{/if}
+  {#if toolsVisible}<div class="asset-caption"><div><strong>{asset.subtitle||asset.title}{#if captionMarker} {captionMarker}{/if}</strong><span>{asset.source}</span></div><div class="asset-actions"><button class="icon-button" aria-label={pinned?'Unpin visual':'Keep visual on stage'} title={pinned?'Unpin':'Keep visible'} onclick={onpin}>{#if pinned}<PinOff size={17}/>{:else}<Pin size={17}/>{/if}</button>{#if asset.kind!=='scripture'&&asset.kind!=='video'}<button class="icon-button" title="Hear description" aria-label="Hear description" onclick={ondescribe}><Volume2 size={18}/></button>{/if}</div></div>{/if}
 </div>
 
 <style>

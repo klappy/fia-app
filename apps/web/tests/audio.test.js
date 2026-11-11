@@ -208,3 +208,30 @@ run('setRate changes the pace of the sounding element without a new play()', asy
   env.controller.stop();
   assert.equal(env.controller.setRate(1), false);
 });
+
+// sync() after the page was hidden: the element may have been paused from outside with no event delivered.
+run('sync() after an outside pause with no event reports not playing, and one resume() plays again', async e => {
+  e.controller.play('hello', '/audio.mp3'); await tick();
+  const owner = e.audio.at(-1); assert.equal(e.controller.playing, true);
+  owner.paused = true;
+  const before = e.states.length;
+  assert.equal(e.controller.sync(), true);
+  assert.equal(e.states.length, before + 1); assert.equal(e.states.at(-1).playing, false);
+  assert.equal(e.controller.playing, false); assert.equal(e.controller.active, true);
+  assert.equal(e.controller.resume(), true); await tick();
+  assert.equal(owner.paused, false); assert.equal(e.states.at(-1).playing, true);
+});
+run('sync() while the clip plays reports the new clock and still playing', async e => {
+  e.controller.play('hello', '/audio.mp3'); await tick();
+  const owner = e.audio.at(-1); assert.equal(owner.paused, false);
+  owner.currentTime = 7;
+  assert.equal(e.controller.sync(), true);
+  assert.equal(e.states.at(-1).elapsed, 7); assert.equal(e.states.at(-1).playing, true);
+});
+run('sync() during a first start that has not reached sound does not report playing', async e => {
+  Audio.prototype.play = function () { this.paused = false; return new Promise(() => {}); };
+  e.controller.play('hello', '/audio.mp3'); await tick();
+  assert.equal(e.controller.sync(), true);
+  assert.equal(e.states.at(-1).playing, false);
+  e.controller.stop();
+});

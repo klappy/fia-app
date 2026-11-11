@@ -38,14 +38,14 @@ test('cold worker opens a newly saved passage without a later app status check',
  const f=fixture(),w=worker(f);assert.equal((await save(w,f)).saved,true);await opens(worker(f,w.stores),f);
 });
 test('old worker remains exposed, and installing candidate does not repair an unselected old save',async()=>{
- const f=fixture(),old=worker(f,new Map(),'tests/fixtures/sw-offline-selection-baseline-29421a8.js');assert.equal((await save(old,f)).saved,true);
+ const f=fixture(),old=worker(f,new Map(),{workerFile:'tests/fixtures/sw-offline-selection-baseline-29421a8.js'});assert.equal((await save(old,f)).saved,true);
  assert.equal(await read(old,'selected'),undefined);old.offline(true);assert.equal((await old.navigate()).status,0);
  const next=worker(f,old.stores);next.offline(true);assert.equal((await next.navigate()).status,0);
  // Existing explicit selection still repairs the old save, without re-downloading.
  await next.message({type:'PACK_SELECT',revision:f.record.revision});await opens(next,f);
 });
 test('selected copy saved by old worker carries over to candidate',async()=>{
- const f=fixture(),old=worker(f,new Map(),'tests/fixtures/sw-offline-selection-baseline-29421a8.js');assert.equal((await save(old,f)).saved,true);
+ const f=fixture(),old=worker(f,new Map(),{workerFile:'tests/fixtures/sw-offline-selection-baseline-29421a8.js'});assert.equal((await save(old,f)).saved,true);
  await old.message({type:'PACK_SELECT',revision:f.record.revision});await opens(worker(f,old.stores),f);
 });
 test('failed save does not initialize offline selection',async()=>{
@@ -54,7 +54,7 @@ test('failed save does not initialize offline selection',async()=>{
 });
 test('an explicit choice during first-Save selection wins without changing the live pin',async()=>{
  let entered,release;const blocked=new Promise(r=>entered=r),gate=new Promise(r=>release=r);let first=true;
- const f=fixture(),w=worker(f,new Map(),'public/sw.js',{beforePut:async key=>{if(key==='/selected'&&first){first=false;entered();await gate;}}});
+ const f=fixture(),w=worker(f,new Map(),{beforePut:async key=>{if(key==='/selected'&&first){first=false;entered();await gate;}}});
  const saving=save(w,f);await blocked;
  const choice=w.message({type:'PACK_SELECT',packId:'eng.MRK-1-21-28',revision:'a'.repeat(64)});
  release();assert.equal((await saving).saved,true);assert.equal((await choice).selected,true);
@@ -62,14 +62,14 @@ test('an explicit choice during first-Save selection wins without changing the l
  assert.equal((await read(w,'client-c')).packId,'eng.MRK-1-21-28');
 });
 test('selection storage failure does not report saved, and later explicit selection still works',async()=>{
- let fail=true;const f=fixture(),w=worker(f,new Map(),'public/sw.js',{beforePut:async key=>{if(key==='/selected'&&fail)throw new Error('selection storage failure');}});
+ let fail=true;const f=fixture(),w=worker(f,new Map(),{beforePut:async key=>{if(key==='/selected'&&fail)throw new Error('selection storage failure');}});
  const result=await save(w,f);assert.equal(result.ok,false);assert.match(result.error,/selection storage failure/);
  assert.equal(await read(w,'selected'),undefined);assert.ok(await read(w,'pack:'+packId+':active'),'verified copy is retained');
  fail=false;assert.equal((await w.message({type:'PACK_SELECT',revision:f.record.revision})).selected,true);await opens(w,f);
 });
 for(const action of ['pause','revoke'])test(`${action} while selection storage is pending must not acknowledge saved`,async()=>{
  let entered,release;const blocked=new Promise(r=>entered=r),gate=new Promise(r=>release=r);
- const f=fixture(),w=worker(f,new Map(),'public/sw.js',{beforePut:async key=>{if(key==='/selected'){entered();await gate;}}});
+ const f=fixture(),w=worker(f,new Map(),{beforePut:async key=>{if(key==='/selected'){entered();await gate;}}});
  const saving=save(w,f);await blocked;
  if(action==='pause')assert.equal((await w.message({type:'DOWNLOAD_PAUSE'})).paused,true);
  else {w.reply('/offline/'+packId+'.json',new Response('revoked',{status:410}));assert.equal((await w.message({type:'DOWNLOAD_STATUS'})).saved,false);}
