@@ -11,12 +11,19 @@ import {saveProgress} from '../src/lib/session-store.js';
 // The flash's length varied (about 120 ms to 1.1 s), so this asserts absence, not a timing bound.
 const registry=JSON.parse(readFileSync('public/content/registry.json','utf8'));
 const defaultPassage=/Mark 1:1[–-]13/;
-afterEach(()=>{cleanup();vi.restoreAllMocks();vi.unstubAllGlobals();localStorage.clear();});
+afterEach(()=>{delete document.modelContext;cleanup();vi.restoreAllMocks();vi.unstubAllGlobals();localStorage.clear();});
 it('a reload onto saved Mark 1:14–20 S02-U008 never renders Mark 1:1–13 before the saved passage',async()=>{
  const descriptor=registry.packs.find(p=>p.id==='eng.MRK-1-14-20'),presentation=JSON.parse(readFileSync('public'+descriptor.presentation.url,'utf8'));
  const session=createSession(presentation.activities);session.index=presentation.activities.findIndex(a=>a.id==='S02-U008');session.status='waiting';
  expect(session.index).toBeGreaterThan(0);
  saveProgress(localStorage,descriptor,presentation.activities,{session,muted:true});localStorage.setItem('fia-v3-selected-pack',descriptor.id);
+ // The bundled passage's own stored place keeps a pinned resource: it must not show beside the restoring state either.
+ const bundled=registry.packs.find(p=>p.id==='eng.MRK-1-1-13'),bundledPresentation=JSON.parse(readFileSync('public'+bundled.presentation.url,'utf8'));
+ const bundledSession=createSession(bundledPresentation.activities),focal=bundledPresentation.activities[0].assetId;
+ bundledSession.pinned=Object.entries(bundledPresentation.assets).find(([id,a])=>id!==focal&&a.src&&a.kind==='image')[0];
+ saveProgress(localStorage,bundled,bundledPresentation.activities,{session:bundledSession,muted:true});
+ // WebMCP tools answer truthfully while restoring: no false success on the hidden bundled passage.
+ const tools=new globalThis.Map();document.modelContext={registerTool:tool=>{tools.set(tool.name,tool);}};
  let answer;vi.spyOn(libraryAdapter,'select').mockImplementation(()=>new Promise(resolve=>answer=resolve));
  vi.spyOn(libraryAdapter,'downloadStatus').mockResolvedValue({saved:false});vi.spyOn(libraryAdapter,'activate').mockResolvedValue({selected:true});
  vi.spyOn(libraryAdapter,'mediaStatus').mockResolvedValue({files:[],savedFiles:[],deliveryRevision:null});
@@ -42,6 +49,11 @@ it('a reload onto saved Mark 1:14–20 S02-U008 never renders Mark 1:1–13 befo
  for(let i=0;i<4;i++){await Promise.resolve();await tick();}
  expect(document.querySelector('main.scene [data-kind="restoring"]')).toBeTruthy();expect(document.querySelector('dialog[open]')).toBeNull();
  expect(bundledProgress()).toEqual(before);expect(localStorage.getItem('fia-v3-progress@1:'+descriptor.id)).toBe(savedBefore);
+ expect(document.querySelector('.kept-content')).toBeNull();
+ const asset=Object.keys(presentation.assets)[0];
+ for(const [name,input] of [['fia_present_resource',{assetId:asset}],['fia_return_to_guide',{}],['fia_complete_activity',{activityId:'S02-U008'}]])
+  await expect(tools.get(name).execute(input),name).rejects.toThrow('The saved passage is still opening. Try again.');
+ expect(localStorage.getItem('fia-v3-progress@1:'+descriptor.id)).toBe(savedBefore);
  answer({descriptor,presentation});
  await waitFor(()=>expect(document.querySelector('main.scene [data-kind="restoring"]')).toBeNull());
  const saved=presentation.activities[session.index];expect([saved.title,saved.prompt]).toContain(screen.getByRole('heading',{level:1}).textContent);
