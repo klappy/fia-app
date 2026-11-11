@@ -36,10 +36,17 @@ async function waitForServer(){for(let i=0;i<120;i++){try{if((await fetch(`http:
   // QA saw 0.0 MB and an empty pack cache: the drop lands before the first file is verified.
   if(process.env.FIA_DROP_AFTER_FILE==='1')await page.getByText(/ [1-9]\d* \/ \d+ files$/).waitFor({timeout:60000});
   network(false);
+  // Count every appearance of the "Checking device storage…" status from 3 s after the drop (after the Save's own refresh).
+  await page.waitForTimeout(3000);
+  await page.evaluate(()=>{window.__fiaChecking=0;new MutationObserver(()=>{if([...document.querySelectorAll('[role=status]')].some(n=>n.textContent.startsWith('Checking device storage')))window.__fiaChecking++;}).observe(document.body,{childList:true,subtree:true,characterData:true});});
   // Hold the drop for a while (QA held it for tens of seconds), then restore the network.
   await sleep(Number(process.env.FIA_DROP_MS||20000));
   const offlineAlert=await page.getByRole('alert').first().innerText().catch(()=>'(none)'),pauseShown=await page.getByRole('button',{name:'Pause download'}).count();
-  console.log(JSON.stringify({offlineAlert,pauseShown,panel:(await page.locator('.pack-card').first().innerText()).slice(0,400)}));
+  // The background re-check (first after 5 s, then backing off) must not wipe the failure alert or flash "Checking…".
+  const checkingFlashes=await page.evaluate(()=>window.__fiaChecking||0);
+  if(offlineAlert==='(none)')throw Error('FAIL: the interrupted-Save alert is not shown after a re-check while offline');
+  if(checkingFlashes)throw Error(`FAIL: "Checking device storage…" flashed ${checkingFlashes} time(s) during background re-checks`);
+  console.log(JSON.stringify({offlineAlert,checkingFlashes,pauseShown,panel:(await page.locator('.pack-card').first().innerText()).slice(0,400)}));
   network(true);
   // The network is back: the Save must be retryable.
   let enabled=false;const t0=Date.now();

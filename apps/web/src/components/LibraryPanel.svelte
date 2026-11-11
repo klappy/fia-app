@@ -43,7 +43,9 @@
  onMount(()=>{refresh();return()=>alive=false;});
  // A status read made while the network is down (for example the one right after an interrupted Save)
  // has no manifest, which leaves Save disabled. Re-check until the manifest is back so the Save can be retried.
- $effect(()=>{if(view!=='downloads'||!download?.available||download.manifest||busy||bookBusy)return;const retry=()=>{if(!loading)refresh();},timer=setInterval(retry,5000);window.addEventListener('online',retry);return()=>{clearInterval(timer);window.removeEventListener('online',retry);};});
+ // Quiet: the re-check leaves loading and the shown error alone until a manifest actually arrives; it backs off 5 s → 30 s.
+ async function recheck(){if(loading||busy||bookBusy)return;try{const next=await libraryAdapter.downloadStatus(selectedPack);if(!alive||!next?.manifest)return;download=next;onstatus(next.saved);error='';if(next.choices?.length&&!next.choices.some(c=>c.id===selection))selection=next.choices[0].id;}catch{}}
+ $effect(()=>{if(view!=='downloads'||!download?.available||download.manifest||busy||bookBusy)return;let delay=5000,timer;const tick=()=>{recheck();delay=Math.min(delay*2,30000);timer=setTimeout(tick,delay);};timer=setTimeout(tick,delay);window.addEventListener('online',recheck);return()=>{clearTimeout(timer);window.removeEventListener('online',recheck);};});
  const labels={core:'Text only',audio:'Text and audio',visual:'Text, audio, images and maps',all:'Text and all available resources'};
  const packageNames={core:'Small · default',visual:'No video',all:'Full'};
  const packageNotes={core:'Scripture, guide and app.',audio:'Adds recordings.',visual:'Leaves out video, which uses the most space.',all:'Everything, including video.'};
