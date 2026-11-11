@@ -74,6 +74,23 @@ export function clearReadingRect(viewport,topEdge=viewport.top,bottomEdge=viewpo
  return {...viewport,top,bottom,height:bottom-top};
 }
 
+/** The clear area between the scene's top and bottom glass, for a reading viewport. */
+export function clearSceneRect(viewport){
+ const rect=viewport.getBoundingClientRect(),scene=viewport.closest('.scene');
+ const top=scene?.querySelector('.scene-glass-top')?.getBoundingClientRect().bottom;
+ const bottom=scene?.querySelector('.scene-glass-bottom')?.getBoundingClientRect().top;
+ return clearReadingRect(rect,top??rect.top,bottom??rect.bottom);
+}
+
+/** The clear area as the band leaves it without a raised notice; a dismissible notice must not open a reading-centre void. */
+export function readingBandRect(viewport){
+ const rect=viewport.getBoundingClientRect(),scene=viewport.closest('.scene'),glass=scene?.querySelector('.scene-glass-top');
+ const band=glass?parseFloat(getComputedStyle(glass).scrollMarginTop):NaN;
+ if(!glass||!Number.isFinite(band)||band<=0)return clearSceneRect(viewport);
+ const bottom=scene.querySelector('.scene-glass-bottom')?.getBoundingClientRect().top;
+ return clearReadingRect(rect,glass.getBoundingClientRect().top+band,bottom??rect.bottom);
+}
+
 /** The highlight leads the voice: word times from speech recognition start a little after the sound does, and the clock reaches the
  * screen a frame or two late, so a highlight that waits for the exact word start always reads behind (captain, Nov 5 2026). */
 export const HIGHLIGHT_LEAD_SECONDS = 0.25;

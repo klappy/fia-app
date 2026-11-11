@@ -13,7 +13,7 @@
  import { createAudioController } from './lib/audio.js';
  import { createScriptController } from './lib/script-controller.js';
  import { validateTranscript, activityWords } from './lib/transcript.js';
- import { activityAlignment } from './lib/alignment.js';
+ import { activityAlignment, readingEdgeSpace, readingBandRect } from './lib/alignment.js';
  import { alignmentFromSidecar } from './lib/passage-timing.js';
  import {swipeNavigation,createSelectionTracker} from './lib/swipe.js';
  import {createVideoPresentation} from './lib/video-presentation.js';
@@ -678,6 +678,16 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
   }
   message(result.response);notice=result.response;clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>{if(notice===result.response)notice='';},4500);
  }
+ // The restoring line's first line sits where a reading step's first line opens (AlignedReading's leading edge space), so the swap
+ // to the saved step does not move the text (design lens r2 on #385, draft line "same top offset").
+ let restoringLeading=$state(0);
+ function restoringOffset(node){
+  const measure=()=>{const p=node.querySelector('p'),style=p?getComputedStyle(p):null;const lineHeight=parseFloat(style?.lineHeight)||((parseFloat(style?.fontSize)||24)*1.6);
+   const height=readingBandRect(node).height||node.clientHeight;restoringLeading=readingEdgeSpace(height,Infinity,lineHeight).leading;};
+  measure();const observer=typeof ResizeObserver!=='undefined'?new ResizeObserver(measure):null;observer?.observe(node);
+  node.closest('.scene')?.querySelectorAll('.scene-glass').forEach(frame=>observer?.observe(frame));
+  return {destroy(){observer?.disconnect();}};
+ }
  function exportSession(){const blob=new Blob([JSON.stringify({contract:contentContract.id,session},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='fia-test-session.json';a.click();URL.revokeObjectURL(url);}
  onMount(()=>{
   try{const selected=localStorage.getItem('fia-v3-library-language');if(['eng','spa'].includes(selected))language=selected;}catch{}
@@ -715,7 +725,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  <div class="scene-glass scene-glass-top" aria-hidden="true"></div>
  <div class="scene-glass scene-glass-bottom" aria-hidden="true"></div>
  {#if restoreShown}
-  <section class="media-stage reading-stage" data-kind="restoring" aria-busy="true"><h1 class="sr-only">Opening your last passage…</h1><div class="scripture-scroll" style:padding-top="calc(var(--chrome-top, 0px) + 24px)"><div class="reading-verses"><p aria-hidden="true">Opening your last passage…</p></div></div></section>
+  <section class="media-stage reading-stage" data-kind="restoring" aria-busy="true"><h1 class="sr-only">Opening your last passage…</h1><div class="scripture-scroll" use:restoringOffset style:padding-top={`calc(var(--chrome-top, 0px) + ${restoringLeading}px)`}><div class="reading-verses" style:margin-top="0"><p aria-hidden="true">Opening your last passage…</p></div></div></section>
  {:else if finished}
   <section class="words-stage"><h1>Carry the story with you.</h1></section>
  {:else if inTransition}
