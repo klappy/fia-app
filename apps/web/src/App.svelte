@@ -13,7 +13,7 @@
  import { createAudioController } from './lib/audio.js';
  import { createScriptController } from './lib/script-controller.js';
  import { validateTranscript, activityWords } from './lib/transcript.js';
- import { activityAlignment } from './lib/alignment.js';
+ import { activityAlignment, readingEdgeSpace, readingBandRect } from './lib/alignment.js';
  import { alignmentFromSidecar } from './lib/passage-timing.js';
  import {swipeNavigation,createSelectionTracker} from './lib/swipe.js';
  import {createVideoPresentation} from './lib/video-presentation.js';
@@ -178,7 +178,10 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  let onlineMedia=$state(new globalThis.Map()),deliveryRevision=$state(null),downloadedDeliveryRevision=$state(null),mediaLoading=$state(false),playbackPending=$state(false);
  // Easy button (R4-R6): availability is verified once per passage before any action shows;
  // a start is one span from the accepted tap until sound, whatever owns it at the moment.
- let restorePending=$state(false),mediaChecked=$state(false),downloadsChecked=$state(false);
+ // A launch with a different saved passage starts restoring from the first paint, so the bundled default's step never shows
+ // before the saved passage answers (fia-app-cookbook work/active/2026-11-03-restore-flash-default-passage).
+ const savedOnLaunch=(()=>{try{const id=localStorage.getItem('fia-v3-selected-pack');return !!id&&id!==bundledPack.id;}catch{return false;}})();
+ let restorePending=$state(false),restoreShown=$state(savedOnLaunch),mediaChecked=$state(false),downloadsChecked=$state(false);
  let requestStarting=$state(false),clipPending=$state(false),videoPlayPending=$state(false),startBurst=$state(false);let requestCarry=0;
  const tapGate=createTapGate({onburst:value=>startBurst=value});
  let verifying=$derived(restorePending||!mediaChecked||!downloadsChecked);
@@ -375,7 +378,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  }
  async function loadSelectedPack(id,intent,options){videoDelivery.cancel();stopVisual();visualOwner.clear();const generation=++selectionGeneration;try{const loaded=await libraryAdapter.select(id,options);if(intent!==selectionIntent||generation!==selectionGeneration)return;if(deferVideo(()=>applySelectedPack(loaded,generation,intent)))return;await applySelectedPack(loaded,generation,intent);}catch(error){if(intent===selectionIntent&&generation===selectionGeneration)recheckCurrent();throw error;}}
  // Opening a passage ends the previous passage's notices (R3); the new passage raises its own after this point.
- async function applySelectedPack(loaded,generation,intent){if(intent!==selectionIntent||generation!==selectionGeneration)return;validateExecutablePresentation(loaded.presentation);persist();cancel();notice='';selectedPack=loaded.descriptor;if(selectedPack.offlineSnapshot==='historical-verified')notice=historicalSnapshotNotice;rawPresentation=loaded.presentation;saved=false;downloadedDeliveryRevision=null;downloadedPaths=new Set();downloadedAudioDescriptors=new globalThis.Map();onlineMedia=new globalThis.Map();savedMedia=new globalThis.Map();visualFiles=new globalThis.Map();deliveryRevision=null;revokePlayback();mediaChecked=false;downloadsChecked=false;introduced=new Set();manualStarts=new Set();visualHeard=null;termDefinition=null;transitionSection=null;messages=[];language=selectedPack.language;session=createSession(loaded.presentation.activities);try{applyStored();localStorage.setItem('fia-v3-selected-pack',loaded.descriptor.id);}catch{notice='Your saved place could not be read.';}sheet=null;await libraryAdapter.activate(selectedPack).catch(()=>{});if(intent!==selectionIntent||generation!==selectionGeneration)return;await updateDownloaded();await updateMedia();}
+ async function applySelectedPack(loaded,generation,intent){if(intent!==selectionIntent||generation!==selectionGeneration)return;validateExecutablePresentation(loaded.presentation);persist();cancel();notice='';selectedPack=loaded.descriptor;if(selectedPack.offlineSnapshot==='historical-verified')notice=historicalSnapshotNotice;rawPresentation=loaded.presentation;saved=false;downloadedDeliveryRevision=null;downloadedPaths=new Set();downloadedAudioDescriptors=new globalThis.Map();onlineMedia=new globalThis.Map();savedMedia=new globalThis.Map();visualFiles=new globalThis.Map();deliveryRevision=null;revokePlayback();mediaChecked=false;downloadsChecked=false;introduced=new Set();manualStarts=new Set();visualHeard=null;termDefinition=null;transitionSection=null;messages=[];language=selectedPack.language;session=createSession(loaded.presentation.activities);try{applyStored();localStorage.setItem('fia-v3-selected-pack',loaded.descriptor.id);}catch{notice='Your saved place could not be read.';}restoreShown=false;sheet=null;await libraryAdapter.activate(selectedPack).catch(()=>{});if(intent!==selectionIntent||generation!==selectionGeneration)return;await updateDownloaded();await updateMedia();}
  function restartPack(id){resetProgress(localStorage,{id});if(id===selectedPack.id)reset();}
  let language=$state('eng');
  function selectLanguage(id){language=id;try{localStorage.setItem('fia-v3-library-language',id);}catch{notice='Language choice could not be saved on this device.';}}
@@ -429,7 +432,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  const iconFor={guide:Speech,scripture:BookOpen,discussion:Users,video:Film};
  
  let phoneLandscape=$state(false),landscapeDismissed=$state(false);
- let immersive=$derived(phoneLandscape&&!landscapeDismissed&&!sheet&&!inTransition&&!finished&&['image','map','video'].includes(focal?.kind));
+ let immersive=$derived(phoneLandscape&&!restoreShown&&!landscapeDismissed&&!sheet&&!inTransition&&!finished&&['image','map','video'].includes(focal?.kind));
  let inlineVideo=$state(null);
  $effect.pre(()=>{const context=videoNoticeContext();untrack(()=>{if(updateNotice&&updateNoticeContext!==context){updateNotice=false;updateNoticeContext=null;}});});
  const videoOwner=createVideoPresentation({quiesce:()=>{revokePlayback();audio?.pause();videoPlaying=false;},notice:text=>notice=text});
@@ -466,7 +469,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  }
  let slotPlays=$derived(verifying?declaresRecording():manualAvailable);
  let manualLabel=$derived(preparationBusy?'Cancel preparation':startPending?'Cancel loading':currentPreparation?.status==='failed'?'Retry recording':isPlaying?'Pause':inlineVideo||audioContext&&audio?.active?'Resume':preparationRequest?'Play original recording':'Play');
- function manualPlay(restart=false){
+ function manualPlay(restart=false){if(restoreShown)return;
   if(!restart&&startPending){cancelStart();return;}
   if(!isPlaying)authorizeVisual();
   if(!restart&&isPlaying){revokePlayback();audio?.pause();videoOwner.node?.pause();dispatch({type:'PAUSE'});return;}
@@ -609,7 +612,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
   if(automaticOff||session.detour||finished||inTransition)return;
   started=true;playbackConsent=true;scheduleNext();
  }
- function navigate(event,auto=false){
+ function navigate(event,auto=false){if(restoreShown)return;
   if(deferVideo(()=>navigate(event,auto)))return;
   // A tap queued while checking belonged to the screen the person just left.
   tapGate.drop();swipeGeneration++;
@@ -623,7 +626,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  function reset(){if(deferVideo(reset))return;stopVisual();visualOwner.clear();cancel();const preferences={...session.preferences};const mode=session.mode;dispatch({type:'RESET'});session={...session,preferences,mode};introduced=new Set();started=false;messages=[];blockedNoticeShown=null;dismissedExecutionNotice=null;persist();}
  function describe(id,explicit=false){if(deferVideo(()=>describe(id,explicit)))return;const a=assets[id];if(!a)return;if(['image','map'].includes(a.kind)&&matchingVideo&&focal.id===id&&(explicit||session.preferences.autoplayVideo)){openMatchingVideo();return;}if(!session.detour&&a.kind==='term'&&activity.assetId===id){termDefinition=activity.id;persist();}cancel();dispatch({type:'PAUSE'});message(a.description);if(!a.descriptionAudio){notice='No source recording is available for this resource.';return;}audioContext={type:'description',id};startRecording(id,a.description,a.descriptionAudio,explicit);}
  function queueVideoPlay(explicit=false){if(!explicit&&!playbackConsent)return;const pack=selectedPack,generation=selectionGeneration,activityId=activity.id,focalId=focal.id,playbackGeneration=mediaGeneration;tick().then(()=>{if(pack===selectedPack&&generation===selectionGeneration&&activityId===activity.id&&focalId===focal.id&&playbackGeneration===mediaGeneration)playVideo();});}
- async function playVideo(){
+ async function playVideo(){if(restoreShown)return;
   // The start span lasts until the element's play event (videoStarted) or a truthful failure.
   videoPlayPending=true;let requested=false;
   try{requested=await startVideo();}finally{if(!requested)videoPlayPending=false;}
@@ -675,6 +678,16 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
   }
   message(result.response);notice=result.response;clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>{if(notice===result.response)notice='';},4500);
  }
+ // The restoring line's first line sits where a reading step's first line opens (AlignedReading's leading edge space), so the swap
+ // to the saved step does not move the text (design lens r2 on #385, draft line "same top offset").
+ let restoringLeading=$state(0);
+ function restoringOffset(node){
+  const measure=()=>{const p=node.querySelector('p'),style=p?getComputedStyle(p):null;const lineHeight=parseFloat(style?.lineHeight)||((parseFloat(style?.fontSize)||24)*1.6);
+   const height=readingBandRect(node).height||node.clientHeight;restoringLeading=readingEdgeSpace(height,Infinity,lineHeight).leading;};
+  measure();const observer=typeof ResizeObserver!=='undefined'?new ResizeObserver(measure):null;observer?.observe(node);
+  node.closest('.scene')?.querySelectorAll('.scene-glass').forEach(frame=>observer?.observe(frame));
+  return {destroy(){observer?.disconnect();}};
+ }
  function exportSession(){const blob=new Blob([JSON.stringify({contract:contentContract.id,session},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='fia-test-session.json';a.click();URL.revokeObjectURL(url);}
  onMount(()=>{
   try{const selected=localStorage.getItem('fia-v3-library-language');if(['eng','spa'].includes(selected))language=selected;}catch{}
@@ -693,13 +706,13 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
   const net=()=>{const wasOnline=online;online=navigator.onLine;if(!online)visualOwner.cancel();else if(!wasOnline){void updateMedia(true);if(visualCanceled!==visualIdentity()){visualOwner.retry();syncVisual();}}};net();window.addEventListener('online',net);window.addEventListener('offline',net);
   if('serviceWorker'in navigator)registerWorker('/sw.js').then(()=>{updateDownloaded();updateMedia();}).catch(()=>{serviceWorkerError='Offline storage is unavailable here. Try the published HTTPS version.';});
   // A returning visit stays verifying until the saved passage itself is checked (R5).
-  try{const id=localStorage.getItem('fia-v3-selected-pack');if(id&&id!==selectedPack.id){restorePending=true;restoreSavedPack(id).finally(()=>{restorePending=false;checked();});}}catch{}
+  try{const id=localStorage.getItem('fia-v3-selected-pack');if(id&&id!==selectedPack.id){restorePending=true;restoreSavedPack(id).finally(()=>{restorePending=false;restoreShown=false;checked();});}else restoreShown=false;}catch{restoreShown=false;}
   const context=document.modelContext;const lifecycle=new AbortController();
   const register=tool=>{try{Promise.resolve(context?.registerTool(tool,{signal:lifecycle.signal})).catch(()=>{});}catch{}};
-  register({name:'fia_read_session',description:'Read the current FIA activity and stage without changing it.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true},execute:()=>({activityId:activity.id,status:session.status,mode:session.mode,stage:presentStage(session,activities)})});
-  register({name:'fia_present_resource',annotations:{readOnlyHint:false},description:'Open an approved resource as a detour, preserving the current guide position.',inputSchema:{type:'object',properties:{assetId:{type:'string'}},required:['assetId'],additionalProperties:false},execute:async input=>{if(!input||!Object.hasOwn(assets,input.assetId)||Object.keys(input).some(k=>k!=='assetId'))throw new Error('Unknown resource');navigate({type:'DETOUR',assetId:input.assetId});await tick();return {assetId:stage.focal,activityId:activity.id};}});
-  register({name:'fia_return_to_guide',description:'Close resource exploration and restore the held guide activity without advancing.',annotations:{readOnlyHint:false},inputSchema:{type:'object',properties:{},additionalProperties:false},execute:async input=>{if(input&&Object.keys(input).length)throw new Error('No arguments expected');navigate({type:'RETURN'});await tick();return {activityId:activity.id,status:session.status,stage:presentStage(session,activities)};}});
-  register({name:'fia_complete_activity',annotations:{readOnlyHint:false},description:'Explicitly finish or skip the current activity and advance; this is a user decision, never a read.',inputSchema:{type:'object',properties:{activityId:{type:'string'}},required:['activityId'],additionalProperties:false},execute:async input=>{if(!input||input.activityId!==activity.id||session.detour||Object.keys(input).some(k=>k!=='activityId'))throw new Error('Activity changed or exploration is open');navigate({type:'CONTINUE'},true);await tick();return {activityId:activity.id,status:session.status};}});
+  register({name:'fia_read_session',description:'Read the current FIA activity and stage without changing it.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true},execute:()=>{if(restoreShown)throw new Error('The saved passage is still opening. Try again.');return {activityId:activity.id,status:session.status,mode:session.mode,stage:presentStage(session,activities)};}});
+  register({name:'fia_present_resource',annotations:{readOnlyHint:false},description:'Open an approved resource as a detour, preserving the current guide position.',inputSchema:{type:'object',properties:{assetId:{type:'string'}},required:['assetId'],additionalProperties:false},execute:async input=>{if(restoreShown)throw new Error('The saved passage is still opening. Try again.');if(!input||!Object.hasOwn(assets,input.assetId)||Object.keys(input).some(k=>k!=='assetId'))throw new Error('Unknown resource');navigate({type:'DETOUR',assetId:input.assetId});await tick();return {assetId:stage.focal,activityId:activity.id};}});
+  register({name:'fia_return_to_guide',description:'Close resource exploration and restore the held guide activity without advancing.',annotations:{readOnlyHint:false},inputSchema:{type:'object',properties:{},additionalProperties:false},execute:async input=>{if(restoreShown)throw new Error('The saved passage is still opening. Try again.');if(input&&Object.keys(input).length)throw new Error('No arguments expected');navigate({type:'RETURN'});await tick();return {activityId:activity.id,status:session.status,stage:presentStage(session,activities)};}});
+  register({name:'fia_complete_activity',annotations:{readOnlyHint:false},description:'Explicitly finish or skip the current activity and advance; this is a user decision, never a read.',inputSchema:{type:'object',properties:{activityId:{type:'string'}},required:['activityId'],additionalProperties:false},execute:async input=>{if(restoreShown)throw new Error('The saved passage is still opening. Try again.');if(!input||input.activityId!==activity.id||session.detour||Object.keys(input).some(k=>k!=='activityId'))throw new Error('Activity changed or exploration is open');navigate({type:'CONTINUE'},true);await tick();return {activityId:activity.id,status:session.status};}});
   return()=>{tapGate.dispose();selectionAbort?.abort();videoOwner.dispose();videoDelivery.clear();stopVisual();visualOwner.clear();landscape?.removeEventListener('change',rotate);clearTimeout(noticeTimer);cancel();fileCache.clear();savedSrc.clear();audio?.retain?.([]);lifecycle.abort();window.removeEventListener('online',net);window.removeEventListener('offline',net);window.removeEventListener('click',unlockAudio,true);document.removeEventListener('visibilitychange',resync);window.removeEventListener('pageshow',resync);void releaseWake();};
  });
 </script>
@@ -708,10 +721,12 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
 
 {#snippet noticeBar()}<div class="scene-notice" class:sheet-notice={noticeInSheet} use:measureNotice role="status" data-kind={raisedNotice?.kind}><span>{noticeText}</span>{#if !notice&&online&&!preparationNotice&&updateNotice}<button class="quiet" onclick={()=>{persist();location.reload();}}>Reload</button>{/if}<button aria-label="Dismiss notice" onclick={()=>{if(!notice&&online&&!preparationNotice&&updateNotice){updateNotice=false;updateDismissed=true;}notice='';preparationDismissed=currentPreparation?.event??null;dismissedExecutionNotice=executionNoticeKey;}}><X size={15}/></button></div>{/snippet}
 
-<main class="scene" class:immersive class:notice-raised={noticeOnStage} style={`--reading-scale:${scale}${noticeOnStage?`;--notice-height:${noticeHeight}px`:''}`} use:swipeNavigation={()=>({identity:`${swipeGeneration}:${selectionGeneration}:${selectedPack.id}:${activity.id}:${inTransition}:${JSON.stringify(session.detour)}`,blocked:!!sheet||immersive||selectionPending,next:!finished&&!session.detour,back:!!session.detour||session.index!==0||finished,navigate:direction=>navigate({type:direction==='next'?'CONTINUE':'BACK'},direction==='next')})}>
+<main class="scene" class:immersive class:notice-raised={noticeOnStage} style={`--reading-scale:${scale}${noticeOnStage?`;--notice-height:${noticeHeight}px`:''}`} use:swipeNavigation={()=>({identity:`${swipeGeneration}:${selectionGeneration}:${selectedPack.id}:${activity.id}:${inTransition}:${JSON.stringify(session.detour)}`,blocked:!!sheet||immersive||selectionPending||restoreShown,next:!finished&&!session.detour,back:!!session.detour||session.index!==0||finished,navigate:direction=>navigate({type:direction==='next'?'CONTINUE':'BACK'},direction==='next')})}>
  <div class="scene-glass scene-glass-top" aria-hidden="true"></div>
  <div class="scene-glass scene-glass-bottom" aria-hidden="true"></div>
- {#if finished}
+ {#if restoreShown}
+  <section class="media-stage reading-stage" data-kind="restoring" aria-busy="true"><h1 class="sr-only">Opening your last passage…</h1><div class="scripture-scroll" use:restoringOffset style:padding-top={`calc(var(--chrome-top, 0px) + ${restoringLeading}px)`}><div class="reading-verses" style:margin-top="0"><p aria-hidden="true">Opening your last passage…</p></div></div></section>
+ {:else if finished}
   <section class="words-stage"><h1>Carry the story with you.</h1></section>
  {:else if inTransition}
   <SectionTransition section={sections.find(s=>s.id===activity.sectionId)} index={sections.findIndex(s=>s.id===activity.sectionId)}/>
@@ -730,25 +745,27 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
   </div>
  {/if}
  <!-- The book control opens passage selection directly (cookbook progress-rail.md § Top band passage control, ticket ④). -->
- <SessionProgress groups={progress} passage={passageName(selectedPack)} onopen={()=>sheet='progress'} onpassages={()=>{passagesView='passages';sheet='passages';}}/>
- {#if stage.supporting}<button class="kept-content" aria-label={`Open kept ${displayTitle(assets[stage.supporting])}`} onclick={()=>navigate({type:'DETOUR',assetId:stage.supporting})}>{#if assets[stage.supporting].src&&assets[stage.supporting].kind!=='video'}<img src={assets[stage.supporting].src} alt={displayTitle(assets[stage.supporting])}/>{:else}<BookOpen size={22}/>{/if}</button>{/if}
+ {#if !restoreShown}<SessionProgress groups={progress} passage={passageName(selectedPack)} onopen={()=>sheet='progress'} onpassages={()=>{passagesView='passages';sheet='passages';}}/>{/if}
+ {#if stage.supporting&&!restoreShown}<button class="kept-content" aria-label={`Open kept ${displayTitle(assets[stage.supporting])}`} onclick={()=>navigate({type:'DETOUR',assetId:stage.supporting})}>{#if assets[stage.supporting].src&&assets[stage.supporting].kind!=='video'}<img src={assets[stage.supporting].src} alt={displayTitle(assets[stage.supporting])}/>{:else}<BookOpen size={22}/>{/if}</button>{/if}
 
  {#if noticeText&&!noticeInSheet}{@render noticeBar()}{/if}
  {#if listeningHint&&muted}<div class="scene-notice" role="status"><span>Prefer automatic narration?</span><button onclick={()=>{listeningHint=false;sheet='settings';}}>Settings</button><button aria-label="Dismiss narration suggestion" onclick={()=>listeningHint=false}><X size={15}/></button></div>{/if}
+ <!-- While the saved passage is restoring, no control acts on the hidden bundled passage (Codex review on #385); the primary
+      only queues its tap for the restored passage (R5 E4), as verifying already holds it. -->
  <nav class="scene-controls" aria-label="Session controls">
-  <button class="menu-control" aria-label="More options" bind:this={moreButton} onclick={()=>sheet='menu'}><FiaMark/></button>
-  <button class="step-control" aria-label={session.detour?'Return to guide':'Previous activity'} disabled={!session.detour&&session.index===0&&!finished} onclick={()=>navigate({type:'BACK'})}><ChevronLeft size={26}/></button>
+  <button class="menu-control" aria-label="More options" bind:this={moreButton} disabled={restoreShown} onclick={()=>{if(!restoreShown)sheet='menu';}}><FiaMark/></button>
+  <button class="step-control" aria-label={session.detour?'Return to guide':'Previous activity'} disabled={restoreShown||!session.detour&&session.index===0&&!finished} onclick={()=>navigate({type:'BACK'})}><ChevronLeft size={26}/></button>
   <GuidePrimary playback={inlineVideo||focal?.kind==='video'?videoState:audioState} label={primaryFace.label} face={primaryFace.kind} playing={(isPlaying||playbackPending)&&!automaticOff} continuing={primaryLabel==='Continue'||primaryLabel==='Return'} onclick={primary} onpointerdown={()=>tapGate.press(primaryFace.kind)}/>
   <!-- The fourth slot: manual Play in manual mode; with narration on, only a labelled Cancel while preparing (R4.2), else Next.
        R6: it holds a Play only where a recording exists or can be prepared, whatever the settings; elsewhere Next.
        While verifying it follows what the screen declares, so the slot keeps one control from first paint (K4). -->
   {#if (automaticOff||preparationBusy)&&slotPlays&&!session.detour&&!inTransition&&!finished}
-  <button class="step-control" aria-label={manualLabel} title={manualLabel} disabled={!manualAvailable} onclick={()=>manualPlay()}>{#if manualLabel.startsWith('Cancel')}<X size={26}/>{:else if isPlaying}<Pause size={26}/>{:else}<Play size={26}/>{/if}</button>
-  {:else}<button class="step-control" aria-label="Skip to next activity" disabled={finished||!!session.detour} onclick={()=>navigate({type:'CONTINUE'},true)}><ChevronRight size={26}/></button>{/if}
+  <button class="step-control" aria-label={manualLabel} title={manualLabel} disabled={restoreShown||!manualAvailable} onclick={()=>manualPlay()}>{#if manualLabel.startsWith('Cancel')}<X size={26}/>{:else if isPlaying}<Pause size={26}/>{:else}<Play size={26}/>{/if}</button>
+  {:else}<button class="step-control" aria-label="Skip to next activity" disabled={restoreShown||finished||!!session.detour} onclick={()=>navigate({type:'CONTINUE'},true)}><ChevronRight size={26}/></button>{/if}
   <!-- Replay is an audio control (easy-button tiers: tier 3): grayed and inert where the block has no recording, video or
        preparable narration — the same R6 rule the fourth slot uses (slotPlays) — and live wherever one exists. While the device check runs it stays
        disabled until the recording can play (manualAvailable, like the fourth slot's Play), so a tap never settles silently. -->
-  <button class="replay-control" class:no-audio={!slotPlays} aria-label="Replay" disabled={finished||!!session.detour||!manualAvailable} onclick={()=>{if(executableMode){cancel();void playExecutableNarration();}else if(automaticOff){manualPlay(true);}else if(inlineVideo){const v=videoOwner.node;if(v)v.currentTime=0;videoState={...videoState,elapsed:0};playVideo();}else if(visual&&matchingVideo){openMatchingVideo();}else{cancel();playActivity(true);}}}><RotateCcw size={22}/></button>
+  <button class="replay-control" class:no-audio={!slotPlays} aria-label="Replay" disabled={restoreShown||finished||!!session.detour||!manualAvailable} onclick={()=>{if(executableMode){cancel();void playExecutableNarration();}else if(automaticOff){manualPlay(true);}else if(inlineVideo){const v=videoOwner.node;if(v)v.currentTime=0;videoState={...videoState,elapsed:0};playVideo();}else if(visual&&matchingVideo){openMatchingVideo();}else{cancel();playActivity(true);}}}><RotateCcw size={22}/></button>
  </nav>
  <span class="sr-only" aria-live="polite">{videoPlaying?'Watching together':audioState.playing?'Listening together':session.status==='waiting'?'Continue when your group is ready':''}</span>
 </main>

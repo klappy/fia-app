@@ -410,13 +410,13 @@ it('B1/K4: while checking, the Next slot follows what the screen declares; Mark 
  slots=recordSlots();await openFromPassages(bundledServer.descriptor.title);await heading(first);await wait(30);
  expect(slots.on(first)).toEqual(['Play (disabled)']);
  await answer('eng.MRK-1-1-13');await verified();slots.stop();expect(slots.on(first)).toEqual(['Play (disabled)','Play']);
- // 4. A reload that restores Mark 1:21–28. The bundled screen paints first and keeps its declared Play;
- // its check answers after the restore began, so it is not applied and the Play stays disabled. Once
- // Mark 1:21–28 paints, Skip throughout.
+ // 4. A reload that restores Mark 1:21–28. The stage shows a neutral restoring state, never the bundled
+ // passage's step (cookbook work/active/2026-11-03-restore-flash-default-passage); the bundled check answers
+ // after the restore began, so it is not applied. Once Mark 1:21–28 paints, Skip throughout.
  faces.stop();cleanup();faces=recordFaces();savePack(unadmitted);
  const restored=deferred();libraryAdapter.select.mockReturnValueOnce(restored.promise);
- slots=recordSlots();render(App);await heading(first);await answer('eng.MRK-1-1-13');await wait(30);
- expect(readFace().label).toBe(CHECKING);expect(slots.on(first)).toEqual(['Play (disabled)']);
+ slots=recordSlots();render(App);await heading('Opening your last passage…');await answer('eng.MRK-1-1-13');await wait(30);
+ expect(readFace().label).toBe(CHECKING);expect(slots.on(first)).toEqual([]);
  restored.resolve(unadmitted);await heading(other);await answer('eng.MRK-1-21-28');await verified();slots.stop();
  expect(slots.on(other)).toEqual(['Skip to next activity']);
  expect(libraryAdapter.prepareRecording).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();

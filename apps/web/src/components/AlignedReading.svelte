@@ -3,7 +3,7 @@
  import ResourceIdentification from './ResourceIdentification.svelte';
  import {createSmoothFollow} from '../lib/smooth-follow.js';
  import {SCRIPTURE_WORD_HIGHLIGHT} from '../lib/scripture-passage.js';
- import {leadingPosition, wordPair, alignedSegments, followScrollTop, durationScrollTop, readingEdgeSpace, clearReadingRect} from '../lib/alignment.js';
+ import {leadingPosition, wordPair, alignedSegments, followScrollTop, durationScrollTop, readingEdgeSpace, clearSceneRect, readingBandRect} from '../lib/alignment.js';
  let {asset, playback={src:null,elapsed:0,playing:false}, suspended=false,identification=null,regionLabel=null}=$props();
  let viewport=$state(), following=$state(true), reducedMotion=$state(false), revision=$state(0), ready=$state(false), edgeSpace=$state({leading:0,trailing:0});
  let lastScrollTarget=null,scroller;
@@ -18,20 +18,9 @@
  let pair=$derived(position&&position.wordIndex>=0?wordPair(position.wordIndex,alignment.verses[position.verseIndex].words.length):null);
  const scrollKeys=new Set(['ArrowUp','ArrowDown','PageUp','PageDown','Home','End',' ']);
  function explore(){scroller?.stop();if(viewport?.scrollHeight>viewport?.clientHeight){if(following&&active)viewport.scrollTo({top:viewport.scrollTop,behavior:'instant'});lastScrollTarget=null;following=false;}}
- function clearViewport(){
-  const rect=viewport.getBoundingClientRect(),scene=viewport.closest('.scene');
-  const top=scene?.querySelector('.scene-glass-top')?.getBoundingClientRect().bottom;
-  const bottom=scene?.querySelector('.scene-glass-bottom')?.getBoundingClientRect().top;
-  return clearReadingRect(rect,top??rect.top,bottom??rect.bottom);
- }
+ function clearViewport(){return clearSceneRect(viewport);}
  // The clear area as the band leaves it without a raised notice; a dismissible notice must not open a reading-centre void.
- function bandViewport(){
-  const rect=viewport.getBoundingClientRect(),scene=viewport.closest('.scene'),glass=scene?.querySelector('.scene-glass-top');
-  const band=glass?parseFloat(getComputedStyle(glass).scrollMarginTop):NaN;
-  if(!glass||!Number.isFinite(band)||band<=0)return clearViewport();
-  const bottom=scene.querySelector('.scene-glass-bottom')?.getBoundingClientRect().top;
-  return clearReadingRect(rect,glass.getBoundingClientRect().top+band,bottom??rect.bottom);
- }
+ function bandViewport(){return readingBandRect(viewport);}
  function follow(){following=true;lastScrollTarget=null;scrollToReading();}
  function scrollToReading(){
   if(!viewport)return;
