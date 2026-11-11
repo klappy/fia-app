@@ -7,7 +7,7 @@ import {readFileSync} from 'node:fs';
 import {webcrypto} from 'node:crypto';
 const audio=vi.hoisted(()=>({play:vi.fn(),pause:vi.fn(),resume:vi.fn(),stop:vi.fn(),active:false}));
 vi.mock('../src/lib/audio.js',()=>({createAudioController:(state,end)=>{audio.state=state;audio.end=end;return audio;}}));
-import App from '../src/App.svelte';import ResourceIdentification from '../src/components/ResourceIdentification.svelte';import {libraryAdapter,contentLang,passageLanguages,assetLang} from '../src/lib/library.js';import {MARKER} from '../src/lib/spanish-coverage.js';
+import App from '../src/App.svelte';import ResourceIdentification from '../src/components/ResourceIdentification.svelte';import AlignedReading from '../src/components/AlignedReading.svelte';import {libraryAdapter,contentLang,passageLanguages,assetLang} from '../src/lib/library.js';import {MARKER} from '../src/lib/spanish-coverage.js';
 const registry=JSON.parse(readFileSync('public/content/registry.json','utf8')),h='a'.repeat(64);
 let descriptor,presentation;
 function load(id){
@@ -51,6 +51,10 @@ it('inside a Spanish passage, the chrome group label and an English-fallback tit
  const group=container.querySelector('.reading-identification'),title=group.querySelector('h2');
  expect(group.getAttribute('aria-label')).toBe('Key term source');expect(group.getAttribute('lang')).toBe('en');
  expect(title.textContent).toContain(MARKER);expect(title.getAttribute('lang')).toBe('en');
+ // F3: only the TITLE falls back; the body of a fallback-titled Spanish term stays in the passage language.
+ const body=pack.assets['term-spa-t53'];expect(body?.spanishText).toBe('english-fallback');expect(body.text).toMatch(/^Cuando perdonan/);
+ cleanup();const reading=render(AlignedReading,{props:{asset:body},context}).container.querySelector('.reading-verses');
+ expect(reading.getAttribute('lang')).toBe('es');expect(reading.querySelector('.reading-identification h2').getAttribute('lang')).toBe('en');
  cleanup();const spanish=render(ResourceIdentification,{props:{asset:present},context}).container.querySelector('h2');
  expect(spanish.textContent).not.toContain(MARKER);expect(spanish.getAttribute('lang')).toBe('es');
 });

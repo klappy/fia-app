@@ -74,7 +74,8 @@ export const contentLang=language=>passageLanguages.find(l=>l.id===language)?.ta
 export const INTERFACE_LANG='en';
 // The language an asset's own text is actually shown in. A title or key term the compiler marked as not yet in the passage
 // language shows its fallback (asset.titleProvenance.fallback, a catalog code) beside the English marker, so it carries that
-// fallback's tag (the interface language when the fallback is unnamed); otherwise it is in the passage language.
+// fallback's tag (the interface language when the fallback is unnamed); otherwise it is in the passage language. Titles
+// only: a fallback-titled key term's body text is still in the passage language.
 export const assetLang=(asset,passageLang)=>titleMarker(asset)?(contentLang(asset?.titleProvenance?.fallback)||INTERFACE_LANG):passageLang;
 export const RESTORE_TIMEOUT_MS=15000;
 export const restoreUnreachable=passageUnreachable;
