@@ -6,6 +6,7 @@ import App from '../src/App.svelte';
 import {libraryAdapter} from '../src/lib/library.js';
 import {createSession} from '../src/lib/engine.js';
 import {saveProgress} from '../src/lib/session-store.js';
+import {displayTitle} from '../src/lib/spanish-coverage.js';
 const registry=JSON.parse(readFileSync('public/content/registry.json','utf8'));
 afterEach(()=>{cleanup();vi.restoreAllMocks();vi.unstubAllGlobals();localStorage.clear();});
 for(const id of ['eng.MRK-1-1-13','spa.MRK-1-1-13','eng.MRK-1-14-20','spa.MRK-1-14-20'])it(`loads ${id} silently in manual mode with explicit text continuation and no resource URL`,async()=>{
@@ -57,5 +58,5 @@ for(const [id,labels] of [
  await fireEvent.click(screen.getByRole('button',{name:'More options'}));await fireEvent.click(screen.getByRole('button',{name:'Passage resources',exact:true}));
  const scripture=screen.getByText('Scripture translations',{selector:'summary'});await fireEvent.click(scripture);
  expect(within(scripture.parentElement).getAllByRole('button').map(button=>button.textContent.trim())).toEqual(labels);
- const image=Object.values(presentation.assets).find(a=>a.kind==='image');if(image){const images=screen.getByText('Images',{selector:'summary'});await fireEvent.click(images);expect(within(images.parentElement).getByRole('button',{name:image.subtitle||image.title,exact:true})).toBeTruthy();}
+ const image=Object.values(presentation.assets).find(a=>a.kind==='image');if(image){const images=screen.getByText('Images',{selector:'summary'});await fireEvent.click(images);expect(within(images.parentElement).getByRole('button',{name:displayTitle(image),exact:true})).toBeTruthy();}
 });

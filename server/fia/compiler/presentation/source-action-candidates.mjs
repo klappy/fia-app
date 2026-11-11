@@ -2,8 +2,21 @@ import {canonicalJSONString,sha256} from '../../preparation/contract.mjs';
 const need=(v,r)=>{if(!v)throw Error(r);},revision=v=>typeof v==='string'&&/^[a-f0-9]{40}(?:[a-f0-9]{24})?$/.test(v);
 // Literal extraction from verified existing asset metadata. This records what
 // language the evidence actually has, not what language its display title suggests.
+// The display title is the evidence title, or one the compiler derived from the asset's own evidence (compile.mjs termTitle):
+// titleProvenance names the evidence title it came from (derivedFrom) and how. The derivation is checked here against the
+// evidence itself, never trusted from the label: a FIAKeyTerms headword must occur in the term's own source text, and a key
+// written out must fold back to the key. Any other title that differs from the evidence title is refused.
+const keyForm=s=>String(s||'').trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+const plainText=html=>String(html||'').replace(/<[^>]*>/g,' ').replace(/&nbsp;/g,' ').replace(/\s+/g,' ').toLowerCase();
+const titleBound=(asset,e)=>{
+ if(asset.title===e.title)return true;
+ const p=asset.titleProvenance;if(p?.status!=='source'||p.derivedFrom!==e.title||typeof e.title!=='string')return false;
+ if(p.from==='FIAKeyTerms key')return keyForm(asset.title)===e.title;
+ if(p.from==='FIAKeyTerms headword')return asset.kind==='term'&&typeof e.text?.html==='string'&&asset.title.trim().length>0&&plainText(e.text.html).includes(asset.title.trim().toLowerCase());
+ return false;
+};
 export async function canonicalSourceActionCandidate(asset,packLanguage){
- const e=asset?.sourceEvidence;need(asset&&e&&typeof e.id==='string'&&asset.id&&asset.title===e.title&&['term','image','map','video'].includes(asset.kind),'execution-canonical-candidate');
+ const e=asset?.sourceEvidence;need(asset&&e&&typeof e.id==='string'&&asset.id&&typeof asset.title==='string'&&titleBound(asset,e)&&['term','image','map','video'].includes(asset.kind),'execution-canonical-candidate');
  let sourceText,sourceRevision,language;
  if(asset.kind==='term'){
   need(e.text?.status==='source'&&typeof e.text.html==='string'&&e.text.provenance?.status==='source'&&e.text.provenance.collection==='FIAKeyTerms'&&revision(e.text.provenance.revision),'execution-candidate-text');
