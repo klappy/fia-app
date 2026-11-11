@@ -7,7 +7,7 @@ import {readFileSync} from 'node:fs';
 import {webcrypto} from 'node:crypto';
 const audio=vi.hoisted(()=>({play:vi.fn(),pause:vi.fn(),resume:vi.fn(),stop:vi.fn(),active:false}));
 vi.mock('../src/lib/audio.js',()=>({createAudioController:(state,end)=>{audio.state=state;audio.end=end;return audio;}}));
-import App from '../src/App.svelte';import {libraryAdapter,contentLang,passageLanguages} from '../src/lib/library.js';
+import App from '../src/App.svelte';import ResourceIdentification from '../src/components/ResourceIdentification.svelte';import {libraryAdapter,contentLang,passageLanguages,assetLang} from '../src/lib/library.js';import {MARKER} from '../src/lib/spanish-coverage.js';
 const registry=JSON.parse(readFileSync('public/content/registry.json','utf8')),h='a'.repeat(64);
 let descriptor,presentation;
 function load(id){
@@ -40,4 +40,17 @@ it.each([['eng.MRK-1-14-20','en'],['spa.MRK-1-14-20','es']])('%s: passage conten
  expect(document.querySelector('.scripture-scroll').hasAttribute('lang')).toBe(false);
  expect(document.querySelector('nav.scene-controls').closest('[lang]')).toBeNull();
  expect(document.documentElement.lang).not.toBe('es');
+});
+it('inside a Spanish passage, the chrome group label and an English-fallback title with its [ES needed] marker carry lang="en"; a Spanish title keeps "es"',()=>{
+ const pack=JSON.parse(readFileSync('public'+registry.packs.find(p=>p.id==='spa.MRK-1-1-13').presentation.url,'utf8'));
+ const assets=Object.values(pack.assets),fallback=assets.find(a=>a.kind==='term'&&a.spanishText==='english-fallback'),present=assets.find(a=>a.kind==='term'&&a.spanishText==='present');
+ expect(fallback?.titleProvenance?.fallback).toBe('eng');expect(present).toBeTruthy();
+ expect(assetLang(fallback,'es')).toBe('en');expect(assetLang(present,'es')).toBe('es');expect(assetLang(present,undefined)).toBeUndefined();
+ const context=new Map([['fia-content-lang',()=>'es']]);
+ const {container}=render(ResourceIdentification,{props:{asset:fallback},context});
+ const group=container.querySelector('.reading-identification'),title=group.querySelector('h2');
+ expect(group.getAttribute('aria-label')).toBe('Key term source');expect(group.getAttribute('lang')).toBe('en');
+ expect(title.textContent).toContain(MARKER);expect(title.getAttribute('lang')).toBe('en');
+ cleanup();const spanish=render(ResourceIdentification,{props:{asset:present},context}).container.querySelector('h2');
+ expect(spanish.textContent).not.toContain(MARKER);expect(spanish.getAttribute('lang')).toBe('es');
 });
