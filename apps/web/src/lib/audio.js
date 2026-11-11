@@ -282,8 +282,10 @@ export function createAudioController(onState, onEnd, onError, { allowSpeechFall
   }
   // Re-read the active clip's clock after the page was hidden (timers and frames stop while the element plays on):
   // one fresh state report, and the range boundary re-armed, so a clip past its end stops now.
+  // The playing flag is recomputed as update() does, since a pause made while hidden may deliver no event.
   function sync() {
     if (!audio) return false;
+    speaking = sounding && !paused && !audio.paused;
     if (range?.ready && !paused && !audio.paused) armBoundary(audio, generation);
     state();
     return true;
