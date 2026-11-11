@@ -1,5 +1,5 @@
 import {it,expect,vi,afterEach} from 'vitest';
-import {render,screen,cleanup,waitFor} from '@testing-library/svelte';
+import {render,screen,cleanup,waitFor,fireEvent} from '@testing-library/svelte';
 import {readFileSync} from 'node:fs';
 import {tick} from 'svelte';
 import App from '../src/App.svelte';
@@ -30,6 +30,17 @@ it('a reload onto saved Mark 1:14–20 S02-U008 never renders Mark 1:1–13 befo
  const restoring=document.querySelector('main.scene [data-kind="restoring"]');
  expect(restoring).toBeTruthy();expect(restoring.getAttribute('aria-busy')).toBe('true');
  expect(screen.getByRole('heading',{level:1}).textContent).toBe('Opening your last passage…');
+ // No control acts on the hidden bundled passage while restoring: nothing navigates, nothing persists its progress.
+ const bundledProgress=()=>Object.keys(localStorage).filter(k=>k.startsWith('fia-v3-progress@1:')&&!k.endsWith(descriptor.id)).map(k=>localStorage.getItem(k));
+ const before=bundledProgress(),savedBefore=localStorage.getItem('fia-v3-progress@1:'+descriptor.id);
+ const nav=document.querySelector('nav.scene-controls');
+ const others=[...nav.querySelectorAll('button')].filter(b=>!b.classList.contains('guide-primary'));expect(others.length).toBeGreaterThanOrEqual(4);
+ for(const b of others){expect({label:b.getAttribute('aria-label'),disabled:b.disabled}).toEqual({label:b.getAttribute('aria-label'),disabled:true});await fireEvent.click(b);}
+ // The primary only queues its tap while verifying; it never acts on the bundled passage.
+ await fireEvent.click(nav.querySelector('.guide-primary'));
+ for(let i=0;i<4;i++){await Promise.resolve();await tick();}
+ expect(document.querySelector('main.scene [data-kind="restoring"]')).toBeTruthy();expect(document.querySelector('dialog[open]')).toBeNull();
+ expect(bundledProgress()).toEqual(before);expect(localStorage.getItem('fia-v3-progress@1:'+descriptor.id)).toBe(savedBefore);
  answer({descriptor,presentation});
  await waitFor(()=>expect(document.querySelector('main.scene [data-kind="restoring"]')).toBeNull());
  const saved=presentation.activities[session.index];expect([saved.title,saved.prompt]).toContain(screen.getByRole('heading',{level:1}).textContent);

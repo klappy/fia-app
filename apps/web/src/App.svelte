@@ -469,7 +469,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
  }
  let slotPlays=$derived(verifying?declaresRecording():manualAvailable);
  let manualLabel=$derived(preparationBusy?'Cancel preparation':startPending?'Cancel loading':currentPreparation?.status==='failed'?'Retry recording':isPlaying?'Pause':inlineVideo||audioContext&&audio?.active?'Resume':preparationRequest?'Play original recording':'Play');
- function manualPlay(restart=false){
+ function manualPlay(restart=false){if(restoreShown)return;
   if(!restart&&startPending){cancelStart();return;}
   if(!isPlaying)authorizeVisual();
   if(!restart&&isPlaying){revokePlayback();audio?.pause();videoOwner.node?.pause();dispatch({type:'PAUSE'});return;}
@@ -612,7 +612,7 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
   if(automaticOff||session.detour||finished||inTransition)return;
   started=true;playbackConsent=true;scheduleNext();
  }
- function navigate(event,auto=false){
+ function navigate(event,auto=false){if(restoreShown)return;
   if(deferVideo(()=>navigate(event,auto)))return;
   // A tap queued while checking belonged to the screen the person just left.
   tapGate.drop();swipeGeneration++;
@@ -711,11 +711,11 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
 
 {#snippet noticeBar()}<div class="scene-notice" class:sheet-notice={noticeInSheet} use:measureNotice role="status" data-kind={raisedNotice?.kind}><span>{noticeText}</span>{#if !notice&&online&&!preparationNotice&&updateNotice}<button class="quiet" onclick={()=>{persist();location.reload();}}>Reload</button>{/if}<button aria-label="Dismiss notice" onclick={()=>{if(!notice&&online&&!preparationNotice&&updateNotice){updateNotice=false;updateDismissed=true;}notice='';preparationDismissed=currentPreparation?.event??null;dismissedExecutionNotice=executionNoticeKey;}}><X size={15}/></button></div>{/snippet}
 
-<main class="scene" class:immersive class:notice-raised={noticeOnStage} style={`--reading-scale:${scale}${noticeOnStage?`;--notice-height:${noticeHeight}px`:''}`} use:swipeNavigation={()=>({identity:`${swipeGeneration}:${selectionGeneration}:${selectedPack.id}:${activity.id}:${inTransition}:${JSON.stringify(session.detour)}`,blocked:!!sheet||immersive||selectionPending,next:!finished&&!session.detour,back:!!session.detour||session.index!==0||finished,navigate:direction=>navigate({type:direction==='next'?'CONTINUE':'BACK'},direction==='next')})}>
+<main class="scene" class:immersive class:notice-raised={noticeOnStage} style={`--reading-scale:${scale}${noticeOnStage?`;--notice-height:${noticeHeight}px`:''}`} use:swipeNavigation={()=>({identity:`${swipeGeneration}:${selectionGeneration}:${selectedPack.id}:${activity.id}:${inTransition}:${JSON.stringify(session.detour)}`,blocked:!!sheet||immersive||selectionPending||restoreShown,next:!finished&&!session.detour,back:!!session.detour||session.index!==0||finished,navigate:direction=>navigate({type:direction==='next'?'CONTINUE':'BACK'},direction==='next')})}>
  <div class="scene-glass scene-glass-top" aria-hidden="true"></div>
  <div class="scene-glass scene-glass-bottom" aria-hidden="true"></div>
  {#if restoreShown}
-  <section class="words-stage" data-kind="restoring" aria-busy="true"><h1>Opening your last passage…</h1></section>
+  <section class="media-stage reading-stage" data-kind="restoring" aria-busy="true"><h1 class="sr-only">Opening your last passage…</h1><div class="scripture-scroll" style:padding-top="calc(var(--chrome-top, 0px) + 24px)"><div class="reading-verses"><p aria-hidden="true">Opening your last passage…</p></div></div></section>
  {:else if finished}
   <section class="words-stage"><h1>Carry the story with you.</h1></section>
  {:else if inTransition}
@@ -740,20 +740,22 @@ import {playableAudio,downloadedWebm} from './lib/opus-webm.js';
 
  {#if noticeText&&!noticeInSheet}{@render noticeBar()}{/if}
  {#if listeningHint&&muted}<div class="scene-notice" role="status"><span>Prefer automatic narration?</span><button onclick={()=>{listeningHint=false;sheet='settings';}}>Settings</button><button aria-label="Dismiss narration suggestion" onclick={()=>listeningHint=false}><X size={15}/></button></div>{/if}
+ <!-- While the saved passage is restoring, no control acts on the hidden bundled passage (Codex review on #385); the primary
+      only queues its tap for the restored passage (R5 E4), as verifying already holds it. -->
  <nav class="scene-controls" aria-label="Session controls">
-  <button class="menu-control" aria-label="More options" bind:this={moreButton} onclick={()=>sheet='menu'}><FiaMark/></button>
-  <button class="step-control" aria-label={session.detour?'Return to guide':'Previous activity'} disabled={!session.detour&&session.index===0&&!finished} onclick={()=>navigate({type:'BACK'})}><ChevronLeft size={26}/></button>
+  <button class="menu-control" aria-label="More options" bind:this={moreButton} disabled={restoreShown} onclick={()=>sheet='menu'}><FiaMark/></button>
+  <button class="step-control" aria-label={session.detour?'Return to guide':'Previous activity'} disabled={restoreShown||!session.detour&&session.index===0&&!finished} onclick={()=>navigate({type:'BACK'})}><ChevronLeft size={26}/></button>
   <GuidePrimary playback={inlineVideo||focal?.kind==='video'?videoState:audioState} label={primaryFace.label} face={primaryFace.kind} playing={(isPlaying||playbackPending)&&!automaticOff} continuing={primaryLabel==='Continue'||primaryLabel==='Return'} onclick={primary} onpointerdown={()=>tapGate.press(primaryFace.kind)}/>
   <!-- The fourth slot: manual Play in manual mode; with narration on, only a labelled Cancel while preparing (R4.2), else Next.
        R6: it holds a Play only where a recording exists or can be prepared, whatever the settings; elsewhere Next.
        While verifying it follows what the screen declares, so the slot keeps one control from first paint (K4). -->
   {#if (automaticOff||preparationBusy)&&slotPlays&&!session.detour&&!inTransition&&!finished}
-  <button class="step-control" aria-label={manualLabel} title={manualLabel} disabled={!manualAvailable} onclick={()=>manualPlay()}>{#if manualLabel.startsWith('Cancel')}<X size={26}/>{:else if isPlaying}<Pause size={26}/>{:else}<Play size={26}/>{/if}</button>
-  {:else}<button class="step-control" aria-label="Skip to next activity" disabled={finished||!!session.detour} onclick={()=>navigate({type:'CONTINUE'},true)}><ChevronRight size={26}/></button>{/if}
+  <button class="step-control" aria-label={manualLabel} title={manualLabel} disabled={restoreShown||!manualAvailable} onclick={()=>manualPlay()}>{#if manualLabel.startsWith('Cancel')}<X size={26}/>{:else if isPlaying}<Pause size={26}/>{:else}<Play size={26}/>{/if}</button>
+  {:else}<button class="step-control" aria-label="Skip to next activity" disabled={restoreShown||finished||!!session.detour} onclick={()=>navigate({type:'CONTINUE'},true)}><ChevronRight size={26}/></button>{/if}
   <!-- Replay is an audio control (easy-button tiers: tier 3): grayed and inert where the block has no recording, video or
        preparable narration — the same R6 rule the fourth slot uses (slotPlays) — and live wherever one exists. While the device check runs it stays
        disabled until the recording can play (manualAvailable, like the fourth slot's Play), so a tap never settles silently. -->
-  <button class="replay-control" class:no-audio={!slotPlays} aria-label="Replay" disabled={finished||!!session.detour||!manualAvailable} onclick={()=>{if(executableMode){cancel();void playExecutableNarration();}else if(automaticOff){manualPlay(true);}else if(inlineVideo){const v=videoOwner.node;if(v)v.currentTime=0;videoState={...videoState,elapsed:0};playVideo();}else if(visual&&matchingVideo){openMatchingVideo();}else{cancel();playActivity(true);}}}><RotateCcw size={22}/></button>
+  <button class="replay-control" class:no-audio={!slotPlays} aria-label="Replay" disabled={restoreShown||finished||!!session.detour||!manualAvailable} onclick={()=>{if(executableMode){cancel();void playExecutableNarration();}else if(automaticOff){manualPlay(true);}else if(inlineVideo){const v=videoOwner.node;if(v)v.currentTime=0;videoState={...videoState,elapsed:0};playVideo();}else if(visual&&matchingVideo){openMatchingVideo();}else{cancel();playActivity(true);}}}><RotateCcw size={22}/></button>
  </nav>
  <span class="sr-only" aria-live="polite">{videoPlaying?'Watching together':audioState.playing?'Listening together':session.status==='waiting'?'Continue when your group is ready':''}</span>
 </main>
