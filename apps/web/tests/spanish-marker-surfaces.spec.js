@@ -5,6 +5,7 @@ import {it,expect,vi,afterEach} from 'vitest';
 import {render,screen,fireEvent,cleanup,waitFor,within} from '@testing-library/svelte';
 import {readFileSync} from 'node:fs';
 import App from '../src/App.svelte';
+import MediaStage from '../src/components/MediaStage.svelte';
 import {libraryAdapter} from '../src/lib/library.js';
 import {MARKER,displayTitle,titleMarker} from '../src/lib/spanish-coverage.js';
 const registry=JSON.parse(readFileSync('public/content/registry.json','utf8'));
@@ -33,4 +34,21 @@ it('displayTitle and titleMarker print the marker only when the pack records tha
  expect(displayTitle({title:'Ángel',spanishText:'present'})).toBe('Ángel');expect(titleMarker({title:'Ángel',spanishText:'present'})).toBe('');
  expect(displayTitle({title:'messiah',spanishText:'english-fallback'})).toBe('messiah '+MARKER);expect(displayTitle({title:'Nazareth and Judea',spanishText:'missing'})).toBe('Nazareth and Judea '+MARKER);
  expect(displayTitle({title:'Holy Spirit'})).toBe('Holy Spirit');expect(displayTitle({title:'',spanishText:'missing'})).toBe(MARKER);expect(displayTitle(null)).toBe('');
+});
+// Slice 2026-11-10 video-label-marker (PR368 review discussion_r4531938508): the video control's accessible label goes
+// through displayTitle like the dialog label, so a Spanish-pack video whose title is the English fallback names the gap.
+// Invented fixture, English placeholder words only.
+const clip={id:'video-fixture-1',kind:'video',title:'Clip',src:'/fixture/clip.mp4',source:'Fixture source'};
+for(const state of ['english-fallback','missing'])it(`the video control's label carries the marker when the Spanish pack records ${state}`,()=>{
+ const {container}=render(MediaStage,{asset:{...clip,spanishText:state}});const expected=clip.title+' '+MARKER;
+ expect(screen.getByLabelText(expected,{selector:'video'})).toBe(container.querySelector('video'));
+ if(state==='english-fallback')expect(screen.getByRole('heading',{level:2}).textContent).toBe(expected);
+});
+it('the video control keeps the bare title in an English pack (no state), with the tools visible',()=>{
+ const {container}=render(MediaStage,{asset:clip,toolsVisible:true});
+ expect(container.querySelector('video').getAttribute('aria-label')).toBe(clip.title);expect(container.innerHTML).not.toContain(MARKER);
+});
+it('the video control keeps the bare title when the Spanish title is present',()=>{
+ const {container}=render(MediaStage,{asset:{...clip,spanishText:'present'}});
+ expect(container.querySelector('video').getAttribute('aria-label')).toBe(clip.title);expect(container.innerHTML).not.toContain(MARKER);
 });

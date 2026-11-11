@@ -217,3 +217,13 @@ run('a future ranged file uses the element unlocked before asynchronous preparat
  e.controller.play('next','blob:next',1,{startSeconds:10,endSeconds:12},'next');owner.metadata();owner.seeked();await tick();
  assert.equal(e.owners.length,1);assert.equal(owner.currentTime,10);assert.equal(e.controller.playing,true);assert.deepEqual(e.errors,[]);
 });
+run('sync() after an outside pause of a ranged clip reports not playing; one resume() plays once and the range still ends once',async e=>{
+ const owner=await e.start();owner._time=5;assert.equal(e.controller.playing,true);
+ owner.paused=true;assert.equal(e.controller.sync(),true);
+ assert.equal(e.states.at(-1).playing,false);assert.equal(e.ends,0);assert.equal(e.controller.active,true);
+ const calls=owner.calls;assert.equal(e.controller.resume(),true);await tick();
+ assert.equal(e.states.at(-1).playing,true);assert.equal(owner.calls,calls+1);
+ owner._time=8.5;assert.equal(e.controller.sync(),true);
+ assert.equal(e.ends,1);assert.equal(e.controller.active,false);
+ assert.equal(e.controller.sync(),false);assert.equal(e.ends,1);
+});
